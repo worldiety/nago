@@ -2,7 +2,7 @@ package web
 
 import (
 	"go.wdy.de/nago/container/slice"
-	"go.wdy.de/nago/presentation/ui"
+	. "go.wdy.de/nago/presentation/ui"
 	"net/http"
 )
 
@@ -15,54 +15,49 @@ type AddEvent int
 type SubEvent int
 
 func Home() http.HandlerFunc {
-	return ui.Handler(
+	return Handler(
 		Render,
-		ui.OnEvent(func(model DashboardModel, evt AddEvent) DashboardModel {
+		OnEvent(func(model DashboardModel, evt AddEvent) DashboardModel {
 			model.Count++
 			return model
 		}),
-		ui.OnEvent(func(model DashboardModel, evt SubEvent) DashboardModel {
+		OnEvent(func(model DashboardModel, evt SubEvent) DashboardModel {
 			model.Count--
 			return model
 		}),
 	)
 }
 
-func Render(model DashboardModel) ui.Page {
-	return ui.Page{
-		Title: model.Title,
-		Body: ui.Grid{
-			Columns: 3,
-			Cells: slice.Of(
-				ui.GridCell{
-					Span: 3,
-					Views: slice.Of[ui.View](
-						ui.Form{Views: slice.Of[ui.InputType](
-							ui.InputFile{
-								Name:     "UnsafeName",
-								Multiple: false,
-							},
-						)},
-					),
-				},
-				ui.GridCell{
-					Span: 2,
-				},
-				ui.GridCell{
-					Views: slice.Of[ui.View](
-						ui.Button{
-							Title:   ui.AttributedText{Value: "Plus"},
-							OnClick: AddEvent(1),
-						},
-					),
-				},
-				ui.GridCell{Views: slice.Of[ui.View](
-					ui.Button{
-						Title:   ui.AttributedText{Value: "Minus"},
-						OnClick: SubEvent(1),
+func Render(model DashboardModel) View {
+	return Grid{
+		Columns: 3,
+		Cells: slice.Of(
+			GridCell{
+				Span: 3,
+				Views: Views(
+					InputFile{
+						Name:     "UnsafeName",
+						Multiple: false,
 					},
-				)},
-			),
-		},
+				),
+			},
+			GridCell{
+				Span: 2,
+			},
+			GridCell{
+				Views: Views(
+					Button{
+						Title:   Text("Plus"),
+						OnClick: AddEvent(1),
+					},
+				),
+			},
+			GridCell{Views: Views(
+				Button{
+					Title:   AttributedText{Value: "Minus"},
+					OnClick: SubEvent(1),
+				},
+			)},
+		),
 	}
 }

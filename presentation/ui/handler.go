@@ -2,12 +2,12 @@ package ui
 
 import "net/http"
 
-func Handler[Model any](render func(Model) Page, options ...RenderOption[Model]) http.HandlerFunc {
+func Handler[Model any](render func(Model) View, options ...RenderOption[Model]) http.HandlerFunc {
 	return nil
 }
 
 type rHnd[Model any] struct {
-	renderer func(Model) Page
+	renderer func(Model) View
 	//decoders  map[string]MsgHandler[Model]
 	//onRequest UpdReqFunc[Model]
 	maxMemory int64
