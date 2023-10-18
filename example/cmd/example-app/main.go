@@ -26,7 +26,7 @@ func main() {
 		application.PresentationLayer{
 			Pages: slice.Of(ui.Route{
 				Pattern: "/",
-				Render:  renderHome,
+				Render:  nil,
 			}),
 			Events: slice.Slice[ui.Event]{},
 			Http: slice.Of(rest.Route{
@@ -49,15 +49,5 @@ func main() {
 
 	if err := app.Run(); err != nil {
 		panic(err)
-	}
-}
-
-func renderHome(ui.RouteEvent) ui.Page {
-	return ui.Page{
-		Title: "hello world",
-		Body: ui.Button{
-			Title:   ui.AttributedText{},
-			OnClick: ui.Event{},
-		},
 	}
 }

@@ -6,10 +6,11 @@ import (
 )
 
 type GridCell struct {
-	Start int // start column at
-	Span  int // span number of columns
-	End   int // end column at
-	Views slice.Slice[View]
+	Start    int               // start column at
+	Span     int               // span number of columns
+	End      int               // end column at
+	Child    View              // first
+	Children slice.Slice[View] // others
 }
 
 func (GridCell) isView() {}
@@ -26,7 +27,7 @@ func (v GridCell) MarshalJSON() ([]byte, error) {
 		Start: v.Start,
 		Span:  v.Span,
 		End:   v.End,
-		Views: slice.UnsafeUnwrap(v.Views),
+		Views: joinViews(v.Child, v.Children),
 	})
 }
 

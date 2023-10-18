@@ -22,7 +22,7 @@ It has the following core features:
 * Each call to a route requests its renderable component tree from /api/v1/nago/route/render/...
   * GET just renders the default registered model
   * POST triggers a re-rendering by submitting the last returned model and an optional ui.Event, which may also include form fields
-  * The result is always a 200 JSON response, but of different types
+  * The result is always a 200 JSON response, but of the following different types:
     * a render tree for the route
     * a redirect, either with forward or backward semantics. A forward pushes to the navigation stack and a backward removes all steps from history until the (old) route has been found and removed.
-    * there is always a single form per page, otherwise we may get awkward effects like loosing stuff from other forms when handling ui.Events.
+    * all values of named input types will be written into the event.

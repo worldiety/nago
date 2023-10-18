@@ -12,7 +12,10 @@ type DashboardModel struct {
 }
 
 type AddEvent int
-type SubEvent int
+type SubEvent struct {
+	UnsafeName string
+	Vorname    string
+}
 
 func Home() http.HandlerFunc {
 	return Handler(
@@ -34,10 +37,30 @@ func Render(model DashboardModel) View {
 		Cells: slice.Of(
 			GridCell{
 				Span: 3,
-				Views: Views(
+				Children: Views(
 					InputFile{
 						Name:     "UnsafeName",
 						Multiple: false,
+					},
+					InputText{
+						Name: "Vorname",
+						OnMatchError: slice.Of(
+							Match{
+								Regex:   `abc.*`,
+								Message: "Darf nicht mit abc beginnen",
+							},
+
+							Match{
+								Regex:   `^[`,
+								Message: "Darf nicht [ enthalten",
+							},
+						),
+						OnMatchSupporting: slice.Of(
+							Match{
+								Regex:   "Hello world",
+								Message: "Das ist super.",
+							},
+						),
 					},
 				),
 			},
@@ -45,19 +68,17 @@ func Render(model DashboardModel) View {
 				Span: 2,
 			},
 			GridCell{
-				Views: Views(
-					Button{
-						Title:   Text("Plus"),
-						OnClick: AddEvent(1),
-					},
-				),
-			},
-			GridCell{Views: Views(
-				Button{
-					Title:   AttributedText{Value: "Minus"},
-					OnClick: SubEvent(1),
+				Child: Button{
+					Title:   Text("Plus"),
+					OnClick: AddEvent(1),
 				},
-			)},
+			},
+			GridCell{
+				Child: Button{
+					Title:   AttributedText{Value: "Minus"},
+					OnClick: SubEvent{},
+				},
+			},
 		),
 	}
 }
