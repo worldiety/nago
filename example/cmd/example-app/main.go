@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"io"
+	"net/http"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/example/dashboard/web"
 	"go.wdy.de/nago/presentation/rest"
 	"go.wdy.de/nago/presentation/ui"
-	"io"
-	"net/http"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	}
 
 	var x bla
-	if err := json.Unmarshal([]byte(`{"Blub":2}`), &x); err != nil {
+	if err := json.Unmarshal([]byte(`{"Blub":"2"}`), &x); err != nil {
 		panic(err)
 	}
 
