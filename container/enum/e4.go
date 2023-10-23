@@ -45,6 +45,14 @@ func (e E4[T1, T2, T3, T4]) Nil() bool {
 	return e.ordinal != 0
 }
 
+func (e E4[T1, T2, T3, T4]) Ordinal() int {
+	return e.ordinal
+}
+
+func (e E4[T1, T2, T3, T4]) Unwrap() any {
+	return e.v
+}
+
 func (e E4[T1, T2, T3, T4]) MarshalJSON() ([]byte, error) {
 	switch e.ordinal {
 	case 0:

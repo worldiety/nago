@@ -28,6 +28,14 @@ func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) Nil() b
 	return e.ordinal != 0
 }
 
+func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) Ordinal() int {
+	return e.ordinal
+}
+
+func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) Unwrap() any {
+	return e.v
+}
+
 func (e E{{.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) MarshalJSON() ([]byte, error) {
 	switch e.ordinal {
 	case 0:

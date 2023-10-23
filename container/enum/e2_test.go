@@ -78,3 +78,19 @@ func Test2_serPrim2(t *testing.T) {
 		t.Fatal("invalid match")
 	}
 }
+
+type NotFound string
+
+func (e NotFound) Error() string {
+	return fmt.Sprintf("not found: %s", string(e))
+}
+
+type Other error
+
+func TestUnwrap(t *testing.T) {
+	type FindErrorEnum = E2[NotFound, Other]
+	type FindError Error[FindErrorEnum]
+
+	err := IntoErr(FindErrorEnum{}.With1("1234"))
+	t.Log(err)
+}
