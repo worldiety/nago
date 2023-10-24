@@ -4,10 +4,12 @@ import (
 	"fmt"
 )
 
+// Error as a wrapper shall be used whenever there is a clear domain error, otherwise it can be used
+// safely anywhere where an unspecified Go error is used. If there is no error, return just nil as always.
 type Error[T any] interface {
 	error
-	Cause() T
-	Unwrap() error
+	Cause() T      // Cause returns the actual underlying type, probably an Enumeration.
+	Unwrap() error // Unwrap returns either nil or Cause if T is also an error.
 }
 
 type err[T any] struct {
@@ -37,10 +39,10 @@ func (e err[T]) Unwrap() error {
 
 func (e err[T]) Error() string {
 	if err := e.Unwrap(); err != nil {
-		return "enum error: " + err.Error()
+		return "error: " + err.Error()
 	}
 
-	return fmt.Sprintf("%T: %v", e.cause, e.cause)
+	return fmt.Sprintf("error: %v", e.cause)
 }
 
 // IntoErr returns a typed error which contains the given T as a cause.

@@ -55,8 +55,12 @@ func (e E6[T1, T2, T3, T4, T5, T6]) With6(t6 T6) E6[T1, T2, T3, T4, T5, T6] {
 	}
 }
 
+func (e E6[T1, T2, T3, T4, T5, T6]) String() string {
+	return toString(e)
+}
+
 func (e E6[T1, T2, T3, T4, T5, T6]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E6[T1, T2, T3, T4, T5, T6]) Ordinal() int {

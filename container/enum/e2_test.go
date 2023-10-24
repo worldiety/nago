@@ -89,7 +89,13 @@ type Other error
 
 func TestUnwrap(t *testing.T) {
 	type FindErrorEnum = E2[NotFound, Other]
-	type FindError Error[FindErrorEnum]
+	err := IntoErr(FindErrorEnum{}.With1("1234"))
+	t.Log(err)
+}
+
+func TestUnwrap2(t *testing.T) {
+	type WasFound string
+	type FindErrorEnum = E2[WasFound, error]
 
 	err := IntoErr(FindErrorEnum{}.With1("1234"))
 	t.Log(err)

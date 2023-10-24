@@ -62,8 +62,12 @@ func (e E7[T1, T2, T3, T4, T5, T6, T7]) With7(t7 T7) E7[T1, T2, T3, T4, T5, T6, 
 	}
 }
 
+func (e E7[T1, T2, T3, T4, T5, T6, T7]) String() string {
+	return toString(e)
+}
+
 func (e E7[T1, T2, T3, T4, T5, T6, T7]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E7[T1, T2, T3, T4, T5, T6, T7]) Ordinal() int {

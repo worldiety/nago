@@ -41,8 +41,12 @@ func (e E4[T1, T2, T3, T4]) With4(t4 T4) E4[T1, T2, T3, T4] {
 	}
 }
 
+func (e E4[T1, T2, T3, T4]) String() string {
+	return toString(e)
+}
+
 func (e E4[T1, T2, T3, T4]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E4[T1, T2, T3, T4]) Ordinal() int {

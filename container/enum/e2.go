@@ -27,8 +27,12 @@ func (e E2[T1, T2]) With2(t2 T2) E2[T1, T2] {
 	}
 }
 
+func (e E2[T1, T2]) String() string {
+	return toString(e)
+}
+
 func (e E2[T1, T2]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E2[T1, T2]) Ordinal() int {

@@ -69,8 +69,12 @@ func (e E8[T1, T2, T3, T4, T5, T6, T7, T8]) With8(t8 T8) E8[T1, T2, T3, T4, T5, 
 	}
 }
 
+func (e E8[T1, T2, T3, T4, T5, T6, T7, T8]) String() string {
+	return toString(e)
+}
+
 func (e E8[T1, T2, T3, T4, T5, T6, T7, T8]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E8[T1, T2, T3, T4, T5, T6, T7, T8]) Ordinal() int {

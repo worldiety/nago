@@ -1,9 +1,42 @@
 package ui
 
-import "net/http"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
 
-func Handler[Model any](render func(Model) View, options ...RenderOption[Model]) http.HandlerFunc {
-	return nil
+type PageHandler struct {
+	id      string
+	handler http.HandlerFunc
+}
+
+func (p *PageHandler) ID() string {
+	return p.id
+}
+
+func (p *PageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	p.handler(w, r)
+}
+
+func Page[Model any](id string, render func(Model) View, options ...RenderOption[Model]) PageHandler {
+
+	return PageHandler{
+		id: id,
+		handler: func(w http.ResponseWriter, r *http.Request) {
+			var zero Model
+			view := render(zero)
+			buf, err := json.Marshal(view)
+			if err != nil {
+				panic(fmt.Errorf("illegal state: %w", err)) // this would mean, that the UI model is broken
+			}
+
+			if _, err := w.Write(buf); err != nil {
+				// todo where is the app?
+				fmt.Println(err)
+			}
+		},
+	}
 }
 
 type rHnd[Model any] struct {

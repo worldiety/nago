@@ -1,0 +1,15 @@
+package text
+
+import (
+	"regexp"
+	"strings"
+)
+
+var safeRegex = regexp.MustCompile(`[^a-z0-9_-]+`)
+
+func SafeName(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "_")
+	s = safeRegex.ReplaceAllString(s, "")
+	return s
+}

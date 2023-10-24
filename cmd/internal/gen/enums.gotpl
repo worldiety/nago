@@ -24,8 +24,12 @@ func (e E{{$.Cardinality}}[{{range $.TypeParams }}T{{.Ordinal}},{{end}}]) With{{
 {{end}}
 
 
+func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) String()string{
+	return toString(e)
+}
+
 func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) Nil() bool {
-	return e.ordinal != 0
+	return e.ordinal == 0
 }
 
 func (e E{{$.Cardinality}}[{{range .TypeParams }}T{{.Ordinal}},{{end}}]) Ordinal() int {
