@@ -28,7 +28,7 @@ func NewConfigurator() *Configurator {
 		pages:    make(map[string]ui.PageHandler),
 		ctx:      ctx,
 		done:     done,
-		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "macos"),
+		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 }
 
