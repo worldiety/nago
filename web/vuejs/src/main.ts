@@ -1,33 +1,24 @@
 import "./assets/main.css";
 
+import App from "@/App.vue";
+import router from "@/router";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
-
-import App from "./App.vue";
-import router from "./router";
 import {createRouter, createWebHashHistory} from "vue-router";
 import generic from "@/components/generic.vue";
 
+const router = createRouter();
 
-const res = await fetch("http://localhost:8080/api/v1/ui/pages").then(r=>r.json())
-
-const router = createRouter({
-    history: createWebHashHistory(),
-    routes: [],
-})
-
-console.log("hello")
-
+// TODO clean up
+const res = await fetch("http://localhost:8080/api/v1/ui/pages").then(r=>r.json());
 res["pages"].forEach(r=>{
     router.addRoute({ path: r.anchor, component: generic })
     console.log("registered route "+r.anchor)
-} )
+});
 
-
-const app = createApp(App);
 const pinia = createPinia();
 
-app.use(pinia);
-app.use(router);
-
-app.mount("#app");
+createApp(App)
+  .use(pinia)
+  .use(router)
+  .mount("#app");
