@@ -6,23 +6,29 @@ import (
 	"go.wdy.de/nago/internal/server"
 	"go.wdy.de/nago/presentation/rest"
 	"go.wdy.de/nago/presentation/ui"
+	"log/slog"
+	"runtime/debug"
 )
 
 type Application struct {
-	cfg *Configurator
+	cfg    *Configurator
+	failed bool
 }
 
 func Configure(f func(cfg *Configurator)) *Application {
 	a := &Application{}
-	a.init(f)
+	a.failed = !a.init(f)
 
 	return a
 }
 
-func (a *Application) init(configure func(cfg *Configurator)) bool {
+func (a *Application) init(configure func(cfg *Configurator)) (success bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("init failed, going into maintenance", r)
+			fmt.Println(r)
+			fmt.Println(string(debug.Stack()))
+			a.cfg.defaultLogger().Error("init failed, going into maintenance", slog.Any("err", r), slog.String("stacktrace", string(debug.Stack())))
+			success = false
 		}
 	}()
 
@@ -33,12 +39,15 @@ func (a *Application) init(configure func(cfg *Configurator)) bool {
 }
 
 func (a *Application) Run() {
+	if a.failed {
+		panic("fix me: start setup/maintainence mode, check log for details")
+	}
 
 	defer func() {
 		a.cfg.done()
 
 		if r := recover(); r != nil {
-			a.cfg.defaultLogger().Error("application panic", fmt.Errorf("panic: %v", r))
+			a.cfg.defaultLogger().Error("application panic", slog.Any("err", fmt.Errorf("panic: %v", r)))
 		}
 	}()
 

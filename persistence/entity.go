@@ -15,8 +15,36 @@ type Entity[Ident comparable] interface {
 // system. Even though these are all anticipated errors, the user cannot usually do something about it.
 // Thus, the system mostly fails with an internal server error (500) at the presentation side.
 // The responsibility to fix that is up to the service administrator.
-// Actually this is just an alias for documentation, we treat every untyped Go error interface as such.
-type InfrastructureError = error
+type InfrastructureError interface {
+	error
+	isInfrastructure()
+	Unwrap() error
+}
+
+type infrErr struct {
+	Cause error
+}
+
+func (e infrErr) Unwrap() error {
+	return e.Cause
+}
+
+func (e infrErr) isInfrastructure() {
+
+}
+
+func (e infrErr) Error() string {
+	return "infrastructure error: " + e.Cause.Error()
+}
+
+// IntoInfrastructure returns an InfrastructureError if e is not nil. Otherwise, returns also nil.
+func IntoInfrastructure(e error) InfrastructureError {
+	if e == nil {
+		return nil
+	}
+
+	return infrErr{Cause: e}
+}
 
 // EntityNotFound declares an error which describes that an existing entity identified by its Ident was expected
 // but has not been found.

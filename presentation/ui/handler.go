@@ -20,11 +20,18 @@ func (p *PageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func Page[Model any](id string, render func(Model) View, options ...RenderOption[Model]) PageHandler {
+	hnd := &rHnd[Model]{}
 
+	for _, option := range options {
+		option(hnd)
+	}
 	return PageHandler{
 		id: id,
 		handler: func(w http.ResponseWriter, r *http.Request) {
 			var zero Model
+			if hnd.onRequest != nil {
+				zero = hnd.onRequest(zero)
+			}
 			view := render(zero)
 			buf, err := json.Marshal(view)
 			if err != nil {
@@ -42,7 +49,7 @@ func Page[Model any](id string, render func(Model) View, options ...RenderOption
 type rHnd[Model any] struct {
 	renderer func(Model) View
 	//decoders  map[string]MsgHandler[Model]
-	//onRequest UpdReqFunc[Model]
+	onRequest func(Model) Model
 	maxMemory int64
 }
 
@@ -56,5 +63,13 @@ type UpdateFunc[Model, Evt any] func(model Model, evt Evt) Model
 // of type Msg. It then calls the UpdateFunc to transform the given Model into a new state.
 // To apply navigation, see also [Redirect].
 func OnEvent[Model, Evt any](update UpdateFunc[Model, Evt]) RenderOption[Model] {
-	return nil
+	return func(hnd *rHnd[Model]) {
+
+	}
+}
+
+func OnRequest[Model any](f func(Model) Model) RenderOption[Model] {
+	return func(hnd *rHnd[Model]) {
+		hnd.onRequest = f
+	}
 }

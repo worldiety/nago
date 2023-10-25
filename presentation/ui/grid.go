@@ -31,6 +31,12 @@ func (v GridCell) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type Responsive struct {
+	Default int
+	Medium  int
+	Large   int
+}
+
 // Grid shall be interpreted like the rules of the tailwind grid, see also https://tailwindcss.com/docs/grid-column.
 type Grid struct {
 	Columns int

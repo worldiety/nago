@@ -36,9 +36,20 @@ func (t *Tx) Each(f func(name []byte, c kv.Bucket) error) error {
 }
 
 func (t *Tx) Bucket(name []byte) (kv.Bucket, error) {
-	b, err := t.tx.CreateBucketIfNotExists(name)
+	var b *bbolt.Bucket
+	var err error
+	if t.Writable() {
+		b, err = t.tx.CreateBucketIfNotExists(name)
+	} else {
+		b = t.tx.Bucket(name)
+	}
+
 	if err != nil {
 		return nil, err
+	}
+
+	if b == nil {
+		return nil, nil
 	}
 
 	return &Bucket{bucket: b}, nil
@@ -48,8 +59,8 @@ func (t *Tx) DeleteBucket(name []byte) error {
 	return t.tx.DeleteBucket(name)
 }
 
-func (t *Tx) Writeable() bool {
-	return t.Writeable()
+func (t *Tx) Writable() bool {
+	return t.tx.Writable()
 }
 
 type Bucket struct {
@@ -65,7 +76,7 @@ func (b *Bucket) Delete(key []byte) error {
 }
 
 func (b *Bucket) Put(key, value []byte) error {
-	return b.Put(key, value)
+	return b.bucket.Put(key, value)
 }
 
 func (b *Bucket) Get(key []byte) ([]byte, error) {

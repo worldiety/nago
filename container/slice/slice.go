@@ -1,8 +1,18 @@
 package slice
 
+import "encoding/json"
+
 // Slice represents an immutable slice.
 type Slice[T any] struct {
 	slice []T
+}
+
+func (s *Slice[T]) UnmarshalJSON(bytes []byte) error {
+	return json.Unmarshal(bytes, &s.slice)
+}
+
+func (s Slice[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.slice)
 }
 
 // Of takes the ownership of the given slice.

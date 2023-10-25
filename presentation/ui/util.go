@@ -8,7 +8,7 @@ func Views(v ...View) slice.Slice[View] {
 }
 
 func joinViews(v View, others slice.Slice[View]) []View {
-	if v == nil || others.Len() == 0 {
+	if v == nil && others.Len() == 0 {
 		return nil
 	}
 
@@ -19,4 +19,17 @@ func joinViews(v View, others slice.Slice[View]) []View {
 
 	res = append(res, slice.UnsafeUnwrap(others)...)
 	return res
+}
+
+type Iterable[T any] interface {
+	Each(f func(idx int, v T))
+}
+
+func Map[In, Out any](iter Iterable[In], f func(int, In) Out) slice.Slice[Out] {
+	var tmp []Out
+	iter.Each(func(idx int, v In) {
+		tmp = append(tmp, f(idx, v))
+	})
+
+	return slice.Of(tmp...)
 }
