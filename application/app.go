@@ -64,7 +64,7 @@ func (a *Application) Run() {
 }
 
 func (a *Application) runServer() error {
-	httpSrv, err := server.NewServer("0.0.0.0", 8080)
+	httpSrv, err := server.NewServer("0.0.0.0", 3000)
 	if err != nil {
 		return fmt.Errorf("server.New: %w", err)
 	}
