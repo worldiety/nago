@@ -7,7 +7,6 @@ import (
 
 type GridCell struct {
 	Start    int               // start column at
-	Span     int               // span number of columns
 	End      int               // end column at
 	Child    View              // first
 	Children slice.Slice[View] // others
@@ -19,13 +18,11 @@ func (v GridCell) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Type  string `json:"type"`
 		Start int    `json:"start"`
-		Span  int    `json:"span"`
 		End   int    `json:"end"`
 		Views []View `json:"views"`
 	}{
 		Type:  "GridCell",
 		Start: v.Start,
-		Span:  v.Span,
 		End:   v.End,
 		Views: joinViews(v.Child, v.Children),
 	})
@@ -49,11 +46,11 @@ func (Grid) isView() {}
 func (v Grid) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Type    string     `json:"type"`
-		Columns int        `json:"start"`
-		Gap     int        `json:"span"`
+		Columns int        `json:"columns"`
+		Gap     int        `json:"gap"`
 		Cells   []GridCell `json:"cells"`
 	}{
-		Type:    "GridCell",
+		Type:    "Grid",
 		Columns: v.Columns,
 		Gap:     v.Gap,
 		Cells:   slice.UnsafeUnwrap(v.Cells),

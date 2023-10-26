@@ -39,12 +39,11 @@ func Home(updateUserName func(name string)) PageHandler {
 func Render(model DashboardModel) View {
 	//	return Text("hallo welt")
 	return Grid{
-		Columns: 1,
+		Columns: 2,
 		Gap:     2,
 		Cells: slice.Of(
 			GridCell{
 				Start: 1,
-				Span:  2,
 				End:   3,
 				Child: Text("hallo welt"),
 			},
@@ -58,7 +57,8 @@ func Render(model DashboardModel) View {
 					},
 				),
 			}},
-			GridCell{Child: Button{OnClick: BlaEvent{}}},
+			GridCell{
+				Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
 		),
 	}
 }
