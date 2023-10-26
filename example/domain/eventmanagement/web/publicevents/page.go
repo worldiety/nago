@@ -14,10 +14,18 @@ type PublicEventPageModel struct {
 	Events slice.Slice[eventmanagement.Event]
 }
 
+type FormAbschicken struct {
+	Firstname string
+	CSVDatei  []byte
+}
+
 func Handler(f ShowAllPublicEventsFunc) PageHandler {
 	return Page(
 		"/events/public",
 		Render,
+		OnEvent(func(model PublicEventPageModel, evt FormAbschicken) PublicEventPageModel {
+			return model
+		}),
 		OnRequest(func(model PublicEventPageModel) PublicEventPageModel {
 			events, err := f()
 			serrors.OrPanic(err)
@@ -34,6 +42,8 @@ func Render(model PublicEventPageModel) View {
 				Columns: slice.Of(
 					TableCell{Child: Text(strconv.Itoa(idx))},
 					TableCell{Child: Text(in.Name)},
+					TableCell{Child: InputText{Name: "CSVDatei"}},
+					TableCell{Child: Button{OnClick: "hello world"}},
 				),
 			}
 		}),

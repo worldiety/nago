@@ -56,3 +56,29 @@ func (v Grid) MarshalJSON() ([]byte, error) {
 		Cells:   slice.UnsafeUnwrap(v.Cells),
 	})
 }
+
+type IntLike interface {
+	isInt()
+}
+
+type RInt ResponsiveValue[int]
+
+func (RInt) isInt() {}
+
+type Int int
+
+func (Int) isInt() {}
+
+// A ResponsiveValue has a default for all devices (or screen sizes) but has multiple
+type ResponsiveValue[T any] struct {
+	// Default is valid for any screen size. This applies always to mobile devices first.
+	Default T
+	// MD is for medium devices like 768 dip
+	MD T
+	// LG is for large devices like 1024 dip
+	LG T
+	// XL is for extra large device like 1280 dip
+	XL T
+	// XXL is for double extra large like 1536 dip.
+	XXL T
+}

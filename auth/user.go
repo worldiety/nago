@@ -42,7 +42,12 @@ type userKey string
 // FromContext extracts the current user from the context or returns nil if not authenticated.
 // Unauthenticated means also that the session or token lifetime has been expired. See also [WithContext].
 func FromContext(ctx context.Context) User {
-	return ctx.Value(userKey("user")).(User)
+	user := ctx.Value(userKey("user"))
+	if user == nil {
+		return nil
+	}
+
+	return user.(User)
 }
 
 // WithContext allocates a new context with the supplied user value. See also [FromContext].

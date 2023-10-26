@@ -64,6 +64,9 @@ func (a *Application) Run() {
 }
 
 func (a *Application) runServer() error {
+	host := "0.0.0.0"
+	port := 3000
+	a.cfg.defaultLogger().Info("launching server", slog.String("host", host), slog.Int("port", port))
 	httpSrv, err := server.NewServer("0.0.0.0", 3000)
 	if err != nil {
 		return fmt.Errorf("server.New: %w", err)
