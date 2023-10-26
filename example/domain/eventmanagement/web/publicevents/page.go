@@ -19,17 +19,25 @@ type FormAbschicken struct {
 	CSVDatei  []byte
 }
 
+type MyHeadersAndQueryParams struct {
+}
+
 func Handler(f ShowAllPublicEventsFunc) PageHandler {
 	return Page(
 		"/events/public",
 		Render,
-		OnEvent(func(model PublicEventPageModel, evt FormAbschicken) PublicEventPageModel {
-			return model
-		}),
 		OnRequest(func(model PublicEventPageModel) PublicEventPageModel {
 			events, err := f()
 			serrors.OrPanic(err)
 			model.Events = events
+			return model
+		}),
+
+		OnEvent(func(model PublicEventPageModel, evt FormAbschicken) PublicEventPageModel {
+			return model
+		}),
+
+		OnRequestParams(func(model PublicEventPageModel, r Request[MyHeadersAndQueryParams]) PublicEventPageModel {
 			return model
 		}),
 	)

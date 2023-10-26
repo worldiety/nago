@@ -55,6 +55,7 @@ func (c *Configurator) newHandler() http.Handler {
 		c.defaultLogger().Warn("using debug cors settings")
 	}
 	r.Use(
+		c.loggerMiddleware,
 		c.keycloakMiddleware,
 	)
 	var idx routeIndex
