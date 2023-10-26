@@ -14,6 +14,9 @@ func main() {
 
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example Event Planner")
+
+		//cfg.KeycloakAuthentication()
+
 		events := kv.NewCollection[eventmanagement.Event, eventmanagement.EventID](cfg.Store("planner-db"), "events")
 		serrors.OrPanic(migrate(events))
 

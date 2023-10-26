@@ -41,26 +41,32 @@ func (c *Configurator) Page(h ui.PageHandler) *Configurator {
 func (c *Configurator) newHandler() http.Handler {
 	r := chi.NewRouter()
 	if c.debug {
-		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   []string{"http://*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-			ExposedHeaders:   []string{"Link"},
-			AllowCredentials: true,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		r.Use(
+			cors.Handler(cors.Options{
+				AllowedOrigins:   []string{"http://*"},
+				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+				ExposedHeaders:   []string{"Link"},
+				AllowCredentials: true,
+				MaxAge:           300, // Maximum value not ignored by any of major browsers
 
-		}))
+			}),
+		)
 		c.defaultLogger().Warn("using debug cors settings")
 	}
+	r.Use(
+		c.keycloakMiddleware,
+	)
 	var idx routeIndex
 	for route, handler := range c.pages {
 		handler := handler // oops, got bitten by it, taking the function pointer from the value will break handlers
 		c.defaultLogger().Info("registered", slog.String("route", route))
 		r.Get(route, handler.ServeHTTP)
 		idx.Pages = append(idx.Pages, page{
-			ID:       handler.ID(),
-			Endpoint: route,
-			Anchor:   path.Join("/" + handler.ID()),
+			ID:            handler.ID(),
+			Endpoint:      route,
+			Anchor:        path.Join("/" + handler.ID()),
+			Authenticated: handler.Authenticated(),
 		})
 	}
 

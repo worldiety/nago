@@ -19,6 +19,7 @@ type Configurator struct {
 	logger   *slog.Logger
 	debug    bool
 	pages    map[string]ui.PageHandler
+	auth     authProviders
 }
 
 func NewConfigurator() *Configurator {
