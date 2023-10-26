@@ -1,4 +1,4 @@
-package errors
+package serrors
 
 func OrPanic(e error) {
 	if e != nil {

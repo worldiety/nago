@@ -1,25 +1,26 @@
 package publicevents
 
 import (
-	"go.wdy.de/nago/container/errors"
+	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/example/domain/eventmanagement"
-	"go.wdy.de/nago/persistence/kv"
 	. "go.wdy.de/nago/presentation/ui"
 	"strconv"
 )
+
+type ShowAllPublicEventsFunc func() (slice.Slice[eventmanagement.Event], serrors.InfrastructureError)
 
 type PublicEventPageModel struct {
 	Events slice.Slice[eventmanagement.Event]
 }
 
-func Handler(c kv.Collection[eventmanagement.Event, eventmanagement.EventID]) PageHandler {
+func Handler(f ShowAllPublicEventsFunc) PageHandler {
 	return Page(
 		"/events/public",
 		Render,
 		OnRequest(func(model PublicEventPageModel) PublicEventPageModel {
-			events, err := eventmanagement.ShowAllPublicEvents(c)
-			errors.OrPanic(err)
+			events, err := f()
+			serrors.OrPanic(err)
 			model.Events = events
 			return model
 		}),

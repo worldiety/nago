@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/container/enum"
+	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence"
 	"slices"
@@ -47,7 +48,7 @@ func NewCollection[E persistence.Entity[ID], ID cmp.Ordered](db Store, name stri
 
 // IntoSlice loads the entire set of all key/values atomically into memory and sorts it by identifier.
 // See also Find.
-func (c Collection[E, ID]) IntoSlice() (slice.Slice[E], persistence.InfrastructureError) {
+func (c Collection[E, ID]) IntoSlice() (slice.Slice[E], serrors.InfrastructureError) {
 	return c.Filter(func(e E) bool {
 		return true
 	})
@@ -55,7 +56,7 @@ func (c Collection[E, ID]) IntoSlice() (slice.Slice[E], persistence.Infrastructu
 
 // Filter collects all entities for which the given predicate returns true. The result ist sorted by identifier.
 // Even though it unmarshalls each entity, only the collected entities are held in memory.
-func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], persistence.InfrastructureError) {
+func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], serrors.InfrastructureError) {
 	var res []E
 	err := c.db.View(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
@@ -77,7 +78,7 @@ func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], persistence.I
 	})
 
 	if err != nil {
-		return slice.Of[E](), persistence.IntoInfrastructure(err)
+		return slice.Of[E](), serrors.IntoInfrastructure(err)
 	}
 
 	slices.SortFunc(res, func(a, b E) int {
@@ -89,8 +90,8 @@ func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], persistence.I
 
 // Delete removes the Entity within a distinct transaction. It is not an error if neither the collection exists nor
 // the entity itself.
-func (c Collection[E, ID]) Delete(id ID) persistence.InfrastructureError {
-	return persistence.IntoInfrastructure(c.db.Update(func(tx Tx) error {
+func (c Collection[E, ID]) Delete(id ID) serrors.InfrastructureError {
+	return serrors.IntoInfrastructure(c.db.Update(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
 		if err != nil {
 			return err
@@ -106,8 +107,8 @@ func (c Collection[E, ID]) Delete(id ID) persistence.InfrastructureError {
 
 // DeleteAll removes all those entities in a single transaction for which the predicate returns true.
 // See also Find.
-func (c Collection[E, ID]) DeleteAll(f func(E) bool) persistence.InfrastructureError {
-	return persistence.IntoInfrastructure(c.db.Update(func(tx Tx) error {
+func (c Collection[E, ID]) DeleteAll(f func(E) bool) serrors.InfrastructureError {
+	return serrors.IntoInfrastructure(c.db.Update(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
 		if err != nil {
 			return err
@@ -137,7 +138,7 @@ func (c Collection[E, ID]) DeleteAll(f func(E) bool) persistence.InfrastructureE
 
 // Save creates or updates the entity by marshalling into JSON.
 // It is a programming error causing a panic, if types are used which cannot be unmarshalled.
-func (c Collection[E, ID]) Save(entities ...E) persistence.InfrastructureError {
+func (c Collection[E, ID]) Save(entities ...E) serrors.InfrastructureError {
 	err := c.db.Update(func(tx Tx) error {
 		for _, entity := range entities {
 			buf, err := json.Marshal(entity)
@@ -158,7 +159,7 @@ func (c Collection[E, ID]) Save(entities ...E) persistence.InfrastructureError {
 		return nil
 	})
 
-	return persistence.IntoInfrastructure(err)
+	return serrors.IntoInfrastructure(err)
 }
 
 // Find returns the given entity or an error with a lookup failure. Unmarshalls from JSON.
@@ -194,7 +195,7 @@ func (c Collection[E, ID]) Find(id ID) (E, enum.Error[persistence.LookupFailure]
 	}
 
 	if err != nil {
-		return value, enum.IntoErr(persistence.LookupFailure{}.With2(persistence.IntoInfrastructure(err)))
+		return value, enum.IntoErr(persistence.LookupFailure{}.With2(serrors.IntoInfrastructure(err)))
 	}
 
 	return value, nil

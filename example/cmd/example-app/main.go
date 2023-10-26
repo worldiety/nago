@@ -2,7 +2,8 @@ package main
 
 import (
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/container/errors"
+	"go.wdy.de/nago/container/serrors"
+	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/example/domain/eventmanagement"
 	"go.wdy.de/nago/example/domain/eventmanagement/web/publicevents"
 	"go.wdy.de/nago/example/events/web"
@@ -14,13 +15,16 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example Event Planner")
 		events := kv.NewCollection[eventmanagement.Event, eventmanagement.EventID](cfg.Store("planner-db"), "events")
-		errors.OrPanic(migrate(events))
+		serrors.OrPanic(migrate(events))
 
 		cfg.Page(web.Home(func(name string) {
 			eventmanagement.ShowAllPublicEvents(events)
 		}))
 
-		cfg.Page(publicevents.Handler(events))
+		// curry over to hide dependencies at the presentation side
+		cfg.Page(publicevents.Handler(func() (slice.Slice[eventmanagement.Event], serrors.InfrastructureError) {
+			return eventmanagement.ShowAllPublicEvents(events)
+		}))
 	}).Run()
 }
 
