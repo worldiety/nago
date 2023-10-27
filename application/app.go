@@ -2,10 +2,7 @@ package application
 
 import (
 	"fmt"
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/internal/server"
-	"go.wdy.de/nago/presentation/rest"
-	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 	"runtime/debug"
 )
@@ -73,10 +70,4 @@ func (a *Application) runServer() error {
 	}
 
 	return httpSrv.ServeHTTPHandler(a.cfg.defaultLogger(), a.cfg.Context(), a.cfg.newHandler())
-}
-
-type PresentationLayer struct {
-	Pages  slice.Slice[ui.Route]
-	Events slice.Slice[ui.Event]
-	Http   slice.Slice[rest.Route]
 }
