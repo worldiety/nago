@@ -1,18 +1,8 @@
 import { useAuth } from "@/stores/auth";
 import Home from "@/views/Home.vue";
 import OAuth from "@/views/OAuth.vue";
-import Secret from "@/views/ClientSideProtection.vue";
-import { createRouter, createWebHistory, NavigationGuardWithThis } from "vue-router";
-
-const checkAuthentication: NavigationGuardWithThis<undefined> = async (to, from, next) => {
-    const auth = useAuth();
-    const user = await auth.getUser();
-    if (user && user.access_token) {
-        next();
-    } else {
-        await auth.signIn(to.fullPath);
-    }
-};
+import { createRouter, createWebHistory } from "vue-router";
+import { PageConfiguration } from "@/shared/model";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,12 +15,31 @@ const router = createRouter({
             path: "/",
             component: Home,
         },
-        {
-            path: "/protected-client",
-            component: Secret,
-            beforeEnter: checkAuthentication,
+    ],
+});
+
+interface PageMeta {
+    page?: PageConfiguration,
+}
+
+// Make sure users only enter authenticated pages when they are signed in.
+router.beforeEach(async (to, from, next) => {
+    const meta = to.meta as PageMeta | undefined;
+    const authenticated = meta?.page?.authenticated || false;
+
+    if (authenticated) {
+        const auth = useAuth();
+        const user = await auth.getUser();
+        const accessToken = user?.access_token;
+        if (accessToken) {
+            next();
+        } else {
+            await auth.signIn(to.fullPath);
+            return;
         }
-    ]
+    }
+
+    next();
 });
 
 export default router;

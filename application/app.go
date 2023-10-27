@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"go.wdy.de/nago/internal/server"
 	"log/slog"
 	"runtime/debug"
@@ -20,6 +21,9 @@ func Configure(f func(cfg *Configurator)) *Application {
 }
 
 func (a *Application) init(configure func(cfg *Configurator)) (success bool) {
+	// Load environment variables from .env file
+	_ = godotenv.Load()
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println(r)

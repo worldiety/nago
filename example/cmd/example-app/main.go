@@ -15,7 +15,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example Event Planner")
 
-		//cfg.KeycloakAuthentication()
+		cfg.KeycloakAuthentication()
 
 		events := kv.NewCollection[eventmanagement.Event, eventmanagement.EventID](cfg.Store("planner-db"), "events")
 		serrors.OrPanic(migrate(events))
@@ -23,6 +23,8 @@ func main() {
 		cfg.Page(web.Home(func(name string) {
 			eventmanagement.ShowAllPublicEvents(events)
 		}))
+
+		cfg.Page(web.Profile())
 
 		// curry over to hide dependencies at the presentation side
 		cfg.Page(publicevents.Handler(func() (slice.Slice[eventmanagement.Event], serrors.InfrastructureError) {
