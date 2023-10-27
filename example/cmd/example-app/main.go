@@ -25,6 +25,7 @@ func main() {
 		}))
 
 		cfg.Page(web.Profile())
+		cfg.Page(web.Counter())
 
 		// curry over to hide dependencies at the presentation side
 		cfg.Page(publicevents.Handler(func() (slice.Slice[eventmanagement.Event], serrors.InfrastructureError) {

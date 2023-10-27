@@ -5,9 +5,9 @@
 
 import { useRoute } from "vue-router";
 import { PageConfiguration, UiDescription } from "@/shared/model";
-import { ref } from "vue";
+import { provide, ref } from "vue";
 import GenericUi from "@/components/UiGeneric.vue";
-import { useHttp } from "@/stores/http";
+import { useHttp } from "@/shared/http";
 
 enum State {
     Loading,
@@ -22,6 +22,10 @@ const http = useHttp();
 
 const state = ref(State.Loading);
 const ui = ref<UiDescription>();
+
+// Provide the current UiDescription to all child elements.
+// https://vuejs.org/guide/components/provide-inject.html
+provide("ui", ui);
 
 async function init() {
     try {

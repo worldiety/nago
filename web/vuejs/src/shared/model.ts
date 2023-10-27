@@ -24,6 +24,13 @@ export interface TextElement {
 export interface ButtonElement {
     type: "Button",
     title: TextElement,
+    onClick: UiEvent,
+}
+
+export interface UiEvent {
+    trigger: string,
+    eventType: string,
+    data: any,
 }
 
 export interface GridCellElement {
