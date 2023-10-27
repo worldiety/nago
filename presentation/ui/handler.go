@@ -38,7 +38,7 @@ func Page[Model any](id string, render func(Model) View, options ...RenderOption
 	hnd := &rHnd[Model]{
 		authenticationRequired: false,
 		authenticationOptional: false,
-		eventTypeDecoder:       make(map[string]func(ctx context.Context, in Model, encodedEvent []byte) (Model, error)),
+		eventTypeDecoder:       make(map[string]func(ctx context.Context, in Model, encodedEvent, encodedForm []byte) (Model, error)),
 		onPanic: func(p PanicContext[Model]) View {
 			return Text("internal server error: " + p.IncidentTag)
 		},
@@ -164,7 +164,7 @@ func Page[Model any](id string, render func(Model) View, options ...RenderOption
 						logging.FromContext(r.Context()).Error(fmt.Sprintf("client requested event '%s' which has not been registered in page '%s'", msg.EventType, id))
 					} else {
 						var err error
-						model, err = applyEvent(r.Context(), model, msg.EventData)
+						model, err = applyEvent(r.Context(), model, msg.EventData, msg.FormData)
 						if err != nil {
 							logging.FromContext(r.Context()).Error("invalid event data in client message", slog.Any("err", err))
 							w.WriteHeader(http.StatusBadRequest)
@@ -209,7 +209,7 @@ type rHnd[Model any] struct {
 	maxMemory              int64
 	authenticationRequired bool
 	authenticationOptional bool
-	eventTypeDecoder       map[string]func(ctx context.Context, in Model, encodedEvent []byte) (Model, error)
+	eventTypeDecoder       map[string]func(ctx context.Context, in Model, encodedEvent []byte, encodedForm []byte) (Model, error)
 }
 
 // RenderOption provides a package private Options pattern.
@@ -229,10 +229,15 @@ func OnEvent[Model, Evt any](update func(model Model, evt Evt) Model) RenderOpti
 			panic(fmt.Errorf("the event type '%s' has already been registered", eventTypeName))
 		}
 
-		hnd.eventTypeDecoder[eventTypeName] = func(ctx context.Context, in Model, buf []byte) (Model, error) {
+		hnd.eventTypeDecoder[eventTypeName] = func(ctx context.Context, in Model, bufEvt, bufForm []byte) (Model, error) {
 			var evt Evt
-			if err := json.Unmarshal(buf, &evt); err != nil {
-				return in, err
+			if err := json.Unmarshal(bufEvt, &evt); err != nil {
+				return in, fmt.Errorf("cannot unmarshal evt: %w", err)
+			}
+
+			// TODO is this logically correct?
+			if err := json.Unmarshal(bufForm, &evt); err != nil {
+				return in, fmt.Errorf("cannot unmarshal form: %w", err)
 			}
 
 			return update(in, evt), nil
@@ -250,10 +255,15 @@ func OnAuthEvent[Model, Evt any](update func(auth.User, Model, Evt) Model) Rende
 			panic(fmt.Errorf("the event type '%s' has already been registered", eventTypeName))
 		}
 
-		hnd.eventTypeDecoder[eventTypeName] = func(ctx context.Context, in Model, buf []byte) (Model, error) {
+		hnd.eventTypeDecoder[eventTypeName] = func(ctx context.Context, in Model, evtBuf []byte, encodedFormBuf []byte) (Model, error) {
 			var evt Evt
-			if err := json.Unmarshal(buf, &evt); err != nil {
+			if err := json.Unmarshal(evtBuf, &evt); err != nil {
 				return in, err
+			}
+
+			//TODO not sure if this makes sense ???
+			if err := json.Unmarshal(encodedFormBuf, &evt); err != nil {
+				return in, fmt.Errorf("cannot unmarshal form: %w", err)
 			}
 
 			user := auth.FromContext(ctx)

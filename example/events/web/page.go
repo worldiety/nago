@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"go.wdy.de/nago/container/slice"
 	. "go.wdy.de/nago/presentation/ui"
 )
@@ -27,6 +28,8 @@ func Home(updateUserName func(name string)) PageHandler {
 		OnEvent(func(model DashboardModel, evt BlaEvent) DashboardModel {
 			model.Count++
 			updateUserName(evt.Name)
+
+			fmt.Println("got", evt.Name)
 			return model
 		}),
 		OnEvent(func(model DashboardModel, evt SubEvent) DashboardModel {
@@ -40,7 +43,7 @@ func Render(model DashboardModel) View {
 	//	return Text("hallo welt")
 	return Grid{
 		Columns: 2,
-		Gap:     2,
+		Gap:     Px(2),
 		Cells: slice.Of(
 			GridCell{
 				Start: 1,

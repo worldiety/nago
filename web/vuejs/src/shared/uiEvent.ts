@@ -1,7 +1,7 @@
-import { useHttp } from "@/shared/http";
-import { PageConfiguration, UiDescription, UiEvent } from "@/shared/model";
-import { useRoute } from "vue-router";
-import { Ref } from "vue";
+import {useHttp} from "@/shared/http";
+import {PageConfiguration, UiDescription, UiEvent} from "@/shared/model";
+import {useRoute} from "vue-router";
+import {Ref} from "vue";
 
 /**
  * A set of methods returned by {@link useUiEvents}.
@@ -38,6 +38,24 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
         // TODO Collect all inputs from current page, by scraping the DOM.
         // const … = document.getElementsByName("input");
         const formData = {};
+        const inputElems = document.getElementsByTagName("input")
+        for (let i = 0; i < inputElems.length; i++) {
+            const item = inputElems.item(i)
+            if (item == null) {
+                return
+            }
+
+            const name = item.getAttribute("name")
+            if (name == null || name == "") {
+                return
+            }
+
+            formData[name] = item.value
+
+
+        }
+
+        console.log(formData)
 
         let request: EventRequest = {
             data: event.data,
@@ -45,10 +63,10 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
             formData,
             model: ui.value.viewModel,
         };
-        
+
         const response = await http.request(url, "POST", request);
         ui.value = await response.json();
     }
 
-    return { send };
+    return {send};
 }

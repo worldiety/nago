@@ -37,7 +37,7 @@ type Responsive struct {
 // Grid shall be interpreted like the rules of the tailwind grid, see also https://tailwindcss.com/docs/grid-column.
 type Grid struct {
 	Columns int
-	Gap     int
+	Gap     Length
 	Cells   slice.Slice[GridCell]
 }
 
@@ -47,7 +47,7 @@ func (v Grid) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Type    string     `json:"type"`
 		Columns int        `json:"columns"`
-		Gap     int        `json:"gap"`
+		Gap     Length     `json:"gap"`
 		Cells   []GridCell `json:"cells"`
 	}{
 		Type:    "Grid",
