@@ -7,11 +7,24 @@ import { useAuth } from "@/stores/auth";
 export function useHttp() {
     const auth = useAuth();
 
-    async function request(url: string, method = "GET") {
+    /**
+     * Make an HTTP request.
+     * @param url The URL to send the request to.
+     * @param method The method to make the request with.
+     * @param body The body to send in the request.
+     *             "undefined" will be an empty body, everything else will be serialized to JSON.
+     */
+    async function request(url: string, method = "GET", body: undefined | any = undefined) {
         const user = await auth.getUser();
+
+        let bodyData = undefined;
+        if (body !== undefined) {
+            bodyData = JSON.stringify(body);
+        }
 
         const response = await fetch(url, {
             method,
+            body: bodyData,
             headers: {
                 "Authorization": `Bearer ${user?.access_token}`
             },

@@ -63,6 +63,7 @@ func (c *Configurator) newHandler() http.Handler {
 		handler := handler // oops, got bitten by it, taking the function pointer from the value will break handlers
 		c.defaultLogger().Info("registered", slog.String("route", route))
 		r.Get(route, handler.ServeHTTP)
+		r.Post(route, handler.ServeHTTP)
 		idx.Pages = append(idx.Pages, page{
 			ID:            handler.ID(),
 			Endpoint:      route,
