@@ -9,13 +9,13 @@ import (
 // expose concrete types behind it.
 // To get access to a user, a [presentation.PageHandler] must be configured to be authenticated.
 type User interface {
-	// UID is the unique user id which is never empty but its nature is totally undefined and depends on the provider.
+	// UserID is the unique user id which is never empty but its nature is totally undefined and depends on the provider.
 	// Its value is constant between different sessions, e.g. keycloak provides a UUID in the sub(ject) claim.
-	UID() string
+	UserID() string
 
-	// SID determines the current session id is never empty but its nature depends totally on the provider,
+	// SesssionID determines the current session id is never empty but its nature depends totally on the provider,
 	// e.g. keycloak provides a UUID in the sid property.
-	SID() string
+	SessionID() string
 
 	// Verified is true if the user has been verified in some way, e.g. by double opt-in or by an administrator.
 	// This is often important, to only allow critical operations on verified users.
@@ -27,14 +27,14 @@ type User interface {
 	// in the domain layer.
 	Roles() slice.Slice[string]
 
-	// ContactEmail contains the primary unparsed and unvalidated mail address, if available. If no mail is provided,
+	// Email contains the primary unparsed and unvalidated mail address, if available. If no mail is provided,
 	// it is empty, e.g. due to GDPR requirements. Note also, that a user can always change its mail address, so
 	// using this as a primary key in your domain logic is probably always wrong.
-	ContactEmail() string
+	Email() string
 
-	// ContactName contains the natural name of the user, e.g. a firstname lastname tuple. Depending on the provider,
+	// Name contains the natural name of the user, e.g. a firstname lastname tuple. Depending on the provider,
 	// this may be empty e.g. due to GDPR requirements.
-	ContactName() string
+	Name() string
 }
 
 type userKey string

@@ -1,11 +1,17 @@
 export interface PageConfiguration {
-    id: string;
-    endpoint: string;
-    anchor: string;
+    id: string,
+    endpoint: string,
+    anchor: string,
+    authenticated: boolean,
 }
 
 export interface PagesConfiguration {
-    pages: PageConfiguration[];
+    pages: PageConfiguration[],
+}
+
+export interface UiDescription {
+    renderTree: UiElement,
+    viewModel: any,
 }
 
 export type UiElement = TextElement | ButtonElement | GridElement;

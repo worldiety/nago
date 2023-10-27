@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go.wdy.de/nago/auth"
@@ -71,11 +72,11 @@ func (c *Configurator) keycloakMiddleware(h http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 		token = strings.TrimPrefix(token, "Bearer ")
 
-		if c.validateToken(c.auth.keycloak, c.Context(), token) {
-			//userInfo, err := c.auth.keycloak.Provider.UserInfo(c.Context(), oauth2.StaticTokenSource(token))
-			// TODO ??? seems to work differently than our szhb stuff? should we just parse the token directly?
-			var user KeycloakUser
-			ctx := auth.WithContext(c.Context(), user)
+		user, err := c.validateToken(c.auth.keycloak, r.Context(), token)
+		if err != nil {
+			c.defaultLogger().Error("validate token", "error", err)
+		} else {
+			ctx := auth.WithContext(r.Context(), user)
 			r = r.WithContext(ctx)
 		}
 
@@ -83,35 +84,59 @@ func (c *Configurator) keycloakMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-func (c *Configurator) validateToken(p *oidcProvider, ctx context.Context, token string) bool {
-	verifier := p.Provider.Verifier(&oidc.Config{
-		ClientID: p.ClientID,
-	})
-
-	_, err := verifier.Verify(ctx, token)
-	if err != nil {
-		c.defaultLogger().Error("cannot verify oidc token", slog.Any("err", err))
-		return false
+func (c *Configurator) validateToken(p *oidcProvider, ctx context.Context, token string) (auth.User, error) {
+	if len(token) == 0 {
+		return nil, errors.New("empty token")
 	}
 
-	return true
+	verifier := p.Provider.Verifier(&oidc.Config{
+		ClientID:          p.ClientID,
+		SkipClientIDCheck: true, // TODO Figure out why this is required
+	})
+
+	idToken, err := verifier.Verify(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("verify token: %w", err)
+	}
+
+	type Claims struct {
+		SID           string `json:"sid"`
+		EmailVerified bool   `json:"email_verified"`
+		Name          string `json:"name"`
+		Email         string `json:"email"`
+	}
+	var claims Claims
+
+	err = idToken.Claims(&claims)
+	if err != nil {
+		return nil, fmt.Errorf("get claims: %w", err)
+	}
+
+	return &KeycloakUser{
+		userId:    idToken.Subject,
+		sessionId: claims.SID,
+		verified:  claims.EmailVerified,
+		roles:     nil,
+		mail:      claims.Email,
+		name:      claims.Name,
+	}, nil
 }
 
 type KeycloakUser struct {
-	uid      string
-	sid      string
-	verified bool
-	roles    []string
-	mail     string
-	name     string
+	userId    string
+	sessionId string
+	verified  bool
+	roles     []string
+	mail      string
+	name      string
 }
 
-func (k KeycloakUser) UID() string {
-	return k.uid
+func (k KeycloakUser) UserID() string {
+	return k.userId
 }
 
-func (k KeycloakUser) SID() string {
-	return k.sid
+func (k KeycloakUser) SessionID() string {
+	return k.sessionId
 }
 
 func (k KeycloakUser) Verified() bool {
@@ -122,10 +147,10 @@ func (k KeycloakUser) Roles() slice.Slice[string] {
 	return slice.Of(k.roles...)
 }
 
-func (k KeycloakUser) ContactEmail() string {
+func (k KeycloakUser) Email() string {
 	return k.mail
 }
 
-func (k KeycloakUser) ContactName() string {
+func (k KeycloakUser) Name() string {
 	return k.name
 }

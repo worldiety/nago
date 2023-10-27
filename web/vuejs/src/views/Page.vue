@@ -4,9 +4,10 @@
 <script lang="ts" setup>
 
 import { useRoute } from "vue-router";
-import { PageConfiguration, UiElement } from "@/shared/model";
+import { PageConfiguration, UiDescription } from "@/shared/model";
 import { ref } from "vue";
 import GenericUi from "@/components/UiGeneric.vue";
+import { useHttp } from "@/stores/http";
 
 enum State {
     Loading,
@@ -17,12 +18,14 @@ enum State {
 const route = useRoute();
 const page = route.meta.page as PageConfiguration;
 
+const http = useHttp();
+
 const state = ref(State.Loading);
-const ui = ref<UiElement>();
+const ui = ref<UiDescription>();
 
 async function init() {
     try {
-        const response = await fetch("http://localhost:3000" + page.endpoint);
+        const response = await http.request("http://localhost:3000" + page.endpoint);
         ui.value = await response.json();
         state.value = State.ShowUI;
     } catch {
@@ -38,7 +41,8 @@ init();
     <div>
         <div>Dynamic page information: {{ page }}</div>
         <div v-if="state === State.Loading">Loading UI definition…</div>
-        <div v-if="state === State.Error">Failed to fetch UI definition.</div>
-        <generic-ui v-if="state === State.ShowUI" :ui="ui" />
+        <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
+        <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui.renderTree" />
+        <div v-else>Empty UI</div>
     </div>
 </template>
