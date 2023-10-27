@@ -1,6 +1,7 @@
 package publicevents
 
 import (
+	"fmt"
 	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/example/domain/eventmanagement"
@@ -20,6 +21,7 @@ type FormAbschicken struct {
 }
 
 type MyHeadersAndQueryParams struct {
+	Test string
 }
 
 func Handler(f ShowAllPublicEventsFunc) PageHandler {
@@ -38,6 +40,7 @@ func Handler(f ShowAllPublicEventsFunc) PageHandler {
 		}),
 
 		OnRequestParams(func(model PublicEventPageModel, r Request[MyHeadersAndQueryParams]) PublicEventPageModel {
+			fmt.Println("Test Query Value ->", r.QueryOrHeader.Test)
 			return model
 		}),
 	)

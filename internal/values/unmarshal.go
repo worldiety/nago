@@ -7,7 +7,7 @@ import (
 )
 
 // Unmarshal takes the given values and parses them into the given struct pointer.
-func Unmarshal(dst any, values url.Values) error {
+func Unmarshal(dst any, values url.Values, strict bool) error {
 	if reflect.ValueOf(dst).Kind() != reflect.Pointer {
 		panic("dst must be a pointer")
 	}
@@ -17,7 +17,11 @@ func Unmarshal(dst any, values url.Values) error {
 	for key, values := range values {
 		field := typ.FieldByName(key)
 		if !field.IsValid() {
-			return fmt.Errorf("type %T does not have expected form field '%s'", dst, key)
+			if strict {
+				return fmt.Errorf("type %T does not have expected form field '%s'", dst, key)
+			} else {
+				continue
+			}
 		}
 
 		if err := ParseValue(field, values); err != nil {
