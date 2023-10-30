@@ -48,13 +48,16 @@ func Handler(f ShowAllPublicEventsFunc) PageHandler {
 
 func Render(model PublicEventPageModel) View {
 	return Table{
+		Header: slice.Of(
+			TableColumnHeader{Child: Text("Index")},
+			TableColumnHeader{Child: Text("Name")},
+		),
 		Rows: Map(model.Events, func(idx int, in eventmanagement.Event) TableRow {
 			return TableRow{
+
 				Columns: slice.Of(
 					TableCell{Child: Text(strconv.Itoa(idx))},
 					TableCell{Child: Text(in.Name)},
-					TableCell{Child: InputFile{Name: "CSVDatei"}},
-					TableCell{Child: Button{OnClick: "hello world"}},
 				),
 			}
 		}),

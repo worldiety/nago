@@ -27,6 +27,12 @@ export interface ButtonElement {
     onClick: UiEvent,
 }
 
+export interface CardElement {
+    type: "Card",
+    onClick: UiEvent,
+    views: UiElement[],
+}
+
 export interface UiEvent {
     trigger: string,
     eventType: string,
@@ -46,6 +52,27 @@ export interface GridElement {
     columns: number,
     gap: number,
     cells: GridCellElement[],
+}
+
+export interface TableElement {
+    type: "Table",
+    rows: TableRow[],
+    columnHeaders: TableColumnHeader[],
+}
+
+export interface TableRow{
+    type:"TableRow",
+    columns: TableCell[]
+}
+
+export interface TableColumnHeader{
+    type: "TableColumnHeader",
+    views: UiElement[],
+}
+
+export interface TableCell{
+    type: "TableCell",
+    views: UiElement[],
 }
 
 export interface InputTextElement {

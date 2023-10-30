@@ -49,12 +49,12 @@ func Render(model DashboardModel) View {
 	//	return Text("hallo welt")
 	return Grid{
 		Columns: 2,
-		Gap:     Px(2),
+		Gap:     Rem(1),
 		Cells: slice.Of(
 			GridCell{
 				Start: 1,
 				End:   3,
-				Child: Text("hallo welt"),
+				Child: Card{Child: Text("hallo welt")},
 			},
 			GridCell{Child: InputText{
 				Name:  "Name",

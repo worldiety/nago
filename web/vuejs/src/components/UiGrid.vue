@@ -8,15 +8,17 @@ const props = defineProps<{
     ui: GridElement,
 }>();
 
+//TODO we get into trouble using tailwind pre-processor here
 const style = computed<string>(() => `
-    display: grid;
-    grid-template-columns: repeat(${props.ui.columns}, 1fr);
+    grid
+    grid-cols-${props.ui.columns}
+    gap-[${props.ui.gap}]
 `);
 
 </script>
 
 <template>
-    <div :style="style">
+    <div :class="style">
         <ui-grid-cell v-for="cell in props.ui.cells" :ui="cell" />
     </div>
 </template>
