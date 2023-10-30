@@ -61,7 +61,14 @@ export interface GridElement {
     columns: number,
     rows: number,
     gap: number,
+    padding: string,
     cells: GridCellElement[],
+}
+
+export interface NavbarElement {
+    type: "Navbar",
+    caption: UiElement,
+    menuItems: UiElement[],
 }
 
 export interface TableElement {

@@ -14,6 +14,7 @@ const style = computed<string>(() => `
     grid-cols-${props.ui.columns}
     grid-rows-${props.ui.rows}
     gap-[${props.ui.gap}]
+    p-[${props.ui.padding}]
 `);
 
 </script>

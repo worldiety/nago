@@ -45,7 +45,7 @@ init();
 
 <template>
     <div>
-        <div>Dynamic page information: {{ page }}</div>
+      <!--  <div>Dynamic page information: {{ page }}</div> -->
         <div v-if="state === State.Loading">Loading UI definition…</div>
         <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
         <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui.renderTree" />

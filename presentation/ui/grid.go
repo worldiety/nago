@@ -39,6 +39,7 @@ type Grid struct {
 	Columns int
 	Rows    int
 	Gap     Length
+	Padding Length
 	Cells   slice.Slice[GridCell]
 }
 
@@ -50,12 +51,14 @@ func (v Grid) MarshalJSON() ([]byte, error) {
 		Columns int        `json:"columns"`
 		Rows    int        `json:"rows"`
 		Gap     Length     `json:"gap"`
+		Padding Length     `json:"padding"`
 		Cells   []GridCell `json:"cells"`
 	}{
 		Type:    "Grid",
 		Columns: v.Columns,
 		Rows:    v.Rows,
 		Gap:     v.Gap,
+		Padding: v.Padding,
 		Cells:   slice.UnsafeUnwrap(v.Cells),
 	})
 }

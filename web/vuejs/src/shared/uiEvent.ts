@@ -125,14 +125,14 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
         const response = await http.request(url, "POST", request);
         ui.value = await response.json();
 
-        //
-        console.log(ui)
+
         if (ui.value?.redirect?.redirect){
-            console.log("shall redirect")
-            console.log(ui.value?.redirect)
+            //console.log("shall redirect")
+            //console.log(ui.value?.redirect)
             await router.push({path:ui.value.redirect.url}).catch(e=>console.log(e))
             // TODO @Lars ich bekomme die Navigation und die vor-zurück Historie nicht sauber hin
-            window.location.reload()
+            //window.location.reload()
+            router.go(0)
             return new Promise<void>((ok,no) =>ok())
         }
     }

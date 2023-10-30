@@ -34,6 +34,8 @@ func (p *PageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.handler(w, r)
 }
 
+type PageID string
+
 func Page[Model any](id PageID, render func(Model) View, options ...RenderOption[Model]) PageHandler {
 	hnd := &rHnd[Model]{
 		authenticationRequired: false,

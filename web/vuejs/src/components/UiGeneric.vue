@@ -8,6 +8,7 @@ import UiInputText from "@/components/UiInputText.vue";
 import UiInputFile from "@/components/UiInputFile.vue";
 import UiCard from "@/components/UiCard.vue";
 import UiTable from "@/components/UiTable.vue";
+import UiNavbar from "@/components/UiNavbar.vue";
 
 const props = defineProps<{
   ui: UiElement,
@@ -22,6 +23,7 @@ const props = defineProps<{
   <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui"/>
   <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui"/>
   <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>
+  <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui"/>
   <ui-input-text v-else-if="props.ui.type === 'InputText'" :ui="props.ui"/>
   <ui-input-file v-else-if="props.ui.type === 'InputFile'" :ui="props.ui"/>
   <div v-else>[Unknown view type {{ props.ui.type }}]</div>

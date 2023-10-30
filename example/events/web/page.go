@@ -57,39 +57,58 @@ func Home(updateUserName func(name string)) PageHandler {
 
 func Render(model DashboardModel) View {
 	//	return Text("hallo welt")
-	return Card{
-		Child: Grid{
-			Columns: 2,
-			Rows:    3,
-			Gap:     Rem(1),
-			Cells: slice.Of(
-				GridCell{
-					Child: InputText{
-						Label: "Dein Vorname",
-						Name:  "Vorname",
-						Value: model.Vorname,
-					},
+	return Grid{
+		Cells: slice.Of(
+			GridCell{
+
+				Child: Navbar{
+					Caption: Text("Super App"),
+					MenuItems: Views(
+						Button{
+							Title: Text("Konto"),
+						},
+					),
 				},
-				GridCell{
-					Child: InputText{
-						Label: "Dein Nachname",
-						Name:  "Nachname",
-						Value: model.Nachname,
-					}},
+			},
 
-				GridCell{
-					ColSpan: 2,
-					RowSpan: 2,
-					Child: InputText{
-						Label: "Deine Mail",
-						Name:  "EMail",
-						Value: model.EMail,
-					}},
+			GridCell{
+				Child: Grid{
+					Padding: Rem(2),
+					Columns: 2,
+					Rows:    4,
+					Gap:     Rem(1),
+					Cells: slice.Of(
 
-				GridCell{Child: InputFile{Name: "CSV"}},
-				GridCell{Child: InputFile{Name: "MultiFiles", Multiple: true, Accept: slice.Of(".csv", ".pdf")}},
-				GridCell{Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
-			),
-		},
+						GridCell{
+							Child: InputText{
+								Label: "Dein Vorname",
+								Name:  "Vorname",
+								Value: model.Vorname,
+							},
+						},
+						GridCell{
+							Child: InputText{
+								Label: "Dein Nachname",
+								Name:  "Nachname",
+								Value: model.Nachname,
+							}},
+
+						GridCell{
+							ColSpan: 2,
+							RowSpan: 2,
+							Child: InputText{
+								Label: "Deine Mail",
+								Name:  "EMail",
+								Value: model.EMail,
+							}},
+
+						GridCell{Child: InputFile{Name: "CSV"}},
+						GridCell{Child: InputFile{Name: "MultiFiles", Multiple: true, Accept: slice.Of(".csv", ".pdf")}},
+						GridCell{Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
+					),
+				},
+			},
+		),
 	}
+
 }
