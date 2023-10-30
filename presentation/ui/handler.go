@@ -34,7 +34,7 @@ func (p *PageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.handler(w, r)
 }
 
-func Page[Model any](id string, render func(Model) View, options ...RenderOption[Model]) PageHandler {
+func Page[Model any](id PageID, render func(Model) View, options ...RenderOption[Model]) PageHandler {
 	hnd := &rHnd[Model]{
 		authenticationRequired: false,
 		authenticationOptional: false,
@@ -55,11 +55,11 @@ func Page[Model any](id string, render func(Model) View, options ...RenderOption
 
 	for k := range hnd.eventTypeDecoder {
 		// TODO where is our logger?
-		slog.Default().Info("registered page event", slog.String("page", id), slog.String("eventType", k))
+		slog.Default().Info("registered page event", slog.String("page", string(id)), slog.String("eventType", k))
 	}
 
 	return PageHandler{
-		id:                     id,
+		id:                     string(id),
 		authenticationRequired: frontendRequiresAuth,
 		handler: func(w http.ResponseWriter, r *http.Request) {
 			var model Model
@@ -80,7 +80,7 @@ func Page[Model any](id string, render func(Model) View, options ...RenderOption
 					trace := string(debug.Stack())
 					fmt.Println(p)
 					fmt.Println(trace)
-					logging.FromContext(r.Context()).Error("unexpected panic while rendering", slog.String("page", id), slog.String("incident", string(incidentTag)), slog.Any("err", err), slog.String("trace", trace))
+					logging.FromContext(r.Context()).Error("unexpected panic while rendering", slog.String("page", string(id)), slog.String("incident", string(incidentTag)), slog.Any("err", err), slog.String("trace", trace))
 					if hnd.onPanic != nil {
 						view := hnd.onPanic(PanicContext[Model]{
 							User:        user,

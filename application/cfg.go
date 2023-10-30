@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
+	"io/fs"
 	"log/slog"
 	"os/signal"
 	"runtime"
@@ -20,6 +21,7 @@ type Configurator struct {
 	debug    bool
 	pages    map[string]ui.PageHandler
 	auth     authProviders
+	fsys     []fs.FS
 }
 
 func NewConfigurator() *Configurator {

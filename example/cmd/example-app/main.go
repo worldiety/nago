@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/example/domain/eventmanagement/web/publicevents"
 	"go.wdy.de/nago/example/events/web"
 	"go.wdy.de/nago/persistence/kv"
+	"go.wdy.de/nago/web/vuejs"
 )
 
 func main() {
@@ -19,6 +20,8 @@ func main() {
 
 		events := kv.NewCollection[eventmanagement.Event, eventmanagement.EventID](cfg.Store("planner-db"), "events")
 		serrors.OrPanic(migrate(events))
+
+		cfg.Serve(vuejs.Dist())
 
 		cfg.Page(web.Home(func(name string) {
 			eventmanagement.ShowAllPublicEvents(events)

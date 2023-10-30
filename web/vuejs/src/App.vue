@@ -18,7 +18,7 @@ const state = ref(State.LoadingRoutes);
 
 async function init() {
     try {
-        const response = await fetch("http://localhost:3000/api/v1/ui/pages");
+        const response = await fetch(import.meta.env.VITE_HOST_BACKEND+"api/v1/ui/pages");
         const pages: PagesConfiguration = await response.json();
 
         pages.pages.forEach((page) => {

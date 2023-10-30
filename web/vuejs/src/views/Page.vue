@@ -29,7 +29,7 @@ provide("ui", ui);
 
 async function init() {
     try {
-        const response = await http.request("http://localhost:3000" + page.endpoint);
+        const response = await http.request(import.meta.env.VITE_HOST_BACKEND + page.endpoint.slice(1));
         ui.value = await response.json();
         state.value = State.ShowUI;
     } catch {

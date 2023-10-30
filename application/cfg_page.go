@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/laher/mergefs"
+	"github.com/vearutop/statigz"
 	"go.wdy.de/nago/presentation/ui"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"path"
@@ -23,6 +26,11 @@ type page struct {
 
 type routeIndex struct {
 	Pages []page `json:"pages"`
+}
+
+func (c *Configurator) Serve(fsys fs.FS) *Configurator {
+	c.fsys = append(c.fsys, fsys)
+	return c
 }
 
 func (c *Configurator) Page(h ui.PageHandler) *Configurator {
@@ -85,6 +93,12 @@ func (c *Configurator) newHandler() http.Handler {
 	})
 
 	c.defaultLogger().Info("registered", slog.String("route", idxRoute))
+
+	if len(c.fsys) > 0 {
+		c.defaultLogger().Info("serving fsys assets")
+		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
+		r.Mount("/", assets)
+	}
 
 	return r
 }

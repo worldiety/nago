@@ -26,7 +26,7 @@ async function logout() {
 }
 
 async function loadPrivateData() {
-    const response = await http.request("http://localhost:3000/private");
+    const response = await http.request(import.meta.env.VITE_HOST_BACKEND+"private");
     const text = await response.text();
     alert(text);
 }
