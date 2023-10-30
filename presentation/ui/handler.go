@@ -95,6 +95,7 @@ func Page[Model any](id PageID, render func(Model) View, options ...RenderOption
 							}{},
 							RenderTree: view,
 						}
+
 						buf, err := json.Marshal(resp)
 						if err != nil {
 							panic(fmt.Errorf("illegal state: %w", err)) // this would mean, that the UI model is broken
@@ -178,6 +179,10 @@ func Page[Model any](id PageID, render func(Model) View, options ...RenderOption
 			resp := clientRenderResponse{
 				ViewModel:  model,
 				RenderTree: view,
+			}
+
+			if rd, ok := any(model).(redirectable); ok {
+				resp.Redirect = rd.Redirection()
 			}
 
 			buf, err := json.Marshal(resp)
@@ -370,6 +375,8 @@ type clientRenderResponse struct {
 	ViewModel any `json:"viewModel"`
 	// RenderTree contains a nested view model which must be interpreted by the frontend engine e.g. vuejs.
 	RenderTree View `json:"renderTree"`
+	// Redirect tells the frontend to ignore the renderTree and instead navigate and reload at the target.
+	Redirect Redirect `json:"redirect"`
 }
 
 // clientRenderRequest is sent from the UI renderer (e.g. vuejs) using http POST to the according page endpoint.

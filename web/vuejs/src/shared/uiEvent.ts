@@ -2,6 +2,7 @@ import {useHttp} from "@/shared/http";
 import {PageConfiguration, UiDescription, UiEvent} from "@/shared/model";
 import {useRoute} from "vue-router";
 import {Ref} from "vue";
+import router from "@/router";
 
 /**
  * A set of methods returned by {@link useUiEvents}.
@@ -48,6 +49,11 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
     const url = `http://localhost:3000${routeMeta.endpoint}`;
 
     async function send(event: UiEvent) {
+        if (event == null ){
+            console.log("send event ignored: null")
+            return new Promise<void>((resolve,reject) => resolve());
+        }
+
         const formData = {};
         const inputElems = document.getElementsByTagName("input")
         for (let i = 0; i < inputElems.length; i++) {
@@ -118,6 +124,17 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
 
         const response = await http.request(url, "POST", request);
         ui.value = await response.json();
+
+        //
+        console.log(ui)
+        if (ui.value?.redirect?.redirect){
+            console.log("shall redirect")
+            console.log(ui.value?.redirect)
+            await router.push({path:ui.value.redirect.url}).catch(e=>console.log(e))
+            // TODO @Lars ich bekomme die Navigation und die vor-zurück Historie nicht sauber hin
+            window.location.reload()
+            return new Promise<void>((ok,no) =>ok())
+        }
     }
 
     return {send};

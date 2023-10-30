@@ -8,6 +8,7 @@ import { PageConfiguration, UiDescription } from "@/shared/model";
 import { provide, ref } from "vue";
 import GenericUi from "@/components/UiGeneric.vue";
 import { useHttp } from "@/shared/http";
+import router from "@/router";
 
 enum State {
     Loading,
@@ -31,6 +32,7 @@ async function init() {
     try {
         const response = await http.request(import.meta.env.VITE_HOST_BACKEND + page.endpoint.slice(1));
         ui.value = await response.json();
+
         state.value = State.ShowUI;
     } catch {
         state.value = State.Error;

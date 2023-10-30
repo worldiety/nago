@@ -12,6 +12,14 @@ export interface PagesConfiguration {
 export interface UiDescription {
     renderTree: UiElement,
     viewModel: any,
+    redirect: Redirection | null
+}
+
+export interface Redirection {
+    type: "Redirect",
+    url: string,
+    direction: "forward" | "backward"
+    redirect: boolean
 }
 
 export type UiElement = TextElement | ButtonElement | GridElement;
@@ -20,6 +28,8 @@ export interface TextElement {
     type: "AttributedText" | "Text",
     value: string,
 }
+
+
 
 export interface ButtonElement {
     type: "Button",

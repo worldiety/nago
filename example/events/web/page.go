@@ -12,6 +12,7 @@ type DashboardModel struct {
 	Vorname  string
 	Nachname string
 	EMail    string
+	Redirect
 }
 
 type AddEvent int
@@ -39,6 +40,12 @@ func Home(updateUserName func(name string)) PageHandler {
 			for _, file := range evt.MultiFiles {
 				fmt.Println("multi", file.Name)
 			}
+
+			if model.Vorname == "Test" {
+				model.Redirect = Forward("/counter")
+			}
+
+			fmt.Println(model)
 			return model
 		}),
 		OnEvent(func(model DashboardModel, evt SubEvent) DashboardModel {
