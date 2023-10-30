@@ -18,7 +18,9 @@ type SubEvent struct {
 }
 
 type BlaEvent struct {
-	Name string
+	Name       string
+	CSV        File
+	MultiFiles []File
 }
 
 func Home(updateUserName func(name string)) PageHandler {
@@ -30,6 +32,10 @@ func Home(updateUserName func(name string)) PageHandler {
 			updateUserName(evt.Name)
 
 			fmt.Println("got", evt.Name)
+			fmt.Printf("got %d bytes\n", len(evt.CSV.Data))
+			for _, file := range evt.MultiFiles {
+				fmt.Println("multi", file.Name)
+			}
 			return model
 		}),
 		OnEvent(func(model DashboardModel, evt SubEvent) DashboardModel {
@@ -60,8 +66,9 @@ func Render(model DashboardModel) View {
 					},
 				),
 			}},
-			GridCell{
-				Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
+			GridCell{Child: InputFile{Name: "CSV"}},
+			GridCell{Child: InputFile{Name: "MultiFiles", Multiple: true, Accept: slice.Of(".csv", ".pdf")}},
+			GridCell{Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
 		),
 	}
 }

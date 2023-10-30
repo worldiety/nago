@@ -53,3 +53,10 @@ export interface InputTextElement {
     name: string,
     value: string,
 }
+
+export interface InputFileElement {
+    type: "InputFile",
+    name: string,
+    multiple: boolean,
+    accept: string,
+}

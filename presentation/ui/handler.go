@@ -377,7 +377,7 @@ type clientRenderRequest struct {
 	// EventType is the absolute qualified type name as it was defined within the render tree.
 	EventType string `json:"eventType"`
 	// EventData is exactly the serialized payload of the Event which has been defined within the render tree.
-	EventData json.RawMessage `json:"data"`
+	EventData json.RawMessage `json:"eventData"`
 	// Model is whatever the server has used to build the render tree. This allows keeping the server stateless so far.
 	Model json.RawMessage `json:"model"`
 	// FormData is whatever the client wants to send, e.g. input text data, options or even file uploads.

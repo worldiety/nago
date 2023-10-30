@@ -53,7 +53,7 @@ func Render(model PublicEventPageModel) View {
 				Columns: slice.Of(
 					TableCell{Child: Text(strconv.Itoa(idx))},
 					TableCell{Child: Text(in.Name)},
-					TableCell{Child: InputText{Name: "CSVDatei"}},
+					TableCell{Child: InputFile{Name: "CSVDatei"}},
 					TableCell{Child: Button{OnClick: "hello world"}},
 				),
 			}

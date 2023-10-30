@@ -15,11 +15,24 @@ export interface UiEvents {
 }
 
 interface EventRequest {
+    // EventType is the absolute qualified type name as it was defined within the render tree.
     eventType: string,
-    data: any,
-    formData: Record<string, string>,
+    // EventData is exactly the serialized payload of the Event which has been defined within the render tree.
+    eventData: any,
+    // FormData is whatever the client wants to send, e.g. input text data, options or even file uploads.
+    formData: any,
+    // Model is whatever the server has used to build the render tree. This allows keeping the server stateless so far.
     model: any,
 }
+
+interface FileData {
+    name: string,
+    lastModified: number,
+    size: number,
+    type: string,
+    data: string, // base64
+}
+
 
 /**
  * Hook for sending events with all data of the current page.
@@ -35,8 +48,6 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
     const url = `http://localhost:3000${routeMeta.endpoint}`;
 
     async function send(event: UiEvent) {
-        // TODO Collect all inputs from current page, by scraping the DOM.
-        // const … = document.getElementsByName("input");
         const formData = {};
         const inputElems = document.getElementsByTagName("input")
         for (let i = 0; i < inputElems.length; i++) {
@@ -47,18 +58,59 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
 
             const name = item.getAttribute("name")
             if (name == null || name == "") {
-                return
+                continue
             }
 
-            formData[name] = item.value
+            if (item.getAttribute("type") === "file") {
+                if (item.files == null) {
+                    continue
+                }
+
+                if (item.multiple) {
+                    const files = item.files;
+                    let tmp = [];
+                    for (let i = 0; i < files.length; i++) {
+                        const file= files.item(i)
+                        if (file == null){
+                            throw new Error("cannot happen!?")
+                        }
+
+                        const b64= await readFileAsDataURL(file)
+                        let fd : FileData={
+                            data: b64, lastModified: file.lastModified, name: file.name, size: file.size, type: file.type
+                        }
+                        tmp.push(fd)
+                    }
+                    formData[name]=tmp
+
+                } else {
+                    const files = item.files;
+                    if (files.length > 0) {
+                        const file = files[0]
+                        const b64= await readFileAsDataURL(file)
+                        let fd : FileData={
+                            data: b64, lastModified: file.lastModified, name: file.name, size: file.size, type: file.type
+                        }
+
+                        formData[name] = fd
+                    }
+
+
+                }
+
+            } else {
+                // todo don't know how to let js and ts world be fine together here
+                formData[name] = item.value
+            }
 
 
         }
 
-        console.log(formData)
+       // console.log(formData) // file upload will bring the browser in debug print down
+        console.log("form data collected and POST")
 
         let request: EventRequest = {
-            data: event.data,
+            eventData: event.data,
             eventType: event.eventType,
             formData,
             model: ui.value.viewModel,
@@ -69,4 +121,17 @@ export function useUiEvents(ui: Ref<UiDescription>): UiEvents {
     }
 
     return {send};
+}
+
+
+async function readFileAsDataURL(file: File) {
+    let resultBase64 = await new Promise<string>((resolve) => {
+        let fileReader = new FileReader();
+        // TODO i don't understand why the linter is unhappy here, the doc says its always a string?
+        fileReader.onload = (e) => resolve(fileReader.result);
+        fileReader.readAsDataURL(file);
+    });
+
+    resultBase64 = resultBase64.split(',')[1];
+    return resultBase64;
 }
