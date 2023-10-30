@@ -31,6 +31,7 @@ func (v InputText) MarshalJSON() ([]byte, error) {
 		Type              string  `json:"type"`
 		Name              string  `json:"name"`
 		Value             string  `json:"value"`
+		Label             string  `json:"label"`
 		Supporting        string  `json:"supporting"`
 		Error             string  `json:"error"`
 		Disabled          bool    `json:"disabled"`
@@ -40,6 +41,7 @@ func (v InputText) MarshalJSON() ([]byte, error) {
 		Type:              "InputText",
 		Name:              v.Name,
 		Value:             v.Value,
+		Label:             v.Label,
 		Supporting:        v.Supporting,
 		Error:             v.Error,
 		Disabled:          v.Disabled,

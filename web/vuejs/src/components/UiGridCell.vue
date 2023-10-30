@@ -8,27 +8,31 @@ const props = defineProps<{
     ui: GridCellElement,
 }>();
 
-const styleGridStart = computed<string>(() => {
-    if (props.ui.start > 0) {
-        return `grid-column-start: ${props.ui.start};`;
-    }
-    return "";
+
+
+const styleGridColSpan = computed<string>(() => {
+  if (props.ui.colSpan > 0) {
+    return `col-span-${props.ui.colSpan} `;
+  }
+  return "";
 });
-const styleGridEnd = computed<string>(() => {
-    if (props.ui.end > 0) {
-        return `grid-column-end: ${props.ui.end};`;
-    }
-    return "";
+
+const styleGridRowSpan = computed<string>(() => {
+  if (props.ui.rowSpan > 0) {
+    return `row-span-${props.ui.rowSpan} `;
+  }
+  return "";
 });
+
 const style = computed(() => `
-    ${styleGridStart.value}
-    ${styleGridEnd.value}
+    ${styleGridRowSpan.value}
+    ${styleGridColSpan.value}
 `);
 
 </script>
 
 <template>
-    <div :style="style">
+    <div :class="style">
         <ui-generic v-for="ui in props.ui.views" :ui="ui" />
     </div>
 </template>

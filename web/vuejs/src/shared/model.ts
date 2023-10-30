@@ -41,15 +41,15 @@ export interface UiEvent {
 
 export interface GridCellElement {
     type: "GridCell",
-    start: number,
-    end: number,
-    span: number,
+    colSpan: number,
+    rowSpan: number,
     views: UiElement[],
 }
 
 export interface GridElement {
     type: "Grid",
     columns: number,
+    rows: number,
     gap: number,
     cells: GridCellElement[],
 }
@@ -79,6 +79,7 @@ export interface InputTextElement {
     type: "InputText",
     name: string,
     value: string,
+    label: string,
 }
 
 export interface InputFileElement {

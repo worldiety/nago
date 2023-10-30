@@ -12,6 +12,7 @@ const props = defineProps<{
 const style = computed<string>(() => `
     grid
     grid-cols-${props.ui.columns}
+    grid-rows-${props.ui.rows}
     gap-[${props.ui.gap}]
 `);
 

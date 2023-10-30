@@ -30,8 +30,6 @@ func RenderProfile(model ProfileModel) ui.View {
 		Columns: 2,
 		Cells: slice.Of(
 			ui.GridCell{
-				Start: 1,
-				End:   3,
 				Child: ui.Text("Your Profile"),
 			},
 			ui.GridCell{Child: ui.Text("Name")},

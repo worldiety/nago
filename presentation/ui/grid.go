@@ -6,8 +6,8 @@ import (
 )
 
 type GridCell struct {
-	Start    int               // start column at
-	End      int               // end column at
+	RowSpan  int
+	ColSpan  int
 	Child    View              // first
 	Children slice.Slice[View] // others
 }
@@ -16,15 +16,15 @@ func (GridCell) isView() {}
 
 func (v GridCell) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Type  string `json:"type"`
-		Start int    `json:"start"`
-		End   int    `json:"end"`
-		Views []View `json:"views"`
+		Type    string `json:"type"`
+		RowSpan int    `json:"rowSpan"`
+		ColSpan int    `json:"colSpan"`
+		Views   []View `json:"views"`
 	}{
-		Type:  "GridCell",
-		Start: v.Start,
-		End:   v.End,
-		Views: joinViews(v.Child, v.Children),
+		Type:    "GridCell",
+		RowSpan: v.RowSpan,
+		ColSpan: v.ColSpan,
+		Views:   joinViews(v.Child, v.Children),
 	})
 }
 
@@ -37,6 +37,7 @@ type Responsive struct {
 // Grid shall be interpreted like the rules of the tailwind grid, see also https://tailwindcss.com/docs/grid-column.
 type Grid struct {
 	Columns int
+	Rows    int
 	Gap     Length
 	Cells   slice.Slice[GridCell]
 }
@@ -47,11 +48,13 @@ func (v Grid) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Type    string     `json:"type"`
 		Columns int        `json:"columns"`
+		Rows    int        `json:"rows"`
 		Gap     Length     `json:"gap"`
 		Cells   []GridCell `json:"cells"`
 	}{
 		Type:    "Grid",
 		Columns: v.Columns,
+		Rows:    v.Rows,
 		Gap:     v.Gap,
 		Cells:   slice.UnsafeUnwrap(v.Cells),
 	})
