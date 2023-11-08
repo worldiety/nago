@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/container/enum"
 	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/container/slice"
-	"go.wdy.de/nago/persistence"
+	"go.wdy.de/nago/domain"
 	"slices"
 )
 
@@ -34,12 +34,12 @@ type Bucket interface {
 
 // A Collection is an abstraction layer over the key value store and assumes, that a bucket contains only elements
 // of the same type. Keys are strings and values are json serialized.
-type Collection[E persistence.Entity[ID], ID cmp.Ordered] struct {
+type Collection[E dm.Entity[ID], ID cmp.Ordered] struct {
 	db   Store
 	name []byte
 }
 
-func NewCollection[E persistence.Entity[ID], ID cmp.Ordered](db Store, name string) Collection[E, ID] {
+func NewCollection[E dm.Entity[ID], ID cmp.Ordered](db Store, name string) Collection[E, ID] {
 	return Collection[E, ID]{
 		db:   db,
 		name: []byte(name),
@@ -151,7 +151,7 @@ func (c Collection[E, ID]) Save(entities ...E) serrors.InfrastructureError {
 				return err
 			}
 
-			if err := bucket.Put([]byte(persistence.IdentString(entity.Identity())), buf); err != nil {
+			if err := bucket.Put([]byte(dm.IdentString(entity.Identity())), buf); err != nil {
 				return err
 			}
 		}
@@ -164,22 +164,22 @@ func (c Collection[E, ID]) Save(entities ...E) serrors.InfrastructureError {
 
 // Find returns the given entity or an error with a lookup failure. Unmarshalls from JSON.
 // It is a programming error causing a panic, if types are used which cannot be unmarshalled.
-func (c Collection[E, ID]) Find(id ID) (E, enum.Error[persistence.LookupFailure]) {
+func (c Collection[E, ID]) Find(id ID) (E, enum.Error[dm.LookupFailure]) {
 	var value E
-	var errLookup enum.Error[persistence.LookupFailure]
+	var errLookup enum.Error[dm.LookupFailure]
 	err := c.db.View(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
 		if err != nil {
 			return err
 		}
 
-		buf, err := bucket.Get([]byte(persistence.IdentString(id)))
+		buf, err := bucket.Get([]byte(dm.IdentString(id)))
 		if err != nil {
 			return err
 		}
 
 		if bucket == nil || buf == nil {
-			errLookup = enum.IntoErr(persistence.LookupFailure{}.With1(persistence.EntityNotFound(persistence.IdentString(id))))
+			errLookup = enum.IntoErr(dm.LookupFailure{}.With1(dm.EntityNotFound(dm.IdentString(id))))
 			return errLookup
 		}
 
@@ -195,7 +195,7 @@ func (c Collection[E, ID]) Find(id ID) (E, enum.Error[persistence.LookupFailure]
 	}
 
 	if err != nil {
-		return value, enum.IntoErr(persistence.LookupFailure{}.With2(serrors.IntoInfrastructure(err)))
+		return value, enum.IntoErr(dm.LookupFailure{}.With2(serrors.IntoInfrastructure(err)))
 	}
 
 	return value, nil

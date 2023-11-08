@@ -71,9 +71,9 @@ type RInt ResponsiveValue[int]
 
 func (RInt) isInt() {}
 
-type Int int
+type Int2 int
 
-func (Int) isInt() {}
+func (Int2) isInt() {}
 
 // A ResponsiveValue has a default for all devices (or screen sizes) but has multiple
 type ResponsiveValue[T any] struct {

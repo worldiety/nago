@@ -7,11 +7,13 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
+	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui2"
 	"io/fs"
 	"log/slog"
 	"net/http"
-	"path"
+	"path/filepath"
 	"regexp"
 )
 
@@ -34,16 +36,31 @@ func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 }
 
 func (c *Configurator) Page(h ui.PageHandler) *Configurator {
-	if len(validPageIdRegex.FindAllStringSubmatch(h.ID(), -1)) != 1 {
-		panic(fmt.Errorf("the id '%s' is invalid and must match the [a-z0-9_\\-{/}]+", h.ID()))
-	}
-	route := path.Join("/api/v1/ui/page/", h.ID())
-	if _, ok := c.pages[route]; ok {
-		panic(fmt.Errorf("another page with the same id->path conversion rule has already been declared: %v -> %v", h.ID(), route))
+	panic("delete me")
+	return c
+}
+
+func (c *Configurator) Page2(id ui2.PageID, authenticated bool, s ui2.Scaffold) *Configurator {
+	if len(validPageIdRegex.FindAllStringSubmatch(string(id), -1)) != 1 {
+		panic(fmt.Errorf("the id '%s' is invalid and must match the [a-z0-9_\\-{/}]+", string(id)))
 	}
 
-	c.pages[route] = h
+	if _, ok := c.pages[id]; ok {
+		panic(fmt.Errorf("another page with the same id has already been declared: %v ", id))
+	}
+
+	c.pages[id] = s
+
+	eps := s.Content.Endpoints(id, authenticated)
+	c.endpoints = append(c.endpoints, s.Endpoints(id, authenticated)...)
+	c.endpoints = append(c.endpoints, eps...)
+
 	return c
+}
+
+type applicationResponse struct {
+	Name  string            `json:"name"`
+	Pages map[string]string `json:"pages"`
 }
 
 func (c *Configurator) newHandler() http.Handler {
@@ -66,33 +83,29 @@ func (c *Configurator) newHandler() http.Handler {
 		c.loggerMiddleware,
 		c.keycloakMiddleware,
 	)
-	var idx routeIndex
-	for route, handler := range c.pages {
-		handler := handler // oops, got bitten by it, taking the function pointer from the value will break handlers
-		c.defaultLogger().Info("registered", slog.String("route", route))
-		r.Get(route, handler.ServeHTTP)
-		r.Post(route, handler.ServeHTTP)
-		idx.Pages = append(idx.Pages, page{
-			ID:            handler.ID(),
-			Endpoint:      route,
-			Anchor:        path.Join("/" + handler.ID()),
-			Authenticated: handler.Authenticated(),
-		})
+
+	for _, endpoint := range c.endpoints {
+		r.Method(endpoint.Method, endpoint.Path, endpoint.Handler)
+		c.defaultLogger().Info("registered", slog.String("route", endpoint.Path))
 	}
 
-	idxRoute := "/api/v1/ui/pages"
-	r.Get(idxRoute, func(w http.ResponseWriter, r *http.Request) {
-		buf, err := json.Marshal(idx)
-		if err != nil {
-			panic(fmt.Errorf("internal error: %w", err))
+	idxApp := "/api/v1/ui"
+
+	r.Get(idxApp, func(writer http.ResponseWriter, request *http.Request) {
+		app := applicationResponse{
+			Name:  c.appName,
+			Pages: make(map[string]string),
+		}
+		for id := range c.pages {
+			app.Pages[string(id)] = filepath.Join("/api/v1/ui/", string(id))
 		}
 
-		if _, err := w.Write(buf); err != nil {
-			c.defaultLogger().Error("cannot write", err)
-		}
+		buf, err := json.Marshal(app)
+		serrors.OrPanic(err)
+		writer.Write(buf)
 	})
 
-	c.defaultLogger().Info("registered", slog.String("route", idxRoute))
+	c.defaultLogger().Info("registered", slog.String("route", idxApp))
 
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")

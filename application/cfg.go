@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"go.wdy.de/nago/persistence/kv"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui2"
 	"io/fs"
 	"log/slog"
 	"os/signal"
@@ -13,22 +13,23 @@ import (
 )
 
 type Configurator struct {
-	appName  string
-	kvStores map[string]kv.Store
-	ctx      context.Context
-	done     context.CancelFunc
-	logger   *slog.Logger
-	debug    bool
-	pages    map[string]ui.PageHandler
-	auth     authProviders
-	fsys     []fs.FS
+	appName   string
+	kvStores  map[string]kv.Store
+	ctx       context.Context
+	done      context.CancelFunc
+	logger    *slog.Logger
+	debug     bool
+	pages     map[ui2.PageID]ui2.Scaffold
+	endpoints []ui2.Endpoint
+	auth      authProviders
+	fsys      []fs.FS
 }
 
 func NewConfigurator() *Configurator {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	return &Configurator{
 		kvStores: make(map[string]kv.Store),
-		pages:    make(map[string]ui.PageHandler),
+		pages:    make(map[ui2.PageID]ui2.Scaffold),
 		ctx:      ctx,
 		done:     done,
 		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
