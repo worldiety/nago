@@ -3,7 +3,6 @@ package ui2
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 	"unicode"
@@ -65,7 +64,6 @@ func marshalJSON(v any) ([]byte, error) {
 		buf.WriteString(strings.Join(tp, `","`))
 		buf.WriteString(`"]`)
 	}
-	fmt.Println(string(buf.String()))
 	t := reflect.TypeOf(v)
 	rv := reflect.ValueOf(v)
 	for i := 0; i < t.NumField(); i++ {

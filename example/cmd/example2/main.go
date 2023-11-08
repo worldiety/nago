@@ -43,10 +43,15 @@ func main() {
 		}
 
 		cfg.Page2("hello-world", false, ui2.Scaffold{
-			ApplicationName: "bla",
+
+			Title: "hello page",
 			Navigation: func(context ui2.Context) slice.Slice[ui2.NavItem] {
 				return slice.Of(ui2.NavItem{
 					Title: "hello world",
+					Action: ui2.Navigation{
+						Target: "#1234",
+					},
+					Icon: ui2.FontIcon{Name: "mdi-home"},
 				})
 			},
 			Content: ui2.ListView[PID]{

@@ -26,8 +26,10 @@ type page struct {
 	Authenticated bool   `json:"authenticated"`
 }
 
-type routeIndex struct {
-	Pages []page `json:"pages"`
+type scaffoldPage struct {
+	scaffold      ui2.Scaffold
+	endpoints     []ui2.Endpoint
+	authenticated bool
 }
 
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
@@ -49,9 +51,13 @@ func (c *Configurator) Page2(id ui2.PageID, authenticated bool, s ui2.Scaffold) 
 		panic(fmt.Errorf("another page with the same id has already been declared: %v ", id))
 	}
 
-	c.pages[id] = s
-
 	eps := s.Content.Endpoints(id, authenticated)
+	c.pages[id] = scaffoldPage{
+		scaffold:      s,
+		endpoints:     eps,
+		authenticated: authenticated,
+	}
+
 	c.endpoints = append(c.endpoints, s.Endpoints(id, authenticated)...)
 	c.endpoints = append(c.endpoints, eps...)
 
@@ -59,8 +65,8 @@ func (c *Configurator) Page2(id ui2.PageID, authenticated bool, s ui2.Scaffold) 
 }
 
 type applicationResponse struct {
-	Name  string            `json:"name"`
-	Pages map[string]string `json:"pages"`
+	Name  string `json:"name"`
+	Pages []page `json:"pages"`
 }
 
 func (c *Configurator) newHandler() http.Handler {
@@ -93,11 +99,15 @@ func (c *Configurator) newHandler() http.Handler {
 
 	r.Get(idxApp, func(writer http.ResponseWriter, request *http.Request) {
 		app := applicationResponse{
-			Name:  c.appName,
-			Pages: make(map[string]string),
+			Name: c.appName,
 		}
-		for id := range c.pages {
-			app.Pages[string(id)] = filepath.Join("/api/v1/ui/", string(id))
+		for id, p := range c.pages {
+			app.Pages = append(app.Pages, page{
+				ID:            string(id),
+				Endpoint:      filepath.Join("/api/v1/ui/page", string(id)),
+				Anchor:        filepath.Join("/", string(id)),
+				Authenticated: p.authenticated,
+			})
 		}
 
 		buf, err := json.Marshal(app)

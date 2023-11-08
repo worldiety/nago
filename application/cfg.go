@@ -19,7 +19,7 @@ type Configurator struct {
 	done      context.CancelFunc
 	logger    *slog.Logger
 	debug     bool
-	pages     map[ui2.PageID]ui2.Scaffold
+	pages     map[ui2.PageID]scaffoldPage
 	endpoints []ui2.Endpoint
 	auth      authProviders
 	fsys      []fs.FS
@@ -29,7 +29,7 @@ func NewConfigurator() *Configurator {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	return &Configurator{
 		kvStores: make(map[string]kv.Store),
-		pages:    make(map[ui2.PageID]ui2.Scaffold),
+		pages:    make(map[ui2.PageID]scaffoldPage),
 		ctx:      ctx,
 		done:     done,
 		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),

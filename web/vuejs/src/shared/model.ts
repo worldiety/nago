@@ -1,3 +1,5 @@
+import * as url from "url";
+
 export interface PageConfiguration {
     id: string,
     endpoint: string,
@@ -6,6 +8,7 @@ export interface PageConfiguration {
 }
 
 export interface PagesConfiguration {
+    name:string,
     pages: PageConfiguration[],
 }
 
@@ -22,13 +25,46 @@ export interface Redirection {
     redirect: boolean
 }
 
-export type UiElement = TextElement | ButtonElement | GridElement;
+export type UiElement = TextElement | ButtonElement | GridElement | Scaffold;
 
 export interface TextElement {
     type: "AttributedText" | "Text",
-    value: string,
+    value: string
 }
 
+export interface Scaffold {
+    type: "Scaffold",
+    content: Persona,
+    title: string,
+    navigation: NavItem[]
+}
+
+export interface NavItem {
+    title: string,
+    action: NavAction,
+    icon: Image,
+}
+
+export type Image = FontIcon
+
+export interface FontIcon {
+    type: "FontIcon",
+    name: string
+}
+
+export type NavAction = Navigation;
+
+export interface Navigation {
+    type: "Navigation",
+    target: string,
+    payload: any,
+}
+
+export interface Persona {
+    type: string,
+    typeParams: string[],
+    model:url,
+}
 
 
 export interface ButtonElement {

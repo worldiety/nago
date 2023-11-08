@@ -9,6 +9,7 @@ import UiInputFile from "@/components/UiInputFile.vue";
 import UiCard from "@/components/UiCard.vue";
 import UiTable from "@/components/UiTable.vue";
 import UiNavbar from "@/components/UiNavbar.vue";
+import UiScaffold from "@/components/UiScaffold.vue";
 
 const props = defineProps<{
   ui: UiElement,
@@ -17,7 +18,8 @@ const props = defineProps<{
 </script>
 
 <template>
-  <ui-text v-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
+  <ui-scaffold v-if="props.ui.type === 'Scaffold'" :ui="props.ui"/>
+  <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui"/>
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui"/>
   <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui"/>

@@ -41,7 +41,7 @@ func (lv ListView[Identity]) Endpoints(page PageID, authenticated bool) []Endpoi
 	var res []Endpoint
 	var meta responseListViewMeta
 	meta.Authenticated = authenticated
-	base := filepath.Join(apiUIPrefix, string(page), "listview")
+	base := filepath.Join(apiUIPrefix, "page", string(page), "listview")
 
 	if lv.List != nil {
 		meta.List = filepath.Join(base, "list-all")

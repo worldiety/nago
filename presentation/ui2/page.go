@@ -25,6 +25,16 @@ type PageID string
 type NavItem struct {
 	Title  string
 	Action Navigation
+	Icon   FontIcon
+}
+
+// FontIcon see also https://fonts.google.com/icons, prefixed by mdi- e.g. like "mdi-home".
+type FontIcon struct {
+	Name string `json:"name"`
+}
+
+func (n FontIcon) MarshalJSON() ([]byte, error) {
+	return marshalJSON(n)
 }
 
 func (n NavItem) MarshalJSON() ([]byte, error) {

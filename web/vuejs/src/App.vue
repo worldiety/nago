@@ -18,10 +18,10 @@ const state = ref(State.LoadingRoutes);
 
 async function init() {
     try {
-        const response = await fetch(import.meta.env.VITE_HOST_BACKEND+"api/v1/ui/pages");
-        const pages: PagesConfiguration = await response.json();
+        const response = await fetch(import.meta.env.VITE_HOST_BACKEND+"api/v1/ui");
+        const app: PagesConfiguration = await response.json();
 
-        pages.pages.forEach((page) => {
+        app.pages.forEach((page) => {
             router.addRoute({ path: page.anchor, component: Page, meta: { page } });
             console.log("registered route", page.anchor);
         });
@@ -30,8 +30,10 @@ async function init() {
         await router.replace(route);
 
         state.value = State.ShowRoutes;
-    } catch {
+    } catch (e){
+      console.log(e)
         state.value = State.Error;
+
     }
 }
 
