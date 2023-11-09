@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-
-import { InputFileElement } from "@/shared/model";
-import UiText from "@/components/UiText.vue";
+import type { InputFileElement } from '@/shared/model';
+import UiText from '@/components/UiText.vue';
 
 const props = defineProps<{
-    ui: InputFileElement,
+    ui: InputFileElement;
 }>();
-
 </script>
 
 <template>
@@ -15,5 +13,6 @@ const props = defineProps<{
         :multiple="props.ui.multiple"
         :name="props.ui.name"
         :accept="props.ui.accept"
-        class="px-2 py-1 border" />
+        class="border px-2 py-1"
+    />
 </template>

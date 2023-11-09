@@ -22,8 +22,8 @@ func (l ListItem[Identity]) MarshalJSON() ([]byte, error) {
 }
 
 type ListView[Identity any] struct {
-	//Delete func(id ...Identity) Status
-	List func() (slice.Slice[ListItem[Identity]], Status) `json:"-"`
+	Delete func(id ...Identity) Status
+	List   func() (slice.Slice[ListItem[Identity]], Status) `json:"-"`
 }
 
 func (lv ListView[Identity]) MarshalJSON() ([]byte, error) {
@@ -33,8 +33,13 @@ func (lv ListView[Identity]) MarshalJSON() ([]byte, error) {
 func (ListView[Identity]) isPersona() {}
 
 type responseListViewMeta struct {
-	List          string `json:"list"`
+	List          string `json:"list,omitempty"`
+	Delete        string `json:"delete,omitempty"`
 	Authenticated bool   `json:"authenticated"`
+}
+
+type deleteRequest[Identity any] struct {
+	Identifiers []Identity `json:"identifiers"`
 }
 
 func (lv ListView[Identity]) Endpoints(page PageID, authenticated bool) []Endpoint {
@@ -58,6 +63,25 @@ func (lv ListView[Identity]) Endpoints(page PageID, authenticated bool) []Endpoi
 				if err := enc.Encode(resp); err != nil {
 					logging.FromContext(request.Context()).Error("failed to encode json response", slog.Any("err", err))
 				}
+			},
+		}
+
+		res = append(res, ep)
+	}
+
+	if lv.Delete != nil {
+		meta.Delete = filepath.Join(base, "delete")
+		ep := Endpoint{
+			Method: http.MethodPost,
+			Path:   meta.Delete,
+			Handler: func(writer http.ResponseWriter, request *http.Request) {
+				var idents deleteRequest[Identity]
+				dec := json.NewDecoder(request.Body)
+				if err := dec.Decode(&idents); err != nil {
+					panic(err) //TODO
+				}
+
+				lv.Delete(idents.Identifiers...)
 			},
 		}
 

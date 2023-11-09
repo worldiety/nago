@@ -3,7 +3,7 @@ const TIMEOUT_MILLISECONDS = 10000;
 const get = async (path: string): Promise<unknown> => {
     const url = path;
     const response = await fetchWithTimeout(url, {
-        method: "GET"
+        method: 'GET',
     });
 
     if (response.ok) {
@@ -16,7 +16,7 @@ const get = async (path: string): Promise<unknown> => {
 const getWithoutResponse = async (path: string): Promise<void> => {
     const url = path;
     const response = await fetchWithTimeout(url, {
-        method: "GET"
+        method: 'GET',
     });
 
     if (!response.ok) {
@@ -27,12 +27,12 @@ const getWithoutResponse = async (path: string): Promise<void> => {
 const post = async (path: string, request: unknown): Promise<void> => {
     const url = path;
     const response = await fetchWithTimeout(url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json"
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
     });
 
     if (!response.ok) {
@@ -43,12 +43,12 @@ const post = async (path: string, request: unknown): Promise<void> => {
 const postWithResponse = async (path: string, request: unknown): Promise<unknown> => {
     const url = path;
     const response = await fetchWithTimeout(url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json"
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
     });
 
     if (response.ok) {
@@ -61,11 +61,11 @@ const postWithResponse = async (path: string, request: unknown): Promise<unknown
 const put = async (path: string, request: unknown): Promise<void> => {
     const url = path;
     const response = await fetchWithTimeout(url, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
     });
 
     if (!response.ok) {
@@ -79,7 +79,7 @@ async function fetchWithTimeout(url: string, options: RequestInit) {
 
     const response = await fetch(url, {
         ...options,
-        signal: controller.signal
+        signal: controller.signal,
     });
     clearTimeout(id);
 
@@ -87,7 +87,7 @@ async function fetchWithTimeout(url: string, options: RequestInit) {
 }
 
 function handleDefectiveResponse(response: Response, url: string) {
-    const errorMessage = "Error calling " + url;
+    const errorMessage = 'Error calling ' + url;
     console.error(errorMessage);
     throw new Error(errorMessage);
 }

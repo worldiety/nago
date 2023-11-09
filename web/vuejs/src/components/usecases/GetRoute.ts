@@ -1,4 +1,4 @@
-import { get } from "@/shared/FetchApi";
+import { get } from '@/shared/FetchApi';
 
 type Test = {
     test: string;

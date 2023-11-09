@@ -1,22 +1,22 @@
 <script lang="ts" setup>
-
-import { GridElement } from "@/shared/model";
-import { computed } from "vue";
-import UiGridCell from "@/components/UiGridCell.vue";
+import type { GridElement } from '@/shared/model';
+import { computed } from 'vue';
+import UiGridCell from '@/components/UiGridCell.vue';
 
 const props = defineProps<{
-    ui: GridElement,
+    ui: GridElement;
 }>();
 
 //TODO we get into trouble using tailwind pre-processor here
-const style = computed<string>(() => `
+const style = computed<string>(
+    () => `
     grid
     grid-cols-${props.ui.columns}
     grid-rows-${props.ui.rows}
     gap-[${props.ui.gap}]
     p-[${props.ui.padding}]
-`);
-
+`
+);
 </script>
 
 <template>

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-
-import { RouterView, useRoute, useRouter } from "vue-router";
-import Page from "@/views/Page.vue";
-import { ref } from "vue";
-import { PagesConfiguration } from "@/shared/model";
+import { RouterView, useRoute, useRouter } from 'vue-router';
+import Page from '@/views/Page.vue';
+import { ref } from 'vue';
+import type { PagesConfiguration } from '@/shared/model';
 
 const router = useRouter();
 const route = useRoute();
@@ -18,27 +17,25 @@ const state = ref(State.LoadingRoutes);
 
 async function init() {
     try {
-        const response = await fetch(import.meta.env.VITE_HOST_BACKEND+"api/v1/ui");
+        const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui');
         const app: PagesConfiguration = await response.json();
 
         app.pages.forEach((page) => {
             router.addRoute({ path: page.anchor, component: Page, meta: { page } });
-            console.log("registered route", page.anchor);
+            console.log('registered route', page.anchor);
         });
 
         // Update router with current route, to load the dynamically configured page.
         await router.replace(route);
 
         state.value = State.ShowRoutes;
-    } catch (e){
-      console.log(e)
+    } catch (e) {
+        console.log(e);
         state.value = State.Error;
-
     }
 }
 
 init();
-
 </script>
 
 <template>

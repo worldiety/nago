@@ -90,7 +90,7 @@ func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], serrors.Infra
 
 // Delete removes the Entity within a distinct transaction. It is not an error if neither the collection exists nor
 // the entity itself.
-func (c Collection[E, ID]) Delete(id ID) serrors.InfrastructureError {
+func (c Collection[E, ID]) Delete(id ...ID) serrors.InfrastructureError {
 	return serrors.IntoInfrastructure(c.db.Update(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
 		if err != nil {
@@ -101,13 +101,19 @@ func (c Collection[E, ID]) Delete(id ID) serrors.InfrastructureError {
 			return nil
 		}
 
-		return bucket.Delete([]byte(fmt.Sprintf("%v", id)))
+		for _, i := range id {
+			if err := bucket.Delete([]byte(fmt.Sprintf("%v", i))); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}))
 }
 
-// DeleteAll removes all those entities in a single transaction for which the predicate returns true.
+// DeleteFunc removes all those entities in a single transaction for which the predicate returns true.
 // See also Find.
-func (c Collection[E, ID]) DeleteAll(f func(E) bool) serrors.InfrastructureError {
+func (c Collection[E, ID]) DeleteFunc(f func(E) bool) serrors.InfrastructureError {
 	return serrors.IntoInfrastructure(c.db.Update(func(tx Tx) error {
 		bucket, err := tx.Bucket(c.name)
 		if err != nil {

@@ -1,24 +1,23 @@
 <script lang="ts" setup>
-
-import { ButtonElement, UiDescription } from "@/shared/model";
-import { useUiEvents } from "@/shared/uiEvent";
-import { inject, Ref } from "vue";
+import type { ButtonElement, UiDescription } from '@/shared/model';
+import { useUiEvents } from '@/shared/uiEvent';
+import type { Ref } from 'vue';
+import { inject } from 'vue';
 
 const props = defineProps<{
-    ui: ButtonElement,
+    ui: ButtonElement;
 }>();
 
-const ui: Ref<UiDescription> = inject("ui")!;
+const ui: Ref<UiDescription> = inject('ui')!;
 const events = useUiEvents(ui);
 
 async function onClick() {
     await events.send(props.ui.onClick);
 }
-
 </script>
 
 <template>
-    <button @click="onClick" class="px-2 py-1 border">
+    <button class="border px-2 py-1" @click="onClick">
         {{ props.ui.title.value }}
     </button>
 </template>

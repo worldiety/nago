@@ -1,4 +1,4 @@
-import { useAuth } from "@/stores/auth";
+import { useAuth } from '@/stores/auth';
 
 /**
  * Simple hook for making requests.
@@ -14,7 +14,7 @@ export function useHttp() {
      * @param body The body to send in the request.
      *             "undefined" will be an empty body, everything else will be serialized to JSON.
      */
-    async function request(url: string, method = "GET", body: undefined | any = undefined) {
+    async function request(url: string, method = 'GET', body: undefined | any = undefined) {
         const user = await auth.getUser();
 
         let bodyData = undefined;
@@ -26,7 +26,7 @@ export function useHttp() {
             method,
             body: bodyData,
             headers: {
-                "Authorization": `Bearer ${user?.access_token}`
+                Authorization: `Bearer ${user?.access_token}`,
             },
         });
 

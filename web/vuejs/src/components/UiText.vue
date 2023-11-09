@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-
-import { TextElement } from "@/shared/model";
+import type { TextElement } from '@/shared/model';
 
 const props = defineProps<{
-    ui: TextElement,
+    ui: TextElement;
 }>();
-
 </script>
 
 <template>

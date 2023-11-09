@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui2"
+	"go.wdy.de/nago/web/vuejs"
 )
 
 type PID string
@@ -42,6 +43,8 @@ func main() {
 			panic(err)
 		}
 
+		cfg.Serve(vuejs.Dist())
+
 		cfg.Page2("hello-world", false, ui2.Scaffold{
 
 			Title: "hello page",
@@ -70,6 +73,13 @@ func main() {
 							Title: v.Firstname,
 						}
 					}), ui2.Ok
+				},
+				Delete: func(id ...PID) ui2.Status {
+					if err := persons.Delete(id...); err != nil {
+						panic(err)
+					}
+
+					return ui2.Ok
 				},
 			},
 		})

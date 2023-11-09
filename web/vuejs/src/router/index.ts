@@ -1,25 +1,25 @@
-import { useAuth } from "@/stores/auth";
-import Home from "@/views/Home.vue";
-import OAuth from "@/views/OAuth.vue";
-import { createRouter, createWebHistory } from "vue-router";
-import { PageConfiguration } from "@/shared/model";
+import type { PageConfiguration } from '@/shared/model';
+import { useAuth } from '@/stores/auth';
+import Home from '@/views/Home.vue';
+import OAuth from '@/views/OAuth.vue';
+import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path: "/oauth",
+            path: '/oauth',
             component: OAuth,
         },
         {
-            path: "/",
+            path: '/',
             component: Home,
         },
     ],
 });
 
 interface PageMeta {
-    page?: PageConfiguration,
+    page?: PageConfiguration;
 }
 
 // Make sure users only enter authenticated pages when they are signed in.
