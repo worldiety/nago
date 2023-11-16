@@ -1,19 +1,16 @@
 package application
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
-	"go.wdy.de/nago/container/serrors"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui2"
 	"io/fs"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 	"regexp"
 )
 
@@ -39,6 +36,14 @@ func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 
 func (c *Configurator) Page(h ui.PageHandler) *Configurator {
 	panic("delete me")
+	return c
+}
+
+func (c *Configurator) Page3(p ui2.Pager) *Configurator {
+	if err := p.PageID().Validate(); err != nil {
+		panic(err)
+	}
+	c.uiApp.Pages = c.uiApp.Pages.AppendAll(p)
 	return c
 }
 
@@ -70,7 +75,9 @@ type applicationResponse struct {
 }
 
 func (c *Configurator) newHandler() http.Handler {
+
 	r := chi.NewRouter()
+
 	if c.debug {
 		r.Use(
 			cors.Handler(cors.Options{
@@ -95,32 +102,37 @@ func (c *Configurator) newHandler() http.Handler {
 		c.defaultLogger().Info("registered", slog.String("route", endpoint.Path))
 	}
 
-	idxApp := "/api/v1/ui"
+	//idxApp := "/api/v1/ui"
 
-	r.Get(idxApp, func(writer http.ResponseWriter, request *http.Request) {
-		app := applicationResponse{
-			Name: c.appName,
-		}
-		for id, p := range c.pages {
-			app.Pages = append(app.Pages, page{
-				ID:            string(id),
-				Endpoint:      filepath.Join("/api/v1/ui/page", string(id)),
-				Anchor:        filepath.Join("/", string(id)),
-				Authenticated: p.authenticated,
-			})
-		}
+	c.uiApp.ConfigureRouter(r)
+	/*	r.Get(idxApp, func(writer http.ResponseWriter, request *http.Request) {
+			app := applicationResponse{
+				Name: c.appName,
+			}
+			for id, p := range c.pages {
+				app.Pages = append(app.Pages, page{
+					ID:            string(id),
+					Endpoint:      filepath.Join("/api/v1/ui/page", string(id)),
+					Anchor:        filepath.Join("/", string(id)),
+					Authenticated: p.authenticated,
+				})
+			}
 
-		buf, err := json.Marshal(app)
-		serrors.OrPanic(err)
-		writer.Write(buf)
-	})
+			buf, err := json.Marshal(app)
+			serrors.OrPanic(err)
+			writer.Write(buf)
+		})
 
-	c.defaultLogger().Info("registered", slog.String("route", idxApp))
-
+		c.defaultLogger().Info("registered", slog.String("route", idxApp))
+	*/
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
 		r.Mount("/", assets)
+	}
+
+	for _, route := range r.Routes() {
+		fmt.Println(route.Pattern)
 	}
 
 	return r

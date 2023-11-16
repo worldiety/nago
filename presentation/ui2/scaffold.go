@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
-	"strings"
 )
 
 type Scaffold struct {
@@ -45,7 +44,7 @@ func (v Scaffold) Endpoints(page PageID, authenticated bool) []Endpoint {
 				Content: responsePersona{
 					Type:       name,
 					TypeParams: tp,
-					Model:      filepath.Join(base, strings.ToLower(name)),
+					Model:      filepath.Join(base, string(v.Content.Id())),
 				},
 				Title:         v.Title,
 				Authenticated: authenticated,

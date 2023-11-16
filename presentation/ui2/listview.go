@@ -1,9 +1,11 @@
 package ui2
 
 import (
+	"cmp"
 	"encoding/json"
+	"github.com/swaggest/openapi-go/openapi3"
 	"go.wdy.de/nago/container/slice"
-	"go.wdy.de/nago/logging"
+	dm "go.wdy.de/nago/domain"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -14,94 +16,115 @@ const apiUIPrefix = "/api/v1/ui"
 type ListItem[Identity any] struct {
 	ID     Identity `json:"id"`
 	Title  string
-	Action Navigation
+	Action Action
 }
 
 func (l ListItem[Identity]) MarshalJSON() ([]byte, error) {
 	return marshalJSON(l)
 }
 
-type ListView[Identity any] struct {
-	Delete func(id ...Identity) Status
-	List   func() (slice.Slice[ListItem[Identity]], Status) `json:"-"`
+type ListView[E dm.Entity[ID], ID cmp.Ordered, Params any] struct {
+	ID          ComponentID
+	Delete      func(p Params, ids slice.Slice[ID]) error
+	List        func(p Params) (slice.Slice[ListItem[ID]], error)
+	Description string
 }
 
-func (lv ListView[Identity]) MarshalJSON() ([]byte, error) {
+func (lv ListView[E, ID, Params]) MarshalJSON() ([]byte, error) {
 	return marshalJSON(lv)
 }
 
-func (ListView[Identity]) isPersona() {}
+func (lv ListView[E, ID, Params]) Id() ComponentID {
+	return lv.ID
+}
 
-type responseListViewMeta struct {
-	List          string `json:"list,omitempty"`
-	Delete        string `json:"delete,omitempty"`
-	Authenticated bool   `json:"authenticated"`
+func (lv ListView[E, ID, Params]) ComponentID() ComponentID {
+	return lv.ID
+}
+
+func (lv ListView[E, ID, Params]) configure(parentSlug string, r router) {
+	pattern := filepath.Join(parentSlug, string(lv.ID))
+	metaLV := listViewResponse{}
+	if lv.List != nil {
+		metaLV.Links.List = Link(filepath.Join(pattern, "list"))
+		r.MethodFunc(http.MethodGet, string(metaLV.Links.List), func(writer http.ResponseWriter, request *http.Request) {
+			params := parseParams[Params](request)
+			items, _ := lv.List(params)
+			s := slice.UnsafeUnwrap(items)
+			resp := response[[]ListItem[ID]]{
+				Data: s,
+			}
+			writeJson(writer, request, resp)
+		})
+	}
+
+	if lv.Delete != nil {
+		metaLV.Links.Delete = Link(filepath.Join(pattern, "delete-by-ids"))
+		r.MethodFunc(http.MethodPost, string(metaLV.Links.Delete), func(writer http.ResponseWriter, request *http.Request) {
+			params := parseParams[Params](request)
+
+			var idents deleteRequest[ID]
+			dec := json.NewDecoder(request.Body)
+			if err := dec.Decode(&idents); err != nil {
+				slog.Default().Error("failed to decode json", slog.Any("err", err))
+				writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err := lv.Delete(params, slice.Of(idents.Identifiers...)); err != nil {
+				slog.Default().Error("failed to delete entities", slog.Any("err", err))
+				writer.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			writeJson(writer, request, struct {
+			}{})
+		})
+	}
+
+	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
+		tmp := metaLV
+		tmp.Links.List = Link(interpolatePathVariables[Params](string(tmp.Links.List), request))
+		tmp.Links.Delete = Link(interpolatePathVariables[Params](string(tmp.Links.Delete), request))
+		writeJson(writer, request, tmp)
+	})
+}
+
+func (lv ListView[E, ID, Params]) renderOpenAPI(p Params, tag string, parentSlug string, r *openapi3.Reflector) {
+	pattern := filepath.Join(parentSlug, string(lv.ID))
+	oc := must2(r.NewOperationContext(http.MethodGet, pattern))
+	oc.AddReqStructure(p)
+	oc.AddRespStructure(listViewResponse{})
+	oc.SetTags(tag)
+	setSummaryAndDescription(oc, lv.Description)
+	must(r.AddOperation(oc))
+
+	if lv.List != nil {
+		oc := must2(r.NewOperationContext(http.MethodGet, filepath.Join(pattern, "list")))
+		oc.AddReqStructure(p)
+		oc.AddRespStructure(response[[]ListItem[ID]]{})
+		oc.SetTags(tag)
+		must(r.AddOperation(oc))
+	}
+
+	if lv.Delete != nil {
+
+		oc := must2(r.NewOperationContext(http.MethodPost, filepath.Join(pattern, "delete-by-ids")))
+		oc.AddReqStructure(p)
+		oc.AddReqStructure(deleteRequest[ID]{})
+		oc.AddRespStructure(struct{}{})
+		oc.SetTags(tag)
+		must(r.AddOperation(oc))
+	}
+}
+
+type listViewResponse struct {
+	Links struct {
+		List   Link `json:"list,omitempty"`
+		Delete Link `json:"delete,omitempty"`
+	} `json:"links"`
 }
 
 type deleteRequest[Identity any] struct {
 	Identifiers []Identity `json:"identifiers"`
-}
-
-func (lv ListView[Identity]) Endpoints(page PageID, authenticated bool) []Endpoint {
-	var res []Endpoint
-	var meta responseListViewMeta
-	meta.Authenticated = authenticated
-	base := filepath.Join(apiUIPrefix, "page", string(page), "listview")
-
-	if lv.List != nil {
-		meta.List = filepath.Join(base, "list-all")
-		ep := Endpoint{
-			Method: http.MethodGet,
-			Path:   meta.List,
-			Handler: func(writer http.ResponseWriter, request *http.Request) {
-				items, _ := lv.List() // TODO fix status
-				s := slice.UnsafeUnwrap(items)
-				resp := response[[]ListItem[Identity]]{
-					Data: s,
-				}
-				enc := json.NewEncoder(writer)
-				if err := enc.Encode(resp); err != nil {
-					logging.FromContext(request.Context()).Error("failed to encode json response", slog.Any("err", err))
-				}
-			},
-		}
-
-		res = append(res, ep)
-	}
-
-	if lv.Delete != nil {
-		meta.Delete = filepath.Join(base, "delete")
-		ep := Endpoint{
-			Method: http.MethodPost,
-			Path:   meta.Delete,
-			Handler: func(writer http.ResponseWriter, request *http.Request) {
-				var idents deleteRequest[Identity]
-				dec := json.NewDecoder(request.Body)
-				if err := dec.Decode(&idents); err != nil {
-					panic(err) //TODO
-				}
-
-				lv.Delete(idents.Identifiers...)
-			},
-		}
-
-		res = append(res, ep)
-	}
-
-	metaBuf, err := json.Marshal(meta)
-	if err != nil {
-		panic("unreachable")
-	}
-
-	res = append(res, Endpoint{
-		Method: http.MethodGet,
-		Path:   base,
-		Handler: func(writer http.ResponseWriter, request *http.Request) {
-			if _, err := writer.Write(metaBuf); err != nil {
-				logging.FromContext(request.Context()).Error("failed to write meta response", slog.Any("err", err))
-			}
-		},
-	})
-
-	return res
 }

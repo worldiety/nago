@@ -23,6 +23,7 @@ type Configurator struct {
 	endpoints []ui2.Endpoint
 	auth      authProviders
 	fsys      []fs.FS
+	uiApp     *ui2.Application
 }
 
 func NewConfigurator() *Configurator {
@@ -32,6 +33,7 @@ func NewConfigurator() *Configurator {
 		pages:    make(map[ui2.PageID]scaffoldPage),
 		ctx:      ctx,
 		done:     done,
+		uiApp:    &ui2.Application{},
 		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 }
@@ -39,6 +41,7 @@ func NewConfigurator() *Configurator {
 // Name sets the applications name.
 func (c *Configurator) Name(name string) *Configurator {
 	c.appName = name
+	c.uiApp.Name = name
 	return c
 }
 

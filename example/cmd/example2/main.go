@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence/kv"
@@ -16,6 +18,17 @@ type Person struct {
 }
 
 func (p Person) Identity() PID {
+	return p.ID
+}
+
+type PetID string
+
+type Pet struct {
+	ID   PetID
+	Name string
+}
+
+func (p Pet) Identity() PetID {
 	return p.ID
 }
 
@@ -38,50 +51,65 @@ func main() {
 				Firstname: "Pippin",
 			},
 		)
-
 		if err != nil {
 			panic(err)
 		}
 
+		pets := kv.NewCollection[Pet, PetID](cfg.Store("test2-db"), "pets")
+		pets.Save(
+			Pet{
+				ID:   "1-cat",
+				Name: "Katze",
+			},
+			Pet{
+				ID:   "2-dog",
+				Name: "Hund",
+			},
+			Pet{
+				ID:   "3-Esel",
+				Name: "Esel",
+			},
+			Pet{
+				ID:   "4-blub",
+				Name: "Stadtmusikant",
+			},
+		)
+
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Page2("hello-world", false, ui2.Scaffold{
+		type OverParams struct {
+			WindparkID  string `path:"windpark-id"`
+			Windspargel int    `path:"spargel-id"`
+		}
 
-			Title: "hello page",
-			Navigation: func(context ui2.Context) slice.Slice[ui2.NavItem] {
-				return slice.Of(ui2.NavItem{
-					Title: "hello world",
-					Action: ui2.Navigation{
-						Target: "#1234",
+		cfg.Page3(ui2.Page[OverParams]{
+			ID:          "overview",
+			Title:       "Übersicht",
+			Description: "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
+			Navigation: slice.Of(
+				ui2.PageNavTarget{
+					Target:  "overview",
+					Icon:    ui2.FontIcon{Name: "mdi-home"},
+					Caption: "Übersicht",
+				},
+			),
+			Children: slice.Of[ui2.Component[OverParams]](
+				ui2.ListView[Person, PID, OverParams]{
+					ID:          "personen",
+					Description: "Kleine Listenansicht",
+					List: func(p OverParams) (slice.Slice[ui2.ListItem[PID]], error) {
+						return slice.Of(ui2.ListItem[PID]{
+							ID:     "12",
+							Title:  fmt.Sprintf("hallo wp=%v %v", p.WindparkID, p.Windspargel),
+							Action: nil,
+						}), nil
 					},
-					Icon: ui2.FontIcon{Name: "mdi-home"},
-				})
-			},
-			Content: ui2.ListView[PID]{
-				List: func() (slice.Slice[ui2.ListItem[PID]], ui2.Status) {
-					s, err := persons.Filter(func(person Person) bool {
-						return true
-					})
-
-					if err != nil {
-						panic(err)
-					}
-
-					return slice.Map(s, func(idx int, v Person) ui2.ListItem[PID] {
-						return ui2.ListItem[PID]{
-							ID:    v.ID,
-							Title: v.Firstname,
-						}
-					}), ui2.Ok
+					Delete: func(p OverParams, ids slice.Slice[PID]) error {
+						return nil
+					},
 				},
-				Delete: func(id ...PID) ui2.Status {
-					if err := persons.Delete(id...); err != nil {
-						panic(err)
-					}
-
-					return ui2.Ok
-				},
-			},
+			),
 		})
+
 	}).Run()
 }

@@ -1,56 +1,138 @@
 package ui2
 
-import "net/http"
+import (
+	"fmt"
+	"github.com/swaggest/openapi-go"
+	"github.com/swaggest/openapi-go/openapi3"
+	"go.wdy.de/nago/container/slice"
+	"net/http"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
 
-type Context struct {
-	writer  http.ResponseWriter
-	request *http.Request
-}
+var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
 
-func newContext(w http.ResponseWriter, r *http.Request) Context {
-	return Context{
-		writer:  w,
-		request: r,
-	}
-}
-
-func Render(id PageID, scaffold Scaffold) {}
-
-type response[T any] struct {
-	Data T `json:"data"`
-}
+const (
+	apiSlug     = "/api/v1/"
+	apiUiSlug   = apiSlug + "ui/"
+	apiPageSlug = apiUiSlug + "page/"
+	apiAppSlug  = apiUiSlug + "application"
+)
 
 type PageID string
 
-type NavItem struct {
-	Title  string
-	Action Navigation
-	Icon   FontIcon
+func (p PageID) Validate() error {
+	if len(validPageIdRegex.FindAllStringSubmatch(string(p), -1)) != 1 {
+		return fmt.Errorf("the id '%s' is invalid and must match the [a-z0-9_\\-{/}]+", string(p))
+	}
+
+	return nil
 }
 
-// FontIcon see also https://fonts.google.com/icons, prefixed by mdi- e.g. like "mdi-home".
-type FontIcon struct {
-	Name string `json:"name"`
+type router interface {
+	MethodFunc(method, pattern string, h http.HandlerFunc)
 }
 
-func (n FontIcon) MarshalJSON() ([]byte, error) {
-	return marshalJSON(n)
+type Pager interface {
+	renderOpenAPI(r *openapi3.Reflector)
+	PageID() PageID
+	PageDescription() string
+	Configure(r router)
+	Authenticated() bool
 }
 
-func (n NavItem) MarshalJSON() ([]byte, error) {
-	return marshalJSON(n)
+type Page[Params any] struct {
+	ID              PageID
+	Title           string
+	Description     string
+	Children        slice.Slice[Component[Params]]
+	Navigation      slice.Slice[PageNavTarget]
+	Unauthenticated bool // secure by design, requires opt-out
 }
 
-type Navigation struct {
+func (p Page[P]) Authenticated() bool {
+	return !p.Unauthenticated
+}
+
+func (p Page[P]) PageID() PageID {
+	return p.ID
+}
+
+func (p Page[Params]) PageDescription() string {
+	return p.Description
+}
+
+func (p Page[P]) renderOpenAPI(r *openapi3.Reflector) {
+	var zeroParams P
+	fields := pathNames(zeroParams)
+	pathParams := "{" + strings.Join(fields, "}/{") + "}"
+
+	pattern := filepath.Join(apiPageSlug, string(p.ID), pathParams)
+	oc := must2(r.NewOperationContext(http.MethodGet, pattern))
+	oc.AddReqStructure(zeroParams)
+
+	oc.AddRespStructure(pageResponse{}, func(cu *openapi.ContentUnit) {
+		cu.Description = fmt.Sprintf("This response contains a machine readable description of the *%s* (%s) page.", p.ID, p.Title)
+
+	})
+	oc.SetTags(string(p.ID))
+
+	setSummaryAndDescription(oc, p.Description)
+	must(r.AddOperation(oc))
+
+	p.Children.Each(func(idx int, v Component[P]) {
+		v.renderOpenAPI(zeroParams, string(p.ID), pattern, r)
+	})
+}
+
+func (p Page[P]) Configure(r router) {
+	var zeroParams P
+	fields := pathNames(zeroParams)
+	pathParams := "{" + strings.Join(fields, "}/{") + "}"
+
+	pattern := filepath.Join(apiPageSlug, string(p.ID), pathParams)
+	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
+		writeJson(writer, request, pageResponse{
+			Type:  "page",
+			Title: p.Title,
+			Children: slice.UnsafeUnwrap(slice.Map(p.Children, func(idx int, v Component[P]) Link {
+				if err := v.ComponentID().Validate(); err != nil {
+					panic(err)
+				}
+				return Link(filepath.Join(apiPageSlug, string(p.ID), string(v.ComponentID())))
+			})),
+			Navigation: slice.UnsafeUnwrap(slice.Map(p.Navigation, func(idx int, v PageNavTarget) pageNavTarget {
+				return pageNavTarget{
+					Target:  Link(filepath.Join(apiPageSlug, string(v.Target))),
+					Icon:    v.Icon,
+					Caption: v.Caption,
+				}
+			})),
+		})
+	})
+
+	p.Children.Each(func(idx int, v Component[P]) {
+		v.configure(pattern, r)
+	})
+}
+
+type PageNavTarget struct {
 	Target  PageID
-	Payload any // optional arbitrary struct serialized e.g. into URL like identity or even form data?
+	Icon    Image
+	Caption string
 }
 
-func (n Navigation) MarshalJSON() ([]byte, error) {
-	return marshalJSON(n)
+// actual page response
+type pageResponse struct {
+	Type       TypeDiscriminator `json:"type" pattern:"page" description:"This is always 'page'."`
+	Title      string            `json:"title" description:"The title of the page."`
+	Children   []Link            `json:"children" description:"A bunch of dynamic subcomponents links."`
+	Navigation []pageNavTarget   `json:"navigation" description:"The primary navigation targets."`
 }
 
-type Persona interface {
-	isPersona()
-	Endpoints(page PageID, authenticated bool) []Endpoint
+type pageNavTarget struct {
+	Target  Link   `json:"link" description:"The page target link."`
+	Icon    Image  `json:"icon" description:"The icon to display."`
+	Caption string `json:"caption" description:"The caption of the page link."`
 }

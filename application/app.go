@@ -49,6 +49,7 @@ func (a *Application) Run() {
 
 		if r := recover(); r != nil {
 			a.cfg.defaultLogger().Error("application panic", slog.Any("err", fmt.Errorf("panic: %v", r)))
+			debug.PrintStack()
 		}
 	}()
 

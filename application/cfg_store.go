@@ -17,6 +17,10 @@ func (c *Configurator) Store(name string) kv.Store {
 		panic("set app name first")
 	}
 
+	if store, ok := c.kvStores[name]; ok {
+		return store
+	}
+
 	dir, _ := os.Getwd()
 	dir = filepath.Join(dir, "."+text.SafeName(c.appName), "kvstore")
 	_ = os.MkdirAll(dir, os.ModePerm)
