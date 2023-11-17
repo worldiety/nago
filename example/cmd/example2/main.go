@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence/kv"
@@ -110,8 +111,46 @@ func main() {
 						return persons.Delete(slice.UnsafeUnwrap(ids)...)
 					},
 				},
+
+				ui.Form[ExampleForm, OverParams]{
+					ID: "edit-person",
+					Init: func(params OverParams) ExampleForm {
+						return ExampleForm{
+							Vorname: ui.TextField{
+								Label: "v-o-r",
+								Hint:  "Dein Rufname",
+							},
+							Nachname: ui.TextField{
+								Label: "Dein Familienname",
+								Hint:  "machs besser",
+							},
+							Avatar: ui.FileUploadField{
+								Label: "iCloud nervt",
+							},
+						}
+					},
+					Load: func(form ExampleForm, params OverParams) ExampleForm {
+						form.Vorname.Value = "Torben"
+						form.Nachname.Value = "Schinke"
+						return form
+					},
+					Submit: ui.FormAction[ExampleForm, OverParams]{
+						Title: "und ab dafür",
+						Receive: func(form ExampleForm, params OverParams) (ExampleForm, ui.Action) {
+							fmt.Printf("%+v", form)
+							form.Vorname.Error = form.Vorname.Value + " ist falsch"
+							return form, nil
+						},
+					},
+				},
 			),
 		})
 
 	}).Run()
+}
+
+type ExampleForm struct {
+	Vorname  ui.TextField `class:"col-start-2 col-span-4"`
+	Nachname ui.TextField
+	Avatar   ui.FileUploadField
 }

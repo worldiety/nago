@@ -1,0 +1,80 @@
+<script lang="ts" setup>
+import type {Form, FormField} from '@/shared/model';
+import {ref} from "vue";
+import UiGeneric from "@/components/UiGeneric.vue";
+import router from "@/router";
+import * as http from "http";
+
+const props = defineProps<{
+  ui: Form;
+}>();
+
+const formFields = ref<FormField[]>(new Array<FormField>())
+
+async function init(): Promise<void> {
+  if (props.ui.links.load != null) {
+    const resp = await fetch(props.ui.links.load).then((r) => r.json())
+    formFields.value = resp['fields']
+  }
+
+}
+
+async function sendAllForms(): Promise<void> {
+
+  const formData = new FormData();
+  const inputElems = document.getElementsByTagName('input');
+  for (let i = 0; i < inputElems.length; i++) {
+    const item = inputElems.item(i);
+    if (item == null) { // ts and linters are so stupid...
+      throw new Error('cannot happen!?');
+    }
+
+    const name = item.getAttribute('name');
+    if (name == null || name == '') {
+      continue;
+    }
+
+
+
+    if (item.getAttribute('type') === 'file') {
+      if (item.files == null) {
+        continue;
+      }
+
+      for (const file of item.files) {
+        formData.append(name, file);
+      }
+    } else {
+      formData.append(name,item.value)
+    }
+  }
+
+  console.log(formData)
+
+  const uploadRes = await fetch(props.ui.links.submit!, {method:'POST',body: formData}).then((r)=>r.json())
+  console.log(uploadRes)
+
+  if (uploadRes.type === "FormValidationError"){
+    formFields.value = uploadRes['fields']
+  }
+}
+
+init();
+</script>
+
+<template>
+
+  <ui-generic v-for="field in formFields" :ui="field"/>
+  <v-responsive
+      class="mx-auto"
+      max-width="344"
+  >
+    <v-btn v-if="props.ui.links.submit"
+           class="me-4 mt-2"
+           block
+           @click="sendAllForms"
+    >
+      {{ props.ui.submitText }}
+    </v-btn>
+  </v-responsive>
+</template>

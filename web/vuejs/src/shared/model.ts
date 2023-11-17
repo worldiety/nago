@@ -1,5 +1,3 @@
-import type * as url from 'url';
-
 export interface PageConfiguration {
     id: string;
     link: string;
@@ -25,7 +23,7 @@ export interface Redirection {
     redirect: boolean;
 }
 
-export type UiElement = TextElement | ButtonElement | GridElement | Scaffold | ListView;
+export type UiElement = TextElement | ButtonElement | GridElement | Scaffold | ListView | FormField;
 
 export interface TextElement {
     type: 'AttributedText' | 'Text';
@@ -67,11 +65,31 @@ export interface ListView {
     links: LVLinks;
 }
 
-export interface LVLinks{
-    list: URL|null
-    delete:URL|null
+export interface LVLinks {
+    list: URL | null
+    delete: URL | null
 }
 
+export interface FormField {
+    type: 'TextField' | 'FileUploadField'
+    label: string
+    id: string
+    value: string | null
+    hint: string
+    error: string
+    disabled: boolean
+}
+
+export interface Form {
+    type: 'Form'
+    submitText: string
+    links: FormLinks
+}
+
+export interface FormLinks {
+    load: URL | null
+    submit: URL | null
+}
 
 export interface ListViewList {
     data: ListItemModel[];
@@ -151,6 +169,7 @@ export interface InputTextElement {
     value: string;
     label: string;
 }
+
 
 export interface InputFileElement {
     type: 'InputFile';

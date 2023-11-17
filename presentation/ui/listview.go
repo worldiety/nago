@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 )
 
-const apiUIPrefix = "/api/v1/ui"
-
 type ListItem[Identity any] struct {
 	ID     Identity `json:"id"`
 	Title  string
@@ -28,14 +26,6 @@ type ListView[E dm.Entity[ID], ID cmp.Ordered, Params any] struct {
 	Delete      func(p Params, ids slice.Slice[ID]) error
 	List        func(p Params) (slice.Slice[ListItem[ID]], error)
 	Description string
-}
-
-func (lv ListView[E, ID, Params]) MarshalJSON() ([]byte, error) {
-	return marshalJSON(lv)
-}
-
-func (lv ListView[E, ID, Params]) Id() ComponentID {
-	return lv.ID
 }
 
 func (lv ListView[E, ID, Params]) ComponentID() ComponentID {

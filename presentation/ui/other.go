@@ -43,16 +43,9 @@ type ExampleParams struct {
 	SortOrder string `query:"sort-order"`
 }
 
-// TODO params just per page because component-api is already page-scoped?
-type Form[FormType, Params any] struct {
-	ID     ComponentID
-	Submit FormAction[FormType, Params]
-	Load   func(Params) FormType
-}
-
-type FormAction[Form, Params any] struct {
-	Title    string
-	OnSubmit func(Form) (Form, Action) // returns either F on error or the action to perform
+type FormAction[Form, PageParams any] struct {
+	Title   string
+	Receive func(Form, PageParams) (Form, Action) // returns either F on error or the action to perform
 }
 
 type MyForm struct {
@@ -108,8 +101,6 @@ func newContext(w http.ResponseWriter, r *http.Request) Context {
 		request: r,
 	}
 }
-
-func Render(id PageID, scaffold Scaffold) {}
 
 type response[T any] struct {
 	Data T `json:"data"`
