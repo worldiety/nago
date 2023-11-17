@@ -7,71 +7,24 @@ import (
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui2"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"regexp"
 )
 
 var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
 
-type page struct {
-	ID            string `json:"id"`
-	Endpoint      string `json:"endpoint"`
-	Anchor        string `json:"anchor"`
-	Authenticated bool   `json:"authenticated"`
-}
-
-type scaffoldPage struct {
-	scaffold      ui2.Scaffold
-	endpoints     []ui2.Endpoint
-	authenticated bool
-}
-
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	c.fsys = append(c.fsys, fsys)
 	return c
 }
 
-func (c *Configurator) Page(h ui.PageHandler) *Configurator {
-	panic("delete me")
-	return c
-}
-
-func (c *Configurator) Page3(p ui2.Pager) *Configurator {
+func (c *Configurator) Page(p ui.Pager) *Configurator {
 	if err := p.PageID().Validate(); err != nil {
 		panic(err)
 	}
 	c.uiApp.Pages = c.uiApp.Pages.AppendAll(p)
 	return c
-}
-
-func (c *Configurator) Page2(id ui2.PageID, authenticated bool, s ui2.Scaffold) *Configurator {
-	if len(validPageIdRegex.FindAllStringSubmatch(string(id), -1)) != 1 {
-		panic(fmt.Errorf("the id '%s' is invalid and must match the [a-z0-9_\\-{/}]+", string(id)))
-	}
-
-	if _, ok := c.pages[id]; ok {
-		panic(fmt.Errorf("another page with the same id has already been declared: %v ", id))
-	}
-
-	eps := s.Content.Endpoints(id, authenticated)
-	c.pages[id] = scaffoldPage{
-		scaffold:      s,
-		endpoints:     eps,
-		authenticated: authenticated,
-	}
-
-	c.endpoints = append(c.endpoints, s.Endpoints(id, authenticated)...)
-	c.endpoints = append(c.endpoints, eps...)
-
-	return c
-}
-
-type applicationResponse struct {
-	Name  string `json:"name"`
-	Pages []page `json:"pages"`
 }
 
 func (c *Configurator) newHandler() http.Handler {
@@ -97,34 +50,8 @@ func (c *Configurator) newHandler() http.Handler {
 		c.keycloakMiddleware,
 	)
 
-	for _, endpoint := range c.endpoints {
-		r.Method(endpoint.Method, endpoint.Path, endpoint.Handler)
-		c.defaultLogger().Info("registered", slog.String("route", endpoint.Path))
-	}
-
-	//idxApp := "/api/v1/ui"
-
 	c.uiApp.ConfigureRouter(r)
-	/*	r.Get(idxApp, func(writer http.ResponseWriter, request *http.Request) {
-			app := applicationResponse{
-				Name: c.appName,
-			}
-			for id, p := range c.pages {
-				app.Pages = append(app.Pages, page{
-					ID:            string(id),
-					Endpoint:      filepath.Join("/api/v1/ui/page", string(id)),
-					Anchor:        filepath.Join("/", string(id)),
-					Authenticated: p.authenticated,
-				})
-			}
 
-			buf, err := json.Marshal(app)
-			serrors.OrPanic(err)
-			writer.Write(buf)
-		})
-
-		c.defaultLogger().Info("registered", slog.String("route", idxApp))
-	*/
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)

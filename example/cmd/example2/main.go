@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
-
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence/kv"
-	"go.wdy.de/nago/presentation/ui2"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -82,30 +80,34 @@ func main() {
 			Windspargel int    `path:"spargel-id"`
 		}
 
-		cfg.Page3(ui2.Page[OverParams]{
-			ID:          "overview",
-			Title:       "Übersicht",
-			Description: "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
+		cfg.Page(ui.Page[OverParams]{
+			ID:              "overview",
+			Unauthenticated: true,
+			Title:           "Übersicht",
+			Description:     "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
 			Navigation: slice.Of(
-				ui2.PageNavTarget{
-					Target:  "overview",
-					Icon:    ui2.FontIcon{Name: "mdi-home"},
-					Caption: "Übersicht",
+				ui.PageNavTarget{
+					Target: "overview/42/60", // TODO fix with typesafe params?
+					Icon:   ui.FontIcon{Name: "mdi-home"},
+					Title:  "Übersicht",
 				},
 			),
-			Children: slice.Of[ui2.Component[OverParams]](
-				ui2.ListView[Person, PID, OverParams]{
+			Children: slice.Of[ui.Component[OverParams]](
+				ui.ListView[Person, PID, OverParams]{
 					ID:          "personen",
 					Description: "Kleine Listenansicht",
-					List: func(p OverParams) (slice.Slice[ui2.ListItem[PID]], error) {
-						return slice.Of(ui2.ListItem[PID]{
-							ID:     "12",
-							Title:  fmt.Sprintf("hallo wp=%v %v", p.WindparkID, p.Windspargel),
-							Action: nil,
-						}), nil
+					List: func(p OverParams) (slice.Slice[ui.ListItem[PID]], error) {
+						return kv.FilterAndMap(persons, nil,
+							func(e Person) ui.ListItem[PID] {
+								return ui.ListItem[PID]{
+									ID:    e.ID,
+									Title: e.Firstname,
+								}
+							},
+						)
 					},
 					Delete: func(p OverParams, ids slice.Slice[PID]) error {
-						return nil
+						return persons.Delete(slice.UnsafeUnwrap(ids)...)
 					},
 				},
 			),

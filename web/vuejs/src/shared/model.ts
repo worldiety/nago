@@ -2,7 +2,7 @@ import type * as url from 'url';
 
 export interface PageConfiguration {
     id: string;
-    endpoint: string;
+    link: string;
     anchor: string;
     authenticated: boolean;
 }
@@ -34,14 +34,14 @@ export interface TextElement {
 
 export interface Scaffold {
     type: 'Scaffold';
-    content: Persona;
+    children: URL[];
     title: string;
     navigation: NavItem[];
 }
 
 export interface NavItem {
     title: string;
-    action: NavAction;
+    link: NavAction;
     icon: Image;
 }
 
@@ -64,14 +64,14 @@ export type Persona = ListView;
 
 export interface ListView {
     type: 'ListView';
-    typeParams: string[];
-    model: url;
+    links: LVLinks;
 }
 
-export interface ListViewModel {
-    list: url;
-    delete: url|null;
+export interface LVLinks{
+    list: URL|null
+    delete:URL|null
 }
+
 
 export interface ListViewList {
     data: ListItemModel[];

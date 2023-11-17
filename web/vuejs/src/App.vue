@@ -17,12 +17,15 @@ const state = ref(State.LoadingRoutes);
 
 async function init() {
     try {
-        const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui');
+        const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
         const app: PagesConfiguration = await response.json();
 
         app.pages.forEach((page) => {
-            router.addRoute({ path: page.anchor, component: Page, meta: { page } });
-            console.log('registered route', page.anchor);
+            let anchor = page.anchor.replaceAll("{",":")
+            anchor = anchor.replaceAll("}","?")
+            anchor = anchor.replaceAll("-","_") //OMG
+            router.addRoute({ path: anchor, component: Page, meta: { page } });
+            console.log('registered route', anchor);
         });
 
         // Update router with current route, to load the dynamically configured page.

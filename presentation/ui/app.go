@@ -1,4 +1,4 @@
-package ui2
+package ui
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/swaggest/openapi-go/openapi3"
 	"go.wdy.de/nago/container/slice"
 	"net/http"
-	"path/filepath"
+	"strings"
 )
 
 type Application struct {
@@ -31,7 +31,8 @@ func (a *Application) ConfigureRouter(router chi.Router) {
 				return appPage{
 					ID:            v.PageID(),
 					Authenticated: v.Authenticated(),
-					Link:          Link(filepath.Join(apiPageSlug, string(v.PageID()))),
+					Link:          Link(v.Pattern()),
+					Anchor:        "/" + strings.TrimPrefix(v.Pattern(), apiPageSlug),
 				}
 			})),
 		})
@@ -71,7 +72,8 @@ type appResponse struct {
 type appPage struct {
 	ID            PageID `json:"id" description:"unique page identifier"`
 	Authenticated bool   `json:"authenticated" description:"If true, the client must provide an authenticated user, otherwise any resource requests will fail."`
-	Link          Link   `json:"links" description:"TODO: how to handle pages with parameters? just query?"`
+	Link          Link   `json:"link" description:"TODO: how to handle pages with parameters? just query?"`
+	Anchor        string `json:"anchor"`
 }
 
 type links map[string]Link

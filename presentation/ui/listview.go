@@ -1,4 +1,4 @@
-package ui2
+package ui
 
 import (
 	"cmp"
@@ -44,7 +44,7 @@ func (lv ListView[E, ID, Params]) ComponentID() ComponentID {
 
 func (lv ListView[E, ID, Params]) configure(parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(lv.ID))
-	metaLV := listViewResponse{}
+	metaLV := listViewResponse{Type: "ListView"}
 	if lv.List != nil {
 		metaLV.Links.List = Link(filepath.Join(pattern, "list"))
 		r.MethodFunc(http.MethodGet, string(metaLV.Links.List), func(writer http.ResponseWriter, request *http.Request) {
@@ -119,6 +119,7 @@ func (lv ListView[E, ID, Params]) renderOpenAPI(p Params, tag string, parentSlug
 }
 
 type listViewResponse struct {
+	Type  string `json:"type"`
 	Links struct {
 		List   Link `json:"list,omitempty"`
 		Delete Link `json:"delete,omitempty"`

@@ -206,3 +206,21 @@ func (c Collection[E, ID]) Find(id ID) (E, enum.Error[dm.LookupFailure]) {
 
 	return value, nil
 }
+
+func FilterAndMap[E dm.Entity[ID], ID cmp.Ordered, Out any](c Collection[E, ID], p func(E) bool, m func(E) Out) (slice.Slice[Out], error) {
+	if p == nil {
+		p = func(e E) bool {
+			return true
+		}
+	}
+	tmp, err := c.Filter(p)
+	if err != nil {
+		return slice.Slice[Out]{}, err
+	}
+
+	// TODO we can avoid that duplication here
+	// TODO think about iterator api
+	return slice.Map(tmp, func(idx int, v E) Out {
+		return m(v)
+	}), nil
+}

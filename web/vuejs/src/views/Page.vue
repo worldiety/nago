@@ -2,7 +2,7 @@
     This page will build its UI dynamically according to the PageConfiguration loaded from the server.
 -->
 <script lang="ts" setup>
-import { useRoute } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import type { PageConfiguration, Scaffold} from '@/shared/model';
 import { UiDescription } from '@/shared/model';
 import { provide, ref } from 'vue';
@@ -30,7 +30,8 @@ provide('ui', ui);
 
 async function init() {
     try {
-        const pageUrl = import.meta.env.VITE_HOST_BACKEND + page.endpoint.slice(1);
+      const router = useRouter()
+        const pageUrl = import.meta.env.VITE_HOST_BACKEND + "api/v1/ui/page/"+router.currentRoute.value.path//page.link.slice(1);
         const response = await http.request(pageUrl);
         ui.value = await response.json();
         state.value = State.ShowUI;
@@ -46,6 +47,7 @@ init();
 
 <template>
     <div>
+
         <!--  <div>Dynamic page information: {{ page }}</div> -->
         <div v-if="state === State.Loading">Loading UI definition…</div>
         <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>

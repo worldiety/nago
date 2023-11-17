@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {ListView, ListViewList, ListViewModel} from '@/shared/model';
+import type {ListView, ListViewList, LVLinks} from '@/shared/model';
 import {ref} from 'vue';
 import * as url from "url";
 
@@ -7,7 +7,6 @@ const props = defineProps<{
   ui: ListView;
 }>();
 
-const lv = ref<ListViewModel>({})
 const listModel = ref<ListViewList>({});
 const menuRequired = ref<boolean>(false);
 const canDelete = ref<boolean>(false);
@@ -16,10 +15,11 @@ const canSelect = ref<boolean>(false);
 const selectedItems = ref<Set<string>>(new Set<string>());
 
 async function init(): Promise<void> {
-  lv.value = await fetch(props.ui.model).then((r) => r.json());
-  listModel.value = await fetch(lv.value.list).then((r) => r.json());
+  if (props.ui.links.list!=null){
+    listModel.value = await fetch(props.ui.links.list).then((r) => r.json());
+  }
   console.log(listModel.value)
-  if (lv.value.delete != null) {
+  if (props.ui.links.delete != null) {
     menuRequired.value = true;
     canDelete.value = true;
     canSelect.value = true;
@@ -27,7 +27,7 @@ async function init(): Promise<void> {
 }
 
 async function deleteItems():Promise<void> {
-  await fetch(lv.value.delete,{
+  await fetch(props.ui.links.delete,{
     method:"POST",
     body:JSON.stringify({"identifiers":Array.from(selectedItems.value.values())})
   })

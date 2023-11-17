@@ -3,8 +3,8 @@ package ui
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"reflect"
+	"strings"
 	"unicode"
 )
 
@@ -13,11 +13,7 @@ var jsonRegistry *registry
 func init() {
 	jsonRegistry = &registry{fqn2json: map[goFQN]jsonName{}}
 	r := jsonRegistry
-	register(r, HorizontalDivider{})
-	register(r, ListItem1L{})
-	register(r, ListItem2L{})
-	register(r, Scaffold{})
-	register(r, MainDetail{})
+	_ = r
 }
 
 type jsonName string
@@ -42,22 +38,36 @@ func fqnOf(v any) goFQN {
 	return goFQN(t.PkgPath() + "." + t.Name())
 }
 
+func getGenericTypeName(v any) (name string, typeParams []string) {
+	name = reflect.TypeOf(v).Name()
+	if tpstart := strings.Index(name, "["); tpstart > -1 {
+		paramsStr := name[tpstart+1:]
+		name = name[:tpstart]
+		params := strings.Split(paramsStr[:len(paramsStr)-1], ",") // not sure how we would want to express nested type param specs
+		return name, params
+	}
+
+	return name, nil
+}
+
 // marshalJSON inserts a "type" field whose value is the registered jsonName (usually just the Go type-name as is).
 // All public fields are marshalled and the field name starts lower case.
 func marshalJSON(v any) ([]byte, error) {
-	n, ok := jsonRegistry.getJsonName(v)
-	if !ok {
-		return nil, fmt.Errorf("type of %T has not been registered for a json type", v)
-	}
+	n, tp := getGenericTypeName(v)
 
 	buf := bytes.Buffer{}
 	buf.WriteString(`{"type":"`)
-	buf.WriteString(string(n))
+	buf.WriteString(n)
 	buf.WriteByte('"')
+	if len(tp) > 0 {
+		buf.WriteString(`,"typeParams":["`)
+		buf.WriteString(strings.Join(tp, `","`))
+		buf.WriteString(`"]`)
+	}
 	t := reflect.TypeOf(v)
 	rv := reflect.ValueOf(v)
 	for i := 0; i < t.NumField(); i++ {
-		buf.WriteString(",")
+
 		tf := t.Field(i)
 		if !tf.IsExported() {
 			continue
@@ -68,6 +78,11 @@ func marshalJSON(v any) ([]byte, error) {
 			fname = j // TODO this is not correct for order and empty features
 		}
 
+		if fname == "-" {
+			continue // ignored by spec
+		}
+
+		buf.WriteString(",")
 		buf.WriteString(`"`)
 		buf.WriteString(fname)
 		buf.WriteString(`":`)

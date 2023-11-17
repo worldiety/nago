@@ -22,6 +22,7 @@ interface PageMeta {
     page?: PageConfiguration;
 }
 
+
 // Make sure users only enter authenticated pages when they are signed in.
 router.beforeEach(async (to, from, next) => {
     const meta = to.meta as PageMeta | undefined;

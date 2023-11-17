@@ -1,4 +1,4 @@
-package ui2
+package ui
 
 type Image interface {
 	isImage()

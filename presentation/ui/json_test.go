@@ -15,8 +15,8 @@ func Test_marshalJSON(t *testing.T) {
 		want    []byte
 		wantErr bool
 	}{
-		{"hd", args{HorizontalDivider{}}, []byte(`{"type":"HorizontalDivider"}`), false},
-		{"l1l", args{ListItem1L{Headline: "abc"}}, []byte(`{"type":"ListItem1L","headline":"abc","leadingIcon":null,"actionEvent":null}`), false},
+		//{"hd", args{HorizontalDivider{}}, []byte(`{"type":"HorizontalDivider"}`), false},
+		//{"l1l", args{ListItem1L{Headline: "abc"}}, []byte(`{"type":"ListItem1L","headline":"abc","leadingIcon":null,"actionEvent":null}`), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

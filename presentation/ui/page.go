@@ -1,4 +1,4 @@
-package ui2
+package ui
 
 import (
 	"fmt"
@@ -40,6 +40,7 @@ type Pager interface {
 	PageDescription() string
 	Configure(r router)
 	Authenticated() bool
+	Pattern() string
 }
 
 type Page[Params any] struct {
@@ -49,6 +50,14 @@ type Page[Params any] struct {
 	Children        slice.Slice[Component[Params]]
 	Navigation      slice.Slice[PageNavTarget]
 	Unauthenticated bool // secure by design, requires opt-out
+}
+
+func (p Page[Params]) Pattern() string {
+	var zeroParams Params
+	fields := pathNames(zeroParams)
+	pathParams := "{" + strings.Join(fields, "}/{") + "}"
+
+	return filepath.Join(apiPageSlug, string(p.ID), pathParams)
 }
 
 func (p Page[P]) Authenticated() bool {
@@ -65,10 +74,8 @@ func (p Page[Params]) PageDescription() string {
 
 func (p Page[P]) renderOpenAPI(r *openapi3.Reflector) {
 	var zeroParams P
-	fields := pathNames(zeroParams)
-	pathParams := "{" + strings.Join(fields, "}/{") + "}"
 
-	pattern := filepath.Join(apiPageSlug, string(p.ID), pathParams)
+	pattern := p.Pattern()
 	oc := must2(r.NewOperationContext(http.MethodGet, pattern))
 	oc.AddReqStructure(zeroParams)
 
@@ -94,22 +101,28 @@ func (p Page[P]) Configure(r router) {
 	pattern := filepath.Join(apiPageSlug, string(p.ID), pathParams)
 	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
 		writeJson(writer, request, pageResponse{
-			Type:  "page",
+			Type:  "Page",
 			Title: p.Title,
 			Children: slice.UnsafeUnwrap(slice.Map(p.Children, func(idx int, v Component[P]) Link {
 				if err := v.ComponentID().Validate(); err != nil {
 					panic(err)
 				}
-				return Link(filepath.Join(apiPageSlug, string(p.ID), string(v.ComponentID())))
+
+				actualPath := interpolatePathVariables[P](pattern, request)
+				return Link(filepath.Join(actualPath, string(v.ComponentID())))
 			})),
 			Navigation: slice.UnsafeUnwrap(slice.Map(p.Navigation, func(idx int, v PageNavTarget) pageNavTarget {
 				return pageNavTarget{
-					Target:  Link(filepath.Join(apiPageSlug, string(v.Target))),
-					Icon:    v.Icon,
-					Caption: v.Caption,
+					Target: Link(filepath.Join(apiPageSlug, string(v.Target))),
+					Icon:   v.Icon,
+					Title:  v.Title,
 				}
 			})),
 		})
+	})
+
+	r.MethodFunc(http.MethodGet, filepath.Join("/", string(p.ID), pathParams), func(writer http.ResponseWriter, request *http.Request) {
+		render("Page", nil, writer)
 	})
 
 	p.Children.Each(func(idx int, v Component[P]) {
@@ -118,9 +131,9 @@ func (p Page[P]) Configure(r router) {
 }
 
 type PageNavTarget struct {
-	Target  PageID
-	Icon    Image
-	Caption string
+	Target PageID
+	Icon   Image
+	Title  string
 }
 
 // actual page response
@@ -132,7 +145,7 @@ type pageResponse struct {
 }
 
 type pageNavTarget struct {
-	Target  Link   `json:"link" description:"The page target link."`
-	Icon    Image  `json:"icon" description:"The icon to display."`
-	Caption string `json:"caption" description:"The caption of the page link."`
+	Target Link   `json:"link" description:"The page target link."`
+	Icon   Image  `json:"icon" description:"The icon to display."`
+	Title  string `json:"title" description:"The caption of the page link."`
 }

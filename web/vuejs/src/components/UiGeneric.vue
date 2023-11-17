@@ -17,7 +17,8 @@ const props = defineProps<{
 </script>
 
 <template>
-    <ui-scaffold v-if="props.ui.type === 'Scaffold'" :ui="props.ui" />
+
+    <ui-scaffold v-if="props.ui.type === 'Page'" :ui="props.ui" />
     <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui" />
     <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui" />
     <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui" />
@@ -25,7 +26,7 @@ const props = defineProps<{
     <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui" />
     <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui" />
     <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui" />
-    <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" />
+   <!-- <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" /> -->
     <ui-input-text v-else-if="props.ui.type === 'InputText'" :ui="props.ui" />
     <ui-input-file v-else-if="props.ui.type === 'InputFile'" :ui="props.ui" />
     <div v-else>[Unknown view type '{{ props.ui.type }}']</div>

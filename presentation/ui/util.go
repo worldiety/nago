@@ -1,35 +1,95 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"encoding/json"
+	"github.com/go-chi/chi/v5"
+	"github.com/swaggest/openapi-go"
+	"log/slog"
+	"net/http"
+	"reflect"
+	"strconv"
+	"strings"
+)
 
-// Views is actually only used because Go (1.21) cannot infer that in the polymorphic case properly from the LHS.
-func Views(v ...View) slice.Slice[View] {
-	return slice.Of(v...)
+func writeJson(w http.ResponseWriter, r *http.Request, v any) {
+	w.Header().Set("content-type", "application/json")
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(v); err != nil {
+		// TODO grab from request
+		slog.Default().Error("failed to encode and write response", slog.Any("err", err))
+	}
 }
 
-func joinViews(v View, others slice.Slice[View]) []View {
-	if v == nil && others.Len() == 0 {
-		return nil
+func setSummaryAndDescription(oc openapi.OperationContext, s string) {
+	oc.SetDescription(s)
+	sentences := strings.Split(s, ". ")
+	if len(sentences) > 0 {
+		summary := sentences[0]
+		if len(summary) > 180 {
+			summary = summary[:180] + "..."
+		}
+		oc.SetSummary(summary)
 	}
+}
 
-	res := make([]View, 0, others.Len()+1)
-	if v != nil {
-		res = append(res, v)
+// pathNames returns all path:"x" tagged public values from fields.
+func pathNames(v any) []string {
+	var res []string
+	t := reflect.TypeOf(v)
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+
+		if s := f.Tag.Get("path"); s != "" {
+			res = append(res, s)
+		}
 	}
-
-	res = append(res, slice.UnsafeUnwrap(others)...)
 	return res
 }
 
-type Iterable[T any] interface {
-	Each(f func(idx int, v T))
+func interpolatePathVariables[Params any](pattern string, r *http.Request) string {
+	var params Params
+	for _, pathVar := range pathNames(params) {
+		pathVarValue := chi.URLParam(r, pathVar)
+		pattern = strings.ReplaceAll(pattern, "{"+pathVar+"}", pathVarValue)
+	}
+
+	return pattern
 }
 
-func Map[In, Out any](iter Iterable[In], f func(int, In) Out) slice.Slice[Out] {
-	var tmp []Out
-	iter.Each(func(idx int, v In) {
-		tmp = append(tmp, f(idx, v))
-	})
+func parseParams[P any](request *http.Request) P {
+	var params P
+	t := reflect.TypeOf(params)
+	v := reflect.ValueOf(&params).Elem()
+	for _, pathVar := range pathNames(params) {
+		pathVarValue := chi.URLParam(request, pathVar)
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			if s := f.Tag.Get("path"); s == pathVar {
+				switch f.Type.Kind() {
+				case reflect.String:
+					v.Field(i).SetString(pathVarValue)
+				case reflect.Int:
+					x, err := strconv.Atoi(pathVarValue)
+					if err != nil {
+						slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+					}
 
-	return slice.Of(tmp...)
+					v.Field(i).SetInt(int64(x))
+				}
+				if f.Type.Kind() == reflect.String {
+
+				}
+
+			}
+		}
+	}
+
+	//TODO if params require a user and no user is available we must raise a not-authorized http response
+	//TODO add query support
+	//TODO add request/writer support to peak through the type system?
+
+	return params
 }
