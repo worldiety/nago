@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"io"
 )
 
 type PID string
@@ -125,7 +126,9 @@ func main() {
 								Hint:  "machs besser",
 							},
 							Avatar: ui.FileUploadField{
-								Label: "iCloud nervt",
+								Label:    "iCloud nervt",
+								Multiple: true,
+								Accept:   ".pdf",
 							},
 						}
 					},
@@ -139,6 +142,16 @@ func main() {
 						Receive: func(form ExampleForm, params OverParams) (ExampleForm, ui.Action) {
 							fmt.Printf("%+v", form)
 							form.Vorname.Error = form.Vorname.Value + " ist falsch"
+							for _, file := range form.Avatar.Files {
+								buf, err := io.ReadAll(file.Data)
+								if err != nil {
+									panic(err)
+								}
+								if len(buf) != int(file.Size) {
+									panic("ooops???")
+								}
+								fmt.Println("upload stimmt: "+file.Name, len(buf))
+							}
 							return form, nil
 						},
 					},

@@ -78,6 +78,8 @@ export interface FormField {
     hint: string
     error: string
     disabled: boolean
+    fileMultiple: boolean | null
+    fileAccept: string | null
 }
 
 export interface Form {

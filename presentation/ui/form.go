@@ -154,14 +154,16 @@ type formLoadResponse struct {
 }
 
 type inputType struct {
-	Type        string      `json:"type"`
-	ID          string      `json:"id"`
-	Label       string      `json:"label"`
-	Value       string      `json:"value,omitempty"`
-	Hint        string      `json:"hint"`
-	Error       string      `json:"error"`
-	LayoutHints layoutHints `json:"layoutHints"`
-	Disabled    bool        `json:"disabled"`
+	Type         string      `json:"type"`
+	ID           string      `json:"id"`
+	Label        string      `json:"label"`
+	Value        string      `json:"value,omitempty"`
+	Hint         string      `json:"hint"`
+	Error        string      `json:"error"`
+	LayoutHints  layoutHints `json:"layoutHints"`
+	Disabled     bool        `json:"disabled"`
+	FileMultiple bool        `json:"fileMultiple,omitempty"`
+	FileAccept   string      `json:"fileAccept,omitempty"`
 }
 
 type layoutHints struct {
@@ -209,7 +211,24 @@ func unmarshalForm(dst any, form *multipart.Form) error {
 				nVal := input.setValue(values[0])
 				v.Field(i).Set(reflect.ValueOf(nVal))
 			}
+		}
 
+		if fileInput, ok := v.Field(i).Interface().(FileUploadField); ok {
+			files := form.File[field.Name]
+			for _, file := range files {
+				fd, err := file.Open()
+				if err != nil {
+					return err
+				}
+
+				fileInput.Files = append(fileInput.Files, ReceivedFile{
+					Data: fd,
+					Name: file.Filename,
+					Size: file.Size,
+				})
+			}
+
+			v.Field(i).Set(reflect.ValueOf(fileInput))
 		}
 	}
 

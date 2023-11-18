@@ -11,6 +11,7 @@ import UiScaffold from '@/components/UiScaffold.vue';
 import UiListView from '@/components/UiListView.vue';
 import UiForm from "@/components/UiForm.vue";
 import UiTextField from "@/components/UiTextField.vue";
+import UiFileField from "@/components/UiFileField.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -22,6 +23,7 @@ const props = defineProps<{
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
+  <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui"/>
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui"/>
@@ -29,7 +31,6 @@ const props = defineProps<{
   <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui"/>
   <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>
   <!-- <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" /> -->
-  <ui-input-text v-else-if="props.ui.type === 'InputText'" :ui="props.ui"/>
-  <ui-input-file v-else-if="props.ui.type === 'InputFile'" :ui="props.ui"/>
+
   <div v-else>[Unknown view type '{{ props.ui.type }}']</div>
 </template>

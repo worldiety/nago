@@ -33,9 +33,11 @@ func (t TextField) intoInput() inputType {
 
 type FileUploadField struct {
 	Label    string
-	File     ReceivedFile // only for receiving
+	Files    []ReceivedFile // only for receiving
 	Error    string
 	Hint     string
+	Multiple bool
+	Accept   string
 	Disabled bool
 }
 
@@ -47,11 +49,13 @@ type ReceivedFile struct {
 
 func (t FileUploadField) intoInput() inputType {
 	return inputType{
-		Type:     "FileUploadField",
-		Label:    t.Label,
-		Hint:     t.Hint,
-		Error:    t.Error,
-		Disabled: t.Disabled,
+		Type:         "FileUploadField",
+		Label:        t.Label,
+		Hint:         t.Hint,
+		Error:        t.Error,
+		Disabled:     t.Disabled,
+		FileAccept:   t.Accept,
+		FileMultiple: t.Multiple,
 	}
 }
 
