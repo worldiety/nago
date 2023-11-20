@@ -146,15 +146,26 @@ export interface NavbarElement {
 }
 
 export interface TableElement {
-    type: 'Table';
-    rows: TableRow[];
-    columnHeaders: TableColumnHeader[];
+    type: 'Table'
+    links: TableLinks;
 }
 
-export interface TableRow {
-    type: 'TableRow';
-    columns: TableCell[];
+export interface TableLinks {
+    list: URL | null
+    delete: URL | null
 }
+
+export interface TableListResponse {
+    rows: any[];
+    headers: TableHeader[];
+}
+
+export interface TableHeader {
+    title: string
+    align: string
+    key: string
+}
+
 
 export interface TableColumnHeader {
     type: 'TableColumnHeader';

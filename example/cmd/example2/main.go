@@ -89,7 +89,7 @@ func main() {
 			Description:     "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
 			Navigation: slice.Of(
 				ui.PageNavTarget{
-					Target: "overview/42/60", // TODO fix with typesafe params?
+					Target: "overview/42/60", // TODO fix with typesafe params? problem: package cycles in Go
 					Icon:   ui.FontIcon{Name: "mdi-home"},
 					Title:  "Übersicht",
 				},
@@ -154,6 +154,24 @@ func main() {
 							}
 							return form, nil
 						},
+					},
+				},
+
+				ui.Table[Person, PID, OverParams]{
+					ID:          "table-view",
+					Description: "Super Tabelle",
+					List: func(p OverParams) (slice.Slice[ui.TableRow[PID]], error) {
+						return kv.FilterAndMap(persons, nil, func(e Person) ui.TableRow[PID] {
+							return ui.TableRow[PID]{
+								ID: e.ID,
+								Cells: slice.Of(
+									ui.TableCell{
+										Key:   "Super name",
+										Value: e.Firstname,
+									},
+								),
+							}
+						})
 					},
 				},
 			),

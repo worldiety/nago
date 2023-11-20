@@ -4,6 +4,7 @@ import Page from '@/views/Page.vue';
 import { ref } from 'vue';
 import type { PagesConfiguration } from '@/shared/model';
 
+
 const router = useRouter();
 const route = useRoute();
 
