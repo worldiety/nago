@@ -122,20 +122,18 @@ func (p Page[P]) Configure(r router) {
 		})
 	})
 
-	r.MethodFunc(http.MethodGet, filepath.Join("/", string(p.ID), pathParams), func(writer http.ResponseWriter, request *http.Request) {
-		render("Page", nil, writer)
-	})
-
 	p.Children.Each(func(idx int, v Component[P]) {
 		v.configure(pattern, r)
 	})
 }
 
 type PageNavTarget struct {
-	Target PageID
+	Target Target
 	Icon   Image
 	Title  string
 }
+
+type Target string // either an absolute link or a pageid or something relativ
 
 // actual page response
 type pageResponse struct {

@@ -130,6 +130,23 @@ func main() {
 								Multiple: true,
 								Accept:   ".pdf",
 							},
+							Chooser: ui.SelectField{
+								Label:       "Wähle einen",
+								SelectedIDs: []string{"2"},
+								Hint:        "genau etwas aus Liste",
+								Multiple:    true,
+								Disabled:    false,
+								List: slice.Of(
+									ui.SelectItem{
+										ID:      "1",
+										Caption: "hallo",
+									},
+									ui.SelectItem{
+										ID:      "2",
+										Caption: "welt",
+									},
+								),
+							},
 						}
 					},
 					Load: func(form ExampleForm, params OverParams) ExampleForm {
@@ -152,7 +169,10 @@ func main() {
 								}
 								fmt.Println("upload stimmt: "+file.Name, len(buf))
 							}
-							return form, nil
+							//return form, nil
+							return form, ui.Redirect{
+								Target: "/overview/42/42",
+							}
 						},
 					},
 				},
@@ -184,4 +204,5 @@ type ExampleForm struct {
 	Vorname  ui.TextField `class:"col-start-2 col-span-4"`
 	Nachname ui.TextField
 	Avatar   ui.FileUploadField
+	Chooser  ui.SelectField
 }

@@ -12,6 +12,7 @@ import UiListView from '@/components/UiListView.vue';
 import UiForm from "@/components/UiForm.vue";
 import UiTextField from "@/components/UiTextField.vue";
 import UiFileField from "@/components/UiFileField.vue";
+import UiSelectField from "@/components/UiSelectField.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -24,6 +25,7 @@ const props = defineProps<{
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>
+  <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui"/>
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui"/>

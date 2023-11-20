@@ -72,7 +72,7 @@ export interface LVLinks {
 }
 
 export interface FormField {
-    type: 'TextField' | 'FileUploadField'
+    type: 'TextField' | 'FileUploadField' | 'SelectField'
     label: string
     id: string
     value: string | null
@@ -81,6 +81,15 @@ export interface FormField {
     disabled: boolean
     fileMultiple: boolean | null
     fileAccept: string | null
+    selectMultiple: boolean|null
+    selectItems: SelectItem[]
+    selectValues: string[]
+}
+
+export interface SelectItem {
+    type: 'SelectItem'
+    id: string
+    caption: string
 }
 
 export interface Form {

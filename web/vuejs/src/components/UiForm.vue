@@ -56,6 +56,12 @@ async function sendAllForms(): Promise<void> {
 
   if (uploadRes.type === "FormValidationError"){
     formFields.value = uploadRes['fields']
+    return
+  }
+
+  if (uploadRes.type ==="Redirect"){
+    router.push(uploadRes.target)
+    return
   }
 }
 

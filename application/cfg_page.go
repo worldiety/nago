@@ -8,7 +8,9 @@ import (
 	"github.com/vearutop/statigz"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
+	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
 )
 
@@ -55,7 +57,22 @@ func (c *Configurator) newHandler() http.Handler {
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
-		r.Mount("/", assets)
+		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			dir := filepath.Dir(request.URL.Path)
+			/*if strings.HasPrefix(base,"index"){
+				request.URL.Path = "/"
+			}*/
+			if dir != "" && dir != "/assets" {
+				request.URL.Path = "/"
+				assets.ServeHTTP(writer, request)
+				return
+			}
+
+			log.Println(request.URL.Path)
+
+			assets.ServeHTTP(writer, request)
+		}))
+
 	}
 
 	for _, route := range r.Routes() {

@@ -31,10 +31,14 @@ function tableRows(): any {
 </script>
 
 <template>
+
+
   <v-data-table
       :headers="tableModel.headers"
       :items="tableModel.rows"
       height="400"
+
+
       items-per-page-text="Zeilen pro Seite"
       :pageText="'{0}-{1} von {2}'"
   ></v-data-table>

@@ -103,7 +103,7 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 				return
 			}
 
-			slog.Default().Error("tododo")
+			writeJson(w, r, action)
 
 		})
 	}
@@ -154,16 +154,24 @@ type formLoadResponse struct {
 }
 
 type inputType struct {
-	Type         string      `json:"type"`
-	ID           string      `json:"id"`
-	Label        string      `json:"label"`
-	Value        string      `json:"value,omitempty"`
-	Hint         string      `json:"hint"`
-	Error        string      `json:"error"`
-	LayoutHints  layoutHints `json:"layoutHints"`
-	Disabled     bool        `json:"disabled"`
-	FileMultiple bool        `json:"fileMultiple,omitempty"`
-	FileAccept   string      `json:"fileAccept,omitempty"`
+	Type           string            `json:"type"`
+	ID             string            `json:"id"`
+	Label          string            `json:"label"`
+	Value          string            `json:"value,omitempty"`
+	Hint           string            `json:"hint"`
+	Error          string            `json:"error"`
+	LayoutHints    layoutHints       `json:"layoutHints"`
+	Disabled       bool              `json:"disabled"`
+	FileMultiple   bool              `json:"fileMultiple,omitempty"`
+	FileAccept     string            `json:"fileAccept,omitempty"`
+	SelectMultiple bool              `json:"selectMultiple"`
+	SelectItems    []inputSelectItem `json:"selectItems"`
+	SelectValues   []string          `json:"selectValues"`
+}
+
+type inputSelectItem struct {
+	ID      string `json:"value"`
+	Caption string `json:"title"`
 }
 
 type layoutHints struct {

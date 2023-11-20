@@ -31,7 +31,7 @@ provide('ui', ui);
 async function init() {
     try {
       const router = useRouter()
-        const pageUrl = import.meta.env.VITE_HOST_BACKEND + "api/v1/ui/page/"+router.currentRoute.value.path//page.link.slice(1);
+        const pageUrl = import.meta.env.VITE_HOST_BACKEND + "api/v1/ui/page"+router.currentRoute.value.path//page.link.slice(1);
         const response = await http.request(pageUrl);
         ui.value = await response.json();
         state.value = State.ShowUI;

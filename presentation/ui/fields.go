@@ -1,10 +1,60 @@
 package ui
 
-import "io"
+import (
+	"go.wdy.de/nago/container/slice"
+	"io"
+	"strings"
+)
 
 type InputField interface {
 	intoInput() inputType
 	setValue(v string) InputField
+}
+
+type SelectField struct {
+	Label       string
+	SelectedIDs []string // the preselected value
+	Error       string
+	Hint        string
+	Multiple    bool
+	Disabled    bool
+	List        slice.Slice[SelectItem]
+}
+
+func (t SelectField) setValue(v string) InputField {
+	if v == "" {
+		t.SelectedIDs = nil
+		return t
+	}
+
+	t.SelectedIDs = strings.Split(v, ",")
+	for i, d := range t.SelectedIDs {
+		t.SelectedIDs[i] = strings.TrimSpace(d) //TODO bad model
+	}
+	return t
+}
+
+func (t SelectField) intoInput() inputType {
+	return inputType{
+		Type:           "SelectField",
+		Label:          t.Label,
+		SelectValues:   t.SelectedIDs,
+		Hint:           t.Hint,
+		Error:          t.Error,
+		Disabled:       t.Disabled,
+		SelectMultiple: t.Multiple,
+		SelectItems: slice.UnsafeUnwrap(slice.Map(t.List, func(idx int, v SelectItem) inputSelectItem {
+			return inputSelectItem{
+				ID:      v.ID,
+				Caption: v.Caption,
+			}
+		})),
+	}
+}
+
+type SelectItem struct {
+	ID      string
+	Caption string
 }
 
 type TextField struct {
