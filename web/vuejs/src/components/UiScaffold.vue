@@ -33,7 +33,7 @@ init()
         <v-list-item
             v-for="navItem in props.ui.navigation"
             :prepend-icon="navItem.icon.name"
-            :href="navItem.link"
+            :to="navItem.anchor"
             link
             :ui="navItem"
             :title="navItem.title"
@@ -49,7 +49,7 @@ init()
     </v-main>
 
     <v-bottom-navigation class="d-flex d-lg-none">
-      <v-btn v-for="navItem in props.ui.navigation" :href="navItem.link" link :ui="navItem">
+      <v-btn v-for="navItem in props.ui.navigation" :to="navItem.anchor" link :ui="navItem">
         <v-icon>{{ navItem.icon.name }}</v-icon>
         <span>{{ navItem.title }}</span>
       </v-btn>

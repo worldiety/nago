@@ -113,7 +113,8 @@ func (p Page[P]) Configure(r router) {
 			})),
 			Navigation: slice.UnsafeUnwrap(slice.Map(p.Navigation, func(idx int, v PageNavTarget) pageNavTarget {
 				return pageNavTarget{
-					Target: Link(filepath.Join(apiPageSlug, string(v.Target))),
+					Target: Link(filepath.Join(apiPageSlug, interpolatePathVariables[P](string(v.Target), request))),
+					Anchor: filepath.Join("/", interpolatePathVariables[P](string(v.Target), request)),
 					Icon:   v.Icon,
 					Title:  v.Title,
 				}
@@ -145,7 +146,8 @@ type pageResponse struct {
 }
 
 type pageNavTarget struct {
-	Target Link   `json:"link" description:"The page target link."`
+	Target Link   `json:"link" description:"The page api target link."`
+	Anchor string `json:"anchor" description:"The page anchor link."`
 	Icon   Image  `json:"icon" description:"The icon to display."`
 	Title  string `json:"title" description:"The caption of the page link."`
 }
