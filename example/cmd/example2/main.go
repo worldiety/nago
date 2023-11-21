@@ -22,7 +22,7 @@ func (p Person) Identity() PID {
 	return p.ID
 }
 
-type PetID string
+type PetID int
 
 type Pet struct {
 	ID   PetID
@@ -69,22 +69,28 @@ func main() {
 		pets := kv.NewCollection[Pet, PetID](cfg.Store("test2-db"), "pets")
 		pets.Save(
 			Pet{
-				ID:   "1-cat",
+				ID:   1,
 				Name: "Katze",
 			},
 			Pet{
-				ID:   "2-dog",
+				ID:   2,
 				Name: "Hund",
 			},
 			Pet{
-				ID:   "3-Esel",
+				ID:   3,
 				Name: "Esel",
 			},
 			Pet{
-				ID:   "4-blub",
+				ID:   4,
 				Name: "Stadtmusikant",
 			},
 		)
+
+		testPet, err2 := pets.Find(3)
+		if err2 != nil {
+			panic(err2)
+		}
+		fmt.Println(testPet)
 
 		cfg.Serve(vuejs.Dist())
 
@@ -144,7 +150,7 @@ func main() {
 				},
 
 				ui.Form[ExampleForm, OverParams]{
-					ID: "edit-person",
+					ID: "edit-person22",
 					Init: func(params OverParams) ExampleForm {
 						return ExampleForm{
 							Vorname: ui.TextField{
@@ -184,6 +190,7 @@ func main() {
 						form.Nachname.Value = "Schinke"
 						return form
 					},
+
 					Delete: ui.FormAction[ExampleForm, OverParams]{
 						Title: "löschen",
 						Receive: func(form ExampleForm, params OverParams) (ExampleForm, ui.Action) {
@@ -208,7 +215,8 @@ func main() {
 								}
 								fmt.Println("upload stimmt: "+file.Name, len(buf))
 							}
-							//return form, nil
+							fmt.Println("!!!", params.Windspargel)
+							return form, nil
 							return form, ui.Redirect{
 								Target: "/overview/42/42",
 							}
@@ -263,7 +271,7 @@ func main() {
 								Actions: slice.Of(
 									ui.Button{
 										Caption: "Einstieg",
-										Action:  ui.Redirect{Target: "/overview/1/2"},
+										Action:  ui.Redirect{Target: "/jupp"},
 									},
 								),
 							},

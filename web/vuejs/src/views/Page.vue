@@ -3,20 +3,21 @@
 -->
 <script lang="ts" setup>
 import {useRoute, useRouter} from 'vue-router';
-import type { PageConfiguration, Scaffold} from '@/shared/model';
-import { UiDescription } from '@/shared/model';
-import { provide, ref } from 'vue';
+import type {PageConfiguration, Scaffold} from '@/shared/model';
+import {provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
-import { useHttp } from '@/shared/http';
-import router from '@/router';
+import {useHttp} from '@/shared/http';
+
 
 enum State {
-    Loading,
-    ShowUI,
-    Error,
+  Loading,
+  ShowUI,
+  Error,
 }
 
 const route = useRoute();
+const router = useRouter();
+
 const page = route.meta.page as PageConfiguration;
 
 const http = useHttp();
@@ -29,29 +30,38 @@ const ui = ref<Scaffold>();
 provide('ui', ui);
 
 async function init() {
-    try {
-      const router = useRouter()
-        const pageUrl = import.meta.env.VITE_HOST_BACKEND + "api/v1/ui/page"+router.currentRoute.value.path//page.link.slice(1);
-        const response = await http.request(pageUrl);
-        ui.value = await response.json();
-        state.value = State.ShowUI;
-        console.log(pageUrl);
-        console.log('got value', ui.value);
-    } catch {
-        state.value = State.Error;
-    }
+  try {
+
+   // const router = useRouter()
+    const pageUrl = import.meta.env.VITE_HOST_BACKEND + "api/v1/ui/page" + router.currentRoute.value.path//page.link.slice(1);
+    console.log("i'm in init", pageUrl)
+    const response = await http.request(pageUrl);
+    ui.value = await response.json();
+    state.value = State.ShowUI;
+    console.log(pageUrl);
+    console.log('got value', ui.value);
+  } catch {
+    state.value = State.Error;
+  }
 }
 
+
 init();
+
+watch(route, ()=>{
+  state.value = State.Loading
+  init()
+
+})
 </script>
 
 <template>
-    <div>
+  <div>
 
-        <!--  <div>Dynamic page information: {{ page }}</div> -->
-        <div v-if="state === State.Loading">Loading UI definition…</div>
-        <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-        <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
-        <div v-else>Empty UI</div>
-    </div>
+    <!--  <div>Dynamic page information: {{ page }}</div> -->
+    <div v-if="state === State.Loading">Loading UI definition…</div>
+    <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
+    <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+    <div v-else>Empty UI</div>
+  </div>
 </template>

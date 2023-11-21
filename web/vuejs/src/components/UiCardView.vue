@@ -26,8 +26,10 @@ const props = defineProps<{
           <ui-generic v-if="card.content" :ui="card.content" />
 
           <v-card-actions v-if="card.actions.length>0">
+
             <v-btn v-for="btn in card.actions"
                 variant="text"
+
                 @click="router.push(btn.action.target)"
             >
               {{btn.caption}}

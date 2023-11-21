@@ -47,11 +47,18 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 		})
 	}
 
-	if f.Submit.Receive != nil {
-		metaForm.SubmitText = f.Submit.Title
-		metaForm.DeleteText = f.Delete.Title
-		metaForm.Links.Submit = Link(filepath.Join(pattern, "submit"))
-		metaForm.Links.Delete = Link(filepath.Join(pattern, "delete"))
+	if f.Submit.Receive != nil || f.Delete.Receive != nil {
+		if f.Submit.Receive != nil {
+			metaForm.SubmitText = f.Submit.Title
+			metaForm.Links.Submit = Link(filepath.Join(pattern, "submit"))
+
+		}
+
+		if f.Delete.Receive != nil {
+
+			metaForm.DeleteText = f.Delete.Title
+			metaForm.Links.Delete = Link(filepath.Join(pattern, "delete"))
+		}
 		r.MethodFunc(http.MethodPost, string(metaForm.Links.Submit), func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if r := recover(); r != nil {

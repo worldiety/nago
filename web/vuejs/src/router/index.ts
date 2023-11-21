@@ -28,6 +28,7 @@ router.beforeEach(async (to, from, next) => {
     const meta = to.meta as PageMeta | undefined;
     const authenticated = meta?.page?.authenticated || false;
 
+    console.log("before push",to)
     if (authenticated) {
         const auth = useAuth();
         const user = await auth.getUser();
