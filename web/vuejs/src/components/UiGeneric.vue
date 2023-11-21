@@ -13,6 +13,8 @@ import UiForm from "@/components/UiForm.vue";
 import UiTextField from "@/components/UiTextField.vue";
 import UiFileField from "@/components/UiFileField.vue";
 import UiSelectField from "@/components/UiSelectField.vue";
+import UiCardView from "@/components/UiCardView.vue";
+import UiCardText from "@/components/UiCardText.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -22,6 +24,8 @@ const props = defineProps<{
 <template>
   <ui-scaffold v-if="props.ui.type === 'Page'" :ui="props.ui"/>
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
+  <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
+  <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>

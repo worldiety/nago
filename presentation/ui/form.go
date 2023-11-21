@@ -17,6 +17,7 @@ type Form[FormType, PageParams any] struct {
 	Init        func(PageParams) FormType
 	Load        func(FormType, PageParams) FormType
 	Submit      FormAction[FormType, PageParams]
+	Delete      FormAction[FormType, PageParams]
 	MaxMemory   int64
 }
 
@@ -48,7 +49,9 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 
 	if f.Submit.Receive != nil {
 		metaForm.SubmitText = f.Submit.Title
+		metaForm.DeleteText = f.Delete.Title
 		metaForm.Links.Submit = Link(filepath.Join(pattern, "submit"))
+		metaForm.Links.Delete = Link(filepath.Join(pattern, "delete"))
 		r.MethodFunc(http.MethodPost, string(metaForm.Links.Submit), func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if r := recover(); r != nil {
@@ -93,7 +96,17 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 				return
 			}
 
-			formToFix, action := f.Submit.Receive(zeroForm, pageParams)
+			var formToFix FormType
+			var action Action
+			switch r.MultipartForm.Value["_action"][0] {
+			case "delete":
+				formToFix, action = f.Delete.Receive(zeroForm, pageParams)
+			case "update":
+				formToFix, action = f.Submit.Receive(zeroForm, pageParams)
+			default:
+				panic(fmt.Errorf("invalid action: %v", r.MultipartForm.Value["_action"]))
+			}
+
 			if action == nil {
 				submitResp := formSubmitResponse{
 					Type: "FormValidationError",
@@ -112,6 +125,7 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 		tmp := metaForm
 		tmp.Links.Load = Link(interpolatePathVariables[PageParams](string(tmp.Links.Load), request))
 		tmp.Links.Submit = Link(interpolatePathVariables[PageParams](string(tmp.Links.Submit), request))
+		tmp.Links.Delete = Link(interpolatePathVariables[PageParams](string(tmp.Links.Delete), request))
 		writeJson(writer, request, tmp)
 	})
 
@@ -143,9 +157,11 @@ type formSubmitResponse struct {
 type formResponse struct {
 	Type       string `json:"type"`
 	SubmitText string `json:"submitText"`
+	DeleteText string `json:"deleteText"`
 	Links      struct {
-		Load   Link `json:"load"`
-		Submit Link `json:"submit"`
+		Load   Link `json:"load,omitempty"`
+		Submit Link `json:"submit,omitempty"`
+		Delete Link `json:"delete,omitempty"`
 	} `json:"links"`
 }
 

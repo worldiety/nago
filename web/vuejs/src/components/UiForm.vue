@@ -19,7 +19,7 @@ async function init(): Promise<void> {
 
 }
 
-async function sendAllForms(): Promise<void> {
+async function sendAllForms(isDelete:boolean): Promise<void> {
 
   const formData = new FormData();
   const inputElems = document.getElementsByTagName('input');
@@ -47,6 +47,12 @@ async function sendAllForms(): Promise<void> {
     } else {
       formData.append(name,item.value)
     }
+  }
+
+  if (isDelete){
+    formData.append("_action","delete")
+  }else{
+    formData.append("_action","update")
   }
 
   console.log(formData)
@@ -78,9 +84,18 @@ init();
     <v-btn v-if="props.ui.links.submit"
            class="me-4 mt-2"
            block
-           @click="sendAllForms"
+           @click="sendAllForms(false)"
     >
       {{ props.ui.submitText }}
+    </v-btn>
+
+    <v-btn v-if="props.ui.links.delete"
+           class="me-4 mt-2"
+           block
+           color="red"
+           @click="sendAllForms(true)"
+    >
+      {{ props.ui.deleteText }}
     </v-btn>
   </v-responsive>
 </template>

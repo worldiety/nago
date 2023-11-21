@@ -23,7 +23,36 @@ export interface Redirection {
     redirect: boolean;
 }
 
-export type UiElement = TextElement | ButtonElement | GridElement | Scaffold | ListView | FormField;
+export type UiElement = TextElement | ButtonElement | GridElement | Scaffold | ListView | FormField | CardView;
+
+export interface CardView {
+    type: 'CardView'
+    cards: Card[]
+}
+
+export interface Card {
+    type: 'Card'
+    title: string
+    subtitle: string
+    content: any
+    prependIcon: FontIcon
+    appendIcon: FontIcon
+    actions: Button[]
+
+}
+
+export interface Button {
+    type: 'Button'
+    caption: string
+    action: Action
+}
+
+export type Action = Redirect
+
+export interface Redirect {
+    type: 'Redirect'
+    target: string
+}
 
 export interface TextElement {
     type: 'AttributedText' | 'Text';
@@ -81,7 +110,7 @@ export interface FormField {
     disabled: boolean
     fileMultiple: boolean | null
     fileAccept: string | null
-    selectMultiple: boolean|null
+    selectMultiple: boolean | null
     selectItems: SelectItem[]
     selectValues: string[]
 }
@@ -95,12 +124,14 @@ export interface SelectItem {
 export interface Form {
     type: 'Form'
     submitText: string
+    deleteText: string
     links: FormLinks
 }
 
 export interface FormLinks {
     load: URL | null
     submit: URL | null
+    delete: URL|null
 }
 
 export interface ListViewList {

@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"log"
 )
 
 type PID string
@@ -154,6 +155,15 @@ func main() {
 						form.Nachname.Value = "Schinke"
 						return form
 					},
+					Delete: ui.FormAction[ExampleForm, OverParams]{
+						Title: "löschen",
+						Receive: func(form ExampleForm, params OverParams) (ExampleForm, ui.Action) {
+							log.Println("jetzt löschen")
+							return form, ui.Redirect{
+								Target: "/overview/666/666",
+							}
+						},
+					},
 					Submit: ui.FormAction[ExampleForm, OverParams]{
 						Title: "und ab dafür",
 						Receive: func(form ExampleForm, params OverParams) (ExampleForm, ui.Action) {
@@ -183,7 +193,8 @@ func main() {
 					List: func(p OverParams) (slice.Slice[ui.TableRow[PID]], error) {
 						return kv.FilterAndMap(persons, nil, func(e Person) ui.TableRow[PID] {
 							return ui.TableRow[PID]{
-								ID: e.ID,
+								ID:     e.ID,
+								Action: ui.Redirect{Target: ui.Target(e.ID)},
 								Cells: slice.Of(
 									ui.TableCell{
 										Key:   "Super name",
@@ -192,6 +203,42 @@ func main() {
 								),
 							}
 						})
+					},
+				},
+
+				ui.CardView[OverParams]{
+					ID:          "dashboard-cards",
+					Description: "Super dashboard somit",
+					List: func(p OverParams) (slice.Slice[ui.Card], error) {
+						return slice.Of(
+							ui.Card{
+								Title:       "Helden",
+								Subtitle:    "Super low code",
+								Content:     ui.CardText("Toller content auf Kachel"),
+								PrependIcon: ui.FontIcon{Name: "mdi-check"},
+								AppendIcon:  ui.FontIcon{Name: "mdi-account"},
+								Actions: slice.Of(
+									ui.Button{
+										Caption: "Einstieg",
+										Action:  ui.Redirect{Target: "/overview/1/2"},
+									},
+								),
+							},
+
+							ui.Card{
+								Title:       "Helden2",
+								Subtitle:    "Super low code2",
+								Content:     ui.CardText("Toller content auf Kachel2"),
+								PrependIcon: ui.FontIcon{Name: "mdi-alarm"},
+								AppendIcon:  ui.FontIcon{Name: "mdi-airport"},
+								Actions: slice.Of(
+									ui.Button{
+										Caption: "Einstieg",
+										Action:  ui.Redirect{Target: "/overview/1/2"},
+									},
+								),
+							},
+						), nil
 					},
 				},
 			),

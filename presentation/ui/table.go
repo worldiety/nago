@@ -53,6 +53,7 @@ func (t Table[E, ID, Params]) configure(parentSlug string, r router) {
 			items.Each(func(idx int, v TableRow[ID]) {
 				obj := map[string]any{}
 				obj["_id"] = v.ID
+				obj["_action"] = v.Action
 				v.Cells.Each(func(idx int, v TableCell) {
 					obj[v.Key] = v.Value
 				})
@@ -90,8 +91,9 @@ func (t Table[E, ID, Params]) renderOpenAPI(p Params, tag string, parentSlug str
 }
 
 type TableRow[ID any] struct {
-	ID    ID
-	Cells slice.Slice[TableCell]
+	ID     ID
+	Cells  slice.Slice[TableCell]
+	Action Action
 }
 
 type TableCell struct {
