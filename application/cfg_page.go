@@ -29,6 +29,11 @@ func (c *Configurator) Page(p ui.Pager) *Configurator {
 	return c
 }
 
+func (c *Configurator) Index(target ui.Target) *Configurator {
+	c.uiApp.IndexTarget = target
+	return c
+}
+
 func (c *Configurator) newHandler() http.Handler {
 
 	r := chi.NewRouter()

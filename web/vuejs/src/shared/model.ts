@@ -8,6 +8,7 @@ export interface PageConfiguration {
 export interface PagesConfiguration {
     name: string;
     pages: PageConfiguration[];
+    index: string;
 }
 
 export interface UiDescription {

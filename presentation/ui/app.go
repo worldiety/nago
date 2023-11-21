@@ -15,6 +15,7 @@ type Application struct {
 	Version     string
 	Description string
 	Pages       slice.Slice[Pager]
+	IndexTarget Target
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {
@@ -27,6 +28,7 @@ func (a *Application) ConfigureRouter(router chi.Router) {
 		writeJson(writer, request, appResponse{
 			Name:        a.Name,
 			Description: a.Description,
+			Index:       string(a.IndexTarget),
 			Pages: slice.UnsafeUnwrap(slice.Map(a.Pages, func(idx int, v Pager) appPage {
 				return appPage{
 					ID:            v.PageID(),
@@ -67,6 +69,7 @@ type appResponse struct {
 	Name        string    `json:"name" description:"The name of the entire application."`
 	Pages       []appPage `json:"pages" description:"All known and configured pages. Not all pages are directly addressable and therefore require parameters."`
 	Description string    `json:"description" description:"The applications purpose description."`
+	Index       string    `json:"index" description:"The default index page target to load."`
 }
 
 type appPage struct {

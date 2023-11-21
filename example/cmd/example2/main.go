@@ -93,6 +93,8 @@ func main() {
 			Windspargel int    `path:"spargel-id"`
 		}
 
+		cfg.Index("/jupp")
+
 		cfg.Page(ui.Page[ui.Void]{
 			ID:              "jupp",
 			Unauthenticated: true,
