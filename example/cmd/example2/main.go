@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 	"io"
 	"log"
+	"time"
 )
 
 type PID string
@@ -41,6 +42,13 @@ type EntByInt struct {
 
 func (e EntByInt) Identity() IntlIke {
 	return e.ID
+}
+
+type MyForm struct {
+	Name    ui.TextField
+	Check   ui.SwitchField
+	DueDate ui.DateField
+	Comment ui.TextAreaField
 }
 
 func main() {
@@ -105,14 +113,41 @@ func main() {
 			ID:              "jupp",
 			Unauthenticated: true,
 			Children: slice.Of[ui.Component[ui.Void]](
-				ui.ListView[EntByInt, IntlIke, ui.Void]{
-					ID: "bla",
-					List: func(p ui.Void) (slice.Slice[ui.ListItem[IntlIke]], error) {
-						return slice.Of(ui.ListItem[IntlIke]{
-							ID:    1,
-							Title: "2",
-						}), nil
-
+				ui.Form[MyForm, ui.Void]{
+					ID: "bla-bl",
+					Init: func(void ui.Void) MyForm {
+						return MyForm{
+							Name: ui.TextField{
+								Label: "loldel",
+								Hint:  "extra",
+							},
+							Check: ui.SwitchField{
+								Label: "super switch",
+								Hint:  "super hint",
+							},
+							DueDate: ui.DateField{
+								Label: "fällig am",
+								Hint:  "meh",
+							},
+							Comment: ui.TextAreaField{
+								Label: "dein kommentar",
+								Hint:  "darf super lang sein",
+							},
+						}
+					},
+					Load: func(form MyForm, void ui.Void) MyForm {
+						form.Check.Value = false
+						form.DueDate.Value = time.Now()
+						form.Comment.Value = "prosa"
+						return form
+					},
+					Submit: ui.FormAction[MyForm, ui.Void]{
+						Title: "xy",
+						Receive: func(form MyForm, void ui.Void) (MyForm, ui.Action) {
+							form.Check.Error = "dumm"
+							form.Comment.Error = form.Comment.Value
+							return form, nil
+						},
 					},
 				},
 			),
@@ -166,18 +201,18 @@ func main() {
 								Multiple: true,
 								Accept:   ".pdf",
 							},
-							Chooser: ui.SelectField{
+							Chooser: ui.SelectField[PID]{
 								Label:       "Wähle einen",
-								SelectedIDs: []string{"2"},
+								SelectedIDs: []PID{"2"},
 								Hint:        "genau etwas aus Liste",
 								Multiple:    true,
 								Disabled:    false,
 								List: slice.Of(
-									ui.SelectItem{
+									ui.SelectItem[PID]{
 										ID:      "1",
 										Caption: "hallo",
 									},
-									ui.SelectItem{
+									ui.SelectItem[PID]{
 										ID:      "2",
 										Caption: "welt",
 									},
@@ -288,5 +323,5 @@ type ExampleForm struct {
 	Vorname  ui.TextField `class:"col-start-2 col-span-4"`
 	Nachname ui.TextField
 	Avatar   ui.FileUploadField
-	Chooser  ui.SelectField
+	Chooser  ui.SelectField[PID]
 }

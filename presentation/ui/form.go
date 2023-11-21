@@ -45,6 +45,8 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 			loadResp.Fields = collectFields(zeroForm)
 			writeJson(writer, request, loadResp)
 		})
+	} else {
+		slog.Default().Warn(fmt.Sprintf("the form '%s' has no Load func and will not work properly", f.ID))
 	}
 
 	if f.Submit.Receive != nil || f.Delete.Receive != nil {

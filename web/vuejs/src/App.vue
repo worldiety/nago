@@ -24,7 +24,7 @@ async function init() {
     app.pages.forEach((page) => {
       let anchor = page.anchor.replaceAll("{", ":")
       anchor = anchor.replaceAll("}", "?")
-      anchor = anchor.replaceAll("-", "_") //OMG
+      anchor = anchor.replaceAll("-", "\\-") //OMG regex
       router.addRoute({path: anchor, component: Page, meta: {page}});
       console.log('registered route', anchor);
     });

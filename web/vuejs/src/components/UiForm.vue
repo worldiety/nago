@@ -15,6 +15,8 @@ async function init(): Promise<void> {
   if (props.ui.links.load != null) {
     const resp = await fetch(props.ui.links.load).then((r) => r.json())
     formFields.value = resp['fields']
+  }else{
+    console.log("warning: form has no load function defined, this is not allowed")
   }
 
 }
@@ -28,6 +30,7 @@ async function sendAllForms(isDelete:boolean): Promise<void> {
     if (item == null) { // ts and linters are so stupid...
       throw new Error('cannot happen!?');
     }
+
 
     const name = item.getAttribute('name');
     if (name == null || name == '') {
@@ -45,8 +48,31 @@ async function sendAllForms(isDelete:boolean): Promise<void> {
         formData.append(name, file);
       }
     } else {
-      formData.append(name,item.value)
+
+      if (item.getAttribute('type') === 'checkbox'){
+        formData.append(name,item.checked)
+      }else{
+        formData.append(name,item.value)
+      }
+
     }
+  }
+
+
+  const textAreaElems = document.getElementsByTagName('textarea');
+  for (let i = 0; i < textAreaElems.length; i++) {
+    const item = textAreaElems.item(i);
+    if (item == null) { // ts and linters are so stupid...
+      throw new Error('cannot happen!?');
+    }
+
+
+    const name = item.getAttribute('name');
+    if (name == null || name == '') {
+      continue;
+    }
+    formData.append(name,item.value)
+
   }
 
   if (isDelete){
@@ -72,6 +98,7 @@ async function sendAllForms(isDelete:boolean): Promise<void> {
 }
 
 init();
+console.log("UiForm init")
 </script>
 
 <template>

@@ -15,6 +15,9 @@ import UiFileField from "@/components/UiFileField.vue";
 import UiSelectField from "@/components/UiSelectField.vue";
 import UiCardView from "@/components/UiCardView.vue";
 import UiCardText from "@/components/UiCardText.vue";
+import UiSwitchField from "@/components/UiSwitchField.vue";
+import UiDateField from "@/components/UiDateField.vue";
+import UiTextAreaField from "@/components/UiTextAreaField.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -28,6 +31,9 @@ const props = defineProps<{
   <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
+  <ui-text-area-field v-else-if="props.ui.type === 'TextAreaField'" :ui="props.ui"/>
+  <ui-switch-field v-else-if="props.ui.type === 'SwitchField'" :ui="props.ui"/>
+  <ui-date-field v-else-if="props.ui.type === 'DateField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>
   <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>

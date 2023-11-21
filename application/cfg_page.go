@@ -26,6 +26,9 @@ func (c *Configurator) Page(p ui.Pager) *Configurator {
 		panic(err)
 	}
 	c.uiApp.Pages = c.uiApp.Pages.AppendAll(p)
+	if err := p.Validate(); err != nil {
+		panic(err)
+	}
 	return c
 }
 

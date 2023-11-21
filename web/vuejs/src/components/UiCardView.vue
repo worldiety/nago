@@ -18,19 +18,19 @@ const props = defineProps<{
             max-width="344"
             :title="card.title"
             :subtitle="card.subtitle"
-            :prepend-icon="card.prependIcon.name"
-            :append-icon="card.appendIcon.name"
+            :prepend-icon="card.prependIcon?.name"
+            :append-icon="card.appendIcon?.name"
         >
 
 
           <ui-generic v-if="card.content" :ui="card.content" />
 
-          <v-card-actions v-if="card.actions.length>0">
+          <v-card-actions v-if="card.actions?.length>0">
 
             <v-btn v-for="btn in card.actions"
                 variant="text"
 
-                @click="router.push(btn.action.target)"
+                @click="router.push(btn.action?.target)"
             >
               {{btn.caption}}
             </v-btn>

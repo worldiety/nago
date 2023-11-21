@@ -41,6 +41,7 @@ type Pager interface {
 	Configure(r router)
 	Authenticated() bool
 	Pattern() string
+	Validate() error
 }
 
 type Page[Params any] struct {
@@ -50,6 +51,20 @@ type Page[Params any] struct {
 	Children        slice.Slice[Component[Params]]
 	Navigation      slice.Slice[PageNavTarget]
 	Unauthenticated bool // secure by design, requires opt-out
+}
+
+func (p Page[Params]) Validate() error {
+	var err error
+	p.Children.Each(func(idx int, v Component[Params]) {
+		if err != nil {
+			return
+		}
+		if err = v.ComponentID().Validate(); err != nil {
+			return
+		}
+	})
+
+	return err
 }
 
 func (p Page[Params]) Pattern() string {
