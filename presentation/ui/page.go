@@ -55,7 +55,10 @@ type Page[Params any] struct {
 func (p Page[Params]) Pattern() string {
 	var zeroParams Params
 	fields := pathNames(zeroParams)
-	pathParams := "{" + strings.Join(fields, "}/{") + "}"
+	var pathParams string
+	if len(fields) > 0 {
+		pathParams = "{" + strings.Join(fields, "}/{") + "}"
+	}
 
 	return filepath.Join(apiPageSlug, string(p.ID), pathParams)
 }
@@ -96,7 +99,10 @@ func (p Page[P]) renderOpenAPI(r *openapi3.Reflector) {
 func (p Page[P]) Configure(r router) {
 	var zeroParams P
 	fields := pathNames(zeroParams)
-	pathParams := "{" + strings.Join(fields, "}/{") + "}"
+	var pathParams string
+	if len(fields) > 0 {
+		pathParams = "{" + strings.Join(fields, "}/{") + "}"
+	}
 
 	pattern := filepath.Join(apiPageSlug, string(p.ID), pathParams)
 	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {

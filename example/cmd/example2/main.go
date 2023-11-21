@@ -33,6 +33,16 @@ func (p Pet) Identity() PetID {
 	return p.ID
 }
 
+type IntlIke int
+
+type EntByInt struct {
+	ID IntlIke
+}
+
+func (e EntByInt) Identity() IntlIke {
+	return e.ID
+}
+
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
@@ -82,6 +92,23 @@ func main() {
 			WindparkID  string `path:"windpark-id"`
 			Windspargel int    `path:"spargel-id"`
 		}
+
+		cfg.Page(ui.Page[ui.Void]{
+			ID:              "jupp",
+			Unauthenticated: true,
+			Children: slice.Of[ui.Component[ui.Void]](
+				ui.ListView[EntByInt, IntlIke, ui.Void]{
+					ID: "bla",
+					List: func(p ui.Void) (slice.Slice[ui.ListItem[IntlIke]], error) {
+						return slice.Of(ui.ListItem[IntlIke]{
+							ID:    1,
+							Title: "2",
+						}), nil
+
+					},
+				},
+			),
+		})
 
 		cfg.Page(ui.Page[OverParams]{
 			ID:              "overview",
