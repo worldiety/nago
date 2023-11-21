@@ -34,7 +34,7 @@ async function init() {
 
     state.value = State.ShowRoutes;
 
-    
+
     if (router.currentRoute.value.path==="/" && app.index != null && app.index != "") {
       console.log("app requires index rewrite to ", app.index)
       router.replace(app.index)
