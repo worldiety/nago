@@ -48,6 +48,14 @@ func (lv CardView[Params]) configure(parentSlug string, r router) {
 								Type:  "CardText",
 								Value: string(t),
 							}
+						case CardMetric:
+							return cardMetricText{
+								Type:  "CardMetric",
+								Value: t.Value,
+								Icon:  t.Icon,
+							}
+						case nil:
+							return nil
 						default:
 							panic(fmt.Errorf("implement me: %T", t))
 						}
@@ -59,6 +67,7 @@ func (lv CardView[Params]) configure(parentSlug string, r router) {
 							Action:  v.Action,
 						}
 					})),
+					PrimaryAction: v.PrimaryAction,
 				}
 			}))
 		}
@@ -78,17 +87,25 @@ func (lv CardView[Params]) renderOpenAPI(p Params, tag string, parentSlug string
 }
 
 type Card struct {
-	Title       string
-	Subtitle    string
-	PrependIcon Image
-	AppendIcon  Image
-	Content     CardContent
-	Actions     slice.Slice[Button]
+	Title         string
+	Subtitle      string
+	PrependIcon   Image
+	AppendIcon    Image
+	Content       CardContent
+	Actions       slice.Slice[Button]
+	PrimaryAction Action // makes the entire card clickable
 }
 
 type CardContent interface {
 	isCardContent()
 }
+
+type CardMetric struct {
+	Value string
+	Icon  Image
+}
+
+func (CardMetric) isCardContent() {}
 
 type CardText string
 
@@ -99,19 +116,26 @@ type cardText struct {
 	Value string `json:"value"`
 }
 
+type cardMetricText struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+	Icon  Image  `json:"icon"`
+}
+
 type cardViewResponse struct {
 	Type  string `json:"type"`
 	Cards []card `json:"cards"`
 }
 
 type card struct {
-	Type        string   `json:"type"`
-	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle"`
-	Content     any      `json:"content"`
-	Actions     []button `json:"actions"`
-	PrependIcon Image    `json:"prependIcon"`
-	AppendIcon  Image    `json:"appendIcon"`
+	Type          string   `json:"type"`
+	Title         string   `json:"title"`
+	Subtitle      string   `json:"subtitle"`
+	Content       any      `json:"content"`
+	Actions       []button `json:"actions"`
+	PrependIcon   Image    `json:"prependIcon"`
+	AppendIcon    Image    `json:"appendIcon"`
+	PrimaryAction Action   `json:"primaryAction"`
 }
 
 type button struct {

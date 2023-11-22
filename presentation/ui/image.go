@@ -15,7 +15,8 @@ func (image) JSONSchemaAnyOf() []interface{} {
 
 // FontIcon see also https://fonts.google.com/icons, prefixed by mdi- e.g. like "mdi-home".
 type FontIcon struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Color string `json:"color"` // only a hint and may be ignored, e.g. primary, error or a color code?
 }
 
 func (n FontIcon) isImage() {}

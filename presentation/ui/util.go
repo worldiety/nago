@@ -78,9 +78,23 @@ func parseParams[P any](request *http.Request) P {
 					}
 
 					v.Field(i).SetInt(int64(x))
-				}
-				if f.Type.Kind() == reflect.String {
+				case reflect.Int64:
+					x, err := strconv.ParseInt(pathVarValue, 10, 64)
+					if err != nil {
+						slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+					}
 
+					v.Field(i).SetInt(x)
+
+				case reflect.Uint64:
+					x, err := strconv.ParseUint(pathVarValue, 10, 64)
+					if err != nil {
+						slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+					}
+
+					v.Field(i).SetUint(x)
+				default:
+					slog.Default().Error("cannot parse path variable '%s' of type '%T' with value '%v'", pathVar, v.Field(i).Interface(), pathVarValue)
 				}
 
 			}

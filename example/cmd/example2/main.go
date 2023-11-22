@@ -118,8 +118,9 @@ func main() {
 					Init: func(void ui.Void) MyForm {
 						return MyForm{
 							Name: ui.TextField{
-								Label: "loldel",
-								Hint:  "extra",
+								Label:    "loldel",
+								Hint:     "extra",
+								Disabled: true,
 							},
 							Check: ui.SwitchField{
 								Label: "super switch",
@@ -298,9 +299,26 @@ func main() {
 							},
 
 							ui.Card{
-								Title:       "Helden2",
-								Subtitle:    "Super low code2",
-								Content:     ui.CardText("Toller content auf Kachel2"),
+								Title:         "a",
+								Content:       ui.CardText("Toller content auf Kachel"),
+								PrependIcon:   ui.FontIcon{Name: "mdi-check"},
+								AppendIcon:    ui.FontIcon{Name: "mdi-account"},
+								PrimaryAction: ui.Redirect{Target: "/jupp"},
+							},
+
+							ui.Card{
+								Title: "Super Titel",
+								Content: ui.CardMetric{
+									Value: "101%",
+									Icon:  ui.FontIcon{Name: "mdi-alert-circle", Color: "error"},
+								},
+								PrimaryAction: ui.Redirect{Target: "/jupp"},
+							},
+
+							ui.Card{
+								Title:    "Helden2",
+								Subtitle: "Super low code2",
+								//Content:     ui.CardText("Toller content auf Kachel2"),
 								PrependIcon: ui.FontIcon{Name: "mdi-alarm"},
 								AppendIcon:  ui.FontIcon{Name: "mdi-airport"},
 								Actions: slice.Of(

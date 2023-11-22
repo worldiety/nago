@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import type {CardView, TextElement} from '@/shared/model';
+import type {CardView} from '@/shared/model';
 import router from "@/router";
 import UiGeneric from "@/components/UiGeneric.vue";
 
 const props = defineProps<{
-    ui: CardView;
+  ui: CardView;
 }>();
 </script>
 
@@ -12,27 +12,33 @@ const props = defineProps<{
 
   <v-container>
     <v-row align="center" justify="center">
-      <v-col cols="auto" v-for="card in props.ui.cards">
+      <v-col cols="auto"
+             v-for="card in props.ui.cards">
+
         <v-card
             class="mx-auto"
-            max-width="344"
+            max-width="368"
+            min-width="300"
             :title="card.title"
             :subtitle="card.subtitle"
             :prepend-icon="card.prependIcon?.name"
             :append-icon="card.appendIcon?.name"
+            :href="card.primaryAction?.target"
         >
 
 
-          <ui-generic v-if="card.content" :ui="card.content" />
+          <ui-generic v-if="card.content" :ui="card.content"/>
+
+
 
           <v-card-actions v-if="card.actions?.length>0">
 
             <v-btn v-for="btn in card.actions"
-                variant="text"
+                   variant="text"
 
-                @click="router.push(btn.action?.target)"
+                   @click="router.push(btn.action?.target)"
             >
-              {{btn.caption}}
+              {{ btn.caption }}
             </v-btn>
           </v-card-actions>
 

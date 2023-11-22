@@ -18,6 +18,7 @@ import UiCardText from "@/components/UiCardText.vue";
 import UiSwitchField from "@/components/UiSwitchField.vue";
 import UiDateField from "@/components/UiDateField.vue";
 import UiTextAreaField from "@/components/UiTextAreaField.vue";
+import UiCardMetricText from "@/components/UiCardMetricText.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -29,6 +30,7 @@ const props = defineProps<{
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
   <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
   <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
+  <ui-card-metric-text v-else-if="props.ui.type === 'CardMetric'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
   <ui-text-area-field v-else-if="props.ui.type === 'TextAreaField'" :ui="props.ui"/>

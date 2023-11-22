@@ -24,6 +24,7 @@ const props = defineProps<{
         :error-messages="props.ui.error"
         :hint="props.ui.hint"
         :label="props.ui.label"
+        :disabled="props.ui.disabled"
     ></v-file-input>
   </v-responsive>
 

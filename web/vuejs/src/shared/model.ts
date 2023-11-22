@@ -39,6 +39,7 @@ export interface Card {
     prependIcon: FontIcon
     appendIcon: FontIcon
     actions: Button[]
+    primaryAction: Action
 
 }
 
@@ -53,6 +54,12 @@ export type Action = Redirect
 export interface Redirect {
     type: 'Redirect'
     target: string
+}
+
+export interface CardMetricText {
+    type: 'CardMetricText';
+    value: string;
+    icon: Image|null
 }
 
 export interface TextElement {
@@ -79,6 +86,7 @@ export type Image = FontIcon;
 export interface FontIcon {
     type: 'FontIcon';
     name: string;
+    color: string;
 }
 
 export type NavAction = Navigation;
