@@ -67,11 +67,33 @@ export interface TextElement {
     value: string;
 }
 
+export interface TimelineElement {
+    type: 'Timeline';
+    items: TimelineItem[];
+}
+
+export interface TimelineItem{
+    type: 'TimelineItem'
+    icon: Image
+    color: string|null
+    title: string
+    alternateDotText : string|null
+    target: string
+}
+
+
 export interface Scaffold {
     type: 'Scaffold';
     children: URL[];
     title: string;
     navigation: NavItem[];
+    breadcrumbs: Breadcrumb[]
+}
+
+export interface Breadcrumb {
+    title : string
+    href: string
+    disabled:boolean
 }
 
 export interface NavItem {

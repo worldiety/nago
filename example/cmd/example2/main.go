@@ -158,7 +158,20 @@ func main() {
 			ID:              "overview",
 			Unauthenticated: true,
 			Title:           "Übersicht",
-			Description:     "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
+			Breadcrumbs: slice.Of(
+				ui.Breadcrumb{
+					Title:  "A",
+					Target: "/jupp",
+				},
+				ui.Breadcrumb{
+					Title:  "B",
+					Target: "/jupp",
+				},
+				ui.Breadcrumb{
+					Title: "C",
+				},
+			),
+			Description: "Diese Übersicht zeigt alle Stadtmusikanten an. Der Nutzer kann zudem Löschen und in die Detailansicht.",
 			Navigation: slice.Of(
 				ui.PageNavTarget{
 					Target: "overview/42/60", // TODO fix with typesafe params? problem: package cycles in Go
@@ -167,6 +180,27 @@ func main() {
 				},
 			),
 			Children: slice.Of[ui.Component[OverParams]](
+				ui.Timeline[OverParams]{
+					ID: "super-time",
+					Items: slice.Of(
+						ui.TimelineItem{
+							Title: "Register",
+						},
+						ui.TimelineItem{
+							Title: "Name",
+							Icon:  ui.FontIcon{Name: "mdi-alert"},
+						},
+						ui.TimelineItem{
+							Title: "Adresse",
+							Color: "error",
+						},
+						ui.TimelineItem{
+							Title:  "Art",
+							Target: "/jupp",
+						},
+					),
+				},
+
 				ui.ListView[Person, PID, OverParams]{
 					ID:          "personen",
 					Description: "Kleine Listenansicht",

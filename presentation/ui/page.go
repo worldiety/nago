@@ -44,6 +44,17 @@ type Pager interface {
 	Validate() error
 }
 
+type Breadcrumb struct {
+	Title  string
+	Target Target
+}
+
+type breadcrumb struct {
+	Title    string `json:"title"`
+	Disabled bool   `json:"disabled"`
+	Href     string `json:"href"`
+}
+
 type Page[Params any] struct {
 	ID              PageID
 	Title           string
@@ -51,6 +62,7 @@ type Page[Params any] struct {
 	Children        slice.Slice[Component[Params]]
 	Navigation      slice.Slice[PageNavTarget]
 	Unauthenticated bool // secure by design, requires opt-out
+	Breadcrumbs     slice.Slice[Breadcrumb]
 }
 
 func (p Page[Params]) Validate() error {
@@ -140,6 +152,12 @@ func (p Page[P]) Configure(r router) {
 					Title:  v.Title,
 				}
 			})),
+			Breadcrumbs: slice.UnsafeUnwrap(slice.Map(p.Breadcrumbs, func(idx int, v Breadcrumb) breadcrumb {
+				return breadcrumb{
+					Title: v.Title,
+					Href:  string(v.Target),
+				}
+			})),
 		})
 	})
 
@@ -158,10 +176,11 @@ type Target string // either an absolute link or a pageid or something relativ
 
 // actual page response
 type pageResponse struct {
-	Type       TypeDiscriminator `json:"type" pattern:"page" description:"This is always 'page'."`
-	Title      string            `json:"title" description:"The title of the page."`
-	Children   []Link            `json:"children" description:"A bunch of dynamic subcomponents links."`
-	Navigation []pageNavTarget   `json:"navigation" description:"The primary navigation targets."`
+	Type        TypeDiscriminator `json:"type" pattern:"page" description:"This is always 'page'."`
+	Title       string            `json:"title" description:"The title of the page."`
+	Children    []Link            `json:"children" description:"A bunch of dynamic subcomponents links."`
+	Navigation  []pageNavTarget   `json:"navigation" description:"The primary navigation targets."`
+	Breadcrumbs []breadcrumb      `json:"breadcrumbs" description:"Optional breadcrumb targets."`
 }
 
 type pageNavTarget struct {

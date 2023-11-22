@@ -25,7 +25,14 @@ init()
 
 <template>
   <v-app class="rounded rounded-md">
-    <v-app-bar :title="props.ui.title"></v-app-bar>
+    <v-app-bar :title="props.ui.title">
+
+      <v-breadcrumbs :items="props.ui.breadcrumbs">
+      </v-breadcrumbs>
+
+    </v-app-bar>
+
+
 
     <v-navigation-drawer expand-on-hover rail>
       <v-list>
@@ -44,6 +51,7 @@ init()
 
     <v-main class="d-flex align-center justify-center" style="min-height: 300px">
       <v-container>
+
            <ui-generic v-for="e in children" :ui="e" />
       </v-container>
     </v-main>
