@@ -21,7 +21,7 @@ type Application struct {
 func (a *Application) ConfigureRouter(router chi.Router) {
 	router.Handle("/api/doc/*", http.StripPrefix("/api/doc", swaggerui.Handler(a.renderOpenAPI())))
 	a.Pages.Each(func(idx int, v Pager) {
-		v.Configure(router)
+		v.Configure(a, router)
 	})
 
 	router.Get(apiAppSlug, func(writer http.ResponseWriter, request *http.Request) {

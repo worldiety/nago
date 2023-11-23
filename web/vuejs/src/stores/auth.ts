@@ -1,8 +1,8 @@
-import type { User} from 'oidc-client-ts';
-import { UserManager } from 'oidc-client-ts';
-import { defineStore } from 'pinia';
-import type { Ref} from 'vue';
-import { ref } from 'vue';
+import type {User} from 'oidc-client-ts';
+import {UserManager} from 'oidc-client-ts';
+import {defineStore} from 'pinia';
+import type {Ref} from 'vue';
+import {ref} from 'vue';
 
 /**
  * After logging in, we will redirect to the URL that is in localstorage under this key.
@@ -43,52 +43,36 @@ export interface AuthStoreState {
      * Trigger a sign-out with a redirect to the configured post_logout_redirect_uri.
      */
     signOut: () => Promise<void>;
+
+    init: (manager: UserManager) => void;
 }
+
 
 /**
  * Create a store for managing authentication.
  * See {@link AuthStoreState} for operations you can do with it.
  */
 export const useAuth = defineStore<string, AuthStoreState>('authentication', () => {
-    const userManager = new UserManager({
-        authority: 'http://localhost:8080/realms/nago',
-        client_id: 'nago',
-        redirect_uri: 'http://localhost:5173/oauth',
-        post_logout_redirect_uri: 'http://localhost:5173',
-    });
+    /*const userManager = new UserManager({
+        authority: 'http://localhost:8080/realms/master',
+        client_id: 'testclientid',
+        redirect_uri: 'http://localhost:8090/oauth',
+        post_logout_redirect_uri: 'http://localhost:8090',
+    });*/
+    let userManager: UserManager | null = null;
 
     // Reactive value of the currently signed-in user.
     const user: Ref<User | null> = ref(null);
 
-    // getUser will return the stored user. We will load the value into this store here.
-    userManager.getUser().then((u) => {
-        if (u?.expired) {
-            user.value = null;
-        } else {
-            user.value = u;
-        }
-    });
 
-    // Add some event listeners for when the user signed in/out to update the reactive value.
-    userManager.events.addUserLoaded((u) => {
-        user.value = u;
-    });
-    userManager.events.addUserSignedIn(async () => {
-        user.value = await userManager.getUser();
-    });
-    userManager.events.addUserUnloaded(() => {
-        user.value = null;
-    });
-    userManager.events.addUserSignedOut(() => {
-        user.value = null;
-    });
-    userManager.events.addAccessTokenExpired(() => {
-        user.value = null;
-    });
 
     // Now define the functions needed to build the AuthStoreState.
 
     async function signIn(redirectAfterSignin?: string) {
+        if (userManager==null){
+            return
+        }
+
         // Store a URL to redirect to after signing in. This will be read in the signInCallback.
         const state = redirectAfterSignin || window.location.href;
         localStorage.setItem(REDIRECT_AFTER_LOGIN_STORAGE_KEY, state);
@@ -96,10 +80,18 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
     }
 
     async function signOut() {
+        if (userManager==null){
+            return
+        }
+
         await userManager.signoutRedirect();
     }
 
     async function signInCallback() {
+        if (userManager==null){
+            return null
+        }
+
         // Handle token exchange
         await userManager.signinCallback();
 
@@ -110,7 +102,43 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
     }
 
     async function getUser() {
+        if (userManager==null){
+            return null
+        }
         return await userManager.getUser();
+    }
+
+    function init(manager:UserManager):void{
+        userManager = manager
+
+        // getUser will return the stored user. We will load the value into this store here.
+        userManager.getUser().then((u) => {
+            if (u?.expired) {
+                user.value = null;
+            } else {
+                user.value = u;
+            }
+        });
+
+        // Add some event listeners for when the user signed in/out to update the reactive value.
+        userManager.events.addUserLoaded((u) => {
+            user.value = u;
+        });
+        userManager.events.addUserSignedIn(async () => {
+            if (userManager==null){
+                return
+            }
+            user.value = await userManager.getUser();
+        });
+        userManager.events.addUserUnloaded(() => {
+            user.value = null;
+        });
+        userManager.events.addUserSignedOut(() => {
+            user.value = null;
+        });
+        userManager.events.addAccessTokenExpired(() => {
+            user.value = null;
+        });
     }
 
     return {
@@ -118,6 +146,7 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
         signInCallback,
         signOut,
         getUser,
+        init,
         user,
     };
 });

@@ -2,8 +2,11 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggest/openapi-go"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"net/http"
 	"reflect"
@@ -59,10 +62,13 @@ func interpolatePathVariables[Params any](pattern string, r *http.Request) strin
 	return pattern
 }
 
-func parseParams[P any](request *http.Request) P {
+var userT = reflect.TypeOf((*auth.User)(nil)).Elem()
+
+func parseParams[P any](request *http.Request, authRequired bool) P {
 	var params P
 	t := reflect.TypeOf(params)
 	v := reflect.ValueOf(&params).Elem()
+
 	for _, pathVar := range pathNames(params) {
 		pathVarValue := chi.URLParam(request, pathVar)
 		for i := 0; i < t.NumField(); i++ {
@@ -94,11 +100,33 @@ func parseParams[P any](request *http.Request) P {
 
 					v.Field(i).SetUint(x)
 				default:
-					slog.Default().Error("cannot parse path variable '%s' of type '%T' with value '%v'", pathVar, v.Field(i).Interface(), pathVarValue)
+					logging.FromContext(request.Context()).Error(fmt.Sprintf("cannot parse path variable '%s' of type '%T' with value '%v'", pathVar, v.Field(i).Interface(), pathVarValue))
 				}
 
 			}
+
 		}
+	}
+
+	user := auth.FromContext(request.Context())
+	if authRequired && user == nil {
+		logging.FromContext(request.Context()).Error("client did not provide a valid user, aborting request")
+		panic(fmt.Errorf("security abort"))
+	}
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if s := f.Tag.Get("path"); s != "" {
+			continue
+		}
+
+		if f.Type == userT {
+			if user != nil {
+				v.Field(i).Set(reflect.ValueOf(user))
+				continue
+			}
+		}
+		// not a path param
+		logging.FromContext(request.Context()).Error(fmt.Sprintf("cannot parse or inject into unsupported field %T.%s of type %v", params, f.Name, f.Type.PkgPath()+"."+f.Type.Name()))
 	}
 
 	//TODO if params require a user and no user is available we must raise a not-authorized http response

@@ -2,6 +2,7 @@
 import type {ListView, ListViewList, LVLinks} from '@/shared/model';
 import {ref} from 'vue';
 import * as url from "url";
+import {useHttp, userHeaders} from "@/shared/http";
 
 const props = defineProps<{
   ui: ListView;
@@ -14,9 +15,12 @@ const showDeleteDialog = ref<boolean>(false);
 const canSelect = ref<boolean>(false);
 const selectedItems = ref<Set<string>>(new Set<string>());
 
+const http = useHttp();
+const headers = userHeaders();
+
 async function init(): Promise<void> {
   if (props.ui.links.list!=null){
-    listModel.value = await fetch(props.ui.links.list).then((r) => r.json());
+    listModel.value = await http.request(props.ui.links.list).then((r) => r.json());
   }
   console.log(listModel.value)
   if (props.ui.links.delete != null) {
@@ -27,9 +31,11 @@ async function init(): Promise<void> {
 }
 
 async function deleteItems():Promise<void> {
+  let h = await headers.headers()
   await fetch(props.ui.links.delete,{
     method:"POST",
-    body:JSON.stringify({"identifiers":Array.from(selectedItems.value.values())})
+    body:JSON.stringify({"identifiers":Array.from(selectedItems.value.values())}),
+    headers:h,
   })
   await init()
 }

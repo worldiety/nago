@@ -21,13 +21,13 @@ func (t Table[E, ID, Params]) ComponentID() ComponentID {
 	return t.ID
 }
 
-func (t Table[E, ID, Params]) configure(parentSlug string, r router) {
+func (t Table[E, ID, Params]) configure(app *Application, authRequired bool, parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(t.ID))
 	metaT := tableResponse{Type: "Table"}
 	if t.List != nil {
 		metaT.Links.List = Link(filepath.Join(pattern, "list"))
 		r.MethodFunc(http.MethodGet, string(metaT.Links.List), func(writer http.ResponseWriter, request *http.Request) {
-			params := parseParams[Params](request)
+			params := parseParams[Params](request, authRequired)
 			items, _ := t.List(params)
 			resp := tableDataListResponse{}
 			if t.Headers.Len() == 0 && items.Len() > 0 {

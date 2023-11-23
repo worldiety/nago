@@ -7,6 +7,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"net/http"
 	"os"
@@ -72,12 +73,15 @@ func (c *Configurator) keycloakMiddleware(h http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 		token = strings.TrimPrefix(token, "Bearer ")
 
-		user, err := c.validateToken(c.auth.keycloak, r.Context(), token)
-		if err != nil {
-			c.defaultLogger().Error("validate token", "error", err)
-		} else {
-			ctx := auth.WithContext(r.Context(), user)
-			r = r.WithContext(ctx)
+		if token != "" {
+			// we are protecting the access when parsing the page params, see also ui/utils.go
+			user, err := c.validateToken(c.auth.keycloak, r.Context(), token)
+			if err != nil {
+				logging.FromContext(r.Context()).Error("cannot validate token", slog.Any("err", err))
+			} else {
+				ctx := auth.WithContext(r.Context(), user)
+				r = r.WithContext(ctx)
+			}
 		}
 
 		h.ServeHTTP(w, r)

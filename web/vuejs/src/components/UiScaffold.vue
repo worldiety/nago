@@ -3,17 +3,19 @@ import type {Scaffold} from '@/shared/model';
 import {UiElement} from "@/shared/model";
 import {ref} from 'vue';
 import UiGeneric from "@/components/UiGeneric.vue";
+import {useHttp} from "@/shared/http";
 
 const props = defineProps<{
   ui: Scaffold;
 }>();
 
 const children = ref<UiElement[]>()
+const http = useHttp()
 
 async function init(): Promise<void> {
   let res = new Array<UiElement>();
   for (const url of props.ui.children) {
-    const e = await fetch(url).then((r) => r.json());
+    const e = await http.request(url).then((r) => r.json());
     res.push(e)
   }
   children.value = res

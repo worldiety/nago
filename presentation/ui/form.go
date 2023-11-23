@@ -25,7 +25,7 @@ func (f Form[FormType, PageParams]) ComponentID() ComponentID {
 	return f.ID
 }
 
-func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
+func (f Form[FormType, PageParams]) configure(app *Application, authRequired bool, parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(f.ID))
 	metaForm := formResponse{Type: "Form"}
 
@@ -33,7 +33,7 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 		metaForm.Links.Load = Link(filepath.Join(pattern, "load"))
 		r.MethodFunc(http.MethodGet, string(metaForm.Links.Load), func(writer http.ResponseWriter, request *http.Request) {
 			loadResp := formLoadResponse{}
-			params := parseParams[PageParams](request)
+			params := parseParams[PageParams](request, authRequired)
 			var zeroForm FormType
 			if f.Init != nil {
 				zeroForm = f.Init(params)
@@ -94,7 +94,7 @@ func (f Form[FormType, PageParams]) configure(parentSlug string, r router) {
 			}
 
 			var zeroForm FormType
-			pageParams := parseParams[PageParams](r)
+			pageParams := parseParams[PageParams](r, authRequired)
 			if f.Init != nil {
 				zeroForm = f.Init(pageParams)
 			}

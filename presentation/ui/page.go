@@ -38,7 +38,7 @@ type Pager interface {
 	renderOpenAPI(r *openapi3.Reflector)
 	PageID() PageID
 	PageDescription() string
-	Configure(r router)
+	Configure(app *Application, r router)
 	Authenticated() bool
 	Pattern() string
 	Validate() error
@@ -123,7 +123,7 @@ func (p Page[P]) renderOpenAPI(r *openapi3.Reflector) {
 	})
 }
 
-func (p Page[P]) Configure(r router) {
+func (p Page[P]) Configure(app *Application, r router) {
 	var zeroParams P
 	fields := pathNames(zeroParams)
 	var pathParams string
@@ -162,7 +162,7 @@ func (p Page[P]) Configure(r router) {
 	})
 
 	p.Children.Each(func(idx int, v Component[P]) {
-		v.configure(pattern, r)
+		v.configure(app, !p.Unauthenticated, pattern, r)
 	})
 }
 

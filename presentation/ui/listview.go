@@ -32,13 +32,13 @@ func (lv ListView[E, ID, Params]) ComponentID() ComponentID {
 	return lv.ID
 }
 
-func (lv ListView[E, ID, Params]) configure(parentSlug string, r router) {
+func (lv ListView[E, ID, Params]) configure(app *Application, authRequired bool, parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(lv.ID))
 	metaLV := listViewResponse{Type: "ListView"}
 	if lv.List != nil {
 		metaLV.Links.List = Link(filepath.Join(pattern, "list"))
 		r.MethodFunc(http.MethodGet, string(metaLV.Links.List), func(writer http.ResponseWriter, request *http.Request) {
-			params := parseParams[Params](request)
+			params := parseParams[Params](request, authRequired)
 			items, _ := lv.List(params)
 			s := slice.UnsafeUnwrap(items)
 			resp := response[[]ListItem[ID]]{
@@ -51,7 +51,7 @@ func (lv ListView[E, ID, Params]) configure(parentSlug string, r router) {
 	if lv.Delete != nil {
 		metaLV.Links.Delete = Link(filepath.Join(pattern, "delete-by-ids"))
 		r.MethodFunc(http.MethodPost, string(metaLV.Links.Delete), func(writer http.ResponseWriter, request *http.Request) {
-			params := parseParams[Params](request)
+			params := parseParams[Params](request, authRequired)
 
 			var idents deleteRequest[ID]
 			dec := json.NewDecoder(request.Body)

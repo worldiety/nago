@@ -37,6 +37,8 @@ router.beforeEach(async (to, from, next) => {
             next();
         } else {
             await auth.signIn(to.fullPath);
+            //next(false)
+            console.log("requires authentication but access token is null",accessToken)
             return;
         }
     }

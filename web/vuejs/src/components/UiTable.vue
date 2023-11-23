@@ -3,6 +3,7 @@ import type {TableElement, TableListResponse} from '@/shared/model';
 import {ref} from 'vue';
 
 import router from "@/router";
+import {useHttp} from "@/shared/http";
 
 const props = defineProps<{
   ui: TableElement;
@@ -11,8 +12,9 @@ const props = defineProps<{
 const tableModel = ref<TableListResponse>({"headers": [], "rows": []});
 
 async function init(): Promise<void> {
+  const http = useHttp();
   if (props.ui.links.list != null) {
-    tableModel.value = await fetch(props.ui.links.list).then((r) => r.json());
+    tableModel.value = await http.request(props.ui.links.list).then((r) => r.json());
   }
   console.log("meh", tableModel.value.headers.values())
 }
@@ -58,16 +60,28 @@ const search = ref<string>("")
   >
 
     <template v-slot:text>
-      <v-text-field
-          v-model="search"
-          label="Stichwort Tabellenfilter"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          clearable
-          variant="outlined"
-          hide-details
-      ></v-text-field>
+      <v-row>
+        <v-text-field
+            v-model="search"
+            label="Stichwort Tabellenfilter"
+            prepend-inner-icon="mdi-magnify"
+            single-line
+            clearable
+            variant="outlined"
+            hide-details
+        ></v-text-field>
+
+        <v-btn
+            color="primary"
+            dark
+            class="mb-2"
+            v-bind="props"
+        >
+          New Item
+        </v-btn>
+      </v-row>
     </template>
+
 
     <v-data-table
         :headers="tableModel.headers"
@@ -79,6 +93,32 @@ const search = ref<string>("")
 
         items-per-page-text="Zeilen pro Seite"
         :pageText="'{0}-{1} von {2}'"
-    ></v-data-table>
+    >
+
+      <template v-slot:item.actions="{ item }">
+        <v-icon
+            size="small"
+            class="me-2"
+            @click="editItem(item)"
+        >
+          mdi-pencil
+        </v-icon>
+        <v-icon
+            size="small"
+            @click="deleteItem(item)"
+        >
+          mdi-delete
+        </v-icon>
+      </template>
+      <template v-slot:no-data>
+        <v-btn
+            color="primary"
+            @click="initialize"
+        >
+          Reset
+        </v-btn>
+      </template>
+
+    </v-data-table>
   </v-card>
 </template>

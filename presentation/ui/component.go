@@ -24,7 +24,7 @@ func (p ComponentID) Validate() error {
 
 type Component[Params any] interface {
 	ComponentID() ComponentID
-	configure(parentSlug string, r router)
+	configure(app *Application, authRequired bool, parentSlug string, r router)
 	renderOpenAPI(p Params, tag string, parentSlug string, r *openapi3.Reflector)
 }
 

@@ -18,7 +18,7 @@ func (t Timeline[Params]) ComponentID() ComponentID {
 	return t.ID
 }
 
-func (t Timeline[Params]) configure(parentSlug string, r router) {
+func (t Timeline[Params]) configure(app *Application, authRequired bool, parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(t.ID))
 	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
 		tResp := timelineResponse{

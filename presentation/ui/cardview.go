@@ -19,14 +19,14 @@ func (lv CardView[Params]) ComponentID() ComponentID {
 	return lv.ID
 }
 
-func (lv CardView[Params]) configure(parentSlug string, r router) {
+func (lv CardView[Params]) configure(app *Application, authRequired bool, parentSlug string, r router) {
 	pattern := filepath.Join(parentSlug, string(lv.ID))
 
 	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
 		metaCV := cardViewResponse{Type: "CardView"}
 
 		if lv.List != nil {
-			params := parseParams[Params](request)
+			params := parseParams[Params](request, authRequired)
 			list, err := lv.List(params)
 			if err != nil {
 				slog.Default().Error("failed to list cards", slog.Any("err", err))

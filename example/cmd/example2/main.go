@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
@@ -55,6 +56,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
 
+		cfg.KeycloakAuthentication()
 		persons := kv.NewCollection[Person, PID](cfg.Store("test2-db"), "persons")
 		err := persons.Save(
 			Person{
@@ -105,6 +107,7 @@ func main() {
 		type OverParams struct {
 			WindparkID  string `path:"windpark-id"`
 			Windspargel int    `path:"spargel-id"`
+			User        auth.User
 		}
 
 		cfg.Index("/jupp")
@@ -156,7 +159,7 @@ func main() {
 
 		cfg.Page(ui.Page[OverParams]{
 			ID:              "overview",
-			Unauthenticated: true,
+			Unauthenticated: false,
 			Title:           "Übersicht",
 			Breadcrumbs: slice.Of(
 				ui.Breadcrumb{
@@ -319,8 +322,8 @@ func main() {
 					List: func(p OverParams) (slice.Slice[ui.Card], error) {
 						return slice.Of(
 							ui.Card{
-								Title:       "Helden",
-								Subtitle:    "Super low code",
+								Title:       "Helden" + p.User.UserID(),
+								Subtitle:    "Super low code" + p.User.Email(),
 								Content:     ui.CardText("Toller content auf Kachel"),
 								PrependIcon: ui.FontIcon{Name: "mdi-check"},
 								AppendIcon:  ui.FontIcon{Name: "mdi-account"},

@@ -1,5 +1,19 @@
 import { useAuth } from '@/stores/auth';
 
+export  function userHeaders(){
+    async function headers():Promise<HeadersInit>{
+        const auth = useAuth();
+        const user = await auth.getUser();
+        return {
+            Authorization: `Bearer ${user?.access_token}`,
+        }
+    }
+
+    return {
+        headers
+    }
+}
+
 /**
  * Simple hook for making requests.
  * Automatically asks users to sign in if a 401 is received.
@@ -14,7 +28,7 @@ export function useHttp() {
      * @param body The body to send in the request.
      *             "undefined" will be an empty body, everything else will be serialized to JSON.
      */
-    async function request(url: string, method = 'GET', body: undefined | any = undefined) {
+    async function request(url: string|URL, method = 'GET', body: undefined | any = undefined) {
         const user = await auth.getUser();
 
         let bodyData = undefined;

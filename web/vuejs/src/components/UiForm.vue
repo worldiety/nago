@@ -3,7 +3,7 @@ import type {Form, FormField} from '@/shared/model';
 import {ref} from "vue";
 import UiGeneric from "@/components/UiGeneric.vue";
 import router from "@/router";
-import * as http from "http";
+import {useHttp, userHeaders} from "@/shared/http";
 
 const props = defineProps<{
   ui: Form;
@@ -11,9 +11,13 @@ const props = defineProps<{
 
 const formFields = ref<FormField[]>(new Array<FormField>())
 
+const http = useHttp();
+const headers = userHeaders();
+
+
 async function init(): Promise<void> {
   if (props.ui.links.load != null) {
-    const resp = await fetch(props.ui.links.load).then((r) => r.json())
+    const resp = await http.request(props.ui.links.load).then((r) => r.json())
     formFields.value = resp['fields']
   }else{
     console.log("warning: form has no load function defined, this is not allowed")
@@ -83,7 +87,8 @@ async function sendAllForms(isDelete:boolean): Promise<void> {
 
   console.log(formData)
 
-  const uploadRes = await fetch(props.ui.links.submit!, {method:'POST',body: formData}).then((r)=>r.json())
+  const h = await headers.headers()
+  const uploadRes = await fetch(props.ui.links.submit!, {method:'POST',body: formData,headers:h}).then((r)=>r.json())
   console.log(uploadRes)
 
   if (uploadRes.type === "FormValidationError"){

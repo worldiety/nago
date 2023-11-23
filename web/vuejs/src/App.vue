@@ -3,6 +3,8 @@ import {RouterView, useRoute, useRouter} from 'vue-router';
 import Page from '@/views/Page.vue';
 import {ref} from 'vue';
 import type {PagesConfiguration} from '@/shared/model';
+import {useAuth} from "@/stores/auth";
+import {UserManager} from "oidc-client-ts";
 
 
 const router = useRouter();
@@ -14,12 +16,22 @@ enum State {
   Error,
 }
 
+const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
 async function init() {
   try {
+
     const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
     const app: PagesConfiguration = await response.json();
+
+    auth.init(new UserManager({
+      authority: 'http://localhost:8080/realms/master',
+      client_id: 'testclientid',
+      redirect_uri: 'http://localhost:8090/oauth',
+      post_logout_redirect_uri: 'http://localhost:8090',
+    }))
+
 
     app.pages.forEach((page) => {
       let anchor = page.anchor.replaceAll("{", ":")
@@ -39,6 +51,8 @@ async function init() {
       console.log("app requires index rewrite to ", app.index)
       router.replace(app.index)
     }
+
+
 
   } catch (e) {
     console.log(e);
