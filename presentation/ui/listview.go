@@ -39,7 +39,10 @@ func (lv ListView[E, ID, Params]) configure(app *Application, authRequired bool,
 		metaLV.Links.List = Link(filepath.Join(pattern, "list"))
 		r.MethodFunc(http.MethodGet, string(metaLV.Links.List), func(writer http.ResponseWriter, request *http.Request) {
 			params := parseParams[Params](request, authRequired)
-			items, _ := lv.List(params)
+			items, err := lv.List(params)
+			if err != nil {
+				panic(err) // TODO Torben
+			}
 			s := slice.UnsafeUnwrap(items)
 			resp := response[[]ListItem[ID]]{
 				Data: s,

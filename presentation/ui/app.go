@@ -16,6 +16,7 @@ type Application struct {
 	Description string
 	Pages       slice.Slice[Pager]
 	IndexTarget Target
+	OIDC        []OIDCProvider
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {
@@ -25,7 +26,7 @@ func (a *Application) ConfigureRouter(router chi.Router) {
 	})
 
 	router.Get(apiAppSlug, func(writer http.ResponseWriter, request *http.Request) {
-		writeJson(writer, request, appResponse{
+		res := appResponse{
 			Name:        a.Name,
 			Description: a.Description,
 			Index:       string(a.IndexTarget),
@@ -37,7 +38,10 @@ func (a *Application) ConfigureRouter(router chi.Router) {
 					Anchor:        "/" + strings.TrimPrefix(v.Pattern(), apiPageSlug),
 				}
 			})),
-		})
+			OIDC: a.OIDC,
+		}
+
+		writeJson(writer, request, res)
 	})
 }
 
@@ -66,10 +70,11 @@ func (a *Application) renderOpenAPI() []byte {
 }
 
 type appResponse struct {
-	Name        string    `json:"name" description:"The name of the entire application."`
-	Pages       []appPage `json:"pages" description:"All known and configured pages. Not all pages are directly addressable and therefore require parameters."`
-	Description string    `json:"description" description:"The applications purpose description."`
-	Index       string    `json:"index" description:"The default index page target to load."`
+	Name        string         `json:"name" description:"The name of the entire application."`
+	Pages       []appPage      `json:"pages" description:"All known and configured pages. Not all pages are directly addressable and therefore require parameters."`
+	Description string         `json:"description" description:"The applications purpose description."`
+	Index       string         `json:"index" description:"The default index page target to load."`
+	OIDC        []OIDCProvider `json:"oidc"`
 }
 
 type appPage struct {
@@ -79,4 +84,13 @@ type appPage struct {
 	Anchor        string `json:"anchor"`
 }
 
-type links map[string]Link
+// OIDCProvider does not perform any oauth workflow in the backend. Instead, it expects that workflow at the
+// frontend-side and only gets the jwts
+type OIDCProvider struct {
+	Name                  string `json:"name"`
+	Authority             string `json:"authority"`             // e.g. http://localhost:8080/realms/myapp for a local keycloak or https://accounts.google.com
+	ClientID              string `json:"clientID"`              // used by the frontend
+	ClientSecret          string `json:"clientSecret"`          // used by the frontend
+	RedirectURL           string `json:"redirectURL"`           // used by the frontend
+	PostLogoutRedirectUri string `json:"postLogoutRedirectUri"` // used by frontend
+}

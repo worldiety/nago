@@ -22,6 +22,9 @@ type Configurator struct {
 	auth     authProviders
 	fsys     []fs.FS
 	uiApp    *ui.Application
+	host     string
+	port     int
+	scheme   string
 }
 
 func NewConfigurator() *Configurator {
@@ -33,6 +36,30 @@ func NewConfigurator() *Configurator {
 		uiApp:    &ui.Application{},
 		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
+}
+
+func (c *Configurator) getHost() string {
+	if c.host != "" {
+		return c.host
+	}
+
+	return "localhost"
+}
+
+func (c *Configurator) getPort() int {
+	if c.port != 0 {
+		return c.port
+	}
+
+	return 3000
+}
+
+func (c *Configurator) getScheme() string {
+	if c.scheme != "" {
+		return c.scheme
+	}
+
+	return "http"
 }
 
 // Name sets the applications name.

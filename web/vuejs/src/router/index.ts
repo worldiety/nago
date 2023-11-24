@@ -30,15 +30,19 @@ router.beforeEach(async (to, from, next) => {
 
     console.log("before push",to)
     if (authenticated) {
+        console.log("router: require auth")
         const auth = useAuth();
         const user = await auth.getUser();
         const accessToken = user?.access_token;
         if (accessToken) {
+            console.log("router: access token is here, dispatching next")
             next();
+            return
         } else {
+            console.log("requires authentication but access token is null",user,accessToken)
             await auth.signIn(to.fullPath);
             //next(false)
-            console.log("requires authentication but access token is null",accessToken)
+
             return;
         }
     }

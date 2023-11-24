@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,35 +22,36 @@ type authProviders struct {
 // oidcProvider does not perform any oauth workflow in the backend. Instead, it expects that workflow at the
 // frontend-side and only gets the jwts
 type oidcProvider struct {
-	Authority    string // e.g. http://localhost:8080/realms/myapp for a local keycloak or https://accounts.google.com
-	ClientID     string // used by the frontend
-	ClientSecret string // used by the frontend
-	RedirectURL  string // used by the frontend
-	Provider     *oidc.Provider
+	Authority             string // e.g. http://localhost:8080/realms/myapp for a local keycloak or https://accounts.google.com
+	ClientID              string // used by the frontend
+	ClientSecret          string // used by the frontend
+	RedirectURL           string // used by the frontend
+	PostLogoutRedirectUri string // used by frontend
+	Provider              *oidc.Provider
 }
 
 // KeycloakAuthentication enables the oauth support configuration using a keycloak instance.
-// Your environment must provide AUTH_KEYCLOAK_REALM, AUTH_OIDC_CLIENT_ID, AUTH_OIDC_CLIENT_SECRET
-// and AUTH_OIDC_REDIRECT_URL variables.
+// Your environment must provide AUTH_KEYCLOAK_REALM and AUTH_OIDC_CLIENT_ID. Secret per AUTH_OIDC_CLIENT_SECRET
+// is optional.
 func (c *Configurator) KeycloakAuthentication() *Configurator {
 	const (
-		envRealm    = "AUTH_KEYCLOAK_REALM"
-		envClid     = "AUTH_OIDC_CLIENT_ID"
-		envSecret   = "AUTH_OIDC_CLIENT_SECRET"
-		envRedirect = "AUTH_OIDC_REDIRECT_URL"
+		envRealm  = "AUTH_KEYCLOAK_REALM" // e.g. something like http://localhost:8080/realms/master
+		envClid   = "AUTH_OIDC_CLIENT_ID" // e.g. something like testclientid
+		envSecret = "AUTH_OIDC_CLIENT_SECRET"
 	)
 
-	for _, envVar := range []string{envRealm, envClid, envSecret, envRedirect} {
+	for _, envVar := range []string{envRealm, envClid, envSecret} {
 		if os.Getenv(envVar) == "" {
 			c.defaultLogger().Error("keycloak authentication required but required variable is missing", slog.String("env", envVar))
 		}
 	}
 
 	providerInfo := &oidcProvider{
-		Authority:    os.Getenv(envRealm),
-		ClientID:     os.Getenv(envClid),
-		ClientSecret: os.Getenv(envSecret),
-		RedirectURL:  os.Getenv(""),
+		Authority:             os.Getenv(envRealm),
+		ClientID:              os.Getenv(envClid),
+		ClientSecret:          os.Getenv(envSecret),
+		RedirectURL:           fmt.Sprintf("%s://%s:%d/oauth", c.getScheme(), c.getHost(), c.getPort()),
+		PostLogoutRedirectUri: fmt.Sprintf("%s://%s:%d", c.getScheme(), c.getHost(), c.getPort()),
 	}
 
 	provider, err := oidc.NewProvider(c.Context(), providerInfo.Authority)
@@ -61,6 +63,14 @@ func (c *Configurator) KeycloakAuthentication() *Configurator {
 
 	c.auth.keycloak = providerInfo
 
+	c.uiApp.OIDC = append(c.uiApp.OIDC, ui.OIDCProvider{
+		Name:                  "Keycloak",
+		Authority:             providerInfo.Authority,
+		ClientID:              providerInfo.ClientID,
+		ClientSecret:          providerInfo.ClientSecret,
+		RedirectURL:           providerInfo.RedirectURL,
+		PostLogoutRedirectUri: providerInfo.PostLogoutRedirectUri,
+	})
 	return c
 }
 

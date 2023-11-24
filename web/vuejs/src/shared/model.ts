@@ -9,6 +9,17 @@ export interface PagesConfiguration {
     name: string;
     pages: PageConfiguration[];
     index: string;
+    oidc:OIDCProvider[]
+
+}
+
+export interface OIDCProvider {
+    name: string
+    authority: string
+    clientID: string
+    clientSecret: string
+    redirectURL: string
+    postLogoutRedirectUri: string
 }
 
 export interface UiDescription {
@@ -24,7 +35,15 @@ export interface Redirection {
     redirect: boolean;
 }
 
-export type UiElement = TextElement | ButtonElement | GridElement | Scaffold | ListView | FormField | CardView;
+export type UiElement =
+    TextElement
+    | ButtonElement
+    | GridElement
+    | Scaffold
+    | ListView
+    | FormField
+    | CardView
+    | SVGElement;
 
 export interface CardView {
     type: 'CardView'
@@ -59,7 +78,7 @@ export interface Redirect {
 export interface CardMetricText {
     type: 'CardMetricText';
     value: string;
-    icon: Image|null
+    icon: Image | null
 }
 
 export interface TextElement {
@@ -67,17 +86,24 @@ export interface TextElement {
     value: string;
 }
 
+export interface SVGElement {
+    type: 'SVG';
+    svg: string;
+    maxWidth: string;
+}
+
+
 export interface TimelineElement {
     type: 'Timeline';
     items: TimelineItem[];
 }
 
-export interface TimelineItem{
+export interface TimelineItem {
     type: 'TimelineItem'
     icon: Image
-    color: string|null
+    color: string | null
     title: string
-    alternateDotText : string|null
+    alternateDotText: string | null
     target: string
 }
 
@@ -91,9 +117,9 @@ export interface Scaffold {
 }
 
 export interface Breadcrumb {
-    title : string
+    title: string
     href: string
-    disabled:boolean
+    disabled: boolean
 }
 
 export interface NavItem {
@@ -162,7 +188,7 @@ export interface Form {
 export interface FormLinks {
     load: URL | null
     submit: URL | null
-    delete: URL|null
+    delete: URL | null
 }
 
 export interface ListViewList {

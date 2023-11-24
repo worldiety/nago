@@ -65,22 +65,23 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
     const user: Ref<User | null> = ref(null);
 
 
-
     // Now define the functions needed to build the AuthStoreState.
 
     async function signIn(redirectAfterSignin?: string) {
-        if (userManager==null){
+        if (userManager == null) {
             return
         }
 
         // Store a URL to redirect to after signing in. This will be read in the signInCallback.
         const state = redirectAfterSignin || window.location.href;
         localStorage.setItem(REDIRECT_AFTER_LOGIN_STORAGE_KEY, state);
+
         await userManager.signinRedirect();
+        console.log("signinRedirect complete", state)
     }
 
     async function signOut() {
-        if (userManager==null){
+        if (userManager == null) {
             return
         }
 
@@ -88,7 +89,7 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
     }
 
     async function signInCallback() {
-        if (userManager==null){
+        if (userManager == null) {
             return null
         }
 
@@ -99,44 +100,59 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
         const redirectTo = localStorage.getItem(REDIRECT_AFTER_LOGIN_STORAGE_KEY);
         localStorage.removeItem(REDIRECT_AFTER_LOGIN_STORAGE_KEY);
         window.location.href = redirectTo || '/';
+        console.log("signinCallback", redirectTo)
     }
 
-    async function getUser() {
-        if (userManager==null){
+    async function getUser(): Promise<User | null> {
+        if (userManager == null) {
+            console.log("auth.ts: user manager is null")
             return null
         }
-        return await userManager.getUser();
+
+        const user = await userManager.getUser();
+        if (user?.expired) {
+            console.log("UserManager: wtf: got an expired user!?")
+        }
+
+        return user
     }
 
-    function init(manager:UserManager):void{
+    function init(manager: UserManager): void {
         userManager = manager
 
         // getUser will return the stored user. We will load the value into this store here.
         userManager.getUser().then((u) => {
             if (u?.expired) {
                 user.value = null;
+                console.log("userManager: user expired")
             } else {
                 user.value = u;
+                console.log("userManager: user updated")
             }
         });
 
         // Add some event listeners for when the user signed in/out to update the reactive value.
         userManager.events.addUserLoaded((u) => {
+            console.log("userManager: got event that user has loaded")
             user.value = u;
         });
         userManager.events.addUserSignedIn(async () => {
-            if (userManager==null){
+            if (userManager == null) {
                 return
             }
+            console.log("userManager: user signed in")
             user.value = await userManager.getUser();
         });
         userManager.events.addUserUnloaded(() => {
             user.value = null;
+            console.log("userManager: unloaded")
         });
         userManager.events.addUserSignedOut(() => {
+            console.log("userManager: user signed out")
             user.value = null;
         });
         userManager.events.addAccessTokenExpired(() => {
+            console.log("userManager: got event that user has expired")
             user.value = null;
         });
     }

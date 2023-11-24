@@ -25,12 +25,22 @@ async function init() {
     const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
     const app: PagesConfiguration = await response.json();
 
-    auth.init(new UserManager({
-      authority: 'http://localhost:8080/realms/master',
-      client_id: 'testclientid',
-      redirect_uri: 'http://localhost:8090/oauth',
-      post_logout_redirect_uri: 'http://localhost:8090',
-    }))
+    if (app.oidc?.length>0){
+      /*auth.init(new UserManager({
+        authority: 'http://localhost:8080/realms/master',
+        client_id: 'testclientid',
+        redirect_uri: 'http://localhost:8090/oauth',
+        post_logout_redirect_uri: 'http://localhost:8090',
+      }))*/
+      let provider = app.oidc.at(0)
+      auth.init(new UserManager({
+        authority: provider.authority,
+        client_id: provider.clientID,
+        redirect_uri: provider.redirectURL,
+        post_logout_redirect_uri: provider.postLogoutRedirectUri,
+      }))
+    }
+
 
 
     app.pages.forEach((page) => {

@@ -5,10 +5,12 @@
 
 <script lang="ts" setup>
 import { useAuth } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
+import {watch} from "vue";
 
 const auth = useAuth();
 const router = useRouter();
+const route = useRoute();
 
 async function init() {
     try {
@@ -21,6 +23,10 @@ async function init() {
 }
 
 init();
+watch(route, ()=>{
+  init()
+
+})
 </script>
 
 <template></template>

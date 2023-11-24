@@ -20,6 +20,7 @@ import UiDateField from "@/components/UiDateField.vue";
 import UiTextAreaField from "@/components/UiTextAreaField.vue";
 import UiCardMetricText from "@/components/UiCardMetricText.vue";
 import UiTimeline from "@/components/UiTimeline.vue";
+import UiSVG from "@/components/UiSVG.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -29,6 +30,7 @@ const props = defineProps<{
 <template>
   <ui-scaffold v-if="props.ui.type === 'Page'" :ui="props.ui"/>
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
+  <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
   <ui-timeline v-else-if="props.ui.type === 'Timeline'" :ui="props.ui"/>
   <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
   <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>

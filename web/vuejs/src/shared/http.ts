@@ -4,6 +4,9 @@ export  function userHeaders(){
     async function headers():Promise<HeadersInit>{
         const auth = useAuth();
         const user = await auth.getUser();
+        if (user?.expired){
+            console.log("headers: Oo user already expired and got that old one")
+        }
         return {
             Authorization: `Bearer ${user?.access_token}`,
         }
@@ -30,6 +33,10 @@ export function useHttp() {
      */
     async function request(url: string|URL, method = 'GET', body: undefined | any = undefined) {
         const user = await auth.getUser();
+
+        if (user?.expired){
+            console.log("request: Oo user already expired and got that old one")
+        }
 
         let bodyData = undefined;
         if (body !== undefined) {
