@@ -64,6 +64,11 @@ func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], serrors.Infra
 			return err
 		}
 
+		// bucket will not be created for this view-only transaction
+		if bucket == nil {
+			return nil
+		}
+
 		return bucket.Each(func(key, value []byte) error {
 			var t E
 			if err := json.Unmarshal(value, &t); err != nil {

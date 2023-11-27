@@ -5,6 +5,8 @@ import (
 	"github.com/swaggest/openapi-go/openapi3"
 	"go.wdy.de/nago/container/slice"
 	dm "go.wdy.de/nago/domain"
+	"go.wdy.de/nago/logging"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 )
@@ -28,7 +30,11 @@ func (t Table[E, ID, Params]) configure(app *Application, authRequired bool, par
 		metaT.Links.List = Link(filepath.Join(pattern, "list"))
 		r.MethodFunc(http.MethodGet, string(metaT.Links.List), func(writer http.ResponseWriter, request *http.Request) {
 			params := parseParams[Params](request, authRequired)
-			items, _ := t.List(params)
+			items, err := t.List(params)
+			if err != nil {
+				logging.FromContext(request.Context()).Error("failed to list table", slog.Any("err", err))
+			}
+
 			resp := tableDataListResponse{}
 			if t.Headers.Len() == 0 && items.Len() > 0 {
 				var tmp []tableHead
