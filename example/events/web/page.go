@@ -64,7 +64,7 @@ func Render(model DashboardModel) View {
 				Child: Navbar{
 					Caption: Text("Super App"),
 					MenuItems: Views(
-						Button{
+						Button2{
 							Title: Text("Konto"),
 						},
 					),
@@ -104,7 +104,7 @@ func Render(model DashboardModel) View {
 
 						GridCell{Child: InputFile{Name: "CSV"}},
 						GridCell{Child: InputFile{Name: "MultiFiles", Multiple: true, Accept: slice.Of(".csv", ".pdf")}},
-						GridCell{Child: Button{OnClick: BlaEvent{}, Title: Text("Klick")}},
+						GridCell{Child: Button2{OnClick: BlaEvent{}, Title: Text("Klick")}},
 					),
 				},
 			},

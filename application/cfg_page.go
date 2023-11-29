@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -82,6 +85,46 @@ func (c *Configurator) newHandler() http.Handler {
 		}))
 
 	}
+
+	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("wire?")
+		var upgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true //TODO security implications?
+			},
+		} // use default options
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Print("upgrade:", err)
+			return
+		}
+		defer conn.Close()
+
+		livePage := c.uiApp.LivePages["1234"](conn)
+		logging.FromContext(r.Context()).Info(fmt.Sprintf("spawned live page %p", livePage))
+		livePage.Invalidate()
+		for {
+			if err := livePage.HandleMessage(); err != nil {
+				livePage.Close()
+				logging.FromContext(r.Context()).Error(fmt.Sprintf("livePage is dead now %p", livePage), slog.Any("err", err))
+				break
+			}
+			/*conn.WriteMessage(1, []byte("kack from server"))
+			log.Println("reading a meassge")
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				break
+			}
+			log.Printf("recv: %s", message)
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}*/
+
+		}
+	}))
 
 	for _, route := range r.Routes() {
 		fmt.Println(route.Pattern)

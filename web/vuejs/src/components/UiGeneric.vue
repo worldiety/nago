@@ -21,14 +21,17 @@ import UiTextAreaField from "@/components/UiTextAreaField.vue";
 import UiCardMetricText from "@/components/UiCardMetricText.vue";
 import UiTimeline from "@/components/UiTimeline.vue";
 import UiSVG from "@/components/UiSVG.vue";
+import UiVBox from "@/components/UiVBox.vue";
 
 const props = defineProps<{
   ui: UiElement;
+  ws: WebSocket;
 }>();
 </script>
 
 <template>
   <ui-scaffold v-if="props.ui.type === 'Page'" :ui="props.ui"/>
+  <ui-v-box v-if="props.ui.type === 'VBox'" :ui="props.ui" :ws="props.ws"/>
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
   <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
   <ui-timeline v-else-if="props.ui.type === 'Timeline'" :ui="props.ui"/>
@@ -36,7 +39,7 @@ const props = defineProps<{
   <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
   <ui-card-metric-text v-else-if="props.ui.type === 'CardMetric'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
-  <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui"/>
+  <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui" :ws="props.ws"/>
   <ui-text-area-field v-else-if="props.ui.type === 'TextAreaField'" :ui="props.ui"/>
   <ui-switch-field v-else-if="props.ui.type === 'SwitchField'" :ui="props.ui"/>
   <ui-date-field v-else-if="props.ui.type === 'DateField'" :ui="props.ui"/>
@@ -44,7 +47,7 @@ const props = defineProps<{
   <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui"/>
-  <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui"/>
+  <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui" :ws="props.ws"/>
   <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui"/>
   <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui"/>
   <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>

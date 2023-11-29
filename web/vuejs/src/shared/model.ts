@@ -5,12 +5,19 @@ export interface PageConfiguration {
     authenticated: boolean;
 }
 
+export interface LivePageConfiguration {
+    id: string;
+    link: string;
+    anchor: string;
+    authenticated: boolean;
+}
+
 export interface PagesConfiguration {
     name: string;
     pages: PageConfiguration[];
     index: string;
     oidc:OIDCProvider[]
-
+    livePages : LivePageConfiguration[]
 }
 
 export interface OIDCProvider {

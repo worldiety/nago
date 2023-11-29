@@ -17,6 +17,7 @@ type Application struct {
 	Pages       slice.Slice[Pager]
 	IndexTarget Target
 	OIDC        []OIDCProvider
+	LivePages   map[PageID]func(Wire) *LivePage
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {
@@ -38,6 +39,18 @@ func (a *Application) ConfigureRouter(router chi.Router) {
 					Anchor:        "/" + strings.TrimPrefix(v.Pattern(), apiPageSlug),
 				}
 			})),
+			LivePages: func() []livePage {
+				var tmp []livePage
+				for id, _ := range a.LivePages {
+					tmp = append(tmp, livePage{
+						ID:            id,
+						Authenticated: false,
+						Anchor:        "/" + strings.TrimPrefix(string(id), apiPageSlug),
+					})
+				}
+
+				return tmp
+			}(),
 			OIDC: a.OIDC,
 		}
 
@@ -75,12 +88,19 @@ type appResponse struct {
 	Description string         `json:"description" description:"The applications purpose description."`
 	Index       string         `json:"index" description:"The default index page target to load."`
 	OIDC        []OIDCProvider `json:"oidc"`
+	LivePages   []livePage     `json:"livePages"`
 }
 
 type appPage struct {
 	ID            PageID `json:"id" description:"unique page identifier"`
 	Authenticated bool   `json:"authenticated" description:"If true, the client must provide an authenticated user, otherwise any resource requests will fail."`
 	Link          Link   `json:"link" description:"TODO: how to handle pages with parameters? just query?"`
+	Anchor        string `json:"anchor"`
+}
+
+type livePage struct {
+	ID            PageID `json:"id"`
+	Authenticated bool   `json:"authenticated"`
 	Anchor        string `json:"anchor"`
 }
 

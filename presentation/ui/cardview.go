@@ -9,6 +9,11 @@ import (
 	"path/filepath"
 )
 
+type Button2 struct {
+	Caption string
+	Action  Action
+}
+
 type CardView[Params any] struct {
 	ID          ComponentID
 	List        func(p Params) (slice.Slice[Card], error)
@@ -60,7 +65,7 @@ func (lv CardView[Params]) configure(app *Application, authRequired bool, parent
 							panic(fmt.Errorf("implement me: %T", t))
 						}
 					}(),
-					Actions: slice.UnsafeUnwrap(slice.Map(v.Actions, func(idx int, v Button) button {
+					Actions: slice.UnsafeUnwrap(slice.Map(v.Actions, func(idx int, v Button2) button {
 						return button{
 							Type:    "Button",
 							Caption: v.Caption,
@@ -92,7 +97,7 @@ type Card struct {
 	PrependIcon   Image
 	AppendIcon    Image
 	Content       CardContent
-	Actions       slice.Slice[Button]
+	Actions       slice.Slice[Button2]
 	PrimaryAction Action // makes the entire card clickable
 }
 

@@ -33,11 +33,11 @@ func renderCounter(model CounterModel) ui.View {
 		Columns: 1,
 		Cells: slice.Of(
 			ui.GridCell{Child: ui.Text(fmt.Sprintf("%d", model.Counter))},
-			ui.GridCell{Child: ui.Button{
+			ui.GridCell{Child: ui.Button2{
 				Title:   ui.Text("+"),
 				OnClick: IncrementEvent{},
 			}},
-			ui.GridCell{Child: ui.Button{
+			ui.GridCell{Child: ui.Button2{
 				Title:   ui.Text("-"),
 				OnClick: DecrementEvent{},
 			}},

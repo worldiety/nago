@@ -5,6 +5,7 @@ import {ref} from 'vue';
 import type {PagesConfiguration} from '@/shared/model';
 import {useAuth} from "@/stores/auth";
 import {UserManager} from "oidc-client-ts";
+import {LiveMessage} from "@/shared/livemsg";
 
 
 const router = useRouter();
@@ -43,7 +44,7 @@ async function init() {
 
 
 
-    app.pages.forEach((page) => {
+    app.livePages.forEach((page) => {
       let anchor = page.anchor.replaceAll("{", ":")
       anchor = anchor.replaceAll("}", "?")
       anchor = anchor.replaceAll("-", "\\-") //OMG regex
@@ -68,7 +69,10 @@ async function init() {
     console.log(e);
     state.value = State.Error;
   }
+
 }
+
+
 
 init();
 </script>

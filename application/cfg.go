@@ -33,8 +33,10 @@ func NewConfigurator() *Configurator {
 		kvStores: make(map[string]kv.Store),
 		ctx:      ctx,
 		done:     done,
-		uiApp:    &ui.Application{},
-		debug:    strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
+		uiApp: &ui.Application{
+			LivePages: make(map[ui.PageID]func(wire ui.Wire) *ui.LivePage),
+		},
+		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 }
 

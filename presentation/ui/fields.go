@@ -130,30 +130,6 @@ func (t DateField) intoInput() inputType {
 	}
 }
 
-type TextField struct {
-	Label    string
-	Value    string
-	Error    string
-	Hint     string
-	Disabled bool
-}
-
-func (t TextField) setValue(v string) InputField {
-	t.Value = v
-	return t
-}
-
-func (t TextField) intoInput() inputType {
-	return inputType{
-		Type:     "TextField",
-		Label:    t.Label,
-		Value:    t.Value,
-		Hint:     t.Hint,
-		Error:    t.Error,
-		Disabled: t.Disabled,
-	}
-}
-
 type TextAreaField struct {
 	Label    string
 	Value    string
