@@ -52,6 +52,14 @@ func (s *SharedList[T]) Name() string {
 }
 
 func (s *SharedList[T]) Value() any {
+	var zero T
+	if _, ok := any(zero).(LiveComponent); ok {
+		var tmp []LiveComponent
+		for _, value := range s.values {
+			tmp = append(tmp, any(value).(LiveComponent))
+		}
+		return slice.Of(tmp...)
+	}
 	return slice.Of(s.values...)
 }
 
@@ -60,7 +68,7 @@ func (s *SharedList[T]) ID() CID {
 }
 
 func (s *SharedList[T]) SetValue(v string) error {
-	return fmt.Errorf("cannot set shared values by list!?")
+	return fmt.Errorf("cannot set shared values by list!?: %v", v)
 }
 
 func (s *SharedList[T]) Dirty() bool {

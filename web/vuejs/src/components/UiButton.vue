@@ -2,7 +2,7 @@
 import type {UiDescription} from '@/shared/model';
 import type {Ref} from 'vue';
 import {computed, inject} from 'vue';
-import {CallServerFunc, LiveButton} from "@/shared/livemsg";
+import {CallServerFunc, invokeFunc, LiveButton} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveButton;
@@ -11,14 +11,8 @@ const props = defineProps<{
 
 const ui: Ref<UiDescription> = inject('ui')!;
 
-async function onClick() {
-  if (props.ui.action) {
-    const callSrvFun: CallServerFunc = {
-      type: "callFn",
-      id: props.ui.action.value
-    }
-    props.ws.send(JSON.stringify(callSrvFun))
-  }
+function onClick() {
+  invokeFunc(props.ws,props.ui.action)
 }
 
 const clazz = computed<string>(() => {
@@ -44,7 +38,7 @@ const iconOnly = computed<boolean>(() => {
 
 <style>
 .btn-primary, .btn-secondary, .btn-subtile, .btn-destructive {
-  @apply inline-flex items-center me-2  px-5 py-2.5 me-2 mb-2;
+  @apply inline-flex items-center justify-center  px-5 py-2.5;
   @apply rounded-lg ;
   @apply text-center text-sm font-medium;
   @apply focus:ring-4 focus:outline-none;
@@ -85,10 +79,10 @@ const iconOnly = computed<boolean>(() => {
   <button
       :class="clazz"
       @click="onClick" :disabled="props.ui.disabled.value">
-    <span class="w-3.5 h-3.5 me-2" v-html="props.ui.preIcon.value" v-if="props.ui.preIcon.value && !iconOnly"></span>
+    <svg v-inline class="w-3.5 h-3.5 me-2" v-html="props.ui.preIcon.value" v-if="props.ui.preIcon.value && !iconOnly"></svg>
     {{ props.ui.caption.value }}
     <span class="w-3.5 h-3.5 ms-2" v-html="props.ui.postIcon.value" v-if="props.ui.postIcon.value"></span>
-    <span class="w-4 h-4" v-if="iconOnly" v-html="props.ui.preIcon.value"></span>
+    <svg v-inline class="w-4 h-4" v-if="iconOnly" v-html="props.ui.preIcon.value"></svg>
   </button>
 
 

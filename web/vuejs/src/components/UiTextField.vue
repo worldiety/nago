@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type {CallServerFunc, LiveTextField, SetServerProperty} from "@/shared/livemsg";
+import {invokeFunc} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveTextField;
@@ -16,14 +17,7 @@ function valueChanged(event: any) {
   }
   props.ws.send(JSON.stringify(setSrvProp))
 
-  if (props.ui.onTextChanged) {
-    const callSrvFun: CallServerFunc = {
-      type: "callFn",
-      id: props.ui.onTextChanged.value
-    }
-    props.ws.send(JSON.stringify(callSrvFun))
-  }
-
+  invokeFunc(props.ws,props.ui.onTextChanged)
 }
 
 function isErr():boolean{

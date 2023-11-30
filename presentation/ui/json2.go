@@ -10,7 +10,10 @@ func marshalComponent(c LiveComponent) jsonComponent {
 		return nil
 	}
 	tmp := map[CID]bool{}
-	return newJsonComponent(tmp, c)
+	compo := newJsonComponent(tmp, c)
+	//	x, _ := json.Marshal(compo)
+	//	fmt.Println(string(x))
+	return compo
 }
 
 type jsonComponent = map[string]any
@@ -86,8 +89,10 @@ func propertyTypeName(p Property) string {
 		return "intentColor"
 	case *Func:
 		return "func"
-	case slice.Slice[LiveComponent]:
+	case slice.Slice[LiveComponent], slice.Slice[*Button]:
 		return "componentList"
+	case LiveComponent:
+		return p.Value().(LiveComponent).Type()
 	default:
 		panic(fmt.Errorf("type not implemented: %T", p.Value()))
 	}

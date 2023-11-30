@@ -1,3 +1,5 @@
+import {LiveComponent} from "@/shared/livemsg";
+
 export interface PageConfiguration {
     id: string;
     link: string;
@@ -50,6 +52,7 @@ export type UiElement =
     | ListView
     | FormField
     | CardView
+    | LiveComponent
     | SVGElement;
 
 export interface CardView {

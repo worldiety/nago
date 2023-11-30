@@ -11,7 +11,7 @@ type Scaffold struct {
 	properties  slice.Slice[Property]
 }
 
-func NewScaffold() *Scaffold {
+func NewScaffold(with func(scaffold *Scaffold)) *Scaffold {
 	c := &Scaffold{
 		id:          nextPtr(),
 		title:       NewShared[string]("title"),
@@ -22,7 +22,23 @@ func NewScaffold() *Scaffold {
 
 	c.properties = slice.Of[Property](c.title, c.breadcrumbs, c.menu, c.body)
 
+	if with != nil {
+		with(c)
+	}
+
 	return c
+}
+
+func (c *Scaffold) Body() *Shared[LiveComponent] {
+	return c.body
+}
+
+func (c *Scaffold) Menu() *SharedList[*Button] {
+	return c.menu
+}
+
+func (c *Scaffold) Breadcrumbs() *SharedList[*Button] {
+	return c.breadcrumbs
 }
 
 func (c *Scaffold) ID() CID {

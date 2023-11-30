@@ -14,7 +14,7 @@ type Button struct {
 	functions  slice.Slice[*Func]
 }
 
-func NewButton() *Button {
+func NewButton(with func(btn *Button)) *Button {
 	c := &Button{
 		id:       nextPtr(),
 		caption:  NewShared[string]("caption"),
@@ -27,11 +27,9 @@ func NewButton() *Button {
 
 	c.properties = slice.Of[Property](c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action)
 	c.functions = slice.Of[*Func](c.action)
-	return c
-}
-
-func (c *Button) With(f func(btn *Button)) *Button {
-	f(c)
+	if with != nil {
+		with(c)
+	}
 	return c
 }
 

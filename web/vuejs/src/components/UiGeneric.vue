@@ -22,6 +22,8 @@ import UiCardMetricText from "@/components/UiCardMetricText.vue";
 import UiTimeline from "@/components/UiTimeline.vue";
 import UiSVG from "@/components/UiSVG.vue";
 import UiVBox from "@/components/UiVBox.vue";
+import UiHBox from "@/components/UiHBox.vue";
+import UiDivider from "@/components/UiDivider.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -30,9 +32,11 @@ const props = defineProps<{
 </script>
 
 <template>
-  <ui-scaffold v-if="props.ui.type === 'Page'" :ui="props.ui"/>
-  <ui-v-box v-if="props.ui.type === 'VBox'" :ui="props.ui" :ws="props.ws"/>
+  <ui-scaffold v-if="props.ui.type === 'Scaffold'" :ui="props.ui" :ws="props.ws"/>
+  <ui-v-box v-else-if="props.ui.type === 'VBox'" :ui="props.ui" :ws="props.ws"/>
+  <ui-h-box v-else-if="props.ui.type === 'HBox'" :ui="props.ui" :ws="props.ws"/>
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
+  <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui"/>
   <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
   <ui-timeline v-else-if="props.ui.type === 'Timeline'" :ui="props.ui"/>
   <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>

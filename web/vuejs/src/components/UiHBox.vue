@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {VBox} from "@/shared/livemsg";
+import {HBox, VBox} from "@/shared/livemsg";
 
 const props = defineProps<{
-  ui: VBox;
+  ui: HBox;
   ws: WebSocket;
 }>();
 </script>
 
 <template>
-   <div class="grid grid-cols-1 gap-y-3">
+   <div class="grid grid-flow-col grid-cols-auto gap-x-3">
 
     <ui-generic v-for="ui in props.ui.children.value" :ui="ui" :ws="ws"/>
   </div>
