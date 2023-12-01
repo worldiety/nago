@@ -51,7 +51,7 @@ const props = defineProps<{
   <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>
   <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui" :ws="props.ws"/>
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui" :ws="props.ws"/>
-  <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui"/>
+  <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui" :ws="props.ws"/>
   <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui" :ws="props.ws"/>
   <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>
   <!-- <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" /> -->

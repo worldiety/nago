@@ -286,6 +286,32 @@ func main() {
 										)
 									}
 								}),
+
+								ui.NewGrid(func(grid *ui.Grid) {
+									grid.Columns().Set(3)
+									grid.Rows().Set(3)
+									grid.AppendCells(
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.ColStart().Set(1)
+											cell.ColEnd().Set(3)
+											cell.RowStart().Set(1)
+											cell.RowEnd().Set(3)
+											cell.Body().Set(ui.MakeText("01"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("02"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("03"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("04"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("05"))
+										}),
+									)
+								}),
 							)
 						}),
 					)

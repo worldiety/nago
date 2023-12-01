@@ -25,7 +25,6 @@ const clazz = computed<string>(() => {
 })
 
 function onClick() {
-  console.log(props.ui.onClick)
   invokeFunc(props.ws, props.ui.onClick)
 }
 

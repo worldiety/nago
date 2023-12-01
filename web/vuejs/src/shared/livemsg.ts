@@ -1,3 +1,5 @@
+import {GridElement} from "@/shared/model";
+
 export type LiveMessage = Invalidation
 
 export interface Invalidation {
@@ -5,7 +7,7 @@ export interface Invalidation {
     root: 'LiveComponent'
 }
 
-export type LiveComponent = LiveTextField | VBox | LiveTable | LiveButton | LiveTableCell | LiveTableRow
+export type LiveComponent = LiveTextField | VBox | LiveTable | LiveButton | LiveTableCell | LiveTableRow | LiveGridCell | LiveGrid
 
 export interface VBox {
     type: 'VBox'
@@ -92,6 +94,25 @@ export interface LiveTableCell {
     body: PropertyComponent<LiveComponent>
 }
 
+export interface LiveGrid {
+    type: 'Grid'
+    id: number
+    cells: ComponentList<LiveGridCell>
+    rows: PropertyInt
+    columns: PropertyInt
+    gap: PropertyString
+}
+
+export interface LiveGridCell {
+    type: 'GridCell'
+    id: number
+    body: PropertyComponent<LiveComponent>
+    colStart: PropertyInt
+    colEnd: PropertyInt
+    rowStart: PropertyInt
+    rowEnd: PropertyInt
+}
+
 export interface LiveTableRow {
     type: 'TableRow'
     id: number
@@ -113,6 +134,13 @@ export interface PropertyBool {
     id: number
     name: string
     value: boolean
+}
+
+export interface PropertyInt {
+    type: 'int'
+    id: number
+    name: string
+    value: number
 }
 
 export interface PropertyFunc {
@@ -170,6 +198,18 @@ export function textSize2Tailwind(s: string): string {
 
     if (s.endsWith('px') || s.endsWith('pt') || s.endsWith('rem')) {
         return "text-[" + s + "]"
+    }
+
+    return s
+}
+
+export function gapSize2Tailwind(s: string): string {
+    if (s == null || s == "") {
+        return ""
+    }
+
+    if (s.endsWith('px') || s.endsWith('pt') || s.endsWith('rem')) {
+        return "gap-[" + s + "]"
     }
 
     return s
