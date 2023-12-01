@@ -36,6 +36,12 @@ func NewText(with func(*Text)) *Text {
 	return c
 }
 
+func MakeText(s string) *Text {
+	return NewText(func(text *Text) {
+		text.Value().Set(s)
+	})
+}
+
 func (c *Text) Value() String {
 	return c.value
 }

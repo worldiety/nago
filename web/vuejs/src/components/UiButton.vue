@@ -12,7 +12,6 @@ const props = defineProps<{
 const ui: Ref<UiDescription> = inject('ui')!;
 
 function onClick() {
-  console.log(props.ui.action)
   invokeFunc(props.ws,props.ui.action)
 }
 

@@ -104,6 +104,11 @@ func main() {
 			page := ui.NewLivePage(w)
 			page.SetBody(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
+					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
+					scaffold.TopBar().Mid.Set(ui.MakeText("GED+DH"))
+					scaffold.TopBar().Right.Set(ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("user")
+					}))
 					scaffold.Breadcrumbs().Append(
 						ui.NewButton(func(btn *ui.Button) {
 							btn.Caption().Set("homer")

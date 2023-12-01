@@ -43,8 +43,11 @@ export interface LiveScaffold {
     id: number
     title: PropertyString
     breadcrumbs: ComponentList<LiveButton> // currently ever of LiveButton
-    menu: ComponentList<LiveComponent> // currently always of LiveButton
-    body: LiveComponent
+    menu: ComponentList<LiveButton> // currently always of LiveButton
+    body: PropertyComponent<LiveComponent>
+    topbarLeft: PropertyComponent<LiveComponent>
+    topbarMid: PropertyComponent<LiveComponent>
+    topbarRight: PropertyComponent<LiveComponent>
 }
 
 export interface LiveTextField {

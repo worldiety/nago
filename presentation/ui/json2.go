@@ -93,6 +93,8 @@ func propertyTypeName(p Property) string {
 		return "func"
 	case slice.Slice[LiveComponent], slice.Slice[*Button]:
 		return "componentList"
+	case nil:
+		return "nil"
 	case LiveComponent:
 		return p.Value().(LiveComponent).Type()
 	default:

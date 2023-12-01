@@ -59,9 +59,26 @@ onMounted(() => {
 
 <template>
 
+  <div class="fixed z-50 flex-1 flex flex-col w-full dark:text-white ">
+    <nav class="px-4 flex justify-between h-16 shadow dark:bg-gray-700 bg-white">
+
+      <div class="flex items-center pl-4">
+        <ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :ws="props.ws"/>
+      </div>
+
+      <div class="flex items-center">
+        <ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :ws="props.ws"/>
+      </div>
+
+      <ul class="flex items-center pr-4">
+        <ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :ws="props.ws"/>
+      </ul>
+
+    </nav>
+  </div>
 
   <aside id="default-sidebar"
-         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+         class="fixed pt-16 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
          aria-label="Sidebar">
 
     <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
@@ -106,7 +123,7 @@ onMounted(() => {
 
   </aside>
 
-  <div class="p-4 sm:ml-64">
+  <div class="p-4 sm:ml-64 pt-16">
     <div class="p-4 ">
 
       <nav v-if="props.ui.breadcrumbs.value" class="flex pb-4" aria-label="Breadcrumb">
