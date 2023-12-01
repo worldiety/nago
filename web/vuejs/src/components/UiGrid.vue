@@ -14,11 +14,23 @@ const style = computed<string>(() => {
       if (props.ui.columns.value > 0) {
         tmp += ` grid-cols-${props.ui.columns.value}`
       } else {
-        if (props.ui.rows.value>0){
-          tmp+=" grid-flow-col"
-        }else{
+        if (props.ui.rows.value > 0) {
+          tmp += " grid-flow-col"
+        } else {
           tmp += " grid-cols-auto"
         }
+      }
+
+      if (props.ui.smColumns.value > 0) {
+        tmp += ` sm:grid-cols-${props.ui.smColumns.value}`
+      }
+
+      if (props.ui.mdColumns.value > 0) {
+        tmp += ` md:grid-cols-${props.ui.mdColumns.value}`
+      }
+
+      if (props.ui.lgColumns.value > 0) {
+        tmp += ` lg:grid-cols-${props.ui.lgColumns.value}`
       }
 
       if (props.ui.rows.value > 0) {
@@ -37,7 +49,7 @@ const style = computed<string>(() => {
 </script>
 
 <template>
-  <div :class="style" >
+  <div :class="style">
     <ui-grid-cell v-for="cell in props.ui.cells.value" :ui="cell" :ws="props.ws"/>
   </div>
 </template>

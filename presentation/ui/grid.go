@@ -7,6 +7,9 @@ type Grid struct {
 	cells      *SharedList[LiveComponent]
 	rows       Int
 	columns    Int
+	smColumns  Int
+	mdColumns  Int
+	lgColumns  Int
 	gap        *Shared[Size]
 	properties slice.Slice[Property]
 	functions  slice.Slice[*Func]
@@ -20,8 +23,11 @@ func NewGrid(with func(grid *Grid)) *Grid {
 	c.cells = NewSharedList[LiveComponent]("cells")
 	c.rows = NewShared[int64]("rows")
 	c.columns = NewShared[int64]("columns")
+	c.smColumns = NewShared[int64]("smColumns")
+	c.mdColumns = NewShared[int64]("mdColumns")
+	c.lgColumns = NewShared[int64]("lgColumns")
 	c.gap = NewShared[Size]("gap")
-	c.properties = slice.Of[Property](c.cells, c.rows, c.columns, c.gap)
+	c.properties = slice.Of[Property](c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns)
 	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
@@ -48,6 +54,18 @@ func (c *Grid) Rows() Int {
 
 func (c *Grid) Columns() Int {
 	return c.columns
+}
+
+func (c *Grid) ColumnsSmallOrLarger() Int {
+	return c.smColumns
+}
+
+func (c *Grid) ColumnsMediumOrLarger() Int {
+	return c.mdColumns
+}
+
+func (c *Grid) ColumnsLarger() Int {
+	return c.lgColumns
 }
 
 func (c *Grid) ID() CID {

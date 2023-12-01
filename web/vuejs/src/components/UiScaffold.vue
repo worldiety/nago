@@ -123,7 +123,7 @@ onMounted(() => {
 
   </aside>
 
-  <div class="p-4 sm:ml-64 pt-16">
+  <div class="p-4 sm:ml-64 pt-16 pb-16 sm:pb-0">
     <div class="p-4 ">
 
       <nav v-if="props.ui.breadcrumbs.value" class="flex pb-4" aria-label="Breadcrumb">

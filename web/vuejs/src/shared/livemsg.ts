@@ -100,6 +100,9 @@ export interface LiveGrid {
     cells: ComponentList<LiveGridCell>
     rows: PropertyInt
     columns: PropertyInt
+    smColumns: PropertyInt
+    mdColumns: PropertyInt
+    lgColumns: PropertyInt
     gap: PropertyString
 }
 

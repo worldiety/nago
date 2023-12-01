@@ -312,6 +312,31 @@ func main() {
 										}),
 									)
 								}),
+
+								ui.MakeText("response grid:"),
+								ui.NewDivider(nil),
+								ui.NewGrid(func(grid *ui.Grid) {
+									grid.Columns().Set(1)
+									grid.ColumnsSmallOrLarger().Set(2)
+									grid.ColumnsMediumOrLarger().Set(3)
+									grid.AppendCells(
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("01"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("02"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("03"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("04"))
+										}),
+										ui.NewGridCell(func(cell *ui.GridCell) {
+											cell.Body().Set(ui.MakeText("05"))
+										}),
+									)
+								}),
 							)
 						}),
 					)
