@@ -1,142 +1,67 @@
 package ui
 
-import (
-	"cmp"
-	"github.com/swaggest/openapi-go/openapi3"
-	"go.wdy.de/nago/container/slice"
-	dm "go.wdy.de/nago/domain"
-	"go.wdy.de/nago/logging"
-	"log/slog"
-	"net/http"
-	"path/filepath"
-)
+import "go.wdy.de/nago/container/slice"
 
-type Table[E dm.Entity[ID], ID cmp.Ordered, Params any] struct {
-	ID          ComponentID
-	Description string
-	Headers     slice.Slice[TableHeader]
-	Delete      func(p Params, ids slice.Slice[ID]) error
-	List        func(p Params) (slice.Slice[TableRow[ID]], error)
+type Table struct {
+	id         CID
+	headers    *SharedList[LiveComponent]
+	rows       *SharedList[LiveComponent]
+	properties slice.Slice[Property]
+	functions  slice.Slice[*Func]
 }
 
-func (t Table[E, ID, Params]) ComponentID() ComponentID {
-	return t.ID
-}
-
-func (t Table[E, ID, Params]) configure(app *Application, authRequired bool, parentSlug string, r router) {
-	pattern := filepath.Join(parentSlug, string(t.ID))
-	metaT := tableResponse{Type: "Table"}
-	if t.List != nil {
-		metaT.Links.List = Link(filepath.Join(pattern, "list"))
-		r.MethodFunc(http.MethodGet, string(metaT.Links.List), func(writer http.ResponseWriter, request *http.Request) {
-			params := parseParams[Params](request, authRequired)
-			items, err := t.List(params)
-			if err != nil {
-				logging.FromContext(request.Context()).Error("failed to list table", slog.Any("err", err))
-			}
-
-			resp := tableDataListResponse{}
-			if t.Headers.Len() == 0 && items.Len() > 0 {
-				var tmp []tableHead
-				items.At(0).Cells.Each(func(idx int, v TableCell) {
-					tmp = append(tmp, tableHead{
-						Title: v.Key,
-						Key:   v.Key,
-						Align: string(AlignStart),
-					})
-				})
-				resp.Headers = tmp
-			} else {
-				t.Headers.Each(func(idx int, v TableHeader) {
-					resp.Headers = append(resp.Headers, tableHead{
-						Title: v.Title,
-						Key:   v.Key,
-						Align: string(v.Align),
-					})
-				})
-			}
-
-			items.Each(func(idx int, v TableRow[ID]) {
-				obj := map[string]any{}
-				obj["_id"] = v.ID
-				obj["_action"] = v.Action
-				v.Cells.Each(func(idx int, v TableCell) {
-					obj[v.Key] = v.Value
-				})
-				resp.Rows = append(resp.Rows, obj)
-			})
-
-			writeJson(writer, request, resp)
-		})
+func NewTable(with func(table *Table)) *Table {
+	c := &Table{
+		id: nextPtr(),
 	}
 
-	r.MethodFunc(http.MethodGet, pattern, func(writer http.ResponseWriter, request *http.Request) {
-		tmp := metaT
-		tmp.Links.List = Link(interpolatePathVariables[Params](string(tmp.Links.List), request))
-		tmp.Links.Delete = Link(interpolatePathVariables[Params](string(tmp.Links.Delete), request))
-		writeJson(writer, request, tmp)
-	})
-}
-
-func (t Table[E, ID, Params]) renderOpenAPI(p Params, tag string, parentSlug string, r *openapi3.Reflector) {
-	pattern := filepath.Join(parentSlug, string(t.ID))
-	oc := must2(r.NewOperationContext(http.MethodGet, pattern))
-	oc.AddReqStructure(p)
-	oc.AddRespStructure(tableResponse{})
-	oc.SetTags(tag)
-	setSummaryAndDescription(oc, t.Description)
-	must(r.AddOperation(oc))
-
-	if t.List != nil {
-		oc := must2(r.NewOperationContext(http.MethodGet, filepath.Join(pattern, "list")))
-		oc.AddReqStructure(p)
-		oc.AddRespStructure(tableResponse{})
-		oc.SetTags(tag)
-		must(r.AddOperation(oc))
+	c.rows = NewSharedList[LiveComponent]("rows")
+	c.headers = NewSharedList[LiveComponent]("headers")
+	c.properties = slice.Of[Property](c.headers, c.rows)
+	c.functions = slice.Of[*Func]()
+	if with != nil {
+		with(c)
 	}
+
+	return c
 }
 
-type TableRow[ID any] struct {
-	ID     ID
-	Cells  slice.Slice[TableCell]
-	Action Action
+func (c *Table) AppendColumn(cell *TableCell) *Table {
+	c.headers.Append(cell)
+	return c
 }
 
-type TableCell struct {
-	Key   string
-	Value any // valid are string, int and float. Other types may break or create rubbish view.
+func (c *Table) AppendColumns(cells ...*TableCell) *Table {
+	for _, cell := range cells {
+		c.headers.Append(cell)
+	}
+	return c
 }
 
-type TableCellAlignment string
-
-const (
-	AlignStart TableCellAlignment = "start"
-	AlignEnd   TableCellAlignment = "end"
-)
-
-type TableHeader struct {
-	Title string
-	Key   string
-	Align TableCellAlignment
+func (c *Table) AppendRow(row *TableRow) *Table {
+	c.rows.Append(row)
+	return c
 }
 
-type tableResponse struct {
-	Type  string `json:"type"`
-	Links struct {
-		List   Link `json:"list,omitempty"`
-		Delete Link `json:"delete,omitempty"`
-	} `json:"links"`
+func (c *Table) ID() CID {
+	return c.id
 }
 
-type tableDataListResponse struct {
-	Headers []tableHead `json:"headers"`
-	Rows    []tableRow  `json:"rows"`
+func (c *Table) Type() string {
+	return "Table"
 }
 
-type tableRow map[string]any
+func (c *Table) Properties() slice.Slice[Property] {
+	return c.properties
+}
 
-type tableHead struct {
-	Title string `json:"title"`
-	Align string `json:"align"` // start or end
-	Key   string `json:"key"`
+func (c *Table) Children() slice.Slice[LiveComponent] {
+	tmp := make([]LiveComponent, 0, c.rows.Len()+c.headers.Len())
+	tmp = append(tmp, c.rows.values...)
+	tmp = append(tmp, c.headers.values...)
+	return slice.Of(tmp...)
+}
+
+func (c *Table) Functions() slice.Slice[*Func] {
+	return c.functions
 }

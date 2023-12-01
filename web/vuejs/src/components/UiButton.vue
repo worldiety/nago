@@ -12,6 +12,7 @@ const props = defineProps<{
 const ui: Ref<UiDescription> = inject('ui')!;
 
 function onClick() {
+  console.log(props.ui.action)
   invokeFunc(props.ws,props.ui.action)
 }
 
@@ -59,7 +60,7 @@ const iconOnly = computed<boolean>(() => {
 }
 
 .btn-subtile {
-  @apply hover:bg-gray-800;
+  @apply hover:bg-gray-100;
   @apply focus:ring-gray-300;
   @apply text-gray-900 border;
   @apply dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;

@@ -85,8 +85,10 @@ func propertyTypeName(p Property) string {
 		return "float"
 	case SVGSrc:
 		return "svg"
-	case IntentColor:
+	case Color:
 		return "intentColor"
+	case Size:
+		return "size"
 	case *Func:
 		return "func"
 	case slice.Slice[LiveComponent], slice.Slice[*Button]:

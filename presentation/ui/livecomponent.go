@@ -29,9 +29,10 @@ type EmbeddedSVG = *Shared[SVGSrc]
 type Bool = *Shared[bool]
 type Int = *Shared[int64]
 type Float = *Shared[float64]
-type Color = *Shared[IntentColor]
 
 type SVGSrc string
+
+type Size string
 
 type SharedList[T any] struct {
 	id     CID
@@ -152,7 +153,7 @@ func (s *Shared[T]) SetValue(value string) error {
 		s.v = any(value).(T)
 	case SVGSrc:
 		s.v = any(value).(T)
-	case IntentColor:
+	case Color:
 		s.v = any(value).(T)
 	case bool:
 		b, err := strconv.ParseBool(value)

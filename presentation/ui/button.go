@@ -7,7 +7,7 @@ type Button struct {
 	caption    String
 	preIcon    EmbeddedSVG
 	postIcon   EmbeddedSVG
-	color      Color
+	color      *Shared[Color]
 	action     *Func
 	disabled   Bool
 	properties slice.Slice[Property]
@@ -20,7 +20,7 @@ func NewButton(with func(btn *Button)) *Button {
 		caption:  NewShared[string]("caption"),
 		preIcon:  NewShared[SVGSrc]("preIcon"),
 		postIcon: NewShared[SVGSrc]("postIcon"),
-		color:    NewShared[IntentColor]("color"),
+		color:    NewShared[Color]("color"),
 		disabled: NewShared[bool]("disabled"),
 		action:   NewFunc("action"),
 	}
@@ -57,7 +57,7 @@ func (c *Button) Caption() String {
 	return c.caption
 }
 
-func (c *Button) Style() Color {
+func (c *Button) Style() *Shared[Color] {
 	return c.color
 }
 

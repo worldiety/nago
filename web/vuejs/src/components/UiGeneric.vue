@@ -35,8 +35,8 @@ const props = defineProps<{
   <ui-scaffold v-if="props.ui.type === 'Scaffold'" :ui="props.ui" :ws="props.ws"/>
   <ui-v-box v-else-if="props.ui.type === 'VBox'" :ui="props.ui" :ws="props.ws"/>
   <ui-h-box v-else-if="props.ui.type === 'HBox'" :ui="props.ui" :ws="props.ws"/>
-  <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui"/>
-  <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui"/>
+  <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui" :ws="props.ws"/>
+  <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui" :ws="props.ws"/>
   <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
   <ui-timeline v-else-if="props.ui.type === 'Timeline'" :ui="props.ui"/>
   <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
@@ -49,11 +49,10 @@ const props = defineProps<{
   <ui-date-field v-else-if="props.ui.type === 'DateField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>
   <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>
-  <ui-text v-else-if="props.ui.type === 'AttributedText'" :ui="props.ui"/>
-  <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui"/>
+  <ui-text v-else-if="props.ui.type === 'Text'" :ui="props.ui" :ws="props.ws"/>
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui" :ws="props.ws"/>
   <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui"/>
-  <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui"/>
+  <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui" :ws="props.ws"/>
   <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>
   <!-- <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" /> -->
 

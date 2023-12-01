@@ -1,124 +1,34 @@
 <script lang="ts" setup>
-import type {TableElement, TableListResponse} from '@/shared/model';
-import {ref} from 'vue';
-
-import router from "@/router";
-import {useHttp} from "@/shared/http";
+import {LiveTable} from "@/shared/livemsg";
+import UiGeneric from "@/components/UiGeneric.vue";
 
 const props = defineProps<{
-  ui: TableElement;
+  ui: LiveTable;
+  ws: WebSocket;
 }>();
 
-const tableModel = ref<TableListResponse>({"headers": [], "rows": []});
-
-async function init(): Promise<void> {
-  const http = useHttp();
-  if (props.ui.links.list != null) {
-    tableModel.value = await http.request(props.ui.links.list).then((r) => r.json());
-  }
-  console.log("meh", tableModel.value.headers.values())
-}
-
-init();
-
-
-function tableHeaders(): any {
-  return tableModel.headers
-}
-
-function tableRows(): any {
-  return tableModel.rows
-}
-
-function handleClick(item, row) {
-  let action = row.item["_action"]
-  if (action != null && action.type === "Redirect") {
-    router.push(action.target)
-  }
-  console.log()
-}
-
-function hasHover(): boolean {
-  if (tableModel.value != null && tableModel.value.rows.length > 0) {
-    let action = tableModel.value.rows[0]["_action"]
-    if (action != null && action.type === "Redirect") {
-      return true
-    }
-  }
-
-  return false
-}
-
-const search = ref<string>("")
 </script>
 
 <template>
 
-  <v-card
-      flat
+  <div class="relative overflow-x-auto shadow-md">
+    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+      <thead v-if="props.ui.headers.value"
+             class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <tr>
+        <th v-for="head in props.ui.headers.value" scope="col" class="px-6 py-3">
+          <ui-generic :ui="head.body.value" :ws="ws"/>
+        </th>
+      </tr>
+      </thead>
 
-  >
-
-    <template v-slot:text>
-      <v-row>
-        <v-text-field
-            v-model="search"
-            label="Stichwort Tabellenfilter"
-            prepend-inner-icon="mdi-magnify"
-            single-line
-            clearable
-            variant="outlined"
-            hide-details
-        ></v-text-field>
-
-        <v-btn
-            color="primary"
-            dark
-            class="mb-2"
-            v-bind="props"
-        >
-          New Item
-        </v-btn>
-      </v-row>
-    </template>
-
-
-    <v-data-table
-        :headers="tableModel.headers"
-        :items="tableModel.rows"
-        height="400"
-        v-bind:hover="hasHover()"
-        @click:row="handleClick"
-        :search="search"
-
-        items-per-page-text="Zeilen pro Seite"
-        :pageText="'{0}-{1} von {2}'"
-    >
-
-      <template v-slot:item.actions="{ item }">
-        <v-icon
-            size="small"
-            class="me-2"
-            @click="editItem(item)"
-        >
-          mdi-pencil
-        </v-icon>
-        <v-icon
-            size="small"
-            @click="deleteItem(item)"
-        >
-          mdi-delete
-        </v-icon>
-      </template>
-      <template v-slot:no-data>
-        <v-btn
-            color="primary"
-            @click="initialize"
-        >
-          Reset
-        </v-btn>
-      </template>
-
-    </v-data-table>
-  </v-card>
+      <tbody>
+      <tr v-for="row in props.ui.rows.value" class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+        <td v-for="cell in row.cells.value" class="px-6 py-4">
+          <ui-generic :ui="cell.body.value" :ws="ws"/>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
 </template>

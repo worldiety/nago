@@ -224,6 +224,63 @@ func main() {
 										}),
 									)
 								}),
+
+								ui.NewTable(func(table *ui.Table) {
+
+									table.AppendColumns(
+										ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewText(func(text *ui.Text) {
+												text.Value().Set("hello world")
+												text.Color().Set("text-pink-700")
+												text.Size().Set("text-6xl")
+												text.OnHoverStart().Set(func() {
+													text.Size().Set("40px")
+													text.Value().Set("in")
+													fmt.Println("in")
+												})
+												text.OnHoverEnd().Set(func() {
+													text.Size().Set("")
+													text.Value().Set("out")
+													fmt.Println("out")
+												})
+												text.OnClick().Set(func() {
+
+													fmt.Println("text was clicked")
+												})
+											}))
+										}),
+										ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+												btn.Caption().Set("column 2")
+											}))
+										}),
+										ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+												btn.Caption().Set("column 3")
+											}))
+										}),
+										ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+												btn.Caption().Set("column 4")
+											}))
+										}),
+									)
+
+									for i := 0; i < 10; i++ {
+
+										table.AppendRow(
+											ui.NewTableRow(func(row *ui.TableRow) {
+												for c := 0; c < 4; c++ {
+													row.AppendCell(ui.NewTableCell(func(cell *ui.TableCell) {
+														cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+															btn.Caption().Set(fmt.Sprintf("row=%d col=%d", i, c))
+														}))
+													}))
+												}
+											}),
+										)
+									}
+								}),
 							)
 						}),
 					)
@@ -234,11 +291,4 @@ func main() {
 		})
 
 	}).Run()
-}
-
-type ExampleForm struct {
-	Vorname  ui.TextField `class:"col-start-2 col-span-4"`
-	Nachname ui.TextField
-	Avatar   ui.FileUploadField
-	Chooser  ui.SelectField[PID]
 }
