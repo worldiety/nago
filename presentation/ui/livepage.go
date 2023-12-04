@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/container/slice"
 	"log/slog"
 	"reflect"
 	"strconv"
@@ -17,28 +18,67 @@ type Wire interface {
 }
 
 type LivePage struct {
+	id      CID
 	wire    Wire
-	body    LiveComponent
+	body    *Shared[LiveComponent]
+	modals  *SharedList[LiveComponent]
 	history *History
 }
 
 func NewLivePage(w Wire, with func(page *LivePage)) *LivePage {
-	p := &LivePage{wire: w}
+	p := &LivePage{wire: w, id: nextPtr()}
 	p.history = &History{p: p}
+	p.body = NewShared[LiveComponent]("body")
+	p.modals = NewSharedList[LiveComponent]("modals")
 	if with != nil {
 		with(p)
 	}
 	return p
 }
 
-func (p *LivePage) SetBody(c LiveComponent) {
-	p.body = c
+func (p *LivePage) ID() CID {
+	return p.id
+}
+
+func (p *LivePage) Type() string {
+	return "Page"
+}
+
+func (p *LivePage) Properties() slice.Slice[Property] {
+	return slice.Of[Property]()
+}
+
+func (p *LivePage) Children() slice.Slice[LiveComponent] {
+	tmp := make([]LiveComponent, 1+p.modals.Len())
+	tmp = append(tmp, p.body.v)
+	p.modals.Each(func(component LiveComponent) {
+		tmp = append(tmp, component)
+	})
+	return slice.Of[LiveComponent](tmp...)
+}
+
+func (p *LivePage) Functions() slice.Slice[*Func] {
+	return slice.Of[*Func]()
+}
+
+func (p *LivePage) Body() *Shared[LiveComponent] {
+	return p.body
+}
+
+func (p *LivePage) Modals() *SharedList[LiveComponent] {
+	return p.modals
 }
 
 func (p *LivePage) Invalidate() {
+	// TODO make also a real component
+	var tmp []jsonComponent
+	for _, value := range p.modals.values {
+		tmp = append(tmp, marshalComponent(value))
+	}
 	p.sendMsg(messageFullInvalidate{
-		Type: "Invalidation",
-		Root: marshalComponent(p.body),
+		Type:   "Invalidation",
+		Root:   marshalComponent(p.body.Get()),
+		Modals: tmp,
 	})
 }
 
@@ -66,21 +106,23 @@ func (p *LivePage) HandleMessage() error {
 		if err := json.Unmarshal(buf, &call); err != nil {
 			panic(fmt.Errorf("cannot happen: %w", err))
 		}
-		callIt(p.body, call)
+		callIt(p, call)
 	case "setProp":
 		var call setProperty
 		if err := json.Unmarshal(buf, &call); err != nil {
 			panic(fmt.Errorf("cannot happen: %w", err))
 		}
 
-		setProp(p.body, call)
+		setProp(p, call)
 
 	default:
 		slog.Default().Error("protocol not implemented: " + m.Type)
 	}
 
-	if IsDirty(p.body) {
-		SetDirty(p.body, false)
+	if IsDirty(p.body.Get()) || p.body.Dirty() || p.modals.Dirty() {
+		p.body.SetDirty(false)
+		p.modals.SetDirty(false)
+		SetDirty(p.body.Get(), false)
 		p.Invalidate()
 	}
 
@@ -103,8 +145,9 @@ func (p *LivePage) sendMsg(t any) {
 }
 
 type messageFullInvalidate struct {
-	Type string        `json:"type"` // value=Invalidation
-	Root jsonComponent `json:"root"`
+	Type   string          `json:"type"` // value=Invalidation
+	Root   jsonComponent   `json:"root"`
+	Modals []jsonComponent `json:"modals"`
 }
 
 type messageHistoryBack struct {
@@ -178,7 +221,7 @@ func (h *History) Back() {
 	h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
 }
 
-func (h *History) PushForward(pageId PageID, params Values) {
+func (h *History) Open(pageId PageID, params Values) {
 	h.p.sendMsg(messageHistoryPushState{
 		Type:   "HistoryPushState",
 		PageID: string(pageId),
@@ -186,7 +229,7 @@ func (h *History) PushForward(pageId PageID, params Values) {
 	})
 }
 
-func (h *History) Open(url string, target string) {
+func (h *History) OpenURL(url string, target string) {
 	h.p.sendMsg(messageHistoryOpen{
 		Type:   "HistoryOpen",
 		URL:    url,

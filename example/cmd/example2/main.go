@@ -106,7 +106,7 @@ func main() {
 					B string `name:"b"`
 				}
 				test, _ := ui.UnmarshalValues[myParams](wire.Values())
-				page.SetBody(
+				page.Body().Set(
 					ui.NewVBox(func(vbox *ui.VBox) {
 						vbox.Append(
 							ui.NewButton(func(btn *ui.Button) {
@@ -127,17 +127,54 @@ func main() {
 		counter := 0
 		cfg.LivePage("1234", func(w ui.Wire) *ui.LivePage {
 			page := ui.NewLivePage(w, nil)
-			page.SetBody(
+			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
 					scaffold.TopBar().Mid.Set(ui.MakeText("GED+DH"))
 					scaffold.TopBar().Right.Set(ui.NewButton(func(btn *ui.Button) {
 						btn.Caption().Set("gehe zu")
 						btn.Action().Set(func() {
-							page.History().PushForward("hello", ui.Values{
-								"a": "1234",
-								"b": "456",
-							})
+							page.Modals().Append(
+								ui.NewDialog(func(dlg *ui.Dialog) {
+									dlg.Title().Set("super dialog")
+									dlg.Icon().Set(`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l3 3m0 0l3-3m-3 3v-7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+`)
+									dlg.Body().Set(ui.MakeText("hello super text"))
+									dlg.Actions().Append(
+										ui.NewButton(func(btn *ui.Button) {
+											btn.Caption().Set("schließen")
+											btn.Action().Set(func() {
+												page.Modals().Remove(dlg)
+											})
+										}),
+
+										ui.NewButton(func(btn *ui.Button) {
+											btn.Caption().Set("öffnen")
+											btn.Style().Set("destructive")
+											btn.Action().Set(func() {
+												page.History().Open("hello", ui.Values{
+													"a": "1234",
+													"b": "456",
+												})
+											})
+										}),
+
+										ui.NewButton(func(btn *ui.Button) {
+											btn.Caption().Set("ugly stack it")
+											btn.Action().Set(func() {
+												page.Modals().Append(
+													ui.NewDialog(func(dlg *ui.Dialog) {
+														dlg.Title().Set("got you over it")
+													}),
+												)
+											})
+										}),
+									)
+								}),
+							)
+
 						})
 					}))
 					scaffold.Breadcrumbs().Append(

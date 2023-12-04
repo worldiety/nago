@@ -59,7 +59,7 @@ onMounted(() => {
 
 <template>
 
-  <div class="fixed z-50 flex-1 flex flex-col w-full dark:text-white ">
+  <div class="fixed z-30 flex-1 flex flex-col w-full dark:text-white ">
     <nav class="px-4 flex justify-between h-16 shadow dark:bg-gray-700 bg-white">
 
       <div class="flex items-center pl-4">
@@ -78,7 +78,7 @@ onMounted(() => {
   </div>
 
   <aside id="default-sidebar"
-         class="fixed pt-16 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+         class="fixed pt-16 left-0 z-20 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
          aria-label="Sidebar">
 
     <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
@@ -146,7 +146,7 @@ onMounted(() => {
 
 
   <div
-      class="sm:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+      class="sm:hidden fixed bottom-0 left-0 z-20 w-full h-16 bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
     <div class="grid h-full max-w-lg auto-cols-auto grid-flow-col mx-auto font-medium">
 
       <button type="button"
@@ -166,6 +166,7 @@ onMounted(() => {
 
     </div>
   </div>
+
 
 
 </template>

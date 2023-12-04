@@ -1,17 +1,25 @@
-import {GridElement} from "@/shared/model";
-
 export type LiveMessage = Invalidation
 
 export interface Invalidation {
-    type: 'Invalidation'|'HistoryPushState'|'HistoryBack'
-    root: 'LiveComponent'
+    type: 'Invalidation' | 'HistoryPushState' | 'HistoryBack'
+    root: LiveComponent
+    modals: ComponentList<LiveComponent>
 }
 
-export type LiveComponent = LiveTextField | VBox | LiveTable | LiveButton | LiveTableCell | LiveTableRow | LiveGridCell | LiveGrid
+export type LiveComponent =
+    LiveTextField
+    | VBox
+    | LiveTable
+    | LiveButton
+    | LiveTableCell
+    | LiveTableRow
+    | LiveGridCell
+    | LiveGrid
+    | LiveDialog
 
 export interface VBox {
     type: 'VBox'
-    children: ComponentList
+    children: ComponentList<LiveComponent>
 }
 
 export interface Divider {
@@ -38,6 +46,15 @@ export interface LiveButton {
     color: PropertyString
     action: PropertyFunc
     disabled: PropertyBool
+}
+
+export interface LiveDialog {
+    type: 'Dialog'
+    id: number
+    title: PropertyString
+    body: PropertyComponent<LiveComponent>
+    icon: PropertyString
+    actions: ComponentList<LiveButton>
 }
 
 export interface LiveScaffold {

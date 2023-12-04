@@ -17,11 +17,11 @@ type LiveComponent interface {
 
 type Property interface {
 	Name() string
-	Dirty() bool
-	Value() any
+	Dirty() bool // don't touch
+	Value() any  // don't touch
 	ID() CID
-	SetValue(v string) error
-	SetDirty(b bool)
+	SetValue(v string) error // don't touch
+	SetDirty(b bool)         // don't touch
 }
 
 type String = *Shared[string]
@@ -111,6 +111,27 @@ func (s *SharedList[T]) Len() int {
 func (s *SharedList[T]) Append(t ...T) {
 	s.values = append(s.values, t...)
 	s.dirty = true
+}
+
+func (s *SharedList[T]) Remove(t ...T) {
+	anyRemoved := false
+	tmp := make([]T, 0, len(s.values))
+	for _, value := range s.values {
+		doRemove := false
+		for _, toRemove := range t {
+			if any(value) == any(toRemove) { //hum
+				doRemove = true
+				anyRemoved = true
+				break
+			}
+		}
+		if !doRemove {
+			tmp = append(tmp, value)
+		}
+	}
+
+	s.values = tmp
+	s.dirty = anyRemoved
 }
 
 // Clear removes any contained pointers and sets the length to 0.

@@ -11,6 +11,7 @@ export default defineConfig({
         host: true,
         proxy: {
             '/api': 'http://localhost:3000',
+            '/wire': 'http://localhost:3000',
         },
     },
     resolve: {
