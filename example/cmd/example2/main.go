@@ -230,6 +230,15 @@ func main() {
 									})
 								}),
 
+								ui.NewToggle(func(tgl *ui.Toggle) {
+									tgl.Label().Set("anschalten")
+									tgl.Checked().Set(false)
+									//	tgl.Disabled().Set(true)
+									tgl.OnCheckedChanged().Set(func() {
+										fmt.Println("toggle changed to ", tgl.Checked().Value())
+									})
+								}),
+
 								ui.NewButton(func(btn *ui.Button) {
 									btn.Caption().Set("hello world")
 									btn.Action().Set(func() {

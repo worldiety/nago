@@ -25,6 +25,7 @@ import UiVBox from "@/components/UiVBox.vue";
 import UiHBox from "@/components/UiHBox.vue";
 import UiDivider from "@/components/UiDivider.vue";
 import UiDialog from "@/components/UiDialog.vue";
+import UiToggle from "@/components/UiToggle.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -47,7 +48,7 @@ const props = defineProps<{
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui" :ws="props.ws"/>
   <ui-text-area-field v-else-if="props.ui.type === 'TextAreaField'" :ui="props.ui"/>
-  <ui-switch-field v-else-if="props.ui.type === 'SwitchField'" :ui="props.ui"/>
+  <ui-toggle v-else-if="props.ui.type === 'Toggle'" :ui="props.ui" :ws="props.ws"/>
   <ui-date-field v-else-if="props.ui.type === 'DateField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>
   <ui-select-field v-else-if="props.ui.type === 'SelectField'" :ui="props.ui"/>

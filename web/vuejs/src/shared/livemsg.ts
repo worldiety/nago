@@ -16,6 +16,7 @@ export type LiveComponent =
     | LiveGridCell
     | LiveGrid
     | LiveDialog
+    | LiveToggle
 
 export interface VBox {
     type: 'VBox'
@@ -55,6 +56,15 @@ export interface LiveDialog {
     body: PropertyComponent<LiveComponent>
     icon: PropertyString
     actions: ComponentList<LiveButton>
+}
+
+export interface LiveToggle {
+    type: 'Toggle'
+    id: number
+    label: PropertyString
+    checked: PropertyBool
+    disabled: PropertyBool
+    onCheckedChanged: PropertyFunc
 }
 
 export interface LiveScaffold {
@@ -196,6 +206,7 @@ export function invokeFunc(ws: WebSocket, action: PropertyFunc) {
             id: action.value
         }
         ws.send(JSON.stringify(callSrvFun))
+
     }
 }
 
