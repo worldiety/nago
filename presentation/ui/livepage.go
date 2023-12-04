@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"reflect"
+	"strconv"
 )
 
 const TextMessage = 1
@@ -11,15 +13,22 @@ const TextMessage = 1
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
+	Values() Values
 }
 
 type LivePage struct {
-	wire Wire
-	body LiveComponent
+	wire    Wire
+	body    LiveComponent
+	history *History
 }
 
-func NewLivePage(w Wire) *LivePage {
-	return &LivePage{wire: w}
+func NewLivePage(w Wire, with func(page *LivePage)) *LivePage {
+	p := &LivePage{wire: w}
+	p.history = &History{p: p}
+	if with != nil {
+		with(p)
+	}
+	return p
 }
 
 func (p *LivePage) SetBody(c LiveComponent) {
@@ -31,6 +40,10 @@ func (p *LivePage) Invalidate() {
 		Type: "Invalidation",
 		Root: marshalComponent(p.body),
 	})
+}
+
+func (p *LivePage) History() *History {
+	return p.history
 }
 
 func (p *LivePage) HandleMessage() error {
@@ -90,8 +103,24 @@ func (p *LivePage) sendMsg(t any) {
 }
 
 type messageFullInvalidate struct {
-	Type string        `json:"type"`
+	Type string        `json:"type"` // value=Invalidation
 	Root jsonComponent `json:"root"`
+}
+
+type messageHistoryBack struct {
+	Type string `json:"type"` // value=HistoryBack
+}
+
+type messageHistoryPushState struct {
+	Type   string            `json:"type"` // value=HistoryPushState
+	PageID string            `json:"pageId"`
+	State  map[string]string `json:"state"`
+}
+
+type messageHistoryOpen struct {
+	Type   string `json:"type"` // value=HistoryOpen
+	URL    string `json:"url"`
+	Target string `json:"target"`
 }
 
 type msg struct {
@@ -139,4 +168,83 @@ func setProp(dst LiveComponent, set setProperty) {
 	dst.Children().Each(func(idx int, component LiveComponent) {
 		setProp(component, set)
 	})
+}
+
+type History struct {
+	p *LivePage
+}
+
+func (h *History) Back() {
+	h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
+}
+
+func (h *History) PushForward(pageId PageID, params Values) {
+	h.p.sendMsg(messageHistoryPushState{
+		Type:   "HistoryPushState",
+		PageID: string(pageId),
+		State:  params,
+	})
+}
+
+func (h *History) Open(url string, target string) {
+	h.p.sendMsg(messageHistoryOpen{
+		Type:   "HistoryOpen",
+		URL:    url,
+		Target: target,
+	})
+}
+
+type Values map[string]string
+
+func UnmarshalValues[Dst any](src Values) (Dst, error) {
+	var params Dst
+	t := reflect.TypeOf(params)
+	v := reflect.ValueOf(&params).Elem()
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		name := f.Name
+		if n, ok := f.Tag.Lookup("name"); ok {
+			name = n
+		}
+
+		value, ok := src[name]
+		if !ok {
+			continue
+		}
+
+		switch f.Type.Kind() {
+		case reflect.String:
+			v.Field(i).SetString(value)
+		case reflect.Int:
+			x, err := strconv.Atoi(value)
+			if err != nil {
+				slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+			}
+
+			v.Field(i).SetInt(int64(x))
+		case reflect.Int64:
+			x, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+			}
+
+			v.Field(i).SetInt(x)
+
+		case reflect.Uint64:
+			x, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				slog.Default().Error("cannot parse integer path variable", slog.Any("err", err))
+			}
+
+			v.Field(i).SetUint(x)
+		default:
+			return params, fmt.Errorf("cannot parse '%s' into %T.%s", value, params, f.Name)
+		}
+
+	}
+
+	return params, nil
 }

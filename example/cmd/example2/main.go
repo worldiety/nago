@@ -99,15 +99,46 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
+		cfg.LivePage("hello", func(wire ui.Wire) *ui.LivePage {
+			return ui.NewLivePage(wire, func(page *ui.LivePage) {
+				type myParams struct {
+					A int    `name:"a"`
+					B string `name:"b"`
+				}
+				test, _ := ui.UnmarshalValues[myParams](wire.Values())
+				page.SetBody(
+					ui.NewVBox(func(vbox *ui.VBox) {
+						vbox.Append(
+							ui.NewButton(func(btn *ui.Button) {
+								btn.Caption().Set("zurück")
+								btn.Action().Set(func() {
+									page.History().Back()
+								})
+							}),
+
+							ui.MakeText(fmt.Sprintf("A=%v", test.A)),
+							ui.MakeText(fmt.Sprintf("B=%v", test.B)),
+						)
+					}),
+				)
+			})
+		})
+
 		counter := 0
 		cfg.LivePage("1234", func(w ui.Wire) *ui.LivePage {
-			page := ui.NewLivePage(w)
+			page := ui.NewLivePage(w, nil)
 			page.SetBody(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
 					scaffold.TopBar().Mid.Set(ui.MakeText("GED+DH"))
 					scaffold.TopBar().Right.Set(ui.NewButton(func(btn *ui.Button) {
-						btn.Caption().Set("user")
+						btn.Caption().Set("gehe zu")
+						btn.Action().Set(func() {
+							page.History().PushForward("hello", ui.Values{
+								"a": "1234",
+								"b": "456",
+							})
+						})
 					}))
 					scaffold.Breadcrumbs().Append(
 						ui.NewButton(func(btn *ui.Button) {
@@ -141,7 +172,7 @@ func main() {
 					)
 
 					scaffold.Body().Set(
-						ui.NewVBox().With(func(vbox *ui.VBox) {
+						ui.NewVBox(func(vbox *ui.VBox) {
 							vbox.Append(
 								ui.NewTextField().With(func(t *ui.TextField) {
 									t.Label().Set("Vorname")

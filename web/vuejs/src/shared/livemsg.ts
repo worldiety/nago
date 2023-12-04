@@ -3,7 +3,7 @@ import {GridElement} from "@/shared/model";
 export type LiveMessage = Invalidation
 
 export interface Invalidation {
-    type: 'Invalidation'
+    type: 'Invalidation'|'HistoryPushState'|'HistoryBack'
     root: 'LiveComponent'
 }
 

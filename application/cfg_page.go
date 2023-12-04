@@ -100,7 +100,18 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 		defer conn.Close()
 
-		livePage := c.uiApp.LivePages["1234"](conn)
+		queryParams := r.URL.Query()
+		pageID := queryParams.Get("_pid")
+
+		livePageFn := c.uiApp.LivePages[ui.PageID(pageID)]
+
+		if livePageFn == nil {
+			logging.FromContext(r.Context()).Warn("client requested unknown page", slog.String("_pid", pageID))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		livePage := livePageFn(&connWrapper{conn: conn, r: r})
 		logging.FromContext(r.Context()).Info(fmt.Sprintf("spawned live page %p", livePage))
 		livePage.Invalidate()
 		for {
@@ -131,4 +142,29 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
+}
+
+type connWrapper struct {
+	conn *websocket.Conn
+	r    *http.Request
+}
+
+func (c *connWrapper) ReadMessage() (messageType int, p []byte, err error) {
+	return c.conn.ReadMessage()
+}
+
+func (c *connWrapper) WriteMessage(messageType int, data []byte) error {
+	return c.conn.WriteMessage(messageType, data)
+}
+
+func (c *connWrapper) Values() ui.Values {
+	tmp := ui.Values{}
+	for k, strings := range c.r.URL.Query() {
+		v := ""
+		if len(strings) > 0 {
+			v = strings[0]
+		}
+		tmp[k] = v
+	}
+	return tmp
 }

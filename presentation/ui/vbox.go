@@ -10,23 +10,21 @@ type VBox struct {
 	properties slice.Slice[Property]
 }
 
-func NewVBox() *VBox {
+func NewVBox(with func(vbox *VBox)) *VBox {
 	c := &VBox{
 		id:       nextPtr(),
 		children: NewSharedList[LiveComponent]("children"),
 	}
 
 	c.properties = slice.Of[Property](c.children)
+	if with != nil {
+		with(c)
+	}
 	return c
 }
 
 func (c *VBox) Append(children ...LiveComponent) *VBox {
 	c.children.Append(children...)
-	return c
-}
-
-func (c *VBox) With(f func(box *VBox)) *VBox {
-	f(c)
 	return c
 }
 
