@@ -65,7 +65,7 @@ function retry() {
 function connectWebSocket() {
   console.log("trying ws open")
 
-  let wsurl = "ws://" + window.location.hostname + import.meta.env.VITE_WS_BACKEND_PORT + "/wire?_pid=" + window.location.pathname.substring(1)
+  let wsurl = "ws://" + window.location.hostname +":"+  window.location.port + "/wire?_pid=" + window.location.pathname.substring(1)
   let queryString = window.location.search.substring(1)
   wsurl+="&"+queryString
 
