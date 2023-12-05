@@ -39,6 +39,13 @@ const styleGridRowEnd = computed<string>(() => {
   return '';
 });
 
+const styleGridColSpan = computed<string>(() => {
+  if (props.ui.rowEnd.value > 0) {
+    return `row-end-${props.ui.rowEnd.value} `;
+  }
+  return '';
+});
+
 const style = computed(
     () => `
     ${styleGridColStart.value}

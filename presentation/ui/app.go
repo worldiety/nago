@@ -5,40 +5,48 @@ import (
 	"github.com/flowchartsman/swaggerui"
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggest/openapi-go/openapi3"
-	"go.wdy.de/nago/container/slice"
 	"net/http"
+	"regexp"
 	"strings"
 )
+
+var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
+
+const (
+	apiSlug     = "/api/v1/"
+	apiUiSlug   = apiSlug + "ui/"
+	apiPageSlug = apiUiSlug + "page/"
+	apiAppSlug  = apiUiSlug + "application"
+)
+
+type PageID string
+
+func (p PageID) Validate() error {
+	if len(validPageIdRegex.FindAllStringSubmatch(string(p), -1)) != 1 {
+		return fmt.Errorf("the id '%s' is invalid and must match the [a-z0-9_\\-{/}]+", string(p))
+	}
+
+	return nil
+}
 
 type Application struct {
 	Name        string
 	Version     string
 	Description string
-	Pages       slice.Slice[Pager]
-	IndexTarget Target
+	IndexTarget string
 	OIDC        []OIDCProvider
-	LivePages   map[PageID]func(Wire) *LivePage
+	LivePages   map[PageID]func(Wire) *Page
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {
 	router.Handle("/api/doc/*", http.StripPrefix("/api/doc", swaggerui.Handler(a.renderOpenAPI())))
-	a.Pages.Each(func(idx int, v Pager) {
-		v.Configure(a, router)
-	})
 
 	router.Get(apiAppSlug, func(writer http.ResponseWriter, request *http.Request) {
 		res := appResponse{
 			Name:        a.Name,
 			Description: a.Description,
 			Index:       string(a.IndexTarget),
-			Pages: slice.UnsafeUnwrap(slice.Map(a.Pages, func(idx int, v Pager) appPage {
-				return appPage{
-					ID:            v.PageID(),
-					Authenticated: v.Authenticated(),
-					Link:          Link(v.Pattern()),
-					Anchor:        "/" + strings.TrimPrefix(v.Pattern(), apiPageSlug),
-				}
-			})),
+
 			LivePages: func() []livePage {
 				var tmp []livePage
 				for id, _ := range a.LivePages {
@@ -66,10 +74,6 @@ func (a *Application) renderOpenAPI() []byte {
 		WithVersion(a.Version).
 		WithDescription("Copyright by worldiety GmbH")
 
-	a.Pages.Each(func(idx int, v Pager) {
-		v.renderOpenAPI(o3a)
-	})
-
 	oc := must2(o3a.NewOperationContext(http.MethodGet, apiAppSlug))
 	oc.AddRespStructure(appResponse{})
 	must(o3a.AddOperation(oc))
@@ -84,18 +88,10 @@ func (a *Application) renderOpenAPI() []byte {
 
 type appResponse struct {
 	Name        string         `json:"name" description:"The name of the entire application."`
-	Pages       []appPage      `json:"pages" description:"All known and configured pages. Not all pages are directly addressable and therefore require parameters."`
 	Description string         `json:"description" description:"The applications purpose description."`
 	Index       string         `json:"index" description:"The default index page target to load."`
 	OIDC        []OIDCProvider `json:"oidc"`
 	LivePages   []livePage     `json:"livePages"`
-}
-
-type appPage struct {
-	ID            PageID `json:"id" description:"unique page identifier"`
-	Authenticated bool   `json:"authenticated" description:"If true, the client must provide an authenticated user, otherwise any resource requests will fail."`
-	Link          Link   `json:"link" description:"TODO: how to handle pages with parameters? just query?"`
-	Anchor        string `json:"anchor"`
 }
 
 type livePage struct {

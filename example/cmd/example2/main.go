@@ -40,13 +40,6 @@ func (e EntByInt) Identity() IntlIke {
 	return e.ID
 }
 
-type MyForm struct {
-	Name    ui.TextField
-	Check   ui.SwitchField
-	DueDate ui.DateField
-	Comment ui.TextAreaField
-}
-
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
@@ -99,8 +92,8 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
-		cfg.LivePage("hello", func(wire ui.Wire) *ui.LivePage {
-			return ui.NewLivePage(wire, func(page *ui.LivePage) {
+		cfg.Page("hello", func(wire ui.Wire) *ui.Page {
+			return ui.NewPage(wire, func(page *ui.Page) {
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
@@ -125,8 +118,8 @@ func main() {
 		})
 
 		counter := 0
-		cfg.LivePage("1234", func(w ui.Wire) *ui.LivePage {
-			page := ui.NewLivePage(w, nil)
+		cfg.Page("1234", func(w ui.Wire) *ui.Page {
+			page := ui.NewPage(w, nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))

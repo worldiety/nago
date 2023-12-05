@@ -34,7 +34,7 @@ func NewConfigurator() *Configurator {
 		ctx:      ctx,
 		done:     done,
 		uiApp: &ui.Application{
-			LivePages: make(map[ui.PageID]func(wire ui.Wire) *ui.LivePage),
+			LivePages: make(map[ui.PageID]func(wire ui.Wire) *ui.Page),
 		},
 		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}

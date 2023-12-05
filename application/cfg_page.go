@@ -24,18 +24,7 @@ func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	return c
 }
 
-func (c *Configurator) Page(p ui.Pager) *Configurator {
-	if err := p.PageID().Validate(); err != nil {
-		panic(err)
-	}
-	c.uiApp.Pages = c.uiApp.Pages.AppendAll(p)
-	if err := p.Validate(); err != nil {
-		panic(err)
-	}
-	return c
-}
-
-func (c *Configurator) Index(target ui.Target) *Configurator {
+func (c *Configurator) Index(target string) *Configurator {
 	c.uiApp.IndexTarget = target
 	return c
 }

@@ -17,7 +17,7 @@ type Wire interface {
 	Values() Values
 }
 
-type LivePage struct {
+type Page struct {
 	id      CID
 	wire    Wire
 	body    *Shared[LiveComponent]
@@ -25,8 +25,8 @@ type LivePage struct {
 	history *History
 }
 
-func NewLivePage(w Wire, with func(page *LivePage)) *LivePage {
-	p := &LivePage{wire: w, id: nextPtr()}
+func NewPage(w Wire, with func(page *Page)) *Page {
+	p := &Page{wire: w, id: nextPtr()}
 	p.history = &History{p: p}
 	p.body = NewShared[LiveComponent]("body")
 	p.modals = NewSharedList[LiveComponent]("modals")
@@ -36,19 +36,19 @@ func NewLivePage(w Wire, with func(page *LivePage)) *LivePage {
 	return p
 }
 
-func (p *LivePage) ID() CID {
+func (p *Page) ID() CID {
 	return p.id
 }
 
-func (p *LivePage) Type() string {
+func (p *Page) Type() string {
 	return "Page"
 }
 
-func (p *LivePage) Properties() slice.Slice[Property] {
+func (p *Page) Properties() slice.Slice[Property] {
 	return slice.Of[Property]()
 }
 
-func (p *LivePage) Children() slice.Slice[LiveComponent] {
+func (p *Page) Children() slice.Slice[LiveComponent] {
 	tmp := make([]LiveComponent, 1+p.modals.Len())
 	tmp = append(tmp, p.body.v)
 	p.modals.Each(func(component LiveComponent) {
@@ -57,19 +57,19 @@ func (p *LivePage) Children() slice.Slice[LiveComponent] {
 	return slice.Of[LiveComponent](tmp...)
 }
 
-func (p *LivePage) Functions() slice.Slice[*Func] {
+func (p *Page) Functions() slice.Slice[*Func] {
 	return slice.Of[*Func]()
 }
 
-func (p *LivePage) Body() *Shared[LiveComponent] {
+func (p *Page) Body() *Shared[LiveComponent] {
 	return p.body
 }
 
-func (p *LivePage) Modals() *SharedList[LiveComponent] {
+func (p *Page) Modals() *SharedList[LiveComponent] {
 	return p.modals
 }
 
-func (p *LivePage) Invalidate() {
+func (p *Page) Invalidate() {
 	// TODO make also a real component
 	var tmp []jsonComponent
 	for _, value := range p.modals.values {
@@ -82,11 +82,11 @@ func (p *LivePage) Invalidate() {
 	})
 }
 
-func (p *LivePage) History() *History {
+func (p *Page) History() *History {
 	return p.history
 }
 
-func (p *LivePage) HandleMessage() error {
+func (p *Page) HandleMessage() error {
 	_, buf, err := p.wire.ReadMessage()
 	if err != nil {
 		slog.Default().Error("failed to receive ws message", slog.Any("err", err))
@@ -129,12 +129,12 @@ func (p *LivePage) HandleMessage() error {
 	return nil
 }
 
-func (p *LivePage) Close() error {
+func (p *Page) Close() error {
 	slog.Default().Info("live page is dead")
 	return nil
 }
 
-func (p *LivePage) sendMsg(t any) {
+func (p *Page) sendMsg(t any) {
 	buf, err := json.Marshal(t)
 	if err != nil {
 		panic(fmt.Errorf("implementation failure: %w", err))
@@ -214,7 +214,7 @@ func setProp(dst LiveComponent, set setProperty) {
 }
 
 type History struct {
-	p *LivePage
+	p *Page
 }
 
 func (h *History) Back() {

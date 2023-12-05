@@ -141,6 +141,9 @@ export interface LiveGridCell {
     colEnd: PropertyInt
     rowStart: PropertyInt
     rowEnd: PropertyInt
+    smColSpan: PropertyInt
+    mdColSpan: PropertyInt
+    lgColSpan: PropertyInt
 }
 
 export interface LiveTableRow {
