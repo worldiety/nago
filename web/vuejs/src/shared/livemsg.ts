@@ -35,6 +35,13 @@ export interface VBox {
     children: ComponentList<LiveComponent>
 }
 
+export interface LiveCard {
+    type: 'Card'
+    children: ComponentList<LiveComponent>
+    action: PropertyFunc
+}
+
+
 export interface Divider {
     type: 'Divider'
 }
@@ -275,7 +282,7 @@ export function textSize2Tailwind(s: string): string {
         return "text-[" + s + "]"
     }
 
-    return s
+    return "text-"+s
 }
 
 export function gapSize2Tailwind(s: string): string {

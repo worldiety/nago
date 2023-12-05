@@ -443,7 +443,7 @@ func main() {
 								}),
 
 								ui.NewHBox(func(hBox *ui.HBox) {
-									hBox.Alignment().Set("flex-right")
+									hBox.Alignment().Set("flex-center")
 									hBox.Append(
 										ui.NewChip(func(chip *ui.Chip) {
 											chip.Caption().Set("default")
@@ -467,6 +467,23 @@ func main() {
 										ui.NewChip(func(chip *ui.Chip) {
 											chip.Caption().Set("yellow")
 											chip.Color().Set("yellow")
+										}),
+
+										ui.NewCard(func(card *ui.Card) {
+											card.Append(
+												ui.NewVBox(func(vbox *ui.VBox) {
+													vbox.Append(
+														ui.NewText(func(text *ui.Text) {
+															text.Color().Set("#FF0000")
+															text.Size().Set("2xl")
+															text.Value().Set("Super card")
+														}),
+														ui.MakeText("standard text kram"),
+														ui.NewDivider(nil),
+														ui.MakeText("bblabla"),
+													)
+												}),
+											)
 										}),
 									)
 								}),

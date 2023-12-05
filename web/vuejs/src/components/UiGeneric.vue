@@ -44,9 +44,7 @@ const props = defineProps<{
   <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui" :ws="props.ws"/>
   <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
   <ui-stepper v-else-if="props.ui.type === 'Stepper'" :ui="props.ui" :ws="props.ws"/>
-  <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
-  <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
-  <ui-card-metric-text v-else-if="props.ui.type === 'CardMetric'" :ui="props.ui"/>
+
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui" :ws="props.ws"/>
   <ui-text-area v-else-if="props.ui.type === 'TextArea'" :ui="props.ui" :ws="props.ws"/>
@@ -58,7 +56,7 @@ const props = defineProps<{
   <ui-button v-else-if="props.ui.type === 'Button'" :ui="props.ui" :ws="props.ws"/>
   <ui-grid v-else-if="props.ui.type === 'Grid'" :ui="props.ui" :ws="props.ws"/>
   <ui-table v-else-if="props.ui.type === 'Table'" :ui="props.ui" :ws="props.ws"/>
-  <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui"/>
+  <ui-card v-else-if="props.ui.type === 'Card'" :ui="props.ui" :ws="props.ws"/>
   <!-- <ui-navbar v-else-if="props.ui.type === 'Navbar'" :ui="props.ui" /> -->
 
   <div v-else>[Unknown view type '{{ props.ui.type }}']</div>

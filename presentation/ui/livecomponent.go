@@ -36,6 +36,7 @@ type Float = *Shared[float64]
 
 type SVGSrc string
 
+// Allows sizes are sm, base, lg, xl and 2xl
 type Size string
 
 type SharedList[T any] struct {

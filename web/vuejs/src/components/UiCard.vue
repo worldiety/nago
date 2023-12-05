@@ -1,25 +1,29 @@
 <script lang="ts" setup>
-import type { CardElement, UiDescription } from '@/shared/model';
-import { ButtonElement } from '@/shared/model';
-import { useUiEvents } from '@/shared/uiEvent';
-import type { Ref } from 'vue';
-import { inject } from 'vue';
+import type {UiDescription} from '@/shared/model';
+import type {Ref} from 'vue';
+import {inject} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
+import {invokeFunc, LiveCard} from "@/shared/livemsg";
 
 const props = defineProps<{
-    ui: CardElement;
+  ui: LiveCard;
+  ws: WebSocket
 }>();
 
 const ui: Ref<UiDescription> = inject('ui')!;
-const events = useUiEvents(ui);
 
-async function onClick() {
-    await events.send(props.ui.onClick);
+function onClick() {
+  invokeFunc(props.ws, props.ui.action)
 }
+
 </script>
 
 <template>
-    <div class="block rounded-lg border border-gray-200 bg-white p-6 shadow" @click="onClick">
-        <ui-generic v-for="ui in props.ui.views" :ui="ui" />
-    </div>
+
+
+  <div @click="onClick" :class="props.ui.action.value>0?'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700':''"
+       class="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 ">
+    <ui-generic v-for="ui in props.ui.children.value" :ui="ui" :ws="ws"/>
+  </div>
+
 </template>

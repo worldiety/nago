@@ -11,10 +11,14 @@ const clazz = computed<string>(() => {
   let tmp = ""
   if (props.ui.color.value) {
     tmp += textColor2Tailwind(props.ui.color.value)
+  }else{
+    tmp+="text-gray-900"
   }
 
   if (props.ui.colorDark.value) {
     tmp += " dark:" + textColor2Tailwind(props.ui.color.value)
+  }else{
+    tmp+=" dark:text-white"
   }
 
   if (props.ui.size.value) {

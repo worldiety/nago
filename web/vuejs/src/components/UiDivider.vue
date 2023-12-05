@@ -10,5 +10,5 @@ const props = defineProps<{
 
 <template>
   <hr
-      class="my-12 border-t-1 opacity-100 dark:opacity-50" />
+      class="border-t-1 opacity-100 dark:opacity-50" />
 </template>
