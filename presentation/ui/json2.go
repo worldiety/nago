@@ -35,7 +35,7 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 	c.Properties().Each(func(idx int, v Property) {
 		ignoreProp := false
 		var value any
-		switch t := v.Value().(type) {
+		switch t := v.value().(type) {
 		case LiveComponent:
 			value = newJsonComponent(visited, t)
 		case slice.Slice[LiveComponent]:
@@ -50,7 +50,7 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 				ignoreProp = true
 			}
 		default:
-			value = v.Value()
+			value = v.value()
 		}
 
 		if !ignoreProp {
@@ -74,7 +74,7 @@ type jsonProperty struct {
 }
 
 func propertyTypeName(p Property) string {
-	switch p.Value().(type) {
+	switch p.value().(type) {
 	case string:
 		return "string"
 	case int64:
@@ -96,8 +96,8 @@ func propertyTypeName(p Property) string {
 	case nil:
 		return "nil"
 	case LiveComponent:
-		return p.Value().(LiveComponent).Type()
+		return p.value().(LiveComponent).Type()
 	default:
-		panic(fmt.Errorf("type not implemented: %T", p.Value()))
+		panic(fmt.Errorf("type not implemented: %T", p.value()))
 	}
 }

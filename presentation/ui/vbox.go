@@ -39,11 +39,3 @@ func (c *VBox) Type() string {
 func (c *VBox) Properties() slice.Slice[Property] {
 	return c.properties
 }
-
-func (c *VBox) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.children.values...)
-}
-
-func (c *VBox) Functions() slice.Slice[*Func] {
-	return slice.Of[*Func]()
-}

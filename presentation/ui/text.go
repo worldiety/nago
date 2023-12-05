@@ -9,7 +9,6 @@ type Text struct {
 	colorDark    *Shared[Color]
 	size         *Shared[Size]
 	properties   slice.Slice[Property]
-	functions    slice.Slice[*Func]
 	onClick      *Func
 	onHoverStart *Func
 	onHoverEnd   *Func
@@ -28,7 +27,6 @@ func NewText(with func(*Text)) *Text {
 	c.color = NewShared[Color]("color")
 	c.colorDark = NewShared[Color]("colorDark")
 	c.properties = slice.Of[Property](c.value, c.color, c.colorDark, c.size, c.onClick, c.onHoverStart, c.onHoverEnd)
-	c.functions = slice.Of[*Func](c.onClick, c.onHoverStart, c.onHoverEnd)
 	if with != nil {
 		with(c)
 	}
@@ -80,12 +78,4 @@ func (c *Text) Type() string {
 
 func (c *Text) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *Text) Children() slice.Slice[LiveComponent] {
-	return slice.Of[LiveComponent]()
-}
-
-func (c *Text) Functions() slice.Slice[*Func] {
-	return c.functions
 }

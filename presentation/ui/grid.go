@@ -12,7 +12,6 @@ type Grid struct {
 	lgColumns  Int
 	gap        *Shared[Size]
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewGrid(with func(grid *Grid)) *Grid {
@@ -28,7 +27,6 @@ func NewGrid(with func(grid *Grid)) *Grid {
 	c.lgColumns = NewShared[int64]("lgColumns")
 	c.gap = NewShared[Size]("gap")
 	c.properties = slice.Of[Property](c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns)
-	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
 	}
@@ -78,12 +76,4 @@ func (c *Grid) Type() string {
 
 func (c *Grid) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *Grid) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.cells.values...)
-}
-
-func (c *Grid) Functions() slice.Slice[*Func] {
-	return c.functions
 }

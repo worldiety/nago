@@ -10,7 +10,6 @@ type Dialog struct {
 	actions *SharedList[*Button]
 
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewDialog(with func(dlg *Dialog)) *Dialog {
@@ -23,7 +22,6 @@ func NewDialog(with func(dlg *Dialog)) *Dialog {
 	}
 
 	c.properties = slice.Of[Property](c.title, c.icon, c.body, c.actions)
-	c.functions = slice.Of[*Func]()
 
 	if with != nil {
 		with(c)
@@ -57,21 +55,4 @@ func (c *Dialog) Type() string {
 
 func (c *Dialog) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *Dialog) Children() slice.Slice[LiveComponent] {
-	tmp := make([]LiveComponent, 0, 1+c.actions.Len())
-	if c.body != nil {
-		tmp = append(tmp, c.body.v)
-	}
-
-	c.actions.Each(func(b *Button) {
-		tmp = append(tmp, b)
-	})
-
-	return slice.Of[LiveComponent](tmp...)
-}
-
-func (c *Dialog) Functions() slice.Slice[*Func] {
-	return c.functions
 }

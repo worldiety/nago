@@ -67,27 +67,6 @@ func (c *Scaffold) Properties() slice.Slice[Property] {
 	return c.properties
 }
 
-func (c *Scaffold) Children() slice.Slice[LiveComponent] {
-	tmp := make([]LiveComponent, 0, c.breadcrumbs.Len()+c.menu.Len()+1+3)
-	c.breadcrumbs.Each(func(b *Button) {
-		tmp = append(tmp, b)
-	})
-	c.menu.Each(func(b *Button) {
-		tmp = append(tmp, b)
-	})
-	if c.body != nil {
-		tmp = append(tmp, c.body.Get())
-	}
-
-	tmp = append(tmp, c.topbarLeft.v, c.topbarMid.v, c.topbarRight.v)
-
-	return slice.Of[LiveComponent](tmp...)
-}
-
-func (c *Scaffold) Functions() slice.Slice[*Func] {
-	return slice.Of[*Func]()
-}
-
 type ScaffoldTopBar struct {
 	Left  *Shared[LiveComponent]
 	Mid   *Shared[LiveComponent]

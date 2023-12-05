@@ -14,7 +14,6 @@ type GridCell struct {
 	rowStart   Int
 	rowEnd     Int
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewGridCell(with func(cell *GridCell)) *GridCell {
@@ -32,7 +31,6 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 	c.mdColSpan = NewShared[int64]("mdColSpan")
 	c.lgColSpan = NewShared[int64]("lgColSpan")
 	c.properties = slice.Of[Property](c.body, c.colStart, c.colEnd, c.rowStart, c.rowEnd, c.colSpan, c.smColSpan, c.mdColSpan, c.lgColSpan)
-	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
 	}
@@ -90,12 +88,4 @@ func (c *GridCell) Type() string {
 
 func (c *GridCell) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *GridCell) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.body.v)
-}
-
-func (c *GridCell) Functions() slice.Slice[*Func] {
-	return c.functions
 }

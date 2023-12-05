@@ -19,11 +19,11 @@ func NewFunc(name string) *Func {
 	}
 }
 
-func (lf *Func) Value() any {
+func (lf *Func) value() any {
 	return lf // ??? TODO this may cause a visitor endless recursion
 }
 
-func (lf *Func) SetValue(v string) error {
+func (lf *Func) setValue(v string) error {
 	return fmt.Errorf("cannot set function pointer by string: %s", v)
 }
 

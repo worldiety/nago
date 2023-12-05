@@ -17,6 +17,8 @@ export type LiveComponent =
     | LiveGrid
     | LiveDialog
     | LiveToggle
+    | LiveStepper
+    | LiveStepInfo
 
 export interface VBox {
     type: 'VBox'
@@ -36,6 +38,21 @@ export interface ComponentList<T extends LiveComponent> {
     type: 'componentList'
     id: number
     value: T[]
+}
+
+export interface LiveStepper {
+    type: 'Stepper'
+    id: number
+    steps: ComponentList<LiveStepInfo>
+    selectedIndex: PropertyInt
+}
+
+export interface LiveStepInfo {
+    type: 'StepInfo'
+    id: number
+    number: PropertyString
+    caption: PropertyString
+    details: PropertyString
 }
 
 export interface LiveButton {
@@ -141,6 +158,7 @@ export interface LiveGridCell {
     colEnd: PropertyInt
     rowStart: PropertyInt
     rowEnd: PropertyInt
+    colSpan: PropertyInt
     smColSpan: PropertyInt
     mdColSpan: PropertyInt
     lgColSpan: PropertyInt

@@ -11,17 +11,21 @@ type LiveComponent interface {
 	ID() CID
 	Type() string
 	Properties() slice.Slice[Property]
-	Children() slice.Slice[LiveComponent]
-	Functions() slice.Slice[*Func]
 }
 
 type Property interface {
+	// Name returns the actual protocol name of this property.
 	Name() string
-	Dirty() bool // don't touch
-	Value() any  // don't touch
+	// Dirty returns true, if the property has been changed.
+	Dirty() bool
+	value() any
+	// ID returns the internal unique instance ID of this property which is used to identify it across process
+	// boundaries.
 	ID() CID
-	SetValue(v string) error // don't touch
-	SetDirty(b bool)         // don't touch
+	setValue(v string) error // don't touch
+	// SetDirty explicitly marks or unmarks this property as dirty.
+	// This is done automatically, when updating the value.
+	SetDirty(b bool)
 }
 
 type String = *Shared[string]
@@ -52,7 +56,7 @@ func (s *SharedList[T]) Name() string {
 	return s.name
 }
 
-func (s *SharedList[T]) Value() any {
+func (s *SharedList[T]) value() any {
 	var zero T
 	if _, ok := any(zero).(LiveComponent); ok {
 		var tmp []LiveComponent
@@ -68,7 +72,7 @@ func (s *SharedList[T]) ID() CID {
 	return s.id
 }
 
-func (s *SharedList[T]) SetValue(v string) error {
+func (s *SharedList[T]) setValue(v string) error {
 	return fmt.Errorf("cannot set shared values by list!?: %v", v)
 }
 
@@ -164,11 +168,11 @@ func (s *Shared[T]) ID() CID {
 	return s.id
 }
 
-func (s *Shared[T]) Value() any {
+func (s *Shared[T]) value() any {
 	return s.v
 }
 
-func (s *Shared[T]) SetValue(value string) error {
+func (s *Shared[T]) setValue(value string) error {
 	switch any(s.v).(type) {
 	case string:
 		s.v = any(value).(T)
@@ -253,7 +257,7 @@ func IsDirty(dst LiveComponent) bool {
 		return true
 	}
 
-	dst.Functions().Each(func(idx int, f *Func) {
+	Functions(dst, func(f *Func) {
 		dirty = dirty || f.Dirty()
 	})
 
@@ -261,8 +265,8 @@ func IsDirty(dst LiveComponent) bool {
 		return true
 	}
 
-	dst.Children().Each(func(idx int, component LiveComponent) {
-		dirty = dirty || IsDirty(component)
+	Children(dst, func(c LiveComponent) {
+		dirty = dirty || IsDirty(c)
 	})
 
 	return dirty
@@ -277,11 +281,42 @@ func SetDirty(dst LiveComponent, dirty bool) {
 		v.SetDirty(dirty)
 	})
 
-	dst.Functions().Each(func(idx int, f *Func) {
+	Functions(dst, func(f *Func) {
 		f.SetDirty(dirty)
 	})
 
-	dst.Children().Each(func(idx int, component LiveComponent) {
-		SetDirty(component, dirty)
+	Children(dst, func(c LiveComponent) {
+		SetDirty(c, dirty)
+	})
+
+}
+
+func Functions(c LiveComponent, f func(f *Func)) {
+	c.Properties().Each(func(idx int, v Property) {
+		if fun, ok := v.(*Func); ok {
+			f(fun)
+		}
+	})
+}
+
+func Children(c LiveComponent, f func(c LiveComponent)) {
+	c.Properties().Each(func(idx int, v Property) {
+		switch t := v.(type) {
+		case *Shared[LiveComponent]:
+			f(t.Get())
+		case *SharedList[LiveComponent]:
+			t.Each(func(component LiveComponent) {
+				f(component)
+			})
+		case Property:
+			switch v := t.value().(type) {
+			case slice.Slice[LiveComponent]:
+				v.Each(func(idx int, v LiveComponent) {
+					f(v)
+				})
+			case LiveComponent:
+				f(v)
+			}
+		}
 	})
 }

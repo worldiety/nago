@@ -36,11 +36,3 @@ func (c *Divider) Type() string {
 func (c *Divider) Properties() slice.Slice[Property] {
 	return c.properties
 }
-
-func (c *Divider) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.children.values...)
-}
-
-func (c *Divider) Functions() slice.Slice[*Func] {
-	return slice.Of[*Func]()
-}

@@ -6,7 +6,6 @@ type TableRow struct {
 	id         CID
 	cells      *SharedList[LiveComponent]
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewTableRow(with func(row *TableRow)) *TableRow {
@@ -16,7 +15,6 @@ func NewTableRow(with func(row *TableRow)) *TableRow {
 
 	c.cells = NewSharedList[LiveComponent]("cells")
 	c.properties = slice.Of[Property](c.cells)
-	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
 	}
@@ -39,12 +37,4 @@ func (c *TableRow) Type() string {
 
 func (c *TableRow) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *TableRow) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.cells.values...)
-}
-
-func (c *TableRow) Functions() slice.Slice[*Func] {
-	return c.functions
 }

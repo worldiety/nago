@@ -13,11 +13,10 @@ type TextField struct {
 	disabled      Bool
 	onTextChanged *Func
 	properties    slice.Slice[Property]
-	functions     slice.Slice[*Func]
 }
 
-func NewTextField() *TextField {
-	l := &TextField{
+func NewTextField(with func(t *TextField)) *TextField {
+	c := &TextField{
 		id:            nextPtr(),
 		label:         NewShared[string]("label"),
 		value:         NewShared[string]("value"),
@@ -27,18 +26,17 @@ func NewTextField() *TextField {
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	l.properties = slice.Of[Property](l.label, l.value, l.hint, l.error, l.disabled, l.disabled, l.onTextChanged)
-	l.functions = slice.Of[*Func](l.onTextChanged)
-	return l
+	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged)
+
+	if with != nil {
+		with(c)
+	}
+
+	return c
 }
 
 func (l *TextField) OnTextChanged() *Func {
 	return l.onTextChanged
-}
-
-func (l *TextField) With(f func(t *TextField)) *TextField {
-	f(l)
-	return l
 }
 
 func (l *TextField) ID() CID {
@@ -71,12 +69,4 @@ func (l *TextField) Type() string {
 
 func (l *TextField) Properties() slice.Slice[Property] {
 	return l.properties
-}
-
-func (l *TextField) Children() slice.Slice[LiveComponent] {
-	return slice.Of[LiveComponent]()
-}
-
-func (l *TextField) Functions() slice.Slice[*Func] {
-	return l.functions
 }

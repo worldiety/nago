@@ -40,11 +40,3 @@ func (c *HBox) Type() string {
 func (c *HBox) Properties() slice.Slice[Property] {
 	return c.properties
 }
-
-func (c *HBox) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.children.values...)
-}
-
-func (c *HBox) Functions() slice.Slice[*Func] {
-	return slice.Of[*Func]()
-}

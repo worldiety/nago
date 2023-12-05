@@ -9,7 +9,6 @@ type Toggle struct {
 	checked          Bool
 	disabled         Bool
 	properties       slice.Slice[Property]
-	functions        slice.Slice[*Func]
 	onCheckedChanged *Func
 }
 
@@ -23,7 +22,6 @@ func NewToggle(with func(tgl *Toggle)) *Toggle {
 	}
 
 	c.properties = slice.Of[Property](c.label, c.disabled, c.checked, c.onCheckedChanged)
-	c.functions = slice.Of[*Func](c.onCheckedChanged)
 	if with != nil {
 		with(c)
 	}
@@ -42,20 +40,12 @@ func (c *Toggle) Properties() slice.Slice[Property] {
 	return c.properties
 }
 
-func (c *Toggle) Children() slice.Slice[LiveComponent] {
-	return slice.Of[LiveComponent]()
-}
-
 func (c *Toggle) OnCheckedChanged() *Func {
 	return c.onCheckedChanged
 }
 
 func (c *Toggle) Label() String {
 	return c.label
-}
-
-func (c *Toggle) Functions() slice.Slice[*Func] {
-	return c.functions
 }
 
 func (c *Toggle) Disabled() Bool {

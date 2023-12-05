@@ -40,10 +40,24 @@ const styleGridRowEnd = computed<string>(() => {
 });
 
 const styleGridColSpan = computed<string>(() => {
-  if (props.ui.rowEnd.value > 0) {
-    return `row-end-${props.ui.rowEnd.value} `;
+  let tmp = ""
+  if (props.ui.colSpan.value > 0) {
+    tmp+= `col-span-${props.ui.colSpan.value} `;
   }
-  return '';
+
+  if (props.ui.smColSpan.value > 0) {
+    tmp+= ` sm:col-span-${props.ui.smColSpan.value} `;
+  }
+
+  if (props.ui.mdColSpan.value > 0) {
+    tmp+= ` md:col-span-${props.ui.mdColSpan.value} `;
+  }
+
+  if (props.ui.lgColSpan.value > 0) {
+    tmp+= ` lg:col-span-${props.ui.lgColSpan.value} `;
+  }
+
+  return tmp;
 });
 
 const style = computed(
@@ -52,6 +66,7 @@ const style = computed(
     ${styleGridColEnd.value}
     ${styleGridRowStart.value}
     ${styleGridRowEnd.value}
+    ${styleGridColSpan.value}
 `
 );
 </script>

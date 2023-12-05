@@ -204,18 +204,18 @@ func main() {
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
 							vbox.Append(
-								ui.NewTextField().With(func(t *ui.TextField) {
+								ui.NewTextField(func(t *ui.TextField) {
 									t.Label().Set("Vorname")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 								}),
 
-								ui.NewTextField().With(func(t *ui.TextField) {
+								ui.NewTextField(func(t *ui.TextField) {
 									t.Label().Set("Nachname")
 									t.OnTextChanged().Set(func() {
-										fmt.Printf("ontext changed to '%v'\n", t.Value().Value())
+										fmt.Printf("ontext changed to '%v'\n", t.Value().Get())
 										t.Error().Set("Malte sagt doch gut: " + t.Value().Get())
 										if t.Value().Get() == "magic" {
-											vbox.Append(ui.NewTextField().With(func(t *ui.TextField) {
+											vbox.Append(ui.NewTextField(func(t *ui.TextField) {
 												t.Label().Set("magic field")
 												t.Disabled().Set(true)
 											}))
@@ -228,7 +228,7 @@ func main() {
 									tgl.Checked().Set(false)
 									//	tgl.Disabled().Set(true)
 									tgl.OnCheckedChanged().Set(func() {
-										fmt.Println("toggle changed to ", tgl.Checked().Value())
+										fmt.Println("toggle changed to ", tgl.Checked().Get())
 									})
 								}),
 
@@ -404,6 +404,30 @@ func main() {
 										}),
 										ui.NewGridCell(func(cell *ui.GridCell) {
 											cell.Body().Set(ui.MakeText("05"))
+										}),
+									)
+								}),
+
+								ui.NewStepper(func(stepper *ui.Stepper) {
+									stepper.SelectedIndex().Set(1)
+
+									stepper.Steps().Append(
+										ui.NewStepInfo(func(step *ui.StepInfo) {
+											step.Number().Set("1")
+											step.Caption().Set("First step")
+											step.Details().Set("comes always first")
+										}),
+
+										ui.NewStepInfo(func(step *ui.StepInfo) {
+											step.Number().Set("2")
+											step.Caption().Set("seconds step")
+											step.Details().Set("comes always second")
+										}),
+
+										ui.NewStepInfo(func(step *ui.StepInfo) {
+											step.Number().Set("33")
+											step.Caption().Set("third step")
+											step.Details().Set("comes always last")
 										}),
 									)
 								}),

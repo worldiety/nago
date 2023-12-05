@@ -6,7 +6,6 @@ type TableCell struct {
 	id         CID
 	body       *Shared[LiveComponent]
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewTableCell(with func(cell *TableCell)) *TableCell {
@@ -16,7 +15,6 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 
 	c.body = NewShared[LiveComponent]("body")
 	c.properties = slice.Of[Property](c.body)
-	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
 	}
@@ -38,12 +36,4 @@ func (c *TableCell) Type() string {
 
 func (c *TableCell) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *TableCell) Children() slice.Slice[LiveComponent] {
-	return slice.Of(c.body.v)
-}
-
-func (c *TableCell) Functions() slice.Slice[*Func] {
-	return c.functions
 }

@@ -11,7 +11,6 @@ type Button struct {
 	action     *Func
 	disabled   Bool
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewButton(with func(btn *Button)) *Button {
@@ -26,7 +25,6 @@ func NewButton(with func(btn *Button)) *Button {
 	}
 
 	c.properties = slice.Of[Property](c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action)
-	c.functions = slice.Of[*Func](c.action)
 	if with != nil {
 		with(c)
 	}
@@ -43,14 +41,6 @@ func (c *Button) Type() string {
 
 func (c *Button) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *Button) Children() slice.Slice[LiveComponent] {
-	return slice.Of[LiveComponent]()
-}
-
-func (c *Button) Functions() slice.Slice[*Func] {
-	return c.functions
 }
 
 func (c *Button) Caption() String {

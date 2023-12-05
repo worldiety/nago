@@ -19,13 +19,13 @@ import UiSwitchField from "@/components/UiSwitchField.vue";
 import UiDateField from "@/components/UiDateField.vue";
 import UiTextAreaField from "@/components/UiTextAreaField.vue";
 import UiCardMetricText from "@/components/UiCardMetricText.vue";
-import UiTimeline from "@/components/UiTimeline.vue";
 import UiSVG from "@/components/UiSVG.vue";
 import UiVBox from "@/components/UiVBox.vue";
 import UiHBox from "@/components/UiHBox.vue";
 import UiDivider from "@/components/UiDivider.vue";
 import UiDialog from "@/components/UiDialog.vue";
 import UiToggle from "@/components/UiToggle.vue";
+import UiStepper from "@/components/UiStepper.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -41,7 +41,7 @@ const props = defineProps<{
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui" :ws="props.ws"/>
   <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui" :ws="props.ws"/>
   <ui-s-v-g v-else-if="props.ui.type === 'SVG'" :ui="props.ui"/>
-  <ui-timeline v-else-if="props.ui.type === 'Timeline'" :ui="props.ui"/>
+  <ui-stepper v-else-if="props.ui.type === 'Stepper'" :ui="props.ui" :ws="props.ws"/>
   <ui-card-view v-else-if="props.ui.type === 'CardView'" :ui="props.ui"/>
   <ui-card-text v-else-if="props.ui.type === 'CardText'" :ui="props.ui"/>
   <ui-card-metric-text v-else-if="props.ui.type === 'CardMetric'" :ui="props.ui"/>

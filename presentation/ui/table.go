@@ -7,7 +7,6 @@ type Table struct {
 	headers    *SharedList[LiveComponent]
 	rows       *SharedList[LiveComponent]
 	properties slice.Slice[Property]
-	functions  slice.Slice[*Func]
 }
 
 func NewTable(with func(table *Table)) *Table {
@@ -18,7 +17,6 @@ func NewTable(with func(table *Table)) *Table {
 	c.rows = NewSharedList[LiveComponent]("rows")
 	c.headers = NewSharedList[LiveComponent]("headers")
 	c.properties = slice.Of[Property](c.headers, c.rows)
-	c.functions = slice.Of[*Func]()
 	if with != nil {
 		with(c)
 	}
@@ -53,15 +51,4 @@ func (c *Table) Type() string {
 
 func (c *Table) Properties() slice.Slice[Property] {
 	return c.properties
-}
-
-func (c *Table) Children() slice.Slice[LiveComponent] {
-	tmp := make([]LiveComponent, 0, c.rows.Len()+c.headers.Len())
-	tmp = append(tmp, c.rows.values...)
-	tmp = append(tmp, c.headers.values...)
-	return slice.Of(tmp...)
-}
-
-func (c *Table) Functions() slice.Slice[*Func] {
-	return c.functions
 }
