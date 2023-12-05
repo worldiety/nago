@@ -19,6 +19,16 @@ export type LiveComponent =
     | LiveToggle
     | LiveStepper
     | LiveStepInfo
+    | LiveTextArea
+| LiveChip
+
+export interface LiveChip {
+    type: 'Chip'
+    caption: PropertyString
+    action: PropertyFunc
+    onClose: PropertyFunc
+    color: PropertyString
+}
 
 export interface VBox {
     type: 'VBox'
@@ -32,6 +42,7 @@ export interface Divider {
 export interface HBox {
     type: 'HBox'
     children: ComponentList<LiveComponent>
+    alignment: PropertyString
 }
 
 export interface ComponentList<T extends LiveComponent> {
@@ -103,6 +114,18 @@ export interface LiveTextField {
     hint: PropertyString
     error: PropertyString
     value: PropertyString
+    disabled: PropertyBool
+    onTextChanged: PropertyFunc
+}
+
+export interface LiveTextArea {
+    type: 'TextArea'
+    id: number
+    label: PropertyString
+    hint: PropertyString
+    error: PropertyString
+    value: PropertyString
+    rows: PropertyInt
     disabled: PropertyBool
     onTextChanged: PropertyFunc
 }
@@ -221,7 +244,7 @@ export interface SetServerProperty {
 }
 
 export function invokeFunc(ws: WebSocket, action: PropertyFunc) {
-    if (action && action.id != 0) {
+    if (action && action.id != 0 && action.value != 0) {
         const callSrvFun: CallServerFunc = {
             type: "callFn",
             id: action.value

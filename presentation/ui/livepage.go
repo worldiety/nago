@@ -171,7 +171,7 @@ func callIt(dst LiveComponent, call callFunc) {
 		return
 	}
 	Functions(dst, func(f *Func) {
-		if f.ID() == call.ID {
+		if f.ID() == call.ID && !f.Nil() {
 			f.Invoke()
 			slog.Default().Info(fmt.Sprintf("func called %d", f.ID()))
 		}

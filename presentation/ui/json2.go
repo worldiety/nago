@@ -33,7 +33,6 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 	obj["id"] = int64(c.ID())
 	obj["type"] = c.Type()
 	c.Properties().Each(func(idx int, v Property) {
-		ignoreProp := false
 		var value any
 		switch t := v.value().(type) {
 		case LiveComponent:
@@ -47,19 +46,17 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 		case *Func:
 			value = int64(t.ID())
 			if t.Nil() {
-				ignoreProp = true
+				value = 0
 			}
 		default:
 			value = v.value()
 		}
 
-		if !ignoreProp {
-			obj[v.Name()] = jsonProperty{
-				ID:    int64(v.ID()),
-				Type:  propertyTypeName(v),
-				Name:  v.Name(),
-				Value: value,
-			}
+		obj[v.Name()] = jsonProperty{
+			ID:    int64(v.ID()),
+			Type:  propertyTypeName(v),
+			Name:  v.Name(),
+			Value: value,
 		}
 	})
 

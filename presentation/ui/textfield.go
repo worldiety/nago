@@ -15,7 +15,7 @@ type TextField struct {
 	properties    slice.Slice[Property]
 }
 
-func NewTextField(with func(t *TextField)) *TextField {
+func NewTextField(with func(textField *TextField)) *TextField {
 	c := &TextField{
 		id:            nextPtr(),
 		label:         NewShared[string]("label"),

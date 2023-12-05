@@ -17,7 +17,6 @@ import UiCardView from "@/components/UiCardView.vue";
 import UiCardText from "@/components/UiCardText.vue";
 import UiSwitchField from "@/components/UiSwitchField.vue";
 import UiDateField from "@/components/UiDateField.vue";
-import UiTextAreaField from "@/components/UiTextAreaField.vue";
 import UiCardMetricText from "@/components/UiCardMetricText.vue";
 import UiSVG from "@/components/UiSVG.vue";
 import UiVBox from "@/components/UiVBox.vue";
@@ -26,6 +25,8 @@ import UiDivider from "@/components/UiDivider.vue";
 import UiDialog from "@/components/UiDialog.vue";
 import UiToggle from "@/components/UiToggle.vue";
 import UiStepper from "@/components/UiStepper.vue";
+import UiTextArea from "@/components/UiTextArea.vue";
+import UiChip from "@/components/UiChip.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -37,6 +38,7 @@ const props = defineProps<{
   <ui-scaffold v-if="props.ui.type === 'Scaffold'" :ui="props.ui" :ws="props.ws"/>
   <ui-v-box v-else-if="props.ui.type === 'VBox'" :ui="props.ui" :ws="props.ws"/>
   <ui-h-box v-else-if="props.ui.type === 'HBox'" :ui="props.ui" :ws="props.ws"/>
+  <ui-chip v-else-if="props.ui.type === 'Chip'" :ui="props.ui" :ws="props.ws"/>
   <ui-dialog v-else-if="props.ui.type === 'Dialog'" :ui="props.ui" :ws="props.ws"/>
   <ui-list-view v-else-if="props.ui.type === 'ListView'" :ui="props.ui" :ws="props.ws"/>
   <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui" :ws="props.ws"/>
@@ -47,7 +49,7 @@ const props = defineProps<{
   <ui-card-metric-text v-else-if="props.ui.type === 'CardMetric'" :ui="props.ui"/>
   <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui" :ws="props.ws"/>
-  <ui-text-area-field v-else-if="props.ui.type === 'TextAreaField'" :ui="props.ui"/>
+  <ui-text-area v-else-if="props.ui.type === 'TextArea'" :ui="props.ui" :ws="props.ws"/>
   <ui-toggle v-else-if="props.ui.type === 'Toggle'" :ui="props.ui" :ws="props.ws"/>
   <ui-date-field v-else-if="props.ui.type === 'DateField'" :ui="props.ui"/>
   <ui-file-field v-else-if="props.ui.type === 'FileUploadField'" :ui="props.ui"/>

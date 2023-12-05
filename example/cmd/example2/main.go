@@ -431,6 +431,45 @@ func main() {
 										}),
 									)
 								}),
+
+								ui.NewTextArea(func(textArea *ui.TextArea) {
+									textArea.Label().Set("dein Roman")
+									textArea.Value().Set("lorem")
+									textArea.Hint().Set("egal was du machst")
+									textArea.Rows().Set(10)
+									textArea.OnTextChanged().Set(func() {
+										textArea.Error().Set("dein Fehler: " + textArea.Value().Get())
+									})
+								}),
+
+								ui.NewHBox(func(hBox *ui.HBox) {
+									hBox.Alignment().Set("flex-right")
+									hBox.Append(
+										ui.NewChip(func(chip *ui.Chip) {
+											chip.Caption().Set("default")
+											chip.Action().Set(func() {
+												fmt.Println("chip click")
+											})
+											chip.OnClose().Set(func() {
+												hBox.Children().Remove(chip)
+											})
+
+										}),
+
+										ui.NewChip(func(chip *ui.Chip) {
+											chip.Caption().Set("red")
+											chip.Color().Set("red")
+										}),
+										ui.NewChip(func(chip *ui.Chip) {
+											chip.Caption().Set("green")
+											chip.Color().Set("green")
+										}),
+										ui.NewChip(func(chip *ui.Chip) {
+											chip.Caption().Set("yellow")
+											chip.Color().Set("yellow")
+										}),
+									)
+								}),
 							)
 						}),
 					)
