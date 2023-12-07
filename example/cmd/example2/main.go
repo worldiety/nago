@@ -350,6 +350,9 @@ func main() {
 														row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
 															cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
 																btn.Caption().Set(fmt.Sprintf("row=%d col=%d", i, c))
+																btn.Action().Set(func() {
+																	fmt.Println("clicked it")
+																})
 															}))
 														}))
 													}

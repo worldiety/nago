@@ -16,12 +16,13 @@ type Wire interface {
 }
 
 type Page struct {
-	id         CID
-	wire       Wire
-	body       *Shared[LiveComponent]
-	modals     *SharedList[LiveComponent]
-	history    *History
-	properties slice.Slice[Property]
+	id          CID
+	wire        Wire
+	body        *Shared[LiveComponent]
+	modals      *SharedList[LiveComponent]
+	history     *History
+	properties  slice.Slice[Property]
+	renderState *renderState
 }
 
 func NewPage(w Wire, with func(page *Page)) *Page {
@@ -30,6 +31,7 @@ func NewPage(w Wire, with func(page *Page)) *Page {
 	p.body = NewShared[LiveComponent]("body")
 	p.modals = NewSharedList[LiveComponent]("modals")
 	p.properties = slice.Of[Property](p.body, p.modals)
+	p.renderState = newRenderState()
 	if with != nil {
 		with(p)
 	}
@@ -57,14 +59,15 @@ func (p *Page) Modals() *SharedList[LiveComponent] {
 }
 
 func (p *Page) Invalidate() {
+	p.renderState.Clear()
 	// TODO make also a real component
 	var tmp []jsonComponent
 	p.modals.Each(func(component LiveComponent) {
-		tmp = append(tmp, marshalComponent(component))
+		tmp = append(tmp, marshalComponent(p.renderState, component))
 	})
 	p.sendMsg(messageFullInvalidate{
 		Type:   "Invalidation",
-		Root:   marshalComponent(p.body.Get()),
+		Root:   marshalComponent(p.renderState, p.body.Get()),
 		Modals: tmp,
 	})
 }
@@ -93,14 +96,14 @@ func (p *Page) HandleMessage() error {
 		if err := json.Unmarshal(buf, &call); err != nil {
 			panic(fmt.Errorf("cannot happen: %w", err))
 		}
-		callIt(p, call)
+		callIt(p.renderState, call)
 	case "setProp":
 		var call setProperty
 		if err := json.Unmarshal(buf, &call); err != nil {
 			panic(fmt.Errorf("cannot happen: %w", err))
 		}
 
-		setProp(p, call)
+		setProp(p.renderState, call)
 
 	default:
 		slog.Default().Error("protocol not implemented: " + m.Type)
@@ -166,8 +169,8 @@ type setProperty struct {
 	Value any `json:"value"`
 }
 
-func callIt(dst LiveComponent, call callFunc) {
-	if dst == nil {
+func callIt(rs *renderState, call callFunc) {
+	/*if dst == nil {
 		return
 	}
 	Functions(dst, func(f *Func) {
@@ -179,11 +182,16 @@ func callIt(dst LiveComponent, call callFunc) {
 
 	Children(dst, func(c LiveComponent) {
 		callIt(c, call)
-	})
+	})*/
+	f := rs.funcs[call.ID]
+	if !f.Nil() {
+		slog.Default().Info(fmt.Sprintf("func called %d", f.ID()))
+		f.Invoke()
+	}
 }
 
-func setProp(dst LiveComponent, set setProperty) {
-	if dst == nil {
+func setProp(rs *renderState, set setProperty) {
+	/*if dst == nil {
 		return
 	}
 	dst.Properties().Each(func(idx int, v Property) {
@@ -197,5 +205,12 @@ func setProp(dst LiveComponent, set setProperty) {
 
 	Children(dst, func(c LiveComponent) {
 		setProp(c, set)
-	})
+	})*/
+	v := rs.props[set.ID]
+	if v != nil {
+		if err := v.setValue(fmt.Sprintf("%v", set.Value)); err != nil {
+			slog.Default().Error(fmt.Sprintf("cannot set property %d = %v, reason: %v", v.ID(), v.value(), err))
+		}
+		slog.Default().Info(fmt.Sprintf("value set %d = %v", v.ID(), v.value()))
+	}
 }
