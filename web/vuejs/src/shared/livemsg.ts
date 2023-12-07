@@ -204,35 +204,30 @@ export interface LiveTableRow {
 export type Property = PropertyString | PropertyBool
 
 export interface PropertyString {
-    type: 'string'
     id: number
     name: string
     value: string
 }
 
 export interface PropertyBool {
-    type: 'bool'
     id: number
     name: string
     value: boolean
 }
 
 export interface PropertyInt {
-    type: 'int'
     id: number
     name: string
     value: number
 }
 
 export interface PropertyFunc {
-    type: 'func'
     id: number
     name: string
     value: number
 }
 
 export interface PropertyComponent<T extends LiveComponent> {
-    type: string
     id: number
     name: string
     value: T

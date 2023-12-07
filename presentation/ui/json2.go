@@ -37,6 +37,12 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 		switch t := v.value().(type) {
 		case LiveComponent:
 			value = newJsonComponent(visited, t)
+		case []LiveComponent:
+			var tmp []jsonComponent
+			for _, component := range t {
+				tmp = append(tmp, newJsonComponent(visited, component))
+			}
+			value = tmp
 		case slice.Slice[LiveComponent]:
 			var tmp []jsonComponent
 			t.Each(func(idx int, component LiveComponent) {
@@ -53,8 +59,8 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 		}
 
 		obj[v.Name()] = jsonProperty{
-			ID:    int64(v.ID()),
-			Type:  propertyTypeName(v),
+			ID: int64(v.ID()),
+			//Type:  propertyTypeName(v),
 			Name:  v.Name(),
 			Value: value,
 		}
@@ -65,36 +71,6 @@ func newJsonComponent(visited map[CID]bool, c LiveComponent) jsonComponent {
 
 type jsonProperty struct {
 	ID    int64  `json:"id"`
-	Type  string `json:"type"`
 	Name  string `json:"name"`
 	Value any    `json:"value"`
-}
-
-func propertyTypeName(p Property) string {
-	switch p.value().(type) {
-	case string:
-		return "string"
-	case int64:
-		return "int"
-	case bool:
-		return "bool"
-	case float64:
-		return "float"
-	case SVGSrc:
-		return "svg"
-	case Color:
-		return "intentColor"
-	case Size:
-		return "size"
-	case *Func:
-		return "func"
-	case slice.Slice[LiveComponent], slice.Slice[*Button]:
-		return "componentList"
-	case nil:
-		return "nil"
-	case LiveComponent:
-		return p.value().(LiveComponent).Type()
-	default:
-		panic(fmt.Errorf("type not implemented: %T", p.value()))
-	}
 }

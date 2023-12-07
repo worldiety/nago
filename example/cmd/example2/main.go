@@ -302,7 +302,7 @@ func main() {
 
 								ui.NewTable(func(table *ui.Table) {
 
-									table.AppendColumns(
+									table.Header().Append(
 										ui.NewTableCell(func(cell *ui.TableCell) {
 											cell.Body().Set(ui.NewText(func(text *ui.Text) {
 												text.Value().Set("hello world")
@@ -343,17 +343,19 @@ func main() {
 
 									for i := 0; i < 10; i++ {
 
-										table.AppendRow(
-											ui.NewTableRow(func(row *ui.TableRow) {
-												for c := 0; c < 4; c++ {
-													row.AppendCell(ui.NewTableCell(func(cell *ui.TableCell) {
-														cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
-															btn.Caption().Set(fmt.Sprintf("row=%d col=%d", i, c))
+										table.Rows().From(func(yield func(*ui.TableRow)) {
+											for c := 0; c < 4; c++ {
+												yield(ui.NewTableRow(func(row *ui.TableRow) {
+													for c := 0; c < 4; c++ {
+														row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+															cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+																btn.Caption().Set(fmt.Sprintf("row=%d col=%d", i, c))
+															}))
 														}))
-													}))
-												}
-											}),
-										)
+													}
+												}))
+											}
+										})
 									}
 								}),
 

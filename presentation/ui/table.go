@@ -4,8 +4,8 @@ import "go.wdy.de/nago/container/slice"
 
 type Table struct {
 	id         CID
-	headers    *SharedList[LiveComponent]
-	rows       *SharedList[LiveComponent]
+	headers    *SharedList[*TableCell]
+	rows       *SharedList[*TableRow]
 	properties slice.Slice[Property]
 }
 
@@ -14,8 +14,8 @@ func NewTable(with func(table *Table)) *Table {
 		id: nextPtr(),
 	}
 
-	c.rows = NewSharedList[LiveComponent]("rows")
-	c.headers = NewSharedList[LiveComponent]("headers")
+	c.rows = NewSharedList[*TableRow]("rows")
+	c.headers = NewSharedList[*TableCell]("headers")
 	c.properties = slice.Of[Property](c.headers, c.rows)
 	if with != nil {
 		with(c)
@@ -24,21 +24,12 @@ func NewTable(with func(table *Table)) *Table {
 	return c
 }
 
-func (c *Table) AppendColumn(cell *TableCell) *Table {
-	c.headers.Append(cell)
-	return c
+func (c *Table) Rows() *SharedList[*TableRow] {
+	return c.rows
 }
 
-func (c *Table) AppendColumns(cells ...*TableCell) *Table {
-	for _, cell := range cells {
-		c.headers.Append(cell)
-	}
-	return c
-}
-
-func (c *Table) AppendRow(row *TableRow) *Table {
-	c.rows.Append(row)
-	return c
+func (c *Table) Header() *SharedList[*TableCell] {
+	return c.headers
 }
 
 func (c *Table) ID() CID {
