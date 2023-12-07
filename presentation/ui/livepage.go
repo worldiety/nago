@@ -59,9 +59,9 @@ func (p *Page) Modals() *SharedList[LiveComponent] {
 func (p *Page) Invalidate() {
 	// TODO make also a real component
 	var tmp []jsonComponent
-	for _, value := range p.modals.values {
-		tmp = append(tmp, marshalComponent(value))
-	}
+	p.modals.Each(func(component LiveComponent) {
+		tmp = append(tmp, marshalComponent(component))
+	})
 	p.sendMsg(messageFullInvalidate{
 		Type:   "Invalidation",
 		Root:   marshalComponent(p.body.Get()),

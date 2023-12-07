@@ -201,6 +201,10 @@ func Children(c LiveComponent, f func(c LiveComponent)) {
 			})
 		case Property:
 			switch v := t.value().(type) {
+			case []LiveComponent:
+				for _, component := range v {
+					f(component)
+				}
 			case slice.Slice[LiveComponent]:
 				v.Each(func(idx int, v LiveComponent) {
 					f(v)
