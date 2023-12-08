@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"sync"
 )
 
 var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
@@ -31,6 +32,7 @@ func (c *Configurator) Index(target string) *Configurator {
 
 func (c *Configurator) newHandler() http.Handler {
 
+	appSrv := newApplicationServer()
 	r := chi.NewRouter()
 
 	if c.debug {
@@ -76,7 +78,8 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("wire?")
+		logger := logging.FromContext(r.Context())
+
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true //TODO security implications?
@@ -95,13 +98,14 @@ func (c *Configurator) newHandler() http.Handler {
 		livePageFn := c.uiApp.LivePages[ui.PageID(pageID)]
 
 		if livePageFn == nil {
-			logging.FromContext(r.Context()).Warn("client requested unknown page", slog.String("_pid", pageID))
+			logger.Warn("client requested unknown page", slog.String("_pid", pageID))
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		livePage := livePageFn(&connWrapper{conn: conn, r: r})
-		logging.FromContext(r.Context()).Info(fmt.Sprintf("spawned live page %p", livePage))
+		logger.Info(fmt.Sprintf("spawned live page %v", livePage.Token()))
+		appSrv.putPage(livePage)
 		livePage.Invalidate()
 		for {
 			if err := livePage.HandleMessage(); err != nil {
@@ -109,21 +113,20 @@ func (c *Configurator) newHandler() http.Handler {
 				logging.FromContext(r.Context()).Error(fmt.Sprintf("livePage is dead now %p", livePage), slog.Any("err", err))
 				break
 			}
-			/*conn.WriteMessage(1, []byte("kack from server"))
-			log.Println("reading a meassge")
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				break
-			}
-			log.Printf("recv: %s", message)
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}*/
 
 		}
+	}))
+
+	r.Mount("/api/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pageToken := r.Header.Get("x-page-token")
+		page := appSrv.getPage(ui.PageInstanceToken(pageToken))
+		if page == nil {
+			logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		page.HandleHTTP(w, r)
 	}))
 
 	for _, route := range r.Routes() {
@@ -156,4 +159,34 @@ func (c *connWrapper) Values() ui.Values {
 		tmp[k] = v
 	}
 	return tmp
+}
+
+type applicationServer struct {
+	activePages map[ui.PageInstanceToken]*ui.Page
+	mutex       sync.RWMutex
+}
+
+func newApplicationServer() *applicationServer {
+	return &applicationServer{
+		activePages: make(map[ui.PageInstanceToken]*ui.Page),
+	}
+}
+
+func (a *applicationServer) getPage(token ui.PageInstanceToken) *ui.Page {
+	a.mutex.RLock()
+	defer a.mutex.RUnlock()
+
+	return a.activePages[token]
+}
+
+func (a *applicationServer) putPage(page *ui.Page) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	a.activePages[page.Token()] = page
+}
+
+func (a *applicationServer) removePage(token ui.PageInstanceToken) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	delete(a.activePages, token)
 }

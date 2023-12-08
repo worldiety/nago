@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {LiveDialog} from "@/shared/livemsg";
+import {LiveDialog, LivePage} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveDialog;
   ws: WebSocket;
+  page: LivePage
 }>();
 </script>
 
@@ -23,7 +24,7 @@ const props = defineProps<{
           <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">{{ props.ui.title.value }}</h3>
           <div class="mt-2">
             <div class="text-sm text-gray-500">
-              <ui-generic v-if="props.ui.body.value" :ui="props.ui.body.value" :ws="ws"/>
+              <ui-generic v-if="props.ui.body.value" :ui="props.ui.body.value" :ws="ws" :page="page"/>
 
             </div>
           </div>
@@ -31,7 +32,7 @@ const props = defineProps<{
       </div>
     </div>
     <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-      <ui-generic class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm  sm:ml-3 sm:w-auto" v-for="action in props.ui.actions.value" :ui="action" :ws="ws"/>
+      <ui-generic class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm  sm:ml-3 sm:w-auto" v-for="action in props.ui.actions.value" :ui="action" :ws="ws" :page="page"/>
 
     </div>
   </div>

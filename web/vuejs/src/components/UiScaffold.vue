@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import {onMounted} from 'vue';
 import UiGeneric from "@/components/UiGeneric.vue";
-import {invokeFunc, LiveScaffold} from "@/shared/livemsg";
+import {invokeFunc, LivePage, LiveScaffold} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveScaffold;
   ws: WebSocket;
+  page: LivePage
 }>();
 
 
@@ -63,15 +64,15 @@ onMounted(() => {
     <nav class="px-4 flex justify-between h-16 shadow dark:bg-gray-700 bg-white">
 
       <div class="flex items-center pl-4">
-        <ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :ws="props.ws"/>
+        <ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :ws="props.ws" :page="page"/>
       </div>
 
       <div class="flex items-center">
-        <ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :ws="props.ws"/>
+        <ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :ws="props.ws" :page="page"/>
       </div>
 
       <ul class="flex items-center pr-4">
-        <ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :ws="props.ws"/>
+        <ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :ws="props.ws" :page="page"/>
       </ul>
 
     </nav>
@@ -140,7 +141,7 @@ onMounted(() => {
       </nav>
 
 
-      <ui-generic :ui="props.ui.body.value" :ws="props.ws"/>
+      <ui-generic :ui="props.ui.body.value" :ws="props.ws" :page="page"/>
     </div>
   </div>
 

@@ -4,7 +4,9 @@ export interface Invalidation {
     type: 'Invalidation' | 'HistoryPushState' | 'HistoryBack'
     root: LiveComponent
     modals: ComponentList<LiveComponent>
+    token: string
 }
+
 
 export type LiveComponent =
     LiveTextField
@@ -20,7 +22,16 @@ export type LiveComponent =
     | LiveStepper
     | LiveStepInfo
     | LiveTextArea
-| LiveChip
+    | LiveChip
+    | LivePage
+
+
+export interface LivePage {
+    type: 'Page'
+    root: LiveComponent
+    modals: ComponentList<LiveComponent>
+    token: string
+}
 
 export interface LiveChip {
     type: 'Chip'
@@ -123,6 +134,18 @@ export interface LiveTextField {
     value: PropertyString
     disabled: PropertyBool
     onTextChanged: PropertyFunc
+}
+
+export interface LiveUploadField {
+    type: 'FileField'
+    id: number
+    label: PropertyString
+    hint: PropertyString
+    error: PropertyString
+    disabled: PropertyBool
+    filter: PropertyString
+    multiple: PropertyBool
+    uploadToken: PropertyString
 }
 
 export interface LiveTextArea {
@@ -277,7 +300,7 @@ export function textSize2Tailwind(s: string): string {
         return "text-[" + s + "]"
     }
 
-    return "text-"+s
+    return "text-" + s
 }
 
 export function gapSize2Tailwind(s: string): string {

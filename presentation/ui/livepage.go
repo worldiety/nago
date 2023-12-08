@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/logging"
+	"io"
 	"log/slog"
+	"mime/multipart"
+	"net/http"
 )
 
 const TextMessage = 1
@@ -15,6 +19,8 @@ type Wire interface {
 	Values() Values
 }
 
+type PageInstanceToken string
+
 type Page struct {
 	id          CID
 	wire        Wire
@@ -23,6 +29,8 @@ type Page struct {
 	history     *History
 	properties  slice.Slice[Property]
 	renderState *renderState
+	token       String
+	maxMemory   int64
 }
 
 func NewPage(w Wire, with func(page *Page)) *Page {
@@ -30,7 +38,10 @@ func NewPage(w Wire, with func(page *Page)) *Page {
 	p.history = &History{p: p}
 	p.body = NewShared[LiveComponent]("body")
 	p.modals = NewSharedList[LiveComponent]("modals")
-	p.properties = slice.Of[Property](p.body, p.modals)
+	p.token = NewShared[string]("token")
+	p.token.Set(nextToken())
+	p.properties = slice.Of[Property](p.body, p.modals, p.token)
+	p.maxMemory = 1024
 	p.renderState = newRenderState()
 	if with != nil {
 		with(p)
@@ -54,6 +65,10 @@ func (p *Page) Body() *Shared[LiveComponent] {
 	return p.body
 }
 
+func (p *Page) Token() PageInstanceToken {
+	return PageInstanceToken(p.token.Get())
+}
+
 func (p *Page) Modals() *SharedList[LiveComponent] {
 	return p.modals
 }
@@ -69,11 +84,74 @@ func (p *Page) Invalidate() {
 		Type:   "Invalidation",
 		Root:   marshalComponent(p.renderState, p.body.Get()),
 		Modals: tmp,
+		Token:  string(p.Token()),
 	})
 }
 
 func (p *Page) History() *History {
 	return p.history
+}
+
+// HandleHTTP provides classic http inter-operation with this page. This is required e.g. for file uploads
+// using multipart forms etc.
+func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
+	pageToken := r.Header.Get("x-page-token")
+	if pageToken != p.token.Get() {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	switch r.URL.Path {
+	case "/api/v1/upload":
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		uploadToken := UploadToken(r.Header.Get("x-upload-token"))
+		handler := p.renderState.uploads[uploadToken]
+		if handler == nil || handler.onUploadReceived == nil {
+			logging.FromContext(r.Context()).Warn("upload received but have no handler", slog.String("upload-token", string(uploadToken)))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if err := r.ParseMultipartForm(p.maxMemory); err != nil {
+			logging.FromContext(r.Context()).Warn("cannot parse multipart form", slog.Any("err", err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var files []FileUpload
+		for _, headers := range r.MultipartForm.File {
+			for _, header := range headers {
+				files = append(files, httpMultipartFile{header: header})
+			}
+		}
+
+		handler.onUploadReceived(files)
+		p.Invalidate() // TODO race condition?!?!
+	}
+}
+
+type httpMultipartFile struct {
+	header *multipart.FileHeader
+}
+
+func (h httpMultipartFile) Size() int64 {
+	return h.header.Size
+}
+
+func (h httpMultipartFile) Name() string {
+	return h.header.Filename
+}
+
+func (h httpMultipartFile) Open() (io.ReadSeekCloser, error) {
+	return h.header.Open()
+}
+
+func (h httpMultipartFile) Sys() any {
+	return h.header
 }
 
 func (p *Page) HandleMessage() error {
@@ -138,6 +216,7 @@ type messageFullInvalidate struct {
 	Type   string          `json:"type"` // value=Invalidation
 	Root   jsonComponent   `json:"root"`
 	Modals []jsonComponent `json:"modals"`
+	Token  string          `json:"token"`
 }
 
 type messageHistoryBack struct {

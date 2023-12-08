@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import {invokeFunc, LiveText, textColor2Tailwind, textSize2Tailwind} from "@/shared/livemsg";
+import {invokeFunc, LivePage, LiveText, textColor2Tailwind, textSize2Tailwind} from "@/shared/livemsg";
 import {computed} from "vue";
 
 const props = defineProps<{
   ui: LiveText;
   ws: WebSocket;
+  page: LivePage
 }>();
 
 const clazz = computed<string>(() => {

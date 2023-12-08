@@ -82,6 +82,7 @@ type renderState struct {
 	funcs    map[CID]*Func
 	props    map[CID]Property
 	elements map[CID]LiveComponent
+	uploads  map[UploadToken]*FileField
 }
 
 func newRenderState() *renderState {
@@ -89,6 +90,7 @@ func newRenderState() *renderState {
 		funcs:    make(map[CID]*Func),
 		props:    make(map[CID]Property),
 		elements: make(map[CID]LiveComponent),
+		uploads:  make(map[UploadToken]*FileField),
 	}
 }
 
@@ -100,6 +102,9 @@ func (r *renderState) Clear() {
 
 func (r *renderState) visit(id CID, t LiveComponent) {
 	r.elements[id] = t
+	if fup, ok := t.(*FileField); ok {
+		r.uploads[fup.UploadToken()] = fup
+	}
 }
 
 func (r *renderState) visited(id CID) bool {

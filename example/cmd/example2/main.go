@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"io"
 )
 
 type PID string
@@ -201,6 +202,7 @@ func main() {
 						}),
 					)
 
+					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
 							vbox.Append(
@@ -210,6 +212,7 @@ func main() {
 								}),
 
 								ui.NewTextField(func(t *ui.TextField) {
+									myMagicTF = t
 									t.Label().Set("Nachname")
 									t.OnTextChanged().Set(func() {
 										fmt.Printf("ontext changed to '%v'\n", t.Value().Get())
@@ -224,11 +227,43 @@ func main() {
 								}),
 
 								ui.NewToggle(func(tgl *ui.Toggle) {
+
 									tgl.Label().Set("anschalten")
 									tgl.Checked().Set(false)
 									//	tgl.Disabled().Set(true)
 									tgl.OnCheckedChanged().Set(func() {
 										fmt.Println("toggle changed to ", tgl.Checked().Get())
+										myMagicTF.Disabled().Set(tgl.Checked().Get())
+									})
+								}),
+
+								ui.NewFileField(func(fileField *ui.FileField) {
+									fileField.Label().Set("Dein Zeug zum upload")
+									fileField.Hint().Set("Klick or Drag'n drop zum Upload")
+									//fileField.Accept().Set(".gif")
+									fileField.Multiple().Set(true)
+									fileField.OnUploadReceived(func(files []ui.FileUpload) {
+										for _, file := range files {
+											f, _ := file.Open()
+											defer f.Close()
+											buf, _ := io.ReadAll(f)
+											fmt.Println(file.Name(), file.Size(), len(buf))
+											page.Modals().Append(
+												ui.NewDialog(func(dlg *ui.Dialog) {
+													dlg.Title().Set("hey")
+													dlg.Body().Set(ui.MakeText("hello Alex, die Datei ist sicher angekommen: " + file.Name()))
+													dlg.Actions().Append(
+														ui.NewButton(func(btn *ui.Button) {
+															btn.Caption().Set("ganz toll")
+															btn.Action().Set(func() {
+																page.Modals().Remove(dlg)
+															},
+															)
+														}),
+													)
+												}),
+											)
+										}
 									})
 								}),
 

@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import {invokeFunc, LiveTextArea, SetServerProperty} from "@/shared/livemsg";
+import {invokeFunc, LivePage, LiveTextArea, SetServerProperty} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveTextArea;
   ws: WebSocket
+  page: LivePage
 }>();
 
 function valueChanged(event: any) {

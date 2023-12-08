@@ -7,7 +7,7 @@ import type {PageConfiguration} from '@/shared/model';
 import {provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useHttp} from '@/shared/http';
-import {Invalidation, LiveComponent, LiveMessage} from "@/shared/livemsg";
+import {Invalidation, LiveComponent, LiveMessage, LivePage} from "@/shared/livemsg";
 
 
 enum State {
@@ -27,12 +27,13 @@ const state = ref(State.Loading);
 const ui = ref<LiveComponent>();
 const invalidationResp = ref<Invalidation>({});
 const ws = ref<WebSocket>();
-
+const livePage = ref<LivePage>({})
 
 // Provide the current UiDescription to all child elements.
 // https://vuejs.org/guide/components/provide-inject.html
 provide('ui', ui);
 provide('ws', ws);
+provide('livePage', livePage);
 
 async function init() {
   try {
@@ -98,6 +99,7 @@ function connectWebSocket() {
     switch (msg.type) {
       case "Invalidation":
         ui.value = msg.root
+        livePage.value = msg
         state.value = State.ShowUI;
         invalidationResp.value = msg
         return
@@ -153,20 +155,11 @@ function encodeQueryData(data) {
 
       <div class="fixed inset-0 z-50 w-screen overflow-y-auto">
         <div class="flex min-h-full  justify-center p-4 text-center items-center sm:p-0">
-          <!--
-            Modal panel, show/hide based on modal state.
 
-            Entering: "ease-out duration-300"
-              From: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              To: "opacity-100 translate-y-0 sm:scale-100"
-            Leaving: "ease-in duration-200"
-              From: "opacity-100 translate-y-0 sm:scale-100"
-              To: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          -->
           <div class="relative transform overflow-hidden sm:my-8 sm:w-full sm:max-w-lg rounded-lg">
 
 
-              <generic-ui :ui="modal" :ws="ws!"/>
+              <generic-ui :ui="modal" :ws="ws!" :page="livePage"/>
 
 
 
@@ -186,7 +179,7 @@ function encodeQueryData(data) {
     <!--  <div>Dynamic page information: {{ page }}</div> -->
     <div v-if="state === State.Loading">Loading UI definition…</div>
     <div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-    <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" :ws="ws!"/>
+    <generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" :ws="ws!" :page="livePage"/>
     <div v-else>Empty UI</div>
   </div>
 

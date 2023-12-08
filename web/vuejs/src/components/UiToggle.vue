@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import {invokeFunc, LiveToggle, SetServerProperty} from "@/shared/livemsg";
+import {invokeFunc, LivePage, LiveToggle, SetServerProperty} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveToggle;
   ws: WebSocket;
+  page: LivePage
 }>();
 
 function onClick() {

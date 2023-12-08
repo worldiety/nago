@@ -2,11 +2,12 @@
 import type {UiDescription} from '@/shared/model';
 import type {Ref} from 'vue';
 import {computed, inject} from 'vue';
-import {CallServerFunc, invokeFunc, LiveButton} from "@/shared/livemsg";
+import {CallServerFunc, invokeFunc, LiveButton, LivePage} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveButton;
   ws: WebSocket;
+  page: LivePage
 }>();
 
 const ui: Ref<UiDescription> = inject('ui')!;

@@ -1,10 +1,11 @@
 <script lang="ts" setup xmlns="http://www.w3.org/1999/html">
-import {invokeFunc, LiveChip, textColor2Tailwind} from "@/shared/livemsg";
+import {invokeFunc, LiveChip, LivePage, textColor2Tailwind} from "@/shared/livemsg";
 import {computed} from "vue";
 
 const props = defineProps<{
   ui: LiveChip;
   ws: WebSocket;
+  page: LivePage
 }>();
 
 

@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/container/slice"
 	"strconv"
@@ -132,6 +134,15 @@ func nextPtr() CID {
 func With[T any](t T, f func(t T)) T {
 	f(t)
 	return t
+}
+
+func nextToken() string {
+	var tmp [16]byte
+	_, err := rand.Read(tmp[:])
+	if err != nil {
+		panic(fmt.Errorf("unexpected crypto error: %w", err))
+	}
+	return hex.EncodeToString(tmp[:])
 }
 
 func IsDirty(dst LiveComponent) bool {
