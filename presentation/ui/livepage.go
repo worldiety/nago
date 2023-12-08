@@ -95,7 +95,12 @@ func (p *Page) History() *History {
 // HandleHTTP provides classic http inter-operation with this page. This is required e.g. for file uploads
 // using multipart forms etc.
 func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
 	pageToken := r.Header.Get("x-page-token")
+	if pageToken == "" {
+		pageToken = query.Get("page")
+	}
+
 	if pageToken != p.token.Get() {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -104,7 +109,7 @@ func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/api/v1/upload":
 		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -131,6 +136,37 @@ func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 
 		handler.onUploadReceived(files)
 		p.Invalidate() // TODO race condition?!?!
+	case "/api/v1/download":
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		downloadToken := DownloadToken(r.Header.Get("x-download-token"))
+		if downloadToken == "" {
+			downloadToken = DownloadToken(query.Get("download"))
+		}
+
+		opener := p.renderState.downloads[downloadToken]
+		if opener == nil {
+			logging.FromContext(r.Context()).Warn("download request received but have no handler", slog.String("download-token", string(downloadToken)))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		reader, err := opener()
+		if err != nil {
+			logging.FromContext(r.Context()).Warn("download request received but cannot open stream", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := io.Copy(w, reader); err != nil {
+			logging.FromContext(r.Context()).Warn("download request received but cannot complete data transfer", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 	}
 }
 
@@ -249,19 +285,6 @@ type setProperty struct {
 }
 
 func callIt(rs *renderState, call callFunc) {
-	/*if dst == nil {
-		return
-	}
-	Functions(dst, func(f *Func) {
-		if f.ID() == call.ID && !f.Nil() {
-			f.Invoke()
-			slog.Default().Info(fmt.Sprintf("func called %d", f.ID()))
-		}
-	})
-
-	Children(dst, func(c LiveComponent) {
-		callIt(c, call)
-	})*/
 	f := rs.funcs[call.ID]
 	if !f.Nil() {
 		slog.Default().Info(fmt.Sprintf("func called %d", f.ID()))
@@ -270,21 +293,6 @@ func callIt(rs *renderState, call callFunc) {
 }
 
 func setProp(rs *renderState, set setProperty) {
-	/*if dst == nil {
-		return
-	}
-	dst.Properties().Each(func(idx int, v Property) {
-		if v.ID() == set.ID {
-			if err := v.setValue(fmt.Sprintf("%v", set.Value)); err != nil {
-				slog.Default().Error(fmt.Sprintf("cannot set property %d = %v, reason: %v", v.ID(), v.value(), err))
-			}
-			slog.Default().Info(fmt.Sprintf("value set %d = %v", v.ID(), v.value()))
-		}
-	})
-
-	Children(dst, func(c LiveComponent) {
-		setProp(c, set)
-	})*/
 	v := rs.props[set.ID]
 	if v != nil {
 		if err := v.setValue(fmt.Sprintf("%v", set.Value)); err != nil {

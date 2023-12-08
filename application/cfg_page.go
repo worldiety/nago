@@ -110,7 +110,8 @@ func (c *Configurator) newHandler() http.Handler {
 		for {
 			if err := livePage.HandleMessage(); err != nil {
 				livePage.Close()
-				logging.FromContext(r.Context()).Error(fmt.Sprintf("livePage is dead now %p", livePage), slog.Any("err", err))
+				logging.FromContext(r.Context()).Error(fmt.Sprintf("livePage is dead now %v", livePage.Token()), slog.Any("err", err))
+				appSrv.removePage(livePage.Token())
 				break
 			}
 
@@ -119,6 +120,21 @@ func (c *Configurator) newHandler() http.Handler {
 
 	r.Mount("/api/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pageToken := r.Header.Get("x-page-token")
+		page := appSrv.getPage(ui.PageInstanceToken(pageToken))
+		if page == nil {
+			logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		page.HandleHTTP(w, r)
+	}))
+
+	r.Mount("/api/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pageToken := r.Header.Get("x-page-token")
+		if pageToken == "" {
+			pageToken = r.URL.Query().Get("page")
+		}
 		page := appSrv.getPage(ui.PageInstanceToken(pageToken))
 		if page == nil {
 			logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))

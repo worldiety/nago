@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/container/slice"
+	"io"
 )
 
 func marshalComponent(rs *renderState, c LiveComponent) jsonComponent {
@@ -79,18 +80,20 @@ type jsonProperty struct {
 }
 
 type renderState struct {
-	funcs    map[CID]*Func
-	props    map[CID]Property
-	elements map[CID]LiveComponent
-	uploads  map[UploadToken]*FileField
+	funcs     map[CID]*Func
+	props     map[CID]Property
+	elements  map[CID]LiveComponent
+	uploads   map[UploadToken]*FileField
+	downloads map[DownloadToken]func() (io.Reader, error)
 }
 
 func newRenderState() *renderState {
 	return &renderState{
-		funcs:    make(map[CID]*Func),
-		props:    make(map[CID]Property),
-		elements: make(map[CID]LiveComponent),
-		uploads:  make(map[UploadToken]*FileField),
+		funcs:     make(map[CID]*Func),
+		props:     make(map[CID]Property),
+		elements:  make(map[CID]LiveComponent),
+		uploads:   make(map[UploadToken]*FileField),
+		downloads: make(map[DownloadToken]func() (io.Reader, error)),
 	}
 }
 
@@ -98,12 +101,17 @@ func (r *renderState) Clear() {
 	clear(r.funcs)
 	clear(r.props)
 	clear(r.elements)
+	clear(r.downloads)
 }
 
 func (r *renderState) visit(id CID, t LiveComponent) {
 	r.elements[id] = t
 	if fup, ok := t.(*FileField); ok {
 		r.uploads[fup.UploadToken()] = fup
+	}
+
+	if ds, ok := t.(DownloadSource); ok && ds.DownloadSource() != nil {
+		r.downloads[ds.DownloadToken()] = ds.DownloadSource()
 	}
 }
 

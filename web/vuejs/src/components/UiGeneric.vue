@@ -6,7 +6,6 @@ import UiGrid from '@/components/UiGrid.vue';
 import UiCard from '@/components/UiCard.vue';
 import UiTable from '@/components/UiTable.vue';
 import UiScaffold from '@/components/UiScaffold.vue';
-import UiForm from "@/components/UiForm.vue";
 import UiTextField from "@/components/UiTextField.vue";
 import UiVBox from "@/components/UiVBox.vue";
 import UiHBox from "@/components/UiHBox.vue";
@@ -18,6 +17,7 @@ import UiTextArea from "@/components/UiTextArea.vue";
 import UiChip from "@/components/UiChip.vue";
 import UiUploadField from "@/components/UiUploadField.vue";
 import {LivePage} from "@/shared/livemsg";
+import UiImage from "@/components/UiImage.vue";
 
 const props = defineProps<{
   ui: UiElement;
@@ -35,8 +35,7 @@ const props = defineProps<{
   <ui-divider v-else-if="props.ui.type === 'Divider'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
   <ui-stepper v-else-if="props.ui.type === 'Stepper'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
   <ui-upload-field v-else-if="props.ui.type === 'FileField'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
-
-  <ui-form v-else-if="props.ui.type === 'Form'" :ui="props.ui" :page="props.page"/>
+  <ui-image v-else-if="props.ui.type === 'Image'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
   <ui-text-field v-else-if="props.ui.type === 'TextField'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
   <ui-text-area v-else-if="props.ui.type === 'TextArea'" :ui="props.ui" :ws="props.ws" :page="props.page"/>
   <ui-toggle v-else-if="props.ui.type === 'Toggle'" :ui="props.ui" :ws="props.ws" :page="props.page"/>

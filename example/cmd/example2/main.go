@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/persistence/kv"
@@ -40,6 +42,9 @@ type EntByInt struct {
 func (e EntByInt) Identity() IntlIke {
 	return e.ID
 }
+
+//go:embed example.jpeg
+var exampleImg []byte
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
@@ -479,6 +484,16 @@ func main() {
 									textArea.Rows().Set(10)
 									textArea.OnTextChanged().Set(func() {
 										textArea.Error().Set("dein Fehler: " + textArea.Value().Get())
+									})
+								}),
+
+								ui.NewImage(func(img *ui.Image) {
+									img.URL().Set("https://www.worldiety.de/_nuxt/images/news_wzo_einzug2-bc96a5.webp")
+								}),
+
+								ui.NewImage(func(img *ui.Image) {
+									img.Source(func() (io.Reader, error) {
+										return bytes.NewBuffer(exampleImg), nil
 									})
 								}),
 

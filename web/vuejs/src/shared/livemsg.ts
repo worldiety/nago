@@ -24,6 +24,7 @@ export type LiveComponent =
     | LiveTextArea
     | LiveChip
     | LivePage
+    | LiveImage
 
 
 export interface LivePage {
@@ -50,6 +51,14 @@ export interface LiveCard {
     type: 'Card'
     children: ComponentList<LiveComponent>
     action: PropertyFunc
+}
+
+
+export interface LiveImage {
+    type: 'Image'
+    url: PropertyString
+    downloadToken: PropertyString
+    caption: PropertyString
 }
 
 
