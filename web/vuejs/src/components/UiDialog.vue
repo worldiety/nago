@@ -10,8 +10,8 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="bg-white text-left shadow-xl transition-all ">
-    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+  <div class="bg-white text-left shadow-xl transition-all dark:bg-gray-500">
+    <div class="px-4 pb-4 pt-5 sm:p-6 sm:pb-4 dark:bg-gray-500">
       <div class="sm:flex sm:items-start">
         <div v-if="props.ui.icon.value"
              class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -31,7 +31,7 @@ const props = defineProps<{
         </div>
       </div>
     </div>
-    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+    <div class="bg-gray-50 dark:bg-gray-600 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
       <ui-generic class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm  sm:ml-3 sm:w-auto" v-for="action in props.ui.actions.value" :ui="action" :ws="ws" :page="page"/>
 
     </div>
