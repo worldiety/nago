@@ -13,7 +13,7 @@ type User interface {
 	// Its value is constant between different sessions, e.g. keycloak provides a UUID in the sub(ject) claim.
 	UserID() string
 
-	// SesssionID determines the current session id is never empty but its nature depends totally on the provider,
+	// SessionID determines the current session id is never empty but its nature depends totally on the provider,
 	// e.g. keycloak provides a UUID in the sid property.
 	SessionID() string
 
@@ -35,6 +35,9 @@ type User interface {
 	// Name contains the natural name of the user, e.g. a firstname lastname tuple. Depending on the provider,
 	// this may be empty e.g. due to GDPR requirements.
 	Name() string
+
+	// Valid returns only true, if the user has been authenticated and the lease of e.g. a token is still valid.
+	Valid() bool
 }
 
 type userKey string

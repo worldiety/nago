@@ -277,6 +277,21 @@ export interface SetServerProperty {
     value: any
 }
 
+export interface UpdateJWT {
+    type: 'updateJWT'
+    token: string
+    OIDCName: 'Keycloak'
+}
+
+export interface ClientHello {
+    type: 'hello'
+    auth: ClientHelloAuth
+}
+
+export interface ClientHelloAuth {
+    keycloak: string
+}
+
 export function invokeFunc(ws: WebSocket, action: PropertyFunc) {
     if (action && action.id != 0 && action.value != 0) {
         const callSrvFun: CallServerFunc = {

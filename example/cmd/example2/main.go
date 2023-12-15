@@ -5,10 +5,12 @@ import (
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"log/slog"
 )
 
 type PID string
@@ -100,6 +102,7 @@ func main() {
 
 		cfg.Page("hello", func(wire ui.Wire) *ui.Page {
 			return ui.NewPage(wire, func(page *ui.Page) {
+
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
@@ -125,6 +128,9 @@ func main() {
 
 		counter := 0
 		cfg.Page("1234", func(w ui.Wire) *ui.Page {
+			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
+			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
+
 			page := ui.NewPage(w, nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
@@ -210,6 +216,8 @@ func main() {
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
+							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
+
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Label().Set("Vorname")
