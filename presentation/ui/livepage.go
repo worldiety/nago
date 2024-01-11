@@ -217,33 +217,41 @@ func (p *Page) HandleMessage() error {
 		return err
 	}
 
-	var m msg
-	if err := json.Unmarshal(buf, &m); err != nil {
-		slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+	var batch msgBatch
+	if err := json.Unmarshal(buf, &batch); err != nil {
+		slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
 		return err
 	}
 
-	switch m.Type {
-	case "callFn":
-		var call callFunc
-		if err := json.Unmarshal(buf, &call); err != nil {
-			panic(fmt.Errorf("cannot happen: %w", err))
-		}
-		callIt(p.renderState, call)
-	case "setProp":
-		var call setProperty
-		if err := json.Unmarshal(buf, &call); err != nil {
-			panic(fmt.Errorf("cannot happen: %w", err))
+	for _, buf := range batch.Messages {
+		var m msg
+		if err := json.Unmarshal(buf, &m); err != nil {
+			slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+			return err
 		}
 
-		setProp(p.renderState, call)
+		switch m.Type {
+		case "callFn":
+			var call callFunc
+			if err := json.Unmarshal(buf, &call); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
+			callIt(p.renderState, call)
+		case "setProp":
+			var call setProperty
+			if err := json.Unmarshal(buf, &call); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
 
-	case "updateJWT":
-		// nothing to do, this is handled transparently by the wire layer itself because the encoding
-		// and auth details are implementation dependent
+			setProp(p.renderState, call)
 
-	default:
-		slog.Default().Error("protocol not implemented: " + m.Type)
+		case "updateJWT":
+			// nothing to do, this is handled transparently by the wire layer itself because the encoding
+			// and auth details are implementation dependent
+
+		default:
+			slog.Default().Error("protocol not implemented: " + m.Type)
+		}
 	}
 
 	if IsDirty(p.body.Get()) || p.body.Dirty() || p.modals.Dirty() {
@@ -296,6 +304,10 @@ type messageHistoryOpen struct {
 
 type msg struct {
 	Type string `json:"type"`
+}
+
+type msgBatch struct {
+	Messages []json.RawMessage `json:"tx"`
 }
 
 type callFunc struct {

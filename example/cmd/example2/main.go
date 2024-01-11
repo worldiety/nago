@@ -52,7 +52,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
 
-		cfg.KeycloakAuthentication()
+		//cfg.KeycloakAuthentication()
 		persons := kv.NewCollection[Person, PID](cfg.Store("test2-db"), "persons")
 		err := persons.Save(
 			Person{
@@ -213,9 +213,22 @@ func main() {
 						}),
 					)
 
+					var yieldToggleVal bool
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
+							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
+								hBox.Children().From(func(yield func(ui.LiveComponent)) {
+									yield(ui.NewToggle(func(tgl *ui.Toggle) {
+										tgl.Checked().Set(yieldToggleVal)
+										tgl.OnCheckedChanged().Set(func() {
+											yieldToggleVal = tgl.Checked().Get()
+											fmt.Println("yield toggle to", tgl.Checked().Get())
+										})
+									}))
+								})
+							}))
+
 							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
 
 							vbox.Append(

@@ -114,8 +114,21 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 
+		tx := txMsg{}
+		if err := json.Unmarshal(helloBuf, &tx); err != nil {
+			logger.Error("failed to parse client tx hello message", slog.Any("err", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if len(tx.TX) == 0 {
+			logger.Error("hello tx is empty")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		var cHello clientHello
-		if err := json.Unmarshal(helloBuf, &cHello); err != nil {
+		if err := json.Unmarshal(tx.TX[0], &cHello); err != nil {
 			logger.Error("failed to parse client hello message", slog.Any("err", err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -202,6 +215,10 @@ func newConnWrapper(conn *websocket.Conn, req *http.Request, providers authProvi
 	}
 }
 
+type txMsg struct {
+	TX []json.RawMessage `json:"tx"`
+}
+
 func (c *connWrapper) ReadMessage() (messageType int, p []byte, err error) {
 	type msg struct {
 		Type string `json:"type"`
@@ -213,20 +230,28 @@ func (c *connWrapper) ReadMessage() (messageType int, p []byte, err error) {
 		return t, buf, err
 	}
 
-	var m msg
-	if err := json.Unmarshal(buf, &m); err != nil {
-		slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+	tx := txMsg{}
+	if err := json.Unmarshal(buf, &tx); err != nil {
+		slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
 		return 0, nil, err
 	}
 
-	switch m.Type {
-	case "updateJWT":
-		var jwt updJWT
-		if err := json.Unmarshal(buf, &jwt); err != nil {
-			panic(fmt.Errorf("cannot happen: %w", err))
+	for _, buf := range tx.TX {
+		var m msg
+		if err := json.Unmarshal(buf, &m); err != nil {
+			slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+			return 0, nil, err
 		}
 
-		c.updateJWT(jwt)
+		switch m.Type {
+		case "updateJWT":
+			var jwt updJWT
+			if err := json.Unmarshal(buf, &jwt); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
+
+			c.updateJWT(jwt)
+		}
 	}
 
 	return t, buf, err

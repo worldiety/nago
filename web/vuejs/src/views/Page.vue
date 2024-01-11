@@ -8,6 +8,7 @@ import {provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useHttp} from '@/shared/http';
 import {
+  CallBatch,
   CallServerFunc,
   ClientHello,
   Invalidation,
@@ -152,7 +153,11 @@ function sendUser(){
     OIDCName:"Keycloak",
   }
 
-  ws.value?.send(JSON.stringify(updateJWT))
+  const callTx: CallBatch = {
+    tx: [updateJWT]
+  }
+
+  ws.value?.send(JSON.stringify(callTx))
 }
 
 function sendHello(){
@@ -165,7 +170,13 @@ function sendHello(){
     },
   }
 
-  ws.value?.send(JSON.stringify(hello))
+  const callTx: CallBatch = {
+    tx: [hello]
+  }
+
+  console.log(JSON.stringify(callTx))
+
+  ws.value?.send(JSON.stringify(callTx))
 }
 
 function encodeQueryData(data) {
