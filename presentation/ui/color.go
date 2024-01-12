@@ -9,6 +9,7 @@ type Color string
 const (
 	PrimaryIntent   Color = "primary"
 	SecondaryIntent Color = "secondary"
+	TertiaryIntent  Color = "tertiary"
 	SubtileIntent   Color = "subtile"
 	Destructive     Color = "destructive"
 )
