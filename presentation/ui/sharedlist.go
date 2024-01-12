@@ -126,6 +126,15 @@ func (s *SharedList[T]) Append(t ...T) {
 	s.dirty = true
 }
 
+// AppendFrom is like append but uses the given iter once. See also From for an always dirty yielding.
+func (s *SharedList[T]) AppendFrom(iter Iter[T]) {
+	iter(func(t T) {
+		s.values = append(s.values, t)
+	})
+
+	s.dirty = true
+}
+
 // Remove removes the first comparable and matching entry. Has no effect if Source has been set.
 func (s *SharedList[T]) Remove(t ...T) {
 	if s.iter != nil {
