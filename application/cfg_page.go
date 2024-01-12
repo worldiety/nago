@@ -1,12 +1,15 @@
 package application
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
@@ -103,9 +106,52 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 
-		livePage := livePageFn(&connWrapper{conn: conn, r: r})
+		wire := newConnWrapper(conn, r, c.auth)
+		_, helloBuf, err := wire.ReadMessage()
+		if err != nil {
+			logger.Error("failed to read clients hello message", slog.Any("err", err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		tx := txMsg{}
+		if err := json.Unmarshal(helloBuf, &tx); err != nil {
+			logger.Error("failed to parse client tx hello message", slog.Any("err", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if len(tx.TX) == 0 {
+			logger.Error("hello tx is empty")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var cHello clientHello
+		if err := json.Unmarshal(tx.TX[0], &cHello); err != nil {
+			logger.Error("failed to parse client hello message", slog.Any("err", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if cHello.Type != "hello" {
+			logger.Error("invalid client hello message", slog.Any("hello", string(helloBuf)))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if cHello.Auth.Keycloak != "" && c.auth.keycloak != nil {
+			wire.updateJWT(updJWT{
+				Token:    cHello.Auth.Keycloak,
+				OIDCName: OIDC_KEYCLOAK,
+			})
+		}
+
+		livePage := livePageFn(wire)
 		logger.Info(fmt.Sprintf("spawned live page %v", livePage.Token()))
 		appSrv.putPage(livePage)
+		// TODO we better wait what the client actually wants, instead of blindly render something?
+		// this allows e.g. that the client can send update message like user authentication details => hello request
 		livePage.Invalidate()
 		for {
 			if err := livePage.HandleMessage(); err != nil {
@@ -122,7 +168,7 @@ func (c *Configurator) newHandler() http.Handler {
 		pageToken := r.Header.Get("x-page-token")
 		page := appSrv.getPage(ui.PageInstanceToken(pageToken))
 		if page == nil {
-			logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))
+			logging.FromContext(r.Context()).Error("invalid page token for upload") //, slog.String("token", pageToken))
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -153,16 +199,90 @@ func (c *Configurator) newHandler() http.Handler {
 }
 
 type connWrapper struct {
-	conn *websocket.Conn
-	r    *http.Request
+	conn          *websocket.Conn
+	r             *http.Request
+	authProviders authProviders
+	ctx           context.Context
+	user          auth.User
+}
+
+func newConnWrapper(conn *websocket.Conn, req *http.Request, providers authProviders) *connWrapper {
+	return &connWrapper{
+		conn:          conn,
+		r:             req,
+		authProviders: providers,
+		ctx:           req.Context(),
+	}
+}
+
+type txMsg struct {
+	TX []json.RawMessage `json:"tx"`
 }
 
 func (c *connWrapper) ReadMessage() (messageType int, p []byte, err error) {
-	return c.conn.ReadMessage()
+	type msg struct {
+		Type string `json:"type"`
+	}
+
+	t, buf, err := c.conn.ReadMessage()
+
+	if err != nil {
+		return t, buf, err
+	}
+
+	tx := txMsg{}
+	if err := json.Unmarshal(buf, &tx); err != nil {
+		slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
+		return 0, nil, err
+	}
+
+	for _, buf := range tx.TX {
+		var m msg
+		if err := json.Unmarshal(buf, &m); err != nil {
+			slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+			return 0, nil, err
+		}
+
+		switch m.Type {
+		case "updateJWT":
+			var jwt updJWT
+			if err := json.Unmarshal(buf, &jwt); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
+
+			c.updateJWT(jwt)
+		}
+	}
+
+	return t, buf, err
+}
+
+func (c *connWrapper) updateJWT(jwt updJWT) {
+	if jwt.OIDCName != OIDC_KEYCLOAK {
+		logging.FromContext(c.r.Context()).Error("cannot update jwt user: oidc name is not implemented", slog.String("name", jwt.OIDCName))
+		return
+	}
+
+	user, err := validateToken(c.authProviders.keycloak, c.r.Context(), jwt.Token)
+	if err != nil {
+		c.user = nil
+		logging.FromContext(c.r.Context()).Error("cannot validate token", slog.Any("err", err))
+	} else {
+		ctx := auth.WithContext(c.r.Context(), user)
+		c.ctx = ctx
+		c.user = user
+		//TODO do we have data races here?
+		//TODO we have an async logic update problem here: if a token expires or updates while the page is open, we are not notified
+		logging.FromContext(c.r.Context()).Info("updated authenticated user credentials")
+	}
 }
 
 func (c *connWrapper) WriteMessage(messageType int, data []byte) error {
 	return c.conn.WriteMessage(messageType, data)
+}
+
+func (c *connWrapper) Context() context.Context {
+	return c.ctx
 }
 
 func (c *connWrapper) Values() ui.Values {
@@ -175,6 +295,20 @@ func (c *connWrapper) Values() ui.Values {
 		tmp[k] = v
 	}
 	return tmp
+}
+
+func (c *connWrapper) User() auth.User {
+	if c.user == nil {
+		return invalidUser{}
+	}
+
+	return c.user
+}
+
+func (c *connWrapper) Remote() ui.Remote {
+	return &remoteImpl{
+		req: c.r,
+	}
 }
 
 type applicationServer struct {
@@ -205,4 +339,41 @@ func (a *applicationServer) removePage(token ui.PageInstanceToken) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 	delete(a.activePages, token)
+}
+
+type updJWT struct {
+	Token    string `json:"token,omitempty"`
+	OIDCName string `json:"OIDCName"`
+}
+
+type remoteImpl struct {
+	req *http.Request
+}
+
+func (r *remoteImpl) Addr() string {
+	return r.req.RemoteAddr
+}
+
+func (r *remoteImpl) ForwardedFor() string {
+	if s := r.req.Header.Get("X-Forwarded-For"); s != "" {
+		return s
+	}
+
+	if s := r.req.Header.Get("X-Real-IP"); s != "" {
+		return s
+	}
+
+	if s := r.req.Header.Get("CF-Connecting-IP"); s != "" {
+		return s
+	}
+
+	return ""
+}
+
+// clientHello must be the first message from the client.
+type clientHello struct {
+	Type string `json:"type,omitempty"`
+	Auth struct {
+		Keycloak string `json:"keycloak,omitempty"`
+	} `json:"auth" json:"auth"`
 }

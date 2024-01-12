@@ -7,7 +7,17 @@ import type {PageConfiguration} from '@/shared/model';
 import {provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useHttp} from '@/shared/http';
-import {Invalidation, LiveComponent, LiveMessage, LivePage} from "@/shared/livemsg";
+import {
+  CallBatch,
+  CallServerFunc,
+  ClientHello,
+  Invalidation,
+  LiveComponent,
+  LiveMessage,
+  LivePage,
+  UpdateJWT
+} from "@/shared/livemsg";
+import {useAuth, UserChangedCallbacks} from "@/stores/auth";
 
 
 enum State {
@@ -28,6 +38,7 @@ const ui = ref<LiveComponent>();
 const invalidationResp = ref<Invalidation>({});
 const ws = ref<WebSocket>();
 const livePage = ref<LivePage>({})
+
 
 // Provide the current UiDescription to all child elements.
 // https://vuejs.org/guide/components/provide-inject.html
@@ -61,6 +72,8 @@ watch(route, () => {
 
 })
 
+
+
 function retry() {
   setTimeout(connectWebSocket, 2000)
 }
@@ -74,6 +87,7 @@ function connectWebSocket() {
   }
 
 
+
   let wsurl = "ws://" + window.location.hostname + ":" + myPort + "/wire?_pid=" + window.location.pathname.substring(1)
   let queryString = window.location.search.substring(1)
   wsurl += "&" + queryString
@@ -84,6 +98,9 @@ function connectWebSocket() {
   lws.onopen = function (evt) {
     console.log("OPEN");
     ws.value = lws
+    sendHello()
+   // sendUser()
+
   }
   lws.onclose = function (evt) {
     console.log("CLOSE");
@@ -124,7 +141,42 @@ function connectWebSocket() {
 
   console.log("ws ???")
 
+  UserChangedCallbacks.push(user => sendUser())
+}
 
+function sendUser(){
+  const auth = useAuth();
+
+  const updateJWT: UpdateJWT = {
+    type: "updateJWT",
+    token: `${auth.user?.access_token}`,
+    OIDCName:"Keycloak",
+  }
+
+  const callTx: CallBatch = {
+    tx: [updateJWT]
+  }
+
+  ws.value?.send(JSON.stringify(callTx))
+}
+
+function sendHello(){
+  const auth = useAuth();
+
+  const hello: ClientHello = {
+    type: "hello",
+    auth: {
+      keycloak: `${auth.user?.access_token}`,
+    },
+  }
+
+  const callTx: CallBatch = {
+    tx: [hello]
+  }
+
+  console.log(JSON.stringify(callTx))
+
+  ws.value?.send(JSON.stringify(callTx))
 }
 
 function encodeQueryData(data) {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {LivePage, LiveTextField, SetServerProperty} from "@/shared/livemsg";
+import {invokeSetProp, invokeTx2, LivePage, LiveTextField, SetServerProperty} from "@/shared/livemsg";
 import {invokeFunc} from "@/shared/livemsg";
 import {computed} from "vue";
 
@@ -12,14 +12,9 @@ const props = defineProps<{
 function valueChanged(event: any) {
 
   props.ui.value.value = event.target.value
-  const setSrvProp: SetServerProperty = {
-    type: "setProp",
-    id: props.ui.value.id,
-    value: props.ui.value.value
-  }
-  props.ws.send(JSON.stringify(setSrvProp))
 
-  invokeFunc(props.ws, props.ui.onTextChanged)
+
+  invokeTx2(props.ws,props.ui.value,props.ui.onTextChanged)
 }
 
 function isErr(): boolean {

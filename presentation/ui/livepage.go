@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/logging"
 	"io"
@@ -16,7 +18,24 @@ const TextMessage = 1
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
+	// Values contains those values, which have been passed from the callers, e.g. intent parameters or url query
+	// parameters. This depends on the actual frontend.
 	Values() Values
+	// User is never nil. Check [auth.User.Valid]. You must not keep the User instance over a long time, because
+	// it will change over time, either due to refreshing tokens or because the user is logged out.
+	User() auth.User
+	// Context returns the wire-lifetime context. Contains additional injected types like User or Logger.
+	Context() context.Context
+	// Remote information, which is especially useful for audit logs.
+	Remote() Remote
+}
+
+type Remote interface {
+	// Addr denotes the physical remote layer. This is useless behind a proxy.
+	Addr() string
+	// ForwardedFor interprets different http headers. This works only behind a trusted proxy,
+	// because it is prone to spoofing.
+	ForwardedFor() string
 }
 
 type PageInstanceToken string
@@ -74,6 +93,7 @@ func (p *Page) Modals() *SharedList[LiveComponent] {
 }
 
 func (p *Page) Invalidate() {
+	logging.FromContext(p.wire.Context()).Info("page invalidated: re-render")
 	p.renderState.Clear()
 	// TODO make also a real component
 	var tmp []jsonComponent
@@ -197,30 +217,46 @@ func (p *Page) HandleMessage() error {
 		return err
 	}
 
-	fmt.Println("got message", string(buf))
-	var m msg
-	if err := json.Unmarshal(buf, &m); err != nil {
-		slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+	var batch msgBatch
+	if err := json.Unmarshal(buf, &batch); err != nil {
+		slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
 		return err
 	}
 
-	switch m.Type {
-	case "callFn":
-		var call callFunc
-		if err := json.Unmarshal(buf, &call); err != nil {
-			panic(fmt.Errorf("cannot happen: %w", err))
-		}
-		callIt(p.renderState, call)
-	case "setProp":
-		var call setProperty
-		if err := json.Unmarshal(buf, &call); err != nil {
-			panic(fmt.Errorf("cannot happen: %w", err))
+	if len(batch.Messages) == 0 {
+		slog.Default().Error("received empty message batch from client, it should not do that")
+		return nil
+	}
+
+	for _, buf := range batch.Messages {
+		var m msg
+		if err := json.Unmarshal(buf, &m); err != nil {
+			slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+			return err
 		}
 
-		setProp(p.renderState, call)
+		switch m.Type {
+		case "callFn":
+			var call callFunc
+			if err := json.Unmarshal(buf, &call); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
+			callIt(p.renderState, call)
+		case "setProp":
+			var call setProperty
+			if err := json.Unmarshal(buf, &call); err != nil {
+				panic(fmt.Errorf("cannot happen: %w", err))
+			}
 
-	default:
-		slog.Default().Error("protocol not implemented: " + m.Type)
+			setProp(p.renderState, call)
+
+		case "updateJWT":
+			// nothing to do, this is handled transparently by the wire layer itself because the encoding
+			// and auth details are implementation dependent
+
+		default:
+			slog.Default().Error("protocol not implemented: " + m.Type)
+		}
 	}
 
 	if IsDirty(p.body.Get()) || p.body.Dirty() || p.modals.Dirty() {
@@ -273,6 +309,10 @@ type messageHistoryOpen struct {
 
 type msg struct {
 	Type string `json:"type"`
+}
+
+type msgBatch struct {
+	Messages []json.RawMessage `json:"tx"`
 }
 
 type callFunc struct {

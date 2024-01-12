@@ -233,7 +233,7 @@ export interface LiveTableRow {
 }
 
 
-export type Property = PropertyString | PropertyBool
+export type Property = PropertyString | PropertyBool | PropertyInt
 
 export interface PropertyString {
     id: number
@@ -266,6 +266,10 @@ export interface PropertyComponent<T extends LiveComponent> {
 }
 
 
+export interface CallBatch {
+    tx: (CallServerFunc | SetServerProperty | UpdateJWT | ClientHello) []
+}
+
 export interface CallServerFunc {
     type: 'callFn'
     id: number
@@ -277,15 +281,57 @@ export interface SetServerProperty {
     value: any
 }
 
+export interface UpdateJWT {
+    type: 'updateJWT'
+    token: string
+    OIDCName: 'Keycloak'
+}
+
+export interface ClientHello {
+    type: 'hello'
+    auth: ClientHelloAuth
+}
+
+export interface ClientHelloAuth {
+    keycloak: string
+}
+
 export function invokeFunc(ws: WebSocket, action: PropertyFunc) {
-    if (action && action.id != 0 && action.value != 0) {
+    invokeTx2(ws, null, action)
+}
+
+export function invokeSetProp(ws: WebSocket, property: Property) {
+    invokeTx2(ws, property, null)
+}
+
+export function invokeTx2(ws: WebSocket, prop: Property | null, fn: PropertyFunc | null) {
+    const callTx: CallBatch = {
+        tx: []
+    }
+
+    if (prop && prop.id != 0) {
+        const setSrvProp: SetServerProperty = {
+            type: "setProp",
+            id: prop.id,
+            value: prop.value
+        }
+        callTx.tx.push(setSrvProp)
+    }
+
+    if (fn && fn.id != 0 && fn.value != 0) {
         const callSrvFun: CallServerFunc = {
             type: "callFn",
-            id: action.value
+            id: fn.value
         }
-        ws.send(JSON.stringify(callSrvFun))
 
+        callTx.tx.push(callSrvFun)
     }
+
+    if (callTx.tx.length == 0) {
+        return
+    }
+
+    ws.send(JSON.stringify(callTx))
 }
 
 export function textColor2Tailwind(s: string): string {

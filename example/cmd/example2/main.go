@@ -5,10 +5,12 @@ import (
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"log/slog"
 )
 
 type PID string
@@ -50,7 +52,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
 
-		cfg.KeycloakAuthentication()
+		//cfg.KeycloakAuthentication()
 		persons := kv.NewCollection[Person, PID](cfg.Store("test2-db"), "persons")
 		err := persons.Save(
 			Person{
@@ -100,6 +102,7 @@ func main() {
 
 		cfg.Page("hello", func(wire ui.Wire) *ui.Page {
 			return ui.NewPage(wire, func(page *ui.Page) {
+
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
@@ -125,6 +128,9 @@ func main() {
 
 		counter := 0
 		cfg.Page("1234", func(w ui.Wire) *ui.Page {
+			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
+			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
+
 			page := ui.NewPage(w, nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
@@ -207,9 +213,24 @@ func main() {
 						}),
 					)
 
+					var yieldToggleVal bool
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
+							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
+								hBox.Children().From(func(yield func(ui.LiveComponent)) {
+									yield(ui.NewToggle(func(tgl *ui.Toggle) {
+										tgl.Checked().Set(yieldToggleVal)
+										tgl.OnCheckedChanged().Set(func() {
+											yieldToggleVal = tgl.Checked().Get()
+											fmt.Println("yield toggle to", tgl.Checked().Get())
+										})
+									}))
+								})
+							}))
+
+							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
+
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Label().Set("Vorname")

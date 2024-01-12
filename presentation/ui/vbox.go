@@ -28,6 +28,10 @@ func (c *VBox) Append(children ...LiveComponent) *VBox {
 	return c
 }
 
+func (c *VBox) Children() *SharedList[LiveComponent] {
+	return c.children
+}
+
 func (c *VBox) ID() CID {
 	return c.id
 }

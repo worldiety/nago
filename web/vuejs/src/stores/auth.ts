@@ -47,6 +47,11 @@ export interface AuthStoreState {
     init: (manager: UserManager) => void;
 }
 
+export interface UserCallback {
+    (user: User | null): void;
+}
+
+export const UserChangedCallbacks = new Array<UserCallback>()
 
 /**
  * Create a store for managing authentication.
@@ -133,9 +138,11 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
 
         // Add some event listeners for when the user signed in/out to update the reactive value.
         userManager.events.addUserLoaded((u) => {
-            console.log("userManager: got event that user has loaded")
+            console.log("userManager: got event that user has loaded:", u)
             user.value = u;
+            UserChangedCallbacks.forEach(value => value(u))
         });
+
         userManager.events.addUserSignedIn(async () => {
             if (userManager == null) {
                 return
@@ -150,10 +157,12 @@ export const useAuth = defineStore<string, AuthStoreState>('authentication', () 
         userManager.events.addUserSignedOut(() => {
             console.log("userManager: user signed out")
             user.value = null;
+            UserChangedCallbacks.forEach(value => value(null))
         });
         userManager.events.addAccessTokenExpired(() => {
             console.log("userManager: got event that user has expired")
             user.value = null;
+            UserChangedCallbacks.forEach(value => value(null))
         });
     }
 

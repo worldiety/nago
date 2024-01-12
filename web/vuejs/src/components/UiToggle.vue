@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {invokeFunc, LivePage, LiveToggle, SetServerProperty} from "@/shared/livemsg";
+import {invokeFunc, invokeTx2, LivePage, LiveToggle, SetServerProperty} from "@/shared/livemsg";
 
 const props = defineProps<{
   ui: LiveToggle;
@@ -8,14 +8,7 @@ const props = defineProps<{
 }>();
 
 function onClick() {
-  const setSrvProp: SetServerProperty = {
-    type: "setProp",
-    id: props.ui.checked.id,
-    value: props.ui.checked.value
-  }
-  props.ws.send(JSON.stringify(setSrvProp))
-
-  invokeFunc(props.ws,props.ui.onCheckedChanged)
+   invokeTx2(props.ws,props.ui.checked,props.ui.onCheckedChanged)
 }
 
 </script>

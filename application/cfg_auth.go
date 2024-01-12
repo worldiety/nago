@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type authProviders struct {
@@ -29,6 +30,8 @@ type oidcProvider struct {
 	PostLogoutRedirectUri string // used by frontend
 	Provider              *oidc.Provider
 }
+
+const OIDC_KEYCLOAK = "Keycloak"
 
 // KeycloakAuthentication enables the oauth support configuration using a keycloak instance.
 // Your environment must provide AUTH_KEYCLOAK_REALM and AUTH_OIDC_CLIENT_ID. Secret per AUTH_OIDC_CLIENT_SECRET
@@ -64,7 +67,7 @@ func (c *Configurator) KeycloakAuthentication() *Configurator {
 	c.auth.keycloak = providerInfo
 
 	c.uiApp.OIDC = append(c.uiApp.OIDC, ui.OIDCProvider{
-		Name:                  "Keycloak",
+		Name:                  OIDC_KEYCLOAK,
 		Authority:             providerInfo.Authority,
 		ClientID:              providerInfo.ClientID,
 		ClientSecret:          providerInfo.ClientSecret,
@@ -79,13 +82,14 @@ func (c *Configurator) keycloakMiddleware(h http.Handler) http.Handler {
 		return h
 	}
 
+	// this is still required for rest apis etc.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		token = strings.TrimPrefix(token, "Bearer ")
 
 		if token != "" {
 			// we are protecting the access when parsing the page params, see also ui/utils.go
-			user, err := c.validateToken(c.auth.keycloak, r.Context(), token)
+			user, err := validateToken(c.auth.keycloak, r.Context(), token)
 			if err != nil {
 				logging.FromContext(r.Context()).Error("cannot validate token", slog.Any("err", err))
 			} else {
@@ -98,7 +102,7 @@ func (c *Configurator) keycloakMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-func (c *Configurator) validateToken(p *oidcProvider, ctx context.Context, token string) (auth.User, error) {
+func validateToken(p *oidcProvider, ctx context.Context, token string) (auth.User, error) {
 	if len(token) == 0 {
 		return nil, errors.New("empty token")
 	}
@@ -133,6 +137,7 @@ func (c *Configurator) validateToken(p *oidcProvider, ctx context.Context, token
 		roles:     nil,
 		mail:      claims.Email,
 		name:      claims.Name,
+		birth:     time.Now(),
 	}, nil
 }
 
@@ -143,6 +148,11 @@ type KeycloakUser struct {
 	roles     []string
 	mail      string
 	name      string
+	birth     time.Time
+}
+
+func (k KeycloakUser) Valid() bool {
+	return k.birth.Add(10 * time.Minute).Before(time.Now()) // this is not what the JWT defines, however it is another security feature
 }
 
 func (k KeycloakUser) UserID() string {
@@ -167,4 +177,35 @@ func (k KeycloakUser) Email() string {
 
 func (k KeycloakUser) Name() string {
 	return k.name
+}
+
+type invalidUser struct {
+}
+
+func (i invalidUser) UserID() string {
+	return ""
+}
+
+func (i invalidUser) SessionID() string {
+	return ""
+}
+
+func (i invalidUser) Verified() bool {
+	return false
+}
+
+func (i invalidUser) Roles() slice.Slice[string] {
+	return slice.Of[string]()
+}
+
+func (i invalidUser) Email() string {
+	return ""
+}
+
+func (i invalidUser) Name() string {
+	return ""
+}
+
+func (i invalidUser) Valid() bool {
+	return false
 }

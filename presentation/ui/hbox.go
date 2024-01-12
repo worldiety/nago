@@ -11,7 +11,7 @@ type HBox struct {
 	properties slice.Slice[Property]
 }
 
-func NewHBox(with func(hBox *HBox)) *HBox {
+func NewHBox(with func(hbox *HBox)) *HBox {
 	c := &HBox{
 		id:        nextPtr(),
 		children:  NewSharedList[LiveComponent]("children"),
