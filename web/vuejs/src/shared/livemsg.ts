@@ -327,6 +327,9 @@ export function invokeTx2(ws: WebSocket, prop: Property | null, fn: PropertyFunc
         callTx.tx.push(callSrvFun)
     }
 
+    if (callTx.tx.length == 0) {
+        return
+    }
 
     ws.send(JSON.stringify(callTx))
 }

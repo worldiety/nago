@@ -223,6 +223,11 @@ func (p *Page) HandleMessage() error {
 		return err
 	}
 
+	if len(batch.Messages) == 0 {
+		slog.Default().Error("received empty message batch from client, it should not do that")
+		return nil
+	}
+
 	for _, buf := range batch.Messages {
 		var m msg
 		if err := json.Unmarshal(buf, &m); err != nil {
