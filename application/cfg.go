@@ -48,6 +48,11 @@ func (c *Configurator) getHost() string {
 	return "localhost"
 }
 
+func (c *Configurator) SetHost(host string) *Configurator {
+	c.host = host
+	return c
+}
+
 func (c *Configurator) getPort() int {
 	if c.port != 0 {
 		return c.port
