@@ -184,12 +184,17 @@ func (c Collection[E, ID]) Find(id ID) (E, enum.Error[dm.LookupFailure]) {
 			return err
 		}
 
+		if bucket == nil {
+			errLookup = enum.IntoErr(dm.LookupFailure{}.With1(dm.EntityNotFound(dm.IdentString(id))))
+			return errLookup
+		}
+
 		buf, err := bucket.Get([]byte(dm.IdentString(id)))
 		if err != nil {
 			return err
 		}
 
-		if bucket == nil || buf == nil {
+		if buf == nil {
 			errLookup = enum.IntoErr(dm.LookupFailure{}.With1(dm.EntityNotFound(dm.IdentString(id))))
 			return errLookup
 		}
