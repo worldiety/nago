@@ -6,7 +6,10 @@ module.exports = {
         'node_modules/flowbite/**/*.{js,jsx,ts,tsx}'
     ],
     theme: {
-        extend: {}
+        extend: {},
+        colors: {
+            'wdy-green': '#1B8C30'
+        }
     },
 
     mode: 'jit',
