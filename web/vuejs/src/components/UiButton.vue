@@ -50,7 +50,7 @@ const iconOnly = computed<boolean>(() => {
   @apply rounded-3xl h-10 w-fit px-5 text-white bg-wdy-green;
   @apply hover:bg-wdy-green hover:opacity-90;
   @apply active:bg-opacity-75;
-  @apply disabled:text-ora-primary-disabled-text disabled:bg-ora-primary-disabled-background disabled:hover:bg-ora-primary-disabled-background disabled:hover:opacity-100;
+  @apply disabled:text-gray-400 disabled:bg-gray-200  disabled:hover:opacity-100;
   @apply dark:bg-opacity-0 dark:hover:bg-opacity-10 dark:focus:bg-opacity-25
 }
 
@@ -59,7 +59,7 @@ const iconOnly = computed<boolean>(() => {
   @apply hover:text-wdy-green hover:border-wdy-green ;
   @apply active:bg-wdy-green active:bg-opacity-25;
   @apply focus:border-none focus:text-wdy-green;
-  @apply disabled:text-ora-secondary-disabled-text disabled:border-ora-secondary-disabled-text disabled:hover:bg-white disabled:focus:bg-white;
+  @apply disabled:text-gray-200 disabled:border-gray-200 disabled:focus:bg-white;
   @apply dark:text-white;
 }
 
@@ -68,7 +68,7 @@ const iconOnly = computed<boolean>(() => {
   @apply hover:bg-wdy-green hover:bg-opacity-10;
   @apply active:bg-wdy-green active:bg-opacity-25;
   @apply focus:outline-none focus:outline-black focus:outline-offset-2;
-  @apply disabled:text-ora-secondary-disabled-text disabled:hover:bg-white disabled:focus:bg-white;
+  @apply disabled:text-gray-200 disabled:hover:bg-white disabled:focus:bg-white;
 
 }
 
@@ -82,11 +82,6 @@ const iconOnly = computed<boolean>(() => {
 .btn-destructive {
     @apply focus:ring-gray-300;
     @apply bg-red-700 text-white hover:bg-red-800 focus:outline-none dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900;
-}
-
-
-.btn-ora-secondary {
-
 }
 
 
