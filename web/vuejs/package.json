@@ -12,6 +12,7 @@
         "format": "prettier --write src/"
     },
     "dependencies": {
+        "axios": "^1.6.7",
         "flowbite-vue": "^0.1.0",
         "oidc-client-ts": "^2.3.0",
         "pinia": "^2.1.6",

@@ -1,3 +1,5 @@
+
+
 <script setup lang="ts">
 import {RouterView, useRoute, useRouter} from 'vue-router';
 import Page from '@/views/Page.vue';
@@ -6,7 +8,7 @@ import type {PagesConfiguration} from '@/shared/model';
 import {useAuth} from "@/stores/auth";
 import {UserManager} from "oidc-client-ts";
 import {LiveMessage} from "@/shared/livemsg";
-
+import axios from 'axios';
 
 const router = useRouter();
 const route = useRoute();
@@ -20,10 +22,53 @@ enum State {
 const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
-async function init() {
-  try {
+const errorMessage = ref()
+const additionalInformation = ref()
 
-    const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
+const isOnline = navigator.onLine
+const captivePortal = ref()
+const captiveOk = ref()
+const showAdditionalInformation = ref(false)
+const contentType = ref()
+
+const checkCaptivePortal = async () => {
+  try {
+    captivePortal.value = await axios.get('https://captive.apple.com')
+    return captiveOk.value = true
+
+  } catch (error) {
+    state.value = State.Error
+    return captiveOk.value = false
+
+  }
+}
+
+const checkInternetConnection = () => {
+  if (!isOnline) {
+    errorMessage.value = "Keine Internetverbindung vorhanden. Bitte Verbindung überprüfen.";
+    additionalInformation.value = "Router und Kabel überprüfen. Eventuell WLAN-Verbindung wiederherstellen.";
+    return false;
+  }
+  return true;
+};
+
+
+const toggleInfo = () => {
+  showAdditionalInformation.value = !showAdditionalInformation.value
+}
+
+async function init() {
+  if (!checkInternetConnection()) {
+    return
+  }
+
+  captiveOk.value = await checkCaptivePortal()
+
+
+  try {
+    const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/applicationn');
+    contentType.value = response.headers.get('Content-Type');
+
     const app: PagesConfiguration = await response.json();
 
     if (app.oidc?.length>0){
@@ -66,10 +111,21 @@ async function init() {
 
 
   } catch (e) {
-    console.log(e);
-    state.value = State.Error;
-  }
+    state.value = State.Error
 
+
+    if (e instanceof SyntaxError) {
+      errorMessage.value = 'Falsche Antwort erhalten. Bitte später erneut versuchen.'
+      additionalInformation.value = 'Falscher Content-Type. JSON erwartet, aber ' + contentType.value + ' erhalten.'
+    } else if (e instanceof TypeError) {
+      errorMessage.value = "Server nicht erreichbar. Bitte später erneut versuchen."
+      additionalInformation.value = e
+    }
+    if (captiveOk.value === false) {
+      errorMessage.value = "Keine Verbindung möglich. Bitte Rechte prüfen."
+      additionalInformation.value = "Captive Portal Check fehlgeschlagen."
+    }
+  }
 }
 
 
@@ -79,8 +135,24 @@ init();
 
 <template>
   <div>
-    <div v-if="state === State.LoadingRoutes">Loading…</div>
-    <div v-if="state === State.Error">Routes could not be loaded.</div>
-    <RouterView v-if="state === State.ShowRoutes"/>
-  </div>
+   </div>
+    <div class="flex justify-center items-center h-screen" v-if="state === State.Error || !isOnline || !captiveOk">
+      <div class="errorMessage">
+        <p> {{errorMessage}}</p>
+        <button class="border border-black p-0.5 text-sm bg-white" @click="toggleInfo()">Mehr Informationen</button>
+        <p v-if="showAdditionalInformation">{{ additionalInformation }}</p>
+      </div>
+    </div>
+    <RouterView v-if="state === State.ShowRoutes && isOnline && captiveOk"/>
 </template>
+
+
+
+<style>
+.errorMessage {
+  @apply border border-gray-600 p-4 rounded-md bg-gray-50
+
+}
+
+
+</style>
