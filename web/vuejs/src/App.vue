@@ -64,9 +64,14 @@ async function init() {
 
   captiveOk.value = await checkCaptivePortal()
 
+  if (captiveOk.value === false) {
+    errorMessage.value = "Keine Verbindung möglich. Bitte Rechte prüfen."
+    additionalInformation.value = "Captive Portal Check fehlgeschlagen."
+  }
+
 
   try {
-    const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/applicationn');
+    const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
     contentType.value = response.headers.get('Content-Type');
 
     const app: PagesConfiguration = await response.json();
@@ -120,10 +125,6 @@ async function init() {
     } else if (e instanceof TypeError) {
       errorMessage.value = "Server nicht erreichbar. Bitte später erneut versuchen."
       additionalInformation.value = e
-    }
-    if (captiveOk.value === false) {
-      errorMessage.value = "Keine Verbindung möglich. Bitte Rechte prüfen."
-      additionalInformation.value = "Captive Portal Check fehlgeschlagen."
     }
   }
 }
