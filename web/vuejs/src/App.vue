@@ -3,12 +3,14 @@
 <script setup lang="ts">
 import {RouterView, useRoute, useRouter} from 'vue-router';
 import Page from '@/views/Page.vue';
-import {ref} from 'vue';
+import {ref, onMounted} from 'vue';
+import {fetchBackendData} from "@/api/application/appService";
 import type {PagesConfiguration} from '@/shared/model';
 import {useAuth} from "@/stores/auth";
 import {UserManager} from "oidc-client-ts";
 import {LiveMessage} from "@/shared/livemsg";
 import axios from 'axios';
+import {Store} from "pinia";
 
 const router = useRouter();
 const route = useRoute();
@@ -22,57 +24,93 @@ enum State {
 const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
-const errorMessage = ref()
-const additionalInformation = ref()
+//TODO: Types festlegen. Bei Variablen die null sein können, mit null oder "leer" initialisieren
+//any ist immer böse
+const errorMessage = ref<string>('')
+const additionalInformation = ref<string>('')
 
-const isOnline = navigator.onLine
-const captivePortal = ref()
-const captiveOk = ref()
-const showAdditionalInformation = ref(false)
-const contentType = ref()
+const captivePortal = ref<string>('')
+const captiveOk = ref<boolean>(false)
+const showAdditionalInformation = ref<boolean>(false)
+const contentType = ref<string | null>('')
 
-const checkCaptivePortal = async () => {
+
+//TODO: überarbeiten, dass bei jedem Request auf Fehler überprüft wird. Im Moment findet die Überprüfung nur einmal am
+// Anfang statt
+
+//TODO: Die ganzen checks auslagern, also die App.vue aufräumen
+async function checkCaptivePortal():Promise<boolean> {
   try {
-    captivePortal.value = await axios.get('https://captive.apple.com')
+
+    //TODO: Statuscode checken
+    //TODO: Torben anschreiben, ob es einen Statusendpunkt gibt, der grundsätzlich 200 zurückgibt, wenn er erreichbar ist
+    // Torben baut zuünkftig /health ein, der 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
+    const response = await axios.get<string>('/api/')
+    captivePortal.value = response.data
+    console.log('Captive Portal Check: ' + response.status)
+
     return captiveOk.value = true
 
   } catch (error) {
+    errorMessage.value = "Keine Verbindung möglich. Bitte Rechte prüfen."
+    additionalInformation.value = "Captive Portal Check fehlgeschlagen."
     state.value = State.Error
     return captiveOk.value = false
 
   }
 }
 
-const checkInternetConnection = () => {
-  if (!isOnline) {
+async function checkInternetConnection():Promise<boolean> {
+  if (!navigator.onLine) {
     errorMessage.value = "Keine Internetverbindung vorhanden. Bitte Verbindung überprüfen.";
     additionalInformation.value = "Router und Kabel überprüfen. Eventuell WLAN-Verbindung wiederherstellen.";
+    state.value = State.Error
     return false;
   }
   return true;
-};
+}
 
-
-const toggleInfo = () => {
+async function toggleInfo():Promise<void> {
   showAdditionalInformation.value = !showAdditionalInformation.value
 }
 
-async function init() {
-  if (!checkInternetConnection()) {
+
+
+async function init():Promise<void> {
+  let dataFromBackend: string[] | null = null
+
+  onMounted(async () => {
+    try {
+      dataFromBackend = await fetchBackendData()
+      console.log('Data from Backend: ' + dataFromBackend)
+    } catch (error) {
+      console.log('Fehler!')
+    }
+  })
+
+  if (!await checkInternetConnection()) {
     return
   }
 
+  /*
   captiveOk.value = await checkCaptivePortal()
 
-  if (captiveOk.value === false) {
-    errorMessage.value = "Keine Verbindung möglich. Bitte Rechte prüfen."
-    additionalInformation.value = "Captive Portal Check fehlgeschlagen."
+  if (!captiveOk.value) {
+      return;
   }
 
+   */
+
+
+
+
+  let response: Response | null = null
 
   try {
-    const response = await fetch(import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/application');
+    //TODO: Mit Torben absprechen, ob wir uns auf axios oder fetch festlegen. Malte empfiehlt mir axios, da es erstmal einfacher zu benutzen ist
+    response = await fetch(import.meta.env.VITE_HOST_BACKEND + '/api/v1/ui/application');
     contentType.value = response.headers.get('Content-Type');
+    console.log('Weiterer Captive Portal Check: ' + response.status)
 
     const app: PagesConfiguration = await response.json();
 
@@ -103,7 +141,10 @@ async function init() {
     });
 
     // Update router with current route, to load the dynamically configured page.
-    await router.replace(route);
+    await router.replace(route)
+
+
+
 
     state.value = State.ShowRoutes;
 
@@ -116,20 +157,87 @@ async function init() {
 
 
   } catch (e) {
+    //TODO: Hier überprüfen, ob ich einen Statuscode bekomme. Failed to fetch bedeutet fast immer, dass keine Internetverbindung vorliegt
+    // Kann man aber mit navigator.online gegenprüfen
+    // Auf folgende Statuscode prüfen:
+    // 401 = Keine Authentifizierung vorhanden
+    // 403 = Man ist angemeldet, aber was ich tun möchte, darf ich nicht
+    // 404 = angefragte Entität ist nicht vorhanden (braucht man eigentlich nur, wenn man einen bestimmten Key abfragen möchte)
+    // 500 = Irgendwas ist fehlgeschlagen. Unbekannt was (default Fehler)
+    // je nachdem, wie man es deployed 502
+    // 503
+    // 504
+    // Doku Statuscodes: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+    // ggfs. andere Statuscodes mit Torben besprechen (Torben sollte eine API-Dokumentation angelegt haben)
+    // ggfs. einbauen, ob ich die richtige Antwort erhalten habe. Sollte eigentlich nicht nötig sein. Wenn doch, dann meistens
+    // Programmierfehler
+
+    // TOOO:i18n Dateien anlegen und da die einzelnen Fehlercodes hinterlegen. Dann hier darauf zugreifen
+    // neue Fehlerkomponente und Fehlerobjekt erstellen, die meine Fehlermeldung anzeigen. Diesen Bereich in meine api auslagern und
+    // dort mit throw arbeiten
+
     state.value = State.Error
+
+    console.log('Dieser Fehler ist aufgetreten: ' + e)
+
+
+    switch(response?.status) {
+      case 401: {
+        errorMessage.value = 'Authentifizierung fehlgeschlagen. Bitte einloggen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+      case 403: {
+        errorMessage.value = 'Autorisierung fehlgeschlagen. Bitte Rechte prüfen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+      case 404: {
+        errorMessage.value = 'Seite nicht gefunden. Bitte URL überprüfen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+      case 502: {
+        errorMessage.value = 'Ungültige Antwort erhalten. Bitte später erneut versuchen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+      case 503: {
+        errorMessage.value = 'Die Anfrage konnte nicht verarbeitet werden. Bitte später erneut versuchen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+      case 504: {
+        errorMessage.value = 'Zeitüberschreitung. Bitte später erneut versuchen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response.status
+        break;
+      }
+
+      //TODO: auf 500 und auf undefined abfragen (undefined höchstwahrscheinlich Netzwerkfehler)
+
+      default: {
+        errorMessage.value = 'Unerwarteter Serverfehler. Bitte später erneut versuchen.'
+        additionalInformation.value = 'HTTP-Statuscode: ' + response?.status
+      }
+    }
+
 
 
     if (e instanceof SyntaxError) {
       errorMessage.value = 'Falsche Antwort erhalten. Bitte später erneut versuchen.'
-      additionalInformation.value = 'Falscher Content-Type. JSON erwartet, aber ' + contentType.value + ' erhalten.'
-    } else if (e instanceof TypeError) {
-      errorMessage.value = "Server nicht erreichbar. Bitte später erneut versuchen."
-      additionalInformation.value = e
+      additionalInformation.value = 'Falscher Content-Type. JSON erwartet, aber ' + contentType.value + ' erhalten. '
     }
+
+/*
+  else if (e instanceof TypeError) {
+      errorMessage.value = "Server nicht erreichbar. Bitte später erneut versuchen."
+      additionalInformation.value = e.toString()
+    }
+
+ */
+
   }
 }
-
-
 
 init();
 </script>
@@ -137,14 +245,14 @@ init();
 <template>
   <div>
    </div>
-    <div class="flex justify-center items-center h-screen" v-if="state === State.Error || !isOnline || !captiveOk">
+    <div v-if="state === State.Error" class="flex justify-center items-center h-screen">
       <div class="errorMessage">
         <p> {{errorMessage}}</p>
         <button class="border border-black p-0.5 text-sm bg-white" @click="toggleInfo()">Mehr Informationen</button>
         <p v-if="showAdditionalInformation">{{ additionalInformation }}</p>
       </div>
     </div>
-    <RouterView v-if="state === State.ShowRoutes && isOnline && captiveOk"/>
+    <RouterView v-if="state === State.ShowRoutes"/>
 </template>
 
 

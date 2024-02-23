@@ -28,7 +28,8 @@ router.beforeEach(async (to, from, next) => {
     const meta = to.meta as PageMeta | undefined;
     const authenticated = meta?.page?.authenticated || false;
 
-    console.log("before push",to)
+    console.log("" +
+        "before push",to)
     if (authenticated) {
         console.log("router: require auth")
         const auth = useAuth();

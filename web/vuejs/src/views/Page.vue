@@ -210,23 +210,14 @@ function encodeQueryData(data) {
 
           <div class="relative transform overflow-hidden sm:my-8 sm:w-full sm:max-w-lg rounded-lg">
 
-
               <generic-ui :ui="modal" :ws="ws!" :page="livePage"/>
-
-
-
 
           </div>
         </div>
       </div>
     </div>
-
   </div>
-
   <div>
-
-
-
 
     <!--  <div>Dynamic page information: {{ page }}</div> -->
     <div v-if="state === State.Loading">Loading UI definition…</div>
