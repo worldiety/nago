@@ -4,7 +4,7 @@
 <script lang="ts" setup>
 import {useRoute, useRouter} from 'vue-router';
 import type {PageConfiguration} from '@/shared/model';
-import {provide, ref, watch} from 'vue';
+import {onUnmounted, provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useHttp} from '@/shared/http';
 import {
@@ -72,7 +72,9 @@ watch(route, () => {
 
 })
 
-
+onUnmounted(()=>{
+  ws.value?.close()
+})
 
 function retry() {
   setTimeout(connectWebSocket, 2000)
@@ -122,7 +124,7 @@ function connectWebSocket() {
         return
       case "HistoryPushState":
         history.pushState({}, "", msg.pageId + "?" + encodeQueryData(msg.state))
-        location.reload()
+        location.reload() // TODO this does not always work like the refresh button, because the websocket and everything is not reconnected
         console.log("push state")
         return
       case "HistoryBack":
