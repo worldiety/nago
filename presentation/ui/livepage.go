@@ -50,6 +50,7 @@ type Page struct {
 	renderState *renderState
 	token       String
 	maxMemory   int64
+	onDestroy   []func()
 }
 
 func NewPage(w Wire, with func(page *Page)) *Page {
@@ -271,7 +272,16 @@ func (p *Page) HandleMessage() error {
 
 func (p *Page) Close() error {
 	slog.Default().Info("live page is dead")
+
+	for _, f := range p.onDestroy {
+		f()
+	}
+
 	return nil
+}
+
+func (p *Page) AddOnDestroy(f func()) {
+	p.onDestroy = append(p.onDestroy, f)
 }
 
 func (p *Page) sendMsg(t any) {

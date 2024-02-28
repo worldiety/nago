@@ -155,7 +155,6 @@ func (c *Configurator) newHandler() http.Handler {
 		livePage.Invalidate()
 		for {
 			if err := livePage.HandleMessage(); err != nil {
-				livePage.Close()
 				logging.FromContext(r.Context()).Error(fmt.Sprintf("livePage is dead now %v", livePage.Token()), slog.Any("err", err))
 				appSrv.removePage(livePage.Token())
 				break
@@ -338,7 +337,14 @@ func (a *applicationServer) putPage(page *ui.Page) {
 func (a *applicationServer) removePage(token ui.PageInstanceToken) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
+	page := a.activePages[token]
+	if page != nil {
+		if err := page.Close(); err != nil {
+			slog.Error("cannot close page", slog.Any("err", err))
+		}
+	}
 	delete(a.activePages, token)
+
 }
 
 type updJWT struct {
