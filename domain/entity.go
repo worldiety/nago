@@ -1,6 +1,8 @@
 package dm
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/container/enum"
 	"go.wdy.de/nago/container/serrors"
@@ -33,4 +35,13 @@ func IdentString[Ident comparable](id Ident) string {
 	default:
 		return fmt.Sprintf("%v", t)
 	}
+}
+
+func RandString() string {
+	var tmp [16]byte
+	if _, err := rand.Read(tmp[:]); err != nil {
+		panic(err)
+	}
+
+	return hex.EncodeToString(tmp[:])
 }

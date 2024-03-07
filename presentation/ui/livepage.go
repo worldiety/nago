@@ -15,6 +15,8 @@ import (
 
 const TextMessage = 1
 
+type SessionID = string
+
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
@@ -28,6 +30,11 @@ type Wire interface {
 	Context() context.Context
 	// Remote information, which is especially useful for audit logs.
 	Remote() Remote
+
+	// ClientSession is a unique identifier, which is assigned to a client using a cookie mechanism. This is a
+	// pure random string and belongs to a distinct client instance. It is shared across multiple pages on the client,
+	// especially when using multiple tabs or browser windows.
+	ClientSession() SessionID
 }
 
 type Remote interface {

@@ -10,6 +10,7 @@ import (
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
 	"go.wdy.de/nago/auth"
+	dm "go.wdy.de/nago/domain"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
@@ -19,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sync"
+	"time"
 )
 
 var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
@@ -63,6 +65,18 @@ func (c *Configurator) newHandler() http.Handler {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
 		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			cookie, err := request.Cookie("wdy-ora-access")
+			if err != nil {
+				cookie = &http.Cookie{}
+				cookie.Name = "wdy-ora-access"
+				cookie.Value = dm.RandString()
+				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
+				cookie.Secure = false //TODO in release-mode this must be true
+				cookie.HttpOnly = true
+				cookie.Path = "/"
+				http.SetCookie(writer, cookie)
+			}
+
 			dir := filepath.Dir(request.URL.Path)
 			/*if strings.HasPrefix(base,"index"){
 				request.URL.Path = "/"
@@ -203,19 +217,35 @@ type connWrapper struct {
 	authProviders authProviders
 	ctx           context.Context
 	user          auth.User
+	sessionId     string
 }
 
 func newConnWrapper(conn *websocket.Conn, req *http.Request, providers authProviders) *connWrapper {
-	return &connWrapper{
+	cookie, err := req.Cookie("wdy-ora-access")
+
+	w := &connWrapper{
 		conn:          conn,
 		r:             req,
 		authProviders: providers,
 		ctx:           req.Context(),
 	}
+
+	if err != nil {
+		w.sessionId = cookie.Value
+	}
+
+	return w
 }
 
 type txMsg struct {
 	TX []json.RawMessage `json:"tx"`
+}
+
+// ClientSession is a unique identifier, which is assigned to a client using a cookie mechanism. This is a
+// pure random string and belongs to a distinct client instance. It is shared across multiple pages on the client,
+// especially when using multiple tabs or browser windows.
+func (c *connWrapper) ClientSession() string {
+	return c.sessionId
 }
 
 func (c *connWrapper) ReadMessage() (messageType int, p []byte, err error) {
