@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-import UiGeneric from '@/components/UiGeneric.vue';
-import {Divider, LivePage, VBox} from "@/shared/livemsg";
+import type { Divider, LivePage } from '@/shared/model';
 
 const props = defineProps<{
   ui: Divider;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 </script>
 

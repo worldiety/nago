@@ -1,12 +1,11 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import { LiveDialog, LivePage } from '@/shared/livemsg';
 import { useFocus } from '@vueuse/core'
 import { ref } from 'vue'
+import type { LiveDialog, LivePage } from '@/shared/model';
 
 const props = defineProps<{
     ui: LiveDialog;
-    ws: WebSocket;
     page: LivePage;
 }>();
 
@@ -32,7 +31,7 @@ useFocus(dialog, { initialValue: true })
                     </h3>
                     <div class="mt-2">
                         <div class="text-sm text-gray-500">
-                            <ui-generic v-if="props.ui.body.value" :ui="props.ui.body.value" :ws="ws" :page="page" />
+                            <ui-generic v-if="props.ui.body.value" :ui="props.ui.body.value" :page="page" />
                         </div>
                     </div>
                 </div>
@@ -43,7 +42,6 @@ useFocus(dialog, { initialValue: true })
                 class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto"
                 v-for="action in props.ui.actions.value"
                 :ui="action"
-                :ws="ws"
                 :page="page"
             />
         </div>

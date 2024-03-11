@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import type {UiDescription} from '@/shared/model';
+import type { LiveImage, LivePage, UiDescription } from '@/shared/model';
 import type {Ref} from 'vue';
 import {inject} from 'vue';
-import {invokeFunc, LiveImage, LivePage} from "@/shared/livemsg";
+import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
   ui: LiveImage;
-  ws: WebSocket
-  page: LivePage
+  page: LivePage;
 }>();
 
+const networkStore = useNetworkStore();
 const ui: Ref<UiDescription> = inject('ui')!;
 
 function onClick() {
-  invokeFunc(props.ws, props.ui.action)
+  networkStore.invokeFunc(props.ui.action);
 }
 
 function getSource():string{
