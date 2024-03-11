@@ -5,11 +5,6 @@ import {ref} from 'vue';
 import type {PagesConfiguration} from '@/shared/model';
 import {useAuth} from "@/stores/auth";
 import {UserManager} from "oidc-client-ts";
-import {LiveMessage} from "@/shared/livemsg";
-
-
-const router = useRouter();
-const route = useRoute();
 
 enum State {
   LoadingRoutes,
@@ -17,6 +12,8 @@ enum State {
   Error,
 }
 
+const router = useRouter();
+const route = useRoute();
 const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
@@ -33,16 +30,16 @@ async function init() {
         redirect_uri: 'http://localhost:8090/oauth',
         post_logout_redirect_uri: 'http://localhost:8090',
       }))*/
-      let provider = app.oidc.at(0)
-      auth.init(new UserManager({
-        authority: provider.authority,
-        client_id: provider.clientID,
-        redirect_uri: provider.redirectURL,
-        post_logout_redirect_uri: provider.postLogoutRedirectUri,
-      }))
+      const provider = app.oidc.at(0);
+      if (provider) {
+        auth.init(new UserManager({
+          authority: provider.authority,
+          client_id: provider.clientID,
+          redirect_uri: provider.redirectURL,
+          post_logout_redirect_uri: provider.postLogoutRedirectUri,
+        }));
+      }
     }
-
-
 
     app.livePages.forEach((page) => {
       let anchor = page.anchor.replaceAll("{", ":")
@@ -57,22 +54,15 @@ async function init() {
 
     state.value = State.ShowRoutes;
 
-
     if (router.currentRoute.value.path==="/" && app.index != null && app.index != "") {
       console.log("app requires index rewrite to ", app.index)
       router.replace(app.index)
     }
-
-
-
   } catch (e) {
     console.log(e);
     state.value = State.Error;
   }
-
 }
-
-
 
 init();
 </script>
