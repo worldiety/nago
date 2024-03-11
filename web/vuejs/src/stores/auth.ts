@@ -1,5 +1,5 @@
 import type {User} from 'oidc-client-ts';
-import {UserManager} from 'oidc-client-ts';
+import type {UserManager} from 'oidc-client-ts';
 import {defineStore} from 'pinia';
 import type {Ref} from 'vue';
 import {ref} from 'vue';

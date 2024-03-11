@@ -39,14 +39,15 @@ export default class WebSocketAdapter {
     this.webSocket.onopen = () => {
       console.log("OPEN");
       this.sendHello();
-      // sendUser()
     }
 
     this.webSocket.onclose = () => {
       console.log("CLOSE");
       if (!this.closedGracefully) {
-        this.retry()
+        // Try to reopen the socket if it was not closed gracefully
+        this.retry();
       } else {
+        // Keep the socket closed if it was closed gracefully (i.e. intentional)
         this.closedGracefully = false;
       }
     }
@@ -69,8 +70,6 @@ export default class WebSocketAdapter {
       }
       this.retry();
     }
-
-    console.log("ws ???")
 
     UserChangedCallbacks.push(() => this.sendUser());
   }

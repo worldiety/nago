@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {textColor2Tailwind, textSize2Tailwind} from "@/shared/livemsg";
+import {textColor2Tailwind, textSize2Tailwind} from "@/shared/tailwindTranslator";
 import {computed} from "vue";
 import type { LivePage, LiveText } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
