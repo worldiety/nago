@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import type {LivePage, LiveUploadField, SetServerProperty} from "@/shared/livemsg";
-import {invokeFunc} from "@/shared/livemsg";
 import {computed} from "vue";
+import type { LivePage, LiveUploadField } from '@/shared/model';
 
 const props = defineProps<{
   ui: LiveUploadField;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
 function isErr(): boolean {

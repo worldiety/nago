@@ -1,12 +1,11 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
-import {LiveGridCell, LivePage} from "@/shared/livemsg";
+import type { LiveGridCell, LivePage } from '@/shared/model';
 
 const props = defineProps<{
   ui: LiveGridCell;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
 const styleGridColStart = computed<string>(() => {
@@ -74,6 +73,6 @@ const style = computed(
 
 <template>
   <div :class="style">
-    <ui-generic :ui="props.ui.body.value" :ws="ws" :page="page"/>
+    <ui-generic :ui="props.ui.body.value" :page="page"/>
   </div>
 </template>

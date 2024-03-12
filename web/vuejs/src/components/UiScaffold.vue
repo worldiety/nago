@@ -1,14 +1,15 @@
 <script lang="ts" setup>
 import {onMounted} from 'vue';
 import UiGeneric from "@/components/UiGeneric.vue";
-import {invokeFunc, LivePage, LiveScaffold} from "@/shared/livemsg";
+import type { LivePage, LiveScaffold } from '@/shared/model';
+import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
   ui: LiveScaffold;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
+const networkStore = useNetworkStore();
 
 function initDarkModeToggle() {
   var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
@@ -64,15 +65,15 @@ onMounted(() => {
     <nav class="px-4 flex justify-between h-16 shadow dark:bg-gray-700 bg-white">
 
       <div class="flex items-center pl-4">
-        <ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :ws="props.ws" :page="page"/>
+        <ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :page="page"/>
       </div>
 
       <div class="flex items-center">
-        <ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :ws="props.ws" :page="page"/>
+        <ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :page="page"/>
       </div>
 
       <ul class="flex items-center pr-4">
-        <ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :ws="props.ws" :page="page"/>
+        <ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :page="page"/>
       </ul>
 
     </nav>
@@ -87,7 +88,7 @@ onMounted(() => {
 
       <ul class="space-y-2 font-medium">
         <li v-for="btn in props.ui.menu.value">
-          <a @click="invokeFunc(props.ws,btn.action)"
+          <a @click="networkStore.invokeFunc(btn.action)"
              class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
 
             <svg v-inline
@@ -130,7 +131,7 @@ onMounted(() => {
       <nav v-if="props.ui.breadcrumbs.value" class="flex pb-4" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
           <li v-for="btn in props.ui.breadcrumbs.value" class="inline-flex items-center">
-            <a @click="invokeFunc(props.ws,btn.action)"
+            <a @click="networkStore.invokeFunc(btn.action)"
                class="cursor-pointer inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
               <svg v-inline class="w-3 h-3 me-2.5" v-if="btn.preIcon.value" v-html="btn.preIcon.value"></svg>
               {{ btn.caption.value }}
@@ -141,7 +142,7 @@ onMounted(() => {
       </nav>
 
 
-      <ui-generic :ui="props.ui.body.value" :ws="props.ws" :page="page"/>
+      <ui-generic :ui="props.ui.body.value" :page="page"/>
     </div>
   </div>
 
@@ -152,7 +153,7 @@ onMounted(() => {
 
       <button type="button"
               class="cursor-pointer inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group"
-              v-for="btn in props.ui.menu.value" @click="invokeFunc(props.ws,btn.action)">
+              v-for="btn in props.ui.menu.value" @click="networkStore.invokeFunc(btn.action)">
         <svg v-inline
              class="w-5 h-5 mb-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
              v-if="btn.preIcon.value" v-html="btn.preIcon.value"></svg>

@@ -1,15 +1,17 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { invokeFunc, LiveButton, LivePage } from '@/shared/livemsg';
+import type { LiveButton, LivePage } from '@/shared/model';
+import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
     ui: LiveButton;
-    ws: WebSocket;
     page: LivePage;
 }>();
 
+const networkStore = useNetworkStore();
+
 function onClick() {
-    invokeFunc(props.ws, props.ui.action);
+    networkStore.invokeFunc(props.ui.action);
 }
 
 const clazz = computed<string>(() => {
