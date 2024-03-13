@@ -221,7 +221,7 @@ type connWrapper struct {
 }
 
 func newConnWrapper(conn *websocket.Conn, req *http.Request, providers authProviders) *connWrapper {
-	cookie, err := req.Cookie("wdy-ora-access")
+	cookie, _ := req.Cookie("wdy-ora-access")
 
 	w := &connWrapper{
 		conn:          conn,
@@ -230,7 +230,7 @@ func newConnWrapper(conn *websocket.Conn, req *http.Request, providers authProvi
 		ctx:           req.Context(),
 	}
 
-	if err != nil {
+	if cookie != nil {
 		w.sessionId = cookie.Value
 	}
 
