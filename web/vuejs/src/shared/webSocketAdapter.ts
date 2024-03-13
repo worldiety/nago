@@ -17,6 +17,7 @@ export default class WebSocketAdapter {
   private webSocketReceiveCallback: ((message: LiveMessage) => void) | null = null;
   private webSocketErrorCallback: (() => void) | null = null;
   private closedGracefully: boolean = false;
+  private retryTimeout: number|null = null;
 
   constructor() {
     this.webSocketPort = this.initializeWebSocketPort();
@@ -110,7 +111,11 @@ export default class WebSocketAdapter {
   }
 
   private retry() {
-    setTimeout(() => {
+    if (this.retryTimeout !== null) {
+      return;
+    }
+    this.retryTimeout = window.setTimeout(() => {
+      this.retryTimeout = null;
       this.initializeWebSocket();
     }, 2000);
   }
