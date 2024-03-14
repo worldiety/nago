@@ -3,20 +3,24 @@ package ui
 import "go.wdy.de/nago/container/slice"
 
 type Dropdown struct {
-	id            CID
-	selectedIndex Int
-	items         *SharedList[*DropdownItem]
-	properties    slice.Slice[Property]
+	id               CID
+	selectedIndex    Int
+	items            *SharedList[*DropdownItem]
+	expanded         Bool
+	onToggleExpanded *Func
+	properties       slice.Slice[Property]
 }
 
 func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	c := &Dropdown{
-		id:            nextPtr(),
-		selectedIndex: NewShared[int64]("selectedIndex"),
-		items:         NewSharedList[*DropdownItem]("items"),
+		id:               nextPtr(),
+		selectedIndex:    NewShared[int64]("selectedIndex"),
+		items:            NewSharedList[*DropdownItem]("items"),
+		expanded:         NewShared[bool]("expanded"),
+		onToggleExpanded: NewFunc("onToggleExpanded"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndex, c.items)
+	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.onToggleExpanded)
 	if with != nil {
 		with(c)
 	}
@@ -37,6 +41,14 @@ func (c *Dropdown) SelectedIndex() Int {
 
 func (c *Dropdown) Items() *SharedList[*DropdownItem] {
 	return c.items
+}
+
+func (c *Dropdown) Expanded() Bool {
+	return c.expanded
+}
+
+func (c *Dropdown) OnToggleExpanded() *Func {
+	return c.onToggleExpanded
 }
 
 func (c *Dropdown) Properties() slice.Slice[Property] {

@@ -399,6 +399,8 @@ export interface LiveDropdown {
 	id: number,
 	items: ComponentList<LiveDropdownItem>,
 	selectedIndex: PropertyInt,
+	expanded: PropertyBool,
+	onToggleExpanded: PropertyFunc,
 }
 
 export interface LiveDropdownItem {

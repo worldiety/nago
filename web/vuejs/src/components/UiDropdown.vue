@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { LiveDropdown } from '@/shared/model';
 import UiDropdownItem from '@/components/UiDropdownItem.vue';
+import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed } from 'vue';
+import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
   ui: LiveDropdown;
 }>();
+
+const networkStore = useNetworkStore();
 
 const selectedItemName = computed((): string => {
 	return props.ui.items.value.find((item) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
@@ -13,10 +17,20 @@ const selectedItemName = computed((): string => {
 </script>
 
 <template>
-	<div>
-		<p>Selected: {{ selectedItemName }}</p>
-		<div class="flex flex-col">
-			<ui-dropdown-item v-for="(dropdownItem, index) in props.ui.items.value" :key="index" :ui="dropdownItem" />
+	<div class="flex flex-col gap-y-1">
+		<div
+			class="flex justify-between gap-x-4 items-center cursor-default border border-black hover:border-wdy-green text-black hover:text-wdy-green rounded-md p-2"
+			@click="networkStore.invokeFunc(props.ui.onToggleExpanded)"
+		>
+			<div class="text-black truncate">{{ selectedItemName }}</div>
+			<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
+		</div>
+		<div v-if="props.ui.expanded.value" class="shadow-lg">
+			<ui-dropdown-item
+				v-for="(dropdownItem, index) in props.ui.items.value"
+				:key="index"
+				:ui="dropdownItem"
+			/>
 		</div>
 	</div>
 </template>

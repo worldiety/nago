@@ -231,6 +231,10 @@ func main() {
 
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
 								dropdown.SelectedIndex().Set(1)
+								dropdown.Expanded().Set(false)
+								dropdown.OnToggleExpanded().Set(func() {
+									dropdown.Expanded().Set(!dropdown.Expanded().Get())
+								})
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
@@ -238,22 +242,25 @@ func main() {
 										item.Content().Set("Option A")
 										item.OnSelected().Set(func() {
 											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Expanded().Set(false)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
 										item.ItemIndex().Set(1)
-										item.Content().Set("Option B")
+										item.Content().Set("Option BC")
 										item.OnSelected().Set(func() {
 											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Expanded().Set(false)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
 										item.ItemIndex().Set(2)
-										item.Content().Set("Option C")
+										item.Content().Set("Option DEF")
 										item.OnSelected().Set(func() {
 											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Expanded().Set(false)
 										})
 									}),
 								)
