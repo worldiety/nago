@@ -5,6 +5,8 @@ import router from '@/router';
 //import '@mdi/font/css/materialdesignicons.css';
 import {createPinia} from 'pinia';
 import {createApp} from 'vue';
+import i18n from "./i18n";
+
 
 /*
 const vuetify = createVuetify({
@@ -30,4 +32,4 @@ app.directive("inline", (element: HTMLElement) => {
     }
     element.replaceWith(...element.children);
 });
-app.use(pinia).use(router).mount('#app');
+app.use(pinia).use(router).use(i18n).mount('#app');

@@ -1,0 +1,46 @@
+{
+    "customErrorcodes": {
+      "001": {
+        "errorMessage": "No internet connection possible. Please check your connection.",
+        "additionalInformation": "Please check your router and cables. Perhaps re-connect with Wi-Fi. "
+      },
+      "002": {
+        "errorMessage": "Got wrong response. Please try again later.",
+        "additionalInformation": "Wrong Content-Type. JSON expected."
+      }
+    },
+    "httpErrorcodes": {
+      "401": {
+        "errorMessage": "Authentication failed. Please log in.",
+        "additionalInformation": "HTTP-Statuscode: 401"
+      },
+      "403": {
+        "errorMessage": "Authorization failed. Please check user rights.",
+        "additionalInformation": "HTTP-Statuscode: 403"
+      },
+      "404": {
+        "errorMessage": "Website not found. Please check URL.",
+        "additionalInformation": "HTTP-Statuscode: 404"
+      },
+      "500": {
+        "errorMessage": "Internal Server Error. Please try again later.",
+        "additionalInformation": "HTTP-Statuscode: 500"
+      },
+      "502": {
+        "errorMessage": "Invalid response received. Please try again later.",
+        "additionalInformation": "HTTP-Statuscode: 502"
+      },
+      "503": {
+        "errorMessage": "Request could not be handled. Please try again later.",
+        "additionalInformation": "HTTP-Statuscode: 503"
+      },
+      "504": {
+        "errorMessage": "Gateway Timeout. Please try again later.",
+        "additionalInformation": "HTTP-Statuscode: 504"
+      },
+      "undefined": {
+        "errorMessage": "Connection not possible. Please check your network devices and connections.",
+        "additionalInformation": "Undefined HTTP Error "
+      }
+    }
+}

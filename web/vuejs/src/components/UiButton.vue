@@ -18,8 +18,8 @@ const clazz = computed<string>(() => {
             return 'btn-primary';
         case 'secondary':
             return 'btn-secondary';
-      case 'tertiary':
-        return 'btn-tertiary'
+        case 'tertiary':
+          return 'btn-tertiary'
         case 'subtile':
             return 'btn-subtile';
         case 'destructive':
