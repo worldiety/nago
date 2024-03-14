@@ -32,7 +32,11 @@ export default class WebSocketAdapter {
   }
 
   initializeWebSocket(): void {
-    const webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}&${window.location.search.substring(1)}`;
+    let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}`;
+    const queryString = window.location.search.substring(1);
+    if (queryString) {
+      webSocketURL += `&${queryString}`;
+    }
 
     console.log("open websocket ->" + webSocketURL)
     this.webSocket = new WebSocket(webSocketURL);
