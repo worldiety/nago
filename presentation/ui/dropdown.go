@@ -3,31 +3,20 @@ package ui
 import "go.wdy.de/nago/container/slice"
 
 type Dropdown struct {
-	id         CID
-	caption    String
-	preIcon    EmbeddedSVG
-	postIcon   EmbeddedSVG
-	color      *Shared[Color]
-	action     *Func
-	disabled   Bool
-	properties slice.Slice[Property]
-
+	id            CID
 	selectedIndex Int
 	items         *SharedList[*DropdownItem]
+	properties    slice.Slice[Property]
 }
 
 func NewDropdown(with func(btn *Dropdown)) *Dropdown {
 	c := &Dropdown{
-		id:       nextPtr(),
-		caption:  NewShared[string]("caption"),
-		preIcon:  NewShared[SVGSrc]("preIcon"),
-		postIcon: NewShared[SVGSrc]("postIcon"),
-		color:    NewShared[Color]("color"),
-		disabled: NewShared[bool]("disabled"),
-		action:   NewFunc("action"),
+		id:            nextPtr(),
+		selectedIndex: NewShared[int64]("selectedIndex"),
+		items:         NewSharedList[*DropdownItem]("items"),
 	}
 
-	c.properties = slice.Of[Property](c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action)
+	c.properties = slice.Of[Property](c.selectedIndex, c.items)
 	if with != nil {
 		with(c)
 	}
@@ -73,26 +62,22 @@ func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
 	return c
 }
 
-func (c *StepInfo) ID() CID {
+func (c *DropdownItem) ID() CID {
 	return c.id
 }
 
-func (c *StepInfo) Type() string {
-	return "StepInfo"
+func (c *DropdownItem) Type() string {
+	return "DropdownItem"
 }
 
-func (c *StepInfo) Properties() slice.Slice[Property] {
+func (c *DropdownItem) Properties() slice.Slice[Property] {
 	return c.properties
 }
 
-func (c *StepInfo) Number() String {
-	return c.number
+func (c *DropdownItem) Content() String {
+	return c.content
 }
 
-func (c *StepInfo) Caption() String {
-	return c.caption
-}
-
-func (c *StepInfo) Details() String {
-	return c.details
+func (c *DropdownItem) OnSelected() *Func {
+	return c.onSelected
 }
