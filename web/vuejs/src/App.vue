@@ -3,7 +3,7 @@ import {RouterView, useRoute, useRouter} from 'vue-router';
 import Page from '@/views/Page.vue';
 import {ref} from 'vue';
 import type {PagesConfiguration} from '@/shared/model';
-import {useAuth} from "@/stores/auth";
+import {useAuth} from "@/stores/authStore";
 import {UserManager} from "oidc-client-ts";
 
 enum State {

@@ -1,4 +1,4 @@
-import { useAuth, UserChangedCallbacks } from '@/stores/auth';
+import { useAuth, UserChangedCallbacks } from '@/stores/authStore';
 import type {
   CallBatch,
   CallServerFunc,

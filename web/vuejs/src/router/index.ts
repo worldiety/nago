@@ -1,5 +1,5 @@
 import type { PageConfiguration } from '@/shared/model';
-import { useAuth } from '@/stores/auth';
+import { useAuth } from '@/stores/authStore';
 import Home from '@/views/Home.vue';
 import OAuth from '@/views/OAuth.vue';
 import { createRouter, createWebHistory } from 'vue-router';
@@ -32,7 +32,7 @@ router.beforeEach(async (to, from, next) => {
     if (authenticated) {
         console.log("router: require auth")
         const auth = useAuth();
-        const user = await auth.getUser();
+        const user = await auth.getUser;
         const accessToken = user?.access_token;
         if (accessToken) {
             console.log("router: access token is here, dispatching next")

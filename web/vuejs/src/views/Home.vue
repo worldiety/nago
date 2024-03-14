@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useAuth } from '@/stores/auth';
+import { useAuth } from '@/stores/authStore';
 import { useHttp } from '@/shared/http';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
