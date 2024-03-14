@@ -9,7 +9,7 @@ type Dropdown struct {
 	properties    slice.Slice[Property]
 }
 
-func NewDropdown(with func(btn *Dropdown)) *Dropdown {
+func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	c := &Dropdown{
 		id:            nextPtr(),
 		selectedIndex: NewShared[int64]("selectedIndex"),
@@ -39,8 +39,13 @@ func (c *Dropdown) Items() *SharedList[*DropdownItem] {
 	return c.items
 }
 
+func (c *Dropdown) Properties() slice.Slice[Property] {
+	return c.properties
+}
+
 type DropdownItem struct {
 	id         CID
+	itemIndex  Int
 	content    String
 	onSelected *Func
 	properties slice.Slice[Property]
@@ -49,11 +54,12 @@ type DropdownItem struct {
 func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
 	c := &DropdownItem{
 		id:         nextPtr(),
+		itemIndex:  NewShared[int64]("itemIndex"),
 		content:    NewShared[string]("content"),
 		onSelected: NewFunc("onSelected"),
 	}
 
-	c.properties = slice.Of[Property](c.content, c.onSelected)
+	c.properties = slice.Of[Property](c.itemIndex, c.content, c.onSelected)
 
 	if with != nil {
 		with(c)
@@ -72,6 +78,10 @@ func (c *DropdownItem) Type() string {
 
 func (c *DropdownItem) Properties() slice.Slice[Property] {
 	return c.properties
+}
+
+func (c *DropdownItem) ItemIndex() Int {
+	return c.itemIndex
 }
 
 func (c *DropdownItem) Content() String {

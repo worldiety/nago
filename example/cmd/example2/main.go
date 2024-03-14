@@ -229,6 +229,36 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
+								dropdown.SelectedIndex().Set(1)
+
+								dropdown.Items().Append(
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(0)
+										item.Content().Set("Option A")
+										item.OnSelected().Set(func() {
+											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(1)
+										item.Content().Set("Option B")
+										item.OnSelected().Set(func() {
+											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(2)
+										item.Content().Set("Option C")
+										item.OnSelected().Set(func() {
+											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+										})
+									}),
+								)
+							}))
+
 							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
 
 							vbox.Append(
