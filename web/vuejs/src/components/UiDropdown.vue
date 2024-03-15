@@ -15,15 +15,15 @@ const dropdownOptions = ref<HTMLElement|undefined>();
 
 onMounted(() => {
 	if (props.ui.expanded.value) {
-		document.addEventListener('mousedown', closeDropdown);
+		document.addEventListener('click', closeDropdown);
 	}
 })
 
 onUpdated(() => {
 	if (props.ui.expanded.value) {
-		document.addEventListener('mousedown', closeDropdown);
+		document.addEventListener('click', closeDropdown);
 	} else {
-		document.removeEventListener('mousedown', closeDropdown);
+		document.removeEventListener('click', closeDropdown);
 	}
 })
 
@@ -42,7 +42,7 @@ function closeDropdown(e: MouseEvent) {
 }
 
 function dropdownClicked(): void {
-	if (!props.ui.disabled.value) {
+	if (!props.ui.disabled.value && !props.ui.expanded.value) {
 		networkStore.invokeFunc(props.ui.onToggleExpanded);
 	}
 }
