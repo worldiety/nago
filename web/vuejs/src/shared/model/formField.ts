@@ -1,3 +1,5 @@
+import type { SelectItem } from '@/shared/model/selectItem';
+
 export interface FormField {
 	type: 'TextField' | 'FileUploadField' | 'SelectField'
 	label: string

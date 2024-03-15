@@ -1,3 +1,6 @@
+import type { PropertyString } from '@/shared/model/propertyString';
+import type { PropertyBool } from '@/shared/model/propertyBool';
+
 export interface LiveUploadField {
 	type: 'FileField'
 	id: number
