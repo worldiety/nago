@@ -8,6 +8,7 @@ import {UserManager} from "oidc-client-ts";
 import {fetchApplication} from "@/api/application/appService";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
 import {useErrorHandling} from "@/composables/errorhandling";
+import i18n from "@/i18n";
 
 const errorHandler = useErrorHandling()
 const router = useRouter();
@@ -56,7 +57,6 @@ async function init():Promise<void> {
   }
 
   try {
-
     //TODO: Mit Torben absprechen, ob wir uns auf axios oder fetch festlegen. Malte empfiehlt mir axios, da es erstmal einfacher zu benutzen ist
 
     //TODO: in eine eigene Datei und Funktion (fetchApplication) auslagern. HTTP Client bauen (siehe Maltes Beispiel).
@@ -68,10 +68,13 @@ async function init():Promise<void> {
     */
 
     response = await fetchApplication(import.meta.env.VITE_HOST_BACKEND + '/api/v1/ui/application')
+    if (!response.ok) {
+      console.log('Response ist nicht ok:' )
+    }
 
     contentType.value = response.headers.get('Content-Type');
 
-
+  console.log('Response Code: ' + response.status)
     const app: PagesConfiguration = await response.json();
 
     if (app.oidc?.length>0){
@@ -112,10 +115,9 @@ async function init():Promise<void> {
       router.replace(app.index)
     }
 
-
-
   } catch (e) {
     errorHandler.handleError(e)
+
 
     //TODO: Hier überprüfen, ob ich einen Statuscode bekomme. Failed to fetch bedeutet fast immer, dass keine Internetverbindung vorliegt
     // Kann man aber mit navigator.online gegenprüfen

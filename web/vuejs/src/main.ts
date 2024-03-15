@@ -5,8 +5,7 @@ import router from '@/router';
 //import '@mdi/font/css/materialdesignicons.css';
 import {createPinia} from 'pinia';
 import {createApp} from 'vue';
-import i18n from "./i18n";
-
+import i18n from "@/i18n";
 
 /*
 const vuetify = createVuetify({
@@ -20,6 +19,7 @@ const vuetify = createVuetify({
 
 
 const pinia = createPinia();
+
 
 const app = createApp(App)
 app.directive("inline", (element: HTMLElement) => {
