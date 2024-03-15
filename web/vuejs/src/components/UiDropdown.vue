@@ -24,21 +24,24 @@ function dropdownClicked(): void {
 </script>
 
 <template>
-	<div class="flex flex-col gap-y-1">
-		<div
-			class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
-			:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
-			@click="dropdownClicked"
-		>
-			<div class="truncate">{{ selectedItemName }}</div>
-			<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
-		</div>
-		<div v-if="props.ui.expanded.value" class="shadow-lg">
-			<ui-dropdown-item
-				v-for="(dropdownItem, index) in props.ui.items.value"
-				:key="index"
-				:ui="dropdownItem"
-			/>
+	<div>
+		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
+		<div class="flex flex-col gap-y-1">
+			<div
+				class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
+				:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
+				@click="dropdownClicked"
+			>
+				<div class="truncate">{{ selectedItemName }}</div>
+				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
+			</div>
+			<div v-if="props.ui.expanded.value" class="shadow-lg">
+				<ui-dropdown-item
+					v-for="(dropdownItem, index) in props.ui.items.value"
+					:key="index"
+					:ui="dropdownItem"
+				/>
+			</div>
 		</div>
 	</div>
 </template>

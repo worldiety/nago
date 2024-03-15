@@ -232,6 +232,7 @@ func main() {
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
 								dropdown.SelectedIndex().Set(1)
 								dropdown.Expanded().Set(false)
+								dropdown.Label().Set("Dropdown")
 								dropdown.OnToggleExpanded().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
