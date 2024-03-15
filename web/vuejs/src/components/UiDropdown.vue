@@ -43,5 +43,8 @@ function dropdownClicked(): void {
 				/>
 			</div>
 		</div>
+		<!-- Error message has precedence over hints -->
+		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
+		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
 	</div>
 </template>

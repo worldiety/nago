@@ -9,6 +9,8 @@ type Dropdown struct {
 	expanded         Bool
 	disabled         Bool
 	label            String
+	hint             String
+	error            String
 	onToggleExpanded *Func
 	properties       slice.Slice[Property]
 }
@@ -21,10 +23,12 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		expanded:         NewShared[bool]("expanded"),
 		disabled:         NewShared[bool]("disabled"),
 		label:            NewShared[string]("label"),
+		hint:             NewShared[string]("hint"),
+		error:            NewShared[string]("error"),
 		onToggleExpanded: NewFunc("onToggleExpanded"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.disabled, c.label, c.onToggleExpanded)
+	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
 	if with != nil {
 		with(c)
 	}
@@ -54,6 +58,10 @@ func (c *Dropdown) Expanded() Bool {
 func (c *Dropdown) Disabled() Bool { return c.disabled }
 
 func (c *Dropdown) Label() String { return c.label }
+
+func (c *Dropdown) Hint() String { return c.hint }
+
+func (c *Dropdown) Error() String { return c.error }
 
 func (c *Dropdown) OnToggleExpanded() *Func {
 	return c.onToggleExpanded

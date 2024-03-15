@@ -233,6 +233,8 @@ func main() {
 								dropdown.SelectedIndex().Set(1)
 								dropdown.Expanded().Set(false)
 								dropdown.Label().Set("Dropdown")
+								dropdown.Error().Set("Das ist eine Fehlermeldung")
+								dropdown.Hint().Set("Das ist ein Hinweis")
 								dropdown.OnToggleExpanded().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
