@@ -41,8 +41,8 @@ function closeDropdown(e: MouseEvent) {
 	}
 }
 
-function dropdownClicked(): void {
-	if (!props.ui.disabled.value && !props.ui.expanded.value) {
+function dropdownClicked(forceClose: boolean): void {
+	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
 		networkStore.invokeFunc(props.ui.onToggleExpanded);
 	}
 }
@@ -55,7 +55,9 @@ function dropdownClicked(): void {
 			<div
 				class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
 				:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
-				@click="dropdownClicked"
+				:tabindex="props.ui.disabled.value ? '-1': '0'"
+				@click="dropdownClicked(false)"
+				@keydown.enter="dropdownClicked(true)"
 			>
 				<div class="truncate">{{ selectedItemName }}</div>
 				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
