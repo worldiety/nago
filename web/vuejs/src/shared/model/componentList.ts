@@ -1,6 +1,4 @@
-import type { LiveComponent } from '@/shared/model/liveComponent';
-
-export interface ComponentList<T extends LiveComponent> {
+export interface ComponentList<T> {
 	type: 'componentList'
 	id: number
 	value: T[]
