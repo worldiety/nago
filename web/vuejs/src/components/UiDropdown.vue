@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiDropdownItem from '@/components/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
-import { computed } from 'vue';
+import { computed, onMounted, onUpdated, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { LiveDropdown } from '@/shared/model/liveDropdown';
 import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
@@ -11,10 +11,35 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
+const dropdownOptions = ref<HTMLElement|undefined>();
+
+onMounted(() => {
+	if (props.ui.expanded.value) {
+		document.addEventListener('mousedown', closeDropdown);
+	}
+})
+
+onUpdated(() => {
+	if (props.ui.expanded.value) {
+		document.addEventListener('mousedown', closeDropdown);
+	} else {
+		document.removeEventListener('mousedown', closeDropdown);
+	}
+})
 
 const selectedItemName = computed((): string => {
 	return props.ui.items.value.find((item: LiveDropdownItem) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
 });
+
+function closeDropdown(e: MouseEvent) {
+	if (e.target instanceof HTMLElement && dropdownOptions.value) {
+		const targetHTMLElement = e.target as HTMLElement;
+		const dropdownItemWasClicked = targetHTMLElement.compareDocumentPosition(dropdownOptions.value) & Node.DOCUMENT_POSITION_CONTAINS;
+		if (!dropdownItemWasClicked) {
+			networkStore.invokeFunc(props.ui.onToggleExpanded);
+		}
+	}
+}
 
 function dropdownClicked(): void {
 	if (!props.ui.disabled.value) {
@@ -35,12 +60,14 @@ function dropdownClicked(): void {
 				<div class="truncate">{{ selectedItemName }}</div>
 				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
 			</div>
-			<div v-if="props.ui.expanded.value" class="absolute top-full mt-1 left-0 right-0 shadow-lg z-10">
-				<ui-dropdown-item
-					v-for="(dropdownItem, index) in props.ui.items.value"
-					:key="index"
-					:ui="dropdownItem"
-				/>
+			<div ref="dropdownOptions">
+				<div v-if="props.ui.expanded.value" class="absolute top-full mt-1 left-0 right-0 shadow-lg z-40">
+					<ui-dropdown-item
+						v-for="(dropdownItem, index) in props.ui.items.value"
+						:key="index"
+						:ui="dropdownItem"
+					/>
+				</div>
 			</div>
 		</div>
 		<!-- Error message has precedence over hints -->

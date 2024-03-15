@@ -36,16 +36,13 @@ export default class WebSocketAdapter {
       webSocketURL += `&${queryString}`;
     }
 
-    console.log("open websocket ->" + webSocketURL)
     this.webSocket = new WebSocket(webSocketURL);
 
     this.webSocket.onopen = () => {
-      console.log("OPEN");
       this.sendHello();
     }
 
     this.webSocket.onclose = () => {
-      console.log("CLOSE");
       if (!this.closedGracefully) {
         // Try to reopen the socket if it was not closed gracefully
         this.retry();
@@ -56,18 +53,13 @@ export default class WebSocketAdapter {
     }
 
     this.webSocket.onmessage = (e) => {
-      console.log("RESPONSE: " + e.data);
-
       const message: LiveMessage = JSON.parse(e.data)
-      console.log(message);
-
       if (this.webSocketReceiveCallback) {
         this.webSocketReceiveCallback(message);
       }
     }
 
     this.webSocket.onerror = (e) => {
-      console.log("ERROR: " + e);
       if (this.webSocketErrorCallback) {
         this.webSocketErrorCallback();
       }
@@ -106,8 +98,6 @@ export default class WebSocketAdapter {
     const callTx: CallBatch = {
       tx: [hello]
     }
-
-    console.log(JSON.stringify(callTx))
 
     this.webSocket?.send(JSON.stringify(callTx))
   }
