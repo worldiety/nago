@@ -7,8 +7,12 @@ export default {
 	theme: {
 		extend: {},
 		colors: {
-			'wdy-green': '#1B8C30'
-		}
+			'wdy-green': '#1B8C30',
+			'disabled': {
+				'text': '#848484',
+				'background': '#E2E2E2',
+			},
+		},
 	},
 
 	mode: 'jit',

@@ -15,15 +15,22 @@ const networkStore = useNetworkStore();
 const selectedItemName = computed((): string => {
 	return props.ui.items.value.find((item: LiveDropdownItem) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
 });
+
+function dropdownClicked(): void {
+	if (!props.ui.disabled.value) {
+		networkStore.invokeFunc(props.ui.onToggleExpanded);
+	}
+}
 </script>
 
 <template>
 	<div class="flex flex-col gap-y-1">
 		<div
-			class="flex justify-between gap-x-4 items-center cursor-default border border-black hover:border-wdy-green text-black hover:text-wdy-green rounded-md p-2"
-			@click="networkStore.invokeFunc(props.ui.onToggleExpanded)"
+			class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
+			:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
+			@click="dropdownClicked"
 		>
-			<div class="text-black truncate">{{ selectedItemName }}</div>
+			<div class="truncate">{{ selectedItemName }}</div>
 			<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
 		</div>
 		<div v-if="props.ui.expanded.value" class="shadow-lg">
