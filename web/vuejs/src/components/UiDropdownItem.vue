@@ -10,11 +10,13 @@ const networkStore = useNetworkStore();
 </script>
 
 <template>
-	<div
-		class="cursor-default p-2 hover:text-wdy-green hover:bg-wdy-green hover:bg-opacity-5"
-		@click="networkStore.invokeFunc(props.ui.onSelected);"
-	>
-		<p class="truncate pl-2">{{ props.ui.content.value }}</p>
+	<div class="bg-white">
+		<div
+			class="cursor-default p-2 hover:text-wdy-green hover:bg-wdy-green hover:bg-opacity-5"
+			@click="networkStore.invokeFunc(props.ui.onSelected);"
+		>
+			<p class="truncate pl-2">{{ props.ui.content.value }}</p>
+		</div>
 	</div>
 </template>
 

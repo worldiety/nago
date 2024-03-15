@@ -26,7 +26,7 @@ function dropdownClicked(): void {
 <template>
 	<div>
 		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
-		<div class="flex flex-col gap-y-1">
+		<div class="relative">
 			<div
 				class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
 				:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
@@ -35,7 +35,7 @@ function dropdownClicked(): void {
 				<div class="truncate">{{ selectedItemName }}</div>
 				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
 			</div>
-			<div v-if="props.ui.expanded.value" class="shadow-lg">
+			<div v-if="props.ui.expanded.value" class="absolute top-full mt-1 left-0 right-0 shadow-lg z-10">
 				<ui-dropdown-item
 					v-for="(dropdownItem, index) in props.ui.items.value"
 					:key="index"
