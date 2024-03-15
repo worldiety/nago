@@ -1,20 +1,22 @@
 <script lang="ts" setup xmlns="http://www.w3.org/1999/html">
-import {invokeFunc, LiveChip, LivePage, textColor2Tailwind} from "@/shared/livemsg";
 import {computed} from "vue";
+import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveChip } from '@/shared/model/liveChip';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveChip;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
+const networkStore = useNetworkStore();
 
 function onClick() {
-  invokeFunc(props.ws, props.ui.action)
+  networkStore.invokeFunc(props.ui.action);
 }
 
 function onClose() {
-  invokeFunc(props.ws, props.ui.onClose)
+  networkStore.invokeFunc(props.ui.onClose);
 }
 
 const outerColor = computed<string>(() => {

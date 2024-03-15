@@ -39,4 +39,4 @@ Then launch the backend:
 go run ./example/cmd/auth-demo
 ```
 
-You can now use the frontend at <http://localhost:5173>. Make sure to have a look at `web/vuejs/src/stores/auth.ts` to see how the `oidc-client-ts` library is configured. Check the files in `web/vuejs/src/views` to see how authentication is used in the application. To have authentication checks on a per-route basis, take a look at `web/vuejs/src/router/index.ts`.
+You can now use the frontend at <http://localhost:5173>. Make sure to have a look at `web/vuejs/src/stores/authStore.ts` to see how the `oidc-client-ts` library is configured. Check the files in `web/vuejs/src/views` to see how authentication is used in the application. To have authentication checks on a per-route basis, take a look at `web/vuejs/src/router/index.ts`.

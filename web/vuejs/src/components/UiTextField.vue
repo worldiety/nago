@@ -1,20 +1,21 @@
 <script lang="ts" setup>
-import {invokeSetProp, invokeTx2, LivePage, LiveTextField, SetServerProperty} from "@/shared/livemsg";
-import {invokeFunc} from "@/shared/livemsg";
 import {computed} from "vue";
+import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveTextField } from '@/shared/model/liveTextField';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveTextField;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
+
+const networkStore = useNetworkStore();
 
 function valueChanged(event: any) {
 
   props.ui.value.value = event.target.value
 
-
-  invokeTx2(props.ws,props.ui.value,props.ui.onTextChanged)
+  networkStore.invokeFuncAndSetProp(props.ui.value,props.ui.onTextChanged)
 }
 
 function isErr(): boolean {

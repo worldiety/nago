@@ -2,17 +2,13 @@
 import {RouterView, useRoute, useRouter} from 'vue-router';
 import Page from '@/views/Page.vue';
 import {ref} from 'vue';
-import type {PagesConfiguration} from '@/shared/model';
-import {useAuth} from "@/stores/auth";
+import {useAuth} from "@/stores/authStore";
 import {UserManager} from "oidc-client-ts";
 import {fetchApplication} from "@/api/application/appService";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
 import {useErrorHandling} from "@/composables/errorhandling";
 import i18n from "@/i18n";
-
-const errorHandler = useErrorHandling()
-const router = useRouter();
-const route = useRoute();
+import type { PagesConfiguration } from '@/shared/model/pagesConfiguration';
 
 enum State {
   LoadingRoutes,
@@ -20,6 +16,9 @@ enum State {
   Error,
 }
 
+const errorHandler = useErrorHandling()
+const router = useRouter();
+const route = useRoute();
 const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
@@ -84,16 +83,16 @@ async function init():Promise<void> {
         redirect_uri: 'http://localhost:8090/oauth',
         post_logout_redirect_uri: 'http://localhost:8090',
       }))*/
-      let provider = app.oidc.at(0)
-      auth.init(new UserManager({
-        authority: provider.authority,
-        client_id: provider.clientID,
-        redirect_uri: provider.redirectURL,
-        post_logout_redirect_uri: provider.postLogoutRedirectUri,
-      }))
+      const provider = app.oidc.at(0);
+      if (provider) {
+        auth.init(new UserManager({
+          authority: provider.authority,
+          client_id: provider.clientID,
+          redirect_uri: provider.redirectURL,
+          post_logout_redirect_uri: provider.postLogoutRedirectUri,
+        }));
+      }
     }
-
-
 
     app.livePages.forEach((page) => {
       anchor = page.anchor.replaceAll("{", ":")
@@ -108,7 +107,6 @@ async function init():Promise<void> {
 
 
     state.value = State.ShowRoutes;
-
 
     if (router.currentRoute.value.path==="/" && app.index != null && app.index != "") {
       console.log("app requires index rewrite to ", app.index)

@@ -1,8 +1,10 @@
 import router from '@/router';
 import { useHttp } from '@/shared/http';
-import type { PageConfiguration, UiDescription, UiEvent } from '@/shared/model';
 import type { Ref } from 'vue';
 import { useRoute } from 'vue-router';
+import type { UiEvent } from '@/shared/model/uiEvent';
+import type { UiDescription } from '@/shared/model/uiDescription';
+import type { PageConfiguration } from '@/shared/model/pageConfiguration';
 
 /**
  * A set of methods returned by {@link useUiEvents}.

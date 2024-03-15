@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import {LivePage, LiveStepper} from "@/shared/livemsg";
+import type { LiveStepper } from '@/shared/model/liveStepper';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveStepper;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 </script>
 

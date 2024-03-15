@@ -1,9 +1,9 @@
-import { useAuth } from '@/stores/auth';
+import { useAuth } from '@/stores/authStore';
 
 export  function userHeaders(){
     async function headers():Promise<HeadersInit>{
         const auth = useAuth();
-        const user = await auth.getUser();
+        const user = await auth.getUser;
         if (user?.expired){
             console.log("headers: Oo user already expired and got that old one")
         }
@@ -32,7 +32,7 @@ export function useHttp() {
      *             "undefined" will be an empty body, everything else will be serialized to JSON.
      */
     async function request(url: string|URL, method = 'GET', body: undefined | any = undefined) {
-        const user = await auth.getUser();
+        const user = await auth.getUser;
 
         if (user?.expired){
             console.log("request: Oo user already expired and got that old one")

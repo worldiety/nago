@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {HBox, LivePage, VBox} from "@/shared/livemsg";
 import {computed} from "vue";
+import type { HBox } from '@/shared/model/hBox';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: HBox;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
 const clazz = computed<string>(() => {
@@ -28,7 +28,6 @@ const clazz = computed<string>(() => {
 
 <template>
    <div :class="clazz">
-
-    <ui-generic v-for="ui in props.ui.children.value" :ui="ui" :ws="ws" :page="page"/>
+    <ui-generic v-for="ui in props.ui.children.value" :ui="ui" :page="page"/>
   </div>
 </template>

@@ -1,14 +1,17 @@
 <script lang="ts" setup>
-import {invokeFunc, invokeTx2, LivePage, LiveToggle, SetServerProperty} from "@/shared/livemsg";
+import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveToggle } from '@/shared/model/liveToggle';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveToggle;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
 
+const networkStore = useNetworkStore();
+
 function onClick() {
-   invokeTx2(props.ws,props.ui.checked,props.ui.onCheckedChanged)
+   networkStore.invokeFuncAndSetProp(props.ui.checked, props.ui.onCheckedChanged)
 }
 
 </script>

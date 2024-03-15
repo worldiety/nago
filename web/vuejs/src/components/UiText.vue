@@ -1,12 +1,16 @@
 <script lang="ts" setup>
-import {invokeFunc, LivePage, LiveText, textColor2Tailwind, textSize2Tailwind} from "@/shared/livemsg";
+import {textColor2Tailwind, textSize2Tailwind} from "@/shared/tailwindTranslator";
 import {computed} from "vue";
+import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveText } from '@/shared/model/liveText';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveText;
-  ws: WebSocket;
-  page: LivePage
+  page: LivePage;
 }>();
+
+const networkStore = useNetworkStore();
 
 const clazz = computed<string>(() => {
   let tmp = ""
@@ -30,15 +34,15 @@ const clazz = computed<string>(() => {
 })
 
 function onClick() {
-  invokeFunc(props.ws, props.ui.onClick)
+  networkStore.invokeFunc(props.ui.onClick)
 }
 
 function onMouseEnter() {
-  invokeFunc(props.ws, props.ui.onHoverStart)
+  networkStore.invokeFunc(props.ui.onHoverStart)
 }
 
 function onMouseLeave() {
-  invokeFunc(props.ws, props.ui.onHoverEnd)
+  networkStore.invokeFunc(props.ui.onHoverEnd)
 }
 
 </script>

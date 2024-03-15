@@ -4,7 +4,7 @@
 -->
 
 <script lang="ts" setup>
-import { useAuth } from '@/stores/auth';
+import { useAuth } from '@/stores/authStore';
 import {useRoute, useRouter} from 'vue-router';
 import {watch} from "vue";
 
