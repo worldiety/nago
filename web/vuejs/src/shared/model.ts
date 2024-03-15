@@ -400,6 +400,7 @@ export interface LiveDropdown {
 	items: ComponentList<LiveDropdownItem>,
 	selectedIndex: PropertyInt,
 	expanded: PropertyBool,
+	disabled: PropertyBool,
 	onToggleExpanded: PropertyFunc,
 }
 

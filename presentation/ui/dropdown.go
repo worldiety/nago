@@ -7,6 +7,7 @@ type Dropdown struct {
 	selectedIndex    Int
 	items            *SharedList[*DropdownItem]
 	expanded         Bool
+	disabled         Bool
 	onToggleExpanded *Func
 	properties       slice.Slice[Property]
 }
@@ -17,10 +18,11 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		selectedIndex:    NewShared[int64]("selectedIndex"),
 		items:            NewSharedList[*DropdownItem]("items"),
 		expanded:         NewShared[bool]("expanded"),
+		disabled:         NewShared[bool]("disabled"),
 		onToggleExpanded: NewFunc("onToggleExpanded"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.onToggleExpanded)
+	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.disabled, c.onToggleExpanded)
 	if with != nil {
 		with(c)
 	}
@@ -46,6 +48,8 @@ func (c *Dropdown) Items() *SharedList[*DropdownItem] {
 func (c *Dropdown) Expanded() Bool {
 	return c.expanded
 }
+
+func (c *Dropdown) Disabled() Bool { return c.disabled }
 
 func (c *Dropdown) OnToggleExpanded() *Func {
 	return c.onToggleExpanded
