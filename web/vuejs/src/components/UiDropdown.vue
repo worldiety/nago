@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { LiveDropdown } from '@/shared/model';
 import UiDropdownItem from '@/components/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveDropdown } from '@/shared/model/liveDropdown';
+import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 
 const props = defineProps<{
   ui: LiveDropdown;
@@ -12,7 +13,7 @@ const props = defineProps<{
 const networkStore = useNetworkStore();
 
 const selectedItemName = computed((): string => {
-	return props.ui.items.value.find((item) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
+	return props.ui.items.value.find((item: LiveDropdownItem) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
 });
 </script>
 

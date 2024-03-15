@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import {onMounted} from 'vue';
 import UiGeneric from "@/components/UiGeneric.vue";
-import type { LivePage, LiveScaffold } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveScaffold } from '@/shared/model/liveScaffold';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveScaffold;

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import type { LivePage, UiElement } from '@/shared/model';
 import uiComponentsMap from '@/shared/uiComponents';
+import type { UiElement } from '@/shared/model/uiElement';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: UiElement;

@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import {textColor2Tailwind, textSize2Tailwind} from "@/shared/tailwindTranslator";
 import {computed} from "vue";
-import type { LivePage, LiveText } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveText } from '@/shared/model/liveText';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveText;

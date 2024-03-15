@@ -2,7 +2,8 @@
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useFocus } from '@vueuse/core'
 import { ref } from 'vue'
-import type { LiveDialog, LivePage } from '@/shared/model';
+import type { LiveDialog } from '@/shared/model/liveDialog';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
     ui: LiveDialog;

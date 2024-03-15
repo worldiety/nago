@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
-import type { LiveGridCell, LivePage } from '@/shared/model';
+import type { LiveGridCell } from '@/shared/model/liveGridCell';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveGridCell;

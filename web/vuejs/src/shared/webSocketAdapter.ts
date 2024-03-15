@@ -1,14 +1,12 @@
 import { useAuth, UserChangedCallbacks } from '@/stores/authStore';
-import type {
-  CallBatch,
-  CallServerFunc,
-  ClientHello,
-  LiveMessage,
-  Property,
-  PropertyFunc,
-  SetServerProperty,
-  UpdateJWT
-} from '@/shared/model';
+import type { LiveMessage } from '@/shared/model/liveMessage';
+import type { UpdateJWT } from '@/shared/model/updateJWT';
+import type { CallBatch } from '@/shared/model/callBatch';
+import type { ClientHello } from '@/shared/model/clientHello';
+import type { PropertyFunc } from '@/shared/model/propertyFunc';
+import type { Property } from '@/shared/model/property';
+import type { SetServerProperty } from '@/shared/model/setServerProperty';
+import type { CallServerFunc } from '@/shared/model/callServerFunc';
 
 export default class WebSocketAdapter {
 

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import type { Divider, LivePage } from '@/shared/model';
+import type { Divider } from '@/shared/model/divider';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: Divider;

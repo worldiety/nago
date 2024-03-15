@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import type { LivePage, VBox } from '@/shared/model';
+import type { VBox } from '@/shared/model/vBox';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: VBox;

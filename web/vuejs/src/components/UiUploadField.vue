@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {computed} from "vue";
-import type { LivePage, LiveUploadField } from '@/shared/model';
+import type { LiveUploadField } from '@/shared/model/liveUploadField';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveUploadField;

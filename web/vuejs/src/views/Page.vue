@@ -3,11 +3,15 @@
 -->
 <script lang="ts" setup>
 import {useRoute, useRouter} from 'vue-router';
-import type { Invalidation, LiveComponent, LiveMessage, LivePage, PageConfiguration } from '@/shared/model';
 import {onUnmounted, provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useHttp} from '@/shared/http';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { PageConfiguration } from '@/shared/model/pageConfiguration';
+import type { LiveComponent } from '@/shared/model/liveComponent';
+import type { Invalidation } from '@/shared/model/invalidation';
+import type { LivePage } from '@/shared/model/livePage';
+import type { LiveMessage } from '@/shared/model/liveMessage';
 
 
 enum State {

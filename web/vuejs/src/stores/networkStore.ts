@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import WebSocketAdapter from '@/shared/webSocketAdapter';
-import type { LiveMessage, Property, PropertyFunc } from '@/shared/model';
+import type { LiveMessage } from '@/shared/model/liveMessage';
+import type { PropertyFunc } from '@/shared/model/propertyFunc';
+import type { Property } from '@/shared/model/property';
 
 interface NetworkStoreState {
   webSocketAdapter: WebSocketAdapter;

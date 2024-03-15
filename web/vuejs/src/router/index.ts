@@ -1,8 +1,8 @@
-import type { PageConfiguration } from '@/shared/model';
 import { useAuth } from '@/stores/authStore';
 import Home from '@/views/Home.vue';
 import OAuth from '@/views/OAuth.vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import type { PageConfiguration } from '@/shared/model/pageConfiguration';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),

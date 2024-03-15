@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { LiveDropdownItem } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 
 const props = defineProps<{
 	ui: LiveDropdownItem;

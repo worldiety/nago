@@ -1,8 +1,10 @@
 <script lang="ts" setup>
-import type { LiveImage, LivePage, UiDescription } from '@/shared/model';
 import type {Ref} from 'vue';
 import {inject} from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveImage } from '@/shared/model/liveImage';
+import type { LivePage } from '@/shared/model/livePage';
+import type { UiDescription } from '@/shared/model/uiDescription';
 
 const props = defineProps<{
   ui: LiveImage;

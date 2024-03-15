@@ -2,7 +2,8 @@
 import {computed} from 'vue';
 import UiGridCell from '@/components/UiGridCell.vue';
 import {gapSize2Tailwind} from "@/shared/tailwindTranslator";
-import type { LiveGrid, LivePage } from '@/shared/model';
+import type { LiveGrid } from '@/shared/model/liveGrid';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveGrid;

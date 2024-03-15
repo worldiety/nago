@@ -1,7 +1,8 @@
 <script lang="ts" setup xmlns="http://www.w3.org/1999/html">
 import {computed} from "vue";
-import type { LiveChip, LivePage } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveChip } from '@/shared/model/liveChip';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveChip;

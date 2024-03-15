@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import type { LiveButton, LivePage } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveButton } from '@/shared/model/liveButton';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
     ui: LiveButton;

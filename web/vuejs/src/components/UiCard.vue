@@ -1,9 +1,11 @@
 <script lang="ts" setup>
-import type { LiveCard, LivePage, UiDescription } from '@/shared/model';
 import type {Ref} from 'vue';
 import {inject} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveCard } from '@/shared/model/liveCard';
+import type { LivePage } from '@/shared/model/livePage';
+import type { UiDescription } from '@/shared/model/uiDescription';
 
 const props = defineProps<{
   ui: LiveCard;

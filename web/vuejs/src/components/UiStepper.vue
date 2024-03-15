@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import type { LivePage, LiveStepper } from '@/shared/model';
+import type { LiveStepper } from '@/shared/model/liveStepper';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveStepper;

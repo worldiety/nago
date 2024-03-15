@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import type { LivePage, LiveTextArea } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveTextArea } from '@/shared/model/liveTextArea';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveTextArea;

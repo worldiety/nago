@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import type { LivePage, LiveToggle } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveToggle } from '@/shared/model/liveToggle';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveToggle;

@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from "vue";
-import type { HBox, LivePage } from '@/shared/model';
+import type { HBox } from '@/shared/model/hBox';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: HBox;

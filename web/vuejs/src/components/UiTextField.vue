@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import {computed} from "vue";
-import type { LivePage, LiveTextField } from '@/shared/model';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { LiveTextField } from '@/shared/model/liveTextField';
+import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
   ui: LiveTextField;
