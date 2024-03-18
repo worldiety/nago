@@ -20,10 +20,9 @@ onMounted(() => {
 })
 
 onUpdated(() => {
+	document.removeEventListener('click', closeDropdown);
 	if (props.ui.expanded.value) {
 		document.addEventListener('click', closeDropdown);
-	} else {
-		document.removeEventListener('click', closeDropdown);
 	}
 })
 
@@ -39,6 +38,7 @@ const selectedItemNames = computed((): string|null => {
 });
 
 function closeDropdown(e: MouseEvent) {
+	e.preventDefault();
 	if (e.target instanceof HTMLElement && dropdownOptions.value) {
 		const targetHTMLElement = e.target as HTMLElement;
 		const dropdownItemWasClicked = targetHTMLElement.compareDocumentPosition(dropdownOptions.value) & Node.DOCUMENT_POSITION_CONTAINS;

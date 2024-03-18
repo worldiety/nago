@@ -19,7 +19,7 @@ const networkStore = useNetworkStore();
 		@keydown.enter="networkStore.invokeFunc(props.ui.onSelected)"
 	>
 		<div class="flex justify-start items-center">
-			<input v-if="props.multiselect" type="checkbox" :checked="props.selected" class="focus:ring-0">
+			<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
 			<p class="truncate pl-2">{{ props.ui.content.value }}</p>
 		</div>
 	</div>
