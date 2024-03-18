@@ -230,7 +230,11 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
-
+								datepicker.Label().Set("Datepicker")
+								datepicker.Error().Set("Das ist auch eine Fehlermeldung")
+								datepicker.OnToggleExpanded().Set(func() {
+									datepicker.Expanded().Set(!datepicker.Expanded().Get())
+								})
 							}))
 
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {

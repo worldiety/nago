@@ -64,8 +64,8 @@ function isSelected(itemIndex: number): boolean {
 		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
 		<div class="relative">
 			<div
-				class="flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
-				:class="props.ui.disabled.value ? 'bg-disabled-background text-disabled-text' : 'border border-black hover:border-wdy-green text-black hover:text-wdy-green'"
+				class="input-field flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
+				:class="{'input-field-disabled': props.ui.disabled.value}"
 				:tabindex="props.ui.disabled.value ? '-1': '0'"
 				@click="dropdownClicked(false)"
 				@keydown.enter="dropdownClicked(true)"
