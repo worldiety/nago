@@ -229,6 +229,10 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
+
+							}))
+
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
 								dropdown.Multiselect().Set(true)
 								dropdown.Expanded().Set(false)

@@ -17,6 +17,7 @@ import UiGrid from '@/components/UiGrid.vue';
 import UiTable from '@/components/UiTable.vue';
 import UiCard from '@/components/UiCard.vue';
 import UiDropdown from '@/components/UiDropdown.vue';
+import UiDatepicker from '@/components/UiDatepicker.vue';
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -38,5 +39,6 @@ uiComponentsMap.set('Grid', UiGrid);
 uiComponentsMap.set('Table', UiTable);
 uiComponentsMap.set('Card', UiCard);
 uiComponentsMap.set('Dropdown', UiDropdown);
+uiComponentsMap.set('Datepicker', UiDatepicker);
 
 export default uiComponentsMap;
