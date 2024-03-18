@@ -53,6 +53,10 @@ function dropdownClicked(forceClose: boolean): void {
 		networkStore.invokeFunc(props.ui.onToggleExpanded);
 	}
 }
+
+function isSelected(itemIndex: number): boolean {
+	return props.ui.selectedIndexes.value?.includes(itemIndex) ?? false;
+}
 </script>
 
 <template>
@@ -75,6 +79,8 @@ function dropdownClicked(forceClose: boolean): void {
 						v-for="(dropdownItem, index) in props.ui.items.value"
 						:key="index"
 						:ui="dropdownItem"
+						:multiselect="props.ui.multiselect.value"
+						:selected="isSelected(dropdownItem.itemIndex.value)"
 					/>
 				</div>
 			</div>

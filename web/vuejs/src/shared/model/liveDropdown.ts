@@ -9,6 +9,7 @@ export interface LiveDropdown {
 	id: number,
 	items: ComponentList<LiveDropdownItem>,
 	selectedIndexes: ComponentList<number>,
+	multiselect: PropertyBool,
 	expanded: PropertyBool,
 	disabled: PropertyBool,
 	label: PropertyString,
