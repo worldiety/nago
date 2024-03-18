@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LiveDatepicker } from '@/shared/model/liveDatepicker';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUpdated, ref } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { useNetworkStore } from '@/stores/networkStore';
@@ -12,9 +12,23 @@ const props = defineProps<{
 
 const networkStore = useNetworkStore();
 const currentDate = new Date(Date.now());
+const datepicker = ref<HTMLElement|undefined>();
 const currentDay = ref<number>(currentDate.getDate());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
 const currentYear = ref<number>(currentDate.getFullYear());
+
+onMounted(() => {
+	if (props.ui.expanded.value) {
+		document.addEventListener('click', closeDatepicker);
+	}
+})
+
+onUpdated(() => {
+	document.removeEventListener('click', closeDatepicker);
+	if (props.ui.expanded.value) {
+		document.addEventListener('click', closeDatepicker);
+	}
+})
 
 const totalDaysInMonth = computed((): number => {
 	const lastDayOfMonthDate = new Date();
@@ -76,6 +90,23 @@ function increaseMonth(): void {
 	}
 	currentMonthIndex.value += 1;
 }
+
+function openDatepicker(): void {
+	if (!props.ui.disabled.value && !props.ui.expanded.value) {
+		networkStore.invokeFunc(props.ui.onToggleExpanded);
+	}
+}
+
+function closeDatepicker(e: MouseEvent) {
+	e.preventDefault();
+	if (e.target instanceof HTMLElement && datepicker.value) {
+		const targetHTMLElement = e.target as HTMLElement;
+		const datepickerItemWasClicked = targetHTMLElement.compareDocumentPosition(datepicker.value) & Node.DOCUMENT_POSITION_CONTAINS;
+		if (!datepickerItemWasClicked) {
+			networkStore.invokeFunc(props.ui.onToggleExpanded);
+		}
+	}
+}
 </script>
 
 <template>
@@ -90,7 +121,7 @@ function increaseMonth(): void {
 					readonly
 					:disabled="props.ui.disabled.value"
 					class="input-field w-full pr-8"
-					@click="networkStore.invokeFunc(props.ui.onToggleExpanded)"
+					@click="openDatepicker"
 				>
 				<div class="absolute top-0 bottom-0 right-2 flex items-center pointer-events-none h-full">
 					<Calendar class="w-4" :class="props.ui.disabled.value ? 'text-disabled-text' : 'text-black'" />
@@ -98,7 +129,7 @@ function increaseMonth(): void {
 			</div>
 
 			<!-- Datepicker -->
-			<div v-if="props.ui.expanded.value" class="absolute top-8 right-8 bg-white rounded-md shadow-lg p-2 z-10">
+			<div v-if="props.ui.expanded.value" ref="datepicker" class="absolute top-12 left-0 bg-white rounded-md shadow-lg p-2 z-10">
 				<div class="flex justify-between items-center mb-4">
 					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="decreaseMonth">
 						<ArrowDown class="rotate-90 h-4" />
