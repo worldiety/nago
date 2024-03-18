@@ -12,14 +12,14 @@ const networkStore = useNetworkStore();
 </script>
 
 <template>
-	<div class="bg-white">
-		<div
-			class="cursor-default p-2 hover:text-wdy-green hover:bg-wdy-green hover:bg-opacity-5"
-			tabindex="0"
-			@click="networkStore.invokeFunc(props.ui.onSelected)"
-			@keydown.enter="networkStore.invokeFunc(props.ui.onSelected)"
-		>
-			<input v-if="props.multiselect" type="checkbox" :checked="props.selected">
+	<div
+		class="cursor-default p-2 hover:text-wdy-green hover:bg-wdy-green hover:bg-opacity-5"
+		tabindex="0"
+		@click="networkStore.invokeFunc(props.ui.onSelected)"
+		@keydown.enter="networkStore.invokeFunc(props.ui.onSelected)"
+	>
+		<div class="flex justify-start items-center">
+			<input v-if="props.multiselect" type="checkbox" :checked="props.selected" class="focus:ring-0">
 			<p class="truncate pl-2">{{ props.ui.content.value }}</p>
 		</div>
 	</div>

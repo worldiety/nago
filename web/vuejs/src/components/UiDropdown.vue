@@ -71,10 +71,10 @@ function isSelected(itemIndex: number): boolean {
 				@keydown.enter="dropdownClicked(true)"
 			>
 				<div class="truncate">{{ selectedItemNames ?? 'Auswählen...' }}</div>
-				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
+				<ArrowDown class="shrink-0 grow-0 duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
 			</div>
 			<div ref="dropdownOptions">
-				<div v-if="props.ui.expanded.value" class="absolute top-full mt-1 left-0 right-0 shadow-lg z-40">
+				<div v-if="props.ui.expanded.value" class="absolute top-full left-0 right-0 bg-white shadow-lg mt-1 z-40">
 					<ui-dropdown-item
 						v-for="(dropdownItem, index) in props.ui.items.value"
 						:key="index"
@@ -82,6 +82,9 @@ function isSelected(itemIndex: number): boolean {
 						:multiselect="props.ui.multiselect.value"
 						:selected="isSelected(dropdownItem.itemIndex.value)"
 					/>
+					<div v-if="props.ui.multiselect.value" class="flex justify-center p-2">
+						<button class="btn-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
+					</div>
 				</div>
 			</div>
 		</div>

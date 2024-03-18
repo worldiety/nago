@@ -245,7 +245,6 @@ func main() {
 										item.Content().Set("Option A")
 										item.OnSelected().Set(func() {
 											dropdown.Toggle(item)
-											dropdown.Expanded().Set(false)
 										})
 									}),
 
@@ -254,7 +253,6 @@ func main() {
 										item.Content().Set("Option BC")
 										item.OnSelected().Set(func() {
 											dropdown.Toggle(item)
-											dropdown.Expanded().Set(false)
 										})
 									}),
 
@@ -263,7 +261,6 @@ func main() {
 										item.Content().Set("Option DEF")
 										item.OnSelected().Set(func() {
 											dropdown.Toggle(item)
-											dropdown.Expanded().Set(false)
 										})
 									}),
 								)
