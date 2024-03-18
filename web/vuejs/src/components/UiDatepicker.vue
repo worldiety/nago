@@ -1,15 +1,60 @@
 <script setup lang="ts">
 import type { LiveDatepicker } from '@/shared/model/liveDatepicker';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
+import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { useNetworkStore } from '@/stores/networkStore';
+import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
 	ui: LiveDatepicker;
 }>();
 
 const networkStore = useNetworkStore();
-const date = ref('DD.MM.YYYY');
+const currentDate = new Date(Date.now());
+const currentDay = ref<number>(currentDate.getDate());
+const currentMonthIndex = ref<number>(currentDate.getMonth());
+const currentYear = ref<number>(currentDate.getFullYear());
+
+const totalDaysInMonth = computed((): number => {
+	const lastDayOfMonthDate = new Date();
+	lastDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
+	return lastDayOfMonthDate.getDate();
+});
+
+const dayStartOffsetInMonth = computed((): number => {
+	const firstDayOfMonthDate = new Date();
+	firstDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 1);
+	return firstDayOfMonthDate.getDay() - 1;
+});
+
+const dateFormatted = computed((): string => {
+	const date = new Date();
+	date.setFullYear(currentYear.value, currentMonthIndex.value, currentDay.value);
+	return date.toLocaleDateString();
+});
+
+function isInCurrentMonth(day: number): boolean {
+	return day == currentDay.value && currentMonthIndex.value == currentDate.getMonth() && currentYear.value == currentDate.getFullYear();
+}
+
+function decreaseMonth(): void {
+	if (currentMonthIndex.value === 0) {
+		currentMonthIndex.value = 11;
+		currentYear.value -= 1;
+		return;
+	}
+	currentMonthIndex.value -= 1;
+}
+
+function increaseMonth(): void {
+	if (currentMonthIndex.value === 11) {
+		currentMonthIndex.value = 0;
+		currentYear.value += 1;
+		return;
+	}
+	currentMonthIndex.value += 1;
+}
 </script>
 
 <template>
@@ -19,7 +64,7 @@ const date = ref('DD.MM.YYYY');
 			<!-- Input field -->
 			<div class="relative z-0">
 				<input
-					v-model="date"
+					:value="dateFormatted"
 					type="text"
 					readonly
 					:disabled="props.ui.disabled.value"
@@ -32,8 +77,33 @@ const date = ref('DD.MM.YYYY');
 			</div>
 
 			<!-- Datepicker -->
-			<div v-if="props.ui.expanded.value" class="absolute top-8 right-8 bg-white rounded-md shadow-lg h-64 w-64 z-10">
+			<div v-if="props.ui.expanded.value" class="absolute top-8 right-8 bg-white rounded-md shadow-lg p-2 z-10">
+				<div class="flex justify-between items-center mb-4">
+					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="decreaseMonth">
+						<ArrowDown class="rotate-90 h-4" />
+					</div>
+					<p class="text-center">{{ monthNames.get(currentMonthIndex) }} {{ currentYear }}</p>
+					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="increaseMonth">
+						<ArrowDown class="-rotate-90 h-4" />
+					</div>
+				</div>
 
+				<div class="grid grid-cols-7 gap-2 text-center leading-none">
+					<span>Mo</span>
+					<span>Di</span>
+					<span>Mi</span>
+					<span>Do</span>
+					<span>Fr</span>
+					<span>Sa</span>
+					<span>So</span>
+
+					<div v-for="(_offset, index) in dayStartOffsetInMonth" :key="index"></div>
+					<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
+						<div class="day effect-hover flex justify-center items-center cursor-default" :class="{'selected-day': isInCurrentMonth(day)}">
+							<span>{{ day }}</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<!-- Error message has precedence over hints -->
@@ -41,3 +111,13 @@ const date = ref('DD.MM.YYYY');
 		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
 	</div>
 </template>
+
+<style scoped>
+.day {
+	@apply size-8 rounded-full
+}
+
+.selected-day {
+	@apply text-wdy-green;
+}
+</style>

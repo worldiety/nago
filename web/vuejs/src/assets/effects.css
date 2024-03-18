@@ -1,0 +1,3 @@
+.effect-hover:hover {
+	@apply bg-wdy-green bg-opacity-10;
+}
