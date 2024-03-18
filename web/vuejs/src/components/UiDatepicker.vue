@@ -134,7 +134,12 @@ function closeDatepicker(e: MouseEvent) {
 					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="decreaseMonth">
 						<ArrowDown class="rotate-90 h-4" />
 					</div>
-					<p class="text-center">{{ monthNames.get(currentMonthIndex) }} {{ currentYear }}</p>
+					<div>
+						<!-- TODO: Fixed index out of range error -->
+						<select v-model="currentMonthIndex">
+							<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">{{ monthEntry[1] }}</option>
+						</select>
+					</div>
 					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="increaseMonth">
 						<ArrowDown class="-rotate-90 h-4" />
 					</div>
