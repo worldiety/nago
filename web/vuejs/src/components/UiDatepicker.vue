@@ -30,12 +30,33 @@ const dayStartOffsetInMonth = computed((): number => {
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
-	date.setFullYear(currentYear.value, currentMonthIndex.value, currentDay.value);
+	date.setFullYear(props.ui.selectedYear.value, props.ui.selectedMonthIndex.value, props.ui.selectedDay.value);
 	return date.toLocaleDateString();
 });
 
 function isInCurrentMonth(day: number): boolean {
 	return day == currentDay.value && currentMonthIndex.value == currentDate.getMonth() && currentYear.value == currentDate.getFullYear();
+}
+
+function selectDay(day: number): void {
+	networkStore.invokeSetProp({
+		...props.ui.selectedDay,
+		value: day,
+	});
+	networkStore.invokeSetProp({
+		...props.ui.selectedMonthIndex,
+		value: currentMonthIndex.value,
+	});
+	networkStore.invokeSetProp({
+		...props.ui.selectedYear,
+		value: currentYear.value,
+	});
+}
+
+function isSelectedDay(day: number): boolean {
+	return day === props.ui.selectedDay.value
+		&& currentMonthIndex.value === props.ui.selectedMonthIndex.value
+		&& currentYear.value === props.ui.selectedYear.value;
 }
 
 function decreaseMonth(): void {
@@ -99,7 +120,7 @@ function increaseMonth(): void {
 
 					<div v-for="(_offset, index) in dayStartOffsetInMonth" :key="index"></div>
 					<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
-						<div class="day effect-hover flex justify-center items-center cursor-default" :class="{'selected-day': isInCurrentMonth(day)}">
+						<div class="day effect-hover flex justify-center items-center cursor-default" :class="{'current-day': isInCurrentMonth(day), 'selected-day': isSelectedDay(day)}" @click="selectDay(day)">
 							<span>{{ day }}</span>
 						</div>
 					</div>
@@ -117,7 +138,11 @@ function increaseMonth(): void {
 	@apply size-8 rounded-full
 }
 
-.selected-day {
+.current-day:not(.selected-day) {
 	@apply text-wdy-green;
+}
+
+.selected-day {
+	@apply bg-wdy-green text-white;
 }
 </style>

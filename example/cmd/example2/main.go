@@ -235,6 +235,9 @@ func main() {
 								datepicker.OnToggleExpanded().Set(func() {
 									datepicker.Expanded().Set(!datepicker.Expanded().Get())
 								})
+								datepicker.SelectedDay().Set(7)
+								datepicker.SelectedMonthIndex().Set(2)
+								datepicker.SelectedYear().Set(2024)
 							}))
 
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
