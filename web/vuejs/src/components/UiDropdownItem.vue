@@ -4,6 +4,8 @@ import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 
 const props = defineProps<{
 	ui: LiveDropdownItem;
+	multiselect: boolean;
+	selected: boolean;
 }>();
 
 const networkStore = useNetworkStore();
@@ -17,6 +19,7 @@ const networkStore = useNetworkStore();
 			@click="networkStore.invokeFunc(props.ui.onSelected)"
 			@keydown.enter="networkStore.invokeFunc(props.ui.onSelected)"
 		>
+			<input v-if="props.multiselect" type="checkbox" :checked="props.selected">
 			<p class="truncate pl-2">{{ props.ui.content.value }}</p>
 		</div>
 	</div>

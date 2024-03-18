@@ -27,8 +27,15 @@ onUpdated(() => {
 	}
 })
 
-const selectedItemName = computed((): string => {
-	return props.ui.items.value.find((item: LiveDropdownItem) => item.itemIndex.value === props.ui.selectedIndex.value)?.content.value ?? '';
+const selectedItemNames = computed((): string|null => {
+	if (!props.ui.selectedIndexes.value) {
+		return null;
+	}
+	const itemNames = props.ui.items.value
+		.filter((item: LiveDropdownItem) => {
+		return props.ui.selectedIndexes.value.find((index) => index === item.itemIndex.value) !== undefined;
+	}).map((item) => item.content.value);
+	return itemNames.length > 0 ? itemNames.join(', ') : null;
 });
 
 function closeDropdown(e: MouseEvent) {
@@ -46,6 +53,10 @@ function dropdownClicked(forceClose: boolean): void {
 		networkStore.invokeFunc(props.ui.onToggleExpanded);
 	}
 }
+
+function isSelected(itemIndex: number): boolean {
+	return props.ui.selectedIndexes.value?.includes(itemIndex) ?? false;
+}
 </script>
 
 <template>
@@ -59,7 +70,7 @@ function dropdownClicked(forceClose: boolean): void {
 				@click="dropdownClicked(false)"
 				@keydown.enter="dropdownClicked(true)"
 			>
-				<div class="truncate">{{ selectedItemName }}</div>
+				<div class="truncate">{{ selectedItemNames ?? 'Auswählen...' }}</div>
 				<ArrowDown class="duration-100 h-3" :class="{'rotate-180': props.ui.expanded.value}" />
 			</div>
 			<div ref="dropdownOptions">
@@ -68,6 +79,8 @@ function dropdownClicked(forceClose: boolean): void {
 						v-for="(dropdownItem, index) in props.ui.items.value"
 						:key="index"
 						:ui="dropdownItem"
+						:multiselect="props.ui.multiselect.value"
+						:selected="isSelected(dropdownItem.itemIndex.value)"
 					/>
 				</div>
 			</div>

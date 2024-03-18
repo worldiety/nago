@@ -230,7 +230,7 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
-								dropdown.SelectedIndex().Set(1)
+								dropdown.Multiselect().Set(true)
 								dropdown.Expanded().Set(false)
 								dropdown.Label().Set("Dropdown")
 								dropdown.Error().Set("Das ist eine Fehlermeldung")
@@ -244,7 +244,7 @@ func main() {
 										item.ItemIndex().Set(0)
 										item.Content().Set("Option A")
 										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Toggle(item)
 											dropdown.Expanded().Set(false)
 										})
 									}),
@@ -253,7 +253,7 @@ func main() {
 										item.ItemIndex().Set(1)
 										item.Content().Set("Option BC")
 										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Toggle(item)
 											dropdown.Expanded().Set(false)
 										})
 									}),
@@ -262,7 +262,7 @@ func main() {
 										item.ItemIndex().Set(2)
 										item.Content().Set("Option DEF")
 										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
+											dropdown.Toggle(item)
 											dropdown.Expanded().Set(false)
 										})
 									}),

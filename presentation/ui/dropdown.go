@@ -4,8 +4,9 @@ import "go.wdy.de/nago/container/slice"
 
 type Dropdown struct {
 	id               CID
-	selectedIndex    Int
+	selectedIndexes  *SharedList[int64]
 	items            *SharedList[*DropdownItem]
+	multiselect      Bool
 	expanded         Bool
 	disabled         Bool
 	label            String
@@ -18,8 +19,9 @@ type Dropdown struct {
 func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	c := &Dropdown{
 		id:               nextPtr(),
-		selectedIndex:    NewShared[int64]("selectedIndex"),
+		selectedIndexes:  NewSharedList[int64]("selectedIndexes"),
 		items:            NewSharedList[*DropdownItem]("items"),
+		multiselect:      NewShared[bool]("multiselect"),
 		expanded:         NewShared[bool]("expanded"),
 		disabled:         NewShared[bool]("disabled"),
 		label:            NewShared[string]("label"),
@@ -28,7 +30,7 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		onToggleExpanded: NewFunc("onToggleExpanded"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndex, c.items, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
+	c.properties = slice.Of[Property](c.selectedIndexes, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
 	if with != nil {
 		with(c)
 	}
@@ -43,12 +45,33 @@ func (c *Dropdown) Type() string {
 	return "Dropdown"
 }
 
-func (c *Dropdown) SelectedIndex() Int {
-	return c.selectedIndex
+func (c *Dropdown) SelectedIndexes() *SharedList[int64] {
+	return c.selectedIndexes
+}
+
+// Toggle toggles a dropdown item's selected state
+func (c *Dropdown) Toggle(item *DropdownItem) {
+	itemIndex := item.ItemIndex().Get()
+	contains := false
+	c.SelectedIndexes().Each(func(index int64) {
+		if itemIndex == index {
+			contains = true
+			return
+		}
+	})
+	if contains {
+		c.SelectedIndexes().Remove(itemIndex)
+	} else {
+		c.SelectedIndexes().Append(itemIndex)
+	}
 }
 
 func (c *Dropdown) Items() *SharedList[*DropdownItem] {
 	return c.items
+}
+
+func (c *Dropdown) Multiselect() Bool {
+	return c.multiselect
 }
 
 func (c *Dropdown) Expanded() Bool {
