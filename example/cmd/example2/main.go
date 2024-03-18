@@ -232,7 +232,7 @@ func main() {
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
 								dropdown.Multiselect().Set(true)
 								dropdown.Expanded().Set(false)
-								dropdown.Label().Set("Dropdown")
+								dropdown.Label().Set("Multiselect")
 								dropdown.Error().Set("Das ist eine Fehlermeldung")
 								dropdown.Hint().Set("Das ist ein Hinweis")
 								dropdown.OnToggleExpanded().Set(func() {
@@ -259,6 +259,42 @@ func main() {
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
 										item.ItemIndex().Set(2)
 										item.Content().Set("Option DEF")
+										item.OnSelected().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+								)
+							}))
+
+							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
+								dropdown.Multiselect().Set(false)
+								dropdown.Expanded().Set(false)
+								dropdown.Label().Set("Dropdown")
+								dropdown.Hint().Set("Das ist ein anderer Hinweis")
+								dropdown.OnToggleExpanded().Set(func() {
+									dropdown.Expanded().Set(!dropdown.Expanded().Get())
+								})
+
+								dropdown.Items().Append(
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(0)
+										item.Content().Set("Option G")
+										item.OnSelected().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(1)
+										item.Content().Set("Option HI")
+										item.OnSelected().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.ItemIndex().Set(2)
+										item.Content().Set("Option JKL")
 										item.OnSelected().Set(func() {
 											dropdown.Toggle(item)
 										})

@@ -27,12 +27,12 @@ onUpdated(() => {
 })
 
 const selectedItemNames = computed((): string|null => {
-	if (!props.ui.selectedIndexes.value) {
+	if (!props.ui.selectedIndices.value) {
 		return null;
 	}
 	const itemNames = props.ui.items.value
 		.filter((item: LiveDropdownItem) => {
-		return props.ui.selectedIndexes.value.find((index) => index === item.itemIndex.value) !== undefined;
+		return props.ui.selectedIndices.value.find((index) => index === item.itemIndex.value) !== undefined;
 	}).map((item) => item.content.value);
 	return itemNames.length > 0 ? itemNames.join(', ') : null;
 });
@@ -55,7 +55,7 @@ function dropdownClicked(forceClose: boolean): void {
 }
 
 function isSelected(itemIndex: number): boolean {
-	return props.ui.selectedIndexes.value?.includes(itemIndex) ?? false;
+	return props.ui.selectedIndices.value?.includes(itemIndex) ?? false;
 }
 </script>
 

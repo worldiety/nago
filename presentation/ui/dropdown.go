@@ -4,7 +4,7 @@ import "go.wdy.de/nago/container/slice"
 
 type Dropdown struct {
 	id               CID
-	selectedIndexes  *SharedList[int64]
+	selectedIndices  *SharedList[int64]
 	items            *SharedList[*DropdownItem]
 	multiselect      Bool
 	expanded         Bool
@@ -19,7 +19,7 @@ type Dropdown struct {
 func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	c := &Dropdown{
 		id:               nextPtr(),
-		selectedIndexes:  NewSharedList[int64]("selectedIndexes"),
+		selectedIndices:  NewSharedList[int64]("selectedIndices"),
 		items:            NewSharedList[*DropdownItem]("items"),
 		multiselect:      NewShared[bool]("multiselect"),
 		expanded:         NewShared[bool]("expanded"),
@@ -30,7 +30,7 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		onToggleExpanded: NewFunc("onToggleExpanded"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndexes, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
+	c.properties = slice.Of[Property](c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
 	if with != nil {
 		with(c)
 	}
@@ -45,24 +45,34 @@ func (c *Dropdown) Type() string {
 	return "Dropdown"
 }
 
-func (c *Dropdown) SelectedIndexes() *SharedList[int64] {
-	return c.selectedIndexes
+func (c *Dropdown) SelectedIndices() *SharedList[int64] {
+	return c.selectedIndices
 }
 
-// Toggle toggles a dropdown item's selected state
+// Toggle toggles a dropdown item's selected state.
+// If the dropdown is in multiselect mode, multiple items may be selected at the same time.
+// Otherwise, only a single item may be selected at the same time.
 func (c *Dropdown) Toggle(item *DropdownItem) {
 	itemIndex := item.ItemIndex().Get()
+
+	if c.Multiselect().Get() != true {
+		c.SelectedIndices().Clear()
+		c.SelectedIndices().Append(itemIndex)
+		c.Expanded().Set(false)
+		return
+	}
+
 	contains := false
-	c.SelectedIndexes().Each(func(index int64) {
+	c.SelectedIndices().Each(func(index int64) {
 		if itemIndex == index {
 			contains = true
 			return
 		}
 	})
 	if contains {
-		c.SelectedIndexes().Remove(itemIndex)
+		c.SelectedIndices().Remove(itemIndex)
 	} else {
-		c.SelectedIndexes().Append(itemIndex)
+		c.SelectedIndices().Append(itemIndex)
 	}
 }
 
