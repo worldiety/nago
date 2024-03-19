@@ -17,9 +17,3 @@ const i18n = createI18n<[MessageSchemaDe | MessageSchemaEn], 'de' | 'en'>({
 });
 
 export default i18n;
-
-// TODO: entfernen, da es eine andere offizielle Verwendung gibt
-export function translate(key: string): string {
-	const { t } = i18n.global;
-	return t(key);
-}

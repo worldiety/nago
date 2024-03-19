@@ -1,7 +1,6 @@
 import '@/assets/tailwind.css';
 import '@/assets/style.css';
 import App from '@/App.vue';
-import '@/assets/main.css';
 import i18n from '@/i18n';
 import router from '@/router';
 import { createPinia } from 'pinia';
