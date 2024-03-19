@@ -39,7 +39,7 @@ const totalDaysInMonth = computed((): number => {
 const dayStartOffsetInMonth = computed((): number => {
 	const firstDayOfMonthDate = new Date();
 	firstDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 1);
-	return firstDayOfMonthDate.getDay() - 1;
+	return firstDayOfMonthDate.getDay() === 0 ? 6 : firstDayOfMonthDate.getDay() - 1;
 });
 
 const dateFormatted = computed((): string => {
