@@ -229,39 +229,79 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
+								datepicker.Label().Set("Datepicker")
+								datepicker.Error().Set("Das ist auch eine Fehlermeldung")
+								datepicker.OnToggleExpanded().Set(func() {
+									datepicker.Expanded().Set(!datepicker.Expanded().Get())
+								})
+								datepicker.SelectedDay().Set(7)
+								datepicker.SelectedMonthIndex().Set(2)
+								datepicker.SelectedYear().Set(2024)
+							}))
+
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
-								dropdown.SelectedIndex().Set(1)
+								dropdown.Multiselect().Set(true)
 								dropdown.Expanded().Set(false)
-								dropdown.Label().Set("Dropdown")
-								dropdown.OnToggleExpanded().Set(func() {
+								dropdown.Label().Set("Multiselect")
+								dropdown.Error().Set("Das ist eine Fehlermeldung")
+								dropdown.Hint().Set("Das ist ein Hinweis")
+								dropdown.OnClicked().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(0)
 										item.Content().Set("Option A")
-										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
-											dropdown.Expanded().Set(false)
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(1)
 										item.Content().Set("Option BC")
-										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
-											dropdown.Expanded().Set(false)
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(2)
 										item.Content().Set("Option DEF")
-										item.OnSelected().Set(func() {
-											dropdown.SelectedIndex().Set(item.ItemIndex().Get())
-											dropdown.Expanded().Set(false)
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+								)
+							}))
+
+							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
+								dropdown.Multiselect().Set(false)
+								dropdown.Expanded().Set(false)
+								dropdown.Label().Set("Dropdown")
+								dropdown.Hint().Set("Das ist ein anderer Hinweis")
+								dropdown.OnClicked().Set(func() {
+									dropdown.Expanded().Set(!dropdown.Expanded().Get())
+								})
+
+								dropdown.Items().Append(
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Option G")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Option HI")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Option JKL")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
 										})
 									}),
 								)

@@ -40,43 +40,35 @@ export default class WebSocketAdapter {
 		console.log('open websocket ->' + webSocketURL);
 		this.webSocket = new WebSocket(webSocketURL);
 
-		this.webSocket.onopen = () => {
-			console.log('OPEN');
-			this.sendHello();
-		};
+    this.webSocket = new WebSocket(webSocketURL);
 
-		this.webSocket.onclose = () => {
-			console.log('CLOSE');
-			if (!this.closedGracefully) {
-				// Try to reopen the socket if it was not closed gracefully
-				this.retry();
-			} else {
-				// Keep the socket closed if it was closed gracefully (i.e. intentional)
-				this.closedGracefully = false;
-			}
-		};
+    this.webSocket.onopen = () => {
+      this.sendHello();
+    }
 
-		this.webSocket.onmessage = (e) => {
-			console.log('RESPONSE: ' + e.data);
+    this.webSocket.onclose = () => {
+      if (!this.closedGracefully) {
+        // Try to reopen the socket if it was not closed gracefully
+        this.retry();
+      } else {
+        // Keep the socket closed if it was closed gracefully (i.e. intentional)
+        this.closedGracefully = false;
+      }
+    }
 
-			const message: LiveMessage = JSON.parse(e.data);
-			console.log(message);
+    this.webSocket.onmessage = (e) => {
+      const message: LiveMessage = JSON.parse(e.data)
+      if (this.webSocketReceiveCallback) {
+        this.webSocketReceiveCallback(message);
+      }
+    }
 
-			if (this.webSocketReceiveCallback) {
-				this.webSocketReceiveCallback(message);
-			}
-		};
-
-		this.webSocket.onerror = (e) => {
-			console.log('ERROR: ' + e);
-			if (this.webSocketErrorCallback) {
-				this.webSocketErrorCallback();
-			}
-			this.retry();
-		};
-
-		UserChangedCallbacks.push(() => this.sendUser());
-	}
+    this.webSocket.onerror = (e) => {
+      if (this.webSocketErrorCallback) {
+        this.webSocketErrorCallback();
+      }
+      this.retry();
+    }
 
 	private sendUser() {
 		const auth = useAuth();
@@ -110,18 +102,8 @@ export default class WebSocketAdapter {
 
 		console.log(JSON.stringify(callTx));
 
-		this.webSocket?.send(JSON.stringify(callTx));
-	}
-
-	private retry() {
-		if (this.retryTimeout !== null) {
-			return;
-		}
-		this.retryTimeout = window.setTimeout(() => {
-			this.retryTimeout = null;
-			this.initializeWebSocket();
-		}, 2000);
-	}
+    this.webSocket?.send(JSON.stringify(callTx))
+  }
 
 	invokeFunc(action: PropertyFunc) {
 		this.invokeTx2(null, action);

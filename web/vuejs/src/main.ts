@@ -1,3 +1,5 @@
+import '@/assets/tailwind.css';
+import '@/assets/style.css';
 import App from '@/App.vue';
 import '@/assets/main.css';
 import i18n from '@/i18n';

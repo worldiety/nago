@@ -1,0 +1,46 @@
+/* Custom styled checkboxes: https://moderncss.dev/pure-css-custom-checkbox-style/ */
+input[type="checkbox"]:checked::before {
+	@apply opacity-100;
+}
+
+input[type="checkbox"]:checked {
+	@apply bg-wdy-green;
+}
+
+input[type="checkbox"] {
+	@apply grid border border-black appearance-none place-content-center w-4 h-4 m-0;
+	font: inherit;
+}
+
+input[type="checkbox"]::before {
+	@apply block opacity-0 h-2.5 w-2.5;
+	content: "";
+	border-radius: 50%;
+	box-shadow: inset 1em 1em theme('colors.white');
+	transform-origin: bottom left;
+	clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="checkbox"]:disabled {
+	@apply border border-solid border-disabled-text;
+}
+
+input[type="checkbox"]:checked:disabled {
+	@apply bg-disabled-background;
+}
+
+input[type="checkbox"]:disabled::before {
+	box-shadow: inset 1em 1em theme('colors.disabled.text');
+}
+
+.input-field {
+	@apply border border-black rounded-md text-black cursor-default;
+}
+
+.input-field:hover {
+	@apply border-wdy-green text-wdy-green;
+}
+
+.input-field:disabled, .input-field.input-field-disabled {
+	@apply border-disabled-background bg-disabled-background text-disabled-text;
+}
