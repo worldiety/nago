@@ -134,11 +134,15 @@ function closeDatepicker(e: MouseEvent) {
 					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="decreaseMonth">
 						<ArrowDown class="rotate-90 h-4" />
 					</div>
-					<div>
-						<!-- TODO: Fixed index out of range error -->
-						<select v-model="currentMonthIndex">
-							<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">{{ monthEntry[1] }}</option>
-						</select>
+					<div class="flex justify-center items-center">
+						<div class="basis-1/4 shrink-0 grow-0">
+							<select v-model="currentMonthIndex" class="month-select w-full">
+								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">{{ monthEntry[1] }}</option>
+							</select>
+						</div>
+						<div class="basis-1/4 shrink-0 grow-0">
+							<input v-model="currentYear" type="text" class="w-full">
+						</div>
 					</div>
 					<div class="effect-hover flex justify-center items-center rounded-full size-8" @click="increaseMonth">
 						<ArrowDown class="-rotate-90 h-4" />
@@ -180,5 +184,9 @@ function closeDatepicker(e: MouseEvent) {
 
 .selected-day {
 	@apply bg-wdy-green text-white;
+}
+
+.month-select {
+	@apply border-none text-black cursor-default;
 }
 </style>
