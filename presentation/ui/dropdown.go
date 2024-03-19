@@ -3,34 +3,34 @@ package ui
 import "go.wdy.de/nago/container/slice"
 
 type Dropdown struct {
-	id               CID
-	selectedIndices  *SharedList[int64]
-	items            *SharedList[*DropdownItem]
-	multiselect      Bool
-	expanded         Bool
-	disabled         Bool
-	label            String
-	hint             String
-	error            String
-	onToggleExpanded *Func
-	properties       slice.Slice[Property]
+	id              CID
+	selectedIndices *SharedList[int64]
+	items           *SharedList[*DropdownItem]
+	multiselect     Bool
+	expanded        Bool
+	disabled        Bool
+	label           String
+	hint            String
+	error           String
+	onClicked       *Func
+	properties      slice.Slice[Property]
 }
 
 func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	c := &Dropdown{
-		id:               nextPtr(),
-		selectedIndices:  NewSharedList[int64]("selectedIndices"),
-		items:            NewSharedList[*DropdownItem]("items"),
-		multiselect:      NewShared[bool]("multiselect"),
-		expanded:         NewShared[bool]("expanded"),
-		disabled:         NewShared[bool]("disabled"),
-		label:            NewShared[string]("label"),
-		hint:             NewShared[string]("hint"),
-		error:            NewShared[string]("error"),
-		onToggleExpanded: NewFunc("onToggleExpanded"),
+		id:              nextPtr(),
+		selectedIndices: NewSharedList[int64]("selectedIndices"),
+		items:           NewSharedList[*DropdownItem]("items"),
+		multiselect:     NewShared[bool]("multiselect"),
+		expanded:        NewShared[bool]("expanded"),
+		disabled:        NewShared[bool]("disabled"),
+		label:           NewShared[string]("label"),
+		hint:            NewShared[string]("hint"),
+		error:           NewShared[string]("error"),
+		onClicked:       NewFunc("onClicked"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onToggleExpanded)
+	c.properties = slice.Of[Property](c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onClicked)
 	if with != nil {
 		with(c)
 	}
@@ -49,12 +49,24 @@ func (c *Dropdown) SelectedIndices() *SharedList[int64] {
 	return c.selectedIndices
 }
 
+func (c *Dropdown) indexOf(item *DropdownItem) int64 {
+	idx := -1
+	i := 0
+	c.items.Each(func(it *DropdownItem) {
+		if it.id == item.id {
+			idx = i
+		}
+		i++
+	})
+
+	return int64(idx)
+}
+
 // Toggle toggles a dropdown item's selected state.
 // If the dropdown is in multiselect mode, multiple items may be selected at the same time.
 // Otherwise, only a single item may be selected at the same time.
 func (c *Dropdown) Toggle(item *DropdownItem) {
-	itemIndex := item.ItemIndex().Get()
-
+	itemIndex := c.indexOf(item)
 	if c.Multiselect().Get() != true {
 		c.SelectedIndices().Clear()
 		c.SelectedIndices().Append(itemIndex)
@@ -96,8 +108,8 @@ func (c *Dropdown) Hint() String { return c.hint }
 
 func (c *Dropdown) Error() String { return c.error }
 
-func (c *Dropdown) OnToggleExpanded() *Func {
-	return c.onToggleExpanded
+func (c *Dropdown) OnClicked() *Func {
+	return c.onClicked
 }
 
 func (c *Dropdown) Properties() slice.Slice[Property] {
@@ -106,21 +118,19 @@ func (c *Dropdown) Properties() slice.Slice[Property] {
 
 type DropdownItem struct {
 	id         CID
-	itemIndex  Int
 	content    String
-	onSelected *Func
+	onClicked  *Func
 	properties slice.Slice[Property]
 }
 
 func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
 	c := &DropdownItem{
-		id:         nextPtr(),
-		itemIndex:  NewShared[int64]("itemIndex"),
-		content:    NewShared[string]("content"),
-		onSelected: NewFunc("onSelected"),
+		id:        nextPtr(),
+		content:   NewShared[string]("content"),
+		onClicked: NewFunc("onClicked"),
 	}
 
-	c.properties = slice.Of[Property](c.itemIndex, c.content, c.onSelected)
+	c.properties = slice.Of[Property](c.content, c.onClicked)
 
 	if with != nil {
 		with(c)
@@ -141,14 +151,10 @@ func (c *DropdownItem) Properties() slice.Slice[Property] {
 	return c.properties
 }
 
-func (c *DropdownItem) ItemIndex() Int {
-	return c.itemIndex
-}
-
 func (c *DropdownItem) Content() String {
 	return c.content
 }
 
-func (c *DropdownItem) OnSelected() *Func {
-	return c.onSelected
+func (c *DropdownItem) OnClicked() *Func {
+	return c.onClicked
 }
