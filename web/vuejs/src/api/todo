@@ -1,0 +1,9 @@
+// Hier die einzelnen Endpunkte/Ressourcen im Backend ansprechen und auf Fehler überprüfen
+// Pro Endpunkt/Ressource eine Datei
+// so weit wie möglich generalisieren
+// Die API soll entweder ein Objekt zurückgeben oder einen Fehler
+// Endpunkte sind hier primär alle Dateien, die ich über /api/ anspreche
+
+
+
+//TODO: Formatter durchlaufen lassen. Darf gemerged werden, wenn es funktioniert. Mit Lukas abstimmen, wann wir den Linter verwenden

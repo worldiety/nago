@@ -3,7 +3,7 @@ import type { LiveComponent } from '@/shared/model/liveComponent';
 import type { PropertyString } from '@/shared/model/propertyString';
 
 export interface HBox {
-	type: 'HBox'
-	children: ComponentList<LiveComponent>
-	alignment: PropertyString
+	type: 'HBox';
+	children: ComponentList<LiveComponent>;
+	alignment: PropertyString;
 }

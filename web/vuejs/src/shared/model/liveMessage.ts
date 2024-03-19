@@ -1,3 +1,3 @@
 import type { Invalidation } from '@/shared/model/invalidation';
 
-export type LiveMessage = Invalidation
+export type LiveMessage = Invalidation;

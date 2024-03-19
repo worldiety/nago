@@ -15,5 +15,5 @@ export interface LiveDropdown {
 	label: PropertyString,
 	hint: PropertyString,
 	error: PropertyString,
-	onToggleExpanded: PropertyFunc,
+	onClicked: PropertyFunc,
 }

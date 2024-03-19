@@ -7,7 +7,7 @@ import type { LiveDropdown } from '@/shared/model/liveDropdown';
 import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 
 const props = defineProps<{
-  ui: LiveDropdown;
+	ui: LiveDropdown;
 }>();
 
 const networkStore = useNetworkStore();
@@ -32,10 +32,20 @@ const selectedItemNames = computed((): string|null => {
 	}
 	const itemNames = props.ui.items.value
 		.filter((item: LiveDropdownItem) => {
-		return props.ui.selectedIndices.value.find((index) => index === item.itemIndex.value) !== undefined;
+			const itemIndex = indexOf(item);
+			return props.ui.selectedIndices.value.find((index) => index === itemIndex) !== undefined;
 	}).map((item) => item.content.value);
 	return itemNames.length > 0 ? itemNames.join(', ') : null;
 });
+
+/**
+ * Determines the index of a dropdown item based on its ID
+ * 
+ * @param item The dropdown item to determine the index of
+ */
+function indexOf(item: LiveDropdownItem): number {
+	return props.ui.items.value.findIndex((it) => it.id == item.id) ?? -1;
+}
 
 function closeDropdown(e: MouseEvent) {
 	e.preventDefault();
@@ -43,18 +53,19 @@ function closeDropdown(e: MouseEvent) {
 		const targetHTMLElement = e.target as HTMLElement;
 		const dropdownItemWasClicked = targetHTMLElement.compareDocumentPosition(dropdownOptions.value) & Node.DOCUMENT_POSITION_CONTAINS;
 		if (!dropdownItemWasClicked) {
-			networkStore.invokeFunc(props.ui.onToggleExpanded);
+			networkStore.invokeFunc(props.ui.onClicked);
 		}
 	}
 }
 
 function dropdownClicked(forceClose: boolean): void {
 	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
-		networkStore.invokeFunc(props.ui.onToggleExpanded);
+		networkStore.invokeFunc(props.ui.onClicked);
 	}
 }
 
-function isSelected(itemIndex: number): boolean {
+function isSelected(item: LiveDropdownItem): boolean {
+	const itemIndex = indexOf(item);
 	return props.ui.selectedIndices.value?.includes(itemIndex) ?? false;
 }
 </script>
@@ -80,7 +91,7 @@ function isSelected(itemIndex: number): boolean {
 						:key="index"
 						:ui="dropdownItem"
 						:multiselect="props.ui.multiselect.value"
-						:selected="isSelected(dropdownItem.itemIndex.value)"
+						:selected="isSelected(dropdownItem)"
 					/>
 					<div v-if="props.ui.multiselect.value" class="flex justify-center p-2">
 						<button class="btn-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>

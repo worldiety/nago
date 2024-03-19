@@ -1,6 +1,10 @@
 package pages
 
-import "go.wdy.de/nago/presentation/ui"
+import (
+	"fmt"
+	"go.wdy.de/nago/presentation/ui"
+	"io"
+)
 
 func Example(wire ui.Wire) *ui.Page {
 	return ui.NewPage(wire, func(page *ui.Page) {
@@ -183,6 +187,36 @@ func Example(wire ui.Wire) *ui.Page {
 
 								})
 
+							}),
+
+							ui.NewFileField(func(fileField *ui.FileField) {
+								fileField.Label().Set("Dateien zum Upload einfügen")
+								fileField.Hint().Set("Klick oder drag 'n' drop zum Upload")
+								//fileField.Accept().Set(".gif")
+								fileField.Multiple().Set(true)
+								fileField.OnUploadReceived(func(files []ui.FileUpload) {
+									for _, file := range files {
+										f, _ := file.Open()
+										defer f.Close()
+										buf, _ := io.ReadAll(f)
+										fmt.Println(file.Name(), file.Size(), len(buf))
+										page.Modals().Append(
+											ui.NewDialog(func(dlg *ui.Dialog) {
+												dlg.Title().Set("hey")
+												dlg.Body().Set(ui.MakeText("Die Datei ist sicher angekommen: " + file.Name()))
+												dlg.Actions().Append(
+													ui.NewButton(func(btn *ui.Button) {
+														btn.Caption().Set("ganz toll")
+														btn.Action().Set(func() {
+															page.Modals().Remove(dlg)
+														},
+														)
+													}),
+												)
+											}),
+										)
+									}
+								})
 							}),
 						)
 					}),

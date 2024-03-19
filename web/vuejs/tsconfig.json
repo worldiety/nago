@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
       "target": "ESNext",
-      "types": ["vite/client"],
+      "types": ["vite/client", "@intlify/vite-plugin-vue-i18n/client"],
       "useDefineForClassFields": true,
       "module": "ESNext",
       "moduleResolution": "Node",

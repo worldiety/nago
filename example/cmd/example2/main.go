@@ -246,31 +246,28 @@ func main() {
 								dropdown.Label().Set("Multiselect")
 								dropdown.Error().Set("Das ist eine Fehlermeldung")
 								dropdown.Hint().Set("Das ist ein Hinweis")
-								dropdown.OnToggleExpanded().Set(func() {
+								dropdown.OnClicked().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(0)
 										item.Content().Set("Option A")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(1)
 										item.Content().Set("Option BC")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(2)
 										item.Content().Set("Option DEF")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
@@ -282,31 +279,28 @@ func main() {
 								dropdown.Expanded().Set(false)
 								dropdown.Label().Set("Dropdown")
 								dropdown.Hint().Set("Das ist ein anderer Hinweis")
-								dropdown.OnToggleExpanded().Set(func() {
+								dropdown.OnClicked().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(0)
 										item.Content().Set("Option G")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(1)
 										item.Content().Set("Option HI")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.ItemIndex().Set(2)
 										item.Content().Set("Option JKL")
-										item.OnSelected().Set(func() {
+										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),

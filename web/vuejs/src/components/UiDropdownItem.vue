@@ -15,8 +15,8 @@ const networkStore = useNetworkStore();
 	<div
 		class="cursor-default p-2 hover:text-wdy-green hover:bg-wdy-green hover:bg-opacity-5"
 		tabindex="0"
-		@click="networkStore.invokeFunc(props.ui.onSelected)"
-		@keydown.enter="networkStore.invokeFunc(props.ui.onSelected)"
+		@click="networkStore.invokeFunc(props.ui.onClicked)"
+		@keydown.enter="networkStore.invokeFunc(props.ui.onClicked)"
 	>
 		<div class="flex justify-start items-center">
 			<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
@@ -25,6 +25,4 @@ const networkStore = useNetworkStore();
 	</div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
