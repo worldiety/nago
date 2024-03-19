@@ -4,8 +4,8 @@ import type { UiElement } from '@/shared/model/uiElement';
 import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
-  ui: UiElement;
-  page: LivePage;
+	ui: UiElement;
+	page: LivePage;
 }>();
 </script>
 
@@ -16,5 +16,5 @@ const props = defineProps<{
 		:ui="props.ui"
 		:page="props.page"
 	/>
-  <div v-else>[Unknown view type '{{ props.ui.type }}']</div>
+	<div v-else>[Unknown view type '{{ props.ui.type }}']</div>
 </template>

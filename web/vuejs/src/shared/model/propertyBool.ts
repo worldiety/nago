@@ -1,5 +1,5 @@
 export interface PropertyBool {
-	id: number
-	name: string
-	value: boolean
+	id: number;
+	name: string;
+	value: boolean;
 }

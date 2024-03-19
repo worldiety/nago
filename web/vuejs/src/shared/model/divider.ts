@@ -1,3 +1,3 @@
 export interface Divider {
-	type: 'Divider'
+	type: 'Divider';
 }

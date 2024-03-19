@@ -7,7 +7,7 @@ import type { LiveDropdown } from '@/shared/model/liveDropdown';
 import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 
 const props = defineProps<{
-  ui: LiveDropdown;
+	ui: LiveDropdown;
 }>();
 
 const networkStore = useNetworkStore();

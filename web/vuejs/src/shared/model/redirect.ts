@@ -1,4 +1,4 @@
 export interface Redirect {
-	type: 'Redirect'
-	target: string
+	type: 'Redirect';
+	target: string;
 }
