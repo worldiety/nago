@@ -1,4 +1,6 @@
 import { useAuth } from '@/stores/authStore';
+import type {CustomError} from "@/composables/errorhandling";
+
 
 export function userHeaders() {
 	async function headers(): Promise<HeadersInit> {
@@ -66,7 +68,7 @@ export function useHttp() {
 			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
 		} catch (e) {
 			// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
-			console.log('Kein gültiges JSON bekommen');
+			console.log('Kein gültiges JSON bekommen', e);
 			throw e;
 		}
 	}
