@@ -22,35 +22,12 @@ const route = useRoute();
 const auth = useAuth();
 const state = ref(State.LoadingRoutes);
 
-const contentType = ref<string | null>('');
-
-//TODO: JSON Dateien überarbeiten, sodass die Custom Codes und die HTTP-Codes nicht vermischt werden (ein Objekt dazwischen verwenden)
-
-//TODO: i18n so überarbeiten, dass ich das Plugin verwende (vue-i18n)
-
-//TODO: nago example erweitern um ein Formular, das ich abschicke bzw. Datei Upload, um da das Fehlerhandling z.B. Internet vorhanden testen.
-
-//TODO: überarbeiten, dass bei jedem Request auf Fehler überprüft wird. Im Moment findet die Überprüfung nur einmal am Anfang statt.
-
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
 async function init(): Promise<void> {
 	let anchor: string;
-	let response: Response | void | null = null;
-
-	//TODO: Kann hier weg
-	// check internet connection
-	if (!navigator.onLine) {
-		console.log('Keine Internetverbindung!');
-	}
 
 	try {
-		//TODO: Mit Torben absprechen, ob wir uns auf axios oder fetch festlegen. Malte empfiehlt mir axios, da es erstmal einfacher zu benutzen ist
-
-		//TODO: in eine eigene Datei und Funktion (fetchApplication) auslagern. HTTP Client bauen (siehe Maltes Beispiel).
-		// Datei bauen, die einfach REST Anfragen durchführt und schaut, ob alles in Ordnung ist. Wenn nicht, Fehler auswerfen (throw)
-		// UI-Komponente bauen, um den Fehler darzustellen
-
 		const app = await fetchApplication();
 
 		if (app.oidc?.length > 0) {
