@@ -3,8 +3,8 @@ import { useI18n } from 'vue-i18n';
 
 export interface CustomError {
 	//  title: string;
-	message: string;
-	additionalInformation?: string;
+	message: string
+	additionalInformation?: string
 }
 
 export type ApplicationError = Error | unknown | Response | CustomError;
