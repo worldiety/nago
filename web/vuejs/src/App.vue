@@ -92,27 +92,6 @@ async function init(): Promise<void> {
 		}
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e);
-
-		//TODO: Hier überprüfen, ob ich einen Statuscode bekomme. Failed to fetch bedeutet fast immer, dass keine Internetverbindung vorliegt
-		// Kann man aber mit navigator.online gegenprüfen
-		// Auf folgende Statuscode prüfen:
-		// 401 = Keine Authentifizierung vorhanden
-		// 403 = Man ist angemeldet, aber was ich tun möchte, darf ich nicht
-		// 404 = angefragte Entität ist nicht vorhanden (braucht man eigentlich nur, wenn man einen bestimmten Key abfragen möchte)
-		// 500 = Irgendwas ist fehlgeschlagen. Unbekannt was (default Fehler)
-		// je nachdem, wie man es deployed 502
-		// 503
-		// 504
-		// Doku Statuscodes: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-		// ggfs. andere Statuscodes mit Torben besprechen (Torben sollte eine API-Dokumentation angelegt haben)
-		// ggfs. einbauen, ob ich die richtige Antwort erhalten habe. Sollte eigentlich nicht nötig sein. Wenn doch, dann meistens
-		// Programmierfehler
-
-		// TODO:i18n Dateien anlegen und da die einzelnen Fehlercodes hinterlegen. Dann hier darauf zugreifen
-		// neue Fehlerkomponente und Fehlerobjekt erstellen, die meine Fehlermeldung anzeigen. Diesen Bereich in meine api auslagern und
-		// dort mit throw arbeiten
-
-		console.log('Dieser Fehler ist aufgetreten: ' + rawError);
 	}
 }
 
