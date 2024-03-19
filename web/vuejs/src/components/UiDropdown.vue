@@ -38,6 +38,11 @@ const selectedItemNames = computed((): string|null => {
 	return itemNames.length > 0 ? itemNames.join(', ') : null;
 });
 
+/**
+ * Determines the index of a dropdown item based on its ID
+ * 
+ * @param item The dropdown item to determine the index of
+ */
 function indexOf(item: LiveDropdownItem): number {
 	return props.ui.items.value.findIndex((it) => it.id == item.id) ?? -1;
 }

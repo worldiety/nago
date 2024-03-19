@@ -49,17 +49,18 @@ func (c *Dropdown) SelectedIndices() *SharedList[int64] {
 	return c.selectedIndices
 }
 
+// indexOf determines the index of a dropdown item based on its DropdownItem.id
 func (c *Dropdown) indexOf(item *DropdownItem) int64 {
-	idx := -1
-	i := 0
+	index := -1
+	counter := 0
 	c.items.Each(func(it *DropdownItem) {
 		if it.id == item.id {
-			idx = i
+			index = counter
 		}
-		i++
+		counter++
 	})
 
-	return int64(idx)
+	return int64(index)
 }
 
 // Toggle toggles a dropdown item's selected state.
