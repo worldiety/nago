@@ -1,5 +1,5 @@
 export interface SelectItem {
-	type: 'SelectItem'
-	id: string
-	caption: string
+	type: 'SelectItem';
+	id: string;
+	caption: string;
 }

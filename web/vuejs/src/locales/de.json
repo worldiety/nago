@@ -1,46 +1,46 @@
 {
-    "customErrorcodes": {
-      "001": {
-        "errorMessage": "Keine Internetverbindung vorhanden. Bitte Verbindung überprüfen.",
-        "additionalInformation": "Router und Kabel überprüfen. Eventuell WLAN-Verbindung wiederherstellen."
-      },
-      "002": {
-        "errorMessage": "Falsche Antwort erhalten. Bitte später erneut versuchen.",
-        "additionalInformation": "Falscher Content-Type. Es wurde JSON erwartet."
-      }
-    },
-    "httpErrorcodes": {
-      "401": {
-        "errorMessage": "Authentifizierung fehlgeschlagen. Bitte einloggen.",
-        "additionalInformation": "HTTP-Statuscode: 401"
-      },
-      "403": {
-        "errorMessage": "Autorisierung fehlgeschlagen. Bitte Rechte prüfen.",
-        "additionalInformation": "HTTP-Statuscode: 403"
-      },
-      "404": {
-        "errorMessage": "Seite nicht gefunden. Bitte URL überprüfen.",
-        "additionalInformation": "HTTP-Statuscode: 404"
-      },
-      "500": {
-        "errorMessage": "Interner Serverfehler. Bitte später erneut versuchen.",
-        "additionalInformation": "HTTP-Statuscode: 500"
-      },
-      "502": {
-        "errorMessage": "Ungültige Antwort erhalten. Bitte später erneut versuchen.",
-        "additionalInformation": "HTTP-Statuscode: 502"
-      },
-      "503": {
-        "errorMessage": "Die Anfrage konnte nicht verarbeitet werden. Bitte später erneut versuchen.",
-        "additionalInformation": "HTTP-Statuscode: 503"
-      },
-      "504": {
-        "errorMessage": "Zeitüberschreitung. Bitte später erneut versuchen.",
-        "additionalInformation": "HTTP-Statuscode: 504"
-      },
-      "undefined": {
-        "errorMessage": "Verbindung nicht möglich, bitte Netzwerkverbindung überprüfen.",
-        "additionalInformation": "Undefinierter HTTP-Fehler "
-      }
-    }
+	"customErrorcodes": {
+		"001": {
+			"errorMessage": "Keine Internetverbindung vorhanden. Bitte Verbindung überprüfen.",
+			"additionalInformation": "Router und Kabel überprüfen. Eventuell WLAN-Verbindung wiederherstellen."
+		},
+		"002": {
+			"errorMessage": "Falsche Antwort erhalten. Bitte später erneut versuchen.",
+			"additionalInformation": "Falscher Content-Type. Es wurde JSON erwartet."
+		}
+	},
+	"httpErrorcodes": {
+		"401": {
+			"errorMessage": "Authentifizierung fehlgeschlagen. Bitte einloggen.",
+			"additionalInformation": "HTTP-Statuscode: 401"
+		},
+		"403": {
+			"errorMessage": "Autorisierung fehlgeschlagen. Bitte Rechte prüfen.",
+			"additionalInformation": "HTTP-Statuscode: 403"
+		},
+		"404": {
+			"errorMessage": "Seite nicht gefunden. Bitte URL überprüfen.",
+			"additionalInformation": "HTTP-Statuscode: 404"
+		},
+		"500": {
+			"errorMessage": "Interner Serverfehler. Bitte später erneut versuchen.",
+			"additionalInformation": "HTTP-Statuscode: 500"
+		},
+		"502": {
+			"errorMessage": "Ungültige Antwort erhalten. Bitte später erneut versuchen.",
+			"additionalInformation": "HTTP-Statuscode: 502"
+		},
+		"503": {
+			"errorMessage": "Die Anfrage konnte nicht verarbeitet werden. Bitte später erneut versuchen.",
+			"additionalInformation": "HTTP-Statuscode: 503"
+		},
+		"504": {
+			"errorMessage": "Zeitüberschreitung. Bitte später erneut versuchen.",
+			"additionalInformation": "HTTP-Statuscode: 504"
+		},
+		"undefined": {
+			"errorMessage": "Verbindung nicht möglich, bitte Netzwerkverbindung überprüfen.",
+			"additionalInformation": "Undefinierter HTTP-Fehler "
+		}
+	}
 }

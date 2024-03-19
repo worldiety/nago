@@ -1,22 +1,22 @@
-import type { Component } from 'vue';
-import UiScaffold from '@/components/UiScaffold.vue';
-import UiVBox from '@/components/UiVBox.vue';
-import UiHBox from '@/components/UiHBox.vue';
+import UiButton from '@/components/UiButton.vue';
+import UiCard from '@/components/UiCard.vue';
 import UiChip from '@/components/UiChip.vue';
 import UiDialog from '@/components/UiDialog.vue';
 import UiDivider from '@/components/UiDivider.vue';
-import UiStepper from '@/components/UiStepper.vue';
-import UiUploadField from '@/components/UiUploadField.vue';
-import UiImage from '@/components/UiImage.vue';
-import UiTextField from '@/components/UiTextField.vue';
-import UiTextArea from '@/components/UiTextArea.vue';
-import UiToggle from '@/components/UiToggle.vue';
-import UiText from '@/components/UiText.vue';
-import UiButton from '@/components/UiButton.vue';
-import UiGrid from '@/components/UiGrid.vue';
-import UiTable from '@/components/UiTable.vue';
-import UiCard from '@/components/UiCard.vue';
 import UiDropdown from '@/components/UiDropdown.vue';
+import UiGrid from '@/components/UiGrid.vue';
+import UiHBox from '@/components/UiHBox.vue';
+import UiImage from '@/components/UiImage.vue';
+import UiScaffold from '@/components/UiScaffold.vue';
+import UiStepper from '@/components/UiStepper.vue';
+import UiTable from '@/components/UiTable.vue';
+import UiText from '@/components/UiText.vue';
+import UiTextArea from '@/components/UiTextArea.vue';
+import UiTextField from '@/components/UiTextField.vue';
+import UiToggle from '@/components/UiToggle.vue';
+import UiUploadField from '@/components/UiUploadField.vue';
+import UiVBox from '@/components/UiVBox.vue';
+import type { Component } from 'vue';
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();

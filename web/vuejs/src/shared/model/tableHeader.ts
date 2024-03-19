@@ -1,5 +1,5 @@
 export interface TableHeader {
-	title: string
-	align: string
-	key: string
+	title: string;
+	align: string;
+	key: string;
 }

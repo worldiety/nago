@@ -1,5 +1,5 @@
 export interface SetServerProperty {
-	type: 'setProp'
-	id: number
-	value: any
+	type: 'setProp';
+	id: number;
+	value: any;
 }

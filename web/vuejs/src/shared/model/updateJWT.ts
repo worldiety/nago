@@ -1,5 +1,5 @@
 export interface UpdateJWT {
-	type: 'updateJWT'
-	token: string
-	OIDCName: 'Keycloak'
+	type: 'updateJWT';
+	token: string;
+	OIDCName: 'Keycloak';
 }
