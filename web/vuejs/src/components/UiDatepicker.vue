@@ -123,7 +123,7 @@ function datepickerClicked(forceClose: boolean): void {
 
 			<!-- Datepicker -->
 			<div v-if="props.ui.expanded.value" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30">
-				<div class="relative bg-white rounded-md shadow-lg p-2 z-10 max-w-96">
+				<div class="relative bg-white rounded-md shadow-lg max-w-96 h-96 p-2 z-10">
 					<!-- Datepicker header -->
 					<div class="flex justify-between items-center gap-x-2">
 						<div class="size-8 shrink-0 grow-0"></div>
