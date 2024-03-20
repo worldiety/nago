@@ -20,10 +20,11 @@ const currentYear = ref<number>(currentDate.getFullYear());
 const yearInput = ref<string>(currentYear.value.toString(10));
 
 /**
- * Only allow year values with a length between 1 and 4
+ * Only allow year values with a length between 1 and 4.
+ * Does also prevent values less than 1 and greater than 9999.
  */
 watch(yearInput, (newValue, oldValue) => {
-	if (newValue.match(/^[0-9]{1,4}$/)) {
+	if (newValue.match(/^[1-9][0-9]{0,3}$/)) {
 		currentYear.value = parseInt(newValue, 10);
 	} else {
 		yearInput.value = oldValue;
