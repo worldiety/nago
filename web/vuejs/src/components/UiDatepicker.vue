@@ -20,10 +20,11 @@ const currentYear = ref<number>(currentDate.getFullYear());
 const yearInput = ref<string>(currentYear.value.toString(10));
 
 /**
- * Only allow year values with a length between 1 and 4
+ * Only allow year values with a length between 1 and 4.
+ * Does also prevent values less than 1 and greater than 9999.
  */
 watch(yearInput, (newValue, oldValue) => {
-	if (newValue.match(/^[0-9]{1,4}$/)) {
+	if (newValue.match(/^[1-9][0-9]{0,3}$/)) {
 		currentYear.value = parseInt(newValue, 10);
 	} else {
 		yearInput.value = oldValue;
@@ -122,7 +123,7 @@ function datepickerClicked(forceClose: boolean): void {
 
 			<!-- Datepicker -->
 			<div v-if="props.ui.expanded.value" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30">
-				<div class="relative bg-white rounded-md shadow-lg p-2 z-10 max-w-96">
+				<div class="relative bg-white rounded-md shadow-lg max-w-96 h-96 p-2 z-10">
 					<!-- Datepicker header -->
 					<div class="flex justify-between items-center gap-x-2">
 						<div class="size-8 shrink-0 grow-0"></div>
