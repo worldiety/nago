@@ -229,6 +229,15 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
+								slider.Label().Set("Slider")
+								slider.Hint().Set("Das ist ein Hinweis")
+								slider.Min().Set(10)
+								slider.Max().Set(25)
+								slider.Stepsize().Set(.5)
+								slider.Value().Set(11)
+							}))
+
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
 								datepicker.Label().Set("Datepicker-Label")
 								datepicker.Error().Set("Das ist auch eine Fehlermeldung")
