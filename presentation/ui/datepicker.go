@@ -12,7 +12,7 @@ type Datepicker struct {
 	selectedDay        Int
 	selectedMonthIndex Int
 	selectedYear       Int
-	onToggleExpanded   *Func
+	onClicked          *Func
 	onSelectionChanged *Func
 	properties         slice.Slice[Property]
 }
@@ -28,11 +28,11 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		selectedDay:        NewShared[int64]("selectedDay"),
 		selectedMonthIndex: NewShared[int64]("selectedMonthIndex"),
 		selectedYear:       NewShared[int64]("selectedYear"),
-		onToggleExpanded:   NewFunc("onToggleExpanded"),
+		onClicked:          NewFunc("onClicked"),
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.selectedDay, c.selectedMonthIndex, c.selectedYear, c.onToggleExpanded, c.onSelectionChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.selectedDay, c.selectedMonthIndex, c.selectedYear, c.onClicked, c.onSelectionChanged)
 	if with != nil {
 		with(c)
 	}
@@ -73,8 +73,8 @@ func (c *Datepicker) SelectedYear() Int {
 	return c.selectedYear
 }
 
-func (c *Datepicker) OnToggleExpanded() *Func {
-	return c.onToggleExpanded
+func (c *Datepicker) OnClicked() *Func {
+	return c.onClicked
 }
 
 func (c *Datepicker) OnSelectionChanged() *Func {
