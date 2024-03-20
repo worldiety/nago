@@ -14,6 +14,6 @@ export interface LiveDatepicker {
 	selectedDay: PropertyInt,
 	selectedMonthIndex: PropertyInt,
 	selectedYear: PropertyInt,
-	onToggleExpanded: PropertyFunc,
+	onClicked: PropertyFunc,
 	onSelectionChanged: PropertyFunc,
 }
