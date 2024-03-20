@@ -230,7 +230,7 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
-								datepicker.Label().Set("Datepicker")
+								datepicker.Label().Set("Datepicker-Label")
 								datepicker.Error().Set("Das ist auch eine Fehlermeldung")
 								datepicker.OnClicked().Set(func() {
 									datepicker.Expanded().Set(!datepicker.Expanded().Get())

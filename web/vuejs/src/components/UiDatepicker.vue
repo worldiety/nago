@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { LiveDatepicker } from '@/shared/model/liveDatepicker';
-import { computed, onMounted, onUpdated, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
+import Close from '@/assets/svg/close.svg';
 import { useNetworkStore } from '@/stores/networkStore';
 import monthNames from '@/shared/monthNames';
 
@@ -17,19 +18,6 @@ const currentDay = ref<number>(currentDate.getDate());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
 const currentYear = ref<number>(currentDate.getFullYear());
 const yearInput = ref<string>(currentYear.value.toString(10));
-
-onMounted(() => {
-	if (props.ui.expanded.value) {
-		document.addEventListener('click', closeDatepicker);
-	}
-})
-
-onUpdated(() => {
-	document.removeEventListener('click', closeDatepicker);
-	if (props.ui.expanded.value) {
-		document.addEventListener('click', closeDatepicker);
-	}
-})
 
 /**
  * Only allow year values with a length between 1 and 4
@@ -89,6 +77,7 @@ function decreaseMonth(): void {
 	if (currentMonthIndex.value === 0) {
 		currentMonthIndex.value = 11;
 		currentYear.value -= 1;
+		yearInput.value = currentYear.value.toString(10);
 		return;
 	}
 	currentMonthIndex.value -= 1;
@@ -98,6 +87,7 @@ function increaseMonth(): void {
 	if (currentMonthIndex.value === 11) {
 		currentMonthIndex.value = 0;
 		currentYear.value += 1;
+		yearInput.value = currentYear.value.toString(10);
 		return;
 	}
 	currentMonthIndex.value += 1;
@@ -106,17 +96,6 @@ function increaseMonth(): void {
 function datepickerClicked(forceClose: boolean): void {
 	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
 		networkStore.invokeFunc(props.ui.onClicked);
-	}
-}
-
-function closeDatepicker(e: MouseEvent) {
-	e.preventDefault();
-	if (e.target instanceof HTMLElement && datepicker.value) {
-		const targetHTMLElement = e.target as HTMLElement;
-		const datepickerItemWasClicked = targetHTMLElement.compareDocumentPosition(datepicker.value) & Node.DOCUMENT_POSITION_CONTAINS;
-		if (!datepickerItemWasClicked) {
-			networkStore.invokeFunc(props.ui.onClicked);
-		}
 	}
 }
 </script>
@@ -142,54 +121,81 @@ function closeDatepicker(e: MouseEvent) {
 			</div>
 
 			<!-- Datepicker -->
-			<div v-if="props.ui.expanded.value" ref="datepicker" class="absolute top-12 left-0 bg-white rounded-md shadow-lg p-2 z-10">
-				<div class="flex justify-between items-center mb-4">
-					<div
-						class="effect-hover flex justify-center items-center rounded-full size-8"
-						tabindex="0"
-						@click="decreaseMonth"
-						@keydown.enter="decreaseMonth"
-					>
-						<ArrowDown class="rotate-90 h-4" />
-					</div>
-					<div class="flex justify-center items-center basis-1/2 gap-x-px">
-						<div class="basis-1/2 shrink-0 grow-0">
-							<select v-model="currentMonthIndex" class="effect-hover border-0 text-black cursor-default rounded-l-md w-full">
-								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
-									{{ monthEntry[1].substring(0, 3) }}
-								</option>
-							</select>
-						</div>
-						<div class="basis-1/2 shrink-0 grow-0">
-							<input v-model="yearInput" type="text" class="effect-hover border-0 rounded-r-md text-right w-full">
+			<div v-if="props.ui.expanded.value" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30">
+				<div class="relative bg-white rounded-md shadow-lg p-2 z-10 max-w-96">
+					<!-- Datepicker header -->
+					<div class="flex justify-between items-center gap-x-2">
+						<div class="size-8 shrink-0 grow-0"></div>
+						<p class="truncate">{{ props.ui.label.value }}</p>
+						<div
+							class="effect-hover flex justify-center items-center rounded-full size-8 shrink-0 grow-0"
+							tabindex="0"
+							@click="datepickerClicked(true)"
+							@keydown.enter="datepickerClicked(true)"
+						>
+							<Close class="h-4" />
 						</div>
 					</div>
-					<div
-						class="effect-hover flex justify-center items-center rounded-full size-8"
-						tabindex="0"
-						@click="increaseMonth"
-						@keydown.enter="increaseMonth"
-					>
-						<ArrowDown class="-rotate-90 h-4" />
+					<div class="border-b border-b-black -mx-2 my-2"></div>
+
+					<!-- Datepicker content -->
+					<div class="flex justify-between items-center mb-4">
+						<div
+							class="effect-hover flex justify-center items-center rounded-full size-8"
+							tabindex="0"
+							@click="decreaseMonth"
+							@keydown.enter="decreaseMonth"
+						>
+							<ArrowDown class="rotate-90 h-4" />
+						</div>
+						<div class="flex justify-center items-center basis-1/2 gap-x-px">
+							<div class="basis-1/2 shrink-0 grow-0">
+								<select v-model="currentMonthIndex" class="effect-hover border-0 text-black cursor-default rounded-l-md w-full">
+									<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
+										{{ monthEntry[1].substring(0, 3) }}
+									</option>
+								</select>
+							</div>
+							<div class="basis-1/2 shrink-0 grow-0">
+								<input v-model="yearInput" type="text" class="effect-hover border-0 rounded-r-md text-right w-full">
+							</div>
+						</div>
+						<div
+							class="effect-hover flex justify-center items-center rounded-full size-8"
+							tabindex="0"
+							@click="increaseMonth"
+							@keydown.enter="increaseMonth"
+						>
+							<ArrowDown class="-rotate-90 h-4" />
+						</div>
+					</div>
+
+					<div class="grid grid-cols-7 gap-2 text-center leading-none">
+						<span>Mo</span>
+						<span>Di</span>
+						<span>Mi</span>
+						<span>Do</span>
+						<span>Fr</span>
+						<span>Sa</span>
+						<span>So</span>
+
+						<div v-for="(_offset, index) in dayStartOffsetInMonth" :key="index"></div>
+						<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
+							<div
+								class="day effect-hover flex justify-center items-center cursor-default"
+								:class="{'current-day': isInCurrentMonth(day), 'selected-day': isSelectedDay(day)}"
+								tabindex="0"
+								@click="selectDay(day)"
+								@keydown.enter="selectDay(day)"
+							>
+								<span>{{ day }}</span>
+							</div>
+						</div>
 					</div>
 				</div>
 
-				<div class="grid grid-cols-7 gap-2 text-center leading-none">
-					<span>Mo</span>
-					<span>Di</span>
-					<span>Mi</span>
-					<span>Do</span>
-					<span>Fr</span>
-					<span>Sa</span>
-					<span>So</span>
-
-					<div v-for="(_offset, index) in dayStartOffsetInMonth" :key="index"></div>
-					<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
-						<div class="day effect-hover flex justify-center items-center cursor-default" :class="{'current-day': isInCurrentMonth(day), 'selected-day': isSelectedDay(day)}" @click="selectDay(day)">
-							<span>{{ day }}</span>
-						</div>
-					</div>
-				</div>
+				<!-- Blurred Background -->
+				<div class="absolute top-0 left-0 bottom-0 right-0 backdrop-blur z-0" @click="networkStore.invokeFunc(props.ui.onClicked)"></div>
 			</div>
 		</div>
 		<!-- Error message has precedence over hints -->
