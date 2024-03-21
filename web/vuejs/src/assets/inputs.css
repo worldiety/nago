@@ -37,10 +37,71 @@ input[type="checkbox"]:disabled::before {
 	@apply border border-black rounded-md text-black cursor-default;
 }
 
+
 .input-field:hover {
 	@apply border-wdy-green text-wdy-green;
 }
 
 .input-field:disabled, .input-field.input-field-disabled {
 	@apply border-disabled-background bg-disabled-background text-disabled-text;
+}
+
+/* Range input styling (see https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/, https://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html) */
+
+input[type=range] {
+	@apply appearance-none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	@apply border border-solid border-black rounded-full bg-white cursor-default h-4 w-4;
+	margin-top: -.5rem;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+	@apply border-wdy-green;
+}
+
+input[type="range"]::-moz-range-thumb {
+	@apply border border-solid border-black rounded-full bg-white cursor-default h-4 w-4;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+	@apply border-wdy-green;
+}
+
+input[type="range"]::-ms-thumb {
+	@apply border border-solid border-black rounded-full bg-white cursor-default h-4 w-4;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	@apply w-full h-px bg-black cursor-default;
+}
+
+input[type="range"]:focus::-webkit-slider-runnable-track {
+	@apply bg-black;
+}
+
+input[type="range"]::-moz-range-track {
+	@apply w-full h-px bg-black;
+}
+
+input[type="range"]::-moz-range-progress {
+	@apply w-full h-px bg-black;
+}
+
+input[type="range"]::-ms-track {
+	@apply w-full h-px bg-transparent border-transparent text-transparent;
+	border-width: 16px 0;
+}
+input[type="range"]::-ms-fill-lower {
+	@apply bg-black;
+}
+input[type="range"]:focus::-ms-fill-lower {
+	@apply bg-black;
+}
+input[type="range"]::-ms-fill-upper {
+	@apply bg-black;
+}
+input[type="range"]:focus::-ms-fill-upper {
+	@apply bg-black;
 }
