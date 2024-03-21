@@ -12,7 +12,9 @@ const networkStore = useNetworkStore();
 const inputValue = ref<string>('');
 
 watch(inputValue, (newValue, oldValue) => {
-	if (!newValue.match(/^[0-9]*$/)) {
+	if (newValue === '') {
+		newValue = '0';
+	} else if (!newValue.match(/^[0-9]+$/)) {
 		inputValue.value = oldValue;
 		return;
 	}
