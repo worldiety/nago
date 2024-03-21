@@ -11,6 +11,11 @@ const props = defineProps<{
 const networkStore = useNetworkStore();
 const inputValue = ref<string>('');
 
+/**
+ * Validates the input value and submits it, if it is valid.
+ * The '-' sign and the empty string are treated as 0.
+ * If the input value is invalid, the value gets reset to the last known valid value.
+ */
 watch(inputValue, (newValue, oldValue) => {
 	if (newValue === '' || newValue == '-') {
 		newValue = '0';
