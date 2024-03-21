@@ -39,6 +39,9 @@ export function useHttp() {
 	async function request(url: string | URL, method = 'GET', body: undefined | any = undefined) {
 		const user = await auth.getUser;
 
+		let customError = {} as CustomError
+
+
 		if (user?.expired) {
 			console.log('request: Oo user already expired and got that old one');
 		}
@@ -61,26 +64,29 @@ export function useHttp() {
 		if (authRequired) {
 			await auth.signIn();
 		}
+		if (!navigator.onLine) {
+			customError = {
+				errorCode: "001"
+			}
 
-
-
-
-
+			throw customError as CustomError
+		}
 
 		try {
 
 			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
 		} catch (e) {
+
 				// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
-			const contentType  =response.headers.get('content-type')
+			const contentType  = response.headers.get('content-type')
 			console.log('CONTENT-TYPE', contentType)
 
 			if (!contentType || !contentType.includes('application/json')) {
-				const contentError: CustomError = {
+				customError = {
 					errorCode: "002"
 				}
 
-				throw contentError as CustomError
+				throw customError as CustomError
 			}
 
 			if (!response.ok) {
