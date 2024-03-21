@@ -15,21 +15,26 @@ function onClick() {
 	networkStore.invokeFunc(props.ui.action);
 }
 
-const clazz = computed<string>(() => {
+const buttonClasses = computed<string>(() => {
+	const classes: string[] = [];
 	switch (props.ui.color.value) {
 		case 'primary':
-			return 'btn-primary';
+			classes.push('button-primary');
+			break;
 		case 'secondary':
-			return 'btn-secondary';
+			classes.push('button-secondary');
+			break;
 		case 'tertiary':
-			return 'btn-tertiary';
-		case 'subtile':
-			return 'btn-subtile';
-		case 'destructive':
-			return 'btn-destructive';
+			classes.push('button-tertiary');
+			break;
 		default:
-			return 'btn-default';
+			classes.push('button-default');
 	}
+	if (iconOnly.value) {
+		// Make button round when it shows an icon only
+		classes.push('!p-0 !w-10');
+	}
+	return classes.join(' ');
 });
 
 const iconOnly = computed<boolean>(() => {
@@ -38,15 +43,12 @@ const iconOnly = computed<boolean>(() => {
 </script>
 
 <template>
-	<button :class="clazz" @click="onClick" :disabled="props.ui.disabled.value">
-		<svg
-			v-inline
-			class="me-2 h-3.5 w-3.5"
-			v-html="props.ui.preIcon.value"
-			v-if="props.ui.preIcon.value && !iconOnly"
-		></svg>
-		{{ props.ui.caption.value }}
-		<span class="ms-2 h-3.5 w-3.5" v-html="props.ui.postIcon.value" v-if="props.ui.postIcon.value"></span>
-		<svg v-inline class="h-4 w-4" v-if="iconOnly" v-html="props.ui.preIcon.value"></svg>
+	<button :class="buttonClasses" :disabled="props.ui.disabled.value" @click="onClick">
+		<svg v-if="iconOnly" v-inline class="h-4 w-4" v-html="props.ui.preIcon.value"></svg>
+		<template v-else>
+			<svg v-if="props.ui.preIcon.value" class="mr-2 h-4 w-4" v-html="props.ui.preIcon.value"></svg>
+			<span>{{ props.ui.caption.value }}</span>
+			<svg v-if="props.ui.postIcon.value" class="ml-2 h-4 w-4" v-html="props.ui.postIcon.value"></svg>
+		</template>
 	</button>
 </template>
