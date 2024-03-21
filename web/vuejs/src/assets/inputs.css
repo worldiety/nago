@@ -53,7 +53,7 @@ input[type=range] {
 }
 
 input[type="range"]::-webkit-slider-thumb {
-	@apply border border-solid border-black rounded-full bg-white cursor-default h-4 w-4;
+	@apply border border-solid border-black rounded-full bg-white cursor-default shadow-none h-4 w-4;
 	margin-top: -.5rem;
 }
 
@@ -93,15 +93,19 @@ input[type="range"]::-ms-track {
 	@apply w-full h-px bg-transparent border-transparent text-transparent;
 	border-width: 16px 0;
 }
+
 input[type="range"]::-ms-fill-lower {
 	@apply bg-black;
 }
+
 input[type="range"]:focus::-ms-fill-lower {
 	@apply bg-black;
 }
+
 input[type="range"]::-ms-fill-upper {
 	@apply bg-black;
 }
+
 input[type="range"]:focus::-ms-fill-upper {
 	@apply bg-black;
 }
