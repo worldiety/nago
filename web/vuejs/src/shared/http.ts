@@ -1,5 +1,6 @@
 import { useAuth } from '@/stores/authStore';
-import type {CustomError} from "@/composables/errorhandling";
+import {CustomError} from "@/composables/errorhandling";
+import {ref} from "vue";
 
 
 export function userHeaders() {
@@ -47,7 +48,8 @@ export function useHttp() {
 			bodyData = JSON.stringify(body);
 		}
 
-		const response = await fetch(url, {
+
+			const response = await fetch(url, {
 			method,
 			body: bodyData,
 			headers: {
@@ -60,16 +62,31 @@ export function useHttp() {
 			await auth.signIn();
 		}
 
-		if (!response.ok) {
-			throw response;
-		}
+
+
+
+
 
 		try {
+
 			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
 		} catch (e) {
-			// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
-			console.log('Kein gültiges JSON bekommen', e);
-			throw e;
+				// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
+			const contentType  =response.headers.get('content-type')
+			console.log('CONTENT-TYPE', contentType)
+
+			if (!contentType || !contentType.includes('application/json')) {
+				const contentError: CustomError = {
+					errorCode: "002"
+				}
+
+				throw contentError as CustomError
+			}
+
+			if (!response.ok) {
+				throw response;
+			}
+
 		}
 	}
 

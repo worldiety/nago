@@ -3,7 +3,8 @@ import { useI18n } from 'vue-i18n';
 
 export interface CustomError {
 	//  title: string;
-	message: string
+	errorCode?: string
+	message?: string
 	additionalInformation?: string
 }
 
@@ -31,16 +32,13 @@ export function useErrorHandling() {
 				//  message: translate('httpErrorcodes.'+errorCode+'.errorMessage'),
 				additionalInformation: 'TODO: Message definieren',
 			};
-		} else if (
-			/*typeof (  rawError as CustomError).title === 'string'  && */ typeof (rawError as CustomError).message ===
-			'string'
-		) {
+		} else if (rawError as CustomError) {
 			console.log('rawError ist CustomError');
 			const rawCustomError = rawError as CustomError;
 			error.value = {
 				//  title: rawCustomError.title,
-				message: rawCustomError.message,
-				additionalInformation: rawCustomError.additionalInformation,
+				message: String(i18n.t('customErrorcodes.' + rawCustomError.errorCode + '.errorMessage')),
+				additionalInformation: String(i18n.t('customErrorcodes.' + rawCustomError.errorCode + '.additionalInformation')),
 			};
 		} else {
 			console.log('rawError ist unknown');
