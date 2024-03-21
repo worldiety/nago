@@ -18,6 +18,7 @@ import UiUploadField from '@/components/UiUploadField.vue';
 import UiVBox from '@/components/UiVBox.vue';
 import UiDatepicker from '@/components/UiDatepicker.vue';
 import UiSlider from '@/components/UiSlider.vue';
+import UiNumberField from '@/components/UiNumberField.vue';
 import type { Component } from 'vue';
 
 // Add new UI components to the following map
@@ -42,5 +43,6 @@ uiComponentsMap.set('Card', UiCard);
 uiComponentsMap.set('Dropdown', UiDropdown);
 uiComponentsMap.set('Datepicker', UiDatepicker);
 uiComponentsMap.set('Slider', UiSlider);
+uiComponentsMap.set('NumberField', UiNumberField);
 
 export default uiComponentsMap;

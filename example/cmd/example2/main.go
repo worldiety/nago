@@ -229,6 +229,13 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								numberField.Label().Set("Nummernfeld für Ganzzahlen")
+								numberField.OnValueChanged().Set(func() {
+									println("number field value changed")
+								})
+							}))
+
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
 								slider.Label().Set("Slider")
 								slider.Hint().Set("Das ist ein Hinweis")
