@@ -31,6 +31,7 @@ function submitSliderValue(): void {
 			:disabled="props.ui.disabled.value"
 			@mouseup="submitSliderValue"
 			@touchend="submitSliderValue"
+			@keyup.left.right="submitSliderValue"
 		/>
 
 		<!-- Error message has precedence over hints -->
