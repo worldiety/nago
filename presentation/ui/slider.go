@@ -3,32 +3,34 @@ package ui
 import "go.wdy.de/nago/container/slice"
 
 type Slider struct {
-	id         CID
-	disabled   Bool
-	label      String
-	hint       String
-	error      String
-	value      Float
-	min        Int
-	max        Int
-	stepsize   Float
-	properties slice.Slice[Property]
+	id          CID
+	disabled    Bool
+	label       String
+	hint        String
+	error       String
+	value       Float
+	min         Int
+	max         Int
+	stepsize    Float
+	initialized Bool
+	properties  slice.Slice[Property]
 }
 
 func NewSlider(with func(slider *Slider)) *Slider {
 	c := &Slider{
-		id:       nextPtr(),
-		disabled: NewShared[bool]("disabled"),
-		label:    NewShared[string]("label"),
-		hint:     NewShared[string]("hint"),
-		error:    NewShared[string]("error"),
-		value:    NewShared[float64]("value"),
-		min:      NewShared[int64]("min"),
-		max:      NewShared[int64]("max"),
-		stepsize: NewShared[float64]("stepsize"),
+		id:          nextPtr(),
+		disabled:    NewShared[bool]("disabled"),
+		label:       NewShared[string]("label"),
+		hint:        NewShared[string]("hint"),
+		error:       NewShared[string]("error"),
+		value:       NewShared[float64]("value"),
+		min:         NewShared[int64]("min"),
+		max:         NewShared[int64]("max"),
+		stepsize:    NewShared[float64]("stepsize"),
+		initialized: NewShared[bool]("initialized"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized)
 	if with != nil {
 		with(c)
 	}
@@ -65,6 +67,10 @@ func (c *Slider) Max() Int {
 
 func (c *Slider) Stepsize() Float {
 	return c.stepsize
+}
+
+func (c *Slider) Initialized() Bool {
+	return c.initialized
 }
 
 func (c *Slider) Properties() slice.Slice[Property] {
