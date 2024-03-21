@@ -33,7 +33,7 @@ watch(inputValue, (newValue, oldValue) => {
 			{{ props.ui.label.value }}
 		</label>
 
-		<input v-model="inputValue" type="text" class="input-field w-full" inputmode="numeric">
+		<input v-model="inputValue" type="text" class="input-field w-full" inputmode="numeric" :disabled="props.ui.disabled.value">
 
 		<!-- Error message has precedence over hints -->
 		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>

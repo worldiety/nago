@@ -232,7 +232,11 @@ func main() {
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.OnValueChanged().Set(func() {
-									println("number field value changed")
+									if numberField.Value().Get() == 3 {
+										numberField.Error().Set("Wert darf nicht 3 sein")
+									} else {
+										numberField.Error().Set("")
+									}
 								})
 							}))
 
