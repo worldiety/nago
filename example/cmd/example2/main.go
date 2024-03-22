@@ -229,13 +229,24 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								numberField.Label().Set("Nummernfeld für Ganzzahlen")
+								numberField.OnValueChanged().Set(func() {
+									if numberField.Value().Get() == 3 {
+										numberField.Error().Set("Wert darf nicht 3 sein")
+									} else {
+										numberField.Error().Set("")
+									}
+								})
+							}))
+
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
 								slider.Label().Set("Slider")
 								slider.Hint().Set("Das ist ein Hinweis")
-								slider.Min().Set(10)
+								slider.Min().Set(-10)
 								slider.Max().Set(25)
 								slider.Stepsize().Set(.5)
-								slider.Value().Set(11)
+								slider.Initialized().Set(false)
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -8,7 +8,11 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
-const sliderValue = ref<number>(props.ui.value.value);
+const sliderValue = ref<number>(0);
+
+onBeforeMount(() => {
+	sliderValue.value = props.ui.initialized.value ? props.ui.value.value : props.ui.min.value;
+});
 
 function submitSliderValue(): void {
 	networkStore.invokeSetProp({
