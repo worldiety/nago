@@ -49,7 +49,7 @@ function radioButtonClicked(): void {
 	@apply outline-none ring-0;
 }
 
-.input-radio:hover input:checked {
+.input-radio:hover input:not(:disabled) {
 	@apply border-ora-orange;
 }
 
