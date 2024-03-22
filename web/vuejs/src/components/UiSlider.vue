@@ -2,7 +2,6 @@
 import type { LiveSlider } from '@/shared/model/liveSlider';
 import { onBeforeMount, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import UiCheckbox from '@/components/UiCheckbox.vue';
 
 const props = defineProps<{
 	ui: LiveSlider;
@@ -42,7 +41,5 @@ function submitSliderValue(): void {
 		<!-- Error message has precedence over hints -->
 		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
 		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
-
-		<UiCheckbox />
 	</div>
 </template>
