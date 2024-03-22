@@ -1,5 +1,6 @@
 /* Custom styled checkboxes: https://moderncss.dev/pure-css-custom-checkbox-style/ */
-input[type="checkbox"]:checked::before {
+input[type="checkbox"]:checked::before,
+input[type="radio"]:checked::before {
 	@apply opacity-100;
 }
 
@@ -7,33 +8,57 @@ input[type="checkbox"]:checked {
 	@apply bg-ora-orange dark:bg-ora-orange;
 }
 
+input[type="radio"]:checked {
+	@apply bg-transparent border-black dark:border-white dark:bg-transparent;
+}
+
 input[type="checkbox"] {
 	@apply grid border border-black dark:border-white appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
 	font: inherit;
 }
 
-input[type="checkbox"]:hover {
+input[type="radio"] {
+	@apply grid border border-black dark:border-white appearance-none bg-transparent place-content-center w-4 h-4 m-0;
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
 	@apply border-ora-orange;
 }
 
-input[type="checkbox"]::before {
+input[type="checkbox"]::before,
+input[type="radio"]::before {
 	@apply block opacity-0 h-2.5 w-2.5;
 	content: "";
 	border-radius: 50%;
-	box-shadow: inset 1em 1em theme('colors.black');
 	transform-origin: bottom left;
+}
+
+input[type="checkbox"]::before {
+	box-shadow: inset 1em 1em theme('colors.black');
 	clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="radio"]::before {
+	box-shadow: inset 1em 1em theme('colors.ora-orange');
+	clip-path: circle(100%);
 }
 
 input[type="checkbox"]:checked:disabled {
 	@apply bg-disabled-background;
 }
 
-input[type="checkbox"]:disabled:not(:checked) {
+input[type="radio"]:checked:disabled {
+	@apply bg-transparent border-disabled-text;
+}
+
+input[type="checkbox"]:disabled:not(:checked),
+input[type="radio"]:disabled:not(:checked) {
 	@apply border-disabled-text;
 }
 
-input[type="checkbox"]:disabled::before {
+input[type="checkbox"]:disabled::before,
+input[type="radio"]:disabled::before {
 	box-shadow: inset 1em 1em theme('colors.disabled.text');
 }
 
