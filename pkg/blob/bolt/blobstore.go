@@ -111,6 +111,8 @@ func (b *boltTx) Put(entry blob.Entry) error {
 		return err
 	}
 
+	defer reader.Close()
+
 	buf, err := io.ReadAll(reader)
 	if err != nil {
 		return err

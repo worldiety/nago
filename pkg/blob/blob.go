@@ -39,6 +39,40 @@ type Tx interface {
 	Get(key string) (std.Option[Entry], error)
 }
 
+// Read transfers from the store all bytes into the given writer, e.g. into a http response.
+func Read(store Store, key string, dst io.Writer) error {
+	err := store.View(func(tx Tx) error {
+		optEnt, err := tx.Get(key)
+		if err != nil {
+			return err
+		}
+
+		reader, err := optEnt.Unwrap().Open()
+		if err != nil {
+			return err
+		}
+
+		defer reader.Close()
+
+		_, err = io.Copy(dst, reader)
+		return err
+	})
+
+	return err
+}
+
+// Write transfers all bytes from the given source into the store, e.g. from a request body.
+func Write(store Store, key string, src io.Reader) error {
+	return store.Update(func(tx Tx) error {
+		return tx.Put(Entry{
+			Key: key,
+			Open: func() (io.ReadCloser, error) {
+				return readerCloser{Reader: src}, nil
+			},
+		})
+	})
+}
+
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
 func Put(store Store, key string, value []byte) error {
 	return store.Update(func(tx Tx) error {
@@ -66,6 +100,8 @@ func Get(store Store, key string) (std.Option[[]byte], error) {
 			return err
 		}
 
+		defer reader.Close()
+
 		buf, err := io.ReadAll(reader)
 		if err != nil {
 			return err
@@ -79,7 +115,7 @@ func Get(store Store, key string) (std.Option[[]byte], error) {
 }
 
 type readerCloser struct {
-	*bytes.Reader
+	io.Reader
 }
 
 func (readerCloser) Close() error {
