@@ -407,6 +407,10 @@ func main() {
 									btn.Style().Set(ui.SecondaryIntent)
 								}),
 								ui.NewButton(func(btn *ui.Button) {
+									btn.Caption().Set("tertiary")
+									btn.Style().Set(ui.TertiaryIntent)
+								}),
+								ui.NewButton(func(btn *ui.Button) {
 									btn.Caption().Set("destructive")
 									btn.Style().Set(ui.Destructive)
 								}),

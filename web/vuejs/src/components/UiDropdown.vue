@@ -94,7 +94,7 @@ function isSelected(item: LiveDropdownItem): boolean {
 						:selected="isSelected(dropdownItem)"
 					/>
 					<div v-if="props.ui.multiselect.value" class="flex justify-center p-2">
-						<button class="btn-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
+						<button class="button-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
 					</div>
 				</div>
 			</div>
