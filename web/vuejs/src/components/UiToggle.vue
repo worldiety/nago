@@ -49,7 +49,8 @@ function onClick() {
 }
 
 .toggle-switch::after {
-	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border border-black bg-transparent transition-all content-[''];
+	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border border-black bg-transparent transition-transform content-[''];
+	@apply dark:border-white;
 }
 
 .toggle-switch.toggle-switch-checked {
@@ -72,12 +73,16 @@ function onClick() {
 	@apply outline-ora-orange;
 }
 
+.toggle-switch-container:hover .toggle-switch::after {
+	@apply border-ora-orange;
+}
+
 .toggle-switch-container:focus {
 	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
 }
 
 .toggle-switch-container.toggle-switch-container-disabled:hover {
-	@apply pointer-events-none;
+	@apply bg-transparent;
 }
 
 .toggle-switch-container.toggle-switch-container-disabled:focus {
