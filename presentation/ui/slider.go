@@ -13,6 +13,7 @@ type Slider struct {
 	max         Int
 	stepsize    Float
 	initialized Bool
+	onChanged   *Func
 	properties  slice.Slice[Property]
 }
 
@@ -28,9 +29,10 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		max:         NewShared[int64]("max"),
 		stepsize:    NewShared[float64]("stepsize"),
 		initialized: NewShared[bool]("initialized"),
+		onChanged:   NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
 	if with != nil {
 		with(c)
 	}
@@ -72,6 +74,8 @@ func (c *Slider) Stepsize() Float {
 func (c *Slider) Initialized() Bool {
 	return c.initialized
 }
+
+func (c *Slider) OnChanged() *Func { return c.onChanged }
 
 func (c *Slider) Properties() slice.Slice[Property] {
 	return c.properties

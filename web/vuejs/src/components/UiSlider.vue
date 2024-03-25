@@ -17,10 +17,10 @@ onBeforeMount(() => {
 
 function submitSliderValue(): void {
 	dragging.value = false;
-	networkStore.invokeSetProp({
+	networkStore.invokeFuncAndSetProp({
 		...props.ui.value,
 		value: sliderValue.value,
-	});
+	}, props.ui.onChanged);
 }
 </script>
 

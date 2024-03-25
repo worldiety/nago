@@ -91,12 +91,17 @@ input[type="range"]::-webkit-slider-thumb {
 	margin-top: -.5rem;
 }
 
+input[type="range"].slider-uninitialized::-webkit-slider-thumb {
+	@apply bg-black;
+	@apply dark:bg-white;
+}
+
 input[type="range"]:not(:disabled)::-webkit-slider-thumb:hover {
-	@apply ring-ora-orange ring-8 ring-opacity-25;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-25;
 }
 
 input[type="range"].slider-dragging::-webkit-slider-thumb:active {
-	@apply ring-ora-orange ring-8 ring-opacity-35;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-35;
 }
 
 input[type="range"]:disabled::-webkit-slider-thumb {
@@ -110,15 +115,16 @@ input[type="range"]::-moz-range-thumb {
 }
 
 input[type="range"].slider-uninitialized::-moz-range-thumb {
-	@apply bg-transparent outline outline-1 outline-black;
+	@apply bg-black;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:not(:disabled)::-moz-range-thumb:hover {
-	@apply ring-ora-orange ring-8 ring-opacity-25;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-25;
 }
 
 input[type="range"].slider-dragging::-moz-range-thumb:active {
-	@apply ring-ora-orange ring-8 ring-opacity-35;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-35;
 }
 
 input[type="range"]:disabled::-moz-range-thumb {
@@ -131,12 +137,17 @@ input[type="range"]::-ms-thumb {
 	@apply rounded-full bg-ora-orange cursor-default h-4 w-4;
 }
 
+input[type="range"].slider-uninitialized::-ms-thumb {
+	@apply bg-black;
+	@apply dark:bg-white;
+}
+
 input[type="range"]:not(:disabled)::-ms-thumb:hover {
-	@apply ring-ora-orange ring-8 ring-opacity-25;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-25;
 }
 
 input[type="range"].slider-dragging::-ms-thumb:active {
-	@apply ring-ora-orange ring-8 ring-opacity-35;
+	@apply bg-ora-orange ring-ora-orange ring-8 ring-opacity-35;
 }
 
 input[type="range"]:disabled::-ms-thumb {

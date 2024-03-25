@@ -249,6 +249,9 @@ func main() {
 								slider.Stepsize().Set(.5)
 								slider.Disabled().Set(false)
 								slider.Initialized().Set(false)
+								slider.OnChanged().Set(func() {
+									slider.Initialized().Set(true)
+								})
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
