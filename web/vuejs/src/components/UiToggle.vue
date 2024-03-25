@@ -77,7 +77,7 @@ function onClick() {
 	@apply border-ora-orange;
 }
 
-.toggle-switch-container:focus {
+.toggle-switch-container:focus-visible {
 	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
 }
 
@@ -85,7 +85,7 @@ function onClick() {
 	@apply bg-transparent;
 }
 
-.toggle-switch-container.toggle-switch-container-disabled:focus {
+.toggle-switch-container.toggle-switch-container-disabled:focus-visible {
 	@apply outline-none ring-0;
 }
 

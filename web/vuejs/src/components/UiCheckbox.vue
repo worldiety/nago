@@ -37,7 +37,7 @@ function checkboxClicked(): void {
 	@apply bg-opacity-35;
 }
 
-.input-checkbox:focus {
+.input-checkbox:focus-visible {
 	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
 }
 
@@ -45,7 +45,7 @@ function checkboxClicked(): void {
 	@apply bg-transparent;
 }
 
-.input-checkbox.input-checkbox-disabled:focus {
+.input-checkbox.input-checkbox-disabled:focus-visible {
 	@apply outline-none ring-0;
 }
 
