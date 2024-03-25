@@ -13,29 +13,66 @@ const networkStore = useNetworkStore();
 const checked = ref<boolean>(props.ui.checked.value);
 
 function onClick() {
-	networkStore.invokeFuncAndSetProp(props.ui.checked, props.ui.onCheckedChanged);
+	checked.value = !checked.value;
+	networkStore.invokeFuncAndSetProp({
+		...props.ui.checked,
+		value: checked.value,
+	}, props.ui.onCheckedChanged);
 }
 </script>
 
 <template>
-	<label class="relative inline-flex cursor-pointer items-center">
-		<input
-			v-model="checked"
-			type="checkbox"
-			value=""
-			class="peer sr-only"
-			:checked="props.ui.checked.value"
-			:disabled="props.ui.disabled.value"
-			@change="onClick"
-		/>
-		<span
-			v-if="ui.disabled.value"
-			class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-gray-400 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700"
-		></span>
-		<span
-			v-else
-			class="peer h-6 w-11 rounded-full border border-black after:absolute after:start-[6px] after:top-1 after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-[105%] peer-checked:after:border-ora-orange peer-checked:after:bg-ora-orange peer-focus:outline-none peer-focus:outline-2 peer-focus:outline-offset-2 peer-focus:outline-black peer-focus:ring-white peer-focus:ring-2 rtl:peer-checked:after:-translate-x-full dark:border-white"
-		></span>
-		<span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ props.ui.label.value }}</span>
-	</label>
+	<div>
+		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
+		<div
+			class="toggle-switch-container"
+			tabindex="0"
+			@click="onClick"
+			@keydown.enter="onClick"
+		>
+			<div
+				class="toggle-switch"
+				:class="{'toggle-switch-checked': checked}"
+			></div>
+		</div>
+	</div>
 </template>
+
+<style scoped>
+.toggle-switch {
+	@apply relative h-6 w-11 rounded-full outline outline-1 outline-black;
+	@apply dark:outline-white dark:after:outline-white;
+}
+
+.toggle-switch::after {
+	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border border-black bg-transparent transition-all content-[''];
+}
+
+.toggle-switch.toggle-switch-checked {
+	@apply after:translate-x-[105%] after:border-ora-orange after:bg-ora-orange;
+}
+
+.toggle-switch.toggle-switch-disabled {
+
+}
+
+.toggle-switch-container {
+	@apply inline-block rounded-full p-1.5 -ml-1.5;
+}
+
+.toggle-switch-container:hover {
+	@apply bg-ora-orange bg-opacity-25;
+}
+
+.toggle-switch-container:active {
+	@apply bg-opacity-35;
+}
+
+.toggle-switch-container:hover .toggle-switch {
+	@apply outline-ora-orange;
+}
+
+.toggle-switch-container:focus {
+	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
+}
+</style>

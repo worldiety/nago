@@ -220,6 +220,7 @@ func main() {
 							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
 								hBox.Children().From(func(yield func(ui.LiveComponent)) {
 									yield(ui.NewToggle(func(tgl *ui.Toggle) {
+										tgl.Label().Set("Ein Toggle.")
 										tgl.Checked().Set(yieldToggleVal)
 										tgl.OnCheckedChanged().Set(func() {
 											yieldToggleVal = tgl.Checked().Get()
