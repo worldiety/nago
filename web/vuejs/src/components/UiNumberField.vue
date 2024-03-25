@@ -35,7 +35,7 @@ watch(inputValue, (newValue, oldValue) => {
 	<div>
 		<label
 			:for="props.ui.id.toString()"
-			class="block mb-2 text-sm font-medium"
+			class="block mb-2 text-sm"
 		>
 			{{ props.ui.label.value }}
 		</label>

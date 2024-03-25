@@ -11,6 +11,7 @@ type TextField struct {
 	hint          String
 	error         String
 	disabled      Bool
+	simple        Bool
 	onTextChanged *Func
 	properties    slice.Slice[Property]
 }
@@ -23,10 +24,11 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		hint:          NewShared[string]("hint"),
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
+		simple:        NewShared[bool]("simple"),
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged)
+	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged)
 
 	if with != nil {
 		with(c)
@@ -62,6 +64,8 @@ func (l *TextField) Error() String {
 func (l *TextField) Disabled() Bool {
 	return l.disabled
 }
+
+func (l *TextField) Simple() Bool { return l.simple }
 
 func (l *TextField) Type() string {
 	return "TextField"

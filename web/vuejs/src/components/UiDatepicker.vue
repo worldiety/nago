@@ -103,7 +103,7 @@ function datepickerClicked(forceClose: boolean): void {
 
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
+		<span v-if="props.ui.label.value" class="block mb-2 text-sm">{{ props.ui.label.value }}</span>
 		<div class="relative">
 			<!-- Input field -->
 			<div class="relative z-0">

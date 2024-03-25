@@ -10,5 +10,6 @@ export interface LiveTextField {
 	error: PropertyString;
 	value: PropertyString;
 	disabled: PropertyBool;
+	simple: PropertyBool;
 	onTextChanged: PropertyFunc;
 }
