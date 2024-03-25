@@ -108,6 +108,10 @@ input[type="range"]:disabled::-webkit-slider-thumb {
 	@apply bg-disabled-text border-none;
 }
 
+input[type="range"].slider-uninitialized:disabled::-webkit-slider-thumb {
+	@apply bg-disabled-text border-none;
+}
+
 /* Moz slider thumb */
 
 input[type="range"]::-moz-range-thumb {
@@ -131,6 +135,10 @@ input[type="range"]:disabled::-moz-range-thumb {
 	@apply bg-disabled-text border-none;
 }
 
+input[type="range"].slider-uninitialized:disabled::-moz-range-thumb {
+	@apply bg-disabled-text border-none;
+}
+
 /* IE slider thumb */
 
 input[type="range"]::-ms-thumb {
@@ -151,6 +159,10 @@ input[type="range"].slider-dragging::-ms-thumb:active {
 }
 
 input[type="range"]:disabled::-ms-thumb {
+	@apply bg-disabled-text border-none;
+}
+
+input[type="range"].slider-uninitialized:disabled::-ms-thumb {
 	@apply bg-disabled-text border-none;
 }
 
