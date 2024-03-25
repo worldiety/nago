@@ -9,12 +9,14 @@ const props = defineProps<{
 
 const networkStore = useNetworkStore();
 const sliderValue = ref<number>(0);
+const dragging = ref<boolean>(false);
 
 onBeforeMount(() => {
 	sliderValue.value = props.ui.initialized.value ? props.ui.value.value : props.ui.min.value;
 });
 
 function submitSliderValue(): void {
+	dragging.value = false;
 	networkStore.invokeSetProp({
 		...props.ui.value,
 		value: sliderValue.value,
@@ -33,6 +35,9 @@ function submitSliderValue(): void {
 			:max="props.ui.max.value"
 			:step="props.ui.stepsize.value"
 			:disabled="props.ui.disabled.value"
+			:class="{'slider-dragging': dragging}"
+			@mousedown="dragging = true"
+			@touchstart="dragging = true"
 			@mouseup="submitSliderValue"
 			@touchend="submitSliderValue"
 			@keyup.left.right="submitSliderValue"

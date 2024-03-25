@@ -247,7 +247,7 @@ func main() {
 								slider.Min().Set(-10)
 								slider.Max().Set(25)
 								slider.Stepsize().Set(.5)
-								slider.Initialized().Set(false)
+								slider.Initialized().Set(true)
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
