@@ -13,6 +13,9 @@ const networkStore = useNetworkStore();
 const checked = ref<boolean>(props.ui.checked.value);
 
 function onClick() {
+	if (props.ui.disabled.value) {
+		return;
+	}
 	checked.value = !checked.value;
 	networkStore.invokeFuncAndSetProp({
 		...props.ui.checked,
@@ -26,7 +29,8 @@ function onClick() {
 		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
 		<div
 			class="toggle-switch-container"
-			tabindex="0"
+			:class="{'toggle-switch-container-disabled': props.ui.disabled.value}"
+			:tabindex="props.ui.disabled.value ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>
@@ -52,10 +56,6 @@ function onClick() {
 	@apply after:translate-x-[105%] after:border-ora-orange after:bg-ora-orange;
 }
 
-.toggle-switch.toggle-switch-disabled {
-
-}
-
 .toggle-switch-container {
 	@apply inline-block rounded-full p-1.5 -ml-1.5;
 }
@@ -74,5 +74,25 @@ function onClick() {
 
 .toggle-switch-container:focus {
 	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled:hover {
+	@apply pointer-events-none;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled:focus {
+	@apply outline-none ring-0;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch {
+	@apply outline-disabled-text;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch::after {
+	@apply bg-transparent border-disabled-text;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch.toggle-switch-checked::after {
+	@apply bg-disabled-text;
 }
 </style>
