@@ -36,6 +36,7 @@ function submitSliderValue(): void {
 			:step="props.ui.stepsize.value"
 			:disabled="props.ui.disabled.value"
 			:class="{'slider-dragging': dragging}"
+			class="px-2 -ml-2"
 			@mousedown="dragging = true"
 			@touchstart="dragging = true"
 			@mouseup="submitSliderValue"

@@ -66,7 +66,6 @@ input[type="radio"]:disabled::before {
 	@apply border border-black rounded-md text-black cursor-default;
 }
 
-
 .input-field:hover {
 	@apply border-wdy-green text-wdy-green;
 }
@@ -78,11 +77,11 @@ input[type="radio"]:disabled::before {
 /* Range input styling (see https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/, https://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html) */
 
 input[type="range"] {
-	@apply appearance-none rounded-full;
+	@apply appearance-none rounded-full bg-transparent;
 }
 
 input[type="range"]:focus-visible {
-	@apply outline-none outline-black outline-offset-[10px] outline-2 ring-2 ring-offset-8 ring-white;
+	@apply outline-none outline-black outline-offset-2 outline-2 ring-2 ring-white;
 }
 
 /* Webkit slider thumb */
@@ -92,16 +91,12 @@ input[type="range"]::-webkit-slider-thumb {
 	margin-top: -.5rem;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
+input[type="range"]:not(:disabled)::-webkit-slider-thumb:hover {
 	@apply ring-ora-orange ring-8 ring-opacity-25;
 }
 
-input[type="range"].slider-dragging::-webkit-slider-thumb:hover {
+input[type="range"].slider-dragging::-webkit-slider-thumb:active {
 	@apply ring-ora-orange ring-8 ring-opacity-35;
-}
-
-input[type="range"]::-webkit-slider-thumb:active {
-	@apply ring-opacity-35;
 }
 
 input[type="range"]:disabled::-webkit-slider-thumb {
@@ -114,12 +109,12 @@ input[type="range"]::-moz-range-thumb {
 	@apply rounded-full bg-ora-orange cursor-default h-4 w-4;
 }
 
-input[type="range"]::-moz-range-thumb:hover {
-	@apply ring-ora-orange ring-8 ring-opacity-25 ring-offset-0;
+input[type="range"]:not(:disabled)::-moz-range-thumb:hover {
+	@apply ring-ora-orange ring-8 ring-opacity-25;
 }
 
 input[type="range"].slider-dragging::-moz-range-thumb:active {
-	@apply ring-ora-orange ring-8 ring-opacity-35 ring-offset-0;
+	@apply ring-ora-orange ring-8 ring-opacity-35;
 }
 
 input[type="range"]:disabled::-moz-range-thumb {
@@ -132,16 +127,12 @@ input[type="range"]::-ms-thumb {
 	@apply rounded-full bg-ora-orange cursor-default h-4 w-4;
 }
 
-input[type="range"]::-ms-thumb:hover {
+input[type="range"]:not(:disabled)::-ms-thumb:hover {
 	@apply ring-ora-orange ring-8 ring-opacity-25;
 }
 
-input[type="range"].slider-dragging::-ms-thumb:hover {
+input[type="range"].slider-dragging::-ms-thumb:active {
 	@apply ring-ora-orange ring-8 ring-opacity-35;
-}
-
-input[type="range"]::-ms-thumb:active {
-	@apply ring-opacity-35;
 }
 
 input[type="range"]:disabled::-ms-thumb {
@@ -151,21 +142,19 @@ input[type="range"]:disabled::-ms-thumb {
 /* Webkit slider track */
 
 input[type="range"]::-webkit-slider-runnable-track {
-	@apply w-full h-px bg-black cursor-default;
+	@apply w-full h-px bg-black cursor-default my-2;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:disabled::-webkit-slider-runnable-track {
 	@apply bg-disabled-background;
 }
 
-input[type="range"]:focus-visible::-webkit-slider-runnable-track {
-	@apply bg-black;
-}
-
 /* Moz slider track */
 
 input[type="range"]::-moz-range-track {
 	@apply w-full h-px bg-black;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:disabled::-moz-range-track {
@@ -174,6 +163,7 @@ input[type="range"]:disabled::-moz-range-track {
 
 input[type="range"]::-moz-range-progress {
 	@apply w-full h-px bg-black;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:disabled::-moz-range-progress {
@@ -189,6 +179,7 @@ input[type="range"]::-ms-track {
 
 input[type="range"]::-ms-fill-lower {
 	@apply bg-black;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:disabled::-ms-fill-lower {
@@ -201,12 +192,9 @@ input[type="range"]:focus-visible::-ms-fill-lower {
 
 input[type="range"]::-ms-fill-upper {
 	@apply bg-black;
+	@apply dark:bg-white;
 }
 
 input[type="range"]:disabled::-ms-fill-upper {
 	@apply bg-disabled-background;
-}
-
-input[type="range"]:focus-visible::-ms-fill-upper {
-	@apply bg-black;
 }
