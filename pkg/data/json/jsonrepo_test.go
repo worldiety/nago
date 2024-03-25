@@ -1,10 +1,14 @@
 package json
 
 import (
+	"go.etcd.io/bbolt"
+	"go.wdy.de/nago/pkg/blob/bolt"
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/iter"
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -21,8 +25,22 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
-	testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
-	testSuite(t, NewSloppyJSONRepository[Person, string](fs.NewBlobStore(t.TempDir())))
+	t.Run("mem", func(t *testing.T) {
+		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
+	})
+
+	t.Run("fs", func(t *testing.T) {
+		testSuite(t, NewSloppyJSONRepository[Person, string](fs.NewBlobStore(t.TempDir())))
+	})
+
+	t.Run("bbolt", func(t *testing.T) {
+		db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		testSuite(t, NewSloppyJSONRepository[Person, string](bolt.NewBlobStore(db, "test")))
+	})
+
 }
 
 func testSuite(t *testing.T, repo data.Repository[Person, string]) {

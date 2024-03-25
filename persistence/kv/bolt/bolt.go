@@ -5,10 +5,12 @@ import (
 	"go.wdy.de/nago/persistence/kv"
 )
 
+// deprecated
 type Store struct {
 	db *bbolt.DB
 }
 
+// deprecated
 func NewStore(db *bbolt.DB) *Store {
 	return &Store{db: db}
 }

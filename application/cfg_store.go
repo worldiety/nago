@@ -6,10 +6,14 @@ import (
 	"go.wdy.de/nago/internal/text"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/persistence/kv/bolt"
+	"go.wdy.de/nago/pkg/blob"
+	bolt2 "go.wdy.de/nago/pkg/blob/bolt"
 	"os"
 	"path/filepath"
 )
 
+// deprecated: use BlobStore
+//
 // Store returns a configured transactional key value store by name
 // or panics and switches into maintenance mode.
 func (c *Configurator) Store(name string) kv.Store {
@@ -32,5 +36,13 @@ func (c *Configurator) Store(name string) kv.Store {
 
 	store := bolt.NewStore(db)
 	c.kvStores[name] = store
+	c.boltStores[name] = db
+
 	return store
+}
+
+func (c *Configurator) BlobStore(dbName, bucketName string) blob.Store {
+	c.Store(dbName)
+	db := c.boltStores[dbName]
+	return bolt2.NewBlobStore(db, bucketName)
 }

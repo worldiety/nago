@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
@@ -13,26 +14,29 @@ import (
 )
 
 type Configurator struct {
-	appName  string
-	kvStores map[string]kv.Store
-	ctx      context.Context
-	done     context.CancelFunc
-	logger   *slog.Logger
-	debug    bool
-	auth     authProviders
-	fsys     []fs.FS
-	uiApp    *ui.Application
-	host     string
-	port     int
-	scheme   string
+	appName string
+	// deprecated
+	kvStores   map[string]kv.Store
+	boltStores map[string]*bbolt.DB
+	ctx        context.Context
+	done       context.CancelFunc
+	logger     *slog.Logger
+	debug      bool
+	auth       authProviders
+	fsys       []fs.FS
+	uiApp      *ui.Application
+	host       string
+	port       int
+	scheme     string
 }
 
 func NewConfigurator() *Configurator {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	return &Configurator{
-		kvStores: make(map[string]kv.Store),
-		ctx:      ctx,
-		done:     done,
+		kvStores:   make(map[string]kv.Store),
+		boltStores: map[string]*bbolt.DB{},
+		ctx:        ctx,
+		done:       done,
 		uiApp: &ui.Application{
 			LivePages: make(map[ui.PageID]func(wire ui.Wire) *ui.Page),
 		},

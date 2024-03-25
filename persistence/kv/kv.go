@@ -11,12 +11,14 @@ import (
 	"slices"
 )
 
+// deprecated
 // Store is a contract for a generic transaction-based key-value store. See [Collection] for an easy-to-use abstraction.
 type Store interface {
 	Update(f func(Tx) error) error // executes synchronously a writeable transaction closure
 	View(f func(Tx) error) error   // executes synchronously a read-only transaction closure
 }
 
+// deprecated
 // Tx is a transaction contract.
 type Tx interface {
 	Each(f func(name []byte, c Bucket) error) error // loops over all available buckets.
@@ -25,6 +27,7 @@ type Tx interface {
 	Writable() bool // true, if this transaction can be written
 }
 
+// deprecated
 type Bucket interface {
 	Each(f func(key, value []byte) error) error // loops over a snapshot of all available entries, key and value must not escape.
 	Delete(key []byte) error
@@ -32,6 +35,7 @@ type Bucket interface {
 	Get(key []byte) ([]byte, error)
 }
 
+// deprecated
 // A Collection is an abstraction layer over the key value store and assumes, that a bucket contains only elements
 // of the same type. Keys are strings and values are json serialized.
 type Collection[E dm.Entity[ID], ID cmp.Ordered] struct {
@@ -39,6 +43,7 @@ type Collection[E dm.Entity[ID], ID cmp.Ordered] struct {
 	name []byte
 }
 
+// deprecated
 func NewCollection[E dm.Entity[ID], ID cmp.Ordered](db Store, name string) Collection[E, ID] {
 	return Collection[E, ID]{
 		db:   db,
@@ -46,6 +51,7 @@ func NewCollection[E dm.Entity[ID], ID cmp.Ordered](db Store, name string) Colle
 	}
 }
 
+// deprecated
 // IntoSlice loads the entire set of all key/values atomically into memory and sorts it by identifier.
 // See also Find.
 func (c Collection[E, ID]) IntoSlice() (slice.Slice[E], serrors.InfrastructureError) {
@@ -54,6 +60,7 @@ func (c Collection[E, ID]) IntoSlice() (slice.Slice[E], serrors.InfrastructureEr
 	})
 }
 
+// deprecated
 // Filter collects all entities for which the given predicate returns true. The result ist sorted by identifier.
 // Even though it unmarshalls each entity, only the collected entities are held in memory.
 func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], serrors.InfrastructureError) {
@@ -93,6 +100,7 @@ func (c Collection[E, ID]) Filter(p func(E) bool) (slice.Slice[E], serrors.Infra
 	return slice.Of(res...), nil
 }
 
+// deprecated
 // Delete removes the Entity within a distinct transaction. It is not an error if neither the collection exists nor
 // the entity itself.
 func (c Collection[E, ID]) Delete(id ...ID) serrors.InfrastructureError {
@@ -116,6 +124,7 @@ func (c Collection[E, ID]) Delete(id ...ID) serrors.InfrastructureError {
 	}))
 }
 
+// deprecated
 // DeleteFunc removes all those entities in a single transaction for which the predicate returns true.
 // See also Find.
 func (c Collection[E, ID]) DeleteFunc(f func(E) bool) serrors.InfrastructureError {
@@ -147,6 +156,7 @@ func (c Collection[E, ID]) DeleteFunc(f func(E) bool) serrors.InfrastructureErro
 	}))
 }
 
+// deprecated
 // Save creates or updates the entity by marshalling into JSON.
 // It is a programming error causing a panic, if types are used which cannot be unmarshalled.
 func (c Collection[E, ID]) Save(entities ...E) serrors.InfrastructureError {
@@ -173,6 +183,7 @@ func (c Collection[E, ID]) Save(entities ...E) serrors.InfrastructureError {
 	return serrors.IntoInfrastructure(err)
 }
 
+// deprecated
 // Find returns the given entity or an error with a lookup failure. Unmarshalls from JSON.
 // It is a programming error causing a panic, if types are used which cannot be unmarshalled.
 func (c Collection[E, ID]) Find(id ID) (E, enum.Error[dm.LookupFailure]) {
@@ -217,6 +228,7 @@ func (c Collection[E, ID]) Find(id ID) (E, enum.Error[dm.LookupFailure]) {
 	return value, nil
 }
 
+// deprecated
 func FilterAndMap[E dm.Entity[ID], ID cmp.Ordered, Out any](c Collection[E, ID], p func(E) bool, m func(E) Out) (slice.Slice[Out], error) {
 	if p == nil {
 		p = func(e E) bool {
