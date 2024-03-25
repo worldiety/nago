@@ -75,7 +75,7 @@ function isSelected(item: LiveDropdownItem): boolean {
 		<span v-if="props.ui.label.value" class="block mb-2 text-sm">{{ props.ui.label.value }}</span>
 		<div class="relative">
 			<div
-				class="input-field flex justify-between gap-x-4 items-center cursor-default rounded-md p-2"
+				class="input-field flex justify-between gap-x-4 items-center cursor-default p-2"
 				:class="{'input-field-disabled': props.ui.disabled.value}"
 				:tabindex="props.ui.disabled.value ? '-1': '0'"
 				@click="dropdownClicked(false)"

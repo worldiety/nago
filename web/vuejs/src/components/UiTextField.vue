@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const networkStore = useNetworkStore();
 const inputValue = ref<string>(props.ui.value.value);
+const idPrefix = 'text-field-';
 
 watch(inputValue, (newValue) => {
 	networkStore.invokeFuncAndSetProp({
@@ -18,24 +19,22 @@ watch(inputValue, (newValue) => {
 		value: newValue,
 	}, props.ui.onTextChanged);
 });
-
-function isErr(): boolean {
-	return props.ui.error.value != '';
-}
 </script>
 
 <template>
 	<div>
-		<label :for="props.ui.id.toString()" class="mb-2 block text-sm">{{
-			props.ui.label.value
-		}}</label>
+		<label :for="idPrefix + props.ui.id.toString()" class="mb-2 block text-sm">
+			{{ props.ui.label.value }}
+		</label>
 		<input
+			:id="idPrefix + props.ui.id.toString()"
 			v-model="inputValue"
+			class="input-field"
+			placeholder="Test"
 			:disabled="props.ui.disabled.value"
 			type="text"
-			:id="props.ui.id.toString()"
 		/>
-		<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-if="!isErr()" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
+		<p v-if="props.ui.error.value !== ''">{{ props.ui.error.value }}</p>
+		<p v-else>{{ props.ui.hint.value }}</p>
 	</div>
 </template>

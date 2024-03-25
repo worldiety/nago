@@ -63,11 +63,24 @@ input[type="radio"]:disabled::before {
 }
 
 .input-field {
-	@apply border border-black rounded-md text-black cursor-default;
+	@apply border-0 border-b border-b-black text-black cursor-default px-0;
+}
+
+.input-field::placeholder {
+	@apply text-disabled-text;
 }
 
 .input-field:hover {
-	@apply border-wdy-green text-wdy-green;
+	@apply border-b-ora-orange border-opacity-75;
+}
+
+.input-field:active {
+	@apply border-opacity-65;
+}
+
+/* TODO: Rounded focus outline */
+.input-field:focus-visible {
+	@apply outline-none outline-2 outline-black ring-0;
 }
 
 .input-field:disabled, .input-field.input-field-disabled {
