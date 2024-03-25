@@ -109,6 +109,10 @@ input[type="range"]::-moz-range-thumb {
 	@apply rounded-full bg-ora-orange cursor-default h-4 w-4;
 }
 
+input[type="range"].slider-uninitialized::-moz-range-thumb {
+	@apply bg-transparent outline outline-1 outline-black;
+}
+
 input[type="range"]:not(:disabled)::-moz-range-thumb:hover {
 	@apply ring-ora-orange ring-8 ring-opacity-25;
 }
