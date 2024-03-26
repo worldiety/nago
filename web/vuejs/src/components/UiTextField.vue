@@ -25,6 +25,7 @@ watch(inputValue, (newValue) => {
 <template>
 	<div>
 		<InputWrapper
+			:simple="props.ui.simple.value"
 			:label="props.ui.label.value"
 			:error="props.ui.error.value"
 			:hint="props.ui.hint.value"

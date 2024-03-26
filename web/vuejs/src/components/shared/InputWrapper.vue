@@ -4,6 +4,7 @@ import ErrorIcon from '@/assets/svg/closeBold.svg';
 import { computed } from 'vue';
 
 const props = defineProps<{
+	simple?: boolean;
 	label?: string;
 	error?: string;
 	hint?: string;
@@ -20,14 +21,17 @@ const labelClass = computed((): string|null => {
 	return null;
 });
 
-const inputFieldWrapperClass = computed((): string|null => {
+const inputFieldWrapperClasses = computed((): string|null => {
+	const classes: string[] = [];
+	if (!props.simple) {
+		classes.push('input-field-wrapper-detailed');
+	}
 	if (props.disabled) {
-		return 'input-field-wrapper-disabled';
+		classes.push('input-field-wrapper-disabled');
+	} else if (props.error) {
+		classes.push('input-field-wrapper-error');
 	}
-	if (props.error) {
-		return 'input-field-wrapper-error';
-	}
-	return null;
+	return classes.join(' ') || null;
 });
 </script>
 
@@ -43,7 +47,7 @@ const inputFieldWrapperClass = computed((): string|null => {
 	</div>
 
   <div class="relative">
-    <div class="peer input-field-wrapper" :class="inputFieldWrapperClass">
+    <div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
       <slot />
     </div>
     <div class="input-field-outline"></div>
@@ -58,8 +62,14 @@ const inputFieldWrapperClass = computed((): string|null => {
   @apply dark:border-b-white dark:text-white;
 }
 
+.input-field-wrapper.input-field-wrapper-detailed input,
+.input-field-wrapper.input-field-wrapper-detailed .input-field {
+	/* TODO: Find solution to correctly align calendar icon of datepicker when applying padding here */
+	@apply border border-black rounded-md px-4;
+}
+
 .input-field-wrapper.input-field-wrapper-error input, .input-field-wrapper.input-field-wrapper-error .input-field {
-	@apply border-b-error;
+	@apply border-error;
 }
 
 .input-field-wrapper input::placeholder {
@@ -67,7 +77,7 @@ const inputFieldWrapperClass = computed((): string|null => {
 }
 
 .input-field-wrapper:hover input, .input-field-wrapper:hover .input-field {
-  @apply border-b-ora-orange border-opacity-75;
+  @apply border-ora-orange border-opacity-75;
 }
 
 .input-field-wrapper input:active, .input-field-wrapper .input-field:active {

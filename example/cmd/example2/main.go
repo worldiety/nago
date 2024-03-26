@@ -231,6 +231,7 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 								numberField.OnValueChanged().Set(func() {
@@ -336,12 +337,14 @@ func main() {
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
+									t.Simple().Set(false)
 									t.Label().Set("Vorname")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 								}),
 
 								ui.NewTextField(func(t *ui.TextField) {
+									t.Simple().Set(true)
 									myMagicTF = t
 									t.Label().Set("Nachname")
 									t.OnTextChanged().Set(func() {

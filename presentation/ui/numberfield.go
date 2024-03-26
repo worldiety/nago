@@ -11,6 +11,7 @@ type NumberField struct {
 	placeholder    String
 	hint           String
 	error          String
+	simple         Bool
 	disabled       Bool
 	onValueChanged *Func
 	properties     slice.Slice[Property]
@@ -24,11 +25,12 @@ func NewNumberField(with func(numberField *NumberField)) *NumberField {
 		placeholder:    NewShared[string]("placeholder"),
 		hint:           NewShared[string]("hint"),
 		error:          NewShared[string]("error"),
+		simple:         NewShared[bool]("simple"),
 		disabled:       NewShared[bool]("disabled"),
 		onValueChanged: NewFunc("onValueChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.error, c.disabled, c.disabled, c.onValueChanged)
+	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.error, c.simple, c.disabled, c.disabled, c.onValueChanged)
 
 	if with != nil {
 		with(c)
@@ -61,6 +63,10 @@ func (l *NumberField) Hint() String {
 
 func (l *NumberField) Error() String {
 	return l.error
+}
+
+func (l *NumberField) Simple() Bool {
+	return l.simple
 }
 
 func (l *NumberField) Disabled() Bool {
