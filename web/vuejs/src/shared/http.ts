@@ -1,6 +1,5 @@
 import { useAuth } from '@/stores/authStore';
-import {CustomError} from "@/composables/errorhandling";
-import {ref} from "vue";
+import type {CustomError} from "@/composables/errorhandling";
 
 
 export function userHeaders() {
@@ -34,12 +33,13 @@ export function useHttp() {
 	 * @param method The method to make the request with.
 	 * @param body The body to send in the request.
 	 *             "undefined" will be an empty body, everything else will be serialized to JSON.
+	 * @param header
 	 */
 
-	async function request(url: string | URL, method = 'GET', body: undefined | any = undefined) {
+	async function request(url: string | URL, method:string, body: undefined | any = undefined, header: undefined | any = undefined) {
 		const user = await auth.getUser;
 
-		let customError = {} as CustomError
+		let customError: CustomError = {}
 
 
 		if (user?.expired) {
@@ -56,7 +56,9 @@ export function useHttp() {
 			method,
 			body: bodyData,
 			headers: {
+				...header,
 				Authorization: `Bearer ${user?.access_token}`,
+
 			},
 		});
 
@@ -76,10 +78,7 @@ export function useHttp() {
 
 			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
 		} catch (e) {
-
-				// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
 			const contentType  = response.headers.get('content-type')
-			console.log('CONTENT-TYPE', contentType)
 
 			if (!contentType || !contentType.includes('application/json')) {
 				customError = {
