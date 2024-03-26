@@ -4,24 +4,35 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
 	"math/rand"
+	"time"
 )
 
 type PersonID string
 type Rank int64
 
 type Person struct {
-	ID        PersonID
-	Firstname string
-	Lastname  string
-	Age       int
-	Rank      Rank
+	ID         PersonID
+	Firstname  string
+	Lastname   string
+	Age        int
+	Rank       Rank
+	Friends    []PersonID
+	BestFriend PersonID
+	CoolGuy    bool
+	Birthday   time.Time
+}
+
+func PersonName(p Person) string {
+	return p.Firstname + " " + p.Lastname
 }
 
 func (p Person) Identity() PersonID {
 	return p.ID
 }
 
-func initUsers(repo data.Repository[Person, PersonID]) error {
+type Persons data.Repository[Person, PersonID]
+
+func initUsers(repo Persons) error {
 	names := []string{
 		"Paco",
 		"Benni",

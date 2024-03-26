@@ -32,8 +32,7 @@ type Options[E data.Aggregate[ID], ID data.IDType] struct {
 	OnDelete   func(E) error
 }
 
-// NewTable creates a new simple data table view based on a repository.
-// TODO is this an aggregate or a custom component?
+// NewTable creates a new simple data table view based on a repository. The ColumnModel can provide custom column names using a "caption" field tag.
 func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.ModalOwner, repo data.Repository[E, ID], intoModel MapF[E, ColumnModel], opts Options[E, ID]) ui.LiveComponent {
 	if opts.PageSize == 0 {
 		opts.PageSize = 20 // TODO: does that make sense for mobile at all?
