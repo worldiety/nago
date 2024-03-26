@@ -106,6 +106,8 @@ func (f *fsTx) Put(entry blob.Entry) error {
 		return fmt.Errorf("cannot open entry stream: %w", err)
 	}
 
+	defer src.Close()
+
 	fname := f.parent.fname(entry.Key)
 	var rbuf [16]byte
 	if _, err := rand.Read(rbuf[:]); err != nil {

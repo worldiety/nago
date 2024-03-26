@@ -4,7 +4,7 @@
 	@apply inline-flex items-center justify-center px-5 py-2.5;
 	@apply rounded-lg;
 	@apply text-center text-sm font-medium;
-	@apply focus:outline-none focus:outline-black focus:outline-offset-2 focus:ring-white focus:ring-2;
+	@apply focus-visible:outline-none focus-visible:outline-black focus-visible:outline-offset-2 focus-visible:ring-white focus-visible:ring-2;
 }
 
 .button-primary {
@@ -18,7 +18,7 @@
 	@apply rounded-full h-10 w-fit px-5 text-ora-orange border border-ora-orange;
 	@apply hover:bg-ora-orange hover:bg-opacity-25;
 	@apply active:bg-opacity-35;
-	@apply focus:border-transparent;
+	@apply focus-visible:border-transparent;
 	@apply disabled:text-disabled-text disabled:border-disabled-background disabled:bg-transparent;
 }
 
@@ -26,11 +26,11 @@
 	@apply text-black rounded-full h-10 w-fit px-5;
 	@apply hover:text-ora-orange hover:bg-ora-orange hover:bg-opacity-25;
 	@apply active:bg-ora-orange active:bg-opacity-35;
-	@apply focus:outline-none focus:outline-black focus:outline-offset-2;
+	@apply focus-visible:outline-none focus-visible:outline-black focus-visible:outline-offset-2;
 	@apply disabled:text-disabled-text disabled:bg-transparent;
 	@apply dark:text-white dark:hover:text-ora-orange dark:disabled:text-disabled-text dark:disabled:bg-transparent;
 }
 
 .button-default {
-	@apply rounded-full px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600  dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
+	@apply rounded-full px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-200 dark:border-gray-600  dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus-visible:ring-gray-700;
 }

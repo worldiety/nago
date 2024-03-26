@@ -2,6 +2,7 @@
 import { useNetworkStore } from '@/stores/networkStore';
 import type { LiveToggle } from '@/shared/model/liveToggle';
 import type { LivePage } from '@/shared/model/livePage';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	ui: LiveToggle;
@@ -9,31 +10,94 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
+const checked = ref<boolean>(props.ui.checked.value);
 
 function onClick() {
-	networkStore.invokeFuncAndSetProp(props.ui.checked, props.ui.onCheckedChanged);
+	if (props.ui.disabled.value) {
+		return;
+	}
+	checked.value = !checked.value;
+	networkStore.invokeFuncAndSetProp({
+		...props.ui.checked,
+		value: checked.value,
+	}, props.ui.onCheckedChanged);
 }
 </script>
 
 <template>
-	<label class="relative inline-flex cursor-pointer items-center">
-		<input
-			@change="onClick"
-			v-model="props.ui.checked.value"
-			type="checkbox"
-			value=""
-			class="peer sr-only"
-			:checked="props.ui.checked.value"
-			:disabled="props.ui.disabled.value"
-		/>
-		<span
-			v-if="ui.disabled.value"
-			class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-gray-400 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700"
-		></span>
-		<span
-			v-else
-			class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-4 peer-focus:ring-blue-300 rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-500 dark:peer-focus:ring-blue-800"
-		></span>
-		<span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ props.ui.label.value }}</span>
-	</label>
+	<div>
+		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
+		<div
+			class="toggle-switch-container"
+			:class="{'toggle-switch-container-disabled': props.ui.disabled.value}"
+			:tabindex="props.ui.disabled.value ? '-1' : '0'"
+			@click="onClick"
+			@keydown.enter="onClick"
+		>
+			<div
+				class="toggle-switch"
+				:class="{'toggle-switch-checked': checked}"
+			></div>
+		</div>
+	</div>
 </template>
+
+<style scoped>
+.toggle-switch {
+	@apply relative h-6 w-11 rounded-full outline outline-1 outline-black;
+	@apply dark:outline-white dark:after:outline-white;
+}
+
+.toggle-switch::after {
+	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border border-black bg-transparent transition-transform content-[''];
+	@apply dark:border-white;
+}
+
+.toggle-switch.toggle-switch-checked {
+	@apply after:translate-x-[105%] after:border-ora-orange after:bg-ora-orange;
+}
+
+.toggle-switch-container {
+	@apply inline-block rounded-full p-1.5 -ml-1.5;
+}
+
+.toggle-switch-container:hover {
+	@apply bg-ora-orange bg-opacity-25;
+}
+
+.toggle-switch-container:active {
+	@apply bg-opacity-35;
+}
+
+.toggle-switch-container:hover .toggle-switch {
+	@apply outline-ora-orange;
+}
+
+.toggle-switch-container:hover .toggle-switch::after {
+	@apply border-ora-orange;
+}
+
+.toggle-switch-container:focus-visible {
+	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled:hover {
+	@apply bg-transparent;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled:focus-visible {
+	@apply outline-none ring-0;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch {
+	@apply outline-disabled-text;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch::after {
+	@apply bg-transparent border-disabled-text;
+}
+
+.toggle-switch-container.toggle-switch-container-disabled .toggle-switch.toggle-switch-checked::after {
+	@apply bg-disabled-text;
+}
+</style>

@@ -220,6 +220,7 @@ func main() {
 							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
 								hBox.Children().From(func(yield func(ui.LiveComponent)) {
 									yield(ui.NewToggle(func(tgl *ui.Toggle) {
+										tgl.Label().Set("Ein Toggle.")
 										tgl.Checked().Set(yieldToggleVal)
 										tgl.OnCheckedChanged().Set(func() {
 											yieldToggleVal = tgl.Checked().Get()
@@ -246,7 +247,11 @@ func main() {
 								slider.Min().Set(-10)
 								slider.Max().Set(25)
 								slider.Stepsize().Set(.5)
-								slider.Initialized().Set(false)
+								slider.Disabled().Set(true)
+								slider.Initialized().Set(true)
+								slider.OnChanged().Set(func() {
+									slider.Initialized().Set(true)
+								})
 							}))
 
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
