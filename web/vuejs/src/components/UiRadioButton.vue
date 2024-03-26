@@ -37,7 +37,7 @@ function radioButtonClicked(): void {
 	@apply bg-opacity-35;
 }
 
-.input-radio:focus {
+.input-radio:focus-visible {
 	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
 }
 
@@ -45,7 +45,7 @@ function radioButtonClicked(): void {
 	@apply bg-transparent;
 }
 
-.input-radio.input-radio-disabled:focus {
+.input-radio.input-radio-disabled:focus-visible {
 	@apply outline-none ring-0;
 }
 

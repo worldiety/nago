@@ -85,6 +85,7 @@ func (m *memTx) Put(entry blob.Entry) error {
 	if err != nil {
 		return err
 	}
+	defer r.Close()
 
 	buf, err := io.ReadAll(r)
 	if err != nil {

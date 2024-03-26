@@ -38,7 +38,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 
 	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
 	// It is not an error, if an entity has not been found.
-	// The order is undefined, to allow concurrent optimizations.
+	// The order is undefined, to allow optimizations.
 	// Implementations with transaction support must find within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	// The yield signature intentionally matches the according [iter.Seq2] part. See also [Repository.Each].
@@ -67,7 +67,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 
 	// Each loops over each item without any particular order until the callee returns false or all entries have
 	// been visited.
-	// The order of traversal is undefined.
+	// The order of traversal is undefined and may be even different between subsequent calls.
 	// Implementations with transaction support must find within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	// This is a [iter.Seq2].
