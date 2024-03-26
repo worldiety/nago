@@ -33,10 +33,14 @@ export function useHttp() {
 	 * @param method The method to make the request with.
 	 * @param body The body to send in the request.
 	 *             "undefined" will be an empty body, everything else will be serialized to JSON.
+	 * @param header
 	 */
 
-	async function request(url: string | URL, method = 'GET', body: undefined | any = undefined) {
+	async function request(url: string | URL, method:string, body: undefined | any = undefined, header: undefined | any = undefined) {
 		const user = await auth.getUser;
+
+		let customError: CustomError = {}
+
 
 		if (user?.expired) {
 			console.log('request: Oo user already expired and got that old one');
@@ -47,11 +51,14 @@ export function useHttp() {
 			bodyData = JSON.stringify(body);
 		}
 
-		const response = await fetch(url, {
+
+			const response = await fetch(url, {
 			method,
 			body: bodyData,
 			headers: {
+				...header,
 				Authorization: `Bearer ${user?.access_token}`,
+
 			},
 		});
 
@@ -59,17 +66,32 @@ export function useHttp() {
 		if (authRequired) {
 			await auth.signIn();
 		}
+		if (!navigator.onLine) {
+			customError = {
+				errorCode: "001"
+			}
 
-		if (!response.ok) {
-			throw response;
+			throw customError as CustomError
 		}
 
 		try {
+
 			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
 		} catch (e) {
-			// TODO: hier mit dem CustomError abfangen, dass kein gültiges JSON zurückgekommen ist
-			console.log('Kein gültiges JSON bekommen', e);
-			throw e;
+			const contentType  = response.headers.get('content-type')
+
+			if (!contentType || !contentType.includes('application/json')) {
+				customError = {
+					errorCode: "002"
+				}
+
+				throw customError as CustomError
+			}
+
+			if (!response.ok) {
+				throw response;
+			}
+
 		}
 	}
 
