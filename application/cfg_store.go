@@ -8,8 +8,11 @@ import (
 	"go.wdy.de/nago/persistence/kv/bolt"
 	"go.wdy.de/nago/pkg/blob"
 	bolt2 "go.wdy.de/nago/pkg/blob/bolt"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/data/json"
 	"os"
 	"path/filepath"
+	"reflect"
 )
 
 // deprecated: use BlobStore
@@ -41,8 +44,19 @@ func (c *Configurator) Store(name string) kv.Store {
 	return store
 }
 
+// BlobStore creates a new blob store instance, currently a bbolt implementation.
+// deprecated: don't know if this is a good thing. See [Repository].
 func (c *Configurator) BlobStore(dbName, bucketName string) blob.Store {
 	c.Store(dbName)
 	db := c.boltStores[dbName]
 	return bolt2.NewBlobStore(db, bucketName)
+}
+
+// SloppyRepository returns a default Repository implementation for the given type, which just serializes the domain
+// type, which is fine for rapid prototyping, but should not be used for products which must be maintained.
+func SloppyRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator) data.Repository[A, ID] {
+	var zero A
+	bucketName := reflect.TypeOf(zero).Name()
+	store := cfg.BlobStore("nago.db", bucketName)
+	return json.NewSloppyJSONRepository[A, ID](store)
 }

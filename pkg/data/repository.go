@@ -9,6 +9,9 @@ import (
 // SkipAll is a sentinel error for traversals.
 var SkipAll = errors.New("skip everything and stop the traversal")
 
+// MapF defines a generic mapping function
+type MapF[From, To any] func(From) (To, error) // TODO this is not MapF but somewhat a MapF12
+
 // An Aggregate is a special Entity but manages other entities or value types (aggregate root).
 // It defines the boundary of a transaction, so if something must be consistent, it must be an aggregate root.
 // A simple CRUD system is a special case, where the AggregateRoot is just an Entity.

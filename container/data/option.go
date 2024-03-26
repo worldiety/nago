@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+// deprecated
 // Option efficiently wraps an arbitrary (value) type and tells if it is available or not.
 // It serializes either as "null" or the value without introducing a 'box' in the json structure.
 type Option[T any] struct {

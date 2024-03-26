@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/container/slice"
 )
 
+// TODO this is the wrong signature
 type Iter[T any] func(yield func(T))
 
 type SharedList[T any] struct {

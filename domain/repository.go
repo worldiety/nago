@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/container/slice"
 )
 
+// deprecated
 type Repository[E Entity[ID], ID cmp.Ordered] interface {
 	Filter(p func(E) bool) (slice.Slice[E], error)
 	Delete(id ID) error

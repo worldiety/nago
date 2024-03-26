@@ -21,7 +21,7 @@ func SimplePredicate[T any](query string) func(T) bool {
 	terms := strings.Split(strings.ToLower(query), " ")
 	var sTerms []string
 	for _, term := range terms {
-		if len(term) <= 2 {
+		if len(term) < 2 {
 			continue
 		}
 
