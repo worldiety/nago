@@ -17,6 +17,11 @@ const TextMessage = 1
 
 type SessionID = string
 
+// TODO I don't like that, because we cannot popup dialogs from nowwhere, but perhaps that is a good thing?
+type ModalOwner interface {
+	Modals() *SharedList[LiveComponent]
+}
+
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
