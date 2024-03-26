@@ -13,6 +13,7 @@ export default {
 				'text': '#848484',
 				'background': '#E2E2E2',
 			},
+			'error': '#FF543E',
 		},
 	},
 

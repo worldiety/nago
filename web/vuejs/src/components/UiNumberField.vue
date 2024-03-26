@@ -34,26 +34,19 @@ watch(inputValue, (newValue, oldValue) => {
 
 <template>
 	<div>
-		<label
-			:for="props.ui.id.toString()"
-			class="block mb-2 text-sm"
+		<InputWrapper
+			:label="props.ui.label.value"
+			:error="props.ui.error.value"
+			:hint="props.ui.hint.value"
 		>
-			{{ props.ui.label.value }}
-		</label>
-
-		<InputWrapper>
 			<input
 				v-model="inputValue"
 				type="text"
-				class="input-field w-full"
+				class="w-full"
 				inputmode="numeric"
 				:placeholder="props.ui.placeholder.value"
 				:disabled="props.ui.disabled.value"
 			>
 		</InputWrapper>
-
-		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
 	</div>
 </template>

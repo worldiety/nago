@@ -248,7 +248,6 @@ func main() {
 								slider.Min().Set(-10)
 								slider.Max().Set(25)
 								slider.Stepsize().Set(.5)
-								slider.Disabled().Set(true)
 								slider.Initialized().Set(true)
 								slider.OnChanged().Set(func() {
 									slider.Initialized().Set(true)

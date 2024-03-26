@@ -24,10 +24,11 @@ watch(inputValue, (newValue) => {
 
 <template>
 	<div>
-		<label :for="idPrefix + props.ui.id.toString()" class="mb-2 block text-sm">
-			{{ props.ui.label.value }}
-		</label>
-		<InputWrapper>
+		<InputWrapper
+			:label="props.ui.label.value"
+			:error="props.ui.error.value"
+			:hint="props.ui.hint.value"
+		>
 			<input
 				:id="idPrefix + props.ui.id.toString()"
 				v-model="inputValue"
@@ -36,7 +37,5 @@ watch(inputValue, (newValue) => {
 				type="text"
 			/>
 		</InputWrapper>
-		<p v-if="props.ui.error.value !== ''">{{ props.ui.error.value }}</p>
-		<p v-else>{{ props.ui.hint.value }}</p>
 	</div>
 </template>
