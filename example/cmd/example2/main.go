@@ -232,6 +232,7 @@ func main() {
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
+								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 								numberField.OnValueChanged().Set(func() {
 									if numberField.Value().Get() == 3 {
 										numberField.Error().Set("Wert darf nicht 3 sein")
@@ -337,6 +338,7 @@ func main() {
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Label().Set("Vorname")
+									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 								}),
 

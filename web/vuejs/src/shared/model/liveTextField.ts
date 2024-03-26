@@ -9,6 +9,7 @@ export interface LiveTextField {
 	hint: PropertyString;
 	error: PropertyString;
 	value: PropertyString;
+	placeholder: PropertyString;
 	disabled: PropertyBool;
 	simple: PropertyBool;
 	onTextChanged: PropertyFunc;

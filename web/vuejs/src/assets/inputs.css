@@ -62,31 +62,6 @@ input[type="radio"]:disabled::before {
 	box-shadow: inset 1em 1em theme('colors.disabled.text');
 }
 
-.input-field {
-	@apply border-0 border-b border-b-black text-black cursor-default px-0;
-}
-
-.input-field::placeholder {
-	@apply text-disabled-text;
-}
-
-.input-field:hover {
-	@apply border-b-ora-orange border-opacity-75;
-}
-
-.input-field:active {
-	@apply border-opacity-65;
-}
-
-/* TODO: Rounded focus outline */
-.input-field:focus-visible {
-	@apply outline-none outline-2 outline-black ring-0;
-}
-
-.input-field:disabled, .input-field.input-field-disabled {
-	@apply border-disabled-background bg-disabled-background text-disabled-text;
-}
-
 /* Range input styling (see https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/, https://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html) */
 
 input[type="range"] {

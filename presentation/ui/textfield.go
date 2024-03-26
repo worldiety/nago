@@ -8,6 +8,7 @@ type TextField struct {
 	id            CID
 	label         String
 	value         String
+	placeholder   String
 	hint          String
 	error         String
 	disabled      Bool
@@ -21,6 +22,7 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		id:            nextPtr(),
 		label:         NewShared[string]("label"),
 		value:         NewShared[string]("value"),
+		placeholder:   NewShared[string]("placeholder"),
 		hint:          NewShared[string]("hint"),
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
@@ -28,7 +30,7 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged)
+	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged)
 
 	if with != nil {
 		with(c)
@@ -48,6 +50,8 @@ func (l *TextField) ID() CID {
 func (l *TextField) Value() String {
 	return l.value
 }
+
+func (l *TextField) Placeholder() String { return l.placeholder }
 
 func (l *TextField) Label() String {
 	return l.label

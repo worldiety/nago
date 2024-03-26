@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { LiveTextField } from '@/shared/model/liveTextField';
 import type { LivePage } from '@/shared/model/livePage';
+import InputWrapper from '@/components/shared/InputWrapper.vue';
 
 const props = defineProps<{
 	ui: LiveTextField;
@@ -26,14 +27,15 @@ watch(inputValue, (newValue) => {
 		<label :for="idPrefix + props.ui.id.toString()" class="mb-2 block text-sm">
 			{{ props.ui.label.value }}
 		</label>
-		<input
-			:id="idPrefix + props.ui.id.toString()"
-			v-model="inputValue"
-			class="input-field"
-			placeholder="Test"
-			:disabled="props.ui.disabled.value"
-			type="text"
-		/>
+		<InputWrapper>
+			<input
+				:id="idPrefix + props.ui.id.toString()"
+				v-model="inputValue"
+				:placeholder="props.ui.placeholder.value"
+				:disabled="props.ui.disabled.value"
+				type="text"
+			/>
+		</InputWrapper>
 		<p v-if="props.ui.error.value !== ''">{{ props.ui.error.value }}</p>
 		<p v-else>{{ props.ui.hint.value }}</p>
 	</div>

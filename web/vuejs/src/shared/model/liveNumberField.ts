@@ -10,6 +10,7 @@ export interface LiveNumberField {
 	hint: PropertyString;
 	error: PropertyString;
 	value: PropertyInt;
+	placeholder: PropertyString;
 	disabled: PropertyBool;
 	onValueChanged: PropertyFunc;
 }

@@ -8,6 +8,7 @@ type NumberField struct {
 	id             CID
 	label          String
 	value          Int
+	placeholder    String
 	hint           String
 	error          String
 	disabled       Bool
@@ -20,13 +21,14 @@ func NewNumberField(with func(numberField *NumberField)) *NumberField {
 		id:             nextPtr(),
 		label:          NewShared[string]("label"),
 		value:          NewShared[int64]("value"),
+		placeholder:    NewShared[string]("placeholder"),
 		hint:           NewShared[string]("hint"),
 		error:          NewShared[string]("error"),
 		disabled:       NewShared[bool]("disabled"),
 		onValueChanged: NewFunc("onValueChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onValueChanged)
+	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.error, c.disabled, c.disabled, c.onValueChanged)
 
 	if with != nil {
 		with(c)
@@ -46,6 +48,8 @@ func (l *NumberField) ID() CID {
 func (l *NumberField) Value() Int {
 	return l.value
 }
+
+func (l *NumberField) Placeholder() String { return l.placeholder }
 
 func (l *NumberField) Label() String {
 	return l.label

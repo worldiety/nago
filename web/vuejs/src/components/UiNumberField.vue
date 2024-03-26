@@ -3,6 +3,7 @@ import type { LiveNumberField } from '@/shared/model/liveNumberField';
 import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { PropertyInt } from '@/shared/model/propertyInt';
+import InputWrapper from '@/components/shared/InputWrapper.vue';
 
 const props = defineProps<{
 	ui: LiveNumberField;
@@ -40,7 +41,16 @@ watch(inputValue, (newValue, oldValue) => {
 			{{ props.ui.label.value }}
 		</label>
 
-		<input v-model="inputValue" type="text" class="input-field w-full" inputmode="numeric" :disabled="props.ui.disabled.value">
+		<InputWrapper>
+			<input
+				v-model="inputValue"
+				type="text"
+				class="input-field w-full"
+				inputmode="numeric"
+				:placeholder="props.ui.placeholder.value"
+				:disabled="props.ui.disabled.value"
+			>
+		</InputWrapper>
 
 		<!-- Error message has precedence over hints -->
 		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
