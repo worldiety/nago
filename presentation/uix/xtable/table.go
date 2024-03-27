@@ -22,14 +22,71 @@ func (s Settings) Identity() SettingsID {
 	return s.ID
 }
 
+type AggregateAction[T any] struct {
+	Icon    ui.SVGSrc
+	Caption string
+	Action  func(T) error
+	make    func(modals ui.ModalOwner, t T) ui.LiveComponent
+}
+
+func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) ui.LiveComponent {
+	if a.make == nil {
+		return ui.NewButton(func(btn *ui.Button) {
+			btn.Caption().Set(a.Caption)
+			if a.Icon != "" {
+				btn.PreIcon().Set(a.Icon)
+			}
+			btn.Action().Set(func() {
+				//TODO i18n
+				xdialog.HandleError(modals, fmt.Sprintf("Die Aktion '%s' hat einen Fehler ausgelöst.", a.Caption), a.Action(t))
+			})
+		})
+	}
+
+	return a.make(modals, t)
+}
+
+func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
+	return AggregateAction[T]{
+		make: func(modals ui.ModalOwner, t T) ui.LiveComponent {
+			return ui.NewButton(func(btn *ui.Button) {
+				btn.PreIcon().Set(icon.Pencil)
+				btn.Style().Set(ui.PrimaryIntent)
+				btn.Action().Set(func() {
+					//TODO i18n
+					// usually does not happen, but who knows
+					xdialog.HandleError(modals, "beim Bearbeiten ist ein Fehler aufgetreten", onEdit(t))
+				})
+			})
+		},
+	}
+}
+
+func NewDeleteAction[T any](onDelete func(T) error) AggregateAction[T] {
+	return AggregateAction[T]{
+		make: func(modals ui.ModalOwner, t T) ui.LiveComponent {
+			return ui.NewButton(func(btn *ui.Button) {
+				//TODO i18n
+				btn.PreIcon().Set(icon.Trash)
+				btn.Style().Set(ui.Destructive)
+				btn.Action().Set(func() {
+					xdialog.ShowDelete(modals, "Soll der Eintrag wirklich unwiderruflich gelöscht werden?", func() {
+						xdialog.HandleError(modals, "Beim Löschen ist ein Fehler aufgetreten.", onDelete(t))
+					}, nil)
+				})
+			})
+		},
+	}
+}
+
 type Options[E data.Aggregate[ID], ID data.IDType] struct {
-	InstanceID SettingsID
-	Settings   data.Repository[Settings, SettingsID]
-	CanSearch  bool
-	CanSort    bool
-	PageSize   int
-	OnEdit     func(E) // edit button is only shown, if
-	OnDelete   func(E) error
+	InstanceID       SettingsID
+	Settings         data.Repository[Settings, SettingsID]
+	CanSearch        bool
+	CanSort          bool
+	PageSize         int
+	AggregateActions []AggregateAction[E] // AggregateActions e.g. for editing (see [NewEditAction]) or delete (see [NewDeleteAction]) or something custom.
+	Actions          []ui.LiveComponent   // Action buttons are used for table specific actions
 }
 
 // NewTable creates a new simple data table view based on a repository. The ColumnModel can provide custom column names using a "caption" field tag.
@@ -38,7 +95,7 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 		opts.PageSize = 20 // TODO: does that make sense for mobile at all?
 	}
 
-	hasEditColumn := opts.OnEdit != nil || opts.OnDelete != nil
+	hasEditColumn := len(opts.AggregateActions) > 0
 	var settings Settings
 	if opts.InstanceID != "" && opts.Settings != nil {
 		optSettings, err := opts.Settings.FindByID(opts.InstanceID)
@@ -59,6 +116,15 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 					})
 				}),
 			)
+		}
+
+		if len(opts.Actions) > 0 {
+			vbox.Append(ui.NewHBox(func(hbox *ui.HBox) {
+				hbox.Alignment().Set("flex-right") // TODO this is to web-centric
+				for _, action := range opts.Actions {
+					hbox.Append(action)
+				}
+			}))
 		}
 
 		var zeroRow ColumnModel
@@ -120,29 +186,9 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 							if hasEditColumn {
 								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
 									cell.Body().Set(ui.NewHBox(func(hbox *ui.HBox) {
-										if opts.OnDelete != nil {
-											hbox.Append(ui.NewButton(func(btn *ui.Button) {
-												//TODO i18n
-												btn.Caption().Set("Löschen")
-												btn.Style().Set(ui.Destructive)
-												btn.Action().Set(func() {
-													xdialog.ShowDelete(modals, "Soll der Eintrag wirklich unwiderruflich gelöscht werden?", func() {
-														xdialog.HandleError(modals, "Beim Löschen ist ein Fehler aufgetreten.", opts.OnDelete(rowDat.holder.Original))
-													}, nil)
-												})
-											}))
+										for _, action := range opts.AggregateActions {
+											hbox.Append(action.makeComponent(modals, rowDat.holder.Original))
 										}
-
-										if opts.OnEdit != nil {
-											hbox.Append(ui.NewButton(func(btn *ui.Button) {
-												btn.Caption().Set("Bearbeiten")
-												btn.Style().Set(ui.PrimaryIntent)
-												btn.Action().Set(func() {
-													opts.OnEdit(rowDat.holder.Original)
-												})
-											}))
-										}
-
 									}))
 								}))
 

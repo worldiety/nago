@@ -34,13 +34,14 @@ func (h holder[Original, ViewModel]) comparator(colName string) func(a, b holder
 
 		if caption == colName {
 			switch field.Type.Kind() {
-			default:
+			case reflect.String:
 				return func(a, b holder[Original, ViewModel]) int {
-					x := reflect.ValueOf(a.ViewModel).Field(i).Interface()
-					y := reflect.ValueOf(b.ViewModel).Field(i).Interface()
+					x := reflect.ValueOf(a.ViewModel).Field(i).String()
+					y := reflect.ValueOf(b.ViewModel).Field(i).String()
 
-					return strings.Compare(fmt.Sprintf("%v", x), fmt.Sprintf("%v", y))
+					return strings.Compare(x, y)
 				}
+
 			case reflect.Int:
 				fallthrough
 			case reflect.Int32:
@@ -51,7 +52,13 @@ func (h holder[Original, ViewModel]) comparator(colName string) func(a, b holder
 					y := reflect.ValueOf(b.ViewModel).Field(i).Int()
 					return int(x - y)
 				}
+			default:
+				return func(a, b holder[Original, ViewModel]) int {
+					x := reflect.ValueOf(a.ViewModel).Field(i).Interface()
+					y := reflect.ValueOf(b.ViewModel).Field(i).Interface()
 
+					return strings.Compare(fmt.Sprintf("%v", x), fmt.Sprintf("%v", y))
+				}
 			}
 		}
 	}
