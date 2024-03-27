@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	dm "go.wdy.de/nago/domain"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
@@ -16,17 +17,12 @@ func dataPage(wire ui.Wire, persons *PersonService) *ui.Page {
 				CanSearch: true,
 				AggregateActions: []xtable.AggregateAction[PersonView]{
 					xtable.NewEditAction(func(pview PersonView) error {
-						person, err := persons.FindPerson(pview.ID)
+						person, err := std.Unpack2(persons.FindPerson(pview.ID))
 						if err != nil {
 							return err
 						}
 
-						if !person.Valid {
-							xdialog.ShowMessage(page, "Person nicht mehr gefunden")
-							return nil
-						}
-
-						edit(page, persons, &person.V)
+						edit(page, persons, &person)
 						return nil
 					}),
 					xtable.NewDeleteAction[PersonView](persons.RemoveByPersonView),
