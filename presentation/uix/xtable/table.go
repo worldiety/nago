@@ -3,10 +3,10 @@ package xtable
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
-	"reflect"
 )
 
 type SettingsID string
@@ -46,6 +46,7 @@ func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) ui.LiveComp
 	return a.make(modals, t)
 }
 
+// NewEditAction dispatches a standard action for editing to the given callback.
 func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
 		make: func(modals ui.ModalOwner, t T) ui.LiveComponent {
@@ -62,7 +63,8 @@ func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 	}
 }
 
-func NewDeleteAction[T any](onDelete func(T) error) AggregateAction[T] {
+// NewDeleteAction returns a ready-to-use action which just removes the aggregate from the repository.
+func NewDeleteAction[T any](delFn func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
 		make: func(modals ui.ModalOwner, t T) ui.LiveComponent {
 			return ui.NewButton(func(btn *ui.Button) {
@@ -71,7 +73,7 @@ func NewDeleteAction[T any](onDelete func(T) error) AggregateAction[T] {
 				btn.Style().Set(ui.Destructive)
 				btn.Action().Set(func() {
 					xdialog.ShowDelete(modals, "Soll der Eintrag wirklich unwiderruflich gelöscht werden?", func() {
-						xdialog.HandleError(modals, "Beim Löschen ist ein Fehler aufgetreten.", onDelete(t))
+						xdialog.HandleError(modals, "Beim Löschen ist ein Fehler aufgetreten.", delFn(t))
 					}, nil)
 				})
 			})
@@ -79,18 +81,17 @@ func NewDeleteAction[T any](onDelete func(T) error) AggregateAction[T] {
 	}
 }
 
-type Options[E data.Aggregate[ID], ID data.IDType] struct {
+type Options[T any] struct {
 	InstanceID       SettingsID
 	Settings         data.Repository[Settings, SettingsID]
 	CanSearch        bool
-	CanSort          bool
 	PageSize         int
-	AggregateActions []AggregateAction[E] // AggregateActions e.g. for editing (see [NewEditAction]) or delete (see [NewDeleteAction]) or something custom.
+	AggregateActions []AggregateAction[T] // AggregateActions e.g. for editing (see [NewEditAction]) or delete (see [NewDeleteAction]) or something custom.
 	Actions          []ui.LiveComponent   // Action buttons are used for table specific actions
 }
 
-// NewTable creates a new simple data table view based on a repository. The ColumnModel can provide custom column names using a "caption" field tag.
-func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.ModalOwner, repo data.Repository[E, ID], intoModel MapF[E, ColumnModel], opts Options[E, ID]) ui.LiveComponent {
+// NewTable creates a new simple data table view based on a repository.
+func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) ui.LiveComponent {
 	if opts.PageSize == 0 {
 		opts.PageSize = 20 // TODO: does that make sense for mobile at all?
 	}
@@ -111,7 +112,6 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 				ui.NewTextField(func(searchField *ui.TextField) {
 					searchField.Label().Set("Filtern nach Stichworten")
 					searchField.OnTextChanged().Set(func() {
-						// todo trigger search
 						settings.LastQuery = searchField.Value().Get()
 					})
 				}),
@@ -127,26 +127,23 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 			}))
 		}
 
-		var zeroRow ColumnModel
-		cols := getCols(zeroRow)
-
 		var allSortBtns []*ui.Button
 
 		vbox.Append(
 			ui.NewTable(func(table *ui.Table) {
-				for _, col := range cols {
+				for _, col := range binding.elems {
 					table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-						if opts.CanSort {
+						if col.Sortable {
 							cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
 								allSortBtns = append(allSortBtns, btn)
-								btn.Caption().Set(col.name)
+								btn.Caption().Set(col.Caption)
 								btn.PreIcon().Set(icon.ArrowUpDown)
 								btn.Action().Set(func() {
 									for _, sortBtn := range allSortBtns {
 										sortBtn.PreIcon().Set(icon.ArrowUpDown)
 									}
 
-									settings.SortByColumName = col.name
+									settings.SortByColumName = col.Caption
 									settings.SortAsc = !settings.SortAsc
 									if settings.SortAsc {
 										btn.PreIcon().Set(icon.ArrowUp)
@@ -157,7 +154,7 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 								})
 							}))
 						} else {
-							cell.Body().Set(ui.MakeText(col.name))
+							cell.Body().Set(ui.MakeText(col.Caption))
 						}
 					}))
 				}
@@ -169,7 +166,7 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 				}
 
 				table.Rows().From(func(yield func(*ui.TableRow)) {
-					rows, err := getData(repo, intoModel, opts, settings)
+					rows, err := getData(items, binding, settings)
 					if err != nil {
 						vbox.Append(ui.MakeText(fmt.Sprintf("error: %v", err)))
 						return // TODO wrong seq signature
@@ -177,9 +174,9 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 
 					for _, rowDat := range rows {
 						yield(ui.NewTableRow(func(row *ui.TableRow) {
-							for _, col := range rowDat.cols {
+							for _, colText := range rowDat.values {
 								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-									cell.Body().Set(ui.MakeText(col.value))
+									cell.Body().Set(ui.MakeText(colText))
 								}))
 							}
 
@@ -187,7 +184,7 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
 									cell.Body().Set(ui.NewHBox(func(hbox *ui.HBox) {
 										for _, action := range opts.AggregateActions {
-											hbox.Append(action.makeComponent(modals, rowDat.holder.Original))
+											hbox.Append(action.makeComponent(modals, rowDat.model))
 										}
 									}))
 								}))
@@ -200,48 +197,4 @@ func NewTable[E data.Aggregate[ID], ID data.IDType, ColumnModel any](modals ui.M
 			}),
 		)
 	})
-}
-
-type column struct {
-	name  string
-	field reflect.StructField
-}
-
-func getCols(t any) []column {
-	var res []column
-	rType := reflect.TypeOf(t)
-	for i := range rType.NumField() {
-		field := rType.Field(i)
-		if !field.IsExported() {
-			continue
-		}
-
-		caption, ok := field.Tag.Lookup("caption")
-		if !ok {
-			caption = field.Name
-		}
-
-		res = append(res, column{
-			name:  caption,
-			field: field,
-		})
-	}
-
-	return res
-}
-
-func getColData(t any) []colData {
-	var res []colData
-	rType := reflect.TypeOf(t)
-	rVal := reflect.ValueOf(t)
-	for i := range rType.NumField() {
-		field := rType.Field(i)
-		if !field.IsExported() {
-			continue
-		}
-
-		res = append(res, colData{value: fmt.Sprintf("%v", rVal.Field(i).Interface())})
-	}
-
-	return res
 }

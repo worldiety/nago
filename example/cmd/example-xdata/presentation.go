@@ -9,40 +9,31 @@ import (
 	"go.wdy.de/nago/presentation/uix/xtable"
 )
 
-type PersonViewModel struct {
-	Firstname string `caption:"Vorname"`
-	Lastname  string `caption:"Nachname"`
-	Age       int    `caption:"Alter"`
-	Rank      Rank
-	Friends   int `caption:"Anzahl Freunde"`
-}
-
-func dataPage(wire ui.Wire, persons Persons) *ui.Page {
+func dataPage(wire ui.Wire, persons *PersonService) *ui.Page {
 	return ui.NewPage(wire, func(page *ui.Page) {
 		page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
-			scaffold.Body().Set(xtable.NewTable(page, persons, func(e Person) PersonViewModel {
-				return PersonViewModel{
-					Firstname: e.Firstname,
-					Lastname:  e.Lastname,
-					Age:       e.Age,
-					Rank:      e.Rank,
-					Friends:   len(e.Friends),
-				}
-			}, xtable.Options[Person, PersonID]{
+			scaffold.Body().Set(xtable.NewTable(page, persons.ViewPersons(), xtable.NewModelBinding[PersonView](), xtable.Options[PersonView]{
 				CanSearch: true,
-				CanSort:   true,
-				AggregateActions: []xtable.AggregateAction[Person]{
-					xtable.NewEditAction(func(person Person) error {
-						edit(page, persons, &person)
+				AggregateActions: []xtable.AggregateAction[PersonView]{
+					xtable.NewEditAction(func(pview PersonView) error {
+						person, err := persons.FindPerson(pview.ID)
+						if err != nil {
+							return err
+						}
+
+						if !person.Valid {
+							xdialog.ShowMessage(page, "Person nicht mehr gefunden")
+							return nil
+						}
+
+						edit(page, persons, &person.V)
 						return nil
 					}),
-					xtable.NewDeleteAction(func(person Person) error {
-						return persons.DeleteByID(person.ID)
-					}),
+					xtable.NewDeleteAction[PersonView](persons.RemoveByPersonView),
 					{
 						Icon:    icon.Cog6Tooth,
 						Caption: "Einstellungen",
-						Action: func(person Person) error {
+						Action: func(person PersonView) error {
 							xdialog.ShowMessage(page, fmt.Sprintf("Einstellungen von %v", person.ID))
 							return nil
 						},
