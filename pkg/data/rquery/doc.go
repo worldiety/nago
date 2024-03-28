@@ -21,7 +21,7 @@ func SimplePredicate[T any](query string) func(T) bool {
 	terms := strings.Split(strings.ToLower(query), " ")
 	var sTerms []string
 	for _, term := range terms {
-		if len(term) <= 2 {
+		if len(term) < 2 {
 			continue
 		}
 
@@ -40,6 +40,21 @@ func SimplePredicate[T any](query string) func(T) bool {
 }
 
 func contains(t any, what string) bool {
+	// fast type switch
+	switch t := t.(type) {
+	case string:
+		return strings.Contains(strings.ToLower(t), what)
+	case []string:
+		for _, s := range t {
+			if strings.Contains(strings.ToLower(s), what) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	// expensive but generic recursive reflect mechanic
 	rType := reflect.TypeOf(t)
 	valOfPtr := reflect.ValueOf(t)
 

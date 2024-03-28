@@ -19,6 +19,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 )
@@ -116,7 +118,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 		if livePageFn == nil {
 			logger.Warn("client requested unknown page", slog.String("_pid", pageID))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest) do not write on hijacked ws connection
 			return
 		}
 
@@ -124,33 +126,33 @@ func (c *Configurator) newHandler() http.Handler {
 		_, helloBuf, err := wire.ReadMessage()
 		if err != nil {
 			logger.Error("failed to read clients hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest) do not write on hijacked ws connection
 			return
 		}
 
 		tx := txMsg{}
 		if err := json.Unmarshal(helloBuf, &tx); err != nil {
 			logger.Error("failed to parse client tx hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
+			// w.WriteHeader(http.StatusInternalServerError) do not write on hijacked ws connection
 			return
 		}
 
 		if len(tx.TX) == 0 {
 			logger.Error("hello tx is empty")
-			w.WriteHeader(http.StatusBadRequest)
+			// w.WriteHeader(http.StatusBadRequest)do not write on hijacked ws connection
 			return
 		}
 
 		var cHello clientHello
 		if err := json.Unmarshal(tx.TX[0], &cHello); err != nil {
 			logger.Error("failed to parse client hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
+			//w.WriteHeader(http.StatusInternalServerError)do not write on hijacked ws connection
 			return
 		}
 
 		if cHello.Type != "hello" {
 			logger.Error("invalid client hello message", slog.Any("hello", string(helloBuf)))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest)do not write on hijacked ws connection
 			return
 		}
 
@@ -160,6 +162,31 @@ func (c *Configurator) newHandler() http.Handler {
 				OIDCName: OIDC_KEYCLOAK,
 			})
 		}
+
+		// recover and render readable stack trace
+		defer func() {
+			if r := recover(); r != nil {
+				stack := string(debug.Stack())
+				fmt.Println(r)
+				fmt.Println(stack)
+				ui.NewPage(wire, func(page *ui.Page) {
+					page.Body().Set(ui.NewVBox(func(vbox *ui.VBox) {
+						vbox.Append(ui.MakeText(fmt.Sprintf("%v", r)))
+						for _, line := range strings.Split(stack, "\n") {
+							if strings.HasPrefix(strings.TrimSpace(line), "/") {
+								vbox.Append(ui.MakeText(line))
+							} else {
+								vbox.Append(ui.NewText(func(text *ui.Text) {
+									text.Value().Set(line)
+									text.Size().Set("sm")
+								}))
+
+							}
+						}
+					}))
+				}).Invalidate()
+			}
+		}()
 
 		livePage := livePageFn(wire)
 		logger.Info(fmt.Sprintf("spawned live page %v", livePage.Token()))

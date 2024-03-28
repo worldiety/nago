@@ -1,4 +1,5 @@
-// Package slices contains some proposals from https://github.com/golang/go/issues/61899
+// Package slices contains some proposals from https://github.com/golang/go/issues/61899.
+// This package will be removed, as soon as these functions become available.
 package slices
 
 import "go.wdy.de/nago/pkg/iter"

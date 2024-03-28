@@ -9,11 +9,13 @@ import (
 	"strconv"
 )
 
+// deprecated
 // An Entity has an artificial identity.
 type Entity[Ident comparable] interface {
 	Identity() Ident
 }
 
+// deprecated
 // EntityNotFound declares an error which describes that an existing entity identified by its Ident was expected
 // but has not been found.
 type EntityNotFound string // todo make this generic, when type aliases can be generic or RHS can be generic
@@ -25,6 +27,7 @@ func (e EntityNotFound) Error() string {
 // LookupFailure is an enum of two error situations.
 type LookupFailure = enum.E2[EntityNotFound, serrors.InfrastructureError]
 
+// deprecated
 // IdentString converts the given identifier into a string representation.
 func IdentString[Ident comparable](id Ident) string {
 	switch t := any(id).(type) {
@@ -37,6 +40,7 @@ func IdentString[Ident comparable](id Ident) string {
 	}
 }
 
+// deprecated
 func RandString() string {
 	var tmp [16]byte
 	if _, err := rand.Read(tmp[:]); err != nil {

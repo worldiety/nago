@@ -23,3 +23,11 @@ func TestMap(t *testing.T) {
 		t.Fatal(str)
 	}
 }
+
+func TestLimit(t *testing.T) {
+	tmp := []int{1, 2, 3, 4, 5, 6}
+	r := slices.Collect(iter.Limit(slices.Values(tmp), 2))
+	if !reflect.DeepEqual([]int{1, 2}, r) {
+		t.Fatal(r)
+	}
+}

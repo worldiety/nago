@@ -15,15 +15,13 @@ import (
 	"strconv"
 )
 
-type MapF[From, To any] func(From) (To, error)
-
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
 	store           blob.Store
-	intoDomain      MapF[PersistenceModel, DomainModel]
-	intoPersistence MapF[DomainModel, PersistenceModel]
+	intoDomain      data.MapF[PersistenceModel, DomainModel]
+	intoPersistence data.MapF[DomainModel, PersistenceModel]
 }
 
-func NewJSONRepository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType](store blob.Store, intoDomain MapF[PersistenceModel, DomainModel], intoPersistence MapF[DomainModel, PersistenceModel]) *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID] {
+func NewJSONRepository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType](store blob.Store, intoDomain data.MapF[PersistenceModel, DomainModel], intoPersistence data.MapF[DomainModel, PersistenceModel]) *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID] {
 	return &Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]{
 		store:           store,
 		intoDomain:      intoDomain,
@@ -282,7 +280,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 		return firstErr
 	}
 
-	return r.DeleteAllByID(iter.Values(deleteList))
+	return r.DeleteAllByID(slices.Values(deleteList))
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Save(e DomainModel) error {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 )
 
 // Option is introduced because range over func can only represent at most 2 arguments. Processing
@@ -44,6 +45,25 @@ func (o Option[T]) Unwrap() T {
 	}
 
 	return o.V
+}
+
+// Get returns the value or [fs.ErrNotExist].
+func (o Option[T]) Get() (T, error) {
+	if o.Valid {
+		return o.V, nil
+	}
+
+	return o.V, fs.ErrNotExist
+}
+
+// Unpack2 is a shorthand for evaluating option and error and returns [fs.ErrNotExist] if no error and not exists,
+// express that fact as oneliner.
+func Unpack2[T any](opt Option[T], err error) (T, error) {
+	if err != nil {
+		return opt.V, err
+	}
+
+	return opt.Get()
 }
 
 // Iter allows iteration over the possibly contained value. Iter is a [iter.Seq].

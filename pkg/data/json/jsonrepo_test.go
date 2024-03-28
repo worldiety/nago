@@ -6,7 +6,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
+	slices2 "go.wdy.de/nago/pkg/slices"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -85,7 +85,7 @@ func testSuite(t *testing.T, repo data.Repository[Person, string]) {
 			Name: "Captain Picard",
 		},
 	}
-	must(repo.SaveAll(iter.Values(testSet)))
+	must(repo.SaveAll(slices2.Values(testSet)))
 
 	if v := unwrap(repo.Count()); v != 3 {
 		t.Fatalf("expected 3 but got %v", v)
@@ -111,7 +111,7 @@ func testSuite(t *testing.T, repo data.Repository[Person, string]) {
 
 	// again but different
 	tmp = nil
-	repo.FindAllByID(iter.Values([]string{"3", "2", "1"}), func(person Person, err error) bool {
+	repo.FindAllByID(slices2.Values([]string{"3", "2", "1"}), func(person Person, err error) bool {
 		tmp = append(tmp, person)
 		if err != nil {
 			t.Fatal(err)
@@ -129,7 +129,7 @@ func testSuite(t *testing.T, repo data.Repository[Person, string]) {
 	}
 
 	//
-	must(repo.DeleteAllByID(iter.Values([]string{"3", "2"})))
+	must(repo.DeleteAllByID(slices2.Values([]string{"3", "2"})))
 	if v := unwrap(repo.Count()); v != 1 {
 		t.Fatalf("expected 1 but got %v", v)
 	}
