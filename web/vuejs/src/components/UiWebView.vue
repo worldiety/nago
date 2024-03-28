@@ -12,6 +12,6 @@ const props = defineProps<{
 
 <template>
 <!--	<div v-html='props.ui.value.value'></div> TODO not sure about the semantics we want-->
-	<iframe :srcdoc='props.ui.value.value'></iframe>
+	<iframe style="width: 100%;height:100vh" :srcdoc='props.ui.value.value'></iframe>
 
 </template>
