@@ -230,6 +230,14 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewWebView(func(view *ui.WebView) {
+								view.Value().Set(`
+<h1>hello <em>world</em></h1>
+<p>a paragraph</p>
+
+`)
+							}))
+
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.OnValueChanged().Set(func() {
