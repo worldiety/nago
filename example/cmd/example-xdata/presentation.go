@@ -2,37 +2,52 @@ package main
 
 import (
 	"fmt"
-	"go.wdy.de/nago/pkg/data"
+	dm "go.wdy.de/nago/domain"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/presentation/uix/xtable"
 )
 
-type PersonViewModel struct {
-	Firstname string `caption:"Vorname"`
-	Lastname  string `caption:"Nachname"`
-	Age       int    `caption:"Alter"`
-	Rank      Rank
-}
-
-func dataPage(wire ui.Wire, persons data.Repository[Person, PersonID]) *ui.Page {
+func dataPage(wire ui.Wire, persons *PersonService) *ui.Page {
 	return ui.NewPage(wire, func(page *ui.Page) {
 		page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
-			scaffold.Body().Set(xtable.NewTable(page, persons, func(e Person) PersonViewModel {
-				return PersonViewModel{
-					Firstname: e.Firstname,
-					Lastname:  e.Lastname,
-					Age:       e.Age,
-					Rank:      e.Rank,
-				}
-			}, xtable.Options[Person, PersonID]{
+			scaffold.Body().Set(xtable.NewTable(page, persons.ViewPersons(), xtable.NewModelBinding[PersonView](), xtable.Options[PersonView]{
 				CanSearch: true,
-				CanSort:   true,
-				OnEdit: func(person Person) {
-					xdialog.ShowMessage(page, fmt.Sprintf("Navigate to detail page of `%v`", person.ID))
+				AggregateActions: []xtable.AggregateAction[PersonView]{
+					xtable.NewEditAction(func(pview PersonView) error {
+						person, err := std.Unpack2(persons.FindPerson(pview.ID))
+						if err != nil {
+							return err
+						}
+
+						edit(page, persons, &person)
+						return nil
+					}),
+					xtable.NewDeleteAction[PersonView](persons.RemoveByPersonView),
+					{
+						Icon:    icon.Cog6Tooth,
+						Caption: "Einstellungen",
+						Action: func(person PersonView) error {
+							xdialog.ShowMessage(page, fmt.Sprintf("Einstellungen von %v", person.ID))
+							return nil
+						},
+					},
 				},
-				OnDelete: func(person Person) error {
-					return persons.DeleteByID(person.ID)
+
+				Actions: []ui.LiveComponent{
+					ui.NewButton(func(btn *ui.Button) {
+						btn.PreIcon().Set(icon.Plus)
+						btn.Caption().Set("Neu")
+						btn.Action().Set(func() {
+							var person Person
+							person.ID = PersonID(dm.NewID())
+							person.Firstname = "Nobody"
+
+							edit(page, persons, &person)
+						})
+					}),
 				},
 			}))
 		}))

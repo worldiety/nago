@@ -118,7 +118,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 		if livePageFn == nil {
 			logger.Warn("client requested unknown page", slog.String("_pid", pageID))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest) do not write on hijacked ws connection
 			return
 		}
 
@@ -126,33 +126,33 @@ func (c *Configurator) newHandler() http.Handler {
 		_, helloBuf, err := wire.ReadMessage()
 		if err != nil {
 			logger.Error("failed to read clients hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest) do not write on hijacked ws connection
 			return
 		}
 
 		tx := txMsg{}
 		if err := json.Unmarshal(helloBuf, &tx); err != nil {
 			logger.Error("failed to parse client tx hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
+			// w.WriteHeader(http.StatusInternalServerError) do not write on hijacked ws connection
 			return
 		}
 
 		if len(tx.TX) == 0 {
 			logger.Error("hello tx is empty")
-			w.WriteHeader(http.StatusBadRequest)
+			// w.WriteHeader(http.StatusBadRequest)do not write on hijacked ws connection
 			return
 		}
 
 		var cHello clientHello
 		if err := json.Unmarshal(tx.TX[0], &cHello); err != nil {
 			logger.Error("failed to parse client hello message", slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
+			//w.WriteHeader(http.StatusInternalServerError)do not write on hijacked ws connection
 			return
 		}
 
 		if cHello.Type != "hello" {
 			logger.Error("invalid client hello message", slog.Any("hello", string(helloBuf)))
-			w.WriteHeader(http.StatusBadRequest)
+			//w.WriteHeader(http.StatusBadRequest)do not write on hijacked ws connection
 			return
 		}
 

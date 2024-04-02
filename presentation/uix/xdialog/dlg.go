@@ -19,6 +19,18 @@ func ShowMessage(ctx ui.ModalOwner, msg string) {
 	}))
 }
 
+func ErrorView(msg string, err error) ui.LiveComponent {
+	if err == nil {
+		return nil
+	}
+
+	var tmp [16]byte
+	_, _ = rand.Read(tmp[:])
+	code := hex.EncodeToString(tmp[:])
+	slog.Error("captured failure on frontend", slog.Any("err", err), slog.String("code", code), slog.String("msg", msg))
+	return ui.MakeText("oh snap: " + code)
+}
+
 func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 	if err == nil {
 		return false
