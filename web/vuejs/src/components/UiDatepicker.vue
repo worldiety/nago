@@ -114,6 +114,7 @@ function datepickerClicked(forceClose: boolean): void {
 			>
 				<div
 					class="input-field relative z-0"
+					tabindex="0"
 					@click="datepickerClicked(false)"
 					@keydown.enter="datepickerClicked(true)">
 					<p>{{ dateFormatted }}</p>

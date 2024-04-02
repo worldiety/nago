@@ -54,7 +54,7 @@ const inputFieldOutlineClass = computed((): string|null => {
     </div>
 
     <!-- Label with optional hint -->
-    <div class="flex justify-between items-end text-sm mb-1" :class="{'peer-active:font-semibold': !disabled}">
+    <div class="flex justify-between items-end text-sm mb-1" :class="{'peer-focus-within:font-semibold': !disabled}">
       <div v-if="label" class="flex justify-start items-center gap-x-1" :class="labelClass">
         <LockIcon v-if="disabled" class="h-4" />
         <ErrorIcon v-else-if="error" class="h-2.5" />
