@@ -230,14 +230,6 @@ func main() {
 								})
 							}))
 
-							vbox.Append(ui.NewWebView(func(view *ui.WebView) {
-								view.Value().Set(`
-<h1>hello <em>world</em></h1>
-<p>a paragraph</p>
-
-`)
-							}))
-
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
@@ -346,6 +338,7 @@ func main() {
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Simple().Set(false)
+									t.Error().Set("Fehler")
 									t.Label().Set("Vorname")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
@@ -683,6 +676,14 @@ func main() {
 									)
 								}),
 							)
+
+							vbox.Append(ui.NewWebView(func(view *ui.WebView) {
+								view.Value().Set(`
+<h1>hello <em>world</em></h1>
+<p>a paragraph</p>
+
+`)
+							}))
 						}),
 					)
 				}),

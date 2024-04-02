@@ -82,13 +82,13 @@ function isSelected(item: LiveDropdownItem): boolean {
 				:disabled="props.ui.disabled.value"
 			>
 				<div
-					class="input-field flex justify-between gap-x-4 items-center cursor-default p-2"
+					class="input-field flex justify-between gap-x-4 items-center cursor-default"
 					:tabindex="props.ui.disabled.value ? '-1': '0'"
 					@click="dropdownClicked(false)"
 					@keydown.enter="dropdownClicked(true)"
 				>
-					<div class="truncate" :class="{'text-disabled-text': !selectedItemNames}">{{ selectedItemNames ?? 'Auswählen...' }}</div>
-					<ArrowDown class="shrink-0 grow-0 duration-100 w-4 mr-2" :class="{'rotate-180': props.ui.expanded.value}" />
+					<div class="truncate">{{ selectedItemNames ?? 'Auswählen...' }}</div>
+					<ArrowDown class="shrink-0 grow-0 duration-100 w-4" :class="{'rotate-180': props.ui.expanded.value}" />
 				</div>
 			</InputWrapper>
 

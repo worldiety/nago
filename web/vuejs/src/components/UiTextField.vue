@@ -29,10 +29,12 @@ watch(inputValue, (newValue) => {
 			:label="props.ui.label.value"
 			:error="props.ui.error.value"
 			:hint="props.ui.hint.value"
+			:disabled="props.ui.disabled.value"
 		>
 			<input
 				:id="idPrefix + props.ui.id.toString()"
 				v-model="inputValue"
+				class="input-field"
 				:placeholder="props.ui.placeholder.value"
 				:disabled="props.ui.disabled.value"
 				type="text"

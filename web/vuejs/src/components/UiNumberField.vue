@@ -39,11 +39,12 @@ watch(inputValue, (newValue, oldValue) => {
 			:label="props.ui.label.value"
 			:error="props.ui.error.value"
 			:hint="props.ui.hint.value"
+			:disabled="props.ui.disabled.value"
 		>
 			<input
 				v-model="inputValue"
 				type="text"
-				class="w-full"
+				class="input-field"
 				inputmode="numeric"
 				:placeholder="props.ui.placeholder.value"
 				:disabled="props.ui.disabled.value"

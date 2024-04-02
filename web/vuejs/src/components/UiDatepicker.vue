@@ -112,17 +112,12 @@ function datepickerClicked(forceClose: boolean): void {
 				:hint="props.ui.hint.value"
 				:disabled="props.ui.disabled.value"
 			>
-				<div class="relative z-0">
-					<input
-						:value="dateFormatted"
-						type="text"
-						readonly
-						:disabled="props.ui.disabled.value"
-						class="pr-8"
-						@click="datepickerClicked(false)"
-						@keydown.enter="datepickerClicked(true)"
-					>
-					<div class="absolute top-0 bottom-0 right-2 flex items-center pointer-events-none h-full">
+				<div
+					class="input-field relative z-0"
+					@click="datepickerClicked(false)"
+					@keydown.enter="datepickerClicked(true)">
+					<p>{{ dateFormatted }}</p>
+					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none h-full">
 						<Calendar class="w-4" />
 					</div>
 				</div>
