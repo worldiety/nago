@@ -1,6 +1,6 @@
-import { useAuth } from '@/stores/authStore';
+import {useAuth} from '@/stores/authStore';
 import type {CustomError} from "@/composables/errorhandling";
-
+import type {URL} from "node:url";
 
 export function userHeaders() {
 	async function headers(): Promise<HeadersInit> {
@@ -13,89 +13,118 @@ export function userHeaders() {
 			Authorization: `Bearer ${user?.access_token}`,
 		};
 	}
-
 	return {
 		headers,
 	};
 }
 
-/**
- * Simple hook for making requests.
- * Automatically asks users to sign in if a 401 is received.
- */
+export class HttpRequest<T> {
+	private readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+	private readonly url: string | URL;
+	private headers: Record<string, string> = {};
+	private payload?: string | FormData;
+	private auth?: () => Promise<string>;
 
-export function useHttp() {
-	const auth = useAuth();
+	constructor(method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string | URL) {
+		this.method = method;
+		this.url = url;
+	}
 
-	/**
-	 * Make an HTTP request.
-	 * @param url The URL to send the request to.
-	 * @param method The method to make the request with.
-	 * @param body The body to send in the request.
-	 *             "undefined" will be an empty body, everything else will be serialized to JSON.
-	 * @param header
-	 */
+	public static get<T = undefined>(url: string | URL): HttpRequest<T> {
+		return new HttpRequest<T>('GET', url);
+	}
 
-	async function request(url: string | URL, method:string, body: undefined | any = undefined, header: undefined | any = undefined) {
-		const user = await auth.getUser;
+	public static post<T = undefined>(url: string | URL): HttpRequest<T> {
+		return new HttpRequest<T>('POST', url);
+	}
 
-		let customError: CustomError = {}
+	public static put<T = undefined>(url: string | URL): HttpRequest<T> {
+		return new HttpRequest<T>('PUT', url);
+	}
 
+	public static delete<T = undefined>(url: string | URL): HttpRequest<T> {
+		return new HttpRequest<T>('DELETE', url);
+	}
 
-		if (user?.expired) {
-			console.log('request: Oo user already expired and got that old one');
+	public header(name: string, value: string): HttpRequest<T> {
+		this.headers[name] = value;
+		return this;
+	}
+
+	public authenticated(auth: () => Promise<string>): HttpRequest<T> {
+		this.auth = auth;
+		return this;
+	}
+
+	public body(body: string | Blob | FormData | object, contentType?: string): HttpRequest<T> {
+		if (!['POST', 'PUT'].includes(this.method)) {
+			throw new Error(`Request method ${this.method} does not support request body!`);
 		}
 
-		let bodyData = undefined;
-		if (body !== undefined) {
-			bodyData = JSON.stringify(body);
-		}
-
-
-			const response = await fetch(url, {
-			method,
-			body: bodyData,
-			headers: {
-				...header,
-				Authorization: `Bearer ${user?.access_token}`,
-
-			},
-		});
-
-		const authRequired = response.status === 401;
-		if (authRequired) {
-			await auth.signIn();
-		}
-		if (!navigator.onLine) {
-			customError = {
-				errorCode: "001"
+		if (body instanceof Blob) {
+			if (this.payload && this.payload instanceof FormData) {
+				this.payload.append('files', body);
+			} else {
+				this.payload = new FormData();
+				this.payload.append('files', body);
 			}
+			// https://muffinman.io/blog/uploading-files-using-fetch-multipart-form-data/
+			delete this.headers['content-type'];
+		} else if (body instanceof FormData) {
+			this.payload = body
+		} else if (typeof body === 'string') {
+			this.payload = body;
+			this.headers['content-type'] = contentType || 'text/plain';
+		} else if (typeof body === 'object') {
+			this.payload = JSON.stringify(body);
+			this.headers['content-type'] = contentType || 'application/json';
+		} else {
+			throw new Error('Unsupported request body!');
+		}
+		return this;
+	}
 
-			throw customError as CustomError
+	public async fetch(): Promise<T> {
+		if (this.auth) {
+			const token = await this.auth()
+			this.headers['Authorization'] = `Bearer ${token}`
+		}
+
+		let response: Response;
+		try {
+			response = await fetch(this.url, {
+				method: this.method,
+				body: this.payload,
+				headers: this.headers,
+				credentials: 'include',
+			});
+		} catch (e) {
+			const customError: CustomError = {
+				errorCode: "001"
+			};
+			throw customError;
+		}
+
+		if (!response.ok) {
+			throw response;
 		}
 
 		try {
-
-			return await response.clone().json(); // bei Promise als return type immer await voranstellen, sonst läuft das Programm mit dem Fehler durch
+			switch (response.headers.get('content-type')?.toLowerCase()) {
+				case 'application/json':
+					return await response.clone().json() as T;
+				case 'text/plain':
+				case 'text/csv':
+					return await response.clone().text() as T;
+				default:
+					//	return await response.clone().json() as T;
+					return undefined as T;
+			}
 		} catch (e) {
-			const contentType  = response.headers.get('content-type')
-
-			if (!contentType || !contentType.includes('application/json')) {
-				customError = {
-					errorCode: "002"
-				}
-
-				throw customError as CustomError
+			const customError: CustomError = {
+				errorCode: "002"
 			}
-
-			if (!response.ok) {
-				throw response;
-			}
-
+			throw customError
 		}
 	}
-
-	return {
-		request,
-	};
 }

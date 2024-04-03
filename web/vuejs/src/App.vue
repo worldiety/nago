@@ -76,16 +76,8 @@ init();
 </script>
 
 <template>
-	<div></div>
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"> </UiErrorMessage>
-		<!--
-      <div class="errorMessage">
-        <p> {{errorMessage}}</p>
-        <button class="border border-black p-0.5 text-sm bg-white" @click="toggleErrorInfo">Mehr Informationen</button>
-        <p v-if="showAdditionalInformation">{{ additionalInformation }}</p>
-      </div>
-      -->
 	</div>
 
 	<RouterView v-if="state === State.ShowRoutes" />
