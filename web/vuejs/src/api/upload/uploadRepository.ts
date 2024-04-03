@@ -1,35 +1,17 @@
+import {HttpRequest} from "@/shared/http";
 
-/*
-import {useHttp} from "@/shared/http";
+//TODO: Klasse anlegen?
 
-
-export function fileInputChange() {
-	const item = e.target;
-	const formData = new FormData();
-	for (const file of item.files) {
-		formData.append('files', file);
+export async function fetchUpload(files: Blob[], pageToken: string, uploadToken: string): Promise<void> {
+	if (files.length === 0){
+		console.log('Provided file array is empty, skipped upload!')
+		return
 	}
-
-
-
-	//TODO: auslagern
-	// - Upload Repository anlegen, das diesen Endpunkt abfragt /api/v1/upload
-	// - Überprüfen, ob ich den Fehler an dieser Stelle anzeigen kann, ansonsten in App.vue durchreichen
-	// -
-	// -
-	fetch('/api/v1/upload', {
-		method: 'POST',
-		body: formData,
-		/*
-		headers: {
-			'x-page-token': props.page.token,
-			'x-upload-token': props.ui.uploadToken.value,
-		},
-
-
-	});
+	const request = HttpRequest.post('/api/v1/upload')
+	for (let i = files.length - 1; i >= 0; i--) {
+		request.body(files[i])
+	}
+		request.header('x-page-token', pageToken)
+		request.header('x-upload-token', uploadToken)
+		await request.fetch()
 }
-
-
-
- */

@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { useAuth } from '@/stores/authStore';
-import { useHttp } from '@/shared/http';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const auth = useAuth();
-const http = useHttp();
 const router = useRouter();
 
 // A list of all dynamically loaded routes, for convenience
@@ -24,11 +22,14 @@ async function logout() {
 	await auth.signOut();
 }
 
+//TODO: Klären, ob das noch gebraucht wird. HTTP Client wurde umgeschrieben, daher auskommentiert, da derzeit nicht benutzt
+/*
 async function loadPrivateData() {
 	const response = await http.request(import.meta.env.VITE_HOST_BACKEND + 'private');
 	const text = await response.text();
 	alert(text);
 }
+ */
 </script>
 
 <template>

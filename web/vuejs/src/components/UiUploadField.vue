@@ -1,7 +1,12 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import {computed, markRaw} from 'vue';
 import type { LiveUploadField } from '@/shared/model/liveUploadField';
 import type { LivePage } from '@/shared/model/livePage';
+import {fetchUpload} from "@/api/upload/uploadRepository";
+import {ApplicationError, useErrorHandling} from "@/composables/errorhandling";
+import UiErrorMessage from "@/components/UiErrorMessage.vue";
+
+const errorHandler = useErrorHandling();
 
 const props = defineProps<{
 	ui: LiveUploadField;
@@ -36,31 +41,32 @@ const inputClass = computed<string>(() => {
 	return 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500';
 });
 
-function fileInputChanged(e: Event) {
-	const item = e.target;
-	const formData = new FormData();
-	for (const file of item.files) {
-		formData.append('files', file);
-	}
 
-	//TODO: auslagern
-	// - Upload Repository anlegen, das diesen Endpunkt abfragt /api/v1/upload
-	// - Überprüfen, ob ich den Fehler an dieser Stelle anzeigen kann, ansonsten in App.vue durchreichen
-	// -
-	// -
-	fetch('/api/v1/upload', {
-		method: 'POST',
-		body: formData,
-		headers: {
-			'x-page-token': props.page.token,
-			'x-upload-token': props.ui.uploadToken.value,
-		},
-	});
+async function fileInputChanged(e: Event):Promise<void> {
+	const item = e.target as HTMLInputElement;
+	if (!item.files) {
+		return
+	}
+	const filesarray: Blob[] = []
+	for (let i = 0; i < item.files.length; i++) {
+		filesarray.push(item.files[i])
+	}
+	try {
+		 await fetchUpload(filesarray, props.page.token, props.ui.uploadToken.value)
+	} catch (e: ApplicationError) {
+		errorHandler.handleError(e)
+	}
 }
+
+
+
 </script>
 
 <template>
-	<div class="flex w-full items-center justify-center">
+	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
+		<UiErrorMessage :error="errorHandler.error.value"> </UiErrorMessage>
+	</div>
+	<div v-else class="flex w-full items-center justify-center">
 		<label
 			:for="props.ui.id.toString()"
 			class="dark:hover:bg-bray-800 flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600"
