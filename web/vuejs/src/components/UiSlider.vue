@@ -10,17 +10,27 @@ const props = defineProps<{
 const networkStore = useNetworkStore();
 const sliderValue = ref<number>(0);
 const dragging = ref<boolean>(false);
+const minRounded = ref<number>(roundValue(props.ui.min.value));
+const maxRounded = ref<number>(roundValue(props.ui.max.value));
+const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
+const initialValueRounded = ref<number>(roundValue(props.ui.value.value));
 
 onBeforeMount(() => {
 	if (!props.ui.initialized.value) {
-		sliderValue.value = props.ui.min.value;
+		sliderValue.value = minRounded.value;
 		return;
 	}
 	// Limit initial value to min and max value
-	const bounded = Math.max(Math.min(props.ui.value.value, props.ui.max.value), props.ui.min.value);
-	// Calculate valid initial value based on the step size and minimum value (always rounding down)
-	sliderValue.value = bounded - (bounded - props.ui.min.value) % props.ui.stepsize.value;
+	const bounded = Math.max(Math.min(initialValueRounded.value, maxRounded.value), minRounded.value);
+	// Calculate valid initial value based on the step size and minimum value (always rounding down to the next valid value)
+	const validated = bounded - (bounded - minRounded.value) % stepsizeRounded.value;
+	// Get rid of rounding errors
+	sliderValue.value = roundValue(validated);
 });
+
+function roundValue(value: number): number {
+	return Math.round(value * 100) / 100;
+}
 
 function submitSliderValue(): void {
 	dragging.value = false;
@@ -38,9 +48,9 @@ function submitSliderValue(): void {
 		<input
 			v-model="sliderValue"
 			type="range"
-			:min="props.ui.min.value"
-			:max="props.ui.max.value"
-			:step="props.ui.stepsize.value"
+			:min="minRounded"
+			:max="maxRounded"
+			:step="stepsizeRounded"
 			:disabled="props.ui.disabled.value"
 			:class="{'slider-dragging': dragging, 'slider-uninitialized': !props.ui.initialized.value}"
 			class="px-2 -ml-2"
