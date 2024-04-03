@@ -27,6 +27,9 @@ const buttonClasses = computed<string>(() => {
 		case 'tertiary':
 			classes.push('button-tertiary');
 			break;
+		case 'destructive':
+			classes.push('button-destructive');
+			break;
 		default:
 			classes.push('button-default');
 	}
