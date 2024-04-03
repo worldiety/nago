@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import { useFocus } from '@vueuse/core';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import type { LiveDialog } from '@/shared/model/liveDialog';
 import type { LivePage } from '@/shared/model/livePage';
 
@@ -10,9 +9,11 @@ const props = defineProps<{
 	page: LivePage;
 }>();
 
-// enables focus on an element that has "dialog" as a ref, as soon as it gets created
-const dialog = ref();
-useFocus(dialog, { initialValue: true });
+const dialog = ref<HTMLElement|undefined>();
+
+onMounted(() => {
+	dialog.value?.focus();
+});
 </script>
 
 <template>
