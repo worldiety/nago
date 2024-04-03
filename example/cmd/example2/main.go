@@ -249,7 +249,8 @@ func main() {
 								slider.Hint().Set("Das ist ein Hinweis")
 								slider.Min().Set(-10)
 								slider.Max().Set(25)
-								slider.Stepsize().Set(.5)
+								slider.Value().Set(21.49)
+								slider.Stepsize().Set(.75)
 								slider.Initialized().Set(true)
 								slider.OnChanged().Set(func() {
 									slider.Initialized().Set(true)

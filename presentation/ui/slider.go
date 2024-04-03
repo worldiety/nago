@@ -9,8 +9,8 @@ type Slider struct {
 	hint        String
 	error       String
 	value       Float
-	min         Int
-	max         Int
+	min         Float
+	max         Float
 	stepsize    Float
 	initialized Bool
 	onChanged   *Func
@@ -25,8 +25,8 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		hint:        NewShared[string]("hint"),
 		error:       NewShared[string]("error"),
 		value:       NewShared[float64]("value"),
-		min:         NewShared[int64]("min"),
-		max:         NewShared[int64]("max"),
+		min:         NewShared[float64]("min"),
+		max:         NewShared[float64]("max"),
 		stepsize:    NewShared[float64]("stepsize"),
 		initialized: NewShared[bool]("initialized"),
 		onChanged:   NewFunc("onChanged"),
@@ -59,11 +59,11 @@ func (c *Slider) Value() Float {
 	return c.value
 }
 
-func (c *Slider) Min() Int {
+func (c *Slider) Min() Float {
 	return c.min
 }
 
-func (c *Slider) Max() Int {
+func (c *Slider) Max() Float {
 	return c.max
 }
 

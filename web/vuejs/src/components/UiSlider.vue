@@ -12,7 +12,14 @@ const sliderValue = ref<number>(0);
 const dragging = ref<boolean>(false);
 
 onBeforeMount(() => {
-	sliderValue.value = props.ui.initialized.value ? props.ui.value.value : props.ui.min.value;
+	if (!props.ui.initialized.value) {
+		sliderValue.value = props.ui.min.value;
+		return;
+	}
+	// Limit initial value to min and max value
+	const bounded = Math.max(Math.min(props.ui.value.value, props.ui.max.value), props.ui.min.value);
+	// Calculate valid initial value based on the step size and minimum value (always rounding down)
+	sliderValue.value = bounded - (bounded - props.ui.min.value) % props.ui.stepsize.value;
 });
 
 function submitSliderValue(): void {
