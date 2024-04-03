@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
-const inputValue = ref<string>('');
+const inputValue = ref<string>(props.ui.value.value.toString(10));
 
 /**
  * Validates the input value and submits it, if it is valid.

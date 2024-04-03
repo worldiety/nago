@@ -231,6 +231,7 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								numberField.Value().Set(123)
 								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
