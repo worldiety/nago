@@ -10,6 +10,10 @@
 		}
 	},
 	"httpErrorcodes": {
+		"400": {
+			"errorMessage": "Der Server konnte die Anfrage nicht verarbeiten. Bitte Webadresse überprüfen und Seite neu laden.",
+			"additionalInformation": "HTTP-Statuscode: 400"
+		},
 		"401": {
 			"errorMessage": "Authentifizierung fehlgeschlagen. Bitte einloggen.",
 			"additionalInformation": "HTTP-Statuscode: 401"

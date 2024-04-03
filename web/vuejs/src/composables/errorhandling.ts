@@ -8,7 +8,6 @@ export interface CustomError {
 }
 
 export type ApplicationError = Error | unknown | Response | CustomError;
-
 // by convention, composable function names start with "use"
 export function useErrorHandling() {
 	const error = ref<CustomError | null>(null);
@@ -16,6 +15,7 @@ export function useErrorHandling() {
 
 	// a composable can update its managed state over time.
 	function handleError(rawError: ApplicationError) {
+		console.log('RAWERROR:',rawError)
 		if (rawError instanceof Error) {
 			console.log('rawError ist Error:');
 			error.value = {
@@ -26,7 +26,7 @@ export function useErrorHandling() {
 			console.log('rawError ist Response');
 			error.value = {
 				message: String(i18n.t('httpErrorcodes.' + rawError.status + '.errorMessage')),
-				additionalInformation: 'TODO: Message definieren',
+				additionalInformation: String(i18n.t('httpErrorcodes.' + rawError.status + '.additionalInformation')),
 			};
 		} else if (rawError as CustomError) {
 			console.log('rawError ist CustomError');
@@ -43,7 +43,6 @@ export function useErrorHandling() {
 			};
 		}
 	}
-
 	return {
 		error,
 		handleError,
