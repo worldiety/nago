@@ -75,7 +75,7 @@ input[type="range"]:focus-visible {
 /* Webkit slider thumb */
 
 input[type="range"]::-webkit-slider-thumb {
-	@apply rounded-full bg-ora-orange cursor-default shadow-none h-4 w-4;
+	@apply appearance-none rounded-full bg-ora-orange cursor-default shadow-none h-4 w-4;
 	margin-top: -.5rem;
 }
 
@@ -103,7 +103,7 @@ input[type="range"].slider-uninitialized:disabled::-webkit-slider-thumb {
 /* Moz slider thumb */
 
 input[type="range"]::-moz-range-thumb {
-	@apply rounded-full bg-ora-orange cursor-default h-4 w-4;
+	@apply rounded-full bg-ora-orange border-none cursor-default h-4 w-4;
 }
 
 input[type="range"].slider-uninitialized::-moz-range-thumb {
