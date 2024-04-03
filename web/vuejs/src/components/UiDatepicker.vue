@@ -6,6 +6,7 @@ import ArrowDown from '@/assets/svg/arrowDown.svg';
 import Close from '@/assets/svg/close.svg';
 import { useNetworkStore } from '@/stores/networkStore';
 import monthNames from '@/shared/monthNames';
+import InputWrapper from '@/components/shared/InputWrapper.vue';
 
 const props = defineProps<{
 	ui: LiveDatepicker;
@@ -103,23 +104,25 @@ function datepickerClicked(forceClose: boolean): void {
 
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm font-medium">{{ props.ui.label.value }}</span>
 		<div class="relative">
 			<!-- Input field -->
-			<div class="relative z-0">
-				<input
-					:value="dateFormatted"
-					type="text"
-					readonly
-					:disabled="props.ui.disabled.value"
-					class="input-field w-full pr-8"
+			<InputWrapper
+				:label="props.ui.label.value"
+				:error="props.ui.error.value"
+				:hint="props.ui.hint.value"
+				:disabled="props.ui.disabled.value"
+			>
+				<div
+					class="input-field relative z-0"
+					tabindex="0"
 					@click="datepickerClicked(false)"
-					@keydown.enter="datepickerClicked(true)"
-				>
-				<div class="absolute top-0 bottom-0 right-2 flex items-center pointer-events-none h-full">
-					<Calendar class="w-4" :class="props.ui.disabled.value ? 'text-disabled-text' : 'text-black'" />
+					@keydown.enter="datepickerClicked(true)">
+					<p>{{ dateFormatted }}</p>
+					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none h-full">
+						<Calendar class="w-4" />
+					</div>
 				</div>
-			</div>
+			</InputWrapper>
 
 			<!-- Datepicker -->
 			<div v-if="props.ui.expanded.value" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30">
@@ -199,9 +202,6 @@ function datepickerClicked(forceClose: boolean): void {
 				<div class="absolute top-0 left-0 bottom-0 right-0 backdrop-blur z-0" @click="networkStore.invokeFunc(props.ui.onClicked)"></div>
 			</div>
 		</div>
-		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
 	</div>
 </template>
 

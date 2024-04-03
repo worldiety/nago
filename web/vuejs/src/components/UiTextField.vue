@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { LiveTextField } from '@/shared/model/liveTextField';
 import type { LivePage } from '@/shared/model/livePage';
+import InputWrapper from '@/components/shared/InputWrapper.vue';
 
 const props = defineProps<{
 	ui: LiveTextField;
@@ -10,56 +11,34 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
+const inputValue = ref<string>(props.ui.value.value);
+const idPrefix = 'text-field-';
 
-function valueChanged(event: any) {
-	props.ui.value.value = event.target.value;
-
-	networkStore.invokeFuncAndSetProp(props.ui.value, props.ui.onTextChanged);
-}
-
-function isErr(): boolean {
-	return props.ui.error.value != '';
-}
-
-const labelClass = computed<string>(() => {
-	if (props.ui.disabled.value && isErr()) {
-		return 'text-red-900 dark:text-red-700';
-	}
-
-	if (isErr()) {
-		return 'text-red-700 dark:text-red-500';
-	}
-
-	return 'text-gray-900 dark:text-white';
-});
-
-const inputClass = computed<string>(() => {
-	if (props.ui.disabled.value) {
-		return 'bg-gray-100 border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500';
-	}
-
-	if (isErr()) {
-		return 'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-lg focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500';
-	}
-
-	return 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500';
+watch(inputValue, (newValue) => {
+	networkStore.invokeFuncAndSetProp({
+		...props.ui.value,
+		value: newValue,
+	}, props.ui.onTextChanged);
 });
 </script>
 
 <template>
 	<div>
-		<label :for="props.ui.id.toString()" :class="labelClass" class="mb-2 block text-sm font-medium">{{
-			props.ui.label.value
-		}}</label>
-		<input
+		<InputWrapper
+			:simple="props.ui.simple.value"
+			:label="props.ui.label.value"
+			:error="props.ui.error.value"
+			:hint="props.ui.hint.value"
 			:disabled="props.ui.disabled.value"
-			@input="valueChanged"
-			:value="props.ui.value.value"
-			type="text"
-			:id="props.ui.id.toString()"
-			:class="inputClass"
-		/>
-		<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-if="!isErr()" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
+		>
+			<input
+				:id="idPrefix + props.ui.id.toString()"
+				v-model="inputValue"
+				class="input-field"
+				:placeholder="props.ui.placeholder.value"
+				:disabled="props.ui.disabled.value"
+				type="text"
+			/>
+		</InputWrapper>
 	</div>
 </template>

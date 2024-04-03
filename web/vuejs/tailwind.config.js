@@ -1,25 +1,22 @@
 export default {
 	content: [
 		"./src/**/*.{html,vue}",
-		'node_modules/flowbite-vue/**/*.{js,jsx,ts,tsx}',
-		'node_modules/flowbite/**/*.{js,jsx,ts,tsx}'
 	],
 	theme: {
-		extend: {},
-		colors: {
-			'wdy-green': '#1B8C30',
-			'ora-orange': '#F7A823',
-			'disabled': {
-				'text': '#848484',
-				'background': '#E2E2E2',
+		extend: {
+			colors: {
+				'wdy-green': '#1B8C30',
+				'ora-orange': '#F7A823',
+				'disabled': {
+					'text': '#848484',
+					'background': '#E2E2E2',
+				},
+				'error': '#FF543E',
 			},
 		},
 	},
 
 	mode: 'jit',
-	plugins: [
-		require('flowbite/plugin')
-	],
 	darkMode: 'class',
 	// safelist does not really work for our dynamic stuff
 	// safelist: ["gap-[2fr]", "grid", "grid-cols-2",]

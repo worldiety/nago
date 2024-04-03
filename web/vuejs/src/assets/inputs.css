@@ -62,18 +62,6 @@ input[type="radio"]:disabled::before {
 	box-shadow: inset 1em 1em theme('colors.disabled.text');
 }
 
-.input-field {
-	@apply border border-black rounded-md text-black cursor-default;
-}
-
-.input-field:hover {
-	@apply border-wdy-green text-wdy-green;
-}
-
-.input-field:disabled, .input-field.input-field-disabled {
-	@apply border-disabled-background bg-disabled-background text-disabled-text;
-}
-
 /* Range input styling (see https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/, https://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html) */
 
 input[type="range"] {

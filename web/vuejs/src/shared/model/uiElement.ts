@@ -6,6 +6,7 @@ import type { ListView } from '@/shared/model/listView';
 import type { LiveComponent } from '@/shared/model/liveComponent';
 import type { Scaffold } from '@/shared/model/scaffold';
 import type { TextElement } from '@/shared/model/textElement';
+import type {WebView} from "@/shared/model/webView";
 
 export type UiElement =
 	| TextElement
@@ -16,4 +17,5 @@ export type UiElement =
 	| FormField
 	| CardView
 	| LiveComponent
+	| WebView
 	| SVGElement;

@@ -231,7 +231,10 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								numberField.Value().Set(123)
+								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
+								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 								numberField.OnValueChanged().Set(func() {
 									if numberField.Value().Get() == 3 {
 										numberField.Error().Set("Wert darf nicht 3 sein")
@@ -247,7 +250,6 @@ func main() {
 								slider.Min().Set(-10)
 								slider.Max().Set(25)
 								slider.Stepsize().Set(.5)
-								slider.Disabled().Set(true)
 								slider.Initialized().Set(true)
 								slider.OnChanged().Set(func() {
 									slider.Initialized().Set(true)
@@ -336,11 +338,15 @@ func main() {
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
+									t.Simple().Set(false)
+									t.Error().Set("Fehler")
 									t.Label().Set("Vorname")
+									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 								}),
 
 								ui.NewTextField(func(t *ui.TextField) {
+									t.Simple().Set(true)
 									myMagicTF = t
 									t.Label().Set("Nachname")
 									t.OnTextChanged().Set(func() {
@@ -671,6 +677,14 @@ func main() {
 									)
 								}),
 							)
+
+							vbox.Append(ui.NewWebView(func(view *ui.WebView) {
+								view.Value().Set(`
+<h1>hello <em>world</em></h1>
+<p>a paragraph</p>
+
+`)
+							}))
 						}),
 					)
 				}),
