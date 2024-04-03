@@ -67,6 +67,7 @@ function selectDay(day: number): void {
 		...props.ui.selectedYear,
 		value: currentYear.value,
 	});
+	networkStore.invokeFunc(props.ui.onSelectionChanged);
 }
 
 function isSelectedDay(day: number): boolean {

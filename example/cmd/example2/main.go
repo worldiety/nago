@@ -266,6 +266,9 @@ func main() {
 								datepicker.SelectedDay().Set(7)
 								datepicker.SelectedMonthIndex().Set(2)
 								datepicker.SelectedYear().Set(2024)
+								datepicker.OnSelectionChanged().Set(func() {
+									fmt.Println("changed date")
+								})
 							}))
 
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
