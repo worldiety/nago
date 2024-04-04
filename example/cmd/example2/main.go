@@ -264,7 +264,7 @@ func main() {
 									datepicker.Expanded().Set(!datepicker.Expanded().Get())
 								})
 								datepicker.SelectedDay().Set(7)
-								datepicker.SelectedMonthIndex().Set(2)
+								datepicker.SelectedMonth().Set(4)
 								datepicker.SelectedYear().Set(2024)
 								datepicker.OnSelectionChanged().Set(func() {
 									fmt.Println("changed date")

@@ -10,7 +10,7 @@ type Datepicker struct {
 	error              String
 	expanded           Bool
 	selectedDay        Int
-	selectedMonthIndex Int
+	selectedMonth      Int
 	selectedYear       Int
 	onClicked          *Func
 	onSelectionChanged *Func
@@ -26,13 +26,13 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		error:              NewShared[string]("error"),
 		expanded:           NewShared[bool]("expanded"),
 		selectedDay:        NewShared[int64]("selectedDay"),
-		selectedMonthIndex: NewShared[int64]("selectedMonthIndex"),
+		selectedMonth:      NewShared[int64]("selectedMonth"),
 		selectedYear:       NewShared[int64]("selectedYear"),
 		onClicked:          NewFunc("onClicked"),
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.selectedDay, c.selectedMonthIndex, c.selectedYear, c.onClicked, c.onSelectionChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.selectedDay, c.selectedMonth, c.selectedYear, c.onClicked, c.onSelectionChanged)
 	if with != nil {
 		with(c)
 	}
@@ -65,8 +65,8 @@ func (c *Datepicker) SelectedDay() Int {
 	return c.selectedDay
 }
 
-func (c *Datepicker) SelectedMonthIndex() Int {
-	return c.selectedMonthIndex
+func (c *Datepicker) SelectedMonth() Int {
+	return c.selectedMonth
 }
 
 func (c *Datepicker) SelectedYear() Int {

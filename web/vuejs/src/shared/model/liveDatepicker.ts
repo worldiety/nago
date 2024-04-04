@@ -12,7 +12,7 @@ export interface LiveDatepicker {
 	error: PropertyString,
 	expanded: PropertyBool,
 	selectedDay: PropertyInt,
-	selectedMonthIndex: PropertyInt,
+	selectedMonth: PropertyInt,
 	selectedYear: PropertyInt,
 	onClicked: PropertyFunc,
 	onSelectionChanged: PropertyFunc,

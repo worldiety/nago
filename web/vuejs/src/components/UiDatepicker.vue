@@ -46,7 +46,7 @@ const dayStartOffsetInMonth = computed((): number => {
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
-	date.setFullYear(props.ui.selectedYear.value, props.ui.selectedMonthIndex.value, props.ui.selectedDay.value);
+	date.setFullYear(props.ui.selectedYear.value, props.ui.selectedMonth.value - 1, props.ui.selectedDay.value);
 	return date.toLocaleDateString();
 });
 
@@ -60,8 +60,8 @@ function selectDay(day: number): void {
 		value: day,
 	});
 	networkStore.invokeSetProp({
-		...props.ui.selectedMonthIndex,
-		value: currentMonthIndex.value,
+		...props.ui.selectedMonth,
+		value: currentMonthIndex.value + 1,
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedYear,
@@ -72,7 +72,7 @@ function selectDay(day: number): void {
 
 function isSelectedDay(day: number): boolean {
 	return day === props.ui.selectedDay.value
-		&& currentMonthIndex.value === props.ui.selectedMonthIndex.value
+		&& currentMonthIndex.value === props.ui.selectedMonth.value - 1
 		&& currentYear.value === props.ui.selectedYear.value;
 }
 
