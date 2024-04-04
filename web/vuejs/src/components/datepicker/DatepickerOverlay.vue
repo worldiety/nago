@@ -81,10 +81,14 @@ import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 
 const props = defineProps<{
 	expanded: boolean;
+	rangeMode: boolean;
 	label: string;
-	selectedDay: number;
-	selectedMonth: number;
-	selectedYear: number;
+	selectedStartDay: number;
+	selectedStartMonth: number;
+	selectedStartYear: number;
+	selectedEndDay: number;
+	selectedEndMonth: number;
+	selectedEndYear: number;
 }>();
 
 const emit = defineEmits<{
@@ -142,9 +146,9 @@ function selectDay(day: number): void {
 }
 
 function isSelectedDay(day: number): boolean {
-	return day === props.selectedDay
-		&& currentMonthIndex.value === props.selectedMonth - 1
-		&& currentYear.value === props.selectedYear;
+	return day === props.selectedStartDay
+		&& currentMonthIndex.value === props.selectedStartMonth - 1
+		&& currentYear.value === props.selectedStartYear;
 }
 
 function decreaseMonth(): void {

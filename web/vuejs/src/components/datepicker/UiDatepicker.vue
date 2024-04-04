@@ -17,7 +17,7 @@ const networkStore = useNetworkStore();
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
-	date.setFullYear(props.ui.selectedYear.value, props.ui.selectedMonth.value - 1, props.ui.selectedDay.value);
+	date.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value - 1, props.ui.selectedStartDay.value);
 	return date.toLocaleDateString();
 });
 
@@ -29,15 +29,15 @@ function datepickerClicked(forceClose: boolean): void {
 
 function selectDay(day: number, month: number, year: number): void {
 	networkStore.invokeSetProp({
-		...props.ui.selectedDay,
+		...props.ui.selectedStartDay,
 		value: day,
 	});
 	networkStore.invokeSetProp({
-		...props.ui.selectedMonth,
+		...props.ui.selectedStartMonth,
 		value: month,
 	});
 	networkStore.invokeSetProp({
-		...props.ui.selectedYear,
+		...props.ui.selectedStartYear,
 		value: year,
 	});
 	networkStore.invokeFunc(props.ui.onSelectionChanged);
@@ -68,10 +68,14 @@ function selectDay(day: number, month: number, year: number): void {
 
 			<DatepickerOverlay
 				:expanded="props.ui.expanded.value"
+				:range-mode="props.ui.rangeMode.value"
 				:label="props.ui.label.value"
-				:selected-day="props.ui.selectedDay.value"
-				:selected-month="props.ui.selectedMonth.value"
-				:selected-year="props.ui.selectedYear.value"
+				:selected-start-day="props.ui.selectedStartDay.value"
+				:selected-start-month="props.ui.selectedStartMonth.value"
+				:selected-start-year="props.ui.selectedStartYear.value"
+				:selected-end-day="props.ui.selectedEndDay.value"
+				:selected-end-month="props.ui.selectedEndMonth.value"
+				:selected-end-year="props.ui.selectedEndYear.value"
 				@close="datepickerClicked(true)"
 				@select="selectDay"
 			/>

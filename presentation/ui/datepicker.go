@@ -9,9 +9,13 @@ type Datepicker struct {
 	hint               String
 	error              String
 	expanded           Bool
-	selectedDay        Int
-	selectedMonth      Int
-	selectedYear       Int
+	rangeMode          Bool
+	selectedStartDay   Int
+	selectedStartMonth Int
+	selectedStartYear  Int
+	selectedEndDay     Int
+	selectedEndMonth   Int
+	selectedEndYear    Int
 	onClicked          *Func
 	onSelectionChanged *Func
 	properties         slice.Slice[Property]
@@ -25,14 +29,18 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		hint:               NewShared[string]("hint"),
 		error:              NewShared[string]("error"),
 		expanded:           NewShared[bool]("expanded"),
-		selectedDay:        NewShared[int64]("selectedDay"),
-		selectedMonth:      NewShared[int64]("selectedMonth"),
-		selectedYear:       NewShared[int64]("selectedYear"),
+		rangeMode:          NewShared[bool]("rangeMode"),
+		selectedStartDay:   NewShared[int64]("selectedStartDay"),
+		selectedStartMonth: NewShared[int64]("selectedStartMonth"),
+		selectedStartYear:  NewShared[int64]("selectedStartYear"),
+		selectedEndDay:     NewShared[int64]("selectedEndDay"),
+		selectedEndMonth:   NewShared[int64]("selectedEndMonth"),
+		selectedEndYear:    NewShared[int64]("selectedEndYear"),
 		onClicked:          NewFunc("onClicked"),
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.selectedDay, c.selectedMonth, c.selectedYear, c.onClicked, c.onSelectionChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
 	if with != nil {
 		with(c)
 	}
@@ -61,16 +69,30 @@ func (c *Datepicker) Expanded() Bool {
 	return c.expanded
 }
 
-func (c *Datepicker) SelectedDay() Int {
-	return c.selectedDay
+func (c *Datepicker) RangeMode() Bool { return c.rangeMode }
+
+func (c *Datepicker) SelectedStartDay() Int {
+	return c.selectedStartDay
 }
 
-func (c *Datepicker) SelectedMonth() Int {
-	return c.selectedMonth
+func (c *Datepicker) SelectedStartMonth() Int {
+	return c.selectedStartMonth
 }
 
-func (c *Datepicker) SelectedYear() Int {
-	return c.selectedYear
+func (c *Datepicker) SelectedStartYear() Int {
+	return c.selectedStartYear
+}
+
+func (c *Datepicker) SelectedEndDay() Int {
+	return c.selectedEndDay
+}
+
+func (c *Datepicker) SelectedEndMonth() Int {
+	return c.selectedEndMonth
+}
+
+func (c *Datepicker) SelectedEndYear() Int {
+	return c.selectedEndYear
 }
 
 func (c *Datepicker) OnClicked() *Func {
