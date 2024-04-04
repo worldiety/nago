@@ -13,7 +13,7 @@
 				>
 					<ArrowRight class="rotate-180 h-4" />
 				</div>
-				<div class="flex justify-center items-center basis-2/3 gap-x-px h-full">
+				<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
 					<div class="basis-1/2 shrink-0 grow-0 h-full">
 						<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-default rounded-l-md w-full h-full px-2">
 							<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
@@ -44,7 +44,11 @@
 				<span>Sa</span>
 				<span>So</span>
 
-				<div v-for="(_offset, index) in dayStartOffsetInMonth" :key="index"></div>
+				<div v-for="(fillingDay, index) in fillingDaysOfPreviousMonth" :key="index">
+					<div class="flex justify-center items-center h-full w-full">
+						<span class="text-disabled-text">{{ fillingDay }}</span>
+					</div>
+				</div>
 				<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
 					<div
 						class="day effect-hover flex justify-center items-center cursor-default"
@@ -105,6 +109,17 @@ const totalDaysInMonth = computed((): number => {
 	const lastDayOfMonthDate = new Date();
 	lastDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
 	return lastDayOfMonthDate.getDate();
+});
+
+const fillingDaysOfPreviousMonth = computed((): number[] => {
+	const lastDayOfPreviousMonthDate = new Date();
+	lastDayOfPreviousMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 0);
+	const lastDayOfPreviousMonth = lastDayOfPreviousMonthDate.getDate();
+	const fillingDays: number[] = [];
+	for (let i = 0; i < dayStartOffsetInMonth.value; i++) {
+		fillingDays.unshift(lastDayOfPreviousMonth - i);
+	}
+	return fillingDays;
 });
 
 const dayStartOffsetInMonth = computed((): number => {
