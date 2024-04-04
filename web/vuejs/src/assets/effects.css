@@ -1,3 +1,3 @@
 .effect-hover:hover {
-	@apply bg-wdy-green bg-opacity-10;
+	@apply bg-ora-orange bg-opacity-15 text-ora-orange;
 }

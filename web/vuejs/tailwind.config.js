@@ -12,6 +12,7 @@ export default {
 					'background': '#E2E2E2',
 				},
 				'error': '#FF543E',
+				'darkmode-gray': '#374151',
 			},
 		},
 	},

@@ -1,41 +1,28 @@
 <template>
-	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30">
-		<div class="relative bg-white rounded-md shadow-lg max-w-96 h-96 p-2 z-10">
-			<!-- Datepicker header -->
-			<div class="flex justify-between items-center gap-x-2">
-				<div class="size-8 shrink-0 grow-0"></div>
-				<p class="truncate">{{ label }}</p>
-				<div
-					class="effect-hover flex justify-center items-center rounded-full size-8 shrink-0 grow-0"
-					tabindex="0"
-					@click="emit('close')"
-					@keydown.enter="emit('close')"
-				>
-					<Close class="h-4" />
-				</div>
-			</div>
-			<div class="border-b border-b-black -mx-2 my-2"></div>
+	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black dark:text-white z-30">
+		<div class="relative bg-white dark:bg-gray-700 rounded-xl shadow-lg max-w-96 h-[25rem] p-6 z-10">
+			<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
 
 			<!-- Datepicker content -->
-			<div class="flex justify-between items-center mb-4">
+			<div class="flex justify-between items-center mb-4 h-8">
 				<div
 					class="effect-hover flex justify-center items-center rounded-full size-8"
 					tabindex="0"
 					@click="decreaseMonth"
 					@keydown.enter="decreaseMonth"
 				>
-					<ArrowDown class="rotate-90 h-4" />
+					<ArrowRight class="rotate-180 h-4" />
 				</div>
-				<div class="flex justify-center items-center basis-1/2 gap-x-px">
-					<div class="basis-1/2 shrink-0 grow-0">
-						<select v-model="currentMonthIndex" class="effect-hover border-0 text-black cursor-default rounded-l-md w-full">
+				<div class="flex justify-center items-center basis-2/3 gap-x-px h-full">
+					<div class="basis-1/2 shrink-0 grow-0 h-full">
+						<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-default rounded-l-md w-full h-full px-2">
 							<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
-								{{ monthEntry[1].substring(0, 3) }}
+								{{ monthEntry[1] }}
 							</option>
 						</select>
 					</div>
-					<div class="basis-1/2 shrink-0 grow-0">
-						<input v-model="yearInput" type="text" class="effect-hover border-0 rounded-r-md text-right w-full">
+					<div class="basis-1/2 shrink-0 grow-0 h-full">
+						<input v-model="yearInput" type="text" class="effect-hover border-0 bg-white dark:bg-darkmode-gray rounded-r-md text-left w-full h-full px-2">
 					</div>
 				</div>
 				<div
@@ -44,7 +31,7 @@
 					@click="increaseMonth"
 					@keydown.enter="increaseMonth"
 				>
-					<ArrowDown class="-rotate-90 h-4" />
+					<ArrowRight class="h-4" />
 				</div>
 			</div>
 
@@ -61,7 +48,7 @@
 				<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
 					<div
 						class="day effect-hover flex justify-center items-center cursor-default"
-						:class="{'current-day': isInCurrentMonth(day), 'selected-day': isSelectedDay(day)}"
+						:class="{'selected-day': isSelectedDay(day)}"
 						tabindex="0"
 						@click="selectDay(day)"
 						@keydown.enter="selectDay(day)"
@@ -79,9 +66,9 @@
 
 <script setup lang="ts">
 import monthNames from '@/shared/monthNames'
-import ArrowDown from '@/assets/svg/arrowDown.svg';
-import Close from '@/assets/svg/close.svg';
+import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import { computed, ref, watch } from 'vue';
+import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 
 const props = defineProps<{
 	expanded: boolean;
@@ -99,7 +86,6 @@ const emit = defineEmits<{
 const datepicker = ref<HTMLElement|undefined>();
 const currentDate = new Date(Date.now());
 const currentYear = ref<number>(currentDate.getFullYear());
-const currentDay = ref<number>(currentDate.getDate());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
 const yearInput = ref<string>(currentYear.value.toString(10));
 
@@ -126,10 +112,6 @@ const dayStartOffsetInMonth = computed((): number => {
 	firstDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 1);
 	return firstDayOfMonthDate.getDay() === 0 ? 6 : firstDayOfMonthDate.getDay() - 1;
 });
-
-function isInCurrentMonth(day: number): boolean {
-	return day == currentDay.value && currentMonthIndex.value == currentDate.getMonth() && currentYear.value == currentDate.getFullYear();
-}
 
 function selectDay(day: number): void {
 	emit('select', day, currentMonthIndex.value + 1, currentYear.value);
@@ -167,11 +149,7 @@ function increaseMonth(): void {
 	@apply size-8 rounded-full
 }
 
-.current-day:not(.selected-day) {
-	@apply text-wdy-green;
-}
-
 .selected-day {
-	@apply bg-wdy-green text-white;
+	@apply bg-ora-orange bg-opacity-25 text-ora-orange;
 }
 </style>
