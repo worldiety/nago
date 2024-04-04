@@ -60,6 +60,11 @@
 						<span>{{ day }}</span>
 					</div>
 				</div>
+				<div v-for="(fillingDay, index) in totalFillingDaysOfNextMonth" :key="index">
+					<div class="flex justify-center items-center h-full w-full">
+						<span class="text-disabled-text">{{ fillingDay }}</span>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -120,6 +125,10 @@ const fillingDaysOfPreviousMonth = computed((): number[] => {
 		fillingDays.unshift(lastDayOfPreviousMonth - i);
 	}
 	return fillingDays;
+});
+
+const totalFillingDaysOfNextMonth = computed((): number => {
+	return (7 - (totalDaysInMonth.value + fillingDaysOfPreviousMonth.value.length) % 7) % 7;
 });
 
 const dayStartOffsetInMonth = computed((): number => {
