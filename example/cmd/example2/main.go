@@ -266,6 +266,7 @@ func main() {
 								datepicker.SelectedStartDay().Set(7)
 								datepicker.SelectedStartMonth().Set(4)
 								datepicker.SelectedStartYear().Set(2024)
+								datepicker.RangeMode().Set(true)
 								datepicker.OnSelectionChanged().Set(func() {
 									fmt.Println("changed date")
 								})

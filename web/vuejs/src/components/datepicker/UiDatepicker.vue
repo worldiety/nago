@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import type { LiveDatepicker } from '@/shared/model/liveDatepicker';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
-import ArrowDown from '@/assets/svg/arrowDown.svg';
-import Close from '@/assets/svg/close.svg';
 import { useNetworkStore } from '@/stores/networkStore';
-import monthNames from '@/shared/monthNames';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 
@@ -14,6 +11,7 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
+const startSelected = ref<boolean>(false);
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
@@ -28,6 +26,16 @@ function datepickerClicked(forceClose: boolean): void {
 }
 
 function selectDay(day: number, month: number, year: number): void {
+	networkStore.invokeFunc(props.ui.onSelectionChanged);
+	if (!props.ui.rangeMode.value) {
+		selectStartDay(day, month, year);
+		return;
+	}
+	startSelected.value ? selectEndDay(day, month, year) : selectStartDay(day, month, year);
+	startSelected.value = !startSelected.value;
+}
+
+function selectStartDay(day: number, month: number, year: number): void {
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartDay,
 		value: day,
@@ -40,7 +48,21 @@ function selectDay(day: number, month: number, year: number): void {
 		...props.ui.selectedStartYear,
 		value: year,
 	});
-	networkStore.invokeFunc(props.ui.onSelectionChanged);
+}
+
+function selectEndDay(day: number, month: number, year: number): void {
+	networkStore.invokeSetProp({
+		...props.ui.selectedEndDay,
+		value: day,
+	});
+	networkStore.invokeSetProp({
+		...props.ui.selectedEndMonth,
+		value: month,
+	});
+	networkStore.invokeSetProp({
+		...props.ui.selectedEndYear,
+		value: year,
+	});
 }
 </script>
 

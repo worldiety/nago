@@ -44,25 +44,14 @@
 				<span>Sa</span>
 				<span>So</span>
 
-				<div v-for="(fillingDay, index) in fillingDaysOfPreviousMonth" :key="index">
-					<div class="flex justify-center items-center h-full w-full">
-						<span class="text-disabled-text">{{ fillingDay }}</span>
-					</div>
-				</div>
-				<div v-for="(day, index) in totalDaysInMonth" :key="index" class="flex justify-center items-center h-full w-full">
+				<div v-for="(day, index) in totalDaysInDatepicker" :key="index" class="flex justify-center items-center h-full w-full">
 					<div
 						class="day effect-hover flex justify-center items-center cursor-default"
-						:class="{'selected-day': isSelectedDay(day)}"
 						tabindex="0"
-						@click="selectDay(day)"
-						@keydown.enter="selectDay(day)"
+						@click="selectDay(day.dayOfMonth)"
+						@keydown.enter="selectDay(day.dayOfMonth)"
 					>
-						<span>{{ day }}</span>
-					</div>
-				</div>
-				<div v-for="(fillingDay, index) in totalFillingDaysOfNextMonth" :key="index">
-					<div class="flex justify-center items-center h-full w-full">
-						<span class="text-disabled-text">{{ fillingDay }}</span>
+						<span>{{ day.dayOfMonth }}</span>
 					</div>
 				</div>
 			</div>
@@ -78,6 +67,7 @@ import monthNames from '@/shared/monthNames'
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import { computed, ref, watch } from 'vue';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
+import type DatepickerDay from '@/components/datepicker/datepickerDay';
 
 const props = defineProps<{
 	expanded: boolean;
@@ -114,7 +104,22 @@ watch(yearInput, (newValue, oldValue) => {
 	}
 });
 
-const totalDaysInMonth = computed((): number => {
+const totalDaysInDatepicker = computed((): DatepickerDay[] => {
+	const datepickerDays: DatepickerDay[] = [];
+	for (let i = 0; i < totalDaysInCurrentMonth.value; i++) {
+		datepickerDays.push({
+			// TODO: Determine correct dow
+			dayOfWeek: (firstDayOfWeekInMonth.value + i) % 8,
+			dayOfMonth: i + 1,
+			month: currentMonthIndex.value + 1,
+			year: currentYear.value,
+			selected: isSelectedDay(i),
+		});
+	}
+	return datepickerDays;
+});
+
+const totalDaysInCurrentMonth = computed((): number => {
 	const lastDayOfMonthDate = new Date();
 	lastDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
 	return lastDayOfMonthDate.getDate();
@@ -125,20 +130,20 @@ const fillingDaysOfPreviousMonth = computed((): number[] => {
 	lastDayOfPreviousMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 0);
 	const lastDayOfPreviousMonth = lastDayOfPreviousMonthDate.getDate();
 	const fillingDays: number[] = [];
-	for (let i = 0; i < dayStartOffsetInMonth.value; i++) {
+	for (let i = 0; i < firstDayOfWeekInMonth.value; i++) {
 		fillingDays.unshift(lastDayOfPreviousMonth - i);
 	}
 	return fillingDays;
 });
 
 const totalFillingDaysOfNextMonth = computed((): number => {
-	return (7 - (totalDaysInMonth.value + fillingDaysOfPreviousMonth.value.length) % 7) % 7;
+	return (7 - (totalDaysInCurrentMonth.value + fillingDaysOfPreviousMonth.value.length) % 7) % 7;
 });
 
-const dayStartOffsetInMonth = computed((): number => {
+const firstDayOfWeekInMonth = computed((): number => {
 	const firstDayOfMonthDate = new Date();
 	firstDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 1);
-	return firstDayOfMonthDate.getDay() === 0 ? 6 : firstDayOfMonthDate.getDay() - 1;
+	return firstDayOfMonthDate.getDay() === 0 ? 7 : firstDayOfMonthDate.getDay();
 });
 
 function selectDay(day: number): void {
@@ -148,7 +153,10 @@ function selectDay(day: number): void {
 function isSelectedDay(day: number): boolean {
 	return day === props.selectedStartDay
 		&& currentMonthIndex.value === props.selectedStartMonth - 1
-		&& currentYear.value === props.selectedStartYear;
+		&& currentYear.value === props.selectedStartYear
+		|| day === props.selectedEndDay
+		&& currentMonthIndex.value === props.selectedEndMonth - 1
+		&& currentYear.value === props.selectedEndYear;
 }
 
 function decreaseMonth(): void {
