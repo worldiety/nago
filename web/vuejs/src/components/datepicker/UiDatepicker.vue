@@ -37,31 +37,31 @@ function selectDay(day: number, month: number, year: number): void {
 
 function selectStartDay(day: number, month: number, year: number): void {
 	networkStore.invokeSetProp({
-		...props.ui.selectedStartDay,
-		value: day,
+		...props.ui.selectedStartYear,
+		value: year,
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartMonth,
 		value: month,
 	});
 	networkStore.invokeSetProp({
-		...props.ui.selectedStartYear,
-		value: year,
+		...props.ui.selectedStartDay,
+		value: day,
 	});
 }
 
 function selectEndDay(day: number, month: number, year: number): void {
 	networkStore.invokeSetProp({
-		...props.ui.selectedEndDay,
-		value: day,
+		...props.ui.selectedEndYear,
+		value: year,
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndMonth,
 		value: month,
 	});
 	networkStore.invokeSetProp({
-		...props.ui.selectedEndYear,
-		value: year,
+		...props.ui.selectedEndDay,
+		value: day,
 	});
 }
 </script>
