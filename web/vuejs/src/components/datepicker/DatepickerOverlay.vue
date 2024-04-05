@@ -44,14 +44,15 @@
 				<span>Sa</span>
 				<span>So</span>
 
-				<div v-for="(day, index) in totalDaysInDatepicker" :key="index" class="flex justify-center items-center h-full w-full">
+				<div v-for="(datepickerDay, index) in datepickerDays" :key="index" class="flex justify-center items-center h-full w-full">
 					<div
 						class="day effect-hover flex justify-center items-center cursor-default"
+						:class="{'selected-day': datepickerDay.selected}"
 						tabindex="0"
-						@click="selectDay(day.dayOfMonth)"
-						@keydown.enter="selectDay(day.dayOfMonth)"
+						@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
+						@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
 					>
-						<span>{{ day.dayOfMonth }}</span>
+						<span>{{ datepickerDay.dayOfMonth }}</span>
 					</div>
 				</div>
 			</div>
@@ -104,59 +105,104 @@ watch(yearInput, (newValue, oldValue) => {
 	}
 });
 
-const totalDaysInDatepicker = computed((): DatepickerDay[] => {
+const datepickerDays = computed((): DatepickerDay[] => {
 	const datepickerDays: DatepickerDay[] = [];
-	for (let i = 0; i < totalDaysInCurrentMonth.value; i++) {
-		datepickerDays.push({
-			// TODO: Determine correct dow
-			dayOfWeek: (firstDayOfWeekInMonth.value + i) % 8,
-			dayOfMonth: i + 1,
-			month: currentMonthIndex.value + 1,
-			year: currentYear.value,
-			selected: isSelectedDay(i),
-		});
+
+	// Add days of current month
+	datepickerDays.push(...getDaysOfCurrentMonth());
+
+	// Add filling days of previous month, if the current month's first day is not a monday
+	if (datepickerDays[0].dayOfWeek !== 1) {
+		datepickerDays.unshift(...getFillingDaysOfPreviousMonth());
 	}
+
+	// Add filling days of next month, if the current month's last day is not a sunday
+	const lastDayOfWeekCurrentMonth = datepickerDays.at(-1)?.dayOfWeek;
+	if (lastDayOfWeekCurrentMonth !== undefined && lastDayOfWeekCurrentMonth !== 7) {
+		datepickerDays.push(...getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth));
+	}
+
 	return datepickerDays;
 });
 
-const totalDaysInCurrentMonth = computed((): number => {
-	const lastDayOfMonthDate = new Date();
-	lastDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
-	return lastDayOfMonthDate.getDate();
-});
+function getDaysOfCurrentMonth(): DatepickerDay[] {
+	const daysOfCurrentMonth: DatepickerDay[] = [];
 
-const fillingDaysOfPreviousMonth = computed((): number[] => {
-	const lastDayOfPreviousMonthDate = new Date();
-	lastDayOfPreviousMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 0);
-	const lastDayOfPreviousMonth = lastDayOfPreviousMonthDate.getDate();
-	const fillingDays: number[] = [];
-	for (let i = 0; i < firstDayOfWeekInMonth.value; i++) {
-		fillingDays.unshift(lastDayOfPreviousMonth - i);
+	const dayOfCurrentMonthDate = new Date();
+	dayOfCurrentMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
+	const lastDayOfCurrentMonth = dayOfCurrentMonthDate.getDate();
+	for (let i = 1; i <= lastDayOfCurrentMonth; i++) {
+		const dayOfWeekDate = new Date();
+		dayOfWeekDate.setFullYear(currentYear.value, currentMonthIndex.value, i);
+		const datepickerDay: DatepickerDay = {
+			dayOfWeek: dayOfWeekDate.getDay() === 0 ? 7 : dayOfWeekDate.getDay(),
+			dayOfMonth: i,
+			month: currentMonthIndex.value + 1,
+			year: currentYear.value,
+			selected: false,
+		};
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		daysOfCurrentMonth.push(datepickerDay);
 	}
-	return fillingDays;
-});
 
-const totalFillingDaysOfNextMonth = computed((): number => {
-	return (7 - (totalDaysInCurrentMonth.value + fillingDaysOfPreviousMonth.value.length) % 7) % 7;
-});
-
-const firstDayOfWeekInMonth = computed((): number => {
-	const firstDayOfMonthDate = new Date();
-	firstDayOfMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 1);
-	return firstDayOfMonthDate.getDay() === 0 ? 7 : firstDayOfMonthDate.getDay();
-});
-
-function selectDay(day: number): void {
-	emit('select', day, currentMonthIndex.value + 1, currentYear.value);
+	return daysOfCurrentMonth;
 }
 
-function isSelectedDay(day: number): boolean {
+function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
+	const fillingDaysOfPreviousMonth: DatepickerDay[] = [];
+
+	const dayOfPreviousMonthDate = new Date();
+	dayOfPreviousMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 0);
+	const lastDayOfWeekPreviousMonth = dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay();
+	const lastDayOfPreviousMonth = dayOfPreviousMonthDate.getDate();
+	for (let i = 0; i < lastDayOfWeekPreviousMonth; i++) {
+		dayOfPreviousMonthDate.setDate(lastDayOfPreviousMonth - i);
+		const datepickerDay: DatepickerDay = {
+			dayOfWeek: dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay(),
+			dayOfMonth: lastDayOfPreviousMonth - i,
+			month: dayOfPreviousMonthDate.getMonth() + 1,
+			year: dayOfPreviousMonthDate.getFullYear(),
+			selected: false,
+		}
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		fillingDaysOfPreviousMonth.unshift(datepickerDay);
+	}
+
+	return fillingDaysOfPreviousMonth;
+}
+
+function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): DatepickerDay[] {
+	const fillingDaysOfNextMonth: DatepickerDay[] = [];
+
+	const dayOfNextMonthDate = new Date();
+	if (currentMonthIndex.value + 1 === 12) {
+		dayOfNextMonthDate.setFullYear(currentYear.value + 1, 0, 1);
+	} else {
+		dayOfNextMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 1);
+	}
+	for (let i = 1; i <= 7 - lastDayOfWeekCurrentMonth; i++) {
+		dayOfNextMonthDate.setDate(i);
+		const datepickerDay: DatepickerDay = {
+			dayOfWeek: dayOfNextMonthDate.getDay() === 0 ? 7 : dayOfNextMonthDate.getDay(),
+			dayOfMonth: dayOfNextMonthDate.getDate(),
+			month: dayOfNextMonthDate.getMonth() + 1,
+			year: dayOfNextMonthDate.getFullYear(),
+			selected: false,
+		};
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		fillingDaysOfNextMonth.push(datepickerDay);
+	}
+
+	return fillingDaysOfNextMonth;
+}
+
+function isSelectedDay(day: number, month: number, year: number): boolean {
 	return day === props.selectedStartDay
-		&& currentMonthIndex.value === props.selectedStartMonth - 1
-		&& currentYear.value === props.selectedStartYear
+		&& month === props.selectedStartMonth
+		&& year === props.selectedStartYear
 		|| day === props.selectedEndDay
-		&& currentMonthIndex.value === props.selectedEndMonth - 1
-		&& currentYear.value === props.selectedEndYear;
+		&& month === props.selectedEndMonth
+		&& year === props.selectedEndYear;
 }
 
 function decreaseMonth(): void {
