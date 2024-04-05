@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LiveDatepicker } from '@/shared/model/liveDatepicker';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -11,7 +11,7 @@ const props = defineProps<{
 }>();
 
 const networkStore = useNetworkStore();
-const startSelected = ref<boolean>(false);
+let endDateSelected: boolean = false;
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
@@ -31,8 +31,18 @@ function selectDay(day: number, month: number, year: number): void {
 		selectStartDay(day, month, year);
 		return;
 	}
-	startSelected.value ? selectEndDay(day, month, year) : selectStartDay(day, month, year);
-	startSelected.value = !startSelected.value;
+
+	// TODO: Remove date selection when selected date has been clicked
+	const selectedDate = new Date();
+	selectedDate.setFullYear(year, month, day);
+	const currentStartDate = new Date();
+	currentStartDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value, props.ui.selectedStartDay.value);
+	if (selectedDate > currentStartDate) {
+		selectEndDay(day, month, year);
+		endDateSelected = true;
+	} else {
+		selectStartDay(day, month, year);
+	}
 }
 
 function selectStartDay(day: number, month: number, year: number): void {

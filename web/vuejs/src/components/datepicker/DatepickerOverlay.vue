@@ -35,7 +35,7 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-7 gap-2 text-center leading-none">
+			<div class="grid grid-cols-7 gap-y-2 text-center leading-none">
 				<span>Mo</span>
 				<span>Di</span>
 				<span>Mi</span>
@@ -44,10 +44,18 @@
 				<span>Sa</span>
 				<span>So</span>
 
-				<div v-for="(datepickerDay, index) in datepickerDays" :key="index" class="flex justify-center items-center h-full w-full">
+				<div
+					v-for="(datepickerDay, index) in datepickerDays"
+					:key="index"
+					class="flex justify-center items-center h-full w-full"
+					:class="{'within-range-day': datepickerDay.withinRange}"
+				>
 					<div
 						class="day effect-hover flex justify-center items-center cursor-default"
-						:class="{'selected-day': datepickerDay.selected}"
+						:class="{
+							'selected-day': datepickerDay.selected,
+							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.month !== currentMonthIndex + 1,
+						}"
 						tabindex="0"
 						@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
 						@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
@@ -105,6 +113,18 @@ watch(yearInput, (newValue, oldValue) => {
 	}
 });
 
+const selectedStartDate = computed((): Date => {
+	const selectedStartDate = new Date();
+	selectedStartDate.setFullYear(props.selectedStartYear, props.selectedStartMonth, props.selectedStartDay);
+	return selectedStartDate;
+});
+
+const selectedEndDate = computed((): Date => {
+	const selectedEndDate = new Date();
+	selectedEndDate.setFullYear(props.selectedEndYear, props.selectedEndMonth, props.selectedEndDay);
+	return selectedEndDate;
+});
+
 const datepickerDays = computed((): DatepickerDay[] => {
 	const datepickerDays: DatepickerDay[] = [];
 
@@ -140,8 +160,10 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 			month: currentMonthIndex.value + 1,
 			year: currentYear.value,
 			selected: false,
+			withinRange: false,
 		};
 		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
 		daysOfCurrentMonth.push(datepickerDay);
 	}
 
@@ -163,8 +185,10 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 			month: dayOfPreviousMonthDate.getMonth() + 1,
 			year: dayOfPreviousMonthDate.getFullYear(),
 			selected: false,
+			withinRange: false,
 		}
 		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
 		fillingDaysOfPreviousMonth.unshift(datepickerDay);
 	}
 
@@ -188,8 +212,10 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 			month: dayOfNextMonthDate.getMonth() + 1,
 			year: dayOfNextMonthDate.getFullYear(),
 			selected: false,
+			withinRange: false,
 		};
 		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
 		fillingDaysOfNextMonth.push(datepickerDay);
 	}
 
@@ -203,6 +229,12 @@ function isSelectedDay(day: number, month: number, year: number): boolean {
 		|| day === props.selectedEndDay
 		&& month === props.selectedEndMonth
 		&& year === props.selectedEndYear;
+}
+
+function isWithinRange(day: number, month: number, year: number): boolean {
+	const dateToCheck = new Date();
+	dateToCheck.setFullYear(year, month, day);
+	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
 }
 
 function decreaseMonth(): void {
@@ -233,5 +265,9 @@ function increaseMonth(): void {
 
 .selected-day {
 	@apply bg-ora-orange bg-opacity-25 text-ora-orange;
+}
+
+.within-range-day {
+	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
 }
 </style>

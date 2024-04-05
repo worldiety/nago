@@ -4,4 +4,5 @@ export default interface DatepickerDay {
 	month: number;
 	year: number;
 	selected: boolean;
+	withinRange: boolean;
 }
