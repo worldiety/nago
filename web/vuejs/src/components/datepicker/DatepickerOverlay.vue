@@ -118,12 +118,14 @@ watch(yearInput, (newValue, oldValue) => {
 const selectedStartDate = computed((): Date => {
 	const selectedStartDate = new Date();
 	selectedStartDate.setFullYear(props.selectedStartYear, props.selectedStartMonth, props.selectedStartDay);
+	selectedStartDate.setHours(0, 0, 0, 0);
 	return selectedStartDate;
 });
 
 const selectedEndDate = computed((): Date => {
 	const selectedEndDate = new Date();
 	selectedEndDate.setFullYear(props.selectedEndYear, props.selectedEndMonth, props.selectedEndDay);
+	selectedEndDate.setHours(0, 0, 0, 0);
 	return selectedEndDate;
 });
 
@@ -241,6 +243,7 @@ function isWithinRange(day: number, month: number, year: number): boolean {
 	}
 	const dateToCheck = new Date();
 	dateToCheck.setFullYear(year, month, day);
+	dateToCheck.setHours(0, 0, 0, 0);
 	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
 }
 

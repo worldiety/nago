@@ -28,6 +28,7 @@ function datepickerClicked(forceClose: boolean): void {
 function selectDay(day: number, month: number, year: number): void {
 	const selectedDate = new Date();
 	selectedDate.setFullYear(year, month, day);
+	selectedDate.setHours(0, 0, 0, 0);
 	if (!props.ui.rangeMode.value || !props.ui.startDateSelected.value) {
 		selectFirstDate(selectedDate);
 		return;
@@ -41,6 +42,7 @@ function selectFirstDate(selectedDate: Date): void {
 	if (props.ui.endDateSelected.value) {
 		const currentEndDate = new Date();
 		currentEndDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value, props.ui.selectedEndDay.value);
+		currentEndDate.setHours(0, 0, 0, 0);
 		if (selectedDate > currentEndDate) {
 			selectStartDate(currentEndDate);
 			selectEndDate(selectedDate);
@@ -67,6 +69,7 @@ function selectFirstDate(selectedDate: Date): void {
 function selectSecondDate(selectedDate: Date): void {
 	const currentStartDate = new Date();
 	currentStartDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value, props.ui.selectedStartDay.value);
+	currentStartDate.setHours(0, 0, 0, 0);
 	if (selectedDate > currentStartDate) {
 		selectEndDate(selectedDate);
 	} else if (selectedDate < currentStartDate) {
