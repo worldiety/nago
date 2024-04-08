@@ -1,69 +1,77 @@
 <template>
 	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black dark:text-white z-30">
-		<div class="relative bg-white dark:bg-gray-700 rounded-xl shadow-lg max-w-96 h-[25rem] p-6 z-10">
-			<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
+		<div class="relative bg-white dark:bg-gray-700 rounded-xl shadow-lg max-w-96 p-6 z-10">
+			<div class="h-[23rem]">
+				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
 
-			<!-- Datepicker content -->
-			<div class="flex justify-between items-center mb-4 h-8">
-				<div
-					class="effect-hover flex justify-center items-center rounded-full size-8"
-					tabindex="0"
-					@click="decreaseMonth"
-					@keydown.enter="decreaseMonth"
-				>
-					<ArrowRight class="rotate-180 h-4" />
-				</div>
-				<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
-					<div class="basis-1/2 shrink-0 grow-0 h-full">
-						<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-default rounded-l-md w-full h-full px-2">
-							<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
-								{{ monthEntry[1] }}
-							</option>
-						</select>
-					</div>
-					<div class="basis-1/2 shrink-0 grow-0 h-full">
-						<input v-model="yearInput" type="text" class="effect-hover border-0 bg-white dark:bg-darkmode-gray rounded-r-md text-left w-full h-full px-2">
-					</div>
-				</div>
-				<div
-					class="effect-hover flex justify-center items-center rounded-full size-8"
-					tabindex="0"
-					@click="increaseMonth"
-					@keydown.enter="increaseMonth"
-				>
-					<ArrowRight class="h-4" />
-				</div>
-			</div>
-
-			<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
-				<span>Mo</span>
-				<span>Di</span>
-				<span>Mi</span>
-				<span>Do</span>
-				<span>Fr</span>
-				<span>Sa</span>
-				<span>So</span>
-
-				<div
-					v-for="(datepickerDay, index) in datepickerDays"
-					:key="index"
-					class="relative flex justify-center items-center h-full w-full z-10"
-					:class="{'within-range-day': datepickerDay.withinRange}"
-				>
+				<!-- Datepicker content -->
+				<div class="flex justify-between items-center mb-4 h-8">
 					<div
-						class="day effect-hover relative flex justify-center items-center cursor-default z-10"
-						:class="{
+						class="effect-hover flex justify-center items-center rounded-full size-8"
+						tabindex="0"
+						@click="decreaseMonth"
+						@keydown.enter="decreaseMonth"
+					>
+						<ArrowRight class="rotate-180 h-4" />
+					</div>
+					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
+						<div class="basis-1/2 shrink-0 grow-0 h-full">
+							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-default rounded-l-md w-full h-full px-2">
+								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
+									{{ monthEntry[1] }}
+								</option>
+							</select>
+						</div>
+						<div class="basis-1/2 shrink-0 grow-0 h-full">
+							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-white dark:bg-darkmode-gray rounded-r-md text-left w-full h-full px-2">
+						</div>
+					</div>
+					<div
+						class="effect-hover flex justify-center items-center rounded-full size-8"
+						tabindex="0"
+						@click="increaseMonth"
+						@keydown.enter="increaseMonth"
+					>
+						<ArrowRight class="h-4" />
+					</div>
+				</div>
+
+				<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
+					<span>Mo</span>
+					<span>Di</span>
+					<span>Mi</span>
+					<span>Do</span>
+					<span>Fr</span>
+					<span>Sa</span>
+					<span>So</span>
+
+					<div
+						v-for="(datepickerDay, index) in datepickerDays"
+						:key="index"
+						class="relative flex justify-center items-center h-full w-full z-10"
+						:class="{'within-range-day': datepickerDay.withinRange}"
+					>
+						<div
+							class="day effect-hover relative flex justify-center items-center cursor-default z-10"
+							:class="{
 							'selected-day': datepickerDay.selected,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.month !== currentMonthIndex + 1,
 						}"
-						tabindex="0"
-						@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
-						@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
-					>
-						<span>{{ datepickerDay.dayOfMonth }}</span>
+							tabindex="0"
+							@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
+							@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
+						>
+							<span>{{ datepickerDay.dayOfMonth }}</span>
+						</div>
 					</div>
 				</div>
 			</div>
+
+			<!-- Confirm button when in range mode -->
+			<template v-if="rangeMode">
+				<div class="border-b border-b-disabled-background mt-2 mb-4"></div>
+				<button class="button-primary !text-black !w-full" @click="emit('close')">{{ t('datepicker.confirm') }}</button>
+			</template>
 		</div>
 
 		<!-- Blurred Background -->
@@ -77,6 +85,7 @@ import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import { computed, ref, watch } from 'vue';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	expanded: boolean;
@@ -97,6 +106,7 @@ const emit = defineEmits<{
 	(e: 'select', day: number, month: number, year: number): void;
 }>();
 
+const { t } = useI18n();
 const datepicker = ref<HTMLElement|undefined>();
 const currentDate = new Date(Date.now());
 const currentYear = ref<number>(currentDate.getFullYear());

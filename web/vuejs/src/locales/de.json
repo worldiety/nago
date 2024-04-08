@@ -46,5 +46,9 @@
 			"errorMessage": "Verbindung nicht möglich, bitte Netzwerkverbindung überprüfen.",
 			"additionalInformation": "Undefinierter HTTP-Fehler "
 		}
+	},
+	"datepicker": {
+		"confirm": "Bestätigen",
+		"select": "Auswählen..."
 	}
 }

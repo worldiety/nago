@@ -6,17 +6,27 @@ import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import type { PropertyBool } from '@/shared/model/propertyBool';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	ui: LiveDatepicker;
 }>();
 
+const { t } = useI18n();
 const networkStore = useNetworkStore();
 
 const dateFormatted = computed((): string => {
-	const date = new Date();
-	date.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value - 1, props.ui.selectedStartDay.value);
-	return date.toLocaleDateString();
+	if (!props.ui.startDateSelected.value) {
+		return t('datepicker.select');
+	}
+	const startDate = new Date();
+	startDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value - 1, props.ui.selectedStartDay.value);
+	if (!props.ui.rangeMode.value || !props.ui.endDateSelected.value) {
+		return startDate.toLocaleDateString();
+	}
+	const endDate = new Date();
+	endDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value - 1, props.ui.selectedEndDay.value);
+	return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 });
 
 function datepickerClicked(forceClose: boolean): void {
