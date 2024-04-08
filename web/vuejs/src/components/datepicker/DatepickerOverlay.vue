@@ -2,7 +2,7 @@
 	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black dark:text-white z-30">
 		<div class="relative bg-white dark:bg-gray-700 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
-				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
+				<DatepickerHeader :label="label" @close="emit('submit', selectedStartDate, selectedEndDate)" class="mb-4" />
 
 				<!-- Datepicker content -->
 				<div class="flex justify-between items-center mb-4 h-8">
@@ -51,6 +51,7 @@
 						class="relative flex justify-center items-center h-full w-full z-10"
 						:class="{'within-range-day': datepickerDay.withinRange}"
 					>
+						<!-- TODO: Add click and keydown enter events to select start and end date -->
 						<div
 							class="day effect-hover relative flex justify-center items-center cursor-default z-10"
 							:class="{
@@ -58,8 +59,6 @@
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.month !== currentMonthIndex + 1,
 						}"
 							tabindex="0"
-							@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
-							@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
 						>
 							<span>{{ datepickerDay.dayOfMonth }}</span>
 						</div>
@@ -70,12 +69,12 @@
 			<!-- Confirm button when in range mode -->
 			<template v-if="rangeMode">
 				<div class="border-b border-b-disabled-background mt-2 mb-4"></div>
-				<button class="button-primary !text-black !w-full" @click="emit('close')">{{ t('datepicker.confirm') }}</button>
+				<button class="button-primary !text-black !w-full" @click="emit('submit', selectedStartDate, selectedEndDate)">{{ t('datepicker.confirm') }}</button>
 			</template>
 		</div>
 
 		<!-- Blurred Background -->
-		<div class="absolute top-0 left-0 bottom-0 right-0 backdrop-blur z-0" @click="emit('close')"></div>
+		<div class="absolute top-0 left-0 bottom-0 right-0 backdrop-blur z-0" @click="emit('submit', selectedStartDate, selectedEndDate)"></div>
 	</div>
 </template>
 
@@ -102,8 +101,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'close'): void;
-	(e: 'select', day: number, month: number, year: number): void;
+	(e: 'submit', selectedStartDate: Date, selectedEndDate: Date|null): void;
 }>();
 
 const { t } = useI18n();
@@ -248,7 +246,7 @@ function isSelectedDay(day: number, month: number, year: number): boolean {
 }
 
 function isWithinRange(day: number, month: number, year: number): boolean {
-	if (!props.startDateSelected || !props.endDateSelected) {
+	if (!props.startDateSelected || !props.endDateSelected || !selectedEndDate.value) {
 		return false;
 	}
 	const dateToCheck = new Date();

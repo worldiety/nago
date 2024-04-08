@@ -35,6 +35,23 @@ function datepickerClicked(forceClose: boolean): void {
 	}
 }
 
+function submit(selectedStartDate: Date, selectedEndDate: Date|null): void {
+	if (!props.ui.rangeMode.value || !selectedEndDate) {
+		selectStartDate(selectedStartDate);
+		datepickerClicked(true);
+		return;
+	}
+
+	if (selectedStartDate <= selectedEndDate) {
+		selectStartDate(selectedStartDate);
+		selectEndDate(selectedEndDate);
+	} else if (selectedStartDate > selectedEndDate) {
+		selectStartDate(selectedEndDate);
+		selectEndDate(selectedStartDate);
+	}
+	datepickerClicked(true);
+}
+
 function selectDay(day: number, month: number, year: number): void {
 	const selectedDate = new Date();
 	selectedDate.setFullYear(year, month, day);
@@ -143,7 +160,7 @@ function selectEndDate(selectedDate: Date): void {
 					class="input-field relative z-0"
 					tabindex="0"
 					@click="datepickerClicked(false)"
-					@keydown.enter="datepickerClicked(true)">
+					@keydown.enter="datepickerClicked(false)">
 					<p>{{ dateFormatted }}</p>
 					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none h-full">
 						<Calendar class="w-4" />
@@ -163,8 +180,7 @@ function selectEndDate(selectedDate: Date): void {
 				:selected-end-day="props.ui.selectedEndDay.value"
 				:selected-end-month="props.ui.selectedEndMonth.value"
 				:selected-end-year="props.ui.selectedEndYear.value"
-				@close="datepickerClicked(true)"
-				@select="selectDay"
+				@submit="submit"
 			/>
 		</div>
 	</div>
