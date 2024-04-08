@@ -5,13 +5,13 @@ import Calendar from '@/assets/svg/calendar.svg';
 import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
+import type { PropertyBool } from '@/shared/model/propertyBool';
 
 const props = defineProps<{
 	ui: LiveDatepicker;
 }>();
 
 const networkStore = useNetworkStore();
-let endDateSelected: boolean = false;
 
 const dateFormatted = computed((): string => {
 	const date = new Date();
@@ -26,52 +26,83 @@ function datepickerClicked(forceClose: boolean): void {
 }
 
 function selectDay(day: number, month: number, year: number): void {
-	networkStore.invokeFunc(props.ui.onSelectionChanged);
-	if (!props.ui.rangeMode.value) {
-		selectStartDay(day, month, year);
+	const selectedDate = new Date();
+	selectedDate.setFullYear(year, month, day);
+	if (!props.ui.rangeMode.value || !props.ui.startDateSelected.value) {
+		selectFirstDate(selectedDate);
 		return;
 	}
 
-	// TODO: Remove date selection when selected date has been clicked
-	const selectedDate = new Date();
-	selectedDate.setFullYear(year, month, day);
+	selectSecondDate(selectedDate);
+	networkStore.invokeFunc(props.ui.onSelectionChanged);
+}
+
+function selectFirstDate(selectedDate: Date): void {
+	const currentEndDate = new Date();
+	currentEndDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value, props.ui.selectedEndDay.value);
+	if (selectedDate > currentEndDate) {
+		selectStartDate(currentEndDate);
+		selectEndDate(selectedDate);
+	} else if (selectedDate < currentEndDate) {
+		selectStartDate(selectedDate);
+	} else {
+		const startDateSelected: PropertyBool = {
+			...props.ui.startDateSelected,
+			value: false,
+		};
+		networkStore.invokeSetProp(startDateSelected);
+	}
+	networkStore.invokeFunc(props.ui.onSelectionChanged);
+}
+
+function selectSecondDate(selectedDate: Date): void {
 	const currentStartDate = new Date();
 	currentStartDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value, props.ui.selectedStartDay.value);
 	if (selectedDate > currentStartDate) {
-		selectEndDay(day, month, year);
-		endDateSelected = true;
+		selectEndDate(selectedDate);
+	} else if (selectedDate < currentStartDate) {
+		selectStartDate(selectedDate);
 	} else {
-		selectStartDay(day, month, year);
+		const startDateSelected: PropertyBool = {
+			...props.ui.startDateSelected,
+			value: false,
+		};
+		networkStore.invokeSetProp(startDateSelected);
 	}
 }
 
-function selectStartDay(day: number, month: number, year: number): void {
+function selectStartDate(selectedDate: Date): void {
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartYear,
-		value: year,
+		value: selectedDate.getFullYear(),
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartMonth,
-		value: month,
+		value: selectedDate.getMonth(),
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartDay,
-		value: day,
+		value: selectedDate.getDate(),
 	});
+	const startDateSelected: PropertyBool = {
+		...props.ui.startDateSelected,
+		value: true,
+	};
+	networkStore.invokeSetProp(startDateSelected);
 }
 
-function selectEndDay(day: number, month: number, year: number): void {
+function selectEndDate(selectedDate: Date): void {
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndYear,
-		value: year,
+		value: selectedDate.getFullYear(),
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndMonth,
-		value: month,
+		value: selectedDate.getMonth(),
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndDay,
-		value: day,
+		value: selectedDate.getDate(),
 	});
 }
 </script>
@@ -102,6 +133,7 @@ function selectEndDay(day: number, month: number, year: number): void {
 				:expanded="props.ui.expanded.value"
 				:range-mode="props.ui.rangeMode.value"
 				:label="props.ui.label.value"
+				:start-date-selected="props.ui.startDateSelected.value"
 				:selected-start-day="props.ui.selectedStartDay.value"
 				:selected-start-month="props.ui.selectedStartMonth.value"
 				:selected-start-year="props.ui.selectedStartYear.value"

@@ -10,6 +10,7 @@ type Datepicker struct {
 	error              String
 	expanded           Bool
 	rangeMode          Bool
+	startDateSelected  Bool
 	selectedStartDay   Int
 	selectedStartMonth Int
 	selectedStartYear  Int
@@ -30,6 +31,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		error:              NewShared[string]("error"),
 		expanded:           NewShared[bool]("expanded"),
 		rangeMode:          NewShared[bool]("rangeMode"),
+		startDateSelected:  NewShared[bool]("startDateSelected"),
 		selectedStartDay:   NewShared[int64]("selectedStartDay"),
 		selectedStartMonth: NewShared[int64]("selectedStartMonth"),
 		selectedStartYear:  NewShared[int64]("selectedStartYear"),
@@ -40,7 +42,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
 	if with != nil {
 		with(c)
 	}
@@ -70,6 +72,10 @@ func (c *Datepicker) Expanded() Bool {
 }
 
 func (c *Datepicker) RangeMode() Bool { return c.rangeMode }
+
+func (c *Datepicker) StartDateSelected() Bool {
+	return c.startDateSelected
+}
 
 func (c *Datepicker) SelectedStartDay() Int {
 	return c.selectedStartDay

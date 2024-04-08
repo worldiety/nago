@@ -82,6 +82,7 @@ const props = defineProps<{
 	expanded: boolean;
 	rangeMode: boolean;
 	label: string;
+	startDateSelected: boolean;
 	selectedStartDay: number;
 	selectedStartMonth: number;
 	selectedStartYear: number;
@@ -223,7 +224,8 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 }
 
 function isSelectedDay(day: number, month: number, year: number): boolean {
-	return day === props.selectedStartDay
+	return props.startDateSelected
+		&& day === props.selectedStartDay
 		&& month === props.selectedStartMonth
 		&& year === props.selectedStartYear
 		|| day === props.selectedEndDay
@@ -232,6 +234,9 @@ function isSelectedDay(day: number, month: number, year: number): boolean {
 }
 
 function isWithinRange(day: number, month: number, year: number): boolean {
+	if (!props.startDateSelected) {
+		return false;
+	}
 	const dateToCheck = new Date();
 	dateToCheck.setFullYear(year, month, day);
 	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
