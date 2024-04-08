@@ -278,6 +278,14 @@ function increaseMonth(): void {
 	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
 }
 
+/* Use no background when the first day of the selected range is within the last grid column */
+.datepicker-grid > :not(.within-range-day) + div.within-range-day:nth-of-type(7n),
+/* Use no background when the last day of the selected range is within the first grid column */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)):nth-of-type(7n - 6) {
+	@apply bg-white;
+	@apply dark:bg-darkmode-gray;
+}
+
 /* Color the background of each day in the last grid column within the selected range */
 .datepicker-grid > div.within-range-day:nth-of-type(7n) > .day::before {
 	content: '';
@@ -295,12 +303,18 @@ function increaseMonth(): void {
 	@apply relative rounded-r-full;
 }
 
+/* Round the first date within the selected range */
+.datepicker-grid > :not(.within-range-day) + .within-range-day {
+	@apply relative rounded-l-full;
+}
+
 /* Hide the background exceeding the right boundary of each day in the last column */
 .datepicker-grid > div:nth-of-type(7n - 6)::before,
 /* Hide the background exceeding the left boundary of the first day within the selected range */
 .datepicker-grid > :not(.within-range-day) + .within-range-day::before {
 	content: '';
 	@apply absolute top-0 left-0 bottom-0 h-8 w-1/2 bg-white z-0;
+	@apply dark:bg-darkmode-gray;
 }
 
 /* Hide the background exceeding the right boundary of each day in the last column */
@@ -309,5 +323,6 @@ function increaseMonth(): void {
 .datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::before {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-white z-0;
+	@apply dark:bg-darkmode-gray;
 }
 </style>
