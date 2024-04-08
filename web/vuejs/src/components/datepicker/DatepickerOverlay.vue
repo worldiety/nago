@@ -35,7 +35,7 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-7 gap-y-2 text-center leading-none">
+			<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
 				<span>Mo</span>
 				<span>Di</span>
 				<span>Mi</span>
@@ -47,11 +47,11 @@
 				<div
 					v-for="(datepickerDay, index) in datepickerDays"
 					:key="index"
-					class="flex justify-center items-center h-full w-full"
+					class="relative flex justify-center items-center h-full w-full z-10"
 					:class="{'within-range-day': datepickerDay.withinRange}"
 				>
 					<div
-						class="day effect-hover flex justify-center items-center cursor-default"
+						class="day effect-hover relative flex justify-center items-center cursor-default z-10"
 						:class="{
 							'selected-day': datepickerDay.selected,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.month !== currentMonthIndex + 1,
@@ -236,7 +236,7 @@ function isSelectedDay(day: number, month: number, year: number): boolean {
 }
 
 function isWithinRange(day: number, month: number, year: number): boolean {
-	if (!props.startDateSelected) {
+	if (!props.startDateSelected || !props.endDateSelected) {
 		return false;
 	}
 	const dateToCheck = new Date();
@@ -276,5 +276,38 @@ function increaseMonth(): void {
 
 .within-range-day {
 	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
+}
+
+/* Color the background of each day in the last grid column within the selected range */
+.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day::before {
+	content: '';
+	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full z-0;
+}
+
+/* Color the background of each day in the first grid column within the selected range */
+.datepicker-grid > div.within-range-day:nth-of-type(7n - 6) > .day::before {
+	content: '';
+	@apply absolute top-0 left-0 bottom-0 h-8 w-1/2 bg-ora-orange bg-opacity-5 rounded-l-full z-0;
+}
+
+/* Round the last date within the selected range */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
+	@apply relative rounded-r-full;
+}
+
+/* Hide the background exceeding the right boundary of each day in the last column */
+.datepicker-grid > div:nth-of-type(7n - 6)::before,
+/* Hide the background exceeding the left boundary of the first day within the selected range */
+.datepicker-grid > :not(.within-range-day) + .within-range-day::before {
+	content: '';
+	@apply absolute top-0 left-0 bottom-0 h-8 w-1/2 bg-white z-0;
+}
+
+/* Hide the background exceeding the right boundary of each day in the last column */
+.datepicker-grid > div:nth-of-type(7n)::before,
+/* Hide the background exceeding the right boundary of the last day within the selected range */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::before {
+	content: '';
+	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-white z-0;
 }
 </style>
