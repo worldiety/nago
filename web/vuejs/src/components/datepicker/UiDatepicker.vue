@@ -57,11 +57,6 @@ function selectFirstDate(selectedDate: Date): void {
 		}
 	} else {
 		selectStartDate(selectedDate);
-		const startDateSelected: PropertyBool = {
-			...props.ui.startDateSelected,
-			value: true,
-		};
-		networkStore.invokeSetProp(startDateSelected);
 	}
 	networkStore.invokeFunc(props.ui.onSelectionChanged);
 }

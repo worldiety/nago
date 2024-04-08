@@ -269,7 +269,7 @@ func main() {
 								datepicker.SelectedStartMonth().Set(int64(month))
 								datepicker.SelectedStartYear().Set(int64(year))
 								datepicker.StartDateSelected().Set(true)
-								datepicker.RangeMode().Set(true)
+								datepicker.RangeMode().Set(false)
 								datepicker.OnSelectionChanged().Set(func() {
 									fmt.Println("changed date")
 								})
