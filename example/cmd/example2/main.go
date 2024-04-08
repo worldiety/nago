@@ -11,6 +11,7 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 	"io"
 	"log/slog"
+	"time"
 )
 
 type PID string
@@ -263,9 +264,10 @@ func main() {
 								datepicker.OnClicked().Set(func() {
 									datepicker.Expanded().Set(!datepicker.Expanded().Get())
 								})
-								datepicker.SelectedStartDay().Set(7)
-								datepicker.SelectedStartMonth().Set(4)
-								datepicker.SelectedStartYear().Set(2024)
+								year, month, day := time.Time.Date(time.Now())
+								datepicker.SelectedStartDay().Set(int64(day))
+								datepicker.SelectedStartMonth().Set(int64(month))
+								datepicker.SelectedStartYear().Set(int64(year))
 								datepicker.StartDateSelected().Set(true)
 								datepicker.RangeMode().Set(true)
 								datepicker.OnSelectionChanged().Set(func() {

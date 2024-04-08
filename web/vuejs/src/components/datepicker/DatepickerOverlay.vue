@@ -86,6 +86,7 @@ const props = defineProps<{
 	selectedStartDay: number;
 	selectedStartMonth: number;
 	selectedStartYear: number;
+	endDateSelected: boolean;
 	selectedEndDay: number;
 	selectedEndMonth: number;
 	selectedEndYear: number;
@@ -228,7 +229,8 @@ function isSelectedDay(day: number, month: number, year: number): boolean {
 		&& day === props.selectedStartDay
 		&& month === props.selectedStartMonth
 		&& year === props.selectedStartYear
-		|| day === props.selectedEndDay
+		|| props.endDateSelected
+		&& day === props.selectedEndDay
 		&& month === props.selectedEndMonth
 		&& year === props.selectedEndYear;
 }

@@ -16,6 +16,7 @@ export interface LiveDatepicker {
 	selectedStartDay: PropertyInt,
 	selectedStartMonth: PropertyInt,
 	selectedStartYear: PropertyInt,
+	endDateSelected: PropertyBool,
 	selectedEndDay: PropertyInt,
 	selectedEndMonth: PropertyInt,
 	selectedEndYear: PropertyInt,

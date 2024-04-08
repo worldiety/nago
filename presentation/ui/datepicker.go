@@ -14,6 +14,7 @@ type Datepicker struct {
 	selectedStartDay   Int
 	selectedStartMonth Int
 	selectedStartYear  Int
+	endDateSelected    Bool
 	selectedEndDay     Int
 	selectedEndMonth   Int
 	selectedEndYear    Int
@@ -35,6 +36,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		selectedStartDay:   NewShared[int64]("selectedStartDay"),
 		selectedStartMonth: NewShared[int64]("selectedStartMonth"),
 		selectedStartYear:  NewShared[int64]("selectedStartYear"),
+		endDateSelected:    NewShared[bool]("endDateSelected"),
 		selectedEndDay:     NewShared[int64]("selectedEndDay"),
 		selectedEndMonth:   NewShared[int64]("selectedEndMonth"),
 		selectedEndYear:    NewShared[int64]("selectedEndYear"),
@@ -42,7 +44,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.endDateSelected, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
 	if with != nil {
 		with(c)
 	}
@@ -87,6 +89,10 @@ func (c *Datepicker) SelectedStartMonth() Int {
 
 func (c *Datepicker) SelectedStartYear() Int {
 	return c.selectedStartYear
+}
+
+func (c *Datepicker) EndDateSelected() Bool {
+	return c.endDateSelected
 }
 
 func (c *Datepicker) SelectedEndDay() Int {

@@ -38,17 +38,26 @@ function selectDay(day: number, month: number, year: number): void {
 }
 
 function selectFirstDate(selectedDate: Date): void {
-	const currentEndDate = new Date();
-	currentEndDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value, props.ui.selectedEndDay.value);
-	if (selectedDate > currentEndDate) {
-		selectStartDate(currentEndDate);
-		selectEndDate(selectedDate);
-	} else if (selectedDate < currentEndDate) {
-		selectStartDate(selectedDate);
+	if (props.ui.endDateSelected.value) {
+		const currentEndDate = new Date();
+		currentEndDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value, props.ui.selectedEndDay.value);
+		if (selectedDate > currentEndDate) {
+			selectStartDate(currentEndDate);
+			selectEndDate(selectedDate);
+		} else if (selectedDate < currentEndDate) {
+			selectStartDate(selectedDate);
+		} else {
+			const startDateSelected: PropertyBool = {
+				...props.ui.startDateSelected,
+				value: false,
+			};
+			networkStore.invokeSetProp(startDateSelected);
+		}
 	} else {
+		selectStartDate(selectedDate);
 		const startDateSelected: PropertyBool = {
 			...props.ui.startDateSelected,
-			value: false,
+			value: true,
 		};
 		networkStore.invokeSetProp(startDateSelected);
 	}
@@ -104,6 +113,11 @@ function selectEndDate(selectedDate: Date): void {
 		...props.ui.selectedEndDay,
 		value: selectedDate.getDate(),
 	});
+	const endDateSelected: PropertyBool = {
+		...props.ui.endDateSelected,
+		value: true,
+	};
+	networkStore.invokeSetProp(endDateSelected);
 }
 </script>
 
@@ -137,6 +151,7 @@ function selectEndDate(selectedDate: Date): void {
 				:selected-start-day="props.ui.selectedStartDay.value"
 				:selected-start-month="props.ui.selectedStartMonth.value"
 				:selected-start-year="props.ui.selectedStartYear.value"
+				:end-date-selected="props.ui.endDateSelected.value"
 				:selected-end-day="props.ui.selectedEndDay.value"
 				:selected-end-month="props.ui.selectedEndMonth.value"
 				:selected-end-year="props.ui.selectedEndYear.value"
