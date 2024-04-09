@@ -70,7 +70,13 @@
 			<!-- Confirm button when in range mode -->
 			<template v-if="rangeMode">
 				<div class="border-b border-b-disabled-background mt-2 mb-4"></div>
-				<button class="button-primary !text-black !w-full" @click="emit('close')">{{ t('datepicker.confirm') }}</button>
+				<button
+					class="button-confirm button-primary"
+					:disabled="!startDateSelected || !endDateSelected"
+					@click="emit('close')"
+				>
+					{{ t('datepicker.confirm') }}
+				</button>
 			</template>
 		</div>
 
@@ -351,5 +357,13 @@ backgrounds overlapping each other */
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-8 bg-white z-0;
 	@apply dark:bg-darkmode-gray;
+}
+
+.button-confirm {
+	@apply w-full;
+}
+
+.button-confirm:not(:disabled) {
+	@apply text-black;
 }
 </style>
