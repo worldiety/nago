@@ -16,9 +16,10 @@ const { t } = useI18n();
 const networkStore = useNetworkStore();
 
 const dateFormatted = computed((): string => {
-	if (!props.ui.startDateSelected.value) {
+	if (!props.ui.startDateSelected || (props.ui.rangeMode.value && !props.ui.endDateSelected.value)) {
 		return t('datepicker.select');
 	}
+
 	const startDate = new Date();
 	startDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value - 1, props.ui.selectedStartDay.value);
 	if (!props.ui.rangeMode.value || !props.ui.endDateSelected.value) {
@@ -42,53 +43,39 @@ function closeDatepicker(): void {
 }
 
 function selectDay(day: number, month: number, year: number): void {
-	const selectedDate = new Date();
-	selectedDate.setFullYear(year, month, day);
-	selectedDate.setHours(0, 0, 0, 0);
+	const selectedDate = new Date(year, month, day, 0, 0, 0, 0);
 	if (!props.ui.rangeMode.value || !props.ui.startDateSelected.value) {
-		selectFirstDate(selectedDate);
+		selectStartDate(selectedDate);
 		return;
 	}
-
-	selectSecondDate(selectedDate);
-}
-
-function selectFirstDate(selectedDate: Date): void {
-	if (props.ui.endDateSelected.value) {
-		const currentEndDate = new Date();
-		currentEndDate.setFullYear(props.ui.selectedEndYear.value, props.ui.selectedEndMonth.value, props.ui.selectedEndDay.value);
-		currentEndDate.setHours(0, 0, 0, 0);
-		if (selectedDate > currentEndDate) {
-			selectStartDate(currentEndDate);
-			selectEndDate(selectedDate);
-		} else if (selectedDate < currentEndDate) {
-			selectStartDate(selectedDate);
-		} else {
-			const startDateSelected: PropertyBool = {
-				...props.ui.startDateSelected,
-				value: false,
-			};
-			networkStore.invokeSetProp(startDateSelected);
-		}
-	} else {
-		selectStartDate(selectedDate);
-	}
-}
-
-function selectSecondDate(selectedDate: Date): void {
-	const currentStartDate = new Date();
-	currentStartDate.setFullYear(props.ui.selectedStartYear.value, props.ui.selectedStartMonth.value, props.ui.selectedStartDay.value);
-	currentStartDate.setHours(0, 0, 0, 0);
-	if (selectedDate > currentStartDate) {
+	if (!props.ui.endDateSelected.value) {
 		selectEndDate(selectedDate);
-	} else if (selectedDate < currentStartDate) {
+		return;
+	}
+	const currentStartDate: Date = new Date(
+		props.ui.selectedStartYear.value,
+		props.ui.selectedStartMonth.value,
+		props.ui.selectedStartDay.value,
+		0,
+		0,
+		0,
+		0,
+	);
+	const currentEndDate: Date = new Date(
+		props.ui.selectedEndYear.value,
+		props.ui.selectedEndMonth.value,
+		props.ui.selectedEndDay.value,
+		0,
+		0,
+		0,
+		0,
+	);
+	if (selectedDate.getTime() > currentStartDate.getTime()) {
+		selectEndDate(selectedDate);
+	} else if (selectedDate.getTime() < currentStartDate.getTime()) {
 		selectStartDate(selectedDate);
 	} else {
-		const startDateSelected: PropertyBool = {
-			...props.ui.startDateSelected,
-			value: false,
-		};
-		networkStore.invokeSetProp(startDateSelected);
+		selectStartDate(currentEndDate);
 	}
 }
 
