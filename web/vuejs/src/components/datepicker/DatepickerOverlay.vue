@@ -339,7 +339,7 @@ function increaseMonth(): void {
 /* Width for the background inset for each day in the first and last column */
 .datepicker-grid > div:nth-of-type(7n - 6)::before,
 .datepicker-grid > div:nth-of-type(7n)::before {
-	@apply w-1/2;
+	@apply w-1/2 rounded-none !important;
 }
 
 /* Custom width and rounding for background insets of selection start and end day to prevent partly transparent
