@@ -91,43 +91,45 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 }
 
 function selectStartDate(selectedDate: Date): void {
-	networkStore.invokeSetProperties({
-		...props.ui.selectedStartYear,
-		value: selectedDate.getFullYear(),
-	});
-	networkStore.invokeSetProperties({
-		...props.ui.selectedStartMonth,
-		value: selectedDate.getMonth() + 1,
-	});
-	networkStore.invokeSetProperties({
-		...props.ui.selectedStartDay,
-		value: selectedDate.getDate(),
-	});
-	const startDateSelected: PropertyBool = {
-		...props.ui.startDateSelected,
-		value: true,
-	};
-	networkStore.invokeSetProperties(startDateSelected);
+	networkStore.invokeSetProperties(
+		{
+			...props.ui.selectedStartYear,
+			value: selectedDate.getFullYear(),
+		},
+		{
+			...props.ui.selectedStartMonth,
+			value: selectedDate.getMonth() + 1,
+		},
+		{
+			...props.ui.selectedStartDay,
+			value: selectedDate.getDate(),
+		},
+		{
+			...props.ui.startDateSelected,
+			value: true,
+		},
+	);
 }
 
 function selectEndDate(selectedDate: Date): void {
-	networkStore.invokeSetProperties({
-		...props.ui.selectedEndYear,
-		value: selectedDate.getFullYear(),
-	});
-	networkStore.invokeSetProperties({
-		...props.ui.selectedEndMonth,
-		value: selectedDate.getMonth() + 1,
-	});
-	networkStore.invokeSetProperties({
-		...props.ui.selectedEndDay,
-		value: selectedDate.getDate(),
-	});
-	const endDateSelected: PropertyBool = {
-		...props.ui.endDateSelected,
-		value: true,
-	};
-	networkStore.invokeSetProperties(endDateSelected);
+	networkStore.invokeSetProperties(
+		{
+			...props.ui.selectedEndYear,
+			value: selectedDate.getFullYear(),
+		},
+		{
+			...props.ui.selectedEndMonth,
+			value: selectedDate.getMonth() + 1,
+		},
+		{
+			...props.ui.selectedEndDay,
+			value: selectedDate.getDate(),
+		},
+		{
+			...props.ui.endDateSelected,
+			value: true,
+		},
+	);
 }
 </script>
 
