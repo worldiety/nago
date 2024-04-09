@@ -2,6 +2,7 @@ package slice
 
 import "encoding/json"
 
+// deprecated: iter.Seq is the same?
 // Slice represents an immutable slice.
 type Slice[T any] struct {
 	slice []T

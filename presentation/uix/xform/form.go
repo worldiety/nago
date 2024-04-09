@@ -52,8 +52,8 @@ func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T,
 	tf.Value().Set(float64(*target))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
-	tf.Min().Set(int64(minIncl))
-	tf.Max().Set(int64(maxIncl))
+	tf.Min().Set(float64(minIncl))
+	tf.Max().Set(float64(maxIncl))
 	tf.Stepsize().Set(float64(stepSize))
 	tf.OnChanged().Set(func() {
 		*target = T(tf.Value().Get())
@@ -99,16 +99,16 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 	tf := ui.NewDatepicker(nil)
 	tf.Label().Set(opts.Label)
 	tme := *target
-	tf.SelectedYear().Set(int64(tme.Year()))
-	tf.SelectedDay().Set(int64(tme.Day()))
-	tf.SelectedMonthIndex().Set(int64(tme.Month()) - 1) // TODO why the Index postfix here?
+	tf.SelectedStartYear().Set(int64(tme.Year()))
+	tf.SelectedStartDay().Set(int64(tme.Day()))
+	tf.SelectedStartMonth().Set(int64(tme.Month()))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.OnClicked().Set(func() {
 		tf.Expanded().Set(!tf.Expanded().Get())
 	})
 	tf.OnSelectionChanged().Set(func() {
-		newTime := time.Date(int(tf.SelectedYear().Get()), time.Month(tf.SelectedMonthIndex().Get()+1), int(tf.SelectedDay().Get()), 0, 0, 0, 0, tz)
+		newTime := time.Date(int(tf.SelectedStartYear().Get()), time.Month(tf.SelectedStartMonth().Get()+1), int(tf.SelectedStartDay().Get()), 0, 0, 0, 0, tz)
 		fmt.Println(newTime)
 		*target = newTime
 		if binding.OnChanged != nil {
