@@ -29,9 +29,15 @@ const dateFormatted = computed((): string => {
 	return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 });
 
-function datepickerClicked(forceClose: boolean): void {
-	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
+function showDatepicker(): void {
+	if (!props.ui.disabled.value && !props.ui.expanded.value) {
 		networkStore.invokeFunc(props.ui.onClicked);
+	}
+}
+
+function closeDatepicker(): void {
+	if (props.ui.expanded.value) {
+		networkStore.invokeFunc(props.ui.onSelectionChanged);
 	}
 }
 
@@ -45,7 +51,6 @@ function selectDay(day: number, month: number, year: number): void {
 	}
 
 	selectSecondDate(selectedDate);
-	networkStore.invokeFunc(props.ui.onSelectionChanged);
 }
 
 function selectFirstDate(selectedDate: Date): void {
@@ -68,7 +73,6 @@ function selectFirstDate(selectedDate: Date): void {
 	} else {
 		selectStartDate(selectedDate);
 	}
-	networkStore.invokeFunc(props.ui.onSelectionChanged);
 }
 
 function selectSecondDate(selectedDate: Date): void {
@@ -142,8 +146,8 @@ function selectEndDate(selectedDate: Date): void {
 				<div
 					class="input-field relative z-0"
 					tabindex="0"
-					@click="datepickerClicked(false)"
-					@keydown.enter="datepickerClicked(true)">
+					@click="showDatepicker()"
+					@keydown.enter="showDatepicker()">
 					<p>{{ dateFormatted }}</p>
 					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none h-full">
 						<Calendar class="w-4" />
@@ -163,7 +167,7 @@ function selectEndDate(selectedDate: Date): void {
 				:selected-end-day="props.ui.selectedEndDay.value"
 				:selected-end-month="props.ui.selectedEndMonth.value"
 				:selected-end-year="props.ui.selectedEndYear.value"
-				@close="datepickerClicked(true)"
+				@close="closeDatepicker()"
 				@select="selectDay"
 			/>
 		</div>

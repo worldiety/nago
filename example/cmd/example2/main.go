@@ -261,11 +261,12 @@ func main() {
 								datepicker.Label().Set("Datepicker-Label")
 								datepicker.Error().Set("Das ist auch eine Fehlermeldung")
 								datepicker.OnClicked().Set(func() {
-									datepicker.Expanded().Set(!datepicker.Expanded().Get())
+									datepicker.Expanded().Set(true)
 								})
 								datepicker.RangeMode().Set(true)
 								datepicker.OnSelectionChanged().Set(func() {
 									fmt.Println("changed date")
+									datepicker.Expanded().Set(false)
 								})
 							}))
 
