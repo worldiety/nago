@@ -34,15 +34,15 @@ const clazz = computed<string>(() => {
 });
 
 function onClick() {
-	networkStore.invokeFunc(props.ui.onClick);
+	networkStore.invokeFunctions(props.ui.onClick);
 }
 
 function onMouseEnter() {
-	networkStore.invokeFunc(props.ui.onHoverStart);
+	networkStore.invokeFunctions(props.ui.onHoverStart);
 }
 
 function onMouseLeave() {
-	networkStore.invokeFunc(props.ui.onHoverEnd);
+	networkStore.invokeFunctions(props.ui.onHoverEnd);
 }
 </script>
 

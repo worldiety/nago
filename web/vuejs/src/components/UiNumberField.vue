@@ -28,7 +28,7 @@ watch(inputValue, (newValue, oldValue) => {
 		...props.ui.value,
 		value: parseInt(newValue, 10),
 	};
-	networkStore.invokeFuncAndSetProp(updatedValueProperty, props.ui.onValueChanged);
+	networkStore.invokeFunctionsAndSetProperties([updatedValueProperty], [props.ui.onValueChanged]);
 });
 </script>
 

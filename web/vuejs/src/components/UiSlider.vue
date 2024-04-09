@@ -34,10 +34,10 @@ function roundValue(value: number): number {
 
 function submitSliderValue(): void {
 	dragging.value = false;
-	networkStore.invokeFuncAndSetProp({
+	networkStore.invokeFunctionsAndSetProperties([{
 		...props.ui.value,
 		value: sliderValue.value,
-	}, props.ui.onChanged);
+	}], [props.ui.onChanged]);
 }
 </script>
 

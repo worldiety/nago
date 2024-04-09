@@ -32,13 +32,13 @@ const dateFormatted = computed((): string => {
 
 function showDatepicker(): void {
 	if (!props.ui.disabled.value && !props.ui.expanded.value) {
-		networkStore.invokeFunc(props.ui.onClicked);
+		networkStore.invokeFunctions(props.ui.onClicked);
 	}
 }
 
 function closeDatepicker(): void {
 	if (props.ui.expanded.value) {
-		networkStore.invokeFunc(props.ui.onSelectionChanged);
+		networkStore.invokeFunctions(props.ui.onSelectionChanged);
 	}
 }
 
@@ -91,15 +91,15 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 }
 
 function selectStartDate(selectedDate: Date): void {
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedStartYear,
 		value: selectedDate.getFullYear(),
 	});
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedStartMonth,
 		value: selectedDate.getMonth() + 1,
 	});
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedStartDay,
 		value: selectedDate.getDate(),
 	});
@@ -107,19 +107,19 @@ function selectStartDate(selectedDate: Date): void {
 		...props.ui.startDateSelected,
 		value: true,
 	};
-	networkStore.invokeSetProp(startDateSelected);
+	networkStore.invokeSetProperties(startDateSelected);
 }
 
 function selectEndDate(selectedDate: Date): void {
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedEndYear,
 		value: selectedDate.getFullYear(),
 	});
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedEndMonth,
 		value: selectedDate.getMonth() + 1,
 	});
-	networkStore.invokeSetProp({
+	networkStore.invokeSetProperties({
 		...props.ui.selectedEndDay,
 		value: selectedDate.getDate(),
 	});
@@ -127,7 +127,7 @@ function selectEndDate(selectedDate: Date): void {
 		...props.ui.endDateSelected,
 		value: true,
 	};
-	networkStore.invokeSetProp(endDateSelected);
+	networkStore.invokeSetProperties(endDateSelected);
 }
 </script>
 

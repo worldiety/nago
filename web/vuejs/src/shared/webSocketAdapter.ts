@@ -112,46 +112,47 @@ export default class WebSocketAdapter {
 		}, 2000);
 	}
 
-	invokeFunc(action: PropertyFunc) {
-		this.invokeTx2(null, action);
+	invokeFunctions(...actions: PropertyFunc[]) {
+		this.invokeTx2(undefined, actions);
 	}
 
-	invokeSetProp(property: Property) {
-		this.invokeTx2(property, null);
+	invokeSetProperties(...properties: Property[]) {
+		this.invokeTx2(properties);
 	}
 
-	invokeFuncAndSetProp(property: Property, action: PropertyFunc) {
-		this.invokeTx2(property, action);
+	invokeFunctionsAndSetProperties(properties: Property[], functions: PropertyFunc[]) {
+		this.invokeTx2(properties, functions);
 	}
 
-	private invokeTx2(prop: Property | null, fn: PropertyFunc | null) {
-		const callTx: CallBatch = {
-			tx: []
+	private invokeTx2(properties?: Property[], functions?: PropertyFunc[]) {
+		const callBatch: CallBatch = {
+			tx: [],
+		};
+
+		properties
+			?.filter((property: Property) => property.id !== 0)
+			.forEach((property: Property) => {
+				const setServerProperty: SetServerProperty = {
+					type: 'setProp',
+					id: property.id,
+					value: property.value,
+				};
+				callBatch.tx.push(setServerProperty);
+			});
+
+		functions
+			?.filter((propertyFunc: PropertyFunc) => propertyFunc.id !== 0 && propertyFunc.value !== 0)
+			.forEach((propertyFunc: PropertyFunc) => {
+				const callServerFunc: CallServerFunc = {
+					type: 'callFn',
+					id: propertyFunc.value,
+				};
+				callBatch.tx.push(callServerFunc);
+			});
+
+		if (callBatch.tx.length > 0) {
+			this.webSocket?.send(JSON.stringify(callBatch));
 		}
-
-		if (prop && prop.id != 0) {
-			const setSrvProp: SetServerProperty = {
-				type: "setProp",
-				id: prop.id,
-				value: prop.value
-			}
-			callTx.tx.push(setSrvProp)
-		}
-
-		if (fn && fn.id != 0 && fn.value != 0) {
-			const callSrvFun: CallServerFunc = {
-				type: "callFn",
-				id: fn.value
-			}
-
-			callTx.tx.push(callSrvFun)
-		}
-
-		if (callTx.tx.length == 0) {
-			return
-		}
-
-		this.webSocket?.send(JSON.stringify(callTx))
 	}
 
 	setWebSocketReceiveCallback(callback: (message: LiveMessage) => void): void {

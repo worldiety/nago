@@ -12,11 +12,11 @@ const props = defineProps<{
 const networkStore = useNetworkStore();
 
 function onClick() {
-	networkStore.invokeFunc(props.ui.action);
+	networkStore.invokeFunctions(props.ui.action);
 }
 
 function onClose() {
-	networkStore.invokeFunc(props.ui.onClose);
+	networkStore.invokeFunctions(props.ui.onClose);
 }
 
 const outerColor = computed<string>(() => {

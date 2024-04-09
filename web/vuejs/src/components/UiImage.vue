@@ -15,7 +15,7 @@ const networkStore = useNetworkStore();
 const ui: Ref<UiDescription> = inject('ui')!;
 
 function onClick() {
-	networkStore.invokeFunc(props.ui.action);
+	networkStore.invokeFunctions(props.ui.action);
 }
 
 function getSource(): string {

@@ -12,7 +12,7 @@ const networkStore = useNetworkStore();
 
 function valueChanged(event: any) {
 	props.ui.value.value = event.target.value;
-	networkStore.invokeFuncAndSetProp(props.ui.value, props.ui.onTextChanged);
+	networkStore.invokeFunctionsAndSetProperties([props.ui.value], [props.ui.onTextChanged]);
 }
 
 function isErr(): boolean {

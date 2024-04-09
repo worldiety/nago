@@ -87,7 +87,7 @@ onMounted(() => {
 			<ul class="space-y-2 font-medium">
 				<li v-for="btn in props.ui.menu.value">
 					<a
-						@click="networkStore.invokeFunc(btn.action)"
+						@click="networkStore.invokeFunctions(btn.action)"
 						class="group flex cursor-pointer items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
 					>
 						<svg
@@ -148,7 +148,7 @@ onMounted(() => {
 				<ol class="inline-flex items-center space-x-1 rtl:space-x-reverse md:space-x-2">
 					<li v-for="btn in props.ui.breadcrumbs.value" class="inline-flex items-center">
 						<a
-							@click="networkStore.invokeFunc(btn.action)"
+							@click="networkStore.invokeFunctions(btn.action)"
 							class="inline-flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
 						>
 							<svg
@@ -175,7 +175,7 @@ onMounted(() => {
 				type="button"
 				class="group inline-flex cursor-pointer flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800"
 				v-for="btn in props.ui.menu.value"
-				@click="networkStore.invokeFunc(btn.action)"
+				@click="networkStore.invokeFunctions(btn.action)"
 			>
 				<svg
 					v-inline

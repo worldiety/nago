@@ -54,14 +54,14 @@ function closeDropdown(e: MouseEvent) {
 		const targetHTMLElement = e.target as HTMLElement;
 		const dropdownItemWasClicked = targetHTMLElement.compareDocumentPosition(dropdownOptions.value) & Node.DOCUMENT_POSITION_CONTAINS;
 		if (!dropdownItemWasClicked) {
-			networkStore.invokeFunc(props.ui.onClicked);
+			networkStore.invokeFunctions(props.ui.onClicked);
 		}
 	}
 }
 
 function dropdownClicked(forceClose: boolean): void {
 	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
-		networkStore.invokeFunc(props.ui.onClicked);
+		networkStore.invokeFunctions(props.ui.onClicked);
 	}
 }
 

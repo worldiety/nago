@@ -15,10 +15,10 @@ const inputValue = ref<string>(props.ui.value.value);
 const idPrefix = 'text-field-';
 
 watch(inputValue, (newValue) => {
-	networkStore.invokeFuncAndSetProp({
+	networkStore.invokeFunctionsAndSetProperties([{
 		...props.ui.value,
 		value: newValue,
-	}, props.ui.onTextChanged);
+	}], [props.ui.onTextChanged]);
 });
 </script>
 

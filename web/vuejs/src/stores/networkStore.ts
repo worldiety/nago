@@ -25,14 +25,14 @@ export const useNetworkStore = defineStore('networkStore', {
 		closeWebSocket(): void {
 			this.webSocketAdapter.closeWebSocket();
 		},
-		invokeFunc(action: PropertyFunc): void {
-			this.webSocketAdapter.invokeFunc(action);
+		invokeFunctions(...functions: PropertyFunc[]): void {
+			this.webSocketAdapter.invokeFunctions(...functions);
 		},
-		invokeSetProp(property: Property): void {
-			this.webSocketAdapter.invokeSetProp(property);
+		invokeSetProperties(...properties: Property[]): void {
+			this.webSocketAdapter.invokeSetProperties(...properties);
 		},
-		invokeFuncAndSetProp(property: Property, action: PropertyFunc): void {
-			this.webSocketAdapter.invokeFuncAndSetProp(property, action);
+		invokeFunctionsAndSetProperties(properties: Property[], functions: PropertyFunc[]): void {
+			this.webSocketAdapter.invokeFunctionsAndSetProperties(properties, functions);
 		},
 	},
 });

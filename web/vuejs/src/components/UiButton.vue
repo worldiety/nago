@@ -12,7 +12,7 @@ const props = defineProps<{
 const networkStore = useNetworkStore();
 
 function onClick() {
-	networkStore.invokeFunc(props.ui.action);
+	networkStore.invokeFunctions(props.ui.action);
 }
 
 const buttonClasses = computed<string>(() => {

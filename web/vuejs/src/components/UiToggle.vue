@@ -17,10 +17,10 @@ function onClick() {
 		return;
 	}
 	checked.value = !checked.value;
-	networkStore.invokeFuncAndSetProp({
+	networkStore.invokeFunctionsAndSetProperties([{
 		...props.ui.checked,
 		value: checked.value,
-	}, props.ui.onCheckedChanged);
+	}], [props.ui.onCheckedChanged]);
 }
 </script>
 
