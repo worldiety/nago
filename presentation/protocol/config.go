@@ -12,13 +12,27 @@ const (
 	DarkMode  ColorScheme = "dark"
 )
 
+// ConfigurationRequested is issued by the frontend to get the applications general configuration.
+// A backend developer has potentially defined a lot of configuration details about the application.
+// For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
+// It is expected, that this only happens once during initialization of the frontend process.
 type ConfigurationRequested struct {
 	Type           EventType   `json:"type" value:"NewConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
 	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
 	event
+	_ struct{} `ConfigurationRequested is issued by the frontend to get the applications general configuration.
+A backend developer has potentially defined a lot of configuration details about the application.
+For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
+It is expected, that this only happens once during initialization of the frontend process.`
 }
 
+// A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
+// According to the locale request, string and svg resources can be localized by the backend.
+// The returned locale is the actually picked locale from the requested locale query string.
+//
+// It looks quite obfuscated, however this minified version is intentional, because it may succeed each transaction call.
+// A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
 type ConfigurationDefined struct {
 	Type             EventType `json:"type" value:"ConfigurationDefined"`
 	ApplicationName  string    `json:"applicationName"`
@@ -27,6 +41,12 @@ type ConfigurationDefined struct {
 	Themes           Themes    `json:"themes"`
 	Resources        Resources `json:"resources"`
 	event
+	_ struct{} `A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
+According to the locale request, string and svg resources can be localized by the backend. The returned locale is the actually picked locale from the requested locale query string.
+
+It looks quite obfuscated, however this minified version is intentional, because it may succeed each transaction call.
+A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
+`
 }
 
 type Themes struct {
@@ -88,9 +108,6 @@ func RGB(color uint32) Color {
 	return Color{r, g, b, a}
 }
 
-type SVGID int
-type SVGSrc string
-
 type Resources struct {
-	SVG map[SVGID]SVGSrc `json:"svgs"`
+	SVG map[RIDSVG]SVG `json:"svgs"`
 }

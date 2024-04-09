@@ -1,5 +1,7 @@
 package protocol
 
+import "reflect"
+
 // Ptr is a unique identifier or address for a specific allocated property.
 type Ptr int64
 
@@ -18,20 +20,16 @@ const (
 	ButtonT ComponentType = "button"
 )
 
-type Button struct {
-	Ptr      Ptr              `json:"id"`
-	Type     ComponentType    `json:"type" value:"Button"`
-	Caption  Property[string] `json:"caption" description:"Caption of the button"`
-	PreIcon  Property[SVGSrc] `json:"preIcon"`
-	PostIcon Property[SVGSrc] `json:"postIcon"`
-	Color    Property[Color]  `json:"color"`
-	Disabled Property[bool]   `json:"disabled"`
-	Action   Property[Ptr]    `json:"action"`
-	component
-}
-
 type Component interface {
 	isComponent()
+}
+
+var Components []reflect.Type
+
+func init() {
+	Components = []reflect.Type{
+		reflect.TypeOf(Button{}),
+	}
 }
 
 type component struct {
