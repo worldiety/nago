@@ -42,15 +42,15 @@ function closeDatepicker(): void {
 	}
 }
 
-function selectDay(day: number, month: number, year: number): void {
-	const selectedDate = new Date(year, month, day, 0, 0, 0, 0);
+function selectDate(day: number, monthIndex: number, year: number): void {
+	const selectedDate = new Date(year, monthIndex, day, 0, 0, 0, 0);
 	if (!props.ui.rangeMode.value || !props.ui.startDateSelected.value) {
 		selectStartDate(selectedDate);
 		return;
 	}
 	const currentStartDate: Date = new Date(
 		props.ui.selectedStartYear.value,
-		props.ui.selectedStartMonth.value,
+		props.ui.selectedStartMonth.value - 1,
 		props.ui.selectedStartDay.value,
 		0,
 		0,
@@ -78,7 +78,7 @@ function selectDay(day: number, month: number, year: number): void {
 			// end date as the start date
 			const currentEndDate: Date = new Date(
 				props.ui.selectedEndYear.value,
-				props.ui.selectedEndMonth.value,
+				props.ui.selectedEndMonth.value - 1,
 				props.ui.selectedEndDay.value,
 				0,
 				0,
@@ -97,7 +97,7 @@ function selectStartDate(selectedDate: Date): void {
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartMonth,
-		value: selectedDate.getMonth(),
+		value: selectedDate.getMonth() + 1,
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedStartDay,
@@ -117,7 +117,7 @@ function selectEndDate(selectedDate: Date): void {
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndMonth,
-		value: selectedDate.getMonth(),
+		value: selectedDate.getMonth() + 1,
 	});
 	networkStore.invokeSetProp({
 		...props.ui.selectedEndDay,
@@ -166,7 +166,7 @@ function selectEndDate(selectedDate: Date): void {
 				:selected-end-month="props.ui.selectedEndMonth.value"
 				:selected-end-year="props.ui.selectedEndYear.value"
 				@close="closeDatepicker()"
-				@select="selectDay"
+				@select="selectDate"
 			/>
 		</div>
 	</div>

@@ -55,11 +55,11 @@
 							class="day effect-hover relative flex justify-center items-center cursor-default z-10"
 							:class="{
 							'selected-day': datepickerDay.selected,
-							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.month !== currentMonthIndex + 1,
+							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
 						}"
 							tabindex="0"
-							@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
-							@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year)"
+							@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year)"
+							@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year)"
 						>
 							<span>{{ datepickerDay.dayOfMonth }}</span>
 						</div>
@@ -132,17 +132,27 @@ watch(yearInput, (newValue, oldValue) => {
 });
 
 const selectedStartDate = computed((): Date => {
-	const selectedStartDate = new Date();
-	selectedStartDate.setFullYear(props.selectedStartYear, props.selectedStartMonth, props.selectedStartDay);
-	selectedStartDate.setHours(0, 0, 0, 0);
-	return selectedStartDate;
+	return new Date(
+		props.selectedStartYear,
+		props.selectedStartMonth - 1,
+		props.selectedStartDay,
+		0,
+		0,
+		0,
+		0,
+	);
 });
 
 const selectedEndDate = computed((): Date => {
-	const selectedEndDate = new Date();
-	selectedEndDate.setFullYear(props.selectedEndYear, props.selectedEndMonth, props.selectedEndDay);
-	selectedEndDate.setHours(0, 0, 0, 0);
-	return selectedEndDate;
+	return new Date(
+		props.selectedEndYear,
+		props.selectedEndMonth - 1,
+		props.selectedEndDay,
+		0,
+		0,
+		0,
+		0,
+	);
 });
 
 const datepickerDays = computed((): DatepickerDay[] => {
@@ -168,22 +178,36 @@ const datepickerDays = computed((): DatepickerDay[] => {
 function getDaysOfCurrentMonth(): DatepickerDay[] {
 	const daysOfCurrentMonth: DatepickerDay[] = [];
 
-	const dayOfCurrentMonthDate = new Date();
-	dayOfCurrentMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 0);
+	const dayOfCurrentMonthDate = new Date(
+		currentYear.value,
+		currentMonthIndex.value + 1,
+		0,
+		0,
+		0,
+		0,
+		0,
+	);
 	const lastDayOfCurrentMonth = dayOfCurrentMonthDate.getDate();
 	for (let i = 1; i <= lastDayOfCurrentMonth; i++) {
-		const dayOfWeekDate = new Date();
-		dayOfWeekDate.setFullYear(currentYear.value, currentMonthIndex.value, i);
+		const dayOfWeekDate = new Date(
+			currentYear.value,
+			currentMonthIndex.value,
+			i,
+			0,
+			0,
+			0,
+			0,
+		);
 		const datepickerDay: DatepickerDay = {
 			dayOfWeek: dayOfWeekDate.getDay() === 0 ? 7 : dayOfWeekDate.getDay(),
 			dayOfMonth: i,
-			month: currentMonthIndex.value + 1,
+			monthIndex: currentMonthIndex.value,
 			year: currentYear.value,
 			selected: false,
 			withinRange: false,
 		};
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		daysOfCurrentMonth.push(datepickerDay);
 	}
 
@@ -193,8 +217,15 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 	const fillingDaysOfPreviousMonth: DatepickerDay[] = [];
 
-	const dayOfPreviousMonthDate = new Date();
-	dayOfPreviousMonthDate.setFullYear(currentYear.value, currentMonthIndex.value, 0);
+	const dayOfPreviousMonthDate = new Date(
+		currentYear.value,
+		currentMonthIndex.value,
+		0,
+		0,
+		0,
+		0,
+		0,
+	);
 	const lastDayOfWeekPreviousMonth = dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay();
 	const lastDayOfPreviousMonth = dayOfPreviousMonthDate.getDate();
 	for (let i = 0; i < lastDayOfWeekPreviousMonth; i++) {
@@ -202,13 +233,13 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 		const datepickerDay: DatepickerDay = {
 			dayOfWeek: dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay(),
 			dayOfMonth: lastDayOfPreviousMonth - i,
-			month: dayOfPreviousMonthDate.getMonth() + 1,
+			monthIndex: dayOfPreviousMonthDate.getMonth(),
 			year: dayOfPreviousMonthDate.getFullYear(),
 			selected: false,
 			withinRange: false,
 		}
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		fillingDaysOfPreviousMonth.unshift(datepickerDay);
 	}
 
@@ -218,48 +249,62 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): DatepickerDay[] {
 	const fillingDaysOfNextMonth: DatepickerDay[] = [];
 
-	const dayOfNextMonthDate = new Date();
+	let dayOfNextMonthDate: Date;
 	if (currentMonthIndex.value + 1 === 12) {
-		dayOfNextMonthDate.setFullYear(currentYear.value + 1, 0, 1);
+		dayOfNextMonthDate = new Date(
+			currentYear.value + 1,
+			0,
+			1,
+			0,
+			0,
+			0,
+			0,
+		);
 	} else {
-		dayOfNextMonthDate.setFullYear(currentYear.value, currentMonthIndex.value + 1, 1);
+		dayOfNextMonthDate = new Date(
+			currentYear.value,
+			currentMonthIndex.value + 1,
+			1,
+			0,
+			0,
+			0,
+			0,
+		);
 	}
 	for (let i = 1; i <= 7 - lastDayOfWeekCurrentMonth; i++) {
 		dayOfNextMonthDate.setDate(i);
 		const datepickerDay: DatepickerDay = {
 			dayOfWeek: dayOfNextMonthDate.getDay() === 0 ? 7 : dayOfNextMonthDate.getDay(),
 			dayOfMonth: dayOfNextMonthDate.getDate(),
-			month: dayOfNextMonthDate.getMonth() + 1,
+			monthIndex: dayOfNextMonthDate.getMonth(),
 			year: dayOfNextMonthDate.getFullYear(),
 			selected: false,
 			withinRange: false,
 		};
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.month, datepickerDay.year);
+		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		fillingDaysOfNextMonth.push(datepickerDay);
 	}
 
 	return fillingDaysOfNextMonth;
 }
 
-function isSelectedDay(day: number, month: number, year: number): boolean {
+function isSelectedDay(day: number, monthIndex: number, year: number): boolean {
 	return props.startDateSelected
 		&& day === props.selectedStartDay
-		&& month === props.selectedStartMonth
+		&& monthIndex === props.selectedStartMonth - 1
 		&& year === props.selectedStartYear
 		|| props.endDateSelected
 		&& day === props.selectedEndDay
-		&& month === props.selectedEndMonth
+		&& monthIndex === props.selectedEndMonth - 1
 		&& year === props.selectedEndYear;
 }
 
-function isWithinRange(day: number, month: number, year: number): boolean {
+function isWithinRange(day: number, monthIndex: number, year: number): boolean {
 	if (!props.startDateSelected || !props.endDateSelected) {
 		return false;
 	}
-	const dateToCheck = new Date();
-	dateToCheck.setFullYear(year, month, day);
-	dateToCheck.setHours(0, 0, 0, 0);
+	const dateToCheck = new Date(year, monthIndex, day, 0, 0, 0, 0);
 	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
 }
 
