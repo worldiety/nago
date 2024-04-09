@@ -300,7 +300,7 @@ function increaseMonth(): void {
 }
 
 /* Color the background of each day in the last grid column within the selected range */
-.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day::before {
+.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day::after {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full z-0;
 }
@@ -326,16 +326,30 @@ function increaseMonth(): void {
 /* Hide the background exceeding the left boundary of the first day within the selected range */
 .datepicker-grid > :not(.within-range-day) + .within-range-day::before {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-8 w-1/2 bg-white z-0;
+	@apply absolute top-0 left-0 bottom-0 h-8 bg-white z-0;
 	@apply dark:bg-darkmode-gray;
+}
+
+/* Width for the background inset for each day in the first and last column */
+.datepicker-grid > div:nth-of-type(7n - 6)::before,
+.datepicker-grid > div:nth-of-type(7n)::before {
+	@apply w-1/2;
+}
+
+/* Custom width and rounding for background insets of selection start and end day to prevent partly transparent
+backgrounds overlapping each other */
+.datepicker-grid > :not(.within-range-day) + .within-range-day::before,
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::after {
+	@apply rounded-full;
+	width: calc(50% + 1rem);
 }
 
 /* Hide the background exceeding the right boundary of each day in the last column */
 .datepicker-grid > div:nth-of-type(7n)::before,
 /* Hide the background exceeding the right boundary of the last day within the selected range */
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::before {
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::after {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-white z-0;
+	@apply absolute top-0 bottom-0 right-0 h-8 bg-white z-0;
 	@apply dark:bg-darkmode-gray;
 }
 </style>
