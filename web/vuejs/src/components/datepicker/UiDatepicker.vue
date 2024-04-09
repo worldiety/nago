@@ -48,10 +48,6 @@ function selectDay(day: number, month: number, year: number): void {
 		selectStartDate(selectedDate);
 		return;
 	}
-	if (!props.ui.endDateSelected.value) {
-		selectEndDate(selectedDate);
-		return;
-	}
 	const currentStartDate: Date = new Date(
 		props.ui.selectedStartYear.value,
 		props.ui.selectedStartMonth.value,
@@ -61,21 +57,36 @@ function selectDay(day: number, month: number, year: number): void {
 		0,
 		0,
 	);
-	const currentEndDate: Date = new Date(
-		props.ui.selectedEndYear.value,
-		props.ui.selectedEndMonth.value,
-		props.ui.selectedEndDay.value,
-		0,
-		0,
-		0,
-		0,
-	);
 	if (selectedDate.getTime() > currentStartDate.getTime()) {
+		// If the selected date is after the current start date, set it as the end date
 		selectEndDate(selectedDate);
 	} else if (selectedDate.getTime() < currentStartDate.getTime()) {
+		// If the selected date is before the current start date, set is as the start date
 		selectStartDate(selectedDate);
+		if (!props.ui.endDateSelected.value) {
+			// If the no end date is selected yet, set the current start date as the end date
+			selectEndDate(currentStartDate);
+		}
 	} else {
-		selectStartDate(currentEndDate);
+		if (!props.ui.endDateSelected.value) {
+			// If the selected date is equal to the current start date and no end date has been selected yet, set the selected
+			// date as the start and end date
+			selectStartDate(selectedDate);
+			selectEndDate(selectedDate);
+		} else {
+			// If the selected date is equal to the current start date and an end date has been selected yet, set the current
+			// end date as the start date
+			const currentEndDate: Date = new Date(
+				props.ui.selectedEndYear.value,
+				props.ui.selectedEndMonth.value,
+				props.ui.selectedEndDay.value,
+				0,
+				0,
+				0,
+				0,
+			);
+			selectStartDate(currentEndDate);
+		}
 	}
 }
 
