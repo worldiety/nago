@@ -16,7 +16,7 @@ const { t } = useI18n();
 const networkStore = useNetworkStore();
 
 const dateFormatted = computed((): string => {
-	if (!props.ui.startDateSelected || (props.ui.rangeMode.value && !props.ui.endDateSelected.value)) {
+	if (!props.ui.startDateSelected.value || (props.ui.rangeMode.value && !props.ui.endDateSelected.value)) {
 		return t('datepicker.select');
 	}
 
