@@ -76,7 +76,7 @@ func init() {
 		},
 		reflect.TypeOf((*protocol.Component)(nil)).Elem(): {
 			Name:    "Component",
-			Package: prefix + "component",
+			Package: genPrefix + "component",
 		},
 		reflect.TypeOf([]protocol.Event{}): {
 			Name: "[]",
