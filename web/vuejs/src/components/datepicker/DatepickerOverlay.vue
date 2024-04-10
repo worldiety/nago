@@ -73,7 +73,7 @@
 
 			<!-- Confirm button when in range mode -->
 			<template v-if="rangeMode">
-				<div class="border-b border-b-disabled-background mt-2 mb-4"></div>
+				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
 				<button
 					class="button-confirm button-primary"
 					:disabled="!startDateSelected || !endDateSelected"
