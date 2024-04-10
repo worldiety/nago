@@ -46,9 +46,7 @@ async function init() {
      state.value = State.ShowUI;
      console.log(pageUrl);
      console.log('got value', ui.value);*/
-		networkStore.setWebSocketReceiveCallback(webSocketReceiveCallback);
-		networkStore.setWebSocketErrorCallback(webSocketErrorCallback);
-		networkStore.initializeWebSocket();
+		networkStore.initialize();
 	} catch {
 		state.value = State.Error;
 	}
@@ -85,7 +83,7 @@ watch(route, () => {
 });
 
 onUnmounted(() => {
-	networkStore.closeWebSocket();
+	networkStore.teardown();
 });
 
 function encodeQueryData(data) {

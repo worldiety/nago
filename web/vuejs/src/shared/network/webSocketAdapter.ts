@@ -1,19 +1,17 @@
 import { useAuth, UserChangedCallbacks } from '@/stores/authStore';
-import type { LiveMessage } from '@/shared/model/liveMessage';
 import type { UpdateJWT } from '@/shared/model/updateJWT';
 import type { CallBatch } from '@/shared/model/callBatch';
 import type { ClientHello } from '@/shared/model/clientHello';
 import type { PropertyFunc } from '@/shared/model/propertyFunc';
-import type { Property } from '@/shared/model/property';
 import type { SetServerProperty } from '@/shared/model/setServerProperty';
 import type { CallServerFunc } from '@/shared/model/callServerFunc';
+import type NetworkAdapter from '@/shared/network/networkAdapter';
+import type { Property } from '@/shared/model/property';
 
-export default class WebSocketAdapter {
+export default class WebSocketAdapter implements NetworkAdapter {
 
 	private readonly webSocketPort: string;
 	private webSocket: WebSocket|null = null;
-	private webSocketReceiveCallback: ((message: LiveMessage) => void) | null = null;
-	private webSocketErrorCallback: (() => void) | null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
 
@@ -29,7 +27,7 @@ export default class WebSocketAdapter {
 		return port;
 	}
 
-	initializeWebSocket(): void {
+	initialize(): void {
 		let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
@@ -50,20 +48,6 @@ export default class WebSocketAdapter {
 				// Keep the socket closed if it was closed gracefully (i.e. intentional)
 				this.closedGracefully = false;
 			}
-		}
-
-		this.webSocket.onmessage = (e) => {
-			const message: LiveMessage = JSON.parse(e.data)
-			if (this.webSocketReceiveCallback) {
-				this.webSocketReceiveCallback(message);
-			}
-		}
-
-		this.webSocket.onerror = (e) => {
-			if (this.webSocketErrorCallback) {
-				this.webSocketErrorCallback();
-			}
-			this.retry();
 		}
 
 		UserChangedCallbacks.push(() => this.sendUser());
@@ -102,26 +86,35 @@ export default class WebSocketAdapter {
 		this.webSocket?.send(JSON.stringify(callTx))
 	}
 
+	teardown(): void {
+		this.closedGracefully = true;
+		this.webSocket?.close();
+	}
+
 	private retry() {
 		if (this.retryTimeout !== null) {
 			return;
 		}
 		this.retryTimeout = window.setTimeout(() => {
 			this.retryTimeout = null;
-			this.initializeWebSocket();
+			this.initialize();
 		}, 2000);
 	}
 
-	invokeFunctions(...actions: PropertyFunc[]) {
-		this.invokeTx2(undefined, actions);
+	publish(payloadRaw: string): void {
+		// TODO: Figure out how to call invokeTx2 without knowing the exact parsed type of payloadRaw
 	}
 
-	invokeSetProperties(...properties: Property[]) {
-		this.invokeTx2(properties);
-	}
+	subscribe(resolve: (responseRaw: string) => void): void {
+		if (!this.webSocket) {
+			return;
+		}
+		this.webSocket.onmessage = (e) => resolve(e.data);
 
-	invokeFunctionsAndSetProperties(properties: Property[], functions: PropertyFunc[]) {
-		this.invokeTx2(properties, functions);
+		this.webSocket.onerror = () => {
+			// TODO: Figure out how to handle failed publishes (i.e. no response with a request ID is returned)
+			this.retry();
+		}
 	}
 
 	private invokeTx2(properties?: Property[], functions?: PropertyFunc[]) {
@@ -132,12 +125,12 @@ export default class WebSocketAdapter {
 		properties
 			?.filter((property: Property) => property.id !== 0)
 			.forEach((property: Property) => {
-				const setServerProperty: SetServerProperty = {
+				const action: SetServerProperty = {
 					type: 'setProp',
 					id: property.id,
 					value: property.value,
 				};
-				callBatch.tx.push(setServerProperty);
+				callBatch.tx.push(action);
 			});
 
 		functions
@@ -153,18 +146,5 @@ export default class WebSocketAdapter {
 		if (callBatch.tx.length > 0) {
 			this.webSocket?.send(JSON.stringify(callBatch));
 		}
-	}
-
-	setWebSocketReceiveCallback(callback: (message: LiveMessage) => void): void {
-		this.webSocketReceiveCallback = callback;
-	}
-
-	setWebSocketErrorCallback(callback: () => void): void {
-		this.webSocketErrorCallback = callback;
-	}
-
-	closeWebSocket(): void {
-		this.closedGracefully = true;
-		this.webSocket?.close();
 	}
 }

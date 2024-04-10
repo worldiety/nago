@@ -1,5 +1,5 @@
 export interface SetServerProperty {
-	type: 'setProp';
+	type: 'setProp'|'callFn';
 	id: number;
 	value: any;
 }

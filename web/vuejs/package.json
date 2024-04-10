@@ -2,7 +2,7 @@
     "name": "vuejs",
     "version": "0.0.0",
     "private": true,
-		"type": "module",
+    "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "run-p  \"build-only {@}\" --",
@@ -13,8 +13,10 @@
         "format": "prettier --write src/"
     },
     "dependencies": {
+        "@types/uuid": "^9.0.8",
         "oidc-client-ts": "^3.0.1",
         "pinia": "^2.1.7",
+        "uuid": "^9.0.1",
         "vue": "^3.4.21",
         "vue-i18n": "^9.10.2",
         "vue-router": "^4.3.0"
