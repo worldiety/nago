@@ -48,14 +48,14 @@
 					<div
 						v-for="(datepickerDay, index) in datepickerDays"
 						:key="index"
-						class="relative flex justify-center items-center h-full w-full z-10"
+						class="relative flex justify-center items-center h-full w-full"
 						:class="{
 							'within-range-day': datepickerDay.withinRange,
 							'selected-range-day': datepickerDay.selected,
 						}"
 					>
 						<div
-							class="day effect-hover relative flex justify-center items-center cursor-default z-10"
+							class="day effect-hover relative flex justify-center items-center cursor-default"
 							:class="{
 							'selected-day': datepickerDay.selected,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
@@ -333,7 +333,6 @@ function increaseMonth(): void {
 </script>
 
 <style scoped>
-/* TODO: Fix styling errors for edge cases */
 .day {
 	@apply size-8 rounded-full
 }
@@ -346,64 +345,48 @@ function increaseMonth(): void {
 	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
 }
 
-/* Use no background when the first day of the selected range is within the last grid column */
-.datepicker-grid > :not(.within-range-day) + div.within-range-day:nth-of-type(7n) {
-	@apply bg-white;
-	@apply dark:bg-darkmode-gray;
-}
-
-/* Color the background of each day in the last grid column within the selected range */
-.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
-	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-8 w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full z-0;
-}
-
-/* Color the background of each day in the first grid column within the selected range */
-.datepicker-grid > div.within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
-	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-8 w-1/2 bg-ora-orange bg-opacity-5 rounded-l-full z-0;
-}
-
-/* Round the last date within the selected range */
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
-	@apply relative rounded-r-full;
-}
-
-/* Round the first date within the selected range */
+/* First day container of selected range */
 .datepicker-grid > :not(.within-range-day) + .within-range-day {
-	@apply relative rounded-l-full;
+	@apply bg-transparent;
 }
 
-/* Hide the background exceeding the right boundary of each day in the last column */
-.datepicker-grid > div:nth-of-type(7n - 6)::before,
-/* Hide the background exceeding the left boundary of the first day within the selected range */
+/* First day container of selected range (before element) */
 .datepicker-grid > :not(.within-range-day) + .within-range-day::before {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-8 bg-white z-0;
-	@apply dark:bg-darkmode-gray;
-}
-
-/* Width for the background inset for each day in the first and last column */
-.datepicker-grid > div:nth-of-type(7n - 6)::before,
-.datepicker-grid > div:nth-of-type(7n)::before {
-	@apply w-1/2 rounded-none !important;
-}
-
-/* Custom width and rounding for background insets of selection start and end day to prevent partly transparent
-backgrounds overlapping each other */
-.datepicker-grid > :not(.within-range-day) + .within-range-day::before,
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::after {
-	@apply rounded-full;
 	width: calc(50% + 1rem);
+	@apply absolute top-0 left-0 bottom-0 h-full bg-white bg-opacity-50 rounded-r-full z-10;
+	@apply dark:bg-darkmode-gray;
 }
 
-/* Hide the background exceeding the right boundary of each day in the last column */
-.datepicker-grid > div:nth-of-type(7n)::before,
-/* Hide the background exceeding the right boundary of the last day within the selected range */
-.datepicker-grid > .within-range-day:not(.selected-range-day):has(+ :not(.within-range-day))::after {
+/* First day container of selected range (after element) */
+.datepicker-grid > :not(.within-range-day) + .within-range-day::after {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-8 bg-white z-0;
-	@apply dark:bg-darkmode-gray;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 z-0;
+}
+
+/* Last day of selected range */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
+
+}
+
+/* Each day in the last grid column within the selected range */
+.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
+	content: '';
+}
+
+/* Each day in the first grid column within the selected range */
+.datepicker-grid > div.within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
+	content: '';
+}
+
+/* Each day in the first column */
+.datepicker-grid > div:nth-of-type(7n)::before {
+	content: '';
+}
+
+/* Each day in the last column */
+.datepicker-grid > div:nth-of-type(7n - 6)::before {
+	content: '';
 }
 
 .button-confirm {
