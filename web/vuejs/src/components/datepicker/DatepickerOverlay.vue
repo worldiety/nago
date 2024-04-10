@@ -55,7 +55,7 @@
 						}"
 					>
 						<div
-							class="day effect-hover relative flex justify-center items-center cursor-default"
+							class="day effect-hover flex justify-center items-center cursor-default"
 							:class="{
 							'selected-day': datepickerDay.selected,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
@@ -334,7 +334,7 @@ function increaseMonth(): void {
 
 <style scoped>
 .day {
-	@apply size-8 rounded-full
+	@apply relative size-8 rounded-full z-20;
 }
 
 .selected-day {
@@ -345,48 +345,64 @@ function increaseMonth(): void {
 	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
 }
 
-/* First day container of selected range */
-.datepicker-grid > :not(.within-range-day) + .within-range-day {
+/* First and last day of selected range */
+.datepicker-grid > :not(.within-range-day) + .within-range-day,
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
 	@apply bg-transparent;
 }
 
-/* First day container of selected range (before element) */
+/* First day of selected range (before element) */
 .datepicker-grid > :not(.within-range-day) + .within-range-day::before {
 	content: '';
 	width: calc(50% + 1rem);
-	@apply absolute top-0 left-0 bottom-0 h-full bg-white bg-opacity-50 rounded-r-full z-10;
+	@apply absolute top-0 left-0 bottom-0 h-full bg-white rounded-r-full z-10;
 	@apply dark:bg-darkmode-gray;
 }
 
-/* First day container of selected range (after element) */
+/* Last day of selected range (after element) */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::after {
+	content: '';
+	width: calc(50% + 1rem);
+	@apply absolute top-0 bottom-0 right-0 h-full bg-white rounded-l-full z-10;
+	@apply dark:bg-darkmode-gray;
+}
+
+/* First day of selected range (after element) */
 .datepicker-grid > :not(.within-range-day) + .within-range-day::after {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 z-0;
 }
 
-/* Last day of selected range */
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
-
+/* Last day of selected range (before element) */
+.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::before {
+	content: '';
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-ora-orange bg-opacity-5 z-0;
 }
 
-/* Each day in the last grid column within the selected range */
-.datepicker-grid > div.within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
+/* Each day in the first column within the selection range except the selected days (after element) */
+.datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-range-day)::after {
 	content: '';
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-white;
+	@apply dark:bg-darkmode-gray;
 }
 
-/* Each day in the first grid column within the selected range */
-.datepicker-grid > div.within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
+/* Each day in the first grid column within the selected range that is not a selected day (before element) */
+.datepicker-grid > .within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
 	content: '';
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-ora-orange bg-opacity-5 rounded-l-full;
 }
 
-/* Each day in the first column */
-.datepicker-grid > div:nth-of-type(7n)::before {
+/* Each day in the last column within the selected range except the selected days (before element) */
+.datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-range-day)::before {
 	content: '';
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-white;
+	@apply dark:bg-darkmode-gray;
 }
 
-/* Each day in the last column */
-.datepicker-grid > div:nth-of-type(7n - 6)::before {
+/* Each day in the last grid column within the selected range that is not a selected day (after element) */
+.datepicker-grid > .within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
 	content: '';
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full;
 }
 
 .button-confirm {
