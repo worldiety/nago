@@ -51,13 +51,14 @@
 						class="relative flex justify-center items-center h-full w-full"
 						:class="{
 							'within-range-day': datepickerDay.withinRange,
-							'selected-range-day': datepickerDay.selected,
+							'selected-start-day-container': datepickerDay.selectedStart,
+							'selected-end-day-container': datepickerDay.selectedEnd,
 						}"
 					>
 						<div
 							class="day effect-hover flex justify-center items-center cursor-default"
 							:class="{
-							'selected-day': datepickerDay.selected,
+							'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
 						}"
 							tabindex="0"
@@ -206,10 +207,12 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 			dayOfMonth: i,
 			monthIndex: currentMonthIndex.value,
 			year: currentYear.value,
-			selected: false,
+			selectedStart: false,
+			selectedEnd: false,
 			withinRange: false,
 		};
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		daysOfCurrentMonth.push(datepickerDay);
 	}
@@ -238,10 +241,12 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 			dayOfMonth: lastDayOfPreviousMonth - i,
 			monthIndex: dayOfPreviousMonthDate.getMonth(),
 			year: dayOfPreviousMonthDate.getFullYear(),
-			selected: false,
+			selectedStart: false,
+			selectedEnd: false,
 			withinRange: false,
 		}
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		fillingDaysOfPreviousMonth.unshift(datepickerDay);
 	}
@@ -281,10 +286,12 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 			dayOfMonth: dayOfNextMonthDate.getDate(),
 			monthIndex: dayOfNextMonthDate.getMonth(),
 			year: dayOfNextMonthDate.getFullYear(),
-			selected: false,
+			selectedStart: false,
+			selectedEnd: false,
 			withinRange: false,
 		};
-		datepickerDay.selected = isSelectedDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 		fillingDaysOfNextMonth.push(datepickerDay);
 	}
@@ -292,15 +299,18 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 	return fillingDaysOfNextMonth;
 }
 
-function isSelectedDay(day: number, monthIndex: number, year: number): boolean {
+function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
 	return props.startDateSelected
 		&& day === props.selectedStartDay
 		&& monthIndex === props.selectedStartMonth - 1
-		&& year === props.selectedStartYear
-		|| props.endDateSelected
-		&& day === props.selectedEndDay
-		&& monthIndex === props.selectedEndMonth - 1
-		&& year === props.selectedEndYear;
+		&& year === props.selectedStartYear;
+}
+
+function isSelectedEndDay(day: number, monthIndex: number, year: number): boolean {
+	return props.endDateSelected
+	&& day === props.selectedEndDay
+	&& monthIndex === props.selectedEndMonth - 1
+	&& year === props.selectedEndYear;
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
@@ -345,42 +355,8 @@ function increaseMonth(): void {
 	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
 }
 
-/* First and last day of selected range */
-.datepicker-grid > :not(.within-range-day) + .within-range-day,
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day)) {
-	@apply bg-transparent;
-}
-
-/* First day of selected range (before element) */
-.datepicker-grid > :not(.within-range-day) + .within-range-day::before {
-	content: '';
-	width: calc(50% + 1rem);
-	@apply absolute top-0 left-0 bottom-0 h-full bg-white rounded-r-full z-10;
-	@apply dark:bg-darkmode-gray;
-}
-
-/* Last day of selected range (after element) */
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::after {
-	content: '';
-	width: calc(50% + 1rem);
-	@apply absolute top-0 bottom-0 right-0 h-full bg-white rounded-l-full z-10;
-	@apply dark:bg-darkmode-gray;
-}
-
-/* First day of selected range (after element) */
-.datepicker-grid > :not(.within-range-day) + .within-range-day::after {
-	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 z-0;
-}
-
-/* Last day of selected range (before element) */
-.datepicker-grid > .within-range-day:has(+ :not(.within-range-day))::before {
-	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-ora-orange bg-opacity-5 z-0;
-}
-
 /* Each day in the first column within the selection range except the selected days (after element) */
-.datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-range-day)::after {
+.datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-start-day-container, .selected-start-day-container)::after {
 	content: '';
 	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-white;
 	@apply dark:bg-darkmode-gray;
@@ -393,7 +369,7 @@ function increaseMonth(): void {
 }
 
 /* Each day in the last column within the selected range except the selected days (before element) */
-.datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-range-day)::before {
+.datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-start-day-container, .selected-end-day-container)::before {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-white;
 	@apply dark:bg-darkmode-gray;
@@ -403,6 +379,29 @@ function increaseMonth(): void {
 .datepicker-grid > .within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full;
+}
+
+/* First day of selected range (before element) */
+.datepicker-grid > .selected-start-day-container::before {
+	content: '';
+	width: calc(50% + 1rem);
+	@apply absolute top-0 left-0 bottom-0 bg-white rounded-r-full h-full;
+	@apply dark:bg-darkmode-gray;
+}
+
+/* Last day of selected range (after element) */
+.datepicker-grid > .selected-end-day-container::after {
+	content: '';
+	width: calc(50% + 1rem);
+	@apply absolute top-0 bottom-0 right-0 bg-white rounded-l-full h-full;
+	@apply dark:bg-darkmode-gray;
+}
+
+/* Selected start day container in last grid row */
+.datepicker-grid > .within-range-day:nth-of-type(7n).selected-start-day-container,
+/* Selected end day container in first grid row */
+.datepicker-grid > .within-range-day:nth-of-type(7n - 6).selected-end-day-container {
+	@apply bg-transparent;
 }
 
 .button-confirm {

@@ -3,6 +3,7 @@ export default interface DatepickerDay {
 	dayOfMonth: number;
 	monthIndex: number;
 	year: number;
-	selected: boolean;
+	selectedStart: boolean;
+	selectedEnd: boolean;
 	withinRange: boolean;
 }
