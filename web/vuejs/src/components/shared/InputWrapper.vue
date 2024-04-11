@@ -1,7 +1,36 @@
+<template>
+	<div class="flex flex-col-reverse">
+
+		<!-- Input -->
+		<div class="peer relative">
+			<div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
+				<slot />
+			</div>
+		</div>
+
+		<!-- Label with optional hint -->
+		<div class="flex justify-between items-end text-sm mb-1" :class="{'peer-focus-within:font-semibold': !disabled}">
+			<div v-if="label" class="flex justify-start items-center gap-x-1" :class="labelClass">
+				<LockIcon v-if="disabled" class="h-4" />
+				<ErrorIcon v-else-if="error" class="h-2.5" />
+				<span>{{ label }}</span>
+			</div>
+			<div v-if="!disabled" class="font-normal">
+				<span v-if="error" class="text-error">{{ t('inputWrapper.error') }}</span>
+				<span v-else-if="hint" class="text-disabled-text">{{ hint }}</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Error message -->
+	<p v-if="!disabled && error" class="mt-1 text-sm text-error">{{ error }}</p>
+</template>
+
 <script setup lang="ts">
 import LockIcon from '@/assets/svg/lock.svg';
 import ErrorIcon from '@/assets/svg/closeBold.svg';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	simple?: boolean;
@@ -10,6 +39,8 @@ const props = defineProps<{
 	hint?: string;
 	disabled?: boolean;
 }>();
+
+const { t } = useI18n();
 
 const labelClass = computed((): string => {
 	if (props.disabled) {
@@ -35,31 +66,6 @@ const inputFieldWrapperClasses = computed((): string|null => {
 });
 </script>
 
-<template>
-  <div class="flex flex-col-reverse">
-
-    <!-- Input -->
-    <div class="peer relative">
-      <div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
-        <slot />
-      </div>
-    </div>
-
-    <!-- Label with optional hint -->
-    <div class="flex justify-between items-end text-sm mb-1" :class="{'peer-focus-within:font-semibold': !disabled}">
-      <div v-if="label" class="flex justify-start items-center gap-x-1" :class="labelClass">
-        <LockIcon v-if="disabled" class="h-4" />
-        <ErrorIcon v-else-if="error" class="h-2.5" />
-        <span>{{ label }}</span>
-      </div>
-      <span v-if="hint" class="text-disabled-text font-normal">{{ hint }}</span>
-    </div>
-  </div>
-
-  <!-- Error message -->
-	<p v-if="!disabled && error" class="mt-1 text-sm text-end text-error">{{ error }}</p>
-</template>
-
 <style>
 .input-field-wrapper .input-field {
   @apply relative bg-transparent border-0 border-b border-b-black text-black cursor-default w-full px-0 py-2;
@@ -80,7 +86,8 @@ const inputFieldWrapperClasses = computed((): string|null => {
   @apply text-disabled-text;
 }
 
-.input-field-wrapper:hover .input-field {
+.input-field-wrapper:hover .input-field,
+.input-field-wrapper .input-field:focus {
   @apply border-ora-orange border-opacity-75;
   @apply dark:border-ora-orange;
 }
