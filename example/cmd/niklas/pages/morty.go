@@ -21,19 +21,18 @@ func Morty(wire ui.Wire) *ui.Page {
 							"a": "b",
 						})
 					})
-					scaffold.Body().Set(
-						ui.NewVBox(func(vbox *ui.VBox) {
-							vbox.Append(
-								ui.NewImage(func(img *ui.Image) {
-									img.Source(func() (io.Reader, error) {
-										return bytes.NewBuffer(mortyImg), nil
-									})
-								}),
-							)
-						}),
-					)
 				}))
-
+				scaffold.Body().Set(
+					ui.NewVBox(func(vbox *ui.VBox) {
+						vbox.Append(
+							ui.NewImage(func(img *ui.Image) {
+								img.Source(func() (io.Reader, error) {
+									return bytes.NewBuffer(mortyImg), nil
+								})
+							}),
+						)
+					}),
+				)
 			}),
 		)
 	})
