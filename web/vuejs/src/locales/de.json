@@ -50,5 +50,8 @@
 	"datepicker": {
 		"confirm": "Bestätigen",
 		"select": "Auswählen..."
+	},
+	"inputWrapper": {
+		"error": "Fehler"
 	}
 }
