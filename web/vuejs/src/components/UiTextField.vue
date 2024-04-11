@@ -4,6 +4,7 @@ import { useNetworkStore } from '@/stores/networkStore';
 import type { LiveTextField } from '@/shared/model/liveTextField';
 import type { LivePage } from '@/shared/model/livePage';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
+import CloseIcon from '@/assets/svg/close.svg';
 
 const props = defineProps<{
 	ui: LiveTextField;
@@ -32,14 +33,20 @@ watch(inputValue, (newValue) => {
 			:help="props.ui.help.value"
 			:disabled="props.ui.disabled.value"
 		>
-			<input
-				:id="idPrefix + props.ui.id.toString()"
-				v-model="inputValue"
-				class="input-field"
-				:placeholder="props.ui.placeholder.value"
-				:disabled="props.ui.disabled.value"
-				type="text"
-			/>
+			<div class="relative">
+				<input
+					:id="idPrefix + props.ui.id.toString()"
+					v-model="inputValue"
+					class="input-field"
+					:class="{'!pr-10': inputValue}"
+					:placeholder="props.ui.placeholder.value"
+					:disabled="props.ui.disabled.value"
+					type="text"
+				/>
+				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+				</div>
+			</div>
 		</InputWrapper>
 	</div>
 </template>
