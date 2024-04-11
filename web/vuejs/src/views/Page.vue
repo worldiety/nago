@@ -41,12 +41,12 @@ async function init() {
 		// const router = useRouter()
 		const pageUrl = import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/page' + router.currentRoute.value.path; //page.link.slice(1);
 		console.log("i'm in init", pageUrl);
-		/* const response = await http.request(pageUrl);
-     ui.value = await response.json();
-     state.value = State.ShowUI;
-     console.log(pageUrl);
-     console.log('got value', ui.value);*/
-		networkStore.initialize();
+
+		const invalidation = await networkStore.initialize();
+		ui.value = invalidation.root;
+		livePage.value = invalidation;
+		state.value = State.ShowUI;
+		invalidationResp.value = invalidation;
 	} catch {
 		state.value = State.Error;
 	}

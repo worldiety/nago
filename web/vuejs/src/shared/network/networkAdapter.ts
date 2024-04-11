@@ -1,5 +1,5 @@
 export default interface NetworkAdapter {
-	initialize(): void;
+	initialize(): Promise<void>;
 	teardown(): void;
 	publish(payloadRaw: string): void;
 	subscribe(resolve: (responseRaw: string) => void): void;
