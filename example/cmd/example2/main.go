@@ -342,7 +342,6 @@ func main() {
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Simple().Set(false)
-									t.Error().Set("Fehler")
 									t.Label().Set("Vorname")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
