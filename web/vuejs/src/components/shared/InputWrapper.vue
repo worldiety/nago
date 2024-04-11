@@ -33,13 +33,6 @@ const inputFieldWrapperClasses = computed((): string|null => {
 	}
 	return classes.join(' ') || null;
 });
-
-const inputFieldOutlineClass = computed((): string|null => {
-  if (!props.simple) {
-    return 'input-field-outline-detailed';
-  }
-  return null;
-});
 </script>
 
 <template>
@@ -50,7 +43,6 @@ const inputFieldOutlineClass = computed((): string|null => {
       <div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
         <slot />
       </div>
-      <div class="input-field-outline" :class="inputFieldOutlineClass"></div>
     </div>
 
     <!-- Label with optional hint -->
@@ -93,13 +85,8 @@ const inputFieldOutlineClass = computed((): string|null => {
   @apply dark:border-ora-orange;
 }
 
-.input-field-wrapper .input-field:active {
-  @apply border-opacity-65;
-}
-
 .input-field-wrapper .input-field:focus {
-  @apply outline-none ring-0 border-transparent;
-  @apply dark:border-transparent;
+  @apply outline-none ring-0;
 }
 
 .input-field-wrapper.input-field-wrapper-disabled .input-field {
@@ -110,15 +97,6 @@ const inputFieldOutlineClass = computed((): string|null => {
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
   @apply bg-disabled-background border-none;
   @apply dark:bg-disabled-text dark:text-disabled-background;
-}
-
-.input-field-outline {
-  @apply absolute top-0 -left-2 bottom-0 -right-2 rounded-sm pointer-events-none;
-  @apply peer-focus-within:outline-none peer-focus-within:outline-2 peer-focus-within:outline-black peer-focus-within:ring-2 peer-focus-within:ring-white;
-}
-
-.input-field-outline.input-field-outline-detailed {
-  @apply right-0 left-0;
 }
 
 .input-field-wrapper {
