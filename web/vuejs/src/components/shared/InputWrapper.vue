@@ -15,7 +15,7 @@
 				<ErrorIcon v-else-if="error" class="h-2.5" />
 				<span>{{ label }}</span>
 			</div>
-			<div v-if="!disabled" class="font-normal">
+			<div v-if="!disabled && (error || hint)" class="font-normal">
 				<span v-if="error" class="text-error">{{ t('inputWrapper.error') }}</span>
 				<span v-else-if="hint" class="text-disabled-text">{{ hint }}</span>
 			</div>
@@ -23,7 +23,10 @@
 	</div>
 
 	<!-- Error message -->
-	<p v-if="!disabled && error" class="mt-1 text-sm text-error">{{ error }}</p>
+	<div v-if="!disabled && (error || help)" class="mt-1 text-sm">
+		<p v-if="error" class="text-error">{{ error }}</p>
+		<p v-else-if="help" class="text-disabled-text">{{ help }}</p>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -37,6 +40,7 @@ const props = defineProps<{
 	label?: string;
 	error?: string;
 	hint?: string;
+	help?: string;
 	disabled?: boolean;
 }>();
 
