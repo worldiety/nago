@@ -33,10 +33,34 @@ The backend responds with a component invalidation event.
 Factories of addressable components are always stateless.
 However, often it does not make sense without additional parameters, e.g. because a detail view needs to know which entity has to be displayed.
 `
+	event
+}
+
+type ComponentInvalidationRequested struct {
+	Type      EventType `json:"type" value:"ComponentInvalidationRequested"`
+	RequestId RequestId `json:"requestId" description:"Request ID from the NewComponentRequested event."`
+	Component Ptr       `json:"ptr" description:"The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid."`
+	event
+}
+
+type ComponentDestructionRequested struct {
+	Type      EventType `json:"type" value:"ComponentDestructionRequested"`
+	RequestId RequestId `json:"requestId" description:"Request ID."`
+	Component Ptr       `json:"ptr" description:"The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid."`
+	event
 }
 
 type ComponentInvalidated struct {
 	Type      EventType `json:"type" value:"ComponentInvalidated"`
-	RequestId RequestId `json:"requestId" description:"Request ID from the NewComponentRequested event."`
+	RequestId RequestId `json:"requestId" description:"Request ID from the ComponentInvalidationRequested or NewComponentRequested event."`
 	Component Component `json:"value" description:"The rendered component tree."`
+
+	event
+}
+
+type ErrorOccurred struct {
+	Type      EventType `json:"type" value:"ErrorOccurred"`
+	RequestId RequestId `json:"requestId" description:"Request ID from the NewComponentRequested event."`
+	Message   string    `json:"message" description:"A message describing the error."`
+	event
 }

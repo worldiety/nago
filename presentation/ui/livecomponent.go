@@ -5,30 +5,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 	"strconv"
-	"sync/atomic"
 )
 
-type LiveComponent interface {
-	ID() CID
-	Type() string
-	Properties() slice.Slice[Property]
-}
+type LiveComponent = core.Component
 
-type Property interface {
-	// Name returns the actual protocol name of this property.
-	Name() string
-	// Dirty returns true, if the property has been changed.
-	Dirty() bool
-	value() any
-	// ID returns the internal unique instance ID of this property which is used to identify it across process
-	// boundaries.
-	ID() CID
-	setValue(v string) error // don't touch
-	// SetDirty explicitly marks or unmarks this property as dirty.
-	// This is done automatically, when updating the value.
-	SetDirty(b bool)
-}
+type Property = core.Property
 
 type String = *Shared[string]
 type EmbeddedSVG = *Shared[SVGSrc]
@@ -61,11 +45,15 @@ func (s *Shared[T]) ID() CID {
 	return s.id
 }
 
-func (s *Shared[T]) value() any {
+func (s *Shared[T]) Unwrap() any {
 	return s.v
 }
 
 func (s *Shared[T]) setValue(value string) error {
+	return s.Parse(value)
+}
+
+func (s *Shared[T]) Parse(value string) error {
 	switch any(s.v).(type) {
 	case string:
 		s.v = any(value).(T)
@@ -119,16 +107,10 @@ func (s *Shared[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
-type CID int64
-
-func (c CID) Nil() bool {
-	return c == 0
-}
-
-var nextFakePtr int64
+type CID = protocol.Ptr
 
 func nextPtr() CID {
-	return CID(atomic.AddInt64(&nextFakePtr, 1))
+	return core.NextPtr()
 }
 
 func With[T any](t T, f func(t T)) T {
@@ -211,7 +193,7 @@ func Children(c LiveComponent, f func(c LiveComponent)) {
 				f(component)
 			})
 		case Property:
-			switch v := t.value().(type) {
+			switch v := t.Unwrap().(type) {
 			case []LiveComponent:
 				for _, component := range v {
 					f(component)

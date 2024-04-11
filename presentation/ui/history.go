@@ -7,28 +7,30 @@ import (
 	"strconv"
 )
 
+// TODO rework this
 type History struct {
 	p *Page
 }
 
 func (h *History) Back() {
-	h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
+
+	//h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
 }
 
 func (h *History) Open(pageId PageID, params Values) {
-	h.p.sendMsg(messageHistoryPushState{
+	/*h.p.sendMsg(messageHistoryPushState{
 		Type:   "HistoryPushState",
 		PageID: string(pageId),
 		State:  params,
-	})
+	})*/
 }
 
 func (h *History) OpenURL(url string, target string) {
-	h.p.sendMsg(messageHistoryOpen{
+	/*h.p.sendMsg(messageHistoryOpen{
 		Type:   "HistoryOpen",
 		URL:    url,
 		Target: target,
-	})
+	})*/
 }
 
 type Values map[string]string

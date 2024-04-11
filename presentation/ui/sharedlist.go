@@ -33,7 +33,7 @@ func (s *SharedList[T]) From(iter Iter[T]) {
 	s.iter = iter
 }
 
-func (s *SharedList[T]) value() any {
+func (s *SharedList[T]) Unwrap() any {
 	var zero T
 	_, isLiveComponent := any(zero).(LiveComponent)
 
@@ -68,7 +68,7 @@ func (s *SharedList[T]) ID() CID {
 	return s.id
 }
 
-func (s *SharedList[T]) setValue(v string) error {
+func (s *SharedList[T]) Parse(v string) error {
 	return fmt.Errorf("cannot set shared values by list!?: %v", v)
 }
 

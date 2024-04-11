@@ -12,6 +12,8 @@ import (
 	"go.wdy.de/nago/auth"
 	dm "go.wdy.de/nago/domain"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log"
@@ -368,7 +370,9 @@ func (c *connWrapper) Remote() ui.Remote {
 }
 
 type applicationServer struct {
+	//deprecated
 	activePages map[ui.PageInstanceToken]*ui.Page
+	scopes      map[protocol.ComponentFactoryId]*core.Scope
 	mutex       sync.RWMutex
 }
 
@@ -378,6 +382,7 @@ func newApplicationServer() *applicationServer {
 	}
 }
 
+// deprecated
 func (a *applicationServer) getPage(token ui.PageInstanceToken) *ui.Page {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()

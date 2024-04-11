@@ -20,6 +20,7 @@ type ConfigurationRequested struct {
 	Type           EventType   `json:"type" value:"NewConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
 	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
+	RequestId      RequestId   `json:"requestId" `
 	event
 	_ struct{} `ConfigurationRequested is issued by the frontend to get the applications general configuration.
 A backend developer has potentially defined a lot of configuration details about the application.
@@ -40,6 +41,7 @@ type ConfigurationDefined struct {
 	ActiveLocale     string    `json:"activeLocale"`
 	Themes           Themes    `json:"themes"`
 	Resources        Resources `json:"resources"`
+	RequestId        RequestId `json:"requestId"`
 	event
 	_ struct{} `A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
 According to the locale request, string and svg resources can be localized by the backend. The returned locale is the actually picked locale from the requested locale query string.
@@ -50,8 +52,12 @@ A frontend may request acknowledges for each event, e.g. while typing in a text 
 }
 
 type Themes struct {
-	Dark  Theme `json:"dark"`
-	Light Theme `json:"light"`
+	Dark         Theme `json:"dark"`
+	Light        Theme `json:"light"`
+	HighContrast Theme `json:"highContrast"`
+	Protanopie   Theme `json:"protanopie"`
+	Deuteranopie Theme `json:"deuteranopie"`
+	Tritanopie   Theme `json:"tritanopie"`
 }
 
 type Theme struct {
