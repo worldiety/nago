@@ -7,7 +7,7 @@ import type { CallBatch } from '@/shared/network/callBatch';
 import type { SetServerProperty } from '@/shared/model/setServerProperty';
 import type { CallServerFunc } from '@/shared/model/callServerFunc';
 import { useAuth } from '@/stores/authStore';
-import type { ClientHello } from '@/shared/model/clientHello';
+import type { ClientHello } from '@/shared/network/clientHello';
 
 export default class NetworkProtocol {
 
