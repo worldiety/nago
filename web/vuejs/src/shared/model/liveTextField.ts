@@ -7,6 +7,7 @@ export interface LiveTextField {
 	id: number;
 	label: PropertyString;
 	hint: PropertyString;
+	help: PropertyString;
 	error: PropertyString;
 	value: PropertyString;
 	placeholder: PropertyString;

@@ -29,6 +29,7 @@ watch(inputValue, (newValue) => {
 			:label="props.ui.label.value"
 			:error="props.ui.error.value"
 			:hint="props.ui.hint.value"
+			:help="props.ui.help.value"
 			:disabled="props.ui.disabled.value"
 		>
 			<input
