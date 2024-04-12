@@ -85,7 +85,7 @@ function addEventListeners(): void {
 	document.addEventListener('mouseup', () => {
 		startDragging.value = false;
 		endDragging.value = false;
-		submitSliderValues(offsetToSliderValue(sliderThumbStartOffset.value), offsetToSliderValue(sliderThumbEndOffset.value));
+		submitSliderValues();
 	});
 	document.addEventListener('mousemove', (event: MouseEvent) => {
 		if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
@@ -118,7 +118,20 @@ function offsetToSliderValue(sliderThumbOffset: number): number {
 		return 0;
 	}
 	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
-	return maxRounded.value * sliderOffsetPercentage;
+	const continuousValue = maxRounded.value * sliderOffsetPercentage;
+	return getDiscreteValue(continuousValue);
+}
+
+function getDiscreteValue(continuousValue: number): number {
+	let validValueBelow: number = minRounded.value;
+	for (let validValue = minRounded.value; validValue <= continuousValue; validValue += stepsizeRounded.value) {
+		validValueBelow = validValue;
+	}
+	const validValueAbove = validValueBelow + stepsizeRounded.value;
+	if (continuousValue - validValueBelow < validValueAbove - continuousValue) {
+		return validValueBelow;
+	}
+	return validValueAbove;
 }
 
 function startSliderThumbPressed(): void {
@@ -141,9 +154,13 @@ function endSliderThumbPressed(): void {
 
 function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, sliderTrackOffsetWidth: number): void {
 	if (startDragging.value) {
-		sliderThumbStartOffset.value = Math.max(0, Math.min(sliderThumbEndOffset.value, mouseX - sliderTrackOffsetX));
+		const continuousOffset = Math.max(0, Math.min(sliderThumbEndOffset.value, mouseX - sliderTrackOffsetX));
+		sliderStartValue.value = offsetToSliderValue(continuousOffset);
+		sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	} else if (endDragging.value) {
-		sliderThumbEndOffset.value = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
+		const continuousOffset = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
+		sliderEndValue.value = offsetToSliderValue(continuousOffset);
+		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	}
 }
 
@@ -151,15 +168,15 @@ function roundValue(value: number): number {
 	return Math.round(value * 100) / 100;
 }
 
-function submitSliderValues(startValue: number, endValue: number): void {
+function submitSliderValues(): void {
 	networkStore.invokeFunctionsAndSetProperties([
 			{
 				...props.ui.startValue,
-				value: startValue,
+				value: roundValue(sliderStartValue.value),
 			},
 			{
 				...props.ui.endValue,
-				value: endValue,
+				value: roundValue(sliderEndValue.value),
 			}
 		], [props.ui.onChanged]);
 }
