@@ -13,6 +13,7 @@ import (
 	dm "go.wdy.de/nago/domain"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/protocol"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
@@ -41,6 +42,14 @@ func (c *Configurator) Index(target string) *Configurator {
 
 func (c *Configurator) newHandler() http.Handler {
 
+	factories := map[protocol.ComponentFactoryId]core.ComponentFactory{}
+	for id, f := range c.uiApp.LivePages {
+		factories[protocol.ComponentFactoryId(id)] = func(scope *core.Scope, requested protocol.NewComponentRequested) core.Component {
+			return f(noOpWireStub{})
+		}
+	}
+
+	app2 := core.NewApplication(factories)
 	appSrv := newApplicationServer()
 	r := chi.NewRouter()
 
@@ -115,6 +124,23 @@ func (c *Configurator) newHandler() http.Handler {
 
 		queryParams := r.URL.Query()
 		pageID := queryParams.Get("_pid")
+
+		// todo new
+		defer func() {
+			if r := recover(); r != nil {
+				debug.PrintStack()
+			}
+		}()
+		channel := gorilla.NewWebsocketChannel(conn)
+		scope := app2.Connect(channel, "")
+		defer scope.Destroy()
+
+		if err := channel.Loop(); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// todo new
 
 		livePageFn := c.uiApp.LivePages[ui.PageID(pageID)]
 
@@ -238,6 +264,37 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
+}
+
+type noOpWireStub struct {
+}
+
+func (n noOpWireStub) ReadMessage() (messageType int, p []byte, err error) {
+	return 0, nil, nil
+}
+
+func (n noOpWireStub) WriteMessage(messageType int, data []byte) error {
+	return nil
+}
+
+func (n noOpWireStub) Values() ui.Values {
+	return ui.Values{}
+}
+
+func (n noOpWireStub) User() auth.User {
+	return invalidUser{}
+}
+
+func (n noOpWireStub) Context() context.Context {
+	return context.Background()
+}
+
+func (n noOpWireStub) Remote() ui.Remote {
+	return nil
+}
+
+func (n noOpWireStub) ClientSession() ui.SessionID {
+	return ui.SessionID("")
 }
 
 type connWrapper struct {
@@ -369,6 +426,7 @@ func (c *connWrapper) Remote() ui.Remote {
 	}
 }
 
+// deprecated
 type applicationServer struct {
 	//deprecated
 	activePages map[ui.PageInstanceToken]*ui.Page

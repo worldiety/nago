@@ -31,7 +31,7 @@ func Unmarshal(buf []byte) (Event, error) {
 
 	evtFac := factoryTable[m.Type]
 	if evtFac == nil {
-		return nil, fmt.Errorf("unknown event type %q", m.Type)
+		return nil, fmt.Errorf("protocol error: unknown event type %v: %v", m.Type, string(buf))
 	}
 
 	evt := evtFac()

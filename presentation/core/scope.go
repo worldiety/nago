@@ -18,6 +18,8 @@ type allocatedComponent struct {
 	RenderState *RenderState
 }
 
+type ComponentFactory func(*Scope, protocol.NewComponentRequested) Component
+
 // A Scope manage its own area of associated pointers. A Pointer must be only unique per Scope.
 // Resolving or keeping pointers outside a scope is inherently unsafe (e.g. a lookup map).
 // A Scope can hold an arbitrary amount of components, created by an arbitrary amount of factories.
@@ -27,7 +29,7 @@ type allocatedComponent struct {
 // Each Scope has a single event loop to guarantee race free event processing.
 type Scope struct {
 	id                  protocol.ScopeID
-	factories           map[protocol.ComponentFactoryId]func(*Scope, protocol.NewComponentRequested) Component
+	factories           map[protocol.ComponentFactoryId]ComponentFactory
 	allocatedComponents map[protocol.Ptr]allocatedComponent
 	lifetime            time.Duration
 	endOfLifeAt         atomic.Pointer[time.Time]
@@ -36,9 +38,9 @@ type Scope struct {
 	eventLoop           *EventLoop
 }
 
-func NewScope(lifetime time.Duration, factories map[protocol.ComponentFactoryId]func(*Scope, protocol.NewComponentRequested) Component) *Scope {
+func NewScope(id protocol.ScopeID, lifetime time.Duration, factories map[protocol.ComponentFactoryId]ComponentFactory) *Scope {
 	s := &Scope{
-		id:                  protocol.NewScopeID(),
+		id:                  id,
 		factories:           factories,
 		allocatedComponents: map[protocol.Ptr]allocatedComponent{},
 		lifetime:            lifetime,
@@ -58,7 +60,7 @@ func (s *Scope) Connect(c Channel) {
 		c = NopChannel{}
 	}
 
-	slog.Info("scope connected to channel", slog.String("id", string(s.id)), slog.String("channel", fmt.Sprintf("%v", c)))
+	slog.Info("scope connected to channel", slog.String("id", string(s.id)), slog.String("channel", fmt.Sprintf("%T: %#v", c, c)))
 
 	s.chanDestructor.With(func(destructor func()) func() {
 		s.channel.Store(c)
