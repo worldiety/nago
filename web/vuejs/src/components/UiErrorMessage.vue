@@ -13,11 +13,11 @@ const props = defineProps<{
 
 const showAdditionalInformation = ref<boolean>(false);
 
-async function toggleErrorInfo(): Promise<void> {
+function toggleErrorInfo(): void {
 	showAdditionalInformation.value = !showAdditionalInformation.value;
 }
 
-async function reload(): Promise<void> {
+function reload(): void {
 	window.location.reload()
 }
 </script>
