@@ -342,8 +342,8 @@ func main() {
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Simple().Set(false)
-									t.Error().Set("Fehler")
 									t.Label().Set("Vorname")
+									t.Help().Set("Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext.")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 								}),

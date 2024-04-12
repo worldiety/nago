@@ -4,6 +4,7 @@ import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { PropertyInt } from '@/shared/model/propertyInt';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
+import CloseIcon from '@/assets/svg/close.svg';
 
 const props = defineProps<{
 	ui: LiveNumberField;
@@ -41,14 +42,19 @@ watch(inputValue, (newValue, oldValue) => {
 			:hint="props.ui.hint.value"
 			:disabled="props.ui.disabled.value"
 		>
-			<input
-				v-model="inputValue"
-				type="text"
-				class="input-field"
-				inputmode="numeric"
-				:placeholder="props.ui.placeholder.value"
-				:disabled="props.ui.disabled.value"
-			>
+			<div class="relative">
+				<input
+					v-model="inputValue"
+					type="text"
+					class="input-field"
+					inputmode="numeric"
+					:placeholder="props.ui.placeholder.value"
+					:disabled="props.ui.disabled.value"
+				>
+				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+				</div>
+			</div>
 		</InputWrapper>
 	</div>
 </template>
