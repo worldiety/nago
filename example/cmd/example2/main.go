@@ -247,10 +247,11 @@ func main() {
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
 								slider.Label().Set("Slider")
 								slider.Hint().Set("Das ist ein Hinweis")
-								slider.Min().Set(-1)
-								slider.Max().Set(25)
-								slider.Value().Set(1.15)
-								slider.Stepsize().Set(.72)
+								slider.Min().Set(0)
+								slider.Max().Set(100)
+								slider.StartValue().Set(25)
+								slider.EndValue().Set(75)
+								slider.Stepsize().Set(1)
 								slider.Initialized().Set(true)
 								slider.OnChanged().Set(func() {
 									slider.Initialized().Set(true)

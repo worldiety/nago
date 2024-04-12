@@ -44,35 +44,44 @@ const props = defineProps<{
 
 const networkStore = useNetworkStore();
 const sliderTrack = ref<HTMLElement|undefined>();
-const sliderValue = ref<number>(0);
+const sliderStartValue = ref<number>(0);
+const sliderEndValue = ref<number>(0);
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
 const minRounded = ref<number>(roundValue(props.ui.min.value));
 const maxRounded = ref<number>(roundValue(props.ui.max.value));
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
-const initialValueRounded = ref<number>(roundValue(props.ui.value.value));
+const initialStartValueRounded = ref<number>(roundValue(props.ui.startValue.value));
+const initialEndValueRounded = ref<number>(roundValue(props.ui.endValue.value));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
 
 onBeforeMount(() => {
 	if (!props.ui.initialized.value) {
-		sliderValue.value = minRounded.value;
+		sliderStartValue.value = minRounded.value;
 		return;
 	}
+	sliderStartValue.value = calculateSliderValue(initialStartValueRounded.value);
+	sliderEndValue.value = calculateSliderValue(initialEndValueRounded.value);
+});
+
+function calculateSliderValue(initialValue: number): number {
 	// Limit initial value to min and max value
-	const bounded = Math.max(Math.min(initialValueRounded.value, maxRounded.value), minRounded.value);
+	const bounded = Math.max(Math.min(initialValue, maxRounded.value), minRounded.value);
 	// Calculate valid initial value based on the step size and minimum value (always rounding down to the next valid value)
 	const validated = bounded - (bounded - minRounded.value) % stepsizeRounded.value;
 	// Get rid of rounding errors by using 2 decimal places at most
-	sliderValue.value = roundValue(validated);
-});
+	return roundValue(validated);
+}
 
 onMounted(() => {
-	sliderThumbEndOffset.value = sliderTrack.value?.offsetWidth ?? 0;
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 
 	document.addEventListener('mouseup', () => {
 		startDragging.value = false;
 		endDragging.value = false;
+		submitSliderValues(offsetToSliderValue(sliderThumbStartOffset.value), offsetToSliderValue(sliderThumbEndOffset.value));
 	});
 	document.addEventListener('mousemove', (event: MouseEvent) => {
 		if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
@@ -81,6 +90,22 @@ onMounted(() => {
 		handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
 	});
 });
+
+function sliderValueToOffset(sliderValue: number): number {
+	if (!sliderTrack.value) {
+		return 0;
+	}
+	const sliderValuePercentage = sliderValue / maxRounded.value;
+	return sliderTrack.value.offsetWidth * sliderValuePercentage;
+}
+
+function offsetToSliderValue(sliderThumbOffset: number): number {
+	if (!sliderTrack.value) {
+		return 0;
+	}
+	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
+	return maxRounded.value * sliderOffsetPercentage;
+}
 
 function startSliderThumbPressed(): void {
 	if (!props.ui.disabled.value) {
@@ -106,23 +131,23 @@ function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, slide
 	} else if (endDragging.value) {
 		sliderThumbEndOffset.value = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
 	}
-	console.log(sliderThumbStartOffset.value, sliderThumbEndOffset.value);
 }
 
 function roundValue(value: number): number {
 	return Math.round(value * 100) / 100;
 }
 
-function mapToSliderValue(sliderThumbOffset: number): number {
-	return 0;
-}
-
-function submitSliderValue(value: number): void {
-	startDragging.value = false;
-	networkStore.invokeFunctionsAndSetProperties([{
-		...props.ui.value,
-		value,
-	}], [props.ui.onChanged]);
+function submitSliderValues(startValue: number, endValue: number): void {
+	networkStore.invokeFunctionsAndSetProperties([
+			{
+				...props.ui.startValue,
+				value: startValue,
+			},
+			{
+				...props.ui.endValue,
+				value: endValue,
+			}
+		], [props.ui.onChanged]);
 }
 </script>
 

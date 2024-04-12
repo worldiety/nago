@@ -8,7 +8,8 @@ type Slider struct {
 	label       String
 	hint        String
 	error       String
-	value       Float
+	startValue  Float
+	endValue    Float
 	min         Float
 	max         Float
 	stepsize    Float
@@ -24,7 +25,8 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		label:       NewShared[string]("label"),
 		hint:        NewShared[string]("hint"),
 		error:       NewShared[string]("error"),
-		value:       NewShared[float64]("value"),
+		startValue:  NewShared[float64]("startValue"),
+		endValue:    NewShared[float64]("endValue"),
 		min:         NewShared[float64]("min"),
 		max:         NewShared[float64]("max"),
 		stepsize:    NewShared[float64]("stepsize"),
@@ -32,7 +34,7 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		onChanged:   NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
 	if with != nil {
 		with(c)
 	}
@@ -55,8 +57,12 @@ func (c *Slider) Hint() String { return c.hint }
 
 func (c *Slider) Error() String { return c.error }
 
-func (c *Slider) Value() Float {
-	return c.value
+func (c *Slider) StartValue() Float {
+	return c.startValue
+}
+
+func (c *Slider) EndValue() Float {
+	return c.endValue
 }
 
 func (c *Slider) Min() Float {
