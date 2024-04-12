@@ -78,6 +78,10 @@ onMounted(() => {
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 
+	addEventListeners();
+});
+
+function addEventListeners(): void {
 	document.addEventListener('mouseup', () => {
 		startDragging.value = false;
 		endDragging.value = false;
@@ -89,8 +93,13 @@ onMounted(() => {
 		}
 		handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
 	});
-});
+}
 
+/**
+ * Maps a slider value to a pixel offset value for the corresponding slider thumb
+ *
+ * @param sliderValue The slider value to map
+ */
 function sliderValueToOffset(sliderValue: number): number {
 	if (!sliderTrack.value) {
 		return 0;
@@ -99,6 +108,11 @@ function sliderValueToOffset(sliderValue: number): number {
 	return sliderTrack.value.offsetWidth * sliderValuePercentage;
 }
 
+/**
+ * Maps a pixel offset value of a slider thumb to its corresponding slider value
+ *
+ * @param sliderThumbOffset The pixel offset value of a slider thumb to map
+ */
 function offsetToSliderValue(sliderThumbOffset: number): number {
 	if (!sliderTrack.value) {
 		return 0;
