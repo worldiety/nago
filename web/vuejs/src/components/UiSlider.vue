@@ -19,7 +19,7 @@
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute right-0 size-4 rounded-full bg-ora-orange z-10"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
 					:class="{'slider-thumb-dragging': endDragging}"
 					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 					@mousedown="endSliderThumbPressed"
@@ -68,6 +68,8 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
+	sliderThumbEndOffset.value = sliderTrack.value?.offsetWidth ?? 0;
+
 	document.addEventListener('mouseup', () => {
 		startDragging.value = false;
 		endDragging.value = false;
@@ -90,7 +92,7 @@ function endSliderThumbPressed(): void {
 	if (props.ui.disabled.value || !sliderTrack.value) {
 		return;
 	}
-	if (sliderThumbStartOffset.value === sliderThumbEndOffset.value + sliderTrack.value.offsetWidth) {
+	if (sliderThumbStartOffset.value === sliderTrack.value.offsetWidth) {
 		// Drag start slider thumb because of higher z-index of end slider thumb
 		startDragging.value = true;
 	} else {
@@ -100,24 +102,26 @@ function endSliderThumbPressed(): void {
 
 function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, sliderTrackOffsetWidth: number): void {
 	if (startDragging.value) {
-		const maximalStartOffset = sliderTrackOffsetWidth - sliderThumbEndOffset.value;
-		sliderThumbStartOffset.value = Math.max(Math.min(maximalStartOffset, mouseX - sliderTrackOffsetX), 0);
+		sliderThumbStartOffset.value = Math.max(0, Math.min(sliderThumbEndOffset.value, mouseX - sliderTrackOffsetX));
 	} else if (endDragging.value) {
-		const maximalEndOffset = sliderTrackOffsetWidth - sliderThumbStartOffset.value;
-		const minimalEndOffset = (mouseX - sliderTrackOffsetX - sliderTrackOffsetWidth) * -1;
-		sliderThumbEndOffset.value = Math.min(maximalEndOffset, Math.max(minimalEndOffset, 0));
+		sliderThumbEndOffset.value = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
 	}
+	console.log(sliderThumbStartOffset.value, sliderThumbEndOffset.value);
 }
 
 function roundValue(value: number): number {
 	return Math.round(value * 100) / 100;
 }
 
-function submitSliderValue(): void {
+function mapToSliderValue(sliderThumbOffset: number): number {
+	return 0;
+}
+
+function submitSliderValue(value: number): void {
 	startDragging.value = false;
 	networkStore.invokeFunctionsAndSetProperties([{
 		...props.ui.value,
-		value: sliderValue.value,
+		value,
 	}], [props.ui.onChanged]);
 }
 </script>
@@ -159,6 +163,6 @@ function submitSliderValue(): void {
 }
 
 .slider-thumb-end {
-	right: calc(var(--slider-thumb-end-offset) - 0.5rem);
+	left: calc(var(--slider-thumb-end-offset) - 0.5rem);
 }
 </style>
