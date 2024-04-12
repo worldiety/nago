@@ -124,6 +124,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 		queryParams := r.URL.Query()
 		pageID := queryParams.Get("_pid")
+		scopeID := queryParams.Get("_sid")
 
 		// todo new
 		defer func() {
@@ -132,7 +133,7 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
-		scope := app2.Connect(channel, "")
+		scope := app2.Connect(channel, protocol.ScopeID(scopeID))
 		defer scope.Destroy()
 
 		if err := channel.Loop(); err != nil {

@@ -17,6 +17,8 @@ func init() {
 		reflect.TypeOf(ErrorOccurred{}),
 		reflect.TypeOf(ComponentDestructionRequested{}),
 		reflect.TypeOf(ScopeDestructionRequested{}),
+		reflect.TypeOf(ConfigurationRequested{}),
+		reflect.TypeOf(ConfigurationDefined{}),
 	}
 }
 

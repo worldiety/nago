@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"unicode"
 )
 
@@ -19,15 +20,21 @@ func main() {
 	slog.Info("generating files in", slog.String("dir", *outDir))
 
 	writeFile(*outDir, "interface",
-		// emit events
-		NewInterface(protocol.EventsAggregated{}),
-		NewInterface(protocol.Acknowledged{}),
-		NewInterface(protocol.NewComponentRequested{}),
-		NewInterface(protocol.ComponentInvalidated{}),
-
-		//emit components
-		NewInterface(protocol.Button{}),
+		NewInterface(protocol.Themes{}),
+		NewInterface(protocol.Theme{}),
+		NewInterface(protocol.Colors{}),
+		NewInterface(protocol.Resources{}),
 	)
+
+	types := append(protocol.Events)
+	types = append(types, protocol.Components...)
+	var ifaces []NamedType
+
+	for _, r := range types {
+		ifaces = append(ifaces, NewInterface(reflect.New(r).Elem().Interface()))
+	}
+
+	writeFile(*outDir, "interface", ifaces...)
 
 	writeFile(*outDir, "union",
 		NewUnion("Component", protocol.Components),

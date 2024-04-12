@@ -17,7 +17,7 @@ const (
 // For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
 // It is expected, that this only happens once during initialization of the frontend process.
 type ConfigurationRequested struct {
-	Type           EventType   `json:"type" value:"NewConfigurationRequested"`
+	Type           EventType   `json:"type" value:"ConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
 	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
 	RequestId      RequestId   `json:"requestId" `

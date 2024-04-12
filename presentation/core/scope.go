@@ -60,7 +60,7 @@ func (s *Scope) Connect(c Channel) {
 		c = NopChannel{}
 	}
 
-	slog.Info("scope connected to channel", slog.String("id", string(s.id)), slog.String("channel", fmt.Sprintf("%T: %#v", c, c)))
+	slog.Info("scope connected to channel", slog.String("scopeId", string(s.id)), slog.String("channel", fmt.Sprintf("%T", c)))
 
 	s.chanDestructor.With(func(destructor func()) func() {
 		s.channel.Store(c)
@@ -70,6 +70,7 @@ func (s *Scope) Connect(c Channel) {
 		}
 
 		return c.Subscribe(func(msg []byte) error {
+			defer s.eventLoop.Tick()
 			return s.handleMessage(msg)
 		})
 	})

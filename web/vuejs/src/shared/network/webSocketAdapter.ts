@@ -9,9 +9,16 @@ export default class WebSocketAdapter implements NetworkAdapter {
 	private webSocket: WebSocket|null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
+	private scopeId: string;
 
 	constructor() {
 		this.webSocketPort = this.initializeWebSocketPort();
+		// important: keep this scopeId for the resume capability only once per
+		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
+		// browser tabs and windows will try to steal the scope from each other.
+		// So, you MUST ensure that each VueJS instance has its own unique scope id,
+		// also when reconnecting to an existing scope.
+		this.scopeId = window.crypto.randomUUID()
 	}
 
 	private initializeWebSocketPort(): string {
@@ -23,13 +30,13 @@ export default class WebSocketAdapter implements NetworkAdapter {
 	}
 
 	async initialize(): Promise<void> {
-		let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}`;
+
+		let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
 		}
 
-		UserChangedCallbacks.push(() => this.sendUser());
 
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
@@ -48,21 +55,6 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		})
 	}
 
-	private sendUser(){
-		const auth = useAuth();
-
-		const updateJWT: UpdateJWT = {
-			type: "updateJWT",
-			token: `${auth.user?.access_token}`,
-			OIDCName:"Keycloak",
-		}
-
-		const callTx: CallBatch = {
-			tx: [updateJWT]
-		}
-
-		this.webSocket?.send(JSON.stringify(callTx))
-	}
 
 	teardown(): void {
 		this.closedGracefully = true;
@@ -80,11 +72,16 @@ export default class WebSocketAdapter implements NetworkAdapter {
 	}
 
 	publish(payloadRaw: string): void {
+		if (!this.webSocket){
+			console.log("webSocketAdapter is invalid")
+		}
+		console.log("webSocketAdapter send",payloadRaw)
 		this.webSocket?.send(payloadRaw);
 	}
 
 	subscribe(resolve: (responseRaw: string) => void): void {
 		if (!this.webSocket) {
+			console.log("webSocketAdapter rejected subscriber")
 			return;
 		}
 		this.webSocket.onmessage = (e) => resolve(e.data);

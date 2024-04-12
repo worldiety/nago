@@ -58,5 +58,5 @@ func (w *WebsocketChannel) Subscribe(f func(msg []byte) error) (destroy func()) 
 }
 
 func (w *WebsocketChannel) Publish(msg []byte) error {
-	return w.conn.WriteMessage(0, msg)
+	return w.conn.WriteMessage(websocket.TextMessage, msg)
 }

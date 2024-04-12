@@ -20,6 +20,9 @@ func init() {
 	// but for now, we keep this simple hardcoded reflection hack
 
 	resolvedTypes = map[reflect.Type]*TSTypeDef{
+		reflect.TypeOf([]string{}): {
+			Name: "string[]",
+		},
 		reflect.TypeOf(""): {
 			Name: "string",
 		},
@@ -81,7 +84,7 @@ func init() {
 		reflect.TypeOf([]protocol.Event{}): {
 			Name: "[]",
 			TypeParams: []*TSTypeDef{
-				{Package: prefix + "event", Name: "Event"},
+				{Package: genPrefix + "event", Name: "Event"},
 			},
 		},
 		reflect.TypeOf(map[string]string{}): {
@@ -89,6 +92,38 @@ func init() {
 			TypeParams: []*TSTypeDef{
 				{Name: "string"},
 				{Name: "string"},
+			},
+		},
+
+		reflect.TypeOf(protocol.Themes{}): {
+			Name:    "Themes",
+			Package: genPrefix + "themes",
+		},
+		reflect.TypeOf(protocol.Resources{}): {
+			Name:    "Resources",
+			Package: genPrefix + "resources",
+		},
+		reflect.TypeOf(protocol.Theme{}): {
+			Name:    "Theme",
+			Package: genPrefix + "theme",
+		},
+		reflect.TypeOf(protocol.ColorScheme("")): {
+			Name:    "ColorScheme",
+			Package: prefix + "colorScheme",
+		},
+		reflect.TypeOf(protocol.Color{}): {
+			Name:    "Color",
+			Package: prefix + "color",
+		},
+		reflect.TypeOf(protocol.Colors{}): {
+			Name:    "Colors",
+			Package: genPrefix + "colors",
+		},
+		reflect.TypeOf(map[protocol.RIDSVG]protocol.SVG{}): {
+			Name: "Map",
+			TypeParams: []*TSTypeDef{
+				{Package: prefix + "ridsvg", Name: "RIDSVG"},
+				{Package: prefix + "svg", Name: "SVG"},
 			},
 		},
 	}
