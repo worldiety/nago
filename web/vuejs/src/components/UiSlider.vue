@@ -12,13 +12,15 @@
 				<div ref="sliderTrack" class="slider-track border-b border-b-black w-full"></div>
 				<!-- Left slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
+					:class="{'slider-thumb-dragging': startDragging}"
 					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
 					@mousedown="startSliderThumbPressed"
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute right-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-end absolute right-0 size-4 rounded-full bg-ora-orange z-10"
+					:class="{'slider-thumb-dragging': endDragging}"
 					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 					@mousedown="endSliderThumbPressed"
 				></div>
@@ -33,7 +35,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -85,17 +87,25 @@ function startSliderThumbPressed(): void {
 }
 
 function endSliderThumbPressed(): void {
-	if (!props.ui.disabled.value) {
+	if (props.ui.disabled.value || !sliderTrack.value) {
+		return;
+	}
+	if (sliderThumbStartOffset.value === sliderThumbEndOffset.value + sliderTrack.value.offsetWidth) {
+		// Drag start slider thumb because of higher z-index of end slider thumb
+		startDragging.value = true;
+	} else {
 		endDragging.value = true;
 	}
 }
 
 function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, sliderTrackOffsetWidth: number): void {
-	// TODO: Limit offsets to keep start always before and and offsets between lower and upper bound of slider track
 	if (startDragging.value) {
-		sliderThumbStartOffset.value = mouseX - sliderTrackOffsetX;
+		const maximalStartOffset = sliderTrackOffsetWidth - sliderThumbEndOffset.value;
+		sliderThumbStartOffset.value = Math.max(Math.min(maximalStartOffset, mouseX - sliderTrackOffsetX), 0);
 	} else if (endDragging.value) {
-		sliderThumbEndOffset.value = (mouseX - sliderTrackOffsetX - sliderTrackOffsetWidth) * -1;
+		const maximalEndOffset = sliderTrackOffsetWidth - sliderThumbStartOffset.value;
+		const minimalEndOffset = (mouseX - sliderTrackOffsetX - sliderTrackOffsetWidth) * -1;
+		sliderThumbEndOffset.value = Math.min(maximalEndOffset, Math.max(minimalEndOffset, 0));
 	}
 }
 
@@ -129,12 +139,17 @@ function submitSliderValue(): void {
 	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
 }
 
-.slider:not(.slider-disabled) .slider-thumb:hover {
+.slider-thumb {
+	@apply select-none;
+}
+
+.slider:not(.slider-disabled) .slider-thumb:hover,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply ring-8 ring-ora-orange ring-opacity-15;
 	@apply dark:ring-opacity-25;
 }
 
-.slider:not(.slider-disabled) .slider-thumb:active {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply ring-opacity-25;
 	@apply dark:ring-opacity-35 !important;
 }
