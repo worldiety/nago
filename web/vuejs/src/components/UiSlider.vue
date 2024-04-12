@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm">{{ props.ui.label.value }}</span>
+		<span v-if="props.ui.label.value" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.value }}</span>
 
 		<div
 			class="slider"
@@ -9,7 +9,7 @@
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
-				<div ref="sliderTrack" class="slider-track border-b border-b-black w-full"></div>
+				<div ref="sliderTrack" class="slider-track w-full"></div>
 				<!-- Left slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
@@ -187,8 +187,13 @@ function submitSliderValues(): void {
 	@apply bg-disabled-text;
 }
 
+.slider-track {
+	@apply border-b border-b-black;
+	@apply dark:border-b-white;
+}
+
 .slider.slider-disabled .slider-track {
-	@apply border-b-disabled-background
+	@apply border-b-disabled-background;
 }
 
 .slider {
