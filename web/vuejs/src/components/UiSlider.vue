@@ -16,6 +16,7 @@
 					:class="{'slider-thumb-dragging': startDragging}"
 					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
 					@mousedown="startSliderThumbPressed"
+					@touchstart="startSliderThumbPressed"
 				></div>
 				<!-- Right slider thumb -->
 				<div
@@ -23,6 +24,7 @@
 					:class="{'slider-thumb-dragging': endDragging}"
 					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 					@mousedown="endSliderThumbPressed"
+					@touchstart="endSliderThumbPressed"
 				></div>
 			</div>
 		</div>
@@ -93,12 +95,18 @@ function initializeSliderThumbOffsets(): void {
 
 function addEventListeners(): void {
 	document.addEventListener('mouseup', onMouseUp);
+	document.addEventListener('touchend', onMouseUp);
+	document.addEventListener('touchcancel', onMouseUp);
+	document.addEventListener('touchmove', onTouchMove);
 	document.addEventListener('mousemove', onMouseMove);
 	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
 }
 
 function removeEventListeners(): void {
 	document.removeEventListener('mouseup', onMouseUp);
+	document.removeEventListener('touchend', onMouseUp);
+	document.removeEventListener('touchcancel', onMouseUp);
+	document.removeEventListener('touchmove', onTouchMove);
 	document.removeEventListener('mousemove', onMouseMove);
 	window.removeEventListener('resize', initializeSliderThumbOffsets);
 }
@@ -114,6 +122,14 @@ function onMouseMove(event: MouseEvent): void {
 		return;
 	}
 	handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
+}
+
+function onTouchMove(event: TouchEvent): void {
+	const touchLocation = event.touches.item(0);
+	if (!touchLocation || !sliderTrack.value || !startDragging.value && !endDragging.value) {
+		return;
+	}
+	handleSliderThumbDrag(touchLocation.clientX, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
 }
 
 /**
