@@ -5,7 +5,6 @@
 		<div
 			class="slider"
 			:class="{'slider-disabled': props.ui.disabled.value}"
-			:tabindex="props.ui.disabled.value ? '-1' : '0'"
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
@@ -15,6 +14,7 @@
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
 					:class="{'slider-thumb-dragging': startDragging}"
 					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
+					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
 					@touchstart="startSliderThumbPressed"
 				></div>
@@ -23,6 +23,7 @@
 					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
 					:class="{'slider-thumb-dragging': endDragging}"
 					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
+					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
 					@touchstart="endSliderThumbPressed"
 				></div>
@@ -37,7 +38,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -237,17 +238,17 @@ function submitSliderValues(): void {
 	@apply rounded-full p-2 -mx-2;
 }
 
-.slider:focus-visible {
-	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
-}
-
 .slider-thumb {
 	@apply select-none;
 }
 
+.slider-thumb:focus-visible:not(:hover) {
+	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
+}
+
 .slider:not(.slider-disabled) .slider-thumb:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
-	@apply ring-8 ring-ora-orange ring-opacity-15;
+	@apply outline-none ring-8 ring-ora-orange ring-opacity-15;
 	@apply dark:ring-opacity-25;
 }
 
