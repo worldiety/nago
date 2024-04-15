@@ -1,16 +1,20 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import type { LivePage } from '@/shared/model/livePage';
-import {VBox} from "@/shared/protocol/gen/vBox";
+import {Page} from "@/shared/protocol/gen/page";
+
+
 
 const props = defineProps<{
-	ui: VBox;
-	page: LivePage;
+	ui: Page;
+	page: LivePage; // TODO refactor me, we should not need that
 }>();
+
+console.log("he in page",props.ui)
 </script>
 
 <template>
 	<div class="grid grid-cols-1 gap-y-3">
-		<ui-generic v-for="ui in props.ui.children.v" :ui="ui" :page="page" />
+		<ui-generic v-if="props.ui.body.v" :ui="props.ui.body.v" :page="page" />
 	</div>
 </template>

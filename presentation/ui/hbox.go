@@ -47,10 +47,6 @@ func (c *HBox) ID() CID {
 	return c.id
 }
 
-func (c *HBox) Type() string {
-	return "HBox"
-}
-
 func (c *HBox) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -60,5 +56,10 @@ func (c *HBox) Properties(yield func(core.Property) bool) {
 }
 
 func (c *HBox) Render() protocol.Component {
-	panic("not implemented")
+	return protocol.HBox{
+		Ptr:       c.id,
+		Type:      protocol.HBoxT,
+		Children:  renderSharedListComponents(c.children),
+		Alignment: c.alignment.render(),
+	}
 }

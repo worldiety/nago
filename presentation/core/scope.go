@@ -47,6 +47,12 @@ func NewScope(id protocol.ScopeID, lifetime time.Duration, factories map[protoco
 		eventLoop:           NewEventLoop(),
 	}
 
+	s.eventLoop.SetOnPanicHandler(func(p any) {
+		s.Publish(protocol.ErrorOccurred{
+			Type:    protocol.ErrorOccurredT,
+			Message: fmt.Sprintf("panic in event loop: %v", p),
+		})
+	})
 	s.channel.Store(NopChannel{})
 	s.Tick()
 

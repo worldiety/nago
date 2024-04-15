@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 )
 
 // TODO this is the wrong signature
@@ -196,4 +197,40 @@ func (s *SharedList[T]) Clear() {
 	}
 	s.values = s.values[:0]
 	s.dirty = true
+}
+
+func renderSharedListButtons(s *SharedList[*Button]) protocol.Property[[]protocol.Button] {
+	res := protocol.Property[[]protocol.Button]{
+		Ptr: s.id,
+	}
+
+	for _, value := range s.values {
+		res.Value = append(res.Value, value.renderButton())
+	}
+
+	return res
+}
+
+func renderSharedListComponents(s *SharedList[core.Component]) protocol.Property[[]protocol.Component] {
+	res := protocol.Property[[]protocol.Component]{
+		Ptr: s.id,
+	}
+
+	for _, value := range s.values {
+		res.Value = append(res.Value, value.Render())
+	}
+
+	return res
+}
+
+func renderSharedComponent(s *Shared[core.Component]) protocol.Property[protocol.Component] {
+	res := protocol.Property[protocol.Component]{
+		Ptr: s.id,
+	}
+
+	if s.v != nil {
+		res.Value = s.v.Render()
+	}
+
+	return res
 }

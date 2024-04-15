@@ -35,6 +35,10 @@ func (r *RenderState) Clear() {
 
 func (r *RenderState) Scan(c Component) {
 	Visit(c)(func(c Component) bool {
+		if c == nil {
+			panic(fmt.Errorf("visitor received a nil component"))
+		}
+
 		if _, ok := r.elements[c.ID()]; ok {
 			panic(fmt.Errorf("another component with the same id has already been visited"))
 		}

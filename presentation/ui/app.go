@@ -30,6 +30,7 @@ func (p PageID) Validate() error {
 	return nil
 }
 
+// deprecated use core.Application
 type Application struct {
 	Name        string
 	Version     string

@@ -62,38 +62,16 @@ async function init() {
 		console.log("my render tree", invalidation)
 
 		ui.value = invalidation.value;
-		livePage.value = invalidation;
+		livePage.value = invalidation.value;
+		invalidationResp.value = invalidation.value;
 		state.value = State.ShowUI;
-		invalidationResp.value = invalidation;
+		console.log("old page async init done",ui)
 	} catch {
 		state.value = State.Error;
 	}
 }
 
 init();
-
-function webSocketReceiveCallback(message: LiveMessage): void {
-	switch (message.type) {
-		case 'Invalidation':
-			ui.value = message.root;
-			livePage.value = message;
-			state.value = State.ShowUI;
-			invalidationResp.value = message;
-			return;
-		case 'HistoryPushState':
-			history.pushState({}, '', message.pageId + '?' + encodeQueryData(message.state));
-			location.reload(); // TODO this does not always work like the refresh button, because the websocket and everything is not reconnected
-			console.log('push state');
-			return;
-		case 'HistoryBack':
-			history.back();
-			return;
-	}
-}
-
-function webSocketErrorCallback(): void {
-	state.value = State.Error;
-}
 
 watch(route, () => {
 	state.value = State.Loading;
@@ -104,11 +82,7 @@ onUnmounted(() => {
 	networkStore.teardown();
 });
 
-function encodeQueryData(data) {
-	const ret = [];
-	for (let d in data) ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
-	return ret.join('&');
-}
+console.log("old page")
 </script>
 
 <template>
@@ -124,13 +98,13 @@ function encodeQueryData(data) {
         To: "opacity-0"
     -->
 
-		<div v-for="modal in invalidationResp.modals">
+		<div v-if="state === State.ShowUI && ui" v-for="modal in invalidationResp.modals.v">
 			<div class="fixed inset-0 z-50 bg-gray-700 bg-opacity-75 transition-opacity"></div>
 
 			<div class="fixed inset-0 z-50 w-screen overflow-y-auto">
 				<div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
 					<div class="relative transform overflow-hidden rounded-lg sm:my-8 sm:w-full sm:max-w-lg">
-						<generic-ui :ui="modal" :page="livePage"/>
+						<generic-ui   :ui="modal" :page="livePage"/>
 					</div>
 				</div>
 			</div>

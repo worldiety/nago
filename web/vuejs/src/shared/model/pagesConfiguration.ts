@@ -2,6 +2,7 @@ import type { LivePageConfiguration } from '@/shared/model/livePageConfiguration
 import type { OIDCProvider } from '@/shared/model/oidcProvider';
 import type { PageConfiguration } from '@/shared/model/pageConfiguration';
 
+// deprecated remove me
 export interface PagesConfiguration {
 	name: string;
 	pages: PageConfiguration[];

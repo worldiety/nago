@@ -75,10 +75,6 @@ func (c *Text) ID() CID {
 	return c.id
 }
 
-func (c *Text) Type() protocol.ComponentType {
-	return protocol.TextT
-}
-
 func (c *Text) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -88,5 +84,24 @@ func (c *Text) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Text) Render() protocol.Component {
-	panic("not implemented")
+	return protocol.Text{
+		Ptr:   c.id,
+		Type:  protocol.TextT,
+		Value: c.value.render(),
+		Color: protocol.Property[string]{
+			Ptr:   c.color.id,
+			Value: string(c.color.v),
+		},
+		ColorDark: protocol.Property[string]{
+			Ptr:   c.colorDark.id,
+			Value: string(c.colorDark.v),
+		},
+		Size: protocol.Property[string]{
+			Ptr:   c.size.id,
+			Value: string(c.size.v),
+		},
+		OnClick:      renderFunc(c.onClick),
+		OnHoverStart: renderFunc(c.onHoverStart),
+		OnHoverEnd:   renderFunc(c.onHoverEnd),
+	}
 }

@@ -45,6 +45,69 @@ func init() {
 				{Name: "string"},
 			},
 		},
+		reflect.TypeOf(protocol.Property[protocol.Component]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "Component", Package: genPrefix + "component"},
+			},
+		},
+		reflect.TypeOf(protocol.Property[protocol.Button]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "Button", Package: genPrefix + "button"},
+			},
+		},
+		reflect.TypeOf(protocol.Property[[]protocol.Component]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "Component", Package: genPrefix + "component"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(protocol.Property[[]protocol.Button]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "Button", Package: genPrefix + "button"},
+					},
+				},
+			},
+		},
+
+		reflect.TypeOf(protocol.Property[[]protocol.TableCell]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "TableCell", Package: genPrefix + "tableCell"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(protocol.Property[[]protocol.TableRow]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "TableRow", Package: genPrefix + "tableRow"},
+					},
+				},
+			},
+		},
 		reflect.TypeOf(protocol.Property[protocol.Intent]{}): {
 			Name:    "Property",
 			Package: prefix + "property",

@@ -48,5 +48,28 @@ func (c *Table) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Table) Render() protocol.Component {
-	panic("not implemented")
+	var headers []protocol.TableCell
+	c.headers.Iter(func(cell *TableCell) bool {
+		headers = append(headers, cell.render())
+		return true
+	})
+
+	var rows []protocol.TableRow
+	c.rows.Iter(func(row *TableRow) bool {
+		rows = append(rows, row.render())
+		return true
+	})
+
+	return protocol.Table{
+		Ptr:  c.id,
+		Type: protocol.TableT,
+		Headers: protocol.Property[[]protocol.TableCell]{
+			Ptr:   c.headers.ID(),
+			Value: headers,
+		},
+		Rows: protocol.Property[[]protocol.TableRow]{
+			Ptr:   c.rows.ID(),
+			Value: rows,
+		},
+	}
 }

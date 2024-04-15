@@ -36,6 +36,7 @@ type EventLoop struct {
 	batchChan chan []msg
 	done      chan bool
 	destroyed bool
+	onPanic   func(p any)
 }
 
 func NewEventLoop() *EventLoop {
@@ -66,10 +67,25 @@ func (l *EventLoop) saveExec(f func()) {
 			fmt.Println(r)
 			debug.PrintStack()
 			slog.Error("recovered from panic in EventLoop", slog.String("func", fmt.Sprintf("%#v", f)))
+
+			l.mutex.Lock()
+			panicHandler := l.onPanic
+			l.mutex.Unlock()
+
+			if panicHandler != nil {
+				panicHandler(r)
+			}
 		}
 	}()
 
 	f()
+}
+
+func (l *EventLoop) SetOnPanicHandler(f func(p any)) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.onPanic = f
 }
 
 // Post appends f to the internal queue. It will be executed in the next tick cycle.

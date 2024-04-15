@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import type { HBox } from '@/shared/model/hBox';
 import type { LivePage } from '@/shared/model/livePage';
+import {HBox} from "@/shared/protocol/gen/hBox";
 
 const props = defineProps<{
 	ui: HBox;
@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const clazz = computed<string>(() => {
-	switch (props.ui.alignment.value) {
+	switch (props.ui.alignment.v) {
 		case 'flex-center':
 			return 'flex justify-center';
 		case 'flex-left':
@@ -26,6 +26,6 @@ const clazz = computed<string>(() => {
 
 <template>
 	<div :class="clazz">
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui" :page="page" />
+		<ui-generic v-for="ui in props.ui.children.v" :ui="ui" :page="page" />
 	</div>
 </template>

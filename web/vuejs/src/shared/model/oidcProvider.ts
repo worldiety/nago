@@ -1,3 +1,4 @@
+// deprecated remove me
 export interface OIDCProvider {
 	name: string;
 	authority: string;

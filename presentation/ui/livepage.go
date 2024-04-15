@@ -21,7 +21,7 @@ type ModalOwner interface {
 	Modals() *SharedList[core.Component]
 }
 
-// deprecated
+// deprecated we want probably the scope instead or any other interface
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
@@ -42,6 +42,7 @@ type Wire interface {
 	ClientSession() SessionID
 }
 
+// deprecated what is this for?
 type Remote interface {
 	// Addr denotes the physical remote layer. This is useless behind a proxy.
 	Addr() string
@@ -65,8 +66,8 @@ type Page struct {
 func NewPage(w Wire, with func(page *Page)) *Page {
 	p := &Page{wire: w, id: nextPtr()}
 	p.history = &History{p: p}
-	p.body = NewShared[LiveComponent]("body")
-	p.modals = NewSharedList[LiveComponent]("modals")
+	p.body = NewShared[core.Component]("body")
+	p.modals = NewSharedList[core.Component]("modals")
 	//p.token = NewShared[string]("token")
 	//p.token.Set(nextToken())
 	p.properties = []core.Property{p.body, p.modals}
@@ -95,7 +96,12 @@ func (p *Page) Properties(yield func(core.Property) bool) {
 }
 
 func (p *Page) Render() protocol.Component {
-	panic("implement me")
+	return protocol.Page{
+		Ptr:    p.id,
+		Type:   protocol.PageT,
+		Body:   renderComponentProp(p.body, p.body),
+		Modals: renderComponentsProp(p.modals, p.modals),
+	}
 }
 
 func (p *Page) Body() *Shared[LiveComponent] {
@@ -130,6 +136,7 @@ func (p *Page) Invalidate() {
 		})*/
 }
 
+// deprecated: this does not belong to a page, but the applications scope
 func (p *Page) History() *History {
 	return p.history
 }

@@ -75,7 +75,17 @@ func (c *Scaffold) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Scaffold) Render() protocol.Component {
-	panic("not implemented")
+	return protocol.Scaffold{
+		Ptr:         c.id,
+		Type:        protocol.ScaffoldT,
+		Title:       c.title.render(),
+		Body:        renderComponentProp(c.body, c.body),
+		Breadcrumbs: renderSharedListButtons(c.breadcrumbs),
+		Menu:        renderSharedListButtons(c.menu),
+		TopbarLeft:  renderSharedComponent(c.topbarLeft),
+		TopbarMid:   renderSharedComponent(c.topbarMid),
+		TopbarRight: renderSharedComponent(c.topbarRight),
+	}
 }
 
 type ScaffoldTopBar struct {

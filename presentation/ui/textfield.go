@@ -24,12 +24,12 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		id:            nextPtr(),
 		label:         NewShared[string]("label"),
 		value:         NewShared[string]("value"),
-		placeholder:   NewShared[string]("placeholder"),
+		placeholder:   NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		hint:          NewShared[string]("hint"),
-		help:          NewShared[string]("help"),
+		help:          NewShared[string]("help"), // TODO remove me, does not make any sense from UX perspective, we have Label and Hint
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
-		simple:        NewShared[bool]("simple"),
+		simple:        NewShared[bool]("simple"), // TODO what is that?
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
@@ -87,5 +87,17 @@ func (l *TextField) Properties(yield func(core.Property) bool) {
 }
 
 func (l *TextField) Render() protocol.Component {
-	panic("not implemented")
+	return protocol.TextField{
+		Ptr:           l.id,
+		Type:          protocol.TextFieldT,
+		Label:         l.label.render(),
+		Hint:          l.hint.render(),
+		Help:          l.help.render(),
+		Error:         l.error.render(),
+		Value:         l.value.render(),
+		Placeholder:   l.placeholder.render(),
+		Disabled:      l.disabled.render(),
+		Simple:        l.simple.render(),
+		OnTextChanged: renderFunc(l.onTextChanged),
+	}
 }

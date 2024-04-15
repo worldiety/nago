@@ -42,6 +42,11 @@ func Visit(root Component) iter.Seq[Component] {
 }
 
 func visitRecursive(root Component, walker func(Component) bool) bool {
+	if root == nil {
+		// by definition legal, properties may have just nil components but we don't want to visit them
+		return true
+	}
+
 	if !walker(root) {
 		return false
 	}

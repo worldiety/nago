@@ -42,7 +42,7 @@ func NewShared[T any](name string) *Shared[T] {
 	}
 }
 
-func (s *Shared[T]) Render() protocol.Property[T] {
+func (s *Shared[T]) render() protocol.Property[T] {
 	return protocol.Property[T]{
 		Ptr:   s.id,
 		Value: s.v,
@@ -137,4 +137,11 @@ func nextToken() string {
 		panic(fmt.Errorf("unexpected crypto error: %w", err))
 	}
 	return hex.EncodeToString(tmp[:])
+}
+
+func renderFunc(lf *core.Func) protocol.Property[protocol.Ptr] {
+	return protocol.Property[protocol.Ptr]{
+		Ptr:   lf.ID(), // TODO why is this not a Property or a Shared[func()]? it is a logical slot (itself a pointer) with a value set (again pointer)
+		Value: lf.ID(),
+	}
 }

@@ -71,14 +71,18 @@ func (c *Button) Disabled() Bool {
 }
 
 func (c *Button) Render() protocol.Component {
+	return c.renderButton()
+}
+
+func (c *Button) renderButton() protocol.Button {
 	return protocol.Button{
 		Ptr:      c.id,
 		Type:     protocol.ButtonT,
-		Caption:  c.caption.Render(),
-		PreIcon:  c.preIcon.Render(),
-		PostIcon: c.postIcon.Render(),
-		Color:    c.color.Render(),
-		Disabled: c.disabled.Render(),
-		Action:   c.action.Render(),
+		Caption:  c.caption.render(),
+		PreIcon:  c.preIcon.render(),
+		PostIcon: c.postIcon.render(),
+		Color:    c.color.render(),
+		Disabled: c.disabled.render(),
+		Action:   renderFunc(c.action),
 	}
 }

@@ -28,8 +28,14 @@ const (
 	TextT        ComponentType = "Text"
 	PageT        ComponentType = "Page"
 	VBoxT        ComponentType = "VBox"
+	HBoxT        ComponentType = "HBox"
 	SliderT      ComponentType = "Slider"
+	ScaffoldT    ComponentType = "Scaffold"
 	NumberFieldT ComponentType = "NumberField"
+	TextFieldT   ComponentType = "TextField"
+	TableT       ComponentType = "Table"
+	TableCellT   ComponentType = "TableCell"
+	TableRowT    ComponentType = "TableRow"
 )
 
 type Component interface {
@@ -41,6 +47,15 @@ var Components []reflect.Type
 func init() {
 	Components = []reflect.Type{
 		reflect.TypeOf(Button{}),
+		reflect.TypeOf(Page{}),
+		reflect.TypeOf(Scaffold{}),
+		reflect.TypeOf(VBox{}),
+		reflect.TypeOf(HBox{}),
+		reflect.TypeOf(TextField{}),
+		reflect.TypeOf(Table{}),
+		reflect.TypeOf(TableCell{}),
+		reflect.TypeOf(TableRow{}),
+		reflect.TypeOf(Text{}),
 	}
 }
 

@@ -37,10 +37,6 @@ func (c *VBox) ID() CID {
 	return c.id
 }
 
-func (c *VBox) Type() protocol.ComponentType {
-	return protocol.VBoxT
-}
-
 func (c *VBox) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -50,5 +46,9 @@ func (c *VBox) Properties(yield func(core.Property) bool) {
 }
 
 func (c *VBox) Render() protocol.Component {
-	panic("not implemented")
+	return protocol.VBox{
+		Ptr:      c.id,
+		Type:     protocol.VBoxT,
+		Children: renderSharedListComponents(c.children),
+	}
 }
