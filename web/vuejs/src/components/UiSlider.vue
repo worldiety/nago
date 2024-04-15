@@ -4,7 +4,10 @@
 
 		<div
 			class="slider"
-			:class="{'slider-disabled': props.ui.disabled.value}"
+			:class="{
+				'slider-disabled': props.ui.disabled.value,
+				'slider-uninitialized': !props.ui.initialized.value,
+			}"
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
@@ -61,7 +64,7 @@ const sliderThumbEndOffset = ref<number>(0);
 onBeforeMount(() => {
 	if (!props.ui.initialized.value) {
 		sliderStartValue.value = 0;
-		return;
+		sliderEndValue.value = 0;
 	}
 
 	// Use a 0-based scale
@@ -113,9 +116,11 @@ function removeEventListeners(): void {
 }
 
 function onMouseUp(): void {
-	startDragging.value = false;
-	endDragging.value = false;
-	submitSliderValues();
+	if (startDragging.value || endDragging.value) {
+		startDragging.value = false;
+		endDragging.value = false;
+		submitSliderValues();
+	}
 }
 
 function onMouseMove(event: MouseEvent): void {
@@ -232,6 +237,17 @@ function submitSliderValues(): void {
 
 .slider.slider-disabled .slider-track {
 	@apply border-b-disabled-background;
+}
+
+.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb {
+	@apply bg-black;
+	@apply dark:bg-white;
+}
+
+.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb:hover,
+.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb:focus-visible,
+.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
+	@apply bg-ora-orange;
 }
 
 .slider {

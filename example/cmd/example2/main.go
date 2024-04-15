@@ -252,7 +252,7 @@ func main() {
 								slider.StartValue().Set(25)
 								slider.EndValue().Set(75)
 								slider.Stepsize().Set(2.17)
-								slider.Initialized().Set(true)
+								slider.Initialized().Set(false)
 								slider.OnChanged().Set(func() {
 									slider.Initialized().Set(true)
 								})
