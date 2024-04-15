@@ -48,22 +48,26 @@ const sliderStartValue = ref<number>(0);
 const sliderEndValue = ref<number>(0);
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
-const minRounded = ref<number>(roundValue(props.ui.min.value));
-const maxRounded = ref<number>(roundValue(props.ui.max.value));
+const minRounded = ref<number>(0);
+const maxRounded = ref<number>(0);
+const scaleOffset = ref<number>(roundValue(props.ui.min.value));
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
-const initialStartValueRounded = ref<number>(roundValue(props.ui.startValue.value));
-const initialEndValueRounded = ref<number>(roundValue(props.ui.endValue.value));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
 
 onBeforeMount(() => {
 	if (!props.ui.initialized.value) {
-		sliderStartValue.value = minRounded.value;
+		sliderStartValue.value = 0;
 		return;
 	}
-	sliderStartValue.value = calculateSliderValue(initialStartValueRounded.value);
-	sliderEndValue.value = calculateSliderValue(initialEndValueRounded.value);
-	maxRounded.value = calculateSliderValue(maxRounded.value);
+
+	// Use a 0-based scale
+	maxRounded.value = getDiscreteValue(props.ui.max.value - scaleOffset.value);
+
+	const initialStartValueRounded = getDiscreteValue(props.ui.startValue.value - scaleOffset.value);
+	const initialEndValueRounded = getDiscreteValue(props.ui.endValue.value - scaleOffset.value);
+	sliderStartValue.value = calculateSliderValue(initialStartValueRounded);
+	sliderEndValue.value = calculateSliderValue(initialEndValueRounded);
 });
 
 onMounted(() => {
@@ -71,15 +75,6 @@ onMounted(() => {
 	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 
 	addEventListeners();
-});
-
-const minRoundedOffset = computed((): number => {
-	if (!sliderTrack.value) {
-		return 0;
-	}
-	const scaleLength = maxRounded.value - minRounded.value;
-	const sliderValuePercentage =  minRounded.value / scaleLength;
-	return sliderTrack.value.offsetWidth * sliderValuePercentage;
 });
 
 function calculateSliderValue(initialValue: number): number {
@@ -114,8 +109,7 @@ function sliderValueToOffset(sliderValue: number): number {
 	if (!sliderTrack.value) {
 		return 0;
 	}
-	const scaleLength = maxRounded.value - minRounded.value;
-	const sliderValuePercentage = (sliderValue - minRounded.value) / (scaleLength - minRounded.value);
+	const sliderValuePercentage = sliderValue / maxRounded.value;
 	return sliderTrack.value.offsetWidth * sliderValuePercentage;
 }
 
@@ -129,8 +123,7 @@ function offsetToSliderValue(sliderThumbOffset: number): number {
 		return 0;
 	}
 	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
-	const scaleLength = maxRounded.value - minRounded.value;
-	const continuousValue = scaleLength * sliderOffsetPercentage;
+	const continuousValue = sliderOffsetPercentage * maxRounded.value;
 	return getDiscreteValue(continuousValue);
 }
 
@@ -141,9 +134,9 @@ function getDiscreteValue(continuousValue: number): number {
 	}
 	const validValueAbove = validValueBelow + stepsizeRounded.value;
 	if (continuousValue - validValueBelow < validValueAbove - continuousValue) {
-		return validValueBelow;
+		return roundValue(validValueBelow);
 	}
-	return validValueAbove;
+	return roundValue(validValueAbove);
 }
 
 function startSliderThumbPressed(): void {
@@ -174,7 +167,6 @@ function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, slide
 		sliderEndValue.value = offsetToSliderValue(continuousOffset);
 		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	}
-	console.log(`SV ${sliderStartValue.value} SO ${sliderThumbStartOffset.value} EV ${sliderEndValue.value} EO ${sliderThumbEndOffset.value}`);
 }
 
 function roundValue(value: number): number {
@@ -185,11 +177,11 @@ function submitSliderValues(): void {
 	networkStore.invokeFunctionsAndSetProperties([
 			{
 				...props.ui.startValue,
-				value: roundValue(sliderStartValue.value),
+				value: roundValue(sliderStartValue.value + scaleOffset.value),
 			},
 			{
 				...props.ui.endValue,
-				value: roundValue(sliderEndValue.value),
+				value: roundValue(sliderEndValue.value + scaleOffset.value),
 			}
 		], [props.ui.onChanged]);
 }
