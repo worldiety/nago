@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { computed, onBeforeMount, onMounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -77,6 +77,8 @@ onMounted(() => {
 	addEventListeners();
 });
 
+onUnmounted(removeEventListeners);
+
 function calculateSliderValue(initialValue: number): number {
 	// Limit initial value to min and max value
 	const bounded = Math.max(Math.min(initialValue, maxRounded.value), minRounded.value);
@@ -87,17 +89,26 @@ function calculateSliderValue(initialValue: number): number {
 }
 
 function addEventListeners(): void {
-	document.addEventListener('mouseup', () => {
-		startDragging.value = false;
-		endDragging.value = false;
-		submitSliderValues();
-	});
-	document.addEventListener('mousemove', (event: MouseEvent) => {
-		if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
-			return;
-		}
-		handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
-	});
+	document.addEventListener('mouseup', onMouseUp);
+	document.addEventListener('mousemove', onMouseMove);
+}
+
+function removeEventListeners(): void {
+	document.removeEventListener('mouseup', onMouseUp);
+	document.removeEventListener('mousemove', onMouseMove);
+}
+
+function onMouseUp(): void {
+	startDragging.value = false;
+	endDragging.value = false;
+	submitSliderValues();
+}
+
+function onMouseMove(event: MouseEvent): void {
+	if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
+		return;
+	}
+	handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
 }
 
 /**
