@@ -63,7 +63,6 @@ onBeforeMount(() => {
 
 	// Use a 0-based scale
 	maxRounded.value = getDiscreteValue(props.ui.max.value - scaleOffset.value);
-
 	const initialStartValueRounded = getDiscreteValue(props.ui.startValue.value - scaleOffset.value);
 	const initialEndValueRounded = getDiscreteValue(props.ui.endValue.value - scaleOffset.value);
 	sliderStartValue.value = calculateSliderValue(initialStartValueRounded);
@@ -71,8 +70,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+	initializeSliderThumbOffsets();
 
 	addEventListeners();
 });
@@ -88,14 +86,21 @@ function calculateSliderValue(initialValue: number): number {
 	return roundValue(validated);
 }
 
+function initializeSliderThumbOffsets(): void {
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+}
+
 function addEventListeners(): void {
 	document.addEventListener('mouseup', onMouseUp);
 	document.addEventListener('mousemove', onMouseMove);
+	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
 }
 
 function removeEventListeners(): void {
 	document.removeEventListener('mouseup', onMouseUp);
 	document.removeEventListener('mousemove', onMouseMove);
+	window.removeEventListener('resize', initializeSliderThumbOffsets);
 }
 
 function onMouseUp(): void {
@@ -144,7 +149,7 @@ function getDiscreteValue(continuousValue: number): number {
 		validValueBelow = validValue;
 	}
 	const validValueAbove = validValueBelow + stepsizeRounded.value;
-	if (continuousValue - validValueBelow < validValueAbove - continuousValue) {
+	if (validValueAbove > props.ui.max.value - scaleOffset.value || continuousValue - validValueBelow < validValueAbove - continuousValue) {
 		return roundValue(validValueBelow);
 	}
 	return roundValue(validValueAbove);
