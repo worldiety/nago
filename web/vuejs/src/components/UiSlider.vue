@@ -4,10 +4,7 @@
 
 		<div
 			class="slider"
-			:class="{
-				'slider-disabled': props.ui.disabled.value,
-				'slider-uninitialized': !props.ui.initialized.value,
-			}"
+			:class="{'slider-disabled': props.ui.disabled.value}"
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
@@ -15,7 +12,10 @@
 				<!-- Left slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
-					:class="{'slider-thumb-dragging': startDragging}"
+					:class="{
+						'slider-thumb-dragging': startDragging,
+						'slider-thumb-disabled': !props.ui.startInitialized.value,
+					}"
 					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
@@ -24,7 +24,10 @@
 				<!-- Right slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
-					:class="{'slider-thumb-dragging': endDragging}"
+					:class="{
+						'slider-thumb-dragging': endDragging,
+						'slider-thumb-disabled': !props.ui.endInitialized.value,
+					}"
 					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
@@ -62,11 +65,6 @@ const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
 
 onBeforeMount(() => {
-	if (!props.ui.initialized.value) {
-		sliderStartValue.value = 0;
-		sliderEndValue.value = 0;
-	}
-
 	// Use a 0-based scale
 	maxRounded.value = getDiscreteValue(props.ui.max.value - scaleOffset.value);
 	const initialStartValueRounded = getDiscreteValue(props.ui.startValue.value - scaleOffset.value);
@@ -87,6 +85,7 @@ function calculateSliderValue(initialValue: number): number {
 	// Limit initial value to min and max value
 	const bounded = Math.max(Math.min(initialValue, maxRounded.value), minRounded.value);
 	// Calculate valid initial value based on the step size and minimum value (always rounding down to the next valid value)
+	// TODO: Fix wrong initial end value being calculated here
 	const validated = bounded - (bounded - minRounded.value) % stepsizeRounded.value;
 	// Get rid of rounding errors by using 2 decimal places at most
 	return roundValue(validated);
@@ -239,14 +238,14 @@ function submitSliderValues(): void {
 	@apply border-b-disabled-background;
 }
 
-.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled {
 	@apply bg-black;
 	@apply dark:bg-white;
 }
 
-.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb:hover,
-.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb:focus-visible,
-.slider.slider-uninitialized:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled:hover,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled:focus-visible,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled.slider-thumb-dragging {
 	@apply bg-ora-orange;
 }
 

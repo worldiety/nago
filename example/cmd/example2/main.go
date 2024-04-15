@@ -245,16 +245,28 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
+								var currentStartValue = 15.28
+								var currentEndValue = 36.98
+
 								slider.Label().Set("Slider")
 								slider.Hint().Set("Das ist ein Hinweis")
 								slider.Min().Set(4.43)
 								slider.Max().Set(90)
-								slider.StartValue().Set(25)
-								slider.EndValue().Set(75)
+								slider.StartValue().Set(currentStartValue)
+								slider.EndValue().Set(currentEndValue)
 								slider.Stepsize().Set(2.17)
-								slider.Initialized().Set(false)
+								slider.StartInitialized().Set(false)
+								slider.EndInitialized().Set(false)
 								slider.OnChanged().Set(func() {
-									slider.Initialized().Set(true)
+									println(slider.StartValue().Get(), currentStartValue)
+									if slider.StartValue().Get() != currentStartValue {
+										slider.StartInitialized().Set(true)
+									}
+									if slider.EndValue().Get() != currentEndValue {
+										slider.EndInitialized().Set(true)
+									}
+									currentStartValue = slider.StartValue().Get()
+									currentEndValue = slider.EndValue().Get()
 								})
 							}))
 

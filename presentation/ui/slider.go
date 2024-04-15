@@ -3,38 +3,40 @@ package ui
 import "go.wdy.de/nago/container/slice"
 
 type Slider struct {
-	id          CID
-	disabled    Bool
-	label       String
-	hint        String
-	error       String
-	startValue  Float
-	endValue    Float
-	min         Float
-	max         Float
-	stepsize    Float
-	initialized Bool
-	onChanged   *Func
-	properties  slice.Slice[Property]
+	id               CID
+	disabled         Bool
+	label            String
+	hint             String
+	error            String
+	startValue       Float
+	endValue         Float
+	min              Float
+	max              Float
+	stepsize         Float
+	startInitialized Bool
+	endInitialized   Bool
+	onChanged        *Func
+	properties       slice.Slice[Property]
 }
 
 func NewSlider(with func(slider *Slider)) *Slider {
 	c := &Slider{
-		id:          nextPtr(),
-		disabled:    NewShared[bool]("disabled"),
-		label:       NewShared[string]("label"),
-		hint:        NewShared[string]("hint"),
-		error:       NewShared[string]("error"),
-		startValue:  NewShared[float64]("startValue"),
-		endValue:    NewShared[float64]("endValue"),
-		min:         NewShared[float64]("min"),
-		max:         NewShared[float64]("max"),
-		stepsize:    NewShared[float64]("stepsize"),
-		initialized: NewShared[bool]("initialized"),
-		onChanged:   NewFunc("onChanged"),
+		id:               nextPtr(),
+		disabled:         NewShared[bool]("disabled"),
+		label:            NewShared[string]("label"),
+		hint:             NewShared[string]("hint"),
+		error:            NewShared[string]("error"),
+		startValue:       NewShared[float64]("startValue"),
+		endValue:         NewShared[float64]("endValue"),
+		min:              NewShared[float64]("min"),
+		max:              NewShared[float64]("max"),
+		stepsize:         NewShared[float64]("stepsize"),
+		startInitialized: NewShared[bool]("startInitialized"),
+		endInitialized:   NewShared[bool]("endInitialized"),
+		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.onChanged)
 	if with != nil {
 		with(c)
 	}
@@ -77,9 +79,11 @@ func (c *Slider) Stepsize() Float {
 	return c.stepsize
 }
 
-func (c *Slider) Initialized() Bool {
-	return c.initialized
+func (c *Slider) StartInitialized() Bool {
+	return c.startInitialized
 }
+
+func (c *Slider) EndInitialized() Bool { return c.endInitialized }
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
