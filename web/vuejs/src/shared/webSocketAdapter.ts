@@ -11,6 +11,7 @@ import type { CallServerFunc } from '@/shared/model/callServerFunc';
 export default class WebSocketAdapter {
 
 	private readonly webSocketPort: string;
+	private readonly isSecure: bool = false;
 	private webSocket: WebSocket|null = null;
 	private webSocketReceiveCallback: ((message: LiveMessage) => void) | null = null;
 	private webSocketErrorCallback: (() => void) | null = null;
@@ -19,6 +20,7 @@ export default class WebSocketAdapter {
 
 	constructor() {
 		this.webSocketPort = this.initializeWebSocketPort();
+		this.isSecure = location.protocol == "https:";
 	}
 
 	private initializeWebSocketPort(): string {
@@ -30,7 +32,11 @@ export default class WebSocketAdapter {
 	}
 
 	initializeWebSocket(): void {
-		let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}`;
+		let proto = "ws";
+		if (this.isSecure) {
+			proto = "wss";
+		}
+		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_pid=${window.location.pathname.substring(1)}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
