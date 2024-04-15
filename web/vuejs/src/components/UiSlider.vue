@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -63,6 +63,23 @@ onBeforeMount(() => {
 	}
 	sliderStartValue.value = calculateSliderValue(initialStartValueRounded.value);
 	sliderEndValue.value = calculateSliderValue(initialEndValueRounded.value);
+	maxRounded.value = calculateSliderValue(maxRounded.value);
+});
+
+onMounted(() => {
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+
+	addEventListeners();
+});
+
+const minRoundedOffset = computed((): number => {
+	if (!sliderTrack.value) {
+		return 0;
+	}
+	const scaleLength = maxRounded.value - minRounded.value;
+	const sliderValuePercentage =  minRounded.value / scaleLength;
+	return sliderTrack.value.offsetWidth * sliderValuePercentage;
 });
 
 function calculateSliderValue(initialValue: number): number {
@@ -73,13 +90,6 @@ function calculateSliderValue(initialValue: number): number {
 	// Get rid of rounding errors by using 2 decimal places at most
 	return roundValue(validated);
 }
-
-onMounted(() => {
-	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
-
-	addEventListeners();
-});
 
 function addEventListeners(): void {
 	document.addEventListener('mouseup', () => {
@@ -104,7 +114,8 @@ function sliderValueToOffset(sliderValue: number): number {
 	if (!sliderTrack.value) {
 		return 0;
 	}
-	const sliderValuePercentage = sliderValue / maxRounded.value;
+	const scaleLength = maxRounded.value - minRounded.value;
+	const sliderValuePercentage = (sliderValue - minRounded.value) / (scaleLength - minRounded.value);
 	return sliderTrack.value.offsetWidth * sliderValuePercentage;
 }
 
@@ -118,7 +129,8 @@ function offsetToSliderValue(sliderThumbOffset: number): number {
 		return 0;
 	}
 	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
-	const continuousValue = maxRounded.value * sliderOffsetPercentage;
+	const scaleLength = maxRounded.value - minRounded.value;
+	const continuousValue = scaleLength * sliderOffsetPercentage;
 	return getDiscreteValue(continuousValue);
 }
 
@@ -162,6 +174,7 @@ function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, slide
 		sliderEndValue.value = offsetToSliderValue(continuousOffset);
 		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	}
+	console.log(`SV ${sliderStartValue.value} SO ${sliderThumbStartOffset.value} EV ${sliderEndValue.value} EO ${sliderThumbEndOffset.value}`);
 }
 
 function roundValue(value: number): number {
