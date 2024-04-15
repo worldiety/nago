@@ -1,6 +1,10 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type Dropdown struct {
 	id              CID
@@ -13,7 +17,7 @@ type Dropdown struct {
 	hint            String
 	error           String
 	onClicked       *Func
-	properties      slice.Slice[Property]
+	properties      []core.Property
 }
 
 func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
@@ -30,7 +34,7 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		onClicked:       NewFunc("onClicked"),
 	}
 
-	c.properties = slice.Of[Property](c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onClicked)
+	c.properties = []core.Property{c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onClicked}
 	if with != nil {
 		with(c)
 	}
@@ -39,10 +43,6 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 
 func (c *Dropdown) ID() CID {
 	return c.id
-}
-
-func (c *Dropdown) Type() string {
-	return "Dropdown"
 }
 
 func (c *Dropdown) SelectedIndices() *SharedList[int64] {
@@ -113,8 +113,16 @@ func (c *Dropdown) OnClicked() *Func {
 	return c.onClicked
 }
 
-func (c *Dropdown) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Dropdown) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Dropdown) Render() protocol.Component {
+	panic("not implemented")
 }
 
 type DropdownItem struct {

@@ -20,6 +20,13 @@ func NewFunc(name string) *Func {
 	}
 }
 
+func (lf *Func) Render() protocol.Property[protocol.Ptr] {
+	return protocol.Property[protocol.Ptr]{
+		Ptr:   lf.id, // TODO why is this not a Property or a Shared[func()]? it is a logical slot (itself a pointer) with a value set (again pointer)
+		Value: lf.id,
+	}
+}
+
 func (lf *Func) Unwrap() any {
 	return lf // ??? TODO this may cause a visitor endless recursion
 }
@@ -69,4 +76,8 @@ func (lf *Func) Clear() {
 
 func (lf *Func) Nil() bool {
 	return lf == nil || lf.id.Nil() || lf.f == nil
+}
+
+func (lf *Func) Iter(yield func(*Func) bool) {
+	yield(lf)
 }

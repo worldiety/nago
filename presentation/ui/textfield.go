@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 )
 
 type TextField struct {
@@ -15,7 +16,7 @@ type TextField struct {
 	disabled      Bool
 	simple        Bool
 	onTextChanged *Func
-	properties    slice.Slice[Property]
+	properties    []core.Property
 }
 
 func NewTextField(with func(textField *TextField)) *TextField {
@@ -32,7 +33,7 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged)
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged}
 
 	if with != nil {
 		with(c)
@@ -77,10 +78,14 @@ func (l *TextField) Disabled() Bool {
 
 func (l *TextField) Simple() Bool { return l.simple }
 
-func (l *TextField) Type() string {
-	return "TextField"
+func (l *TextField) Properties(yield func(core.Property) bool) {
+	for _, property := range l.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (l *TextField) Properties() slice.Slice[Property] {
-	return l.properties
+func (l *TextField) Render() protocol.Component {
+	panic("not implemented")
 }

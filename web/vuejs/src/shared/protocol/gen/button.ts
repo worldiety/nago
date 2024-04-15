@@ -2,7 +2,7 @@
 
 import type { Pointer } from '@/shared/protocol/pointer';
 import type { Property } from '@/shared/protocol/property';
-import type { RIDSVG } from '@/shared/protocol/ridsvg';
+import type { SVG } from '@/shared/protocol/svg';
 import type { Intent } from '@/shared/protocol/intent';
 
 
@@ -18,8 +18,8 @@ export interface Button {
      * Caption of the button
      */
     caption: Property<string>;
-    preIcon: Property<RIDSVG>;
-    postIcon: Property<RIDSVG>;
+    preIcon: Property<SVG>;
+    postIcon: Property<SVG>;
     color: Property<Intent>;
     disabled: Property<boolean>;
     action: Property<Pointer>;

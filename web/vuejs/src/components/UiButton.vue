@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveButton } from '@/shared/model/liveButton';
+import type { Button } from '@/shared/protocol/gen/button';
 import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
-	ui: LiveButton;
+	ui: Button;
 	page: LivePage;
 }>();
 
@@ -17,7 +17,7 @@ function onClick() {
 
 const buttonClasses = computed<string>(() => {
 	const classes: string[] = [];
-	switch (props.ui.color.value) {
+	switch (props.ui.color.v) {
 		case 'primary':
 			classes.push('button-primary');
 			break;
@@ -41,17 +41,17 @@ const buttonClasses = computed<string>(() => {
 });
 
 const iconOnly = computed<boolean>(() => {
-	return props.ui.caption.value == '' && props.ui.preIcon.value != '';
+	return props.ui.caption.v == '' && props.ui.preIcon.v != '';
 });
 </script>
 
 <template>
-	<button :class="buttonClasses" :disabled="props.ui.disabled.value" @click="onClick">
-		<svg v-if="iconOnly" v-inline class="h-4 w-4" v-html="props.ui.preIcon.value"></svg>
+	<button :class="buttonClasses" :disabled="props.ui.disabled.v" @click="onClick">
+		<svg v-if="iconOnly" v-inline class="h-4 w-4" v-html="props.ui.preIcon.v"></svg>
 		<template v-else>
-			<svg v-if="props.ui.preIcon.value" class="mr-2 h-4 w-4" v-html="props.ui.preIcon.value"></svg>
-			<span>{{ props.ui.caption.value }}</span>
-			<svg v-if="props.ui.postIcon.value" class="ml-2 h-4 w-4" v-html="props.ui.postIcon.value"></svg>
+			<svg v-if="props.ui.preIcon.v" class="mr-2 h-4 w-4" v-html="props.ui.preIcon.v"></svg>
+			<span>{{ props.ui.caption.v }}</span>
+			<svg v-if="props.ui.postIcon.v" class="ml-2 h-4 w-4" v-html="props.ui.postIcon.v"></svg>
 		</template>
 	</button>
 </template>

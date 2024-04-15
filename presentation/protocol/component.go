@@ -13,15 +13,23 @@ func (p Ptr) Nil() bool {
 // within the backend process.
 // Note, that these pointers are not real pointers and only unique and valid for a specific scope.
 type Property[T any] struct {
-	Ptr   Ptr `json:"id"`
-	Value T   `json:"value"`
+	Ptr   Ptr `json:"p"`
+	Value T   `json:"v"`
 }
 
 // ComponentType defines the defined set of components.
 type ComponentType string
 
 const (
-	ButtonT ComponentType = "button"
+	ButtonT      ComponentType = "Button"
+	GridT        ComponentType = "Grid"
+	GridCellT    ComponentType = "GridCell"
+	DialogT      ComponentType = "Dialog"
+	TextT        ComponentType = "Text"
+	PageT        ComponentType = "Page"
+	VBoxT        ComponentType = "VBox"
+	SliderT      ComponentType = "Slider"
+	NumberFieldT ComponentType = "NumberField"
 )
 
 type Component interface {

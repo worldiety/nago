@@ -32,6 +32,15 @@ func (s *Scope) handleEvent(t protocol.Event) {
 
 func (s *Scope) handleEventsAggregated(evt protocol.EventsAggregated) {
 	for _, event := range evt.Events {
+		switch e := event.(type) {
+		case protocol.FunctionCallRequested:
+			e.RequestId = evt.RequestId
+			event = e
+		case protocol.SetPropertyValueRequested:
+			e.RequestId = evt.RequestId
+			event = e
+		}
+
 		s.handleEvent(event)
 	}
 
@@ -83,6 +92,7 @@ func (s *Scope) handleFunctionCallRequested(evt protocol.FunctionCallRequested) 
 		}
 
 		fn.Invoke()
+		return
 	}
 
 	slog.Error("function not found", slog.Any("evt", evt))

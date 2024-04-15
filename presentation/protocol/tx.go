@@ -1,5 +1,7 @@
 package protocol
 
+import "encoding/json"
+
 // An EventsAggregated forms an envelope message which contains a bunch of the actual events, which shall be applied within a single event processing step at the receivers side in exactly the given order.
 // A receiver must ensure the sequential processing of the contained messages and must not apply them in different order, partially or in parallel. Nested transactions are invalid.
 //
@@ -29,6 +31,36 @@ The _ack_ event must be the first message in the next transaction from the recei
 However, due to channel interruptions, the _ack_ may get lost, thus a participant must handle this gracefully using a timeout mechanism.
 The frontend must not freeze, but shall instead visualize the waiting, e.g. by debouncing interactive elements or by even disabling the entire screen and showing an indeterminate progress.
 `
+}
+
+func (e *EventsAggregated) UnmarshalJSON(bytes []byte) error {
+	type evts struct {
+		Type      EventType         `json:"type" `
+		Events    []json.RawMessage `json:"events"`
+		RequestId RequestId         `json:"r"`
+	}
+
+	var tmp evts
+	if err := json.Unmarshal(bytes, &tmp); err != nil {
+		return err
+	}
+
+	res := EventsAggregated{
+		Type:      tmp.Type,
+		RequestId: tmp.RequestId,
+	}
+
+	for _, message := range tmp.Events {
+		subEvt, err := Unmarshal(message)
+		if err != nil {
+			return err
+		}
+		res.Events = append(res.Events, subEvt)
+	}
+
+	*e = res
+
+	return nil
 }
 
 // An Acknowledged event is the response to an [EventsAggregated] event if a [RequestId] had been set.

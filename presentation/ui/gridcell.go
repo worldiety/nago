@@ -1,10 +1,13 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type GridCell struct {
 	id         CID
-	body       *Shared[LiveComponent]
+	body       *Shared[core.Component]
 	colStart   Int
 	colEnd     Int
 	colSpan    Int
@@ -13,7 +16,7 @@ type GridCell struct {
 	lgColSpan  Int
 	rowStart   Int
 	rowEnd     Int
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewGridCell(with func(cell *GridCell)) *GridCell {
@@ -21,7 +24,7 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 		id: nextPtr(),
 	}
 
-	c.body = NewShared[LiveComponent]("body")
+	c.body = NewShared[core.Component]("body")
 	c.colStart = NewShared[int64]("colStart")
 	c.colEnd = NewShared[int64]("colEnd")
 	c.rowStart = NewShared[int64]("rowStart")
@@ -30,7 +33,7 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 	c.smColSpan = NewShared[int64]("smColSpan")
 	c.mdColSpan = NewShared[int64]("mdColSpan")
 	c.lgColSpan = NewShared[int64]("lgColSpan")
-	c.properties = slice.Of[Property](c.body, c.colStart, c.colEnd, c.rowStart, c.rowEnd, c.colSpan, c.smColSpan, c.mdColSpan, c.lgColSpan)
+	c.properties = []core.Property{c.body, c.colStart, c.colEnd, c.rowStart, c.rowEnd, c.colSpan, c.smColSpan, c.mdColSpan, c.lgColSpan}
 	if with != nil {
 		with(c)
 	}
@@ -38,7 +41,7 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 	return c
 }
 
-func (c *GridCell) Body() *Shared[LiveComponent] {
+func (c *GridCell) Body() *Shared[core.Component] {
 	return c.body
 }
 
@@ -82,10 +85,18 @@ func (c *GridCell) ID() CID {
 	return c.id
 }
 
-func (c *GridCell) Type() string {
-	return "GridCell"
+func (c *GridCell) Type() protocol.ComponentType {
+	return protocol.GridCellT
 }
 
-func (c *GridCell) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *GridCell) Properties(yield func(property core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *GridCell) Render() protocol.Component {
+	panic("implement me")
 }

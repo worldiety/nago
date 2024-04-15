@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type Slider struct {
 	id          CID
@@ -14,7 +17,7 @@ type Slider struct {
 	stepsize    Float
 	initialized Bool
 	onChanged   *Func
-	properties  slice.Slice[Property]
+	properties  []core.Property
 }
 
 func NewSlider(with func(slider *Slider)) *Slider {
@@ -32,7 +35,7 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		onChanged:   NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized, c.onChanged}
 	if with != nil {
 		with(c)
 	}
@@ -43,8 +46,8 @@ func (c *Slider) ID() CID {
 	return c.id
 }
 
-func (c *Slider) Type() string {
-	return "Slider"
+func (c *Slider) Type() protocol.ComponentType {
+	return protocol.SliderT
 }
 
 func (c *Slider) Disabled() Bool { return c.disabled }
@@ -77,6 +80,14 @@ func (c *Slider) Initialized() Bool {
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
-func (c *Slider) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Slider) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Slider) Render() protocol.Component {
+	panic("not implemented")
 }

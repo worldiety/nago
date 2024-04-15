@@ -3,9 +3,9 @@ package ui
 import (
 	"context"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 	"io"
 	"log/slog"
 	"mime/multipart"
@@ -18,7 +18,7 @@ type SessionID = string
 
 // TODO I don't like that, because we cannot popup dialogs from nowwhere, but perhaps that is a good thing?
 type ModalOwner interface {
-	Modals() *SharedList[LiveComponent]
+	Modals() *SharedList[core.Component]
 }
 
 // deprecated
@@ -53,16 +53,13 @@ type Remote interface {
 type PageInstanceToken string
 
 type Page struct {
-	id          CID
-	wire        Wire
-	body        *Shared[LiveComponent]
-	modals      *SharedList[LiveComponent]
-	history     *History
-	properties  slice.Slice[Property]
-	renderState *core.RenderState
-	token       String
-	maxMemory   int64
-	onDestroy   []func()
+	id         CID
+	wire       Wire
+	body       *Shared[core.Component]
+	modals     *SharedList[core.Component]
+	history    *History
+	properties []core.Property
+	onDestroy  []func()
 }
 
 func NewPage(w Wire, with func(page *Page)) *Page {
@@ -70,11 +67,11 @@ func NewPage(w Wire, with func(page *Page)) *Page {
 	p.history = &History{p: p}
 	p.body = NewShared[LiveComponent]("body")
 	p.modals = NewSharedList[LiveComponent]("modals")
-	p.token = NewShared[string]("token")
-	p.token.Set(nextToken())
-	p.properties = slice.Of[Property](p.body, p.modals, p.token)
-	p.maxMemory = 1024
-	p.renderState = core.NewRenderState()
+	//p.token = NewShared[string]("token")
+	//p.token.Set(nextToken())
+	p.properties = []core.Property{p.body, p.modals}
+	//p.maxMemory = 1024
+	//p.renderState = core.NewRenderState()
 	if with != nil {
 		with(p)
 	}
@@ -85,12 +82,20 @@ func (p *Page) ID() CID {
 	return p.id
 }
 
-func (p *Page) Type() string {
-	return "Page"
+func (p *Page) Type() protocol.ComponentType {
+	return protocol.PageT
 }
 
-func (p *Page) Properties() slice.Slice[Property] {
-	return p.properties
+func (p *Page) Properties(yield func(core.Property) bool) {
+	for _, property := range p.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (p *Page) Render() protocol.Component {
+	panic("implement me")
 }
 
 func (p *Page) Body() *Shared[LiveComponent] {
@@ -98,16 +103,19 @@ func (p *Page) Body() *Shared[LiveComponent] {
 }
 
 func (p *Page) Token() PageInstanceToken {
-	return PageInstanceToken(p.token.Get())
+	//return PageInstanceToken(p.token.Get())
+	panic("implement me")
 }
 
-func (p *Page) Modals() *SharedList[LiveComponent] {
+func (p *Page) Modals() *SharedList[core.Component] {
 	return p.modals
 }
 
+// deprecated: the scope[component-id] must be invalidated instead
 func (p *Page) Invalidate() {
 	logging.FromContext(p.wire.Context()).Info("page invalidated: re-render")
-	p.renderState.Clear()
+
+	/*p.renderState.Clear()
 	// TODO make also a real component
 	var tmp []jsonComponent
 	p.modals.Each(func(component LiveComponent) {
@@ -128,6 +136,7 @@ func (p *Page) History() *History {
 
 // HandleHTTP provides classic http inter-operation with this page. This is required e.g. for file uploads
 // using multipart forms etc.
+// deprecated: entirely the wrong place for this
 func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	pageToken := r.Header.Get("x-page-token")
@@ -135,10 +144,10 @@ func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		pageToken = query.Get("page")
 	}
 
-	if pageToken != p.token.Get() {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	//if pageToken != p.token.Get() {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
 	// TODO where and how to handle that???
 	/*
 		switch r.URL.Path {

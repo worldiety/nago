@@ -123,11 +123,13 @@ func (s *Scope) sendAck(id protocol.RequestId) {
 
 // only for event loop
 func (s *Scope) render(requestId protocol.RequestId, component Component) protocol.ComponentInvalidated {
-	// TODO
+	s.allocatedComponents[component.ID()].RenderState.Clear()
+	s.allocatedComponents[component.ID()].RenderState.Scan(component)
+
 	return protocol.ComponentInvalidated{
 		Type:      protocol.ComponentInvalidatedT,
 		RequestId: requestId,
-		Component: nil,
+		Component: component.Render(),
 	}
 }
 

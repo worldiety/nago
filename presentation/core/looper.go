@@ -63,6 +63,7 @@ func NewEventLoop() *EventLoop {
 func (l *EventLoop) saveExec(f func()) {
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Println(r)
 			debug.PrintStack()
 			slog.Error("recovered from panic in EventLoop", slog.String("func", fmt.Sprintf("%#v", f)))
 		}

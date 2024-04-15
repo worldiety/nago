@@ -43,8 +43,8 @@ func (c *Configurator) Index(target string) *Configurator {
 func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[protocol.ComponentFactoryId]core.ComponentFactory{}
-	for id, f := range c.uiApp.LivePages {
-		factories[protocol.ComponentFactoryId(id)] = func(scope *core.Scope, requested protocol.NewComponentRequested) core.Component {
+	for id, f := range c.uiApp.Components {
+		factories[id] = func(scope *core.Scope, requested protocol.NewComponentRequested) core.Component {
 			return f(noOpWireStub{})
 		}
 	}

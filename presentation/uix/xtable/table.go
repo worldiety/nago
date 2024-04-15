@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
@@ -29,7 +30,7 @@ type AggregateAction[T any] struct {
 	make    func(modals ui.ModalOwner, t T) ui.LiveComponent
 }
 
-func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) ui.LiveComponent {
+func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.Component {
 	if a.make == nil {
 		return ui.NewButton(func(btn *ui.Button) {
 			btn.Caption().Set(a.Caption)

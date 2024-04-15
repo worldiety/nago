@@ -1,12 +1,15 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type Table struct {
 	id         CID
 	headers    *SharedList[*TableCell]
 	rows       *SharedList[*TableRow]
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewTable(with func(table *Table)) *Table {
@@ -16,7 +19,7 @@ func NewTable(with func(table *Table)) *Table {
 
 	c.rows = NewSharedList[*TableRow]("rows")
 	c.headers = NewSharedList[*TableCell]("headers")
-	c.properties = slice.Of[Property](c.headers, c.rows)
+	c.properties = []core.Property{c.headers, c.rows}
 	if with != nil {
 		with(c)
 	}
@@ -36,10 +39,14 @@ func (c *Table) ID() CID {
 	return c.id
 }
 
-func (c *Table) Type() string {
-	return "Table"
+func (c *Table) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *Table) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Table) Render() protocol.Component {
+	panic("not implemented")
 }

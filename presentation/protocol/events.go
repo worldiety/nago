@@ -19,6 +19,8 @@ func init() {
 		reflect.TypeOf(ScopeDestructionRequested{}),
 		reflect.TypeOf(ConfigurationRequested{}),
 		reflect.TypeOf(ConfigurationDefined{}),
+		reflect.TypeOf(SetPropertyValueRequested{}),
+		reflect.TypeOf(FunctionCallRequested{}),
 	}
 }
 

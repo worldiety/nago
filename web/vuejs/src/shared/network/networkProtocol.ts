@@ -1,17 +1,16 @@
 import type {Invalidation} from '@/shared/model/invalidation';
 import type NetworkAdapter from '@/shared/network/networkAdapter';
-import type {Property} from '@/shared/model/property';
-import type {PropertyFunc} from '@/shared/model/propertyFunc';
-import {v4 as uuidv4} from 'uuid';
-import type {CallBatch} from '@/shared/network/callBatch';
-import type {SetServerProperty} from '@/shared/model/setServerProperty';
-import type {CallServerFunc} from '@/shared/model/callServerFunc';
 import {ConfigurationRequested} from "@/shared/protocol/gen/configurationRequested";
 import {ColorScheme} from "@/shared/protocol/colorScheme";
 import {ConfigurationDefined} from "@/shared/protocol/gen/configurationDefined";
 import {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
 import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
 import {NewComponentRequested} from "@/shared/protocol/gen/newComponentRequested";
+import {Property} from "@/shared/protocol/property";
+import {Pointer} from "@/shared/protocol/pointer";
+import {EventsAggregated} from "@/shared/protocol/gen/eventsAggregated";
+import {SetPropertyValueRequested} from "@/shared/protocol/gen/setPropertyValueRequested";
+import {FunctionCallRequested} from "@/shared/protocol/gen/functionCallRequested";
 
 export default class NetworkProtocol {
 
@@ -32,13 +31,25 @@ export default class NetworkProtocol {
 		console.log("networkAdapter is ok")
 
 		this.networkAdapter.subscribe((responseRaw) => {
-			console.log("got response",responseRaw)
+			console.log("got response", responseRaw)
 			const responseParsed = JSON.parse(responseRaw);
-			const requestId = responseParsed['requestId'] as number;
+			let requestId = responseParsed['requestId'] as number;
+			if (requestId===undefined){
+				// try again the shortened field name of ack, we keep that efficient
+				requestId = responseParsed['r'] as number;
+			}
+
+			if (requestId===undefined){
+				// something event driven from the backend happened, usually an invalidate or a navigation request
+
+				// TODO implement me
+				console.log("trigger redraw because backend wants",responseParsed)
+			}
+
 			let future = this.pendingFutures.get(requestId);
-			if (!future){
+			if (!future) {
 				console.log(`error: got network response with unmatched requestId=${requestId}`)
-			}else{
+			} else {
 				this.pendingFutures.delete(requestId)
 				future.resolveFuture(responseParsed);
 			}
@@ -61,7 +72,7 @@ export default class NetworkProtocol {
 			colorScheme: colorScheme,
 		};
 
-		return this.publishToAdapter(evt.requestId,evt).then(value => {
+		return this.publishToAdapter(evt.requestId, evt).then(value => {
 			let evt = value as ConfigurationDefined
 			this.activeLocale = evt.activeLocale;
 			return evt
@@ -81,7 +92,7 @@ export default class NetworkProtocol {
 			values: params,
 		};
 
-		return this.publishToAdapter(evt.requestId,evt).then(value => value as ComponentInvalidated)
+		return this.publishToAdapter(evt.requestId, evt).then(value => value as ComponentInvalidated)
 	}
 
 
@@ -89,63 +100,74 @@ export default class NetworkProtocol {
 		this.networkAdapter.teardown();
 	}
 
-	async callFunctions(...functions: PropertyFunc[]): Promise<Invalidation | void> {
-		const callBatch = this.createCallBatch(undefined, functions);
-		if (callBatch.tx.length === 0) {
+	// todo I don't believe a void choice type is a good idea...
+	async callFunctions(...functions: Property<Pointer>[]): Promise<Invalidation | void> {
+		let rid = this.nextReqId();
+		const callBatch = this.createCallBatch(rid, undefined, functions);
+		if (callBatch.events.length === 0) {
 			return;
 		}
-		return this.publishToAdapter(callBatch);
+
+		return this.publishToAdapter(rid, callBatch);
 	}
 
-	async setProperties(...properties: Property[]): Promise<Invalidation | void> {
-		const callBatch = this.createCallBatch(properties);
-		if (callBatch.tx.length === 0) {
+	// todo I don't believe a void choice type is a good idea...
+	async setProperties(...properties: Property<unknown>[]): Promise<Invalidation | void> {
+		let rid = this.nextReqId();
+		const callBatch = this.createCallBatch(rid, properties, undefined);
+		if (callBatch.events.length === 0) {
 			return;
 		}
-		return this.publishToAdapter(callBatch);
+		return this.publishToAdapter(rid, callBatch);
 	}
 
-	async setPropertiesAndCallFunctions(properties: Property[], functions: PropertyFunc[]): Promise<Invalidation | void> {
-		const callBatch = this.createCallBatch(properties, functions);
-		if (callBatch.tx.length === 0) {
+	// todo I don't believe a void choice type is a good idea...
+	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<Invalidation | void> {
+		let rid = this.nextReqId();
+		const callBatch = this.createCallBatch(rid, properties, functions);
+		if (callBatch.events.length === 0) {
 			return;
 		}
-		return this.publishToAdapter(callBatch);
+		return this.publishToAdapter(rid, callBatch);
 	}
 
-	private createCallBatch(properties?: Property[], functions?: PropertyFunc[]): CallBatch {
-		const callBatch: CallBatch = {
-			tx: [],
+	private createCallBatch(requestId: number, properties?: Property<unknown>[], functions?: Property<Pointer>[]): EventsAggregated {
+		const callBatch: EventsAggregated = {
+			type: "T",
+			events: [],
+			r: requestId,
 		};
 
 		properties
-			?.filter((property: Property) => property.id !== 0)
-			.forEach((property: Property) => {
-				const action: SetServerProperty = {
-					type: 'setProp',
-					id: property.id,
-					value: property.value,
+			?.filter((property: Property<unknown>) => property.p !== 0)
+			.forEach((property: Property<unknown>) => {
+				const action: SetPropertyValueRequested = {
+					type: 'P',
+					p: property.p,
+					v: String(property.v), // TODO is this correct to convert any into a string?
+					//requestId: requestId, // TODO logically not required and inefficient due to repetition on call , make me optional
 				};
-				callBatch.tx.push(action);
+				callBatch.events.push(action);
 			});
 
 		functions
-			?.filter((propertyFunc: PropertyFunc) => propertyFunc.id !== 0 && propertyFunc.value !== 0)
-			.forEach((propertyFunc: PropertyFunc) => {
-				const callServerFunc: CallServerFunc = {
-					type: 'callFn',
-					id: propertyFunc.value,
+			?.filter((propertyFunc: Property<Pointer>) => propertyFunc.p !== 0 && propertyFunc.v !== 0)
+			.forEach((propertyFunc: Property<Pointer>) => {
+				const callServerFunc: FunctionCallRequested = {
+					type: 'F',
+					p: propertyFunc.v,
+					//requestId: requestId, // TODO logically not required and inefficient due to repetition on call, make me optional
 				};
-				callBatch.tx.push(callServerFunc);
+				callBatch.events.push(callServerFunc);
 			});
 
 		return callBatch;
 	}
 
-	private async publishToAdapter(requestId:number,evt: unknown): Promise<unknown> {
+	private async publishToAdapter(requestId: number, evt: unknown): Promise<unknown> {
 		this.networkAdapter.publish(JSON.stringify(evt));
 		return new Promise<unknown>((resolve, reject) => {
-			const future = new Future(requestId,(obj) => {
+			const future = new Future(requestId, (obj) => {
 				//console.log(obj)
 				return resolve(obj);
 			}, reject);
@@ -177,16 +199,22 @@ export default class NetworkProtocol {
 class Future {
 
 	private readonly resolve: (responseRaw: unknown) => void;
-	private readonly reject: () => void;
+	private readonly reject: (reason: unknown) => void;
 	private readonly monotonicRequestId: number;
 
-	constructor(monotonicRequestId:number,resolve: (responseRaw: unknown) => void, reject: () => void) {
+	constructor(monotonicRequestId: number, resolve: (responseRaw: unknown) => void, reject: (reason: unknown) => void) {
 		this.resolve = resolve;
 		this.reject = reject;
 		this.monotonicRequestId = monotonicRequestId;
 	}
 
 	resolveFuture(responseRaw: unknown): void {
+		if (responseRaw.type === "ErrorOccurred") {
+			console.log(`future ${this.monotonicRequestId} is rejected`)
+			this.reject(responseRaw)
+			return
+		}
+
 		this.resolve(responseRaw);
 	}
 

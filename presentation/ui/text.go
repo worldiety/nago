@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type Text struct {
 	id           CID
@@ -8,7 +11,7 @@ type Text struct {
 	color        *Shared[Color]
 	colorDark    *Shared[Color]
 	size         *Shared[Size]
-	properties   slice.Slice[Property]
+	properties   []core.Property
 	onClick      *Func
 	onHoverStart *Func
 	onHoverEnd   *Func
@@ -26,7 +29,7 @@ func NewText(with func(*Text)) *Text {
 	c.size = NewShared[Size]("size")
 	c.color = NewShared[Color]("color")
 	c.colorDark = NewShared[Color]("colorDark")
-	c.properties = slice.Of[Property](c.value, c.color, c.colorDark, c.size, c.onClick, c.onHoverStart, c.onHoverEnd)
+	c.properties = []core.Property{c.value, c.color, c.colorDark, c.size, c.onClick, c.onHoverStart, c.onHoverEnd}
 	if with != nil {
 		with(c)
 	}
@@ -72,10 +75,18 @@ func (c *Text) ID() CID {
 	return c.id
 }
 
-func (c *Text) Type() string {
-	return "Text"
+func (c *Text) Type() protocol.ComponentType {
+	return protocol.TextT
 }
 
-func (c *Text) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Text) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Text) Render() protocol.Component {
+	panic("not implemented")
 }

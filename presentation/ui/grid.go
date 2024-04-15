@@ -1,17 +1,20 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
+)
 
 type Grid struct {
 	id         CID
-	cells      *SharedList[LiveComponent]
+	cells      *SharedList[core.Component]
 	rows       Int
 	columns    Int
 	smColumns  Int
 	mdColumns  Int
 	lgColumns  Int
 	gap        *Shared[Size]
-	properties slice.Slice[Property]
+	properties []Property
 }
 
 func NewGrid(with func(grid *Grid)) *Grid {
@@ -26,7 +29,7 @@ func NewGrid(with func(grid *Grid)) *Grid {
 	c.mdColumns = NewShared[int64]("mdColumns")
 	c.lgColumns = NewShared[int64]("lgColumns")
 	c.gap = NewShared[Size]("gap")
-	c.properties = slice.Of[Property](c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns)
+	c.properties = []Property{c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns}
 	if with != nil {
 		with(c)
 	}
@@ -70,10 +73,18 @@ func (c *Grid) ID() CID {
 	return c.id
 }
 
-func (c *Grid) Type() string {
-	return "Grid"
+func (c *Grid) Type() protocol.ComponentType {
+	return protocol.GridT
 }
 
-func (c *Grid) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Grid) Properties(yield func(Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Grid) Render() protocol.Component {
+	panic("implement me")
 }

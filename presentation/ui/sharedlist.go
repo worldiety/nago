@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
 )
 
 // TODO this is the wrong signature
@@ -33,9 +34,10 @@ func (s *SharedList[T]) From(iter Iter[T]) {
 	s.iter = iter
 }
 
+// deprecated
 func (s *SharedList[T]) Unwrap() any {
 	var zero T
-	_, isLiveComponent := any(zero).(LiveComponent)
+	_, isLiveComponent := any(zero).(core.Component)
 
 	if s.iter != nil {
 		if isLiveComponent {
@@ -94,6 +96,7 @@ func (s *SharedList[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
+// deprecated wrong iter signature, use Iter
 func (s *SharedList[T]) Each(f func(T)) {
 	if s == nil {
 		return
@@ -105,6 +108,25 @@ func (s *SharedList[T]) Each(f func(T)) {
 
 	for _, value := range s.values {
 		f(value)
+	}
+}
+
+func (s *SharedList[T]) Iter(f func(T) bool) {
+	if s == nil {
+		return
+	}
+
+	if s.iter != nil {
+		s.iter(func(t T) {
+			// return f(t)
+			f(t) // todo update to proper iterator type
+		})
+	}
+
+	for _, value := range s.values {
+		if !f(value) {
+			return
+		}
 	}
 }
 

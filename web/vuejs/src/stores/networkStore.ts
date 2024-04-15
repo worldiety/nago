@@ -1,13 +1,14 @@
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import { defineStore } from 'pinia';
 import NetworkProtocol from '@/shared/network/networkProtocol';
-import type { Property } from '@/shared/model/property';
 import type { PropertyFunc } from '@/shared/model/propertyFunc';
 import type { Invalidation } from '@/shared/model/invalidation';
 import {ConfigurationDefined} from "@/shared/protocol/gen/configurationDefined";
 import {ColorScheme} from "@/shared/protocol/colorScheme";
 import {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
 import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
+import {Pointer} from "@/shared/protocol/pointer";
+import {Property} from "@/shared/protocol/property";
 
 interface NetworkStoreState {
 	networkProtocol: NetworkProtocol;
@@ -33,13 +34,13 @@ export const useNetworkStore = defineStore('networkStore', {
 		teardown(): void {
 			this.networkProtocol.teardown();
 		},
-		async invokeFunctions(...functions: PropertyFunc[]): Promise<Invalidation|void> {
+		async invokeFunctions(...functions: Property<Pointer>[]): Promise<Invalidation|void> {
 			return this.networkProtocol.callFunctions(...functions);
 		},
-		async invokeSetProperties(...properties: Property[]): Promise<Invalidation|void> {
+		async invokeSetProperties(...properties: Property<unknown>[]): Promise<Invalidation|void> {
 			return this.networkProtocol.setProperties(...properties);
 		},
-		async invokeFunctionsAndSetProperties(properties: Property[], functions: PropertyFunc[]): Promise<Invalidation|void> {
+		async invokeFunctionsAndSetProperties(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<Invalidation|void> {
 			return this.networkProtocol.setPropertiesAndCallFunctions(properties, functions);
 		},
 	},

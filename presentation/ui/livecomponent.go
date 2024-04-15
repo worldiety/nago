@@ -4,14 +4,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/protocol"
 	"strconv"
 )
 
+// deprecated
 type LiveComponent = core.Component
 
+// deprecated
 type Property = core.Property
 
 type String = *Shared[string]
@@ -20,7 +21,7 @@ type Bool = *Shared[bool]
 type Int = *Shared[int64]
 type Float = *Shared[float64]
 
-type SVGSrc string
+type SVGSrc = protocol.SVG
 
 // Allows sizes are sm, base, lg, xl and 2xl
 type Size string
@@ -39,6 +40,17 @@ func NewShared[T any](name string) *Shared[T] {
 		id:   nextPtr(),
 		name: name,
 	}
+}
+
+func (s *Shared[T]) Render() protocol.Property[T] {
+	return protocol.Property[T]{
+		Ptr:   s.id,
+		Value: s.v,
+	}
+}
+
+func (s *Shared[T]) Iter(f func(T) bool) {
+	f(s.v)
 }
 
 func (s *Shared[T]) ID() CID {
@@ -125,86 +137,4 @@ func nextToken() string {
 		panic(fmt.Errorf("unexpected crypto error: %w", err))
 	}
 	return hex.EncodeToString(tmp[:])
-}
-
-func IsDirty(dst LiveComponent) bool {
-	if dst == nil {
-		return false
-	}
-
-	dirty := false
-	dst.Properties().Each(func(idx int, v Property) {
-		dirty = dirty || v.Dirty()
-	})
-
-	if dirty {
-		return true
-	}
-
-	Functions(dst, func(f *Func) {
-		dirty = dirty || f.Dirty()
-	})
-
-	if dirty {
-		return true
-	}
-
-	Children(dst, func(c LiveComponent) {
-		dirty = dirty || IsDirty(c)
-	})
-
-	return dirty
-}
-
-func SetDirty(dst LiveComponent, dirty bool) {
-	if dst == nil {
-		return
-	}
-
-	dst.Properties().Each(func(idx int, v Property) {
-		v.SetDirty(dirty)
-	})
-
-	Functions(dst, func(f *Func) {
-		f.SetDirty(dirty)
-	})
-
-	Children(dst, func(c LiveComponent) {
-		SetDirty(c, dirty)
-	})
-
-}
-
-func Functions(c LiveComponent, f func(f *Func)) {
-	c.Properties().Each(func(idx int, v Property) {
-		if fun, ok := v.(*Func); ok {
-			f(fun)
-		}
-	})
-}
-
-func Children(c LiveComponent, f func(c LiveComponent)) {
-	c.Properties().Each(func(idx int, v Property) {
-		switch t := v.(type) {
-		case *Shared[LiveComponent]:
-			f(t.Get())
-		case *SharedList[LiveComponent]:
-			t.Each(func(component LiveComponent) {
-				f(component)
-			})
-		case Property:
-			switch v := t.Unwrap().(type) {
-			case []LiveComponent:
-				for _, component := range v {
-					f(component)
-				}
-			case slice.Slice[LiveComponent]:
-				v.Each(func(idx int, v LiveComponent) {
-					f(v)
-				})
-			case LiveComponent:
-				f(v)
-			}
-		}
-	})
 }

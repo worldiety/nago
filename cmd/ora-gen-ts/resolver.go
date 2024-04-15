@@ -73,6 +73,14 @@ func init() {
 				{Package: prefix + "ridsvg", Name: "RIDSVG"},
 			},
 		},
+
+		reflect.TypeOf(protocol.Property[protocol.SVG]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Package: prefix + "svg", Name: "SVG"},
+			},
+		},
 		reflect.TypeOf(protocol.RequestId(0)): {
 			Name:    "RequestId",
 			Package: prefix + "requestId",

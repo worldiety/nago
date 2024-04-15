@@ -10,6 +10,8 @@ import type { ComponentDestructionRequested } from '@/shared/protocol/gen/compon
 import type { ScopeDestructionRequested } from '@/shared/protocol/gen/scopeDestructionRequested';
 import type { ConfigurationRequested } from '@/shared/protocol/gen/configurationRequested';
 import type { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
+import type { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
+import type { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
 
 
 export type Event =
@@ -23,5 +25,7 @@ export type Event =
     | ScopeDestructionRequested
     | ConfigurationRequested
     | ConfigurationDefined
+    | SetPropertyValueRequested
+    | FunctionCallRequested
     
 

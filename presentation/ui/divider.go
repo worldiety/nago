@@ -1,22 +1,18 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/protocol"
 )
 
 type Divider struct {
-	id         CID
-	children   *SharedList[LiveComponent]
-	properties slice.Slice[Property]
+	id CID
 }
 
 func NewDivider(with func(*Divider)) *Divider {
 	c := &Divider{
-		id:       nextPtr(),
-		children: NewSharedList[LiveComponent]("children"),
+		id: nextPtr(),
 	}
-
-	c.properties = slice.Of[Property](c.children)
 
 	if with != nil {
 		with(c)
@@ -29,10 +25,9 @@ func (c *Divider) ID() CID {
 	return c.id
 }
 
-func (c *Divider) Type() string {
-	return "Divider"
+func (c *Divider) Properties(yield func(core.Property) bool) {
 }
 
-func (c *Divider) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Divider) Render() protocol.Component {
+	panic("not implemented")
 }
