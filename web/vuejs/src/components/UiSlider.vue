@@ -6,7 +6,10 @@
 			class="slider"
 			:class="{'slider-disabled': props.ui.disabled.value}"
 		>
-			<div class="relative flex items-center h-4">
+			<div
+				class="relative flex items-center h-4"
+				:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
+			>
 				<!-- Slider track -->
 				<div ref="sliderTrack" class="slider-track w-full"></div>
 				<!-- Left slider thumb -->
@@ -14,23 +17,23 @@
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
 					:class="{
 						'slider-thumb-dragging': startDragging,
-						'slider-thumb-disabled': !props.ui.startInitialized.value,
+						'slider-thumb-uninitialized': !props.ui.startInitialized.value,
 					}"
-					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
 					@touchstart="startSliderThumbPressed"
 					@keydown.left="decreaseStartSliderValue"
 					@keydown.right="increaseStartSliderValue"
 				></div>
+				<!-- Slider thumb connector -->
+				<div v-if="props.ui.startInitialized.value && props.ui.endInitialized.value" class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange"></div>
 				<!-- Right slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
 					:class="{
 						'slider-thumb-dragging': endDragging,
-						'slider-thumb-disabled': !props.ui.endInitialized.value,
+						'slider-thumb-uninitialized': !props.ui.endInitialized.value,
 					}"
-					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
 					@touchstart="endSliderThumbPressed"
@@ -258,14 +261,14 @@ function increaseEndSliderValue(): void {
 	@apply border-b-disabled-background;
 }
 
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
 	@apply bg-black;
 	@apply dark:bg-white;
 }
 
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled:hover,
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled:focus-visible,
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-disabled.slider-thumb-dragging {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:focus-visible,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
 	@apply bg-ora-orange;
 }
 
@@ -298,5 +301,10 @@ function increaseEndSliderValue(): void {
 
 .slider-thumb-end {
 	left: calc(var(--slider-thumb-end-offset) - 0.5rem);
+}
+
+.slider:not(.slider-disabled) .slider-thumb-connector {
+	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset) - 1rem);
+	left: calc(var(--slider-thumb-start-offset) + 0.5rem);
 }
 </style>
