@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import type { LivePage } from '@/shared/model/livePage';
 import {Table} from "@/shared/protocol/gen/table";
 
 const props = defineProps<{
 	ui: Table;
-	page: LivePage;
 }>();
 </script>
 
@@ -18,7 +16,7 @@ const props = defineProps<{
 			>
 				<tr>
 					<th v-for="head in props.ui.headers.v" scope="col" class="px-6 py-3">
-						<ui-generic :ui="head.body.v" :page="page" />
+						<ui-generic :ui="head.body.v" />
 					</th>
 				</tr>
 			</thead>
@@ -29,7 +27,7 @@ const props = defineProps<{
 					class="border-b odd:bg-white even:bg-gray-50 dark:border-gray-700 odd:dark:bg-gray-900 even:dark:bg-gray-800"
 				>
 					<td v-for="cell in row.cells.v" class="px-6 py-4">
-						<ui-generic :ui="cell.body.v" :page="page" />
+						<ui-generic :ui="cell.body.v"  />
 					</td>
 				</tr>
 			</tbody>

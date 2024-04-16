@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import uiComponentsMap from '@/shared/uiComponents';
-import type { UiElement } from '@/shared/model/uiElement';
-import type { LivePage } from '@/shared/model/livePage';
+import {Component as OraComponent} from "@/shared/protocol/gen/component";
 
 const props = defineProps<{
-	ui: UiElement;
-	page: LivePage;
+	ui: OraComponent; // if we don't rename the import, Vue confuses everything up
 }>();
 </script>
 
@@ -14,7 +12,6 @@ const props = defineProps<{
 		:is="uiComponentsMap.get(props.ui.type)"
 		v-if="props.ui && uiComponentsMap.has(props.ui.type)"
 		:ui="props.ui"
-		:page="props.page"
 	/>
 	<div v-else-if="!props.ui">ui is null</div>
 	<div v-else>[Unknown view type '{{ props.ui.type }}']</div>

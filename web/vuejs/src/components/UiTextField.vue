@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import {TextField} from "@/shared/protocol/gen/textField";
 
 const props = defineProps<{
 	ui: TextField;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();

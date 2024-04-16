@@ -2,12 +2,10 @@
 import type { Ref } from 'vue';
 import { inject } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {Image} from "@/shared/protocol/gen/image";
 
 const props = defineProps<{
 	ui: Image;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();
@@ -16,7 +14,7 @@ const networkStore = useNetworkStore();
 
 function getSource(): string {
 	if (props.ui.url.v === '/api/v1/download') {
-		return props.ui.url.v + '?page=' + props.page.token + '&download=' + props.ui.downloadToken.v;
+		return props.ui.url.v + '?page=???' +  + '&download=' + props.ui.downloadToken.v; // TODO we had the page token here, but why not just omit that and just use the token? the backend can resolve that easily
 	}
 
 	return props.ui.url.v;

@@ -1,3 +1,4 @@
+// todo this is wrong, we need to define intents or explicit and complete color themes
 export function textColor2Tailwind(s: string): string {
 	if (s == null || s == '') {
 		return '';

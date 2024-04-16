@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import {computed, markRaw} from 'vue';
-import type { LivePage } from '@/shared/model/livePage';
 import {fetchUpload} from "@/api/upload/uploadRepository";
 import {ApplicationError, useErrorHandling} from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
@@ -10,7 +9,6 @@ const errorHandler = useErrorHandling();
 
 const props = defineProps<{
 	ui: FileField;
-	page: LivePage;
 }>();
 
 function isErr(): boolean {
@@ -52,7 +50,7 @@ async function fileInputChanged(e: Event):Promise<void> {
 		filesarray.push(item.files[i])
 	}
 	try {
-		 await fetchUpload(filesarray, props.page.token, props.ui.uploadToken.v)
+		 await fetchUpload(filesarray, "???", props.ui.uploadToken.v) // todo backend must resolve page/scope whatever by token itself
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e)
 	}

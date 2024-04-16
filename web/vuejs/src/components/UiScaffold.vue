@@ -2,12 +2,10 @@
 import { onMounted } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {Scaffold} from "@/shared/protocol/gen/scaffold";
 
 const props = defineProps<{
 	ui: Scaffold;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();
@@ -65,15 +63,15 @@ onMounted(() => {
 	<div class="fixed z-30 flex w-full flex-1 flex-col dark:text-white">
 		<nav class="flex h-16 justify-between bg-white px-4 shadow dark:bg-gray-700">
 			<div class="flex items-center pl-4">
-				<ui-generic v-if="props.ui.topbarLeft.v" :ui="props.ui.topbarLeft.v" :page="page" />
+				<ui-generic v-if="props.ui.topbarLeft.v" :ui="props.ui.topbarLeft.v"  />
 			</div>
 
 			<div class="flex items-center">
-				<ui-generic v-if="props.ui.topbarMid.v" :ui="props.ui.topbarMid.v" :page="page" />
+				<ui-generic v-if="props.ui.topbarMid.v" :ui="props.ui.topbarMid.v"  />
 			</div>
 
 			<ul class="flex items-center pr-4">
-				<ui-generic v-if="props.ui.topbarRight.v" :ui="props.ui.topbarRight.v" :page="page" />
+				<ui-generic v-if="props.ui.topbarRight.v" :ui="props.ui.topbarRight.v"  />
 			</ul>
 		</nav>
 	</div>
@@ -93,15 +91,15 @@ onMounted(() => {
 						<svg
 							v-inline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							v-if="btn.preIcon.value"
-							v-html="btn.preIcon.value"
+							v-if="btn.preIcon.v"
+							v-html="btn.preIcon.v"
 						></svg>
-						<span class="ms-3">{{ btn.caption.value }}</span>
+						<span class="ms-3">{{ btn.caption.v }}</span>
 						<svg
 							v-inline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							v-if="btn.postIcon.value"
-							v-html="btn.postIcon.value"
+							v-if="btn.postIcon.v"
+							v-html="btn.postIcon.v"
 						></svg>
 					</a>
 				</li>
@@ -154,16 +152,16 @@ onMounted(() => {
 							<svg
 								v-inline
 								class="me-2.5 h-3 w-3"
-								v-if="btn.preIcon.value"
-								v-html="btn.preIcon.value"
+								v-if="btn.preIcon.v"
+								v-html="btn.preIcon.v"
 							></svg>
-							{{ btn.caption.value }}
+							{{ btn.caption.v }}
 						</a>
 					</li>
 				</ol>
 			</nav>
 
-			<ui-generic :ui="props.ui.body.v" :page="page" />
+			<ui-generic :ui="props.ui.body.v"  />
 		</div>
 	</div>
 
@@ -180,18 +178,18 @@ onMounted(() => {
 				<svg
 					v-inline
 					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					v-if="btn.preIcon.value"
-					v-html="btn.preIcon.value"
+					v-if="btn.preIcon.v"
+					v-html="btn.preIcon.v"
 				></svg>
 				<span
 					class="text-sm text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					>{{ btn.caption.value }}</span
+					>{{ btn.caption.v }}</span
 				>
 				<svg
 					v-inline
 					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					v-if="btn.postIcon.value"
-					v-html="btn.postIcon.value"
+					v-if="btn.postIcon.v"
+					v-html="btn.postIcon.v"
 				></svg>
 			</button>
 		</div>

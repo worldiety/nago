@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { PropertyInt } from '@/shared/model/propertyInt';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import {NumberField} from "@/shared/protocol/gen/numberField";
+import {Property} from "@/shared/protocol/property";
 
 const props = defineProps<{
 	ui: NumberField
@@ -25,9 +25,9 @@ watch(inputValue, (newValue, oldValue) => {
 		inputValue.value = oldValue;
 		return;
 	}
-	const updatedValueProperty: PropertyInt = {
+	const updatedValueProperty: Property<number> = {
 		...props.ui.value,
-		value: parseInt(newValue, 10),
+		v: parseInt(newValue, 10),
 	};
 	networkStore.invokeFunctionsAndSetProperties([updatedValueProperty], [props.ui.onValueChanged]);
 });

@@ -4,7 +4,6 @@ import Calendar from '@/assets/svg/calendar.svg';
 import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
-import type { PropertyBool } from '@/shared/model/propertyBool';
 import { useI18n } from 'vue-i18n';
 import {DatePicker} from "@/shared/protocol/gen/datePicker";
 

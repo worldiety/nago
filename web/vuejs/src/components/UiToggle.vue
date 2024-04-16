@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import { ref } from 'vue';
 import {Toggle} from "@/shared/protocol/gen/toggle";
 
 const props = defineProps<{
 	ui: Toggle;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();
@@ -19,7 +17,7 @@ function onClick() {
 	checked.value = !checked.value;
 	networkStore.invokeFunctionsAndSetProperties([{
 		...props.ui.checked,
-		value: checked.value,
+		v: checked.value,
 	}], [props.ui.onCheckedChanged]);
 }
 </script>

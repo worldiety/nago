@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import type { LivePage } from '@/shared/model/livePage';
 import {GridCell} from "@/shared/protocol/gen/gridCell";
 
 const props = defineProps<{
 	ui: GridCell;
-	page: LivePage;
 }>();
 
 const styleGridColStart = computed<string>(() => {
@@ -73,6 +71,6 @@ const style = computed(
 
 <template>
 	<div :class="style">
-		<ui-generic :ui="props.ui.body.v" :page="page" />
+		<ui-generic :ui="props.ui.body.v" />
 	</div>
 </template>

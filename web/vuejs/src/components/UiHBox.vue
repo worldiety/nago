@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import type { LivePage } from '@/shared/model/livePage';
 import {HBox} from "@/shared/protocol/gen/hBox";
 
 const props = defineProps<{
 	ui: HBox;
-	page: LivePage;
 }>();
 
 const clazz = computed<string>(() => {
@@ -26,6 +24,6 @@ const clazz = computed<string>(() => {
 
 <template>
 	<div :class="clazz">
-		<ui-generic v-for="ui in props.ui.children.v" :ui="ui" :page="page" />
+		<ui-generic v-for="ui in props.ui.children.v" :ui="ui"  />
 	</div>
 </template>

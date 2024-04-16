@@ -1,4 +1,3 @@
-import type {Invalidation} from '@/shared/model/invalidation';
 import type NetworkAdapter from '@/shared/network/networkAdapter';
 import {ConfigurationRequested} from "@/shared/protocol/gen/configurationRequested";
 import {ColorScheme} from "@/shared/protocol/colorScheme";
@@ -121,7 +120,7 @@ export default class NetworkProtocol {
 	}
 
 	// todo I don't believe a void choice type is a good idea...
-	async callFunctions(...functions: Property<Pointer>[]): Promise<Invalidation | void> {
+	async callFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated | void> {
 		let rid = this.nextReqId();
 		const callBatch = this.createCallBatch(rid, undefined, functions);
 		if (callBatch.events.length === 0) {
@@ -132,7 +131,7 @@ export default class NetworkProtocol {
 	}
 
 	// todo I don't believe a void choice type is a good idea...
-	async setProperties(...properties: Property<unknown>[]): Promise<Invalidation | void> {
+	async setProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated | void> {
 		let rid = this.nextReqId();
 		const callBatch = this.createCallBatch(rid, properties, undefined);
 		if (callBatch.events.length === 0) {
@@ -142,7 +141,7 @@ export default class NetworkProtocol {
 	}
 
 	// todo I don't believe a void choice type is a good idea...
-	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<Invalidation | void> {
+	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated | void> {
 		let rid = this.nextReqId();
 		const callBatch = this.createCallBatch(rid, properties, functions);
 		if (callBatch.events.length === 0) {

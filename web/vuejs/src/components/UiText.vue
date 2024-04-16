@@ -2,12 +2,10 @@
 import { textColor2Tailwind, textSize2Tailwind } from '@/shared/tailwindTranslator';
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {Text} from "@/shared/protocol/gen/text";
 
 const props = defineProps<{
 	ui: Text;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();

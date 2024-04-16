@@ -2,15 +2,13 @@
 import { computed } from 'vue';
 import UiGridCell from '@/components/UiGridCell.vue';
 import { gapSize2Tailwind } from '@/shared/tailwindTranslator';
-import type { LivePage } from '@/shared/model/livePage';
 import {Grid} from "@/shared/protocol/gen/grid";
 
 const props = defineProps<{
 	ui: Grid;
-	page: LivePage;
 }>();
 
-//TODO we get into trouble using tailwind pre-processor here
+//TODO remove this entire type, because it has no semantic meaning and cannot be ported to different platforms without major glitches
 const style = computed<string>(() => {
 	let tmp = 'grid';
 	if (props.ui.columns.v > 0) {
@@ -49,6 +47,6 @@ const style = computed<string>(() => {
 
 <template>
 	<div :class="style">
-		<ui-grid-cell v-for="cell in props.ui.cells.v" :ui="cell" :page="page" />
+		<ui-grid-cell v-for="cell in props.ui.cells.v" :ui="cell"  />
 	</div>
 </template>

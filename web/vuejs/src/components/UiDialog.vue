@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { onMounted, ref } from 'vue';
-import type { LivePage } from '@/shared/model/livePage';
 import {Dialog} from "@/shared/protocol/gen/dialog";
 
 const props = defineProps<{
 	ui: Dialog;
-	page: LivePage;
 }>();
 
 const dialog = ref<HTMLElement|undefined>();
@@ -32,7 +30,7 @@ onMounted(() => {
 					</h3>
 					<div class="mt-2">
 						<div class="text-sm text-gray-500">
-							<ui-generic v-if="props.ui.body.v" :ui="props.ui.body.v" :page="page" />
+							<ui-generic v-if="props.ui.body.v" :ui="props.ui.body.v" />
 						</div>
 					</div>
 				</div>
@@ -43,7 +41,6 @@ onMounted(() => {
 				class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto"
 				v-for="action in props.ui.actions.v"
 				:ui="action"
-				:page="page"
 			/>
 		</div>
 	</div>

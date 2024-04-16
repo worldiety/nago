@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {TextArea} from "@/shared/protocol/gen/textArea";
 
 const props = defineProps<{
 	ui: TextArea;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();

@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import type { LivePage } from '@/shared/model/livePage';
 import {Divider} from "@/shared/protocol/gen/divider";
 
 const props = defineProps<{
 	ui: Divider;
-	page: LivePage;
 }>();
 </script>
 

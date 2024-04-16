@@ -2,11 +2,9 @@
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { Button } from '@/shared/protocol/gen/button';
-import type { LivePage } from '@/shared/model/livePage';
 
 const props = defineProps<{
 	ui: Button;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();

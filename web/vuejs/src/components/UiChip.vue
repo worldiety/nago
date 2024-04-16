@@ -1,12 +1,10 @@
 <script lang="ts" setup xmlns="http://www.w3.org/1999/html">
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {Chip} from "@/shared/protocol/gen/chip";
 
 const props = defineProps<{
 	ui: Chip;
-	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();

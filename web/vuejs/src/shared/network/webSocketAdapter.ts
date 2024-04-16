@@ -1,6 +1,3 @@
-import { useAuth, UserChangedCallbacks } from '@/stores/authStore';
-import type { UpdateJWT } from '@/shared/model/updateJWT';
-import type { CallBatch } from '@/shared/network/callBatch';
 import type NetworkAdapter from '@/shared/network/networkAdapter';
 
 export default class WebSocketAdapter implements NetworkAdapter {

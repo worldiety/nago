@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LivePage } from '@/shared/model/livePage';
 import {WebView} from "@/shared/protocol/gen/webView";
 
 const props = defineProps<{
 	ui: WebView;
-	page: LivePage;
 }>();
 
 </script>
