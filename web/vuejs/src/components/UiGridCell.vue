@@ -1,60 +1,60 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import type { LiveGridCell } from '@/shared/model/liveGridCell';
 import type { LivePage } from '@/shared/model/livePage';
+import {GridCell} from "@/shared/protocol/gen/gridCell";
 
 const props = defineProps<{
-	ui: LiveGridCell;
+	ui: GridCell;
 	page: LivePage;
 }>();
 
 const styleGridColStart = computed<string>(() => {
-	if (props.ui.colStart.value > 0) {
-		return `col-start-${props.ui.colStart.value} `;
+	if (props.ui.colStart.v > 0) {
+		return `col-start-${props.ui.colStart.v} `;
 	}
 
 	return '';
 });
 
 const styleGridColEnd = computed<string>(() => {
-	if (props.ui.colEnd.value > 0) {
-		return `col-end-${props.ui.colEnd.value} `;
+	if (props.ui.colEnd.v > 0) {
+		return `col-end-${props.ui.colEnd.v} `;
 	}
 	return '';
 });
 
 const styleGridRowStart = computed<string>(() => {
-	if (props.ui.rowStart.value > 0) {
-		return `row-start-${props.ui.rowStart.value} `;
+	if (props.ui.rowStart.v > 0) {
+		return `row-start-${props.ui.rowStart.v} `;
 	}
 
 	return '';
 });
 
 const styleGridRowEnd = computed<string>(() => {
-	if (props.ui.rowEnd.value > 0) {
-		return `row-end-${props.ui.rowEnd.value} `;
+	if (props.ui.rowEnd.v > 0) {
+		return `row-end-${props.ui.rowEnd.v} `;
 	}
 	return '';
 });
 
 const styleGridColSpan = computed<string>(() => {
 	let tmp = '';
-	if (props.ui.colSpan.value > 0) {
-		tmp += `col-span-${props.ui.colSpan.value} `;
+	if (props.ui.colSpan.v > 0) {
+		tmp += `col-span-${props.ui.colSpan.v} `;
 	}
 
-	if (props.ui.smColSpan.value > 0) {
-		tmp += ` sm:col-span-${props.ui.smColSpan.value} `;
+	if (props.ui.smColSpan.v > 0) {
+		tmp += ` sm:col-span-${props.ui.smColSpan.v} `;
 	}
 
-	if (props.ui.mdColSpan.value > 0) {
-		tmp += ` md:col-span-${props.ui.mdColSpan.value} `;
+	if (props.ui.mdColSpan.v > 0) {
+		tmp += ` md:col-span-${props.ui.mdColSpan.v} `;
 	}
 
-	if (props.ui.lgColSpan.value > 0) {
-		tmp += ` lg:col-span-${props.ui.lgColSpan.value} `;
+	if (props.ui.lgColSpan.v > 0) {
+		tmp += ` lg:col-span-${props.ui.lgColSpan.v} `;
 	}
 
 	return tmp;
@@ -73,6 +73,6 @@ const style = computed(
 
 <template>
 	<div :class="style">
-		<ui-generic :ui="props.ui.body.value" :page="page" />
+		<ui-generic :ui="props.ui.body.v" :page="page" />
 	</div>
 </template>

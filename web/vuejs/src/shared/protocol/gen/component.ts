@@ -18,6 +18,16 @@ import type { Slider } from '@/shared/protocol/gen/slider';
 import type { Divider } from '@/shared/protocol/gen/divider';
 import type { Dropdown } from '@/shared/protocol/gen/dropdown';
 import type { DropdownItem } from '@/shared/protocol/gen/dropdownItem';
+import type { Chip } from '@/shared/protocol/gen/chip';
+import type { Card } from '@/shared/protocol/gen/card';
+import type { Stepper } from '@/shared/protocol/gen/stepper';
+import type { StepInfo } from '@/shared/protocol/gen/stepInfo';
+import type { WebView } from '@/shared/protocol/gen/webView';
+import type { TextArea } from '@/shared/protocol/gen/textArea';
+import type { FileField } from '@/shared/protocol/gen/fileField';
+import type { Image } from '@/shared/protocol/gen/image';
+import type { Grid } from '@/shared/protocol/gen/grid';
+import type { GridCell } from '@/shared/protocol/gen/gridCell';
 
 
 export type Component =
@@ -39,5 +49,15 @@ export type Component =
     | Divider
     | Dropdown
     | DropdownItem
+    | Chip
+    | Card
+    | Stepper
+    | StepInfo
+    | WebView
+    | TextArea
+    | FileField
+    | Image
+    | Grid
+    | GridCell
     
 

@@ -41,6 +41,14 @@ const (
 	DividerT      ComponentType = "Divider"
 	DropdownT     ComponentType = "Dropdown"
 	DropdownItemT ComponentType = "DropdownItem"
+	ChipT         ComponentType = "Chip"
+	CardT         ComponentType = "Card"
+	StepperT      ComponentType = "Stepper"
+	StepInfoT     ComponentType = "StepInfo"
+	WebViewT      ComponentType = "WebView"
+	TextAreaT     ComponentType = "TextArea"
+	FileFieldT    ComponentType = "FileField"
+	ImageT        ComponentType = "Image"
 )
 
 type Component interface {
@@ -69,6 +77,16 @@ func init() {
 		reflect.TypeOf(Divider{}),
 		reflect.TypeOf(Dropdown{}),
 		reflect.TypeOf(DropdownItem{}),
+		reflect.TypeOf(Chip{}),
+		reflect.TypeOf(Card{}),
+		reflect.TypeOf(Stepper{}),
+		reflect.TypeOf(StepInfo{}),
+		reflect.TypeOf(WebView{}),
+		reflect.TypeOf(TextArea{}),
+		reflect.TypeOf(FileField{}),
+		reflect.TypeOf(Image{}),
+		reflect.TypeOf(Grid{}),
+		reflect.TypeOf(GridCell{}),
 	}
 }
 

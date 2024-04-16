@@ -1,24 +1,24 @@
 <script lang="ts" setup>
 import {computed, markRaw} from 'vue';
-import type { LiveUploadField } from '@/shared/model/liveUploadField';
 import type { LivePage } from '@/shared/model/livePage';
 import {fetchUpload} from "@/api/upload/uploadRepository";
 import {ApplicationError, useErrorHandling} from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
+import {FileField} from "@/shared/protocol/gen/fileField";
 
 const errorHandler = useErrorHandling();
 
 const props = defineProps<{
-	ui: LiveUploadField;
+	ui: FileField;
 	page: LivePage;
 }>();
 
 function isErr(): boolean {
-	return props.ui.error.value != '';
+	return props.ui.error.v != '';
 }
 
 const labelClass = computed<string>(() => {
-	if (props.ui.disabled.value && isErr()) {
+	if (props.ui.disabled.v && isErr()) {
 		return 'text-red-900 dark:text-red-700';
 	}
 
@@ -30,7 +30,7 @@ const labelClass = computed<string>(() => {
 });
 
 const inputClass = computed<string>(() => {
-	if (props.ui.disabled.value) {
+	if (props.ui.disabled.v) {
 		return 'bg-gray-100 border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500';
 	}
 
@@ -52,7 +52,7 @@ async function fileInputChanged(e: Event):Promise<void> {
 		filesarray.push(item.files[i])
 	}
 	try {
-		 await fetchUpload(filesarray, props.page.token, props.ui.uploadToken.value)
+		 await fetchUpload(filesarray, props.page.token, props.ui.uploadToken.v)
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e)
 	}
@@ -87,19 +87,19 @@ async function fileInputChanged(e: Event):Promise<void> {
 						d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
 					/>
 				</svg>
-				<p class="mb-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
-				<p class="text-xs text-gray-500 dark:text-gray-400">{{ props.ui.label.value }}</p>
+				<p class="mb-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
+				<p class="text-xs text-gray-500 dark:text-gray-400">{{ props.ui.label.v }}</p>
 			</div>
 			<input
 				@change="fileInputChanged"
-				:disabled="props.ui.disabled.value"
+				:disabled="props.ui.disabled.v"
 				:id="props.ui.id.toString()"
 				type="file"
 				class="hidden"
-				:multiple="props.ui.multiple.value"
-				:accept="props.ui.filter.value"
+				:multiple="props.ui.multiple.v"
+				:accept="props.ui.filter.v"
 			/>
-			<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
+			<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
 		</label>
 	</div>
 </template>

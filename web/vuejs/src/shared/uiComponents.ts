@@ -43,7 +43,7 @@ uiComponentsMap.set('Grid', UiGrid);
 uiComponentsMap.set('Table', UiTable);
 uiComponentsMap.set('Card', UiCard);
 uiComponentsMap.set('Dropdown', UiDropdown);
-uiComponentsMap.set('Datepicker', UiDatepicker);
+uiComponentsMap.set('DatePicker', UiDatepicker);
 uiComponentsMap.set('Slider', UiSlider);
 uiComponentsMap.set('NumberField', UiNumberField);
 uiComponentsMap.set('WebView', UiWebView);

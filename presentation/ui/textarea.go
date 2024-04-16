@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type TextArea struct {
@@ -13,7 +14,7 @@ type TextArea struct {
 	rows          Int
 	disabled      Bool
 	onTextChanged *Func
-	properties    slice.Slice[Property]
+	properties    []core.Property
 }
 
 func NewTextArea(with func(textArea *TextArea)) *TextArea {
@@ -28,7 +29,7 @@ func NewTextArea(with func(textArea *TextArea)) *TextArea {
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged, c.rows)
+	c.properties = []core.Property{c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged, c.rows}
 
 	if with != nil {
 		with(c)
@@ -73,6 +74,28 @@ func (c *TextArea) Rows() Int {
 	return c.rows
 }
 
-func (c *TextArea) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *TextArea) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *TextArea) Render() ora.Component {
+	return c.render()
+}
+
+func (c *TextArea) render() ora.TextArea {
+	return ora.TextArea{
+		Ptr:           c.id,
+		Type:          ora.TextAreaT,
+		Label:         c.label.render(),
+		Hint:          c.hint.render(),
+		Error:         c.error.render(),
+		Value:         c.value.render(),
+		Rows:          c.rows.render(),
+		Disabled:      c.disabled.render(),
+		OnTextChanged: renderFunc(c.onTextChanged),
+	}
 }

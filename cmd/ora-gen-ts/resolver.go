@@ -92,6 +92,18 @@ func init() {
 				},
 			},
 		},
+		reflect.TypeOf(ora.Property[[]ora.GridCell]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "GridCell", Package: genPrefix + "gridCell"},
+					},
+				},
+			},
+		},
 		reflect.TypeOf(ora.Property[[]int64]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
@@ -112,6 +124,18 @@ func init() {
 					Name: "[]",
 					TypeParams: []*TSTypeDef{
 						{Name: "DropdownItem", Package: genPrefix + "dropdownItem"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.StepInfo]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "StepInfo", Package: genPrefix + "stepInfo"},
 					},
 				},
 			},

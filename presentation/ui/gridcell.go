@@ -98,5 +98,21 @@ func (c *GridCell) Properties(yield func(property core.Property) bool) {
 }
 
 func (c *GridCell) Render() ora.Component {
-	panic("implement me")
+	return c.render()
+}
+
+func (c *GridCell) render() ora.GridCell {
+	return ora.GridCell{
+		Ptr:       c.id,
+		Type:      ora.GridCellT,
+		Body:      renderSharedComponent(c.body),
+		ColStart:  c.colStart.render(),
+		ColEnd:    c.colEnd.render(),
+		RowStart:  c.rowStart.render(),
+		RowEnd:    c.rowEnd.render(),
+		ColSpan:   c.colSpan.render(),
+		SmColSpan: c.smColSpan.render(),
+		MdColSpan: c.mdColSpan.render(),
+		LgColSpan: c.lgColSpan.render(),
+	}
 }

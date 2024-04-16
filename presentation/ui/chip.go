@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 // A Chip is like a badge but removable.
 type Chip struct {
@@ -9,7 +12,7 @@ type Chip struct {
 	action     *Func
 	onClose    *Func
 	color      *Shared[Color]
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewChip(with func(chip *Chip)) *Chip {
@@ -21,7 +24,7 @@ func NewChip(with func(chip *Chip)) *Chip {
 		color:   NewShared[Color]("color"),
 	}
 
-	c.properties = slice.Of[Property](c.caption, c.action, c.onClose, c.color)
+	c.properties = []core.Property{c.caption, c.action, c.onClose, c.color}
 
 	if with != nil {
 		with(c)
@@ -32,14 +35,6 @@ func NewChip(with func(chip *Chip)) *Chip {
 
 func (c *Chip) ID() CID {
 	return c.id
-}
-
-func (c *Chip) Type() string {
-	return "Chip"
-}
-
-func (c *Chip) Properties() slice.Slice[Property] {
-	return c.properties
 }
 
 func (c *Chip) Caption() String {
@@ -54,7 +49,33 @@ func (c *Chip) OnClose() *Func {
 	return c.onClose
 }
 
-// TBD: red, green, yellow
+// TODO TBD: red, green, yellow
 func (c *Chip) Color() *Shared[Color] {
 	return c.color
+}
+
+func (c *Chip) Properties(yield func(property core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Chip) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Chip) render() ora.Chip {
+	return ora.Chip{
+		Ptr:     c.id,
+		Type:    ora.ChipT,
+		Caption: c.caption.render(),
+		Action:  renderFunc(c.action),
+		OnClose: renderFunc(c.onClose),
+		Color: ora.Property[string]{
+			Ptr:   c.color.id,
+			Value: string(c.color.v),
+		},
+	}
 }

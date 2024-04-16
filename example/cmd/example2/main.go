@@ -5,12 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/persistence/kv"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
-	"log/slog"
 )
 
 type PID string
@@ -128,8 +126,9 @@ func main() {
 
 		counter := 0
 		cfg.Page("1234", func(w ui.Wire) *ui.Page {
-			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
-			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
+			// TODO reimplement user and whatever remote was for
+			//			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
+			//			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
 
 			page := ui.NewPage(w, nil)
 			page.Body().Set(
