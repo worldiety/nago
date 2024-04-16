@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type TextField struct {
@@ -86,10 +86,10 @@ func (l *TextField) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (l *TextField) Render() protocol.Component {
-	return protocol.TextField{
+func (l *TextField) Render() ora.Component {
+	return ora.TextField{
 		Ptr:           l.id,
-		Type:          protocol.TextFieldT,
+		Type:          ora.TextFieldT,
 		Label:         l.label.render(),
 		Hint:          l.hint.render(),
 		Help:          l.help.render(),

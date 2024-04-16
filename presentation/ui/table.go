@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Table struct {
@@ -47,27 +47,27 @@ func (c *Table) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Table) Render() protocol.Component {
-	var headers []protocol.TableCell
+func (c *Table) Render() ora.Component {
+	var headers []ora.TableCell
 	c.headers.Iter(func(cell *TableCell) bool {
 		headers = append(headers, cell.render())
 		return true
 	})
 
-	var rows []protocol.TableRow
+	var rows []ora.TableRow
 	c.rows.Iter(func(row *TableRow) bool {
 		rows = append(rows, row.render())
 		return true
 	})
 
-	return protocol.Table{
+	return ora.Table{
 		Ptr:  c.id,
-		Type: protocol.TableT,
-		Headers: protocol.Property[[]protocol.TableCell]{
+		Type: ora.TableT,
+		Headers: ora.Property[[]ora.TableCell]{
 			Ptr:   c.headers.ID(),
 			Value: headers,
 		},
-		Rows: protocol.Property[[]protocol.TableRow]{
+		Rows: ora.Property[[]ora.TableRow]{
 			Ptr:   c.rows.ID(),
 			Value: rows,
 		},

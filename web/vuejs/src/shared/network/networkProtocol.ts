@@ -34,7 +34,7 @@ export default class NetworkProtocol {
 		console.log("networkAdapter is ok")
 
 		this.networkAdapter.subscribe((responseRaw) => {
-			console.log("got response", responseRaw)
+			//console.log("got response", responseRaw)
 			const responseParsed = JSON.parse(responseRaw);
 			let requestId = responseParsed['requestId'] as number;
 			if (requestId === undefined) {
@@ -42,6 +42,7 @@ export default class NetworkProtocol {
 				requestId = responseParsed['r'] as number;
 			}
 
+			console.log(responseParsed)
 			// our lowest id is 1, so this must be something without our intention
 			if (requestId === 0) {
 				// something event driven from the backend happened, usually an invalidate or a navigation request

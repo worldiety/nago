@@ -2,14 +2,14 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 // Func is a remote addressable function holder.
 type Func struct {
 	name  string
 	f     func()
-	id    protocol.Ptr
+	id    ora.Ptr
 	dirty bool
 }
 
@@ -50,7 +50,7 @@ func (lf *Func) Dirty() bool {
 	return lf.dirty
 }
 
-func (lf *Func) ID() protocol.Ptr {
+func (lf *Func) ID() ora.Ptr {
 	return lf.id
 }
 

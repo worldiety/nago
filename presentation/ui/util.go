@@ -3,7 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"net/http"
 )
@@ -30,27 +30,27 @@ func must(err error) {
 	}
 }
 
-func renderComponentProp(property core.Property, p core.Iterable[core.Component]) protocol.Property[protocol.Component] {
+func renderComponentProp(property core.Property, p core.Iterable[core.Component]) ora.Property[ora.Component] {
 	var first core.Component
 	p.Iter(func(component core.Component) bool {
 		first = component
 		return false
 	})
 
-	return protocol.Property[protocol.Component]{
+	return ora.Property[ora.Component]{
 		Ptr:   property.ID(),
 		Value: first.Render(),
 	}
 }
 
-func renderComponentsProp(property core.Property, p core.Iterable[core.Component]) protocol.Property[[]protocol.Component] {
-	var res []protocol.Component
+func renderComponentsProp(property core.Property, p core.Iterable[core.Component]) ora.Property[[]ora.Component] {
+	var res []ora.Component
 	p.Iter(func(component core.Component) bool {
 		res = append(res, component.Render())
 		return true
 	})
 
-	return protocol.Property[[]protocol.Component]{
+	return ora.Property[[]ora.Component]{
 		Ptr:   property.ID(),
 		Value: res,
 	}

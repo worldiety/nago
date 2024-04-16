@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type HBox struct {
@@ -55,10 +55,10 @@ func (c *HBox) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *HBox) Render() protocol.Component {
-	return protocol.HBox{
+func (c *HBox) Render() ora.Component {
+	return ora.HBox{
 		Ptr:       c.id,
-		Type:      protocol.HBoxT,
+		Type:      ora.HBoxT,
 		Children:  renderSharedListComponents(c.children),
 		Alignment: c.alignment.render(),
 	}

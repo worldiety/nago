@@ -13,6 +13,7 @@ import type {LivePage} from '@/shared/model/livePage';
 import type {LiveMessage} from '@/shared/model/liveMessage';
 import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
 import {Component} from "@/shared/protocol/gen/component";
+import {ErrorOccurred} from "@/shared/protocol/gen/errorOccurred";
 
 enum State {
 	Loading,
@@ -68,6 +69,10 @@ async function init() {
 			switch (evt.type){
 				case "ComponentInvalidated":
 					ui.value=(evt as ComponentInvalidated).value
+					break
+				case "ErrorOccurred":
+					alert((evt as ErrorOccurred).message)
+					break
 			}
 		})
 

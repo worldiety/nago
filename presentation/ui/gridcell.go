@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type GridCell struct {
@@ -85,8 +85,8 @@ func (c *GridCell) ID() CID {
 	return c.id
 }
 
-func (c *GridCell) Type() protocol.ComponentType {
-	return protocol.GridCellT
+func (c *GridCell) Type() ora.ComponentType {
+	return ora.GridCellT
 }
 
 func (c *GridCell) Properties(yield func(property core.Property) bool) {
@@ -97,6 +97,6 @@ func (c *GridCell) Properties(yield func(property core.Property) bool) {
 	}
 }
 
-func (c *GridCell) Render() protocol.Component {
+func (c *GridCell) Render() ora.Component {
 	panic("implement me")
 }

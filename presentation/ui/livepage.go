@@ -5,7 +5,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"log/slog"
 	"mime/multipart"
@@ -83,8 +83,8 @@ func (p *Page) ID() CID {
 	return p.id
 }
 
-func (p *Page) Type() protocol.ComponentType {
-	return protocol.PageT
+func (p *Page) Type() ora.ComponentType {
+	return ora.PageT
 }
 
 func (p *Page) Properties(yield func(core.Property) bool) {
@@ -95,10 +95,10 @@ func (p *Page) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (p *Page) Render() protocol.Component {
-	return protocol.Page{
+func (p *Page) Render() ora.Component {
+	return ora.Page{
 		Ptr:    p.id,
-		Type:   protocol.PageT,
+		Type:   ora.PageT,
 		Body:   renderComponentProp(p.body, p.body),
 		Modals: renderComponentsProp(p.modals, p.modals),
 	}

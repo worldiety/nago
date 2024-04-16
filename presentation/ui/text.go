@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Text struct {
@@ -83,20 +83,20 @@ func (c *Text) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Text) Render() protocol.Component {
-	return protocol.Text{
+func (c *Text) Render() ora.Component {
+	return ora.Text{
 		Ptr:   c.id,
-		Type:  protocol.TextT,
+		Type:  ora.TextT,
 		Value: c.value.render(),
-		Color: protocol.Property[string]{
+		Color: ora.Property[string]{
 			Ptr:   c.color.id,
 			Value: string(c.color.v),
 		},
-		ColorDark: protocol.Property[string]{
+		ColorDark: ora.Property[string]{
 			Ptr:   c.colorDark.id,
 			Value: string(c.colorDark.v),
 		},
-		Size: protocol.Property[string]{
+		Size: ora.Property[string]{
 			Ptr:   c.size.id,
 			Value: string(c.size.v),
 		},

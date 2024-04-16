@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Datepicker struct {
@@ -122,6 +122,29 @@ func (c *Datepicker) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Datepicker) Render() protocol.Component {
-	panic("not implemented")
+func (c *Datepicker) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Datepicker) render() ora.DatePicker {
+	return ora.DatePicker{
+		Ptr:                c.id,
+		Type:               ora.DatePickerT,
+		Disabled:           c.disabled.render(),
+		Label:              c.label.render(),
+		Hint:               c.hint.render(),
+		Error:              c.error.render(),
+		Expanded:           c.expanded.render(),
+		RangeMode:          c.rangeMode.render(),
+		StartDateSelected:  c.startDateSelected.render(),
+		SelectedStartDay:   c.selectedStartDay.render(),
+		SelectedStartMonth: c.selectedStartMonth.render(),
+		SelectedStartYear:  c.selectedStartYear.render(),
+		EndDateSelected:    c.endDateSelected.render(),
+		SelectedEndDay:     c.selectedEndDay.render(),
+		SelectedEndMonth:   c.selectedEndMonth.render(),
+		SelectedEndYear:    c.selectedEndYear.render(),
+		OnClicked:          renderFunc(c.onClicked),
+		OnSelectionChanged: renderFunc(c.onSelectionChanged),
+	}
 }

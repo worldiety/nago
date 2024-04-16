@@ -2,13 +2,13 @@ package core
 
 import (
 	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Component interface {
-	ID() protocol.Ptr
+	ID() ora.Ptr
 	Properties(yield func(Property) bool) // contract of iter.Seq[Property]
-	Render() protocol.Component
+	Render() ora.Component
 }
 
 func IsDirty(dst Component) bool {

@@ -2,13 +2,13 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type RenderState struct {
-	funcs    map[protocol.Ptr]*Func
-	props    map[protocol.Ptr]Property
-	elements map[protocol.Ptr]Component
+	funcs    map[ora.Ptr]*Func
+	props    map[ora.Ptr]Property
+	elements map[ora.Ptr]Component
 	visited  map[Component]bool
 	//uploads   map[ui.UploadToken]*ui.FileField
 	//downloads map[ui.DownloadToken]func() (io.Reader, error)
@@ -16,9 +16,9 @@ type RenderState struct {
 
 func NewRenderState() *RenderState {
 	return &RenderState{
-		funcs:    make(map[protocol.Ptr]*Func),
-		props:    make(map[protocol.Ptr]Property),
-		elements: make(map[protocol.Ptr]Component),
+		funcs:    make(map[ora.Ptr]*Func),
+		props:    make(map[ora.Ptr]Property),
+		elements: make(map[ora.Ptr]Component),
 		//	uploads:   make(map[ui.UploadToken]*ui.FileField),
 		//	downloads: make(map[ui.DownloadToken]func() (io.Reader, error)),
 		visited: map[Component]bool{},
@@ -69,7 +69,7 @@ func (r *RenderState) Scan(c Component) {
 }
 
 // deprecated
-func (r *RenderState) Visit(id protocol.Ptr, t Component) {
+func (r *RenderState) Visit(id ora.Ptr, t Component) {
 	//r.elements[id] = t
 	// TODO this is causing a cycle we don't want
 	/*if fup, ok := t.(*ui.FileField); ok {
@@ -82,7 +82,7 @@ func (r *RenderState) Visit(id protocol.Ptr, t Component) {
 }
 
 // deprecated
-func (r *RenderState) Visited(id protocol.Ptr) bool {
+func (r *RenderState) Visited(id ora.Ptr) bool {
 	_, ok := r.elements[id]
 	return ok
 }

@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Slider struct {
@@ -46,8 +46,8 @@ func (c *Slider) ID() CID {
 	return c.id
 }
 
-func (c *Slider) Type() protocol.ComponentType {
-	return protocol.SliderT
+func (c *Slider) Type() ora.ComponentType {
+	return ora.SliderT
 }
 
 func (c *Slider) Disabled() Bool { return c.disabled }
@@ -88,6 +88,6 @@ func (c *Slider) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Slider) Render() protocol.Component {
+func (c *Slider) Render() ora.Component {
 	panic("not implemented")
 }

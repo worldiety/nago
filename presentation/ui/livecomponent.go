@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"strconv"
 )
 
@@ -21,7 +21,7 @@ type Bool = *Shared[bool]
 type Int = *Shared[int64]
 type Float = *Shared[float64]
 
-type SVGSrc = protocol.SVG
+type SVGSrc = ora.SVG
 
 // Allows sizes are sm, base, lg, xl and 2xl
 type Size string
@@ -42,8 +42,8 @@ func NewShared[T any](name string) *Shared[T] {
 	}
 }
 
-func (s *Shared[T]) render() protocol.Property[T] {
-	return protocol.Property[T]{
+func (s *Shared[T]) render() ora.Property[T] {
+	return ora.Property[T]{
 		Ptr:   s.id,
 		Value: s.v,
 	}
@@ -125,7 +125,7 @@ func (s *Shared[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
-type CID = protocol.Ptr
+type CID = ora.Ptr
 
 func nextPtr() CID {
 	return core.NextPtr()
@@ -145,8 +145,12 @@ func nextToken() string {
 	return hex.EncodeToString(tmp[:])
 }
 
-func renderFunc(lf *core.Func) protocol.Property[protocol.Ptr] {
-	return protocol.Property[protocol.Ptr]{
+func renderFunc(lf *core.Func) ora.Property[ora.Ptr] {
+	if lf.Nil() {
+		return ora.Property[ora.Ptr]{}
+	}
+
+	return ora.Property[ora.Ptr]{
 		Ptr:   lf.ID(), // TODO why is this not a Property or a Shared[func()]? it is a logical slot (itself a pointer) with a value set (again pointer)
 		Value: lf.ID(),
 	}

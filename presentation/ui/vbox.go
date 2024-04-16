@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type VBox struct {
@@ -45,10 +45,10 @@ func (c *VBox) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *VBox) Render() protocol.Component {
-	return protocol.VBox{
+func (c *VBox) Render() ora.Component {
+	return ora.VBox{
 		Ptr:      c.id,
-		Type:     protocol.VBoxT,
+		Type:     ora.VBoxT,
 		Children: renderSharedListComponents(c.children),
 	}
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -47,7 +47,7 @@ table th:nth-of-type(4) {
 	aboutChannel(d)
 	d.Printf("## events\n\n")
 
-	for _, event := range protocol.Events {
+	for _, event := range ora.Events {
 		newEvent := reflect.New(event).Elem().Interface()
 		d.Printf("### %s\n\n", nameOf(event.Name()))
 		d.PrintSpec(newEvent)
@@ -55,7 +55,7 @@ table th:nth-of-type(4) {
 	}
 
 	d.Printf("## Components\n\n")
-	for _, component := range protocol.Components {
+	for _, component := range ora.Components {
 		newEvent := reflect.New(component).Elem().Interface()
 		d.Printf("### %s\n\n", nameOf(component.Name()))
 		d.PrintSpec(newEvent)
@@ -69,24 +69,24 @@ table th:nth-of-type(4) {
 	}
 }
 
-var ptr protocol.Ptr
+var ptr ora.Ptr
 
-func nextPtr() protocol.Ptr {
+func nextPtr() ora.Ptr {
 	ptr++
 	return ptr
 }
 
-func nextRequestId() protocol.RequestId {
+func nextRequestId() ora.RequestId {
 	ptr++
-	return protocol.RequestId(ptr)
+	return ora.RequestId(ptr)
 }
 
 func nextCaption() string {
 	return fmt.Sprintf("Caption No. %d", nextPtr())
 }
 
-func nextSVGSrc() protocol.SVG {
-	return protocol.SVG(fmt.Sprintf("<svg>my inline svg %d</svg>", nextPtr()))
+func nextSVGSrc() ora.SVG {
+	return ora.SVG(fmt.Sprintf("<svg>my inline svg %d</svg>", nextPtr()))
 }
 
 func nextUUID() string {

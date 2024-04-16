@@ -2,41 +2,41 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 )
 
 // only for event loop
-func (s *Scope) handleEvent(t protocol.Event) {
+func (s *Scope) handleEvent(t ora.Event) {
 	switch evt := t.(type) {
-	case protocol.EventsAggregated:
+	case ora.EventsAggregated:
 		s.handleEventsAggregated(evt)
-	case protocol.SetPropertyValueRequested:
+	case ora.SetPropertyValueRequested:
 		s.handleSetPropertyValueRequested(evt)
-	case protocol.FunctionCallRequested:
+	case ora.FunctionCallRequested:
 		s.handleFunctionCallRequested(evt)
-	case protocol.NewComponentRequested:
+	case ora.NewComponentRequested:
 		s.handleNewComponentRequested(evt)
-	case protocol.ComponentInvalidationRequested:
+	case ora.ComponentInvalidationRequested:
 		s.handleComponentInvalidationRequested(evt)
-	case protocol.ConfigurationRequested:
+	case ora.ConfigurationRequested:
 		s.handleConfigurationRequested(evt)
-	case protocol.ComponentDestructionRequested:
+	case ora.ComponentDestructionRequested:
 		s.handleComponentDestructionRequested(evt)
-	case protocol.ScopeDestructionRequested:
+	case ora.ScopeDestructionRequested:
 		s.handleScopeDestructionRequested(evt)
 	default:
 		slog.Error("unexpected event type in scope processing", slog.String("type", fmt.Sprintf("%T", evt)))
 	}
 }
 
-func (s *Scope) handleEventsAggregated(evt protocol.EventsAggregated) {
+func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
 	for _, event := range evt.Events {
 		switch e := event.(type) {
-		case protocol.FunctionCallRequested:
+		case ora.FunctionCallRequested:
 			e.RequestId = evt.RequestId
 			event = e
-		case protocol.SetPropertyValueRequested:
+		case ora.SetPropertyValueRequested:
 			e.RequestId = evt.RequestId
 			event = e
 		}
@@ -47,13 +47,13 @@ func (s *Scope) handleEventsAggregated(evt protocol.EventsAggregated) {
 	s.sendAck(evt.RequestId)
 }
 
-func (s *Scope) handleScopeDestructionRequested(evt protocol.ScopeDestructionRequested) {
+func (s *Scope) handleScopeDestructionRequested(evt ora.ScopeDestructionRequested) {
 	s.sendAck(evt.RequestId)
 	s.destroy()
 	s.eventLoop.Destroy() // discards everything else queued
 }
 
-func (s *Scope) handleSetPropertyValueRequested(evt protocol.SetPropertyValueRequested) {
+func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequested) {
 	// we do not expect many components, usually only 1 or 2 (e.g. 2 open activities on mobile)
 	for _, state := range s.allocatedComponents {
 		prop := state.RenderState.props[evt.Ptr]
@@ -63,8 +63,8 @@ func (s *Scope) handleSetPropertyValueRequested(evt protocol.SetPropertyValueReq
 
 		if err := prop.Parse(evt.Value); err != nil {
 			slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", prop)))
-			s.Publish(protocol.ErrorOccurred{
-				Type:      protocol.ErrorOccurredT,
+			s.Publish(ora.ErrorOccurred{
+				Type:      ora.ErrorOccurredT,
 				RequestId: evt.RequestId,
 				Message:   fmt.Sprintf("cannot set property: invalid property value: %d", evt.Ptr),
 			})
@@ -74,8 +74,8 @@ func (s *Scope) handleSetPropertyValueRequested(evt protocol.SetPropertyValueReq
 	}
 
 	slog.Error("property not found", slog.Any("evt", evt))
-	s.Publish(protocol.ErrorOccurred{
-		Type:      protocol.ErrorOccurredT,
+	s.Publish(ora.ErrorOccurred{
+		Type:      ora.ErrorOccurredT,
 		RequestId: evt.RequestId,
 		Message:   fmt.Sprintf("cannot set property: no such pointer found: %d", evt.Ptr),
 	})
@@ -83,7 +83,7 @@ func (s *Scope) handleSetPropertyValueRequested(evt protocol.SetPropertyValueReq
 	return
 }
 
-func (s *Scope) handleFunctionCallRequested(evt protocol.FunctionCallRequested) {
+func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
 	// we do not expect many components, usually only 1 or 2 (e.g. 2 open activities on mobile)
 	for _, state := range s.allocatedComponents {
 		fn := state.RenderState.funcs[evt.Ptr]
@@ -96,8 +96,8 @@ func (s *Scope) handleFunctionCallRequested(evt protocol.FunctionCallRequested) 
 	}
 
 	slog.Error("function not found", slog.Any("evt", evt))
-	s.Publish(protocol.ErrorOccurred{
-		Type:      protocol.ErrorOccurredT,
+	s.Publish(ora.ErrorOccurred{
+		Type:      ora.ErrorOccurredT,
 		RequestId: evt.RequestId,
 		Message:   fmt.Sprintf("cannot call function: no such pointer found: %d", evt.Ptr),
 	})
@@ -105,7 +105,7 @@ func (s *Scope) handleFunctionCallRequested(evt protocol.FunctionCallRequested) 
 	return
 }
 
-func (s *Scope) handleNewComponentRequested(evt protocol.NewComponentRequested) {
+func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 	fac := s.factories[evt.Factory]
 	var component Component
 	if fac == nil {
@@ -119,8 +119,8 @@ func (s *Scope) handleNewComponentRequested(evt protocol.NewComponentRequested) 
 			}
 			component = notFoundComponent
 		} else {
-			s.Publish(protocol.ErrorOccurred{
-				Type:      protocol.ErrorOccurredT,
+			s.Publish(ora.ErrorOccurred{
+				Type:      ora.ErrorOccurredT,
 				RequestId: evt.RequestId,
 				Message:   fmt.Sprintf("factory %s not found", evt.Factory),
 			})
@@ -131,8 +131,8 @@ func (s *Scope) handleNewComponentRequested(evt protocol.NewComponentRequested) 
 		component = fac(s, evt)
 		if component == nil {
 			slog.Error("factory returned a nil component which is not allowed", slog.String("id", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
-			s.Publish(protocol.ErrorOccurred{
-				Type:      protocol.ErrorOccurredT,
+			s.Publish(ora.ErrorOccurred{
+				Type:      ora.ErrorOccurredT,
 				RequestId: evt.RequestId,
 				Message:   fmt.Sprintf("internal factory error: delivered null component"),
 			})
@@ -151,12 +151,12 @@ func (s *Scope) handleNewComponentRequested(evt protocol.NewComponentRequested) 
 
 }
 
-func (s *Scope) handleComponentInvalidationRequested(evt protocol.ComponentInvalidationRequested) {
+func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidationRequested) {
 	alloc, ok := s.allocatedComponents[evt.Component]
 	if !ok {
 		slog.Error("cannot invalidate: no such component in scope", slog.Any("evt", evt))
-		s.Publish(protocol.ErrorOccurred{
-			Type:      protocol.ErrorOccurredT,
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
 			RequestId: evt.RequestId,
 			Message:   fmt.Sprintf("cannot invalidate: no such component in scope: %d", evt.Component),
 		})
@@ -167,24 +167,24 @@ func (s *Scope) handleComponentInvalidationRequested(evt protocol.ComponentInval
 	s.Publish(renderTree)
 }
 
-func (s *Scope) handleConfigurationRequested(evt protocol.ConfigurationRequested) {
+func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 	// todo where is the configuration?
-	s.Publish(protocol.ConfigurationDefined{
-		Type:             protocol.ConfigurationDefinedT,
+	s.Publish(ora.ConfigurationDefined{
+		Type:             ora.ConfigurationDefinedT,
 		ApplicationName:  "todo",
 		AvailableLocales: []string{"de", "en"},
 		ActiveLocale:     "de",
-		Themes:           protocol.Themes{},
-		Resources:        protocol.Resources{},
+		Themes:           ora.Themes{},
+		Resources:        ora.Resources{},
 		RequestId:        evt.RequestId,
 	})
 }
 
-func (s *Scope) handleComponentDestructionRequested(evt protocol.ComponentDestructionRequested) {
+func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestructionRequested) {
 	component, ok := s.allocatedComponents[evt.Component]
 	if !ok {
-		s.Publish(protocol.ErrorOccurred{
-			Type:      protocol.ErrorOccurredT,
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
 			RequestId: evt.RequestId,
 			Message:   fmt.Sprintf("no such component: %d", evt.Component),
 		})

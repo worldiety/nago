@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 // TODO this is the wrong signature
@@ -218,8 +218,8 @@ func (s *SharedList[T]) Clear() {
 	s.dirty = true
 }
 
-func renderSharedListButtons(s *SharedList[*Button]) protocol.Property[[]protocol.Button] {
-	res := protocol.Property[[]protocol.Button]{
+func renderSharedListButtons(s *SharedList[*Button]) ora.Property[[]ora.Button] {
+	res := ora.Property[[]ora.Button]{
 		Ptr: s.id,
 	}
 
@@ -230,8 +230,8 @@ func renderSharedListButtons(s *SharedList[*Button]) protocol.Property[[]protoco
 	return res
 }
 
-func renderSharedListComponents(s *SharedList[core.Component]) protocol.Property[[]protocol.Component] {
-	res := protocol.Property[[]protocol.Component]{
+func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]ora.Component] {
+	res := ora.Property[[]ora.Component]{
 		Ptr: s.id,
 	}
 
@@ -242,8 +242,8 @@ func renderSharedListComponents(s *SharedList[core.Component]) protocol.Property
 	return res
 }
 
-func renderSharedComponent(s *Shared[core.Component]) protocol.Property[protocol.Component] {
-	res := protocol.Property[protocol.Component]{
+func renderSharedComponent(s *Shared[core.Component]) ora.Property[ora.Component] {
+	res := ora.Property[ora.Component]{
 		Ptr: s.id,
 	}
 

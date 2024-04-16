@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"log/slog"
 	"sync/atomic"
@@ -18,7 +18,7 @@ type allocatedComponent struct {
 	RenderState *RenderState
 }
 
-type ComponentFactory func(*Scope, protocol.NewComponentRequested) Component
+type ComponentFactory func(*Scope, ora.NewComponentRequested) Component
 
 // A Scope manage its own area of associated pointers. A Pointer must be only unique per Scope.
 // Resolving or keeping pointers outside a scope is inherently unsafe (e.g. a lookup map).
@@ -28,9 +28,9 @@ type ComponentFactory func(*Scope, protocol.NewComponentRequested) Component
 // causing race conditions.
 // Each Scope has a single event loop to guarantee race free event processing.
 type Scope struct {
-	id                  protocol.ScopeID
-	factories           map[protocol.ComponentFactoryId]ComponentFactory
-	allocatedComponents map[protocol.Ptr]allocatedComponent
+	id                  ora.ScopeID
+	factories           map[ora.ComponentFactoryId]ComponentFactory
+	allocatedComponents map[ora.Ptr]allocatedComponent
 	lifetime            time.Duration
 	endOfLifeAt         atomic.Pointer[time.Time]
 	channel             AtomicRef[Channel]
@@ -38,18 +38,18 @@ type Scope struct {
 	eventLoop           *EventLoop
 }
 
-func NewScope(id protocol.ScopeID, lifetime time.Duration, factories map[protocol.ComponentFactoryId]ComponentFactory) *Scope {
+func NewScope(id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
 	s := &Scope{
 		id:                  id,
 		factories:           factories,
-		allocatedComponents: map[protocol.Ptr]allocatedComponent{},
+		allocatedComponents: map[ora.Ptr]allocatedComponent{},
 		lifetime:            lifetime,
 		eventLoop:           NewEventLoop(),
 	}
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
-		s.Publish(protocol.ErrorOccurred{
-			Type:    protocol.ErrorOccurredT,
+		s.Publish(ora.ErrorOccurred{
+			Type:    ora.ErrorOccurredT,
 			Message: fmt.Sprintf("panic in event loop: %v", p),
 		})
 	})
@@ -85,7 +85,7 @@ func (s *Scope) Connect(c Channel) {
 func (s *Scope) handleMessage(buf []byte) error {
 	s.Tick()
 
-	t, err := protocol.Unmarshal(buf)
+	t, err := ora.Unmarshal(buf)
 	if err != nil {
 		return err
 	}
@@ -99,8 +99,8 @@ func (s *Scope) handleMessage(buf []byte) error {
 	return nil
 }
 
-func (s *Scope) Publish(evt protocol.Event) {
-	if err := s.channel.Load().Publish(protocol.Marshal(evt)); err != nil {
+func (s *Scope) Publish(evt ora.Event) {
+	if err := s.channel.Load().Publish(ora.Marshal(evt)); err != nil {
 		slog.Error(err.Error())
 	}
 }
@@ -118,13 +118,13 @@ func (s *Scope) EOL() time.Time {
 
 // sendAck eventually sends an acknowledged message, if id is not 0. This is intentional, so a sender
 // can optimize for performance.
-func (s *Scope) sendAck(id protocol.RequestId) {
+func (s *Scope) sendAck(id ora.RequestId) {
 	if id == 0 {
 		return
 	}
 
-	s.Publish(protocol.Acknowledged{
-		Type:      protocol.AcknowledgedT,
+	s.Publish(ora.Acknowledged{
+		Type:      ora.AcknowledgedT,
 		RequestId: id,
 	})
 }
@@ -141,12 +141,12 @@ func (s *Scope) renderIfRequired() {
 }
 
 // only for event loop
-func (s *Scope) render(requestId protocol.RequestId, component Component) protocol.ComponentInvalidated {
+func (s *Scope) render(requestId ora.RequestId, component Component) ora.ComponentInvalidated {
 	s.allocatedComponents[component.ID()].RenderState.Clear()
 	s.allocatedComponents[component.ID()].RenderState.Scan(component)
 
-	return protocol.ComponentInvalidated{
-		Type:      protocol.ComponentInvalidatedT,
+	return ora.ComponentInvalidated{
+		Type:      ora.ComponentInvalidatedT,
 		RequestId: requestId,
 		Component: component.Render(),
 	}

@@ -5,7 +5,7 @@ import (
 	"github.com/flowchartsman/swaggerui"
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggest/openapi-go/openapi3"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"net/http"
 	"regexp"
 	"strings"
@@ -40,7 +40,7 @@ type Application struct {
 	OIDC        []OIDCProvider //deprecated must be unified/abstracted away
 	//deprecated we work with components now
 	LivePages  map[PageID]func(Wire) *Page
-	Components map[protocol.ComponentFactoryId]func(Wire) LiveComponent
+	Components map[ora.ComponentFactoryId]func(Wire) LiveComponent
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {

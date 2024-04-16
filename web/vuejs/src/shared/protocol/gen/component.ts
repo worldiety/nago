@@ -10,6 +10,10 @@ import type { Table } from '@/shared/protocol/gen/table';
 import type { TableCell } from '@/shared/protocol/gen/tableCell';
 import type { TableRow } from '@/shared/protocol/gen/tableRow';
 import type { Text } from '@/shared/protocol/gen/text';
+import type { Dialog } from '@/shared/protocol/gen/dialog';
+import type { Toggle } from '@/shared/protocol/gen/toggle';
+import type { DatePicker } from '@/shared/protocol/gen/datePicker';
+import type { NumberField } from '@/shared/protocol/gen/numberField';
 
 
 export type Component =
@@ -23,5 +27,9 @@ export type Component =
     | TableCell
     | TableRow
     | Text
+    | Dialog
+    | Toggle
+    | DatePicker
+    | NumberField
     
 

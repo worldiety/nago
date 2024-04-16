@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Button struct {
@@ -70,14 +70,14 @@ func (c *Button) Disabled() Bool {
 	return c.disabled
 }
 
-func (c *Button) Render() protocol.Component {
+func (c *Button) Render() ora.Component {
 	return c.renderButton()
 }
 
-func (c *Button) renderButton() protocol.Button {
-	return protocol.Button{
+func (c *Button) renderButton() ora.Button {
+	return ora.Button{
 		Ptr:      c.id,
-		Type:     protocol.ButtonT,
+		Type:     ora.ButtonT,
 		Caption:  c.caption.render(),
 		PreIcon:  c.preIcon.render(),
 		PostIcon: c.postIcon.render(),

@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 // Toggle is like a checkbox, which is either on or off.
@@ -63,6 +63,17 @@ func (c *Toggle) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Toggle) Render() protocol.Component {
-	panic("not implemented")
+func (c *Toggle) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Toggle) render() ora.Toggle {
+	return ora.Toggle{
+		Ptr:              c.id,
+		Type:             ora.ToggleT,
+		Label:            c.label.render(),
+		Checked:          c.checked.render(),
+		Disabled:         c.disabled.render(),
+		OnCheckedChanged: renderFunc(c.onCheckedChanged),
+	}
 }

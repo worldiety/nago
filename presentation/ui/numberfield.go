@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type NumberField struct {
@@ -74,8 +74,8 @@ func (l *NumberField) Disabled() Bool {
 	return l.disabled
 }
 
-func (l *NumberField) Type() protocol.ComponentType {
-	return protocol.NumberFieldT
+func (l *NumberField) Type() ora.ComponentType {
+	return ora.NumberFieldT
 }
 
 func (l *NumberField) Properties(yield func(core.Property) bool) {
@@ -86,6 +86,21 @@ func (l *NumberField) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (l *NumberField) Render() protocol.Component {
-	panic("not implemented")
+func (l *NumberField) Render() ora.Component {
+	return l.render()
+}
+
+func (l *NumberField) render() ora.NumberField {
+	return ora.NumberField{
+		Ptr:            l.id,
+		Type:           ora.NumberFieldT,
+		Label:          l.label.render(),
+		Hint:           l.hint.render(),
+		Error:          l.error.render(),
+		Value:          l.value.render(),
+		Placeholder:    l.placeholder.render(),
+		Disabled:       l.disabled.render(),
+		Simple:         l.simple.render(),
+		OnValueChanged: renderFunc(l.onValueChanged),
+	}
 }

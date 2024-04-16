@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Divider struct {
@@ -28,6 +28,6 @@ func (c *Divider) ID() CID {
 func (c *Divider) Properties(yield func(core.Property) bool) {
 }
 
-func (c *Divider) Render() protocol.Component {
+func (c *Divider) Render() ora.Component {
 	panic("not implemented")
 }

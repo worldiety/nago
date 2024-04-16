@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type TableCell struct {
@@ -41,13 +41,13 @@ func (c *TableCell) Properties(yield func(property core.Property) bool) {
 	}
 }
 
-func (c *TableCell) Render() protocol.Component {
+func (c *TableCell) Render() ora.Component {
 	return c.render()
 }
-func (c *TableCell) render() protocol.TableCell {
-	return protocol.TableCell{
+func (c *TableCell) render() ora.TableCell {
+	return ora.TableCell{
 		Ptr:  c.id,
-		Type: protocol.TableCellT,
+		Type: ora.TableCellT,
 		Body: renderSharedComponent(c.body),
 	}
 }

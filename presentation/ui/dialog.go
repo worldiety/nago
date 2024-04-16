@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Dialog struct {
@@ -52,8 +52,8 @@ func (c *Dialog) ID() CID {
 	return c.id
 }
 
-func (c *Dialog) Type() protocol.ComponentType {
-	return protocol.DialogT
+func (c *Dialog) Type() ora.ComponentType {
+	return ora.DialogT
 }
 
 func (c *Dialog) Properties(yield func(core.Property) bool) {
@@ -64,6 +64,17 @@ func (c *Dialog) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Dialog) Render() protocol.Component {
-	panic("implement me")
+func (c *Dialog) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Dialog) render() ora.Dialog {
+	return ora.Dialog{
+		Ptr:     c.id,
+		Type:    ora.DialogT,
+		Title:   c.title.render(),
+		Body:    renderSharedComponent(c.body),
+		Icon:    c.icon.render(),
+		Actions: renderSharedListButtons(c.actions),
+	}
 }

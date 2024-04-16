@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Scaffold struct {
@@ -74,10 +74,10 @@ func (c *Scaffold) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Scaffold) Render() protocol.Component {
-	return protocol.Scaffold{
+func (c *Scaffold) Render() ora.Component {
+	return ora.Scaffold{
 		Ptr:         c.id,
-		Type:        protocol.ScaffoldT,
+		Type:        ora.ScaffoldT,
 		Title:       c.title.render(),
 		Body:        renderComponentProp(c.body, c.body),
 		Breadcrumbs: renderSharedListButtons(c.breadcrumbs),

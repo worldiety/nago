@@ -1,7 +1,7 @@
 package core
 
 import (
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"sync"
 	"time"
@@ -12,11 +12,11 @@ type Scopes struct {
 	mutex  sync.Mutex
 	ticker *time.Ticker
 	done   chan bool
-	scopes map[protocol.ScopeID]*Scope
+	scopes map[ora.ScopeID]*Scope
 }
 
 func NewScopes() *Scopes {
-	s := &Scopes{ticker: time.NewTicker(time.Minute), done: make(chan bool), scopes: make(map[protocol.ScopeID]*Scope)}
+	s := &Scopes{ticker: time.NewTicker(time.Minute), done: make(chan bool), scopes: make(map[ora.ScopeID]*Scope)}
 	go func() {
 		for {
 			select {
@@ -31,7 +31,7 @@ func NewScopes() *Scopes {
 	return s
 }
 
-func (s *Scopes) Get(id protocol.ScopeID) (*Scope, bool) {
+func (s *Scopes) Get(id ora.ScopeID) (*Scope, bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

@@ -1,6 +1,8 @@
 package core
 
-import "go.wdy.de/nago/presentation/protocol"
+import (
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Property interface {
 	// Name returns the actual protocol name of this property.
@@ -14,7 +16,7 @@ type Property interface {
 
 	// ID returns the internal unique instance ID of this property which is used to identify it across process
 	// boundaries.
-	ID() protocol.Ptr
+	ID() ora.Ptr
 
 	Parse(v string) error
 

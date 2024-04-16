@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type TableRow struct {
@@ -41,20 +41,20 @@ func (c *TableRow) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *TableRow) Render() protocol.Component {
+func (c *TableRow) Render() ora.Component {
 	return c.render()
 }
 
-func (c *TableRow) render() protocol.TableRow {
-	var cells []protocol.TableCell
+func (c *TableRow) render() ora.TableRow {
+	var cells []ora.TableCell
 	c.cells.Iter(func(cell *TableCell) bool {
 		cells = append(cells, cell.render())
 		return true
 	})
-	return protocol.TableRow{
+	return ora.TableRow{
 		Ptr:  c.id,
-		Type: protocol.TableRowT,
-		Cells: protocol.Property[[]protocol.TableCell]{
+		Type: ora.TableRowT,
+		Cells: ora.Property[[]ora.TableCell]{
 			Ptr:   c.cells.ID(),
 			Value: cells,
 		},

@@ -1,19 +1,19 @@
 <script lang="ts" setup>
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveToggle } from '@/shared/model/liveToggle';
 import type { LivePage } from '@/shared/model/livePage';
 import { ref } from 'vue';
+import {Toggle} from "@/shared/protocol/gen/toggle";
 
 const props = defineProps<{
-	ui: LiveToggle;
+	ui: Toggle;
 	page: LivePage;
 }>();
 
 const networkStore = useNetworkStore();
-const checked = ref<boolean>(props.ui.checked.value);
+const checked = ref<boolean>(props.ui.checked.v);
 
 function onClick() {
-	if (props.ui.disabled.value) {
+	if (props.ui.disabled.v) {
 		return;
 	}
 	checked.value = !checked.value;
@@ -26,11 +26,11 @@ function onClick() {
 
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm">{{ props.ui.label.value }}</span>
+		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
 		<div
 			class="toggle-switch-container"
-			:class="{'toggle-switch-container-disabled': props.ui.disabled.value}"
-			:tabindex="props.ui.disabled.value ? '-1' : '0'"
+			:class="{'toggle-switch-container-disabled': props.ui.disabled.v}"
+			:tabindex="props.ui.disabled.v ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>

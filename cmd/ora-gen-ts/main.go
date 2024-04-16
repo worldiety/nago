@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"flag"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -20,14 +20,14 @@ func main() {
 	slog.Info("generating files in", slog.String("dir", *outDir))
 
 	writeFile(*outDir, "interface",
-		NewInterface(protocol.Themes{}),
-		NewInterface(protocol.Theme{}),
-		NewInterface(protocol.Colors{}),
-		NewInterface(protocol.Resources{}),
+		NewInterface(ora.Themes{}),
+		NewInterface(ora.Theme{}),
+		NewInterface(ora.Colors{}),
+		NewInterface(ora.Resources{}),
 	)
 
-	types := append(protocol.Events)
-	types = append(types, protocol.Components...)
+	types := append(ora.Events)
+	types = append(types, ora.Components...)
 	var ifaces []NamedType
 
 	for _, r := range types {
@@ -37,8 +37,8 @@ func main() {
 	writeFile(*outDir, "interface", ifaces...)
 
 	writeFile(*outDir, "union",
-		NewUnion("Component", protocol.Components),
-		NewUnion("Event", protocol.Events),
+		NewUnion("Component", ora.Components),
+		NewUnion("Event", ora.Events),
 	)
 }
 

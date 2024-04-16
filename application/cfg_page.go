@@ -14,7 +14,7 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log"
@@ -42,9 +42,9 @@ func (c *Configurator) Index(target string) *Configurator {
 
 func (c *Configurator) newHandler() http.Handler {
 
-	factories := map[protocol.ComponentFactoryId]core.ComponentFactory{}
+	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
 	for id, f := range c.uiApp.Components {
-		factories[id] = func(scope *core.Scope, requested protocol.NewComponentRequested) core.Component {
+		factories[id] = func(scope *core.Scope, requested ora.NewComponentRequested) core.Component {
 			return f(noOpWireStub{})
 		}
 	}
@@ -133,7 +133,7 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
-		scope := app2.Connect(channel, protocol.ScopeID(scopeID))
+		scope := app2.Connect(channel, ora.ScopeID(scopeID))
 		defer scope.Destroy()
 
 		if err := channel.Loop(); err != nil {
@@ -431,7 +431,7 @@ func (c *connWrapper) Remote() ui.Remote {
 type applicationServer struct {
 	//deprecated
 	activePages map[ui.PageInstanceToken]*ui.Page
-	scopes      map[protocol.ComponentFactoryId]*core.Scope
+	scopes      map[ora.ComponentFactoryId]*core.Scope
 	mutex       sync.RWMutex
 }
 

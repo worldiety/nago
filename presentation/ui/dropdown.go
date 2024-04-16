@@ -3,7 +3,7 @@ package ui
 import (
 	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Dropdown struct {
@@ -121,7 +121,7 @@ func (c *Dropdown) Properties(yield func(core.Property) bool) {
 	}
 }
 
-func (c *Dropdown) Render() protocol.Component {
+func (c *Dropdown) Render() ora.Component {
 	panic("not implemented")
 }
 
