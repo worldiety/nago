@@ -55,6 +55,10 @@ watch(inputValue, (newValue, oldValue) => {
 					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
 				</div>
 			</div>
-		</InputWrapper>
+			<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+				<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+			</div>
+	</InputWrapper>
+
 	</div>
 </template>

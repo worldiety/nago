@@ -26,14 +26,14 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		value:         NewShared[string]("value"),
 		placeholder:   NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		hint:          NewShared[string]("hint"),
-		help:          NewShared[string]("help"), // TODO remove me, does not make any sense from UX perspective, we have Label and Hint
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
+		help:          NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		simple:        NewShared[bool]("simple"), // TODO what is that?
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged}
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged}
 
 	if with != nil {
 		with(c)

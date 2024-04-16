@@ -50,14 +50,14 @@ func NewBinding() *Binding {
 func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T, opts Field) {
 	tf := ui.NewSlider(nil)
 	tf.Label().Set(opts.Label)
-	tf.Value().Set(float64(*target))
+	tf.Min().Set(float64(*target))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.Min().Set(float64(minIncl))
 	tf.Max().Set(float64(maxIncl))
 	tf.Stepsize().Set(float64(stepSize))
 	tf.OnChanged().Set(func() {
-		*target = T(tf.Value().Get())
+		*target = T(tf.Min().Get())
 		if binding.OnChanged != nil {
 			binding.OnChanged()
 		}

@@ -51,6 +51,7 @@ func (r *RenderState) Scan(c Component) {
 		r.visited[c] = true
 
 		c.Properties(func(property Property) bool {
+
 			r.props[property.ID()] = property
 
 			property.AnyIter(func(a any) bool {
