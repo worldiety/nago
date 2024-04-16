@@ -20,6 +20,8 @@
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
 					@touchstart="startSliderThumbPressed"
+					@keydown.left="decreaseStartSliderValue"
+					@keydown.right="increaseStartSliderValue"
 				></div>
 				<!-- Right slider thumb -->
 				<div
@@ -32,6 +34,8 @@
 					:tabindex="props.ui.disabled.value ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
 					@touchstart="endSliderThumbPressed"
+					@keydown.left="decreaseEndSliderValue"
+					@keydown.right="increaseEndSliderValue"
 				></div>
 			</div>
 		</div>
@@ -44,7 +48,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -202,6 +206,36 @@ function submitSliderValues(): void {
 				value: roundValue(sliderEndValue.value + scaleOffset.value),
 			}
 		], [props.ui.onChanged]);
+}
+
+function decreaseStartSliderValue(): void {
+	sliderStartValue.value = getDiscreteValue(sliderStartValue.value - stepsizeRounded.value);
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	submitSliderValues();
+}
+
+function increaseStartSliderValue(): void {
+	sliderStartValue.value = Math.min(
+		getDiscreteValue(sliderStartValue.value + stepsizeRounded.value),
+		getDiscreteValue(sliderEndValue.value),
+	);
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	submitSliderValues();
+}
+
+function decreaseEndSliderValue(): void {
+	sliderEndValue.value = Math.max(
+		getDiscreteValue(sliderEndValue.value - stepsizeRounded.value),
+		getDiscreteValue(sliderStartValue.value),
+	);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+	submitSliderValues();
+}
+
+function increaseEndSliderValue(): void {
+	sliderEndValue.value = getDiscreteValue(sliderEndValue.value + stepsizeRounded.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+	submitSliderValues();
 }
 </script>
 
