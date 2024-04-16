@@ -53,25 +53,16 @@ const props = defineProps<{
 
 const networkStore = useNetworkStore();
 const sliderTrack = ref<HTMLElement|undefined>();
-const sliderStartValue = ref<number>(0);
-const sliderEndValue = ref<number>(0);
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
-const minRounded = ref<number>(0);
-const maxRounded = ref<number>(0);
 const scaleOffset = ref<number>(roundValue(props.ui.min.value));
+const minRounded = ref<number>(0);
+const maxRounded = ref<number>(roundValue(props.ui.max.value - scaleOffset.value));
+const sliderStartValue = ref<number>(roundValue(props.ui.startValue.value - scaleOffset.value));
+const sliderEndValue = ref<number>(roundValue(props.ui.endValue.value - scaleOffset.value));
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
-
-onBeforeMount(() => {
-	// Use a 0-based scale
-	maxRounded.value = getDiscreteValue(props.ui.max.value - scaleOffset.value);
-	const initialStartValueRounded = getDiscreteValue(props.ui.startValue.value - scaleOffset.value);
-	const initialEndValueRounded = getDiscreteValue(props.ui.endValue.value - scaleOffset.value);
-	sliderStartValue.value = calculateSliderValue(initialStartValueRounded);
-	sliderEndValue.value = calculateSliderValue(initialEndValueRounded);
-});
 
 onMounted(() => {
 	initializeSliderThumbOffsets();
@@ -80,16 +71,6 @@ onMounted(() => {
 });
 
 onUnmounted(removeEventListeners);
-
-function calculateSliderValue(initialValue: number): number {
-	// Limit initial value to min and max value
-	const bounded = Math.max(Math.min(initialValue, maxRounded.value), minRounded.value);
-	// Calculate valid initial value based on the step size and minimum value (always rounding down to the next valid value)
-	// TODO: Fix wrong initial end value being calculated here
-	const validated = bounded - (bounded - minRounded.value) % stepsizeRounded.value;
-	// Get rid of rounding errors by using 2 decimal places at most
-	return roundValue(validated);
-}
 
 function initializeSliderThumbOffsets(): void {
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
@@ -167,10 +148,10 @@ function offsetToSliderValue(sliderThumbOffset: number): number {
 function getDiscreteValue(continuousValue: number): number {
 	let validValueBelow: number = minRounded.value;
 	for (let validValue = minRounded.value; validValue <= continuousValue; validValue += stepsizeRounded.value) {
-		validValueBelow = validValue;
+		validValueBelow = roundValue(validValue);
 	}
-	const validValueAbove = validValueBelow + stepsizeRounded.value;
-	if (validValueAbove > props.ui.max.value - scaleOffset.value || continuousValue - validValueBelow < validValueAbove - continuousValue) {
+	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
+	if (validValueAbove > roundValue(props.ui.max.value - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
 		return roundValue(validValueBelow);
 	}
 	return roundValue(validValueAbove);
