@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -67,6 +67,11 @@ const sliderEndValue = ref<number>(roundValue(props.ui.endValue.value - scaleOff
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
+
+onBeforeMount(() => {
+	sliderStartValue.value = getDiscreteValue(sliderStartValue.value);
+	sliderEndValue.value = getDiscreteValue(sliderEndValue.value);
+})
 
 onMounted(() => {
 	initializeSliderThumbOffsets();
@@ -156,9 +161,9 @@ function getDiscreteValue(continuousValue: number): number {
 	}
 	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
 	if (validValueAbove > roundValue(props.ui.max.value - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
-		return roundValue(validValueBelow);
+		return validValueBelow;
 	}
-	return roundValue(validValueAbove);
+	return validValueAbove;
 }
 
 function startSliderThumbPressed(): void {
@@ -217,7 +222,7 @@ function decreaseStartSliderValue(): void {
 function increaseStartSliderValue(): void {
 	sliderStartValue.value = Math.min(
 		getDiscreteValue(sliderStartValue.value + stepsizeRounded.value),
-		getDiscreteValue(sliderEndValue.value),
+		sliderEndValue.value,
 	);
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	submitSliderValues();
@@ -226,7 +231,7 @@ function increaseStartSliderValue(): void {
 function decreaseEndSliderValue(): void {
 	sliderEndValue.value = Math.max(
 		getDiscreteValue(sliderEndValue.value - stepsizeRounded.value),
-		getDiscreteValue(sliderStartValue.value),
+		sliderStartValue.value,
 	);
 	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	submitSliderValues();
