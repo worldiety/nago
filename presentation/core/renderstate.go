@@ -51,12 +51,15 @@ func (r *RenderState) Scan(c Component) {
 		r.visited[c] = true
 
 		c.Properties(func(property Property) bool {
-			if fn, ok := property.(Iterable[*Func]); ok {
-				fn.Iter(func(f *Func) bool {
-					r.funcs[f.ID()] = f
-					return true
-				})
-			}
+			r.props[property.ID()] = property
+
+			property.AnyIter(func(a any) bool {
+
+				if fn, ok := a.(*Func); ok {
+					r.funcs[fn.ID()] = fn
+				}
+				return true
+			})
 
 			return true
 		})

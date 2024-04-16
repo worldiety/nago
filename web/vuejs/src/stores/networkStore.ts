@@ -9,6 +9,7 @@ import {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
 import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
 import {Pointer} from "@/shared/protocol/pointer";
 import {Property} from "@/shared/protocol/property";
+import {Event} from "@/shared/protocol/gen/event";
 
 interface NetworkStoreState {
 	networkProtocol: NetworkProtocol;
@@ -30,6 +31,13 @@ export const useNetworkStore = defineStore('networkStore', {
 			return this.networkProtocol.newComponent(fid,params)
 		},
 
+		addUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
+			this.networkProtocol.addUnprocessedEventSubscriber(fn)
+		},
+
+		removeUnprocessedEventSubscriber(fn: ((evt: Event) => void)){
+			this.networkProtocol.removeUnprocessedEventSubscriber(fn)
+		},
 
 		teardown(): void {
 			this.networkProtocol.teardown();

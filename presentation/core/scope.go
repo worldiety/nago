@@ -92,6 +92,8 @@ func (s *Scope) handleMessage(buf []byte) error {
 
 	s.eventLoop.Post(func() {
 		s.handleEvent(t)
+		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
+		s.renderIfRequired()
 	})
 
 	return nil
@@ -125,6 +127,17 @@ func (s *Scope) sendAck(id protocol.RequestId) {
 		Type:      protocol.AcknowledgedT,
 		RequestId: id,
 	})
+}
+
+// only for event loop
+func (s *Scope) renderIfRequired() {
+	for _, component := range s.allocatedComponents {
+		if IsDirty(component.Component) {
+			slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
+			s.Publish(s.render(0, component.Component))
+			ClearDirty(component.Component)
+		}
+	}
 }
 
 // only for event loop

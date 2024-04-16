@@ -11,6 +11,8 @@ import type {LiveComponent} from '@/shared/model/liveComponent';
 import type {Invalidation} from '@/shared/model/invalidation';
 import type {LivePage} from '@/shared/model/livePage';
 import type {LiveMessage} from '@/shared/model/liveMessage';
+import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
+import {Component} from "@/shared/protocol/gen/component";
 
 enum State {
 	Loading,
@@ -25,7 +27,7 @@ const networkStore = useNetworkStore();
 const page = route.meta.page as PageConfiguration;
 
 const state = ref(State.Loading);
-const ui = ref<LiveComponent>();
+const ui = ref<Component>();
 const invalidationResp = ref<Invalidation>({});
 const ws = ref<WebSocket>();
 const livePage = ref<LivePage>({});
@@ -60,6 +62,14 @@ async function init() {
 		})
 		let invalidation = await networkStore.newComponent(factoryId, params)
 		console.log("my render tree", invalidation)
+
+		// todo is this the right place? when to remove the subscriber?
+		networkStore.addUnprocessedEventSubscriber(evt => {
+			switch (evt.type){
+				case "ComponentInvalidated":
+					ui.value=(evt as ComponentInvalidated).value
+			}
+		})
 
 		ui.value = invalidation.value;
 		livePage.value = invalidation.value;

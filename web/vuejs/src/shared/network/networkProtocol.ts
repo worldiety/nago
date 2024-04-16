@@ -11,6 +11,7 @@ import {Pointer} from "@/shared/protocol/pointer";
 import {EventsAggregated} from "@/shared/protocol/gen/eventsAggregated";
 import {SetPropertyValueRequested} from "@/shared/protocol/gen/setPropertyValueRequested";
 import {FunctionCallRequested} from "@/shared/protocol/gen/functionCallRequested";
+import {Event} from "@/shared/protocol/gen/event";
 
 export default class NetworkProtocol {
 
@@ -18,12 +19,14 @@ export default class NetworkProtocol {
 	private pendingFutures: Map<number, Future>;
 	private reqCounter: number;
 	private activeLocale: string;
+	private unprocessedEventSubscribers: ((evt: Event) => void)[]
 
 	constructor(networkAdapter: NetworkAdapter) {
 		this.networkAdapter = networkAdapter;
 		this.pendingFutures = new Map<number, Future>();
 		this.reqCounter = 1;
 		this.activeLocale = "";
+		this.unprocessedEventSubscribers = [];
 	}
 
 	async initialize(): Promise<void> {
@@ -34,16 +37,24 @@ export default class NetworkProtocol {
 			console.log("got response", responseRaw)
 			const responseParsed = JSON.parse(responseRaw);
 			let requestId = responseParsed['requestId'] as number;
-			if (requestId===undefined){
+			if (requestId === undefined) {
 				// try again the shortened field name of ack, we keep that efficient
 				requestId = responseParsed['r'] as number;
 			}
 
-			if (requestId===undefined){
+			// our lowest id is 1, so this must be something without our intention
+			if (requestId === 0) {
 				// something event driven from the backend happened, usually an invalidate or a navigation request
+				console.log(`received unrequested event from backend: ${responseParsed.type}`)
+				this.unprocessedEventSubscribers.forEach(fn => {
+					if (fn === undefined) {
+						return
+					}
 
-				// TODO implement me
-				console.log("trigger redraw because backend wants",responseParsed)
+					fn(responseParsed as Event)
+				})
+
+				return
 			}
 
 			let future = this.pendingFutures.get(requestId);
@@ -62,6 +73,14 @@ export default class NetworkProtocol {
 	private nextReqId(): number {
 		this.reqCounter++;
 		return this.reqCounter;
+	}
+
+	addUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
+		this.unprocessedEventSubscribers.push(fn)
+	}
+
+	removeUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
+		this.unprocessedEventSubscribers = this.unprocessedEventSubscribers.filter(obj => obj !== fn)
 	}
 
 	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {

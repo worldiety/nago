@@ -14,7 +14,7 @@ type Component interface {
 func IsDirty(dst Component) bool {
 	dirty := false
 	Visit(dst)(func(component Component) bool {
-		dst.Properties(func(property Property) bool {
+		component.Properties(func(property Property) bool {
 			if property.Dirty() {
 				dirty = true
 				return false
@@ -31,6 +31,20 @@ func IsDirty(dst Component) bool {
 	})
 
 	return dirty
+}
+
+func ClearDirty(dst Component) {
+	Visit(dst)(func(component Component) bool {
+		component.Properties(func(property Property) bool {
+			if property.Dirty() {
+				property.SetDirty(false)
+			}
+
+			return true
+		})
+
+		return true
+	})
 }
 
 func Visit(root Component) iter.Seq[Component] {
@@ -52,13 +66,12 @@ func visitRecursive(root Component, walker func(Component) bool) bool {
 	}
 
 	root.Properties(func(property Property) bool {
-		switch p := property.(type) {
-
-		case Iterable[Component]:
-			p.Iter(func(c Component) bool {
+		property.AnyIter(func(a any) bool {
+			if c, ok := a.(Component); ok {
 				return visitRecursive(c, walker)
-			})
-		}
+			}
+			return true
+		})
 		return true
 	})
 

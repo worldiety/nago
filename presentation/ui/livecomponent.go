@@ -53,6 +53,10 @@ func (s *Shared[T]) Iter(f func(T) bool) {
 	f(s.v)
 }
 
+func (s *Shared[T]) AnyIter(f func(any) bool) {
+	f(s.v)
+}
+
 func (s *Shared[T]) ID() CID {
 	return s.id
 }
@@ -66,6 +70,8 @@ func (s *Shared[T]) setValue(value string) error {
 }
 
 func (s *Shared[T]) Parse(value string) error {
+	s.SetDirty(true)
+
 	switch any(s.v).(type) {
 	case string:
 		s.v = any(value).(T)

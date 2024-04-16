@@ -112,6 +112,25 @@ func (s *SharedList[T]) Each(f func(T)) {
 	}
 }
 
+func (s *SharedList[T]) AnyIter(f func(any) bool) {
+	if s == nil {
+		return
+	}
+
+	if s.iter != nil {
+		s.iter(func(t T) {
+			// return f(t)
+			f(t) // todo update to proper iterator type
+		})
+	}
+
+	for _, value := range s.values {
+		if !f(value) {
+			return
+		}
+	}
+}
+
 func (s *SharedList[T]) Iter(f func(T) bool) {
 	if s == nil {
 		return

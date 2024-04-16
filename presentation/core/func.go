@@ -72,5 +72,9 @@ func (lf *Func) Nil() bool {
 }
 
 func (lf *Func) Iter(yield func(*Func) bool) {
-	yield(lf)
+	yield(lf) // todo this is prone to endless recursion
+}
+
+func (lf *Func) AnyIter(f func(any) bool) {
+	f(lf) // todo this is prone to endless recursion
 }
