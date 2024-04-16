@@ -14,6 +14,10 @@ import type { Dialog } from '@/shared/protocol/gen/dialog';
 import type { Toggle } from '@/shared/protocol/gen/toggle';
 import type { DatePicker } from '@/shared/protocol/gen/datePicker';
 import type { NumberField } from '@/shared/protocol/gen/numberField';
+import type { Slider } from '@/shared/protocol/gen/slider';
+import type { Divider } from '@/shared/protocol/gen/divider';
+import type { Dropdown } from '@/shared/protocol/gen/dropdown';
+import type { DropdownItem } from '@/shared/protocol/gen/dropdownItem';
 
 
 export type Component =
@@ -31,5 +35,9 @@ export type Component =
     | Toggle
     | DatePicker
     | NumberField
+    | Slider
+    | Divider
+    | Dropdown
+    | DropdownItem
     
 

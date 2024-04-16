@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"go.wdy.de/nago/container/slice"
+	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
@@ -11,11 +11,13 @@ import (
 type Iter[T any] func(yield func(T))
 
 type SharedList[T any] struct {
-	id     CID
-	name   string
-	values []T
-	dirty  bool
-	iter   Iter[T]
+	id           CID
+	name         string
+	values       []T
+	dirty        bool
+	iter         Iter[T]
+	frozen       bool
+	frozenValues []T
 }
 
 func NewSharedList[T any](name string) *SharedList[T] {
@@ -35,36 +37,11 @@ func (s *SharedList[T]) From(iter Iter[T]) {
 	s.iter = iter
 }
 
-// deprecated
-func (s *SharedList[T]) Unwrap() any {
-	var zero T
-	_, isLiveComponent := any(zero).(core.Component)
-
-	if s.iter != nil {
-		if isLiveComponent {
-			var tmp []LiveComponent
-			s.iter(func(t T) {
-				tmp = append(tmp, any(t).(LiveComponent))
-			})
-			return tmp
-
-		} else {
-			var tmp []T
-			s.iter(func(t T) {
-				tmp = append(tmp, t)
-			})
-			return tmp
-		}
+func (s *SharedList[T]) render() ora.Property[[]T] {
+	return ora.Property[[]T]{
+		Ptr:   s.id,
+		Value: slices2.Collect(s.Iter),
 	}
-
-	if isLiveComponent {
-		var tmp []LiveComponent
-		for _, value := range s.values {
-			tmp = append(tmp, any(value).(LiveComponent))
-		}
-		return slice.Of(tmp...)
-	}
-	return slice.Of(s.values...)
 }
 
 func (s *SharedList[T]) ID() CID {
@@ -79,6 +56,10 @@ func (s *SharedList[T]) Dirty() bool {
 	if s == nil {
 		return false
 	}
+	if s.frozen {
+		return s.dirty
+	}
+
 	if s.iter != nil {
 		return true
 	}
@@ -90,6 +71,12 @@ func (s *SharedList[T]) SetDirty(b bool) {
 	if b && s == nil {
 		panic("cannot set non-false to nil shared list")
 	}
+
+	if s.frozen {
+		s.dirty = b
+		return
+	}
+
 	if !b && s == nil {
 		return
 	}
@@ -97,23 +84,18 @@ func (s *SharedList[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
-// deprecated wrong iter signature, use Iter
-func (s *SharedList[T]) Each(f func(T)) {
+func (s *SharedList[T]) AnyIter(f func(any) bool) {
 	if s == nil {
 		return
 	}
 
-	if s.iter != nil {
-		s.iter(f)
-	}
+	if s.frozen {
+		for _, value := range s.frozenValues {
+			if !f(value) {
+				return
+			}
+		}
 
-	for _, value := range s.values {
-		f(value)
-	}
-}
-
-func (s *SharedList[T]) AnyIter(f func(any) bool) {
-	if s == nil {
 		return
 	}
 
@@ -136,6 +118,16 @@ func (s *SharedList[T]) Iter(f func(T) bool) {
 		return
 	}
 
+	if s.frozen {
+		for _, value := range s.frozenValues {
+			if !f(value) {
+				return
+			}
+		}
+
+		return
+	}
+
 	if s.iter != nil {
 		s.iter(func(t T) {
 			// return f(t)
@@ -150,10 +142,43 @@ func (s *SharedList[T]) Iter(f func(T) bool) {
 	}
 }
 
+func (s *SharedList[T]) Freeze() {
+	if s.frozen {
+		panic(fmt.Errorf("already frozen shared list %v", s.id))
+	}
+
+	tmp := make([]T, 0, len(s.values))
+
+	//fmt.Printf("freezing shared list: %v\n", s.id)
+	s.Iter(func(t T) bool {
+		tmp = append(tmp, t)
+		return true
+	})
+
+	s.frozen = true
+	s.dirty = true
+	s.frozenValues = tmp
+}
+
+func (s *SharedList[T]) Unfreeze() {
+	if !s.frozen {
+		panic(fmt.Errorf("already unfrozen shared list %v", s.id))
+	}
+
+	//fmt.Printf("unfreezing shared list: %v\n", s.id)
+
+	s.frozen = false
+	s.frozenValues = nil
+}
+
 // Has no effect if Source has been set.
 func (s *SharedList[T]) Len() int {
 	if s == nil {
 		return 0
+	}
+
+	if s.frozen {
+		return len(s.frozenValues)
 	}
 
 	return len(s.values)
@@ -165,12 +190,20 @@ func (s *SharedList[T]) Append(t ...T) {
 		panic("cannot append data if Source has been set")
 	}
 
+	if s.frozen {
+		panic("cannot append data if frozen")
+	}
+
 	s.values = append(s.values, t...)
 	s.dirty = true
 }
 
 // AppendFrom is like append but uses the given iter once. See also From for an always dirty yielding.
 func (s *SharedList[T]) AppendFrom(iter Iter[T]) {
+	if s.frozen {
+		panic("cannot append data if frozen")
+	}
+
 	iter(func(t T) {
 		s.values = append(s.values, t)
 	})
@@ -182,6 +215,10 @@ func (s *SharedList[T]) AppendFrom(iter Iter[T]) {
 func (s *SharedList[T]) Remove(t ...T) {
 	if s.iter != nil {
 		panic("cannot remove data if Source has been set")
+	}
+
+	if s.frozen {
+		panic("cannot remove data if frozen")
 	}
 
 	anyRemoved := false
@@ -208,6 +245,10 @@ func (s *SharedList[T]) Remove(t ...T) {
 func (s *SharedList[T]) Clear() {
 	if s.iter != nil {
 		panic("cannot clear data if Source has been set")
+	}
+
+	if s.frozen {
+		panic("cannot clear data if frozen")
 	}
 
 	var zero T

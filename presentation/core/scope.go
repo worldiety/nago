@@ -36,6 +36,7 @@ type Scope struct {
 	channel             AtomicRef[Channel]
 	chanDestructor      AtomicRef[func()]
 	eventLoop           *EventLoop
+	lastMessageType     ora.EventType
 }
 
 func NewScope(id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
@@ -93,13 +94,22 @@ func (s *Scope) handleMessage(buf []byte) error {
 	s.eventLoop.Post(func() {
 		s.handleEvent(t)
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
-		s.renderIfRequired()
+		if s.lastMessageType != ora.ComponentInvalidatedT {
+			s.renderIfRequired()
+		}
 	})
 
 	return nil
 }
 
 func (s *Scope) Publish(evt ora.Event) {
+	switch evt := evt.(type) {
+	case ora.ComponentInvalidated:
+		s.lastMessageType = evt.Type
+	default:
+		s.lastMessageType = ""
+	}
+
 	if err := s.channel.Load().Publish(ora.Marshal(evt)); err != nil {
 		slog.Error(err.Error())
 	}
@@ -135,15 +145,19 @@ func (s *Scope) renderIfRequired() {
 		if IsDirty(component.Component) {
 			slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
 			s.Publish(s.render(0, component.Component))
-			ClearDirty(component.Component)
 		}
 	}
 }
 
 // only for event loop
 func (s *Scope) render(requestId ora.RequestId, component Component) ora.ComponentInvalidated {
-	s.allocatedComponents[component.ID()].RenderState.Clear()
-	s.allocatedComponents[component.ID()].RenderState.Scan(component)
+	Freeze(component)
+	defer Unfreeze(component)
+
+	rs := s.allocatedComponents[component.ID()].RenderState
+	rs.Clear()
+	rs.Scan(component)
+	ClearDirty(component)
 
 	return ora.ComponentInvalidated{
 		Type:      ora.ComponentInvalidatedT,

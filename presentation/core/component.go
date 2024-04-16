@@ -49,31 +49,67 @@ func ClearDirty(dst Component) {
 
 func Visit(root Component) iter.Seq[Component] {
 	return func(yield func(Component) bool) {
-		visitRecursive(root, func(component2 Component) bool {
+		visitRecursive(root, false, func(component2 Component) bool {
 			return yield(component2)
 		})
 	}
 }
 
-func visitRecursive(root Component, walker func(Component) bool) bool {
+func Freeze(c Component) {
+	Visit(c)(func(component Component) bool {
+		component.Properties(func(property Property) bool {
+			if freezable, ok := property.(Freezable); ok {
+				freezable.Freeze()
+			}
+
+			return true
+		})
+
+		return true
+	})
+}
+
+func Unfreeze(c Component) {
+	visitRecursive(c, true, func(component Component) bool {
+		component.Properties(func(property Property) bool {
+			if freezable, ok := property.(Freezable); ok {
+				freezable.Unfreeze()
+			}
+
+			return true
+		})
+
+		return true
+	})
+}
+
+func visitRecursive(root Component, depthFirst bool, walker func(Component) bool) bool {
 	if root == nil {
 		// by definition legal, properties may have just nil components but we don't want to visit them
 		return true
 	}
 
-	if !walker(root) {
-		return false
+	if !depthFirst {
+		if !walker(root) {
+			return false
+		}
 	}
 
 	root.Properties(func(property Property) bool {
 		property.AnyIter(func(a any) bool {
 			if c, ok := a.(Component); ok {
-				return visitRecursive(c, walker)
+				return visitRecursive(c, depthFirst, walker)
 			}
 			return true
 		})
 		return true
 	})
+
+	if depthFirst {
+		if !walker(root) {
+			return false
+		}
+	}
 
 	return true
 }

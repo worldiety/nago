@@ -99,5 +99,24 @@ func (c *Slider) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Slider) Render() ora.Component {
-	panic("not implemented")
+	return c.render()
+}
+
+func (c *Slider) render() ora.Slider {
+	return ora.Slider{
+		Ptr:              c.id,
+		Type:             ora.SliderT,
+		Disabled:         c.disabled.render(),
+		Label:            c.label.render(),
+		Hint:             c.hint.render(),
+		Error:            c.error.render(),
+		StartValue:       c.startValue.render(),
+		EndValue:         c.endValue.render(),
+		Min:              c.min.render(),
+		Max:              c.max.render(),
+		Stepsize:         c.stepsize.render(),
+		StartInitialized: c.startInitialized.render(),
+		EndInitialized:   c.endInitialized.render(),
+		OnChanged:        renderFunc(c.onChanged),
+	}
 }

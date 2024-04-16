@@ -14,10 +14,12 @@ type Func struct {
 }
 
 func NewFunc(name string) *Func {
-	return &Func{
+	f := &Func{
 		name: name,
 		id:   NextPtr(),
 	}
+	//fmt.Printf("NewFunc: %s: %v\n", name, f.ID())
+	return f
 }
 
 func (lf *Func) Unwrap() any {

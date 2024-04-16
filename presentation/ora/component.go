@@ -21,23 +21,26 @@ type Property[T any] struct {
 type ComponentType string
 
 const (
-	ButtonT      ComponentType = "Button"
-	GridT        ComponentType = "Grid"
-	GridCellT    ComponentType = "GridCell"
-	DialogT      ComponentType = "Dialog"
-	TextT        ComponentType = "Text"
-	PageT        ComponentType = "Page"
-	VBoxT        ComponentType = "VBox"
-	HBoxT        ComponentType = "HBox"
-	SliderT      ComponentType = "Slider"
-	ScaffoldT    ComponentType = "Scaffold"
-	NumberFieldT ComponentType = "NumberField"
-	TextFieldT   ComponentType = "TextField"
-	TableT       ComponentType = "Table"
-	TableCellT   ComponentType = "TableCell"
-	TableRowT    ComponentType = "TableRow"
-	ToggleT      ComponentType = "Toggle"
-	DatePickerT  ComponentType = "DatePicker"
+	ButtonT       ComponentType = "Button"
+	GridT         ComponentType = "Grid"
+	GridCellT     ComponentType = "GridCell"
+	DialogT       ComponentType = "Dialog"
+	TextT         ComponentType = "Text"
+	PageT         ComponentType = "Page"
+	VBoxT         ComponentType = "VBox"
+	HBoxT         ComponentType = "HBox"
+	SliderT       ComponentType = "Slider"
+	ScaffoldT     ComponentType = "Scaffold"
+	NumberFieldT  ComponentType = "NumberField"
+	TextFieldT    ComponentType = "TextField"
+	TableT        ComponentType = "Table"
+	TableCellT    ComponentType = "TableCell"
+	TableRowT     ComponentType = "TableRow"
+	ToggleT       ComponentType = "Toggle"
+	DatePickerT   ComponentType = "DatePicker"
+	DividerT      ComponentType = "Divider"
+	DropdownT     ComponentType = "Dropdown"
+	DropdownItemT ComponentType = "DropdownItem"
 )
 
 type Component interface {
@@ -62,6 +65,10 @@ func init() {
 		reflect.TypeOf(Toggle{}),
 		reflect.TypeOf(DatePicker{}),
 		reflect.TypeOf(NumberField{}),
+		reflect.TypeOf(Slider{}),
+		reflect.TypeOf(Divider{}),
+		reflect.TypeOf(Dropdown{}),
+		reflect.TypeOf(DropdownItem{}),
 	}
 }
 

@@ -201,8 +201,9 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 					cb.Toggle(dropdownItem)
 					*target = zero
 
-					cb.SelectedIndices().Each(func(i int64) {
+					cb.SelectedIndices().Iter(func(i int64) bool {
 						*target = itemSlice[i].Identity()
+						return true
 					})
 
 					if binding.OnChanged != nil {
@@ -259,8 +260,9 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 					cb.Toggle(dropdownItem)
 					*target = nil
 
-					cb.SelectedIndices().Each(func(i int64) {
+					cb.SelectedIndices().Iter(func(i int64) bool {
 						*target = append(*target, itemSlice[i].Identity())
+						return true
 					})
 
 					if binding.OnChanged != nil {

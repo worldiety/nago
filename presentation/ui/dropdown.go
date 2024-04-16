@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
@@ -53,11 +52,12 @@ func (c *Dropdown) SelectedIndices() *SharedList[int64] {
 func (c *Dropdown) indexOf(item *DropdownItem) int64 {
 	index := -1
 	counter := 0
-	c.items.Each(func(it *DropdownItem) {
+	c.items.Iter(func(it *DropdownItem) bool {
 		if it.id == item.id {
 			index = counter
 		}
 		counter++
+		return true
 	})
 
 	return int64(index)
@@ -76,11 +76,13 @@ func (c *Dropdown) Toggle(item *DropdownItem) {
 	}
 
 	contains := false
-	c.SelectedIndices().Each(func(index int64) {
+	c.SelectedIndices().Iter(func(index int64) bool {
 		if itemIndex == index {
 			contains = true
-			return
+			return false
 		}
+
+		return true
 	})
 	if contains {
 		c.SelectedIndices().Remove(itemIndex)
@@ -122,14 +124,39 @@ func (c *Dropdown) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Dropdown) Render() ora.Component {
-	panic("not implemented")
+	return c.render()
+}
+
+func (c *Dropdown) render() ora.Dropdown {
+	var items []ora.DropdownItem
+	c.items.Iter(func(it *DropdownItem) bool {
+		items = append(items, it.render())
+		return true
+	})
+
+	return ora.Dropdown{
+		Ptr:  c.id,
+		Type: ora.DropdownT,
+		Items: ora.Property[[]ora.DropdownItem]{
+			Ptr:   c.items.ID(),
+			Value: items,
+		},
+		SelectedIndices: c.selectedIndices.render(),
+		Multiselect:     c.multiselect.render(),
+		Expanded:        c.expanded.render(),
+		Disabled:        c.disabled.render(),
+		Label:           c.label.render(),
+		Hint:            c.hint.render(),
+		Error:           c.error.render(),
+		OnClicked:       renderFunc(c.onClicked),
+	}
 }
 
 type DropdownItem struct {
 	id         CID
 	content    String
 	onClicked  *Func
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
@@ -139,7 +166,7 @@ func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
 		onClicked: NewFunc("onClicked"),
 	}
 
-	c.properties = slice.Of[Property](c.content, c.onClicked)
+	c.properties = []core.Property{c.content, c.onClicked}
 
 	if with != nil {
 		with(c)
@@ -152,12 +179,12 @@ func (c *DropdownItem) ID() CID {
 	return c.id
 }
 
-func (c *DropdownItem) Type() string {
-	return "DropdownItem"
-}
-
-func (c *DropdownItem) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *DropdownItem) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
 func (c *DropdownItem) Content() String {
@@ -166,4 +193,17 @@ func (c *DropdownItem) Content() String {
 
 func (c *DropdownItem) OnClicked() *Func {
 	return c.onClicked
+}
+
+func (c *DropdownItem) Render() ora.Component {
+	return c.render()
+}
+
+func (c *DropdownItem) render() ora.DropdownItem {
+	return ora.DropdownItem{
+		Ptr:       c.id,
+		Type:      ora.DropdownItemT,
+		Content:   c.content.render(),
+		OnClicked: renderFunc(c.onClicked),
+	}
 }

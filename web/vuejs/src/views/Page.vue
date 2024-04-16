@@ -29,7 +29,6 @@ const page = route.meta.page as PageConfiguration;
 
 const state = ref(State.Loading);
 const ui = ref<Component>();
-const invalidationResp = ref<Invalidation>({});
 const ws = ref<WebSocket>();
 const livePage = ref<LivePage>({});
 
@@ -78,7 +77,6 @@ async function init() {
 
 		ui.value = invalidation.value;
 		livePage.value = invalidation.value;
-		invalidationResp.value = invalidation.value;
 		state.value = State.ShowUI;
 		console.log("old page async init done",ui)
 	} catch {
@@ -113,7 +111,7 @@ console.log("old page")
         To: "opacity-0"
     -->
 
-		<div v-if="state === State.ShowUI && ui" v-for="modal in invalidationResp.modals.v">
+		<div v-if="state === State.ShowUI && ui" v-for="modal in ui.modals.v">
 			<div class="fixed inset-0 z-50 bg-gray-700 bg-opacity-75 transition-opacity"></div>
 
 			<div class="fixed inset-0 z-50 w-screen overflow-y-auto">

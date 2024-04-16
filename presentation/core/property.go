@@ -11,9 +11,6 @@ type Property interface {
 	// Dirty returns true, if the property has been changed.
 	Dirty() bool
 
-	// deprecated: usage unclear, need a type assertion anyway why not assert the proper property type?
-	Unwrap() any
-
 	// ID returns the internal unique instance ID of this property which is used to identify it across process
 	// boundaries.
 	ID() ora.Ptr
@@ -26,6 +23,12 @@ type Property interface {
 
 	// AnyIter is an iter.Seq[any] for none, one or many property values. Note, that implementation may emit null.
 	AnyIter(f func(any) bool)
+}
+
+// Freezable can freeze dynamic content, e.g. if multiple iterations need a stable result.
+type Freezable interface {
+	Freeze()
+	Unfreeze()
 }
 
 type Iterable[T any] interface {

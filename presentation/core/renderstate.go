@@ -58,6 +58,7 @@ func (r *RenderState) Scan(c Component) {
 
 				if fn, ok := a.(*Func); ok {
 					r.funcs[fn.ID()] = fn
+					//fmt.Printf("registered func %v\n", fn.ID())
 				}
 				return true
 			})

@@ -52,6 +52,13 @@ func init() {
 				{Name: "number"},
 			},
 		},
+		reflect.TypeOf(ora.Property[float64]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "number"},
+			},
+		},
 		reflect.TypeOf(ora.Property[int64]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
@@ -81,6 +88,30 @@ func init() {
 					Name: "[]",
 					TypeParams: []*TSTypeDef{
 						{Name: "Component", Package: genPrefix + "component"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]int64]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "number"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.DropdownItem]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "DropdownItem", Package: genPrefix + "dropdownItem"},
 					},
 				},
 			},

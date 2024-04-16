@@ -29,5 +29,8 @@ func (c *Divider) Properties(yield func(core.Property) bool) {
 }
 
 func (c *Divider) Render() ora.Component {
-	panic("not implemented")
+	return ora.Divider{
+		Ptr:  c.id,
+		Type: ora.DividerT,
+	}
 }
