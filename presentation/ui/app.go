@@ -41,7 +41,7 @@ type Application struct {
 	OIDC        []OIDCProvider //deprecated must be unified/abstracted away
 	//deprecated we work with components now
 	LivePages  map[PageID]func(Wire) *Page
-	Components map[ora.ComponentFactoryId]func(realm core.Realm) core.Component
+	Components map[ora.ComponentFactoryId]func(realm core.Window) core.Component
 }
 
 func (a *Application) ConfigureRouter(router chi.Router) {

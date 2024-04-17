@@ -108,7 +108,7 @@ func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
 }
 
 func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
-	realm := newScopeRealm(s, evt.Factory, evt.Values)
+	realm := newScopeWindow(s, evt.Factory, evt.Values)
 	fac := s.factories[evt.Factory]
 	var component Component
 	if fac == nil {
@@ -144,7 +144,7 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 	}
 
 	s.allocatedComponents[component.ID()] = allocatedComponent{
-		Realm:       realm,
+		Window:      realm,
 		Component:   component,
 		RenderState: NewRenderState(),
 	}

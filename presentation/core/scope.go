@@ -15,12 +15,12 @@ type Destroyable interface {
 }
 
 type allocatedComponent struct {
-	Realm       *scopeRealm
+	Window      *scopeWindow
 	Component   Component
 	RenderState *RenderState
 }
 
-type ComponentFactory func(Realm, ora.NewComponentRequested) Component
+type ComponentFactory func(Window, ora.NewComponentRequested) Component
 
 // A Scope manage its own area of associated pointers. A Pointer must be only unique per Scope.
 // Resolving or keeping pointers outside a scope is inherently unsafe (e.g. a lookup map).

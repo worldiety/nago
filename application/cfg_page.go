@@ -44,7 +44,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
 	for id, f := range c.uiApp.Components {
-		factories[id] = func(scope core.Realm, requested ora.NewComponentRequested) core.Component {
+		factories[id] = func(scope core.Window, requested ora.NewComponentRequested) core.Component {
 			return f(scope)
 		}
 	}

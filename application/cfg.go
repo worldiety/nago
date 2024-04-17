@@ -41,7 +41,7 @@ func NewConfigurator() *Configurator {
 		done:       done,
 		uiApp: &ui.Application{
 			LivePages:  make(map[ui.PageID]func(wire ui.Wire) *ui.Page),
-			Components: map[ora.ComponentFactoryId]func(realm core.Realm) core.Component{},
+			Components: map[ora.ComponentFactoryId]func(realm core.Window) core.Component{},
 		},
 		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}

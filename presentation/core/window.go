@@ -6,17 +6,17 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-// A Realm owns the lifecycle of a component and is part of a Scope.
-// Another association could be thinking of a "window", however a window-behavior is currently not specified and
-// it depends completely on the clients rendering capabilities - especially if there is a relation between a
-// component and a window.
-type Realm interface {
+// A Window owns the lifecycle of a component and is part of a Scope.
+// Ora does not define (yet) what a window is.
+// However, obviously every component lives inside a window of the frontend and navigation is related to that.
+// Today, a frontend client must treat a scope as a window.
+type Window interface {
 	// Execute posts the task into the associated Executor. It will be executed in the associated event loop
 	// to allow race free processing.
 	// Use this to post updates from foreign goroutines into the ui components.
 	Execute(task func())
 
-	// Navigation allows access to the realms (respective window) navigation.
+	// Navigation allows access to the window navigation.
 	Navigation() *NavigationController
 
 	// Values contains those values, which have been passed from the callers, e.g. intent parameters or url query
@@ -41,15 +41,15 @@ type Realm interface {
 
 type SessionID string
 
-type scopeRealm struct {
+type scopeWindow struct {
 	factory       ora.ComponentFactoryId
 	scope         *Scope
 	navController *NavigationController
 	values        Values
 }
 
-func newScopeRealm(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeRealm {
-	s := &scopeRealm{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope)}
+func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
+	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope)}
 	if values == nil {
 		s.values = Values{}
 	}
@@ -57,26 +57,26 @@ func newScopeRealm(scope *Scope, factory ora.ComponentFactoryId, values Values) 
 	return s
 }
 
-func (s *scopeRealm) Execute(task func()) {
+func (s *scopeWindow) Execute(task func()) {
 	s.scope.eventLoop.Post(task)
 }
 
-func (s *scopeRealm) Navigation() *NavigationController {
+func (s *scopeWindow) Navigation() *NavigationController {
 	return s.navController
 }
 
-func (s *scopeRealm) Values() Values {
+func (s *scopeWindow) Values() Values {
 	return s.values
 }
 
-func (s *scopeRealm) User() auth.User {
+func (s *scopeWindow) User() auth.User {
 	return invalidUser{} // TODO
 }
 
-func (s *scopeRealm) Context() context.Context {
+func (s *scopeWindow) Context() context.Context {
 	return s.scope.ctx
 }
 
-func (s *scopeRealm) SessionID() SessionID {
+func (s *scopeWindow) SessionID() SessionID {
 	return s.scope.sessionID
 }

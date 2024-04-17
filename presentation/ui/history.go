@@ -13,7 +13,7 @@ type History struct {
 }
 
 func (h *History) Back() {
-	slog.Error("not implemented, use Realm.Navigation.Back")
+	slog.Error("not implemented, use Window.Navigation.Back")
 	//h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
 }
 
@@ -23,7 +23,7 @@ func (h *History) Open(pageId PageID, params Values) {
 		PageID: string(pageId),
 		State:  params,
 	})*/
-	slog.Error("not implemented, use Realm.Navigation.ForwardTo")
+	slog.Error("not implemented, use Window.Navigation.ForwardTo")
 }
 
 func (h *History) OpenURL(url string, target string) {

@@ -101,21 +101,21 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component("hello", func(realm core.Realm) core.Component {
+		cfg.Component("hello", func(wnd core.Window) core.Component {
 			return ui.NewPage2(func(page *ui.Page) {
 
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
 				}
-				test, _ := core.UnmarshalValues[myParams](realm.Values())
+				test, _ := core.UnmarshalValues[myParams](wnd.Values())
 				page.Body().Set(
 					ui.NewVBox(func(vbox *ui.VBox) {
 						vbox.Append(
 							ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("zurück")
 								btn.Action().Set(func() {
-									realm.Navigation().Back()
+									wnd.Navigation().Back()
 								})
 							}),
 
@@ -128,7 +128,7 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Component("1234", func(w core.Realm) core.Component {
+		cfg.Component("1234", func(w core.Window) core.Component {
 			// TODO reimplement user and whatever remote was for
 			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
 			//			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
