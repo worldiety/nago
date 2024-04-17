@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
-	"go.wdy.de/nago/container/slice"
 )
+
+type UserID string
+type RoleID string
 
 // User is a common contract for an authenticated user. Different implementations may provide additional interfaces or
 // expose concrete types behind it.
@@ -11,11 +13,9 @@ import (
 type User interface {
 	// UserID is the unique user id which is never empty but its nature is totally undefined and depends on the provider.
 	// Its value is constant between different sessions, e.g. keycloak provides a UUID in the sub(ject) claim.
-	UserID() string
-
-	// SessionID determines the current session id is never empty but its nature depends totally on the provider,
-	// e.g. keycloak provides a UUID in the sid property.
-	SessionID() string
+	// If you need resource-based authorization use this id for association.
+	// Use [User.Verified] and [User.Valid] in your domain logic.
+	UserID() UserID
 
 	// Verified is true if the user has been verified in some way, e.g. by double opt-in or by an administrator.
 	// This is often important, to only allow critical operations on verified users.
@@ -25,18 +25,22 @@ type User interface {
 	// different static user authorization, like users having administrator privileges.
 	// However, it is not suited to implement resource based authorizations which must be usually modelled explicitly
 	// in the domain layer.
-	Roles() slice.Slice[string]
+	// This confirms to iter.Seq[RoleID].
+	Roles(yield func(RoleID) bool)
 
 	// Email contains the primary unparsed and unvalidated mail address, if available. If no mail is provided,
 	// it is empty, e.g. due to GDPR requirements. Note also, that a user can always change its mail address, so
 	// using this as a primary key in your domain logic is probably always wrong.
+	// It is not a dedicated email type, because we cannot trust external implementations but they often provide
+	// this kind of property.
 	Email() string
 
 	// Name contains the natural name of the user, e.g. a firstname lastname tuple. Depending on the provider,
 	// this may be empty e.g. due to GDPR requirements.
 	Name() string
 
-	// Valid returns only true, if the user has been authenticated and the lease of e.g. a token is still valid.
+	// Valid returns only true, if the user has been authenticated and the lease and internal session
+	// of e.g. a token is still valid.
 	Valid() bool
 }
 

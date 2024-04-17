@@ -44,12 +44,12 @@ func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
 	for id, f := range c.uiApp.Components {
-		factories[id] = func(scope *core.Scope, requested ora.NewComponentRequested) core.Component {
-			return f(noOpWireStub{})
+		factories[id] = func(scope core.Realm, requested ora.NewComponentRequested) core.Component {
+			return f(scope)
 		}
 	}
 
-	app2 := core.NewApplication(factories)
+	app2 := core.NewApplication(c.ctx, factories)
 	appSrv := newApplicationServer()
 	r := chi.NewRouter()
 
@@ -135,6 +135,15 @@ func (c *Configurator) newHandler() http.Handler {
 		channel := gorilla.NewWebsocketChannel(conn)
 		scope := app2.Connect(channel, ora.ScopeID(scopeID))
 		defer scope.Destroy()
+
+		cookie, _ := r.Cookie("wdy-ora-access")
+		if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{
+			Type:      ora.SessionAssignedT,
+			SessionID: cookie.Value,
+		})); err != nil {
+			slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
+			return
+		}
 
 		if err := channel.Loop(); err != nil {
 			fmt.Println(err)

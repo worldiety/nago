@@ -11,6 +11,8 @@ import {EventsAggregated} from "@/shared/protocol/gen/eventsAggregated";
 import {SetPropertyValueRequested} from "@/shared/protocol/gen/setPropertyValueRequested";
 import {FunctionCallRequested} from "@/shared/protocol/gen/functionCallRequested";
 import {Event} from "@/shared/protocol/gen/event";
+import {Acknowledged} from "@/shared/protocol/gen/acknowledged";
+import {ComponentDestructionRequested} from "@/shared/protocol/gen/componentDestructionRequested";
 
 export default class NetworkProtocol {
 
@@ -41,9 +43,9 @@ export default class NetworkProtocol {
 				requestId = responseParsed['r'] as number;
 			}
 
-			console.log(responseParsed)
+			console.log("networkAdapter received", responseParsed)
 			// our lowest id is 1, so this must be something without our intention
-			if (requestId === 0) {
+			if (requestId === 0 || requestId === undefined) {
 				// something event driven from the backend happened, usually an invalidate or a navigation request
 				console.log(`received unrequested event from backend: ${responseParsed.type}`)
 				this.unprocessedEventSubscribers.forEach(fn => {
@@ -81,6 +83,19 @@ export default class NetworkProtocol {
 
 	removeUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
 		this.unprocessedEventSubscribers = this.unprocessedEventSubscribers.filter(obj => obj !== fn)
+	}
+
+	async destroyComponent(ptr: Pointer): Promise<Acknowledged> {
+		const evt: ComponentDestructionRequested = {
+			type: 'ComponentDestructionRequested',
+			requestId: this.nextReqId(),
+			ptr: ptr,
+		};
+
+		return this.publishToAdapter(evt.requestId, evt).then(value => {
+			let evt = value as Acknowledged
+			return evt
+		});
 	}
 
 	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {

@@ -21,6 +21,10 @@ func init() {
 		reflect.TypeOf(ConfigurationDefined{}),
 		reflect.TypeOf(SetPropertyValueRequested{}),
 		reflect.TypeOf(FunctionCallRequested{}),
+		reflect.TypeOf(NavigationForwardToRequested{}),
+		reflect.TypeOf(NavigationResetRequested{}),
+		reflect.TypeOf(NavigationBackRequested{}),
+		reflect.TypeOf(SessionAssigned{}),
 	}
 }
 

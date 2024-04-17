@@ -60,3 +60,16 @@ func (w *WebsocketChannel) Subscribe(f func(msg []byte) error) (destroy func()) 
 func (w *WebsocketChannel) Publish(msg []byte) error {
 	return w.conn.WriteMessage(websocket.TextMessage, msg)
 }
+
+// PublishLocal dispatches the buffer directly to currently all registered subscribers.
+func (w *WebsocketChannel) PublishLocal(buf []byte) error {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	for _, f := range w.observers {
+		if err := f(buf); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

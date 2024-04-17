@@ -12,6 +12,10 @@ import type { ConfigurationRequested } from '@/shared/protocol/gen/configuration
 import type { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
 import type { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
 import type { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
+import type { NavigationForwardToRequested } from '@/shared/protocol/gen/navigationForwardToRequested';
+import type { NavigationResetRequested } from '@/shared/protocol/gen/navigationResetRequested';
+import type { NavigationBackRequested } from '@/shared/protocol/gen/navigationBackRequested';
+import type { SessionAssigned } from '@/shared/protocol/gen/sessionAssigned';
 
 
 export type Event =
@@ -27,5 +31,9 @@ export type Event =
     | ConfigurationDefined
     | SetPropertyValueRequested
     | FunctionCallRequested
+    | NavigationForwardToRequested
+    | NavigationResetRequested
+    | NavigationBackRequested
+    | SessionAssigned
     
 

@@ -5,10 +5,13 @@ import (
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/persistence/kv"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"log/slog"
 )
 
 type PID string
@@ -98,21 +101,21 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Page("hello", func(wire ui.Wire) *ui.Page {
-			return ui.NewPage(wire, func(page *ui.Page) {
+		cfg.Component("hello", func(realm core.Realm) core.Component {
+			return ui.NewPage2(func(page *ui.Page) {
 
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
 				}
-				test, _ := ui.UnmarshalValues[myParams](wire.Values())
+				test, _ := core.UnmarshalValues[myParams](realm.Values())
 				page.Body().Set(
 					ui.NewVBox(func(vbox *ui.VBox) {
 						vbox.Append(
 							ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("zurück")
 								btn.Action().Set(func() {
-									page.History().Back()
+									realm.Navigation().Back()
 								})
 							}),
 
@@ -125,12 +128,12 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Page("1234", func(w ui.Wire) *ui.Page {
+		cfg.Component("1234", func(w core.Realm) core.Component {
 			// TODO reimplement user and whatever remote was for
-			//			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
+			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
 			//			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
 
-			page := ui.NewPage(w, nil)
+			page := ui.NewPage2(nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
@@ -158,7 +161,7 @@ func main() {
 											btn.Caption().Set("öffnen")
 											btn.Style().Set("destructive")
 											btn.Action().Set(func() {
-												page.History().Open("hello", ui.Values{
+												w.Navigation().ForwardTo("hello", core.Values{
 													"a": "1234",
 													"b": "456",
 												})
@@ -348,7 +351,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
+							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + w.User().Email()))
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {

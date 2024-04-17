@@ -63,6 +63,7 @@ type Page struct {
 	onDestroy  []func()
 }
 
+// deprecated: or not, if I change that, everything will bail out
 func NewPage(w Wire, with func(page *Page)) *Page {
 	p := &Page{wire: w, id: nextPtr()}
 	p.history = &History{p: p}
@@ -73,6 +74,18 @@ func NewPage(w Wire, with func(page *Page)) *Page {
 	p.properties = []core.Property{p.body, p.modals}
 	//p.maxMemory = 1024
 	//p.renderState = core.NewRenderState()
+	if with != nil {
+		with(p)
+	}
+	return p
+}
+
+func NewPage2(with func(page *Page)) *Page {
+	p := &Page{wire: nil, id: nextPtr()}
+	p.history = &History{p: p}
+	p.body = NewShared[core.Component]("body")
+	p.modals = NewSharedList[core.Component]("modals")
+	p.properties = []core.Property{p.body, p.modals}
 	if with != nil {
 		with(p)
 	}

@@ -7,6 +7,8 @@ import {onUnmounted, provide, ref} from "vue";
 import {useNetworkStore} from "@/stores/networkStore";
 import {Component} from "@/shared/protocol/gen/component";
 import GenericUi from "@/components/UiGeneric.vue";
+import {NavigationForwardToRequested} from "@/shared/protocol/gen/navigationForwardToRequested";
+import { factory } from 'typescript';
 
 enum State {
 	Loading,
@@ -45,10 +47,14 @@ async function init(): Promise<void> {
 			factoryId = "." // this is by ora definition the root page
 		}
 		console.log(`factory: ${factoryId}`)
-		let params :Record<string,string> = {};
+		let params: Record<string, string> = {};
 		new URLSearchParams(window.location.search).forEach((value, key) => {
-			params[key]= value
+			params[key] = value
 		})
+		history.replaceState({
+			factory:factoryId,
+			values:params,
+		},"",null)
 		let invalidation = await networkStore.newComponent(factoryId, params)
 		console.log("my render tree", invalidation)
 
@@ -61,6 +67,25 @@ async function init(): Promise<void> {
 				case "ErrorOccurred":
 					alert((evt as ErrorOccurred).message)
 					break
+				case "NavigationForwardToRequested":
+					let req = (evt as NavigationForwardToRequested);
+					networkStore.destroyComponent(ui.value?.id)
+					networkStore.newComponent(req.factory, req.values).then(invalidation => {
+						ui.value = invalidation.value;
+					})
+
+					let url = `/${req.factory}?`
+					Object.entries(req.values).forEach(([key, value]) => {
+						url += `${key}=${value}&`
+					});
+					history.pushState(req, "", url)
+					break
+				case "NavigationBackRequested":
+					history.back()
+
+					break
+				default:
+					console.log("ignored unhandled evt", evt)
 			}
 		})
 
@@ -73,6 +98,18 @@ async function init(): Promise<void> {
 }
 
 init();
+addEventListener("popstate",(event)=>{
+	if (event.state===null){
+		console.log("bogus history")
+		return
+	}
+
+	let req2 = history.state as NavigationForwardToRequested
+	networkStore.destroyComponent(ui.value?.id)
+	networkStore.newComponent(req2.factory, req2.values).then(invalidation => {
+		ui.value = invalidation.value;
+	})
+})
 
 onUnmounted(() => {
 	networkStore.teardown();

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"go.wdy.de/nago/presentation/ora"
 	"sync"
 	"time"
@@ -11,13 +12,19 @@ type Application struct {
 	scopes        map[ora.ScopeID]*Scope
 	factories     map[ora.ComponentFactoryId]ComponentFactory
 	scopeLifetime time.Duration
+	ctx           context.Context
+	cancelCtx     func()
 }
 
-func NewApplication(factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
+func NewApplication(ctx context.Context, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
+	cancelCtx, cancel := context.WithCancel(ctx)
+
 	return &Application{
 		scopeLifetime: time.Minute,
 		factories:     factories,
 		scopes:        map[ora.ScopeID]*Scope{},
+		ctx:           cancelCtx,
+		cancelCtx:     cancel,
 	}
 }
 
@@ -32,11 +39,18 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 
 	scope := a.scopes[id]
 	if scope == nil {
-		scope = NewScope(id, time.Minute, a.factories)
+		scope = NewScope(a.ctx, id, time.Minute, a.factories)
 	}
 
 	scope.Connect(channel)
 	a.scopes[id] = scope
 
 	return scope
+}
+
+func (a *Application) Destroy() {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	a.cancelCtx()
 }

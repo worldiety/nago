@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
@@ -14,11 +15,12 @@ type Destroyable interface {
 }
 
 type allocatedComponent struct {
+	Realm       *scopeRealm
 	Component   Component
 	RenderState *RenderState
 }
 
-type ComponentFactory func(*Scope, ora.NewComponentRequested) Component
+type ComponentFactory func(Realm, ora.NewComponentRequested) Component
 
 // A Scope manage its own area of associated pointers. A Pointer must be only unique per Scope.
 // Resolving or keeping pointers outside a scope is inherently unsafe (e.g. a lookup map).
@@ -27,6 +29,10 @@ type ComponentFactory func(*Scope, ora.NewComponentRequested) Component
 // "pages" and those pages may communicate immediately with each other (observer etc.) without
 // causing race conditions.
 // Each Scope has a single event loop to guarantee race free event processing.
+// A Scope is probably a single window.
+// To allow interacting between different scopes, we may either go the full serializing message route or
+// as a cheap alternative, replace all event loops with the same looper instance.
+// However, we must be careful on destruction of the scopes sharing them.
 type Scope struct {
 	id                  ora.ScopeID
 	factories           map[ora.ComponentFactoryId]ComponentFactory
@@ -37,15 +43,21 @@ type Scope struct {
 	chanDestructor      AtomicRef[func()]
 	eventLoop           *EventLoop
 	lastMessageType     ora.EventType
+	ctx                 context.Context
+	cancelCtx           func()
+	sessionID           SessionID
 }
 
-func NewScope(id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+func NewScope(ctx context.Context, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
 		id:                  id,
 		factories:           factories,
 		allocatedComponents: map[ora.Ptr]allocatedComponent{},
 		lifetime:            lifetime,
 		eventLoop:           NewEventLoop(),
+		ctx:                 scopeCtx,
+		cancelCtx:           cancel,
 	}
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
@@ -179,6 +191,7 @@ func (s *Scope) Destroy() {
 
 // only for event loop
 func (s *Scope) destroy() {
+	s.cancelCtx()
 	for _, component := range s.allocatedComponents {
 		invokeDestructors(component)
 	}
@@ -186,6 +199,11 @@ func (s *Scope) destroy() {
 	s.channel.Store(NewPrintChannel()) // detach
 	clear(s.allocatedComponents)
 	clear(s.factories)
+}
+
+// only for event loop
+func (s *Scope) handleSessionAssigned(evt ora.SessionAssigned) {
+	s.sessionID = SessionID(evt.SessionID)
 }
 
 // only for event loop

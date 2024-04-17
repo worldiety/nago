@@ -1,4 +1,4 @@
-package ui
+package core
 
 import (
 	"fmt"
@@ -7,37 +7,6 @@ import (
 	"strconv"
 )
 
-// deprecated: use NavigationController
-type History struct {
-	p *Page
-}
-
-func (h *History) Back() {
-	slog.Error("not implemented, use Realm.Navigation.Back")
-	//h.p.sendMsg(messageHistoryBack{Type: "HistoryBack"})
-}
-
-func (h *History) Open(pageId PageID, params Values) {
-	/*h.p.sendMsg(messageHistoryPushState{
-		Type:   "HistoryPushState",
-		PageID: string(pageId),
-		State:  params,
-	})*/
-	slog.Error("not implemented, use Realm.Navigation.ForwardTo")
-}
-
-func (h *History) OpenURL(url string, target string) {
-	/*h.p.sendMsg(messageHistoryOpen{
-		Type:   "HistoryOpen",
-		URL:    url,
-		Target: target,
-	})*/
-}
-
-// deprecated
-type Values map[string]string
-
-// deprecated
 func UnmarshalValues[Dst any](src Values) (Dst, error) {
 	var params Dst
 	t := reflect.TypeOf(params)

@@ -8,6 +8,7 @@ import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
 import {Pointer} from "@/shared/protocol/pointer";
 import {Property} from "@/shared/protocol/property";
 import {Event} from "@/shared/protocol/gen/event";
+import {Acknowledged} from "@/shared/protocol/gen/acknowledged";
 
 interface NetworkStoreState {
 	networkProtocol: NetworkProtocol;
@@ -23,6 +24,10 @@ export const useNetworkStore = defineStore('networkStore', {
 		},
 		async getConfiguration(colorScheme:ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined>{
 			return this.networkProtocol.getConfiguration(colorScheme,acceptLanguages)
+		},
+
+		async destroyComponent(ptr :Pointer):Promise<Acknowledged>{
+			return this.networkProtocol.destroyComponent(ptr)
 		},
 
 		async newComponent(fid:ComponentFactoryId, params : Record<string,string>):Promise<ComponentInvalidated>{

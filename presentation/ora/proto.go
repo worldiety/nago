@@ -15,8 +15,12 @@ const (
 )
 
 const (
-	NewConfigurationRequestedT EventType = "NewConfigurationRequested"
-	ConfigurationDefinedT      EventType = "ConfigurationDefined"
+	NewConfigurationRequestedT    EventType = "NewConfigurationRequested"
+	ConfigurationDefinedT         EventType = "ConfigurationDefined"
+	NavigationForwardToRequestedT EventType = "NavigationForwardToRequested"
+	NavigationBackRequestedT      EventType = "NavigationBackRequested"
+	NavigationResetRequestedT     EventType = "NavigationResetRequested"
+	SessionAssignedT              EventType = "SessionAssigned"
 )
 
 // Event is a sum type of
