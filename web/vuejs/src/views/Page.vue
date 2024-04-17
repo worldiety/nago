@@ -2,15 +2,9 @@
     This page will build its UI dynamically according to the PageConfiguration loaded from the server.
 -->
 <script lang="ts" setup>
-import {useRoute, useRouter} from 'vue-router';
 import {onUnmounted, provide, ref, watch} from 'vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import {useNetworkStore} from '@/stores/networkStore';
-import type {PageConfiguration} from '@/shared/model/pageConfiguration';
-import type {LiveComponent} from '@/shared/model/liveComponent';
-import type {Invalidation} from '@/shared/model/invalidation';
-import type {LivePage} from '@/shared/model/livePage';
-import type {LiveMessage} from '@/shared/model/liveMessage';
 import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
 import {Component} from "@/shared/protocol/gen/component";
 import {ErrorOccurred} from "@/shared/protocol/gen/errorOccurred";
@@ -21,27 +15,19 @@ enum State {
 	Error,
 }
 
-const route = useRoute();
-const router = useRouter();
 const networkStore = useNetworkStore();
 
-const page = route.meta.page as PageConfiguration;
 
 const state = ref(State.Loading);
 const ui = ref<Component>();
-const ws = ref<WebSocket>();
-const livePage = ref<LivePage>({});
 
 // Provide the current UiDescription to all child elements.
 // https://vuejs.org/guide/components/provide-inject.html
 provide('ui', ui);
-provide('ws', ws);
-provide('livePage', livePage);
 
 async function init() {
 	try {
-		// const router = useRouter()
-		const pageUrl = import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/page' + router.currentRoute.value.path; //page.link.slice(1);
+		const pageUrl = import.meta.env.VITE_HOST_BACKEND + 'api/v1/ui/page' + document.location.pathname;
 
 
 		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
@@ -76,7 +62,6 @@ async function init() {
 		})
 
 		ui.value = invalidation.value;
-		livePage.value = invalidation.value;
 		state.value = State.ShowUI;
 		console.log("old page async init done",ui)
 	} catch {
@@ -85,11 +70,6 @@ async function init() {
 }
 
 init();
-
-watch(route, () => {
-	state.value = State.Loading;
-	init();
-});
 
 onUnmounted(() => {
 	networkStore.teardown();
@@ -117,7 +97,7 @@ console.log("old page")
 			<div class="fixed inset-0 z-50 w-screen overflow-y-auto">
 				<div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
 					<div class="relative transform overflow-hidden rounded-lg sm:my-8 sm:w-full sm:max-w-lg">
-						<generic-ui   :ui="modal" :page="livePage"/>
+						<generic-ui   :ui="modal"/>
 					</div>
 				</div>
 			</div>
@@ -127,7 +107,7 @@ console.log("old page")
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" :page="livePage"/>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
 	</div>
 </template>
