@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Button struct {
 	id         CID
@@ -10,7 +13,7 @@ type Button struct {
 	color      *Shared[Color]
 	action     *Func
 	disabled   Bool
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewButton(with func(btn *Button)) *Button {
@@ -24,7 +27,7 @@ func NewButton(with func(btn *Button)) *Button {
 		action:   NewFunc("action"),
 	}
 
-	c.properties = slice.Of[Property](c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action)
+	c.properties = []core.Property{c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action}
 	if with != nil {
 		with(c)
 	}
@@ -35,12 +38,12 @@ func (c *Button) ID() CID {
 	return c.id
 }
 
-func (c *Button) Type() string {
-	return "Button"
-}
-
-func (c *Button) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Button) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
 func (c *Button) Caption() String {
@@ -65,4 +68,21 @@ func (c *Button) Action() *Func {
 
 func (c *Button) Disabled() Bool {
 	return c.disabled
+}
+
+func (c *Button) Render() ora.Component {
+	return c.renderButton()
+}
+
+func (c *Button) renderButton() ora.Button {
+	return ora.Button{
+		Ptr:      c.id,
+		Type:     ora.ButtonT,
+		Caption:  c.caption.render(),
+		PreIcon:  c.preIcon.render(),
+		PostIcon: c.postIcon.render(),
+		Color:    c.color.render(),
+		Disabled: c.disabled.render(),
+		Action:   renderFunc(c.action),
+	}
 }

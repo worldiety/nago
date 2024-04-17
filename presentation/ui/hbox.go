@@ -1,26 +1,27 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type HBox struct {
 	id         CID
-	children   *SharedList[LiveComponent]
+	children   *SharedList[core.Component]
 	alignment  String
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewHBox(with func(hbox *HBox)) *HBox {
 	c := &HBox{
 		id:        nextPtr(),
-		children:  NewSharedList[LiveComponent]("children"),
+		children:  NewSharedList[core.Component]("children"),
 		alignment: NewShared[string]("alignment"),
 	}
 	c.alignment.Set("grid")
 	c.alignment.SetDirty(false)
 
-	c.properties = slice.Of[Property](c.children, c.alignment)
+	c.properties = []core.Property{c.children, c.alignment}
 	if with != nil {
 		with(c)
 	}
@@ -46,10 +47,19 @@ func (c *HBox) ID() CID {
 	return c.id
 }
 
-func (c *HBox) Type() string {
-	return "HBox"
+func (c *HBox) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *HBox) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *HBox) Render() ora.Component {
+	return ora.HBox{
+		Ptr:       c.id,
+		Type:      ora.HBoxT,
+		Children:  renderSharedListComponents(c.children),
+		Alignment: c.alignment.render(),
+	}
 }

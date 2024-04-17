@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
@@ -151,12 +150,20 @@ type KeycloakUser struct {
 	birth     time.Time
 }
 
-func (k KeycloakUser) Valid() bool {
-	return k.birth.Add(10 * time.Minute).Before(time.Now()) // this is not what the JWT defines, however it is another security feature
+func (k KeycloakUser) UserID() auth.UserID {
+	return auth.UserID(k.userId)
 }
 
-func (k KeycloakUser) UserID() string {
-	return k.userId
+func (k KeycloakUser) Roles(yield func(auth.RoleID) bool) {
+	for _, role := range k.roles {
+		if !yield(auth.RoleID(role)) {
+			return
+		}
+	}
+}
+
+func (k KeycloakUser) Valid() bool {
+	return k.birth.Add(10 * time.Minute).Before(time.Now()) // this is not what the JWT defines, however it is another security feature
 }
 
 func (k KeycloakUser) SessionID() string {
@@ -165,10 +172,6 @@ func (k KeycloakUser) SessionID() string {
 
 func (k KeycloakUser) Verified() bool {
 	return k.verified
-}
-
-func (k KeycloakUser) Roles() slice.Slice[string] {
-	return slice.Of(k.roles...)
 }
 
 func (k KeycloakUser) Email() string {
@@ -182,8 +185,11 @@ func (k KeycloakUser) Name() string {
 type invalidUser struct {
 }
 
-func (i invalidUser) UserID() string {
+func (i invalidUser) UserID() auth.UserID {
 	return ""
+}
+
+func (i invalidUser) Roles(yield func(auth.RoleID) bool) {
 }
 
 func (i invalidUser) SessionID() string {
@@ -192,10 +198,6 @@ func (i invalidUser) SessionID() string {
 
 func (i invalidUser) Verified() bool {
 	return false
-}
-
-func (i invalidUser) Roles() slice.Slice[string] {
-	return slice.Of[string]()
 }
 
 func (i invalidUser) Email() string {

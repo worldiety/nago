@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 // Toggle is like a checkbox, which is either on or off.
 type Toggle struct {
@@ -8,7 +11,7 @@ type Toggle struct {
 	label            String
 	checked          Bool
 	disabled         Bool
-	properties       slice.Slice[Property]
+	properties       []core.Property
 	onCheckedChanged *Func
 }
 
@@ -21,7 +24,7 @@ func NewToggle(with func(tgl *Toggle)) *Toggle {
 		onCheckedChanged: NewFunc("onCheckedChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.disabled, c.checked, c.onCheckedChanged)
+	c.properties = []core.Property{c.label, c.disabled, c.checked, c.onCheckedChanged}
 	if with != nil {
 		with(c)
 	}
@@ -34,10 +37,6 @@ func (c *Toggle) ID() CID {
 
 func (c *Toggle) Type() string {
 	return "Toggle"
-}
-
-func (c *Toggle) Properties() slice.Slice[Property] {
-	return c.properties
 }
 
 func (c *Toggle) OnCheckedChanged() *Func {
@@ -54,4 +53,27 @@ func (c *Toggle) Disabled() Bool {
 
 func (c *Toggle) Checked() Bool {
 	return c.checked
+}
+
+func (c *Toggle) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Toggle) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Toggle) render() ora.Toggle {
+	return ora.Toggle{
+		Ptr:              c.id,
+		Type:             ora.ToggleT,
+		Label:            c.label.render(),
+		Checked:          c.checked.render(),
+		Disabled:         c.disabled.render(),
+		OnCheckedChanged: renderFunc(c.onCheckedChanged),
+	}
 }

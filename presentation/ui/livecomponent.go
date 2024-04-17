@@ -4,31 +4,16 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"strconv"
-	"sync/atomic"
 )
 
-type LiveComponent interface {
-	ID() CID
-	Type() string
-	Properties() slice.Slice[Property]
-}
+// deprecated
+type LiveComponent = core.Component
 
-type Property interface {
-	// Name returns the actual protocol name of this property.
-	Name() string
-	// Dirty returns true, if the property has been changed.
-	Dirty() bool
-	value() any
-	// ID returns the internal unique instance ID of this property which is used to identify it across process
-	// boundaries.
-	ID() CID
-	setValue(v string) error // don't touch
-	// SetDirty explicitly marks or unmarks this property as dirty.
-	// This is done automatically, when updating the value.
-	SetDirty(b bool)
-}
+// deprecated
+type Property = core.Property
 
 type String = *Shared[string]
 type EmbeddedSVG = *Shared[SVGSrc]
@@ -36,7 +21,7 @@ type Bool = *Shared[bool]
 type Int = *Shared[int64]
 type Float = *Shared[float64]
 
-type SVGSrc string
+type SVGSrc = ora.SVG
 
 // Allows sizes are sm, base, lg, xl and 2xl
 type Size string
@@ -57,15 +42,36 @@ func NewShared[T any](name string) *Shared[T] {
 	}
 }
 
+func (s *Shared[T]) render() ora.Property[T] {
+	return ora.Property[T]{
+		Ptr:   s.id,
+		Value: s.v,
+	}
+}
+
+func (s *Shared[T]) Iter(f func(T) bool) {
+	f(s.v)
+}
+
+func (s *Shared[T]) AnyIter(f func(any) bool) {
+	f(s.v)
+}
+
 func (s *Shared[T]) ID() CID {
 	return s.id
 }
 
-func (s *Shared[T]) value() any {
+func (s *Shared[T]) Unwrap() any {
 	return s.v
 }
 
 func (s *Shared[T]) setValue(value string) error {
+	return s.Parse(value)
+}
+
+func (s *Shared[T]) Parse(value string) error {
+	s.SetDirty(true)
+
 	switch any(s.v).(type) {
 	case string:
 		s.v = any(value).(T)
@@ -119,16 +125,10 @@ func (s *Shared[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
-type CID int64
-
-func (c CID) Nil() bool {
-	return c == 0
-}
-
-var nextFakePtr int64
+type CID = ora.Ptr
 
 func nextPtr() CID {
-	return CID(atomic.AddInt64(&nextFakePtr, 1))
+	return core.NextPtr()
 }
 
 func With[T any](t T, f func(t T)) T {
@@ -145,84 +145,13 @@ func nextToken() string {
 	return hex.EncodeToString(tmp[:])
 }
 
-func IsDirty(dst LiveComponent) bool {
-	if dst == nil {
-		return false
+func renderFunc(lf *core.Func) ora.Property[ora.Ptr] {
+	if lf.Nil() {
+		return ora.Property[ora.Ptr]{}
 	}
 
-	dirty := false
-	dst.Properties().Each(func(idx int, v Property) {
-		dirty = dirty || v.Dirty()
-	})
-
-	if dirty {
-		return true
+	return ora.Property[ora.Ptr]{
+		Ptr:   lf.ID(), // TODO why is this not a Property or a Shared[func()]? it is a logical slot (itself a pointer) with a value set (again pointer)
+		Value: lf.ID(),
 	}
-
-	Functions(dst, func(f *Func) {
-		dirty = dirty || f.Dirty()
-	})
-
-	if dirty {
-		return true
-	}
-
-	Children(dst, func(c LiveComponent) {
-		dirty = dirty || IsDirty(c)
-	})
-
-	return dirty
-}
-
-func SetDirty(dst LiveComponent, dirty bool) {
-	if dst == nil {
-		return
-	}
-
-	dst.Properties().Each(func(idx int, v Property) {
-		v.SetDirty(dirty)
-	})
-
-	Functions(dst, func(f *Func) {
-		f.SetDirty(dirty)
-	})
-
-	Children(dst, func(c LiveComponent) {
-		SetDirty(c, dirty)
-	})
-
-}
-
-func Functions(c LiveComponent, f func(f *Func)) {
-	c.Properties().Each(func(idx int, v Property) {
-		if fun, ok := v.(*Func); ok {
-			f(fun)
-		}
-	})
-}
-
-func Children(c LiveComponent, f func(c LiveComponent)) {
-	c.Properties().Each(func(idx int, v Property) {
-		switch t := v.(type) {
-		case *Shared[LiveComponent]:
-			f(t.Get())
-		case *SharedList[LiveComponent]:
-			t.Each(func(component LiveComponent) {
-				f(component)
-			})
-		case Property:
-			switch v := t.value().(type) {
-			case []LiveComponent:
-				for _, component := range v {
-					f(component)
-				}
-			case slice.Slice[LiveComponent]:
-				v.Each(func(idx int, v LiveComponent) {
-					f(v)
-				})
-			case LiveComponent:
-				f(v)
-			}
-		}
-	})
 }

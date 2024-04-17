@@ -1,38 +1,58 @@
-import type { LiveMessage } from '@/shared/model/liveMessage';
-import type { Property } from '@/shared/model/property';
-import type { PropertyFunc } from '@/shared/model/propertyFunc';
-import WebSocketAdapter from '@/shared/webSocketAdapter';
+import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import { defineStore } from 'pinia';
+import NetworkProtocol from '@/shared/network/networkProtocol';
+import {ConfigurationDefined} from "@/shared/protocol/gen/configurationDefined";
+import {ColorScheme} from "@/shared/protocol/colorScheme";
+import {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
+import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
+import {Pointer} from "@/shared/protocol/pointer";
+import {Property} from "@/shared/protocol/property";
+import {Event} from "@/shared/protocol/gen/event";
+import {Acknowledged} from "@/shared/protocol/gen/acknowledged";
 
 interface NetworkStoreState {
-	webSocketAdapter: WebSocketAdapter;
+	networkProtocol: NetworkProtocol;
 }
 
 export const useNetworkStore = defineStore('networkStore', {
 	state: (): NetworkStoreState => ({
-		webSocketAdapter: new WebSocketAdapter(),
+		networkProtocol: new NetworkProtocol(new WebSocketAdapter()),
 	}),
 	actions: {
-		initializeWebSocket(): void {
-			this.webSocketAdapter.initializeWebSocket();
+		async initialize(): Promise<void> {
+			return this.networkProtocol.initialize();
 		},
-		setWebSocketReceiveCallback(callback: (message: LiveMessage) => void): void {
-			this.webSocketAdapter.setWebSocketReceiveCallback(callback);
+		async getConfiguration(colorScheme:ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined>{
+			return this.networkProtocol.getConfiguration(colorScheme,acceptLanguages)
 		},
-		setWebSocketErrorCallback(callback: () => void): void {
-			this.webSocketAdapter.setWebSocketErrorCallback(callback);
+
+		async destroyComponent(ptr :Pointer):Promise<Acknowledged>{
+			return this.networkProtocol.destroyComponent(ptr)
 		},
-		closeWebSocket(): void {
-			this.webSocketAdapter.closeWebSocket();
+
+		async newComponent(fid:ComponentFactoryId, params : Record<string,string>):Promise<ComponentInvalidated>{
+			return this.networkProtocol.newComponent(fid,params)
 		},
-		invokeFunctions(...functions: PropertyFunc[]): void {
-			this.webSocketAdapter.invokeFunctions(...functions);
+
+		addUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
+			this.networkProtocol.addUnprocessedEventSubscriber(fn)
 		},
-		invokeSetProperties(...properties: Property[]): void {
-			this.webSocketAdapter.invokeSetProperties(...properties);
+
+		removeUnprocessedEventSubscriber(fn: ((evt: Event) => void)){
+			this.networkProtocol.removeUnprocessedEventSubscriber(fn)
 		},
-		invokeFunctionsAndSetProperties(properties: Property[], functions: PropertyFunc[]): void {
-			this.webSocketAdapter.invokeFunctionsAndSetProperties(properties, functions);
+
+		teardown(): void {
+			this.networkProtocol.teardown();
+		},
+		async invokeFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
+			return this.networkProtocol.callFunctions(...functions);
+		},
+		async invokeSetProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated|void> {
+			return this.networkProtocol.setProperties(...properties);
+		},
+		async invokeFunctionsAndSetProperties(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
+			return this.networkProtocol.setPropertiesAndCallFunctions(properties, functions);
 		},
 	},
 });

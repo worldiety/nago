@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
+import {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
 
 const props = defineProps<{
-	ui: LiveDropdownItem;
+	ui: DropdownItem;
 	multiselect: boolean;
 	selected: boolean;
 }>();
@@ -20,7 +20,7 @@ const networkStore = useNetworkStore();
 	>
 		<div class="flex justify-start items-center">
 			<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
-			<p class="truncate pl-2">{{ props.ui.content.value }}</p>
+			<p class="truncate pl-2">{{ props.ui.content.v }}</p>
 		</div>
 	</div>
 </template>

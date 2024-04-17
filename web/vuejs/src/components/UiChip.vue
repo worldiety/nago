@@ -1,12 +1,10 @@
 <script lang="ts" setup xmlns="http://www.w3.org/1999/html">
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveChip } from '@/shared/model/liveChip';
-import type { LivePage } from '@/shared/model/livePage';
+import {Chip} from "@/shared/protocol/gen/chip";
 
 const props = defineProps<{
-	ui: LiveChip;
-	page: LivePage;
+	ui: Chip;
 }>();
 
 const networkStore = useNetworkStore();
@@ -21,11 +19,11 @@ function onClose() {
 
 const outerColor = computed<string>(() => {
 	let cursor = '';
-	if (props.ui.action.value != 0) {
+	if (props.ui.action.v != 0) {
 		cursor = 'cursor-pointer ';
 	}
 
-	switch (props.ui.color.value) {
+	switch (props.ui.color.v) {
 		case 'red':
 			return cursor + 'text-red-800 bg-red-100  dark:bg-red-900 dark:text-red-300';
 		case 'green':
@@ -38,7 +36,7 @@ const outerColor = computed<string>(() => {
 });
 
 const innerColor = computed<string>(() => {
-	switch (props.ui.color.value) {
+	switch (props.ui.color.v) {
 		case 'red':
 			return 'hover:bg-red-200 hover:text-red-900 dark:hover:bg-red-800 dark:hover:text-red-300 text-red-400';
 		case 'green':
@@ -57,9 +55,9 @@ const innerColor = computed<string>(() => {
 		:class="outerColor"
 		class="me-2 inline-flex items-center rounded px-2 py-1 text-sm font-medium"
 	>
-		{{ props.ui.caption.value }}
+		{{ props.ui.caption.v }}
 		<button
-			v-if="props.ui.onClose.value"
+			v-if="props.ui.onClose.v"
 			type="button"
 			@click="onClose"
 			:class="innerColor"

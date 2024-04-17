@@ -1,22 +1,20 @@
 <script lang="ts" setup>
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveTextArea } from '@/shared/model/liveTextArea';
-import type { LivePage } from '@/shared/model/livePage';
+import {TextArea} from "@/shared/protocol/gen/textArea";
 
 const props = defineProps<{
-	ui: LiveTextArea;
-	page: LivePage;
+	ui: TextArea;
 }>();
 
 const networkStore = useNetworkStore();
 
 function valueChanged(event: any) {
-	props.ui.value.value = event.target.value;
+	props.ui.value.v = event.target.value;
 	networkStore.invokeFunctionsAndSetProperties([props.ui.value], [props.ui.onTextChanged]);
 }
 
 function isErr(): boolean {
-	return props.ui.error.value != '';
+	return props.ui.error.v != '';
 }
 </script>
 
@@ -26,15 +24,15 @@ function isErr(): boolean {
 			:for="props.ui.id.toString()"
 			:class="isErr() ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'"
 			class="mb-2 block text-sm font-medium"
-			>{{ props.ui.label.value }}</label
+			>{{ props.ui.label.v }}</label
 		>
 		<textarea
-			:disabled="props.ui.disabled.value"
+			:disabled="props.ui.disabled.v"
 			@input="valueChanged"
-			:value="props.ui.value.value"
+			:value="props.ui.value.v"
 			type="text"
 			:id="props.ui.id.toString()"
-			:rows="props.ui.rows.value"
+			:rows="props.ui.rows.v"
 			:class="
 				isErr()
 					? 'block w-full rounded-lg border border-red-500 bg-red-50 p-2.5 text-sm text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500'
@@ -42,7 +40,7 @@ function isErr(): boolean {
 			"
 		>
 		</textarea>
-		<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-if="!isErr()" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
+		<p v-if="isErr()" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
+		<p v-if="!isErr()" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
 	</div>
 </template>

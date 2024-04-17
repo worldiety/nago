@@ -4,6 +4,8 @@ import (
 	"context"
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/persistence/kv"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log/slog"
@@ -38,7 +40,8 @@ func NewConfigurator() *Configurator {
 		ctx:        ctx,
 		done:       done,
 		uiApp: &ui.Application{
-			LivePages: make(map[ui.PageID]func(wire ui.Wire) *ui.Page),
+			LivePages:  make(map[ui.PageID]func(wire ui.Wire) *ui.Page),
+			Components: map[ora.ComponentFactoryId]func(realm core.Window) core.Component{},
 		},
 		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}

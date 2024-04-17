@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"time"
@@ -49,20 +50,20 @@ func NewBinding() *Binding {
 func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T, opts Field) {
 	tf := ui.NewSlider(nil)
 	tf.Label().Set(opts.Label)
-	tf.Value().Set(float64(*target))
+	tf.Min().Set(float64(*target))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.Min().Set(float64(minIncl))
 	tf.Max().Set(float64(maxIncl))
 	tf.Stepsize().Set(float64(stepSize))
 	tf.OnChanged().Set(func() {
-		*target = T(tf.Value().Get())
+		*target = T(tf.Min().Get())
 		if binding.OnChanged != nil {
 			binding.OnChanged()
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() ui.LiveComponent {
+		getComponent: func() core.Component {
 			return tf
 		},
 		opts: opts,
@@ -82,7 +83,7 @@ func Int[T Number](binding *Binding, target *T, opts Field) {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() ui.LiveComponent {
+		getComponent: func() core.Component {
 			return tf
 		},
 		opts: opts,
@@ -117,7 +118,7 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 	})
 
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() ui.LiveComponent {
+		getComponent: func() core.Component {
 			return tf
 		},
 		opts: opts,
@@ -200,8 +201,9 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 					cb.Toggle(dropdownItem)
 					*target = zero
 
-					cb.SelectedIndices().Each(func(i int64) {
+					cb.SelectedIndices().Iter(func(i int64) bool {
 						*target = itemSlice[i].Identity()
+						return true
 					})
 
 					if binding.OnChanged != nil {
@@ -212,7 +214,7 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 		)
 	}
 
-	binding.elems = append(binding.elems, formElem{func() ui.LiveComponent {
+	binding.elems = append(binding.elems, formElem{func() core.Component {
 		return cb
 	}, opts})
 }
@@ -258,8 +260,9 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 					cb.Toggle(dropdownItem)
 					*target = nil
 
-					cb.SelectedIndices().Each(func(i int64) {
+					cb.SelectedIndices().Iter(func(i int64) bool {
 						*target = append(*target, itemSlice[i].Identity())
+						return true
 					})
 
 					if binding.OnChanged != nil {
@@ -270,7 +273,7 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 		)
 	}
 
-	binding.elems = append(binding.elems, formElem{func() ui.LiveComponent {
+	binding.elems = append(binding.elems, formElem{func() core.Component {
 		return cb
 	}, opts})
 }
@@ -353,7 +356,7 @@ nextElem:
 }
 
 type formElem struct {
-	getComponent func() ui.LiveComponent
+	getComponent func() core.Component
 	opts         Field
 }
 

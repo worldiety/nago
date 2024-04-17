@@ -2,11 +2,10 @@ package ui
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/container/slice"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"log/slog"
 	"mime/multipart"
@@ -19,9 +18,10 @@ type SessionID = string
 
 // TODO I don't like that, because we cannot popup dialogs from nowwhere, but perhaps that is a good thing?
 type ModalOwner interface {
-	Modals() *SharedList[LiveComponent]
+	Modals() *SharedList[core.Component]
 }
 
+// deprecated we want probably the scope instead or any other interface
 type Wire interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
@@ -42,6 +42,7 @@ type Wire interface {
 	ClientSession() SessionID
 }
 
+// deprecated what is this for?
 type Remote interface {
 	// Addr denotes the physical remote layer. This is useless behind a proxy.
 	Addr() string
@@ -53,28 +54,38 @@ type Remote interface {
 type PageInstanceToken string
 
 type Page struct {
-	id          CID
-	wire        Wire
-	body        *Shared[LiveComponent]
-	modals      *SharedList[LiveComponent]
-	history     *History
-	properties  slice.Slice[Property]
-	renderState *renderState
-	token       String
-	maxMemory   int64
-	onDestroy   []func()
+	id         CID
+	wire       Wire
+	body       *Shared[core.Component]
+	modals     *SharedList[core.Component]
+	history    *History
+	properties []core.Property
+	onDestroy  []func()
 }
 
+// deprecated: or not, if I change that, everything will bail out
 func NewPage(w Wire, with func(page *Page)) *Page {
 	p := &Page{wire: w, id: nextPtr()}
 	p.history = &History{p: p}
-	p.body = NewShared[LiveComponent]("body")
-	p.modals = NewSharedList[LiveComponent]("modals")
-	p.token = NewShared[string]("token")
-	p.token.Set(nextToken())
-	p.properties = slice.Of[Property](p.body, p.modals, p.token)
-	p.maxMemory = 1024
-	p.renderState = newRenderState()
+	p.body = NewShared[core.Component]("body")
+	p.modals = NewSharedList[core.Component]("modals")
+	//p.token = NewShared[string]("token")
+	//p.token.Set(nextToken())
+	p.properties = []core.Property{p.body, p.modals}
+	//p.maxMemory = 1024
+	//p.renderState = core.NewRenderState()
+	if with != nil {
+		with(p)
+	}
+	return p
+}
+
+func NewPage2(with func(page *Page)) *Page {
+	p := &Page{wire: nil, id: nextPtr()}
+	p.history = &History{p: p}
+	p.body = NewShared[core.Component]("body")
+	p.modals = NewSharedList[core.Component]("modals")
+	p.properties = []core.Property{p.body, p.modals}
 	if with != nil {
 		with(p)
 	}
@@ -85,12 +96,25 @@ func (p *Page) ID() CID {
 	return p.id
 }
 
-func (p *Page) Type() string {
-	return "Page"
+func (p *Page) Type() ora.ComponentType {
+	return ora.PageT
 }
 
-func (p *Page) Properties() slice.Slice[Property] {
-	return p.properties
+func (p *Page) Properties(yield func(core.Property) bool) {
+	for _, property := range p.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (p *Page) Render() ora.Component {
+	return ora.Page{
+		Ptr:    p.id,
+		Type:   ora.PageT,
+		Body:   renderComponentProp(p.body, p.body),
+		Modals: renderComponentsProp(p.modals, p.modals),
+	}
 }
 
 func (p *Page) Body() *Shared[LiveComponent] {
@@ -98,35 +122,41 @@ func (p *Page) Body() *Shared[LiveComponent] {
 }
 
 func (p *Page) Token() PageInstanceToken {
-	return PageInstanceToken(p.token.Get())
+	//return PageInstanceToken(p.token.Get())
+	panic("implement me")
 }
 
-func (p *Page) Modals() *SharedList[LiveComponent] {
+func (p *Page) Modals() *SharedList[core.Component] {
 	return p.modals
 }
 
+// deprecated: the scope[component-id] must be invalidated instead
 func (p *Page) Invalidate() {
 	logging.FromContext(p.wire.Context()).Info("page invalidated: re-render")
-	p.renderState.Clear()
+
+	/*p.renderState.Clear()
 	// TODO make also a real component
 	var tmp []jsonComponent
 	p.modals.Each(func(component LiveComponent) {
 		tmp = append(tmp, marshalComponent(p.renderState, component))
 	})
-	p.sendMsg(messageFullInvalidate{
-		Type:   "Invalidation",
-		Root:   marshalComponent(p.renderState, p.body.Get()),
-		Modals: tmp,
-		Token:  string(p.Token()),
-	})
+	/*
+		p.sendMsg(messageFullInvalidate{
+			Type:   "Invalidation",
+			Root:   marshalComponent(p.renderState, p.body.Get()),
+			Modals: tmp,
+			Token:  string(p.Token()),
+		})*/
 }
 
+// deprecated: this does not belong to a page, but the applications scope
 func (p *Page) History() *History {
 	return p.history
 }
 
 // HandleHTTP provides classic http inter-operation with this page. This is required e.g. for file uploads
 // using multipart forms etc.
+// deprecated: entirely the wrong place for this
 func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	pageToken := r.Header.Get("x-page-token")
@@ -134,73 +164,76 @@ func (p *Page) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		pageToken = query.Get("page")
 	}
 
-	if pageToken != p.token.Get() {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	switch r.URL.Path {
-	case "/api/v1/upload":
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		uploadToken := UploadToken(r.Header.Get("x-upload-token"))
-		handler := p.renderState.uploads[uploadToken]
-		if handler == nil || handler.onUploadReceived == nil {
-			logging.FromContext(r.Context()).Warn("upload received but have no handler", slog.String("upload-token", string(uploadToken)))
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err := r.ParseMultipartForm(p.maxMemory); err != nil {
-			logging.FromContext(r.Context()).Warn("cannot parse multipart form", slog.Any("err", err))
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var files []FileUpload
-		for _, headers := range r.MultipartForm.File {
-			for _, header := range headers {
-				files = append(files, httpMultipartFile{header: header})
+	//if pageToken != p.token.Get() {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
+	// TODO where and how to handle that???
+	/*
+		switch r.URL.Path {
+		case "/api/v1/upload":
+			if r.Method != http.MethodPost {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
 			}
+
+			uploadToken := UploadToken(r.Header.Get("x-upload-token"))
+			handler := p.renderState.uploads[uploadToken]
+			if handler == nil || handler.onUploadReceived == nil {
+				logging.FromContext(r.Context()).Warn("upload received but have no handler", slog.String("upload-token", string(uploadToken)))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err := r.ParseMultipartForm(p.maxMemory); err != nil {
+				logging.FromContext(r.Context()).Warn("cannot parse multipart form", slog.Any("err", err))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			var files []FileUpload
+			for _, headers := range r.MultipartForm.File {
+				for _, header := range headers {
+					files = append(files, httpMultipartFile{header: header})
+				}
+			}
+
+			handler.onUploadReceived(files)
+			p.Invalidate() // TODO race condition?!?!
+		case "/api/v1/download":
+			if r.Method != http.MethodGet {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+
+			downloadToken := DownloadToken(r.Header.Get("x-download-token"))
+			if downloadToken == "" {
+				downloadToken = DownloadToken(query.Get("download"))
+			}
+
+			opener := p.renderState.downloads[downloadToken]
+			if opener == nil {
+				logging.FromContext(r.Context()).Warn("download request received but have no handler", slog.String("download-token", string(downloadToken)))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			reader, err := opener()
+			if err != nil {
+				logging.FromContext(r.Context()).Warn("download request received but cannot open stream", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			if _, err := io.Copy(w, reader); err != nil {
+				logging.FromContext(r.Context()).Warn("download request received but cannot complete data transfer", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 		}
 
-		handler.onUploadReceived(files)
-		p.Invalidate() // TODO race condition?!?!
-	case "/api/v1/download":
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		downloadToken := DownloadToken(r.Header.Get("x-download-token"))
-		if downloadToken == "" {
-			downloadToken = DownloadToken(query.Get("download"))
-		}
-
-		opener := p.renderState.downloads[downloadToken]
-		if opener == nil {
-			logging.FromContext(r.Context()).Warn("download request received but have no handler", slog.String("download-token", string(downloadToken)))
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		reader, err := opener()
-		if err != nil {
-			logging.FromContext(r.Context()).Warn("download request received but cannot open stream", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if _, err := io.Copy(w, reader); err != nil {
-			logging.FromContext(r.Context()).Warn("download request received but cannot complete data transfer", slog.String("download-token", string(downloadToken)), slog.Any("err", err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-	}
+	*/
 }
 
 type httpMultipartFile struct {
@@ -224,61 +257,61 @@ func (h httpMultipartFile) Sys() any {
 }
 
 func (p *Page) HandleMessage() error {
-	_, buf, err := p.wire.ReadMessage()
-	if err != nil {
-		slog.Default().Error("failed to receive ws message", slog.Any("err", err))
-		return err
-	}
-
-	var batch msgBatch
-	if err := json.Unmarshal(buf, &batch); err != nil {
-		slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
-		return err
-	}
-
-	if len(batch.Messages) == 0 {
-		slog.Default().Error("received empty message batch from client, it should not do that")
-		return nil
-	}
-
-	for _, buf := range batch.Messages {
-		var m msg
-		if err := json.Unmarshal(buf, &m); err != nil {
-			slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+	/*	_, buf, err := p.wire.ReadMessage()
+		if err != nil {
+			slog.Default().Error("failed to receive ws message", slog.Any("err", err))
 			return err
 		}
 
-		switch m.Type {
-		case "callFn":
-			var call callFunc
-			if err := json.Unmarshal(buf, &call); err != nil {
-				panic(fmt.Errorf("cannot happen: %w", err))
-			}
-			callIt(p.renderState, call)
-		case "setProp":
-			var call setProperty
-			if err := json.Unmarshal(buf, &call); err != nil {
-				panic(fmt.Errorf("cannot happen: %w", err))
-			}
-
-			setProp(p.renderState, call)
-
-		case "updateJWT":
-			// nothing to do, this is handled transparently by the wire layer itself because the encoding
-			// and auth details are implementation dependent
-
-		default:
-			slog.Default().Error("protocol not implemented: " + m.Type)
+		var batch msgBatch
+		if err := json.Unmarshal(buf, &batch); err != nil {
+			slog.Default().Error("cannot decode ws batch message", slog.Any("err", err))
+			return err
 		}
-	}
 
-	if IsDirty(p.body.Get()) || p.body.Dirty() || p.modals.Dirty() {
-		p.body.SetDirty(false)
-		p.modals.SetDirty(false)
-		SetDirty(p.body.Get(), false)
-		p.Invalidate()
-	}
+		if len(batch.Messages) == 0 {
+			slog.Default().Error("received empty message batch from client, it should not do that")
+			return nil
+		}
 
+		for _, buf := range batch.Messages {
+			var m msg
+			if err := json.Unmarshal(buf, &m); err != nil {
+				slog.Default().Error("cannot decode ws message", slog.Any("err", err))
+				return err
+			}
+
+			switch m.Type {
+			case "callFn":
+				var call callFunc
+				if err := json.Unmarshal(buf, &call); err != nil {
+					panic(fmt.Errorf("cannot happen: %w", err))
+				}
+				callIt(p.renderState, call)
+			case "setProp":
+				var call setProperty
+				if err := json.Unmarshal(buf, &call); err != nil {
+					panic(fmt.Errorf("cannot happen: %w", err))
+				}
+
+				setProp(p.renderState, call)
+
+			case "updateJWT":
+				// nothing to do, this is handled transparently by the wire layer itself because the encoding
+				// and auth details are implementation dependent
+
+			default:
+				slog.Default().Error("protocol not implemented: " + m.Type)
+			}
+		}
+
+		if IsDirty(p.body.Get()) || p.body.Dirty() || p.modals.Dirty() {
+			p.body.SetDirty(false)
+			p.modals.SetDirty(false)
+			SetDirty(p.body.Get(), false)
+			p.Invalidate()
+		}
+	*/
 	return nil
 }
 
@@ -296,6 +329,7 @@ func (p *Page) AddOnDestroy(f func()) {
 	p.onDestroy = append(p.onDestroy, f)
 }
 
+/*
 func (p *Page) sendMsg(t any) {
 	buf, err := json.Marshal(t)
 	if err != nil {
@@ -305,6 +339,7 @@ func (p *Page) sendMsg(t any) {
 		slog.Default().Error("failed to write websocket message", slog.Any("err", err))
 	}
 }
+
 
 type messageFullInvalidate struct {
 	Type   string          `json:"type"` // value=Invalidation
@@ -346,7 +381,8 @@ type setProperty struct {
 	Value any `json:"value"`
 }
 
-func callIt(rs *renderState, call callFunc) {
+
+func callIt(rs *internal.RenderState, call callFunc) {
 	f := rs.funcs[call.ID]
 	if !f.Nil() {
 		slog.Default().Info(fmt.Sprintf("func called %d", f.ID()))
@@ -354,12 +390,13 @@ func callIt(rs *renderState, call callFunc) {
 	}
 }
 
-func setProp(rs *renderState, set setProperty) {
+func setProp(rs *internal.RenderState, set setProperty) {
 	v := rs.props[set.ID]
 	if v != nil {
 		if err := v.setValue(fmt.Sprintf("%v", set.Value)); err != nil {
-			slog.Default().Error(fmt.Sprintf("cannot set property %d = %v, reason: %v", v.ID(), v.value(), err))
+			slog.Default().Error(fmt.Sprintf("cannot set property %d = %v, reason: %v", v.ID(), v.Unwrap(), err))
 		}
-		slog.Default().Info(fmt.Sprintf("value set %d = %v", v.ID(), v.value()))
+		slog.Default().Info(fmt.Sprintf("value set %d = %v", v.ID(), v.Unwrap()))
 	}
 }
+*/

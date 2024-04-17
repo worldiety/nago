@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import type { LiveNumberField } from '@/shared/model/liveNumberField';
 import { ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { PropertyInt } from '@/shared/model/propertyInt';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
+import {NumberField} from "@/shared/protocol/gen/numberField";
+import {Property} from "@/shared/protocol/property";
 
 const props = defineProps<{
-	ui: LiveNumberField;
+	ui: NumberField
 }>();
 
 const networkStore = useNetworkStore();
-const inputValue = ref<string>(props.ui.value.value.toString(10));
+const inputValue = ref<string>(props.ui.value.v.toString(10));
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -25,9 +25,9 @@ watch(inputValue, (newValue, oldValue) => {
 		inputValue.value = oldValue;
 		return;
 	}
-	const updatedValueProperty: PropertyInt = {
+	const updatedValueProperty: Property<number> = {
 		...props.ui.value,
-		value: parseInt(newValue, 10),
+		v: parseInt(newValue, 10),
 	};
 	networkStore.invokeFunctionsAndSetProperties([updatedValueProperty], [props.ui.onValueChanged]);
 });
@@ -36,11 +36,11 @@ watch(inputValue, (newValue, oldValue) => {
 <template>
 	<div>
 		<InputWrapper
-			:simple="props.ui.simple.value"
-			:label="props.ui.label.value"
-			:error="props.ui.error.value"
-			:hint="props.ui.hint.value"
-			:disabled="props.ui.disabled.value"
+			:simple="props.ui.simple.v"
+			:label="props.ui.label.v"
+			:error="props.ui.error.v"
+			:hint="props.ui.hint.v"
+			:disabled="props.ui.disabled.v"
 		>
 			<div class="relative">
 				<input
@@ -48,13 +48,17 @@ watch(inputValue, (newValue, oldValue) => {
 					type="text"
 					class="input-field"
 					inputmode="numeric"
-					:placeholder="props.ui.placeholder.value"
-					:disabled="props.ui.disabled.value"
+					:placeholder="props.ui.placeholder.v"
+					:disabled="props.ui.disabled.v"
 				>
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
 				</div>
 			</div>
-		</InputWrapper>
+			<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+				<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+			</div>
+	</InputWrapper>
+
 	</div>
 </template>

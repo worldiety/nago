@@ -1,11 +1,14 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type TableCell struct {
 	id         CID
-	body       *Shared[LiveComponent]
-	properties slice.Slice[Property]
+	body       *Shared[core.Component]
+	properties []core.Property
 }
 
 func NewTableCell(with func(cell *TableCell)) *TableCell {
@@ -14,7 +17,7 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 	}
 
 	c.body = NewShared[LiveComponent]("body")
-	c.properties = slice.Of[Property](c.body)
+	c.properties = []core.Property{c.body}
 	if with != nil {
 		with(c)
 	}
@@ -22,7 +25,7 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 	return c
 }
 
-func (c *TableCell) Body() *Shared[LiveComponent] {
+func (c *TableCell) Body() *Shared[core.Component] {
 	return c.body
 }
 
@@ -30,10 +33,21 @@ func (c *TableCell) ID() CID {
 	return c.id
 }
 
-func (c *TableCell) Type() string {
-	return "TableCell"
+func (c *TableCell) Properties(yield func(property core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *TableCell) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *TableCell) Render() ora.Component {
+	return c.render()
+}
+func (c *TableCell) render() ora.TableCell {
+	return ora.TableCell{
+		Ptr:  c.id,
+		Type: ora.TableCellT,
+		Body: renderSharedComponent(c.body),
+	}
 }

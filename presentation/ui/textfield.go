@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type TextField struct {
@@ -15,7 +16,7 @@ type TextField struct {
 	disabled      Bool
 	simple        Bool
 	onTextChanged *Func
-	properties    slice.Slice[Property]
+	properties    []core.Property
 }
 
 func NewTextField(with func(textField *TextField)) *TextField {
@@ -23,16 +24,16 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		id:            nextPtr(),
 		label:         NewShared[string]("label"),
 		value:         NewShared[string]("value"),
-		placeholder:   NewShared[string]("placeholder"),
+		placeholder:   NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		hint:          NewShared[string]("hint"),
-		help:          NewShared[string]("help"),
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
-		simple:        NewShared[bool]("simple"),
+		help:          NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
+		simple:        NewShared[bool]("simple"), // TODO what is that?
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.disabled, c.simple, c.onTextChanged)
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged}
 
 	if with != nil {
 		with(c)
@@ -77,10 +78,26 @@ func (l *TextField) Disabled() Bool {
 
 func (l *TextField) Simple() Bool { return l.simple }
 
-func (l *TextField) Type() string {
-	return "TextField"
+func (l *TextField) Properties(yield func(core.Property) bool) {
+	for _, property := range l.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (l *TextField) Properties() slice.Slice[Property] {
-	return l.properties
+func (l *TextField) Render() ora.Component {
+	return ora.TextField{
+		Ptr:           l.id,
+		Type:          ora.TextFieldT,
+		Label:         l.label.render(),
+		Hint:          l.hint.render(),
+		Help:          l.help.render(),
+		Error:         l.error.render(),
+		Value:         l.value.render(),
+		Placeholder:   l.placeholder.render(),
+		Disabled:      l.disabled.render(),
+		Simple:        l.simple.render(),
+		OnTextChanged: renderFunc(l.onTextChanged),
+	}
 }

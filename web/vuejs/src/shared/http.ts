@@ -1,22 +1,7 @@
-import {useAuth} from '@/stores/authStore';
 import type {CustomError} from "@/composables/errorhandling";
 import type {URL} from "node:url";
 
-export function userHeaders() {
-	async function headers(): Promise<HeadersInit> {
-		const auth = useAuth();
-		const user = await auth.getUser;
-		if (user?.expired) {
-			console.log('headers: Oo user already expired and got that old one');
-		}
-		return {
-			Authorization: `Bearer ${user?.access_token}`,
-		};
-	}
-	return {
-		headers,
-	};
-}
+
 
 export class HttpRequest<T> {
 	private readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';

@@ -21,6 +21,7 @@ import UiSlider from '@/components/UiSlider.vue';
 import UiNumberField from '@/components/UiNumberField.vue';
 import type { Component } from 'vue';
 import UiWebView from "@/components/UiWebView.vue";
+import UiPage from "@/components/UiPage.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -42,9 +43,10 @@ uiComponentsMap.set('Grid', UiGrid);
 uiComponentsMap.set('Table', UiTable);
 uiComponentsMap.set('Card', UiCard);
 uiComponentsMap.set('Dropdown', UiDropdown);
-uiComponentsMap.set('Datepicker', UiDatepicker);
+uiComponentsMap.set('DatePicker', UiDatepicker);
 uiComponentsMap.set('Slider', UiSlider);
 uiComponentsMap.set('NumberField', UiNumberField);
 uiComponentsMap.set('WebView', UiWebView);
+uiComponentsMap.set('Page',UiPage);
 
 export default uiComponentsMap;

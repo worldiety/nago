@@ -1,15 +1,12 @@
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.value }}</span>
+		<span v-if="props.ui.label.v" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.v }}</span>
 
 		<div
 			class="slider"
-			:class="{'slider-disabled': props.ui.disabled.value}"
+			:class="{'slider-disabled': props.ui.disabled.v}"
 		>
-			<div
-				class="relative flex items-center h-4"
-				:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
-			>
+			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
 				<div ref="sliderTrack" class="slider-track w-full"></div>
 				<!-- Left slider thumb -->
@@ -17,24 +14,24 @@
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
 					:class="{
 						'slider-thumb-dragging': startDragging,
-						'slider-thumb-uninitialized': !props.ui.startInitialized.value,
+						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
 					}"
-					:tabindex="props.ui.disabled.value ? '-1' : '0'"
+					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
 					@touchstart="startSliderThumbPressed"
 					@keydown.left="decreaseStartSliderValue"
 					@keydown.right="increaseStartSliderValue"
 				></div>
 				<!-- Slider thumb connector -->
-				<div v-if="props.ui.startInitialized.value && props.ui.endInitialized.value" class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange"></div>
+				<div v-if="props.ui.startInitialized.v && props.ui.endInitialized.v" class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange"></div>
 				<!-- Right slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
 					:class="{
 						'slider-thumb-dragging': endDragging,
-						'slider-thumb-uninitialized': !props.ui.endInitialized.value,
+						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
 					}"
-					:tabindex="props.ui.disabled.value ? '-1' : '0'"
+					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
 					@touchstart="endSliderThumbPressed"
 					@keydown.left="decreaseEndSliderValue"
@@ -44,30 +41,30 @@
 		</div>
 
 		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
+		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
+		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
 	</div>
 </template>
 
 <script setup lang="ts">
-import type { LiveSlider } from '@/shared/model/liveSlider';
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
+import {Slider} from "@/shared/protocol/gen/slider";
 
 const props = defineProps<{
-	ui: LiveSlider;
+	ui: Slider;
 }>();
 
 const networkStore = useNetworkStore();
 const sliderTrack = ref<HTMLElement|undefined>();
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
-const scaleOffset = ref<number>(roundValue(props.ui.min.value));
+const scaleOffset = ref<number>(roundValue(props.ui.min.v));
 const minRounded = ref<number>(0);
-const maxRounded = ref<number>(roundValue(props.ui.max.value - scaleOffset.value));
-const sliderStartValue = ref<number>(roundValue(props.ui.startValue.value - scaleOffset.value));
-const sliderEndValue = ref<number>(roundValue(props.ui.endValue.value - scaleOffset.value));
-const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
+const maxRounded = ref<number>(roundValue(props.ui.max.v - scaleOffset.value));
+const sliderStartValue = ref<number>(roundValue(props.ui.startValue.v - scaleOffset.value));
+const sliderEndValue = ref<number>(roundValue(props.ui.endValue.v - scaleOffset.value));
+const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.v));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
 
@@ -163,20 +160,20 @@ function getDiscreteValue(continuousValue: number): number {
 		validValueBelow = roundValue(validValue);
 	}
 	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
-	if (validValueAbove > roundValue(props.ui.max.value - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
+	if (validValueAbove > roundValue(props.ui.max.v - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
 		return validValueBelow;
 	}
 	return validValueAbove;
 }
 
 function startSliderThumbPressed(): void {
-	if (!props.ui.disabled.value) {
+	if (!props.ui.disabled.v) {
 		startDragging.value = true;
 	}
 }
 
 function endSliderThumbPressed(): void {
-	if (props.ui.disabled.value || !sliderTrack.value) {
+	if (props.ui.disabled.v || !sliderTrack.value) {
 		return;
 	}
 	if (sliderThumbStartOffset.value === sliderTrack.value.offsetWidth) {
@@ -207,11 +204,11 @@ function submitSliderValues(): void {
 	networkStore.invokeFunctionsAndSetProperties([
 			{
 				...props.ui.startValue,
-				value: roundValue(sliderStartValue.value + scaleOffset.value),
+				v: roundValue(sliderStartValue.value + scaleOffset.value),
 			},
 			{
 				...props.ui.endValue,
-				value: roundValue(sliderEndValue.value + scaleOffset.value),
+				v: roundValue(sliderEndValue.value + scaleOffset.value),
 			}
 		], [props.ui.onChanged]);
 }

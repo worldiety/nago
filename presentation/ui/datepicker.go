@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Datepicker struct {
 	id                 CID
@@ -20,7 +23,7 @@ type Datepicker struct {
 	selectedEndYear    Int
 	onClicked          *Func
 	onSelectionChanged *Func
-	properties         slice.Slice[Property]
+	properties         []core.Property
 }
 
 func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
@@ -44,7 +47,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		onSelectionChanged: NewFunc("onSelectionChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.endDateSelected, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged)
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.endDateSelected, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged}
 	if with != nil {
 		with(c)
 	}
@@ -53,10 +56,6 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 
 func (c *Datepicker) ID() CID {
 	return c.id
-}
-
-func (c *Datepicker) Type() string {
-	return "Datepicker"
 }
 
 func (c *Datepicker) Disabled() Bool {
@@ -115,6 +114,37 @@ func (c *Datepicker) OnSelectionChanged() *Func {
 	return c.onSelectionChanged
 }
 
-func (c *Datepicker) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Datepicker) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Datepicker) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Datepicker) render() ora.DatePicker {
+	return ora.DatePicker{
+		Ptr:                c.id,
+		Type:               ora.DatePickerT,
+		Disabled:           c.disabled.render(),
+		Label:              c.label.render(),
+		Hint:               c.hint.render(),
+		Error:              c.error.render(),
+		Expanded:           c.expanded.render(),
+		RangeMode:          c.rangeMode.render(),
+		StartDateSelected:  c.startDateSelected.render(),
+		SelectedStartDay:   c.selectedStartDay.render(),
+		SelectedStartMonth: c.selectedStartMonth.render(),
+		SelectedStartYear:  c.selectedStartYear.render(),
+		EndDateSelected:    c.endDateSelected.render(),
+		SelectedEndDay:     c.selectedEndDay.render(),
+		SelectedEndMonth:   c.selectedEndMonth.render(),
+		SelectedEndYear:    c.selectedEndYear.render(),
+		OnClicked:          renderFunc(c.onClicked),
+		OnSelectionChanged: renderFunc(c.onSelectionChanged),
+	}
 }

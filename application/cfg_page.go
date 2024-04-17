@@ -12,6 +12,9 @@ import (
 	"go.wdy.de/nago/auth"
 	dm "go.wdy.de/nago/domain"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/core/http/gorilla"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log"
@@ -39,6 +42,14 @@ func (c *Configurator) Index(target string) *Configurator {
 
 func (c *Configurator) newHandler() http.Handler {
 
+	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
+	for id, f := range c.uiApp.Components {
+		factories[id] = func(scope core.Window, requested ora.NewComponentRequested) core.Component {
+			return f(scope)
+		}
+	}
+
+	app2 := core.NewApplication(c.ctx, factories)
 	appSrv := newApplicationServer()
 	r := chi.NewRouter()
 
@@ -113,6 +124,33 @@ func (c *Configurator) newHandler() http.Handler {
 
 		queryParams := r.URL.Query()
 		pageID := queryParams.Get("_pid")
+		scopeID := queryParams.Get("_sid")
+
+		// todo new
+		defer func() {
+			if r := recover(); r != nil {
+				debug.PrintStack()
+			}
+		}()
+		channel := gorilla.NewWebsocketChannel(conn)
+		scope := app2.Connect(channel, ora.ScopeID(scopeID))
+		defer scope.Destroy()
+
+		cookie, _ := r.Cookie("wdy-ora-access")
+		if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{
+			Type:      ora.SessionAssignedT,
+			SessionID: cookie.Value,
+		})); err != nil {
+			slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
+			return
+		}
+
+		if err := channel.Loop(); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// todo new
 
 		livePageFn := c.uiApp.LivePages[ui.PageID(pageID)]
 
@@ -236,6 +274,37 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
+}
+
+type noOpWireStub struct {
+}
+
+func (n noOpWireStub) ReadMessage() (messageType int, p []byte, err error) {
+	return 0, nil, nil
+}
+
+func (n noOpWireStub) WriteMessage(messageType int, data []byte) error {
+	return nil
+}
+
+func (n noOpWireStub) Values() ui.Values {
+	return ui.Values{}
+}
+
+func (n noOpWireStub) User() auth.User {
+	return invalidUser{}
+}
+
+func (n noOpWireStub) Context() context.Context {
+	return context.Background()
+}
+
+func (n noOpWireStub) Remote() ui.Remote {
+	return nil
+}
+
+func (n noOpWireStub) ClientSession() ui.SessionID {
+	return ui.SessionID("")
 }
 
 type connWrapper struct {
@@ -367,8 +436,11 @@ func (c *connWrapper) Remote() ui.Remote {
 	}
 }
 
+// deprecated
 type applicationServer struct {
+	//deprecated
 	activePages map[ui.PageInstanceToken]*ui.Page
+	scopes      map[ora.ComponentFactoryId]*core.Scope
 	mutex       sync.RWMutex
 }
 
@@ -378,6 +450,7 @@ func newApplicationServer() *applicationServer {
 	}
 }
 
+// deprecated
 func (a *applicationServer) getPage(token ui.PageInstanceToken) *ui.Page {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
