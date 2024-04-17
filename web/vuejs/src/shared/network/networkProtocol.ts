@@ -98,7 +98,7 @@ export default class NetworkProtocol {
 		});
 	}
 
-	async newComponent(fid: ComponentFactoryId, params: Map<string, string>): Promise<ComponentInvalidated> {
+	async newComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
 		if (this.activeLocale == "") {
 			console.log("there is no configured active locale. Invoke getConfiguration to set it.")
 		}

@@ -25,7 +25,7 @@ export const useNetworkStore = defineStore('networkStore', {
 			return this.networkProtocol.getConfiguration(colorScheme,acceptLanguages)
 		},
 
-		async newComponent(fid:ComponentFactoryId, params : Map<string,string>):Promise<ComponentInvalidated>{
+		async newComponent(fid:ComponentFactoryId, params : Record<string,string>):Promise<ComponentInvalidated>{
 			return this.networkProtocol.newComponent(fid,params)
 		},
 

@@ -228,7 +228,7 @@ func init() {
 			},
 		},
 		reflect.TypeOf(map[string]string{}): {
-			Name: "Map",
+			Name: "Record",
 			TypeParams: []*TSTypeDef{
 				{Name: "string"},
 				{Name: "string"},
