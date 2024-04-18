@@ -207,14 +207,16 @@ func (s *Scope) handleSessionAssigned(evt ora.SessionAssigned) {
 }
 
 // only for event loop
-func invokeDestructors(component any) {
-	if closer, ok := component.(io.Closer); ok {
+func invokeDestructors(component allocatedComponent) {
+	component.Window.viewRoot.Destroy()
+
+	if closer, ok := component.Component.(io.Closer); ok {
 		if err := closer.Close(); err != nil {
 			slog.Error("error on closing Component", slog.Any("err", err), slog.String("type", fmt.Sprintf("%T", component)))
 		}
 	}
 
-	if destroyer, ok := component.(Destroyable); ok {
+	if destroyer, ok := component.Component.(Destroyable); ok {
 		destroyer.Destroy()
 	}
 }

@@ -69,32 +69,3 @@ func (r *RenderState) Scan(c Component) {
 		return true
 	})
 }
-
-// deprecated
-func (r *RenderState) Visit(id ora.Ptr, t Component) {
-	//r.elements[id] = t
-	// TODO this is causing a cycle we don't want
-	/*if fup, ok := t.(*ui.FileField); ok {
-		r.uploads[fup.UploadToken()] = fup
-	}
-
-	if ds, ok := t.(ui.DownloadSource); ok && ds.DownloadSource() != nil {
-		r.downloads[ds.DownloadToken()] = ds.DownloadSource()
-	}*/
-}
-
-// deprecated
-func (r *RenderState) Visited(id ora.Ptr) bool {
-	_, ok := r.elements[id]
-	return ok
-}
-
-// deprecated
-func (r *RenderState) AddFunc(f *Func) {
-	r.funcs[f.ID()] = f
-}
-
-// deprecated
-func (r *RenderState) AddProp(p Property) {
-	r.props[p.ID()] = p
-}

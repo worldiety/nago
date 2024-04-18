@@ -1,6 +1,8 @@
 package data
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
@@ -92,4 +94,13 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// Implementations with transaction support must save all aggregates within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	SaveAll(it iter.Seq[E]) error
+}
+
+func RandIdent[T ~string]() T {
+	var tmp [16]byte
+	if _, err := rand.Read(tmp[:]); err != nil {
+		panic(err)
+	}
+
+	return T(base64.URLEncoding.EncodeToString(tmp[:]))
 }

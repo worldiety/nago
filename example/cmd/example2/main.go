@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/logging"
-	"go.wdy.de/nago/persistence/kv"
+	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
@@ -53,47 +53,52 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.Name("Example 2")
 
+		cfg.SetApplicationID("de.worldiety.nago.demo.kitchensink")
 		//cfg.KeycloakAuthentication()
-		persons := kv.NewCollection[Person, PID](cfg.Store("test2-db"), "persons")
-		err := persons.Save(
-			Person{
-				ID:        "1",
-				Firstname: "Frodo",
-			},
-			Person{
-				ID:        "2",
-				Firstname: "Sam",
-			},
-			Person{
-				ID:        "3",
-				Firstname: "Pippin",
-			},
+		persons := application.SloppyRepository[Person, PID](cfg)
+		err := persons.SaveAll(
+			slices.Values([]Person{
+				{
+					ID:        "1",
+					Firstname: "Frodo",
+				},
+				{
+					ID:        "2",
+					Firstname: "Sam",
+				},
+				{
+					ID:        "3",
+					Firstname: "Pippin",
+				},
+			}),
 		)
 		if err != nil {
 			panic(err)
 		}
 
-		pets := kv.NewCollection[Pet, PetID](cfg.Store("test2-db"), "pets")
-		pets.Save(
-			Pet{
-				ID:   1,
-				Name: "Katze",
-			},
-			Pet{
-				ID:   2,
-				Name: "Hund",
-			},
-			Pet{
-				ID:   3,
-				Name: "Esel",
-			},
-			Pet{
-				ID:   4,
-				Name: "Stadtmusikant",
-			},
+		pets := application.SloppyRepository[Pet, PetID](cfg)
+		err = pets.SaveAll(
+			slices.Values([]Pet{
+				{
+					ID:   1,
+					Name: "Katze",
+				},
+				{
+					ID:   2,
+					Name: "Hund",
+				},
+				{
+					ID:   3,
+					Name: "Esel",
+				},
+				{
+					ID:   4,
+					Name: "Stadtmusikant",
+				},
+			}),
 		)
 
-		testPet, err2 := pets.Find(3)
+		testPet, err2 := pets.FindByID(3)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -102,7 +107,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component("hello", func(wnd core.Window) core.Component {
-			return ui.NewPage2(func(page *ui.Page) {
+			return ui.NewPage(func(page *ui.Page) {
 
 				type myParams struct {
 					A int    `name:"a"`
@@ -129,11 +134,9 @@ func main() {
 
 		counter := 0
 		cfg.Component("1234", func(w core.Window) core.Component {
-			// TODO reimplement user and whatever remote was for
 			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
-			//			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
 
-			page := ui.NewPage2(nil)
+			page := ui.NewPage(nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))

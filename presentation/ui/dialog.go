@@ -5,6 +5,10 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+type ModalOwner interface {
+	Modals() *SharedList[core.Component]
+}
+
 type Dialog struct {
 	id      CID
 	title   String

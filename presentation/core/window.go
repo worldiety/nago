@@ -4,6 +4,9 @@ import (
 	"context"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/ora"
+	"golang.org/x/text/language"
+	"log/slog"
+	"time"
 )
 
 // A Window owns the lifecycle of a component and is part of a Scope.
@@ -37,6 +40,21 @@ type Window interface {
 	// state.
 	// It usually outlives a frontend process and e.g. is restored after a device restart.
 	SessionID() SessionID
+
+	// Authenticate triggers a round trip so that [Window.User] may contain a valid user afterward.
+	// For sure, the user can always cancel that.
+	Authenticate()
+
+	// ViewRoot returns the access to the component which represents the current root.
+	ViewRoot() ViewRoot
+
+	// Locale returns the negotiated language tag or locale identifier between the frontend and the backend.
+	Locale() language.Tag
+
+	// Location returns negotiated time zone location
+	Location() *time.Location
+	// TODO add Locale, add Screen Metrics (density, pixel width and height, size classes etc)
+
 }
 
 type SessionID string
@@ -46,13 +64,22 @@ type scopeWindow struct {
 	scope         *Scope
 	navController *NavigationController
 	values        Values
+	location      *time.Location
+	viewRoot      *scopeViewRoot
 }
 
 func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
-	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope)}
+	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope), viewRoot: newScopeViewRoot()}
 	if values == nil {
 		s.values = Values{}
 	}
+
+	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me
+	if err != nil {
+		slog.Error("cannot load location", slog.Any("err", err))
+		loc = time.UTC
+	}
+	s.location = loc
 
 	return s
 }
@@ -79,4 +106,20 @@ func (s *scopeWindow) Context() context.Context {
 
 func (s *scopeWindow) SessionID() SessionID {
 	return s.scope.sessionID
+}
+
+func (s *scopeWindow) Authenticate() {
+	// TODO implement me
+}
+
+func (s *scopeWindow) ViewRoot() ViewRoot {
+	return s.viewRoot
+}
+
+func (s *scopeWindow) Locale() language.Tag {
+	return language.German // TODO implement me
+}
+
+func (s *scopeWindow) Location() *time.Location {
+	return s.location
 }
