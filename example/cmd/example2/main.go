@@ -352,7 +352,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + w.User().Email()))
+							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + string(w.User().Email())))
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {

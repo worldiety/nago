@@ -20,7 +20,7 @@ func (i invalidUser) Verified() bool {
 	return false
 }
 
-func (i invalidUser) Email() string {
+func (i invalidUser) Email() auth.EMail {
 	return ""
 }
 

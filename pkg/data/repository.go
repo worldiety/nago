@@ -2,7 +2,7 @@ package data
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
@@ -97,11 +97,12 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 }
 
 // RandIdent create a cryptographic secure random string containing 16 bytes of entropy.
+// It is hex encoded and looks like 5134b3c04a7bbc56ab1b9435acfd98cb
 func RandIdent[T ~string]() T {
 	var tmp [16]byte
 	if _, err := rand.Read(tmp[:]); err != nil {
 		panic(err)
 	}
 
-	return T(base64.URLEncoding.EncodeToString(tmp[:]))
+	return T(hex.EncodeToString(tmp[:]))
 }

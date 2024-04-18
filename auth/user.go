@@ -2,10 +2,30 @@ package auth
 
 import (
 	"context"
+	"regexp"
 )
 
 type UserID string
 type RoleID string
+
+const (
+	Admin RoleID = "admin"
+)
+
+type EMail string
+
+var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$`)
+
+// Valid checks if the Mail looks like structural valid mail. It does not mean that the address actually exists
+// or has been verified.
+func (e EMail) Valid() bool {
+	// see https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html#email-address-validation
+	if len(e) > 254 {
+		return false
+	}
+
+	return regexMail.FindString(string(e)) == string(e)
+}
 
 // User is a common contract for an authenticated user. Different implementations may provide additional interfaces or
 // expose concrete types behind it.
@@ -33,7 +53,7 @@ type User interface {
 	// using this as a primary key in your domain logic is probably always wrong.
 	// It is not a dedicated email type, because we cannot trust external implementations but they often provide
 	// this kind of property.
-	Email() string
+	Email() EMail
 
 	// Name contains the natural name of the user, e.g. a firstname lastname tuple. Depending on the provider,
 	// this may be empty e.g. due to GDPR requirements.

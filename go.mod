@@ -19,6 +19,7 @@ require (
 	github.com/bool64/dev v0.2.31 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
+	github.com/wagslane/go-password-validator v0.3.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.19.0 // indirect

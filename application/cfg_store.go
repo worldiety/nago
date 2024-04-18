@@ -13,10 +13,12 @@ import (
 	"reflect"
 )
 
-// BlobStore return the default applications blob store. There is only one instance.
+// BlobStore returns the default applications blob store. There is only one instance.
 // Do not put (large) files into this store. See also [blob.Get] and [blob.Put] helper functions.
 // For just storing serialized repository data, consider using [SloppyRepository] or
 // a [json.NewJSONRepository] with custom domain model mapping.
+//
+// Use [Configurator.FileStore] for large blobs.
 func (c *Configurator) BlobStore(bucketName string) blob.Store {
 	if c.boltStore == nil {
 		fname := filepath.Join(c.Directory("bbolt"), "bolt.db")

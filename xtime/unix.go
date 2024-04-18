@@ -10,3 +10,7 @@ type UnixMilliseconds int64
 func (u UnixMilliseconds) Time(tz *time.Location) time.Time {
 	return time.UnixMilli(int64(u)).In(tz)
 }
+
+func Now() UnixMilliseconds {
+	return UnixMilliseconds(time.Now().UnixMilli())
+}
