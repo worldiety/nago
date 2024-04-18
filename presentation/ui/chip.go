@@ -7,7 +7,7 @@ import (
 
 // A Chip is like a badge but removable.
 type Chip struct {
-	id         CID
+	id         ora.Ptr
 	caption    String
 	action     *Func
 	onClose    *Func
@@ -33,7 +33,7 @@ func NewChip(with func(chip *Chip)) *Chip {
 	return c
 }
 
-func (c *Chip) ID() CID {
+func (c *Chip) ID() ora.Ptr {
 	return c.id
 }
 

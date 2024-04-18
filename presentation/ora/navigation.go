@@ -19,7 +19,7 @@ type NavigationResetRequested struct {
 }
 
 // NavigationBackRequested steps back causing a likely destruction of the most top component.
-// The frontend may decide to ignore that, if the stack would be empty/undefined otherwise.
+// The frontend may deora.Ptre to ignore that, if the stack would be empty/undefined otherwise.
 type NavigationBackRequested struct {
 	Type EventType `json:"type" value:"NavigationBackRequested"`
 	event

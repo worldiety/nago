@@ -6,7 +6,7 @@ import (
 )
 
 type TextField struct {
-	id            CID
+	id            ora.Ptr
 	label         String
 	value         String
 	placeholder   String
@@ -46,7 +46,7 @@ func (l *TextField) OnTextChanged() *Func {
 	return l.onTextChanged
 }
 
-func (l *TextField) ID() CID {
+func (l *TextField) ID() ora.Ptr {
 	return l.id
 }
 

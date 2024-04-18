@@ -7,7 +7,7 @@ import (
 
 // Toggle is like a checkbox, which is either on or off.
 type Toggle struct {
-	id               CID
+	id               ora.Ptr
 	label            String
 	checked          Bool
 	disabled         Bool
@@ -31,7 +31,7 @@ func NewToggle(with func(tgl *Toggle)) *Toggle {
 	return c
 }
 
-func (c *Toggle) ID() CID {
+func (c *Toggle) ID() ora.Ptr {
 	return c.id
 }
 

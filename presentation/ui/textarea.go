@@ -6,7 +6,7 @@ import (
 )
 
 type TextArea struct {
-	id            CID
+	id            ora.Ptr
 	label         String
 	value         String
 	hint          String
@@ -42,7 +42,7 @@ func (c *TextArea) OnTextChanged() *Func {
 	return c.onTextChanged
 }
 
-func (c *TextArea) ID() CID {
+func (c *TextArea) ID() ora.Ptr {
 	return c.id
 }
 

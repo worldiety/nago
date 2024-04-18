@@ -6,7 +6,7 @@ import (
 )
 
 type Datepicker struct {
-	id                 CID
+	id                 ora.Ptr
 	disabled           Bool
 	label              String
 	hint               String
@@ -54,7 +54,7 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 	return c
 }
 
-func (c *Datepicker) ID() CID {
+func (c *Datepicker) ID() ora.Ptr {
 	return c.id
 }
 

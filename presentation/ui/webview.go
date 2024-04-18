@@ -6,7 +6,7 @@ import (
 )
 
 type WebView struct {
-	id         CID
+	id         ora.Ptr
 	value      String
 	properties []core.Property
 }
@@ -33,7 +33,7 @@ func (c *WebView) Value() String {
 	return c.value
 }
 
-func (c *WebView) ID() CID {
+func (c *WebView) ID() ora.Ptr {
 	return c.id
 }
 

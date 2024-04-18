@@ -6,7 +6,7 @@ import (
 )
 
 type HBox struct {
-	id         CID
+	id         ora.Ptr
 	children   *SharedList[core.Component]
 	alignment  String
 	properties []core.Property
@@ -29,12 +29,12 @@ func NewHBox(with func(hbox *HBox)) *HBox {
 	return c
 }
 
-func (c *HBox) Append(children ...LiveComponent) *HBox {
+func (c *HBox) Append(children ...core.Component) *HBox {
 	c.children.Append(children...)
 	return c
 }
 
-func (c *HBox) Children() *SharedList[LiveComponent] {
+func (c *HBox) Children() *SharedList[core.Component] {
 	return c.children
 }
 
@@ -43,7 +43,7 @@ func (c *HBox) Alignment() String {
 	return c.alignment
 }
 
-func (c *HBox) ID() CID {
+func (c *HBox) ID() ora.Ptr {
 	return c.id
 }
 

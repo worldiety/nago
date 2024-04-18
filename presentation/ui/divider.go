@@ -6,7 +6,7 @@ import (
 )
 
 type Divider struct {
-	id CID
+	id ora.Ptr
 }
 
 func NewDivider(with func(*Divider)) *Divider {
@@ -21,7 +21,7 @@ func NewDivider(with func(*Divider)) *Divider {
 	return c
 }
 
-func (c *Divider) ID() CID {
+func (c *Divider) ID() ora.Ptr {
 	return c.id
 }
 

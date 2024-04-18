@@ -6,7 +6,7 @@ import (
 )
 
 type Text struct {
-	id           CID
+	id           ora.Ptr
 	value        String
 	color        *Shared[Color]
 	colorDark    *Shared[Color]
@@ -71,7 +71,7 @@ func (c *Text) OnHoverEnd() *Func {
 	return c.onHoverEnd
 }
 
-func (c *Text) ID() CID {
+func (c *Text) ID() ora.Ptr {
 	return c.id
 }
 

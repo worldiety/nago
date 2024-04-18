@@ -6,7 +6,7 @@ import (
 )
 
 type Stepper struct {
-	id            CID
+	id            ora.Ptr
 	steps         *SharedList[*StepInfo]
 	properties    []core.Property
 	selectedIndex Int
@@ -36,7 +36,7 @@ func (c *Stepper) Steps() *SharedList[*StepInfo] {
 	return c.steps
 }
 
-func (c *Stepper) ID() CID {
+func (c *Stepper) ID() ora.Ptr {
 	return c.id
 }
 
@@ -71,7 +71,7 @@ func (c *Stepper) render() ora.Stepper {
 }
 
 type StepInfo struct {
-	id         CID
+	id         ora.Ptr
 	number     String // what is in the bubble
 	caption    String
 	details    String
@@ -95,7 +95,7 @@ func NewStepInfo(with func(step *StepInfo)) *StepInfo {
 	return c
 }
 
-func (c *StepInfo) ID() CID {
+func (c *StepInfo) ID() ora.Ptr {
 	return c.id
 }
 

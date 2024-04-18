@@ -6,7 +6,7 @@ import (
 )
 
 type Slider struct {
-	id               CID
+	id               ora.Ptr
 	disabled         Bool
 	label            String
 	hint             String
@@ -46,7 +46,7 @@ func NewSlider(with func(slider *Slider)) *Slider {
 	return c
 }
 
-func (c *Slider) ID() CID {
+func (c *Slider) ID() ora.Ptr {
 	return c.id
 }
 

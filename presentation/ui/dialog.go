@@ -10,7 +10,7 @@ type ModalOwner interface {
 }
 
 type Dialog struct {
-	id      CID
+	id      ora.Ptr
 	title   String
 	body    *Shared[core.Component]
 	icon    *Shared[SVGSrc]
@@ -52,7 +52,7 @@ func (c *Dialog) Actions() *SharedList[*Button] {
 	return c.actions
 }
 
-func (c *Dialog) ID() CID {
+func (c *Dialog) ID() ora.Ptr {
 	return c.id
 }
 

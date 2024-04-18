@@ -1,5 +1,7 @@
 package core
 
+import "log/slog"
+
 type ViewRoot interface {
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
@@ -11,10 +13,12 @@ type ViewRoot interface {
 type scopeViewRoot struct {
 	observers map[int]func()
 	hnd       int
+	scope     *Scope
+	component Component
 }
 
-func newScopeViewRoot() *scopeViewRoot {
-	return &scopeViewRoot{observers: map[int]func(){}}
+func newScopeViewRoot(scope *Scope) *scopeViewRoot {
+	return &scopeViewRoot{observers: map[int]func(){}, scope: scope}
 }
 
 func (s *scopeViewRoot) AddDestroyObserver(fn func()) (removeObserver func()) {
@@ -31,8 +35,19 @@ func (s *scopeViewRoot) Destroy() {
 		f()
 	}
 	clear(s.observers)
+	s.component = nil
 }
 
 func (s *scopeViewRoot) Invalidate() {
-	// TODO implement me
+	if s.component == nil {
+		slog.Error("cannot invalidate nil component. This may be either early in construction cycle or after destruction.")
+		return
+	}
+
+	evt := s.scope.render(0, s.component)
+	s.scope.Publish(evt)
+}
+
+func (s *scopeViewRoot) setComponent(component Component) {
+	s.component = component
 }

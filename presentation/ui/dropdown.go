@@ -6,7 +6,7 @@ import (
 )
 
 type Dropdown struct {
-	id              CID
+	id              ora.Ptr
 	selectedIndices *SharedList[int64]
 	items           *SharedList[*DropdownItem]
 	multiselect     Bool
@@ -40,7 +40,7 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 	return c
 }
 
-func (c *Dropdown) ID() CID {
+func (c *Dropdown) ID() ora.Ptr {
 	return c.id
 }
 
@@ -153,7 +153,7 @@ func (c *Dropdown) render() ora.Dropdown {
 }
 
 type DropdownItem struct {
-	id         CID
+	id         ora.Ptr
 	content    String
 	onClicked  *Func
 	properties []core.Property
@@ -175,7 +175,7 @@ func NewDropdownItem(with func(dropdownItem *DropdownItem)) *DropdownItem {
 	return c
 }
 
-func (c *DropdownItem) ID() CID {
+func (c *DropdownItem) ID() ora.Ptr {
 	return c.id
 }
 

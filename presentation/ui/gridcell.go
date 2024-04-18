@@ -6,7 +6,7 @@ import (
 )
 
 type GridCell struct {
-	id         CID
+	id         ora.Ptr
 	body       *Shared[core.Component]
 	colStart   Int
 	colEnd     Int
@@ -81,7 +81,7 @@ func (c *GridCell) RowEnd() Int {
 	return c.rowEnd
 }
 
-func (c *GridCell) ID() CID {
+func (c *GridCell) ID() ora.Ptr {
 	return c.id
 }
 

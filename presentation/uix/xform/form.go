@@ -138,7 +138,7 @@ func String[T ~string](binding *Binding, target *T, opts Field) {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() ui.LiveComponent {
+		getComponent: func() core.Component {
 			return tf
 		},
 		opts: opts,
@@ -158,7 +158,7 @@ func Bool[T ~bool](binding *Binding, target *T, opts Field) {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() ui.LiveComponent {
+		getComponent: func() core.Component {
 			return tf
 		},
 		opts: opts,
@@ -179,9 +179,10 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 	var err error
 	itemSlice := slices.Collect(iter.BreakOnError(&err, items))
 	if err != nil {
-		binding.elems = append(binding.elems, formElem{func() ui.LiveComponent {
-			return xdialog.ErrorView("cannot collect dropdown items", err)
-		}, opts})
+		binding.elems = append(binding.elems, formElem{
+			func() core.Component {
+				return xdialog.ErrorView("cannot collect dropdown items", err)
+			}, opts})
 
 		return
 	}
@@ -233,9 +234,10 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 	var err error
 	itemSlice := slices.Collect(iter.BreakOnError(&err, items))
 	if err != nil {
-		binding.elems = append(binding.elems, formElem{func() ui.LiveComponent {
-			return xdialog.ErrorView("cannot collect dropdown items", err)
-		}, opts})
+		binding.elems = append(binding.elems, formElem{
+			func() core.Component {
+				return xdialog.ErrorView("cannot collect dropdown items", err)
+			}, opts})
 
 		return
 	}
@@ -279,7 +281,7 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 }
 
 // NewForm creates a form, based on the given binding.
-func NewForm(binding *Binding) ui.LiveComponent {
+func NewForm(binding *Binding) core.Component {
 	type group struct {
 		definedGroup Group
 		elems        []formElem

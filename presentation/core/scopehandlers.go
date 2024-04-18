@@ -108,14 +108,14 @@ func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
 }
 
 func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
-	realm := newScopeWindow(s, evt.Factory, evt.Values)
+	window := newScopeWindow(s, evt.Factory, evt.Values)
 	fac := s.factories[evt.Factory]
 	var component Component
 	if fac == nil {
 		slog.Error("frontend requested unknown factory", slog.String("path", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
 		fac = s.factories["_"]
 		if fac != nil {
-			notFoundComponent := fac(realm, evt)
+			notFoundComponent := fac(window, evt)
 			if notFoundComponent == nil {
 				slog.Error("notFound factory returned a nil component which is not allowed", slog.String("id", "_"), slog.Int("requestId", int(evt.RequestId)))
 				return
@@ -131,7 +131,7 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 		}
 
 	} else {
-		component = fac(realm, evt)
+		component = fac(window, evt)
 		if component == nil {
 			slog.Error("factory returned a nil component which is not allowed", slog.String("id", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
 			s.Publish(ora.ErrorOccurred{
@@ -143,8 +143,10 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 		}
 	}
 
+	window.viewRoot.setComponent(component)
+
 	s.allocatedComponents[component.ID()] = allocatedComponent{
-		Window:      realm,
+		Window:      window,
 		Component:   component,
 		RenderState: NewRenderState(),
 	}

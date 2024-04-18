@@ -6,7 +6,7 @@ import (
 )
 
 type Button struct {
-	id         CID
+	id         ora.Ptr
 	caption    String
 	preIcon    EmbeddedSVG
 	postIcon   EmbeddedSVG
@@ -34,7 +34,7 @@ func NewButton(with func(btn *Button)) *Button {
 	return c
 }
 
-func (c *Button) ID() CID {
+func (c *Button) ID() ora.Ptr {
 	return c.id
 }
 

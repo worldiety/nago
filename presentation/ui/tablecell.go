@@ -6,7 +6,7 @@ import (
 )
 
 type TableCell struct {
-	id         CID
+	id         ora.Ptr
 	body       *Shared[core.Component]
 	properties []core.Property
 }
@@ -16,7 +16,7 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 		id: nextPtr(),
 	}
 
-	c.body = NewShared[LiveComponent]("body")
+	c.body = NewShared[core.Component]("body")
 	c.properties = []core.Property{c.body}
 	if with != nil {
 		with(c)
@@ -29,7 +29,7 @@ func (c *TableCell) Body() *Shared[core.Component] {
 	return c.body
 }
 
-func (c *TableCell) ID() CID {
+func (c *TableCell) ID() ora.Ptr {
 	return c.id
 }
 

@@ -16,20 +16,33 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"runtime/debug"
 	"time"
 )
 
-var validPageIdRegex = regexp.MustCompile(`[a-z0-9_\-{/}]+`)
+// Component registers a factory to create a [core.ViewRoot] within a [core.Scope].
+// For example, a web browser will create at least a single ViewRoot for each open tab.
+// Note, that leading or succeeding slashes in the factory ids are not allowed, otherwise you can
+// use them in arbitrary ways.
+// Keep in mind, that web browsers will expose these ids to the user and they become part of your public
+// API or contract with the user. A user may bookmark them.
+//
+// You cannot use path variables. Instead, use [core.Window.Values] to transport a state from one ViewRoot
+// (or window) to another.
+func (c *Configurator) Component(id ora.ComponentFactoryId, factory func(wnd core.Window) core.Component) {
+	if !id.Valid() {
+		panic(fmt.Errorf("invalid component factory id: %v", id))
+	}
+
+	if _, ok := c.uiApp.Components[id]; ok {
+		panic(fmt.Errorf("another factory with id %v has already been registered", id))
+	}
+
+	c.uiApp.Components[id] = factory
+}
 
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	c.fsys = append(c.fsys, fsys)
-	return c
-}
-
-func (c *Configurator) Index(target string) *Configurator {
-	c.uiApp.IndexTarget = target
 	return c
 }
 
@@ -61,7 +74,6 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 	r.Use(
 		c.loggerMiddleware,
-		c.keycloakMiddleware,
 	)
 
 	if len(c.fsys) > 0 {

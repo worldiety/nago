@@ -6,7 +6,7 @@ import (
 )
 
 type NumberField struct {
-	id             CID
+	id             ora.Ptr
 	label          String
 	value          Int
 	placeholder    String
@@ -44,7 +44,7 @@ func (l *NumberField) OnValueChanged() *Func {
 	return l.onValueChanged
 }
 
-func (l *NumberField) ID() CID {
+func (l *NumberField) ID() ora.Ptr {
 	return l.id
 }
 

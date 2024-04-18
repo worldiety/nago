@@ -2,8 +2,6 @@ package core
 
 import "go.wdy.de/nago/presentation/ora"
 
-type Values map[string]string
-
 type NavigationController struct {
 	scope *Scope
 }

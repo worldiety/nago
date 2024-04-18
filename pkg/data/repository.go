@@ -86,7 +86,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	Count() (int, error)
 
 	// Save persists a single aggregate.
-	// Implementations with transaction support must save within a single transaction, hopefully ACID.
+	// Implementations with transaction support must save within a single transaction, hopefully Aora.Ptr.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	Save(E) error
 
@@ -96,6 +96,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	SaveAll(it iter.Seq[E]) error
 }
 
+// RandIdent create a cryptographic secure random string containing 16 bytes of entropy.
 func RandIdent[T ~string]() T {
 	var tmp [16]byte
 	if _, err := rand.Read(tmp[:]); err != nil {

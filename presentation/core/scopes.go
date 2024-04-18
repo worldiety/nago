@@ -39,6 +39,13 @@ func (s *Scopes) Get(id ora.ScopeID) (*Scope, bool) {
 	return scope, ok
 }
 
+func (s *Scopes) Put(scope *Scope) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.scopes[scope.id] = scope
+}
+
 // tick checks all scopes and destroys all scopes which reached EOL.
 func (s *Scopes) tick(now time.Time) {
 	s.mutex.Lock()

@@ -7,7 +7,7 @@ import (
 )
 
 type Image struct {
-	id            CID
+	id            ora.Ptr
 	url           String
 	source        func() (io.Reader, error)
 	downloadToken String
@@ -33,7 +33,7 @@ func NewImage(with func(img *Image)) *Image {
 	return c
 }
 
-func (c *Image) ID() CID {
+func (c *Image) ID() ora.Ptr {
 	return c.id
 }
 

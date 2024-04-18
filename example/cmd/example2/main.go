@@ -51,8 +51,6 @@ var exampleImg []byte
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.Name("Example 2")
-
 		cfg.SetApplicationID("de.worldiety.nago.demo.kitchensink")
 		//cfg.KeycloakAuthentication()
 		persons := application.SloppyRepository[Person, PID](cfg)
@@ -223,7 +221,7 @@ func main() {
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
 							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
-								hBox.Children().From(func(yield func(ui.LiveComponent)) {
+								hBox.Children().From(func(yield func(core.Component) bool) {
 									yield(ui.NewToggle(func(tgl *ui.Toggle) {
 										tgl.Label().Set("Ein Toggle.")
 										tgl.Checked().Set(yieldToggleVal)
@@ -537,7 +535,7 @@ func main() {
 
 									for i := 0; i < 10; i++ {
 
-										table.Rows().From(func(yield func(*ui.TableRow)) {
+										table.Rows().From(func(yield func(*ui.TableRow) bool) {
 											for c := 0; c < 4; c++ {
 												yield(ui.NewTableRow(func(row *ui.TableRow) {
 													for c := 0; c < 4; c++ {

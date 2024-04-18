@@ -6,7 +6,7 @@ import (
 )
 
 type Grid struct {
-	id         CID
+	id         ora.Ptr
 	cells      *SharedList[*GridCell]
 	rows       Int
 	columns    Int
@@ -69,7 +69,7 @@ func (c *Grid) ColumnsLarger() Int {
 	return c.lgColumns
 }
 
-func (c *Grid) ID() CID {
+func (c *Grid) ID() ora.Ptr {
 	return c.id
 }
 

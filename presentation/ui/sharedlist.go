@@ -2,20 +2,18 @@ package ui
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/iter"
 	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
 
-// TODO this is the wrong signature
-type Iter[T any] func(yield func(T))
-
 type SharedList[T any] struct {
-	id           CID
+	id           ora.Ptr
 	name         string
 	values       []T
 	dirty        bool
-	iter         Iter[T]
+	iter         iter.Seq[T]
 	frozen       bool
 	frozenValues []T
 }
@@ -33,8 +31,8 @@ func (s *SharedList[T]) Name() string {
 
 // From enables an "always" dirty re-evaluation of the shared entries.
 // This disables defacto all possible optimizations, however it is the most comfortable.
-func (s *SharedList[T]) From(iter Iter[T]) {
-	s.iter = iter
+func (s *SharedList[T]) From(it iter.Seq[T]) {
+	s.iter = it
 }
 
 func (s *SharedList[T]) render() ora.Property[[]T] {
@@ -44,7 +42,7 @@ func (s *SharedList[T]) render() ora.Property[[]T] {
 	}
 }
 
-func (s *SharedList[T]) ID() CID {
+func (s *SharedList[T]) ID() ora.Ptr {
 	return s.id
 }
 
@@ -100,9 +98,8 @@ func (s *SharedList[T]) AnyIter(f func(any) bool) {
 	}
 
 	if s.iter != nil {
-		s.iter(func(t T) {
-			// return f(t)
-			f(t) // todo update to proper iterator type
+		s.iter(func(t T) bool {
+			return f(t)
 		})
 	}
 
@@ -129,9 +126,8 @@ func (s *SharedList[T]) Iter(f func(T) bool) {
 	}
 
 	if s.iter != nil {
-		s.iter(func(t T) {
-			// return f(t)
-			f(t) // todo update to proper iterator type
+		s.iter(func(t T) bool {
+			return f(t)
 		})
 	}
 
@@ -199,13 +195,14 @@ func (s *SharedList[T]) Append(t ...T) {
 }
 
 // AppendFrom is like append but uses the given iter once. See also From for an always dirty yielding.
-func (s *SharedList[T]) AppendFrom(iter Iter[T]) {
+func (s *SharedList[T]) AppendFrom(it iter.Seq[T]) {
 	if s.frozen {
 		panic("cannot append data if frozen")
 	}
 
-	iter(func(t T) {
+	it(func(t T) bool {
 		s.values = append(s.values, t)
+		return true
 	})
 
 	s.dirty = true

@@ -6,7 +6,7 @@ import (
 )
 
 type Table struct {
-	id         CID
+	id         ora.Ptr
 	headers    *SharedList[*TableCell]
 	rows       *SharedList[*TableRow]
 	properties []core.Property
@@ -35,7 +35,7 @@ func (c *Table) Header() *SharedList[*TableCell] {
 	return c.headers
 }
 
-func (c *Table) ID() CID {
+func (c *Table) ID() ora.Ptr {
 	return c.id
 }
 

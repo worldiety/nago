@@ -10,7 +10,6 @@ import (
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.Name("Example 2")
 		cfg.SetApplicationID("de.worldiety.nago.demo.xdata")
 		personRepo := application.SloppyRepository[Person, PersonID](cfg)
 		if err := initUsers(personRepo); err != nil {

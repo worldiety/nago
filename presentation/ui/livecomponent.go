@@ -9,12 +9,6 @@ import (
 	"strconv"
 )
 
-// deprecated
-type LiveComponent = core.Component
-
-// deprecated
-type Property = core.Property
-
 type String = *Shared[string]
 type EmbeddedSVG = *Shared[SVGSrc]
 type Bool = *Shared[bool]
@@ -29,7 +23,7 @@ type Size string
 // Shared represents a shared state between client and server. Both sides share the same state connected through
 // a message bus. We could use a comparable here, however components would not work due to function pointers.
 type Shared[T any] struct {
-	id    CID
+	id    ora.Ptr
 	v     T
 	dirty bool
 	name  string
@@ -57,7 +51,7 @@ func (s *Shared[T]) AnyIter(f func(any) bool) {
 	f(s.v)
 }
 
-func (s *Shared[T]) ID() CID {
+func (s *Shared[T]) ID() ora.Ptr {
 	return s.id
 }
 
@@ -125,15 +119,8 @@ func (s *Shared[T]) SetDirty(b bool) {
 	s.dirty = b
 }
 
-type CID = ora.Ptr
-
-func nextPtr() CID {
+func nextPtr() ora.Ptr {
 	return core.NextPtr()
-}
-
-func With[T any](t T, f func(t T)) T {
-	f(t)
-	return t
 }
 
 func nextToken() string {

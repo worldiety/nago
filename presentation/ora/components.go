@@ -1,10 +1,25 @@
 package ora
 
+import (
+	"regexp"
+	"strings"
+)
+
+var validComponentIdRegex = regexp.MustCompile(`[A-Za-z0-9_\-{/}]+`)
+
 // A ComponentFactoryId identifies a unique constructor for a specific ComponentType.
 // Such an addressable Component is likely a page and instantiated and rendered.
 // In return, a ComponentInvalidated event will be sent in the future.
 // For details, see the [NewComponentRequested] event.
 type ComponentFactoryId string
+
+func (c ComponentFactoryId) Valid() bool {
+	if strings.HasPrefix(string(c), "/") || strings.HasSuffix(string(c), "/") {
+		return false
+	}
+
+	return validComponentIdRegex.FindString(string(c)) == string(c)
+}
 
 // NewComponentRequested allocates an addressable component explicitely in the backend within its channel scope.
 // Adressable components are like pages in a classic server side rendering or like routing targets in single page apps.
@@ -22,7 +37,7 @@ type NewComponentRequested struct {
 	Factory   ComponentFactoryId `json:"factory" description:"This is the unique address for a specific component factory, e.g. my/component/path. This is typically a page."`
 	Values    map[string]string  `json:"values" description:"Contains string encoded parameters for a component. This is like query parameters."`
 	RequestId RequestId          `json:"requestId" description:"Request ID used to generate a new component request and is returned in the according response."`
-	_         struct{}           `NewComponentRequested allocates an addressable component explicitely in the backend within its channel scope.
+	_ struct{} `NewComponentRequested allocates an addressable component explicitely in the backend within its channel scope.
 Adressable components are like pages in a classic server side rendering or like routing targets in single page apps.
 We do not call them _page_ anymore, because that has wrong assocations in the web world.
 Adressable components exist independently from each other and share no lifecycle with each other.

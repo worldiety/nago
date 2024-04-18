@@ -6,7 +6,7 @@ import (
 )
 
 type Page struct {
-	id         CID
+	id         ora.Ptr
 	body       *Shared[core.Component]
 	modals     *SharedList[core.Component]
 	properties []core.Property
@@ -23,7 +23,7 @@ func NewPage(with func(page *Page)) *Page {
 	return p
 }
 
-func (p *Page) ID() CID {
+func (p *Page) ID() ora.Ptr {
 	return p.id
 }
 

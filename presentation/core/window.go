@@ -69,7 +69,7 @@ type scopeWindow struct {
 }
 
 func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
-	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope), viewRoot: newScopeViewRoot()}
+	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope), viewRoot: newScopeViewRoot(scope)}
 	if values == nil {
 		s.values = Values{}
 	}

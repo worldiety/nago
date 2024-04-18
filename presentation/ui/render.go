@@ -2,7 +2,7 @@ package ui
 
 import "go.wdy.de/nago/presentation/core"
 
-func marshalComponent(rs *core.RenderState, c LiveComponent) jsonComponent {
+func marshalComponent(rs *core.RenderState, c core.Component) jsonComponent {
 	if c == nil {
 		return nil
 	}
@@ -14,7 +14,7 @@ func marshalComponent(rs *core.RenderState, c LiveComponent) jsonComponent {
 
 type jsonComponent = map[string]any
 
-func newJsonComponent(rs *core.RenderState, c LiveComponent) jsonComponent {
+func newJsonComponent(rs *core.RenderState, c core.Component) jsonComponent {
 	if c == nil {
 		return nil
 	}
@@ -31,19 +31,19 @@ func newJsonComponent(rs *core.RenderState, c LiveComponent) jsonComponent {
 		c.Properties().Each(func(idx int, v Property) {
 			var value any
 			switch t := v.Unwrap().(type) {
-			case LiveComponent:
+			case core.Component:
 				value = newJsonComponent(rs, t)
 				rs.addProp(v)
-			case []LiveComponent:
+			case []core.Component:
 				var tmp []jsonComponent
 				for _, component := range t {
 					tmp = append(tmp, newJsonComponent(rs, component))
 				}
 				value = tmp
 				rs.addProp(v)
-			case slice.Slice[LiveComponent]:
+			case slice.Slice[core.Component]:
 				var tmp []jsonComponent
-				t.Each(func(idx int, component LiveComponent) {
+				t.Each(func(idx int, component core.Component) {
 					tmp = append(tmp, newJsonComponent(rs, component))
 				})
 				value = tmp

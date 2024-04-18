@@ -18,7 +18,7 @@ type UploadToken string
 type FileHandler func(files []FileUpload)
 
 type FileField struct {
-	id               CID
+	id               ora.Ptr
 	label            String
 	value            String
 	hint             String
@@ -73,7 +73,7 @@ func (c *FileField) getOnUploadReceived() FileHandler {
 	return c.onUploadReceived
 }
 
-func (c *FileField) ID() CID {
+func (c *FileField) ID() ora.Ptr {
 	return c.id
 }
 

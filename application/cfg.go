@@ -19,13 +19,11 @@ import (
 )
 
 type Configurator struct {
-	appName       string
 	boltStore     *bbolt.DB
 	ctx           context.Context
 	done          context.CancelFunc
 	logger        *slog.Logger
 	debug         bool
-	auth          authProviders
 	fsys          []fs.FS
 	uiApp         *ui.Application
 	host          string
@@ -135,13 +133,6 @@ func (c *Configurator) getScheme() string {
 	}
 
 	return "http"
-}
-
-// Name sets the applications name.
-func (c *Configurator) Name(name string) *Configurator {
-	c.appName = name
-	c.uiApp.Name = name
-	return c
 }
 
 // Context returns the applications default context.

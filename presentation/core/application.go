@@ -9,7 +9,7 @@ import (
 
 type Application struct {
 	mutex         sync.Mutex
-	scopes        map[ora.ScopeID]*Scope
+	scopes        *Scopes
 	factories     map[ora.ComponentFactoryId]ComponentFactory
 	scopeLifetime time.Duration
 	ctx           context.Context
@@ -22,7 +22,7 @@ func NewApplication(ctx context.Context, factories map[ora.ComponentFactoryId]Co
 	return &Application{
 		scopeLifetime: time.Minute,
 		factories:     factories,
-		scopes:        map[ora.ScopeID]*Scope{},
+		scopes:        NewScopes(),
 		ctx:           cancelCtx,
 		cancelCtx:     cancel,
 	}
@@ -37,13 +37,13 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 		id = ora.NewScopeID()
 	}
 
-	scope := a.scopes[id]
+	scope, _ := a.scopes.Get(id)
 	if scope == nil {
 		scope = NewScope(a.ctx, id, time.Minute, a.factories)
 	}
 
 	scope.Connect(channel)
-	a.scopes[id] = scope
+	a.scopes.Put(scope)
 
 	return scope
 }
@@ -52,5 +52,6 @@ func (a *Application) Destroy() {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
+	a.scopes.Destroy()
 	a.cancelCtx()
 }

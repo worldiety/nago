@@ -6,7 +6,7 @@ import (
 )
 
 type VBox struct {
-	id         CID
+	id         ora.Ptr
 	children   *SharedList[core.Component]
 	properties []core.Property
 }
@@ -33,7 +33,7 @@ func (c *VBox) Children() *SharedList[core.Component] {
 	return c.children
 }
 
-func (c *VBox) ID() CID {
+func (c *VBox) ID() ora.Ptr {
 	return c.id
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 type TableRow struct {
-	id         CID
+	id         ora.Ptr
 	cells      *SharedList[*TableCell]
 	properties []core.Property
 }
@@ -29,7 +29,7 @@ func (c *TableRow) Cells() *SharedList[*TableCell] {
 	return c.cells
 }
 
-func (c *TableRow) ID() CID {
+func (c *TableRow) ID() ora.Ptr {
 	return c.id
 }
 

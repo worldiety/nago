@@ -6,7 +6,7 @@ import (
 )
 
 type Scaffold struct {
-	id          CID
+	id          ora.Ptr
 	title       String
 	breadcrumbs *SharedList[*Button]
 	menu        *SharedList[*Button]
@@ -38,7 +38,7 @@ func NewScaffold(with func(scaffold *Scaffold)) *Scaffold {
 	return c
 }
 
-func (c *Scaffold) Body() *Shared[LiveComponent] {
+func (c *Scaffold) Body() *Shared[core.Component] {
 	return c.body
 }
 
@@ -58,7 +58,7 @@ func (c *Scaffold) TopBar() ScaffoldTopBar {
 	}
 }
 
-func (c *Scaffold) ID() CID {
+func (c *Scaffold) ID() ora.Ptr {
 	return c.id
 }
 

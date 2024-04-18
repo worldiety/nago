@@ -31,8 +31,6 @@ type Application struct {
 	Name        string
 	Version     string
 	Description string
-	//deprecated this is just the .
-	IndexTarget string
 	OIDC        []OIDCProvider //deprecated must be unified/abstracted away
 	Components  map[ora.ComponentFactoryId]func(realm core.Window) core.Component
 }

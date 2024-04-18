@@ -6,7 +6,7 @@ import (
 )
 
 type Card struct {
-	id         CID
+	id         ora.Ptr
 	children   *SharedList[core.Component]
 	properties []core.Property
 	action     *Func
@@ -30,12 +30,12 @@ func (c *Card) Action() *Func {
 	return c.action
 }
 
-func (c *Card) Append(children ...LiveComponent) *Card {
+func (c *Card) Append(children ...core.Component) *Card {
 	c.children.Append(children...)
 	return c
 }
 
-func (c *Card) ID() CID {
+func (c *Card) ID() ora.Ptr {
 	return c.id
 }
 
