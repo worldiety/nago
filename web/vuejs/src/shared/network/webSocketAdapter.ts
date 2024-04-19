@@ -3,6 +3,7 @@ import type NetworkAdapter from '@/shared/network/networkAdapter';
 export default class WebSocketAdapter implements NetworkAdapter {
 
 	private readonly webSocketPort: string;
+	private readonly isSecure: bool = false;
 	private webSocket: WebSocket|null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
@@ -16,6 +17,7 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		// So, you MUST ensure that each VueJS instance has its own unique scope id,
 		// also when reconnecting to an existing scope.
 		this.scopeId = window.crypto.randomUUID()
+		this.isSecure = location.proto == "https:";
 	}
 
 	private initializeWebSocketPort(): string {
@@ -27,8 +29,11 @@ export default class WebSocketAdapter implements NetworkAdapter {
 	}
 
 	async initialize(): Promise<void> {
-
-		let webSocketURL = `ws://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
+		let proto = "ws";
+		if (this.isSecure) {
+			proto = "wss";
+		}
+		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
