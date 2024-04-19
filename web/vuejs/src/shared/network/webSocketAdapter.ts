@@ -17,7 +17,7 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		// So, you MUST ensure that each VueJS instance has its own unique scope id,
 		// also when reconnecting to an existing scope.
 		this.scopeId = window.crypto.randomUUID()
-		this.isSecure = location.proto == "https:";
+		this.isSecure = location.protocol == "https:";
 	}
 
 	private initializeWebSocketPort(): string {
