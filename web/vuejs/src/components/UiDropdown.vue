@@ -4,8 +4,8 @@ import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {Dropdown} from "@/shared/protocol/gen/dropdown";
-import {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import type {Dropdown} from "@/shared/protocol/gen/dropdown";
+import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
 
 const props = defineProps<{
 	ui: Dropdown;
@@ -73,7 +73,7 @@ function isSelected(item: DropdownItem): boolean {
 
 <template>
 	<div>
-		<div class="relative">
+		<div class="relative active:bg-white dark:active:bg-ora-dropdown-background " >
 			<!-- Input field -->
 			<InputWrapper
 				:label="props.ui.label.v"
@@ -87,14 +87,15 @@ function isSelected(item: DropdownItem): boolean {
 					@click="dropdownClicked(false)"
 					@keydown.enter="dropdownClicked(true)"
 				>
-					<div class="truncate">{{ selectedItemNames ?? 'Auswählen...' }}</div>
-					<ArrowDown class="shrink-0 grow-0 duration-100 w-4" :class="{'rotate-180': props.ui.expanded.v}" />
+					<div v-if="selectedItemNames" class="truncate text-black dark:text-white">{{ selectedItemNames}}</div>
+					<div v-else class="truncate text-placeholder-text pt-2 pr-1 pb-1.75 pl-1">{{ 'Auswählen...' }}</div>
+					<ArrowDown class="shrink-0 grow-0 duration-100 w-3.5 " :class="{'rotate-180': props.ui.expanded.v}" />
 				</div>
 			</InputWrapper>
 
 			<!-- Dropdown content -->
 			<div ref="dropdownOptions">
-				<div v-if="props.ui.expanded.v" class="absolute top-full left-0 right-0 bg-white shadow-lg mt-1 z-40">
+				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
 					<ui-dropdown-item
 						v-for="(dropdownItem, index) in props.ui.items.v"
 						:key="index"

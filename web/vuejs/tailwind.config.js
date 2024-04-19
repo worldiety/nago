@@ -11,9 +11,21 @@ export default {
 					'text': '#848484',
 					'background': '#E2E2E2',
 				},
+				'placeholder-text': '#848484',
 				'error': '#FF543E',
 				'darkmode-gray': '#374151',
+				'ora-dropdown-background': '#2B2B2B',
 			},
+			boxShadow: {
+				'ora-shadow': '0 3px 6px rgba(0, 0, 0, 0.16)',
+			},
+			borderRadius: {
+				'2lg': '0.625rem',
+			},
+			padding: {
+				'1.75': '0.4375rem'
+			}
+
 		},
 	},
 
