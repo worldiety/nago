@@ -13,7 +13,9 @@
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
 				<div ref="sliderTrack" class="slider-track w-full">
+					<!-- Slider tick marks -->
 					<div
+						v-if="props.ui.showTickMarks.v"
 						v-for="(sliderTickMark, index) in sliderTickMarks"
 						:key="index"
 						class="slider-tick-mark"

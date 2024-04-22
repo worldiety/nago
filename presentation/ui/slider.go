@@ -20,6 +20,7 @@ type Slider struct {
 	endInitialized   Bool
 	showLabel        Bool
 	labelSuffix      String
+	showTickMarks    Bool
 	onChanged        *Func
 	properties       []core.Property
 }
@@ -40,10 +41,11 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		endInitialized:   NewShared[bool]("endInitialized"),
 		showLabel:        NewShared[bool]("showLabel"),
 		labelSuffix:      NewShared[string]("labelSuffix"),
+		showTickMarks:    NewShared[bool]("showTickMarks"),
 		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.onChanged}
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged}
 
 	if with != nil {
 		with(c)
@@ -101,6 +103,10 @@ func (c *Slider) LabelSuffix() String {
 	return c.labelSuffix
 }
 
+func (c *Slider) ShowTickMarks() Bool {
+	return c.showTickMarks
+}
+
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
 func (c *Slider) Properties(yield func(core.Property) bool) {
@@ -132,6 +138,7 @@ func (c *Slider) render() ora.Slider {
 		EndInitialized:   c.endInitialized.render(),
 		ShowLabel:        c.showLabel.render(),
 		LabelSuffix:      c.labelSuffix.render(),
+		ShowTickMarks:    c.showTickMarks.render(),
 		OnChanged:        renderFunc(c.onChanged),
 	}
 }

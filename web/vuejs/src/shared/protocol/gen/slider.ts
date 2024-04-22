@@ -20,6 +20,7 @@ export interface Slider {
     endInitialized: Property<boolean>;
     showLabel: Property<boolean>;
     labelSuffix: Property<string>;
+    showTickMarks: Property<boolean>;
     onChanged: Property<Pointer>;
     
 }

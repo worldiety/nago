@@ -262,6 +262,7 @@ func main() {
 								slider.EndInitialized().Set(true)
 								slider.ShowLabel().Set(true)
 								slider.LabelSuffix().Set(" €")
+								slider.ShowTickMarks().Set(true)
 								slider.OnChanged().Set(func() {
 									if slider.StartValue().Get() != currentStartValue {
 										slider.StartInitialized().Set(true)
