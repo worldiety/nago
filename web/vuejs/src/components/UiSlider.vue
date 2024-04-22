@@ -27,7 +27,7 @@
 					@keydown.right="increaseStartSliderValue"
 				>
 					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
-						{{ getSliderLabel(sliderStartValue) }}
+						{{ getSliderLabel(sliderStartValue + scaleOffset) }}
 					</div>
 				</div>
 				<!-- Slider thumb connector -->
@@ -49,7 +49,7 @@
 					@keydown.right="increaseEndSliderValue"
 				>
 					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
-						{{ getSliderLabel(sliderEndValue) }}
+						{{ getSliderLabel(sliderEndValue + scaleOffset) }}
 					</div>
 				</div>
 			</div>

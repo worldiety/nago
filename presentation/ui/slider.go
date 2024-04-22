@@ -130,6 +130,8 @@ func (c *Slider) render() ora.Slider {
 		Stepsize:         c.stepsize.render(),
 		StartInitialized: c.startInitialized.render(),
 		EndInitialized:   c.endInitialized.render(),
+		ShowLabel:        c.showLabel.render(),
+		LabelSuffix:      c.labelSuffix.render(),
 		OnChanged:        renderFunc(c.onChanged),
 	}
 }
