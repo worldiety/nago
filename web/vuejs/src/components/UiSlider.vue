@@ -14,17 +14,19 @@
 				<!-- Slider track -->
 				<div ref="sliderTrack" class="slider-track w-full">
 					<!-- Slider tick marks -->
-					<div
-						v-if="props.ui.showTickMarks.v"
-						v-for="(sliderTickMark, index) in sliderTickMarks"
-						:key="index"
-						class="slider-tick-mark"
-						:class="{'slider-tick-mark-in-range': sliderTickMark.withinRange}"
-						:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
-					></div>
+					<template v-if="props.ui.showTickMarks.v">
+						<div
+							v-for="(sliderTickMark, index) in sliderTickMarks"
+							:key="index"
+							class="slider-tick-mark"
+							:class="{'slider-tick-mark-in-range': sliderTickMark.withinRange}"
+							:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
+						></div>
+					</template>
 				</div>
 				<!-- Left slider thumb -->
 				<div
+					v-if="props.ui.rangeMode.v"
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
 					:class="{
 						'slider-thumb-dragging': startDragging,
@@ -38,13 +40,13 @@
 					@keydown.left="decreaseStartSliderValue"
 					@keydown.right="increaseStartSliderValue"
 				>
-					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
+					<div v-if="props.ui.showLabel.v && props.ui.startInitialized.v" class="slider-thumb-label">
 						<span>{{ getSliderLabel(sliderStartValue + scaleOffset) }}</span>
 					</div>
 				</div>
 				<!-- Slider thumb connector -->
 				<div
-					v-if="props.ui.startInitialized.v && props.ui.endInitialized.v"
+					v-if="props.ui.startInitialized.v && props.ui.endInitialized.v || !props.ui.rangeMode.v && props.ui.endInitialized.v"
 					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
 				></div>
 				<!-- Right slider thumb -->
@@ -62,7 +64,7 @@
 					@keydown.left="decreaseEndSliderValue"
 					@keydown.right="increaseEndSliderValue"
 				>
-					<div v-if="props.ui.showLabel.v" class="slider-thumb-label" :class="endDragging ? 'z-10' : 'z-0'">
+					<div v-if="props.ui.showLabel.v && props.ui.endInitialized.v" class="slider-thumb-label" :class="endDragging ? 'z-10' : 'z-0'">
 						<span>{{ getSliderLabel(sliderEndValue + scaleOffset) }}</span>
 					</div>
 				</div>
@@ -76,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { Slider } from "@/shared/protocol/gen/slider";
 
@@ -96,16 +98,18 @@ const endDragging = ref<boolean>(false);
 const scaleOffset = ref<number>(roundValue(props.ui.min.v));
 const minRounded = ref<number>(0);
 const maxRounded = ref<number>(roundValue(props.ui.max.v - scaleOffset.value));
-const sliderStartValue = ref<number>(roundValue(props.ui.startValue.v - scaleOffset.value));
-const sliderEndValue = ref<number>(roundValue(props.ui.endValue.v - scaleOffset.value));
+const sliderStartValue = ref<number>(0);
+const sliderEndValue = ref<number>(0);
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.v));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
 const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
-	sliderStartValue.value = getDiscreteValue(sliderStartValue.value);
-	sliderEndValue.value = getDiscreteValue(sliderEndValue.value);
+	const startValue = props.ui.rangeMode.v ? roundValue(props.ui.startValue.v - scaleOffset.value) : roundValue(minRounded.value);
+	sliderStartValue.value = getDiscreteValue(startValue);
+	const endValue = roundValue(props.ui.endValue.v - scaleOffset.value);
+	sliderEndValue.value = getDiscreteValue(endValue);
 })
 
 onMounted(() => {
@@ -119,6 +123,8 @@ onUnmounted(removeEventListeners);
 watch(sliderThumbStartOffset, initializeSliderTickMarks);
 
 watch(sliderThumbEndOffset, initializeSliderTickMarks);
+
+watch(() => props.ui.endInitialized.v, initializeSliderTickMarks);
 
 function getSliderLabel(sliderValue: number): string {
 	return sliderValue.toLocaleString(undefined, {
@@ -136,9 +142,10 @@ function initializeSliderTickMarks(): void {
 	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
 	for (let i = 0; i < totalSteps; i++) {
 		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
+		const withinRange = props.ui.endInitialized.v && sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value;
 		updatedSliderTickMarks.push({
 			offset: tickMarkOffset,
-			withinRange: sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value,
+			withinRange: withinRange,
 		});
 	}
 	sliderTickMarks.value = updatedSliderTickMarks;
@@ -312,18 +319,22 @@ function increaseEndSliderValue(): void {
 	@apply dark:border-b-white;
 }
 
+.slider.slider-disabled .slider-track {
+	@apply border-b-disabled-background;
+}
+
 .slider-tick-mark {
 	@apply absolute -top-[4px] border-l border-l-black h-[9px];
 	@apply dark:border-l-white;
 	left: var(--slider-tick-mark-offset);
 }
 
-.slider-tick-mark.slider-tick-mark-in-range {
-	@apply border-l-ora-orange;
+.slider.slider-disabled .slider-tick-mark {
+	@apply border-l-disabled-background;
 }
 
-.slider.slider-disabled .slider-track {
-	@apply border-b-disabled-background;
+.slider:not(.slider-disabled) .slider-tick-mark.slider-tick-mark-in-range {
+	@apply border-l-ora-orange;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
@@ -369,13 +380,17 @@ function increaseEndSliderValue(): void {
 }
 
 .slider:not(.slider-disabled) .slider-thumb-connector {
-	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset) - 1rem);
-	left: calc(var(--slider-thumb-start-offset) + 0.5rem);
+	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset));
+	left: calc(var(--slider-thumb-start-offset));
 }
 
 .slider-thumb-label {
 	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
 	top: 150%;
+}
+
+.slider.slider-disabled .slider-thumb-label {
+	@apply text-disabled-text;
 }
 
 .slider-thumb-label > span {

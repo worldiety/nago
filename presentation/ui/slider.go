@@ -11,6 +11,7 @@ type Slider struct {
 	label            String
 	hint             String
 	error            String
+	rangeMode        Bool
 	startValue       Float
 	endValue         Float
 	min              Float
@@ -32,6 +33,7 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		label:            NewShared[string]("label"),
 		hint:             NewShared[string]("hint"),
 		error:            NewShared[string]("error"),
+		rangeMode:        NewShared[bool]("rangeMode"),
 		startValue:       NewShared[float64]("startValue"),
 		endValue:         NewShared[float64]("endValue"),
 		min:              NewShared[float64]("min"),
@@ -45,7 +47,7 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged}
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.rangeMode, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged}
 
 	if with != nil {
 		with(c)
@@ -68,6 +70,10 @@ func (c *Slider) Label() String { return c.label }
 func (c *Slider) Hint() String { return c.hint }
 
 func (c *Slider) Error() String { return c.error }
+
+func (c *Slider) RangeMode() Bool {
+	return c.rangeMode
+}
 
 func (c *Slider) StartValue() Float {
 	return c.startValue
@@ -129,6 +135,7 @@ func (c *Slider) render() ora.Slider {
 		Label:            c.label.render(),
 		Hint:             c.hint.render(),
 		Error:            c.error.render(),
+		RangeMode:        c.rangeMode.render(),
 		StartValue:       c.startValue.render(),
 		EndValue:         c.endValue.render(),
 		Min:              c.min.render(),
