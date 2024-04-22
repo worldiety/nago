@@ -23,10 +23,12 @@
 				</div>
 				<!-- Left slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-10"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
 					:class="{
 						'slider-thumb-dragging': startDragging,
 						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
+						'z-10': !startDragging,
+						'z-20': startDragging,
 					}"
 					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
@@ -35,7 +37,7 @@
 					@keydown.right="increaseStartSliderValue"
 				>
 					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
-						{{ getSliderLabel(sliderStartValue + scaleOffset) }}
+						<span>{{ getSliderLabel(sliderStartValue + scaleOffset) }}</span>
 					</div>
 				</div>
 				<!-- Slider thumb connector -->
@@ -45,10 +47,12 @@
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-20"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange"
 					:class="{
 						'slider-thumb-dragging': endDragging,
 						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
+						'z-10': !endDragging,
+						'z-20': endDragging,
 					}"
 					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
@@ -56,8 +60,8 @@
 					@keydown.left="decreaseEndSliderValue"
 					@keydown.right="increaseEndSliderValue"
 				>
-					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
-						{{ getSliderLabel(sliderEndValue + scaleOffset) }}
+					<div v-if="props.ui.showLabel.v" class="slider-thumb-label" :class="endDragging ? 'z-10' : 'z-0'">
+						<span>{{ getSliderLabel(sliderEndValue + scaleOffset) }}</span>
 					</div>
 				</div>
 			</div>
@@ -370,5 +374,10 @@ function increaseEndSliderValue(): void {
 .slider-thumb-label {
 	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
 	top: 130%;
+}
+
+.slider-thumb-label > span {
+	@apply bg-white rounded-lg px-1;
+	@apply dark:bg-darkmode-gray;
 }
 </style>
