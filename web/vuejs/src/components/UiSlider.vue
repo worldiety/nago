@@ -8,6 +8,7 @@
 				'slider-disabled': props.ui.disabled.v,
 				'mb-4': props.ui.showLabel.v,
 			}"
+			:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->

@@ -18,6 +18,8 @@ export interface Slider {
     stepsize: Property<number>;
     startInitialized: Property<boolean>;
     endInitialized: Property<boolean>;
+    showLabel: Property<boolean>;
+    labelSuffix: Property<string>;
     onChanged: Property<Pointer>;
     
 }

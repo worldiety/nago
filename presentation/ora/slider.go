@@ -14,6 +14,8 @@ type Slider struct {
 	Stepsize         Property[float64] `json:"stepsize"`
 	StartInitialized Property[bool]    `json:"startInitialized"`
 	EndInitialized   Property[bool]    `json:"endInitialized"`
+	ShowLabel        Property[bool]    `json:"showLabel"`
+	LabelSuffix      Property[string]  `json:"labelSuffix"`
 	OnChanged        Property[Ptr]     `json:"onChanged"`
 	component
 }
