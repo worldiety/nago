@@ -11,6 +11,7 @@ export interface Slider {
     label: Property<string>;
     hint: Property<string>;
     error: Property<string>;
+    rangeMode: Property<boolean>;
     startValue: Property<number>;
     endValue: Property<number>;
     min: Property<number>;
@@ -20,6 +21,7 @@ export interface Slider {
     endInitialized: Property<boolean>;
     showLabel: Property<boolean>;
     labelSuffix: Property<string>;
+    showTickMarks: Property<boolean>;
     onChanged: Property<Pointer>;
     
 }

@@ -7,6 +7,7 @@ type Slider struct {
 	Label            Property[string]  `json:"label"`
 	Hint             Property[string]  `json:"hint"`
 	Error            Property[string]  `json:"error"`
+	RangeMode        Property[bool]    `json:"rangeMode"`
 	StartValue       Property[float64] `json:"startValue"`
 	EndValue         Property[float64] `json:"endValue"`
 	Min              Property[float64] `json:"min"`
@@ -16,6 +17,7 @@ type Slider struct {
 	EndInitialized   Property[bool]    `json:"endInitialized"`
 	ShowLabel        Property[bool]    `json:"showLabel"`
 	LabelSuffix      Property[string]  `json:"labelSuffix"`
+	ShowTickMarks    Property[bool]    `json:"showTickMarks"`
 	OnChanged        Property[Ptr]     `json:"onChanged"`
 	component
 }
