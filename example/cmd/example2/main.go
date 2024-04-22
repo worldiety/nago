@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/logging"
-	"go.wdy.de/nago/persistence/kv"
+	"go.wdy.de/nago/pkg/slices"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
@@ -50,49 +51,52 @@ var exampleImg []byte
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.Name("Example 2")
-
+		cfg.SetApplicationID("de.worldiety.nago.demo.kitchensink")
 		//cfg.KeycloakAuthentication()
-		persons := kv.NewCollection[Person, PID](cfg.Store("test2-db"), "persons")
-		err := persons.Save(
-			Person{
-				ID:        "1",
-				Firstname: "Frodo",
-			},
-			Person{
-				ID:        "2",
-				Firstname: "Sam",
-			},
-			Person{
-				ID:        "3",
-				Firstname: "Pippin",
-			},
+		persons := application.SloppyRepository[Person, PID](cfg)
+		err := persons.SaveAll(
+			slices.Values([]Person{
+				{
+					ID:        "1",
+					Firstname: "Frodo",
+				},
+				{
+					ID:        "2",
+					Firstname: "Sam",
+				},
+				{
+					ID:        "3",
+					Firstname: "Pippin",
+				},
+			}),
 		)
 		if err != nil {
 			panic(err)
 		}
 
-		pets := kv.NewCollection[Pet, PetID](cfg.Store("test2-db"), "pets")
-		pets.Save(
-			Pet{
-				ID:   1,
-				Name: "Katze",
-			},
-			Pet{
-				ID:   2,
-				Name: "Hund",
-			},
-			Pet{
-				ID:   3,
-				Name: "Esel",
-			},
-			Pet{
-				ID:   4,
-				Name: "Stadtmusikant",
-			},
+		pets := application.SloppyRepository[Pet, PetID](cfg)
+		err = pets.SaveAll(
+			slices.Values([]Pet{
+				{
+					ID:   1,
+					Name: "Katze",
+				},
+				{
+					ID:   2,
+					Name: "Hund",
+				},
+				{
+					ID:   3,
+					Name: "Esel",
+				},
+				{
+					ID:   4,
+					Name: "Stadtmusikant",
+				},
+			}),
 		)
 
-		testPet, err2 := pets.Find(3)
+		testPet, err2 := pets.FindByID(3)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -100,21 +104,21 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Page("hello", func(wire ui.Wire) *ui.Page {
-			return ui.NewPage(wire, func(page *ui.Page) {
+		cfg.Component("hello", func(wnd core.Window) core.Component {
+			return ui.NewPage(func(page *ui.Page) {
 
 				type myParams struct {
 					A int    `name:"a"`
 					B string `name:"b"`
 				}
-				test, _ := ui.UnmarshalValues[myParams](wire.Values())
+				test, _ := core.UnmarshalValues[myParams](wnd.Values())
 				page.Body().Set(
 					ui.NewVBox(func(vbox *ui.VBox) {
 						vbox.Append(
 							ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("zurück")
 								btn.Action().Set(func() {
-									page.History().Back()
+									wnd.Navigation().Back()
 								})
 							}),
 
@@ -127,11 +131,10 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Page("1234", func(w ui.Wire) *ui.Page {
-			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()))
-			logging.FromContext(w.Context()).Info("remote", slog.String("addr", w.Remote().Addr()), slog.String("forwd", w.Remote().ForwardedFor()))
+		cfg.Component("1234", func(w core.Window) core.Component {
+			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
 
-			page := ui.NewPage(w, nil)
+			page := ui.NewPage(nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
@@ -159,7 +162,7 @@ func main() {
 											btn.Caption().Set("öffnen")
 											btn.Style().Set("destructive")
 											btn.Action().Set(func() {
-												page.History().Open("hello", ui.Values{
+												w.Navigation().ForwardTo("hello", core.Values{
 													"a": "1234",
 													"b": "456",
 												})
@@ -218,7 +221,7 @@ func main() {
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
 							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
-								hBox.Children().From(func(yield func(ui.LiveComponent)) {
+								hBox.Children().From(func(yield func(core.Component) bool) {
 									yield(ui.NewToggle(func(tgl *ui.Toggle) {
 										tgl.Label().Set("Ein Toggle.")
 										tgl.Checked().Set(yieldToggleVal)
@@ -245,15 +248,29 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
+								var currentStartValue = 15.1
+								var currentEndValue = 32.46
+
 								slider.Label().Set("Slider")
 								slider.Hint().Set("Das ist ein Hinweis")
-								slider.Min().Set(-1)
-								slider.Max().Set(25)
-								slider.Value().Set(1.15)
-								slider.Stepsize().Set(.72)
-								slider.Initialized().Set(true)
+								slider.Min().Set(-4.43)
+								slider.Max().Set(91.05)
+								slider.StartValue().Set(currentStartValue)
+								slider.EndValue().Set(currentEndValue)
+								slider.Stepsize().Set(2.17)
+								slider.StartInitialized().Set(true)
+								slider.EndInitialized().Set(true)
+								slider.ShowLabel().Set(true)
+								slider.LabelSuffix().Set(" €")
 								slider.OnChanged().Set(func() {
-									slider.Initialized().Set(true)
+									if slider.StartValue().Get() != currentStartValue {
+										slider.StartInitialized().Set(true)
+									}
+									if slider.EndValue().Get() != currentEndValue {
+										slider.EndInitialized().Set(true)
+									}
+									currentStartValue = slider.StartValue().Get()
+									currentEndValue = slider.EndValue().Get()
 								})
 							}))
 
@@ -337,7 +354,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(w.User().UserID() + ":" + w.User().Name() + "->" + w.User().Email()))
+							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + string(w.User().Email())))
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
@@ -520,7 +537,7 @@ func main() {
 
 									for i := 0; i < 10; i++ {
 
-										table.Rows().From(func(yield func(*ui.TableRow)) {
+										table.Rows().From(func(yield func(*ui.TableRow) bool) {
 											for c := 0; c < 4; c++ {
 												yield(ui.NewTableRow(func(row *ui.TableRow) {
 													for c := 0; c < 4; c++ {

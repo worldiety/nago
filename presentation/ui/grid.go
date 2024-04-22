@@ -1,17 +1,20 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Grid struct {
-	id         CID
-	cells      *SharedList[LiveComponent]
+	id         ora.Ptr
+	cells      *SharedList[*GridCell]
 	rows       Int
 	columns    Int
 	smColumns  Int
 	mdColumns  Int
 	lgColumns  Int
 	gap        *Shared[Size]
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewGrid(with func(grid *Grid)) *Grid {
@@ -19,14 +22,14 @@ func NewGrid(with func(grid *Grid)) *Grid {
 		id: nextPtr(),
 	}
 
-	c.cells = NewSharedList[LiveComponent]("cells")
+	c.cells = NewSharedList[*GridCell]("cells")
 	c.rows = NewShared[int64]("rows")
 	c.columns = NewShared[int64]("columns")
 	c.smColumns = NewShared[int64]("smColumns")
 	c.mdColumns = NewShared[int64]("mdColumns")
 	c.lgColumns = NewShared[int64]("lgColumns")
 	c.gap = NewShared[Size]("gap")
-	c.properties = slice.Of[Property](c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns)
+	c.properties = []core.Property{c.cells, c.rows, c.columns, c.gap, c.smColumns, c.mdColumns, c.lgColumns}
 	if with != nil {
 		with(c)
 	}
@@ -66,14 +69,48 @@ func (c *Grid) ColumnsLarger() Int {
 	return c.lgColumns
 }
 
-func (c *Grid) ID() CID {
+func (c *Grid) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *Grid) Type() string {
-	return "Grid"
+func (c *Grid) Type() ora.ComponentType {
+	return ora.GridT
 }
 
-func (c *Grid) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Grid) Properties(yield func(property core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Grid) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Grid) render() ora.Grid {
+	var cells []ora.GridCell
+	c.cells.Iter(func(component *GridCell) bool {
+		cells = append(cells, component.render())
+		return true
+	})
+
+	return ora.Grid{
+		Ptr:  c.id,
+		Type: ora.GridT,
+		Cells: ora.Property[[]ora.GridCell]{
+			Ptr:   c.cells.ID(),
+			Value: cells,
+		},
+		Rows:      c.rows.render(),
+		Columns:   c.columns.render(),
+		SMColumns: c.smColumns.render(),
+		MDColumns: c.mdColumns.render(),
+		LGColumns: c.lgColumns.render(),
+		Gap: ora.Property[string]{
+			Ptr:   c.gap.ID(),
+			Value: string(c.gap.v),
+		},
+	}
 }

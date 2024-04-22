@@ -3,39 +3,39 @@ import UiDropdownItem from '@/components/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveDropdown } from '@/shared/model/liveDropdown';
-import type { LiveDropdownItem } from '@/shared/model/liveDropdownItem';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
+import type {Dropdown} from "@/shared/protocol/gen/dropdown";
+import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
 
 const props = defineProps<{
-	ui: LiveDropdown;
+	ui: Dropdown;
 }>();
 
 const networkStore = useNetworkStore();
 const dropdownOptions = ref<HTMLElement|undefined>();
 
 onMounted(() => {
-	if (props.ui.expanded.value) {
+	if (props.ui.expanded.v) {
 		document.addEventListener('click', closeDropdown);
 	}
 })
 
 onUpdated(() => {
 	document.removeEventListener('click', closeDropdown);
-	if (props.ui.expanded.value) {
+	if (props.ui.expanded.v) {
 		document.addEventListener('click', closeDropdown);
 	}
 })
 
 const selectedItemNames = computed((): string|null => {
-	if (!props.ui.selectedIndices.value) {
+	if (!props.ui.selectedIndices.v) {
 		return null;
 	}
-	const itemNames = props.ui.items.value
-		.filter((item: LiveDropdownItem) => {
+	const itemNames = props.ui.items.v
+		.filter((item: DropdownItem) => {
 			const itemIndex = indexOf(item);
-			return props.ui.selectedIndices.value.find((index) => index === itemIndex) !== undefined;
-	}).map((item) => item.content.value);
+			return props.ui.selectedIndices.v.find((index) => index === itemIndex) !== undefined;
+	}).map((item) => item.content.v);
 	return itemNames.length > 0 ? itemNames.join(', ') : null;
 });
 
@@ -44,8 +44,8 @@ const selectedItemNames = computed((): string|null => {
  * 
  * @param item The dropdown item to determine the index of
  */
-function indexOf(item: LiveDropdownItem): number {
-	return props.ui.items.value.findIndex((it) => it.id == item.id) ?? -1;
+function indexOf(item: DropdownItem): number {
+	return props.ui.items.v.findIndex((it) => it.id == item.id) ?? -1;
 }
 
 function closeDropdown(e: MouseEvent) {
@@ -60,49 +60,50 @@ function closeDropdown(e: MouseEvent) {
 }
 
 function dropdownClicked(forceClose: boolean): void {
-	if (!props.ui.disabled.value && (forceClose || !props.ui.expanded.value)) {
+	if (!props.ui.disabled.v && (forceClose || !props.ui.expanded.v)) {
 		networkStore.invokeFunctions(props.ui.onClicked);
 	}
 }
 
-function isSelected(item: LiveDropdownItem): boolean {
+function isSelected(item: DropdownItem): boolean {
 	const itemIndex = indexOf(item);
-	return props.ui.selectedIndices.value?.includes(itemIndex) ?? false;
+	return props.ui.selectedIndices.v?.includes(itemIndex) ?? false;
 }
 </script>
 
 <template>
 	<div>
-		<div class="relative">
+		<div class="relative active:bg-white dark:active:bg-ora-dropdown-background " >
 			<!-- Input field -->
 			<InputWrapper
-				:label="props.ui.label.value"
-				:error="props.ui.error.value"
-				:hint="props.ui.hint.value"
-				:disabled="props.ui.disabled.value"
+				:label="props.ui.label.v"
+				:error="props.ui.error.v"
+				:hint="props.ui.hint.v"
+				:disabled="props.ui.disabled.v"
 			>
 				<div
 					class="input-field flex justify-between gap-x-4 items-center cursor-default"
-					:tabindex="props.ui.disabled.value ? '-1': '0'"
+					:tabindex="props.ui.disabled.v ? '-1': '0'"
 					@click="dropdownClicked(false)"
 					@keydown.enter="dropdownClicked(true)"
 				>
-					<div class="truncate">{{ selectedItemNames ?? 'Auswählen...' }}</div>
-					<ArrowDown class="shrink-0 grow-0 duration-100 w-4" :class="{'rotate-180': props.ui.expanded.value}" />
+					<div v-if="selectedItemNames" class="truncate text-black dark:text-white">{{ selectedItemNames}}</div>
+					<div v-else class="truncate text-placeholder-text pt-2 pr-1 pb-1.75 pl-1">{{ 'Auswählen...' }}</div>
+					<ArrowDown class="shrink-0 grow-0 duration-100 w-3.5 " :class="{'rotate-180': props.ui.expanded.v}" />
 				</div>
 			</InputWrapper>
 
 			<!-- Dropdown content -->
 			<div ref="dropdownOptions">
-				<div v-if="props.ui.expanded.value" class="absolute top-full left-0 right-0 bg-white shadow-lg mt-1 z-40">
+				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
 					<ui-dropdown-item
-						v-for="(dropdownItem, index) in props.ui.items.value"
+						v-for="(dropdownItem, index) in props.ui.items.v"
 						:key="index"
 						:ui="dropdownItem"
-						:multiselect="props.ui.multiselect.value"
+						:multiselect="props.ui.multiselect.v"
 						:selected="isSelected(dropdownItem)"
 					/>
-					<div v-if="props.ui.multiselect.value" class="flex justify-center p-2">
+					<div v-if="props.ui.multiselect.v" class="flex justify-center p-2">
 						<button class="button-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
 					</div>
 				</div>

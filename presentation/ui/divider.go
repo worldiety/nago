@@ -1,22 +1,18 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type Divider struct {
-	id         CID
-	children   *SharedList[LiveComponent]
-	properties slice.Slice[Property]
+	id ora.Ptr
 }
 
 func NewDivider(with func(*Divider)) *Divider {
 	c := &Divider{
-		id:       nextPtr(),
-		children: NewSharedList[LiveComponent]("children"),
+		id: nextPtr(),
 	}
-
-	c.properties = slice.Of[Property](c.children)
 
 	if with != nil {
 		with(c)
@@ -25,14 +21,16 @@ func NewDivider(with func(*Divider)) *Divider {
 	return c
 }
 
-func (c *Divider) ID() CID {
+func (c *Divider) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *Divider) Type() string {
-	return "Divider"
+func (c *Divider) Properties(yield func(core.Property) bool) {
 }
 
-func (c *Divider) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Divider) Render() ora.Component {
+	return ora.Divider{
+		Ptr:  c.id,
+		Type: ora.DividerT,
+	}
 }

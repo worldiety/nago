@@ -1,17 +1,18 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"io"
 )
 
 type Image struct {
-	id            CID
+	id            ora.Ptr
 	url           String
 	source        func() (io.Reader, error)
 	downloadToken String
 	caption       String
-	properties    slice.Slice[Property]
+	properties    []core.Property
 }
 
 func NewImage(with func(img *Image)) *Image {
@@ -23,7 +24,7 @@ func NewImage(with func(img *Image)) *Image {
 	}
 
 	c.downloadToken.Set(nextToken())
-	c.properties = slice.Of[Property](c.url, c.downloadToken, c.caption)
+	c.properties = []core.Property{c.url, c.downloadToken, c.caption}
 
 	if with != nil {
 		with(c)
@@ -32,16 +33,8 @@ func NewImage(with func(img *Image)) *Image {
 	return c
 }
 
-func (c *Image) ID() CID {
+func (c *Image) ID() ora.Ptr {
 	return c.id
-}
-
-func (c *Image) Type() string {
-	return "Image"
-}
-
-func (c *Image) Properties() slice.Slice[Property] {
-	return c.properties
 }
 
 // Source sets a dynamic stream provider as a data source for this image.
@@ -79,4 +72,26 @@ func (c *Image) DownloadSource() func() (io.Reader, error) {
 
 func (c *Image) DownloadToken() DownloadToken {
 	return DownloadToken(c.downloadToken.Get())
+}
+
+func (c *Image) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Image) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Image) render() ora.Image {
+	return ora.Image{
+		Ptr:           c.id,
+		Type:          ora.ImageT,
+		URL:           c.url.render(),
+		DownloadToken: c.downloadToken.render(),
+		Caption:       c.caption.render(),
+	}
 }

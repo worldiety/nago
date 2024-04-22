@@ -1,11 +1,14 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type TableRow struct {
-	id         CID
+	id         ora.Ptr
 	cells      *SharedList[*TableCell]
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewTableRow(with func(row *TableRow)) *TableRow {
@@ -14,7 +17,7 @@ func NewTableRow(with func(row *TableRow)) *TableRow {
 	}
 
 	c.cells = NewSharedList[*TableCell]("cells")
-	c.properties = slice.Of[Property](c.cells)
+	c.properties = []core.Property{c.cells}
 	if with != nil {
 		with(c)
 	}
@@ -26,14 +29,34 @@ func (c *TableRow) Cells() *SharedList[*TableCell] {
 	return c.cells
 }
 
-func (c *TableRow) ID() CID {
+func (c *TableRow) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *TableRow) Type() string {
-	return "TableRow"
+func (c *TableRow) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *TableRow) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *TableRow) Render() ora.Component {
+	return c.render()
+}
+
+func (c *TableRow) render() ora.TableRow {
+	var cells []ora.TableCell
+	c.cells.Iter(func(cell *TableCell) bool {
+		cells = append(cells, cell.render())
+		return true
+	})
+	return ora.TableRow{
+		Ptr:  c.id,
+		Type: ora.TableRowT,
+		Cells: ora.Property[[]ora.TableCell]{
+			Ptr:   c.cells.ID(),
+			Value: cells,
+		},
+	}
 }

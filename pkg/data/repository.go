@@ -1,6 +1,8 @@
 package data
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
@@ -84,7 +86,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	Count() (int, error)
 
 	// Save persists a single aggregate.
-	// Implementations with transaction support must save within a single transaction, hopefully ACID.
+	// Implementations with transaction support must save within a single transaction, hopefully Aora.Ptr.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	Save(E) error
 
@@ -92,4 +94,15 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// Implementations with transaction support must save all aggregates within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	SaveAll(it iter.Seq[E]) error
+}
+
+// RandIdent create a cryptographic secure random string containing 16 bytes of entropy.
+// It is hex encoded and looks like 5134b3c04a7bbc56ab1b9435acfd98cb
+func RandIdent[T ~string]() T {
+	var tmp [16]byte
+	if _, err := rand.Read(tmp[:]); err != nil {
+		panic(err)
+	}
+
+	return T(hex.EncodeToString(tmp[:]))
 }

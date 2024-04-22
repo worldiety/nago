@@ -1,50 +1,62 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Slider struct {
-	id          CID
-	disabled    Bool
-	label       String
-	hint        String
-	error       String
-	value       Float
-	min         Float
-	max         Float
-	stepsize    Float
-	initialized Bool
-	onChanged   *Func
-	properties  slice.Slice[Property]
+	id               ora.Ptr
+	disabled         Bool
+	label            String
+	hint             String
+	error            String
+	startValue       Float
+	endValue         Float
+	min              Float
+	max              Float
+	stepsize         Float
+	startInitialized Bool
+	endInitialized   Bool
+	showLabel        Bool
+	labelSuffix      String
+	onChanged        *Func
+	properties       []core.Property
 }
 
 func NewSlider(with func(slider *Slider)) *Slider {
 	c := &Slider{
-		id:          nextPtr(),
-		disabled:    NewShared[bool]("disabled"),
-		label:       NewShared[string]("label"),
-		hint:        NewShared[string]("hint"),
-		error:       NewShared[string]("error"),
-		value:       NewShared[float64]("value"),
-		min:         NewShared[float64]("min"),
-		max:         NewShared[float64]("max"),
-		stepsize:    NewShared[float64]("stepsize"),
-		initialized: NewShared[bool]("initialized"),
-		onChanged:   NewFunc("onChanged"),
+		id:               nextPtr(),
+		disabled:         NewShared[bool]("disabled"),
+		label:            NewShared[string]("label"),
+		hint:             NewShared[string]("hint"),
+		error:            NewShared[string]("error"),
+		startValue:       NewShared[float64]("startValue"),
+		endValue:         NewShared[float64]("endValue"),
+		min:              NewShared[float64]("min"),
+		max:              NewShared[float64]("max"),
+		stepsize:         NewShared[float64]("stepsize"),
+		startInitialized: NewShared[bool]("startInitialized"),
+		endInitialized:   NewShared[bool]("endInitialized"),
+		showLabel:        NewShared[bool]("showLabel"),
+		labelSuffix:      NewShared[string]("labelSuffix"),
+		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.value, c.min, c.max, c.stepsize, c.initialized, c.onChanged)
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.onChanged}
+
 	if with != nil {
 		with(c)
 	}
 	return c
 }
 
-func (c *Slider) ID() CID {
+func (c *Slider) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *Slider) Type() string {
-	return "Slider"
+func (c *Slider) Type() ora.ComponentType {
+	return ora.SliderT
 }
 
 func (c *Slider) Disabled() Bool { return c.disabled }
@@ -55,8 +67,12 @@ func (c *Slider) Hint() String { return c.hint }
 
 func (c *Slider) Error() String { return c.error }
 
-func (c *Slider) Value() Float {
-	return c.value
+func (c *Slider) StartValue() Float {
+	return c.startValue
+}
+
+func (c *Slider) EndValue() Float {
+	return c.endValue
 }
 
 func (c *Slider) Min() Float {
@@ -71,12 +87,51 @@ func (c *Slider) Stepsize() Float {
 	return c.stepsize
 }
 
-func (c *Slider) Initialized() Bool {
-	return c.initialized
+func (c *Slider) StartInitialized() Bool {
+	return c.startInitialized
+}
+
+func (c *Slider) EndInitialized() Bool { return c.endInitialized }
+
+func (c *Slider) ShowLabel() Bool {
+	return c.showLabel
+}
+
+func (c *Slider) LabelSuffix() String {
+	return c.labelSuffix
 }
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
-func (c *Slider) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Slider) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Slider) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Slider) render() ora.Slider {
+	return ora.Slider{
+		Ptr:              c.id,
+		Type:             ora.SliderT,
+		Disabled:         c.disabled.render(),
+		Label:            c.label.render(),
+		Hint:             c.hint.render(),
+		Error:            c.error.render(),
+		StartValue:       c.startValue.render(),
+		EndValue:         c.endValue.render(),
+		Min:              c.min.render(),
+		Max:              c.max.render(),
+		Stepsize:         c.stepsize.render(),
+		StartInitialized: c.startInitialized.render(),
+		EndInitialized:   c.endInitialized.render(),
+		ShowLabel:        c.showLabel.render(),
+		LabelSuffix:      c.labelSuffix.render(),
+		OnChanged:        renderFunc(c.onChanged),
+	}
 }

@@ -3,10 +3,11 @@ package main
 import (
 	"bytes"
 	"flag"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"unicode"
 )
 
@@ -19,19 +20,25 @@ func main() {
 	slog.Info("generating files in", slog.String("dir", *outDir))
 
 	writeFile(*outDir, "interface",
-		// emit events
-		NewInterface(protocol.EventsAggregated{}),
-		NewInterface(protocol.Acknowledged{}),
-		NewInterface(protocol.NewComponentRequested{}),
-		NewInterface(protocol.ComponentInvalidated{}),
-
-		//emit components
-		NewInterface(protocol.Button{}),
+		NewInterface(ora.Themes{}),
+		NewInterface(ora.Theme{}),
+		NewInterface(ora.Colors{}),
+		NewInterface(ora.Resources{}),
 	)
 
+	types := append(ora.Events)
+	types = append(types, ora.Components...)
+	var ifaces []NamedType
+
+	for _, r := range types {
+		ifaces = append(ifaces, NewInterface(reflect.New(r).Elem().Interface()))
+	}
+
+	writeFile(*outDir, "interface", ifaces...)
+
 	writeFile(*outDir, "union",
-		NewUnion("Component", protocol.Components),
-		NewUnion("Event", protocol.Events),
+		NewUnion("Component", ora.Components),
+		NewUnion("Event", ora.Events),
 	)
 }
 

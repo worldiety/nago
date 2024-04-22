@@ -3,6 +3,7 @@ package xdialog
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 )
@@ -19,7 +20,7 @@ func ShowMessage(ctx ui.ModalOwner, msg string) {
 	}))
 }
 
-func ErrorView(msg string, err error) ui.LiveComponent {
+func ErrorView(msg string, err error) core.Component {
 	if err == nil {
 		return nil
 	}

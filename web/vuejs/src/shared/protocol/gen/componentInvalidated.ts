@@ -8,7 +8,7 @@ export interface ComponentInvalidated {
     type: 'ComponentInvalidated';
     
      /**
-     * Request ID from the NewComponentRequested event.
+     * Request ID from the ComponentInvalidationRequested or NewComponentRequested event.
      */
     requestId: RequestId;
     

@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 )
 
 type NumberField struct {
-	id             CID
+	id             ora.Ptr
 	label          String
 	value          Int
 	placeholder    String
@@ -14,7 +15,7 @@ type NumberField struct {
 	simple         Bool
 	disabled       Bool
 	onValueChanged *Func
-	properties     slice.Slice[Property]
+	properties     []core.Property
 }
 
 func NewNumberField(with func(numberField *NumberField)) *NumberField {
@@ -30,7 +31,7 @@ func NewNumberField(with func(numberField *NumberField)) *NumberField {
 		onValueChanged: NewFunc("onValueChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.label, c.value, c.placeholder, c.hint, c.error, c.simple, c.disabled, c.disabled, c.onValueChanged)
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.error, c.simple, c.disabled, c.disabled, c.onValueChanged}
 
 	if with != nil {
 		with(c)
@@ -43,7 +44,7 @@ func (l *NumberField) OnValueChanged() *Func {
 	return l.onValueChanged
 }
 
-func (l *NumberField) ID() CID {
+func (l *NumberField) ID() ora.Ptr {
 	return l.id
 }
 
@@ -73,10 +74,33 @@ func (l *NumberField) Disabled() Bool {
 	return l.disabled
 }
 
-func (l *NumberField) Type() string {
-	return "NumberField"
+func (l *NumberField) Type() ora.ComponentType {
+	return ora.NumberFieldT
 }
 
-func (l *NumberField) Properties() slice.Slice[Property] {
-	return l.properties
+func (l *NumberField) Properties(yield func(core.Property) bool) {
+	for _, property := range l.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (l *NumberField) Render() ora.Component {
+	return l.render()
+}
+
+func (l *NumberField) render() ora.NumberField {
+	return ora.NumberField{
+		Ptr:            l.id,
+		Type:           ora.NumberFieldT,
+		Label:          l.label.render(),
+		Hint:           l.hint.render(),
+		Error:          l.error.render(),
+		Value:          l.value.render(),
+		Placeholder:    l.placeholder.render(),
+		Disabled:       l.disabled.render(),
+		Simple:         l.simple.render(),
+		OnValueChanged: renderFunc(l.onValueChanged),
+	}
 }

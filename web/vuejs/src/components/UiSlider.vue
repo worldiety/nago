@@ -1,101 +1,250 @@
 <template>
 	<div>
-		<span v-if="props.ui.label.value" class="block mb-2 text-sm">{{ props.ui.label.value }}</span>
+		<span v-if="props.ui.label.v" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.v }}</span>
 
 		<div
 			class="slider"
-			:class="{'slider-disabled': props.ui.disabled.value}"
-			:tabindex="props.ui.disabled.value ? '-1' : '0'"
+			:class="{
+				'slider-disabled': props.ui.disabled.v,
+				'mb-4': props.ui.showLabel.v,
+			}"
+			:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
-				<div ref="sliderTrack" class="slider-track border-b border-b-black w-full"></div>
+				<div ref="sliderTrack" class="slider-track w-full">
+					<div
+						v-for="(sliderTickMark, index) in sliderTickMarks"
+						:key="index"
+						class="slider-tick-mark"
+						:class="{'slider-tick-mark-in-range': sliderTickMark.withinRange}"
+						:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
+					></div>
+				</div>
 				<!-- Left slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
-					:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px;`"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-10"
+					:class="{
+						'slider-thumb-dragging': startDragging,
+						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
+					}"
+					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="startSliderThumbPressed"
+					@touchstart="startSliderThumbPressed"
+					@keydown.left="decreaseStartSliderValue"
+					@keydown.right="increaseStartSliderValue"
+				>
+					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
+						{{ getSliderLabel(sliderStartValue + scaleOffset) }}
+					</div>
+				</div>
+				<!-- Slider thumb connector -->
+				<div
+					v-if="props.ui.startInitialized.v && props.ui.endInitialized.v"
+					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute right-0 size-4 rounded-full bg-ora-orange"
-					:style="`--slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-20"
+					:class="{
+						'slider-thumb-dragging': endDragging,
+						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
+					}"
+					:tabindex="props.ui.disabled.v ? '-1' : '0'"
 					@mousedown="endSliderThumbPressed"
-				></div>
+					@touchstart="endSliderThumbPressed"
+					@keydown.left="decreaseEndSliderValue"
+					@keydown.right="increaseEndSliderValue"
+				>
+					<div v-if="props.ui.showLabel.v" class="slider-thumb-label">
+						{{ getSliderLabel(sliderEndValue + scaleOffset) }}
+					</div>
+				</div>
 			</div>
 		</div>
 
 		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.value" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.value }}</p>
-		<p v-else-if="props.ui.hint.value" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.value }}</p>
+		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
+		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
 	</div>
 </template>
 
 <script setup lang="ts">
-import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
+import type { Slider } from "@/shared/protocol/gen/slider";
+
+interface SliderTickMark {
+	offset: number;
+	withinRange: boolean;
+}
 
 const props = defineProps<{
-	ui: LiveSlider;
+	ui: Slider;
 }>();
 
 const networkStore = useNetworkStore();
 const sliderTrack = ref<HTMLElement|undefined>();
-const sliderValue = ref<number>(0);
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
-const minRounded = ref<number>(roundValue(props.ui.min.value));
-const maxRounded = ref<number>(roundValue(props.ui.max.value));
-const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.value));
-const initialValueRounded = ref<number>(roundValue(props.ui.value.value));
+const scaleOffset = ref<number>(roundValue(props.ui.min.v));
+const minRounded = ref<number>(0);
+const maxRounded = ref<number>(roundValue(props.ui.max.v - scaleOffset.value));
+const sliderStartValue = ref<number>(roundValue(props.ui.startValue.v - scaleOffset.value));
+const sliderEndValue = ref<number>(roundValue(props.ui.endValue.v - scaleOffset.value));
+const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.v));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
+const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
-	if (!props.ui.initialized.value) {
-		sliderValue.value = minRounded.value;
-		return;
-	}
-	// Limit initial value to min and max value
-	const bounded = Math.max(Math.min(initialValueRounded.value, maxRounded.value), minRounded.value);
-	// Calculate valid initial value based on the step size and minimum value (always rounding down to the next valid value)
-	const validated = bounded - (bounded - minRounded.value) % stepsizeRounded.value;
-	// Get rid of rounding errors by using 2 decimal places at most
-	sliderValue.value = roundValue(validated);
-});
+	sliderStartValue.value = getDiscreteValue(sliderStartValue.value);
+	sliderEndValue.value = getDiscreteValue(sliderEndValue.value);
+})
 
 onMounted(() => {
-	document.addEventListener('mouseup', () => {
-		startDragging.value = false;
-		endDragging.value = false;
-	});
-	document.addEventListener('mousemove', (event: MouseEvent) => {
-		if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
-			return;
-		}
-		handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
-	});
+	initializeSliderThumbOffsets();
+
+	addEventListeners();
 });
 
+onUnmounted(removeEventListeners);
+
+watch(sliderThumbStartOffset, initializeSliderTickMarks);
+
+watch(sliderThumbEndOffset, initializeSliderTickMarks);
+
+function getSliderLabel(sliderValue: number): string {
+	return sliderValue.toLocaleString(undefined, {
+		minimumFractionDigits: 2,
+	}) + props.ui.labelSuffix.v;
+}
+
+function initializeSliderThumbOffsets(): void {
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+}
+
+function initializeSliderTickMarks(): void {
+	const updatedSliderTickMarks: SliderTickMark[] = [];
+	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
+	for (let i = 0; i < totalSteps; i++) {
+		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
+		updatedSliderTickMarks.push({
+			offset: tickMarkOffset,
+			withinRange: sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value,
+		});
+	}
+	sliderTickMarks.value = updatedSliderTickMarks;
+}
+
+function addEventListeners(): void {
+	document.addEventListener('mouseup', onMouseUp);
+	document.addEventListener('touchend', onMouseUp);
+	document.addEventListener('touchcancel', onMouseUp);
+	document.addEventListener('touchmove', onTouchMove);
+	document.addEventListener('mousemove', onMouseMove);
+	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
+}
+
+function removeEventListeners(): void {
+	document.removeEventListener('mouseup', onMouseUp);
+	document.removeEventListener('touchend', onMouseUp);
+	document.removeEventListener('touchcancel', onMouseUp);
+	document.removeEventListener('touchmove', onTouchMove);
+	document.removeEventListener('mousemove', onMouseMove);
+	window.removeEventListener('resize', initializeSliderThumbOffsets);
+}
+
+function onMouseUp(): void {
+	if (startDragging.value || endDragging.value) {
+		startDragging.value = false;
+		endDragging.value = false;
+		submitSliderValues();
+	}
+}
+
+function onMouseMove(event: MouseEvent): void {
+	if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
+		return;
+	}
+	handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
+}
+
+function onTouchMove(event: TouchEvent): void {
+	const touchLocation = event.touches.item(0);
+	if (!touchLocation || !sliderTrack.value || !startDragging.value && !endDragging.value) {
+		return;
+	}
+	handleSliderThumbDrag(touchLocation.clientX, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
+}
+
+/**
+ * Maps a slider value to a pixel offset value for the corresponding slider thumb
+ *
+ * @param sliderValue The slider value to map
+ */
+function sliderValueToOffset(sliderValue: number): number {
+	if (!sliderTrack.value) {
+		return 0;
+	}
+	const sliderValuePercentage = sliderValue / maxRounded.value;
+	return sliderTrack.value.offsetWidth * sliderValuePercentage;
+}
+
+/**
+ * Maps a pixel offset value of a slider thumb to its corresponding slider value
+ *
+ * @param sliderThumbOffset The pixel offset value of a slider thumb to map
+ */
+function offsetToSliderValue(sliderThumbOffset: number): number {
+	if (!sliderTrack.value) {
+		return 0;
+	}
+	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
+	const continuousValue = sliderOffsetPercentage * maxRounded.value;
+	return getDiscreteValue(continuousValue);
+}
+
+function getDiscreteValue(continuousValue: number): number {
+	let validValueBelow: number = minRounded.value;
+	for (let validValue = minRounded.value; validValue <= continuousValue; validValue += stepsizeRounded.value) {
+		validValueBelow = roundValue(validValue);
+	}
+	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
+	if (validValueAbove > roundValue(props.ui.max.v - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
+		return validValueBelow;
+	}
+	return validValueAbove;
+}
+
 function startSliderThumbPressed(): void {
-	if (!props.ui.disabled.value) {
+	if (!props.ui.disabled.v) {
 		startDragging.value = true;
 	}
 }
 
 function endSliderThumbPressed(): void {
-	if (!props.ui.disabled.value) {
+	if (props.ui.disabled.v || !sliderTrack.value) {
+		return;
+	}
+	if (sliderThumbStartOffset.value === sliderTrack.value.offsetWidth) {
+		// Drag start slider thumb because of higher z-index of end slider thumb
+		startDragging.value = true;
+	} else {
 		endDragging.value = true;
 	}
 }
 
 function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, sliderTrackOffsetWidth: number): void {
-	// TODO: Limit offsets to keep start always before and and offsets between lower and upper bound of slider track
 	if (startDragging.value) {
-		sliderThumbStartOffset.value = mouseX - sliderTrackOffsetX;
+		const continuousOffset = Math.max(0, Math.min(sliderThumbEndOffset.value, mouseX - sliderTrackOffsetX));
+		sliderStartValue.value = offsetToSliderValue(continuousOffset);
+		sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	} else if (endDragging.value) {
-		sliderThumbEndOffset.value = (mouseX - sliderTrackOffsetX - sliderTrackOffsetWidth) * -1;
+		const continuousOffset = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
+		sliderEndValue.value = offsetToSliderValue(continuousOffset);
+		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	}
 }
 
@@ -103,12 +252,47 @@ function roundValue(value: number): number {
 	return Math.round(value * 100) / 100;
 }
 
-function submitSliderValue(): void {
-	startDragging.value = false;
-	networkStore.invokeFunctionsAndSetProperties([{
-		...props.ui.value,
-		value: sliderValue.value,
-	}], [props.ui.onChanged]);
+function submitSliderValues(): void {
+	networkStore.invokeFunctionsAndSetProperties([
+		{
+			...props.ui.startValue,
+			v: roundValue(sliderStartValue.value + scaleOffset.value),
+		},
+		{
+			...props.ui.endValue,
+			v: roundValue(sliderEndValue.value + scaleOffset.value),
+		}
+	], [props.ui.onChanged]);
+}
+
+function decreaseStartSliderValue(): void {
+	sliderStartValue.value = getDiscreteValue(sliderStartValue.value - stepsizeRounded.value);
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	submitSliderValues();
+}
+
+function increaseStartSliderValue(): void {
+	sliderStartValue.value = Math.min(
+		getDiscreteValue(sliderStartValue.value + stepsizeRounded.value),
+		sliderEndValue.value,
+	);
+	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
+	submitSliderValues();
+}
+
+function decreaseEndSliderValue(): void {
+	sliderEndValue.value = Math.max(
+		getDiscreteValue(sliderEndValue.value - stepsizeRounded.value),
+		sliderStartValue.value,
+	);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+	submitSliderValues();
+}
+
+function increaseEndSliderValue(): void {
+	sliderEndValue.value = getDiscreteValue(sliderEndValue.value + stepsizeRounded.value);
+	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+	submitSliderValues();
 }
 </script>
 
@@ -117,24 +301,55 @@ function submitSliderValue(): void {
 	@apply bg-disabled-text;
 }
 
+.slider-track {
+	@apply relative border-b border-b-black;
+	@apply dark:border-b-white;
+}
+
+.slider-tick-mark {
+	@apply absolute -top-[4px] border-l border-l-black h-[9px];
+	@apply dark:border-l-white;
+	left: var(--slider-tick-mark-offset);
+}
+
+.slider-tick-mark.slider-tick-mark-in-range {
+	@apply border-l-ora-orange;
+}
+
 .slider.slider-disabled .slider-track {
-	@apply border-b-disabled-background
+	@apply border-b-disabled-background;
+}
+
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
+	@apply bg-black;
+	@apply dark:bg-white;
+}
+
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:focus-visible,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
+	@apply bg-ora-orange;
 }
 
 .slider {
 	@apply rounded-full p-2 -mx-2;
 }
 
-.slider:focus-visible {
-	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
+.slider-thumb {
+	@apply select-none;
 }
 
-.slider:not(.slider-disabled) .slider-thumb:hover {
-	@apply ring-8 ring-ora-orange ring-opacity-15;
+.slider-thumb:focus-visible:not(:hover) {
+	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
+}
+
+.slider:not(.slider-disabled) .slider-thumb:hover,
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
+	@apply outline-none ring-8 ring-ora-orange ring-opacity-15;
 	@apply dark:ring-opacity-25;
 }
 
-.slider:not(.slider-disabled) .slider-thumb:active {
+.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply ring-opacity-25;
 	@apply dark:ring-opacity-35 !important;
 }
@@ -144,6 +359,16 @@ function submitSliderValue(): void {
 }
 
 .slider-thumb-end {
-	right: calc(var(--slider-thumb-end-offset) - 0.5rem);
+	left: calc(var(--slider-thumb-end-offset) - 0.5rem);
+}
+
+.slider:not(.slider-disabled) .slider-thumb-connector {
+	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset) - 1rem);
+	left: calc(var(--slider-thumb-start-offset) + 0.5rem);
+}
+
+.slider-thumb-label {
+	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
+	top: 130%;
 }
 </style>
