@@ -25,6 +25,7 @@ func init() {
 		reflect.TypeOf(NavigationResetRequested{}),
 		reflect.TypeOf(NavigationBackRequested{}),
 		reflect.TypeOf(SessionAssigned{}),
+		reflect.TypeOf(Ping{}),
 	}
 }
 

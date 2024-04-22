@@ -1,4 +1,6 @@
 import type NetworkAdapter from '@/shared/network/networkAdapter';
+import {ConfigurationRequested} from "@/shared/protocol/gen/configurationRequested";
+import {Ping} from "@/shared/protocol/gen/ping";
 
 export default class WebSocketAdapter implements NetworkAdapter {
 
@@ -18,6 +20,16 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		// also when reconnecting to an existing scope.
 		this.scopeId = window.crypto.randomUUID()
 		this.isSecure = location.protocol == "https:";
+		setInterval(()=>{
+			if (this.closedGracefully){
+				return
+			}
+			const evt: Ping = {
+				type: 'Ping',
+			};
+
+			this.publish(JSON.stringify(evt)) // this keeps our connection at least logically alive
+		},30000)
 	}
 
 	private initializeWebSocketPort(): string {

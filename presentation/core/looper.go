@@ -109,8 +109,6 @@ func (l *EventLoop) Post(f func()) {
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.
 func (l *EventLoop) pull() []msg {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
 
 	if l.destroyed {
 		return nil
@@ -129,6 +127,14 @@ func (l *EventLoop) pull() []msg {
 // This is intentional, because it throttles e.g. a sender in a natural way (to many ticks and messages).
 // A Tick can never block a Post or vice versa.
 func (l *EventLoop) Tick() {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.tickWithoutLock()
+}
+
+func (l *EventLoop) tickWithoutLock() {
+
 	messages := l.pull()
 	if len(messages) == 0 {
 		return
@@ -148,6 +154,8 @@ func (l *EventLoop) Destroy() {
 		return
 	}
 
+	l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
+
 	l.destroyed = true
 	l.done <- true
 	close(l.done)
@@ -155,6 +163,7 @@ func (l *EventLoop) Destroy() {
 	clear(l.queue)
 }
 
+/*
 // Shutdown executes all added tasks until now and blocks until finished.
 // This will deadlock if called from the EventLoop itself.
 func (l *EventLoop) Shutdown() {
@@ -175,6 +184,7 @@ func (l *EventLoop) Shutdown() {
 	wg.Wait()
 	l.Destroy()
 }
+*/
 
 // Executor returns an isolated adapter, so that no one can apply other interface assertions to screw up the looper.
 func (l *EventLoop) Executor() Executor {
