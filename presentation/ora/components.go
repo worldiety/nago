@@ -14,6 +14,10 @@ var validComponentIdRegex = regexp.MustCompile(`[A-Za-z0-9_\-{/}]+`)
 type ComponentFactoryId string
 
 func (c ComponentFactoryId) Valid() bool {
+	if c == "." {
+		return true
+	}
+
 	if strings.HasPrefix(string(c), "/") || strings.HasSuffix(string(c), "/") {
 		return false
 	}
