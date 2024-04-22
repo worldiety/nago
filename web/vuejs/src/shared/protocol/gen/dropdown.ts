@@ -17,5 +17,5 @@ export interface Dropdown {
     hint: Property<string>;
     error: Property<string>;
     onClicked: Property<Pointer>;
-    
+
 }

@@ -6,6 +6,7 @@ import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import type {Dropdown} from "@/shared/protocol/gen/dropdown";
 import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import UiDropdownSearchfilter from "@/components/UiDropdownSearchfilter.vue";
 
 const props = defineProps<{
 	ui: Dropdown;
@@ -96,6 +97,7 @@ function isSelected(item: DropdownItem): boolean {
 			<!-- Dropdown content -->
 			<div ref="dropdownOptions">
 				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
+					<ui-dropdown-searchfilter></ui-dropdown-searchfilter>
 					<ui-dropdown-item
 						v-for="(dropdownItem, index) in props.ui.items.v"
 						:key="index"
