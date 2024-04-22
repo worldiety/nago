@@ -4,7 +4,10 @@
 
 		<div
 			class="slider"
-			:class="{'slider-disabled': props.ui.disabled.value}"
+			:class="{
+				'slider-disabled': props.ui.disabled.value,
+				'mb-4': props.ui.showLabel.value,
+			}"
 		>
 			<div
 				class="relative flex items-center h-4"
@@ -14,7 +17,7 @@
 				<div ref="sliderTrack" class="slider-track w-full"></div>
 				<!-- Left slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-0"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-10"
 					:class="{
 						'slider-thumb-dragging': startDragging,
 						'slider-thumb-uninitialized': !props.ui.startInitialized.value,
@@ -24,12 +27,19 @@
 					@touchstart="startSliderThumbPressed"
 					@keydown.left="decreaseStartSliderValue"
 					@keydown.right="increaseStartSliderValue"
-				></div>
+				>
+					<div v-if="props.ui.showLabel.value" class="slider-thumb-label">
+						{{ getSliderLabel(sliderStartValue) }}
+					</div>
+				</div>
 				<!-- Slider thumb connector -->
-				<div v-if="props.ui.startInitialized.value && props.ui.endInitialized.value" class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange"></div>
+				<div
+					v-if="props.ui.startInitialized.value && props.ui.endInitialized.value"
+					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
+				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-10"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange z-20"
 					:class="{
 						'slider-thumb-dragging': endDragging,
 						'slider-thumb-uninitialized': !props.ui.endInitialized.value,
@@ -39,7 +49,11 @@
 					@touchstart="endSliderThumbPressed"
 					@keydown.left="decreaseEndSliderValue"
 					@keydown.right="increaseEndSliderValue"
-				></div>
+				>
+					<div v-if="props.ui.showLabel.value" class="slider-thumb-label">
+						{{ getSliderLabel(sliderEndValue) }}
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -51,7 +65,7 @@
 
 <script setup lang="ts">
 import type { LiveSlider } from '@/shared/model/liveSlider';
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 
 const props = defineProps<{
@@ -83,6 +97,12 @@ onMounted(() => {
 });
 
 onUnmounted(removeEventListeners);
+
+function getSliderLabel(sliderValue: number): string {
+	return sliderValue.toLocaleString(undefined, {
+		minimumFractionDigits: 2,
+	}) + props.ui.labelSuffix.value;
+}
 
 function initializeSliderThumbOffsets(): void {
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
@@ -306,5 +326,10 @@ function increaseEndSliderValue(): void {
 .slider:not(.slider-disabled) .slider-thumb-connector {
 	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset) - 1rem);
 	left: calc(var(--slider-thumb-start-offset) + 0.5rem);
+}
+
+.slider-thumb-label {
+	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
+	top: 130%;
 }
 </style>

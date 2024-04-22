@@ -15,6 +15,8 @@ type Slider struct {
 	stepsize         Float
 	startInitialized Bool
 	endInitialized   Bool
+	showLabel        Bool
+	labelSuffix      String
 	onChanged        *Func
 	properties       slice.Slice[Property]
 }
@@ -33,10 +35,12 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		stepsize:         NewShared[float64]("stepsize"),
 		startInitialized: NewShared[bool]("startInitialized"),
 		endInitialized:   NewShared[bool]("endInitialized"),
+		showLabel:        NewShared[bool]("showLabel"),
+		labelSuffix:      NewShared[string]("labelSuffix"),
 		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.onChanged)
+	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.onChanged)
 	if with != nil {
 		with(c)
 	}
@@ -84,6 +88,14 @@ func (c *Slider) StartInitialized() Bool {
 }
 
 func (c *Slider) EndInitialized() Bool { return c.endInitialized }
+
+func (c *Slider) ShowLabel() Bool {
+	return c.showLabel
+}
+
+func (c *Slider) LabelSuffix() String {
+	return c.labelSuffix
+}
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 

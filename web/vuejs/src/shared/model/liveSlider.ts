@@ -17,5 +17,7 @@ export interface LiveSlider {
 	stepsize: PropertyInt,
 	startInitialized: PropertyBool,
 	endInitialized: PropertyBool,
+	showLabel: PropertyBool,
+	labelSuffix: PropertyString,
 	onChanged: PropertyFunc,
 }
