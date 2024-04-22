@@ -17,6 +17,7 @@
 						v-for="(sliderTickMark, index) in sliderTickMarks"
 						:key="index"
 						class="slider-tick-mark"
+						:class="{'slider-tick-mark-in-range': sliderTickMark.withinRange}"
 						:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
 					></div>
 				</div>
@@ -69,12 +70,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { Slider } from "@/shared/protocol/gen/slider";
 
 interface SliderTickMark {
 	offset: number;
+	withinRange: boolean;
 }
 
 const props = defineProps<{
@@ -96,29 +98,26 @@ const sliderThumbEndOffset = ref<number>(0);
 const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
-	console.log(sliderStartValue.value, sliderEndValue.value);
 	sliderStartValue.value = getDiscreteValue(sliderStartValue.value);
 	sliderEndValue.value = getDiscreteValue(sliderEndValue.value);
 })
 
 onMounted(() => {
 	initializeSliderThumbOffsets();
-	initializeSliderTickMarks();
 
 	addEventListeners();
 });
 
 onUnmounted(removeEventListeners);
 
+watch(sliderThumbStartOffset, initializeSliderTickMarks);
+
+watch(sliderThumbEndOffset, initializeSliderTickMarks);
+
 function getSliderLabel(sliderValue: number): string {
 	return sliderValue.toLocaleString(undefined, {
 		minimumFractionDigits: 2,
 	}) + props.ui.labelSuffix.v;
-}
-
-function windowResized(): void {
-	initializeSliderThumbOffsets();
-	initializeSliderTickMarks();
 }
 
 function initializeSliderThumbOffsets(): void {
@@ -131,7 +130,10 @@ function initializeSliderTickMarks(): void {
 	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
 	for (let i = 0; i < totalSteps; i++) {
 		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
-		updatedSliderTickMarks.push({ offset: tickMarkOffset });
+		updatedSliderTickMarks.push({
+			offset: tickMarkOffset,
+			withinRange: sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value,
+		});
 	}
 	sliderTickMarks.value = updatedSliderTickMarks;
 }
@@ -142,7 +144,7 @@ function addEventListeners(): void {
 	document.addEventListener('touchcancel', onMouseUp);
 	document.addEventListener('touchmove', onTouchMove);
 	document.addEventListener('mousemove', onMouseMove);
-	window.addEventListener('resize', windowResized, { passive: true });
+	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
 }
 
 function removeEventListeners(): void {
@@ -151,7 +153,7 @@ function removeEventListeners(): void {
 	document.removeEventListener('touchcancel', onMouseUp);
 	document.removeEventListener('touchmove', onTouchMove);
 	document.removeEventListener('mousemove', onMouseMove);
-	window.removeEventListener('resize', windowResized);
+	window.removeEventListener('resize', initializeSliderThumbOffsets);
 }
 
 function onMouseUp(): void {
@@ -252,15 +254,15 @@ function roundValue(value: number): number {
 
 function submitSliderValues(): void {
 	networkStore.invokeFunctionsAndSetProperties([
-			{
-				...props.ui.startValue,
-				v: roundValue(sliderStartValue.value + scaleOffset.value),
-			},
-			{
-				...props.ui.endValue,
-				v: roundValue(sliderEndValue.value + scaleOffset.value),
-			}
-		], [props.ui.onChanged]);
+		{
+			...props.ui.startValue,
+			v: roundValue(sliderStartValue.value + scaleOffset.value),
+		},
+		{
+			...props.ui.endValue,
+			v: roundValue(sliderEndValue.value + scaleOffset.value),
+		}
+	], [props.ui.onChanged]);
 }
 
 function decreaseStartSliderValue(): void {
@@ -308,6 +310,10 @@ function increaseEndSliderValue(): void {
 	@apply absolute -top-[4px] border-l border-l-black h-[9px];
 	@apply dark:border-l-white;
 	left: var(--slider-tick-mark-offset);
+}
+
+.slider-tick-mark.slider-tick-mark-in-range {
+	@apply border-l-ora-orange;
 }
 
 .slider.slider-disabled .slider-track {
