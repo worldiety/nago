@@ -48,8 +48,8 @@ func (a *Application) Run() {
 		a.cfg.done()
 
 		if r := recover(); r != nil {
-			a.cfg.defaultLogger().Error("application panic", slog.Any("err", fmt.Errorf("panic: %v", r)))
-			debug.PrintStack()
+			fmt.Println(r)
+			fmt.Println(string(debug.Stack()))
 		}
 	}()
 

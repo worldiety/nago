@@ -1,9 +1,12 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type Slider struct {
-	id               CID
+	id               ora.Ptr
 	disabled         Bool
 	label            String
 	hint             String
@@ -18,7 +21,7 @@ type Slider struct {
 	showLabel        Bool
 	labelSuffix      String
 	onChanged        *Func
-	properties       slice.Slice[Property]
+	properties       []core.Property
 }
 
 func NewSlider(with func(slider *Slider)) *Slider {
@@ -40,19 +43,20 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = slice.Of[Property](c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.onChanged)
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.onChanged}
+
 	if with != nil {
 		with(c)
 	}
 	return c
 }
 
-func (c *Slider) ID() CID {
+func (c *Slider) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *Slider) Type() string {
-	return "Slider"
+func (c *Slider) Type() ora.ComponentType {
+	return ora.SliderT
 }
 
 func (c *Slider) Disabled() Bool { return c.disabled }
@@ -99,6 +103,33 @@ func (c *Slider) LabelSuffix() String {
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
-func (c *Slider) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *Slider) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
+}
+
+func (c *Slider) Render() ora.Component {
+	return c.render()
+}
+
+func (c *Slider) render() ora.Slider {
+	return ora.Slider{
+		Ptr:              c.id,
+		Type:             ora.SliderT,
+		Disabled:         c.disabled.render(),
+		Label:            c.label.render(),
+		Hint:             c.hint.render(),
+		Error:            c.error.render(),
+		StartValue:       c.startValue.render(),
+		EndValue:         c.endValue.render(),
+		Min:              c.min.render(),
+		Max:              c.max.render(),
+		Stepsize:         c.stepsize.render(),
+		StartInitialized: c.startInitialized.render(),
+		EndInitialized:   c.endInitialized.render(),
+		OnChanged:        renderFunc(c.onChanged),
+	}
 }

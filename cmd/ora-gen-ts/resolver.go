@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/protocol"
+	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"reflect"
 	"strings"
@@ -20,81 +20,256 @@ func init() {
 	// but for now, we keep this simple hardcoded reflection hack
 
 	resolvedTypes = map[reflect.Type]*TSTypeDef{
+		reflect.TypeOf([]string{}): {
+			Name: "string[]",
+		},
 		reflect.TypeOf(""): {
 			Name: "string",
 		},
-		reflect.TypeOf(protocol.Ptr(0)): {
+		reflect.TypeOf(ora.Ptr(0)): {
 			Name:    "Pointer",
 			Package: prefix + "pointer",
 		},
-		reflect.TypeOf(protocol.ComponentFactoryId("")): {
+		reflect.TypeOf(ora.ComponentFactoryId("")): {
 			Name:    "ComponentFactoryId",
 			Package: prefix + "componentFactoryId",
 		},
-		reflect.TypeOf(protocol.ComponentType("")): {
+		reflect.TypeOf(ora.ComponentType("")): {
 			Name:    "ComponentType",
 			Package: prefix + "componentType",
 		},
-		reflect.TypeOf(protocol.Property[string]{}): {
+		reflect.TypeOf(ora.Property[string]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{Name: "string"},
 			},
 		},
-		reflect.TypeOf(protocol.Property[protocol.Intent]{}): {
+		reflect.TypeOf(ora.Property[int]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "number"},
+			},
+		},
+		reflect.TypeOf(ora.Property[float64]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "number"},
+			},
+		},
+		reflect.TypeOf(ora.Property[int64]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "number"},
+			},
+		},
+		reflect.TypeOf(ora.Property[ora.Component]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "Component", Package: genPrefix + "component"},
+			},
+		},
+		reflect.TypeOf(ora.Property[ora.Button]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Name: "Button", Package: genPrefix + "button"},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.Component]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "Component", Package: genPrefix + "component"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.GridCell]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "GridCell", Package: genPrefix + "gridCell"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]int64]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "number"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.DropdownItem]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "DropdownItem", Package: genPrefix + "dropdownItem"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.StepInfo]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "StepInfo", Package: genPrefix + "stepInfo"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.Button]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "Button", Package: genPrefix + "button"},
+					},
+				},
+			},
+		},
+
+		reflect.TypeOf(ora.Property[[]ora.TableCell]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "TableCell", Package: genPrefix + "tableCell"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[[]ora.TableRow]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "TableRow", Package: genPrefix + "tableRow"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[ora.Intent]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{Package: prefix + "intent", Name: "Intent"},
 			},
 		},
-		reflect.TypeOf(protocol.Property[protocol.Ptr]{}): {
+		reflect.TypeOf(ora.Property[ora.Ptr]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{Package: prefix + "pointer", Name: "Pointer"},
 			},
 		},
-		reflect.TypeOf(protocol.Property[bool]{}): {
+		reflect.TypeOf(ora.Property[bool]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{Name: "boolean"},
 			},
 		},
-		reflect.TypeOf(protocol.Property[protocol.RIDSVG]{}): {
+		reflect.TypeOf(ora.Property[ora.RIDSVG]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{Package: prefix + "ridsvg", Name: "RIDSVG"},
 			},
 		},
-		reflect.TypeOf(protocol.RequestId(0)): {
+
+		reflect.TypeOf(ora.Property[ora.SVG]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Package: prefix + "svg", Name: "SVG"},
+			},
+		},
+		reflect.TypeOf(ora.RequestId(0)): {
 			Name:    "RequestId",
 			Package: prefix + "requestId",
 		},
-		reflect.TypeOf((*protocol.Component)(nil)).Elem(): {
+		reflect.TypeOf((*ora.Component)(nil)).Elem(): {
 			Name:    "Component",
 			Package: genPrefix + "component",
 		},
-		reflect.TypeOf([]protocol.Event{}): {
+		reflect.TypeOf([]ora.Event{}): {
 			Name: "[]",
 			TypeParams: []*TSTypeDef{
-				{Package: prefix + "event", Name: "Event"},
+				{Package: genPrefix + "event", Name: "Event"},
 			},
 		},
 		reflect.TypeOf(map[string]string{}): {
-			Name: "Map",
+			Name: "Record",
 			TypeParams: []*TSTypeDef{
 				{Name: "string"},
 				{Name: "string"},
+			},
+		},
+
+		reflect.TypeOf(ora.Themes{}): {
+			Name:    "Themes",
+			Package: genPrefix + "themes",
+		},
+		reflect.TypeOf(ora.Resources{}): {
+			Name:    "Resources",
+			Package: genPrefix + "resources",
+		},
+		reflect.TypeOf(ora.Theme{}): {
+			Name:    "Theme",
+			Package: genPrefix + "theme",
+		},
+		reflect.TypeOf(ora.ColorScheme("")): {
+			Name:    "ColorScheme",
+			Package: prefix + "colorScheme",
+		},
+		reflect.TypeOf(ora.Color{}): {
+			Name:    "Color",
+			Package: prefix + "color",
+		},
+		reflect.TypeOf(ora.Colors{}): {
+			Name:    "Colors",
+			Package: genPrefix + "colors",
+		},
+		reflect.TypeOf(map[ora.RIDSVG]ora.SVG{}): {
+			Name: "Map",
+			TypeParams: []*TSTypeDef{
+				{Package: prefix + "ridsvg", Name: "RIDSVG"},
+				{Package: prefix + "svg", Name: "SVG"},
 			},
 		},
 	}
 
 	// also use the components "enumeration"
-	for _, component := range protocol.Components {
+	for _, component := range ora.Components {
 		name := simpleName(component)
 		resolvedTypes[component] = &TSTypeDef{
 			Name:    name,
@@ -103,7 +278,7 @@ func init() {
 	}
 
 	// also use the events "enumeration"
-	for _, event := range protocol.Events {
+	for _, event := range ora.Events {
 		name := simpleName(event)
 		resolvedTypes[event] = &TSTypeDef{
 			Name:    name,

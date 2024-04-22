@@ -3,60 +3,54 @@ package application
 import (
 	"fmt"
 	"go.etcd.io/bbolt"
-	"go.wdy.de/nago/internal/text"
-	"go.wdy.de/nago/persistence/kv"
-	"go.wdy.de/nago/persistence/kv/bolt"
 	"go.wdy.de/nago/pkg/blob"
 	bolt2 "go.wdy.de/nago/pkg/blob/bolt"
+	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
-	"os"
+	"log/slog"
 	"path/filepath"
 	"reflect"
 )
 
-// deprecated: use BlobStore
+// BlobStore returns the default applications blob store. There is only one instance.
+// Do not put (large) files into this store. See also [blob.Get] and [blob.Put] helper functions.
+// For just storing serialized repository data, consider using [SloppyRepository] or
+// a [json.NewJSONRepository] with custom domain model mapping.
 //
-// Store returns a configured transactional key value store by name
-// or panics and switches into maintenance mode.
-func (c *Configurator) Store(name string) kv.Store {
-	if c.appName == "" {
-		panic("set app name first")
+// Use [Configurator.FileStore] for large blobs.
+func (c *Configurator) BlobStore(bucketName string) blob.Store {
+	if c.boltStore == nil {
+		fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
+		db, err := bbolt.Open(fname, 0700, nil) // security: only owner can read,write,exec
+		if err != nil {
+			panic(fmt.Errorf("cannot open bbolt database '%s': %w", fname, err))
+		}
+
+		c.boltStore = db
+		slog.Info("bbolt store opened", slog.String("file", fname))
 	}
 
-	if store, ok := c.kvStores[name]; ok {
-		return store
-	}
+	slog.Info("BlobStore bucket opened", slog.String("bucket", bucketName), slog.String("file", c.boltStore.Path()))
 
-	dir, _ := os.Getwd()
-	dir = filepath.Join(dir, "."+text.SafeName(c.appName), "kvstore")
-	_ = os.MkdirAll(dir, os.ModePerm)
-	fname := filepath.Join(dir, text.SafeName(name)+".db")
-	db, err := bbolt.Open(fname, os.ModePerm, nil)
-	if err != nil {
-		panic(fmt.Errorf("cannot open bbolt database '%s': %w", fname, err))
-	}
-
-	store := bolt.NewStore(db)
-	c.kvStores[name] = store
-	c.boltStores[name] = db
-
-	return store
+	return bolt2.NewBlobStore(c.boltStore, bucketName)
 }
 
-// BlobStore creates a new blob store instance, currently a bbolt implementation.
-// deprecated: don't know if this is a good thing. See [Repository].
-func (c *Configurator) BlobStore(dbName, bucketName string) blob.Store {
-	c.Store(dbName)
-	db := c.boltStores[dbName]
-	return bolt2.NewBlobStore(db, bucketName)
+// FileStore returns a blob store which directly saves into the filesystem and is recommended for handling large
+// files. See also [blob.Read] and [blob.Write] helper functions.
+func (c *Configurator) FileStore(bucketName string) blob.Store {
+	dir := c.Directory(filepath.Join("files", bucketName))
+	slog.Info(fmt.Sprintf("file store '%s' stores in '%s'", bucketName, dir))
+	return fs.NewBlobStore(dir)
 }
 
 // SloppyRepository returns a default Repository implementation for the given type, which just serializes the domain
 // type, which is fine for rapid prototyping, but should not be used for products which must be maintained.
+// This shares the bucket name space with [Configurator.BlobStore] and uses the reflected type name as the
+// bucket name, so be careful when renaming types or having type name collisions.
 func SloppyRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator) data.Repository[A, ID] {
 	var zero A
 	bucketName := reflect.TypeOf(zero).Name()
-	store := cfg.BlobStore("nago.db", bucketName)
+	store := cfg.BlobStore(bucketName)
 	return json.NewSloppyJSONRepository[A, ID](store)
 }

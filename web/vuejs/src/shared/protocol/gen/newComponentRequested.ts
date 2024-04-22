@@ -34,7 +34,7 @@ export interface NewComponentRequested {
      /**
      * Contains string encoded parameters for a component. This is like query parameters.
      */
-    values: Map<string, string>;
+    values: Record<string, string>;
     
      /**
      * Request ID used to generate a new component request and is returned in the according response.

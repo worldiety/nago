@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"go.wdy.de/nago/container/slice"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"io"
 )
 
@@ -17,7 +18,7 @@ type UploadToken string
 type FileHandler func(files []FileUpload)
 
 type FileField struct {
-	id               CID
+	id               ora.Ptr
 	label            String
 	value            String
 	hint             String
@@ -27,7 +28,7 @@ type FileField struct {
 	filter           String
 	uploadToken      String
 	onUploadReceived FileHandler
-	properties       slice.Slice[Property]
+	properties       []core.Property
 }
 
 func NewFileField(with func(fileField *FileField)) *FileField {
@@ -45,7 +46,7 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 
 	c.uploadToken.Set(nextToken())
 
-	c.properties = slice.Of[Property](c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.multiple, c.filter, c.uploadToken)
+	c.properties = []core.Property{c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.multiple, c.filter, c.uploadToken}
 
 	if with != nil {
 		with(c)
@@ -72,7 +73,7 @@ func (c *FileField) getOnUploadReceived() FileHandler {
 	return c.onUploadReceived
 }
 
-func (c *FileField) ID() CID {
+func (c *FileField) ID() ora.Ptr {
 	return c.id
 }
 
@@ -104,10 +105,28 @@ func (c *FileField) Disabled() Bool {
 	return c.disabled
 }
 
-func (c *FileField) Type() string {
-	return "FileField"
+func (c *FileField) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *FileField) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *FileField) Render() ora.Component {
+	return c.render()
+}
+
+func (c *FileField) render() ora.FileField {
+	return ora.FileField{
+		Ptr:         c.id,
+		Type:        ora.FileFieldT,
+		Label:       c.label.render(),
+		Hint:        c.hint.render(),
+		Error:       c.error.render(),
+		Disabled:    c.disabled.render(),
+		Filter:      c.filter.render(),
+		Multiple:    c.Multiple().render(),
+		UploadToken: c.uploadToken.render(),
+	}
 }

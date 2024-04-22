@@ -2,32 +2,30 @@
 import { textColor2Tailwind, textSize2Tailwind } from '@/shared/tailwindTranslator';
 import { computed } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveText } from '@/shared/model/liveText';
-import type { LivePage } from '@/shared/model/livePage';
+import {Text} from "@/shared/protocol/gen/text";
 
 const props = defineProps<{
-	ui: LiveText;
-	page: LivePage;
+	ui: Text;
 }>();
 
 const networkStore = useNetworkStore();
 
 const clazz = computed<string>(() => {
 	let tmp = '';
-	if (props.ui.color.value) {
-		tmp += textColor2Tailwind(props.ui.color.value);
+	if (props.ui.color.v) {
+		tmp += textColor2Tailwind(props.ui.color.v);
 	} else {
 		tmp += 'text-gray-900';
 	}
 
-	if (props.ui.colorDark.value) {
-		tmp += ' dark:' + textColor2Tailwind(props.ui.color.value);
+	if (props.ui.colorDark.v) {
+		tmp += ' dark:' + textColor2Tailwind(props.ui.color.v);
 	} else {
 		tmp += ' dark:text-white';
 	}
 
-	if (props.ui.size.value) {
-		tmp += ' ' + textSize2Tailwind(props.ui.size.value);
+	if (props.ui.size.v) {
+		tmp += ' ' + textSize2Tailwind(props.ui.size.v);
 	}
 
 	return tmp;
@@ -48,6 +46,6 @@ function onMouseLeave() {
 
 <template>
 	<span :class="clazz" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">{{
-		props.ui.value.value
+		props.ui.value.v
 	}}</span>
 </template>

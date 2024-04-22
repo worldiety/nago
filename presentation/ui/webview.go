@@ -1,11 +1,14 @@
 package ui
 
-import "go.wdy.de/nago/container/slice"
+import (
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
+)
 
 type WebView struct {
-	id         CID
+	id         ora.Ptr
 	value      String
-	properties slice.Slice[Property]
+	properties []core.Property
 }
 
 func NewWebView(with func(*WebView)) *WebView {
@@ -15,7 +18,7 @@ func NewWebView(with func(*WebView)) *WebView {
 
 	c.value = NewShared[string]("value")
 
-	c.properties = slice.Of[Property](c.value)
+	c.properties = []core.Property{c.value}
 	if with != nil {
 		with(c)
 	}
@@ -30,14 +33,26 @@ func (c *WebView) Value() String {
 	return c.value
 }
 
-func (c *WebView) ID() CID {
+func (c *WebView) ID() ora.Ptr {
 	return c.id
 }
 
-func (c *WebView) Type() string {
-	return "WebView"
+func (c *WebView) Properties(yield func(core.Property) bool) {
+	for _, property := range c.properties {
+		if !yield(property) {
+			return
+		}
+	}
 }
 
-func (c *WebView) Properties() slice.Slice[Property] {
-	return c.properties
+func (c *WebView) Render() ora.Component {
+	return c.render()
+}
+
+func (c *WebView) render() ora.WebView {
+	return ora.WebView{
+		Ptr:   c.id,
+		Type:  ora.WebViewT,
+		Value: c.value.render(),
+	}
 }

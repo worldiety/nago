@@ -2,12 +2,10 @@
 import { onMounted } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useNetworkStore } from '@/stores/networkStore';
-import type { LiveScaffold } from '@/shared/model/liveScaffold';
-import type { LivePage } from '@/shared/model/livePage';
+import {Scaffold} from "@/shared/protocol/gen/scaffold";
 
 const props = defineProps<{
-	ui: LiveScaffold;
-	page: LivePage;
+	ui: Scaffold;
 }>();
 
 const networkStore = useNetworkStore();
@@ -65,15 +63,15 @@ onMounted(() => {
 	<div class="fixed z-30 flex w-full flex-1 flex-col dark:text-white">
 		<nav class="flex h-16 justify-between bg-white px-4 shadow dark:bg-gray-700">
 			<div class="flex items-center pl-4">
-				<ui-generic v-if="props.ui.topbarLeft.value" :ui="props.ui.topbarLeft.value" :page="page" />
+				<ui-generic v-if="props.ui.topbarLeft.v" :ui="props.ui.topbarLeft.v"  />
 			</div>
 
 			<div class="flex items-center">
-				<ui-generic v-if="props.ui.topbarMid.value" :ui="props.ui.topbarMid.value" :page="page" />
+				<ui-generic v-if="props.ui.topbarMid.v" :ui="props.ui.topbarMid.v"  />
 			</div>
 
 			<ul class="flex items-center pr-4">
-				<ui-generic v-if="props.ui.topbarRight.value" :ui="props.ui.topbarRight.value" :page="page" />
+				<ui-generic v-if="props.ui.topbarRight.v" :ui="props.ui.topbarRight.v"  />
 			</ul>
 		</nav>
 	</div>
@@ -85,7 +83,7 @@ onMounted(() => {
 	>
 		<div class="h-full overflow-y-auto bg-gray-50 px-3 py-4 dark:bg-gray-800">
 			<ul class="space-y-2 font-medium">
-				<li v-for="btn in props.ui.menu.value">
+				<li v-for="btn in props.ui.menu.v">
 					<a
 						@click="networkStore.invokeFunctions(btn.action)"
 						class="group flex cursor-pointer items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
@@ -93,15 +91,15 @@ onMounted(() => {
 						<svg
 							v-inline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							v-if="btn.preIcon.value"
-							v-html="btn.preIcon.value"
+							v-if="btn.preIcon.v"
+							v-html="btn.preIcon.v"
 						></svg>
-						<span class="ms-3">{{ btn.caption.value }}</span>
+						<span class="ms-3">{{ btn.caption.v }}</span>
 						<svg
 							v-inline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							v-if="btn.postIcon.value"
-							v-html="btn.postIcon.value"
+							v-if="btn.postIcon.v"
+							v-html="btn.postIcon.v"
 						></svg>
 					</a>
 				</li>
@@ -144,9 +142,9 @@ onMounted(() => {
 
 	<div class="p-4 pb-16 pt-16 sm:ml-64 sm:pb-0">
 		<div class="p-4">
-			<nav v-if="props.ui.breadcrumbs.value" class="flex pb-4" aria-label="Breadcrumb">
+			<nav v-if="props.ui.breadcrumbs.v" class="flex pb-4" aria-label="Breadcrumb">
 				<ol class="inline-flex items-center space-x-1 rtl:space-x-reverse md:space-x-2">
-					<li v-for="btn in props.ui.breadcrumbs.value" class="inline-flex items-center">
+					<li v-for="btn in props.ui.breadcrumbs.v" class="inline-flex items-center">
 						<a
 							@click="networkStore.invokeFunctions(btn.action)"
 							class="inline-flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
@@ -154,16 +152,16 @@ onMounted(() => {
 							<svg
 								v-inline
 								class="me-2.5 h-3 w-3"
-								v-if="btn.preIcon.value"
-								v-html="btn.preIcon.value"
+								v-if="btn.preIcon.v"
+								v-html="btn.preIcon.v"
 							></svg>
-							{{ btn.caption.value }}
+							{{ btn.caption.v }}
 						</a>
 					</li>
 				</ol>
 			</nav>
 
-			<ui-generic :ui="props.ui.body.value" :page="page" />
+			<ui-generic :ui="props.ui.body.v"  />
 		</div>
 	</div>
 
@@ -174,24 +172,24 @@ onMounted(() => {
 			<button
 				type="button"
 				class="group inline-flex cursor-pointer flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800"
-				v-for="btn in props.ui.menu.value"
+				v-for="btn in props.ui.menu.v"
 				@click="networkStore.invokeFunctions(btn.action)"
 			>
 				<svg
 					v-inline
 					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					v-if="btn.preIcon.value"
-					v-html="btn.preIcon.value"
+					v-if="btn.preIcon.v"
+					v-html="btn.preIcon.v"
 				></svg>
 				<span
 					class="text-sm text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					>{{ btn.caption.value }}</span
+					>{{ btn.caption.v }}</span
 				>
 				<svg
 					v-inline
 					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
-					v-if="btn.postIcon.value"
-					v-html="btn.postIcon.value"
+					v-if="btn.postIcon.v"
+					v-html="btn.postIcon.v"
 				></svg>
 			</button>
 		</div>

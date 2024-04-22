@@ -1,84 +1,134 @@
 <script setup lang="ts">
-import { RouterView, useRoute, useRouter } from 'vue-router';
-import Page from '@/views/Page.vue';
-import { ref } from 'vue';
-import { useAuth } from '@/stores/authStore';
-import { UserManager } from 'oidc-client-ts';
-import { fetchApplication } from '@/api/application/appRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
-import { ApplicationError, type CustomError, useErrorHandling } from '@/composables/errorhandling';
-import i18n from '@/i18n';
-import type { PagesConfiguration } from '@/shared/model/pagesConfiguration';
+import {useErrorHandling} from '@/composables/errorhandling';
+import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
+import {ErrorOccurred} from "@/shared/protocol/gen/errorOccurred";
+import {onUnmounted, provide, ref} from "vue";
+import {useNetworkStore} from "@/stores/networkStore";
+import {Component} from "@/shared/protocol/gen/component";
+import GenericUi from "@/components/UiGeneric.vue";
+import {NavigationForwardToRequested} from "@/shared/protocol/gen/navigationForwardToRequested";
+import { factory } from 'typescript';
 
 enum State {
-	LoadingRoutes,
-	ShowRoutes,
+	Loading,
+	ShowUI,
 	Error,
 }
 
+const networkStore = useNetworkStore();
+
+
+const state = ref(State.Loading);
+const ui = ref<Component>();
+
+// Provide the current UiDescription to all child elements.
+// https://vuejs.org/guide/components/provide-inject.html
+provide('ui', ui);
+
 const errorHandler = useErrorHandling();
-const router = useRouter();
-const route = useRoute();
-const auth = useAuth();
-const state = ref(State.LoadingRoutes);
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
 async function init(): Promise<void> {
-	let anchor: string;
-
 	try {
-		const app = await fetchApplication();
+		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
+		// restoration).
+		await networkStore.initialize();
 
-		if (app.oidc?.length > 0) {
-			/*auth.init(new UserManager({
-        authority: 'http://localhost:8080/realms/master',
-        client_id: 'testclientid',
-        redirect_uri: 'http://localhost:8090/oauth',
-        post_logout_redirect_uri: 'http://localhost:8090',
-      }))*/
-			const provider = app.oidc.at(0);
-			if (provider) {
-				auth.init(
-					new UserManager({
-						authority: provider.authority,
-						client_id: provider.clientID,
-						redirect_uri: provider.redirectURL,
-						post_logout_redirect_uri: provider.postLogoutRedirectUri,
+		// configure the scope with color scheme and locale
+		// TODO: connect this to the scheme and locale picker for accessibility
+		let cfg = await networkStore.getConfiguration("light", navigator.languages[0])
+		console.log("my config", cfg)
+
+		// create a new component (which is likely a page but not necessarily)
+		let factoryId = window.location.pathname.substring(1);
+		if (factoryId.length === 0) {
+			factoryId = "." // this is by ora definition the root page
+		}
+		console.log(`factory: ${factoryId}`)
+		let params: Record<string, string> = {};
+		new URLSearchParams(window.location.search).forEach((value, key) => {
+			params[key] = value
+		})
+		history.replaceState({
+			factory:factoryId,
+			values:params,
+		},"",null)
+		let invalidation = await networkStore.newComponent(factoryId, params)
+		console.log("my render tree", invalidation)
+
+		// todo is this the right place? when to remove the subscriber?
+		networkStore.addUnprocessedEventSubscriber(evt => {
+			switch (evt.type) {
+				case "ComponentInvalidated":
+					ui.value = (evt as ComponentInvalidated).value
+					break
+				case "ErrorOccurred":
+					alert((evt as ErrorOccurred).message)
+					break
+				case "NavigationForwardToRequested":
+					let req = (evt as NavigationForwardToRequested);
+					networkStore.destroyComponent(ui.value?.id)
+					networkStore.newComponent(req.factory, req.values).then(invalidation => {
+						ui.value = invalidation.value;
 					})
-				);
+
+					let url = `/${req.factory}?`
+					Object.entries(req.values).forEach(([key, value]) => {
+						url += `${key}=${value}&`
+					});
+					history.pushState(req, "", url)
+					break
+				case "NavigationBackRequested":
+					history.back()
+
+					break
+				default:
+					console.log("ignored unhandled evt", evt)
 			}
-		}
+		})
 
-		app.livePages.forEach((page) => {
-			anchor = page.anchor.replaceAll('{', ':');
-			anchor = anchor.replaceAll('}', '?');
-			anchor = anchor.replaceAll('-', '\\-'); //OMG regex
-			router.addRoute({ path: anchor, component: Page, meta: { page } });
-			console.log('registered route', anchor);
-		});
-
-		// Update router with current route, to load the dynamically configured page.
-		await router.replace(route);
-
-		state.value = State.ShowRoutes;
-
-		if (router.currentRoute.value.path === '/' && app.index != null && app.index != '') {
-			console.log('app requires index rewrite to ', app.index);
-			router.replace(app.index);
-		}
-	} catch (e: ApplicationError) {
-		errorHandler.handleError(e);
+		ui.value = invalidation.value;
+		state.value = State.ShowUI;
+		console.log("app init done")
+	} catch {
+		state.value = State.Error;
 	}
 }
 
 init();
+addEventListener("popstate",(event)=>{
+	if (event.state===null){
+		console.log("bogus history")
+		return
+	}
+
+	let req2 = history.state as NavigationForwardToRequested
+	networkStore.destroyComponent(ui.value?.id)
+	networkStore.newComponent(req2.factory, req2.values).then(invalidation => {
+		ui.value = invalidation.value;
+	})
+})
+
+onUnmounted(() => {
+	networkStore.teardown();
+});
+
 </script>
 
 <template>
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
-		<UiErrorMessage :error="errorHandler.error.value"> </UiErrorMessage>
+		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
-	<RouterView v-if="state === State.ShowRoutes" />
+
+	<div>
+		<!--  <div>Dynamic page information: {{ page }}</div> -->
+		<div v-if="state === State.Loading">Loading UI definition…</div>
+		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+		<div v-else>Empty UI</div>
+	</div>
+
 </template>
