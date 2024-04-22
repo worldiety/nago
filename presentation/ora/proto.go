@@ -7,6 +7,7 @@ const (
 	AcknowledgedT                  EventType = "A"
 	SetPropertyValueRequestedT     EventType = "P"
 	FunctionCallRequestedT         EventType = "F"
+	PingT                          EventType = "Ping"
 	NewComponentRequestedT         EventType = "NewComponentRequested"
 	ComponentInvalidatedT          EventType = "ComponentInvalidated"
 	ErrorOccurredT                 EventType = "ErrorOccurred"
