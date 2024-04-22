@@ -6,7 +6,7 @@
 			class="slider"
 			:class="{
 				'slider-disabled': props.ui.disabled.v,
-				'mb-4': props.ui.showLabel.v,
+				'mb-6': props.ui.showLabel.v,
 			}"
 			:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
 		>
@@ -375,7 +375,7 @@ function increaseEndSliderValue(): void {
 
 .slider-thumb-label {
 	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
-	top: 130%;
+	top: 150%;
 }
 
 .slider-thumb-label > span {
