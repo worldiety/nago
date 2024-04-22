@@ -12,7 +12,14 @@
 		>
 			<div class="relative flex items-center h-4">
 				<!-- Slider track -->
-				<div ref="sliderTrack" class="slider-track w-full"></div>
+				<div ref="sliderTrack" class="slider-track w-full">
+					<div
+						v-for="(sliderTickMark, index) in sliderTickMarks"
+						:key="index"
+						class="slider-tick-mark"
+						:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
+					></div>
+				</div>
 				<!-- Left slider thumb -->
 				<div
 					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange z-10"
@@ -62,9 +69,13 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { Slider } from "@/shared/protocol/gen/slider";
+
+interface SliderTickMark {
+	offset: number;
+}
 
 const props = defineProps<{
 	ui: Slider;
@@ -82,14 +93,17 @@ const sliderEndValue = ref<number>(roundValue(props.ui.endValue.v - scaleOffset.
 const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.v));
 const sliderThumbStartOffset = ref<number>(0);
 const sliderThumbEndOffset = ref<number>(0);
+const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
+	console.log(sliderStartValue.value, sliderEndValue.value);
 	sliderStartValue.value = getDiscreteValue(sliderStartValue.value);
 	sliderEndValue.value = getDiscreteValue(sliderEndValue.value);
 })
 
 onMounted(() => {
 	initializeSliderThumbOffsets();
+	initializeSliderTickMarks();
 
 	addEventListeners();
 });
@@ -102,9 +116,24 @@ function getSliderLabel(sliderValue: number): string {
 	}) + props.ui.labelSuffix.v;
 }
 
+function windowResized(): void {
+	initializeSliderThumbOffsets();
+	initializeSliderTickMarks();
+}
+
 function initializeSliderThumbOffsets(): void {
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
+}
+
+function initializeSliderTickMarks(): void {
+	const updatedSliderTickMarks: SliderTickMark[] = [];
+	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
+	for (let i = 0; i < totalSteps; i++) {
+		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
+		updatedSliderTickMarks.push({ offset: tickMarkOffset });
+	}
+	sliderTickMarks.value = updatedSliderTickMarks;
 }
 
 function addEventListeners(): void {
@@ -113,7 +142,7 @@ function addEventListeners(): void {
 	document.addEventListener('touchcancel', onMouseUp);
 	document.addEventListener('touchmove', onTouchMove);
 	document.addEventListener('mousemove', onMouseMove);
-	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
+	window.addEventListener('resize', windowResized, { passive: true });
 }
 
 function removeEventListeners(): void {
@@ -122,7 +151,7 @@ function removeEventListeners(): void {
 	document.removeEventListener('touchcancel', onMouseUp);
 	document.removeEventListener('touchmove', onTouchMove);
 	document.removeEventListener('mousemove', onMouseMove);
-	window.removeEventListener('resize', initializeSliderThumbOffsets);
+	window.removeEventListener('resize', windowResized);
 }
 
 function onMouseUp(): void {
@@ -271,8 +300,14 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-track {
-	@apply border-b border-b-black;
+	@apply relative border-b border-b-black;
 	@apply dark:border-b-white;
+}
+
+.slider-tick-mark {
+	@apply absolute -top-[4px] border-l border-l-black h-[9px];
+	@apply dark:border-l-white;
+	left: var(--slider-tick-mark-offset);
 }
 
 .slider.slider-disabled .slider-track {
