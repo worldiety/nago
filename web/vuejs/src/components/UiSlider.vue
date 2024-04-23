@@ -46,7 +46,7 @@
 				</div>
 				<!-- Slider thumb connector -->
 				<div
-					v-if="props.ui.startInitialized.v && props.ui.endInitialized.v || !props.ui.rangeMode.v && props.ui.endInitialized.v"
+					v-if="sliderThumbConnectorVisible"
 					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
 				></div>
 				<!-- Right slider thumb -->
@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useNetworkStore } from '@/stores/networkStore';
 import type { Slider } from "@/shared/protocol/gen/slider";
 
@@ -126,6 +126,12 @@ watch(sliderThumbEndOffset, initializeSliderTickMarks);
 
 watch(() => props.ui.endInitialized.v, initializeSliderTickMarks);
 
+watch(() => props.ui.startInitialized.v, initializeSliderTickMarks);
+
+const sliderThumbConnectorVisible = computed((): boolean => {
+	return props.ui.showLabel.v && (props.ui.startInitialized.v && props.ui.endInitialized.v || !props.ui.rangeMode.v && props.ui.endInitialized.v);
+});
+
 function getSliderLabel(sliderValue: number): string {
 	return sliderValue.toLocaleString(undefined, {
 		minimumFractionDigits: 2,
@@ -142,7 +148,7 @@ function initializeSliderTickMarks(): void {
 	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
 	for (let i = 0; i < totalSteps; i++) {
 		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
-		const withinRange = props.ui.endInitialized.v && sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value;
+		const withinRange = props.ui.showLabel.v && props.ui.startInitialized.v && props.ui.endInitialized.v && sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value;
 		updatedSliderTickMarks.push({
 			offset: tickMarkOffset,
 			withinRange: withinRange,
@@ -337,13 +343,16 @@ function increaseEndSliderValue(): void {
 	@apply border-l-ora-orange;
 }
 
+.slider.slider-disabled .slider-tick-mark.slider-tick-mark-in-range {
+	@apply border-l-disabled-text;
+}
+
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
 	@apply bg-black;
 	@apply dark:bg-white;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:focus-visible,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
 	@apply bg-ora-orange;
 }
@@ -379,9 +388,13 @@ function increaseEndSliderValue(): void {
 	left: calc(var(--slider-thumb-end-offset) - 0.5rem);
 }
 
-.slider:not(.slider-disabled) .slider-thumb-connector {
+.slider .slider-thumb-connector {
 	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset));
 	left: calc(var(--slider-thumb-start-offset));
+}
+
+.slider.slider-disabled .slider-thumb-connector {
+	@apply border-b-disabled-text;
 }
 
 .slider-thumb-label {
