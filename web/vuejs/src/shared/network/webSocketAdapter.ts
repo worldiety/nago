@@ -1,17 +1,29 @@
-import type NetworkAdapter from '@/shared/network/networkAdapter';
-import {ConfigurationRequested} from "@/shared/protocol/gen/configurationRequested";
-import {Ping} from "@/shared/protocol/gen/ping";
+import NetworkAdapter from '@/shared/network/networkAdapter';
+import type { Ping } from "@/shared/protocol/gen/ping";
+import { Property } from '@/shared/protocol/property';
+import { Pointer } from '@/shared/protocol/pointer';
+import { Event } from '@/shared/protocol/gen/event';
+import { ComponentInvalidated } from '@/shared/protocol/gen/componentInvalidated';
+import { ColorScheme } from '@/shared/protocol/colorScheme';
+import { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
+import { ConfigurationRequested } from '@/shared/protocol/gen/configurationRequested';
+import { Acknowledged } from '@/shared/protocol/gen/acknowledged';
+import Future from '@/shared/network/future';
+import type { EventsAggregated } from '@/shared/protocol/gen/eventsAggregated';
+import { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
+import { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
 
-export default class WebSocketAdapter implements NetworkAdapter {
+export default class WebSocketAdapter extends NetworkAdapter {
 
 	private readonly webSocketPort: string;
-	private readonly isSecure: bool = false;
+	private readonly isSecure: boolean = false;
 	private webSocket: WebSocket|null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
 	private scopeId: string;
 
 	constructor() {
+		super();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
@@ -20,16 +32,6 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		// also when reconnecting to an existing scope.
 		this.scopeId = window.crypto.randomUUID()
 		this.isSecure = location.protocol == "https:";
-		setInterval(()=>{
-			if (this.closedGracefully){
-				return
-			}
-			const evt: Ping = {
-				type: 'Ping',
-			};
-
-			this.publish(JSON.stringify(evt)) // this keeps our connection at least logically alive
-		},30000)
 	}
 
 	private initializeWebSocketPort(): string {
@@ -51,9 +53,10 @@ export default class WebSocketAdapter implements NetworkAdapter {
 			webSocketURL += `&${queryString}`;
 		}
 
-
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
+
+			this.webSocket.onmessage = (e) => this.processReceivedMessage(e.data);
 
 			this.webSocket.onclose = () => {
 				if (!this.closedGracefully) {
@@ -65,12 +68,52 @@ export default class WebSocketAdapter implements NetworkAdapter {
 				}
 			}
 
-			this.webSocket.onopen = () => resolve();
+			this.webSocket.onopen = () => {
+				// this keeps our connection at least logically alive
+				setInterval(()=>{
+					if (this.closedGracefully){
+						return
+					}
+					const evt: Ping = {
+						type: 'Ping',
+					};
+
+					this.webSocket?.send(JSON.stringify(evt))
+				},30000);
+
+				resolve();
+			}
 		})
 	}
 
+	private processReceivedMessage(responseRaw: any): void {
+		const responseParsed = JSON.parse(responseRaw);
+		let requestId = responseParsed['requestId'] as number;
+		if (requestId === undefined) {
+			// try again the shortened field name of ack, we keep that efficient
+			requestId = responseParsed['r'] as number;
+		}
 
-	teardown(): void {
+		// our lowest id is 1, so this must be something without our intention
+		if (requestId === 0 || requestId === undefined) {
+			// something event driven from the backend happened, usually an invalidate or a navigation request
+			/*console.log(`received unrequested event from backend: ${responseParsed.type}`)
+			this.unprocessedEventSubscribers.forEach(fn => {
+				if (fn === undefined) {
+					return
+				}
+
+				fn(responseParsed as Event)
+			})
+
+			return*/
+			this.handleUnrequestedMessage(responseParsed as Event);
+		}
+
+		this.resolveFuture(requestId);
+	}
+
+	async teardown(): Promise<void> {
 		this.closedGracefully = true;
 		this.webSocket?.close();
 	}
@@ -85,20 +128,90 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		}, 2000);
 	}
 
-	publish(payloadRaw: string): void {
-		if (!this.webSocket){
-			console.log("webSocketAdapter is invalid")
-		}
-		console.log("webSocketAdapter send",payloadRaw)
-		this.webSocket?.send(payloadRaw);
+	executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
+		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
+			const requestId = this.nextReqId();
+			const future = new Future(requestId, resolve, reject);
+			this.addFuture(future);
+			const callBatch = this.createCallBatch(requestId, undefined, functions);
+			this.send(callBatch);
+		});
 	}
 
-	subscribe(resolve: (responseRaw: string) => void): void {
-		if (!this.webSocket) {
-			console.log("webSocketAdapter rejected subscriber")
-			return;
+	setProperties<T>(properties: Property<T>[]): Promise<ComponentInvalidated|void> {
+		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
+			const requestId = this.nextReqId();
+			const future = new Future(requestId, resolve, reject);
+			this.addFuture(future);
+			const callBatch = this.createCallBatch(requestId, properties);
+			this.send(callBatch);
+		});
+	}
+
+	setPropertiesAndCallFunctions<T>(properties: Property<T>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
+		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
+			const requestId = this.nextReqId();
+			const future = new Future(requestId, resolve, reject);
+			this.addFuture(future);
+			const callBatch = this.createCallBatch(requestId, properties, functions);
+			this.send(callBatch);
+		});
+	}
+
+	createComponent(): Promise<ComponentInvalidated> {
+		return Promise.resolve(undefined);
+	}
+
+	destroyComponent(pointer: Pointer): Promise<Acknowledged> {
+		return Promise.resolve(undefined);
+	}
+
+	getConfiguration(configurationRequested: ConfigurationRequested): Promise<ConfigurationDefined> {
+		return new Promise<ConfigurationDefined>((resolve, reject) => {
+			const requestId = this.nextReqId();
+			const future = new Future(requestId, resolve, reject);
+			this.addFuture(future);
+			const callBatch = this.createCallBatch(requestId, undefined, undefined, configurationRequested);
+			this.send(callBatch);
+		});
+	}
+
+	private createCallBatch(requestId: number, properties?: Property<unknown>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested): EventsAggregated {
+		const callBatch: EventsAggregated = {
+			type: 'T',
+			events: [],
+			r: requestId,
+		};
+
+		properties
+			?.filter((property: Property<unknown>) => property.p !== 0)
+			.forEach((property: Property<unknown>) => {
+				const action: SetPropertyValueRequested = {
+					type: 'P',
+					p: property.p,
+					v: property.v as string,
+				};
+				callBatch.events.push(action);
+			});
+
+		functions
+			?.filter((propertyFunc: Property<Pointer>) => propertyFunc.p !== 0 && propertyFunc.v !== 0)
+			.forEach((propertyFunc: Property<Pointer>) => {
+				const callServerFunc: FunctionCallRequested = {
+					type: 'F',
+					p: propertyFunc.v,
+				};
+				callBatch.events.push(callServerFunc);
+			});
+
+		if (configurationRequested) {
+			callBatch.events.push(configurationRequested);
 		}
-		this.webSocket.onmessage = (e) => resolve(e.data);
-		this.webSocket.onerror = this.retry;
+
+		return callBatch;
+	}
+
+	private send(callBatch: EventsAggregated): void {
+		this.webSocket?.send(JSON.stringify(callBatch));
 	}
 }
