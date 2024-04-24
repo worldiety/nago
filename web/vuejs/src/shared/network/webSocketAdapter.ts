@@ -104,6 +104,7 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		if (requestId === 0 || requestId === undefined) {
 			// something event driven from the backend happened, usually an invalidate or a navigation request
 			this.handleUnrequestedEvent(responseParsed as Event);
+			return;
 		}
 
 		this.resolveFuture(requestId, responseParsed);

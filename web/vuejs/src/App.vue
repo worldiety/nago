@@ -61,6 +61,7 @@ async function init(): Promise<void> {
 		// todo is this the right place? when to remove the subscriber?
 		networkStore.addUnrequestedEventSubscriber((event: Event) => {
 			switch (event.type) {
+				// TODO: Why is the request ID always 0 to ensure this function gets called?
 				case "ComponentInvalidated":
 					ui.value = (event as ComponentInvalidated).value
 					break
@@ -68,6 +69,9 @@ async function init(): Promise<void> {
 					alert((event as ErrorOccurred).message)
 					break
 				case "NavigationForwardToRequested":
+					if (!ui.value) {
+						break;
+					}
 					const req = (event as NavigationForwardToRequested);
 					networkStore.destroyComponent(ui.value?.id)
 					networkStore.newComponent(req.factory, req.values).then(invalidation => {
