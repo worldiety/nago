@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
-import {useErrorHandling} from '@/composables/errorhandling';
-import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
-import {ErrorOccurred} from "@/shared/protocol/gen/errorOccurred";
-import {onUnmounted, provide, ref} from "vue";
-import {useNetworkStore} from "@/stores/networkStore";
-import {Component} from "@/shared/protocol/gen/component";
+import { useErrorHandling } from '@/composables/errorhandling';
+import type { ComponentInvalidated } from "@/shared/protocol/gen/componentInvalidated";
+import type { ErrorOccurred } from "@/shared/protocol/gen/errorOccurred";
+import { inject, onUnmounted, provide, ref } from "vue";
+import { useNetworkStore } from "@/stores/networkStore";
+import type { Component } from "@/shared/protocol/gen/component";
 import GenericUi from "@/components/UiGeneric.vue";
-import {NavigationForwardToRequested} from "@/shared/protocol/gen/navigationForwardToRequested";
+import type { NavigationForwardToRequested } from "@/shared/protocol/gen/navigationForwardToRequested";
 import type { Event } from '@/shared/protocol/gen/event';
+import EventBus, { EventType } from '@/shared/eventBus';
+import { eventBusKey } from '@/shared/injectionKeys';
 
 enum State {
 	Loading,
@@ -17,8 +19,7 @@ enum State {
 }
 
 const networkStore = useNetworkStore();
-
-
+const eventBus: EventBus|undefined = inject(eventBusKey);
 const state = ref(State.Loading);
 const ui = ref<Component>();
 
@@ -58,8 +59,11 @@ async function init(): Promise<void> {
 		let invalidation = await networkStore.newComponent(factoryId, params)
 		console.log("my render tree", invalidation)
 
+		eventBus?.subscribe(EventType.INVALIDATION, (event: Event) => updateUi(event as ComponentInvalidated));
+		// TODO: Create network adapter having the event bus in main.ts and inject it where necessary
+
 		// todo is this the right place? when to remove the subscriber?
-		networkStore.addUnrequestedEventSubscriber((event: Event) => {
+		/*networkStore.addUnrequestedEventSubscriber((event: Event) => {
 			switch (event.type) {
 				// TODO: Why is the request ID always 0 to ensure this function gets called?
 				case "ComponentInvalidated":
@@ -90,7 +94,7 @@ async function init(): Promise<void> {
 				default:
 					console.log("ignored unhandled event", event)
 			}
-		})
+		})*/
 
 		ui.value = invalidation.value;
 		state.value = State.ShowUI;
@@ -98,6 +102,10 @@ async function init(): Promise<void> {
 	} catch {
 		state.value = State.Error;
 	}
+}
+
+function updateUi(componentInvalidated: ComponentInvalidated): void {
+	console.log('X');
 }
 
 init();

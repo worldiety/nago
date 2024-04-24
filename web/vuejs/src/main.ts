@@ -4,11 +4,14 @@ import App from '@/App.vue';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
+import EventBus from '@/shared/eventBus';
+import { eventBusKey } from '@/shared/injectionKeys';
 
 const pinia = createPinia();
 
 const app = createApp(App);
 
+app.provide(eventBusKey, new EventBus());
 app.directive('inline', (element: HTMLElement) => {
 	const parentCss = element.classList;
 	for (let i = 0; i < element.children.length; i++) {

@@ -1,5 +1,4 @@
-import NetworkAdapter from '@/shared/network/networkAdapter';
-import Future from '@/shared/network/future';
+import type NetworkAdapter from '@/shared/network/networkAdapter';
 import type { Ping } from '@/shared/protocol/gen/ping';
 import type { Property } from '@/shared/protocol/property';
 import type { Pointer } from '@/shared/protocol/pointer';
@@ -17,7 +16,7 @@ import type { ColorScheme } from '@/shared/protocol/colorScheme';
 import type { ComponentFactoryId } from '@/shared/protocol/componentFactoryId';
 import { v4 as uuidv4 } from 'uuid';
 
-export default class WebSocketAdapter extends NetworkAdapter {
+export default class WebSocketAdapter implements NetworkAdapter {
 
 	private pendingFutures: Map<number, Future>;
 	private readonly webSocketPort: string;
@@ -26,9 +25,11 @@ export default class WebSocketAdapter extends NetworkAdapter {
 	private webSocket: WebSocket|null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
+	private activeLocale: string;
+	private requestId: number;
+	private unrequestedEventSubscribers: ((evt: Event) => void)[];
 
 	constructor() {
-		super();
 		this.pendingFutures = new Map();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
@@ -38,6 +39,9 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		// also when reconnecting to an existing scope.
 		this.scopeId = uuidv4();
 		this.isSecure = location.protocol == "https:";
+		this.activeLocale = '';
+		this.requestId = 0;
+		this.unrequestedEventSubscribers = [];
 	}
 
 	private initializeWebSocketPort(): string {
@@ -283,5 +287,49 @@ export default class WebSocketAdapter extends NetworkAdapter {
 			this.pendingFutures.delete(requestId)
 			future.resolveFuture(response);
 		}
+	}
+
+	addUnrequestedEventSubscriber(fn: ((event: Event) => void)) {
+		this.unrequestedEventSubscribers.push(fn);
+	}
+
+	removeUnrequestedEventSubscriber(fn: ((evt: Event) => void)) {
+		this.unrequestedEventSubscribers = this.unrequestedEventSubscribers.filter(obj => obj !== fn)
+	}
+
+	private handleUnrequestedEvent(event: Event): void {
+		this.unrequestedEventSubscribers.forEach(fn => fn(event));
+	}
+
+	private nextRequestId(): number {
+		this.requestId++;
+		return this.requestId;
+	}
+}
+
+class Future {
+
+	private readonly resolve: (event: Event) => void;
+	private readonly reject: (event: Event) => void;
+	private readonly monotonicRequestId: number;
+
+	constructor(monotonicRequestId: number, resolve: (event: Event) => void, reject: (event: Event) => void) {
+		this.resolve = resolve;
+		this.reject = reject;
+		this.monotonicRequestId = monotonicRequestId;
+	}
+
+	resolveFuture(event: Event): void {
+		if (event.type === "ErrorOccurred") {
+			console.log(`future ${this.monotonicRequestId} is rejected`)
+			this.reject(event)
+			return
+		}
+
+		this.resolve(event);
+	}
+
+	getRequestId(): number {
+		return this.monotonicRequestId;
 	}
 }
