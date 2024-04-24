@@ -383,6 +383,13 @@ func main() {
 									})
 								}),
 
+								ui.NewPasswordField(func(p *ui.PasswordField) {
+									p.Simple().Set(false)
+									p.Label().Set("Password")
+									p.Help().Set("Das ist ein kurzer Hilfstext.")
+									p.Placeholder().Set("Bitte eingeben...")
+								}),
+
 								ui.NewToggle(func(tgl *ui.Toggle) {
 
 									tgl.Label().Set("anschalten")
