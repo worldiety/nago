@@ -225,7 +225,7 @@ export default class WebSocketAdapter extends NetworkAdapter {
 				const action: SetPropertyValueRequested = {
 					type: 'P',
 					p: property.p,
-					v: property.v as string,
+					v: String(property.v),
 				};
 				callBatch.events.push(action);
 			});
