@@ -1,6 +1,8 @@
-export default class Future<T> {
+import type { Event } from '@/shared/protocol/gen/event';
 
-	private readonly resolve: (responseRaw: T) => void;
+export default class Future<T extends Event> {
+
+	private readonly resolve: (response: T) => void;
 	private readonly reject: (reason: unknown) => void;
 	private readonly monotonicRequestId: number;
 
@@ -10,14 +12,14 @@ export default class Future<T> {
 		this.monotonicRequestId = monotonicRequestId;
 	}
 
-	resolveFuture(responseRaw: T): void {
-		if (responseRaw.type === "ErrorOccurred") {
+	resolveFuture(response: T): void {
+		if (response.type === "ErrorOccurred") {
 			console.log(`future ${this.monotonicRequestId} is rejected`)
-			this.reject(responseRaw)
+			this.reject(response)
 			return
 		}
 
-		this.resolve(responseRaw);
+		this.resolve(response);
 	}
 
 	getRequestId(): number {

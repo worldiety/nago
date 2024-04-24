@@ -1,58 +1,58 @@
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import { defineStore } from 'pinia';
-import NetworkProtocol from '@/shared/network/networkProtocol';
-import {ConfigurationDefined} from "@/shared/protocol/gen/configurationDefined";
-import {ColorScheme} from "@/shared/protocol/colorScheme";
-import {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
-import {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
-import {Pointer} from "@/shared/protocol/pointer";
-import {Property} from "@/shared/protocol/property";
-import {Event} from "@/shared/protocol/gen/event";
-import {Acknowledged} from "@/shared/protocol/gen/acknowledged";
+import type {ConfigurationDefined} from "@/shared/protocol/gen/configurationDefined";
+import type {ColorScheme} from "@/shared/protocol/colorScheme";
+import type {ComponentFactoryId} from "@/shared/protocol/componentFactoryId";
+import type {ComponentInvalidated} from "@/shared/protocol/gen/componentInvalidated";
+import type {Pointer} from "@/shared/protocol/pointer";
+import type {Property} from "@/shared/protocol/property";
+import type {Event} from "@/shared/protocol/gen/event";
+import type {Acknowledged} from "@/shared/protocol/gen/acknowledged";
+import type NetworkAdapter from '@/shared/network/networkAdapter';
 
 interface NetworkStoreState {
-	networkProtocol: NetworkProtocol;
+	networkAdapter: NetworkAdapter;
 }
 
 export const useNetworkStore = defineStore('networkStore', {
 	state: (): NetworkStoreState => ({
-		networkProtocol: new NetworkProtocol(new WebSocketAdapter()),
+		networkAdapter: new WebSocketAdapter(),
 	}),
 	actions: {
 		async initialize(): Promise<void> {
-			return this.networkProtocol.initialize();
+			return this.networkAdapter.initialize();
 		},
 		async getConfiguration(colorScheme:ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined>{
-			return this.networkProtocol.getConfiguration(colorScheme,acceptLanguages)
+			return this.networkAdapter.getConfiguration(colorScheme,acceptLanguages)
 		},
 
 		async destroyComponent(ptr :Pointer):Promise<Acknowledged>{
-			return this.networkProtocol.destroyComponent(ptr)
+			return this.networkAdapter.destroyComponent(ptr)
 		},
 
 		async newComponent(fid:ComponentFactoryId, params : Record<string,string>):Promise<ComponentInvalidated>{
-			return this.networkProtocol.newComponent(fid,params)
+			return this.networkAdapter.createComponent(fid, params)
 		},
 
-		addUnprocessedEventSubscriber(fn: ((evt: Event) => void)) {
-			this.networkProtocol.addUnprocessedEventSubscriber(fn)
+		addUnrequestedEventSubscriber(fn: ((evt: Event) => void)) {
+			this.networkAdapter.addUnrequestedEventSubscriber(fn)
 		},
 
 		removeUnprocessedEventSubscriber(fn: ((evt: Event) => void)){
-			this.networkProtocol.removeUnprocessedEventSubscriber(fn)
+			this.networkAdapter.removeUnrequestedEventSubscriber(fn)
 		},
 
-		teardown(): void {
-			this.networkProtocol.teardown();
+		async teardown(): Promise<void> {
+			return this.networkAdapter.teardown();
 		},
-		async invokeFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
-			return this.networkProtocol.callFunctions(...functions);
+		async invokeFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+			return this.networkAdapter.executeFunctions(functions);
 		},
-		async invokeSetProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated|void> {
-			return this.networkProtocol.setProperties(...properties);
+		async invokeSetProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated> {
+			return this.networkAdapter.setProperties(properties);
 		},
-		async invokeFunctionsAndSetProperties(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
-			return this.networkProtocol.setPropertiesAndCallFunctions(properties, functions);
+		async invokeFunctionsAndSetProperties(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+			return this.networkAdapter.setPropertiesAndCallFunctions(properties, functions);
 		},
 	},
 });

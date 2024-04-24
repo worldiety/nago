@@ -8,7 +8,7 @@ import {useNetworkStore} from "@/stores/networkStore";
 import {Component} from "@/shared/protocol/gen/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import {NavigationForwardToRequested} from "@/shared/protocol/gen/navigationForwardToRequested";
-import { factory } from 'typescript';
+import type { Event } from '@/shared/protocol/gen/event';
 
 enum State {
 	Loading,
@@ -59,16 +59,16 @@ async function init(): Promise<void> {
 		console.log("my render tree", invalidation)
 
 		// todo is this the right place? when to remove the subscriber?
-		networkStore.addUnprocessedEventSubscriber(evt => {
-			switch (evt.type) {
+		networkStore.addUnrequestedEventSubscriber((event: Event) => {
+			switch (event.type) {
 				case "ComponentInvalidated":
-					ui.value = (evt as ComponentInvalidated).value
+					ui.value = (event as ComponentInvalidated).value
 					break
 				case "ErrorOccurred":
-					alert((evt as ErrorOccurred).message)
+					alert((event as ErrorOccurred).message)
 					break
 				case "NavigationForwardToRequested":
-					let req = (evt as NavigationForwardToRequested);
+					const req = (event as NavigationForwardToRequested);
 					networkStore.destroyComponent(ui.value?.id)
 					networkStore.newComponent(req.factory, req.values).then(invalidation => {
 						ui.value = invalidation.value;
@@ -82,10 +82,9 @@ async function init(): Promise<void> {
 					break
 				case "NavigationBackRequested":
 					history.back()
-
 					break
 				default:
-					console.log("ignored unhandled evt", evt)
+					console.log("ignored unhandled event", event)
 			}
 		})
 

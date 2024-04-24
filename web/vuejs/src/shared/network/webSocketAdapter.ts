@@ -1,36 +1,42 @@
 import NetworkAdapter from '@/shared/network/networkAdapter';
-import type { Ping } from "@/shared/protocol/gen/ping";
-import { Property } from '@/shared/protocol/property';
-import { Pointer } from '@/shared/protocol/pointer';
-import { Event } from '@/shared/protocol/gen/event';
-import { ComponentInvalidated } from '@/shared/protocol/gen/componentInvalidated';
-import { ColorScheme } from '@/shared/protocol/colorScheme';
-import { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
-import { ConfigurationRequested } from '@/shared/protocol/gen/configurationRequested';
-import { Acknowledged } from '@/shared/protocol/gen/acknowledged';
 import Future from '@/shared/network/future';
+import type { Ping } from '@/shared/protocol/gen/ping';
+import type { Property } from '@/shared/protocol/property';
+import type { Pointer } from '@/shared/protocol/pointer';
+import type { Event } from '@/shared/protocol/gen/event';
+import type { ComponentInvalidated } from '@/shared/protocol/gen/componentInvalidated';
+import type { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
+import type { ConfigurationRequested } from '@/shared/protocol/gen/configurationRequested';
+import type { Acknowledged } from '@/shared/protocol/gen/acknowledged';
 import type { EventsAggregated } from '@/shared/protocol/gen/eventsAggregated';
-import { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
-import { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
+import type { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
+import type { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
+import type { NewComponentRequested } from '@/shared/protocol/gen/newComponentRequested';
+import type { ComponentDestructionRequested } from '@/shared/protocol/gen/componentDestructionRequested';
+import type { ColorScheme } from '@/shared/protocol/colorScheme';
+import type { ComponentFactoryId } from '@/shared/protocol/componentFactoryId';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class WebSocketAdapter extends NetworkAdapter {
 
+	private pendingFutures: Map<number, Future<any>>;
 	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
+	private readonly scopeId: string;
 	private webSocket: WebSocket|null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number|null = null;
-	private scopeId: string;
 
 	constructor() {
 		super();
+		this.pendingFutures = new Map();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
 		// browser tabs and windows will try to steal the scope from each other.
 		// So, you MUST ensure that each VueJS instance has its own unique scope id,
 		// also when reconnecting to an existing scope.
-		this.scopeId = window.crypto.randomUUID()
+		this.scopeId = uuidv4();
 		this.isSecure = location.protocol == "https:";
 	}
 
@@ -86,7 +92,7 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		})
 	}
 
-	private processReceivedMessage(responseRaw: any): void {
+	private processReceivedMessage(responseRaw: string): void {
 		const responseParsed = JSON.parse(responseRaw);
 		let requestId = responseParsed['requestId'] as number;
 		if (requestId === undefined) {
@@ -97,20 +103,10 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
 			// something event driven from the backend happened, usually an invalidate or a navigation request
-			/*console.log(`received unrequested event from backend: ${responseParsed.type}`)
-			this.unprocessedEventSubscribers.forEach(fn => {
-				if (fn === undefined) {
-					return
-				}
-
-				fn(responseParsed as Event)
-			})
-
-			return*/
-			this.handleUnrequestedMessage(responseParsed as Event);
+			this.handleUnrequestedEvent(responseParsed as Event);
 		}
 
-		this.resolveFuture(requestId);
+		this.resolveFuture(requestId, responseParsed);
 	}
 
 	async teardown(): Promise<void> {
@@ -128,55 +124,70 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		}, 2000);
 	}
 
-	executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
-		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
-			const requestId = this.nextReqId();
-			const future = new Future(requestId, resolve, reject);
-			this.addFuture(future);
-			const callBatch = this.createCallBatch(requestId, undefined, functions);
-			this.send(callBatch);
+	executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+		return this.send(undefined, functions);
+	}
+
+	setProperties<T>(properties: Property<T>[]): Promise<ComponentInvalidated> {
+		return this.send(properties);
+	}
+
+	setPropertiesAndCallFunctions<T>(properties: Property<T>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+		return this.send(properties, functions);
+	}
+
+	createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
+		if (this.activeLocale == "") {
+			console.log("there is no configured active locale. Invoke getConfiguration to set it.")
+		}
+
+		const newComponentRequested: NewComponentRequested = {
+			type: 'NewComponentRequested',
+			requestId: this.nextRequestId(),
+			activeLocale: this.activeLocale,
+			factory: fid,
+			values: params,
+		};
+
+		return this.send(undefined, undefined, undefined, newComponentRequested);
+	}
+
+	destroyComponent(ptr: Pointer): Promise<Acknowledged> {
+		const componentDestructionRequested: ComponentDestructionRequested = {
+			type: 'ComponentDestructionRequested',
+			requestId: this.nextRequestId(),
+			ptr: ptr,
+		};
+
+		return this.send(undefined, undefined, undefined, undefined, componentDestructionRequested);
+	}
+
+	getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
+		const configurationRequested: ConfigurationRequested = {
+			type: 'ConfigurationRequested',
+			requestId: this.nextRequestId(),
+			acceptLanguage: acceptLanguages,
+			colorScheme: colorScheme,
+		};
+
+		return this.send(undefined, undefined, configurationRequested).then((event) => {
+			const configurationDefined = event as ConfigurationDefined;
+			this.activeLocale = configurationDefined.activeLocale;
+			return configurationDefined;
 		});
 	}
 
-	setProperties<T>(properties: Property<T>[]): Promise<ComponentInvalidated|void> {
-		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
-			const requestId = this.nextReqId();
-			const future = new Future(requestId, resolve, reject);
+	private send<T, U extends Event>(properties?: Property<T>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested, newComponentRequested?: NewComponentRequested, componentDestructionRequested?: ComponentDestructionRequested): Promise<U> {
+		return new Promise<U>((resolve, reject) => {
+			const requestId = this.nextRequestId();
+			const future = new Future<U>(requestId, resolve, reject);
 			this.addFuture(future);
-			const callBatch = this.createCallBatch(requestId, properties);
-			this.send(callBatch);
+			const callBatch = this.createCallBatch(requestId, properties, functions, configurationRequested, newComponentRequested, componentDestructionRequested);
+			this.webSocket?.send(JSON.stringify(callBatch));
 		});
 	}
 
-	setPropertiesAndCallFunctions<T>(properties: Property<T>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated|void> {
-		return new Promise<ComponentInvalidated | void>((resolve, reject) => {
-			const requestId = this.nextReqId();
-			const future = new Future(requestId, resolve, reject);
-			this.addFuture(future);
-			const callBatch = this.createCallBatch(requestId, properties, functions);
-			this.send(callBatch);
-		});
-	}
-
-	createComponent(): Promise<ComponentInvalidated> {
-		return Promise.resolve(undefined);
-	}
-
-	destroyComponent(pointer: Pointer): Promise<Acknowledged> {
-		return Promise.resolve(undefined);
-	}
-
-	getConfiguration(configurationRequested: ConfigurationRequested): Promise<ConfigurationDefined> {
-		return new Promise<ConfigurationDefined>((resolve, reject) => {
-			const requestId = this.nextReqId();
-			const future = new Future(requestId, resolve, reject);
-			this.addFuture(future);
-			const callBatch = this.createCallBatch(requestId, undefined, undefined, configurationRequested);
-			this.send(callBatch);
-		});
-	}
-
-	private createCallBatch(requestId: number, properties?: Property<unknown>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested): EventsAggregated {
+	private createCallBatch(requestId: number, properties?: Property<unknown>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested, newComponentRequested?: NewComponentRequested, componentDestructionRequested?: ComponentDestructionRequested): EventsAggregated {
 		const callBatch: EventsAggregated = {
 			type: 'T',
 			events: [],
@@ -208,10 +219,44 @@ export default class WebSocketAdapter extends NetworkAdapter {
 			callBatch.events.push(configurationRequested);
 		}
 
+		if (newComponentRequested) {
+			callBatch.events.push(newComponentRequested);
+		}
+
+		if (componentDestructionRequested) {
+			callBatch.events.push(componentDestructionRequested);
+		}
+
 		return callBatch;
 	}
 
-	private send(callBatch: EventsAggregated): void {
-		this.webSocket?.send(JSON.stringify(callBatch));
+	private addFuture<T extends Event>(future: Future<T>): void {
+		// Allow a maximum of 10000 pending futures
+		if (this.pendingFutures.size >= 10000) {
+
+			const sortedPendingRequests = [...this.pendingFutures.entries()].sort(comparePendingFutures);
+			this.pendingFutures.delete(sortedPendingRequests[0][0]);
+		}
+
+		this.pendingFutures.set(future.getRequestId(), future);
+
+		function comparePendingFutures(a: [number, Future<T>], b: [number, Future<T>]): number {
+			if (a[1].getRequestId() > b[1].getRequestId()) {
+				return 1;
+			} else if (a[1].getRequestId() < b[1].getRequestId()) {
+				return -1;
+			}
+			return 0;
+		}
+	}
+
+	private resolveFuture(requestId: number, response: Event): void {
+		const future = this.pendingFutures.get(requestId);
+		if (!future) {
+			console.log(`error: got network response with unmatched requestId=${requestId}`)
+		} else {
+			this.pendingFutures.delete(requestId)
+			future.resolveFuture(response);
+		}
 	}
 }
