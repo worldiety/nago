@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default class WebSocketAdapter extends NetworkAdapter {
 
-	private pendingFutures: Map<number, Future<any>>;
+	private pendingFutures: Map<number, Future>;
 	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
 	private readonly scopeId: string;
@@ -124,19 +124,19 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		}, 2000);
 	}
 
-	executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
-		return this.send(undefined, functions);
+	async executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);
 	}
 
-	setProperties<T>(properties: Property<T>[]): Promise<ComponentInvalidated> {
-		return this.send(properties);
+	async setProperties(properties: Property<unknown>[]): Promise<ComponentInvalidated> {
+		return this.send(properties).then((event) => event as ComponentInvalidated);
 	}
 
-	setPropertiesAndCallFunctions<T>(properties: Property<T>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
-		return this.send(properties, functions);
+	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+		return this.send(properties, functions).then((event) => event as ComponentInvalidated);
 	}
 
-	createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
+	async createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
 		if (this.activeLocale == "") {
 			console.log("there is no configured active locale. Invoke getConfiguration to set it.")
 		}
@@ -149,20 +149,31 @@ export default class WebSocketAdapter extends NetworkAdapter {
 			values: params,
 		};
 
-		return this.send(undefined, undefined, undefined, newComponentRequested);
+		return this.send(
+			undefined,
+			undefined,
+			undefined,
+			newComponentRequested,
+		).then((event) => event as ComponentInvalidated);
 	}
 
-	destroyComponent(ptr: Pointer): Promise<Acknowledged> {
+	async destroyComponent(ptr: Pointer): Promise<Acknowledged> {
 		const componentDestructionRequested: ComponentDestructionRequested = {
 			type: 'ComponentDestructionRequested',
 			requestId: this.nextRequestId(),
 			ptr: ptr,
 		};
 
-		return this.send(undefined, undefined, undefined, undefined, componentDestructionRequested);
+		return this.send(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			componentDestructionRequested,
+		).then((event) => event as Acknowledged);
 	}
 
-	getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
+	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
 			requestId: this.nextRequestId(),
@@ -177,17 +188,30 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		});
 	}
 
-	private send<T, U extends Event>(properties?: Property<T>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested, newComponentRequested?: NewComponentRequested, componentDestructionRequested?: ComponentDestructionRequested): Promise<U> {
-		return new Promise<U>((resolve, reject) => {
+	private send(
+		properties?: Property<unknown>[],
+		functions?: Property<Pointer>[],
+		configurationRequested?: ConfigurationRequested,
+		newComponentRequested?: NewComponentRequested,
+		componentDestructionRequested?: ComponentDestructionRequested,
+	): Promise<Event> {
+		return new Promise<Event>((resolve, reject) => {
 			const requestId = this.nextRequestId();
-			const future = new Future<U>(requestId, resolve, reject);
+			const future = new Future(requestId, resolve, reject);
 			this.addFuture(future);
 			const callBatch = this.createCallBatch(requestId, properties, functions, configurationRequested, newComponentRequested, componentDestructionRequested);
 			this.webSocket?.send(JSON.stringify(callBatch));
 		});
 	}
 
-	private createCallBatch(requestId: number, properties?: Property<unknown>[], functions?: Property<Pointer>[], configurationRequested?: ConfigurationRequested, newComponentRequested?: NewComponentRequested, componentDestructionRequested?: ComponentDestructionRequested): EventsAggregated {
+	private createCallBatch(
+		requestId: number,
+		properties?: Property<unknown>[],
+		functions?: Property<Pointer>[],
+		configurationRequested?: ConfigurationRequested,
+		newComponentRequested?: NewComponentRequested,
+		componentDestructionRequested?: ComponentDestructionRequested,
+	): EventsAggregated {
 		const callBatch: EventsAggregated = {
 			type: 'T',
 			events: [],
@@ -230,7 +254,7 @@ export default class WebSocketAdapter extends NetworkAdapter {
 		return callBatch;
 	}
 
-	private addFuture<T extends Event>(future: Future<T>): void {
+	private addFuture(future: Future): void {
 		// Allow a maximum of 10000 pending futures
 		if (this.pendingFutures.size >= 10000) {
 
@@ -240,7 +264,7 @@ export default class WebSocketAdapter extends NetworkAdapter {
 
 		this.pendingFutures.set(future.getRequestId(), future);
 
-		function comparePendingFutures(a: [number, Future<T>], b: [number, Future<T>]): number {
+		function comparePendingFutures(a: [number, Future], b: [number, Future]): number {
 			if (a[1].getRequestId() > b[1].getRequestId()) {
 				return 1;
 			} else if (a[1].getRequestId() < b[1].getRequestId()) {

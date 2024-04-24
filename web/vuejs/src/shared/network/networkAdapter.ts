@@ -22,8 +22,8 @@ export default abstract class NetworkAdapter {
 	abstract initialize(): Promise<void>;
 	abstract teardown(): Promise<void>;
 	abstract executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated>;
-	abstract setProperties<T>(properties: Property<T>[]): Promise<ComponentInvalidated>;
-	abstract setPropertiesAndCallFunctions<T>(properties: Property<T>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated>;
+	abstract setProperties(properties: Property<unknown>[]): Promise<ComponentInvalidated>;
+	abstract setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated>;
 	abstract createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated>;
 	abstract destroyComponent(ptr: Pointer): Promise<Acknowledged>;
 	abstract getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined>;
