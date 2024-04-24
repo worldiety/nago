@@ -43,18 +43,18 @@ function toggleRevealed(): void {
 		>
 			<div class="relative">
 				<input
-					ref="passwordInput"
 					:id="idPrefix + props.ui.id.toString()"
+					ref="passwordInput"
 					v-model="inputValue"
 					class="input-field"
-					:class="{'!pr-10': inputValue}"
+					:class="{'!pr-12': inputValue}"
 					:placeholder="props.ui.placeholder.v"
 					:disabled="props.ui.disabled.v"
 					:type="props.ui.revealed.v ? 'text' : 'password'"
 				/>
 				<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<div tabindex="0" @click="toggleRevealed" @keydown.enter="toggleRevealed">
-						<RevealIcon v-if="!props.ui.revealed.v" class="w-6"  />
+						<RevealIcon v-if="!props.ui.revealed.v" class="w-6" />
 						<HideIcon v-else class="w-6" />
 					</div>
 				</div>
