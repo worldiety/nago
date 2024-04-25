@@ -27,6 +27,8 @@ func (s *Scope) handleEvent(t ora.Event) {
 		s.handleScopeDestructionRequested(evt)
 	case ora.SessionAssigned:
 		s.handleSessionAssigned(evt)
+	case ora.Ping:
+		// do nothing, we already applied our keep-alive-tick
 	default:
 		slog.Error("unexpected event type in scope processing", slog.String("type", fmt.Sprintf("%T", evt)))
 	}

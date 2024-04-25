@@ -6,10 +6,11 @@ import (
 )
 
 type WebsocketChannel struct {
-	conn      *websocket.Conn
-	observers map[int]func(msg []byte) error
-	mutex     sync.RWMutex
-	hnd       int
+	conn         *websocket.Conn
+	observers    map[int]func(msg []byte) error
+	mutex        sync.RWMutex
+	hnd          int
+	gorillaMutex sync.Mutex
 }
 
 func NewWebsocketChannel(conn *websocket.Conn) *WebsocketChannel {
@@ -58,6 +59,10 @@ func (w *WebsocketChannel) Subscribe(f func(msg []byte) error) (destroy func()) 
 }
 
 func (w *WebsocketChannel) Publish(msg []byte) error {
+	// we need this lock, to mitigate a race condition within the gorilla lib in their socket connection (beginMessage)
+	w.gorillaMutex.Lock()
+	defer w.gorillaMutex.Unlock()
+
 	return w.conn.WriteMessage(websocket.TextMessage, msg)
 }
 

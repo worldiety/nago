@@ -16,6 +16,7 @@ import type { NavigationForwardToRequested } from '@/shared/protocol/gen/navigat
 import type { NavigationResetRequested } from '@/shared/protocol/gen/navigationResetRequested';
 import type { NavigationBackRequested } from '@/shared/protocol/gen/navigationBackRequested';
 import type { SessionAssigned } from '@/shared/protocol/gen/sessionAssigned';
+import type { Ping } from '@/shared/protocol/gen/ping';
 
 
 export type Event =
@@ -35,5 +36,6 @@ export type Event =
     | NavigationResetRequested
     | NavigationBackRequested
     | SessionAssigned
+    | Ping
     
 

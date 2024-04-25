@@ -41,6 +41,7 @@ type Scope struct {
 	endOfLifeAt         atomic.Pointer[time.Time]
 	channel             AtomicRef[Channel]
 	chanDestructor      AtomicRef[func()]
+	destroyed           AtomicRef[bool]
 	eventLoop           *EventLoop
 	lastMessageType     ora.EventType
 	ctx                 context.Context
@@ -49,6 +50,7 @@ type Scope struct {
 }
 
 func NewScope(ctx context.Context, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
 		id:                  id,
@@ -151,11 +153,17 @@ func (s *Scope) sendAck(id ora.RequestId) {
 	})
 }
 
+func (s *Scope) sendPing() {
+	s.Publish(ora.Ping{
+		Type: ora.PingT,
+	})
+}
+
 // only for event loop
 func (s *Scope) renderIfRequired() {
 	for _, component := range s.allocatedComponents {
 		if IsDirty(component.Component) {
-			slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
+			//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
 			s.Publish(s.render(0, component.Component))
 		}
 	}
@@ -182,11 +190,20 @@ func (s *Scope) render(requestId ora.RequestId, component Component) ora.Compone
 // The scope is of no use afterward.
 // Do never call this from the event loop.
 func (s *Scope) Destroy() {
-	s.eventLoop.Post(func() {
-		s.destroy()
+	s.destroyed.With(func(destroyed bool) bool {
+		if destroyed {
+			return true
+		}
+
+		s.eventLoop.Post(func() {
+			s.destroy()
+		})
+
+		s.eventLoop.Destroy()
+
+		return true
 	})
 
-	s.eventLoop.Shutdown()
 }
 
 // only for event loop
@@ -198,7 +215,7 @@ func (s *Scope) destroy() {
 
 	s.channel.Store(NewPrintChannel()) // detach
 	clear(s.allocatedComponents)
-	clear(s.factories)
+	//	clear(s.factories) // clearing this map would cause a data race, even though we use the factory as read-only
 }
 
 // only for event loop

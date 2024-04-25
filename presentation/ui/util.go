@@ -37,9 +37,14 @@ func renderComponentProp(property core.Property, p core.Iterable[core.Component]
 		return false
 	})
 
+	var firstRenderedComponent ora.Component
+	if first != nil {
+		firstRenderedComponent = first.Render()
+	}
+
 	return ora.Property[ora.Component]{
 		Ptr:   property.ID(),
-		Value: first.Render(),
+		Value: firstRenderedComponent,
 	}
 }
 
