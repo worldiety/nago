@@ -1,4 +1,4 @@
-import type NetworkAdapter from '@/shared/network/networkAdapter';
+import type ServiceAdapter from '@/shared/network/serviceAdapter';
 import type { Ping } from '@/shared/protocol/gen/ping';
 import type { Property } from '@/shared/protocol/property';
 import type { Pointer } from '@/shared/protocol/pointer';
@@ -15,9 +15,12 @@ import type { ComponentDestructionRequested } from '@/shared/protocol/gen/compon
 import type { ColorScheme } from '@/shared/protocol/colorScheme';
 import type { ComponentFactoryId } from '@/shared/protocol/componentFactoryId';
 import { v4 as uuidv4 } from 'uuid';
+import type EventBus from '@/shared/eventbus/eventBus';
+import type { EventType } from '@/shared/eventbus/eventType';
 
-export default class WebSocketAdapter implements NetworkAdapter {
+export default class WebSocketAdapter implements ServiceAdapter {
 
+	private eventBus: EventBus;
 	private pendingFutures: Map<number, Future>;
 	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
@@ -27,9 +30,9 @@ export default class WebSocketAdapter implements NetworkAdapter {
 	private retryTimeout: number|null = null;
 	private activeLocale: string;
 	private requestId: number;
-	private unrequestedEventSubscribers: ((evt: Event) => void)[];
 
-	constructor() {
+	constructor(eventBus: EventBus) {
+		this.eventBus = eventBus;
 		this.pendingFutures = new Map();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
@@ -41,7 +44,6 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		this.isSecure = location.protocol == "https:";
 		this.activeLocale = '';
 		this.requestId = 0;
-		this.unrequestedEventSubscribers = [];
 	}
 
 	private initializeWebSocketPort(): string {
@@ -66,7 +68,7 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
 
-			this.webSocket.onmessage = (e) => this.processReceivedMessage(e.data);
+			this.webSocket.onmessage = (e) => this.receive(e.data);
 
 			this.webSocket.onclose = () => {
 				if (!this.closedGracefully) {
@@ -96,24 +98,6 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		})
 	}
 
-	private processReceivedMessage(responseRaw: string): void {
-		const responseParsed = JSON.parse(responseRaw);
-		let requestId = responseParsed['requestId'] as number;
-		if (requestId === undefined) {
-			// try again the shortened field name of ack, we keep that efficient
-			requestId = responseParsed['r'] as number;
-		}
-
-		// our lowest id is 1, so this must be something without our intention
-		if (requestId === 0 || requestId === undefined) {
-			// something event driven from the backend happened, usually an invalidate or a navigation request
-			this.handleUnrequestedEvent(responseParsed as Event);
-			return;
-		}
-
-		this.resolveFuture(requestId, responseParsed);
-	}
-
 	async teardown(): Promise<void> {
 		this.closedGracefully = true;
 		this.webSocket?.close();
@@ -129,11 +113,11 @@ export default class WebSocketAdapter implements NetworkAdapter {
 		}, 2000);
 	}
 
-	async executeFunctions(functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+	async executeFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
 		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);
 	}
 
-	async setProperties(properties: Property<unknown>[]): Promise<ComponentInvalidated> {
+	async setProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated> {
 		return this.send(properties).then((event) => event as ComponentInvalidated);
 	}
 
@@ -207,6 +191,25 @@ export default class WebSocketAdapter implements NetworkAdapter {
 			const callBatch = this.createCallBatch(requestId, properties, functions, configurationRequested, newComponentRequested, componentDestructionRequested);
 			this.webSocket?.send(JSON.stringify(callBatch));
 		});
+	}
+
+	private receive(responseRaw: string): void {
+		const responseParsed = JSON.parse(responseRaw);
+		let requestId = responseParsed['requestId'] as number;
+		if (requestId === undefined) {
+			// try again the shortened field name of ack, we keep that efficient
+			requestId = responseParsed['r'] as number;
+		}
+
+		// our lowest id is 1, so this must be something without our intention
+		if (requestId === 0 || requestId === undefined) {
+			// something event driven from the backend happened, usually an invalidate or a navigation request
+			const event = responseParsed as Event;
+			this.eventBus.publish(event.type as EventType, event);
+			return;
+		}
+
+		this.resolveFuture(requestId, responseParsed);
 	}
 
 	private createCallBatch(
@@ -287,18 +290,6 @@ export default class WebSocketAdapter implements NetworkAdapter {
 			this.pendingFutures.delete(requestId)
 			future.resolveFuture(response);
 		}
-	}
-
-	addUnrequestedEventSubscriber(fn: ((event: Event) => void)) {
-		this.unrequestedEventSubscribers.push(fn);
-	}
-
-	removeUnrequestedEventSubscriber(fn: ((evt: Event) => void)) {
-		this.unrequestedEventSubscribers = this.unrequestedEventSubscribers.filter(obj => obj !== fn)
-	}
-
-	private handleUnrequestedEvent(event: Event): void {
-		this.unrequestedEventSubscribers.forEach(fn => fn(event));
 	}
 
 	private nextRequestId(): number {

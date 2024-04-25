@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
-import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import { useI18n } from 'vue-i18n';
-import {DatePicker} from "@/shared/protocol/gen/datePicker";
+import type {DatePicker} from "@/shared/protocol/gen/datePicker";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui:DatePicker;
 }>();
 
 const { t } = useI18n();
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 const dateFormatted = computed((): string => {
 	if (!props.ui.startDateSelected.v || (props.ui.rangeMode.v && !props.ui.endDateSelected.v)) {
@@ -31,13 +31,13 @@ const dateFormatted = computed((): string => {
 
 function showDatepicker(): void {
 	if (!props.ui.disabled.v && !props.ui.expanded.v) {
-		networkStore.invokeFunctions(props.ui.onClicked);
+		serviceAdapter.executeFunctions(props.ui.onClicked);
 	}
 }
 
 function closeDatepicker(): void {
 	if (props.ui.expanded.v) {
-		networkStore.invokeFunctions(props.ui.onSelectionChanged);
+		serviceAdapter.executeFunctions(props.ui.onSelectionChanged);
 	}
 }
 
@@ -90,7 +90,7 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 }
 
 function selectStartDate(selectedDate: Date): void {
-	networkStore.invokeSetProperties(
+	serviceAdapter.setProperties(
 		{
 			...props.ui.selectedStartYear,
 			v: selectedDate.getFullYear(),
@@ -111,7 +111,7 @@ function selectStartDate(selectedDate: Date): void {
 }
 
 function selectEndDate(selectedDate: Date): void {
-	networkStore.invokeSetProperties(
+	serviceAdapter.setProperties(
 		{
 			...props.ui.selectedEndYear,
 			v: selectedDate.getFullYear(),

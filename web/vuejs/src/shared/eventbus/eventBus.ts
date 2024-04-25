@@ -1,20 +1,27 @@
 import type { Event } from '@/shared/protocol/gen/event';
+import { EventType } from '@/shared/eventbus/eventType';
+
+type EventCallback = (event: Event) => void;
 
 export default class EventBus {
 
-	private readonly callbacksMap: Map<EventType, ((event: Event) => void)[]>;
+	private readonly callbacksMap: Map<EventType, EventCallback[]> = new Map();
 
-	constructor() {
-		this.callbacksMap = new Map();
+	register(): void {
+
 	}
 
-	subscribe(eventType: EventType, callback: (event: Event) => void): void {
+	signOff(): void {
+
+	}
+
+	subscribe(eventType: EventType, callback: EventCallback): void {
 		const callbacks = this.callbacksMap.get(eventType) ?? [];
 		callbacks.push(callback);
 		this.callbacksMap.set(eventType, callbacks);
 	}
 
-	unsubscribe(eventType: EventType, callback: (event: Event) => void): void {
+	unsubscribe(eventType: EventType, callback: EventCallback): void {
 		const callbacks = this.callbacksMap.get(eventType) ?? [];
 		const existingCallbackIndex = callbacks.findIndex((existingCallback) => existingCallback === callback);
 		if (existingCallbackIndex >= 0) {
@@ -27,8 +34,4 @@ export default class EventBus {
 		const callbacks = this.callbacksMap.get(eventType) ?? [];
 		callbacks.forEach(callback => callback(event));
 	}
-}
-
-export enum EventType {
-	INVALIDATION,
 }

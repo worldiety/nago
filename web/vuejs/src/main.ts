@@ -4,14 +4,18 @@ import App from '@/App.vue';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
-import EventBus from '@/shared/eventBus';
-import { eventBusKey } from '@/shared/injectionKeys';
+import { eventBusKey, networkAdapterKey } from '@/shared/injectionKeys';
+import WebSocketAdapter from '@/shared/network/webSocketAdapter';
+import EventBus from '@/shared/eventbus/eventBus';
 
 const pinia = createPinia();
 
 const app = createApp(App);
 
-app.provide(eventBusKey, new EventBus());
+const eventBus = new EventBus();
+app.provide(networkAdapterKey, new WebSocketAdapter(eventBus));
+app.provide(eventBusKey, eventBus);
+
 app.directive('inline', (element: HTMLElement) => {
 	const parentCss = element.classList;
 	for (let i = 0; i < element.children.length; i++) {
