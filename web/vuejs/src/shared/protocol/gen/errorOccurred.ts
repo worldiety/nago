@@ -9,7 +9,7 @@ export interface ErrorOccurred {
      /**
      * Request ID from the NewComponentRequested event.
      */
-    requestId: RequestId;
+    r: RequestId;
     
      /**
      * A message describing the error.

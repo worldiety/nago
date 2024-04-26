@@ -1,16 +1,9 @@
 <script lang="ts" setup>
-import type { Ref } from 'vue';
-import { inject } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
-import {Image} from "@/shared/protocol/gen/image";
+import type {Image} from "@/shared/protocol/gen/image";
 
 const props = defineProps<{
 	ui: Image;
 }>();
-
-const networkStore = useNetworkStore();
-
-
 
 function getSource(): string {
 	if (props.ui.url.v === '/api/v1/download') {

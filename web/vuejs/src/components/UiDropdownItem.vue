@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useNetworkStore } from '@/stores/networkStore';
 import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: DropdownItem;
@@ -8,7 +8,7 @@ const props = defineProps<{
 	selected: boolean;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 </script>
 
 <template>
@@ -17,8 +17,8 @@ const networkStore = useNetworkStore();
 					hover:text-ora-orange hover:bg-ora-orange hover:rounded-2lg hover:bg-opacity-15
 					dark:hover:bg-ora-orange dark:hover:rounded-2lg dark:text-white dark:hover:text-ora-orange dark:hover:bg-opacity-25"
 		tabindex="0"
-		@click="networkStore.invokeFunctions(props.ui.onClicked)"
-		@keydown.enter="networkStore.invokeFunctions(props.ui.onClicked)"
+		@click="serviceAdapter.executeFunctions(props.ui.onClicked)"
+		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"
 	>
 			<div class="flex justify-start items-center pl-2.5">
 				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">

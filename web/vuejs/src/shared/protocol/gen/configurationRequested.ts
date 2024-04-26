@@ -19,6 +19,6 @@ export interface ConfigurationRequested {
      * Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
      */
     colorScheme: ColorScheme;
-    requestId: RequestId;
+    r: RequestId;
     
 }

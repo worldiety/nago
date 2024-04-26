@@ -1,20 +1,20 @@
-<script lang="ts" setup xmlns="http://www.w3.org/1999/html">
+<script setup lang="ts">
 import { computed } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
-import {Chip} from "@/shared/protocol/gen/chip";
+import type {Chip} from "@/shared/protocol/gen/chip";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Chip;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	networkStore.invokeFunctions(props.ui.action);
+	serviceAdapter.executeFunctions(props.ui.action);
 }
 
 function onClose() {
-	networkStore.invokeFunctions(props.ui.onClose);
+	serviceAdapter.executeFunctions(props.ui.onClose);
 }
 
 const outerColor = computed<string>(() => {

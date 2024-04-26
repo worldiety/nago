@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { textColor2Tailwind, textSize2Tailwind } from '@/shared/tailwindTranslator';
 import { computed } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
-import {Text} from "@/shared/protocol/gen/text";
+import type {Text} from "@/shared/protocol/gen/text";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Text;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 const clazz = computed<string>(() => {
 	let tmp = '';
@@ -32,15 +32,15 @@ const clazz = computed<string>(() => {
 });
 
 function onClick() {
-	networkStore.invokeFunctions(props.ui.onClick);
+	serviceAdapter.executeFunctions(props.ui.onClick);
 }
 
 function onMouseEnter() {
-	networkStore.invokeFunctions(props.ui.onHoverStart);
+	serviceAdapter.executeFunctions(props.ui.onHoverStart);
 }
 
 function onMouseLeave() {
-	networkStore.invokeFunctions(props.ui.onHoverEnd);
+	serviceAdapter.executeFunctions(props.ui.onHoverEnd);
 }
 </script>
 

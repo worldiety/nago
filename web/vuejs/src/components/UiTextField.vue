@@ -1,20 +1,20 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
-import {TextField} from "@/shared/protocol/gen/textField";
+import type {TextField} from "@/shared/protocol/gen/textField";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: TextField;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'text-field-';
 
 watch(inputValue, (newValue) => {
-	networkStore.invokeFunctionsAndSetProperties([{
+	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.value,
 		v: newValue,
 	}], [props.ui.onTextChanged]);

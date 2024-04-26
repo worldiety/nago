@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
-import {NumberField} from "@/shared/protocol/gen/numberField";
-import {Property} from "@/shared/protocol/property";
+import type {NumberField} from "@/shared/protocol/gen/numberField";
+import type {Property} from "@/shared/protocol/property";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: NumberField
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v.toString(10));
 
 /**
@@ -29,7 +29,7 @@ watch(inputValue, (newValue, oldValue) => {
 		...props.ui.value,
 		v: parseInt(newValue, 10),
 	};
-	networkStore.invokeFunctionsAndSetProperties([updatedValueProperty], [props.ui.onValueChanged]);
+	serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
 });
 </script>
 

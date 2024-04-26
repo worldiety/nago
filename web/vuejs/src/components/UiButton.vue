@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
 import type { Button } from '@/shared/protocol/gen/button';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Button;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	networkStore.invokeFunctions(props.ui.action);
+	serviceAdapter.executeFunctions(props.ui.action);
 }
 
 const buttonClasses = computed<string>(() => {

@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import { useNetworkStore } from '@/stores/networkStore';
 import { ref } from 'vue';
-import {Toggle} from "@/shared/protocol/gen/toggle";
+import type {Toggle} from "@/shared/protocol/gen/toggle";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Toggle;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 const checked = ref<boolean>(props.ui.checked.v);
 
 function onClick() {
@@ -15,7 +15,7 @@ function onClick() {
 		return;
 	}
 	checked.value = !checked.value;
-	networkStore.invokeFunctionsAndSetProperties([{
+	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.checked,
 		v: checked.value,
 	}], [props.ui.onCheckedChanged]);
