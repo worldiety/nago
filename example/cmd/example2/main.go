@@ -292,6 +292,7 @@ func main() {
 							vbox.Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
 								dropdown.Multiselect().Set(true)
 								dropdown.Expanded().Set(false)
+								dropdown.Searchable().Set(true)
 								dropdown.Label().Set("Multiselect")
 								dropdown.Error().Set("Das ist eine Fehlermeldung")
 								dropdown.Hint().Set("Das ist ein Hinweis")

@@ -104,7 +104,7 @@ function isSelected(item: DropdownItem): boolean {
 			<!-- Dropdown content -->
 			<div ref="dropdownOptions">
 				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
-					<ui-dropdown-searchfilter @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
+					<ui-dropdown-searchfilter  v-if="props.ui.searchable.v" @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
 					<ui-dropdown-item
 						v-for="(dropdownItem, index) in itemsFiltered"
 						:key="index"
