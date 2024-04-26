@@ -3,7 +3,7 @@ import UiCard from '@/components/UiCard.vue';
 import UiChip from '@/components/UiChip.vue';
 import UiDialog from '@/components/UiDialog.vue';
 import UiDivider from '@/components/UiDivider.vue';
-import UiDropdown from '@/components/UiDropdown.vue';
+import UiDropdown from '@/components/dropdown/UiDropdown.vue';
 import UiGrid from '@/components/UiGrid.vue';
 import UiHBox from '@/components/UiHBox.vue';
 import UiImage from '@/components/UiImage.vue';

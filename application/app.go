@@ -21,7 +21,7 @@ func Configure(f func(cfg *Configurator)) *Application {
 }
 
 func (a *Application) init(configure func(cfg *Configurator)) (success bool) {
-	// Load environment variables from .env file
+	// Load environment variables from .env.local file
 	_ = godotenv.Load()
 
 	defer func() {

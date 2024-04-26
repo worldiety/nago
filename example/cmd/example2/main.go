@@ -308,7 +308,7 @@ func main() {
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option BC")
+										item.Content().Set("Option BCD")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
