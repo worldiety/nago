@@ -20,6 +20,6 @@ export interface SetPropertyValueRequested {
      * v denotes the serialized value to set the property to.
      */
     v: string;
-    requestId?: RequestId;
+    r: RequestId;
     
 }

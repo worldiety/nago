@@ -21,6 +21,6 @@ export interface ConfigurationDefined {
     activeLocale: string;
     themes: Themes;
     resources: Resources;
-    requestId: RequestId;
+    r: RequestId;
     
 }

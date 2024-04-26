@@ -29,6 +29,6 @@ func NewScopeID() ScopeID {
 
 type ScopeDestructionRequested struct {
 	Type      EventType `json:"type" value:"ScopeDestructionRequested"`
-	RequestId RequestId `json:"requestId" description:"Request ID."`
+	RequestId RequestId `json:"r" description:"Request ID."`
 	event
 }

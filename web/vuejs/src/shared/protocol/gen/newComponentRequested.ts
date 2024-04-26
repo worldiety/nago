@@ -39,6 +39,6 @@ export interface NewComponentRequested {
      /**
      * Request ID used to generate a new component request and is returned in the according response.
      */
-    requestId: RequestId;
+    r: RequestId;
     
 }

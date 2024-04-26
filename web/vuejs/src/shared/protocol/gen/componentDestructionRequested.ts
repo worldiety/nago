@@ -10,7 +10,7 @@ export interface ComponentDestructionRequested {
      /**
      * Request ID.
      */
-    requestId: RequestId;
+    r: RequestId;
     
      /**
      * The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid.

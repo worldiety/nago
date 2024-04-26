@@ -15,6 +15,6 @@ export interface FunctionCallRequested {
      * p denotes the remote pointer.
      */
     p: Pointer;
-    requestId?: RequestId;
+    r: RequestId;
     
 }

@@ -10,7 +10,7 @@ export interface ComponentInvalidated {
      /**
      * Request ID from the ComponentInvalidationRequested or NewComponentRequested event.
      */
-    requestId: RequestId;
+    r: RequestId;
     
      /**
      * The rendered component tree.

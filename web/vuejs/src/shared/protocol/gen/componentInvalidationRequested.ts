@@ -10,7 +10,7 @@ export interface ComponentInvalidationRequested {
      /**
      * Request ID from the NewComponentRequested event.
      */
-    requestId: RequestId;
+    r: RequestId;
     
      /**
      * The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid.
