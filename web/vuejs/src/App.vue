@@ -10,7 +10,7 @@ import type { Event } from '@/shared/protocol/gen/event';
 import { useEventBus } from '@/composables/eventBus';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { EventType } from '@/shared/eventbus/eventType';
-import { ErrorOccurred } from '@/shared/protocol/gen/errorOccurred';
+import type { ErrorOccurred } from '@/shared/protocol/gen/errorOccurred';
 
 enum State {
 	Loading,
@@ -72,20 +72,20 @@ function updateUi(event: Event): void {
 	state.value = State.ShowUI;
 }
 
-async function navigateForward(event: Event): void {
+async function navigateForward(event: Event): Promise<void> {
 	if (!ui.value) {
 		return;
 	}
-	const req = (event as NavigationForwardToRequested);
+	const navigationForwardToRequested = (event as NavigationForwardToRequested);
 	await serviceAdapter.destroyComponent(ui.value?.id)
-	const componentInvalidated = await serviceAdapter.createComponent(req.factory, req.values);
+	const componentInvalidated = await serviceAdapter.createComponent(navigationForwardToRequested.factory, navigationForwardToRequested.values);
 	ui.value = componentInvalidated.value;
 
-	let url = `/${req.factory}?`
-	Object.entries(req.values).forEach(([key, value]) => {
+	let url = `/${navigationForwardToRequested.factory}?`
+	Object.entries(navigationForwardToRequested.values).forEach(([key, value]) => {
 		url += `${key}=${value}&`
 	});
-	history.pushState(req, "", url)
+	history.pushState(navigationForwardToRequested, "", url)
 }
 
 function navigateBack(): void {
