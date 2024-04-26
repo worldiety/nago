@@ -132,7 +132,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		const newComponentRequested: NewComponentRequested = {
 			type: 'NewComponentRequested',
-			r: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			activeLocale: this.activeLocale,
 			factory: fid,
 			values: params,
@@ -149,7 +149,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async destroyComponent(ptr: Pointer): Promise<Acknowledged> {
 		const componentDestructionRequested: ComponentDestructionRequested = {
 			type: 'ComponentDestructionRequested',
-			r: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			ptr: ptr,
 		};
 
@@ -165,7 +165,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
-			r: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			acceptLanguage: acceptLanguages,
 			colorScheme: colorScheme,
 		};
@@ -246,14 +246,17 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			});
 
 		if (configurationRequested) {
+			configurationRequested.r = requestId;
 			callBatch.events.push(configurationRequested);
 		}
 
 		if (newComponentRequested) {
+			newComponentRequested.r = requestId;
 			callBatch.events.push(newComponentRequested);
 		}
 
 		if (componentDestructionRequested) {
+			componentDestructionRequested.r = requestId;
 			callBatch.events.push(componentDestructionRequested);
 		}
 
