@@ -7,14 +7,6 @@ export default class EventBus {
 
 	private readonly callbacksMap: Map<EventType, EventCallback[]> = new Map();
 
-	register(): void {
-
-	}
-
-	signOff(): void {
-
-	}
-
 	subscribe(eventType: EventType, callback: EventCallback): void {
 		const callbacks = this.callbacksMap.get(eventType) ?? [];
 		callbacks.push(callback);
