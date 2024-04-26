@@ -385,7 +385,9 @@ func main() {
 
 								ui.NewPasswordField(func(p *ui.PasswordField) {
 									p.Simple().Set(false)
-									p.Label().Set("Password")
+									p.Disabled().Set(false)
+									p.Hint().Set("Optional")
+									p.Label().Set("Passwort")
 									p.Help().Set("Das ist ein kurzer Hilfstext.")
 									p.Placeholder().Set("Bitte eingeben...")
 								}),
