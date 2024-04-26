@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { useNetworkStore } from '@/stores/networkStore';
-import {WebView} from "@/shared/protocol/gen/webView";
+import type {WebView} from "@/shared/protocol/gen/webView";
 
 const props = defineProps<{
 	ui: WebView;

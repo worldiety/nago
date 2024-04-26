@@ -2,17 +2,17 @@
 import UiDropdownItem from '@/components/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed, onMounted, onUpdated, ref } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import type {Dropdown} from "@/shared/protocol/gen/dropdown";
 import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
 import UiDropdownSearchfilter from "@/components/UiDropdownSearchfilter.vue";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Dropdown;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 const dropdownOptions = ref<HTMLElement|undefined>();
 
 onMounted(() => {
@@ -55,14 +55,14 @@ function closeDropdown(e: MouseEvent) {
 		const targetHTMLElement = e.target as HTMLElement;
 		const dropdownItemWasClicked = targetHTMLElement.compareDocumentPosition(dropdownOptions.value) & Node.DOCUMENT_POSITION_CONTAINS;
 		if (!dropdownItemWasClicked) {
-			networkStore.invokeFunctions(props.ui.onClicked);
+			serviceAdapter.executeFunctions(props.ui.onClicked);
 		}
 	}
 }
 
 function dropdownClicked(forceClose: boolean): void {
 	if (!props.ui.disabled.v && (forceClose || !props.ui.expanded.v)) {
-		networkStore.invokeFunctions(props.ui.onClicked);
+		serviceAdapter.executeFunctions(props.ui.onClicked);
 	}
 }
 

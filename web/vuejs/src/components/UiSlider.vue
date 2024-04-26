@@ -79,8 +79,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useNetworkStore } from '@/stores/networkStore';
 import type { Slider } from "@/shared/protocol/gen/slider";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 interface SliderTickMark {
 	offset: number;
@@ -91,7 +91,7 @@ const props = defineProps<{
 	ui: Slider;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 const sliderTrack = ref<HTMLElement|undefined>();
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
@@ -272,7 +272,7 @@ function roundValue(value: number): number {
 }
 
 function submitSliderValues(): void {
-	networkStore.invokeFunctionsAndSetProperties([
+	serviceAdapter.setPropertiesAndCallFunctions([
 		{
 			...props.ui.startValue,
 			v: roundValue(sliderStartValue.value + scaleOffset.value),

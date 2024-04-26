@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { useNetworkStore } from '@/stores/networkStore';
-import {Scaffold} from "@/shared/protocol/gen/scaffold";
+import type {Scaffold} from "@/shared/protocol/gen/scaffold";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Scaffold;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 function initDarkModeToggle() {
 	var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
@@ -85,7 +85,7 @@ onMounted(() => {
 			<ul class="space-y-2 font-medium">
 				<li v-for="btn in props.ui.menu.v">
 					<a
-						@click="networkStore.invokeFunctions(btn.action)"
+						@click="serviceAdapter.executeFunctions(btn.action)"
 						class="group flex cursor-pointer items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
 					>
 						<svg
@@ -146,7 +146,7 @@ onMounted(() => {
 				<ol class="inline-flex items-center space-x-1 rtl:space-x-reverse md:space-x-2">
 					<li v-for="btn in props.ui.breadcrumbs.v" class="inline-flex items-center">
 						<a
-							@click="networkStore.invokeFunctions(btn.action)"
+							@click="serviceAdapter.executeFunctions(btn.action)"
 							class="inline-flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
 						>
 							<svg
@@ -173,7 +173,7 @@ onMounted(() => {
 				type="button"
 				class="group inline-flex cursor-pointer flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800"
 				v-for="btn in props.ui.menu.v"
-				@click="networkStore.invokeFunctions(btn.action)"
+				@click="serviceAdapter.executeFunctions(btn.action)"
 			>
 				<svg
 					v-inline

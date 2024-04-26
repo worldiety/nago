@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import { useNetworkStore } from '@/stores/networkStore';
-import {TextArea} from "@/shared/protocol/gen/textArea";
+import type {TextArea} from "@/shared/protocol/gen/textArea";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: TextArea;
 }>();
 
-const networkStore = useNetworkStore();
+const serviceAdapter = useServiceAdapter();
 
 function valueChanged(event: any) {
 	props.ui.value.v = event.target.value;
-	networkStore.invokeFunctionsAndSetProperties([props.ui.value], [props.ui.onTextChanged]);
+	serviceAdapter.setPropertiesAndCallFunctions([props.ui.value], [props.ui.onTextChanged]);
 }
 
 function isErr(): boolean {
