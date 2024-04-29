@@ -16,7 +16,7 @@ import type { ColorScheme } from '@/shared/protocol/colorScheme';
 import type { ComponentFactoryId } from '@/shared/protocol/componentFactoryId';
 import { v4 as uuidv4 } from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
-import type { EventType } from '@/shared/eventbus/eventType';
+import { EventType } from '@/shared/eventbus/eventType';
 
 export default class WebSocketAdapter implements ServiceAdapter {
 
@@ -196,13 +196,18 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private receive(responseRaw: string): void {
 		const responseParsed = JSON.parse(responseRaw);
 		const requestId = responseParsed['r'] as number;
+		const event = responseParsed as Event;
+		const eventType = event.type as EventType;
 
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
 			// something event driven from the backend happened, usually an invalidate or a navigation request
-			const event = responseParsed as Event;
-			this.eventBus.publish(event.type as EventType, event);
+			this.eventBus.publish(eventType, event);
 			return;
+		}
+
+		if (eventType === EventType.ACKNOWLEDGED) {
+			// TODO: Backend needs to tell the frontend about the end of a transaction (EOT / amount of messages / ...)
 		}
 
 		this.resolveFuture(requestId, responseParsed);
