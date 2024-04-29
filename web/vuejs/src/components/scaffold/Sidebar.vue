@@ -1,10 +1,10 @@
 <template>
 	<nav
-		class="fixed left-0 z-20 h-screen w-64 -translate-x-full pt-16 transition-transform sm:translate-x-0"
+		class="fixed top-0 left-0 bottom-0 z-10 h-full w-32 bg-white dark:bg-darkmode-gray"
 		aria-label="Sidebar"
 	>
-		<div class="h-full overflow-y-auto bg-gray-50 px-3 py-4 dark:bg-gray-800">
-			<!-- TODO: Content here -->
+		<div class="flex flex-col justify-between items-center h-full p-2">
+			<div class="*:w-full" v-html="ui.logo.v"></div>
 			<ThemeToggle />
 		</div>
 	</nav>
