@@ -177,6 +177,32 @@ func init() {
 				},
 			},
 		},
+		reflect.TypeOf(ora.Property[[]ora.MenuEntry]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "MenuEntry", Package: genPrefix + "menuEntry"},
+					},
+				},
+			},
+		},
+		reflect.TypeOf(ora.Property[ora.NavigationComponent]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Package: genPrefix + "navigationComponent", Name: "NavigationComponent"},
+			},
+		},
+		reflect.TypeOf(ora.Property[ora.Alignment]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{Package: prefix + "alignment", Name: "Alignment"},
+			},
+		},
 		reflect.TypeOf(ora.Property[ora.Intent]{}): {
 			Name:    "Property",
 			Package: prefix + "property",

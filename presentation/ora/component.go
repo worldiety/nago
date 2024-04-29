@@ -21,35 +21,37 @@ type Property[T any] struct {
 type ComponentType string
 
 const (
-	ButtonT        ComponentType = "Button"
-	GridT          ComponentType = "Grid"
-	GridCellT      ComponentType = "GridCell"
-	DialogT        ComponentType = "Dialog"
-	TextT          ComponentType = "Text"
-	PageT          ComponentType = "Page"
-	VBoxT          ComponentType = "VBox"
-	HBoxT          ComponentType = "HBox"
-	SliderT        ComponentType = "Slider"
-	ScaffoldT      ComponentType = "Scaffold"
-	NumberFieldT   ComponentType = "NumberField"
-	TextFieldT     ComponentType = "TextField"
-	PasswordFieldT ComponentType = "PasswordField"
-	TableT         ComponentType = "Table"
-	TableCellT     ComponentType = "TableCell"
-	TableRowT      ComponentType = "TableRow"
-	ToggleT        ComponentType = "Toggle"
-	DatePickerT    ComponentType = "DatePicker"
-	DividerT       ComponentType = "Divider"
-	DropdownT      ComponentType = "Dropdown"
-	DropdownItemT  ComponentType = "DropdownItem"
-	ChipT          ComponentType = "Chip"
-	CardT          ComponentType = "Card"
-	StepperT       ComponentType = "Stepper"
-	StepInfoT      ComponentType = "StepInfo"
-	WebViewT       ComponentType = "WebView"
-	TextAreaT      ComponentType = "TextArea"
-	FileFieldT     ComponentType = "FileField"
-	ImageT         ComponentType = "Image"
+	ButtonT              ComponentType = "Button"
+	GridT                ComponentType = "Grid"
+	GridCellT            ComponentType = "GridCell"
+	DialogT              ComponentType = "Dialog"
+	TextT                ComponentType = "Text"
+	PageT                ComponentType = "Page"
+	VBoxT                ComponentType = "VBox"
+	HBoxT                ComponentType = "HBox"
+	SliderT              ComponentType = "Slider"
+	ScaffoldT            ComponentType = "Scaffold"
+	NavigationComponentT ComponentType = "NavigationComponent"
+	MenuEntryT           ComponentType = "MenuEntry"
+	NumberFieldT         ComponentType = "NumberField"
+	TextFieldT           ComponentType = "TextField"
+	PasswordFieldT       ComponentType = "PasswordField"
+	TableT               ComponentType = "Table"
+	TableCellT           ComponentType = "TableCell"
+	TableRowT            ComponentType = "TableRow"
+	ToggleT              ComponentType = "Toggle"
+	DatePickerT          ComponentType = "DatePicker"
+	DividerT             ComponentType = "Divider"
+	DropdownT            ComponentType = "Dropdown"
+	DropdownItemT        ComponentType = "DropdownItem"
+	ChipT                ComponentType = "Chip"
+	CardT                ComponentType = "Card"
+	StepperT             ComponentType = "Stepper"
+	StepInfoT            ComponentType = "StepInfo"
+	WebViewT             ComponentType = "WebView"
+	TextAreaT            ComponentType = "TextArea"
+	FileFieldT           ComponentType = "FileField"
+	ImageT               ComponentType = "Image"
 )
 
 type Component interface {
@@ -63,6 +65,8 @@ func init() {
 		reflect.TypeOf(Button{}),
 		reflect.TypeOf(Page{}),
 		reflect.TypeOf(Scaffold{}),
+		reflect.TypeOf(NavigationComponent{}),
+		reflect.TypeOf(MenuEntry{}),
 		reflect.TypeOf(VBox{}),
 		reflect.TypeOf(HBox{}),
 		reflect.TypeOf(TextField{}),

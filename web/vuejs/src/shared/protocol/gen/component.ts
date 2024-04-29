@@ -3,6 +3,8 @@
 import type { Button } from '@/shared/protocol/gen/button';
 import type { Page } from '@/shared/protocol/gen/page';
 import type { Scaffold } from '@/shared/protocol/gen/scaffold';
+import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
+import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import type { VBox } from '@/shared/protocol/gen/vBox';
 import type { HBox } from '@/shared/protocol/gen/hBox';
 import type { TextField } from '@/shared/protocol/gen/textField';
@@ -35,6 +37,8 @@ export type Component =
     | Button
     | Page
     | Scaffold
+    | NavigationComponent
+    | MenuEntry
     | VBox
     | HBox
     | TextField

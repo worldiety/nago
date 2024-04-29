@@ -3,18 +3,13 @@
 import type { Pointer } from '@/shared/protocol/pointer';
 import type { Property } from '@/shared/protocol/property';
 import type { Component } from '@/shared/protocol/gen/component';
-import type { Button } from '@/shared/protocol/gen/button';
+import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 
 
 export interface Scaffold {
     id: Pointer;
     type: 'Scaffold';
-    title: Property<string>;
     body: Property<Component>;
-    breadcrumbs: Property<Button[]>;
-    menu: Property<Button[]>;
-    topbarLeft: Property<Component>;
-    topbarMid: Property<Component>;
-    topbarRight: Property<Component>;
+    navigationComponent: Property<NavigationComponent>;
     
 }
