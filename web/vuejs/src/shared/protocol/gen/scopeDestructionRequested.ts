@@ -9,6 +9,6 @@ export interface ScopeDestructionRequested {
      /**
      * Request ID.
      */
-    requestId: RequestId;
+    r: RequestId;
     
 }

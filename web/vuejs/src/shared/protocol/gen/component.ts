@@ -6,6 +6,7 @@ import type { Scaffold } from '@/shared/protocol/gen/scaffold';
 import type { VBox } from '@/shared/protocol/gen/vBox';
 import type { HBox } from '@/shared/protocol/gen/hBox';
 import type { TextField } from '@/shared/protocol/gen/textField';
+import type { PasswordField } from '@/shared/protocol/gen/passwordField';
 import type { Table } from '@/shared/protocol/gen/table';
 import type { TableCell } from '@/shared/protocol/gen/tableCell';
 import type { TableRow } from '@/shared/protocol/gen/tableRow';
@@ -37,6 +38,7 @@ export type Component =
     | VBox
     | HBox
     | TextField
+    | PasswordField
     | Table
     | TableCell
     | TableRow

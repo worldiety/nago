@@ -132,7 +132,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		const newComponentRequested: NewComponentRequested = {
 			type: 'NewComponentRequested',
-			requestId: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			activeLocale: this.activeLocale,
 			factory: fid,
 			values: params,
@@ -149,7 +149,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async destroyComponent(ptr: Pointer): Promise<Acknowledged> {
 		const componentDestructionRequested: ComponentDestructionRequested = {
 			type: 'ComponentDestructionRequested',
-			requestId: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			ptr: ptr,
 		};
 
@@ -165,7 +165,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
-			requestId: this.nextRequestId(),
+			r: this.nextRequestId(), // TODO: Redundant, remove
 			acceptLanguage: acceptLanguages,
 			colorScheme: colorScheme,
 		};
@@ -195,11 +195,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	private receive(responseRaw: string): void {
 		const responseParsed = JSON.parse(responseRaw);
-		let requestId = responseParsed['requestId'] as number;
-		if (requestId === undefined) {
-			// try again the shortened field name of ack, we keep that efficient
-			requestId = responseParsed['r'] as number;
-		}
+		const requestId = responseParsed['r'] as number;
 
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
@@ -233,6 +229,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 					type: 'P',
 					p: property.p,
 					v: String(property.v),
+					r: requestId, // TODO: Redundant, remove
 				};
 				callBatch.events.push(action);
 			});
@@ -243,19 +240,23 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',
 					p: propertyFunc.v,
+					r: requestId, // TODO: Redundant, remove
 				};
 				callBatch.events.push(callServerFunc);
 			});
 
 		if (configurationRequested) {
+			configurationRequested.r = requestId;
 			callBatch.events.push(configurationRequested);
 		}
 
 		if (newComponentRequested) {
+			newComponentRequested.r = requestId;
 			callBatch.events.push(newComponentRequested);
 		}
 
 		if (componentDestructionRequested) {
+			componentDestructionRequested.r = requestId;
 			callBatch.events.push(componentDestructionRequested);
 		}
 
@@ -285,7 +286,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private resolveFuture(requestId: number, response: Event): void {
 		const future = this.pendingFutures.get(requestId);
 		if (!future) {
-			console.log(`error: got network response with unmatched requestId=${requestId}`)
+			console.log(`error: got network response with unmatched request ID r=${requestId}`)
 		} else {
 			this.pendingFutures.delete(requestId)
 			future.resolveFuture(response);
