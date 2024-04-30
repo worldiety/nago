@@ -1,8 +1,12 @@
 <template>
-	<nav class="fixed top-0 left-0 right-0 flex justify-between items-center bg-white dark:bg-darkmode-gray border-b border-b-disabled-background dark:border-b-disabled-text h-16 p-2 z-30">
-		<!-- TODO: Content here -->
-		<div class="h-full *:h-full" v-html="ui.logo.v"></div>
-		<ThemeToggle />
+	<nav class="fixed top-0 left-0 right-0 z-30">
+		<div class="bg-white dark:bg-darkmode-gray border-b border-b-disabled-background dark:border-b-disabled-text h-16 py-2">
+			<div class="website-content flex justify-between items-center h-full">
+				<!-- TODO: Content here -->
+				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
+				<ThemeToggle />
+			</div>
+		</div>
 	</nav>
 </template>
 

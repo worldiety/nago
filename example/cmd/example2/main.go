@@ -145,22 +145,9 @@ func main() {
 						}),
 					)
 
-					var yieldToggleVal bool
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
-							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
-								hBox.Children().From(func(yield func(core.Component) bool) {
-									yield(ui.NewToggle(func(tgl *ui.Toggle) {
-										tgl.Label().Set("Ein Toggle.")
-										tgl.Checked().Set(yieldToggleVal)
-										tgl.OnCheckedChanged().Set(func() {
-											yieldToggleVal = tgl.Checked().Get()
-											fmt.Println("yield toggle to", tgl.Checked().Get())
-										})
-									}))
-								})
-							}))
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Value().Set(123)
@@ -312,15 +299,6 @@ func main() {
 									})
 								}),
 
-								ui.NewPasswordField(func(p *ui.PasswordField) {
-									p.Simple().Set(false)
-									p.Disabled().Set(false)
-									p.Hint().Set("Optional")
-									p.Label().Set("Passwort")
-									p.Help().Set("Das ist ein kurzer Hilfstext.")
-									p.Placeholder().Set("Bitte eingeben...")
-								}),
-
 								ui.NewToggle(func(tgl *ui.Toggle) {
 
 									tgl.Label().Set("anschalten")
@@ -330,6 +308,15 @@ func main() {
 										fmt.Println("toggle changed to ", tgl.Checked().Get())
 										myMagicTF.Disabled().Set(tgl.Checked().Get())
 									})
+								}),
+
+								ui.NewPasswordField(func(p *ui.PasswordField) {
+									p.Simple().Set(false)
+									p.Disabled().Set(false)
+									p.Hint().Set("Optional")
+									p.Label().Set("Passwort")
+									p.Help().Set("Das ist ein kurzer Hilfstext.")
+									p.Placeholder().Set("Bitte eingeben...")
 								}),
 
 								ui.NewFileField(func(fileField *ui.FileField) {
