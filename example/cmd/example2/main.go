@@ -8,6 +8,8 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
@@ -140,8 +142,38 @@ func main() {
 
 					scaffold.NavigationComponent().Set(
 						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-							navigationComponent.Alignment().Set("top")
-							navigationComponent.Logo().Set("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">\n\t<path fill=\"currentColor\" d=\"M7.5,10.5h-1a1,1,0,1,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M12.5,10.5h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M17.5,10.5h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M7.5,14.5h-1a1,1,0,1,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M12.5,14.5h-1a1,1,0,1,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M17.5,14.5h-1a1,1,0,1,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M7.5,18.5h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M12.5,18.5h-1a1,1,0,0,0,0,2h1a1,1,0,1,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M17.5,18.5h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Z\"/>\n\t<path fill=\"currentColor\" d=\"M21.5,3H18.75a.25.25,0,0,1-.25-.25V1a1,1,0,0,0-2,0v4.75a.75.75,0,1,1-1.5,0V3.5a.5.5,0,0,0-.5-.5H8.25A.25.25,0,0,1,8,2.751V1A1,1,0,1,0,6,1v4.75a.75.75,0,1,1-1.5,0V3.5A.5.5,0,0,0,4,3H2.5a2,2,0,0,0-2,2V22a2,2,0,0,0,2,2h19a2,2,0,0,0,2-2V5A2,2,0,0,0,21.5,3Zm0,18.5a.5.5,0,0,1-.5.5H3a.5.5,0,0,1-.5-.5V9.5A.5.5,0,0,1,3,9H21a.5.5,0,0,1,.5.5Z\"/>\n</svg>\n")
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
+							navigationComponent.Logo().Set(icon.OraLogo)
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntry.Title().Set("Menüpunkt A")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 1")
+								}))
+							}))
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntry.Title().Set("Menüpunkt B")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 1")
+								}))
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 2")
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt I")
+									}))
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt II")
+									}))
+								}))
+							}))
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntry.Title().Set("Menüpunkt C")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+							}))
 						}),
 					)
 

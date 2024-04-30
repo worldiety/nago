@@ -26,9 +26,9 @@
 .button-tertiary {
 	@apply text-black rounded-full h-10 w-fit px-5;
 	@apply hover:text-ora-orange hover:bg-ora-orange hover:bg-opacity-25;
-	@apply active:bg-ora-orange active:bg-opacity-35;
+	@apply active:bg-ora-orange active:bg-opacity-35 active:text-ora-orange;
 	@apply disabled:text-disabled-text disabled:bg-transparent;
-	@apply dark:text-white dark:hover:text-ora-orange dark:disabled:text-disabled-text dark:disabled:bg-transparent;
+	@apply dark:text-white dark:hover:text-ora-orange dark:active:text-ora-orange dark:disabled:text-disabled-text dark:disabled:bg-transparent;
 }
 
 .button-destructive {

@@ -3,7 +3,7 @@
 		class="fixed top-0 left-0 bottom-0 z-10 h-full w-32 bg-white dark:bg-darkmode-gray"
 		aria-label="Sidebar"
 	>
-		<div class="flex flex-col justify-between items-center h-full p-2">
+		<div class="flex flex-col justify-between items-center h-full py-8 px-2">
 			<div class="*:w-full" v-html="ui.logo.v"></div>
 			<ThemeToggle />
 		</div>

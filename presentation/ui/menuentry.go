@@ -8,6 +8,7 @@ import (
 type MenuEntry struct {
 	id         ora.Ptr
 	icon       EmbeddedSVG
+	iconActive EmbeddedSVG
 	title      String
 	menu       *SharedList[*MenuEntry]
 	properties []core.Property
@@ -15,13 +16,14 @@ type MenuEntry struct {
 
 func NewMenuEntry(with func(menuEntry *MenuEntry)) *MenuEntry {
 	m := &MenuEntry{
-		id:    nextPtr(),
-		icon:  NewShared[SVGSrc]("icon"),
-		title: NewShared[string]("title"),
-		menu:  NewSharedList[*MenuEntry]("menu"),
+		id:         nextPtr(),
+		icon:       NewShared[SVGSrc]("icon"),
+		iconActive: NewShared[SVGSrc]("iconActive"),
+		title:      NewShared[string]("title"),
+		menu:       NewSharedList[*MenuEntry]("menu"),
 	}
 
-	m.properties = []core.Property{m.icon, m.title, m.menu}
+	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.menu}
 	if with != nil {
 		with(m)
 	}
@@ -48,6 +50,10 @@ func (m *MenuEntry) Icon() EmbeddedSVG {
 	return m.icon
 }
 
+func (m *MenuEntry) IconActive() EmbeddedSVG {
+	return m.iconActive
+}
+
 func (m *MenuEntry) Menu() *SharedList[*MenuEntry] {
 	return m.menu
 }
@@ -58,10 +64,11 @@ func (m *MenuEntry) Render() ora.Component {
 
 func (m *MenuEntry) renderMenuEntry() ora.MenuEntry {
 	return ora.MenuEntry{
-		Ptr:   m.id,
-		Type:  ora.MenuEntryT,
-		Title: m.title.render(),
-		Icon:  m.icon.render(),
-		Menu:  renderSharedListMenuEntries(m.menu),
+		Ptr:        m.id,
+		Type:       ora.MenuEntryT,
+		Title:      m.title.render(),
+		Icon:       m.icon.render(),
+		IconActive: m.iconActive.render(),
+		Menu:       renderSharedListMenuEntries(m.menu),
 	}
 }

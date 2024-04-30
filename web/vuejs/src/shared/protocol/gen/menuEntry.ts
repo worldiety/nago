@@ -10,6 +10,7 @@ export interface MenuEntry {
     id: Pointer;
     type: 'MenuEntry';
     icon: Property<SVG>;
+    iconActive: Property<SVG>;
     title: Property<string>;
     menu: Property<MenuEntry[]>;
     

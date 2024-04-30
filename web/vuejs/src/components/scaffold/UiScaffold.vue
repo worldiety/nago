@@ -2,9 +2,11 @@
 	<NavigationBar v-if="navigationBarVisible" :ui="props.ui.navigationComponent.v" />
 	<Sidebar v-if="sidebarVisible" :ui="props.ui.navigationComponent.v" />
 
-	<div class="website-content" :class="bodyWrapperClass">
-		<ui-generic :ui="props.ui.body.v"  />
-	</div>
+  <div :class="bodyWrapperClass">
+    <div class="website-content">
+      <ui-generic :ui="props.ui.body.v"  />
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -25,7 +27,10 @@ const sidebarVisible = computed((): boolean => props.ui.navigationComponent.v.al
 
 const bodyWrapperClass = computed((): string => {
 	if (navigationBarVisible.value) {
-		return 'pt-16';
+		return 'pt-20';
 	}
+  if (sidebarVisible.value) {
+    return 'py-8 pl-32';
+  }
 });
 </script>
