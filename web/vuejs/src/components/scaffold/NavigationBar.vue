@@ -9,7 +9,8 @@
 						<MenuEntryComponent
 							:ui="menuEntry"
 							:menu-entry-index="index"
-							@menu-entry-hovered="menuEntryHovered"
+							:expanded="menuEntry.id === activeMenuEntry?.id"
+							@expand-menu-entry="expandMenuEntry"
 						/>
 					</div>
           <ThemeToggle />
@@ -87,7 +88,7 @@ function handleMouseMove(event: MouseEvent): void {
 	}
 }
 
-function menuEntryHovered(menuEntry: MenuEntry, menuEntryIndex: number): void {
+function expandMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
 	setActiveMenuEntry(menuEntry, menuEntryIndex);
 	nextTick(updateSubMenuTriangleLeftOffset);
 }
