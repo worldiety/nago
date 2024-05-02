@@ -5,22 +5,28 @@
 			<div class="website-content flex justify-between items-center h-full">
 				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
         <div class="flex justify-end items-center gap-x-8">
-          <MenuEntryComponent
-						v-for="(menuEntry, index) in ui.menu.v"
-						:key="index"
-						:ui="menuEntry"
-						@menu-entry-hovered="setActiveMenuEntry"
-					/>
+					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" :data-index="index">
+						<MenuEntryComponent
+							:ui="menuEntry"
+							:menu-entry-index="index"
+							@menu-entry-hovered="menuEntryHovered"
+						/>
+					</div>
           <ThemeToggle />
         </div>
 			</div>
 		</div>
 
-		<!-- Sub menu triangle -->
-		<!-- TODO: Show triangle at the appropriate location -->
 		<div class="relative z-10">
+			<!-- Navigation bar border -->
 			<div class="absolute top-0 left-0 right-0 border-b border-b-disabled-background dark:border-b-disabled-text z-0"></div>
-			<div class="absolute -top-2 left-64 rotate-45 border border-disabled-background bg-white size-4 z-10"></div>
+			<!-- Sub menu triangle -->
+			<div
+				v-show="subMenuEntries.length > 0"
+				ref="subMenuTriangle"
+				class="sub-menu-triangle absolute -top-2 left-0 rotate-45 border border-disabled-background bg-white dark:bg-darkmode-gray dark:border-disabled-text size-4 z-10"
+				:style="`--sub-menu-triangle-left-offset: ${subMenuTriangleLeftOffset}px`"
+			></div>
 		</div>
 
 		<!-- Sub menu -->
@@ -50,7 +56,7 @@
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 
 defineProps<{
@@ -59,6 +65,10 @@ defineProps<{
 
 const subMenu = ref<HTMLElement|undefined>();
 const activeMenuEntry = ref<MenuEntry|null>(null);
+const activeMenuEntryIndex = ref<number|null>(null);
+const menuEntryElements = ref<HTMLElement[]>([]);
+const subMenuTriangle = ref<HTMLElement|undefined>();
+const subMenuTriangleLeftOffset = ref<number>(0);
 
 onMounted(() => {
 	document.addEventListener('mousemove', handleMouseMove);
@@ -77,14 +87,33 @@ function handleMouseMove(event: MouseEvent): void {
 	}
 }
 
-function setActiveMenuEntry(menuEntry: MenuEntry): void {
+function menuEntryHovered(menuEntry: MenuEntry, menuEntryIndex: number): void {
+	setActiveMenuEntry(menuEntry, menuEntryIndex);
+	nextTick(updateSubMenuTriangleLeftOffset);
+}
+
+function setActiveMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
 	activeMenuEntry.value = menuEntry;
+	activeMenuEntryIndex.value = menuEntryIndex;
+}
+
+function updateSubMenuTriangleLeftOffset(): void {
+	if (!subMenuTriangle.value || activeMenuEntryIndex.value === null) {
+		return;
+	}
+	const activeMenuEntryElement = menuEntryElements.value.find((element) => {
+		return element.getAttribute('data-index') === activeMenuEntryIndex.value + '';
+	});
+	if (!activeMenuEntryElement) {
+		return;
+	}
+	subMenuTriangleLeftOffset.value = activeMenuEntryElement.getBoundingClientRect().x + activeMenuEntryElement.offsetWidth / 2 - subMenuTriangle.value.offsetWidth / 2;
 }
 </script>
 
 <style scoped>
-.triangle {
-	@apply size-0 border-x-[20px] border-x-transparent border-t-[20px] border-t-white;
+.sub-menu-triangle {
+	left: var(--sub-menu-triangle-left-offset);
 }
 
 /* Vue transitions: https://vuejs.org/guide/built-ins/transition#css-transitions */

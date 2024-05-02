@@ -23,11 +23,12 @@ import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import { ref } from 'vue';
 
 const emit = defineEmits<{
-	(e: 'menuEntryHovered', menuEntry: MenuEntry): void;
+	(e: 'menuEntryHovered', menuEntry: MenuEntry, menuEntryIndex: number): void;
 }>();
 
 const props = defineProps<{
 	ui: MenuEntry;
+	menuEntryIndex: number;
 }>();
 
 const hovered = ref<boolean>(false);
@@ -35,7 +36,7 @@ const active = ref<boolean>(false);
 
 function setHovered(): void {
 	hovered.value = true;
-	emit('menuEntryHovered', props.ui);
+	emit('menuEntryHovered', props.ui, props.menuEntryIndex);
 }
 
 function resetState(): void {
