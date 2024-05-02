@@ -89,7 +89,7 @@ function isSelected(item: DropdownItem): boolean {
 				>
 					<div v-if="selectedItemNames" class="truncate text-black dark:text-white">{{ selectedItemNames}}</div>
 					<div v-else class="truncate text-placeholder-text pt-2 pr-1 pb-1.75 pl-1">{{ 'Auswählen...' }}</div>
-					<ArrowDown class="shrink-0 grow-0 duration-100 w-3.5 " :class="{'rotate-180': props.ui.expanded.v}" />
+					<ArrowDown class="shrink-0 grow-0 text-black dark:text-white duration-100 w-3.5 " :class="{'rotate-180': props.ui.expanded.v}" />
 				</div>
 			</InputWrapper>
 
