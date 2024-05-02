@@ -73,10 +73,12 @@ const subMenuTriangleLeftOffset = ref<number>(0);
 
 onMounted(() => {
 	document.addEventListener('mousemove', handleMouseMove);
+	window.addEventListener('resize', updateSubMenuTriangleLeftOffset, { passive: true });
 });
 
 onUnmounted(() => {
 	document.removeEventListener('mousemove', handleMouseMove);
+	window.removeEventListener('resize', updateSubMenuTriangleLeftOffset);
 });
 
 const subMenuEntries = computed((): MenuEntry[] => activeMenuEntry.value?.menu.v ?? []);
