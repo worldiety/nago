@@ -81,7 +81,7 @@ function isSelected(item: DropdownItem): boolean {
 
 <template>
 	<div>
-		<div class="relative active:bg-white dark:active:bg-ora-dropdown-background" >
+		<div class="relative" >
 			<!-- Input field -->
 			<InputWrapper
 				:label="props.ui.label.v"
@@ -90,7 +90,7 @@ function isSelected(item: DropdownItem): boolean {
 				:disabled="props.ui.disabled.v"
 			>
 				<div
-					class="input-field flex justify-between gap-x-4 items-center cursor-default"
+					class="input-field flex justify-between gap-x-4 items-center cursor-default focus:bg-white dark:active:bg-ora-dropdown-background"
 					:tabindex="props.ui.disabled.v ? '-1': '0'"
 					@click="dropdownClicked(false)"
 					@keydown.enter="dropdownClicked(true)"
