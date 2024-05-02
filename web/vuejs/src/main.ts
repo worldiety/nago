@@ -4,7 +4,7 @@ import App from '@/App.vue';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
-import { eventBusKey, networkAdapterKey } from '@/shared/injectionKeys';
+import { eventBusKey, serviceAdapterKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import EventBus from '@/shared/eventbus/eventBus';
 
@@ -13,7 +13,7 @@ const pinia = createPinia();
 const app = createApp(App);
 
 const eventBus = new EventBus();
-app.provide(networkAdapterKey, new WebSocketAdapter(eventBus));
+app.provide(serviceAdapterKey, new WebSocketAdapter(eventBus));
 app.provide(eventBusKey, eventBus);
 
 app.directive('inline', (element: HTMLElement) => {

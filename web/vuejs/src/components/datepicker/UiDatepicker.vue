@@ -148,7 +148,7 @@ function selectEndDate(selectedDate: Date): void {
 					@click="showDatepicker()"
 					@keydown.enter="showDatepicker()">
 					<p>{{ dateFormatted }}</p>
-					<div class="absolute top-0 bottom-0 right-3 flex items-center pointer-events-none h-full">
+					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black dark:text-white h-full">
 						<Calendar class="w-4" />
 					</div>
 				</div>

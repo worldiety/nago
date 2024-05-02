@@ -52,7 +52,7 @@ function toggleRevealed(): void {
 					:disabled="props.ui.disabled.v"
 					:type="props.ui.revealed.v ? 'text' : 'password'"
 				/>
-				<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black dark:text-white h-full">
 					<div :tabindex="props.ui.disabled.v ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">
 						<RevealIcon v-if="!props.ui.revealed.v" class="w-6" />
 						<HideIcon v-else class="w-6" />
