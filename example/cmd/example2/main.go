@@ -142,7 +142,7 @@ func main() {
 
 					scaffold.NavigationComponent().Set(
 						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-							navigationComponent.Alignment().Set(ora.AlignmentTop)
+							navigationComponent.Alignment().Set(ora.AlignmentLeft)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntry.Title().Set("Menüpunkt A")
@@ -159,7 +159,7 @@ func main() {
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntry.Title().Set("Menüpunkt B")
+								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {

@@ -19,7 +19,7 @@
 			<div v-if="expanded" class="h-4 *:h-full" v-html="ui.iconActive.v"></div>
 			<div v-else class="h-4 *:h-full" v-html="ui.icon.v"></div>
 		</div>
-		<p class="menu-entry-title text-sm font-medium select-none">{{ ui.title.v }}</p>
+		<p class="menu-entry-title text-sm text-center font-medium select-none">{{ ui.title.v }}</p>
 	</div>
 </template>
 
