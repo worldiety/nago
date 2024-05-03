@@ -60,7 +60,7 @@
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 
 defineProps<{
