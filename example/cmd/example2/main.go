@@ -148,8 +148,10 @@ func main() {
 								menuEntry.Title().Set("Menüpunkt A")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Url().Set("/hello")
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
+									subEntry.Url().Set("/hello")
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
@@ -158,6 +160,7 @@ func main() {
 								menuEntry.IconActive().Set(icon.PackageFilled)
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
+									subEntry.Url().Set("/hello")
 								}))
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 2")
@@ -166,11 +169,13 @@ func main() {
 									}))
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt II")
+										subSubEntry.Url().Set("/hello")
 									}))
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntry.Title().Set("Menüpunkt C")
+								menuEntry.Url().Set("/hello")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
 							}))

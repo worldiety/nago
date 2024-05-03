@@ -5,7 +5,7 @@
 		@mousedown="active = true"
 		@click="expandMenuEntry"
 		@mouseenter="expandMenuEntry"
-		@mouseleave="active = false"
+		@mouseleave="handleMouseLeave"
 		@mouseup="active = false"
 	>
 		<div
@@ -25,6 +25,7 @@ import { ref } from 'vue';
 
 const emit = defineEmits<{
 	(e: 'expandMenuEntry', menuEntry: MenuEntry, menuEntryIndex: number): void;
+	(e: 'collapseMenuEntry'): void;
 }>();
 
 const props = defineProps<{
@@ -37,5 +38,12 @@ const active = ref<boolean>(false);
 
 function expandMenuEntry(): void {
 	emit('expandMenuEntry', props.ui, props.menuEntryIndex);
+}
+
+function handleMouseLeave(): void {
+	active.value = false;
+	if (!props.ui.menu.v || props.ui.menu.v.length === 0) {
+		emit('collapseMenuEntry');
+	}
 }
 </script>

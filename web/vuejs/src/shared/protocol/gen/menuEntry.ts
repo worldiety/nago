@@ -12,5 +12,7 @@ export interface MenuEntry {
     icon: Property<SVG>;
     iconActive: Property<SVG>;
     title: Property<string>;
+    url: Property<string>;
     menu: Property<MenuEntry[]>;
+    
 }

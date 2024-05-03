@@ -11,6 +11,7 @@
 							:menu-entry-index="index"
 							:expanded="menuEntry.id === activeMenuEntry?.id"
 							@expand-menu-entry="expandMenuEntry"
+							@collapse-menu-entry="collapseMenuEntry"
 						/>
 					</div>
           <ThemeToggle />
@@ -20,7 +21,7 @@
 
 		<div class="relative z-10">
 			<!-- Navigation bar border -->
-			<div class="absolute top-0 left-0 right-0 border-b border-b-disabled-background dark:border-b-disabled-text z-0"></div>
+			<div ref="navigationBarBorder" class="absolute top-0 left-0 right-0 border-b border-b-disabled-background dark:border-b-disabled-text z-0"></div>
 			<!-- Sub menu triangle -->
 			<div
 				v-show="subMenuEntries.length > 0"
@@ -39,12 +40,14 @@
 			>
 				<div class="website-content flex justify-start items-start gap-x-8">
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
-						<p class="font-medium" :class="{'mb-4': subMenuEntry.menu.v?.length > 0}">{{ subMenuEntry.title.v }}</p>
+						<a v-if="subMenuEntry.url.v" :href="subMenuEntry.url.v" class="font-medium">{{ subMenuEntry.title.v }}</a>
+						<p v-else class="font-medium" :class="{'mb-4': subMenuEntry.menu.v?.length > 0}">{{ subMenuEntry.title.v }}</p>
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
 						>
-							{{ subSubMenuEntry.title.v }}
+							<a v-if="subSubMenuEntry.url.v" :href="subSubMenuEntry.url.v">{{ subSubMenuEntry.title.v }}</a>
+							<span v-else>{{ subSubMenuEntry.title.v }}</span>
 						</p>
 					</div>
 				</div>
@@ -64,6 +67,7 @@ defineProps<{
 	ui: NavigationComponent;
 }>();
 
+const navigationBarBorder = ref<HTMLElement|undefined>();
 const subMenu = ref<HTMLElement|undefined>();
 const activeMenuEntry = ref<MenuEntry|null>(null);
 const activeMenuEntryIndex = ref<number|null>(null);
@@ -84,7 +88,9 @@ onUnmounted(() => {
 const subMenuEntries = computed((): MenuEntry[] => activeMenuEntry.value?.menu.v ?? []);
 
 function handleMouseMove(event: MouseEvent): void {
-	const threshold = subMenu.value?.getBoundingClientRect().bottom ?? 0;
+	const threshold = subMenu.value?.getBoundingClientRect().bottom
+		?? navigationBarBorder.value?.getBoundingClientRect().bottom
+		?? 0;
 	if (event.y > threshold) {
 		activeMenuEntry.value = null;
 	}
@@ -95,7 +101,11 @@ function expandMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
 	nextTick(updateSubMenuTriangleLeftOffset);
 }
 
-function setActiveMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
+function collapseMenuEntry(): void {
+	setActiveMenuEntry(null, null);
+}
+
+function setActiveMenuEntry(menuEntry: MenuEntry|null, menuEntryIndex: number|null): void {
 	activeMenuEntry.value = menuEntry;
 	activeMenuEntryIndex.value = menuEntryIndex;
 }
