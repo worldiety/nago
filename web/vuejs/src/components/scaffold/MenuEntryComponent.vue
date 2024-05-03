@@ -1,9 +1,10 @@
 <template>
 	<div
 		class="flex flex-col justify-center items-center cursor-pointer"
+		:class="{'menu-entry-linked': ui.action.v}"
 		tabindex="0"
 		@mousedown="active = true"
-		@click="expandMenuEntry"
+		@click="handleClick"
 		@mouseenter="expandMenuEntry"
 		@mouseleave="handleMouseLeave"
 		@mouseup="active = false"
@@ -15,13 +16,14 @@
 			<div v-if="expanded" class="h-4 *:h-full" v-html="ui.iconActive.v"></div>
 			<div v-else class="h-4 *:h-full" v-html="ui.icon.v"></div>
 		</div>
-		<p class="text-sm font-medium select-none">{{ ui.title.v }}</p>
+		<p class="menu-entry-title text-sm font-medium select-none">{{ ui.title.v }}</p>
 	</div>
 </template>
 
 <script setup lang="ts">
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import { ref } from 'vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const emit = defineEmits<{
 	(e: 'expandMenuEntry', menuEntry: MenuEntry, menuEntryIndex: number): void;
@@ -34,7 +36,16 @@ const props = defineProps<{
 	expanded: boolean;
 }>();
 
+const serviceAdapter = useServiceAdapter();
 const active = ref<boolean>(false);
+
+function handleClick(): void {
+	if (props.ui.action.v) {
+		serviceAdapter.executeFunctions(props.ui.action);
+	} else {
+		expandMenuEntry();
+	}
+}
 
 function expandMenuEntry(): void {
 	emit('expandMenuEntry', props.ui, props.menuEntryIndex);
@@ -47,3 +58,9 @@ function handleMouseLeave(): void {
 	}
 }
 </script>
+
+<style scoped>
+.menu-entry-linked:hover .menu-entry-title {
+	@apply underline;
+}
+</style>

@@ -5,7 +5,3 @@
 *:focus-visible {
 	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
 }
-
-a:hover {
-	@apply underline;
-}

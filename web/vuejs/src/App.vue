@@ -81,10 +81,16 @@ async function navigateForward(event: Event): Promise<void> {
 	const componentInvalidated = await serviceAdapter.createComponent(navigationForwardToRequested.factory, navigationForwardToRequested.values);
 	ui.value = componentInvalidated.value;
 
-	let url = `/${navigationForwardToRequested.factory}?`
-	Object.entries(navigationForwardToRequested.values).forEach(([key, value]) => {
-		url += `${key}=${value}&`
-	});
+	let url = `/${navigationForwardToRequested.factory}`
+	if (navigationForwardToRequested.values && Object.entries(navigationForwardToRequested.values).length > 0) {
+		url += '?';
+		Object.entries(navigationForwardToRequested.values).forEach(([key, value], index, array) => {
+			url += `${key}=${value}`;
+			if (index < array.length - 1) {
+				url += '&';
+			}
+		});
+	}
 	history.pushState(navigationForwardToRequested, "", url)
 }
 

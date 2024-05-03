@@ -40,14 +40,22 @@
 			>
 				<div class="website-content flex justify-start items-start gap-x-8">
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
-						<a v-if="subMenuEntry.url.v" :href="subMenuEntry.url.v" class="font-medium">{{ subMenuEntry.title.v }}</a>
-						<p v-else class="font-medium" :class="{'mb-4': subMenuEntry.menu.v?.length > 0}">{{ subMenuEntry.title.v }}</p>
+						<p
+							class="font-medium"
+							:class="{
+								'mb-4': subMenuEntry.menu.v?.length > 0,
+								'cursor-pointer hover:underline': subMenuEntry.action.v,
+							}"
+							@click="menuEntryClicked(subMenuEntry.action)">
+							{{ subMenuEntry.title.v }}
+						</p>
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
+							:class="{'cursor-pointer hover:underline': subSubMenuEntry.action.v}"
+							@click="menuEntryClicked(subSubMenuEntry.action)"
 						>
-							<a v-if="subSubMenuEntry.url.v" :href="subSubMenuEntry.url.v">{{ subSubMenuEntry.title.v }}</a>
-							<span v-else>{{ subSubMenuEntry.title.v }}</span>
+							{{ subSubMenuEntry.title.v }}
 						</p>
 					</div>
 				</div>
@@ -62,11 +70,15 @@ import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Property } from '@/shared/protocol/property';
+import type { Pointer } from '@/shared/protocol/pointer';
 
 defineProps<{
 	ui: NavigationComponent;
 }>();
 
+const serviceAdapter = useServiceAdapter();
 const navigationBarBorder = ref<HTMLElement|undefined>();
 const subMenu = ref<HTMLElement|undefined>();
 const activeMenuEntry = ref<MenuEntry|null>(null);
@@ -121,6 +133,12 @@ function updateSubMenuTriangleLeftOffset(): void {
 		return;
 	}
 	subMenuTriangleLeftOffset.value = activeMenuEntryElement.getBoundingClientRect().x + activeMenuEntryElement.offsetWidth / 2 - subMenuTriangle.value.offsetWidth / 2;
+}
+
+function menuEntryClicked(menuEntryAction: Property<Pointer>): void {
+	if (menuEntryAction.v) {
+		serviceAdapter.executeFunctions(menuEntryAction);
+	}
 }
 </script>
 

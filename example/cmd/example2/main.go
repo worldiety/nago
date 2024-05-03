@@ -133,8 +133,8 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Component("1234", func(w core.Window) core.Component {
-			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
+		cfg.Component("1234", func(wnd core.Window) core.Component {
+			logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
 
 			page := ui.NewPage(nil)
 			page.Body().Set(
@@ -148,10 +148,14 @@ func main() {
 								menuEntry.Title().Set("Menüpunkt A")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Url().Set("/hello")
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "A"})
+								})
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Url().Set("/hello")
+									subEntry.Action().Set(func() {
+										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
+									})
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
@@ -160,24 +164,30 @@ func main() {
 								menuEntry.IconActive().Set(icon.PackageFilled)
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Url().Set("/hello")
 								}))
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 2")
+									subEntry.Action().Set(func() {
+										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_2"})
+									})
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt I")
+										subSubEntry.Action().Set(func() {
+											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_I"})
+										})
 									}))
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt II")
-										subSubEntry.Url().Set("/hello")
 									}))
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntry.Title().Set("Menüpunkt C")
-								menuEntry.Url().Set("/hello")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "C"})
+								})
 							}))
 						}),
 					)
@@ -308,7 +318,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + string(w.User().Email())))
+							vbox.Append(ui.MakeText(string(wnd.User().UserID()) + ":" + wnd.User().Name() + "->" + string(wnd.User().Email())))
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {

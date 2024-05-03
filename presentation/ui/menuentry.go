@@ -10,7 +10,7 @@ type MenuEntry struct {
 	icon       EmbeddedSVG
 	iconActive EmbeddedSVG
 	title      String
-	url        String
+	action     *Func
 	menu       *SharedList[*MenuEntry]
 	properties []core.Property
 }
@@ -21,11 +21,11 @@ func NewMenuEntry(with func(menuEntry *MenuEntry)) *MenuEntry {
 		icon:       NewShared[SVGSrc]("icon"),
 		iconActive: NewShared[SVGSrc]("iconActive"),
 		title:      NewShared[string]("title"),
-		url:        NewShared[string]("url"),
+		action:     NewFunc("action"),
 		menu:       NewSharedList[*MenuEntry]("menu"),
 	}
 
-	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.url, m.menu}
+	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.action, m.menu}
 	if with != nil {
 		with(m)
 	}
@@ -48,8 +48,8 @@ func (m *MenuEntry) Title() String {
 	return m.title
 }
 
-func (m *MenuEntry) Url() String {
-	return m.url
+func (m *MenuEntry) Action() *Func {
+	return m.action
 }
 
 func (m *MenuEntry) Icon() EmbeddedSVG {
@@ -73,7 +73,7 @@ func (m *MenuEntry) renderMenuEntry() ora.MenuEntry {
 		Ptr:        m.id,
 		Type:       ora.MenuEntryT,
 		Title:      m.title.render(),
-		Url:        m.url.render(),
+		Action:     renderFunc(m.action),
 		Icon:       m.icon.render(),
 		IconActive: m.iconActive.render(),
 		Menu:       renderSharedListMenuEntries(m.menu),
