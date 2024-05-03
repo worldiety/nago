@@ -5,9 +5,12 @@
 		tabindex="0"
 		@mousedown="active = true"
 		@click="handleClick"
+		@keydown.enter="handleClick"
+		@keydown.down.prevent="focusFirstLinkedSubMenuEntry"
 		@mouseenter="expandMenuEntry"
 		@mouseleave="handleMouseLeave"
 		@mouseup="active = false"
+		@focus="expandMenuEntry"
 	>
 		<div
 			class="flex justify-center items-center rounded-full py-2 w-16"
@@ -28,6 +31,7 @@ import { useServiceAdapter } from '@/composables/serviceAdapter';
 const emit = defineEmits<{
 	(e: 'expandMenuEntry', menuEntry: MenuEntry, menuEntryIndex: number): void;
 	(e: 'collapseMenuEntry'): void;
+	(e: 'focusFirstLinkedSubMenuEntry'): void;
 }>();
 
 const props = defineProps<{
@@ -57,10 +61,17 @@ function handleMouseLeave(): void {
 		emit('collapseMenuEntry');
 	}
 }
+
+function focusFirstLinkedSubMenuEntry(): void {
+	if (props.ui.menu.v?.length > 0) {
+		emit('focusFirstLinkedSubMenuEntry');
+	}
+}
 </script>
 
 <style scoped>
-.menu-entry-linked:hover .menu-entry-title {
+.menu-entry-linked:hover .menu-entry-title,
+.menu-entry-linked:focus-visible .menu-entry-title {
 	@apply underline;
 }
 </style>

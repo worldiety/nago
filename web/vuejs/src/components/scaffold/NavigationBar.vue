@@ -12,6 +12,7 @@
 							:expanded="menuEntry.id === activeMenuEntry?.id"
 							@expand-menu-entry="expandMenuEntry"
 							@collapse-menu-entry="collapseMenuEntry"
+							@focus-first-linked-sub-menu-entry="focusFirstLinkedSubMenuEntry"
 						/>
 					</div>
           <ThemeToggle />
@@ -41,19 +42,25 @@
 				<div class="website-content flex justify-start items-start gap-x-8">
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
 						<p
+							ref="subMenuEntryElements"
 							class="font-medium"
 							:class="{
 								'mb-4': subMenuEntry.menu.v?.length > 0,
-								'cursor-pointer hover:underline': subMenuEntry.action.v,
+								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v,
 							}"
-							@click="menuEntryClicked(subMenuEntry.action)">
+							:tabindex="subMenuEntry.action.v ? '0' : '-1'"
+							@click="menuEntryClicked(subMenuEntry.action)"
+							@keydown.enter="menuEntryClicked(subMenuEntry.action)"
+						>
 							{{ subMenuEntry.title.v }}
 						</p>
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
-							:class="{'cursor-pointer hover:underline': subSubMenuEntry.action.v}"
+							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
+							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry.action)"
+							@keydown.enter="menuEntryClicked(subSubMenuEntry.action)"
 						>
 							{{ subSubMenuEntry.title.v }}
 						</p>
@@ -79,6 +86,7 @@ defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+const subMenuEntryElements = ref<HTMLElement[]>([]);
 const navigationBarBorder = ref<HTMLElement|undefined>();
 const subMenu = ref<HTMLElement|undefined>();
 const activeMenuEntry = ref<MenuEntry|null>(null);
@@ -139,6 +147,10 @@ function menuEntryClicked(menuEntryAction: Property<Pointer>): void {
 	if (menuEntryAction.v) {
 		serviceAdapter.executeFunctions(menuEntryAction);
 	}
+}
+
+function focusFirstLinkedSubMenuEntry(): void {
+	subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)?.focus();
 }
 </script>
 
