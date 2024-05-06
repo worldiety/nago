@@ -14,5 +14,7 @@ export interface MenuEntry {
     title: Property<string>;
     action: Property<Pointer>;
     menu: Property<MenuEntry[]>;
+    expanded: Property<boolean>;
+    onFocus: Property<Pointer>;
     
 }

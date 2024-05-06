@@ -9,9 +9,7 @@
 						<MenuEntryComponent
 							:ui="menuEntry"
 							:menu-entry-index="index"
-							:expanded="menuEntry.id === activeMenuEntry?.id"
-							@expand-menu-entry="expandMenuEntry"
-							@collapse-menu-entry="collapseMenuEntry"
+							:mode="'navigationBar'"
 							@focus-first-linked-sub-menu-entry="focusFirstLinkedSubMenuEntry"
 						/>
 					</div>
@@ -39,7 +37,7 @@
 				ref="subMenu"
 				class="relative bg-white dark:bg-darkmode-gray rounded-b-2xl shadow-md pt-8 pb-10 z-0"
 			>
-				<div class="website-content flex justify-start items-start gap-x-8">
+				<div class="website-content flex justify-center items-start gap-x-8">
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
 						<p
 							ref="subMenuEntryElements"
@@ -57,6 +55,7 @@
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
+							ref="subSubMenuEntryElements"
 							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry.action)"
@@ -75,22 +74,21 @@
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import type { Property } from '@/shared/protocol/property';
 import type { Pointer } from '@/shared/protocol/pointer';
 
-defineProps<{
+const props = defineProps<{
 	ui: NavigationComponent;
 }>();
 
 const serviceAdapter = useServiceAdapter();
 const subMenuEntryElements = ref<HTMLElement[]>([]);
+const subSubMenuEntryElements = ref<HTMLElement[]>([]);
 const navigationBarBorder = ref<HTMLElement|undefined>();
 const subMenu = ref<HTMLElement|undefined>();
-const activeMenuEntry = ref<MenuEntry|null>(null);
-const activeMenuEntryIndex = ref<number|null>(null);
 const menuEntryElements = ref<HTMLElement[]>([]);
 const subMenuTriangle = ref<HTMLElement|undefined>();
 const subMenuTriangleLeftOffset = ref<number>(0);
@@ -105,37 +103,32 @@ onUnmounted(() => {
 	window.removeEventListener('resize', updateSubMenuTriangleLeftOffset);
 });
 
-const subMenuEntries = computed((): MenuEntry[] => activeMenuEntry.value?.menu.v ?? []);
+watch(() => props.ui, () => {
+	nextTick(updateSubMenuTriangleLeftOffset);
+});
+
+const subMenuEntries = computed((): MenuEntry[] => {
+	return props.ui.menu.v
+		?.filter((menuEntry) => menuEntry.expanded.v)
+		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+});
 
 function handleMouseMove(event: MouseEvent): void {
 	const threshold = subMenu.value?.getBoundingClientRect().bottom
 		?? navigationBarBorder.value?.getBoundingClientRect().bottom
 		?? 0;
 	if (event.y > threshold) {
-		activeMenuEntry.value = null;
+		// TODO: Collapse sub menu
 	}
-}
-
-function expandMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
-	setActiveMenuEntry(menuEntry, menuEntryIndex);
-	nextTick(updateSubMenuTriangleLeftOffset);
-}
-
-function collapseMenuEntry(): void {
-	setActiveMenuEntry(null, null);
-}
-
-function setActiveMenuEntry(menuEntry: MenuEntry|null, menuEntryIndex: number|null): void {
-	activeMenuEntry.value = menuEntry;
-	activeMenuEntryIndex.value = menuEntryIndex;
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	if (!subMenuTriangle.value || activeMenuEntryIndex.value === null) {
+	const activeMenuEntryIndex: number|undefined = props.ui.menu.v?.findIndex((menuEntry) => menuEntry.expanded.v);
+	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
 	}
 	const activeMenuEntryElement = menuEntryElements.value.find((element) => {
-		return element.getAttribute('data-index') === activeMenuEntryIndex.value + '';
+		return element.getAttribute('data-index') === activeMenuEntryIndex + '';
 	});
 	if (!activeMenuEntryElement) {
 		return;
@@ -150,7 +143,10 @@ function menuEntryClicked(menuEntryAction: Property<Pointer>): void {
 }
 
 function focusFirstLinkedSubMenuEntry(): void {
-	subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)?.focus();
+	const elementToFocus =
+		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)
+		?? subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
+	elementToFocus?.focus();
 }
 </script>
 

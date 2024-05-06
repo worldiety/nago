@@ -142,14 +142,20 @@ func main() {
 
 					scaffold.NavigationComponent().Set(
 						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-							navigationComponent.Alignment().Set(ora.AlignmentLeft)
+							var menuEntryA *ui.MenuEntry
+							var menuEntryB *ui.MenuEntry
+							var menuEntryC *ui.MenuEntry
+
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryA = menuEntry
 								menuEntry.Title().Set("Menüpunkt A")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "A"})
+								menuEntry.OnFocus().Set(func() {
+									menuEntryB.Expanded().Set(false)
+									menuEntryC.Expanded().Set(false)
 								})
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
@@ -159,17 +165,19 @@ func main() {
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryB = menuEntry
 								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.OnFocus().Set(func() {
+									menuEntryA.Expanded().Set(false)
+									menuEntryC.Expanded().Set(false)
+								})
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
 								}))
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 2")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_2"})
-									})
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt I")
 										subSubEntry.Action().Set(func() {
@@ -182,9 +190,14 @@ func main() {
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryC = menuEntry
 								menuEntry.Title().Set("Menüpunkt C")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.OnFocus().Set(func() {
+									menuEntryA.Expanded().Set(false)
+									menuEntryB.Expanded().Set(false)
+								})
 								menuEntry.Action().Set(func() {
 									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "C"})
 								})

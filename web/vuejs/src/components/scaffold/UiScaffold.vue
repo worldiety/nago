@@ -25,12 +25,13 @@ const navigationBarVisible = computed((): boolean => props.ui.navigationComponen
 
 const sidebarVisible = computed((): boolean => props.ui.navigationComponent.v.alignment.v === Alignment.LEFT);
 
-const bodyWrapperClass = computed((): string => {
+const bodyWrapperClass = computed((): string|undefined => {
 	if (navigationBarVisible.value) {
 		return 'pt-20';
 	}
   if (sidebarVisible.value) {
     return 'py-8 pl-32';
   }
+	return undefined;
 });
 </script>
