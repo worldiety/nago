@@ -13,7 +13,7 @@ const serviceAdapter = useServiceAdapter();
 
 <template>
 	<div
-		class="cursor-default mx-2.5 py-4
+		class="cursor-default mx-1 py-4
 					hover:text-ora-orange hover:bg-ora-orange hover:rounded-2lg hover:bg-opacity-15
 					dark:hover:bg-ora-orange dark:hover:rounded-2lg dark:text-white dark:hover:text-ora-orange dark:hover:bg-opacity-25"
 		tabindex="0"
