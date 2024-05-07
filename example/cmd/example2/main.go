@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
@@ -231,6 +232,12 @@ func main() {
 										})
 									}))
 								})
+							}))
+
+							vbox.Append(ui.NewBreadcrumbs(func(breadcrumbs *ui.Breadcrumbs) {
+								breadcrumbs.Items().Append("a", "b", "c", "d")
+								breadcrumbs.SelectedItemIndex().Set(1)
+								breadcrumbs.Icon().Set(icon.Dashboard)
 							}))
 
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {

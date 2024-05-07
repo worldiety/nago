@@ -25,3 +25,6 @@ var Cog6Tooth ui.SVGSrc
 
 //go:embed plus.svg
 var Plus ui.SVGSrc
+
+//go:embed dashboard.svg
+var Dashboard ui.SVGSrc
