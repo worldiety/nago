@@ -15,8 +15,11 @@ func (p Ptr) Nil() bool {
 // Note, that these pointers are not real pointers and only unique and valid for a specific scope.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Property[T any] struct {
-	Ptr   Ptr `json:"p"`
-	Value T   `json:"v"`
+	// Ptr is short for "Pointer" and references a property instance within the backend.
+	// Because it is so common, the json field name is just p.
+	Ptr Ptr `json:"p"`
+	// Value contains the actual value specified by the generic type parameter and shortend to v in json.
+	Value T `json:"v"`
 }
 
 // ComponentType defines the defined set of components.
