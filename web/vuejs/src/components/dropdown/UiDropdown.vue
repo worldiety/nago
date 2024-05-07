@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import UiDropdownItem from '@/components/UiDropdownItem.vue';
+import UiDropdownItem from '@/components/dropdown/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import type {Dropdown} from "@/shared/protocol/gen/dropdown";
 import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import UiDropdownSearchfilter from "@/components/dropdown/UiDropdownSearchfilter.vue";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
@@ -13,6 +14,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const dropdownOptions = ref<HTMLElement|undefined>();
+const searchQuery = ref<string>("");
 
 onMounted(() => {
 	if (props.ui.expanded.v) {
@@ -25,6 +27,12 @@ onUpdated(() => {
 	if (props.ui.expanded.v) {
 		document.addEventListener('click', closeDropdown);
 	}
+})
+
+const itemsFiltered = computed((): DropdownItem[] => {
+	return props.ui.items.v.filter((item: DropdownItem) => {
+		return item.content.v.includes(searchQuery.value)
+	})
 })
 
 const selectedItemNames = computed((): string|null => {
@@ -73,7 +81,7 @@ function isSelected(item: DropdownItem): boolean {
 
 <template>
 	<div>
-		<div class="relative active:bg-white dark:active:bg-ora-dropdown-background " >
+		<div class="relative" >
 			<!-- Input field -->
 			<InputWrapper
 				:label="props.ui.label.v"
@@ -82,22 +90,23 @@ function isSelected(item: DropdownItem): boolean {
 				:disabled="props.ui.disabled.v"
 			>
 				<div
-					class="input-field flex justify-between gap-x-4 items-center cursor-default"
+					class="input-field flex justify-between gap-x-4 items-center cursor-default focus:bg-white dark:active:bg-ora-dropdown-background"
 					:tabindex="props.ui.disabled.v ? '-1': '0'"
 					@click="dropdownClicked(false)"
 					@keydown.enter="dropdownClicked(true)"
 				>
 					<div v-if="selectedItemNames" class="truncate text-black dark:text-white">{{ selectedItemNames}}</div>
-					<div v-else class="truncate text-placeholder-text pt-2 pr-1 pb-1.75 pl-1">{{ 'Auswählen...' }}</div>
-					<ArrowDown class="shrink-0 grow-0 text-black dark:text-white duration-100 w-3.5 " :class="{'rotate-180': props.ui.expanded.v}" />
+					<div v-else class="truncate text-placeholder-text">{{ 'Auswählen...' }}</div>
+					<ArrowDown class="absolute shrink-0 grow-0 duration-100 w-3.5 right-3" :class="{'rotate-180': props.ui.expanded.v}" />
 				</div>
 			</InputWrapper>
 
 			<!-- Dropdown content -->
 			<div ref="dropdownOptions">
 				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
+					<ui-dropdown-searchfilter  v-if="props.ui.searchable.v" @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
 					<ui-dropdown-item
-						v-for="(dropdownItem, index) in props.ui.items.v"
+						v-for="(dropdownItem, index) in itemsFiltered"
 						:key="index"
 						:ui="dropdownItem"
 						:multiselect="props.ui.multiselect.v"
