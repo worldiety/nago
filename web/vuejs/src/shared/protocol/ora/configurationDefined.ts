@@ -2,9 +2,9 @@
 
 
 import type { EventType } from '@/shared/protocol/ora/eventType';
-import type { Themes } from '@/shared/protocol/ora/themes';
-import type { Resources } from '@/shared/protocol/ora/resources';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
+import type { Resources } from '@/shared/protocol/ora/resources';
+import type { Themes } from '@/shared/protocol/ora/themes';
 
 // A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
 // According to the locale request, string and svg resources can be localized by the backend.

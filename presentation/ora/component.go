@@ -95,6 +95,11 @@ func init() {
 	}
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type _component interface {
+	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Grid | GridCell
+}
+
 type component struct {
 }
 

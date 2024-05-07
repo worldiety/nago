@@ -2,9 +2,9 @@
 
 
 import type { Component } from '@/shared/protocol/ora/component';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Property } from '@/shared/protocol/ora/property';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export class Page {
     private _id : Ptr;

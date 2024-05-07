@@ -2,8 +2,8 @@
 
 
 import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
-import type { RequestId } from '@/shared/protocol/ora/requestId';
 import type { EventType } from '@/shared/protocol/ora/eventType';
+import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 // NewComponentRequested allocates an addressable component explicitely in the backend within its channel scope.
 // Adressable components are like pages in a classic server side rendering or like routing targets in single page apps.

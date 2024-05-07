@@ -3,8 +3,8 @@
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Property } from '@/shared/protocol/ora/property';
-import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 
 export class Stepper {
     private _id : Ptr;

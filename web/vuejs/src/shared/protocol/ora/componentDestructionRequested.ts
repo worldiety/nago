@@ -2,8 +2,8 @@
 
 
 import type { EventType } from '@/shared/protocol/ora/eventType';
-import type { RequestId } from '@/shared/protocol/ora/requestId';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export class ComponentDestructionRequested {
     private _type : EventType;
