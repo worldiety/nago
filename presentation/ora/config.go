@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ColorScheme string
 
 const (
@@ -16,16 +17,13 @@ const (
 // A backend developer has potentially defined a lot of configuration details about the application.
 // For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
 // It is expected, that this only happens once during initialization of the frontend process.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ConfigurationRequested struct {
 	Type           EventType   `json:"type" value:"ConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
 	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
 	RequestId      RequestId   `json:"r" `
 	event
-	_ struct{} `ConfigurationRequested is issued by the frontend to get the applications general configuration.
-A backend developer has potentially defined a lot of configuration details about the application.
-For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
-It is expected, that this only happens once during initialization of the frontend process.`
 }
 
 // A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
@@ -34,6 +32,7 @@ It is expected, that this only happens once during initialization of the fronten
 //
 // It looks quite obfuscated, however this minified version is intentional, because it may succeed each transaction call.
 // A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ConfigurationDefined struct {
 	Type             EventType `json:"type" value:"ConfigurationDefined"`
 	ApplicationName  string    `json:"applicationName"`
@@ -43,14 +42,9 @@ type ConfigurationDefined struct {
 	Resources        Resources `json:"resources"`
 	RequestId        RequestId `json:"r"`
 	event
-	_ struct{} `A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
-According to the locale request, string and svg resources can be localized by the backend. The returned locale is the actually picked locale from the requested locale query string.
-
-It looks quite obfuscated, however this minified version is intentional, because it may succeed each transaction call.
-A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
-`
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Themes struct {
 	Dark         Theme `json:"dark"`
 	Light        Theme `json:"light"`
@@ -60,6 +54,7 @@ type Themes struct {
 	Tritanopie   Theme `json:"tritanopie"`
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Theme struct {
 	Colors Colors `json:"colors"`
 }
@@ -77,6 +72,7 @@ func DefaultTheme() Theme {
 	}
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Colors struct {
 	Black         Color `json:"black"`
 	White         Color `json:"white"`
@@ -86,6 +82,7 @@ type Colors struct {
 	AlertPositive Color `json:"alertPositive"`
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Color struct {
 	R, G, B, A uint8
 }
@@ -114,6 +111,7 @@ func RGB(color uint32) Color {
 	return Color{r, g, b, a}
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Resources struct {
 	SVG map[RIDSVG]SVG `json:"svgs"`
 }

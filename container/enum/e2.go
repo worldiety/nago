@@ -8,6 +8,7 @@ import (
 	"reflect"
 )
 
+// deprecated: use github.com/worldiety/macro
 type E2[T1 any, T2 any] struct {
 	ordinal int
 	v       any

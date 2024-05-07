@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// deprecated: use github.com/worldiety/macro
 // Error as a wrapper shall be used whenever there is a clear domain error, otherwise it can be used
 // safely anywhere where an unspecified Go error is used. If there is no error, return just nil as always.
 type Error[T any] interface {

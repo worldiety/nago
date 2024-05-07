@@ -3,6 +3,7 @@ package ora
 import "reflect"
 
 // Ptr is a unique identifier or address for a specific allocated property.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Ptr int64
 
 func (p Ptr) Nil() bool {
@@ -12,12 +13,14 @@ func (p Ptr) Nil() bool {
 // Property represents the current value of an allocated property which is uniquely addressed through a pointer
 // within the backend process.
 // Note, that these pointers are not real pointers and only unique and valid for a specific scope.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Property[T any] struct {
 	Ptr   Ptr `json:"p"`
 	Value T   `json:"v"`
 }
 
 // ComponentType defines the defined set of components.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ComponentType string
 
 const (
@@ -94,6 +97,11 @@ func init() {
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 	}
+}
+
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type _component interface {
+	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Grid | GridCell
 }
 
 type component struct {
