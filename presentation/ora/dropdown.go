@@ -12,5 +12,6 @@ type Dropdown struct {
 	Hint            Property[string]         `json:"hint"`
 	Error           Property[string]         `json:"error"`
 	OnClicked       Property[Ptr]            `json:"onClicked"`
+	Searchable      Property[bool]           `json:"searchable"`
 	component
 }

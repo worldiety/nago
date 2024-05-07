@@ -77,7 +77,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {
-	@apply border border-black rounded-md px-4;
+	@apply border border-black rounded-md px-3;
   @apply dark:border-white;
 }
 

@@ -16,6 +16,7 @@ type Dropdown struct {
 	hint            String
 	error           String
 	onClicked       *Func
+	searchable      Bool
 	properties      []core.Property
 }
 
@@ -31,9 +32,10 @@ func NewDropdown(with func(dropdown *Dropdown)) *Dropdown {
 		hint:            NewShared[string]("hint"),
 		error:           NewShared[string]("error"),
 		onClicked:       NewFunc("onClicked"),
+		searchable:      NewShared[bool]("searchable"),
 	}
 
-	c.properties = []core.Property{c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onClicked}
+	c.properties = []core.Property{c.selectedIndices, c.items, c.multiselect, c.expanded, c.disabled, c.label, c.hint, c.error, c.onClicked, c.searchable}
 	if with != nil {
 		with(c)
 	}
@@ -115,6 +117,8 @@ func (c *Dropdown) OnClicked() *Func {
 	return c.onClicked
 }
 
+func (c *Dropdown) Searchable() Bool { return c.searchable }
+
 func (c *Dropdown) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -149,6 +153,7 @@ func (c *Dropdown) render() ora.Dropdown {
 		Hint:            c.hint.render(),
 		Error:           c.error.render(),
 		OnClicked:       renderFunc(c.onClicked),
+		Searchable:      c.searchable.render(),
 	}
 }
 
