@@ -1,5 +1,7 @@
 package ora
 
+// Button represents an user interface element which spans a visible area to click or tap from the user.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Button struct {
 	Ptr      Ptr              `json:"id"`
 	Type     ComponentType    `json:"type" value:"Button"`
@@ -10,5 +12,4 @@ type Button struct {
 	Disabled Property[bool]   `json:"disabled"`
 	Action   Property[Ptr]    `json:"action"`
 	component
-	_ struct{} `description:"A Button is the only button"`
 }

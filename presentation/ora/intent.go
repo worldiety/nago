@@ -1,5 +1,6 @@
 package ora
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Intent string
 
 const (
