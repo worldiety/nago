@@ -4,7 +4,7 @@ import Calendar from '@/assets/svg/calendar.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import { useI18n } from 'vue-i18n';
-import type {DatePicker} from "@/shared/protocol/gen/datePicker";
+import type {DatePicker} from "@/shared/protocol/ora/datePicker";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

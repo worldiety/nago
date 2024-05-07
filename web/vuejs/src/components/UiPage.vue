@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {Page} from "@/shared/protocol/gen/page";
+import {Page} from "@/shared/protocol/ora/page";
 import GenericUi from "@/components/UiGeneric.vue";
 
 

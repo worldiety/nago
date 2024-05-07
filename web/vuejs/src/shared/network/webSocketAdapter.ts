@@ -1,19 +1,19 @@
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import type { Ping } from '@/shared/protocol/gen/ping';
-import type { Property } from '@/shared/protocol/property';
-import type { Pointer } from '@/shared/protocol/pointer';
-import type { Event } from '@/shared/protocol/gen/event';
-import type { ComponentInvalidated } from '@/shared/protocol/gen/componentInvalidated';
-import type { ConfigurationDefined } from '@/shared/protocol/gen/configurationDefined';
-import type { ConfigurationRequested } from '@/shared/protocol/gen/configurationRequested';
-import type { Acknowledged } from '@/shared/protocol/gen/acknowledged';
-import type { EventsAggregated } from '@/shared/protocol/gen/eventsAggregated';
-import type { SetPropertyValueRequested } from '@/shared/protocol/gen/setPropertyValueRequested';
-import type { FunctionCallRequested } from '@/shared/protocol/gen/functionCallRequested';
-import type { NewComponentRequested } from '@/shared/protocol/gen/newComponentRequested';
-import type { ComponentDestructionRequested } from '@/shared/protocol/gen/componentDestructionRequested';
-import type { ColorScheme } from '@/shared/protocol/colorScheme';
-import type { ComponentFactoryId } from '@/shared/protocol/componentFactoryId';
+import type { Ping } from '@/shared/protocol/ora/ping';
+import type { Property } from '@/shared/protocol/ora/property';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { Event } from '@/shared/protocol/ora/event';
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ConfigurationDefined } from '@/shared/protocol/ora/configurationDefined';
+import type { ConfigurationRequested } from '@/shared/protocol/ora/configurationRequested';
+import type { Acknowledged } from '@/shared/protocol/ora/acknowledged';
+import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
+import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
+import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
+import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
+import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
+import type { ColorScheme } from '@/shared/protocol/ora/colorScheme';
+import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
 import { v4 as uuidv4 } from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
 import { EventType } from '@/shared/eventbus/eventType';
@@ -113,7 +113,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		}, 2000);
 	}
 
-	async executeFunctions(...functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+	async executeFunctions(...functions: Property<Ptr>[]): Promise<ComponentInvalidated> {
 		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);
 	}
 
@@ -121,7 +121,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		return this.send(properties).then((event) => event as ComponentInvalidated);
 	}
 
-	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Pointer>[]): Promise<ComponentInvalidated> {
+	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Ptr>[]): Promise<ComponentInvalidated> {
 		return this.send(properties, functions).then((event) => event as ComponentInvalidated);
 	}
 
@@ -146,7 +146,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		).then((event) => event as ComponentInvalidated);
 	}
 
-	async destroyComponent(ptr: Pointer): Promise<Acknowledged> {
+	async destroyComponent(ptr: Ptr): Promise<Acknowledged> {
 		const componentDestructionRequested: ComponentDestructionRequested = {
 			type: 'ComponentDestructionRequested',
 			r: this.nextRequestId(), // TODO: Redundant, remove
@@ -179,7 +179,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	private send(
 		properties?: Property<unknown>[],
-		functions?: Property<Pointer>[],
+		functions?: Property<Ptr>[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
@@ -216,7 +216,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private createCallBatch(
 		requestId: number,
 		properties?: Property<unknown>[],
-		functions?: Property<Pointer>[],
+		functions?: Property<Ptr>[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
@@ -240,8 +240,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			});
 
 		functions
-			?.filter((propertyFunc: Property<Pointer>) => propertyFunc.p !== 0 && propertyFunc.v !== 0)
-			.forEach((propertyFunc: Property<Pointer>) => {
+			?.filter((propertyFunc: Property<Ptr>) => propertyFunc.p !== 0 && propertyFunc.v !== 0)
+			.forEach((propertyFunc: Property<Ptr>) => {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',
 					p: propertyFunc.v,

@@ -3,7 +3,7 @@ import {computed, markRaw} from 'vue';
 import {fetchUpload} from "@/api/upload/uploadRepository";
 import {ApplicationError, useErrorHandling} from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
-import {FileField} from "@/shared/protocol/gen/fileField";
+import {FileField} from "@/shared/protocol/ora/fileField";
 
 const errorHandler = useErrorHandling();
 

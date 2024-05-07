@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Image} from "@/shared/protocol/gen/image";
+import type {Image} from "@/shared/protocol/ora/image";
 
 const props = defineProps<{
 	ui: Image;

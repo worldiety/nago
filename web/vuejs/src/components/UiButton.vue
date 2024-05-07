@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import type { Button } from '@/shared/protocol/gen/button';
+import type { Button } from '@/shared/protocol/ora/button';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

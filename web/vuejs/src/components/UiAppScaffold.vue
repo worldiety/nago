@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import type {Scaffold} from "@/shared/protocol/gen/scaffold";
+import type {Scaffold} from "@/shared/protocol/ora/scaffold";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
