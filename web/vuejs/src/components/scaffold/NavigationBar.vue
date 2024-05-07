@@ -44,11 +44,11 @@
 							class="font-medium"
 							:class="{
 								'mb-4': subMenuEntry.menu.v?.length > 0,
-								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v,
+								'cursor-pointer hover:underline focus-visible:underline': isClickableMenuEntry(subMenuEntry),
 							}"
-							:tabindex="subMenuEntry.action.v ? '0' : '-1'"
-							@click="menuEntryClicked(subMenuEntry.action)"
-							@keydown.enter="menuEntryClicked(subMenuEntry.action)"
+							:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
+							@click="menuEntryClicked(subMenuEntry)"
+							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
 							{{ subMenuEntry.title.v }}
 						</p>
@@ -58,8 +58,8 @@
 							ref="subSubMenuEntryElements"
 							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
-							@click="menuEntryClicked(subSubMenuEntry.action)"
-							@keydown.enter="menuEntryClicked(subSubMenuEntry.action)"
+							@click="menuEntryClicked(subSubMenuEntry)"
+							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
 							{{ subSubMenuEntry.title.v }}
 						</p>
@@ -113,12 +113,25 @@ const subMenuEntries = computed((): MenuEntry[] => {
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
 });
 
+function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
+	return !!menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
+}
+
 function handleMouseMove(event: MouseEvent): void {
 	const threshold = subMenu.value?.getBoundingClientRect().bottom
 		?? navigationBarBorder.value?.getBoundingClientRect().bottom
 		?? 0;
 	if (event.y > threshold) {
-		// TODO: Collapse sub menu
+		// Collapse the sub menu when threshold is passed
+		const updatedExpandedProperties = props.ui.menu.v
+			?.filter((menuEntry) => menuEntry.expanded.v)
+			.map((menuEntry) => ({
+				...menuEntry.expanded,
+				v: false,
+			}));
+		if (updatedExpandedProperties.length > 0) {
+			serviceAdapter.setProperties(...updatedExpandedProperties);
+		}
 	}
 }
 
@@ -136,9 +149,9 @@ function updateSubMenuTriangleLeftOffset(): void {
 	subMenuTriangleLeftOffset.value = activeMenuEntryElement.getBoundingClientRect().x + activeMenuEntryElement.offsetWidth / 2 - subMenuTriangle.value.offsetWidth / 2;
 }
 
-function menuEntryClicked(menuEntryAction: Property<Pointer>): void {
-	if (menuEntryAction.v) {
-		serviceAdapter.executeFunctions(menuEntryAction);
+function menuEntryClicked(menuEntry: MenuEntry): void {
+	if (isClickableMenuEntry(menuEntry)) {
+		serviceAdapter.executeFunctions(menuEntry.action);
 	}
 }
 
