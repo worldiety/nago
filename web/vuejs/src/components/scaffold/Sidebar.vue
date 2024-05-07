@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
+import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import TriangleDown from '@/assets/svg/triangleDown.svg';

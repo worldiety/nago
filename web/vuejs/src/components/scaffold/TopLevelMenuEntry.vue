@@ -17,8 +17,14 @@
 			class="flex justify-center items-center rounded-full py-2 w-16"
 			:class="{'bg-disabled-background bg-opacity-25': ui.expanded.v, 'bg-opacity-35': active}"
 		>
-			<div v-if="ui.expanded.v" class="h-4 *:h-full" v-html="ui.iconActive.v"></div>
-			<div v-else class="h-4 *:h-full" v-html="ui.icon.v"></div>
+			<div class="relative w-4 h-full">
+				<div v-if="ui.expanded.v" class="*:h-full" v-html="ui.iconActive.v"></div>
+				<div v-else class="*:h-full" v-html="ui.icon.v"></div>
+				<!-- Optional red badge -->
+				<div v-if="ui.badge.v" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-error">
+					<p class="text-xs text-white">1</p>
+				</div>
+			</div>
 		</div>
 		<p class="menu-entry-title text-sm text-center font-medium select-none">{{ ui.title.v }}</p>
 	</div>

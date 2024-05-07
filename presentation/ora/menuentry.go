@@ -8,6 +8,7 @@ type MenuEntry struct {
 	Title      Property[string]      `json:"title"`
 	Action     Property[Ptr]         `json:"action"`
 	Menu       Property[[]MenuEntry] `json:"menu"`
+	Badge      Property[string]      `json:"badge"`
 	Expanded   Property[bool]        `json:"expanded"`
 	OnFocus    Property[Ptr]         `json:"onFocus"`
 	component

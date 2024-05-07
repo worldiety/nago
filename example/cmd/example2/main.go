@@ -146,13 +146,14 @@ func main() {
 							var menuEntryB *ui.MenuEntry
 							var menuEntryC *ui.MenuEntry
 
-							navigationComponent.Alignment().Set(ora.AlignmentLeft)
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntryA = menuEntry
 								menuEntry.Title().Set("Menüpunkt A")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Badge().Set("2")
 								menuEntry.Action().Set(func() {
 									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
 								})

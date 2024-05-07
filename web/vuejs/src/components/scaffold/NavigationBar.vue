@@ -72,13 +72,11 @@
 
 <script setup lang="ts">
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
-import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
+import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Property } from '@/shared/protocol/property';
-import type { Pointer } from '@/shared/protocol/pointer';
 
 const props = defineProps<{
 	ui: NavigationComponent;

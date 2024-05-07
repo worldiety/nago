@@ -12,6 +12,7 @@ type MenuEntry struct {
 	title      String
 	action     *Func
 	menu       *SharedList[*MenuEntry]
+	badge      String
 	expanded   Bool
 	onFocus    *Func
 	properties []core.Property
@@ -25,11 +26,12 @@ func NewMenuEntry(with func(menuEntry *MenuEntry)) *MenuEntry {
 		title:      NewShared[string]("title"),
 		action:     NewFunc("action"),
 		menu:       NewSharedList[*MenuEntry]("menu"),
+		badge:      NewShared[string]("badge"),
 		expanded:   NewShared[bool]("expanded"),
 		onFocus:    NewFunc("onFocus"),
 	}
 
-	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.action, m.menu, m.expanded, m.onFocus}
+	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.action, m.menu, m.badge, m.expanded, m.onFocus}
 	if with != nil {
 		with(m)
 	}
@@ -68,6 +70,10 @@ func (m *MenuEntry) Menu() *SharedList[*MenuEntry] {
 	return m.menu
 }
 
+func (m *MenuEntry) Badge() String {
+	return m.badge
+}
+
 func (m *MenuEntry) Expanded() Bool {
 	return m.expanded
 }
@@ -89,6 +95,7 @@ func (m *MenuEntry) renderMenuEntry() ora.MenuEntry {
 		Icon:       m.icon.render(),
 		IconActive: m.iconActive.render(),
 		Menu:       renderSharedListMenuEntries(m.menu),
+		Badge:      m.badge.render(),
 		Expanded:   m.expanded.render(),
 		OnFocus:    renderFunc(m.onFocus),
 	}
