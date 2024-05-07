@@ -54,8 +54,10 @@ const hasSubMenuEntries = computed((): boolean => {
 
 function handleClick(): void {
 	if (props.ui.action.v && !hasSubMenuEntries.value) {
+		// If the menu entry has an action and no sub menu entries, execute the action
 		serviceAdapter.executeFunctions(props.ui.action);
 	} else {
+		// Else expand the menu entry
 		expandMenuEntry();
 	}
 }
@@ -63,6 +65,7 @@ function handleClick(): void {
 function handleMouseLeave(): void {
 	active.value = false;
 	if (!hasSubMenuEntries.value) {
+		// Collapse the menu entry if it has no sub menu entries
 		serviceAdapter.setProperties({
 			...props.ui.expanded,
 			v: false,

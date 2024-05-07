@@ -5,6 +5,7 @@
 			<div class="website-content flex justify-between items-center h-full">
 				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
         <div class="flex justify-end items-center gap-x-6 h-full">
+					<!-- Top level menu entries -->
 					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="h-full" :data-index="index">
 						<MenuEntryComponent
 							:ui="menuEntry"
@@ -38,6 +39,7 @@
 				class="relative bg-white dark:bg-darkmode-gray rounded-b-2xl shadow-md pt-8 pb-10 z-0"
 			>
 				<div class="website-content flex justify-center items-start gap-x-8">
+					<!-- Sub menu entries -->
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
 						<p
 							ref="subMenuEntryElements"
@@ -52,6 +54,7 @@
 						>
 							{{ subMenuEntry.title.v }}
 						</p>
+						<!-- Sub sub menu entries -->
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
@@ -113,6 +116,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 });
 
 function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
+	// Clickable, if it has an action and no sub menu entries
 	return !!menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
 }
 

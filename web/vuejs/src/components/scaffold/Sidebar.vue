@@ -8,13 +8,12 @@
 		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full pt-6 px-4 pb-7 z-10">
 			<div class="flex flex-col items-center justify-start gap-y-4">
 				<div class="*:w-full" v-html="ui.logo.v"></div>
+				<!-- Top level menu entries -->
 				<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements">
 					<MenuEntryComponent
 						:ui="menuEntry"
 						:menu-entry-index="index"
 						:mode="'sidebar'"
-						@expand-menu-entry="expandMenuEntry"
-						@collapse-menu-entry="collapseMenuEntry"
 						@focus-first-linked-sub-menu-entry="focusFirstLinkedSubMenuEntry"
 					/>
 				</div>
@@ -29,6 +28,7 @@
 				ref="subMenu"
 				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-white dark:bg-darkmode-gray border-l border-l-disabled-background dark:border-l-disabled-text rounded-r-2xl shadow-md w-72 py-8 px-2 z-0"
 			>
+				<!-- Sub menu entries -->
 				<div
 					v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries"
 					:key="subMenuEntryIndex"
@@ -53,6 +53,7 @@
 						v-if="subMenuEntry.expanded.v && subMenuEntry.menu.v?.length > 0"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
+						<!-- Sub sub menu entries -->
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
@@ -90,8 +91,6 @@ const sidebar = ref<HTMLElement|undefined>();
 const subMenu = ref<HTMLElement|undefined>();
 const subMenuEntryElements = ref<HTMLElement[]>([]);
 const subSubMenuEntryElements = ref<HTMLElement[]>([]);
-const activeMenuEntry = ref<MenuEntry|null>(null);
-const activeMenuEntryIndex = ref<number|null>(null);
 
 onMounted(() => {
 	document.addEventListener('mousemove', handleMouseMove);
@@ -108,6 +107,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 });
 
 function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
+	// Clickable, if it has an action or sub menu entries
 	return !!menuEntry.action.v || menuEntry.menu.v && menuEntry.menu.v.length > 0;
 }
 
@@ -127,19 +127,6 @@ function handleMouseMove(event: MouseEvent): void {
 			serviceAdapter.setProperties(...updatedExpandedProperties);
 		}
 	}
-}
-
-function expandMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
-	setActiveMenuEntry(menuEntry, menuEntryIndex);
-}
-
-function collapseMenuEntry(): void {
-	setActiveMenuEntry(null, null);
-}
-
-function setActiveMenuEntry(menuEntry: MenuEntry|null, menuEntryIndex: number|null): void {
-	activeMenuEntry.value = menuEntry;
-	activeMenuEntryIndex.value = menuEntryIndex;
 }
 
 function focusFirstLinkedSubMenuEntry(): void {
