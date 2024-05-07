@@ -9,7 +9,7 @@
 		@keydown.down.prevent="focusFirstLinkedSubMenuEntry('down')"
 		@keydown.right.prevent="focusFirstLinkedSubMenuEntry('right')"
 		@mouseenter="expandMenuEntry"
-		@mouseleave="active = false"
+		@mouseleave="handleMouseLeave"
 		@mouseup="active = false"
 		@focus="expandMenuEntry"
 	>
@@ -51,6 +51,16 @@ function handleClick(): void {
 		serviceAdapter.executeFunctions(props.ui.action);
 	} else {
 		expandMenuEntry();
+	}
+}
+
+function handleMouseLeave(): void {
+	active.value = false;
+	if (!hasSubMenuEntries.value) {
+		serviceAdapter.setProperties({
+			...props.ui.expanded,
+			v: false,
+		});
 	}
 }
 

@@ -1,5 +1,6 @@
 <template>
 	<nav
+		ref="sidebar"
 		class="fixed top-0 left-0 bottom-0 text-black dark:text-white h-full w-32 z-30"
 		aria-label="Sidebar"
 	>
@@ -25,21 +26,22 @@
 		<Transition name="slide">
 			<div
 				v-if="subMenuEntries.length > 0"
+				ref="subMenu"
 				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-white dark:bg-darkmode-gray border-l border-l-disabled-background dark:border-l-disabled-text rounded-r-2xl shadow-md w-72 py-8 px-4 z-0"
 			>
 				<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex" class="flex flex-col justify-start gap-y-2">
 					<div
 						ref="subMenuEntryElements"
 						class="flex justify-between items-center hover:bg-disabled-background rounded-full py-2 px-4"
-						:class="{'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v}"
-						:tabindex="subMenuEntry.action.v ? '0' : '-1'"
+						:class="{'cursor-pointer hover:underline focus-visible:underline': isClickableMenuEntry(subMenuEntry)}"
+						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
 					>
 						<p class="font-medium">{{ subMenuEntry.title.v }}</p>
 						<TriangleDown
 							v-if="subMenuEntry.menu.v?.length > 0"
-							class="h-2.5"
+							class="duration-150 h-2.5"
 							:class="{'rotate-180': subMenuEntry.expanded.v}"
 						/>
 					</div>
@@ -67,7 +69,7 @@
 import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/MenuEntryComponent.vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
@@ -77,16 +79,48 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+const sidebar = ref<HTMLElement|undefined>();
+const subMenu = ref<HTMLElement|undefined>();
 const subMenuEntryElements = ref<HTMLElement[]>([]);
 const subSubMenuEntryElements = ref<HTMLElement[]>([]);
 const activeMenuEntry = ref<MenuEntry|null>(null);
 const activeMenuEntryIndex = ref<number|null>(null);
+
+onMounted(() => {
+	document.addEventListener('mousemove', handleMouseMove);
+});
+
+onUnmounted(() => {
+	document.removeEventListener('mousemove', handleMouseMove);
+});
 
 const subMenuEntries = computed((): MenuEntry[] => {
 	return props.ui.menu.v
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
 });
+
+function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
+	return !!menuEntry.action.v || menuEntry.menu.v && menuEntry.menu.v.length > 0;
+}
+
+function handleMouseMove(event: MouseEvent): void {
+	const threshold = subMenu.value?.getBoundingClientRect().right
+		?? sidebar.value?.getBoundingClientRect().right
+		?? 0;
+	if (event.x > threshold) {
+		// Collapse the sub menu when threshold is passed
+		const updatedExpandedProperties = props.ui.menu.v
+			?.filter((menuEntry) => menuEntry.expanded.v)
+			.map((menuEntry) => ({
+				...menuEntry.expanded,
+				v: false,
+			}));
+		if (updatedExpandedProperties.length > 0) {
+			serviceAdapter.setProperties(...updatedExpandedProperties);
+		}
+	}
+}
 
 function expandMenuEntry(menuEntry: MenuEntry, menuEntryIndex: number): void {
 	setActiveMenuEntry(menuEntry, menuEntryIndex);
@@ -109,8 +143,15 @@ function focusFirstLinkedSubMenuEntry(): void {
 }
 
 function menuEntryClicked(menuEntry: MenuEntry): void {
-	if (menuEntry.action.v) {
-		serviceAdapter.executeFunctions(menuEntry.action);
+	if (isClickableMenuEntry(menuEntry)) {
+		if (menuEntry.menu.v && menuEntry.menu.v.length > 0) {
+			serviceAdapter.setProperties({
+				...menuEntry.expanded,
+				v: !menuEntry.expanded.v,
+			});
+		} else if (menuEntry.action.v) {
+			serviceAdapter.executeFunctions(menuEntry.action);
+		}
 	}
 }
 </script>

@@ -194,6 +194,15 @@ func main() {
 										subSubEntry.Title().Set("Subsubpunkt II")
 									}))
 								}))
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 3")
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt III")
+										subSubEntry.Action().Set(func() {
+											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_III"})
+										})
+									}))
+								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntryC = menuEntry
