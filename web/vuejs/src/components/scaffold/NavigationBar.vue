@@ -1,11 +1,11 @@
 <template>
 	<nav class="fixed top-0 left-0 right-0 text-black dark:text-white z-30">
 		<!-- Top bar -->
-		<div class="relative bg-white dark:bg-darkmode-gray h-20 py-2 z-20">
+		<div class="relative bg-white dark:bg-darkmode-gray h-24 py-5 z-20">
 			<div class="website-content flex justify-between items-center h-full">
 				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
-        <div class="flex justify-end items-center gap-x-8">
-					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" :data-index="index">
+        <div class="flex justify-end items-center gap-x-6 h-full">
+					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="h-full" :data-index="index">
 						<MenuEntryComponent
 							:ui="menuEntry"
 							:menu-entry-index="index"

@@ -5,7 +5,7 @@
 		aria-label="Sidebar"
 	>
 		<!-- Sidebar -->
-		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full py-8 px-2 z-10">
+		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full py-6 px-4 z-10">
 			<div class="flex flex-col items-center justify-start gap-y-4">
 				<div class="*:w-full mb-4" v-html="ui.logo.v"></div>
 				<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements">

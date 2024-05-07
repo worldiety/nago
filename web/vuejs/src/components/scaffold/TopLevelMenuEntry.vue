@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex flex-col justify-center items-center cursor-pointer"
+		class="flex flex-col justify-between items-center cursor-pointer h-full"
 		:class="{'menu-entry-linked': ui.action.v && !hasSubMenuEntries}"
 		tabindex="0"
 		@mousedown="active = true"
@@ -14,10 +14,10 @@
 		@focus="expandMenuEntry"
 	>
 		<div
-			class="flex justify-center items-center rounded-full py-2 w-16"
+			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{'bg-disabled-background bg-opacity-25': ui.expanded.v, 'bg-opacity-35': active}"
 		>
-			<div class="relative w-4 h-full">
+			<div class="relative w-4">
 				<div v-if="ui.expanded.v" class="*:h-full" v-html="ui.iconActive.v"></div>
 				<div v-else class="*:h-full" v-html="ui.icon.v"></div>
 				<!-- Optional red badge -->
