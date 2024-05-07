@@ -116,6 +116,18 @@ func init() {
 				},
 			},
 		},
+		reflect.TypeOf(ora.Property[[]string]{}): {
+			Name:    "Property",
+			Package: prefix + "property",
+			TypeParams: []*TSTypeDef{
+				{
+					Name: "[]",
+					TypeParams: []*TSTypeDef{
+						{Name: "string"},
+					},
+				},
+			},
+		},
 		reflect.TypeOf(ora.Property[[]ora.DropdownItem]{}): {
 			Name:    "Property",
 			Package: prefix + "property",

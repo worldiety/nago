@@ -27,6 +27,7 @@ import type { WebView } from '@/shared/protocol/gen/webView';
 import type { TextArea } from '@/shared/protocol/gen/textArea';
 import type { FileField } from '@/shared/protocol/gen/fileField';
 import type { Image } from '@/shared/protocol/gen/image';
+import type { Breadcrumbs } from '@/shared/protocol/gen/breadcrumbs';
 import type { Grid } from '@/shared/protocol/gen/grid';
 import type { GridCell } from '@/shared/protocol/gen/gridCell';
 
@@ -59,6 +60,7 @@ export type Component =
     | TextArea
     | FileField
     | Image
+    | Breadcrumbs
     | Grid
     | GridCell
     

@@ -6,10 +6,6 @@ import type { SVG } from '@/shared/protocol/svg';
 import type { Intent } from '@/shared/protocol/intent';
 
 
-
-/**
-* description:"A Button is the only button"
-*/
 export interface Button {
     id: Pointer;
     type: 'Button';

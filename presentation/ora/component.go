@@ -53,6 +53,7 @@ const (
 	TextAreaT      ComponentType = "TextArea"
 	FileFieldT     ComponentType = "FileField"
 	ImageT         ComponentType = "Image"
+	BreadcrumbsT   ComponentType = "Breadcrumbs"
 )
 
 type Component interface {
@@ -90,6 +91,7 @@ func init() {
 		reflect.TypeOf(TextArea{}),
 		reflect.TypeOf(FileField{}),
 		reflect.TypeOf(Image{}),
+		reflect.TypeOf(Breadcrumbs{}),
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 	}
@@ -97,7 +99,7 @@ func init() {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Grid | GridCell
+	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | Grid | GridCell
 }
 
 type component struct {
