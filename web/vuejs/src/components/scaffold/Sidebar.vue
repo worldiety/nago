@@ -32,7 +32,7 @@
 				<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex" class="flex flex-col justify-start gap-y-2">
 					<div
 						ref="subMenuEntryElements"
-						class="flex justify-between items-center hover:bg-disabled-background rounded-full py-2 px-4"
+						class="flex justify-between items-center hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
 						:class="{'cursor-pointer hover:underline focus-visible:underline': isClickableMenuEntry(subMenuEntry)}"
 						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
 						@click="menuEntryClicked(subMenuEntry)"
@@ -50,7 +50,7 @@
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
-							class="hover:bg-disabled-background rounded-full py-2 px-4"
+							class="hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
 							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
