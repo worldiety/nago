@@ -5,9 +5,9 @@
 		aria-label="Sidebar"
 	>
 		<!-- Sidebar -->
-		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full py-6 px-4 z-10">
+		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full pt-6 px-4 pb-7 z-10">
 			<div class="flex flex-col items-center justify-start gap-y-4">
-				<div class="*:w-full mb-4" v-html="ui.logo.v"></div>
+				<div class="*:w-full" v-html="ui.logo.v"></div>
 				<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements">
 					<MenuEntryComponent
 						:ui="menuEntry"
@@ -27,9 +27,13 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-white dark:bg-darkmode-gray border-l border-l-disabled-background dark:border-l-disabled-text rounded-r-2xl shadow-md w-72 py-8 px-4 z-0"
+				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-white dark:bg-darkmode-gray border-l border-l-disabled-background dark:border-l-disabled-text rounded-r-2xl shadow-md w-72 py-8 px-2 z-0"
 			>
-				<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex" class="flex flex-col justify-start gap-y-2">
+				<div
+					v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries"
+					:key="subMenuEntryIndex"
+					class="flex flex-col justify-start gap-y-2"
+				>
 					<div
 						ref="subMenuEntryElements"
 						class="flex justify-between items-center hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
@@ -41,11 +45,14 @@
 						<p class="font-medium">{{ subMenuEntry.title.v }}</p>
 						<TriangleDown
 							v-if="subMenuEntry.menu.v?.length > 0"
-							class="duration-150 h-2.5"
+							class="duration-150 w-2 -mr-1"
 							:class="{'rotate-180': subMenuEntry.expanded.v}"
 						/>
 					</div>
-					<div v-if="subMenuEntry.expanded.v && subMenuEntry.menu.v?.length > 0" class="flex flex-col justify-start gap-y-2 pl-4">
+					<div
+						v-if="subMenuEntry.expanded.v && subMenuEntry.menu.v?.length > 0"
+						class="flex flex-col justify-start gap-y-2 pl-4"
+					>
 						<p
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"

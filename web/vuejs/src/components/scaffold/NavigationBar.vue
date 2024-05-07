@@ -56,6 +56,7 @@
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
+							class="sub-sub-menu-entry"
 							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
@@ -164,6 +165,10 @@ function focusFirstLinkedSubMenuEntry(): void {
 <style scoped>
 .sub-menu-triangle {
 	left: var(--sub-menu-triangle-left-offset);
+}
+
+.sub-sub-menu-entry:not(:last-child) {
+	@apply mb-2;
 }
 
 /* Vue transitions: https://vuejs.org/guide/built-ins/transition#css-transitions */
