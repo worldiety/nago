@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import type {DropdownItem} from "@/shared/protocol/ora/dropdownItem";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

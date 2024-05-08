@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Divider} from "@/shared/protocol/gen/divider";
+import {Divider} from "@/shared/protocol/ora/divider";
 
 const props = defineProps<{
 	ui: Divider;

@@ -84,7 +84,10 @@ type Colors struct {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Color struct {
-	R, G, B, A uint8
+	R uint8 `json:"r"`
+	G uint8 `json:"g"`
+	B uint8 `json:"b"`
+	A uint8 `json:"a"`
 }
 
 func (c Color) MarshalJSON() ([]byte, error) {

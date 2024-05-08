@@ -23,6 +23,7 @@ import type { Component } from 'vue';
 import UiWebView from "@/components/UiWebView.vue";
 import UiPage from "@/components/UiPage.vue";
 import UiPasswordField from '@/components/UiPasswordField.vue';
+import UiBreadcrumbs from '@/components/breadcrumbs/UiBreadcrumbs.vue';
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -50,5 +51,6 @@ uiComponentsMap.set('NumberField', UiNumberField);
 uiComponentsMap.set('WebView', UiWebView);
 uiComponentsMap.set('Page',UiPage);
 uiComponentsMap.set('PasswordField',UiPasswordField);
+uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
 
 export default uiComponentsMap;

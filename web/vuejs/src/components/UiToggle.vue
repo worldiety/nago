@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import type {Toggle} from "@/shared/protocol/gen/toggle";
+import type {Toggle} from "@/shared/protocol/ora/toggle";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

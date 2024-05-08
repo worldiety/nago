@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import type {Card} from "@/shared/protocol/gen/card";
+import type {Card} from "@/shared/protocol/ora/card";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

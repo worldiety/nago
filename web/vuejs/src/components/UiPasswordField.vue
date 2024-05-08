@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import HideIcon from '@/assets/svg/hide.svg';
-import type { PasswordField } from '@/shared/protocol/gen/passwordField';
+import type { PasswordField } from '@/shared/protocol/ora/passwordField';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

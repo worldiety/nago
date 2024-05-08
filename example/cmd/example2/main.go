@@ -225,6 +225,26 @@ func main() {
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
 
+							vbox.Append(ui.NewBreadcrumbs(func(breadcrumbs *ui.Breadcrumbs) {
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt A")
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Ich bin ein unnötig langer Breadcrumb-Punkt, der dafür sorgen soll, dass die Breadcrumbs umbrechen")
+									item.Action().Set(func() {
+										println("Breadcrumb item clicked")
+									})
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt C")
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt D")
+								}))
+								breadcrumbs.SelectedItemIndex().Set(1)
+								breadcrumbs.Icon().Set(icon.Dashboard)
+							}))
+
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Value().Set(123)
 								numberField.Simple().Set(true)

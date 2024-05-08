@@ -15,8 +15,11 @@ func (p Ptr) Nil() bool {
 // Note, that these pointers are not real pointers and only unique and valid for a specific scope.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Property[T any] struct {
-	Ptr   Ptr `json:"p"`
-	Value T   `json:"v"`
+	// Ptr is short for "Pointer" and references a property instance within the backend.
+	// Because it is so common, the json field name is just p.
+	Ptr Ptr `json:"p"`
+	// Value contains the actual value specified by the generic type parameter and shortend to v in json.
+	Value T `json:"v"`
 }
 
 // ComponentType defines the defined set of components.
@@ -55,6 +58,8 @@ const (
 	TextAreaT            ComponentType = "TextArea"
 	FileFieldT           ComponentType = "FileField"
 	ImageT               ComponentType = "Image"
+	BreadcrumbsT         ComponentType = "Breadcrumbs"
+	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
 )
 
 type Component interface {
@@ -94,6 +99,8 @@ func init() {
 		reflect.TypeOf(TextArea{}),
 		reflect.TypeOf(FileField{}),
 		reflect.TypeOf(Image{}),
+		reflect.TypeOf(Breadcrumbs{}),
+		reflect.TypeOf(BreadcrumbItem{}),
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 	}
@@ -101,7 +108,7 @@ func init() {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Grid | GridCell
+	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | Grid | GridCell
 }
 
 type component struct {

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import { useErrorHandling } from '@/composables/errorhandling';
-import type { ComponentInvalidated } from "@/shared/protocol/gen/componentInvalidated";
+import type { ComponentInvalidated } from "@/shared/protocol/ora/componentInvalidated";
 import { onUnmounted, ref } from "vue";
-import type { Component } from "@/shared/protocol/gen/component";
+import type { Component } from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
-import type { NavigationForwardToRequested } from "@/shared/protocol/gen/navigationForwardToRequested";
-import type { Event } from '@/shared/protocol/gen/event';
+import type { NavigationForwardToRequested } from "@/shared/protocol/ora/navigationForwardToRequested";
+import type { Event } from '@/shared/protocol/ora/event';
 import { useEventBus } from '@/composables/eventBus';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { EventType } from '@/shared/eventbus/eventType';
-import type { ErrorOccurred } from '@/shared/protocol/gen/errorOccurred';
+import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
 
 enum State {
 	Loading,

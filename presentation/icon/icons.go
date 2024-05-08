@@ -34,3 +34,6 @@ var PackageOutlined ui.SVGSrc
 
 //go:embed package-filled.svg
 var PackageFilled ui.SVGSrc
+
+//go:embed dashboard.svg
+var Dashboard ui.SVGSrc

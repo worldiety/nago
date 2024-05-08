@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {VBox} from "@/shared/protocol/gen/vBox";
+import {VBox} from "@/shared/protocol/ora/vBox";
 
 const props = defineProps<{
 	ui: VBox;

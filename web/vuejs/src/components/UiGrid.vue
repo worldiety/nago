@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import UiGridCell from '@/components/UiGridCell.vue';
 import { gapSize2Tailwind } from '@/shared/tailwindTranslator';
-import {Grid} from "@/shared/protocol/gen/grid";
+import {Grid} from "@/shared/protocol/ora/grid";
 
 const props = defineProps<{
 	ui: Grid;

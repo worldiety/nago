@@ -1,3 +1,4 @@
+// TODO what is this? Should we autogenerate that based on the sum type discriminators?
 export enum EventType {
 	INVALIDATED = 'ComponentInvalidated',
 	INVALIDATION_REQUESTED = 'ComponentInvalidationRequested',
