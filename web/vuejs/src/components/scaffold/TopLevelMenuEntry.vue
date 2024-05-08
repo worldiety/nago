@@ -22,7 +22,7 @@
 				<div v-else class="*:h-full" v-html="ui.icon.v"></div>
 				<!-- Optional red badge -->
 				<div v-if="ui.badge.v" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-error">
-					<p class="text-xs text-white">1</p>
+					<p class="text-xs text-white">{{ ui.badge.v }}</p>
 				</div>
 			</div>
 		</div>

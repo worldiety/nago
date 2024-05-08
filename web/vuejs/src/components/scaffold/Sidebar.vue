@@ -37,7 +37,10 @@
 					<div
 						ref="subMenuEntryElements"
 						class="flex justify-between items-center hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
-						:class="{'cursor-pointer hover:underline focus-visible:underline': isClickableMenuEntry(subMenuEntry)}"
+						:class="{
+							'cursor-pointer': isClickableMenuEntry(subMenuEntry),
+							'hover:underline focus-visible:underline': isLinkingMenuEntry(subMenuEntry),
+						}"
 						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
@@ -55,7 +58,7 @@
 					>
 						<!-- Sub sub menu entries -->
 						<p
-							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
+							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in getSubSubMenuEntries(subMenuEntry)"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
 							class="hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
@@ -74,11 +77,11 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
+import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
+import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
@@ -100,15 +103,34 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', handleMouseMove);
 });
 
+const expandedMenuEntry = computed((): MenuEntry|undefined => {
+	return props.ui.menu.v?.find((menuEntry) => menuEntry.expanded.v);
+});
+
 const subMenuEntries = computed((): MenuEntry[] => {
-	return props.ui.menu.v
+	const entries: MenuEntry[] = props.ui.menu.v
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
+		entries.unshift({
+			...expandedMenuEntry.value,
+			menu: {
+				...expandedMenuEntry.value.menu,
+				v: [],
+			}
+		});
+	}
+	return entries;
 });
 
 function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
 	return !!menuEntry.action.v || menuEntry.menu.v && menuEntry.menu.v.length > 0;
+}
+
+function isLinkingMenuEntry(menuEntry: MenuEntry): boolean {
+	// Linking, if it has an action and no sub menu entries
+	return menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -147,6 +169,20 @@ function menuEntryClicked(menuEntry: MenuEntry): void {
 			serviceAdapter.executeFunctions(menuEntry.action);
 		}
 	}
+}
+
+function getSubSubMenuEntries(subMenuEntry: MenuEntry): MenuEntry[] {
+	const entries: MenuEntry[] = [...subMenuEntry.menu.v];
+	if (entries.length > 0 && subMenuEntry.action.v) {
+		entries.unshift({
+			...subMenuEntry,
+			menu: {
+				...subMenuEntry.menu,
+				v: [],
+			}
+		});
+	}
+	return entries;
 }
 </script>
 

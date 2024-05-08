@@ -111,7 +111,7 @@ watch(() => props.ui, () => {
 
 const expandedMenuEntry = computed((): MenuEntry|undefined => {
 	return props.ui.menu.v?.find((menuEntry) => menuEntry.expanded.v);
-})
+});
 
 const subMenuEntries = computed((): MenuEntry[] => {
 	const entries: MenuEntry[] = props.ui.menu.v
