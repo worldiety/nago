@@ -146,7 +146,7 @@ func main() {
 							var menuEntryB *ui.MenuEntry
 							var menuEntryC *ui.MenuEntry
 
-							navigationComponent.Alignment().Set(ora.AlignmentLeft)
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntryA = menuEntry
@@ -154,9 +154,6 @@ func main() {
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
 								menuEntry.Badge().Set("2")
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
-								})
 								menuEntry.OnFocus().Set(func() {
 									menuEntryB.Expanded().Set(false)
 									menuEntryC.Expanded().Set(false)
@@ -173,6 +170,9 @@ func main() {
 								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "B"})
+								})
 								menuEntry.OnFocus().Set(func() {
 									menuEntryA.Expanded().Set(false)
 									menuEntryC.Expanded().Set(false)

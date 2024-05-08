@@ -45,10 +45,10 @@
 							ref="subMenuEntryElements"
 							class="font-medium"
 							:class="{
-								'mb-4': subMenuEntry.menu.v?.length > 0,
-								'cursor-pointer hover:underline focus-visible:underline': isClickableMenuEntry(subMenuEntry),
-							}"
-							:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
+							'mb-4': subMenuEntry.menu.v?.length > 0,
+							'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v,
+						}"
+							:tabindex="subMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
@@ -75,11 +75,11 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationComponent } from '@/shared/protocol/gen/navigationComponent';
+import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
+import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
@@ -109,16 +109,25 @@ watch(() => props.ui, () => {
 	nextTick(updateSubMenuTriangleLeftOffset);
 });
 
+const expandedMenuEntry = computed((): MenuEntry|undefined => {
+	return props.ui.menu.v?.find((menuEntry) => menuEntry.expanded.v);
+})
+
 const subMenuEntries = computed((): MenuEntry[] => {
-	return props.ui.menu.v
+	const entries: MenuEntry[] = props.ui.menu.v
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
+		entries.unshift({
+			...expandedMenuEntry.value,
+			menu: {
+				...expandedMenuEntry.value.menu,
+				v: [],
+			}
+		});
+	}
+	return entries;
 });
-
-function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
-	// Clickable, if it has an action and no sub menu entries
-	return !!menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
-}
 
 function handleMouseMove(event: MouseEvent): void {
 	const threshold = subMenu.value?.getBoundingClientRect().bottom
@@ -153,7 +162,7 @@ function updateSubMenuTriangleLeftOffset(): void {
 }
 
 function menuEntryClicked(menuEntry: MenuEntry): void {
-	if (isClickableMenuEntry(menuEntry)) {
+	if (menuEntry.action.v) {
 		serviceAdapter.executeFunctions(menuEntry.action);
 	}
 }

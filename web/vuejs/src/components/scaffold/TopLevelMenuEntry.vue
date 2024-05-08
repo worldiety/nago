@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import type { MenuEntry } from '@/shared/protocol/gen/menuEntry';
 import { computed, ref } from 'vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
