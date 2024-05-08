@@ -3,6 +3,8 @@
  */
 
 
+import type { BreadcrumbItem } from '@/shared/protocol/ora/breadcrumbItem';
+import type { Breadcrumbs } from '@/shared/protocol/ora/breadcrumbs';
 import type { Button } from '@/shared/protocol/ora/button';
 import type { Card } from '@/shared/protocol/ora/card';
 import type { Chip } from '@/shared/protocol/ora/chip';
@@ -61,5 +63,7 @@ export type Component =
 | TextArea
 | FileField
 | Image
+| Breadcrumbs
+| BreadcrumbItem
 | Grid
 | GridCell
