@@ -425,8 +425,9 @@ func main() {
 								}),
 
 								ui.NewFileField(func(fileField *ui.FileField) {
-									fileField.Label().Set("Dein Zeug zum upload")
-									fileField.Hint().Set("Klick or Drag'n drop zum Upload")
+									fileField.Label().Set("Drag & Drop oder Dateien per Klick auswählen")
+									fileField.HintRight().Set("Max. Dateigröße: 25MB")
+									fileField.HintLeft().Set("Unterstützte Dateiformate: PDF, JPG, DOCX")
 									//fileField.Accept().Set(".gif")
 									fileField.Multiple().Set(true)
 									fileField.OnUploadReceived(func(files []ui.FileUpload) {

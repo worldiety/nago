@@ -11,7 +11,8 @@ export interface FileField {
     id /*Ptr*/: Ptr;
     type: 'FileField'/*ComponentType*/;
     label: Property<string>;
-    hint: Property<string>;
+    hintLeft: Property<string>;
+    hintRight: Property<string>;
     error: Property<string>;
     disabled: Property<boolean>;
     filter: Property<string>;
