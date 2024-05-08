@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { onMounted, ref } from 'vue';
-import {Dialog} from "@/shared/protocol/gen/dialog";
+import {Dialog} from "@/shared/protocol/ora/dialog";
 
 const props = defineProps<{
 	ui: Dialog;

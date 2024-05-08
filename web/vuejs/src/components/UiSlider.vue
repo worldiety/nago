@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { Slider } from "@/shared/protocol/gen/slider";
+import type { Slider } from "@/shared/protocol/ora/slider";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 interface SliderTickMark {

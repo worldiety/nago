@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import {GridCell} from "@/shared/protocol/gen/gridCell";
+import {GridCell} from "@/shared/protocol/ora/gridCell";
 
 const props = defineProps<{
 	ui: GridCell;

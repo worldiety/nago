@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
-import {HBox} from "@/shared/protocol/gen/hBox";
+import {HBox} from "@/shared/protocol/ora/hBox";
 
 const props = defineProps<{
 	ui: HBox;

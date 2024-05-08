@@ -1,17 +1,31 @@
-import {HttpRequest} from "@/shared/http";
-
 //TODO: Klasse anlegen?
 
-export async function fetchUpload(files: Blob[], pageToken: string, uploadToken: string): Promise<void> {
-	if (files.length === 0){
-		console.log('Provided file array is empty, skipped upload!')
-		return
+export async function fetchUpload(files: File[], pageToken: string, uploadToken: string): Promise<void> {
+	if (files.length === 0) {
+		return;
 	}
-	const request = HttpRequest.post('/api/v1/upload')
-	for (let i = files.length - 1; i >= 0; i--) {
-		request.body(files[i])
-	}
-		request.header('x-page-token', pageToken)
-		request.header('x-upload-token', uploadToken)
-		await request.fetch()
+	const formData = new FormData();
+	files.forEach((file: File) => {
+		formData.append(file.name, file, file.name);
+	});
+
+	return new Promise<void>((resolve, reject) => {
+		const request = new XMLHttpRequest();
+		request.upload.addEventListener('progress', (event: ProgressEvent) => {
+			console.log(`${event.loaded} of ${event.total}`);
+		});
+		request.addEventListener('error', (e) => {
+			console.log('ERR', e);
+			reject('Error');
+		});
+		request.addEventListener('load', () => {
+			request.status.toString(10).startsWith('2') ? resolve() : reject(request.status);
+		});
+		request.addEventListener('abort', () => {
+			console.log('ABORTED');
+			reject('Aborted');
+		})
+		request.open('POST', '/api/v1/upload');
+		request.send(formData);
+	});
 }

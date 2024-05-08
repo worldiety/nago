@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
-import type {TextField} from "@/shared/protocol/gen/textField";
+import type {TextField} from "@/shared/protocol/ora/textField";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

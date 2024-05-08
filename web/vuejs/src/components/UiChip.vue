@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type {Chip} from "@/shared/protocol/gen/chip";
+import type {Chip} from "@/shared/protocol/ora/chip";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
