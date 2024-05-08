@@ -116,14 +116,14 @@ func init() {
 				},
 			},
 		},
-		reflect.TypeOf(ora.Property[[]string]{}): {
+		reflect.TypeOf(ora.Property[[]ora.BreadcrumbItem]{}): {
 			Name:    "Property",
 			Package: prefix + "property",
 			TypeParams: []*TSTypeDef{
 				{
 					Name: "[]",
 					TypeParams: []*TSTypeDef{
-						{Name: "string"},
+						{Name: "BreadcrumbItem", Package: genPrefix + "breadcrumbItem"},
 					},
 				},
 			},

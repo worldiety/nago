@@ -24,36 +24,37 @@ type Property[T any] struct {
 type ComponentType string
 
 const (
-	ButtonT        ComponentType = "Button"
-	GridT          ComponentType = "Grid"
-	GridCellT      ComponentType = "GridCell"
-	DialogT        ComponentType = "Dialog"
-	TextT          ComponentType = "Text"
-	PageT          ComponentType = "Page"
-	VBoxT          ComponentType = "VBox"
-	HBoxT          ComponentType = "HBox"
-	SliderT        ComponentType = "Slider"
-	ScaffoldT      ComponentType = "Scaffold"
-	NumberFieldT   ComponentType = "NumberField"
-	TextFieldT     ComponentType = "TextField"
-	PasswordFieldT ComponentType = "PasswordField"
-	TableT         ComponentType = "Table"
-	TableCellT     ComponentType = "TableCell"
-	TableRowT      ComponentType = "TableRow"
-	ToggleT        ComponentType = "Toggle"
-	DatePickerT    ComponentType = "DatePicker"
-	DividerT       ComponentType = "Divider"
-	DropdownT      ComponentType = "Dropdown"
-	DropdownItemT  ComponentType = "DropdownItem"
-	ChipT          ComponentType = "Chip"
-	CardT          ComponentType = "Card"
-	StepperT       ComponentType = "Stepper"
-	StepInfoT      ComponentType = "StepInfo"
-	WebViewT       ComponentType = "WebView"
-	TextAreaT      ComponentType = "TextArea"
-	FileFieldT     ComponentType = "FileField"
-	ImageT         ComponentType = "Image"
-	BreadcrumbsT   ComponentType = "Breadcrumbs"
+	ButtonT         ComponentType = "Button"
+	GridT           ComponentType = "Grid"
+	GridCellT       ComponentType = "GridCell"
+	DialogT         ComponentType = "Dialog"
+	TextT           ComponentType = "Text"
+	PageT           ComponentType = "Page"
+	VBoxT           ComponentType = "VBox"
+	HBoxT           ComponentType = "HBox"
+	SliderT         ComponentType = "Slider"
+	ScaffoldT       ComponentType = "Scaffold"
+	NumberFieldT    ComponentType = "NumberField"
+	TextFieldT      ComponentType = "TextField"
+	PasswordFieldT  ComponentType = "PasswordField"
+	TableT          ComponentType = "Table"
+	TableCellT      ComponentType = "TableCell"
+	TableRowT       ComponentType = "TableRow"
+	ToggleT         ComponentType = "Toggle"
+	DatePickerT     ComponentType = "DatePicker"
+	DividerT        ComponentType = "Divider"
+	DropdownT       ComponentType = "Dropdown"
+	DropdownItemT   ComponentType = "DropdownItem"
+	ChipT           ComponentType = "Chip"
+	CardT           ComponentType = "Card"
+	StepperT        ComponentType = "Stepper"
+	StepInfoT       ComponentType = "StepInfo"
+	WebViewT        ComponentType = "WebView"
+	TextAreaT       ComponentType = "TextArea"
+	FileFieldT      ComponentType = "FileField"
+	ImageT          ComponentType = "Image"
+	BreadcrumbsT    ComponentType = "Breadcrumbs"
+	BreadcrumbItemT ComponentType = "BreadcrumbItem"
 )
 
 type Component interface {
@@ -92,6 +93,7 @@ func init() {
 		reflect.TypeOf(FileField{}),
 		reflect.TypeOf(Image{}),
 		reflect.TypeOf(Breadcrumbs{}),
+		reflect.TypeOf(BreadcrumbItem{}),
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 	}
@@ -99,7 +101,7 @@ func init() {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | Grid | GridCell
+	Button | Page | Scaffold | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | Grid | GridCell
 }
 
 type component struct {
