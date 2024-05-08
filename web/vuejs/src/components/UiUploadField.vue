@@ -45,12 +45,12 @@ async function fileInputChanged(e: Event):Promise<void> {
 	if (!item.files) {
 		return
 	}
-	const filesarray: Blob[] = []
+	const files: File[] = []
 	for (let i = 0; i < item.files.length; i++) {
-		filesarray.push(item.files[i])
+		files.push(item.files[i])
 	}
 	try {
-		 await fetchUpload(filesarray, "???", props.ui.uploadToken.v) // todo backend must resolve page/scope whatever by token itself
+		await fetchUpload(files, "???", props.ui.uploadToken.v) // todo backend must resolve page/scope whatever by token itself
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e)
 	}
