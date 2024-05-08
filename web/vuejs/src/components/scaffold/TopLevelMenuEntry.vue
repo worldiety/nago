@@ -1,7 +1,6 @@
 <template>
 	<div
 		class="flex flex-col justify-between items-center cursor-pointer h-full"
-		:class="{'menu-entry-linked': ui.action.v && !hasSubMenuEntries}"
 		tabindex="0"
 		@mousedown="active = true"
 		@click="handleClick"
@@ -26,7 +25,7 @@
 				</div>
 			</div>
 		</div>
-		<p class="menu-entry-title text-sm text-center font-medium select-none">{{ ui.title.v }}</p>
+		<p class="text-sm text-center font-medium select-none">{{ ui.title.v }}</p>
 	</div>
 </template>
 
@@ -91,10 +90,3 @@ function focusFirstLinkedSubMenuEntry(keyPressed: 'down'|'right'): void {
 	}
 }
 </script>
-
-<style scoped>
-.menu-entry-linked:hover .menu-entry-title,
-.menu-entry-linked:focus-visible .menu-entry-title {
-	@apply underline;
-}
-</style>

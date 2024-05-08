@@ -37,10 +37,7 @@
 					<div
 						ref="subMenuEntryElements"
 						class="flex justify-between items-center hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
-						:class="{
-							'cursor-pointer': isClickableMenuEntry(subMenuEntry),
-							'hover:underline focus-visible:underline': isLinkingMenuEntry(subMenuEntry),
-						}"
+						:class="{'cursor-pointer': isClickableMenuEntry(subMenuEntry)}"
 						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
@@ -62,7 +59,7 @@
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
 							class="hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
-							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
+							:class="{'cursor-pointer': subSubMenuEntry.action.v}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
@@ -111,6 +108,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 	const entries: MenuEntry[] = props.ui.menu.v
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+	// Add the expanded menu entry without its sub menu entries, if it has an action
 	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
 		entries.unshift({
 			...expandedMenuEntry.value,
@@ -130,7 +128,7 @@ function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
 
 function isLinkingMenuEntry(menuEntry: MenuEntry): boolean {
 	// Linking, if it has an action and no sub menu entries
-	return menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
+	return !!menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -173,6 +171,7 @@ function menuEntryClicked(menuEntry: MenuEntry): void {
 
 function getSubSubMenuEntries(subMenuEntry: MenuEntry): MenuEntry[] {
 	const entries: MenuEntry[] = [...subMenuEntry.menu.v];
+	// Add the sub menu entry without its sub menu entries, if it has an action
 	if (entries.length > 0 && subMenuEntry.action.v) {
 		entries.unshift({
 			...subMenuEntry,

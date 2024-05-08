@@ -27,7 +27,7 @@ const sidebarVisible = computed((): boolean => props.ui.navigationComponent.v.al
 
 const bodyWrapperClass = computed((): string|undefined => {
 	if (navigationBarVisible.value) {
-		return 'pt-20';
+		return 'pt-28';
 	}
   if (sidebarVisible.value) {
     return 'py-8 pl-32';

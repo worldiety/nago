@@ -117,6 +117,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 	const entries: MenuEntry[] = props.ui.menu.v
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+	// Add the expanded menu entry without its sub menu entries, if it has an action
 	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
 		entries.unshift({
 			...expandedMenuEntry.value,
