@@ -28,26 +28,24 @@ onUpdated(() => {
 		document.addEventListener('click', closeDropdown);
 	}
 })
+
 /*
 const itemsFiltered = computed((): DropdownItem[] => {
 	return props.ui.items.v.filter((item: DropdownItem) => {
 		return item.content.v.includes(searchQuery.value)
 	})
 })
- */
+*/
 
-const itemsFiltered = computed(() => {
-	return props.ui.items.v.filter((item) => {
-		const searchTerm = searchQuery.value.trim().toLowerCase().replace(/\s+/g, ""); // Leerzeichen entfernen
-		if (searchTerm === "") {
-			return true;
-		}
+const itemsFiltered = computed((): DropdownItem[] => {
+  const searchTerms = searchQuery.value.toLowerCase().trim().split(/\s+/);
 
-		const content = item.content.v.toLowerCase().replace(/\s+/g, ""); // Leerzeichen im Inhalt entfernen
-		return content.includes(searchTerm);
-	});
+  return props.ui.items.v.filter((item: DropdownItem) => {
+    const combinedItem = item.content.v.toLowerCase().replace(/\s+/g, "");
+
+		return searchTerms.every(searchTerm => combinedItem.includes(searchTerm));
+  });
 });
-
 
 const selectedItemNames = computed((): string|null => {
 	if (!props.ui.selectedIndices.v) {

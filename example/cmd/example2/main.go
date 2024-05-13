@@ -293,22 +293,70 @@ func main() {
 								dropdown.Expanded().Set(false)
 								dropdown.Searchable().Set(true)
 								dropdown.Label().Set("Multiselect")
-								dropdown.Error().Set("Das ist eine Fehlermeldung")
-								dropdown.Hint().Set("Das ist ein Hinweis")
+								dropdown.Hint().Set("Bitte berücksichtigen Sie bei der Suche Groß- und Kleinschreibung!")
 								dropdown.OnClicked().Set(func() {
 									dropdown.Expanded().Set(!dropdown.Expanded().Get())
 								})
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option A")
+										item.Content().Set("Halle A: 07:00 Stand 1")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option BCD")
+										item.Content().Set("Halle A: 07:00 Stand 2")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle A: 08:00 Stand 1")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle A: 08:00 Stand 2")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B: 08:00 Stand 1")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B: 08:00 Stand 2")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B: 09:00 Stand 1")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B: 09:00 Stand 2")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Option FGH")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
