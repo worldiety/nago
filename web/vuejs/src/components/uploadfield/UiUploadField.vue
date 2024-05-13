@@ -30,14 +30,11 @@
 		</div>
 
 		<!-- File statuses -->
-		<template v-if="files && bytesUploaded !== null && bytesTotal !== null">
+		<template v-if="fileUploads && bytesUploaded !== null && bytesTotal !== null">
 			<FileStatus
-				v-for="(file, index) in files"
+				v-for="(fileUpload, index) in fileUploads"
 				:key="index"
-				:file="file"
-				:bytes-uploaded="bytesUploaded"
-				:bytes-total="bytesTotal"
-				:finished="true"
+				:file-upload="fileUpload"
 			/>
 		</template>
 	</div>
@@ -52,6 +49,8 @@ import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
+import type FileUpload from '@/components/uploadfield/fileUpload';
+import { v4 as uuidv4 } from 'uuid';
 
 const props = defineProps<{
 	ui: FileField;
@@ -61,7 +60,7 @@ const errorHandler = useErrorHandling();
 const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
-const files = ref<File[]|null>(null);
+const fileUploads = ref<FileUpload[]|null>(null);
 const bytesUploaded = ref<number|null>(null);
 const bytesTotal = ref<number|null>(null);
 
@@ -90,13 +89,26 @@ async function fileInputChanged(e: Event):Promise<void> {
 		return;
 	}
 
-	files.value = filesToUpload;
-	bytesUploaded.value = null;
-	bytesTotal.value = null;
+	fileUploads.value = filesToUpload.map((file) => ({
+		uploadId: uuidv4(),
+		file,
+		bytesUploaded: null,
+		bytesTotal: null,
+		finished: false,
+	}));
+	const promises = fileUploads.value.map((fileUpload) => {
+		return fetchUpload(
+			fileUpload.file,
+			fileUpload.uploadId,
+			"???",
+			props.ui.uploadToken.v,
+			uploadProgressCallback,
+		) // todo backend must resolve page/scope whatever by token itself
+	});
 	try {
-		await fetchUpload(filesToUpload, "???", props.ui.uploadToken.v, uploadProgressCallback) // todo backend must resolve page/scope whatever by token itself
+		await Promise.all(promises);
 	} catch (e: ApplicationError) {
-		errorHandler.handleError(e)
+		errorHandler.handleError(e);
 	}
 }
 
@@ -107,8 +119,20 @@ function filesValid(files: File[]): boolean {
 	return files.every((file) => file.size <= props.ui.maxBytes.v);
 }
 
-function uploadProgressCallback(progress: number, total: number): void {
-	bytesUploaded.value = progress;
-	bytesTotal.value = total;
+function uploadProgressCallback(uploadId: string, progress: number, total: number): void {
+	if (!fileUploads.value) {
+		return;
+	}
+	// TODO: Check, if still reactive as soon as upload is working again
+	fileUploads.value = fileUploads.value.map((fileUpload) => {
+		if (fileUpload.uploadId === uploadId) {
+			return {
+				...fileUpload,
+				bytesUploaded: progress,
+				bytesTotal: total,
+			};
+		}
+		return fileUpload;
+	});
 }
 </script>

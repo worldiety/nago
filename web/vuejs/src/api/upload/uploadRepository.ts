@@ -1,20 +1,15 @@
 //TODO: Klasse anlegen?
 
-export type UploadProgressCallback = (progress: number, total: number) => void;
+export type UploadProgressCallback = (uploadId: string, progress: number, total: number) => void;
 
-export async function fetchUpload(files: File[], pageToken: string, uploadToken: string, uploadProgressCallback: UploadProgressCallback): Promise<void> {
-	if (files.length === 0) {
-		return;
-	}
+export async function fetchUpload(file: File, uploadId: string, pageToken: string, uploadToken: string, uploadProgressCallback: UploadProgressCallback): Promise<void> {
 	const formData = new FormData();
-	files.forEach((file: File) => {
-		formData.append(file.name, file, file.name);
-	});
+	formData.append(file.name, file, file.name);
 
 	return new Promise<void>((resolve, reject) => {
 		const request = new XMLHttpRequest();
 		request.upload.addEventListener('progress', (event: ProgressEvent) => {
-			uploadProgressCallback(event.loaded, event.total);
+			uploadProgressCallback(uploadId, event.loaded, event.total);
 		});
 		request.addEventListener('error', (e) => {
 			console.log('ERR', e);

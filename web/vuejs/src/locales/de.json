@@ -59,6 +59,7 @@
 		"error": "Fehler"
 	},
 	"uploadField": {
-		"size": "Größe"
+		"size": "Größe",
+		"unknown": "Unbekannt"
 	}
 }
