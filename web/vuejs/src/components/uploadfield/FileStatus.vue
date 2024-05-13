@@ -29,7 +29,7 @@ import BinIcon from '@/assets/svg/bin.svg';
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { localizeNumber } from '@/shared/localization';
-import FileUpload from '@/components/uploadfield/fileUpload';
+import type FileUpload from '@/components/uploadfield/fileUpload';
 
 const props = defineProps<{
 	fileUpload: FileUpload;
