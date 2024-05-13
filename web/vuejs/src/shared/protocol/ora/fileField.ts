@@ -17,6 +17,7 @@ export interface FileField {
     disabled: Property<boolean>;
     filter: Property<string>;
     multiple: Property<boolean>;
+    maxBytes: Property<number /*int64*/>;
     uploadToken: Property<string>;
 }
 

@@ -25,6 +25,7 @@ type FileField struct {
 	hintRight        String
 	error            String
 	multiple         Bool
+	maxBytes         Int
 	disabled         Bool
 	filter           String
 	uploadToken      String
@@ -42,13 +43,14 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 		error:       NewShared[string]("error"),
 		disabled:    NewShared[bool]("disabled"),
 		multiple:    NewShared[bool]("multiple"),
+		maxBytes:    NewShared[int64]("maxBytes"),
 		filter:      NewShared[string]("filter"),
 		uploadToken: NewShared[string]("uploadToken"),
 	}
 
 	c.uploadToken.Set(nextToken())
 
-	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.filter, c.uploadToken}
+	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.maxBytes, c.filter, c.uploadToken}
 
 	if with != nil {
 		with(c)
@@ -104,6 +106,10 @@ func (c *FileField) Multiple() Bool {
 	return c.multiple
 }
 
+func (c *FileField) MaxBytes() Int {
+	return c.maxBytes
+}
+
 func (c *FileField) Error() String {
 	return c.error
 }
@@ -135,6 +141,7 @@ func (c *FileField) render() ora.FileField {
 		Disabled:    c.disabled.render(),
 		Filter:      c.filter.render(),
 		Multiple:    c.Multiple().render(),
+		MaxBytes:    c.maxBytes.render(),
 		UploadToken: c.uploadToken.render(),
 	}
 }

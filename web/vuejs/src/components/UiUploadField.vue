@@ -3,13 +3,19 @@
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 	<div v-else class="flex flex-col items-start justify-center gap-y-2 w-full">
-		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v }}</p>
-		<div class="dark:hover:bg-bray-800 flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v || errorMessage }}</p>
+		<div
+			class="dark:hover:bg-bray-800 flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text bg-disabled-background bg-opacity-15 hover:bg-opacity-25 dark:bg-opacity-5 dark:hover:bg-opacity-10"
+			tabindex="0"
+			@click="showUploadDialog"
+			@keydown.enter="showUploadDialog"
+		>
 			<div class="flex flex-col items-center justify-center pb-6 pt-5">
 				<UploadIcon class="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400" />
 				<p class="mb-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.label.v }}</p>
 			</div>
 			<input
+				ref="fileInput"
 				:disabled="props.ui.disabled.v"
 				type="file"
 				class="hidden"
@@ -27,34 +33,63 @@
 
 <script setup lang="ts">
 import { fetchUpload } from "@/api/upload/uploadRepository";
-import { ApplicationError, useErrorHandling } from "@/composables/errorhandling";
+import { ApplicationError, CustomError, useErrorHandling } from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
 import type { FileField } from "@/shared/protocol/ora/fileField";
 import UploadIcon from '@/assets/svg/upload.svg';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	ui: FileField;
 }>();
 
 const errorHandler = useErrorHandling();
+const { t } = useI18n();
+const fileInput = ref<HTMLElement|undefined>();
+const errorMessage = ref<string|null>(null);
+
+function showUploadDialog(): void {
+	fileInput.value?.click();
+}
 
 function isErr(): boolean {
-	return props.ui.error.v != '';
+	return props.ui.error.v != '' || errorMessage.value !== null;
 }
 
 async function fileInputChanged(e: Event):Promise<void> {
 	const item = e.target as HTMLInputElement;
 	if (!item.files) {
-		return
+		return;
 	}
 	const files: File[] = []
 	for (let i = 0; i < item.files.length; i++) {
 		files.push(item.files[i])
 	}
+	if (!filesValid(files)) {
+		const error: CustomError = {
+			errorCode: '003',
+			message: t('customErrorcodes.003.errorMessage', [`${props.ui.maxBytes.v / 1000000} MB`]),
+		}
+		errorHandler.handleError(error);
+		return;
+	}
+
 	try {
-		await fetchUpload(files, "???", props.ui.uploadToken.v) // todo backend must resolve page/scope whatever by token itself
+		await fetchUpload(files, "???", props.ui.uploadToken.v, uploadProgressCallback) // todo backend must resolve page/scope whatever by token itself
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e)
 	}
+}
+
+function filesValid(files: File[]): boolean {
+	if (!props.ui.maxBytes.v && props.ui.maxBytes.v !== 0) {
+		return true;
+	}
+	return files.every((file) => file.size <= props.ui.maxBytes.v);
+}
+
+function uploadProgressCallback(progress: number, total: number): void {
+	console.log(progress + ' of ' + total);
 }
 </script>

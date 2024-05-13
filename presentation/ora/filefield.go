@@ -11,6 +11,7 @@ type FileField struct {
 	Disabled    Property[bool]   `json:"disabled"`
 	Filter      Property[string] `json:"filter"`
 	Multiple    Property[bool]   `json:"multiple"`
+	MaxBytes    Property[int64]  `json:"maxBytes"`
 	UploadToken Property[string] `json:"uploadToken"`
 	component
 }
