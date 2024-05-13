@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
-import type {NumberField} from "@/shared/protocol/gen/numberField";
-import type {Property} from "@/shared/protocol/property";
+import type {NumberField} from "@/shared/protocol/ora/numberField";
+import type {Property} from "@/shared/protocol/ora/property";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

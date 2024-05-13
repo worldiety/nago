@@ -21,9 +21,11 @@ type FileField struct {
 	id               ora.Ptr
 	label            String
 	value            String
-	hint             String
+	hintLeft         String
+	hintRight        String
 	error            String
 	multiple         Bool
+	maxBytes         Int
 	disabled         Bool
 	filter           String
 	uploadToken      String
@@ -36,17 +38,19 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 		id:          nextPtr(),
 		label:       NewShared[string]("label"),
 		value:       NewShared[string]("value"),
-		hint:        NewShared[string]("hint"),
+		hintLeft:    NewShared[string]("hintLeft"),
+		hintRight:   NewShared[string]("hintRight"),
 		error:       NewShared[string]("error"),
 		disabled:    NewShared[bool]("disabled"),
 		multiple:    NewShared[bool]("multiple"),
+		maxBytes:    NewShared[int64]("maxBytes"),
 		filter:      NewShared[string]("filter"),
 		uploadToken: NewShared[string]("uploadToken"),
 	}
 
 	c.uploadToken.Set(nextToken())
 
-	c.properties = []core.Property{c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.multiple, c.filter, c.uploadToken}
+	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.maxBytes, c.filter, c.uploadToken}
 
 	if with != nil {
 		with(c)
@@ -62,7 +66,8 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 // TODO unify message handling and make it single threaded for all kind of events: ui, inter-domain, intra-domain, uploads and rest-calls !?!
 func (c *FileField) OnUploadReceived(f FileHandler) {
 	c.onUploadReceived = f
-	c.hint.SetDirty(true) // fake re-render, today we always re-render anyway
+	c.hintLeft.SetDirty(true)  // fake re-render, today we always re-render anyway
+	c.hintRight.SetDirty(true) // fake re-render, today we always re-render anyway
 }
 
 func (c *FileField) UploadToken() UploadToken {
@@ -85,8 +90,12 @@ func (c *FileField) Label() String {
 	return c.label
 }
 
-func (c *FileField) Hint() String {
-	return c.hint
+func (c *FileField) HintLeft() String {
+	return c.hintLeft
+}
+
+func (c *FileField) HintRight() String {
+	return c.hintRight
 }
 
 func (c *FileField) Accept() String {
@@ -95,6 +104,10 @@ func (c *FileField) Accept() String {
 
 func (c *FileField) Multiple() Bool {
 	return c.multiple
+}
+
+func (c *FileField) MaxBytes() Int {
+	return c.maxBytes
 }
 
 func (c *FileField) Error() String {
@@ -122,11 +135,13 @@ func (c *FileField) render() ora.FileField {
 		Ptr:         c.id,
 		Type:        ora.FileFieldT,
 		Label:       c.label.render(),
-		Hint:        c.hint.render(),
+		HintLeft:    c.hintLeft.render(),
+		HintRight:   c.hintRight.render(),
 		Error:       c.error.render(),
 		Disabled:    c.disabled.render(),
 		Filter:      c.filter.render(),
 		Multiple:    c.Multiple().render(),
+		MaxBytes:    c.maxBytes.render(),
 		UploadToken: c.uploadToken.render(),
 	}
 }

@@ -29,6 +29,11 @@ func init() {
 	}
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type _event interface {
+	Acknowledged | EventsAggregated | NewComponentRequested | ComponentInvalidated | ComponentInvalidationRequested | ErrorOccurred | ComponentDestructionRequested | ScopeDestructionRequested | ConfigurationRequested | ConfigurationDefined | SetPropertyValueRequested | FunctionCallRequested | NavigationForwardToRequested | NavigationResetRequested | NavigationBackRequested | SessionAssigned | Ping
+}
+
 func EventTypeDiscriminator(v Event) string {
 	t := reflect.TypeOf(v)
 	f, ok := t.FieldByName("Type")

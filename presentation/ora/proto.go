@@ -1,5 +1,6 @@
 package ora
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type EventType string
 
 const (
@@ -36,6 +37,7 @@ type Event interface {
 	isEvent()
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type SetPropertyValueRequested struct {
 	Type      EventType `json:"type" value:"P" description:"P stands for Set**P**ropertValue. It is expected, that we must process countless of these events."`
 	Ptr       Ptr       `json:"p" description:"p denotes the remote pointer."`
@@ -44,6 +46,7 @@ type SetPropertyValueRequested struct {
 	event
 }
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type FunctionCallRequested struct {
 	Type      EventType `json:"type" value:"F" description:"F stands for **F**unctionCallRequested. It is expected, that we must process countless of these events."`
 	Ptr       Ptr       `json:"p" description:"p denotes the remote pointer."`

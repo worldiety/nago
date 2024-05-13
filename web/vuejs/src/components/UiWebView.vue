@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {WebView} from "@/shared/protocol/gen/webView";
+import type {WebView} from "@/shared/protocol/ora/webView";
 
 const props = defineProps<{
 	ui: WebView;

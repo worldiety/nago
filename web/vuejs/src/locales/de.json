@@ -7,6 +7,10 @@
 		"002": {
 			"errorMessage": "Falsche Antwort erhalten. Bitte später erneut versuchen.",
 			"additionalInformation": "Falscher Content-Type. Es wurde JSON erwartet."
+		},
+		"003": {
+			"errorMessage": "Die maximale Größe pro Datei darf {0} nicht überschreiten.",
+			"additionalInformation": ""
 		}
 	},
 	"httpErrorcodes": {

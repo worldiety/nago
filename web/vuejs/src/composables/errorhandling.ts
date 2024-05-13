@@ -29,11 +29,11 @@ export function useErrorHandling() {
 				additionalInformation: String(i18n.t('httpErrorcodes.' + rawError.status + '.additionalInformation')),
 			};
 		} else if (rawError as CustomError) {
+			const customError = rawError as CustomError;
 			console.log('rawError ist CustomError');
-			const rawCustomError = rawError as CustomError;
 			error.value = {
-				message: String(i18n.t('customErrorcodes.' + rawCustomError.errorCode + '.errorMessage')),
-				additionalInformation: String(i18n.t('customErrorcodes.' + rawCustomError.errorCode + '.additionalInformation')),
+				message: customError.message ?? String(i18n.t('customErrorcodes.' + customError.errorCode + '.errorMessage')),
+				additionalInformation: customError.additionalInformation ?? String(i18n.t('customErrorcodes.' + customError.errorCode + '.additionalInformation')),
 			};
 		} else {
 			console.log('rawError ist unknown');

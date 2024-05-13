@@ -3,8 +3,8 @@ import UiDropdownItem from '@/components/dropdown/UiDropdownItem.vue';
 import ArrowDown from '@/assets/svg/arrowDown.svg';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import type {Dropdown} from "@/shared/protocol/gen/dropdown";
-import type {DropdownItem} from "@/shared/protocol/gen/dropdownItem";
+import type {Dropdown} from "@/shared/protocol/ora/dropdown";
+import type {DropdownItem} from "@/shared/protocol/ora/dropdownItem";
 import UiDropdownSearchfilter from "@/components/dropdown/UiDropdownSearchfilter.vue";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
@@ -48,6 +48,12 @@ const itemsFiltered = computed(() => {
 	});
 });
 
+
+const itemsFiltered = computed((): DropdownItem[] => {
+	return props.ui.items.v.filter((item: DropdownItem) => {
+		return item.content.v.includes(searchQuery.value)
+	})
+})
 
 const selectedItemNames = computed((): string|null => {
 	if (!props.ui.selectedIndices.v) {

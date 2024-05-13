@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { textColor2Tailwind, textSize2Tailwind } from '@/shared/tailwindTranslator';
 import { computed } from 'vue';
-import type {Text} from "@/shared/protocol/gen/text";
+import type {Text} from "@/shared/protocol/ora/text";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

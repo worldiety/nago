@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {TextArea} from "@/shared/protocol/gen/textArea";
+import type {TextArea} from "@/shared/protocol/ora/textArea";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{

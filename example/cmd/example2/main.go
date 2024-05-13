@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
@@ -233,6 +234,59 @@ func main() {
 								})
 							}))
 
+							vbox.Append(ui.NewBreadcrumbs(func(breadcrumbs *ui.Breadcrumbs) {
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt A")
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Ich bin ein unnötig langer Breadcrumb-Punkt, der dafür sorgen soll, dass die Breadcrumbs umbrechen")
+									item.Action().Set(func() {
+										println("Breadcrumb item clicked")
+									})
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt C")
+								}))
+								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
+									item.Label().Set("Punkt D")
+								}))
+								breadcrumbs.SelectedItemIndex().Set(1)
+								breadcrumbs.Icon().Set(icon.Dashboard)
+							}))
+
+							vbox.Append(ui.NewFileField(func(fileField *ui.FileField) {
+								fileField.Label().Set("Drag & Drop oder Dateien per Klick auswählen")
+								fileField.HintRight().Set("Max. Dateigröße: 300 MB")
+								fileField.MaxBytes().Set(300000000) // 300 MB
+								fileField.HintLeft().Set("Unterstützte Dateiformate: MP4, PDF, JPG, DOCX")
+								fileField.Accept().Set("video/mp4,image/jpeg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+								//fileField.Accept().Set(".gif")
+								fileField.Multiple().Set(true)
+								fileField.OnUploadReceived(func(files []ui.FileUpload) {
+									for _, file := range files {
+										f, _ := file.Open()
+										defer f.Close()
+										buf, _ := io.ReadAll(f)
+										fmt.Println(file.Name(), file.Size(), len(buf))
+										page.Modals().Append(
+											ui.NewDialog(func(dlg *ui.Dialog) {
+												dlg.Title().Set("hey")
+												dlg.Body().Set(ui.MakeText("hello Alex, die Datei ist sicher angekommen: " + file.Name()))
+												dlg.Actions().Append(
+													ui.NewButton(func(btn *ui.Button) {
+														btn.Caption().Set("ganz toll")
+														btn.Action().Set(func() {
+															page.Modals().Remove(dlg)
+														},
+														)
+													}),
+												)
+											}),
+										)
+									}
+								})
+							}))
+
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Value().Set(123)
 								numberField.Simple().Set(true)
@@ -400,36 +454,6 @@ func main() {
 									tgl.OnCheckedChanged().Set(func() {
 										fmt.Println("toggle changed to ", tgl.Checked().Get())
 										myMagicTF.Disabled().Set(tgl.Checked().Get())
-									})
-								}),
-
-								ui.NewFileField(func(fileField *ui.FileField) {
-									fileField.Label().Set("Dein Zeug zum upload")
-									fileField.Hint().Set("Klick or Drag'n drop zum Upload")
-									//fileField.Accept().Set(".gif")
-									fileField.Multiple().Set(true)
-									fileField.OnUploadReceived(func(files []ui.FileUpload) {
-										for _, file := range files {
-											f, _ := file.Open()
-											defer f.Close()
-											buf, _ := io.ReadAll(f)
-											fmt.Println(file.Name(), file.Size(), len(buf))
-											page.Modals().Append(
-												ui.NewDialog(func(dlg *ui.Dialog) {
-													dlg.Title().Set("hey")
-													dlg.Body().Set(ui.MakeText("hello Alex, die Datei ist sicher angekommen: " + file.Name()))
-													dlg.Actions().Append(
-														ui.NewButton(func(btn *ui.Button) {
-															btn.Caption().Set("ganz toll")
-															btn.Action().Set(func() {
-																page.Modals().Remove(dlg)
-															},
-															)
-														}),
-													)
-												}),
-											)
-										}
 									})
 								}),
 

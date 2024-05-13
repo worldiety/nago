@@ -1,4 +1,4 @@
-import type { Event } from '@/shared/protocol/gen/event';
+import type { Event } from '@/shared/protocol/ora/event';
 import type { EventType } from '@/shared/eventbus/eventType';
 
 type EventCallback = (event: Event) => void;
