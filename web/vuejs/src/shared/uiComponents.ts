@@ -7,7 +7,7 @@ import UiDropdown from '@/components/dropdown/UiDropdown.vue';
 import UiGrid from '@/components/UiGrid.vue';
 import UiHBox from '@/components/UiHBox.vue';
 import UiImage from '@/components/UiImage.vue';
-import UiScaffold from '@/components/UiScaffold.vue';
+import UiScaffold from '@/components/scaffold/UiScaffold.vue';
 import UiStepper from '@/components/UiStepper.vue';
 import UiTable from '@/components/UiTable.vue';
 import UiText from '@/components/UiText.vue';

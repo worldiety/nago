@@ -1,0 +1,3 @@
+.website-content {
+	@apply max-w-[100rem] px-4 mx-auto;
+}
