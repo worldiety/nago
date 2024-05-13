@@ -1,6 +1,7 @@
 @import "inputs.css";
 @import "effects.css";
 @import "buttons.css";
+@import "progress.css";
 
 html {
 	font-size: 16px;

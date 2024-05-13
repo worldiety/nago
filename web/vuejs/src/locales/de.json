@@ -57,5 +57,8 @@
 	},
 	"inputWrapper": {
 		"error": "Fehler"
+	},
+	"uploadField": {
+		"size": "Größe"
 	}
 }

@@ -14,7 +14,7 @@ import UiText from '@/components/UiText.vue';
 import UiTextArea from '@/components/UiTextArea.vue';
 import UiTextField from '@/components/UiTextField.vue';
 import UiToggle from '@/components/UiToggle.vue';
-import UiUploadField from '@/components/UiUploadField.vue';
+import UiUploadField from '@/components/uploadfield/UiUploadField.vue';
 import UiVBox from '@/components/UiVBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiSlider from '@/components/UiSlider.vue';

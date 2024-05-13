@@ -28,17 +28,30 @@
 			<p class="text-gray-500 dark:text-gray-400">{{ props.ui.hintLeft.v }}</p>
 			<p class="text-gray-500 dark:text-gray-400">{{ props.ui.hintRight.v }}</p>
 		</div>
+
+		<!-- File statuses -->
+		<template v-if="files && bytesUploaded !== null && bytesTotal !== null">
+			<FileStatus
+				v-for="(file, index) in files"
+				:key="index"
+				:file="file"
+				:bytes-uploaded="bytesUploaded"
+				:bytes-total="bytesTotal"
+				:finished="true"
+			/>
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { fetchUpload } from "@/api/upload/uploadRepository";
-import { ApplicationError, CustomError, useErrorHandling } from "@/composables/errorhandling";
+import { ApplicationError, useErrorHandling } from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
 import type { FileField } from "@/shared/protocol/ora/fileField";
 import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FileStatus from '@/components/uploadfield/FileStatus.vue';
 
 const props = defineProps<{
 	ui: FileField;
@@ -48,6 +61,9 @@ const errorHandler = useErrorHandling();
 const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
+const files = ref<File[]|null>(null);
+const bytesUploaded = ref<number|null>(null);
+const bytesTotal = ref<number|null>(null);
 
 function showUploadDialog(): void {
 	fileInput.value?.click();
@@ -62,21 +78,23 @@ async function fileInputChanged(e: Event):Promise<void> {
 	if (!item.files) {
 		return;
 	}
-	const files: File[] = []
+	const filesToUpload: File[] = []
 	for (let i = 0; i < item.files.length; i++) {
-		files.push(item.files[i])
+		filesToUpload.push(item.files[i])
 	}
-	if (!filesValid(files)) {
-		const error: CustomError = {
+	if (!filesValid(filesToUpload)) {
+		errorHandler.handleError({
 			errorCode: '003',
 			message: t('customErrorcodes.003.errorMessage', [`${props.ui.maxBytes.v / 1000000} MB`]),
-		}
-		errorHandler.handleError(error);
+		});
 		return;
 	}
 
+	files.value = filesToUpload;
+	bytesUploaded.value = null;
+	bytesTotal.value = null;
 	try {
-		await fetchUpload(files, "???", props.ui.uploadToken.v, uploadProgressCallback) // todo backend must resolve page/scope whatever by token itself
+		await fetchUpload(filesToUpload, "???", props.ui.uploadToken.v, uploadProgressCallback) // todo backend must resolve page/scope whatever by token itself
 	} catch (e: ApplicationError) {
 		errorHandler.handleError(e)
 	}
@@ -90,6 +108,7 @@ function filesValid(files: File[]): boolean {
 }
 
 function uploadProgressCallback(progress: number, total: number): void {
-	console.log(progress + ' of ' + total);
+	bytesUploaded.value = progress;
+	bytesTotal.value = total;
 }
 </script>
