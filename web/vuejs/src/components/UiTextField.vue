@@ -12,13 +12,34 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'text-field-';
+let timeout: number|null = null;
 
-watch(inputValue, (newValue) => {
+watch(() => props.ui.value.v, (newValue) => {
+	inputValue.value = newValue;
+});
+
+function inputValueChanged(): void {
+	// Use debouncing here to prevent excessive updates
+	if (timeout !== null) {
+		return;
+	}
+	timeout = window.setTimeout(() => {
+		submitInputValue();
+		timeout = null;
+	}, 500);
+}
+
+function submitInputValue(): void {
 	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.value,
-		v: newValue,
+		v: inputValue.value,
 	}], [props.ui.onTextChanged]);
-});
+}
+
+function clearInputValue(): void {
+	inputValue.value = '';
+	submitInputValue();
+}
 </script>
 
 <template>
@@ -40,9 +61,10 @@ watch(inputValue, (newValue) => {
 					:placeholder="props.ui.placeholder.v"
 					:disabled="props.ui.disabled.v"
 					type="text"
+					@input="inputValueChanged"
 				/>
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+					<CloseIcon class="w-4" tabindex="0" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 		</InputWrapper>

@@ -416,6 +416,9 @@ func main() {
 									t.Help().Set("Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext.")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
+									t.OnTextChanged().Set(func() {
+										myMagicTF.Value().Set(t.Value().Get())
+									})
 								}),
 
 								ui.NewTextField(func(t *ui.TextField) {
