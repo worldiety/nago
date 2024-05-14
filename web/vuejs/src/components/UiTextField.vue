@@ -12,7 +12,7 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'text-field-';
-let timeout: number|null = null;
+let submitTimeout: number|null = null;
 
 watch(() => props.ui.value.v, (newValue) => {
 	inputValue.value = newValue;
@@ -21,12 +21,12 @@ watch(() => props.ui.value.v, (newValue) => {
 watch(inputValue, () => {
 	console.log('X');
 	// Use debouncing here to prevent excessive updates
-	if (timeout !== null) {
+	if (submitTimeout !== null) {
 		return;
 	}
-	timeout = window.setTimeout(() => {
+	submitTimeout = window.setTimeout(() => {
 		submitInputValue();
-		timeout = null;
+		submitTimeout = null;
 	}, 500);
 });
 

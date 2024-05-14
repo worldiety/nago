@@ -284,6 +284,23 @@ func main() {
 								})
 							}))
 
+							var pf *ui.PasswordField
+							vbox.Append(ui.NewPasswordField(func(passwordField *ui.PasswordField) {
+								passwordField.Simple().Set(true)
+								passwordField.Label().Set("Passwort 1")
+								passwordField.Placeholder().Set("Bitte ein Passwort eingeben...")
+								passwordField.OnPasswordChanged().Set(func() {
+									pf.Value().Set(passwordField.Value().Get())
+								})
+							}))
+
+							vbox.Append(ui.NewPasswordField(func(passwordField *ui.PasswordField) {
+								pf = passwordField
+								passwordField.Simple().Set(true)
+								passwordField.Label().Set("Passwort 2")
+								passwordField.Placeholder().Set("Bitte ein Passwort eingeben...")
+							}))
+
 							var nf *ui.NumberField
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
 								numberField.Value().Set("123")

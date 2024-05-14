@@ -14,13 +14,28 @@ const serviceAdapter = useServiceAdapter();
 const passwordInput = ref<HTMLElement|undefined>();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'password-field-';
+let submitTimeout: number|null = null;
 
-watch(inputValue, (newValue) => {
+watch(() => props.ui.value.v, (newValue) => {
+	inputValue.value = newValue;
+});
+
+watch(inputValue, () => {
+	if (submitTimeout !== null) {
+		return;
+	}
+	submitTimeout = window.setTimeout(() => {
+		submitInputValue();
+		submitTimeout = null;
+	}, 500);
+});
+
+function submitInputValue(): void {
 	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.value,
-		v: newValue,
+		v: inputValue.value,
 	}], [props.ui.onPasswordChanged]);
-});
+}
 
 function toggleRevealed(): void {
 	serviceAdapter.setProperties({

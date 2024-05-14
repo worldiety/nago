@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
-let timeout: number|null = null;
+let submitTimeout: number|null = null;
 
 watch(() => props.ui.value.v, (newValue) => {
 	inputValue.value = newValue;
@@ -31,16 +31,16 @@ watch(inputValue, (newValue, oldValue) => {
 		return;
 	}
 
-	if (timeout !== null) {
+	if (submitTimeout !== null) {
 		return;
 	}
-	timeout = window.setTimeout(() => {
+	submitTimeout = window.setTimeout(() => {
 		const updatedValueProperty: Property<string> = {
 			...props.ui.value,
 			v: inputValue.value,
 		};
 		serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
-		timeout = null;
+		submitTimeout = null;
 	}, 500);
 });
 </script>
