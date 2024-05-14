@@ -13,7 +13,7 @@ export interface NumberField {
     label: Property<string>;
     hint: Property<string>;
     error: Property<string>;
-    value: Property<number /*int64*/>;
+    value: Property<string>;
     placeholder: Property<string>;
     disabled: Property<boolean>;
     simple: Property<boolean>;

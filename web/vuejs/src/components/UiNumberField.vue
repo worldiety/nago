@@ -11,7 +11,12 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const inputValue = ref<string>(props.ui.value.v.toString(10));
+const inputValue = ref<string>(props.ui.value.v);
+let timeout: number|null = null;
+
+watch(() => props.ui.value.v, (newValue) => {
+	inputValue.value = newValue;
+});
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -20,16 +25,23 @@ const inputValue = ref<string>(props.ui.value.v.toString(10));
  */
 watch(inputValue, (newValue, oldValue) => {
 	if (newValue === '' || newValue == '-') {
-		newValue = '0';
+		inputValue.value = '0';
 	} else if (!newValue.match(/^-?[0-9]+$/)) {
 		inputValue.value = oldValue;
 		return;
 	}
-	const updatedValueProperty: Property<number> = {
-		...props.ui.value,
-		v: parseInt(newValue, 10),
-	};
-	serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
+
+	if (timeout !== null) {
+		return;
+	}
+	timeout = window.setTimeout(() => {
+		const updatedValueProperty: Property<string> = {
+			...props.ui.value,
+			v: inputValue.value,
+		};
+		serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
+		timeout = null;
+	}, 500);
 });
 </script>
 

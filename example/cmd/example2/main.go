@@ -284,18 +284,23 @@ func main() {
 								})
 							}))
 
+							var nf *ui.NumberField
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
-								numberField.Value().Set(123)
+								numberField.Value().Set("123")
 								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 								numberField.OnValueChanged().Set(func() {
-									if numberField.Value().Get() == 3 {
-										numberField.Error().Set("Wert darf nicht 3 sein")
-									} else {
-										numberField.Error().Set("")
-									}
+									nf.Value().Set(numberField.Value().Get())
 								})
+							}))
+
+							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								nf = numberField
+								numberField.Value().Set("123")
+								numberField.Simple().Set(true)
+								numberField.Label().Set("Nummernfeld für Ganzzahlen 2")
+								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 							}))
 
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
