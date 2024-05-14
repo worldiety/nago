@@ -397,21 +397,27 @@ func main() {
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option A")
+										item.Content().Set("Halle A 07:00 Uhr Stand 1")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option BCD")
+										item.Content().Set("Halle A 07:00 Uhr Stand 2")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option DEF")
+										item.Content().Set("Halle B 07:00 Uhr Stand 1")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B 08:00 Uhr Stand 2")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
