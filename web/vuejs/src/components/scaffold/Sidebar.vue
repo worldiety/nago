@@ -5,10 +5,10 @@
 		aria-label="Sidebar"
 	>
 		<!-- Sidebar -->
-		<div class="relative flex flex-col justify-between items-center bg-white dark:bg-darkmode-gray h-full w-full pt-6 px-4 pb-7 z-10">
-			<div class="flex flex-col items-center justify-start gap-y-4 w-full">
-				<div class="w-full *:w-full" v-html="ui.logo.v"></div>
-				<!-- Top level menu entries -->
+		<div class="relative flex flex-col items-center justify-start gap-y-4 bg-white dark:bg-darkmode-gray h-full w-full pt-6 px-4 pb-7 z-10">
+			<div class="w-full *:w-full" v-html="ui.logo.v"></div>
+			<!-- Top level menu entries -->
+			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
 				<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="w-full">
 					<MenuEntryComponent
 						:ui="menuEntry"
