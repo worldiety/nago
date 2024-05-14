@@ -37,7 +37,7 @@ function reload(): void {
 							<div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
 								<div class="mt-2">
 									<p>{{ props.error.message }}</p>
-									<button class="border border-black bg-white p-0.5 text-sm rounded-md" @click="toggleErrorInfo">Mehr Informationen</button>
+									<button v-if="error.additionalInformation" class="border border-black bg-white p-0.5 text-sm rounded-md" @click="toggleErrorInfo">Mehr Informationen</button>
 									<p v-if="showAdditionalInformation">{{ props.error.additionalInformation }}</p>
 								</div>
 							</div>

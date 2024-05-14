@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"reflect"
 )
-
+// deprecated: use github.com/worldiety/macro
 type E3[T1 any, T2 any, T3 any] struct {
 	ordinal int
 	v       any

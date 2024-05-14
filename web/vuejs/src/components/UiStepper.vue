@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Stepper} from "@/shared/protocol/gen/stepper";
+import {Stepper} from "@/shared/protocol/ora/stepper";
 
 const props = defineProps<{
 	ui: Stepper;

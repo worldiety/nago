@@ -5,6 +5,7 @@ package ora
 //	I vote for deletion, but what is the replacement?
 //
 // deprecated
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type GridCell struct {
 	Ptr       Ptr                 `json:"id"`
 	Type      ComponentType       `json:"type" value:"GridCell"`

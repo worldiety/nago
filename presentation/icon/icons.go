@@ -25,3 +25,15 @@ var Cog6Tooth ui.SVGSrc
 
 //go:embed plus.svg
 var Plus ui.SVGSrc
+
+//go:embed ora-logo.svg
+var OraLogo ui.SVGSrc
+
+//go:embed package-outlined.svg
+var PackageOutlined ui.SVGSrc
+
+//go:embed package-filled.svg
+var PackageFilled ui.SVGSrc
+
+//go:embed dashboard.svg
+var Dashboard ui.SVGSrc

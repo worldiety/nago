@@ -6,90 +6,61 @@ import (
 )
 
 type Scaffold struct {
-	id          ora.Ptr
-	title       String
-	breadcrumbs *SharedList[*Button]
-	menu        *SharedList[*Button]
-	body        *Shared[core.Component]
-	topbarLeft  *Shared[core.Component]
-	topbarMid   *Shared[core.Component]
-	topbarRight *Shared[core.Component]
-	properties  []core.Property
+	id                  ora.Ptr
+	navigationComponent *Shared[*NavigationComponent]
+	body                *Shared[core.Component]
+	properties          []core.Property
 }
 
 func NewScaffold(with func(scaffold *Scaffold)) *Scaffold {
-	c := &Scaffold{
-		id:          nextPtr(),
-		title:       NewShared[string]("title"),
-		breadcrumbs: NewSharedList[*Button]("breadcrumbs"),
-		topbarLeft:  NewShared[core.Component]("topbarLeft"),
-		topbarMid:   NewShared[core.Component]("topbarMid"),
-		topbarRight: NewShared[core.Component]("topbarRight"),
-		menu:        NewSharedList[*Button]("menu"),
-		body:        NewShared[core.Component]("body"),
+	s := &Scaffold{
+		id:                  nextPtr(),
+		navigationComponent: NewShared[*NavigationComponent]("navigationComponent"),
+		body:                NewShared[core.Component]("body"),
 	}
 
-	c.properties = []core.Property{c.title, c.breadcrumbs, c.menu, c.body, c.topbarLeft, c.topbarMid, c.topbarRight}
+	s.properties = []core.Property{s.navigationComponent, s.body}
 
 	if with != nil {
-		with(c)
+		with(s)
 	}
 
-	return c
+	return s
 }
 
-func (c *Scaffold) Body() *Shared[core.Component] {
-	return c.body
+func (s *Scaffold) Body() *Shared[core.Component] {
+	return s.body
 }
 
-func (c *Scaffold) Menu() *SharedList[*Button] {
-	return c.menu
+func (s *Scaffold) NavigationComponent() *Shared[*NavigationComponent] {
+	return s.navigationComponent
 }
 
-func (c *Scaffold) Breadcrumbs() *SharedList[*Button] {
-	return c.breadcrumbs
+func (s *Scaffold) ID() ora.Ptr {
+	return s.id
 }
 
-func (c *Scaffold) TopBar() ScaffoldTopBar {
-	return ScaffoldTopBar{
-		Left:  c.topbarLeft,
-		Mid:   c.topbarMid,
-		Right: c.topbarRight,
-	}
-}
-
-func (c *Scaffold) ID() ora.Ptr {
-	return c.id
-}
-
-func (c *Scaffold) Type() string {
+func (s *Scaffold) Type() string {
 	return "Scaffold"
 }
 
-func (c *Scaffold) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
+func (s *Scaffold) Properties(yield func(core.Property) bool) {
+	for _, property := range s.properties {
 		if !yield(property) {
 			return
 		}
 	}
 }
 
-func (c *Scaffold) Render() ora.Component {
-	return ora.Scaffold{
-		Ptr:         c.id,
-		Type:        ora.ScaffoldT,
-		Title:       c.title.render(),
-		Body:        renderComponentProp(c.body, c.body),
-		Breadcrumbs: renderSharedListButtons(c.breadcrumbs),
-		Menu:        renderSharedListButtons(c.menu),
-		TopbarLeft:  renderSharedComponent(c.topbarLeft),
-		TopbarMid:   renderSharedComponent(c.topbarMid),
-		TopbarRight: renderSharedComponent(c.topbarRight),
-	}
-}
+func (s *Scaffold) Render() ora.Component {
+	var navigationComponent ora.Property[ora.NavigationComponent]
+	navigationComponent.Ptr = s.navigationComponent.id
+	navigationComponent.Value = s.navigationComponent.v.renderNavigationComponent()
 
-type ScaffoldTopBar struct {
-	Left  *Shared[core.Component]
-	Mid   *Shared[core.Component]
-	Right *Shared[core.Component]
+	return ora.Scaffold{
+		Ptr:                 s.id,
+		Type:                ora.ScaffoldT,
+		Body:                renderComponentProp(s.body, s.body),
+		NavigationComponent: navigationComponent,
+	}
 }

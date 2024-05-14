@@ -1,0 +1,15 @@
+progress[value] {
+	@apply appearance-none border-none bg-disabled-background text-ora-orange rounded-full h-1;
+}
+
+progress[value]::-webkit-progress-bar {
+	@apply bg-disabled-background rounded-full;
+}
+
+progress[value]::-moz-progress-bar {
+	@apply bg-ora-orange rounded-full;
+}
+
+progress[value]::-webkit-progress-value {
+	@apply bg-ora-orange rounded-full;
+}

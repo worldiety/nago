@@ -7,14 +7,14 @@ import UiDropdown from '@/components/dropdown/UiDropdown.vue';
 import UiGrid from '@/components/UiGrid.vue';
 import UiHBox from '@/components/UiHBox.vue';
 import UiImage from '@/components/UiImage.vue';
-import UiScaffold from '@/components/UiScaffold.vue';
+import UiScaffold from '@/components/scaffold/UiScaffold.vue';
 import UiStepper from '@/components/UiStepper.vue';
 import UiTable from '@/components/UiTable.vue';
 import UiText from '@/components/UiText.vue';
 import UiTextArea from '@/components/UiTextArea.vue';
 import UiTextField from '@/components/UiTextField.vue';
 import UiToggle from '@/components/UiToggle.vue';
-import UiUploadField from '@/components/UiUploadField.vue';
+import UiUploadField from '@/components/uploadfield/UiUploadField.vue';
 import UiVBox from '@/components/UiVBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiSlider from '@/components/UiSlider.vue';
@@ -23,6 +23,7 @@ import type { Component } from 'vue';
 import UiWebView from "@/components/UiWebView.vue";
 import UiPage from "@/components/UiPage.vue";
 import UiPasswordField from '@/components/UiPasswordField.vue';
+import UiBreadcrumbs from '@/components/breadcrumbs/UiBreadcrumbs.vue';
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -50,5 +51,6 @@ uiComponentsMap.set('NumberField', UiNumberField);
 uiComponentsMap.set('WebView', UiWebView);
 uiComponentsMap.set('Page',UiPage);
 uiComponentsMap.set('PasswordField',UiPasswordField);
+uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
 
 export default uiComponentsMap;

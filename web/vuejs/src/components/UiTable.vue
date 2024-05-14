@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {Table} from "@/shared/protocol/gen/table";
+import {Table} from "@/shared/protocol/ora/table";
 
 const props = defineProps<{
 	ui: Table;
