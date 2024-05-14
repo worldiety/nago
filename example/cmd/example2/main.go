@@ -146,7 +146,7 @@ func main() {
 							var menuEntryB *ui.MenuEntry
 							var menuEntryC *ui.MenuEntry
 
-							navigationComponent.Alignment().Set(ora.AlignmentTop)
+							navigationComponent.Alignment().Set(ora.AlignmentLeft)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntryA = menuEntry
@@ -281,6 +281,28 @@ func main() {
 											}),
 										)
 									}
+								})
+							}))
+
+							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
+
+								tgl.Label().Set("Toggle 1")
+								tgl.Checked().Set(false)
+								//	tgl.Disabled().Set(true)
+								tgl.OnCheckedChanged().Set(func() {
+									fmt.Println("toggle changed to ", tgl.Checked().Get())
+									myMagicTF.Disabled().Set(tgl.Checked().Get())
+								})
+							}))
+
+							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
+
+								tgl.Label().Set("Toggle 1")
+								tgl.Checked().Set(false)
+								//	tgl.Disabled().Set(true)
+								tgl.OnCheckedChanged().Set(func() {
+									fmt.Println("toggle changed to ", tgl.Checked().Get())
+									myMagicTF.Disabled().Set(tgl.Checked().Get())
 								})
 							}))
 

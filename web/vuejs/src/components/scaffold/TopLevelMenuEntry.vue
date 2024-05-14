@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex flex-col justify-between items-center cursor-pointer h-full"
+		class="flex flex-col justify-between items-center cursor-pointer h-full w-full"
 		tabindex="0"
 		@mousedown="active = true"
 		@click="handleClick"
@@ -13,6 +13,7 @@
 		@focus="expandMenuEntry"
 	>
 		<div
+			v-if="ui.icon.v"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{'bg-disabled-background bg-opacity-25': ui.expanded.v, 'bg-opacity-35': active}"
 		>
@@ -25,7 +26,7 @@
 				</div>
 			</div>
 		</div>
-		<p class="text-sm text-center font-medium select-none">{{ ui.title.v }}</p>
+		<p class="text-sm text-center font-medium select-none hyphens-auto w-full">Donaudampfschifffahrtsgesellschaft</p>
 	</div>
 </template>
 

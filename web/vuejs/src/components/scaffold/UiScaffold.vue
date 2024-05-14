@@ -11,7 +11,7 @@
 
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import type { Scaffold } from "@/shared/protocol/gen/scaffold";
+import type { Scaffold } from "@/shared/protocol/ora/scaffold";
 import Sidebar from '@/components/scaffold/Sidebar.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
 import { Alignment } from '@/shared/protocol/alignment';
