@@ -14,9 +14,11 @@ import (
 	"io/fs"
 	"log"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"time"
 )
 
@@ -55,7 +57,9 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 	}
 
-	app2 := core.NewApplication(c.ctx, factories)
+	tmpDir := filepath.Join(c.dataDir, "tmp")
+	slog.Info("tmp directory updated", "dir", tmpDir)
+	app2 := core.NewApplication(c.ctx, tmpDir, factories)
 	r := chi.NewRouter()
 
 	if c.debug {
@@ -108,6 +112,60 @@ func (c *Configurator) newHandler() http.Handler {
 		}))
 
 	}
+
+	r.Mount("/api/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// we support currently only multipart upload forms
+		scopeID := ora.ScopeID(r.Header.Get("x-scope"))
+		if len(scopeID) < 32 {
+			slog.Error("upload request has a weired x-scope id", "id", scopeID)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		receiverPtr, err := strconv.Atoi(r.Header.Get("x-receiver"))
+		if err != nil {
+			slog.Error("upload request has no parseable x-receiver header", "err", err)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		isMultipart := r.Header.Get("Content-Type") == "multipart/form-data"
+		if isMultipart {
+			if err := r.ParseMultipartForm(1024 * 1024); err != nil {
+				slog.Error("cannot parse multipart form", "err", err)
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+
+			for _, headers := range r.MultipartForm.File {
+				// we don't care about specific field names and instead just collect everything what looks like a file
+				for _, header := range headers {
+					file, err := header.Open()
+					if err != nil {
+						slog.Error("cannot open multipart form", "err", err)
+						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+					}
+
+					defer file.Close()
+
+					stream := newHttpFileStream(file, header, scopeID, ora.Ptr(receiverPtr))
+
+					if err := app2.OnStreamReceive(stream); err != nil {
+						slog.Error("cannot process received stream", "err", err)
+						http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+
+			return
+		} else {
+			slog.Error("upload request must be multipart form", "err", err)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+	}))
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context())
@@ -186,4 +244,31 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
+}
+
+type httpFileStream struct {
+	file     multipart.File
+	header   *multipart.FileHeader
+	scopeID  ora.ScopeID
+	receiver ora.Ptr
+}
+
+func newHttpFileStream(file multipart.File, header *multipart.FileHeader, scopeID ora.ScopeID, receiver ora.Ptr) *httpFileStream {
+	return &httpFileStream{file: file, header: header, scopeID: scopeID, receiver: receiver}
+}
+
+func (h *httpFileStream) Read(p []byte) (n int, err error) {
+	return h.file.Read(p)
+}
+
+func (h *httpFileStream) Name() string {
+	return h.header.Filename
+}
+
+func (h *httpFileStream) Receiver() ora.Ptr {
+	return h.receiver
+}
+
+func (h *httpFileStream) ScopeID() ora.ScopeID {
+	return h.scopeID
 }
