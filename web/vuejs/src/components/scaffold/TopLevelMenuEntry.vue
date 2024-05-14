@@ -26,7 +26,7 @@
 				</div>
 			</div>
 		</div>
-		<p class="text-sm text-center font-medium select-none hyphens-auto w-full">Donaudampfschifffahrtsgesellschaft</p>
+		<p class="text-sm text-center font-medium select-none hyphens-auto w-full">{{ ui.title.v }}</p>
 	</div>
 </template>
 
