@@ -284,25 +284,26 @@ func main() {
 								})
 							}))
 
+							var toggle *ui.Toggle
 							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
-
+								toggle = tgl
 								tgl.Label().Set("Toggle 1")
 								tgl.Checked().Set(false)
 								//	tgl.Disabled().Set(true)
 								tgl.OnCheckedChanged().Set(func() {
-									fmt.Println("toggle changed to ", tgl.Checked().Get())
-									myMagicTF.Disabled().Set(tgl.Checked().Get())
+									fmt.Println("toggle 1 changed to ", tgl.Checked().Get())
 								})
 							}))
 
 							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
 
-								tgl.Label().Set("Toggle 1")
+								tgl.Label().Set("Toggle 2")
 								tgl.Checked().Set(false)
 								//	tgl.Disabled().Set(true)
 								tgl.OnCheckedChanged().Set(func() {
-									fmt.Println("toggle changed to ", tgl.Checked().Get())
-									myMagicTF.Disabled().Set(tgl.Checked().Get())
+									toggle.Checked().Set(false)
+									toggle.OnCheckedChanged().Invoke()
+									fmt.Println("toggle 2 changed to ", tgl.Checked().Get())
 								})
 							}))
 
