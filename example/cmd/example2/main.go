@@ -462,6 +462,7 @@ func main() {
 									t.Hint().Set("dieses Feld ist ohne Fehler")
 									t.OnTextChanged().Set(func() {
 										myMagicTF.Value().Set(t.Value().Get())
+										myMagicTF.OnTextChanged().Invoke()
 									})
 								}),
 

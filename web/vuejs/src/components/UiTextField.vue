@@ -12,22 +12,9 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'text-field-';
-let submitTimeout: number|null = null;
 
 watch(() => props.ui.value.v, (newValue) => {
 	inputValue.value = newValue;
-});
-
-watch(inputValue, () => {
-	console.log('X');
-	// Use debouncing here to prevent excessive updates
-	if (submitTimeout !== null) {
-		return;
-	}
-	submitTimeout = window.setTimeout(() => {
-		submitInputValue();
-		submitTimeout = null;
-	}, 500);
 });
 
 function submitInputValue(): void {
@@ -39,6 +26,7 @@ function submitInputValue(): void {
 
 function clearInputValue(): void {
 	inputValue.value = '';
+	submitInputValue();
 }
 </script>
 
@@ -61,6 +49,7 @@ function clearInputValue(): void {
 					:placeholder="props.ui.placeholder.v"
 					:disabled="props.ui.disabled.v"
 					type="text"
+					@input="submitInputValue"
 				/>
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<CloseIcon class="w-4" tabindex="0" @click="clearInputValue" @keydown.enter="clearInputValue" />
