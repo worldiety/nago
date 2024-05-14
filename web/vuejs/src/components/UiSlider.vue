@@ -106,10 +106,7 @@ const sliderThumbEndOffset = ref<number>(0);
 const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
-	const startValue = props.ui.rangeMode.v ? roundValue(props.ui.startValue.v - scaleOffset.value) : roundValue(minRounded.value);
-	sliderStartValue.value = getDiscreteValue(startValue);
-	const endValue = roundValue(props.ui.endValue.v - scaleOffset.value);
-	sliderEndValue.value = getDiscreteValue(endValue);
+	initializeBoundaries();
 })
 
 onMounted(() => {
@@ -119,6 +116,24 @@ onMounted(() => {
 });
 
 onUnmounted(removeEventListeners);
+
+watch(() => props.ui.min.v, (newValue) => {
+	scaleOffset.value = roundValue(newValue);
+	initializeBoundaries();
+	initializeSliderThumbOffsets();
+});
+
+watch(() => props.ui.max.v, (newValue) => {
+	maxRounded.value = roundValue(newValue - scaleOffset.value)
+	initializeBoundaries();
+	initializeSliderThumbOffsets();
+});
+
+watch(() => props.ui.stepsize.v, (newValue) => {
+	stepsizeRounded.value = roundValue(newValue);
+	initializeBoundaries();
+	initializeSliderThumbOffsets();
+});
 
 watch(sliderThumbStartOffset, initializeSliderTickMarks);
 
@@ -136,6 +151,13 @@ function getSliderLabel(sliderValue: number): string {
 	return sliderValue.toLocaleString(undefined, {
 		minimumFractionDigits: 2,
 	}) + props.ui.labelSuffix.v;
+}
+
+function initializeBoundaries(): void {
+	const startValue = props.ui.rangeMode.v ? roundValue(props.ui.startValue.v - scaleOffset.value) : roundValue(minRounded.value);
+	sliderStartValue.value = getDiscreteValue(startValue);
+	const endValue = roundValue(props.ui.endValue.v - scaleOffset.value);
+	sliderEndValue.value = getDiscreteValue(endValue);
 }
 
 function initializeSliderThumbOffsets(): void {
