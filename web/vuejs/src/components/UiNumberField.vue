@@ -12,7 +12,6 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
-let submitTimeout: number|null = null;
 
 watch(() => props.ui.value.v, (newValue) => {
 	inputValue.value = newValue;
@@ -24,25 +23,28 @@ watch(() => props.ui.value.v, (newValue) => {
  * If the input value is invalid, the value gets reset to the last known valid value.
  */
 watch(inputValue, (newValue, oldValue) => {
-	if (newValue === '' || newValue == '-') {
+	if (newValue === '' || newValue === '-') {
 		inputValue.value = '0';
 	} else if (!newValue.match(/^-?[0-9]+$/)) {
 		inputValue.value = oldValue;
-		return;
 	}
-
-	if (submitTimeout !== null) {
-		return;
-	}
-	submitTimeout = window.setTimeout(() => {
-		const updatedValueProperty: Property<string> = {
-			...props.ui.value,
-			v: inputValue.value,
-		};
-		serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
-		submitTimeout = null;
-	}, 500);
 });
+
+function submitInputValue(): void {
+	if (!inputValue.value.match(/^-?[0-9]+$/)) {
+		return;
+	}
+	const updatedValueProperty: Property<string> = {
+		...props.ui.value,
+		v: inputValue.value,
+	};
+	serviceAdapter.setPropertiesAndCallFunctions([updatedValueProperty], [props.ui.onValueChanged]);
+}
+
+function clearInputValue(): void {
+	inputValue.value = '0';
+	submitInputValue();
+}
 </script>
 
 <template>
@@ -62,9 +64,10 @@ watch(inputValue, (newValue, oldValue) => {
 					inputmode="numeric"
 					:placeholder="props.ui.placeholder.v"
 					:disabled="props.ui.disabled.v"
+					@input="submitInputValue"
 				>
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<CloseIcon class="w-4" tabindex="0" @click="inputValue = ''" @keydown.enter="inputValue = ''" />
+					<CloseIcon class="w-4" tabindex="0" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 	</InputWrapper>
