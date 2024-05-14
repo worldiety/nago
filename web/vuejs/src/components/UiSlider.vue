@@ -121,18 +121,21 @@ watch(() => props.ui.min.v, (newValue) => {
 	scaleOffset.value = roundValue(newValue);
 	initializeBoundaries();
 	initializeSliderThumbOffsets();
+	submitSliderValues();
 });
 
 watch(() => props.ui.max.v, (newValue) => {
 	maxRounded.value = roundValue(newValue - scaleOffset.value)
 	initializeBoundaries();
 	initializeSliderThumbOffsets();
+	submitSliderValues();
 });
 
 watch(() => props.ui.stepsize.v, (newValue) => {
 	stepsizeRounded.value = roundValue(newValue);
 	initializeBoundaries();
 	initializeSliderThumbOffsets();
+	submitSliderValues();
 });
 
 watch(sliderThumbStartOffset, initializeSliderTickMarks);
