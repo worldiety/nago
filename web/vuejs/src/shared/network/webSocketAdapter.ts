@@ -17,6 +17,7 @@ import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryI
 import { v4 as uuidv4 } from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
 import { EventType } from '@/shared/eventbus/eventType';
+import {ScopeID} from "@/shared/protocol/ora/scopeID";
 
 export default class WebSocketAdapter implements ServiceAdapter {
 
@@ -123,6 +124,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Ptr>[]): Promise<ComponentInvalidated> {
 		return this.send(properties, functions).then((event) => event as ComponentInvalidated);
+	}
+
+	getScopeID(): ScopeID {
+		return this.scopeId
 	}
 
 	async createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {

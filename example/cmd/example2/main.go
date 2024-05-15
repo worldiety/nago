@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"io/fs"
 	"log/slog"
 )
 
@@ -259,29 +260,14 @@ func main() {
 								fileField.Accept().Set("video/mp4,image/jpeg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
-								fileField.OnUploadReceived(func(files []ui.FileUpload) {
-									for _, file := range files {
-										f, _ := file.Open()
-										defer f.Close()
-										buf, _ := io.ReadAll(f)
-										fmt.Println(file.Name(), file.Size(), len(buf))
-										page.Modals().Append(
-											ui.NewDialog(func(dlg *ui.Dialog) {
-												dlg.Title().Set("hey")
-												dlg.Body().Set(ui.MakeText("hello Alex, die Datei ist sicher angekommen: " + file.Name()))
-												dlg.Actions().Append(
-													ui.NewButton(func(btn *ui.Button) {
-														btn.Caption().Set("ganz toll")
-														btn.Action().Set(func() {
-															page.Modals().Remove(dlg)
-														},
-														)
-													}),
-												)
-											}),
-										)
-									}
+
+								fileField.SetFileReceiver(func(f fs.File) {
+									defer f.Close()
+									buf, _ := io.ReadAll(f)
+									info, _ := f.Stat()
+									fmt.Println(info.Name(), info.Size(), len(buf))
 								})
+
 							}))
 
 							var toggle *ui.Toggle

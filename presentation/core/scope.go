@@ -176,6 +176,7 @@ func (s *Scope) OnStreamReceive(stream StreamReader) (e error) {
 			slog.Error("receiver component for data stream has no compatible receiver interface", "type", fmt.Sprintf("%T", receiver))
 		}
 	})
+	s.eventLoop.Tick()
 
 	return nil
 }
@@ -206,9 +207,9 @@ func (s *Scope) getTempDir() (string, error) {
 
 	// we don't know where the temp root is. It may be in our apps home (e.g. in shared hosting environments)
 	// or in the systems temp dir.
-	path := filepath.Join(s.tempRootDir, string(s.id))
+	path := filepath.Join(s.tempRootDir)
 	//0600 means that only the owner can read and write
-	if err := os.MkdirAll(path, 0600); err != nil {
+	if err := os.MkdirAll(path, 0700); err != nil {
 		return "", fmt.Errorf("cannot create temp dir for scope: %s: %w", path, err)
 	}
 

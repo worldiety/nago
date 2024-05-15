@@ -51,6 +51,7 @@ import { useI18n } from 'vue-i18n';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
 import type FileUpload from '@/components/uploadfield/fileUpload';
 import { v4 as uuidv4 } from 'uuid';
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const props = defineProps<{
 	ui: FileField;
@@ -63,6 +64,8 @@ const errorMessage = ref<string|null>(null);
 const fileUploads = ref<FileUpload[]|null>(null);
 const bytesUploaded = ref<number|null>(null);
 const bytesTotal = ref<number|null>(null);
+
+const serviceAdapter = useServiceAdapter();
 
 function showUploadDialog(): void {
 	fileInput.value?.click();
@@ -100,10 +103,10 @@ async function fileInputChanged(e: Event):Promise<void> {
 		return fetchUpload(
 			fileUpload.file,
 			fileUpload.uploadId,
-			"???",
-			props.ui.uploadToken.v,
+			props.ui.id,
+			serviceAdapter.getScopeID(),
 			uploadProgressCallback,
-		) // todo backend must resolve page/scope whatever by token itself
+		)
 	});
 	try {
 		await Promise.all(promises);

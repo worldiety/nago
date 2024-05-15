@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -113,7 +114,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}
 
-	r.Mount("/api/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// we support currently only multipart upload forms
 		scopeID := ora.ScopeID(r.Header.Get("x-scope"))
 		if len(scopeID) < 32 {
@@ -129,7 +130,7 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 
-		isMultipart := r.Header.Get("Content-Type") == "multipart/form-data"
+		isMultipart := strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
 		if isMultipart {
 			if err := r.ParseMultipartForm(1024 * 1024); err != nil {
 				slog.Error("cannot parse multipart form", "err", err)
@@ -160,7 +161,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 			return
 		} else {
-			slog.Error("upload request must be multipart form", "err", err)
+			slog.Error("upload request must be multipart form", "content-type", r.Header.Get("Content-Type"))
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
