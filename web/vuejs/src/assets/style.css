@@ -6,5 +6,11 @@
 @import "scrollbars.css";
 
 html {
-	font-size: 16px;
+	font-size: 14px;
+}
+
+@media screen(md) {
+	html {
+		font-size: 16px;
+	}
 }

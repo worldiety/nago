@@ -146,7 +146,7 @@ func main() {
 							var menuEntryB *ui.MenuEntry
 							var menuEntryC *ui.MenuEntry
 
-							navigationComponent.Alignment().Set(ora.AlignmentLeft)
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
 							navigationComponent.Logo().Set(icon.OraLogo)
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntryA = menuEntry

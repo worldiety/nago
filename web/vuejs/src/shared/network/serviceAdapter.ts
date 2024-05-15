@@ -17,3 +17,4 @@ export default interface ServiceAdapter {
 	destroyComponent(ptr: Ptr): Promise<Acknowledged>;
 	getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined>;
 }
+sc
