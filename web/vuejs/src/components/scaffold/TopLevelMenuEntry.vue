@@ -78,8 +78,8 @@ function expandMenuEntry(): void {
 		{
 			...props.ui.expanded,
 			v: true,
-		}
-	], [props.ui.onFocus])
+		},
+	], [props.ui.onFocus]);
 }
 
 function focusFirstLinkedSubMenuEntry(keyPressed: 'down'|'right'): void {
