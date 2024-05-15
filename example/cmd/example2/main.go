@@ -456,6 +456,9 @@ func main() {
 										myMagicTF.Disabled().Set(tgl.Checked().Get())
 									})
 								}),
+								ui.NewCheckbox(func(chb *ui.Checkbox) {
+									chb.Clicked().Set(func() { fmt.Println("Hallo aus Checkbox") })
+								}),
 
 								ui.NewButton(func(btn *ui.Button) {
 									btn.Caption().Set("hello world")

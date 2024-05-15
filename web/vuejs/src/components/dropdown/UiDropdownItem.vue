@@ -21,7 +21,7 @@ const serviceAdapter = useServiceAdapter();
 		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"
 	>
 			<div class="flex justify-start items-center pl-2.5">
-				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
+				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0 box">
 				<div v-if="props.multiselect">
 					<p class="truncate pl-2">{{ props.ui.content.v }}</p>
 				</div>
@@ -32,4 +32,10 @@ const serviceAdapter = useServiceAdapter();
 	</div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.box {
+	@apply hover:border-black;
+	@apply checked:border-ora-orange;
+}
+
+</style>

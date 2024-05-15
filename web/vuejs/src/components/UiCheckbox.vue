@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import type {Checkbox} from "@/shared/protocol/ora/checkbox";
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const props = defineProps<{
-	disabled?: boolean;
+	ui: Checkbox
 }>()
 
-const checked = ref<boolean>(false);
+const serviceAdapter = useServiceAdapter()
 
-function checkboxClicked(): void {
-	if (!props.disabled) {
-		checked.value = !checked.value;
+function checkboxSelected(): void {
+	if (!props.ui.disabled.v) {
+		serviceAdapter.setPropertiesAndCallFunctions([{
+			...props.ui.selected, v: !props.ui.selected.v
+		}], [props.ui.clicked])
 	}
 }
 </script>
@@ -17,16 +21,17 @@ function checkboxClicked(): void {
 <template>
 	<div
 		class="input-checkbox rounded-full w-fit -ml-2.5"
-		:class="{'input-checkbox-disabled': disabled}"
-		:tabindex="disabled ? '-1' : '0'"
-		@click="checkboxClicked"
-		@keydown.enter="checkboxClicked"
+		:class="{'input-checkbox-disabled': ui.disabled.v}"
+		:tabindex="ui.disabled.v ? '-1' : '0'"
+		@click="checkboxSelected"
+		@keydown.enter="checkboxSelected"
 	>
 		<div class="p-2.5">
-			<input v-model="checked" type="checkbox" class="pointer-events-none" tabindex="-1" :disabled="disabled">
+			<input :checked="ui.selected.v" type="checkbox" class="pointer-events-none" tabindex="-1" :disabled="ui.disabled.v">
 		</div>
 	</div>
 </template>
+
 
 <style scoped>
 .input-checkbox:hover {
@@ -57,3 +62,4 @@ function checkboxClicked(): void {
 	@apply border-disabled-text;
 }
 </style>
+
