@@ -1,6 +1,8 @@
 package application
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -10,6 +12,7 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
+	"go.wdy.de/nago/presentation/core/tmpfs"
 	"go.wdy.de/nago/presentation/ora"
 	"io/fs"
 	"log"
@@ -138,25 +141,47 @@ func (c *Configurator) newHandler() http.Handler {
 				return
 			}
 
+			var tmp [32]byte
+			if _, err := rand.Read(tmp[:]); err != nil {
+				panic(err)
+			}
+			uplTmpDir := c.Directory(filepath.Join("upload", hex.EncodeToString(tmp[:])))
+
+			fsys, err := tmpfs.NewFS(uplTmpDir)
+			if err != nil {
+				slog.Error("cannot create tmpfs filesystem", "err", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
 			for _, headers := range r.MultipartForm.File {
 				// we don't care about specific field names and instead just collect everything what looks like a file
 				for _, header := range headers {
 					file, err := header.Open()
 					if err != nil {
-						slog.Error("cannot open multipart form", "err", err)
+						defer fsys.Clear()
+						slog.Error("cannot open multipart form file", "err", err)
 						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+						return
 					}
 
 					defer file.Close()
 
-					stream := newHttpFileStream(file, header, scopeID, ora.Ptr(receiverPtr))
-
-					if err := app2.OnStreamReceive(stream); err != nil {
-						slog.Error("cannot process received stream", "err", err)
+					if err := fsys.Import(header.Filename, file); err != nil {
+						defer fsys.Clear()
+						slog.Error("cannot import multipart form file", "err", err)
 						http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 						return
 					}
+
 				}
+			}
+
+			if err := app2.OnFilesReceived(scopeID, ora.Ptr(receiverPtr), fsys); err != nil {
+				defer fsys.Clear()
+				slog.Error("cannot process received stream", "err", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
 
 			return
@@ -213,19 +238,7 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 	/*
 		TODO
-			r.Mount("/api/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				pageToken := r.Header.Get("x-page-token")
-				page := appSrv.getPage(ui.PageInstanceToken(pageToken))
-				if page == nil {
-					logging.FromContext(r.Context()).Error("invalid page token for upload") //, slog.String("token", pageToken))
-					w.WriteHeader(http.StatusNotFound)
-					return
-				}
-
-				page.HandleHTTP(w, r)
-			}))
-
-			r.Mount("/api/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				r.Mount("/api/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				pageToken := r.Header.Get("x-page-token")
 				if pageToken == "" {
 					pageToken = r.URL.Query().Get("page")

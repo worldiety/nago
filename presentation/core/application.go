@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
+	"io/fs"
 	"path/filepath"
 	"sync"
 	"time"
@@ -52,14 +53,14 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	return scope
 }
 
-// OnStreamReceive delegates the received stream into according scope.
-func (a *Application) OnStreamReceive(stream StreamReader) error {
-	scope, ok := a.scopes.Get(stream.ScopeID())
+// OnFilesReceived delegates the received fs into according scope.
+func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, fsys fs.FS) error {
+	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
 		return fmt.Errorf("no such scope to receive stream: %s", scope.id)
 	}
 
-	return scope.OnStreamReceive(stream)
+	return scope.OnFilesReceived(receiver, fsys)
 }
 
 func (a *Application) Destroy() {
