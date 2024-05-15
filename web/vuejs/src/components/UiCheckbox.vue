@@ -13,7 +13,7 @@ function checkboxSelected(): void {
 	if (!props.ui.disabled.v) {
 		serviceAdapter.setPropertiesAndCallFunctions([{
 			...props.ui.selected, v: !props.ui.selected.v
-		}], [props.ui.clicked])
+		}], [props.ui.onClicked])
 	}
 }
 </script>

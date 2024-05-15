@@ -14,7 +14,7 @@ export interface Checkbox {
     id /*Ptr*/: Ptr;
     type: 'Checkbox'/*ComponentType*/;
     selected: Property<boolean>;
-    clicked: Property<Ptr>;
+    onClicked: Property<Ptr>;
     disabled: Property<boolean>;
 }
 

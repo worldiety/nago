@@ -486,7 +486,7 @@ func main() {
 									})
 								}),
 								ui.NewCheckbox(func(chb *ui.Checkbox) {
-									chb.Clicked().Set(func() { fmt.Println("Hallo aus Checkbox") })
+									chb.OnClicked().Set(func() { fmt.Println("Hallo aus Checkbox") })
 								}),
 
 								ui.NewButton(func(btn *ui.Button) {
