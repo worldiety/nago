@@ -268,6 +268,18 @@ func renderSharedListButtons(s *SharedList[*Button]) ora.Property[[]ora.Button] 
 	return res
 }
 
+func renderSharedListMenuEntries(s *SharedList[*MenuEntry]) ora.Property[[]ora.MenuEntry] {
+	res := ora.Property[[]ora.MenuEntry]{
+		Ptr: s.id,
+	}
+
+	for _, value := range s.values {
+		res.Value = append(res.Value, value.renderMenuEntry())
+	}
+
+	return res
+}
+
 func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]ora.Component] {
 	res := ora.Property[[]ora.Component]{
 		Ptr: s.id,
@@ -287,6 +299,18 @@ func renderSharedComponent(s *Shared[core.Component]) ora.Property[ora.Component
 
 	if s.v != nil {
 		res.Value = s.v.Render()
+	}
+
+	return res
+}
+
+func renderSharedNavigationComponent(n *Shared[*NavigationComponent]) ora.Property[ora.NavigationComponent] {
+	res := ora.Property[ora.NavigationComponent]{
+		Ptr: n.id,
+	}
+
+	if n.v != nil {
+		res.Value = n.v.renderNavigationComponent()
 	}
 
 	return res

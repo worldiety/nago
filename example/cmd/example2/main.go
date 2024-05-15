@@ -9,9 +9,11 @@ import (
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"io/fs"
 	"log/slog"
 )
 
@@ -132,107 +134,103 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Component("1234", func(w core.Window) core.Component {
-			logging.FromContext(w.Context()).Info("user", slog.Any("user", w.User()), slog.String("session", string(w.SessionID())))
+		cfg.Component("1234", func(wnd core.Window) core.Component {
+			logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
 
 			page := ui.NewPage(nil)
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
-					scaffold.TopBar().Left.Set(ui.MakeText("hello app"))
-					scaffold.TopBar().Mid.Set(ui.MakeText("GED+DH"))
-					scaffold.TopBar().Right.Set(ui.NewButton(func(btn *ui.Button) {
-						btn.Caption().Set("gehe zu")
-						btn.Action().Set(func() {
-							page.Modals().Append(
-								ui.NewDialog(func(dlg *ui.Dialog) {
-									dlg.Title().Set("super dialog")
-									dlg.Icon().Set(`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l3 3m0 0l3-3m-3 3v-7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-</svg>
-`)
-									dlg.Body().Set(ui.MakeText("hello super text"))
-									dlg.Actions().Append(
-										ui.NewButton(func(btn *ui.Button) {
-											btn.Caption().Set("schließen")
-											btn.Action().Set(func() {
-												page.Modals().Remove(dlg)
-											})
-										}),
 
-										ui.NewButton(func(btn *ui.Button) {
-											btn.Caption().Set("öffnen")
-											btn.Style().Set("destructive")
-											btn.Action().Set(func() {
-												w.Navigation().ForwardTo("hello", core.Values{
-													"a": "1234",
-													"b": "456",
-												})
-											})
-										}),
+					scaffold.NavigationComponent().Set(
+						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
+							var menuEntryA *ui.MenuEntry
+							var menuEntryB *ui.MenuEntry
+							var menuEntryC *ui.MenuEntry
 
-										ui.NewButton(func(btn *ui.Button) {
-											btn.Caption().Set("ugly stack it")
-											btn.Action().Set(func() {
-												page.Modals().Append(
-													ui.NewDialog(func(dlg *ui.Dialog) {
-														dlg.Title().Set("got you over it")
-													}),
-												)
-											})
-										}),
-									)
-								}),
-							)
-
-						})
-					}))
-					scaffold.Breadcrumbs().Append(
-						ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("homer")
-						}),
-						ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("simpson")
-							btn.PreIcon().Set(`<svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-              </svg>`)
+							navigationComponent.Alignment().Set(ora.AlignmentTop)
+							navigationComponent.Logo().Set(icon.OraLogo)
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryA = menuEntry
+								menuEntry.Title().Set("Menüpunkt A")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Badge().Set("2")
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "A"})
+								})
+								menuEntry.OnFocus().Set(func() {
+									menuEntryB.Expanded().Set(false)
+									menuEntryC.Expanded().Set(false)
+								})
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 1")
+									subEntry.Action().Set(func() {
+										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
+									})
+								}))
+							}))
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryB = menuEntry
+								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "B"})
+								})
+								menuEntry.OnFocus().Set(func() {
+									menuEntryA.Expanded().Set(false)
+									menuEntryC.Expanded().Set(false)
+								})
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 1")
+									subEntry.Action().Set(func() {
+										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
+									})
+								}))
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 2")
+									subEntry.Action().Set(func() {
+										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_2"})
+									})
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt I")
+										subSubEntry.Action().Set(func() {
+											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_I"})
+										})
+									}))
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt II")
+									}))
+								}))
+								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+									subEntry.Title().Set("Subpunkt 3")
+									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+										subSubEntry.Title().Set("Subsubpunkt III")
+										subSubEntry.Action().Set(func() {
+											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_III"})
+										})
+									}))
+								}))
+							}))
+							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+								menuEntryC = menuEntry
+								menuEntry.Title().Set("Menüpunkt C")
+								menuEntry.Icon().Set(icon.PackageOutlined)
+								menuEntry.IconActive().Set(icon.PackageFilled)
+								menuEntry.OnFocus().Set(func() {
+									menuEntryA.Expanded().Set(false)
+									menuEntryB.Expanded().Set(false)
+								})
+								menuEntry.Action().Set(func() {
+									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "C"})
+								})
+							}))
 						}),
 					)
 
-					scaffold.Menu().Append(
-						ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("hello")
-							btn.Action().Set(func() {
-								fmt.Println("clicked hello")
-							})
-						}),
-						ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("world")
-							btn.Action().Set(func() {
-								fmt.Println("clicked world")
-							})
-							btn.PreIcon().Set(`<svg class="" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
-              <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
-              <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
-            </svg>`)
-						}),
-					)
-
-					var yieldToggleVal bool
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
 						ui.NewVBox(func(vbox *ui.VBox) {
-							vbox.Append(ui.NewHBox(func(hBox *ui.HBox) {
-								hBox.Children().From(func(yield func(core.Component) bool) {
-									yield(ui.NewToggle(func(tgl *ui.Toggle) {
-										tgl.Label().Set("Ein Toggle.")
-										tgl.Checked().Set(yieldToggleVal)
-										tgl.OnCheckedChanged().Set(func() {
-											yieldToggleVal = tgl.Checked().Get()
-											fmt.Println("yield toggle to", tgl.Checked().Get())
-										})
-									}))
-								})
-							}))
 
 							vbox.Append(ui.NewBreadcrumbs(func(breadcrumbs *ui.Breadcrumbs) {
 								breadcrumbs.Items().Append(ui.NewBreadcrumbItem(func(item *ui.BreadcrumbItem) {
@@ -262,43 +260,73 @@ func main() {
 								fileField.Accept().Set("video/mp4,image/jpeg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
-								fileField.OnUploadReceived(func(files []ui.FileUpload) {
-									for _, file := range files {
-										f, _ := file.Open()
-										defer f.Close()
-										buf, _ := io.ReadAll(f)
-										fmt.Println(file.Name(), file.Size(), len(buf))
-										page.Modals().Append(
-											ui.NewDialog(func(dlg *ui.Dialog) {
-												dlg.Title().Set("hey")
-												dlg.Body().Set(ui.MakeText("hello Alex, die Datei ist sicher angekommen: " + file.Name()))
-												dlg.Actions().Append(
-													ui.NewButton(func(btn *ui.Button) {
-														btn.Caption().Set("ganz toll")
-														btn.Action().Set(func() {
-															page.Modals().Remove(dlg)
-														},
-														)
-													}),
-												)
-											}),
-										)
-									}
+
+								fileField.SetFileReceiver(func(f fs.File) {
+									defer f.Close()
+									buf, _ := io.ReadAll(f)
+									info, _ := f.Stat()
+									fmt.Println(info.Name(), info.Size(), len(buf))
+								})
+
+							}))
+
+							var toggle *ui.Toggle
+							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
+								toggle = tgl
+								tgl.Label().Set("Toggle 1")
+								tgl.Checked().Set(false)
+								//	tgl.Disabled().Set(true)
+								tgl.OnCheckedChanged().Set(func() {
+									fmt.Println("toggle 1 changed to ", tgl.Checked().Get())
 								})
 							}))
 
+							vbox.Append(ui.NewToggle(func(tgl *ui.Toggle) {
+
+								tgl.Label().Set("Toggle 2")
+								tgl.Checked().Set(false)
+								//	tgl.Disabled().Set(true)
+								tgl.OnCheckedChanged().Set(func() {
+									toggle.Checked().Set(false)
+									toggle.OnCheckedChanged().Invoke()
+									fmt.Println("toggle 2 changed to ", tgl.Checked().Get())
+								})
+							}))
+
+							var pf *ui.PasswordField
+							vbox.Append(ui.NewPasswordField(func(passwordField *ui.PasswordField) {
+								passwordField.Simple().Set(true)
+								passwordField.Label().Set("Passwort 1")
+								passwordField.Placeholder().Set("Bitte ein Passwort eingeben...")
+								passwordField.OnPasswordChanged().Set(func() {
+									pf.Value().Set(passwordField.Value().Get())
+								})
+							}))
+
+							vbox.Append(ui.NewPasswordField(func(passwordField *ui.PasswordField) {
+								pf = passwordField
+								passwordField.Simple().Set(true)
+								passwordField.Label().Set("Passwort 2")
+								passwordField.Placeholder().Set("Bitte ein Passwort eingeben...")
+							}))
+
+							var nf *ui.NumberField
 							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
-								numberField.Value().Set(123)
+								numberField.Value().Set("123")
 								numberField.Simple().Set(true)
 								numberField.Label().Set("Nummernfeld für Ganzzahlen")
 								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 								numberField.OnValueChanged().Set(func() {
-									if numberField.Value().Get() == 3 {
-										numberField.Error().Set("Wert darf nicht 3 sein")
-									} else {
-										numberField.Error().Set("")
-									}
+									nf.Value().Set(numberField.Value().Get())
 								})
+							}))
+
+							vbox.Append(ui.NewNumberField(func(numberField *ui.NumberField) {
+								nf = numberField
+								numberField.Value().Set("123")
+								numberField.Simple().Set(true)
+								numberField.Label().Set("Nummernfeld für Ganzzahlen 2")
+								numberField.Placeholder().Set("Bitte eine Ganzzahl eingeben...")
 							}))
 
 							vbox.Append(ui.NewSlider(func(slider *ui.Slider) {
@@ -355,21 +383,27 @@ func main() {
 
 								dropdown.Items().Append(
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option A")
+										item.Content().Set("Halle A 07:00 Uhr Stand 1")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option BCD")
+										item.Content().Set("Halle A 07:00 Uhr Stand 2")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
 									}),
 
 									ui.NewDropdownItem(func(item *ui.DropdownItem) {
-										item.Content().Set("Option DEF")
+										item.Content().Set("Halle B 07:00 Uhr Stand 1")
+										item.OnClicked().Set(func() {
+											dropdown.Toggle(item)
+										})
+									}),
+									ui.NewDropdownItem(func(item *ui.DropdownItem) {
+										item.Content().Set("Halle B 08:00 Uhr Stand 2")
 										item.OnClicked().Set(func() {
 											dropdown.Toggle(item)
 										})
@@ -410,7 +444,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(string(w.User().UserID()) + ":" + w.User().Name() + "->" + string(w.User().Email())))
+							vbox.Append(ui.MakeText(string(wnd.User().UserID()) + ":" + wnd.User().Name() + "->" + string(wnd.User().Email())))
 
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
@@ -419,6 +453,10 @@ func main() {
 									t.Help().Set("Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext. Das ist ein Hilfstext.")
 									t.Placeholder().Set("Bitte eingeben...")
 									t.Hint().Set("dieses Feld ist ohne Fehler")
+									t.OnTextChanged().Set(func() {
+										myMagicTF.Value().Set(t.Value().Get())
+										myMagicTF.OnTextChanged().Invoke()
+									})
 								}),
 
 								ui.NewTextField(func(t *ui.TextField) {
@@ -435,15 +473,6 @@ func main() {
 											}))
 										}
 									})
-								}),
-
-								ui.NewPasswordField(func(p *ui.PasswordField) {
-									p.Simple().Set(false)
-									p.Disabled().Set(false)
-									p.Hint().Set("Optional")
-									p.Label().Set("Passwort")
-									p.Help().Set("Das ist ein kurzer Hilfstext.")
-									p.Placeholder().Set("Bitte eingeben...")
 								}),
 
 								ui.NewToggle(func(tgl *ui.Toggle) {

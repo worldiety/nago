@@ -15,12 +15,16 @@ const passwordInput = ref<HTMLElement|undefined>();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'password-field-';
 
-watch(inputValue, (newValue) => {
+watch(() => props.ui.value.v, (newValue) => {
+	inputValue.value = newValue;
+});
+
+function submitInputValue(): void {
 	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.value,
-		v: newValue,
+		v: inputValue.value,
 	}], [props.ui.onPasswordChanged]);
-});
+}
 
 function toggleRevealed(): void {
 	serviceAdapter.setProperties({
@@ -51,6 +55,7 @@ function toggleRevealed(): void {
 					:placeholder="props.ui.placeholder.v"
 					:disabled="props.ui.disabled.v"
 					:type="props.ui.revealed.v ? 'text' : 'password'"
+					@input="submitInputValue"
 				/>
 				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black dark:text-white h-full">
 					<div :tabindex="props.ui.disabled.v ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">

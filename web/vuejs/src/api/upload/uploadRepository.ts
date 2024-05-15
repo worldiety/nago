@@ -1,20 +1,18 @@
 //TODO: Klasse anlegen?
 
-export type UploadProgressCallback = (progress: number, total: number) => void;
+import {Ptr} from "@/shared/protocol/ora/ptr";
+import {ScopeID} from "@/shared/protocol/ora/scopeID";
 
-export async function fetchUpload(files: File[], pageToken: string, uploadToken: string, uploadProgressCallback: UploadProgressCallback): Promise<void> {
-	if (files.length === 0) {
-		return;
-	}
+export type UploadProgressCallback = (uploadId: string, progress: number, total: number) => void;
+
+export async function fetchUpload(file: File, uploadId: string, receiverPtr: Ptr, scope: ScopeID, uploadProgressCallback: UploadProgressCallback): Promise<void> {
 	const formData = new FormData();
-	files.forEach((file: File) => {
-		formData.append(file.name, file, file.name);
-	});
+	formData.append(file.name, file, file.name);
 
 	return new Promise<void>((resolve, reject) => {
 		const request = new XMLHttpRequest();
 		request.upload.addEventListener('progress', (event: ProgressEvent) => {
-			uploadProgressCallback(event.loaded, event.total);
+			uploadProgressCallback(uploadId, event.loaded, event.total);
 		});
 		request.addEventListener('error', (e) => {
 			console.log('ERR', e);
@@ -27,7 +25,10 @@ export async function fetchUpload(files: File[], pageToken: string, uploadToken:
 			console.log('ABORTED');
 			reject('Aborted');
 		})
-		request.open('POST', '/api/v1/upload');
+
+		request.open('POST', '/api/ora/v1/upload');
+		request.setRequestHeader("x-scope", scope)
+		request.setRequestHeader("x-receiver", String(receiverPtr))
 		request.send(formData);
 	});
 }

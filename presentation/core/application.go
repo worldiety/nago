@@ -2,7 +2,9 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"go.wdy.de/nago/presentation/ora"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -14,9 +16,10 @@ type Application struct {
 	scopeLifetime time.Duration
 	ctx           context.Context
 	cancelCtx     func()
+	tmpDir        string
 }
 
-func NewApplication(ctx context.Context, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
+func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	return &Application{
@@ -25,6 +28,7 @@ func NewApplication(ctx context.Context, factories map[ora.ComponentFactoryId]Co
 		scopes:        NewScopes(),
 		ctx:           cancelCtx,
 		cancelCtx:     cancel,
+		tmpDir:        tmpDir,
 	}
 }
 
@@ -39,13 +43,23 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 
 	scope, _ := a.scopes.Get(id)
 	if scope == nil {
-		scope = NewScope(a.ctx, id, time.Minute, a.factories)
+		scope = NewScope(a.ctx, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories)
 	}
 
 	scope.Connect(channel)
 	a.scopes.Put(scope)
 
 	return scope
+}
+
+// OnStreamReceive delegates the received stream into according scope.
+func (a *Application) OnStreamReceive(stream StreamReader) error {
+	scope, ok := a.scopes.Get(stream.ScopeID())
+	if !ok {
+		return fmt.Errorf("no such scope to receive stream: %s", scope.id)
+	}
+
+	return scope.OnStreamReceive(stream)
 }
 
 func (a *Application) Destroy() {

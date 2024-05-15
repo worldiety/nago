@@ -8,7 +8,7 @@ import (
 type NumberField struct {
 	id             ora.Ptr
 	label          String
-	value          Int
+	value          String
 	placeholder    String
 	hint           String
 	error          String
@@ -22,7 +22,7 @@ func NewNumberField(with func(numberField *NumberField)) *NumberField {
 	c := &NumberField{
 		id:             nextPtr(),
 		label:          NewShared[string]("label"),
-		value:          NewShared[int64]("value"),
+		value:          NewShared[string]("value"),
 		placeholder:    NewShared[string]("placeholder"),
 		hint:           NewShared[string]("hint"),
 		error:          NewShared[string]("error"),
@@ -48,7 +48,7 @@ func (l *NumberField) ID() ora.Ptr {
 	return l.id
 }
 
-func (l *NumberField) Value() Int {
+func (l *NumberField) Value() String {
 	return l.value
 }
 

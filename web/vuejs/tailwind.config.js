@@ -13,6 +13,7 @@ export default {
 				},
 				'placeholder-text': '#848484',
 				'error': '#FF543E',
+				'success': '#54FF3E',
 				'darkmode-gray': '#374151',
 				'ora-dropdown-background': '#2B2B2B',
 			},

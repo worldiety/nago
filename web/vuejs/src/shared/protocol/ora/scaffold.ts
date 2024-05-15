@@ -3,21 +3,16 @@
  */
 
 
-import type { Button } from '@/shared/protocol/ora/button';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Scaffold {
     id /*Ptr*/: Ptr;
     type: 'Scaffold'/*ComponentType*/;
-    title: Property<string>;
     body: Property<Component>;
-    breadcrumbs: Property<Button[]>;
-    menu: Property<Button[]>;
-    topbarLeft: Property<Component>;
-    topbarMid: Property<Component>;
-    topbarRight: Property<Component>;
+    navigationComponent: Property<NavigationComponent>;
 }
 

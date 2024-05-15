@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import type {Toggle} from "@/shared/protocol/ora/toggle";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
@@ -9,6 +9,10 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const checked = ref<boolean>(props.ui.checked.v);
+
+watch(() => props.ui.checked.v, (newValue) => {
+	checked.value = newValue;
+})
 
 function onClick() {
 	if (props.ui.disabled.v) {

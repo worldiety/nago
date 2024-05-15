@@ -13,8 +13,8 @@ import (
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+	~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -70,10 +70,10 @@ func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T,
 	})
 }
 
-func Int[T Number](binding *Binding, target *T, opts Field) {
+func Int[T string](binding *Binding, target *T, opts Field) {
 	tf := ui.NewNumberField(nil)
 	tf.Label().Set(opts.Label)
-	tf.Value().Set(int64(*target))
+	tf.Value().Set(string(*target))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.OnValueChanged().Set(func() {

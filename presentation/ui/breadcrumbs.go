@@ -13,7 +13,7 @@ type Breadcrumbs struct {
 	properties        []core.Property
 }
 
-func NewBreadcrumbs(with func(dropdown *Breadcrumbs)) *Breadcrumbs {
+func NewBreadcrumbs(with func(breadcrumbs *Breadcrumbs)) *Breadcrumbs {
 	b := &Breadcrumbs{
 		id:                nextPtr(),
 		items:             NewSharedList[*BreadcrumbItem]("items"),
@@ -82,7 +82,7 @@ type BreadcrumbItem struct {
 	properties []core.Property
 }
 
-func NewBreadcrumbItem(with func(dropdown *BreadcrumbItem)) *BreadcrumbItem {
+func NewBreadcrumbItem(with func(breadcrumbItem *BreadcrumbItem)) *BreadcrumbItem {
 	b := &BreadcrumbItem{
 		id:     nextPtr(),
 		label:  NewShared[string]("label"),

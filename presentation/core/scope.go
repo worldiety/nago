@@ -2,10 +2,16 @@ package core
 
 import (
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -47,9 +53,13 @@ type Scope struct {
 	ctx                 context.Context
 	cancelCtx           func()
 	sessionID           SessionID
+	tempDirMutex        sync.Mutex
+	tempRootDir         string
+	tempDir             string
+	nextFileSeqNo       int64
 }
 
-func NewScope(ctx context.Context, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+func NewScope(ctx context.Context, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
 
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
@@ -60,6 +70,7 @@ func NewScope(ctx context.Context, id ora.ScopeID, lifetime time.Duration, facto
 		eventLoop:           NewEventLoop(),
 		ctx:                 scopeCtx,
 		cancelCtx:           cancel,
+		tempRootDir:         tempRootDir,
 	}
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
@@ -72,6 +83,140 @@ func NewScope(ctx context.Context, id ora.ScopeID, lifetime time.Duration, facto
 	s.Tick()
 
 	return s
+}
+
+// OnStreamReceive provides a side channel for sending large streams of blobs which must not
+// block the lightweight and responsive connected event Channel.
+// If e.g. this scope is part of a http web server, each uploaded file must trigger a call here.
+// The stream is consumed immediately and stored within a temporary file synchronously with a metadata sidecar file.
+// The so-stored file is kept as long as this scope is alive and can be inspected any time.
+// Afterward, the component is invoked over the application event looper.
+// Note, that the origin could also be from different sources, like the content resolver within an Android App
+// directly issued over FFI calls.
+func (s *Scope) OnStreamReceive(stream StreamReader) (e error) {
+	s.Tick()
+
+	fileId := atomic.AddInt64(&s.nextFileSeqNo, 1)
+	tmpDir, err := s.getTempDir()
+	if err != nil {
+		return err
+	}
+
+	absPath := filepath.Join(tmpDir, fmt.Sprintf("%d.tmp", fileId))
+	file, err := os.OpenFile(absPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("cannot open tmp file for write: %w", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil && e == nil {
+			e = err
+		}
+	}()
+
+	size, err := io.Copy(file, stream)
+	if err != nil {
+		return fmt.Errorf("cannot copy data: %w", err)
+	}
+
+	// hash that file, often of interest at the domain level e.g. for deduplication or content-addressed-storage
+	hashStr, err := s.readHash(absPath)
+	if err != nil {
+		return fmt.Errorf("cannot calculate hash: %w", err)
+	}
+
+	// create sidecar file
+	meta := tmpFileInfo{
+		AbsolutePath: absPath,
+		FName:        stream.Name(),
+		FSize:        size,
+		Hash:         hashStr,
+		CreatedAt:    time.Now(),
+		SeqNum:       fileId,
+		Scope:        stream.ScopeID(),
+		Receiver:     stream.Receiver(),
+	}
+
+	sidecarBuf, err := json.Marshal(meta)
+	if err != nil {
+		return fmt.Errorf("cannot marshal meta: %w", err)
+	}
+
+	sidecarFile := filepath.Join(tmpDir, fmt.Sprintf("%d.json", fileId))
+	if err := os.WriteFile(sidecarFile, sidecarBuf, 0600); err != nil {
+		return fmt.Errorf("cannot write sidecar file: %w", err)
+	}
+
+	s.eventLoop.Post(func() {
+		var receiver Component
+		if cmp, ok := s.allocatedComponents[meta.Receiver]; ok {
+			receiver = cmp.Component
+		} else {
+			for _, holder := range s.allocatedComponents {
+				if cmp, ok := holder.RenderState.elements[meta.Receiver]; ok {
+					receiver = cmp
+				}
+			}
+		}
+
+		if receiver == nil {
+			slog.Error("receiver component for data stream not found")
+			return
+		}
+
+		switch receiver := receiver.(type) {
+		case FileReceiver:
+			f, err := os.Open(meta.AbsolutePath)
+			if err != nil {
+				slog.Error("cannot open file for reading in looper: %w", err)
+				return
+			}
+
+			receiver.OnFileReceived(newTmpFile(meta, f))
+		default:
+			slog.Error("receiver component for data stream has no compatible receiver interface", "type", fmt.Sprintf("%T", receiver))
+		}
+	})
+	s.eventLoop.Tick()
+
+	return nil
+}
+
+func (s *Scope) readHash(path string) (string, error) {
+	hasher := sha512.New512_256()
+	f, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %w", err)
+	}
+
+	defer f.Close()
+
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", fmt.Errorf("cannot read file: %w", err)
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func (s *Scope) getTempDir() (string, error) {
+	s.tempDirMutex.Lock()
+	defer s.tempDirMutex.Unlock()
+
+	if s.tempDir != "" {
+		return s.tempDir, nil
+	}
+
+	// we don't know where the temp root is. It may be in our apps home (e.g. in shared hosting environments)
+	// or in the systems temp dir.
+	path := filepath.Join(s.tempRootDir)
+	//0600 means that only the owner can read and write
+	if err := os.MkdirAll(path, 0700); err != nil {
+		return "", fmt.Errorf("cannot create temp dir for scope: %s: %w", path, err)
+	}
+
+	slog.Info("created temp dir for scope", "path", path)
+
+	s.tempDir = path
+	return path, nil
 }
 
 // Connect attaches the given channel to this Scope immediately. There must be exact 1 Scope per Channel.

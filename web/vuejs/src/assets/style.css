@@ -1,7 +1,16 @@
 @import "inputs.css";
 @import "effects.css";
 @import "buttons.css";
+@import "progress.css";
+@import "container.css";
+@import "scrollbars.css";
 
 html {
-	font-size: 16px;
+	font-size: 14px;
+}
+
+@media screen(md) {
+	html {
+		font-size: 16px;
+	}
 }

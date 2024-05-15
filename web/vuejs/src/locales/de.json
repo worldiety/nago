@@ -57,5 +57,9 @@
 	},
 	"inputWrapper": {
 		"error": "Fehler"
+	},
+	"uploadField": {
+		"size": "Größe",
+		"unknown": "Unbekannt"
 	}
 }
