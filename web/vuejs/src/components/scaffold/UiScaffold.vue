@@ -17,7 +17,7 @@ import Sidebar from '@/components/scaffold/Sidebar.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
 import { Alignment } from '@/shared/protocol/alignment';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import BurgerMenu from '@/components/scaffold/BurgerMenu.vue';
+import BurgerMenu from '@/components/scaffold/burgermenu/BurgerMenu.vue';
 
 const props = defineProps<{
 	ui: Scaffold;
