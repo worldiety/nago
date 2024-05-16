@@ -19,7 +19,7 @@
 					<div
 						v-for="(menuEntry, index) in ui.menu.v"
 						:key="index"
-						class="menu-entry flex justify-start items-center gap-x-2 cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full w-full p-2 -mx-2"
+						class="menu-entry flex justify-start items-center gap-x-2 cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full w-full p-2"
 						tabindex="0"
 						@click="expandMenuEntry(menuEntry)"
 						@keydown.enter="expandMenuEntry(menuEntry)"
