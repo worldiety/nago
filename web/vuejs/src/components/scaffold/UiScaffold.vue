@@ -46,11 +46,11 @@ const burgerMenuVisible = computed((): boolean => {
 });
 
 const bodyWrapperClass = computed((): string|undefined => {
-	if (navigationBarVisible.value) {
+	if (burgerMenuVisible.value || navigationBarVisible.value) {
 		return 'pt-28';
 	}
   if (sidebarVisible.value) {
-    return 'py-8 pl-32 pt-28 md:pt-0';
+    return 'py-8 pl-32';
   }
 	return undefined;
 });
