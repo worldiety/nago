@@ -10,12 +10,15 @@ type Executor interface {
 }
 
 // PostDelayed executes the given task from within the event loop after the given duration.
-// It is not executed, if the Window is destroyed before.
+// It is not executed, if the Window is destroyed before. It invalidates the view root automatically.
 func PostDelayed(wnd Window, after time.Duration, task func()) {
 	if root := wnd.ViewRoot(); root != nil {
 		var timer *time.Timer
 		timer = time.AfterFunc(after, func() {
-			wnd.Execute(task)
+			wnd.Execute(func() {
+				task()
+				root.Invalidate()
+			})
 		})
 
 		root.AddDestroyObserver(func() {
@@ -25,7 +28,7 @@ func PostDelayed(wnd Window, after time.Duration, task func()) {
 }
 
 // Schedule repeats invocations of the given task within the event looper, until the Window is destroyed or
-// the schedule is cancelled explicitly.
+// the schedule is cancelled explicitly. It invalidates the view root automatically.
 func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 	if root := wnd.ViewRoot(); root != nil {
 		ticker := time.NewTicker(d)
@@ -41,7 +44,10 @@ func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 				case <-done:
 					return
 				case <-ticker.C:
-					wnd.Execute(task)
+					wnd.Execute(func() {
+						task()
+						root.Invalidate()
+					})
 				}
 			}
 		}()

@@ -48,7 +48,6 @@ func main() {
 				core.Schedule(wnd, 5*time.Second, func() {
 					// use a little trick to trigger a reload in the native image view by changing the uri a bit
 					img.URI().Set(ora.URI(fmt.Sprintf("%s&version=%d", uri, atomic.LoadInt64(&invocationCount))))
-					wnd.ViewRoot().Invalidate()
 				})
 
 			})
