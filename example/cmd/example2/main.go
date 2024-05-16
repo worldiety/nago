@@ -265,7 +265,7 @@ func main() {
 
 								fileField.SetFilesReceiver(func(fsys fs.FS) {
 									defer core.Release(fsys)
-									
+
 									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 										if d.IsDir() {
 											return nil // this is the root ". directory
@@ -509,6 +509,12 @@ func main() {
 								}),
 								ui.NewCheckbox(func(chb *ui.Checkbox) {
 									chb.OnClicked().Set(func() { fmt.Println("Hallo aus Checkbox") })
+
+								}),
+
+								ui.NewCheckbox(func(chb *ui.Checkbox) {
+									chb.Disabled().Set(true)
+
 								}),
 
 								ui.NewButton(func(btn *ui.Button) {

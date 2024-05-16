@@ -5,7 +5,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="checkbox"]:checked {
-	@apply bg-ora-orange dark:bg-ora-orange;
+	@apply bg-ora-orange dark:bg-ora-orange border-ora-orange dark:border-ora-orange;
 }
 
 input[type="radio"]:checked {
@@ -21,7 +21,6 @@ input[type="radio"] {
 	@apply grid border border-black dark:border-white appearance-none bg-transparent place-content-center w-4 h-4 m-0;
 }
 
-input[type="checkbox"]:hover,
 input[type="radio"]:hover {
 	@apply border-ora-orange;
 }
@@ -65,3 +64,5 @@ input[type="radio"]:disabled::before {
 select {
 	@apply appearance-none;
 }
+
+

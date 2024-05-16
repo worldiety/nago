@@ -13,7 +13,7 @@ const serviceAdapter = useServiceAdapter();
 
 <template>
 	<div
-		class="cursor-default mx-1 py-4
+		class="cursor-pointer mx-1 py-4
 					hover:text-ora-orange hover:bg-ora-orange hover:rounded-2lg hover:bg-opacity-15
 					dark:hover:bg-ora-orange dark:hover:rounded-2lg dark:text-white dark:hover:text-ora-orange dark:hover:bg-opacity-25"
 		tabindex="0"
@@ -21,7 +21,7 @@ const serviceAdapter = useServiceAdapter();
 		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"
 	>
 			<div class="flex justify-start items-center pl-2.5">
-				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0 box">
+				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
 				<div v-if="props.multiselect">
 					<p class="truncate pl-2">{{ props.ui.content.v }}</p>
 				</div>
@@ -32,10 +32,4 @@ const serviceAdapter = useServiceAdapter();
 	</div>
 </template>
 
-<style scoped>
-.box {
-	@apply hover:border-black;
-	@apply checked:border-ora-orange;
-}
-
-</style>
+<style scoped></style>
