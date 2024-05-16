@@ -158,9 +158,6 @@ func main() {
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
 								menuEntry.Badge().Set("2")
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "A"})
-								})
 								menuEntry.OnFocus().Set(func() {
 									menuEntryB.Expanded().Set(false)
 									menuEntryC.Expanded().Set(false)

@@ -10,7 +10,10 @@
 
 		<!-- Menu -->
 		<Transition name="slide">
-			<div v-if="menuOpen" class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-white dark:bg-darkmode-gray shadow-md z-20">
+			<div
+				v-if="menuOpen"
+				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-white dark:bg-darkmode-gray shadow-md z-20"
+			>
 				<div class="flex justify-start items-center h-24 p-8">
 					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false" @keydown.enter="menuOpen = false" />
 				</div>
@@ -32,6 +35,7 @@
 						</div>
 						<!-- Top level menu entry title button -->
 						<div
+							v-if="expandedTopLevelMenuEntryClickable"
 							tabindex="0"
 							class="flex justify-start items-center gap-x-2 cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full w-full p-4"
 							@click="navigateToExpandedTopLevelMenuEntry"
@@ -72,6 +76,10 @@ const menuOpen = ref<boolean>(false);
 
 const expandedTopLevelMenuEntry = computed((): MenuEntry|null => {
 	return props.ui.menu.v?.find((menuEntry: MenuEntry) => menuEntry.expanded.v) ?? null;
+});
+
+const expandedTopLevelMenuEntryClickable = computed((): boolean => {
+	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.action.v;
 });
 
 const subMenuVisible = computed((): boolean => {
