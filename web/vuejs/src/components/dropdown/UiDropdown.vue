@@ -75,6 +75,7 @@ function dropdownClicked(forceClose: boolean): void {
 	if (!props.ui.disabled.v && (forceClose || !props.ui.expanded.v)) {
 		serviceAdapter.executeFunctions(props.ui.onClicked);
 	}
+	searchQuery.value = ''
 }
 
 function isSelected(item: DropdownItem): boolean {
