@@ -1,21 +1,21 @@
 <template>
 	<div class="flex flex-col justify-start items-start gap-y-4 w-full">
 		<div
-			class="menu-entry flex justify-start items-center gap-x-2 rounded-full w-full p-4"
+			class="menu-entry flex justify-start items-center gap-x-4 rounded-full w-full p-4"
 			:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable}"
 			:tabindex="menuEntryClickable ? 0 : 1"
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
 		>
 			<div v-if="ui.icon.v && ui.iconActive.v" class="relative flex justify-start items-center h-full">
-				<div class="menu-entry-icon h-4 *:h-full" v-html="ui.icon.v"></div>
-				<div class="menu-entry-icon-active h-4 *:h-full" v-html="ui.iconActive.v"></div>
+				<div class="menu-entry-icon h-6 *:h-full" v-html="ui.icon.v"></div>
+				<div class="menu-entry-icon-active h-6 *:h-full" v-html="ui.iconActive.v"></div>
 				<!-- Optional red badge -->
 				<div
 					v-if="ui.badge.v"
-					class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-error"
+					class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-5 px-1 rounded-full bg-error"
 				>
-					<p class="text-xs text-white">{{ ui.badge.v }}</p>
+					<p class="text-sm text-white">{{ ui.badge.v }}</p>
 				</div>
 			</div>
 			<p class="grow leading-tight select-none">{{ ui.title.v }}</p>
@@ -72,11 +72,13 @@ function expandMenuEntry(): void {
 
 <style scoped>
 .menu-entry:hover .menu-entry-icon,
+.menu-entry:focus-visible .menu-entry-icon,
 .menu-entry .menu-entry-icon-active {
 	@apply hidden;
 }
 
-.menu-entry:hover .menu-entry-icon-active {
+.menu-entry:hover .menu-entry-icon-active,
+.menu-entry:focus-visible .menu-entry-icon-active {
 	@apply block;
 }
 </style>

@@ -11,7 +11,7 @@
 		<!-- Menu -->
 		<Transition name="slide">
 			<div v-if="menuOpen" class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-80 bg-white dark:bg-darkmode-gray shadow-md z-20">
-				<div class="flex justify-start items-center h-24 p-8 mb-8">
+				<div class="flex justify-start items-center h-24 p-8">
 					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false" @keydown.enter="menuOpen = false" />
 				</div>
 				<div class="flex flex-col justify-start items-start gap-y-4 basis-full w-full p-4">
