@@ -2,7 +2,7 @@ package ora
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 )
 
 // A ScopeID has at least a 32 byte entropy and must be generated using a secure random source.
@@ -18,14 +18,14 @@ import (
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ScopeID string
 
-// NewScopeID returns a secure URL safe base64 encoded random 32 byte entropy.
+// NewScopeID returns a hex encoded and filename safe 32 byte entropy.
 func NewScopeID() ScopeID {
 	var tmp [32]byte
 	if _, err := rand.Read(tmp[:]); err != nil {
 		panic(err)
 	}
 
-	return ScopeID(base64.URLEncoding.EncodeToString(tmp[:]))
+	return ScopeID(hex.EncodeToString(tmp[:]))
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

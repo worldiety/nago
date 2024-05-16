@@ -8,9 +8,11 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/core/tmpfs"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
 	"io/fs"
@@ -261,11 +263,31 @@ func main() {
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
 
-								fileField.SetFileReceiver(func(f fs.File) {
-									defer f.Close()
-									buf, _ := io.ReadAll(f)
-									info, _ := f.Stat()
-									fmt.Println(info.Name(), info.Size(), len(buf))
+								fileField.SetFilesReceiver(func(fsys fs.FS) {
+									defer core.Release(fsys)
+									
+									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+										if d.IsDir() {
+											return nil // this is the root ". directory
+										}
+
+										file, err := fsys.Open(path)
+										if err != nil {
+											return err
+										}
+										defer file.Close()
+										buf, _ := io.ReadAll(file)
+										info, _ := file.Stat()
+
+										xinfo := info.(tmpfs.FileInfo)
+										fmt.Println(info.Name(), info.Size(), len(buf), xinfo.Hash(), xinfo.ResourceName())
+										return err
+									})
+
+									if err != nil {
+										xdialog.ErrorView("err", err)
+									}
+
 								})
 
 							}))

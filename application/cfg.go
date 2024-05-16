@@ -81,11 +81,16 @@ func (c *Configurator) SetDataDir(dir string) {
 	slog.Info("data directory updated", slog.String("dir", c.dataDir))
 }
 
-// Directory returns an allocated local directory underneath the
+// Directory returns an allocated local directory underneath the data dir
 func (c *Configurator) Directory(name string) string {
 	name = filepath.Clean(name) // security: avoid path traversal attacks here
 	path := filepath.Join(c.DataDir(), name)
-	_ = os.MkdirAll(path, 0700) // security: only owner can read,write,exec
+	// security: only owner can read,write,exec
+	if err := os.MkdirAll(path, 0700); err != nil {
+		panic(fmt.Errorf("irrecoverable denied directory access: %w", err))
+	}
+
+	slog.Info("directory created", slog.String("path", path))
 	return path
 }
 

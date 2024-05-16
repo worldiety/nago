@@ -2,12 +2,10 @@ package core
 
 import (
 	"context"
-	"crypto/sha512"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -85,75 +83,47 @@ func NewScope(ctx context.Context, tempRootDir string, id ora.ScopeID, lifetime 
 	return s
 }
 
-// OnStreamReceive provides a side channel for sending large streams of blobs which must not
+// OnFilesReceived provides a side channel for sending large streams of blobs which must not
 // block the lightweight and responsive connected event Channel.
-// If e.g. this scope is part of a http web server, each uploaded file must trigger a call here.
-// The stream is consumed immediately and stored within a temporary file synchronously with a metadata sidecar file.
-// The so-stored file is kept as long as this scope is alive and can be inspected any time.
-// Afterward, the component is invoked over the application event looper.
+// If e.g. this scope is part of a http web server, each multipart form (one or many files) must trigger a call here.
 // Note, that the origin could also be from different sources, like the content resolver within an Android App
-// directly issued over FFI calls.
-func (s *Scope) OnStreamReceive(stream StreamReader) (e error) {
-	s.Tick()
-
-	fileId := atomic.AddInt64(&s.nextFileSeqNo, 1)
-	tmpDir, err := s.getTempDir()
-	if err != nil {
-		return err
-	}
-
-	absPath := filepath.Join(tmpDir, fmt.Sprintf("%d.tmp", fileId))
-	file, err := os.OpenFile(absPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("cannot open tmp file for write: %w", err)
-	}
-	defer func() {
-		if err := file.Close(); err != nil && e == nil {
-			e = err
-		}
-	}()
-
-	size, err := io.Copy(file, stream)
-	if err != nil {
-		return fmt.Errorf("cannot copy data: %w", err)
-	}
-
-	// hash that file, often of interest at the domain level e.g. for deduplication or content-addressed-storage
-	hashStr, err := s.readHash(absPath)
-	if err != nil {
-		return fmt.Errorf("cannot calculate hash: %w", err)
-	}
-
-	// create sidecar file
-	meta := tmpFileInfo{
-		AbsolutePath: absPath,
-		FName:        stream.Name(),
-		FSize:        size,
-		Hash:         hashStr,
-		CreatedAt:    time.Now(),
-		SeqNum:       fileId,
-		Scope:        stream.ScopeID(),
-		Receiver:     stream.Receiver(),
-	}
-
-	sidecarBuf, err := json.Marshal(meta)
-	if err != nil {
-		return fmt.Errorf("cannot marshal meta: %w", err)
-	}
-
-	sidecarFile := filepath.Join(tmpDir, fmt.Sprintf("%d.json", fileId))
-	if err := os.WriteFile(sidecarFile, sidecarBuf, 0600); err != nil {
-		return fmt.Errorf("cannot write sidecar file: %w", err)
-	}
+// directly issued over FFI calls or other activity intents.
+// The so-stored files are kept an undefined amount of time but at least as long the callback runs.
+// However, the system may reclaim the used disk space if running short on storage space or it may keep it for
+// even for years.
+// So, to ensure a correct cleanup, use [FS.Clear] to remove all temporary files.
+func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
+	s.Tick() // keep this scope alive
 
 	s.eventLoop.Post(func() {
 		var receiver Component
-		if cmp, ok := s.allocatedComponents[meta.Receiver]; ok {
-			receiver = cmp.Component
-		} else {
+		if receiverPtr.Nil() {
+			slog.Info("scope received unrequested files, trying to dispatch to any allocated root component...")
+
+			dispatched := false
 			for _, holder := range s.allocatedComponents {
-				if cmp, ok := holder.RenderState.elements[meta.Receiver]; ok {
-					receiver = cmp
+				if rec, ok := holder.Component.(FilesReceiver); ok {
+					rec.OnFilesReceived(fsys)
+					dispatched = true
+				}
+			}
+
+			if !dispatched {
+				slog.Error("scope received unrequested files, but could not find any allocated root component, file are lost")
+				if err := Release(fsys); err != nil {
+					slog.Error("cannot release received but unprocessed files", "err", err)
+				}
+			}
+
+			return
+		} else {
+			if cmp, ok := s.allocatedComponents[receiverPtr]; ok {
+				receiver = cmp.Component
+			} else {
+				for _, holder := range s.allocatedComponents {
+					if cmp, ok := holder.RenderState.elements[receiverPtr]; ok {
+						receiver = cmp
+					}
 				}
 			}
 		}
@@ -164,37 +134,18 @@ func (s *Scope) OnStreamReceive(stream StreamReader) (e error) {
 		}
 
 		switch receiver := receiver.(type) {
-		case FileReceiver:
-			f, err := os.Open(meta.AbsolutePath)
-			if err != nil {
-				slog.Error("cannot open file for reading in looper: %w", err)
-				return
-			}
-
-			receiver.OnFileReceived(newTmpFile(meta, f))
+		case FilesReceiver:
+			receiver.OnFilesReceived(fsys)
 		default:
-			slog.Error("receiver component for data stream has no compatible receiver interface", "type", fmt.Sprintf("%T", receiver))
+			slog.Error("receiver component for data stream has no compatible receiver interface, files are lost", "type", fmt.Sprintf("%T", receiver))
+			if err := Release(fsys); err != nil {
+				slog.Error("cannot release received but unprocessed files", "err", err)
+			}
 		}
 	})
-	s.eventLoop.Tick()
+	s.eventLoop.Tick() // trigger event loop processing, so that our post is actually processed.
 
 	return nil
-}
-
-func (s *Scope) readHash(path string) (string, error) {
-	hasher := sha512.New512_256()
-	f, err := os.Open(path)
-	if err != nil {
-		return "", fmt.Errorf("cannot open file: %w", err)
-	}
-
-	defer f.Close()
-
-	if _, err := io.Copy(hasher, f); err != nil {
-		return "", fmt.Errorf("cannot read file: %w", err)
-	}
-
-	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func (s *Scope) getTempDir() (string, error) {
@@ -208,7 +159,7 @@ func (s *Scope) getTempDir() (string, error) {
 	// we don't know where the temp root is. It may be in our apps home (e.g. in shared hosting environments)
 	// or in the systems temp dir.
 	path := filepath.Join(s.tempRootDir)
-	//0600 means that only the owner can read and write
+	//0700 means that only the owner can read and write the dir, files are 0600
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return "", fmt.Errorf("cannot create temp dir for scope: %s: %w", path, err)
 	}

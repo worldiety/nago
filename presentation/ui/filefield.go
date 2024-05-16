@@ -18,7 +18,7 @@ type FileField struct {
 	disabled     Bool
 	filter       String
 	properties   []core.Property
-	fileReceiver func(f fs.File)
+	fileReceiver func(fsys fs.FS)
 }
 
 func NewFileField(with func(fileField *FileField)) *FileField {
@@ -44,13 +44,13 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 	return c
 }
 
-func (c *FileField) OnFileReceived(f fs.File) {
+func (c *FileField) OnFilesReceived(fsys fs.FS) {
 	if c.fileReceiver != nil {
-		c.fileReceiver(f)
+		c.fileReceiver(fsys)
 	}
 }
 
-func (c *FileField) SetFileReceiver(receiverCallback func(f fs.File)) {
+func (c *FileField) SetFilesReceiver(receiverCallback func(fsys fs.FS)) {
 	c.fileReceiver = receiverCallback
 }
 
