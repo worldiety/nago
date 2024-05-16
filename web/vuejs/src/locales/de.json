@@ -61,5 +61,8 @@
 	"uploadField": {
 		"size": "Größe",
 		"unknown": "Unbekannt"
+	},
+	"scaffold": {
+		"toMenu": "Zum Menü"
 	}
 }
