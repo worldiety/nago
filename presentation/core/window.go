@@ -2,9 +2,11 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
+	"io/fs"
 	"log/slog"
 	"time"
 )
@@ -55,6 +57,10 @@ type Window interface {
 	Location() *time.Location
 	// TODO add Locale, add Screen Metrics (density, pixel width and height, size classes etc)
 
+	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
+	// actual frontend. For example, a browser may just download these files but an Android frontend may show
+	// a _send multiple intent_.
+	SendFiles(fsys fs.FS) error
 }
 
 type SessionID string
@@ -82,6 +88,14 @@ func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values)
 	s.location = loc
 
 	return s
+}
+
+func (s *scopeWindow) SendFiles(fsys fs.FS) error {
+	if callback := s.scope.app.onSendFiles; callback != nil {
+		return callback(s.scope, fsys)
+	}
+
+	return fmt.Errorf("no send files platform adapter has been configured")
 }
 
 func (s *scopeWindow) Execute(task func()) {

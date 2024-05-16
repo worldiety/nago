@@ -18,6 +18,7 @@ type Application struct {
 	ctx           context.Context
 	cancelCtx     func()
 	tmpDir        string
+	onSendFiles   func(*Scope, fs.FS) error
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
@@ -33,6 +34,13 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 	}
 }
 
+// SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific
+// "send files" behavior. On webbrowser the according download events may be issued and on other platforms
+// like Android a custom content provider may be created which exposes these blobs as URIs.
+func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, fs.FS) error) {
+	a.onSendFiles = onSendFiles
+}
+
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
 func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	a.mutex.Lock()
@@ -44,7 +52,7 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 
 	scope, _ := a.scopes.Get(id)
 	if scope == nil {
-		scope = NewScope(a.ctx, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories)
+		scope = NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories)
 	}
 
 	scope.Connect(channel)

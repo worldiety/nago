@@ -23,6 +23,7 @@ const (
 	NavigationBackRequestedT      EventType = "NavigationBackRequested"
 	NavigationResetRequestedT     EventType = "NavigationResetRequested"
 	SessionAssignedT              EventType = "SessionAssigned"
+	SendMultipleRequestedT        EventType = "SendMultipleRequested"
 )
 
 // Event is a sum type of

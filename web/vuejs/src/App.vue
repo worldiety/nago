@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
-import { useErrorHandling } from '@/composables/errorhandling';
-import type { ComponentInvalidated } from "@/shared/protocol/ora/componentInvalidated";
-import { onUnmounted, ref } from "vue";
-import type { Component } from "@/shared/protocol/ora/component";
+import {useErrorHandling} from '@/composables/errorhandling';
+import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
+import {onUnmounted, ref} from "vue";
+import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
-import type { NavigationForwardToRequested } from "@/shared/protocol/ora/navigationForwardToRequested";
-import type { Event } from '@/shared/protocol/ora/event';
-import { useEventBus } from '@/composables/eventBus';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { EventType } from '@/shared/eventbus/eventType';
-import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
+import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
+import type {Event} from '@/shared/protocol/ora/event';
+import {useEventBus} from '@/composables/eventBus';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {EventType} from '@/shared/eventbus/eventType';
+import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
+import {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
 
 enum State {
 	Loading,
@@ -45,13 +46,14 @@ async function init(): Promise<void> {
 		history.replaceState({
 			factory: factoryId,
 			values: params,
-		},"",null)
+		}, "", null)
 		const invalidation = await serviceAdapter.createComponent(factoryId, params)
 
 		eventBus.subscribe(EventType.INVALIDATED, updateUi);
 		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
 		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested)
 
 		updateUi(invalidation);
 	} catch {
@@ -98,9 +100,21 @@ function navigateBack(): void {
 	history.back();
 }
 
+function sendMultipleRequested(evt: Event): void {
+	let msg = evt as SendMultipleRequested;
+	let res = msg.resources[0];
+
+	let a = document.createElement('a');
+	a.href = res.uri;
+	a.download = res.name;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+}
+
 init();
-addEventListener("popstate",(event)=>{
-	if (event.state===null){
+addEventListener("popstate", (event) => {
+	if (event.state === null) {
 		return
 	}
 

@@ -17,6 +17,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"testing/fstest"
 )
 
 type PID string
@@ -254,6 +255,18 @@ func main() {
 								breadcrumbs.Icon().Set(icon.Dashboard)
 							}))
 
+							vbox.Append(ui.NewButton(func(btn *ui.Button) {
+								btn.Caption().Set("download")
+								btn.Action().Set(func() {
+									err := wnd.SendFiles(fstest.MapFS{
+										"test.txt": &fstest.MapFile{
+											Data: []byte("hello world"),
+										},
+									})
+									xdialog.ErrorView("send files failed", err)
+								})
+							}))
+
 							vbox.Append(ui.NewFileField(func(fileField *ui.FileField) {
 								fileField.Label().Set("Drag & Drop oder Dateien per Klick auswählen")
 								fileField.HintRight().Set("Max. Dateigröße: 300 MB")
@@ -265,7 +278,7 @@ func main() {
 
 								fileField.SetFilesReceiver(func(fsys fs.FS) {
 									defer core.Release(fsys)
-									
+
 									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 										if d.IsDir() {
 											return nil // this is the root ". directory
