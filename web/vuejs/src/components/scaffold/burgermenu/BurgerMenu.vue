@@ -39,7 +39,10 @@
 						<div
 							:tabindex="expandedTopLevelMenuEntryLinked ? '0' : '-1'"
 							class="flex justify-start items-center gap-x-2 rounded-full w-full p-4"
-							:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryLinked}"
+							:class="{
+								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryLinked,
+								'bg-disabled-background bg-opacity-35': expandedTopLevelMenuEntryActive,
+							}"
 							@click="navigateToExpandedTopLevelMenuEntry"
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>
@@ -84,6 +87,10 @@ const expandedTopLevelMenuEntry = computed((): MenuEntry|null => {
 
 const expandedTopLevelMenuEntryLinked = computed((): boolean => {
 	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.action.v;
+});
+
+const expandedTopLevelMenuEntryActive = computed((): boolean => {
+	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.uri.v}` === window.location.pathname;
 });
 
 const subMenuVisible = computed((): boolean => {

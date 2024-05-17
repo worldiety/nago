@@ -8,6 +8,7 @@ type MenuEntry struct {
 	IconActive Property[SVG]         `json:"iconActive"` // TODO replace with svg id
 	Title      Property[string]      `json:"title"`
 	Action     Property[Ptr]         `json:"action"`
+	Uri        Property[string]      `json:"uri"`
 	Menu       Property[[]MenuEntry] `json:"menu"`
 	Badge      Property[string]      `json:"badge"`
 	Expanded   Property[bool]        `json:"expanded"`

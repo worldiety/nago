@@ -118,17 +118,90 @@ func main() {
 				}
 				test, _ := core.UnmarshalValues[myParams](wnd.Values())
 				page.Body().Set(
-					ui.NewVBox(func(vbox *ui.VBox) {
-						vbox.Append(
-							ui.NewButton(func(btn *ui.Button) {
-								btn.Caption().Set("zurück")
-								btn.Action().Set(func() {
-									wnd.Navigation().Back()
-								})
-							}),
+					ui.NewScaffold(func(scaffold *ui.Scaffold) {
+						scaffold.NavigationComponent().Set(
+							ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
+								var menuEntryA *ui.MenuEntry
+								var menuEntryB *ui.MenuEntry
+								var menuEntryC *ui.MenuEntry
 
-							ui.MakeText(fmt.Sprintf("A=%v", test.A)),
-							ui.MakeText(fmt.Sprintf("B=%v", test.B)),
+								navigationComponent.Alignment().Set(ora.AlignmentTop)
+								navigationComponent.Logo().Set(icon.OraLogo)
+								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+									menuEntryA = menuEntry
+									menuEntry.Title().Set("Menüpunkt A")
+									menuEntry.Icon().Set(icon.PackageOutlined)
+									menuEntry.IconActive().Set(icon.PackageFilled)
+									menuEntry.Badge().Set("2")
+									menuEntry.OnFocus().Set(func() {
+										menuEntryB.Expanded().Set(false)
+										menuEntryC.Expanded().Set(false)
+									})
+									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+										subEntry.Title().Set("Subpunkt 1")
+										subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
+									}))
+								}))
+								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+									menuEntryB = menuEntry
+									menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
+									menuEntry.Icon().Set(icon.PackageOutlined)
+									menuEntry.IconActive().Set(icon.PackageFilled)
+									menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
+									menuEntry.OnFocus().Set(func() {
+										menuEntryA.Expanded().Set(false)
+										menuEntryC.Expanded().Set(false)
+									})
+									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+										subEntry.Title().Set("Subpunkt 1")
+									}))
+									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+										subEntry.Title().Set("Subpunkt 2")
+										subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
+										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+											subSubEntry.Title().Set("Subsubpunkt I")
+											subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
+										}))
+										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+											subSubEntry.Title().Set("Subsubpunkt II")
+										}))
+									}))
+									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+										subEntry.Title().Set("Subpunkt 3")
+										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+											subSubEntry.Title().Set("Subsubpunkt III")
+											subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
+										}))
+									}))
+								}))
+								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+									menuEntryC = menuEntry
+									menuEntry.Title().Set("Menüpunkt C")
+									menuEntry.Icon().Set(icon.PackageOutlined)
+									menuEntry.IconActive().Set(icon.PackageFilled)
+									menuEntry.OnFocus().Set(func() {
+										menuEntryA.Expanded().Set(false)
+										menuEntryB.Expanded().Set(false)
+									})
+									menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
+								}))
+							}),
+						)
+
+						scaffold.Body().Set(
+							ui.NewVBox(func(vbox *ui.VBox) {
+								vbox.Append(
+									ui.NewButton(func(btn *ui.Button) {
+										btn.Caption().Set("zurück")
+										btn.Action().Set(func() {
+											wnd.Navigation().Back()
+										})
+									}),
+
+									ui.MakeText(fmt.Sprintf("A=%v", test.A)),
+									ui.MakeText(fmt.Sprintf("B=%v", test.B)),
+								)
+							}),
 						)
 					}),
 				)
@@ -163,9 +236,7 @@ func main() {
 								})
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
-									})
+									subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
 								}))
 							}))
 							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
@@ -173,9 +244,7 @@ func main() {
 								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
 								menuEntry.Icon().Set(icon.PackageOutlined)
 								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "B"})
-								})
+								menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
 								menuEntry.OnFocus().Set(func() {
 									menuEntryA.Expanded().Set(false)
 									menuEntryC.Expanded().Set(false)
@@ -185,14 +254,10 @@ func main() {
 								}))
 								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
 									subEntry.Title().Set("Subpunkt 2")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_2"})
-									})
+									subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt I")
-										subSubEntry.Action().Set(func() {
-											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_I"})
-										})
+										subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
 									}))
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt II")
@@ -202,9 +267,7 @@ func main() {
 									subEntry.Title().Set("Subpunkt 3")
 									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
 										subSubEntry.Title().Set("Subsubpunkt III")
-										subSubEntry.Action().Set(func() {
-											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_III"})
-										})
+										subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
 									}))
 								}))
 							}))
@@ -217,9 +280,7 @@ func main() {
 									menuEntryA.Expanded().Set(false)
 									menuEntryB.Expanded().Set(false)
 								})
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "C"})
-								})
+								menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
 							}))
 						}),
 					)

@@ -2,7 +2,10 @@
 	<div class="flex flex-col justify-start items-start gap-y-4 w-full">
 		<div
 			class="menu-entry flex justify-start items-center gap-x-4 rounded-full w-full p-4"
-			:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable}"
+			:class="{
+				'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable,
+				'bg-disabled-background bg-opacity-35': menuEntryActive,
+			}"
 			:tabindex="menuEntryClickable ? '0' : '-1'"
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
@@ -49,6 +52,10 @@ const hasSubMenuEntries = computed((): boolean => {
 });
 
 const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || !!props.ui.action.v);
+
+const menuEntryActive = computed((): boolean => {
+	return `/${props.ui.uri.v}` === window.location.pathname;
+});
 
 function menuEntryClicked(): void {
 	if (hasSubMenuEntries.value) {
