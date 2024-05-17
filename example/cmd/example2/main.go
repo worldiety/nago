@@ -259,7 +259,7 @@ func main() {
 							vbox.Append(ui.NewFileField(func(fileField *ui.FileField) {
 								fileField.Label().Set("Drag & Drop oder Dateien per Klick auswählen")
 								fileField.HintRight().Set("Max. Dateigröße: 300 MB")
-								fileField.MaxBytes().Set(300000000) // 300 MB
+								fileField.MaxBytes().Set(300000000000000) // 300 MB
 								fileField.HintLeft().Set("Unterstützte Dateiformate: MP4, PDF, JPG, DOCX")
 								fileField.Accept().Set("video/mp4,image/jpeg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 								//fileField.Accept().Set(".gif")

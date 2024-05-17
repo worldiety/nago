@@ -14,9 +14,12 @@
 			</div>
 			<progress v-if="progressBarVisible" :max="fileUpload.bytesTotal ?? 0" :value="fileUpload.bytesUploaded ?? 0" class="w-full"></progress>
 		</div>
-		<div class="cursor-pointer hover:bg-disabled-background hover:bg-opacity-35 active:bg-opacity-45 dark:hover:bg-opacity-10 dark:active:bg-opacity-15 rounded-full h-10 p-3" tabindex="0">
-			<BinIcon v-if="fileUpload.finished" class="text-error h-full" />
-			<CloseIcon v-else class="text-disabled-text h-full" />
+		<div
+			v-if="!fileUpload.finished"
+			class="cursor-pointer hover:bg-disabled-background hover:bg-opacity-35 active:bg-opacity-45 dark:hover:bg-opacity-10 dark:active:bg-opacity-15 rounded-full h-10 p-3"
+			tabindex="0"
+		>
+			<CloseIcon class="text-disabled-text h-full" />
 		</div>
 	</div>
 </template>
@@ -25,11 +28,11 @@
 import FileIcon from '@/assets/svg/file.svg';
 import CheckIcon from '@/assets/svg/check.svg';
 import CloseIcon from '@/assets/svg/closeBold.svg';
-import BinIcon from '@/assets/svg/bin.svg';
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { localizeNumber } from '@/shared/localization';
 import type FileUpload from '@/components/uploadfield/fileUpload';
+import { activeLocale } from '@/i18n';
 
 const props = defineProps<{
 	fileUpload: FileUpload;
@@ -58,6 +61,18 @@ const progressFormatted = computed((): string => {
 });
 
 const informationText = computed((): string => {
-	return props.fileUpload.finished ? 'Hochgeladen am' : progressFormatted.value;
+	if (!props.fileUpload.finished) {
+		return progressFormatted.value;
+	}
+	const currentDate = new Date();
+	const uploadDateString = currentDate.toLocaleString(activeLocale, {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+	return `Hochgeladen am ${uploadDateString}`;
 });
 </script>

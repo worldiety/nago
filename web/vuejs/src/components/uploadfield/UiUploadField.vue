@@ -30,7 +30,7 @@
 		</div>
 
 		<!-- File statuses -->
-		<template v-if="fileUploads && bytesUploaded !== null && bytesTotal !== null">
+		<template v-if="fileUploads">
 			<FileStatus
 				v-for="(fileUpload, index) in fileUploads"
 				:key="index"
@@ -62,8 +62,6 @@ const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
 const fileUploads = ref<FileUpload[]|null>(null);
-const bytesUploaded = ref<number|null>(null);
-const bytesTotal = ref<number|null>(null);
 
 const serviceAdapter = useServiceAdapter();
 
@@ -106,6 +104,7 @@ async function fileInputChanged(e: Event):Promise<void> {
 			props.ui.id,
 			serviceAdapter.getScopeID(),
 			uploadProgressCallback,
+			uploadFinishedCallback,
 		)
 	});
 	try {
@@ -126,13 +125,27 @@ function uploadProgressCallback(uploadId: string, progress: number, total: numbe
 	if (!fileUploads.value) {
 		return;
 	}
-	// TODO: Check, if still reactive as soon as upload is working again
 	fileUploads.value = fileUploads.value.map((fileUpload) => {
 		if (fileUpload.uploadId === uploadId) {
 			return {
 				...fileUpload,
 				bytesUploaded: progress,
 				bytesTotal: total,
+			};
+		}
+		return fileUpload;
+	});
+}
+
+function uploadFinishedCallback(uploadId: string): void {
+	if (!fileUploads.value) {
+		return;
+	}
+	fileUploads.value = fileUploads.value.map((fileUpload) => {
+		if (fileUpload.uploadId === uploadId) {
+			return {
+				...fileUpload,
+				finished: true,
 			};
 		}
 		return fileUpload;

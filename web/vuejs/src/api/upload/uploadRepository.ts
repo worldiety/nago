@@ -1,11 +1,20 @@
 //TODO: Klasse anlegen?
 
-import {Ptr} from "@/shared/protocol/ora/ptr";
-import {ScopeID} from "@/shared/protocol/ora/scopeID";
+import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { ScopeID } from '@/shared/protocol/ora/scopeID';
 
 export type UploadProgressCallback = (uploadId: string, progress: number, total: number) => void;
 
-export async function fetchUpload(file: File, uploadId: string, receiverPtr: Ptr, scope: ScopeID, uploadProgressCallback: UploadProgressCallback): Promise<void> {
+export type UploadFinishedCallback = (uploadId: string) => void;
+
+export async function fetchUpload(
+		file: File,
+		uploadId: string,
+		receiverPtr: Ptr,
+		scope: ScopeID,
+		uploadProgressCallback: UploadProgressCallback,
+		uploadFinishedCallback: UploadFinishedCallback,
+	): Promise<void> {
 	const formData = new FormData();
 	formData.append(file.name, file, file.name);
 
@@ -19,7 +28,12 @@ export async function fetchUpload(file: File, uploadId: string, receiverPtr: Ptr
 			reject('Error');
 		});
 		request.addEventListener('load', () => {
-			request.status.toString(10).startsWith('2') ? resolve() : reject(request.status);
+			if (request.status.toString(10).startsWith('2')) {
+				uploadFinishedCallback(uploadId);
+				resolve();
+				return;
+			}
+			reject(request.status);
 		});
 		request.addEventListener('abort', () => {
 			console.log('ABORTED');
