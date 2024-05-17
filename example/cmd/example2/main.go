@@ -57,7 +57,7 @@ func generateNavigationComponent(wnd core.Window) *ui.NavigationComponent {
 		var menuEntryB *ui.MenuEntry
 		var menuEntryC *ui.MenuEntry
 
-		navigationComponent.Alignment().Set(ora.AlignmentTop)
+		navigationComponent.Alignment().Set(ora.AlignmentLeft)
 		navigationComponent.Logo().Set(icon.OraLogo)
 		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 			menuEntryA = menuEntry
