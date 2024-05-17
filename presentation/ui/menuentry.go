@@ -56,6 +56,14 @@ func (m *MenuEntry) Title() String {
 	return m.title
 }
 
+func (m *MenuEntry) Action() *Func {
+	return m.action
+}
+
+func (m *MenuEntry) Uri() String {
+	return m.uri
+}
+
 func (m *MenuEntry) Icon() EmbeddedSVG {
 	return m.icon
 }
