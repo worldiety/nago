@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
@@ -731,16 +730,6 @@ func main() {
 									textArea.Rows().Set(10)
 									textArea.OnTextChanged().Set(func() {
 										textArea.Error().Set("dein Fehler: " + textArea.Value().Get())
-									})
-								}),
-
-								ui.NewImage(func(img *ui.Image) {
-									img.URL().Set("https://www.worldiety.de/_nuxt/images/news_wzo_einzug2-bc96a5.webp")
-								}),
-
-								ui.NewImage(func(img *ui.Image) {
-									img.Source(func() (io.Reader, error) {
-										return bytes.NewBuffer(exampleImg), nil
 									})
 								}),
 

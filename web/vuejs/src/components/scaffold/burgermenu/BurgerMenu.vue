@@ -35,9 +35,9 @@
 						</div>
 						<!-- Top level menu entry title button -->
 						<div
-							v-if="expandedTopLevelMenuEntryClickable"
-							tabindex="0"
-							class="flex justify-start items-center gap-x-2 cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full w-full p-4"
+							:tabindex="expandedTopLevelMenuEntryClickable ? '0' : '-1'"
+							class="flex justify-start items-center gap-x-2 rounded-full w-full p-4"
+							:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryClickable}"
 							@click="navigateToExpandedTopLevelMenuEntry"
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>

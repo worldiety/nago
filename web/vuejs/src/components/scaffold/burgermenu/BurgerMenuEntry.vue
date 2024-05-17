@@ -3,7 +3,7 @@
 		<div
 			class="menu-entry flex justify-start items-center gap-x-4 rounded-full w-full p-4"
 			:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable}"
-			:tabindex="menuEntryClickable ? 0 : 1"
+			:tabindex="menuEntryClickable ? '0' : '-1'"
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
 		>
