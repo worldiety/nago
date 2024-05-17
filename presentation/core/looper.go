@@ -197,4 +197,5 @@ type execAdapter struct {
 
 func (e execAdapter) Execute(task func()) {
 	e.looper.Post(task)
+	e.looper.Tick() // ensure to trigger processing
 }

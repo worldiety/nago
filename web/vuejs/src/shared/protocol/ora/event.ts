@@ -41,4 +41,3 @@ export type Event =
 | SessionAssigned
 | Ping
 | SendMultipleRequested
-| SendMultipleRequested

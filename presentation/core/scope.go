@@ -280,6 +280,14 @@ func (s *Scope) renderIfRequired() {
 }
 
 // only for event loop
+func (s *Scope) forceRender() {
+	for _, component := range s.allocatedComponents {
+		//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
+		s.Publish(s.render(0, component.Component))
+	}
+}
+
+// only for event loop
 func (s *Scope) render(requestId ora.RequestId, component Component) ora.ComponentInvalidated {
 	Freeze(component)
 	defer Unfreeze(component)

@@ -37,3 +37,29 @@ func Release(a any) error {
 
 	return nil
 }
+
+type ReaderWithMimeType interface {
+	io.Reader
+	MimeType() string
+}
+
+type basicMTReader struct {
+	io.Reader
+	mt string
+}
+
+func (b basicMTReader) MimeType() string {
+	return b.mt
+}
+
+func (b basicMTReader) Close() error {
+	if closer, ok := b.Reader.(io.Closer); ok {
+		return closer.Close()
+	}
+
+	return nil
+}
+
+func WithMimeType(mimeType string, r io.Reader) ReaderWithMimeType {
+	return basicMTReader{r, mimeType}
+}

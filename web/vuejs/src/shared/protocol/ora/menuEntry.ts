@@ -16,6 +16,7 @@ export interface MenuEntry {
     iconActive: Property<SVG>;
     title: Property<string>;
     action: Property<Ptr>;
+    uri: Property<string>;
     menu: Property<MenuEntry[]>;
     badge: Property<string>;
     expanded: Property<boolean>;

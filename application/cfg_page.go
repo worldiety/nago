@@ -26,6 +26,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -72,6 +73,8 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	downloadFiles := map[string]httpFileDownload{}
+	downloadStreams := map[string]func() (io.Reader, error){}
+	var downloadFilesMutex sync.Mutex
 
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
@@ -117,6 +120,10 @@ func (c *Configurator) newHandler() http.Handler {
 				if err := os.Remove(tmpFile); err != nil {
 					slog.Error("cannot remove download file", "file", tmpFile, "err", err)
 				}
+
+				downloadFilesMutex.Lock()
+				defer downloadFilesMutex.Unlock()
+				delete(downloadFiles, token)
 			})
 
 			download := httpFileDownload{
@@ -131,7 +138,9 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 
 			download.Mimetype = mime
+			downloadFilesMutex.Lock()
 			downloadFiles[token] = download
+			downloadFilesMutex.Unlock()
 
 			scope.Publish(ora.SendMultipleRequested{
 				Type: ora.SendMultipleRequestedT,
@@ -165,7 +174,10 @@ func (c *Configurator) newHandler() http.Handler {
 				AbsolutePath: zipFile,
 				Mimetype:     "application/zip",
 			}
+
+			downloadFilesMutex.Lock()
 			downloadFiles[token] = download
+			downloadFilesMutex.Unlock()
 
 			scope.Publish(ora.SendMultipleRequested{
 				Type: ora.SendMultipleRequestedT,
@@ -182,6 +194,23 @@ func (c *Configurator) newHandler() http.Handler {
 		scope.Tick()
 
 		return nil
+	})
+
+	app2.SetOnShareStream(func(scope *core.Scope, f func() (io.Reader, error)) (ora.URI, error) {
+		downloadFilesMutex.Lock()
+		defer downloadFilesMutex.Unlock()
+
+		token := string(ora.NewScopeID())
+
+		scope.AddOnDestroyObserver(func() {
+			downloadFilesMutex.Lock()
+			defer downloadFilesMutex.Unlock()
+			delete(downloadStreams, token)
+		})
+
+		uri := ora.URI("/api/ora/v1/share?token=" + token)
+		downloadStreams[token] = f
+		return uri, nil
 	})
 
 	if c.debug {
@@ -235,9 +264,46 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}
 
+	r.Mount("/api/ora/v1/share", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		downloadFilesMutex.Lock()
+		download, ok := downloadStreams[token]
+		downloadFilesMutex.Unlock()
+
+		if !ok {
+			// TODO how to make DOS or id brute force attacks harder?
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		reader, err := download()
+		if err != nil {
+			slog.Error("cannot open shared stream", "token", token, "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer core.Release(reader)
+
+		if mt, ok := reader.(core.ReaderWithMimeType); ok {
+			w.Header().Set("Content-Type", mt.MimeType())
+		} else {
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+
+		w.Header().Set("Cache-Control", "No-Store")
+		if _, err := io.Copy(w, reader); err != nil {
+			slog.Error("cannot write shared stream", "token", token, "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+	}))
+
 	r.Mount("/api/ora/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
+		downloadFilesMutex.Lock()
 		download, ok := downloadFiles[token]
+		downloadFilesMutex.Unlock()
+
 		if !ok {
 			// TODO how to make DOS or id brute force attacks harder?
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -380,23 +446,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 	}))
-	/*
-		TODO
-				r.Mount("/api/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				pageToken := r.Header.Get("x-page-token")
-				if pageToken == "" {
-					pageToken = r.URL.Query().Get("page")
-				}
-				page := appSrv.getPage(ui.PageInstanceToken(pageToken))
-				if page == nil {
-					logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))
-					w.WriteHeader(http.StatusNotFound)
-					return
-				}
 
-				page.HandleHTTP(w, r)
-			}))
-	*/
 	for _, route := range r.Routes() {
 		fmt.Println(route.Pattern)
 	}

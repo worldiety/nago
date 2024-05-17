@@ -6,7 +6,11 @@ type ViewRoot interface {
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
 
-	// Invalidate renders the current view root and sends it to the server.
+	// Invalidate renders the tree and sends it to the actual frontend for displaying. Usually you should not use
+	// this directly, because the request-response cycles triggers this automatically. However, if backend
+	// data has changed due to other domain events, you have to notify the view tree to redraw and potentially
+	// to load the data again from repositories. In those cases you likely want to use [core.Iterable.Iter] to
+	// always rebuild the entire tree from the according property.
 	Invalidate()
 }
 

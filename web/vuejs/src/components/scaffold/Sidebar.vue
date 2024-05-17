@@ -36,8 +36,11 @@
 				>
 					<div
 						ref="subMenuEntryElements"
-						class="flex justify-between items-center hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
-						:class="{'cursor-pointer': isClickableMenuEntry(subMenuEntry)}"
+						class="flex justify-between items-center rounded-full py-2 px-4"
+						:class="{
+							'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': isClickableMenuEntry(subMenuEntry),
+							'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subMenuEntry),
+						}"
 						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
@@ -58,8 +61,11 @@
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in getSubSubMenuEntries(subMenuEntry)"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
-							class="hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35 rounded-full py-2 px-4"
-							:class="{'cursor-pointer': subSubMenuEntry.action.v}"
+							class="rounded-full py-2 px-4"
+							:class="{
+								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': subSubMenuEntry.action.v,
+								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
+							}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
@@ -126,9 +132,9 @@ function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
 	return !!menuEntry.action.v || menuEntry.menu.v && menuEntry.menu.v.length > 0;
 }
 
-function isLinkingMenuEntry(menuEntry: MenuEntry): boolean {
-	// Linking, if it has an action and no sub menu entries
-	return !!menuEntry.action.v && (!menuEntry.menu.v || menuEntry.menu.v.length === 0);
+function isActiveMenuEntry(menuEntry: MenuEntry): boolean {
+	// Active, if its URI matches the current page's path name
+	return `/${menuEntry.uri.v}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {

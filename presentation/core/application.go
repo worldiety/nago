@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
+	"io"
 	"io/fs"
 	"path/filepath"
 	"sync"
@@ -19,6 +20,7 @@ type Application struct {
 	cancelCtx     func()
 	tmpDir        string
 	onSendFiles   func(*Scope, fs.FS) error
+	onShareStream func(*Scope, func() (io.Reader, error)) (ora.URI, error)
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
@@ -39,6 +41,12 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 // like Android a custom content provider may be created which exposes these blobs as URIs.
 func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, fs.FS) error) {
 	a.onSendFiles = onSendFiles
+}
+
+// SetOnShareStream set the callback which is called the by the window to convert any dynamic stream into a fixed
+// URI. A webbrowser will get an url resource, which must not be cached. Android needs a custom content provider.
+func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Reader, error)) (ora.URI, error)) {
+	a.onShareStream = onShareStream
 }
 
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
