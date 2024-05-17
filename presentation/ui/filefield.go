@@ -34,6 +34,7 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 		maxBytes:  NewShared[int64]("maxBytes"),
 		filter:    NewShared[string]("filter"),
 	}
+	c.maxBytes.Set(1024 * 1024 * 16)
 
 	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.maxBytes, c.filter}
 

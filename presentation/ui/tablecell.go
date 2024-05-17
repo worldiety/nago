@@ -11,6 +11,13 @@ type TableCell struct {
 	properties []core.Property
 }
 
+// NewTextCell is a handy shortcut to just put some default text into a cell.
+func NewTextCell(text string) *TableCell {
+	return NewTableCell(func(cell *TableCell) {
+		cell.Body().Set(MakeText(text))
+	})
+}
+
 func NewTableCell(with func(cell *TableCell)) *TableCell {
 	c := &TableCell{
 		id: nextPtr(),

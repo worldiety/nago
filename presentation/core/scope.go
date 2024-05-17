@@ -156,7 +156,11 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 				slog.Error("cannot release received but unprocessed files", "err", err)
 			}
 		}
+
+		s.forceRender() // the callback likely changed some domain state, so invalidate
+		s.eventLoop.Tick()
 	})
+
 	s.eventLoop.Tick() // trigger event loop processing, so that our post is actually processed.
 
 	return nil

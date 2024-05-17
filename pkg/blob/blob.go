@@ -85,6 +85,12 @@ func Put(store Store, key string, value []byte) error {
 	})
 }
 
+func Delete(store Store, key string) error {
+	return store.Update(func(tx Tx) error {
+		return tx.Delete(key)
+	})
+}
+
 // Get is a shortcut function to read small slices from the store. Do not use for large blobs, because it allocates
 // the entire blob size without other limits.
 func Get(store Store, key string) (std.Option[[]byte], error) {
@@ -120,4 +126,23 @@ type readerCloser struct {
 
 func (readerCloser) Close() error {
 	return nil
+}
+
+func Keys(store Store) ([]string, error) {
+	var keys []string
+	err := store.View(func(tx Tx) error {
+		var e error
+		tx.Each(func(entry Entry, err error) bool {
+			if err != nil {
+				e = err
+				return false
+			}
+
+			keys = append(keys, entry.Key)
+			return true
+		})
+		return e
+	})
+
+	return keys, err
 }
