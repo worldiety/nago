@@ -2,7 +2,7 @@
 
 Das obligatorische _hello world_ Beispiel.
 
-Sämtliche Tutorialbeispiele befinden sich auch als ausführbare Packages im Nago-Projekt. Um ein Tutorial Paket auszuführen, reicht ein Aufruf wie `go run go.wdy.de/nago/example/cmd/tutorial-helloworld@latest`.
+Sämtliche Tutorialbeispiele befinden sich auch als ausführbare Packages im [Nago-Projekt](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/example/cmd?ref_type=heads). Um ein Tutorial Paket auszuführen, reicht ein Aufruf wie `go run go.wdy.de/nago/example/cmd/tutorial-helloworld@latest`.
 
 
 Da es sich beim Nago-Projekt um ein firmeninternes Repository handelt, kann es nicht automatisch durch das Go-Modulsystem aufgelöst werden. Einmalig musst du also deine Konfiguration anpassen:

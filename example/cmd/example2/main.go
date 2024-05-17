@@ -265,7 +265,7 @@ func main() {
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
 
-								fileField.SetFilesReceiver(func(fsys fs.FS) {
+								fileField.SetFilesReceiver(func(fsys fs.FS) error {
 									defer core.Release(fsys)
 
 									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
@@ -290,6 +290,7 @@ func main() {
 										xdialog.ErrorView("err", err)
 									}
 
+									return nil
 								})
 
 							}))
