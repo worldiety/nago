@@ -67,7 +67,7 @@ func (r *Radiobutton) renderRadiobutton() ora.Radiobutton {
 func (r *Radiobutton) UpdateRadioButtons(radiobuttons []*Radiobutton, selectedButton *Radiobutton) {
 	for _, v := range radiobuttons {
 		if v != selectedButton {
-			v.Disabled().Set(!v.Disabled().Get())
+			v.Selected().Set(false)
 		}
 	}
 }
