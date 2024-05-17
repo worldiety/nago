@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import type {Radiobutton} from "@/shared/protocol/ora/radiobutton";
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const props = defineProps<{
-	disabled?: boolean;
+	ui: Radiobutton
 }>();
 
-const checked = ref<boolean>(false);
+const serviceAdapter = useServiceAdapter()
 
 function radioButtonClicked(): void {
-	if (!props.disabled) {
-		checked.value = !checked.value;
+	if (!props.ui.disabled.v) {
+	serviceAdapter.setPropertiesAndCallFunctions([{
+		...props.ui.selected, v: !props.ui.selected.v
+	}], [props.ui.onClicked])
 	}
 }
 </script>
@@ -17,13 +21,13 @@ function radioButtonClicked(): void {
 <template>
 	<div
 		class="input-radio rounded-full w-fit -ml-2.5"
-		:class="{'input-radio-disabled': disabled}"
-		:tabindex="disabled ? '-1' : '0'"
+		:class="{'input-radio-disabled': ui.disabled.v}"
+		:tabindex="ui.disabled.v ? '-1' : '0'"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="radio" class="pointer-events-none" tabindex="-1" :disabled="disabled">
+			<input :checked="ui.selected.v" type="radio" class="pointer-events-none" tabindex="-1" :disabled="ui.disabled.v">
 		</div>
 	</div>
 </template>
