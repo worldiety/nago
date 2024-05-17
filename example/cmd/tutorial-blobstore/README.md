@@ -1,3 +1,18 @@
+# Blobstores for small and large byte streams
+
+Standardmäßig bietet das Framework nur die BlobStore API an.
+Obwohl grundsätzlich der Zugriff auf das Dateisystem nicht eingeschränkt wird, solltest du das Dateisystem wenn möglich nie direkt benutzen.
+Verwende stattdessen die BlobStore-API direkt oder mit einem der vielen Helfer-Funktionen und Typen.
+
+![Screenshot](screenshot.png)
+
+Durch die Abstraktion kannst du später die Implementierung einfach austauschen und somit sehr einfach die Eigenschaften _Skalierbarkeit_ und _Integrität_ beeinflussen.
+Derzeit gibt es eine [BBolt-](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/pkg/blob/bolt), eine [Dateisystem-](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/pkg/blob/fs) und eine [In-Memory-](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/pkg/blob/mem)Implementierung.
+Geplant sind zudem noch Implementierung für das worldiety S3- sowie das worldiety Cockroach-Cluster.
+
+Um das Prototyping zu erleichtern und strukturierte Daten zu verarbeiten, gibt es noch eine [https://gitlab.worldiety.net/group/ora/nago/-/tree/main/pkg/data/json](JSON-Repository-Implementierung), die aber in einem anderen Tutorial vorgestellt wird.
+
+```go
 package main
 
 import (
@@ -56,3 +71,5 @@ func main() {
 		})
 	}).Run()
 }
+
+```
