@@ -7,7 +7,7 @@
         <div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
 					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="h-full" :data-index="index">
-						<MenuEntryComponent
+						<TopLevelMenuEntry
 							:ui="menuEntry"
 							:menu-entry-index="index"
 							:mode="'navigationBar'"
@@ -76,11 +76,11 @@
 
 <script setup lang="ts">
 import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
-import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
 
 const props = defineProps<{
 	ui: NavigationComponent;
