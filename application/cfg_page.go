@@ -14,15 +14,19 @@ import (
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/core/tmpfs"
 	"go.wdy.de/nago/presentation/ora"
+	"io"
 	"io/fs"
 	"log"
 	"log/slog"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -52,6 +56,13 @@ func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	return c
 }
 
+type httpFileDownload struct {
+	Token        string
+	Name         string
+	AbsolutePath string
+	Mimetype     string
+}
+
 func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
@@ -61,10 +72,146 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 	}
 
+	downloadFiles := map[string]httpFileDownload{}
+	downloadStreams := map[string]func() (io.Reader, error){}
+	var downloadFilesMutex sync.Mutex
+
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
 	app2 := core.NewApplication(c.ctx, tmpDir, factories)
 	r := chi.NewRouter()
+	app2.SetOnSendFiles(func(scope *core.Scope, f fs.FS) error {
+		type colFile struct {
+			path  string
+			entry fs.DirEntry
+		}
+		var collectedFiles []colFile
+		err := fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() {
+				return nil
+			}
+
+			if d.Type().IsRegular() {
+				collectedFiles = append(collectedFiles, colFile{
+					path:  path,
+					entry: d,
+				})
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
+		switch len(collectedFiles) {
+		case 0:
+			return fmt.Errorf("no files found in fsys: %v", f)
+		case 1:
+			// issue a direct link
+			token := string(ora.NewScopeID())
+			tmpFile := filepath.Join(c.Directory("download"), token)
+			if err := copyFile(f, collectedFiles[0].path, tmpFile); err != nil {
+				return fmt.Errorf("could not copy file %v: %v", tmpFile, err)
+			}
+
+			scope.AddOnDestroyObserver(func() {
+				if err := os.Remove(tmpFile); err != nil {
+					slog.Error("cannot remove download file", "file", tmpFile, "err", err)
+				}
+
+				downloadFilesMutex.Lock()
+				defer downloadFilesMutex.Unlock()
+				delete(downloadFiles, token)
+			})
+
+			download := httpFileDownload{
+				Token:        token,
+				Name:         collectedFiles[0].entry.Name(),
+				AbsolutePath: tmpFile,
+			}
+
+			mime := mime.TypeByExtension(filepath.Ext(download.Name))
+			if mime == "" {
+				mime = "application/octet-stream"
+			}
+
+			download.Mimetype = mime
+			downloadFilesMutex.Lock()
+			downloadFiles[token] = download
+			downloadFilesMutex.Unlock()
+
+			scope.Publish(ora.SendMultipleRequested{
+				Type: ora.SendMultipleRequestedT,
+				Resources: []ora.Resource{
+					{
+						Name:     download.Name,
+						URI:      ora.URI("/api/ora/v1/download?token=" + token),
+						MimeType: download.Mimetype,
+					},
+				},
+			})
+
+		default:
+			// issue a zip file
+			token := string(ora.NewScopeID())
+			zipFile := filepath.Join(c.Directory("download"), token)
+			err := makeZip(zipFile, f)
+			if err != nil {
+				return fmt.Errorf("cannot create zip file for multi download: %w", err)
+			}
+
+			scope.AddOnDestroyObserver(func() {
+				if err := os.Remove(zipFile); err != nil {
+					slog.Error("cannot remove zip file", "file", zipFile, "err", err)
+				}
+			})
+
+			download := httpFileDownload{
+				Token:        token,
+				Name:         "files.zip",
+				AbsolutePath: zipFile,
+				Mimetype:     "application/zip",
+			}
+
+			downloadFilesMutex.Lock()
+			downloadFiles[token] = download
+			downloadFilesMutex.Unlock()
+
+			scope.Publish(ora.SendMultipleRequested{
+				Type: ora.SendMultipleRequestedT,
+				Resources: []ora.Resource{
+					{
+						Name:     download.Name,
+						URI:      ora.URI("/api/ora/v1/download?token=" + token),
+						MimeType: download.Mimetype,
+					},
+				},
+			})
+		}
+
+		scope.Tick()
+
+		return nil
+	})
+
+	app2.SetOnShareStream(func(scope *core.Scope, f func() (io.Reader, error)) (ora.URI, error) {
+		downloadFilesMutex.Lock()
+		defer downloadFilesMutex.Unlock()
+
+		token := string(ora.NewScopeID())
+
+		scope.AddOnDestroyObserver(func() {
+			downloadFilesMutex.Lock()
+			defer downloadFilesMutex.Unlock()
+			delete(downloadStreams, token)
+		})
+
+		uri := ora.URI("/api/ora/v1/share?token=" + token)
+		downloadStreams[token] = f
+		return uri, nil
+	})
 
 	if c.debug {
 		r.Use(
@@ -116,6 +263,69 @@ func (c *Configurator) newHandler() http.Handler {
 		}))
 
 	}
+
+	r.Mount("/api/ora/v1/share", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		downloadFilesMutex.Lock()
+		download, ok := downloadStreams[token]
+		downloadFilesMutex.Unlock()
+
+		if !ok {
+			// TODO how to make DOS or id brute force attacks harder?
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		reader, err := download()
+		if err != nil {
+			slog.Error("cannot open shared stream", "token", token, "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer core.Release(reader)
+
+		if mt, ok := reader.(core.ReaderWithMimeType); ok {
+			w.Header().Set("Content-Type", mt.MimeType())
+		} else {
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+
+		w.Header().Set("Cache-Control", "No-Store")
+		if _, err := io.Copy(w, reader); err != nil {
+			slog.Error("cannot write shared stream", "token", token, "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+	}))
+
+	r.Mount("/api/ora/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		downloadFilesMutex.Lock()
+		download, ok := downloadFiles[token]
+		downloadFilesMutex.Unlock()
+
+		if !ok {
+			// TODO how to make DOS or id brute force attacks harder?
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		file, err := os.Open(download.AbsolutePath)
+		if err != nil {
+			slog.Error("cannot open file for download", "file", download.AbsolutePath, "err", err)
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		defer file.Close()
+
+		w.Header().Set("Content-Type", download.Mimetype)
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+download.Name+"\"")
+		if _, err := io.Copy(w, file); err != nil {
+			slog.Error("cannot write download file", "file", download.AbsolutePath, "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}))
 
 	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// we support currently only multipart upload forms
@@ -236,23 +446,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 	}))
-	/*
-		TODO
-				r.Mount("/api/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				pageToken := r.Header.Get("x-page-token")
-				if pageToken == "" {
-					pageToken = r.URL.Query().Get("page")
-				}
-				page := appSrv.getPage(ui.PageInstanceToken(pageToken))
-				if page == nil {
-					logging.FromContext(r.Context()).Error("invalid page token for upload", slog.String("token", pageToken))
-					w.WriteHeader(http.StatusNotFound)
-					return
-				}
 
-				page.HandleHTTP(w, r)
-			}))
-	*/
 	for _, route := range r.Routes() {
 		fmt.Println(route.Pattern)
 	}

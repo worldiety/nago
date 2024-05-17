@@ -4,6 +4,9 @@ export default {
 	],
 	theme: {
 		extend: {
+			screens: {
+				'xs': '400px',
+			},
 			colors: {
 				'wdy-green': '#1B8C30',
 				'ora-orange': '#F7A823',

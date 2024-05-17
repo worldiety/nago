@@ -14,10 +14,10 @@ import (
 // because the scope don't know if you have spawned a concurrent go routine or want to continue processing later.
 // Use [Release] for that, as you can't assert which implementation you will actually get.
 //
-// Intentionally there is no error return, because this callback is issued over the event looper and thus
+// Intentionally there is no much sense on error return, because this callback is issued over the event looper and thus
 // the actual caller cannot be notified anymore. So, if errors occur, the callee must handle it itself.
 type FilesReceiver interface {
-	OnFilesReceived(fsys fs.FS)
+	OnFilesReceived(fsys fs.FS) error
 }
 
 // Release tries to clear and close the given thing. If no such interfaces are implemented, the call has no side effects
@@ -36,4 +36,30 @@ func Release(a any) error {
 	}
 
 	return nil
+}
+
+type ReaderWithMimeType interface {
+	io.Reader
+	MimeType() string
+}
+
+type basicMTReader struct {
+	io.Reader
+	mt string
+}
+
+func (b basicMTReader) MimeType() string {
+	return b.mt
+}
+
+func (b basicMTReader) Close() error {
+	if closer, ok := b.Reader.(io.Closer); ok {
+		return closer.Close()
+	}
+
+	return nil
+}
+
+func WithMimeType(mimeType string, r io.Reader) ReaderWithMimeType {
+	return basicMTReader{r, mimeType}
 }

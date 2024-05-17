@@ -2,9 +2,12 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
+	"io"
+	"io/fs"
 	"log/slog"
 	"time"
 )
@@ -55,6 +58,15 @@ type Window interface {
 	Location() *time.Location
 	// TODO add Locale, add Screen Metrics (density, pixel width and height, size classes etc)
 
+	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
+	// actual frontend. For example, a browser may just download these files but an Android frontend may show
+	// a _send multiple intent_.
+	SendFiles(fsys fs.FS) error
+
+	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
+	// is returned from the open call. Note that open is usually not called from the event looper and the open call
+	// must not modify your view tree.
+	AsURI(open func() (io.Reader, error)) (ora.URI, error)
 }
 
 type SessionID string
@@ -84,8 +96,25 @@ func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values)
 	return s
 }
 
+func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
+	if callback := s.scope.app.onShareStream; callback != nil {
+		return callback(s.scope, open)
+	}
+
+	return "", fmt.Errorf("no share stream platform adapter has been configured")
+}
+
+func (s *scopeWindow) SendFiles(fsys fs.FS) error {
+	if callback := s.scope.app.onSendFiles; callback != nil {
+		return callback(s.scope, fsys)
+	}
+
+	return fmt.Errorf("no send files platform adapter has been configured")
+}
+
 func (s *scopeWindow) Execute(task func()) {
 	s.scope.eventLoop.Post(task)
+	s.scope.eventLoop.Tick()
 }
 
 func (s *scopeWindow) Navigation() *NavigationController {

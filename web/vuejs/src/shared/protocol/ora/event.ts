@@ -18,6 +18,7 @@ import type { NavigationResetRequested } from '@/shared/protocol/ora/navigationR
 import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
 import type { Ping } from '@/shared/protocol/ora/ping';
 import type { ScopeDestructionRequested } from '@/shared/protocol/ora/scopeDestructionRequested';
+import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
 import type { SessionAssigned } from '@/shared/protocol/ora/sessionAssigned';
 import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
 
@@ -39,3 +40,4 @@ export type Event =
 | NavigationBackRequested
 | SessionAssigned
 | Ping
+| SendMultipleRequested

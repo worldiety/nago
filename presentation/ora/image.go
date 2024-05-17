@@ -2,10 +2,9 @@ package ora
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Image struct {
-	Ptr           Ptr              `json:"id"`
-	Type          ComponentType    `json:"type" value:"Image"`
-	URL           Property[string] `json:"url"`
-	DownloadToken Property[string] `json:"downloadToken"`
-	Caption       Property[string] `json:"caption"`
+	Ptr     Ptr              `json:"id"`
+	Type    ComponentType    `json:"type" value:"Image"`
+	URI     Property[URI]    `json:"uri"`
+	Caption Property[string] `json:"caption"`
 	component
 }

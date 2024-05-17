@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -38,6 +39,7 @@ type ComponentFactory func(Window, ora.NewComponentRequested) Component
 // as a cheap alternative, replace all event loops with the same looper instance.
 // However, we must be careful on destruction of the scopes sharing them.
 type Scope struct {
+	app                 *Application
 	id                  ora.ScopeID
 	factories           map[ora.ComponentFactoryId]ComponentFactory
 	allocatedComponents map[ora.Ptr]allocatedComponent
@@ -55,12 +57,14 @@ type Scope struct {
 	tempRootDir         string
 	tempDir             string
 	nextFileSeqNo       int64
+	onDestroyObservers  []func()
 }
 
-func NewScope(ctx context.Context, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
 
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
+		app:                 app,
 		id:                  id,
 		factories:           factories,
 		allocatedComponents: map[ora.Ptr]allocatedComponent{},
@@ -103,8 +107,13 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 			dispatched := false
 			for _, holder := range s.allocatedComponents {
 				if rec, ok := holder.Component.(FilesReceiver); ok {
-					rec.OnFilesReceived(fsys)
-					dispatched = true
+					if err := rec.OnFilesReceived(fsys); err != nil {
+						dispatched = false
+						slog.Error("failed to dispatch files", "err", err)
+						break
+					} else {
+						dispatched = true
+					}
 				}
 			}
 
@@ -135,7 +144,12 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 
 		switch receiver := receiver.(type) {
 		case FilesReceiver:
-			receiver.OnFilesReceived(fsys)
+			if err := receiver.OnFilesReceived(fsys); err != nil {
+				slog.Error("failed to dispatch files", "err", err)
+				if err := Release(fsys); err != nil {
+					slog.Error("cannot release received but unprocessed files", "err", err)
+				}
+			}
 		default:
 			slog.Error("receiver component for data stream has no compatible receiver interface, files are lost", "type", fmt.Sprintf("%T", receiver))
 			if err := Release(fsys); err != nil {
@@ -266,6 +280,14 @@ func (s *Scope) renderIfRequired() {
 }
 
 // only for event loop
+func (s *Scope) forceRender() {
+	for _, component := range s.allocatedComponents {
+		//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
+		s.Publish(s.render(0, component.Component))
+	}
+}
+
+// only for event loop
 func (s *Scope) render(requestId ora.RequestId, component Component) ora.ComponentInvalidated {
 	Freeze(component)
 	defer Unfreeze(component)
@@ -292,6 +314,18 @@ func (s *Scope) Destroy() {
 		}
 
 		s.eventLoop.Post(func() {
+			// the event loop is panic protected, thus separate the observer execution
+			var tmp []func()
+			s.destroyed.With(func(b bool) bool {
+				tmp = slices.Clone(s.onDestroyObservers)
+				return b
+			})
+
+			for _, f := range tmp {
+				f()
+			}
+		})
+		s.eventLoop.Post(func() {
 			s.destroy()
 		})
 
@@ -300,6 +334,13 @@ func (s *Scope) Destroy() {
 		return true
 	})
 
+}
+
+func (s *Scope) AddOnDestroyObserver(f func()) {
+	s.destroyed.With(func(b bool) bool {
+		s.onDestroyObservers = append(s.onDestroyObservers, f)
+		return b
+	})
 }
 
 // only for event loop

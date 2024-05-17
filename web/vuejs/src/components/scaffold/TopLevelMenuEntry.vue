@@ -2,20 +2,24 @@
 	<div
 		class="flex flex-col justify-between items-center cursor-pointer h-full w-full"
 		tabindex="0"
-		@mousedown="active = true"
+		@mousedown="interacted = true"
 		@click="handleClick"
 		@keydown.enter="handleClick"
 		@keydown.down.prevent="focusFirstLinkedSubMenuEntry('down')"
 		@keydown.right.prevent="focusFirstLinkedSubMenuEntry('right')"
 		@mouseenter="expandMenuEntry"
 		@mouseleave="handleMouseLeave"
-		@mouseup="active = false"
+		@mouseup="interacted = false"
 		@focus="expandMenuEntry"
 	>
 		<div
 			v-if="ui.icon.v"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
-			:class="{'bg-disabled-background bg-opacity-25': ui.expanded.v, 'bg-opacity-35': active}"
+			:class="{
+				'bg-disabled-background bg-opacity-25': ui.expanded.v,
+				'bg-opacity-35': interacted,
+				'bg-disabled-background bg-opacity-35': active,
+			}"
 		>
 			<div class="relative w-4">
 				<div v-if="ui.expanded.v" class="*:h-full" v-html="ui.iconActive.v"></div>
@@ -46,7 +50,11 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const active = ref<boolean>(false);
+const interacted = ref<boolean>(false);
+
+const active = computed((): boolean => {
+	return interacted.value || `/${props.ui.uri.v}` === window.location.pathname;
+});
 
 const hasSubMenuEntries = computed((): boolean => {
 	return props.ui.menu.v && props.ui.menu.v.length > 0;
@@ -63,7 +71,7 @@ function handleClick(): void {
 }
 
 function handleMouseLeave(): void {
-	active.value = false;
+	interacted.value = false;
 	if (!hasSubMenuEntries.value) {
 		// Collapse the menu entry if it has no sub menu entries
 		serviceAdapter.setProperties({

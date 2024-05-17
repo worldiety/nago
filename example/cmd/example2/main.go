@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
@@ -17,6 +16,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"testing/fstest"
 )
 
 type PID string
@@ -49,6 +49,75 @@ type EntByInt struct {
 
 func (e EntByInt) Identity() IntlIke {
 	return e.ID
+}
+
+func generateNavigationComponent(wnd core.Window) *ui.NavigationComponent {
+	return ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
+		var menuEntryA *ui.MenuEntry
+		var menuEntryB *ui.MenuEntry
+		var menuEntryC *ui.MenuEntry
+
+		navigationComponent.Alignment().Set(ora.AlignmentLeft)
+		navigationComponent.Logo().Set(icon.OraLogo)
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryA = menuEntry
+			menuEntry.Title().Set("Menüpunkt A")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.Badge().Set("2")
+			menuEntry.OnFocus().Set(func() {
+				menuEntryB.Expanded().Set(false)
+				menuEntryC.Expanded().Set(false)
+			})
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 1")
+				subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
+			}))
+		}))
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryB = menuEntry
+			menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
+			menuEntry.OnFocus().Set(func() {
+				menuEntryA.Expanded().Set(false)
+				menuEntryC.Expanded().Set(false)
+			})
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 1")
+			}))
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 2")
+				subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt I")
+					subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
+				}))
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt II")
+				}))
+			}))
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 3")
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt III")
+					subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
+				}))
+			}))
+		}))
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryC = menuEntry
+			menuEntry.Title().Set("Menüpunkt C")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.OnFocus().Set(func() {
+				menuEntryA.Expanded().Set(false)
+				menuEntryB.Expanded().Set(false)
+			})
+			menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
+		}))
+	})
 }
 
 //go:embed example.jpeg
@@ -118,17 +187,23 @@ func main() {
 				}
 				test, _ := core.UnmarshalValues[myParams](wnd.Values())
 				page.Body().Set(
-					ui.NewVBox(func(vbox *ui.VBox) {
-						vbox.Append(
-							ui.NewButton(func(btn *ui.Button) {
-								btn.Caption().Set("zurück")
-								btn.Action().Set(func() {
-									wnd.Navigation().Back()
-								})
-							}),
+					ui.NewScaffold(func(scaffold *ui.Scaffold) {
+						scaffold.NavigationComponent().Set(generateNavigationComponent(wnd))
 
-							ui.MakeText(fmt.Sprintf("A=%v", test.A)),
-							ui.MakeText(fmt.Sprintf("B=%v", test.B)),
+						scaffold.Body().Set(
+							ui.NewVBox(func(vbox *ui.VBox) {
+								vbox.Append(
+									ui.NewButton(func(btn *ui.Button) {
+										btn.Caption().Set("zurück")
+										btn.Action().Set(func() {
+											wnd.Navigation().Back()
+										})
+									}),
+
+									ui.MakeText(fmt.Sprintf("A=%v", test.A)),
+									ui.MakeText(fmt.Sprintf("B=%v", test.B)),
+								)
+							}),
 						)
 					}),
 				)
@@ -143,92 +218,7 @@ func main() {
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 
-					scaffold.NavigationComponent().Set(
-						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-							var menuEntryA *ui.MenuEntry
-							var menuEntryB *ui.MenuEntry
-							var menuEntryC *ui.MenuEntry
-
-							navigationComponent.Alignment().Set(ora.AlignmentTop)
-							navigationComponent.Logo().Set(icon.OraLogo)
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryA = menuEntry
-								menuEntry.Title().Set("Menüpunkt A")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Badge().Set("2")
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "A"})
-								})
-								menuEntry.OnFocus().Set(func() {
-									menuEntryB.Expanded().Set(false)
-									menuEntryC.Expanded().Set(false)
-								})
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
-									})
-								}))
-							}))
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryB = menuEntry
-								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "B"})
-								})
-								menuEntry.OnFocus().Set(func() {
-									menuEntryA.Expanded().Set(false)
-									menuEntryC.Expanded().Set(false)
-								})
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_1"})
-									})
-								}))
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 2")
-									subEntry.Action().Set(func() {
-										wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "sub_2"})
-									})
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt I")
-										subSubEntry.Action().Set(func() {
-											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_I"})
-										})
-									}))
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt II")
-									}))
-								}))
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 3")
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt III")
-										subSubEntry.Action().Set(func() {
-											wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "subsub_III"})
-										})
-									}))
-								}))
-							}))
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryC = menuEntry
-								menuEntry.Title().Set("Menüpunkt C")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.OnFocus().Set(func() {
-									menuEntryA.Expanded().Set(false)
-									menuEntryB.Expanded().Set(false)
-								})
-								menuEntry.Action().Set(func() {
-									wnd.Navigation().ForwardTo("hello", map[string]string{"menu_entry": "C"})
-								})
-							}))
-						}),
-					)
+					scaffold.NavigationComponent().Set(generateNavigationComponent(wnd))
 
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(
@@ -254,6 +244,18 @@ func main() {
 								breadcrumbs.Icon().Set(icon.Dashboard)
 							}))
 
+							vbox.Append(ui.NewButton(func(btn *ui.Button) {
+								btn.Caption().Set("download")
+								btn.Action().Set(func() {
+									err := wnd.SendFiles(fstest.MapFS{
+										"test.txt": &fstest.MapFile{
+											Data: []byte("hello world"),
+										},
+									})
+									xdialog.ErrorView("send files failed", err)
+								})
+							}))
+
 							vbox.Append(ui.NewFileField(func(fileField *ui.FileField) {
 								fileField.Label().Set("Drag & Drop oder Dateien per Klick auswählen")
 								fileField.HintRight().Set("Max. Dateigröße: 300 MB")
@@ -263,7 +265,7 @@ func main() {
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
 
-								fileField.SetFilesReceiver(func(fsys fs.FS) {
+								fileField.SetFilesReceiver(func(fsys fs.FS) error {
 									defer core.Release(fsys)
 
 									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
@@ -288,6 +290,7 @@ func main() {
 										xdialog.ErrorView("err", err)
 									}
 
+									return nil
 								})
 
 							}))
@@ -733,16 +736,6 @@ func main() {
 									textArea.Rows().Set(10)
 									textArea.OnTextChanged().Set(func() {
 										textArea.Error().Set("dein Fehler: " + textArea.Value().Get())
-									})
-								}),
-
-								ui.NewImage(func(img *ui.Image) {
-									img.URL().Set("https://www.worldiety.de/_nuxt/images/news_wzo_einzug2-bc96a5.webp")
-								}),
-
-								ui.NewImage(func(img *ui.Image) {
-									img.Source(func() (io.Reader, error) {
-										return bytes.NewBuffer(exampleImg), nil
 									})
 								}),
 
