@@ -51,6 +51,75 @@ func (e EntByInt) Identity() IntlIke {
 	return e.ID
 }
 
+func generateNavigationComponent(wnd core.Window) *ui.NavigationComponent {
+	return ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
+		var menuEntryA *ui.MenuEntry
+		var menuEntryB *ui.MenuEntry
+		var menuEntryC *ui.MenuEntry
+
+		navigationComponent.Alignment().Set(ora.AlignmentTop)
+		navigationComponent.Logo().Set(icon.OraLogo)
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryA = menuEntry
+			menuEntry.Title().Set("Menüpunkt A")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.Badge().Set("2")
+			menuEntry.OnFocus().Set(func() {
+				menuEntryB.Expanded().Set(false)
+				menuEntryC.Expanded().Set(false)
+			})
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 1")
+				subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
+			}))
+		}))
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryB = menuEntry
+			menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
+			menuEntry.OnFocus().Set(func() {
+				menuEntryA.Expanded().Set(false)
+				menuEntryC.Expanded().Set(false)
+			})
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 1")
+			}))
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 2")
+				subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt I")
+					subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
+				}))
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt II")
+				}))
+			}))
+			menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
+				subEntry.Title().Set("Subpunkt 3")
+				subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
+					subSubEntry.Title().Set("Subsubpunkt III")
+					subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
+				}))
+			}))
+		}))
+		navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+			menuEntryC = menuEntry
+			menuEntry.Title().Set("Menüpunkt C")
+			menuEntry.Icon().Set(icon.PackageOutlined)
+			menuEntry.IconActive().Set(icon.PackageFilled)
+			menuEntry.OnFocus().Set(func() {
+				menuEntryA.Expanded().Set(false)
+				menuEntryB.Expanded().Set(false)
+			})
+			menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
+		}))
+	})
+}
+
 //go:embed example.jpeg
 var exampleImg []byte
 
@@ -119,74 +188,7 @@ func main() {
 				test, _ := core.UnmarshalValues[myParams](wnd.Values())
 				page.Body().Set(
 					ui.NewScaffold(func(scaffold *ui.Scaffold) {
-						scaffold.NavigationComponent().Set(
-							ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-								var menuEntryA *ui.MenuEntry
-								var menuEntryB *ui.MenuEntry
-								var menuEntryC *ui.MenuEntry
-
-								navigationComponent.Alignment().Set(ora.AlignmentTop)
-								navigationComponent.Logo().Set(icon.OraLogo)
-								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-									menuEntryA = menuEntry
-									menuEntry.Title().Set("Menüpunkt A")
-									menuEntry.Icon().Set(icon.PackageOutlined)
-									menuEntry.IconActive().Set(icon.PackageFilled)
-									menuEntry.Badge().Set("2")
-									menuEntry.OnFocus().Set(func() {
-										menuEntryB.Expanded().Set(false)
-										menuEntryC.Expanded().Set(false)
-									})
-									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-										subEntry.Title().Set("Subpunkt 1")
-										subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
-									}))
-								}))
-								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-									menuEntryB = menuEntry
-									menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
-									menuEntry.Icon().Set(icon.PackageOutlined)
-									menuEntry.IconActive().Set(icon.PackageFilled)
-									menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
-									menuEntry.OnFocus().Set(func() {
-										menuEntryA.Expanded().Set(false)
-										menuEntryC.Expanded().Set(false)
-									})
-									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-										subEntry.Title().Set("Subpunkt 1")
-									}))
-									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-										subEntry.Title().Set("Subpunkt 2")
-										subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
-										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-											subSubEntry.Title().Set("Subsubpunkt I")
-											subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
-										}))
-										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-											subSubEntry.Title().Set("Subsubpunkt II")
-										}))
-									}))
-									menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-										subEntry.Title().Set("Subpunkt 3")
-										subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-											subSubEntry.Title().Set("Subsubpunkt III")
-											subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
-										}))
-									}))
-								}))
-								navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-									menuEntryC = menuEntry
-									menuEntry.Title().Set("Menüpunkt C")
-									menuEntry.Icon().Set(icon.PackageOutlined)
-									menuEntry.IconActive().Set(icon.PackageFilled)
-									menuEntry.OnFocus().Set(func() {
-										menuEntryA.Expanded().Set(false)
-										menuEntryB.Expanded().Set(false)
-									})
-									menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
-								}))
-							}),
-						)
+						scaffold.NavigationComponent().Set(generateNavigationComponent(wnd))
 
 						scaffold.Body().Set(
 							ui.NewVBox(func(vbox *ui.VBox) {
@@ -216,74 +218,7 @@ func main() {
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 
-					scaffold.NavigationComponent().Set(
-						ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-							var menuEntryA *ui.MenuEntry
-							var menuEntryB *ui.MenuEntry
-							var menuEntryC *ui.MenuEntry
-
-							navigationComponent.Alignment().Set(ora.AlignmentTop)
-							navigationComponent.Logo().Set(icon.OraLogo)
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryA = menuEntry
-								menuEntry.Title().Set("Menüpunkt A")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Badge().Set("2")
-								menuEntry.OnFocus().Set(func() {
-									menuEntryB.Expanded().Set(false)
-									menuEntryC.Expanded().Set(false)
-								})
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 1")
-									subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_1"})
-								}))
-							}))
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryB = menuEntry
-								menuEntry.Title().Set("Ich bin ein sehr langer Menüpunkt B")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.Link("1234", wnd, map[string]string{"menu_entry": "B"})
-								menuEntry.OnFocus().Set(func() {
-									menuEntryA.Expanded().Set(false)
-									menuEntryC.Expanded().Set(false)
-								})
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 1")
-								}))
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 2")
-									subEntry.Link("hello", wnd, map[string]string{"menu_entry": "sub_2"})
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt I")
-										subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_I"})
-									}))
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt II")
-									}))
-								}))
-								menuEntry.Menu().Append(ui.NewMenuEntry(func(subEntry *ui.MenuEntry) {
-									subEntry.Title().Set("Subpunkt 3")
-									subEntry.Menu().Append(ui.NewMenuEntry(func(subSubEntry *ui.MenuEntry) {
-										subSubEntry.Title().Set("Subsubpunkt III")
-										subSubEntry.Link("hello", wnd, map[string]string{"menu_entry": "subsub_III"})
-									}))
-								}))
-							}))
-							navigationComponent.Menu().Append(ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntryC = menuEntry
-								menuEntry.Title().Set("Menüpunkt C")
-								menuEntry.Icon().Set(icon.PackageOutlined)
-								menuEntry.IconActive().Set(icon.PackageFilled)
-								menuEntry.OnFocus().Set(func() {
-									menuEntryA.Expanded().Set(false)
-									menuEntryB.Expanded().Set(false)
-								})
-								menuEntry.Link("hello", wnd, map[string]string{"menu_entry": "C"})
-							}))
-						}),
-					)
+					scaffold.NavigationComponent().Set(generateNavigationComponent(wnd))
 
 					var myMagicTF *ui.TextField
 					scaffold.Body().Set(

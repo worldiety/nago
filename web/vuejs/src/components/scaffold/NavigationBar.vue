@@ -43,10 +43,11 @@
 					<div v-for="(subMenuEntry, subMenuEntryIndex) in subMenuEntries" :key="subMenuEntryIndex">
 						<p
 							ref="subMenuEntryElements"
-							class="font-medium"
+							class="font-medium rounded-full px-2"
 							:class="{
 							'mb-4': subMenuEntry.menu.v?.length > 0,
 							'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v,
+							'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 						}"
 							:tabindex="subMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
@@ -59,8 +60,11 @@
 							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
-							class="sub-sub-menu-entry"
-							:class="{'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v}"
+							class="sub-sub-menu-entry rounded-full px-2"
+							:class="{
+								'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v,
+								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
+							}"
 							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
@@ -129,6 +133,11 @@ const subMenuEntries = computed((): MenuEntry[] => {
 	}
 	return entries;
 });
+
+function isActiveMenuEntry(menuEntry: MenuEntry): boolean {
+	// Active, if its URI matches the current page's path name
+	return `/${menuEntry.uri.v}` === window.location.pathname;
+}
 
 function handleMouseMove(event: MouseEvent): void {
 	const threshold = subMenu.value?.getBoundingClientRect().bottom
