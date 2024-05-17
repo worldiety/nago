@@ -526,7 +526,7 @@ func main() {
 
 								ui.NewVBox(func(box *ui.VBox) {
 									var radiobuttons []*ui.Radiobutton
-									var selectedButton *ui.Radiobutton // Speichert den ausgewählten Button
+									var selectedButton *ui.Radiobutton
 
 									box.Append(
 										ui.NewRadiobutton(func(rab *ui.Radiobutton) {
