@@ -18,7 +18,9 @@
 					<p class="text-sm text-white">{{ ui.badge.v }}</p>
 				</div>
 			</div>
-			<p class="grow leading-tight select-none">{{ ui.title.v }}</p>
+			<div class="flex justify-start items-center h-6">
+				<p class="grow leading-tight select-none align-bottom">{{ ui.title.v }}</p>
+			</div>
 			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="{'rotate-180': ui.expanded.v}" />
 		</div>
 

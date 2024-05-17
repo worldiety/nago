@@ -30,18 +30,22 @@
 							@click="returnToTopLevelMenu"
 							@keydown.enter="returnToTopLevelMenu"
 						>
-							<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto" />
+							<div class="h-6">
+								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto" />
+							</div>
 							<p class="leading-tight font-semibold">{{ $t('scaffold.toMenu') }}</p>
 						</div>
 						<!-- Top level menu entry title button -->
 						<div
-							:tabindex="expandedTopLevelMenuEntryClickable ? '0' : '-1'"
+							:tabindex="expandedTopLevelMenuEntryLinked ? '0' : '-1'"
 							class="flex justify-start items-center gap-x-2 rounded-full w-full p-4"
-							:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryClickable}"
+							:class="{'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryLinked}"
 							@click="navigateToExpandedTopLevelMenuEntry"
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>
-							<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title.v }}</p>
+							<div class="flex justify-start items-center h-6">
+								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title.v }}</p>
+							</div>
 						</div>
 						<!-- Sub menu entries -->
 						<BurgerMenuEntry v-for="(menuEntry, index) in subMenuEntries" :key="index" :ui="menuEntry" />
@@ -78,7 +82,7 @@ const expandedTopLevelMenuEntry = computed((): MenuEntry|null => {
 	return props.ui.menu.v?.find((menuEntry: MenuEntry) => menuEntry.expanded.v) ?? null;
 });
 
-const expandedTopLevelMenuEntryClickable = computed((): boolean => {
+const expandedTopLevelMenuEntryLinked = computed((): boolean => {
 	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.action.v;
 });
 
