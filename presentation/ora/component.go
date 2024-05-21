@@ -106,6 +106,7 @@ func init() {
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 		reflect.TypeOf(Checkbox{}),
+		reflect.TypeOf(Radiobutton{}),
 	}
 }
 
