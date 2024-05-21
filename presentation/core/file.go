@@ -1,9 +1,16 @@
 package core
 
 import (
+	"go.wdy.de/nago/pkg/iter"
 	"io"
-	"io/fs"
 )
+
+// File provides a simple File interface. It is way more minimalized.
+type File interface {
+	Open() (io.ReadCloser, error)
+	// Name of the file
+	Name() string
+}
 
 // FilesReceiver must be implemented by components which requested a file selection.
 // The receiver is called from the event loop, thus if you need to block for a long time, you must run that
@@ -17,7 +24,7 @@ import (
 // Intentionally there is no much sense on error return, because this callback is issued over the event looper and thus
 // the actual caller cannot be notified anymore. So, if errors occur, the callee must handle it itself.
 type FilesReceiver interface {
-	OnFilesReceived(fsys fs.FS) error
+	OnFilesReceived(it iter.Seq2[File, error]) error
 }
 
 // Release tries to clear and close the given thing. If no such interfaces are implemented, the call has no side effects

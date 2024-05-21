@@ -9,6 +9,8 @@ import (
 	"sync"
 )
 
+type Entries = map[string][]byte
+
 // BlobStore provides an in-memory implementation without transactions.
 // The transactions are just fake implementations to satisfy the contract and respect the read/write property.
 // However, the store itself is at least thread safe.
@@ -20,6 +22,10 @@ type BlobStore struct {
 // NewBlobStore creates a new in-memory store.
 func NewBlobStore() *BlobStore {
 	return &BlobStore{values: map[string][]byte{}}
+}
+
+func From(values map[string][]byte) *BlobStore {
+	return &BlobStore{values: values}
 }
 
 func (b *BlobStore) Update(f func(blob.Tx) error) error {

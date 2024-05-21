@@ -1,10 +1,12 @@
 package ui
 
 import (
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
-	"io/fs"
 )
+
+var _ core.FilesReceiver = (*FileField)(nil)
 
 type FileField struct {
 	id           ora.Ptr
@@ -18,7 +20,7 @@ type FileField struct {
 	disabled     Bool
 	filter       String
 	properties   []core.Property
-	fileReceiver func(fsys fs.FS) error
+	fileReceiver func(iter.Seq2[core.File, error]) error
 }
 
 func NewFileField(with func(fileField *FileField)) *FileField {
@@ -45,15 +47,15 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 	return c
 }
 
-func (c *FileField) OnFilesReceived(fsys fs.FS) error {
+func (c *FileField) OnFilesReceived(it iter.Seq2[core.File, error]) error {
 	if c.fileReceiver != nil {
-		return c.fileReceiver(fsys)
+		return c.fileReceiver(it)
 	}
 
 	return nil
 }
 
-func (c *FileField) SetFilesReceiver(receiverCallback func(fsys fs.FS) error) {
+func (c *FileField) SetFilesReceiver(receiverCallback func(iter.Seq2[core.File, error]) error) {
 	c.fileReceiver = receiverCallback
 }
 

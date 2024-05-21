@@ -7,7 +7,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"io/fs"
 )
 
 func main() {
@@ -24,9 +23,7 @@ func main() {
 					// configure the upload field
 					ui.NewFileField(func(fileField *ui.FileField) {
 						fileField.Multiple().Set(true)
-						fileField.SetFilesReceiver(func(fsys fs.FS) error {
-							return blob.Import(fstore, fsys)
-						})
+						fileField.SetFilesReceiver(application.BlobReceiver(fstore))
 					}),
 					ui.NewTable(func(table *ui.Table) {
 						table.Header().Append(ui.NewTextCell("File"), ui.NewTextCell("Options"))
@@ -49,7 +46,7 @@ func main() {
 													ui.NewButton(func(btn *ui.Button) {
 														btn.Caption().Set("download")
 														btn.Action().Set(func() {
-															must(any(nil), wnd.SendFiles(blob.NewFS(blob.Filter(fstore, namePredicate(key)))))
+															must(any(nil), wnd.SendFiles(application.FilesIter(blob.Filter(fstore, namePredicate(key)))))
 														})
 													}),
 												)
@@ -65,7 +62,7 @@ func main() {
 					ui.NewButton(func(btn *ui.Button) {
 						btn.Caption().Set("download all")
 						btn.Action().Set(func() {
-							must(any(nil), wnd.SendFiles(blob.NewFS(fstore)))
+							must(any(nil), wnd.SendFiles(application.FilesIter(fstore)))
 						})
 					}),
 				)
@@ -76,6 +73,7 @@ func main() {
 }
 
 // don't do this in production, check and handle gracefully, give help and apply logging
+// this is just used to keep the code above short for demonstration
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)

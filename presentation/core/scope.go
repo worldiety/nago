@@ -3,9 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
-	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -96,7 +96,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 // However, the system may reclaim the used disk space if running short on storage space or it may keep it for
 // even for years.
 // So, to ensure a correct cleanup, use [FS.Clear] to remove all temporary files.
-func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
+func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, it iter.Seq2[File, error]) error {
 	s.Tick() // keep this scope alive
 
 	s.eventLoop.Post(func() {
@@ -107,7 +107,7 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 			dispatched := false
 			for _, holder := range s.allocatedComponents {
 				if rec, ok := holder.Component.(FilesReceiver); ok {
-					if err := rec.OnFilesReceived(fsys); err != nil {
+					if err := rec.OnFilesReceived(it); err != nil {
 						dispatched = false
 						slog.Error("failed to dispatch files", "err", err)
 						break
@@ -119,7 +119,7 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 
 			if !dispatched {
 				slog.Error("scope received unrequested files, but could not find any allocated root component, file are lost")
-				if err := Release(fsys); err != nil {
+				if err := Release(it); err != nil {
 					slog.Error("cannot release received but unprocessed files", "err", err)
 				}
 			}
@@ -144,15 +144,15 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, fsys fs.FS) error {
 
 		switch receiver := receiver.(type) {
 		case FilesReceiver:
-			if err := receiver.OnFilesReceived(fsys); err != nil {
+			if err := receiver.OnFilesReceived(it); err != nil {
 				slog.Error("failed to dispatch files", "err", err)
-				if err := Release(fsys); err != nil {
+				if err := Release(it); err != nil {
 					slog.Error("cannot release received but unprocessed files", "err", err)
 				}
 			}
 		default:
 			slog.Error("receiver component for data stream has no compatible receiver interface, files are lost", "type", fmt.Sprintf("%T", receiver))
-			if err := Release(fsys); err != nil {
+			if err := Release(it); err != nil {
 				slog.Error("cannot release received but unprocessed files", "err", err)
 			}
 		}

@@ -3,9 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
-	"io/fs"
 	"path/filepath"
 	"sync"
 	"time"
@@ -19,7 +19,7 @@ type Application struct {
 	ctx           context.Context
 	cancelCtx     func()
 	tmpDir        string
-	onSendFiles   func(*Scope, fs.FS) error
+	onSendFiles   func(*Scope, iter.Seq2[File, error]) error
 	onShareStream func(*Scope, func() (io.Reader, error)) (ora.URI, error)
 }
 
@@ -39,7 +39,7 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific
 // "send files" behavior. On webbrowser the according download events may be issued and on other platforms
 // like Android a custom content provider may be created which exposes these blobs as URIs.
-func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, fs.FS) error) {
+func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, iter.Seq2[File, error]) error) {
 	a.onSendFiles = onSendFiles
 }
 
@@ -70,13 +70,13 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 }
 
 // OnFilesReceived delegates the received fs into according scope.
-func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, fsys fs.FS) error {
+func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, it iter.Seq2[File, error]) error {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
 		return fmt.Errorf("no such scope to receive stream: %s", scope.id)
 	}
 
-	return scope.OnFilesReceived(receiver, fsys)
+	return scope.OnFilesReceived(receiver, it)
 }
 
 func (a *Application) Destroy() {

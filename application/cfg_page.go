@@ -9,10 +9,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
+	"go.wdy.de/nago/internal/incubator/tmpfiles"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
-	"go.wdy.de/nago/presentation/core/tmpfs"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"io/fs"
@@ -80,39 +82,21 @@ func (c *Configurator) newHandler() http.Handler {
 	slog.Info("tmp directory updated", "dir", tmpDir)
 	app2 := core.NewApplication(c.ctx, tmpDir, factories)
 	r := chi.NewRouter()
-	app2.SetOnSendFiles(func(scope *core.Scope, f fs.FS) error {
-		type colFile struct {
-			path  string
-			entry fs.DirEntry
-		}
-		var collectedFiles []colFile
-		err := fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() {
-				return nil
-			}
-
-			if d.Type().IsRegular() {
-				collectedFiles = append(collectedFiles, colFile{
-					path:  path,
-					entry: d,
-				})
-			}
-
-			return nil
-		})
-
+	app2.SetOnSendFiles(func(scope *core.Scope, it iter.Seq2[core.File, error]) error {
+		var err error
+		collectedFiles := slices.Collect(iter.BreakOnError(&err, it))
 		if err != nil {
 			return err
 		}
 
 		switch len(collectedFiles) {
 		case 0:
-			return fmt.Errorf("no files found in fsys: %v", f)
+			return fmt.Errorf("no files found in fsys: %v", it)
 		case 1:
 			// issue a direct link
 			token := string(ora.NewScopeID())
 			tmpFile := filepath.Join(c.Directory("download"), token)
-			if err := copyFile(f, collectedFiles[0].path, tmpFile); err != nil {
+			if err := copyFile(collectedFiles[0], tmpFile); err != nil {
 				return fmt.Errorf("could not copy file %v: %v", tmpFile, err)
 			}
 
@@ -128,7 +112,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 			download := httpFileDownload{
 				Token:        token,
-				Name:         collectedFiles[0].entry.Name(),
+				Name:         collectedFiles[0].Name(),
 				AbsolutePath: tmpFile,
 			}
 
@@ -157,7 +141,7 @@ func (c *Configurator) newHandler() http.Handler {
 			// issue a zip file
 			token := string(ora.NewScopeID())
 			zipFile := filepath.Join(c.Directory("download"), token)
-			err := makeZip(zipFile, f)
+			err := makeZip(zipFile, it)
 			if err != nil {
 				return fmt.Errorf("cannot create zip file for multi download: %w", err)
 			}
@@ -357,7 +341,7 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 			uplTmpDir := c.Directory(filepath.Join("upload", hex.EncodeToString(tmp[:])))
 
-			fsys, err := tmpfs.NewFS(uplTmpDir)
+			fsys, err := tmpfiles.New(uplTmpDir)
 			if err != nil {
 				slog.Error("cannot create tmpfs filesystem", "err", err)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -369,7 +353,7 @@ func (c *Configurator) newHandler() http.Handler {
 				for _, header := range headers {
 					file, err := header.Open()
 					if err != nil {
-						defer fsys.Clear()
+						defer fsys.Close()
 						slog.Error("cannot open multipart form file", "err", err)
 						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 						return
@@ -378,7 +362,7 @@ func (c *Configurator) newHandler() http.Handler {
 					defer file.Close()
 
 					if err := fsys.Import(header.Filename, file); err != nil {
-						defer fsys.Clear()
+						defer fsys.Close()
 						slog.Error("cannot import multipart form file", "err", err)
 						http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 						return
@@ -387,8 +371,8 @@ func (c *Configurator) newHandler() http.Handler {
 				}
 			}
 
-			if err := app2.OnFilesReceived(scopeID, ora.Ptr(receiverPtr), fsys); err != nil {
-				defer fsys.Clear()
+			if err := app2.OnFilesReceived(scopeID, ora.Ptr(receiverPtr), fsys.Each); err != nil {
+				defer fsys.Close()
 				slog.Error("cannot process received stream", "err", err)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return

@@ -2,6 +2,7 @@ package blob
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/blob"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -96,13 +97,13 @@ func (v vFile) Close() error {
 }
 
 type blobFS struct {
-	store Store
+	store blob.Store
 }
 
 func (f *blobFS) Open(name string) (fs.File, error) {
 	var res vFile
 	// TODO this is actually totally incompatible from the interface side. its an implementation detail that this works with the fs implementation
-	err := f.store.View(func(tx Tx) error {
+	err := f.store.View(func(tx blob.Tx) error {
 		optEnt, err := tx.Get(name)
 		if err != nil {
 			return err
@@ -134,8 +135,8 @@ func (f *blobFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	}
 
 	var res []fs.DirEntry
-	err := f.store.View(func(tx Tx) error {
-		tx.Each(func(entry Entry, err error) bool {
+	err := f.store.View(func(tx blob.Tx) error {
+		tx.Each(func(entry blob.Entry, err error) bool {
 			res = append(res, dirEnt{
 				f:            f,
 				absolutePath: entry.Key,
@@ -157,7 +158,7 @@ func (f *blobFS) Stat(name string) (fs.FileInfo, error) {
 	}
 
 	var info fileInfo
-	err := f.store.View(func(tx Tx) error {
+	err := f.store.View(func(tx blob.Tx) error {
 		optEnt, err := tx.Get(name)
 		if err != nil {
 			return err
@@ -202,39 +203,4 @@ func (f *blobFS) Stat(name string) (fs.FileInfo, error) {
 	}
 
 	return info, nil
-}
-
-// NewFS wraps the given blob Store and provides all contained blobs as fs.File.
-// Note, that the current implementation tries not to interpret directories from names,
-// thus it may violate any naming rules of the fs.FS contract.
-// WARNING: This may change in the future, to comply
-func NewFS(store Store) fs.FS {
-	return &blobFS{store: store}
-}
-
-// Import copies and updates all blobs based on the given fs.FS.
-func Import(dst Store, src fs.FS) error {
-	return dst.Update(func(tx Tx) error {
-		return fs.WalkDir(src, ".", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() || err != nil {
-				return err
-			}
-			info, err := d.Info()
-			if err != nil {
-				return err
-			}
-
-			name := path
-			if info, ok := info.(interface{ ResourceName() string }); ok {
-				name = info.ResourceName()
-			}
-
-			return tx.Put(Entry{
-				Key: name,
-				Open: func() (io.ReadCloser, error) {
-					return src.Open(path)
-				},
-			})
-		})
-	})
 }

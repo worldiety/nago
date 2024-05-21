@@ -14,12 +14,12 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		// BlobStore is only for small files upto a few kilobytes.
+		// EntityStore is only for small files upto a few kilobytes.
 		// This store saves everything within a single file using etcd bbolt fork.
 		// Transactions are supported.
 		//
 		// In this example, the database file is ~/.de.worldiety.tutorial/bbolt/bolt.db
-		dbstore := cfg.BlobStore("small-blobs")
+		dbstore := cfg.EntityStore("small-blobs")
 
 		// quickly write some bytes using a transaction with a single write.
 		if err := blob.Write(dbstore, "my key", bytes.NewBufferString("I'm a fine blob")); err != nil {

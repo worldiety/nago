@@ -13,13 +13,13 @@ import (
 	"reflect"
 )
 
-// BlobStore returns the default applications blob store. There is only one instance.
+// EntityStore returns the default applications blob store. There is only one instance.
 // Do not put (large) files into this store. See also [blob.Get] and [blob.Put] helper functions.
 // For just storing serialized repository data, consider using [SloppyRepository] or
 // a [json.NewJSONRepository] with custom domain model mapping.
 //
 // Use [Configurator.FileStore] for large blobs.
-func (c *Configurator) BlobStore(bucketName string) blob.Store {
+func (c *Configurator) EntityStore(bucketName string) blob.Store {
 	if c.boltStore == nil {
 		fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
 		db, err := bbolt.Open(fname, 0700, nil) // security: only owner can read,write,exec
@@ -36,6 +36,11 @@ func (c *Configurator) BlobStore(bucketName string) blob.Store {
 	return bolt2.NewBlobStore(c.boltStore, bucketName)
 }
 
+// deprecated: use EntityStore
+func (c *Configurator) BlobStore(bucketName string) blob.Store {
+	return c.EntityStore(bucketName)
+}
+
 // FileStore returns a blob store which directly saves into the filesystem and is recommended for handling large
 // files. See also [blob.Read] and [blob.Write] helper functions.
 func (c *Configurator) FileStore(bucketName string) blob.Store {
@@ -46,11 +51,11 @@ func (c *Configurator) FileStore(bucketName string) blob.Store {
 
 // SloppyRepository returns a default Repository implementation for the given type, which just serializes the domain
 // type, which is fine for rapid prototyping, but should not be used for products which must be maintained.
-// This shares the bucket name space with [Configurator.BlobStore] and uses the reflected type name as the
+// This shares the bucket name space with [Configurator.EntityStore] and uses the reflected type name as the
 // bucket name, so be careful when renaming types or having type name collisions.
 func SloppyRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator) data.Repository[A, ID] {
 	var zero A
 	bucketName := reflect.TypeOf(zero).Name()
-	store := cfg.BlobStore(bucketName)
+	store := cfg.EntityStore(bucketName)
 	return json.NewSloppyJSONRepository[A, ID](store)
 }

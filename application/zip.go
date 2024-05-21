@@ -3,12 +3,13 @@ package application
 import (
 	"archive/zip"
 	"fmt"
+	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/presentation/core"
 	"io"
-	"io/fs"
 	"os"
 )
 
-func makeZip(dstFile string, src fs.FS) error {
+func makeZip(dstFile string, it iter.Seq2[core.File, error]) error {
 	zipfile, err := os.Create(dstFile)
 	if err != nil {
 		return fmt.Errorf("cannot create zip file: %w", err)
@@ -18,45 +19,37 @@ func makeZip(dstFile string, src fs.FS) error {
 	zipWriter := zip.NewWriter(zipfile)
 	defer zipWriter.Close()
 
-	err = fs.WalkDir(src, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	it(func(file core.File, e error) bool {
+		if e != nil {
+			err = e
+			return false
 		}
 
-		info, err := d.Info()
-		if err != nil {
-			return err
+		header := &zip.FileHeader{
+			Name:   file.Name(),
+			Method: zip.Deflate,
+			//UncompressedSize64: uint64(file.Size()),
 		}
 
-		header, err := zip.FileInfoHeader(info)
-		if err != nil {
-			return err
+		r, e := file.Open()
+		if e != nil {
+			err = e
+			return false
+		}
+		defer r.Close()
+
+		writer, e := zipWriter.CreateHeader(header)
+		if e != nil {
+			err = e
+			return false
 		}
 
-		header.Name = path
-		if info.IsDir() {
-			header.Name += "/"
-		} else {
-			header.Method = zip.Deflate
+		_, e = io.Copy(writer, r)
+		if e != nil {
+			err = e
 		}
 
-		writer, err := zipWriter.CreateHeader(header)
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() {
-			file, err := src.Open(path)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			_, err = io.Copy(writer, file)
-			return err
-		}
-
-		return nil
+		return true
 	})
 
 	if err != nil {

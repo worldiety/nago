@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
 	"io"
-	"io/fs"
 	"log/slog"
 	"time"
 )
@@ -60,16 +60,18 @@ type Window interface {
 
 	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
-	// a _send multiple intent_.
-	SendFiles(fsys fs.FS) error
+	// a _send multiple intent_. See also AsURI which does not trigger such intent.
+	SendFiles(it iter.Seq2[File, error]) error
 
 	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
 	// is returned from the open call. Note that open is usually not called from the event looper and the open call
-	// must not modify your view tree.
+	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
 	AsURI(open func() (io.Reader, error)) (ora.URI, error)
 }
 
 type SessionID string
+
+var _ Window = (*scopeWindow)(nil)
 
 type scopeWindow struct {
 	factory       ora.ComponentFactoryId
@@ -104,9 +106,9 @@ func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
 	return "", fmt.Errorf("no share stream platform adapter has been configured")
 }
 
-func (s *scopeWindow) SendFiles(fsys fs.FS) error {
+func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
 	if callback := s.scope.app.onSendFiles; callback != nil {
-		return callback(s.scope, fsys)
+		return callback(s.scope, it)
 	}
 
 	return fmt.Errorf("no send files platform adapter has been configured")
