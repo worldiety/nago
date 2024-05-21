@@ -9,3 +9,7 @@ type SessionAssigned struct {
 	SessionID string    `json:"sessionID"`
 	event
 }
+
+func (e SessionAssigned) ReqID() RequestId {
+	return 0 // TODO this was only for internal purposes? Probably we better remove the SessionAssigned message above? But our sum type will bail then...
+}

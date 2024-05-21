@@ -36,6 +36,7 @@ const (
 //	ComponentInvalidated
 type Event interface {
 	isEvent()
+	ReqID() RequestId
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -47,12 +48,20 @@ type SetPropertyValueRequested struct {
 	event
 }
 
+func (e SetPropertyValueRequested) ReqID() RequestId {
+	return e.RequestId
+}
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type FunctionCallRequested struct {
 	Type      EventType `json:"type" value:"F" description:"F stands for **F**unctionCallRequested. It is expected, that we must process countless of these events."`
 	Ptr       Ptr       `json:"p" description:"p denotes the remote pointer."`
 	RequestId RequestId `json:"r"`
 	event
+}
+
+func (e FunctionCallRequested) ReqID() RequestId {
+	return e.RequestId
 }
 
 type event struct {

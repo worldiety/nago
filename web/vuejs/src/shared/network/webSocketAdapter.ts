@@ -239,7 +239,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 					type: 'P',
 					p: property.p,
 					v: String(property.v),
-					r: requestId, // TODO: Redundant, remove
+					r: requestId,
 				};
 				callBatch.events.push(action);
 			});
@@ -250,7 +250,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',
 					p: propertyFunc.v,
-					r: requestId, // TODO: Redundant, remove
+					r: requestId,
 				};
 				callBatch.events.push(callServerFunc);
 			});

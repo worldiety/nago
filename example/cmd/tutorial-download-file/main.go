@@ -5,8 +5,8 @@ import (
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/web/vuejs"
+	"log/slog"
 )
 
 func main() {
@@ -21,7 +21,9 @@ func main() {
 					err := wnd.SendFiles(application.FilesIter(mem.From(mem.Entries{
 						"test.txt": []byte("hello world"),
 					})))
-					xdialog.ErrorView("send files failed", err)
+					if err != nil {
+						slog.Error("cannot send files", slog.Any("err", err))
+					}
 				})
 			})
 		})

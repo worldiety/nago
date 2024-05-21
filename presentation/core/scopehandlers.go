@@ -7,7 +7,10 @@ import (
 )
 
 // only for event loop
-func (s *Scope) handleEvent(t ora.Event) {
+func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
+	if ackRequired {
+		defer s.sendAck(t.ReqID())
+	}
 	switch evt := t.(type) {
 	case ora.EventsAggregated:
 		s.handleEventsAggregated(evt)
@@ -36,23 +39,11 @@ func (s *Scope) handleEvent(t ora.Event) {
 
 func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
 	for _, event := range evt.Events {
-		switch e := event.(type) {
-		case ora.FunctionCallRequested:
-			e.RequestId = evt.RequestId
-			event = e
-		case ora.SetPropertyValueRequested:
-			e.RequestId = evt.RequestId
-			event = e
-		}
-
-		s.handleEvent(event)
+		s.handleEvent(event, false)
 	}
-
-	s.sendAck(evt.RequestId)
 }
 
 func (s *Scope) handleScopeDestructionRequested(evt ora.ScopeDestructionRequested) {
-	s.sendAck(evt.RequestId)
 	s.destroy()
 	s.eventLoop.Destroy() // discards everything else queued
 }
@@ -203,6 +194,4 @@ func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestruction
 	invokeDestructors(component)
 
 	delete(s.allocatedComponents, evt.Component)
-
-	s.sendAck(evt.RequestId)
 }

@@ -21,6 +21,10 @@ type EventsAggregated struct {
 	event
 }
 
+func (e EventsAggregated) ReqID() RequestId {
+	return e.RequestId
+}
+
 func (e *EventsAggregated) UnmarshalJSON(bytes []byte) error {
 	type evts struct {
 		Type      EventType         `json:"type" `
@@ -66,4 +70,8 @@ type Acknowledged struct {
 	Type      EventType `json:"type" value:"A" description:"The magic type constant."`
 	RequestId RequestId `json:"r" description:"The request identifier, which is sent back."`
 	event
+}
+
+func (e Acknowledged) ReqID() RequestId {
+	return 0 // it's me
 }

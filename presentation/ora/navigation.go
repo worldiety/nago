@@ -11,6 +11,10 @@ type NavigationForwardToRequested struct {
 	event
 }
 
+func (e NavigationForwardToRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
+}
+
 // NavigationResetRequested removes the entire history in the scope and pushes the target on top.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type NavigationResetRequested struct {
@@ -20,10 +24,18 @@ type NavigationResetRequested struct {
 	event
 }
 
+func (e NavigationResetRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
+}
+
 // NavigationBackRequested steps back causing a likely destruction of the most top component.
 // The frontend may deora.Ptre to ignore that, if the stack would be empty/undefined otherwise.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type NavigationBackRequested struct {
 	Type EventType `json:"type" value:"NavigationBackRequested"`
 	event
+}
+
+func (e NavigationBackRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
 }

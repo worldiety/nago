@@ -14,6 +14,10 @@ type SendMultipleRequested struct {
 	event
 }
 
+func (e SendMultipleRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
+}
+
 // A Resource represents a blob with a name and a resource accessor URI.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Resource struct {

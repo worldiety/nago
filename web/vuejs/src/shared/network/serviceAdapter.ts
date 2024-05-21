@@ -27,4 +27,3 @@ export default interface ServiceAdapter {
 
 	getScopeID(): ScopeID;
 }
-sc

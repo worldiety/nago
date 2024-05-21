@@ -220,7 +220,7 @@ func (s *Scope) handleMessage(buf []byte) error {
 	}
 
 	s.eventLoop.Post(func() {
-		s.handleEvent(t)
+		s.handleEvent(t, true)
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
 		if s.lastMessageType != ora.ComponentInvalidatedT {
 			s.renderIfRequired()

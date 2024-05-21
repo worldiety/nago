@@ -46,6 +46,10 @@ type NewComponentRequested struct {
 	event
 }
 
+func (e NewComponentRequested) ReqID() RequestId {
+	return e.RequestId
+}
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ComponentInvalidationRequested struct {
 	Type      EventType `json:"type" value:"ComponentInvalidationRequested"`
@@ -54,12 +58,20 @@ type ComponentInvalidationRequested struct {
 	event
 }
 
+func (e ComponentInvalidationRequested) ReqID() RequestId {
+	return e.RequestId
+}
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ComponentDestructionRequested struct {
 	Type      EventType `json:"type" value:"ComponentDestructionRequested"`
 	RequestId RequestId `json:"r" description:"Request ID."`
 	Component Ptr       `json:"ptr" description:"The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid."`
 	event
+}
+
+func (e ComponentDestructionRequested) ReqID() RequestId {
+	return e.RequestId
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -71,10 +83,18 @@ type ComponentInvalidated struct {
 	event
 }
 
+func (e ComponentInvalidated) ReqID() RequestId {
+	return e.RequestId
+}
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ErrorOccurred struct {
 	Type      EventType `json:"type" value:"ErrorOccurred"`
 	RequestId RequestId `json:"r" description:"Request ID from the NewComponentRequested event."`
 	Message   string    `json:"message" description:"A message describing the error."`
 	event
+}
+
+func (e ErrorOccurred) ReqID() RequestId {
+	return e.RequestId
 }

@@ -26,6 +26,10 @@ type ConfigurationRequested struct {
 	event
 }
 
+func (e ConfigurationRequested) ReqID() RequestId {
+	return e.RequestId
+}
+
 // A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
 // According to the locale request, string and svg resources can be localized by the backend.
 // The returned locale is the actually picked locale from the requested locale query string.
@@ -42,6 +46,10 @@ type ConfigurationDefined struct {
 	Resources        Resources `json:"resources"`
 	RequestId        RequestId `json:"r"`
 	event
+}
+
+func (e ConfigurationDefined) ReqID() RequestId {
+	return e.RequestId
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

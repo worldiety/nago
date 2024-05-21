@@ -34,3 +34,7 @@ type ScopeDestructionRequested struct {
 	RequestId RequestId `json:"r" description:"Request ID."`
 	event
 }
+
+func (e ScopeDestructionRequested) ReqID() RequestId {
+	return e.RequestId
+}
