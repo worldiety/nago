@@ -6,7 +6,12 @@
 		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v || errorMessage }}</p>
 		<div
 			class="upload-field flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text hover:border-ora-orange bg-disabled-background bg-opacity-15 hover:bg-ora-orange hover:bg-opacity-15"
+			:class="{'upload-field-highlighted': dragAndDropActive}"
 			tabindex="0"
+			@dragover.prevent
+			@dragenter="dragAndDropActive = true"
+			@dragleave="dragAndDropActive = false"
+			@drop.prevent="uploadDroppedFiles"
 			@click="showUploadDialog"
 			@keydown.enter="showUploadDialog"
 		>
@@ -48,7 +53,8 @@ import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
-import FileUpload, { FileUploadStatus } from '@/components/uploadfield/fileUpload';
+import type FileUpload from '@/components/uploadfield/fileUpload';
+import { FileUploadStatus } from '@/components/uploadfield/fileUpload';
 import { v4 as uuidv4 } from 'uuid';
 import { useServiceAdapter } from "@/composables/serviceAdapter";
 import { useUploadRepository } from '@/api/upload/uploadRepository';
@@ -63,6 +69,7 @@ const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
 const fileUploads = ref<FileUpload[]|null>(null);
+const dragAndDropActive = ref<boolean>(false);
 
 const serviceAdapter = useServiceAdapter();
 
@@ -91,7 +98,11 @@ async function fileInputChanged(e: Event):Promise<void> {
 		return;
 	}
 
-	fileUploads.value = filesToUpload.map((file) => ({
+	await uploadFiles(filesToUpload);
+}
+
+async function uploadFiles(files: File[]): Promise<void> {
+	fileUploads.value = files.map((file) => ({
 		uploadId: uuidv4(),
 		file,
 		bytesUploaded: null,
@@ -188,10 +199,37 @@ function uploadFailedCallback(uploadId: string, statusCode: number): void {
 		return fileUpload;
 	});
 }
+
+async function uploadDroppedFiles(event: DragEvent): Promise<void> {
+	dragAndDropActive.value = false;
+
+	// Source: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop#process_the_drop
+	let filesToUpload: File[] = [];
+	if (event.dataTransfer?.items) {
+		filesToUpload = Object.values(event.dataTransfer.items).flatMap((item) => {
+			const file = item.getAsFile();
+			return file ? [file] : [];
+		});
+	} else if (event.dataTransfer?.files) {
+		filesToUpload = Object.values(event.dataTransfer.files);
+	}
+
+
+	await uploadFiles(filesToUpload);
+}
 </script>
 
 <style scoped>
-.upload-field:hover .upload-icon {
+.upload-field * {
+	@apply pointer-events-none;
+}
+
+.upload-field:hover .upload-icon,
+.upload-field.upload-field-highlighted .upload-icon {
 	@apply text-ora-orange;
+}
+
+.upload-field.upload-field-highlighted {
+	@apply border-ora-orange bg-ora-orange bg-opacity-15;
 }
 </style>
