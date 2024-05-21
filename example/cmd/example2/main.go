@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/pkg/blob/mem"
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/core/tmpfs"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
-	"io/fs"
 	"log/slog"
-	"testing/fstest"
 )
 
 type PID string
@@ -247,11 +246,9 @@ func main() {
 							vbox.Append(ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("download")
 								btn.Action().Set(func() {
-									err := wnd.SendFiles(fstest.MapFS{
-										"test.txt": &fstest.MapFile{
-											Data: []byte("hello world"),
-										},
-									})
+									err := wnd.SendFiles(application.FilesIter(mem.From(mem.Entries{
+										"test.txt": []byte("hello world"),
+									})))
 									xdialog.ErrorView("send files failed", err)
 								})
 							}))
@@ -265,25 +262,20 @@ func main() {
 								//fileField.Accept().Set(".gif")
 								fileField.Multiple().Set(true)
 
-								fileField.SetFilesReceiver(func(fsys fs.FS) error {
-									defer core.Release(fsys)
-
-									err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-										if d.IsDir() {
-											return nil // this is the root ". directory
-										}
-
-										file, err := fsys.Open(path)
+								fileField.SetFilesReceiver(func(it iter.Seq2[core.File, error]) error {
+									defer core.Release(it)
+									var err error
+									it(func(file core.File, e error) bool {
+										f, err := file.Open()
 										if err != nil {
-											return err
+											err = e
+											return false
 										}
-										defer file.Close()
-										buf, _ := io.ReadAll(file)
-										info, _ := file.Stat()
+										defer f.Close()
+										buf, _ := io.ReadAll(f)
 
-										xinfo := info.(tmpfs.FileInfo)
-										fmt.Println(info.Name(), info.Size(), len(buf), xinfo.Hash(), xinfo.ResourceName())
-										return err
+										fmt.Println(file.Name(), len(buf))
+										return true
 									})
 
 									if err != nil {
