@@ -5,14 +5,14 @@
 	<div v-else class="flex flex-col items-start justify-center gap-y-2 w-full">
 		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v || errorMessage }}</p>
 		<div
-			class="dark:hover:bg-bray-800 flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text bg-disabled-background bg-opacity-15 hover:bg-opacity-25 dark:bg-opacity-5 dark:hover:bg-opacity-10"
+			class="upload-field flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text hover:border-ora-orange bg-disabled-background bg-opacity-15 hover:bg-ora-orange hover:bg-opacity-15"
 			tabindex="0"
 			@click="showUploadDialog"
 			@keydown.enter="showUploadDialog"
 		>
-			<div class="flex flex-col items-center justify-center pb-6 pt-5">
-				<UploadIcon class="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400" />
-				<p class="mb-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.label.v }}</p>
+			<div class="flex flex-col items-center justify-center pb-6 pt-5 px-4">
+				<UploadIcon class="upload-icon mb-4 h-8 w-8 text-black dark:text-white" />
+				<p class="mb-2 text-sm text-black dark:text-white text-center">{{ props.ui.label.v }}</p>
 			</div>
 			<input
 				ref="fileInput"
@@ -24,9 +24,9 @@
 				@change="fileInputChanged"
 			/>
 		</div>
-		<div class="flex justify-between items-center text-sm w-full">
-			<p class="text-gray-500 dark:text-gray-400">{{ props.ui.hintLeft.v }}</p>
-			<p class="text-gray-500 dark:text-gray-400">{{ props.ui.hintRight.v }}</p>
+		<div class="flex justify-between items-center text-sm w-full gap-x-4 pb-2">
+			<p class="text-disabled-text">{{ props.ui.hintLeft.v }}</p>
+			<p class="text-disabled-text text-right">{{ props.ui.hintRight.v }}</p>
 		</div>
 
 		<!-- File statuses -->
@@ -41,23 +41,24 @@
 </template>
 
 <script setup lang="ts">
-import { fetchUpload } from "@/api/upload/uploadRepository";
-import { ApplicationError, useErrorHandling } from "@/composables/errorhandling";
+import { useErrorHandling } from "@/composables/errorhandling";
 import UiErrorMessage from "@/components/UiErrorMessage.vue";
 import type { FileField } from "@/shared/protocol/ora/fileField";
 import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
-import type FileUpload from '@/components/uploadfield/fileUpload';
+import FileUpload, { FileUploadStatus } from '@/components/uploadfield/fileUpload';
 import { v4 as uuidv4 } from 'uuid';
-import {useServiceAdapter} from "@/composables/serviceAdapter";
+import { useServiceAdapter } from "@/composables/serviceAdapter";
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 
 const props = defineProps<{
 	ui: FileField;
 }>();
 
 const errorHandler = useErrorHandling();
+const uploadRepository = useUploadRepository();
 const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
@@ -96,20 +97,23 @@ async function fileInputChanged(e: Event):Promise<void> {
 		bytesUploaded: null,
 		bytesTotal: null,
 		finished: false,
+		status: FileUploadStatus.PENDING,
 	}));
 	const promises = fileUploads.value.map((fileUpload) => {
-		return fetchUpload(
+		return uploadRepository.fetchUpload(
 			fileUpload.file,
 			fileUpload.uploadId,
 			props.ui.id,
 			serviceAdapter.getScopeID(),
 			uploadProgressCallback,
 			uploadFinishedCallback,
+			uploadAbortedCallback,
+			uploadFailedCallback,
 		)
 	});
 	try {
-		await Promise.all(promises);
-	} catch (e: ApplicationError) {
+		await Promise.allSettled(promises);
+	} catch (e) {
 		errorHandler.handleError(e);
 	}
 }
@@ -131,6 +135,7 @@ function uploadProgressCallback(uploadId: string, progress: number, total: numbe
 				...fileUpload,
 				bytesUploaded: progress,
 				bytesTotal: total,
+				status: FileUploadStatus.IN_PROGRESS,
 			};
 		}
 		return fileUpload;
@@ -146,9 +151,47 @@ function uploadFinishedCallback(uploadId: string): void {
 			return {
 				...fileUpload,
 				finished: true,
+				status: FileUploadStatus.SUCCESS,
+			};
+		}
+		return fileUpload;
+	});
+}
+
+function uploadAbortedCallback(uploadId: string): void {
+	if (!fileUploads.value) {
+		return;
+	}
+	fileUploads.value = fileUploads.value.map((fileUpload) => {
+		if (fileUpload.uploadId === uploadId) {
+			return {
+				...fileUpload,
+				status: FileUploadStatus.ABORTED,
+			};
+		}
+		return fileUpload;
+	});
+}
+
+function uploadFailedCallback(uploadId: string, statusCode: number): void {
+	if (!fileUploads.value) {
+		return;
+	}
+	fileUploads.value = fileUploads.value.map((fileUpload) => {
+		if (fileUpload.uploadId === uploadId) {
+			return {
+				...fileUpload,
+				status: FileUploadStatus.ERROR,
+				statusCode,
 			};
 		}
 		return fileUpload;
 	});
 }
 </script>
+
+<style scoped>
+.upload-field:hover .upload-icon {
+	@apply text-ora-orange;
+}
+</style>

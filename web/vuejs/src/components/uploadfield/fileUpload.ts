@@ -3,5 +3,14 @@ export default interface FileUpload {
 	file: File;
 	bytesUploaded: number|null;
 	bytesTotal: number|null;
-	finished: boolean;
+	status: FileUploadStatus;
+	statusCode?: number;
+}
+
+export enum FileUploadStatus {
+	PENDING,
+	IN_PROGRESS,
+	SUCCESS,
+	ABORTED,
+	ERROR,
 }

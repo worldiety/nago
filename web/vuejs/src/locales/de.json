@@ -60,7 +60,10 @@
 	},
 	"uploadField": {
 		"size": "Größe",
-		"unknown": "Unbekannt"
+		"unknown": "Unbekannt",
+		"pending": "Warten...",
+		"aborted": "Abgebrochen",
+		"errorOccurred": "Fehler: {0}"
 	},
 	"scaffold": {
 		"toMenu": "Hauptmenü"
