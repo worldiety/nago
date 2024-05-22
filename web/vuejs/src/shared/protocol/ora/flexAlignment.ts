@@ -1,4 +1,4 @@
-export enum ContentAlignment {
+export enum FlexAlignment {
 	START = 'start',
 	CENTER = 'center',
 	END = 'end',

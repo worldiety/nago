@@ -10,7 +10,8 @@ type FlexContainer struct {
 	elements         *SharedList[core.Component]
 	elementSize      EmbeddedElementSize
 	orientation      EmbeddedOrientation
-	contentAlignment EmbeddedContentAlignment
+	contentAlignment EmbeddedFlexAlignment
+	itemsAlignment   EmbeddedFlexAlignment
 	properties       []core.Property
 }
 
@@ -20,10 +21,11 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 		elements:         NewSharedList[core.Component]("elements"),
 		elementSize:      NewShared[ElementSize]("elementSize"),
 		orientation:      NewShared[Orientation]("orientation"),
-		contentAlignment: NewShared[ContentAlignment]("contentAlignment"),
+		contentAlignment: NewShared[FlexAlignment]("contentAlignment"),
+		itemsAlignment:   NewShared[FlexAlignment]("itemsAlignment"),
 	}
 
-	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment}
+	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment, f.itemsAlignment}
 
 	if with != nil {
 		with(f)
@@ -44,8 +46,12 @@ func (f *FlexContainer) Orientation() EmbeddedOrientation {
 	return f.orientation
 }
 
-func (f *FlexContainer) ContentAlignment() EmbeddedContentAlignment {
+func (f *FlexContainer) ContentAlignment() EmbeddedFlexAlignment {
 	return f.contentAlignment
+}
+
+func (f *FlexContainer) ItemsAlignment() EmbeddedFlexAlignment {
+	return f.itemsAlignment
 }
 
 func (f *FlexContainer) ID() ora.Ptr {
@@ -72,5 +78,6 @@ func (f *FlexContainer) Render() ora.Component {
 		ElementSize:      f.elementSize.render(),
 		Orientation:      f.orientation.render(),
 		ContentAlignment: f.contentAlignment.render(),
+		ItemsAlignment:   f.itemsAlignment.render(),
 	}
 }

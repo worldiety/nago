@@ -245,13 +245,13 @@ func main() {
 
 							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 								flexContainer.Orientation().Set(ora.OrientationHorizontal)
-								flexContainer.ElementSize().Set(ora.ElementSizeMedium)
-								flexContainer.ContentAlignment().Set(ora.ContentCenter)
+								flexContainer.ElementSize().Set(ora.ElementSizeLarge)
+								flexContainer.ContentAlignment().Set(ora.FlexStart)
 
 								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
 									card.Append(ui.NewFlexContainer(func(innerFlexContainer *ui.FlexContainer) {
 										innerFlexContainer.Orientation().Set(ora.OrientationVertical)
-										innerFlexContainer.ContentAlignment().Set(ora.ContentCenter)
+										innerFlexContainer.ItemsAlignment().Set(ora.FlexCenter)
 
 										innerFlexContainer.Elements().Append(ui.NewButton(func(button *ui.Button) {
 											button.Caption().Set("Button A")
