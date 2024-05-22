@@ -108,6 +108,7 @@ func init() {
 		reflect.TypeOf(GridCell{}),
 		reflect.TypeOf(Checkbox{}),
 		reflect.TypeOf(Radiobutton{}),
+		reflect.TypeOf(FlexContainer{}),
 	}
 }
 
