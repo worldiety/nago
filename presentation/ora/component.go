@@ -62,6 +62,7 @@ const (
 	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
 	CheckboxT            ComponentType = "Checkbox"
 	RadiobuttonT         ComponentType = "Radiobutton"
+	FlexContainerT       ComponentType = "FlexContainer"
 )
 
 type Component interface {

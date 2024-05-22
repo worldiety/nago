@@ -243,6 +243,51 @@ func main() {
 								breadcrumbs.Icon().Set(icon.Dashboard)
 							}))
 
+							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
+								flexContainer.Orientation().Set(ora.OrientationHorizontal)
+								flexContainer.ElementSize().Set(ora.ElementSizeMedium)
+								flexContainer.ContentAlignment().Set(ora.ContentCenter)
+
+								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
+									card.Append(ui.NewFlexContainer(func(innerFlexContainer *ui.FlexContainer) {
+										innerFlexContainer.Orientation().Set(ora.OrientationVertical)
+										innerFlexContainer.ContentAlignment().Set(ora.ContentCenter)
+
+										innerFlexContainer.Elements().Append(ui.NewButton(func(button *ui.Button) {
+											button.Caption().Set("Button A")
+											button.Style().Set(ui.SecondaryIntent)
+										}))
+										innerFlexContainer.Elements().Append(ui.NewTextField(func(textField *ui.TextField) {
+											textField.Label().Set("Textfield 1")
+										}))
+									}))
+								}))
+								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
+									card.Append(ui.NewButton(func(button *ui.Button) {
+										button.Caption().Set("Button B")
+										button.Style().Set(ui.PrimaryIntent)
+									}))
+								}))
+								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
+									card.Append(ui.NewButton(func(button *ui.Button) {
+										button.Caption().Set("Button C")
+										button.Style().Set(ui.SecondaryIntent)
+									}))
+								}))
+								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
+									card.Append(ui.NewButton(func(button *ui.Button) {
+										button.Caption().Set("Button D")
+										button.Style().Set(ui.TertiaryIntent)
+									}))
+								}))
+								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
+									card.Append(ui.NewButton(func(button *ui.Button) {
+										button.Caption().Set("Button E")
+										button.Style().Set(ui.Destructive)
+									}))
+								}))
+							}))
+
 							vbox.Append(ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("download")
 								btn.Action().Set(func() {

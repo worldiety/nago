@@ -12,6 +12,9 @@ import (
 type String = *Shared[string]
 type EmbeddedSVG = *Shared[SVGSrc]
 type EmbeddedAlignment = *Shared[Alignment]
+type EmbeddedOrientation = *Shared[Orientation]
+type EmbeddedElementSize = *Shared[ElementSize]
+type EmbeddedContentAlignment = *Shared[ContentAlignment]
 type EmbeddedNavigationComponent = *Shared[ora.NavigationComponent]
 type Bool = *Shared[bool]
 type Int = *Shared[int64]
@@ -19,6 +22,9 @@ type Float = *Shared[float64]
 
 type SVGSrc = ora.SVG
 type Alignment = ora.Alignment
+type ElementSize = ora.ElementSize
+type Orientation = ora.Orientation
+type ContentAlignment = ora.ContentAlignment
 
 // Allows sizes are sm, base, lg, xl and 2xl
 type Size string

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import uiComponentsMap from '@/shared/uiComponents';
-import {Component as OraComponent} from "@/shared/protocol/ora/component";
+import type { Component as OraComponent } from '@/shared/protocol/ora/component';
 
 const props = defineProps<{
 	ui: OraComponent; // if we don't rename the import, Vue confuses everything up
