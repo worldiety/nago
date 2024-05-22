@@ -135,8 +135,8 @@ const subMenuEntries = computed((): MenuEntry[] => {
 });
 
 function isActiveMenuEntry(menuEntry: MenuEntry): boolean {
-	// Active, if its URI matches the current page's path name
-	return `/${menuEntry.uri.v}` === window.location.pathname;
+	// Active, if its component factory ID matches the current page's path name
+	return `/${menuEntry.componentFactoryId.v}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {

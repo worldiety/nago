@@ -54,7 +54,7 @@ const hasSubMenuEntries = computed((): boolean => {
 const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || !!props.ui.action.v);
 
 const menuEntryActive = computed((): boolean => {
-	return `/${props.ui.uri.v}` === window.location.pathname;
+	return `/${props.ui.componentFactoryId.v}` === window.location.pathname;
 });
 
 function menuEntryClicked(): void {

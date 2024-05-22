@@ -6,34 +6,34 @@ import (
 )
 
 type MenuEntry struct {
-	id         ora.Ptr
-	icon       EmbeddedSVG
-	iconActive EmbeddedSVG
-	title      String
-	action     *Func
-	uri        String
-	menu       *SharedList[*MenuEntry]
-	badge      String
-	expanded   Bool
-	onFocus    *Func
-	properties []core.Property
+	id                 ora.Ptr
+	icon               EmbeddedSVG
+	iconActive         EmbeddedSVG
+	title              String
+	action             *Func
+	componentFactoryId String
+	menu               *SharedList[*MenuEntry]
+	badge              String
+	expanded           Bool
+	onFocus            *Func
+	properties         []core.Property
 }
 
 func NewMenuEntry(with func(menuEntry *MenuEntry)) *MenuEntry {
 	m := &MenuEntry{
-		id:         nextPtr(),
-		icon:       NewShared[SVGSrc]("icon"),
-		iconActive: NewShared[SVGSrc]("iconActive"),
-		title:      NewShared[string]("title"),
-		action:     NewFunc("action"),
-		uri:        NewShared[string]("uri"),
-		menu:       NewSharedList[*MenuEntry]("menu"),
-		badge:      NewShared[string]("badge"),
-		expanded:   NewShared[bool]("expanded"),
-		onFocus:    NewFunc("onFocus"),
+		id:                 nextPtr(),
+		icon:               NewShared[SVGSrc]("icon"),
+		iconActive:         NewShared[SVGSrc]("iconActive"),
+		title:              NewShared[string]("title"),
+		action:             NewFunc("action"),
+		componentFactoryId: NewShared[string]("componentFactoryId"),
+		menu:               NewSharedList[*MenuEntry]("menu"),
+		badge:              NewShared[string]("badge"),
+		expanded:           NewShared[bool]("expanded"),
+		onFocus:            NewFunc("onFocus"),
 	}
 
-	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.action, m.uri, m.menu, m.badge, m.expanded, m.onFocus}
+	m.properties = []core.Property{m.icon, m.iconActive, m.title, m.action, m.componentFactoryId, m.menu, m.badge, m.expanded, m.onFocus}
 	if with != nil {
 		with(m)
 	}
@@ -44,8 +44,8 @@ func (m *MenuEntry) ID() ora.Ptr {
 	return m.id
 }
 
-func (c *MenuEntry) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
+func (m *MenuEntry) Properties(yield func(core.Property) bool) {
+	for _, property := range m.properties {
 		if !yield(property) {
 			return
 		}
@@ -60,8 +60,8 @@ func (m *MenuEntry) Action() *Func {
 	return m.action
 }
 
-func (m *MenuEntry) Uri() String {
-	return m.uri
+func (m *MenuEntry) ComponentFactoryId() String {
+	return m.componentFactoryId
 }
 
 func (m *MenuEntry) Icon() EmbeddedSVG {
@@ -94,23 +94,23 @@ func (m *MenuEntry) Render() ora.Component {
 
 func (m *MenuEntry) renderMenuEntry() ora.MenuEntry {
 	return ora.MenuEntry{
-		Ptr:        m.id,
-		Type:       ora.MenuEntryT,
-		Title:      m.title.render(),
-		Action:     renderFunc(m.action),
-		Uri:        m.uri.render(),
-		Icon:       m.icon.render(),
-		IconActive: m.iconActive.render(),
-		Menu:       renderSharedListMenuEntries(m.menu),
-		Badge:      m.badge.render(),
-		Expanded:   m.expanded.render(),
-		OnFocus:    renderFunc(m.onFocus),
+		Ptr:                m.id,
+		Type:               ora.MenuEntryT,
+		Title:              m.title.render(),
+		Action:             renderFunc(m.action),
+		ComponentFactoryId: m.componentFactoryId.render(),
+		Icon:               m.icon.render(),
+		IconActive:         m.iconActive.render(),
+		Menu:               renderSharedListMenuEntries(m.menu),
+		Badge:              m.badge.render(),
+		Expanded:           m.expanded.render(),
+		OnFocus:            renderFunc(m.onFocus),
 	}
 }
 
-func (m *MenuEntry) Link(uri ora.ComponentFactoryId, window core.Window, query core.Values) {
-	m.uri.Set(string(uri))
+func (m *MenuEntry) Link(componentFactoryId ora.ComponentFactoryId, window core.Window, query core.Values) {
+	m.componentFactoryId.Set(string(componentFactoryId))
 	m.action.Set(func() {
-		window.Navigation().ForwardTo(uri, query)
+		window.Navigation().ForwardTo(componentFactoryId, query)
 	})
 }

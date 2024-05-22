@@ -90,7 +90,7 @@ const expandedTopLevelMenuEntryLinked = computed((): boolean => {
 });
 
 const expandedTopLevelMenuEntryActive = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.uri.v}` === window.location.pathname;
+	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.componentFactoryId.v}` === window.location.pathname;
 });
 
 const subMenuVisible = computed((): boolean => {

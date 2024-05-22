@@ -53,7 +53,7 @@ const serviceAdapter = useServiceAdapter();
 const interacted = ref<boolean>(false);
 
 const active = computed((): boolean => {
-	return interacted.value || `/${props.ui.uri.v}` === window.location.pathname;
+	return interacted.value || `/${props.ui.componentFactoryId.v}` === window.location.pathname;
 });
 
 const hasSubMenuEntries = computed((): boolean => {
