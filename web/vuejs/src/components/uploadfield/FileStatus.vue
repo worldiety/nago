@@ -44,7 +44,7 @@ import CloseIcon from '@/assets/svg/closeBold.svg';
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { localizeNumber } from '@/shared/localization';
-import type FileUpload from '@/components/uploadfield/fileUpload';
+import type { FileUpload} from '@/components/uploadfield/fileUpload';
 import { FileUploadStatus } from '@/components/uploadfield/fileUpload';
 import { activeLocale } from '@/i18n';
 import { useUploadRepository } from '@/api/upload/uploadRepository';

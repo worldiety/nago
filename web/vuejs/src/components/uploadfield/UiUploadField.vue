@@ -35,13 +35,11 @@
 		</div>
 
 		<!-- File statuses -->
-		<template v-if="fileUploads">
-			<FileStatus
-				v-for="(fileUpload, index) in fileUploads"
-				:key="index"
-				:file-upload="fileUpload"
-			/>
-		</template>
+		<FileStatus
+			v-for="(fileUpload, index) in fileUploads"
+			:key="index"
+			:file-upload="fileUpload"
+		/>
 	</div>
 </template>
 
@@ -53,7 +51,7 @@ import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
-import type FileUpload from '@/components/uploadfield/fileUpload';
+import type { FileUpload } from '@/components/uploadfield/fileUpload';
 import { FileUploadStatus } from '@/components/uploadfield/fileUpload';
 import { v4 as uuidv4 } from 'uuid';
 import { useServiceAdapter } from "@/composables/serviceAdapter";
@@ -68,7 +66,7 @@ const uploadRepository = useUploadRepository();
 const { t } = useI18n();
 const fileInput = ref<HTMLElement|undefined>();
 const errorMessage = ref<string|null>(null);
-const fileUploads = ref<FileUpload[]|null>(null);
+const fileUploads = ref<FileUpload[]>([]);
 const dragAndDropActive = ref<boolean>(false);
 
 const serviceAdapter = useServiceAdapter();
@@ -101,16 +99,33 @@ async function fileInputChanged(e: Event):Promise<void> {
 	await uploadFiles(filesToUpload);
 }
 
-// TODO: Check failing upload for TXT files
+async function uploadDroppedFiles(event: DragEvent): Promise<void> {
+	dragAndDropActive.value = false;
+
+	// Source: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop#process_the_drop
+	let filesToUpload: File[] = [];
+	if (event.dataTransfer?.items) {
+		filesToUpload = Object.values(event.dataTransfer.items).flatMap((item) => {
+			const file = item.getAsFile();
+			return file ? [file] : [];
+		});
+	} else if (event.dataTransfer?.files) {
+		filesToUpload = Object.values(event.dataTransfer.files);
+	}
+
+	await uploadFiles(filesToUpload);
+}
+
 async function uploadFiles(files: File[]): Promise<void> {
-	fileUploads.value = files.map((file) => ({
+	const newFileUploads: FileUpload[] = files.map((file) => ({
 		uploadId: uuidv4(),
 		file,
 		bytesUploaded: null,
 		bytesTotal: null,
 		status: FileUploadStatus.PENDING,
 	}));
-	const promises = fileUploads.value.map((fileUpload) => {
+	fileUploads.value = fileUploads.value.concat(newFileUploads);
+	const promises = newFileUploads.map((fileUpload) => {
 		return uploadRepository.fetchUpload(
 			fileUpload.file,
 			fileUpload.uploadId,
@@ -120,7 +135,7 @@ async function uploadFiles(files: File[]): Promise<void> {
 			uploadFinishedCallback,
 			uploadAbortedCallback,
 			uploadFailedCallback,
-		)
+		);
 	});
 	try {
 		await Promise.allSettled(promises);
@@ -197,24 +212,6 @@ function uploadFailedCallback(uploadId: string, statusCode: number): void {
 		}
 		return fileUpload;
 	});
-}
-
-async function uploadDroppedFiles(event: DragEvent): Promise<void> {
-	dragAndDropActive.value = false;
-
-	// Source: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop#process_the_drop
-	let filesToUpload: File[] = [];
-	if (event.dataTransfer?.items) {
-		filesToUpload = Object.values(event.dataTransfer.items).flatMap((item) => {
-			const file = item.getAsFile();
-			return file ? [file] : [];
-		});
-	} else if (event.dataTransfer?.files) {
-		filesToUpload = Object.values(event.dataTransfer.files);
-	}
-
-
-	await uploadFiles(filesToUpload);
 }
 </script>
 

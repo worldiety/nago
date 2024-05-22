@@ -1,4 +1,4 @@
-export default interface FileUpload {
+export interface FileUpload {
 	uploadId: string;
 	file: File;
 	bytesUploaded: number|null;
