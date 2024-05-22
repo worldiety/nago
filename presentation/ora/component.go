@@ -61,6 +61,7 @@ const (
 	BreadcrumbsT         ComponentType = "Breadcrumbs"
 	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
 	CheckboxT            ComponentType = "Checkbox"
+	RadiobuttonT         ComponentType = "Radiobutton"
 )
 
 type Component interface {
@@ -105,6 +106,7 @@ func init() {
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 		reflect.TypeOf(Checkbox{}),
+		reflect.TypeOf(Radiobutton{}),
 	}
 }
 

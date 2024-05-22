@@ -18,7 +18,7 @@ input[type="checkbox"] {
 }
 
 input[type="radio"] {
-	@apply grid border border-black dark:border-white appearance-none bg-transparent place-content-center w-4 h-4 m-0;
+	@apply grid border border-black rounded-full dark:border-white appearance-none bg-transparent place-content-center w-4 h-4 m-0;
 }
 
 input[type="radio"]:hover {

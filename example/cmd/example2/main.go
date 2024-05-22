@@ -512,6 +512,39 @@ func main() {
 
 								}),
 
+								ui.NewRadiobutton(func(rab *ui.Radiobutton) {
+
+								}),
+
+								ui.NewVBox(func(box *ui.VBox) {
+									var radiobuttons []*ui.Radiobutton
+									var selectedButton *ui.Radiobutton
+
+									box.Append(
+										ui.NewRadiobutton(func(rab *ui.Radiobutton) {
+											radiobuttons = append(radiobuttons, rab)
+
+											rab.OnClicked().Set(func() {
+												selectedButton = rab
+												fmt.Println("radiobutton 1 changed to", rab.Selected().Get())
+												rab.UpdateRadioButtons(radiobuttons, selectedButton)
+											})
+
+										}),
+
+										ui.NewRadiobutton(func(rab *ui.Radiobutton) {
+											radiobuttons = append(radiobuttons, rab)
+
+											rab.OnClicked().Set(func() {
+												selectedButton = rab
+												fmt.Println("radiobutton 2 changed to", rab.Selected().Get())
+												rab.UpdateRadioButtons(radiobuttons, selectedButton)
+											})
+										}),
+									)
+
+								}),
+
 								ui.NewButton(func(btn *ui.Button) {
 									btn.Caption().Set("hello world")
 									btn.Action().Set(func() {
