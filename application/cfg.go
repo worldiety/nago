@@ -6,7 +6,6 @@ import (
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -19,18 +18,20 @@ import (
 )
 
 type Configurator struct {
-	boltStore     *bbolt.DB
-	ctx           context.Context
-	done          context.CancelFunc
-	logger        *slog.Logger
-	debug         bool
-	fsys          []fs.FS
-	uiApp         *ui.Application
-	host          string
-	port          int
-	scheme        string
-	applicationID ApplicationID
-	dataDir       string
+	boltStore                *bbolt.DB
+	ctx                      context.Context
+	done                     context.CancelFunc
+	logger                   *slog.Logger
+	debug                    bool
+	fsys                     []fs.FS
+	host                     string
+	port                     int
+	scheme                   string
+	applicationID            ApplicationID
+	dataDir                  string
+	iamSettings              IAMSettings
+	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.Component
+	onWindowCreatedObservers []core.OnWindowCreatedObserver
 }
 
 var appIdRegex = regexp.MustCompile(`^[a-z]\w*(\.[a-z]\w*)+$`)
@@ -45,13 +46,17 @@ func NewConfigurator() *Configurator {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	return &Configurator{
-		ctx:  ctx,
-		done: done,
-		uiApp: &ui.Application{
-			Components: map[ora.ComponentFactoryId]func(realm core.Window) core.Component{},
-		},
+		ctx:       ctx,
+		done:      done,
+		factories: map[ora.ComponentFactoryId]func(wnd core.Window) core.Component{},
+
 		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
+}
+
+func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {
+	c.onWindowCreatedObservers = append(c.onWindowCreatedObservers, observer)
+	return c
 }
 
 func (c *Configurator) DataDir() string {

@@ -53,6 +53,7 @@ async function init(): Promise<void> {
 		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
 		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested)
 
 		updateUi(invalidation);
@@ -98,6 +99,11 @@ async function navigateForward(event: Event): Promise<void> {
 
 function navigateBack(): void {
 	history.back();
+}
+
+function resetHistory(event: Event): void {
+	// todo this seems not possible in the web
+	navigateForward(event)
 }
 
 function sendMultipleRequested(evt: Event): void {

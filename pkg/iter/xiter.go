@@ -9,6 +9,34 @@ package iter
 type Seq[V any] func(yield func(V) bool)
 type Seq2[K, V any] func(yield func(K, V) bool)
 
+func Empty[T any]() Seq[T] {
+	return func(yield func(T) bool) {
+
+	}
+}
+
+func Empty2[T, V any]() Seq2[T, V] {
+	return func(yield func(T, V) bool) {
+		
+	}
+}
+
+func Find[V comparable](it Seq[V], predicate func(V) bool) (V, bool) {
+	contains := false
+	var res V
+	it(func(v V) bool {
+		if predicate(v) {
+			contains = true
+			res = v
+			return false
+		}
+
+		return true
+	})
+
+	return res, contains
+}
+
 // Filter returns an iterator over seq that only includes
 // the values v for which f(v) is true.
 func Filter[V any](f func(V) bool, seq Seq[V]) Seq[V] {

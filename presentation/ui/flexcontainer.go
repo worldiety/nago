@@ -27,6 +27,12 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 
 	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment, f.itemsAlignment}
 
+	// the container is otherwise in an undefined state, so lets define it
+	f.orientation.Set(ora.OrientationHorizontal)
+	f.contentAlignment.Set(ora.FlexCenter)
+	f.itemsAlignment.Set(ora.FlexCenter)
+	f.elementSize.Set(ora.ElementSizeMedium)
+
 	if with != nil {
 		with(f)
 	}

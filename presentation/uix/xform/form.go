@@ -13,8 +13,8 @@ import (
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-	~float32 | ~float64
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -27,7 +27,6 @@ type Field struct {
 	Group    GroupID // Group reference, if not exist, it is used as the label
 	Hint     string
 	Disabled bool
-	Secure   bool
 }
 
 type GroupID string
@@ -132,6 +131,26 @@ func String[T ~string](binding *Binding, target *T, opts Field) {
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.OnTextChanged().Set(func() {
+		*target = T(tf.Value().Get())
+		if binding.OnChanged != nil {
+			binding.OnChanged()
+		}
+	})
+	binding.elems = append(binding.elems, formElem{
+		getComponent: func() core.Component {
+			return tf
+		},
+		opts: opts,
+	})
+}
+
+func PasswordString[T ~string](binding *Binding, target *T, opts Field) {
+	tf := ui.NewPasswordField(nil)
+	tf.Label().Set(opts.Label)
+	tf.Value().Set(string(*target))
+	tf.Hint().Set(opts.Hint)
+	tf.Disabled().Set(opts.Disabled)
+	tf.OnPasswordChanged().Set(func() {
 		*target = T(tf.Value().Get())
 		if binding.OnChanged != nil {
 			binding.OnChanged()

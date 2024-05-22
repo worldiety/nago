@@ -14,6 +14,7 @@ type Application struct {
 }
 
 func Configure(f func(cfg *Configurator)) *Application {
+
 	a := &Application{}
 	a.failed = !a.init(f)
 

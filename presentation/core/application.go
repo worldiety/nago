@@ -11,28 +11,32 @@ import (
 	"time"
 )
 
+type OnWindowCreatedObserver func(wnd Window)
+
 type Application struct {
-	mutex         sync.Mutex
-	scopes        *Scopes
-	factories     map[ora.ComponentFactoryId]ComponentFactory
-	scopeLifetime time.Duration
-	ctx           context.Context
-	cancelCtx     func()
-	tmpDir        string
-	onSendFiles   func(*Scope, iter.Seq2[File, error]) error
-	onShareStream func(*Scope, func() (io.Reader, error)) (ora.URI, error)
+	mutex                    sync.Mutex
+	scopes                   *Scopes
+	factories                map[ora.ComponentFactoryId]ComponentFactory
+	scopeLifetime            time.Duration
+	ctx                      context.Context
+	cancelCtx                func()
+	tmpDir                   string
+	onSendFiles              func(*Scope, iter.Seq2[File, error]) error
+	onShareStream            func(*Scope, func() (io.Reader, error)) (ora.URI, error)
+	onWindowCreatedObservers []OnWindowCreatedObserver
 }
 
-func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory) *Application {
+func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	return &Application{
-		scopeLifetime: time.Minute,
-		factories:     factories,
-		scopes:        NewScopes(),
-		ctx:           cancelCtx,
-		cancelCtx:     cancel,
-		tmpDir:        tmpDir,
+		scopeLifetime:            time.Minute,
+		factories:                factories,
+		scopes:                   NewScopes(),
+		ctx:                      cancelCtx,
+		cancelCtx:                cancel,
+		tmpDir:                   tmpDir,
+		onWindowCreatedObservers: onWindowCreatedObservers,
 	}
 }
 

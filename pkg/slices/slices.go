@@ -16,6 +16,12 @@ func Values[Slice ~[]Elem, Elem any](s Slice) iter.Seq[Elem] {
 	}
 }
 
+// Of is var args variant of Values which avoid declaring the slice type even though
+// it is technical absolutely the same.
+func Of[T any](v ...T) iter.Seq[T] {
+	return Values(v)
+}
+
 // Append appends the values from seq to the slice and returns the extended slice.
 func Append[Slice ~[]Elem, Elem any](x Slice, seq iter.Seq[Elem]) Slice {
 	seq(func(elem Elem) bool {

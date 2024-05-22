@@ -317,14 +317,11 @@ func (s *Scope) Destroy() {
 			return true
 		}
 
+		var tmp []func()
+		tmp = slices.Clone(s.onDestroyObservers)
+
 		s.eventLoop.Post(func() {
 			// the event loop is panic protected, thus separate the observer execution
-			var tmp []func()
-			s.destroyed.With(func(b bool) bool {
-				tmp = slices.Clone(s.onDestroyObservers)
-				return b
-			})
-
 			for _, f := range tmp {
 				f()
 			}

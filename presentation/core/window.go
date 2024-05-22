@@ -9,6 +9,7 @@ import (
 	"golang.org/x/text/language"
 	"io"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -29,9 +30,13 @@ type Window interface {
 	// parameters. This depends on the actual frontend.
 	Values() Values
 
-	// User is never nil. Check [auth.User.Valid]. You must not keep the User instance over a long time, because
+	// Subject is never nil. Use [auth.Subject.Audit] for permission handling.
+	// You must not keep the identity instance over a long time, because
 	// it will change over time, either due to refreshing tokens or because the user is logged out.
-	User() auth.User
+	Subject() auth.Subject
+
+	// UpdateSubject sets the current subject.
+	UpdateSubject(subject auth.Subject)
 
 	// Context returns the wire-lifetime context. Contains additional injected types like User or Logger.
 	Context() context.Context
@@ -44,7 +49,7 @@ type Window interface {
 	// It usually outlives a frontend process and e.g. is restored after a device restart.
 	SessionID() SessionID
 
-	// Authenticate triggers a round trip so that [Window.User] may contain a valid user afterward.
+	// Authenticate triggers a round trip so that [Window.Subject] may contain a valid user afterward.
 	// For sure, the user can always cancel that.
 	Authenticate()
 
@@ -80,6 +85,14 @@ type scopeWindow struct {
 	values        Values
 	location      *time.Location
 	viewRoot      *scopeViewRoot
+	subject       auth.Subject
+	mutex         sync.Mutex
+}
+
+func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.subject = subject
 }
 
 func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -94,6 +107,12 @@ func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values)
 		loc = time.UTC
 	}
 	s.location = loc
+
+	s.subject = auth.InvalidSubject{}
+
+	for _, observer := range s.scope.app.onWindowCreatedObservers {
+		observer(s)
+	}
 
 	return s
 }
@@ -127,8 +146,11 @@ func (s *scopeWindow) Values() Values {
 	return s.values
 }
 
-func (s *scopeWindow) User() auth.User {
-	return invalidUser{} // TODO
+func (s *scopeWindow) Subject() auth.Subject {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.subject
 }
 
 func (s *scopeWindow) Context() context.Context {
@@ -140,7 +162,11 @@ func (s *scopeWindow) SessionID() SessionID {
 }
 
 func (s *scopeWindow) Authenticate() {
-	// TODO implement me
+	// TODO ????
+}
+
+func (s *scopeWindow) AuthenticatedObserver() {
+	// TODO how to implement that? trigger navigation
 }
 
 func (s *scopeWindow) ViewRoot() ViewRoot {

@@ -16,6 +16,13 @@ type Button struct {
 	properties []core.Property
 }
 
+func NewActionButton(caption string, action func()) *Button {
+	return NewButton(func(btn *Button) {
+		btn.Caption().Set(caption)
+		btn.Action().Set(action)
+	})
+}
+
 func NewButton(with func(btn *Button)) *Button {
 	c := &Button{
 		id:       nextPtr(),

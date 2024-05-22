@@ -46,11 +46,11 @@ func (c *Configurator) Component(id ora.ComponentFactoryId, factory func(wnd cor
 		panic(fmt.Errorf("invalid component factory id: %v", id))
 	}
 
-	if _, ok := c.uiApp.Components[id]; ok {
+	if _, ok := c.factories[id]; ok {
 		panic(fmt.Errorf("another factory with id %v has already been registered", id))
 	}
 
-	c.uiApp.Components[id] = factory
+	c.factories[id] = factory
 }
 
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
@@ -68,7 +68,7 @@ type httpFileDownload struct {
 func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
-	for id, f := range c.uiApp.Components {
+	for id, f := range c.factories {
 		factories[id] = func(scope core.Window, requested ora.NewComponentRequested) core.Component {
 			return f(scope)
 		}
@@ -80,7 +80,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
-	app2 := core.NewApplication(c.ctx, tmpDir, factories)
+	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers)
 	r := chi.NewRouter()
 	app2.SetOnSendFiles(func(scope *core.Scope, it iter.Seq2[core.File, error]) error {
 		var err error
@@ -221,12 +221,16 @@ func (c *Configurator) newHandler() http.Handler {
 		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			cookie, err := request.Cookie("wdy-ora-access")
 			if err != nil {
+				// TODO move me to the wire, which is called from the JS
 				cookie = &http.Cookie{}
 				cookie.Name = "wdy-ora-access"
 				cookie.Value = string(ora.NewScopeID())
 				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
 				cookie.Secure = false //TODO in release-mode this must be true
 				cookie.HttpOnly = true
+				cookie.SameSite = http.SameSiteStrictMode //TODO CSRF protection however, do we actually suffer for this problem due to random addresses? if not, Lax is probably enough? => discuss with Fred
+				// TODO can we make it more secure to do something like ASLR? how does that work? Is entropy large enough?
+				// TODO alternative: use UUID + tree deltas to mitigate larger ids and avoid CSRF attacks
 				cookie.Path = "/"
 				http.SetCookie(writer, cookie)
 			}
@@ -312,6 +316,7 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("received upload request")
 		// we support currently only multipart upload forms
 		scopeID := ora.ScopeID(r.Header.Get("x-scope"))
 		if len(scopeID) < 32 {
@@ -368,6 +373,7 @@ func (c *Configurator) newHandler() http.Handler {
 						return
 					}
 
+					slog.Info("imported multipart form file", "file", header.Filename)
 				}
 			}
 
@@ -378,6 +384,7 @@ func (c *Configurator) newHandler() http.Handler {
 				return
 			}
 
+			slog.Info("multipart upload complete")
 			return
 		} else {
 			slog.Error("upload request must be multipart form", "content-type", r.Header.Get("Content-Type"))
@@ -389,6 +396,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context())
+		logger.Info("wire is called, before upgrade")
 		_ = logger
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -402,6 +410,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 		defer conn.Close()
 
+		logger.Info("wire upgrade to websocket success")
 		queryParams := r.URL.Query()
 		scopeID := queryParams.Get("_sid")
 

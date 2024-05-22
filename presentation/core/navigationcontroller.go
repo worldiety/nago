@@ -2,6 +2,8 @@ package core
 
 import "go.wdy.de/nago/presentation/ora"
 
+// TODO make me an interface?
+
 type NavigationController struct {
 	scope *Scope
 }
@@ -32,4 +34,8 @@ func (n *NavigationController) ResetTo(id ora.ComponentFactoryId, values Values)
 		Factory: id,
 		Values:  values,
 	})
+}
+
+func (n *NavigationController) Reload() {
+	// TODO this does not change history stack but destroys the stack entirely
 }

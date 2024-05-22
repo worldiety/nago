@@ -11,8 +11,6 @@ import (
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"io"
-	"reflect"
-	"strconv"
 )
 
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
@@ -46,7 +44,7 @@ func NewSloppyJSONRepository[DomainModel data.Aggregate[DomainID], DomainID data
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindByID(id DomainID) (std.Option[DomainModel], error) {
 	var res std.Option[DomainModel]
 	err := r.store.View(func(tx blob.Tx) error {
-		entry, err := tx.Get(idIntoKey(id))
+		entry, err := tx.Get(data.Idtos(id))
 		if err != nil {
 			return fmt.Errorf("cannot retrieve data from store: %w", err)
 		}
@@ -99,7 +97,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) enc
 	}
 
 	return blob.Entry{
-		Key: idIntoKey(domainModel.Identity()),
+		Key: data.Idtos(domainModel.Identity()),
 		Open: func() (io.ReadCloser, error) {
 			return readerCloser{Reader: bytes.NewReader(buf)}, nil
 		},
@@ -113,7 +111,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 	stopIter := false
 	err := r.store.View(func(tx blob.Tx) error {
 		for _, ident := range idents {
-			optEnt, err := tx.Get(idIntoKey(ident))
+			optEnt, err := tx.Get(data.Idtos(ident))
 			if err != nil {
 				// continue iteration, perhaps a little more robust
 				if !yield(zeroDomain, err) {
@@ -208,7 +206,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Cou
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteByID(id DomainID) error {
 	return r.store.Update(func(tx blob.Tx) error {
-		return tx.Delete(idIntoKey(id))
+		return tx.Delete(data.Idtos(id))
 	})
 }
 
@@ -242,7 +240,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 	return r.store.Update(func(tx blob.Tx) error {
 		var err error
 		ids(func(id DomainID) bool {
-			err = tx.Delete(idIntoKey(id))
+			err = tx.Delete(data.Idtos(id))
 			if err != nil {
 				return false
 			}
@@ -314,20 +312,4 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Sav
 
 		return firstError
 	})
-}
-
-func idIntoKey[ID data.IDType](id ID) string {
-	v := reflect.ValueOf(id)
-	switch v.Kind() {
-	case reflect.Int64:
-		return strconv.FormatInt(v.Int(), 10)
-	case reflect.Int:
-		return strconv.FormatInt(v.Int(), 10)
-	case reflect.Int32:
-		return strconv.FormatInt(v.Int(), 10)
-	case reflect.String:
-		return v.String()
-	default:
-		panic(fmt.Errorf("unsupported id type: %T", id))
-	}
 }

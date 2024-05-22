@@ -4,8 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
+	"reflect"
+	"strconv"
 )
 
 // SkipAll is a sentinel error for traversals.
@@ -97,7 +100,12 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 }
 
 // RandIdent create a cryptographic secure random string containing 16 bytes of entropy.
-// It is hex encoded and looks like 5134b3c04a7bbc56ab1b9435acfd98cb
+// It is hex encoded and looks like 5134b3c04a7bbc56ab1b9435acfd98cb.
+// In the future, we may increase this to 24 or 32 byte of entropy.
+//
+// Intentionally,
+// we do not allow the number types, because they contain just 4-8 byte of entropy, which
+// causes a large collision probability.
 func RandIdent[T ~string]() T {
 	var tmp [16]byte
 	if _, err := rand.Read(tmp[:]); err != nil {
@@ -105,4 +113,42 @@ func RandIdent[T ~string]() T {
 	}
 
 	return T(hex.EncodeToString(tmp[:]))
+}
+
+// Idtos converts any IDType into a string. See Stoid for its inverse.
+func Idtos[ID IDType](id ID) string {
+	v := reflect.ValueOf(id)
+	switch v.Kind() {
+	case reflect.Int64:
+		return strconv.FormatInt(v.Int(), 10)
+	case reflect.Int:
+		return strconv.FormatInt(v.Int(), 10)
+	case reflect.Int32:
+		return strconv.FormatInt(v.Int(), 10)
+	case reflect.String:
+		return v.String()
+	default:
+		panic(fmt.Errorf("unsupported id type: %T", id))
+	}
+}
+
+// Stoid tries to parse a string value into the actual ID type. See Idtos for the inverse.
+func Stoid[ID IDType](value string) (ID, error) {
+	var zero ID
+	v := reflect.ValueOf(zero)
+	switch v.Kind() {
+	case reflect.Int64:
+		fallthrough
+	case reflect.Int:
+		fallthrough
+	case reflect.Int32:
+		i, err := strconv.ParseInt(value, 10, 64)
+		reflect.ValueOf(&zero).Elem().SetInt(i)
+		return zero, err
+	case reflect.String:
+		reflect.ValueOf(&zero).Elem().SetString(value)
+		return zero, nil
+	default:
+		panic(fmt.Errorf("unsupported id type: %T", zero))
+	}
 }
