@@ -26,7 +26,7 @@
 				class="hidden"
 				:multiple="props.ui.multiple.v"
 				:accept="props.ui.filter.v"
-				@change="fileInputChanged"
+				@change="uploadSelectedFiles"
 			/>
 		</div>
 		<div class="flex justify-between items-center text-sm w-full gap-x-4 pb-2">
@@ -79,8 +79,8 @@ function isErr(): boolean {
 	return props.ui.error.v != '' || errorMessage.value !== null;
 }
 
-async function fileInputChanged(e: Event):Promise<void> {
-	const item = e.target as HTMLInputElement;
+async function uploadSelectedFiles(event: Event):Promise<void> {
+	const item = event.target as HTMLInputElement;
 	if (!item.files) {
 		return;
 	}
