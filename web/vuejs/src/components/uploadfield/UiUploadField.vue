@@ -101,13 +101,13 @@ async function fileInputChanged(e: Event):Promise<void> {
 	await uploadFiles(filesToUpload);
 }
 
+// TODO: Check failing upload for TXT files
 async function uploadFiles(files: File[]): Promise<void> {
 	fileUploads.value = files.map((file) => ({
 		uploadId: uuidv4(),
 		file,
 		bytesUploaded: null,
 		bytesTotal: null,
-		finished: false,
 		status: FileUploadStatus.PENDING,
 	}));
 	const promises = fileUploads.value.map((fileUpload) => {
@@ -161,7 +161,6 @@ function uploadFinishedCallback(uploadId: string): void {
 		if (fileUpload.uploadId === uploadId) {
 			return {
 				...fileUpload,
-				finished: true,
 				status: FileUploadStatus.SUCCESS,
 			};
 		}
