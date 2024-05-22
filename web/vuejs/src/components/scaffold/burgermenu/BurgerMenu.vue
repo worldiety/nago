@@ -17,7 +17,7 @@
 				<div class="flex justify-start items-center h-24 p-8">
 					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false" @keydown.enter="menuOpen = false" />
 				</div>
-				<div class="flex flex-col justify-start items-start gap-y-4 basis-full w-full p-4">
+				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry v-for="(menuEntry, index) in ui.menu.v" :key="index" :ui="menuEntry" />
@@ -53,10 +53,9 @@
 						<!-- Sub menu entries -->
 						<BurgerMenuEntry v-for="(menuEntry, index) in subMenuEntries" :key="index" :ui="menuEntry" />
 					</div>
-					<div class="grow w-full"></div>
-					<div class="flex justify-center items-center w-full p-4">
-						<ThemeToggle />
-					</div>
+				</div>
+				<div class="flex justify-center items-center w-full p-4">
+					<ThemeToggle />
 				</div>
 			</div>
 		</Transition>
