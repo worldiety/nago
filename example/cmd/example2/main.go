@@ -225,19 +225,21 @@ func main() {
 							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 								flexContainer.Orientation().Set(ora.OrientationHorizontal)
 								flexContainer.ElementSize().Set(ora.ElementSizeLarge)
-								flexContainer.ContentAlignment().Set(ora.FlexBetween)
+								flexContainer.ContentAlignment().Set(ora.FlexStart)
 
 								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
 									card.Append(ui.NewFlexContainer(func(innerFlexContainer *ui.FlexContainer) {
-										innerFlexContainer.Orientation().Set(ora.OrientationVertical)
+										innerFlexContainer.Orientation().Set(ora.OrientationHorizontal)
+										innerFlexContainer.ElementSize().Set(ora.ElementSizeAuto)
+										innerFlexContainer.ContentAlignment().Set(ora.FlexBetween)
 										innerFlexContainer.ItemsAlignment().Set(ora.FlexCenter)
 
-										innerFlexContainer.Elements().Append(ui.NewButton(func(button *ui.Button) {
-											button.Caption().Set("Button A")
-											button.Style().Set(ui.SecondaryIntent)
+										innerFlexContainer.Elements().Append(ui.NewText(func(text *ui.Text) {
+											text.Value().Set("Ein Text")
 										}))
-										innerFlexContainer.Elements().Append(ui.NewTextField(func(textField *ui.TextField) {
-											textField.Label().Set("Textfield 1")
+										innerFlexContainer.Elements().Append(ui.NewButton(func(button *ui.Button) {
+											button.Caption().Set("Button A2")
+											button.Style().Set(ui.SecondaryIntent)
 										}))
 									}))
 								}))

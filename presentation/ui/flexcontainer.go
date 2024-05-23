@@ -31,7 +31,7 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 	f.orientation.Set(ora.OrientationHorizontal)
 	f.contentAlignment.Set(ora.FlexCenter)
 	f.itemsAlignment.Set(ora.FlexStretch)
-	f.elementSize.Set(ora.ElementSizeMedium)
+	f.elementSize.Set(ora.ElementSizeAuto)
 
 	if with != nil {
 		with(f)

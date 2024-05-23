@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-wrap gap-4" :class="containerClasses">
-		<ui-generic v-for="(element, index) in ui.elements.v" :key="index" :ui="element" :class="elementClass" />
+		<ui-generic v-for="(element, index) in ui.elements.v" :key="index" :ui="element" :class="elementClasses" />
 	</div>
 </template>
 
@@ -69,20 +69,29 @@ const containerClasses = computed((): string => {
 	return containerClasses.join(' ');
 });
 
-const elementClass = computed((): string => {
+const elementClasses = computed((): string => {
+	const elementClasses: string[] = [];
 	if (props.ui.orientation.v === Orientation.VERTICAL) {
-		return 'w-full';
+		elementClasses.push('w-full');
 	}
 
 	switch (props.ui.elementSize.v) {
+		case ElementSize.SIZE_AUTO:
+			elementClasses.push('basis-auto');
+			break;
 		case ElementSize.SIZE_SMALL:
-			return 'w-64';
+			elementClasses.push('basis-64');
+			break;
 		case ElementSize.SIZE_MEDIUM:
-			return 'w-80';
+			elementClasses.push('basis-80');
+			break;
 		case ElementSize.SIZE_LARGE:
-			return 'w-96';
+			elementClasses.push('basis-96');
+			break;
 		default:
-			return 'w-80';
+			elementClasses.push('basis-80');
+			break;
 	}
+	return elementClasses.join(' ');
 });
 </script>
