@@ -7,10 +7,10 @@
 		@keydown.enter="handleClick"
 		@keydown.down.prevent="focusFirstLinkedSubMenuEntry('down')"
 		@keydown.right.prevent="focusFirstLinkedSubMenuEntry('right')"
-		@mouseenter="expandMenuEntry"
+		@mouseenter="emit('expand', ui);"
 		@mouseleave="handleMouseLeave"
 		@mouseup="interacted = false"
-		@focus="expandMenuEntry"
+		@focus="emit('expand', ui);"
 	>
 		<div
 			v-if="ui.icon.v"
@@ -41,6 +41,7 @@ import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
+	(e: 'expand', menuEntry: MenuEntry): void;
 }>();
 
 const props = defineProps<{
@@ -66,7 +67,7 @@ function handleClick(): void {
 		serviceAdapter.executeFunctions(props.ui.action);
 	} else {
 		// Else expand the menu entry
-		expandMenuEntry();
+		emit('expand', props.ui);
 	}
 }
 
@@ -79,15 +80,6 @@ function handleMouseLeave(): void {
 			v: false,
 		});
 	}
-}
-
-function expandMenuEntry(): void {
-	serviceAdapter.setPropertiesAndCallFunctions([
-		{
-			...props.ui.expanded,
-			v: true,
-		},
-	], [props.ui.onFocus]);
 }
 
 function focusFirstLinkedSubMenuEntry(keyPressed: 'down'|'right'): void {

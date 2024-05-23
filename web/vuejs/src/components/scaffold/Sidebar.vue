@@ -15,6 +15,7 @@
 						:menu-entry-index="index"
 						:mode="'sidebar'"
 						@focus-first-linked-sub-menu-entry="focusFirstLinkedSubMenuEntry"
+						@expand="expandMenuEntry"
 					/>
 				</div>
 			</div>
@@ -87,6 +88,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Property } from '@/shared/protocol/ora/property';
 
 const props = defineProps<{
 	ui: NavigationComponent;
@@ -188,6 +190,17 @@ function getSubSubMenuEntries(subMenuEntry: MenuEntry): MenuEntry[] {
 		});
 	}
 	return entries;
+}
+
+function expandMenuEntry(menuEntry: MenuEntry): void {
+	const propertiesToSet: Property<boolean>[] = props.ui.menu.v.map((entry) => {
+		return {
+			...entry.expanded,
+			v: entry.id === menuEntry.id,
+		};
+	});
+
+	serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 }
 </script>
 

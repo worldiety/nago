@@ -12,6 +12,7 @@
 							:menu-entry-index="index"
 							:mode="'navigationBar'"
 							@focus-first-linked-sub-menu-entry="focusFirstLinkedSubMenuEntry"
+							@expand="expandMenuEntry"
 						/>
 					</div>
           <ThemeToggle />
@@ -85,6 +86,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
+import type { Property } from '@/shared/protocol/ora/property';
 
 const props = defineProps<{
 	ui: NavigationComponent;
@@ -182,6 +184,17 @@ function focusFirstLinkedSubMenuEntry(): void {
 		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)
 		?? subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
 	elementToFocus?.focus();
+}
+
+function expandMenuEntry(menuEntry: MenuEntry): void {
+	const propertiesToSet: Property<boolean>[] = props.ui.menu.v.map((entry) => {
+		return {
+			...entry.expanded,
+			v: entry.id === menuEntry.id,
+		};
+	});
+
+	serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 }
 </script>
 
