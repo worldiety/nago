@@ -55,6 +55,9 @@ const containerClasses = computed((): string => {
 		case FlexAlignment.END:
 			containerClasses.push('items-end');
 			break;
+		case FlexAlignment.STRETCH:
+			containerClasses.push('items-stretch');
+			break;
 		default:
 			containerClasses.push('items-stretch');
 			break;
