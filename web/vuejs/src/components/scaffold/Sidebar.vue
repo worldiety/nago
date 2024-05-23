@@ -117,7 +117,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 		?.filter((menuEntry) => menuEntry.expanded.v)
 		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
+	if (entries?.length > 0 && expandedMenuEntry.value?.action.v) {
 		entries.unshift({
 			...expandedMenuEntry.value,
 			menu: {
@@ -126,7 +126,7 @@ const subMenuEntries = computed((): MenuEntry[] => {
 			}
 		});
 	}
-	return entries;
+	return entries ?? [];
 });
 
 function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
@@ -151,7 +151,7 @@ function handleMouseMove(event: MouseEvent): void {
 				...menuEntry.expanded,
 				v: false,
 			}));
-		if (updatedExpandedProperties.length > 0) {
+		if (updatedExpandedProperties?.length > 0) {
 			serviceAdapter.setProperties(...updatedExpandedProperties);
 		}
 	}
