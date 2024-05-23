@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
@@ -15,7 +14,6 @@ import (
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
-	"log/slog"
 )
 
 type PID string
@@ -211,7 +209,7 @@ func main() {
 
 		counter := 0
 		cfg.Component("1234", func(wnd core.Window) core.Component {
-			logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
+			// logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
 
 			page := ui.NewPage(nil)
 			page.Body().Set(
@@ -506,7 +504,7 @@ func main() {
 								)
 							}))
 
-							vbox.Append(ui.MakeText(string(wnd.User().UserID()) + ":" + wnd.User().Name() + "->" + string(wnd.User().Email())))
+							// vbox.Append(ui.MakeText(string(wnd.User().UserID()) + ":" + wnd.User().Name() + "->" + string(wnd.User().Email())))
 
 							var otherCheckbox *ui.Checkbox
 							vbox.Append(
