@@ -9,5 +9,6 @@ type FlexContainer struct {
 	Orientation      Property[Orientation]   `json:"orientation"`
 	ContentAlignment Property[FlexAlignment] `json:"contentAlignment"`
 	ItemsAlignment   Property[FlexAlignment] `json:"itemsAlignment"`
+	Visible          Property[bool]          `json:"visible"`
 	component
 }

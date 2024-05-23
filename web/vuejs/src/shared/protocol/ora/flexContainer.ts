@@ -19,5 +19,6 @@ export interface FlexContainer {
     orientation: Property<Orientation>;
     contentAlignment: Property<FlexAlignment>;
     itemsAlignment: Property<FlexAlignment>;
+    visible: Property<boolean>;
 }
 

@@ -1,5 +1,7 @@
 package auth
 
+import "golang.org/x/text/language"
+
 // UID is the User or Subject ID.
 type UID string
 
@@ -41,6 +43,9 @@ type Subject interface {
 
 	// Valid tells us, if the subject has been authenticated and potentially contains permissions.
 	Valid() bool
+
+	// Language returns the BCP47 language tag, which encodes a language and locale.
+	Language() language.Tag
 }
 
 func OneOf(subject Subject, permissions ...string) bool {

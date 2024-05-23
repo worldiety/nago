@@ -242,11 +242,11 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls
 	if len(password) < 8 {
-		return "", fmt.Errorf("password must be at least 8 characters")
+		return "", fmt.Errorf("Das Kennwort muss mindestens 8 Zeichen enthalten.") //fmt.Errorf("password must be at least 8 characters") TODO use language from subject
 	}
 	const minEntropyBits = 60
 	if err := passwordvalidator.Validate(password, minEntropyBits); err != nil {
-		return "", fmt.Errorf("password has not enough entropy: %v", err)
+		return "", fmt.Errorf("Das Kennwort hat nicht genug Entropie.") //fmt.Errorf("password has not enough entropy: %v", err) TODO use language from subject
 	}
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet

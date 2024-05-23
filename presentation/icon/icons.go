@@ -37,3 +37,6 @@ var PackageFilled ui.SVGSrc
 
 //go:embed dashboard.svg
 var Dashboard ui.SVGSrc
+
+//go:embed exclamation-triangle.svg
+var ExclamationTriangle ui.SVGSrc

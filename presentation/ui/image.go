@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/base64"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
@@ -42,6 +43,12 @@ func (c *Image) ID() ora.Ptr {
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
 func (c *Image) URI() *Shared[ora.URI] {
 	return c.uri
+}
+
+// SetDataURI encodes the given buffer as an URI with the embedded data image.
+func (c *Image) SetDataURI(buf []byte) {
+	b64 := base64.StdEncoding.EncodeToString(buf)
+	c.URI().Set(ora.URI(`data:application/octet-stream;base64,` + b64))
 }
 
 func (c *Image) Caption() String {

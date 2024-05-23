@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
@@ -44,10 +45,36 @@ type Binding struct {
 	elems     []formElem
 	Groups    []Group // defines the order and settings of form groups, e.g. if collapsed etc.
 	OnChanged func()
+	error     *ui.Text
+	msgView   *ui.FlexContainer
 }
 
 func NewBinding() *Binding {
-	return &Binding{}
+	errView := ui.NewText(nil)
+	b := &Binding{
+		error: errView,
+		msgView: ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+			flex.ContentAlignment().Set(ora.FlexStart)
+			flex.ElementSize().Set(ora.ElementSizeAuto)
+			flex.Orientation().Set(ora.OrientationHorizontal)
+			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.Append(
+				ui.NewButton(func(btn *ui.Button) {
+					btn.Style().Set(ui.Destructive)
+					btn.PreIcon().Set(icon.ExclamationTriangle)
+				}),
+
+				errView,
+			)
+		}),
+	}
+	b.msgView.Visible().Set(false)
+	return b
+}
+
+func (b *Binding) SetError(msg string) {
+	b.error.Value().Set(msg)
+	b.msgView.Visible().Set(msg != "")
 }
 
 func (b *Binding) AddComponent(c core.Component, field Field) {
@@ -405,6 +432,8 @@ nextElem:
 			}
 		}
 
+		vbox.Append(binding.msgView)
+
 	})
 }
 
@@ -420,8 +449,10 @@ func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 				ui.NewButton(func(btn *ui.Button) {
 
 					btn.Caption().Set("Speichern")
+					btn.Style().Set(ora.Primary)
 					btn.Action().Set(func() {
 						// automatically clear all errors on retry
+						binding.SetError("")
 						for _, elem := range binding.elems {
 							if errorText, ok := elem.getComponent().(interface{ Error() ui.String }); ok {
 								errorText.Error().Set("")
@@ -442,6 +473,7 @@ func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 				}),
 				ui.NewButton(func(btn *ui.Button) {
 					btn.Caption().Set("Abbrechen")
+					btn.Style().Set(ora.Secondary)
 					btn.Action().Set(func() {
 						modals.Modals().Remove(dlg)
 					})

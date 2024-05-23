@@ -23,10 +23,8 @@ func create(subject auth.Subject, modals ui.ModalOwner, users *iam.Service) {
 	mail := xform.String(b, &model.EMail, xform.Field{Label: "eMail"})
 	pwd1 := xform.PasswordString(b, &model.Password1, xform.Field{Label: "Kennwort"})
 	pwd2 := xform.PasswordString(b, &model.Password2, xform.Field{Label: "Kennwort wiederholen"})
-	msg := xform.Text(b, "", xform.Field{})
 
 	xform.Show(modals, b, func() error {
-		msg.Value().Set("")
 		if !iam.Email(mail.Value().Get()).Valid() {
 			mail.Error().Set("Die eMail-Adresse ist ungültig.")
 			return xform.UserMustCorrectInput
@@ -40,7 +38,7 @@ func create(subject auth.Subject, modals ui.ModalOwner, users *iam.Service) {
 
 		_, err := users.NewUser(subject, model.EMail, model.Firstname, model.Lastname, model.Password1)
 		if err != nil {
-			msg.Value().Set(err.Error())
+			b.SetError(err.Error())
 			return xform.UserMustCorrectInput
 		}
 

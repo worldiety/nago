@@ -13,9 +13,10 @@ type FlexContainer struct {
 	contentAlignment EmbeddedFlexAlignment
 	itemsAlignment   EmbeddedFlexAlignment
 	properties       []core.Property
+	visible          Bool
 }
 
-func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
+func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 	f := &FlexContainer{
 		id:               nextPtr(),
 		elements:         NewSharedList[core.Component]("elements"),
@@ -23,6 +24,7 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 		orientation:      NewShared[Orientation]("orientation"),
 		contentAlignment: NewShared[FlexAlignment]("contentAlignment"),
 		itemsAlignment:   NewShared[FlexAlignment]("itemsAlignment"),
+		visible:          NewShared[bool]("visible"),
 	}
 
 	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment, f.itemsAlignment}
@@ -32,6 +34,7 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 	f.contentAlignment.Set(ora.FlexCenter)
 	f.itemsAlignment.Set(ora.FlexStretch)
 	f.elementSize.Set(ora.ElementSizeAuto)
+	f.visible.Set(true)
 
 	if with != nil {
 		with(f)
@@ -73,6 +76,10 @@ func (f *FlexContainer) Type() string {
 	return "FlexContainer"
 }
 
+func (f *FlexContainer) Visible() Bool {
+	return f.visible
+}
+
 func (f *FlexContainer) Properties(yield func(core.Property) bool) {
 	for _, property := range f.properties {
 		if !yield(property) {
@@ -90,5 +97,6 @@ func (f *FlexContainer) Render() ora.Component {
 		Orientation:      f.orientation.render(),
 		ContentAlignment: f.contentAlignment.render(),
 		ItemsAlignment:   f.itemsAlignment.render(),
+		Visible:          f.visible.render(),
 	}
 }

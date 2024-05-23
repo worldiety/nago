@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-wrap gap-4" :class="containerClasses">
+	<div v-if="ui.visible.v" class="flex flex-wrap gap-4" :class="containerClasses">
 		<ui-generic v-for="(element, index) in ui.elements.v" :key="index" :ui="element" :class="elementClasses" />
 	</div>
 </template>

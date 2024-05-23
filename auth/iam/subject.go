@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
 	"strings"
 )
 
@@ -20,6 +21,10 @@ type nagoSubject struct {
 	user        User
 	permissions map[string]struct{}
 	audit       func(session core.SessionID, usr User, permission string, granted bool)
+}
+
+func (n nagoSubject) Language() language.Tag {
+	return language.German // TODO
 }
 
 func newNagoSubject(session core.SessionID, user User, permissions map[string]struct{}, audit func(session core.SessionID, usr User, permission string, granted bool)) *nagoSubject {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"golang.org/x/text/language"
 	"log/slog"
 )
 
@@ -9,6 +10,10 @@ var _ Subject = InvalidSubject{}
 
 type InvalidSubject struct {
 	DeniedLog func(permission string)
+}
+
+func (i InvalidSubject) Language() language.Tag {
+	return language.German // TODO
 }
 
 func (i InvalidSubject) HasPermission(permission string) bool {
