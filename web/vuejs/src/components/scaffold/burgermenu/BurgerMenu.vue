@@ -20,7 +20,13 @@
 				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
-						<BurgerMenuEntry v-for="(menuEntry, index) in ui.menu.v" :key="index" :ui="menuEntry" />
+						<BurgerMenuEntry
+							v-for="(menuEntry, index) in ui.menu.v"
+							:key="index"
+							:ui="menuEntry"
+							:top-level="true"
+							@clicked="menuOpen = false"
+						/>
 					</template>
 					<div v-else class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 						<!-- Back to top level menu button -->
@@ -51,7 +57,13 @@
 							</div>
 						</div>
 						<!-- Sub menu entries -->
-						<BurgerMenuEntry v-for="(menuEntry, index) in subMenuEntries" :key="index" :ui="menuEntry" />
+						<BurgerMenuEntry
+							v-for="(menuEntry, index) in subMenuEntries"
+							:key="index"
+							:ui="menuEntry"
+							:top-level="false"
+							@clicked="menuOpen = false"
+						/>
 					</div>
 				</div>
 				<div class="flex justify-center items-center w-full p-4">
@@ -67,7 +79,7 @@ import MenuIcon from '@/assets/svg/menu.svg';
 import CloseIcon from '@/assets/svg/closeBold.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';

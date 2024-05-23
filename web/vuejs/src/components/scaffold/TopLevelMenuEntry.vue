@@ -30,7 +30,7 @@
 				</div>
 			</div>
 		</div>
-		<p class="text-sm text-center font-medium select-none hyphens-auto w-full">{{ ui.title.v }}</p>
+		<p class="text-sm text-center font-medium select-none hyphens-auto w-full" :class="{'font-semibold': linksToCurrentPage}">{{ ui.title.v }}</p>
 	</div>
 </template>
 
@@ -53,8 +53,12 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const interacted = ref<boolean>(false);
 
+const linksToCurrentPage = computed((): boolean => {
+	return `/${props.ui.componentFactoryId.v}` === window.location.pathname;
+})
+
 const active = computed((): boolean => {
-	return interacted.value || `/${props.ui.componentFactoryId.v}` === window.location.pathname;
+	return interacted.value || linksToCurrentPage.value;
 });
 
 const hasSubMenuEntries = computed((): boolean => {

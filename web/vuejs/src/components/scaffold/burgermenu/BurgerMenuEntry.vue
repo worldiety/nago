@@ -24,12 +24,17 @@
 			<div class="flex justify-start items-center h-6">
 				<p class="grow leading-tight select-none align-bottom">{{ ui.title.v }}</p>
 			</div>
-			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="{'rotate-180': ui.expanded.v}" />
+			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass" />
 		</div>
 
 		<template v-if="ui.expanded.v">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
-				<BurgerMenuEntry v-for="(menuEntry, index) in ui.menu.v" :key="index" :ui="menuEntry" />
+				<BurgerMenuEntry
+					v-for="(menuEntry, index) in ui.menu.v"
+					:key="index" :ui="menuEntry"
+					:top-level="false"
+					@clicked="$emit('clicked')"
+				/>
 			</div>
 		</template>
 	</div>
@@ -43,6 +48,11 @@ import { useServiceAdapter } from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: MenuEntry;
+	topLevel: boolean;
+}>();
+
+const emit = defineEmits<{
+	(e: 'clicked'): void;
 }>();
 
 const serviceAdapter = useServiceAdapter();
@@ -57,12 +67,23 @@ const menuEntryActive = computed((): boolean => {
 	return `/${props.ui.componentFactoryId.v}` === window.location.pathname;
 });
 
+const triangleClass = computed((): string|null => {
+	if (props.topLevel) {
+		return '-rotate-90';
+	}
+	if (props.ui.expanded.v) {
+		return 'rotate-180';
+	}
+	return null;
+})
+
 function menuEntryClicked(): void {
 	if (hasSubMenuEntries.value) {
 		expandMenuEntry();
 		return;
 	}
 	if (props.ui.action.v) {
+		emit('clicked');
 		serviceAdapter.executeFunctions(props.ui.action);
 	}
 }
@@ -72,7 +93,7 @@ function expandMenuEntry(): void {
 		serviceAdapter.setPropertiesAndCallFunctions([
 			{
 				...props.ui.expanded,
-				v: !props.ui.expanded.v,
+				v: true,
 			},
 		], [props.ui.onFocus]);
 	}
