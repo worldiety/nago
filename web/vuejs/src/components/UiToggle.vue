@@ -18,10 +18,9 @@ function onClick() {
 	if (props.ui.disabled.v) {
 		return;
 	}
-	checked.value = !checked.value;
 	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.checked,
-		v: checked.value,
+		v: !checked.value,
 	}], [props.ui.onCheckedChanged]);
 }
 </script>

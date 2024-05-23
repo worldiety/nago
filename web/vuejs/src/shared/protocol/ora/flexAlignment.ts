@@ -2,5 +2,6 @@ export enum FlexAlignment {
 	START = 'start',
 	CENTER = 'center',
 	END = 'end',
-	STRETCH = 'stretch'
+	STRETCH = 'stretch',
+	BETWEEN = 'between',
 }

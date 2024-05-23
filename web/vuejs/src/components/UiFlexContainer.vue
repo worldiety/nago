@@ -40,6 +40,9 @@ const containerClasses = computed((): string => {
 		case FlexAlignment.END:
 			containerClasses.push('justify-end');
 			break;
+		case FlexAlignment.BETWEEN:
+			containerClasses.push('justify-between');
+			break;
 		default:
 			containerClasses.push('justify-normal');
 			break;

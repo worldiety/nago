@@ -7,4 +7,5 @@ const (
 	FlexCenter  FlexAlignment = "center"
 	FlexEnd     FlexAlignment = "end"
 	FlexStretch FlexAlignment = "stretch"
+	FlexBetween FlexAlignment = "between"
 )
