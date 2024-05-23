@@ -34,6 +34,10 @@ func (e Email) Valid() bool {
 		return true
 	}
 
+	if e == "" {
+		return false
+	}
+
 	return regexMail.FindString(string(e)) == string(e)
 }
 

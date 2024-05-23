@@ -1,11 +1,9 @@
 package iamui
 
 import (
-	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/presentation/uix/xform"
 )
 
@@ -22,18 +20,28 @@ func create(subject auth.Subject, modals ui.ModalOwner, users *iam.Service) {
 	b := xform.NewBinding()
 	xform.String(b, &model.Firstname, xform.Field{Label: "Vorname"})
 	xform.String(b, &model.Lastname, xform.Field{Label: "Nachname"})
-	xform.String(b, &model.EMail, xform.Field{Label: "eMail"})
-	xform.PasswordString(b, &model.Password1, xform.Field{Label: "Kennwort"})
-	xform.PasswordString(b, &model.Password2, xform.Field{Label: "Kennwort wiederholen"})
+	mail := xform.String(b, &model.EMail, xform.Field{Label: "eMail"})
+	pwd1 := xform.PasswordString(b, &model.Password1, xform.Field{Label: "Kennwort"})
+	pwd2 := xform.PasswordString(b, &model.Password2, xform.Field{Label: "Kennwort wiederholen"})
+	msg := xform.Text(b, "", xform.Field{})
 
 	xform.Show(modals, b, func() error {
-		if model.Password1 != model.Password2 {
-			xdialog.ShowMessage(modals, "Die Kennwörter stimmen nicht überein.")
-			return fmt.Errorf("passwords don't match")
+		msg.Value().Set("")
+		if !iam.Email(mail.Value().Get()).Valid() {
+			mail.Error().Set("Die eMail-Adresse ist ungültig.")
+			return xform.UserMustCorrectInput
 		}
+
+		if model.Password1 != model.Password2 {
+			pwd1.Error().Set("Die Kennwörter stimmen nicht überein.")
+			pwd2.Error().Set("Die Kennwörter stimmen nicht überein.")
+			return xform.UserMustCorrectInput
+		}
+
 		_, err := users.NewUser(subject, model.EMail, model.Firstname, model.Lastname, model.Password1)
 		if err != nil {
-			return err
+			msg.Value().Set(err.Error())
+			return xform.UserMustCorrectInput
 		}
 
 		return nil

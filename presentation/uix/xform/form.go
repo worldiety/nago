@@ -1,15 +1,19 @@
 package xform
 
 import (
+	"errors"
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"time"
 )
+
+var UserMustCorrectInput = fmt.Errorf("UserMustCorrectInput")
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
@@ -44,6 +48,15 @@ type Binding struct {
 
 func NewBinding() *Binding {
 	return &Binding{}
+}
+
+func (b *Binding) AddComponent(c core.Component, field Field) {
+	b.elems = append(b.elems, formElem{
+		getComponent: func() core.Component {
+			return c
+		},
+		opts: field,
+	})
 }
 
 func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T, opts Field) {
@@ -124,7 +137,21 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 	})
 }
 
-func String[T ~string](binding *Binding, target *T, opts Field) {
+func Text[T ~string](binding *Binding, target T, opts Field) *ui.Text {
+	tf := ui.NewText(nil)
+	tf.Value().Set(string(target))
+
+	binding.elems = append(binding.elems, formElem{
+		getComponent: func() core.Component {
+			return tf
+		},
+		opts: opts,
+	})
+
+	return tf
+}
+
+func String[T ~string](binding *Binding, target *T, opts Field) *ui.TextField {
 	tf := ui.NewTextField(nil)
 	tf.Label().Set(opts.Label)
 	tf.Value().Set(string(*target))
@@ -142,9 +169,11 @@ func String[T ~string](binding *Binding, target *T, opts Field) {
 		},
 		opts: opts,
 	})
+
+	return tf
 }
 
-func PasswordString[T ~string](binding *Binding, target *T, opts Field) {
+func PasswordString[T ~string](binding *Binding, target *T, opts Field) *ui.PasswordField {
 	tf := ui.NewPasswordField(nil)
 	tf.Label().Set(opts.Label)
 	tf.Value().Set(string(*target))
@@ -162,6 +191,8 @@ func PasswordString[T ~string](binding *Binding, target *T, opts Field) {
 		},
 		opts: opts,
 	})
+
+	return tf
 }
 
 func Bool[T ~bool](binding *Binding, target *T, opts Field) {
@@ -350,7 +381,8 @@ nextElem:
 		}
 	}
 
-	return ui.NewVBox(func(vbox *ui.VBox) {
+	return ui.NewFlexContainer(func(vbox *ui.FlexContainer) {
+		vbox.ElementSize().Set(ora.ElementSizeLarge)
 		for i, g := range groups {
 			if len(g.elems) == 0 {
 				continue // do not show empty sections
@@ -386,9 +418,23 @@ func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 		ui.NewDialog(func(dlg *ui.Dialog) {
 			dlg.Actions().Append(
 				ui.NewButton(func(btn *ui.Button) {
+
 					btn.Caption().Set("Speichern")
 					btn.Action().Set(func() {
-						if xdialog.HandleError(modals, "cannot save item", onSave()) {
+						// automatically clear all errors on retry
+						for _, elem := range binding.elems {
+							if errorText, ok := elem.getComponent().(interface{ Error() ui.String }); ok {
+								errorText.Error().Set("")
+							}
+						}
+
+						// onSave may set again error stuff
+						err := onSave()
+						if errors.Is(err, UserMustCorrectInput) {
+							return
+						}
+
+						if xdialog.HandleError(modals, "cannot save item", err) {
 							return
 						}
 						modals.Modals().Remove(dlg)
