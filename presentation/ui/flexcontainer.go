@@ -40,6 +40,11 @@ func NewFlexContainer(with func(flexContainer *FlexContainer)) *FlexContainer {
 	return f
 }
 
+func (f *FlexContainer) Append(children ...core.Component) *FlexContainer {
+	f.Elements().Append(children...)
+	return f
+}
+
 func (f *FlexContainer) Elements() *SharedList[core.Component] {
 	return f.elements
 }

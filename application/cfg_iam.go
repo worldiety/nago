@@ -46,7 +46,7 @@ type Sessions struct {
 	Repository iam.SessionRepository
 }
 
-func (c *Configurator) IAM(settings IAMSettings) *Configurator {
+func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 	if settings.Permissions.ID == "" {
 		settings.Permissions.ID = "iam/permissions"
 	}
@@ -161,5 +161,5 @@ func (c *Configurator) IAM(settings IAMSettings) *Configurator {
 		wnd.UpdateSubject(service.Subject(wnd.SessionID()))
 	})
 
-	return c
+	return settings
 }

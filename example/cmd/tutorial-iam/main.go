@@ -30,28 +30,26 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.IAM(application.IAMSettings{
-			Permissions: application.Permissions{
-				Permissions: iam.PermissionsFrom(Permissions()),
-			},
-		})
+		iamCfg := application.IAMSettings{}
+		iamCfg.Permissions.Permissions = iam.PermissionsFrom(Permissions())
+		iamCfg = cfg.IAM(iamCfg)
 
 		cfg.Component(".", func(wnd core.Window) core.Component {
 			return ui.NewVBox(func(vbox *ui.VBox) {
 				vbox.Append(
 					ui.NewActionButton("Berechtigungen", func() {
-						wnd.Navigation().ForwardTo("iam/permissions", nil)
+						wnd.Navigation().ForwardTo(iamCfg.Permissions.ID, nil)
 					}),
 
 					ui.NewActionButton("Benutzer", func() {
-						wnd.Navigation().ForwardTo("iam/users", nil)
+						wnd.Navigation().ForwardTo(iamCfg.Users.ID, nil)
 					}),
 
 					ui.NewActionButton("Anmelden", func() {
-						wnd.Navigation().ForwardTo("iam/login", nil)
+						wnd.Navigation().ForwardTo(iamCfg.Login.ID, nil)
 					}),
 					ui.NewActionButton("Abmelden", func() {
-						wnd.Navigation().ForwardTo("iam/logout", nil)
+						wnd.Navigation().ForwardTo(iamCfg.Logout.ID, nil)
 					}),
 				)
 
