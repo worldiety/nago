@@ -508,6 +508,7 @@ func main() {
 
 							vbox.Append(ui.MakeText(string(wnd.User().UserID()) + ":" + wnd.User().Name() + "->" + string(wnd.User().Email())))
 
+							var otherCheckbox *ui.Checkbox
 							vbox.Append(
 								ui.NewTextField(func(t *ui.TextField) {
 									t.Simple().Set(false)
@@ -547,46 +548,54 @@ func main() {
 										myMagicTF.Disabled().Set(tgl.Checked().Get())
 									})
 								}),
-								ui.NewCheckbox(func(chb *ui.Checkbox) {
-									chb.OnClicked().Set(func() { fmt.Println("Hallo aus Checkbox") })
 
-								}),
+								ui.NewTable(func(table *ui.Table) {
+									table.Rows().Append(ui.NewTableRow(func(row *ui.TableRow) {
+										row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewCheckbox(func(chb *ui.Checkbox) {
+												chb.OnClicked().Set(func() {
+													fmt.Println("Hallo aus Checkbox")
+													if otherCheckbox.Selected().Get() == true {
+														otherCheckbox.Selected().Set(false)
+													}
+												})
 
-								ui.NewCheckbox(func(chb *ui.Checkbox) {
-									chb.Disabled().Set(true)
+											}))
+										}))
+										row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewCheckbox(func(chb *ui.Checkbox) {
+												otherCheckbox = chb
+											}))
+										}))
+									}))
+									table.Rows().Append(ui.NewTableRow(func(row *ui.TableRow) {
+										var radiobuttons []*ui.Radiobutton
+										var selectedButton *ui.Radiobutton
 
+										row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewRadiobutton(func(rab *ui.Radiobutton) {
+												radiobuttons = append(radiobuttons, rab)
+												rab.OnClicked().Set(func() {
+													selectedButton = rab
+													fmt.Println("radiobutton 1 changed to", rab.Selected().Get())
+													rab.UpdateRadioButtons(radiobuttons, selectedButton)
+												})
+											}))
+										}))
+										row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+											cell.Body().Set(ui.NewRadiobutton(func(rab *ui.Radiobutton) {
+												radiobuttons = append(radiobuttons, rab)
+												rab.OnClicked().Set(func() {
+													selectedButton = rab
+													fmt.Println("radiobutton 2 changed to", rab.Selected().Get())
+													rab.UpdateRadioButtons(radiobuttons, selectedButton)
+												})
+											}))
+										}))
+									}))
 								}),
 
 								ui.NewRadiobutton(func(rab *ui.Radiobutton) {
-
-								}),
-
-								ui.NewVBox(func(box *ui.VBox) {
-									var radiobuttons []*ui.Radiobutton
-									var selectedButton *ui.Radiobutton
-
-									box.Append(
-										ui.NewRadiobutton(func(rab *ui.Radiobutton) {
-											radiobuttons = append(radiobuttons, rab)
-
-											rab.OnClicked().Set(func() {
-												selectedButton = rab
-												fmt.Println("radiobutton 1 changed to", rab.Selected().Get())
-												rab.UpdateRadioButtons(radiobuttons, selectedButton)
-											})
-
-										}),
-
-										ui.NewRadiobutton(func(rab *ui.Radiobutton) {
-											radiobuttons = append(radiobuttons, rab)
-
-											rab.OnClicked().Set(func() {
-												selectedButton = rab
-												fmt.Println("radiobutton 2 changed to", rab.Selected().Get())
-												rab.UpdateRadioButtons(radiobuttons, selectedButton)
-											})
-										}),
-									)
 
 								}),
 
