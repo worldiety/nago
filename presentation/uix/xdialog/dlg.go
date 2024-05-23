@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 )
@@ -60,7 +61,7 @@ func ShowDelete(ctx ui.ModalOwner, msg string, onDelete, onCancel func()) {
 		dlg.Body().Set(ui.MakeText(msg))
 		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
 			btn.Caption().Set("Löschen")
-			btn.Style().Set("destructive")
+			btn.Style().Set(ora.Destructive)
 			btn.Action().Set(func() {
 				onDelete()
 				ctx.Modals().Remove(dlg)
@@ -68,6 +69,7 @@ func ShowDelete(ctx ui.ModalOwner, msg string, onDelete, onCancel func()) {
 		}))
 		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
 			btn.Caption().Set("Abbrechen")
+			btn.Style().Set(ora.Secondary)
 			btn.Action().Set(func() {
 				if onCancel != nil {
 					onCancel()

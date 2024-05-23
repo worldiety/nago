@@ -20,7 +20,7 @@ const props = defineProps<{
 
 			<div class="fixed inset-0 z-50 w-screen overflow-y-auto">
 				<div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-					<div class="relative transform overflow-hidden rounded-lg sm:my-8 sm:w-full sm:max-w-lg">
+					<div class="relative transform rounded-lg sm:my-8 sm:w-full sm:max-w-lg">
 						<generic-ui   :ui="modal"/>
 					</div>
 				</div>

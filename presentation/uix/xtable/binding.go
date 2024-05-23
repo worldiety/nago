@@ -1,5 +1,7 @@
 package xtable
 
+import "log/slog"
+
 type SortOrder int
 
 const (
@@ -56,6 +58,7 @@ func (b *Binding[T]) AddColumn(opts Column[T]) *Binding[T] {
 		},
 		CompareField: func(a, b any) int {
 			if opts.CompareField == nil {
+				slog.Error("cannot compare field because no field comparator has been defined", "field", opts.Caption)
 				return 0
 			}
 

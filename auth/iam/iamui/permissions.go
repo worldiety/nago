@@ -10,7 +10,7 @@ import (
 func Permissions(subject auth.Subject, service *iam.Service) core.Component {
 	return ui.NewTable(func(table *ui.Table) {
 		table.Header().Append(ui.NewTextCell("Anwendungsfall"), ui.NewTextCell("Beschreibung"))
-		service.AllPermissions(subject)(func(permission iam.Permission) bool {
+		service.AllPermissions(subject)(func(permission iam.Permission, err error) bool {
 			table.Rows().Append(ui.NewTableRow(func(row *ui.TableRow) {
 				row.Cells().Append(
 					ui.NewTextCell(permission.Name()),

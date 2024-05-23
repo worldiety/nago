@@ -31,8 +31,9 @@ func create(subject auth.Subject, modals ui.ModalOwner, users *iam.Service) {
 		}
 
 		if model.Password1 != model.Password2 {
-			pwd1.Error().Set("Die Kennwörter stimmen nicht überein.")
-			pwd2.Error().Set("Die Kennwörter stimmen nicht überein.")
+			msg := "Die Kennwörter stimmen nicht überein."
+			pwd1.Error().Set(msg)
+			pwd2.Error().Set(msg)
 			return xform.UserMustCorrectInput
 		}
 

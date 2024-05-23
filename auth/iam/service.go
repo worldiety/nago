@@ -81,10 +81,10 @@ func (s *Service) Bootstrap() error {
 	return nil
 }
 
-func (s *Service) AllPermissions(subject auth.Subject) iter.Seq[Permission] {
+func (s *Service) AllPermissions(subject auth.Subject) iter.Seq2[Permission, error] {
 	if err := subject.Audit(ReadPermission); err != nil {
 		slog.Error("insufficient permission", "err", err)
-		return iter.Empty[Permission]()
+		return iter.Empty2[Permission, error]()
 	}
 
 	return s.permissions.Each

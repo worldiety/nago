@@ -17,4 +17,5 @@ const (
 	Positive    Intent = "positive"
 	Informative Intent = "informative"
 	Success     Intent = "success"
+	Destructive Intent = "destructive"
 )

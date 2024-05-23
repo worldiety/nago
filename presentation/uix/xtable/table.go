@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 )
@@ -138,6 +139,7 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 							cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
 								allSortBtns = append(allSortBtns, btn)
 								btn.Caption().Set(col.Caption)
+								btn.Style().Set(ora.Tertiary)
 								btn.PreIcon().Set(icon.ArrowUpDown)
 								btn.Action().Set(func() {
 									for _, sortBtn := range allSortBtns {

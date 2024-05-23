@@ -223,6 +223,56 @@ func setArgon2idMin(usr *User, password string) error {
 	return nil
 }
 
+func (s *Service) FindUser(subject auth.Subject, id auth.UID) (std.Option[User], error) {
+	if err := subject.Audit(ReadUser); err != nil {
+		return std.None[User](), err
+	}
+
+	return s.users.FindByID(id)
+}
+
+func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstname, lastname string, customPermissions []PID) error {
+	if err := subject.Audit(UpdateUser); err != nil {
+		return err
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock() // this is really harsh and allows intentionally only to create one user per second
+
+	mail := Email(strings.ToLower(email))
+	if !mail.Valid() {
+		return fmt.Errorf("invalid email: %v", email)
+	}
+
+	// intentionally validate now, so that an attacker cannot use this method to massively
+	// find out, which mails exist in the system
+	optUsr, err := s.userByMail(mail)
+	if err != nil {
+		return fmt.Errorf("cannot check for existing user: %w", err)
+	}
+
+	if optUsr.Valid && optUsr.Unwrap().ID != user {
+		return fmt.Errorf("user email already taken")
+	}
+
+	optUsr, err = s.users.FindByID(user)
+	if err != nil {
+		return fmt.Errorf("cannot load existing user: %w", err)
+	}
+
+	if !optUsr.Valid {
+		return fmt.Errorf("user does not exist")
+	}
+
+	usr := optUsr.Unwrap()
+	usr.Email = mail
+	usr.Firstname = firstname
+	usr.Lastname = lastname
+	usr.Permissions = customPermissions
+
+	return s.users.Save(usr)
+}
+
 func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, password string) (auth.UID, error) {
 	if err := subject.Audit(CreateUser); err != nil {
 		return "", err

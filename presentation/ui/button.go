@@ -35,6 +35,7 @@ func NewButton(with func(btn *Button)) *Button {
 	}
 
 	c.properties = []core.Property{c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action}
+	c.Style().Set(ora.Primary) // the default style is undefined, so make it primary by default
 	if with != nil {
 		with(c)
 	}

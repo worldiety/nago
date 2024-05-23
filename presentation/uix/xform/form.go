@@ -300,7 +300,6 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Binding, target *Slice, items iter.Seq2[E, error], itemCaptionizer MapF[E, string], opts Field) {
 	cb := ui.NewDropdown(nil)
 	cb.Label().Set(opts.Label)
-	cb.Hint().Set(opts.Hint)
 	cb.OnClicked().Set(func() {
 		cb.Expanded().Set(!cb.Expanded().Get())
 	})
@@ -317,6 +316,10 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 			}, opts})
 
 		return
+	}
+
+	if len(itemSlice) > 10 {
+		cb.Searchable().Set(true)
 	}
 
 	for i, item := range itemSlice {

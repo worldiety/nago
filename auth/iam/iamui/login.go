@@ -3,12 +3,14 @@ package iamui
 import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 )
 
 func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
+		flexContainer.ElementSize().Set(ora.ElementSizeLarge)
 		flexContainer.Elements().Append(
 			ui.NewVBox(func(vbox *ui.VBox) {
 				var mailLogin *ui.TextField
@@ -30,25 +32,30 @@ func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Com
 						pwdLogin = passwordField
 						passwordField.Label().Set("Kennwort")
 					}),
-					ui.NewText(func(text *ui.Text) {
-						text.Value().Set("Passwort vergessen")
-						text.OnClick().Set(func() {
+					ui.NewButton(func(text *ui.Button) {
+						text.Caption().Set("Passwort vergessen")
+						text.Style().Set(ora.Tertiary)
+						text.Action().Set(func() {
 							xdialog.ShowMessage(modals, "Die Self-Service Funktion steht nicht zur Verfügung. Bitte wenden Sie sich an Ihren Administrator.")
 						})
 					}),
-					ui.NewButton(func(btn *ui.Button) {
-						btn.Caption().Set("Anmelden")
-						btn.Action().Set(func() {
-							ok := service.Login(wnd.SessionID(), mailLogin.Value().Get(), pwdLogin.Value().Get())
-							if !ok {
-								errMsg.Value().Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
-							}
+					ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+						flex.Append(
+							ui.NewButton(func(btn *ui.Button) {
+								btn.Caption().Set("Anmelden")
+								btn.Action().Set(func() {
+									ok := service.Login(wnd.SessionID(), mailLogin.Value().Get(), pwdLogin.Value().Get())
+									if !ok {
+										errMsg.Value().Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
+									}
 
-							if ok {
-								errMsg.Value().Set("")
-								wnd.Navigation().Back()
-							}
-						})
+									if ok {
+										errMsg.Value().Set("")
+										wnd.Navigation().Back()
+									}
+								})
+							}),
+						)
 					}),
 				)
 			}),

@@ -20,7 +20,7 @@ type iamPerm struct {
 	desc string
 }
 
-func (b iamPerm) ID() string {
+func (b iamPerm) Identity() string {
 	return b.id
 }
 
@@ -64,7 +64,7 @@ func BuildInPermissions() []Permission {
 
 // Permission is the basic contract for the permissions repository, which is used by higher level implementations.
 type Permission interface {
-	ID() string
+	Identity() string
 	Name() string
 	Desc() string
 }
@@ -81,21 +81,21 @@ func PermissionsFrom[T Permission](slice []T) *Permissions {
 	// always ensure that our permissions are available.
 	// However, allow that developers permission may override the description texts.
 	for _, permission := range BuildInPermissions() {
-		p.permissions[permission.ID()] = permission
+		p.permissions[permission.Identity()] = permission
 	}
 
 	for _, t := range slice {
-		p.permissions[t.ID()] = t
+		p.permissions[t.Identity()] = t
 	}
 
 	return p
 }
 
-func (p *Permissions) Each(yield func(permission Permission) bool) {
+func (p *Permissions) Each(yield func(permission Permission, err error) bool) {
 	sorted := slices.Collect(maps.Keys(p.permissions))
 	slices2.Sort(sorted)
 	for _, t := range sorted {
-		if !yield(p.permissions[t]) {
+		if !yield(p.permissions[t], nil) {
 			return
 		}
 	}
