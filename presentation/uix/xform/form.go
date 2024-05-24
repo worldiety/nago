@@ -18,8 +18,8 @@ var UserMustCorrectInput = fmt.Errorf("UserMustCorrectInput")
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+	~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -448,41 +448,49 @@ type formElem struct {
 func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 	modals.Modals().Append(
 		ui.NewDialog(func(dlg *ui.Dialog) {
-			dlg.Actions().Append(
-				ui.NewButton(func(btn *ui.Button) {
-
-					btn.Caption().Set("Speichern")
-					btn.Style().Set(ora.Primary)
-					btn.Action().Set(func() {
-						// automatically clear all errors on retry
-						binding.SetError("")
-						for _, elem := range binding.elems {
-							if errorText, ok := elem.getComponent().(interface{ Error() ui.String }); ok {
-								errorText.Error().Set("")
-							}
-						}
-
-						// onSave may set again error stuff
-						err := onSave()
-						if errors.Is(err, UserMustCorrectInput) {
-							return
-						}
-
-						if xdialog.HandleError(modals, "cannot save item", err) {
-							return
-						}
-						modals.Modals().Remove(dlg)
-					})
-				}),
-				ui.NewButton(func(btn *ui.Button) {
-					btn.Caption().Set("Abbrechen")
-					btn.Style().Set(ora.Secondary)
-					btn.Action().Set(func() {
-						modals.Modals().Remove(dlg)
-					})
-				}),
-			)
 			dlg.Body().Set(NewForm(binding))
+
+			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+				flex.Orientation().Set(ora.OrientationHorizontal)
+				flex.ContentAlignment().Set(ora.FlexEnd)
+				flex.ItemsAlignment().Set(ora.FlexCenter)
+				flex.ElementSize().Set(ora.ElementSizeAuto)
+
+				flex.Elements().Append(
+					ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("Speichern")
+						btn.Style().Set(ora.Primary)
+						btn.Action().Set(func() {
+							// automatically clear all errors on retry
+							binding.SetError("")
+							for _, elem := range binding.elems {
+								if errorText, ok := elem.getComponent().(interface{ Error() ui.String }); ok {
+									errorText.Error().Set("")
+								}
+							}
+
+							// onSave may set again error stuff
+							err := onSave()
+							if errors.Is(err, UserMustCorrectInput) {
+								return
+							}
+
+							if xdialog.HandleError(modals, "cannot save item", err) {
+								return
+							}
+							modals.Modals().Remove(dlg)
+						})
+					}),
+
+					ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("Abbrechen")
+						btn.Style().Set(ora.Secondary)
+						btn.Action().Set(func() {
+							modals.Modals().Remove(dlg)
+						})
+					}),
+				)
+			}))
 		}),
 	)
 }

@@ -44,7 +44,7 @@ const containerClasses = computed((): string => {
 			containerClasses.push('justify-between');
 			break;
 		default:
-			containerClasses.push('justify-normal');
+			containerClasses.push('justify-center');
 			break;
 	}
 
@@ -89,7 +89,7 @@ const elementClasses = computed((): string => {
 			elementClasses.push('basis-96');
 			break;
 		default:
-			elementClasses.push('basis-80');
+			elementClasses.push('basis-auto');
 			break;
 	}
 	return elementClasses.join(' ');

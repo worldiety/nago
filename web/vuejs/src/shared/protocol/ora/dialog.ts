@@ -3,9 +3,9 @@
  */
 
 
-import type { Button } from '@/shared/protocol/ora/button';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { ElementSize } from '@/shared/protocol/ora/elementSize';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
@@ -15,7 +15,9 @@ export interface Dialog {
     type: 'Dialog'/*ComponentType*/;
     title: Property<string>;
     body: Property<Component>;
+    footer: Property<Component>;
     icon: Property<SVG>;
-    actions: Property<Button[]>;
+    visible: Property<boolean>;
+    size: Property<ElementSize>;
 }
 

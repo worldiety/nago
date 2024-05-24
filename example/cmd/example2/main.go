@@ -193,6 +193,68 @@ func main() {
 			// logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
 
 			page := ui.NewPage(nil)
+
+			var dialog *ui.Dialog
+			page.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
+				dialog = dlg
+				dlg.Visible().Set(false)
+				dlg.Title().Set("Ein Dialog")
+				dlg.Icon().Set(icon.ExclamationTriangle)
+				dlg.Size().Set(ora.ElementSizeMedium)
+				dlg.Body().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+					flex.Orientation().Set(ora.OrientationVertical)
+					flex.ContentAlignment().Set(ora.FlexStart)
+					flex.ItemsAlignment().Set(ora.FlexStart)
+
+					flex.Elements().Append(ui.NewText(func(text *ui.Text) {
+						text.Value().Set("Ein Text")
+					}))
+
+					flex.Elements().Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
+						dropdown.Multiselect().Set(true)
+						dropdown.OnClicked().Set(func() {
+							dropdown.Expanded().Set(!dropdown.Expanded().Get())
+						})
+
+						dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+							dropdownItem.Content().Set("Item A Item A Item A Item A Item A Item A Item A Item A Item A")
+							dropdownItem.OnClicked().Set(func() {
+								dropdown.Toggle(dropdownItem)
+							})
+						}))
+						dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+							dropdownItem.Content().Set("Item B Item B Item B Item B Item B Item B Item B Item B Item B Item B")
+							dropdownItem.OnClicked().Set(func() {
+								dropdown.Toggle(dropdownItem)
+							})
+						}))
+					}))
+				}))
+				dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+					flex.ContentAlignment().Set(ora.FlexBetween)
+
+					flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("Schließen")
+						btn.Style().Set(ui.SecondaryIntent)
+						btn.Action().Set(func() {
+							dlg.Visible().Set(false)
+						})
+					}))
+					flex.Elements().Append(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+						flex.ContentAlignment().Set(ora.FlexEnd)
+
+						flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+							btn.Caption().Set("Behalten")
+							btn.Style().Set(ui.SecondaryIntent)
+						}))
+						flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+							btn.Caption().Set("Löschen")
+							btn.Style().Set(ui.Destructive)
+						}))
+					}))
+				}))
+			}))
+
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 
@@ -240,6 +302,9 @@ func main() {
 										innerFlexContainer.Elements().Append(ui.NewButton(func(button *ui.Button) {
 											button.Caption().Set("Button A2")
 											button.Style().Set(ui.SecondaryIntent)
+											button.Action().Set(func() {
+												dialog.Visible().Set(true)
+											})
 										}))
 									}))
 								}))

@@ -12,11 +12,19 @@ import (
 func ShowMessage(ctx ui.ModalOwner, msg string) {
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
 		dlg.Body().Set(ui.MakeText(msg))
-		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
-			btn.Caption().Set("Ok")
-			btn.Action().Set(func() {
-				ctx.Modals().Remove(dlg)
-			})
+
+		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+			flex.Orientation().Set(ora.OrientationHorizontal)
+			flex.ContentAlignment().Set(ora.FlexEnd)
+			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ElementSize().Set(ora.ElementSizeAuto)
+
+			flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+				btn.Caption().Set("Ok")
+				btn.Action().Set(func() {
+					ctx.Modals().Remove(dlg)
+				})
+			}))
 		}))
 	}))
 }
@@ -44,13 +52,20 @@ func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 	slog.Error("captured failure on frontend", slog.Any("err", err), slog.String("code", code), slog.String("msg", msg))
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
 		dlg.Body().Set(ui.MakeText(msg + "(" + code + ")"))
-		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
-			btn.Caption().Set("Ok")
-			btn.Action().Set(func() {
-				ctx.Modals().Remove(dlg)
-			})
-		}))
 
+		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+			flex.Orientation().Set(ora.OrientationHorizontal)
+			flex.ContentAlignment().Set(ora.FlexEnd)
+			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ElementSize().Set(ora.ElementSizeAuto)
+
+			flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+				btn.Caption().Set("Ok")
+				btn.Action().Set(func() {
+					ctx.Modals().Remove(dlg)
+				})
+			}))
+		}))
 	}))
 
 	return true
@@ -59,23 +74,33 @@ func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 func ShowDelete(ctx ui.ModalOwner, msg string, onDelete, onCancel func()) {
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
 		dlg.Body().Set(ui.MakeText(msg))
-		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
-			btn.Caption().Set("Löschen")
-			btn.Style().Set(ora.Destructive)
-			btn.Action().Set(func() {
-				onDelete()
-				ctx.Modals().Remove(dlg)
-			})
-		}))
-		dlg.Actions().Append(ui.NewButton(func(btn *ui.Button) {
-			btn.Caption().Set("Abbrechen")
-			btn.Style().Set(ora.Secondary)
-			btn.Action().Set(func() {
-				if onCancel != nil {
-					onCancel()
-				}
-				ctx.Modals().Remove(dlg)
-			})
+
+		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+			flex.Orientation().Set(ora.OrientationHorizontal)
+			flex.ContentAlignment().Set(ora.FlexEnd)
+			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ElementSize().Set(ora.ElementSizeAuto)
+
+			flex.Elements().Append(
+				ui.NewButton(func(btn *ui.Button) {
+					btn.Caption().Set("Löschen")
+					btn.Style().Set(ora.Destructive)
+					btn.Action().Set(func() {
+						onDelete()
+						ctx.Modals().Remove(dlg)
+					})
+				}),
+				ui.NewButton(func(btn *ui.Button) {
+					btn.Caption().Set("Abbrechen")
+					btn.Style().Set(ora.Secondary)
+					btn.Action().Set(func() {
+						if onCancel != nil {
+							onCancel()
+						}
+						ctx.Modals().Remove(dlg)
+					})
+				}),
+			)
 		}))
 	}))
 }

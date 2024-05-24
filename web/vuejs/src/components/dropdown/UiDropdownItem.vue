@@ -21,8 +21,8 @@ const serviceAdapter = useServiceAdapter();
 		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"
 	>
 			<div class="flex justify-start items-center pl-2.5">
-				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="focus:ring-0">
-				<div v-if="props.multiselect">
+				<input v-if="props.multiselect" type="checkbox" tabindex="-1" :checked="props.selected" class="shrink-0 focus:ring-0">
+				<div v-if="props.multiselect" class="overflow-hidden">
 					<p class="truncate pl-2">{{ props.ui.content.v }}</p>
 				</div>
 				<div v-else>

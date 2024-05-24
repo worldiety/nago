@@ -14,7 +14,9 @@ type Dialog struct {
 	title   String
 	body    *Shared[core.Component]
 	icon    *Shared[SVGSrc]
-	actions *SharedList[*Button]
+	visible Bool
+	footer  *Shared[core.Component]
+	size    EmbeddedElementSize
 
 	properties []core.Property
 }
@@ -25,10 +27,15 @@ func NewDialog(with func(dlg *Dialog)) *Dialog {
 		title:   NewShared[string]("title"),
 		icon:    NewShared[SVGSrc]("icon"),
 		body:    NewShared[core.Component]("body"),
-		actions: NewSharedList[*Button]("actions"),
+		visible: NewShared[bool]("visible"),
+		footer:  NewShared[core.Component]("footer"),
+		size:    NewShared[ElementSize]("size"),
 	}
 
-	c.properties = []core.Property{c.title, c.icon, c.body, c.actions}
+	c.properties = []core.Property{c.title, c.icon, c.body, c.visible, c.footer, c.size}
+
+	c.visible.Set(true)
+	c.size.Set(ora.ElementSizeAuto)
 
 	if with != nil {
 		with(c)
@@ -48,8 +55,16 @@ func (c *Dialog) Icon() *Shared[SVGSrc] {
 	return c.icon
 }
 
-func (c *Dialog) Actions() *SharedList[*Button] {
-	return c.actions
+func (c *Dialog) Visible() Bool {
+	return c.visible
+}
+
+func (c *Dialog) Footer() *Shared[core.Component] {
+	return c.footer
+}
+
+func (c *Dialog) Size() EmbeddedElementSize {
+	return c.size
 }
 
 func (c *Dialog) ID() ora.Ptr {
@@ -79,6 +94,8 @@ func (c *Dialog) render() ora.Dialog {
 		Title:   c.title.render(),
 		Body:    renderSharedComponent(c.body),
 		Icon:    c.icon.render(),
-		Actions: renderSharedListButtons(c.actions),
+		Visible: c.visible.render(),
+		Footer:  renderSharedComponent(c.footer),
+		Size:    c.size.render(),
 	}
 }
