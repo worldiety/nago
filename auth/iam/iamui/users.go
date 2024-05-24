@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xtable"
 	"strings"
@@ -42,8 +43,12 @@ func Users(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 	}
 
 	if subject.HasPermission(iam.CreateUser) {
-		opts.Actions = append(opts.Actions, ui.NewActionButton("Neuen Nutzer anlegen", func() {
-			create(subject, modals, service)
+		opts.Actions = append(opts.Actions, ui.NewButton(func(btn *ui.Button) {
+			btn.Caption().Set("Neuen Nutzer anlegen")
+			btn.PreIcon().Set(icon.UserPlus)
+			btn.Action().Set(func() {
+				create(subject, modals, service)
+			})
 		}))
 	}
 

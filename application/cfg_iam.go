@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/auth/iam/iamui"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 )
@@ -78,8 +79,10 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 							menuEntry.Link(settings.Login.ID, wnd, nil)
 							if subject.Valid() {
 								menuEntry.Title().Set("Mit einem anderen Konto anmelden")
+								menuEntry.Icon().Set(icon.UserPlus)
 							} else {
 								menuEntry.Title().Set("Anmelden")
+								menuEntry.Icon().Set(icon.UserPlus)
 							}
 						}),
 					)
@@ -89,6 +92,7 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 							ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 								menuEntry.Link(settings.Logout.ID, wnd, nil)
 								menuEntry.Title().Set("Abmelden")
+								menuEntry.Icon().Set(icon.ArrowLeftStartOnRectangle)
 							}),
 						)
 					}
@@ -98,14 +102,17 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 							ui.NewMenuEntry(func(usm *ui.MenuEntry) {
 								usm.Title().Set("Nutzerverwaltung")
+								usm.Icon().Set(icon.Users)
 								usm.Menu().Append(
 									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 										menuEntry.Link(settings.Permissions.ID, wnd, nil)
 										menuEntry.Title().Set("Berechtigungen")
+										menuEntry.Icon().Set(icon.Users)
 									}),
 									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 										menuEntry.Link(settings.Users.ID, wnd, nil)
 										menuEntry.Title().Set("Nutzerkonten")
+										menuEntry.Icon().Set(icon.Users)
 									}),
 								)
 							}),

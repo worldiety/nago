@@ -40,3 +40,12 @@ var Dashboard ui.SVGSrc
 
 //go:embed exclamation-triangle.svg
 var ExclamationTriangle ui.SVGSrc
+
+//go:embed arrow-left-start-on-rectangle.svg
+var ArrowLeftStartOnRectangle ui.SVGSrc
+
+//go:embed user-plus.svg
+var UserPlus ui.SVGSrc
+
+//go:embed users.svg
+var Users ui.SVGSrc
