@@ -10,9 +10,9 @@
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
 		>
-			<div v-if="ui.icon.v && ui.iconActive.v" class="relative flex justify-start items-center h-full">
+			<div v-if="ui.icon.v && activeIcon()" class="relative flex justify-start items-center h-full">
 				<div class="menu-entry-icon h-6 *:h-full" v-html="ui.icon.v"></div>
-				<div class="menu-entry-icon-active h-6 *:h-full" v-html="ui.iconActive.v"></div>
+				<div class="menu-entry-icon-active h-6 *:h-full" v-html="activeIcon()"></div>
 				<!-- Optional red badge -->
 				<div
 					v-if="ui.badge.v"
@@ -45,6 +45,7 @@ import TriangleDown from '@/assets/svg/triangleDown.svg';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import { computed } from 'vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type {SVG} from "@/shared/protocol/ora/sVG";
 
 const props = defineProps<{
 	ui: MenuEntry;
@@ -76,6 +77,14 @@ const triangleClass = computed((): string|null => {
 	}
 	return null;
 })
+
+function activeIcon(): SVG{
+	if (props.ui.iconActive.v){
+		return props.ui.iconActive.v
+	}
+
+	return props.ui.icon.v
+}
 
 function menuEntryClicked(): void {
 	if (hasSubMenuEntries.value) {

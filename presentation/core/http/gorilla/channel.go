@@ -1,6 +1,7 @@
 package gorilla
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"sync"
 )
@@ -36,7 +37,7 @@ func (w *WebsocketChannel) dispatch(buf []byte) error {
 
 	for _, f := range w.observers {
 		if err := f(buf); err != nil {
-			return err
+			return fmt.Errorf("%s: %w", string(buf), err)
 		}
 	}
 

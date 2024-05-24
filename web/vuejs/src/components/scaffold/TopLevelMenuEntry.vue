@@ -22,7 +22,7 @@
 			}"
 		>
 			<div class="relative w-4">
-				<div v-if="ui.expanded.v" class="*:h-full" v-html="ui.iconActive.v"></div>
+				<div v-if="ui.expanded.v" class="*:h-full" v-html="activeIcon()"></div>
 				<div v-else class="*:h-full" v-html="ui.icon.v"></div>
 				<!-- Optional red badge -->
 				<div v-if="ui.badge.v" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-error">
@@ -38,6 +38,7 @@
 import { computed, ref } from 'vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
+import type {SVG} from "@/shared/protocol/ora/sVG";
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
@@ -64,6 +65,14 @@ const active = computed((): boolean => {
 const hasSubMenuEntries = computed((): boolean => {
 	return props.ui.menu.v && props.ui.menu.v.length > 0;
 });
+
+function activeIcon(): SVG{
+	if (props.ui.iconActive.v){
+		return props.ui.iconActive.v
+	}
+
+	return props.ui.icon.v
+}
 
 function handleClick(): void {
 	if (props.ui.action.v && !hasSubMenuEntries.value) {
