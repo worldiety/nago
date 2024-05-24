@@ -1,18 +1,18 @@
 <template>
 	<div v-if="ui.visible.v" class="relative flex justify-center items-center pointer-events-auto bg-black bg-opacity-60 h-full">
-		<div class="text-black dark:text-white rounded-lg shadow-md" :class="dialogClass" @click.stop>
+		<div class="text-black dark:text-white rounded-xl shadow-md overflow-y-auto max-h-screen" :class="dialogClasses" @click.stop>
 			<!-- Dialog header -->
-			<div class="flex justify-start items-center gap-x-2 bg-[#F9F9F9] dark:bg-black rounded-t-lg px-6 py-3">
+			<div class="flex justify-start items-center gap-x-2 bg-[#F9F9F9] dark:bg-black rounded-t-xl px-6 py-3">
 				<div v-html="ui.icon.v" class="w-6 *:h-full"></div>
 				<p class="font-bold">{{ ui.title.v }}</p>
 			</div>
 
 			<!-- Dialog body -->
-			<div class="bg-white dark:bg-[#2B2B2B] pt-3.5 px-6 pb-6" :class="{'rounded-b-lg': !ui.footer.v}">
+			<div class="bg-white dark:bg-[#2B2B2B] pt-3.5 px-6 pb-6" :class="{'rounded-b-xl': !ui.footer.v}">
 				<UiGeneric :ui="ui.body.v" />
 			</div>
 
-			<div v-if="ui.footer.v" class="bg-white dark:bg-[#2B2B2B] rounded-b-lg px-6 pb-6">
+			<div v-if="ui.footer.v" class="bg-white dark:bg-[#2B2B2B] rounded-b-xl px-6 pb-6">
 				<hr class="border-[#E2E2E2] dark:border-[#848484] pb-6" />
 				<!-- Dialog footer -->
 				<UiGeneric :ui="ui.footer.v" />
@@ -31,18 +31,25 @@ const props = defineProps<{
 	ui: Dialog;
 }>();
 
-const dialogClass = computed((): string => {
+const dialogClasses = computed((): string => {
+	const dialogClasses: string[] = ['w-full'];
 	switch (props.ui.size.v) {
 		case ElementSize.SIZE_AUTO:
-			return 'w-auto';
+			dialogClasses.push('sm:w-auto');
+			break;
 		case ElementSize.SIZE_SMALL:
-			return 'w-[25rem]';
+			dialogClasses.push('sm:w-[25rem]');
+			break;
 		case ElementSize.SIZE_MEDIUM:
-			return 'w-[35rem]';
+			dialogClasses.push('sm:w-[35rem]');
+			break;
 		case ElementSize.SIZE_LARGE:
-			return 'w-[45rem]';
+			dialogClasses.push('sm:w-[45rem]');
+			break;
 		default:
-			return 'w-auto';
+			dialogClasses.push('sm:w-auto');
+			break;
 	}
+	return dialogClasses.join(' ');
 });
 </script>

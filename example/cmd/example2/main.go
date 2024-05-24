@@ -229,6 +229,18 @@ func main() {
 							})
 						}))
 					}))
+
+					flex.Elements().Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
+						datepicker.RangeMode().Set(true)
+						datepicker.Label().Set("Ein Datepicker")
+						datepicker.OnClicked().Set(func() {
+							datepicker.Expanded().Set(true)
+						})
+						datepicker.OnSelectionChanged().Set(func() {
+							fmt.Println("changed date")
+							datepicker.Expanded().Set(false)
+						})
+					}))
 				}))
 				dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 					flex.ContentAlignment().Set(ora.FlexBetween)
