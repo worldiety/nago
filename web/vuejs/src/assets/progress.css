@@ -1,17 +1,17 @@
-progress[value] {
+progress {
 	@apply appearance-none border-none bg-disabled-background text-ora-orange rounded-full h-1;
 	@apply dark:bg-disabled-text;
 }
 
-progress[value]::-webkit-progress-bar {
+progress::-webkit-progress-bar {
 	@apply bg-disabled-background rounded-full;
 	@apply dark:bg-disabled-text;
 }
 
-progress[value]::-moz-progress-bar {
+progress::-moz-progress-bar {
 	@apply bg-ora-orange rounded-full;
 }
 
-progress[value]::-webkit-progress-value {
+progress::-webkit-progress-value {
 	@apply bg-ora-orange rounded-full;
 }

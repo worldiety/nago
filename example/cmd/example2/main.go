@@ -223,6 +223,10 @@ func main() {
 								breadcrumbs.Icon().Set(icon.Dashboard)
 							}))
 
+							vbox.Append(ui.NewProgressBar(func(progressBar *ui.ProgressBar) {
+
+							}))
+
 							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 								flexContainer.Orientation().Set(ora.OrientationHorizontal)
 								flexContainer.ElementSize().Set(ora.ElementSizeLarge)

@@ -63,6 +63,7 @@ const (
 	CheckboxT            ComponentType = "Checkbox"
 	RadiobuttonT         ComponentType = "Radiobutton"
 	FlexContainerT       ComponentType = "FlexContainer"
+	ProgressBarT         ComponentType = "ProgressBar"
 )
 
 type Component interface {
