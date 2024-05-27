@@ -16,14 +16,16 @@ type Service struct {
 	permissions *Permissions
 	users       UserRepository
 	sessions    SessionRepository
+	roles       RoleRepository
 	mutex       sync.Mutex
 }
 
-func NewService(permissions *Permissions, users UserRepository, sessions SessionRepository) *Service {
+func NewService(permissions *Permissions, users UserRepository, sessions SessionRepository, roles RoleRepository) *Service {
 	return &Service{
 		permissions: permissions,
 		users:       users,
 		sessions:    sessions,
+		roles:       roles,
 	}
 }
 
@@ -56,6 +58,11 @@ func (s *Service) Bootstrap() error {
 		UpdateUser,
 		DeleteUser,
 		ReadPermission,
+
+		CreateRole,
+		ReadRole,
+		UpdateRole,
+		DeleteRole,
 	}
 
 	// we always generate a new random password at startup, which makes accidental information leak

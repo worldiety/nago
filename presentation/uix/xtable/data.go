@@ -24,7 +24,7 @@ func getData[E any](rows iter.Seq2[E, error], binding *Binding[E], settings Sett
 			model:   in,
 		}
 
-		for _, binder := range binding.elems {
+		for _, binder := range binding.Columns {
 			res.values = append(res.values, binder.MapField(in))
 		}
 		return res

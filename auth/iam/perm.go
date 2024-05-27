@@ -7,11 +7,17 @@ import (
 )
 
 const (
-	CreateUser     = "de.worldiety.ora.user.create"
-	ReadUser       = "de.worldiety.ora.user.read"
-	UpdateUser     = "de.worldiety.ora.user.update"
-	DeleteUser     = "de.worldiety.ora.user.delete"
+	CreateUser = "de.worldiety.ora.user.create"
+	ReadUser   = "de.worldiety.ora.user.read"
+	UpdateUser = "de.worldiety.ora.user.update"
+	DeleteUser = "de.worldiety.ora.user.delete"
+
 	ReadPermission = "de.worldiety.ora.permission.read"
+
+	ReadRole   = "de.worldiety.ora.role.read"
+	CreateRole = "de.worldiety.ora.role.create"
+	UpdateRole = "de.worldiety.ora.role.update"
+	DeleteRole = "de.worldiety.ora.role.delete"
 )
 
 type iamPerm struct {
@@ -58,6 +64,11 @@ func BuildInPermissions() []Permission {
 			id:   ReadPermission,
 			name: "Berechtigungen anzeigen",
 			desc: "Träger dieser Berechtigung können alle vorhandenen Berechtigungen inkl. der Erläuterungstexte einsehen. Die Menge der Berechtigungen wird vom System vorgegeben und kann nicht dynamisch geändert werden.",
+		},
+		iamPerm{
+			id:   ReadRole,
+			name: "Rollen anzeigen",
+			desc: "Träger dieser Berechtigung können alle vorhandenen Rollen und die ihnen zugeordneten Berechtigungen anzeigen.",
 		},
 	}
 }

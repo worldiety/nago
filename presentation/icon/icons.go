@@ -49,3 +49,6 @@ var UserPlus ui.SVGSrc
 
 //go:embed users.svg
 var Users ui.SVGSrc
+
+//go:embed magnifying-glass.svg
+var MagnifyingGlass ui.SVGSrc

@@ -11,17 +11,17 @@ const (
 )
 
 type Binding[T any] struct {
-	elems []dynColumn
+	Columns []AnyColumn
 }
 
-func (b *Binding[T]) byCaption(caption string) (dynColumn, bool) {
-	for _, elem := range b.elems {
+func (b *Binding[T]) byCaption(caption string) (AnyColumn, bool) {
+	for _, elem := range b.Columns {
 		if elem.Caption == caption {
 			return elem, true
 		}
 	}
 
-	return dynColumn{}, false
+	return AnyColumn{}, false
 }
 
 type Column[Aggregate any] struct {
@@ -31,7 +31,7 @@ type Column[Aggregate any] struct {
 	CompareField func(a, b Aggregate) int
 }
 
-type dynColumn struct {
+type AnyColumn struct {
 	Caption      string
 	Sortable     bool
 	MapField     func(any) string
@@ -46,7 +46,7 @@ func NewBinding[T any]() *Binding[T] {
 }
 
 func (b *Binding[T]) AddColumn(opts Column[T]) *Binding[T] {
-	b.elems = append(b.elems, dynColumn{
+	b.Columns = append(b.Columns, AnyColumn{
 		Caption:  opts.Caption,
 		Sortable: opts.Sortable,
 		MapField: func(a any) string {

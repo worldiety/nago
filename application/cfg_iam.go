@@ -17,8 +17,15 @@ type IAMSettings struct {
 	Permissions Permissions
 	Users       Users
 	Sessions    Sessions
+	Roles       Roles
 	Login       Login
 	Logout      Logout
+}
+
+type Roles struct {
+	// default to iam/roles
+	ID         ora.ComponentFactoryId
+	Repository iam.RoleRepository
 }
 
 type Login struct {
@@ -68,6 +75,10 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Logout.ID = "iam/logout"
 	}
 
+	if settings.Roles.ID == "" {
+		settings.Roles.ID = "iam/roles"
+	}
+
 	if settings.Decorator == nil {
 		settings.Decorator = func(wnd core.Window, page *ui.Page, content core.Component) {
 			page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
@@ -110,6 +121,11 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 										menuEntry.Icon().Set(icon.Users)
 									}),
 									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+										menuEntry.Link(settings.Roles.ID, wnd, nil)
+										menuEntry.Title().Set("Rollen")
+										menuEntry.Icon().Set(icon.Cog6Tooth)
+									}),
+									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 										menuEntry.Link(settings.Users.ID, wnd, nil)
 										menuEntry.Title().Set("Nutzerkonten")
 										menuEntry.Icon().Set(icon.Users)
@@ -133,9 +149,13 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Sessions.Repository = json.NewSloppyJSONRepository[iam.Session](c.EntityStore("iam.sessions"))
 	}
 
+	if settings.Roles.Repository == nil {
+		settings.Roles.Repository = json.NewSloppyJSONRepository[iam.Role](c.EntityStore("iam.roles"))
+	}
+
 	c.iamSettings = settings
 
-	service := iam.NewService(settings.Permissions.Permissions, settings.Users.Repository, settings.Sessions.Repository)
+	service := iam.NewService(settings.Permissions.Permissions, settings.Users.Repository, settings.Sessions.Repository, settings.Roles.Repository)
 	if err := service.Bootstrap(); err != nil {
 		panic(fmt.Errorf("cannot bootstrap IAM service: %v", err))
 	}
@@ -161,7 +181,12 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		page := ui.NewPage(nil)
 		settings.Decorator(wnd, page, iamui.Users(wnd.Subject(), page, service))
 		return page
+	})
 
+	c.Component(settings.Roles.ID, func(wnd core.Window) core.Component {
+		page := ui.NewPage(nil)
+		settings.Decorator(wnd, page, iamui.Roles(wnd.Subject(), page, service))
+		return page
 	})
 
 	c.AddOnWindowCreatedObserver(func(wnd core.Window) {

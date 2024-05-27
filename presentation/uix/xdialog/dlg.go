@@ -51,7 +51,13 @@ func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 	code := hex.EncodeToString(tmp[:])
 	slog.Error("captured failure on frontend", slog.Any("err", err), slog.String("code", code), slog.String("msg", msg))
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
-		dlg.Body().Set(ui.MakeText(msg + "(" + code + ")"))
+		dlg.Body().Set(ui.NewVStack(func(vstack *ui.FlexContainer) {
+			vstack.Append(
+				ui.MakeText(msg),
+				ui.MakeText("Die Fehlerkennung für den Support lautet: "+code),
+			)
+		}))
+		dlg.Title().Set("Ein Fehler ist aufgetreten.")
 
 		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 			flex.Orientation().Set(ora.OrientationHorizontal)

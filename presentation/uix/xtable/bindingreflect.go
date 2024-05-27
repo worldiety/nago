@@ -37,7 +37,7 @@ func NewModelBinding[ViewModel any]() *Binding[ViewModel] {
 		strSortable := field.Tag.Get("sortable")
 		sortable, _ := strconv.ParseBool(strSortable)
 
-		colOpts := dynColumn{
+		colOpts := AnyColumn{
 			Caption:  caption,
 			Sortable: sortable,
 		}
@@ -80,7 +80,7 @@ func NewModelBinding[ViewModel any]() *Binding[ViewModel] {
 			}
 		}
 
-		b.elems = append(b.elems, colOpts)
+		b.Columns = append(b.Columns, colOpts)
 	}
 
 	return b

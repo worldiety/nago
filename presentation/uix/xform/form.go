@@ -448,7 +448,9 @@ type formElem struct {
 func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 	modals.Modals().Append(
 		ui.NewDialog(func(dlg *ui.Dialog) {
+			dlg.Title().Set("Felder bearbeiten")
 			dlg.Body().Set(NewForm(binding))
+			dlg.Size().Set(ora.ElementSizeSmall)
 
 			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 				flex.Orientation().Set(ora.OrientationHorizontal)

@@ -133,7 +133,7 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 
 		vbox.Append(
 			ui.NewTable(func(table *ui.Table) {
-				for _, col := range binding.elems {
+				for _, col := range binding.Columns {
 					table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
 						if col.Sortable {
 							cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
