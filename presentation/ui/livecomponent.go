@@ -14,7 +14,8 @@ type EmbeddedSVG = *Shared[SVGSrc]
 type EmbeddedAlignment = *Shared[Alignment]
 type EmbeddedOrientation = *Shared[Orientation]
 type EmbeddedElementSize = *Shared[ElementSize]
-type EmbeddedFlexAlignment = *Shared[FlexAlignment]
+type EmbeddedContentAlignment = *Shared[ContentAlignment]
+type EmbeddedItemsAlignment = *Shared[ItemsAlignment]
 type EmbeddedNavigationComponent = *Shared[ora.NavigationComponent]
 type Bool = *Shared[bool]
 type Int = *Shared[int64]
@@ -24,7 +25,8 @@ type SVGSrc = ora.SVG
 type Alignment = ora.Alignment
 type ElementSize = ora.ElementSize
 type Orientation = ora.Orientation
-type FlexAlignment = ora.FlexAlignment
+type ContentAlignment = ora.ContentAlignment
+type ItemsAlignment = ora.ItemsAlignment
 
 // Allows sizes are sm, base, lg, xl and 2xl
 type Size string

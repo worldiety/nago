@@ -1,7 +1,6 @@
-export enum FlexAlignment {
+export enum ContentAlignment {
 	START = 'start',
 	CENTER = 'center',
 	END = 'end',
-	STRETCH = 'stretch',
 	BETWEEN = 'between',
 }

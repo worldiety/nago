@@ -10,8 +10,8 @@ type FlexContainer struct {
 	elements         *SharedList[core.Component]
 	elementSize      EmbeddedElementSize
 	orientation      EmbeddedOrientation
-	contentAlignment EmbeddedFlexAlignment
-	itemsAlignment   EmbeddedFlexAlignment
+	contentAlignment EmbeddedContentAlignment
+	itemsAlignment   EmbeddedItemsAlignment
 	properties       []core.Property
 	visible          Bool
 }
@@ -22,8 +22,8 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 		elements:         NewSharedList[core.Component]("elements"),
 		elementSize:      NewShared[ElementSize]("elementSize"),
 		orientation:      NewShared[Orientation]("orientation"),
-		contentAlignment: NewShared[FlexAlignment]("contentAlignment"),
-		itemsAlignment:   NewShared[FlexAlignment]("itemsAlignment"),
+		contentAlignment: NewShared[ContentAlignment]("contentAlignment"),
+		itemsAlignment:   NewShared[ItemsAlignment]("itemsAlignment"),
 		visible:          NewShared[bool]("visible"),
 	}
 
@@ -31,8 +31,8 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 
 	// the container is otherwise in an undefined state, so lets define it
 	f.orientation.Set(ora.OrientationHorizontal)
-	f.contentAlignment.Set(ora.FlexCenter)
-	f.itemsAlignment.Set(ora.FlexStretch)
+	f.contentAlignment.Set(ora.ContentCenter)
+	f.itemsAlignment.Set(ora.ItemsStretch)
 	f.elementSize.Set(ora.ElementSizeAuto)
 	f.visible.Set(true)
 
@@ -60,11 +60,11 @@ func (f *FlexContainer) Orientation() EmbeddedOrientation {
 	return f.orientation
 }
 
-func (f *FlexContainer) ContentAlignment() EmbeddedFlexAlignment {
+func (f *FlexContainer) ContentAlignment() EmbeddedContentAlignment {
 	return f.contentAlignment
 }
 
-func (f *FlexContainer) ItemsAlignment() EmbeddedFlexAlignment {
+func (f *FlexContainer) ItemsAlignment() EmbeddedItemsAlignment {
 	return f.itemsAlignment
 }
 

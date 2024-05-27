@@ -226,14 +226,14 @@ func main() {
 							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 								flexContainer.Orientation().Set(ora.OrientationHorizontal)
 								flexContainer.ElementSize().Set(ora.ElementSizeLarge)
-								flexContainer.ContentAlignment().Set(ora.FlexStart)
+								flexContainer.ContentAlignment().Set(ora.ContentStart)
 
 								flexContainer.Elements().Append(ui.NewCard(func(card *ui.Card) {
 									card.Append(ui.NewFlexContainer(func(innerFlexContainer *ui.FlexContainer) {
 										innerFlexContainer.Orientation().Set(ora.OrientationHorizontal)
 										innerFlexContainer.ElementSize().Set(ora.ElementSizeAuto)
-										innerFlexContainer.ContentAlignment().Set(ora.FlexBetween)
-										innerFlexContainer.ItemsAlignment().Set(ora.FlexCenter)
+										innerFlexContainer.ContentAlignment().Set(ora.ContentBetween)
+										innerFlexContainer.ItemsAlignment().Set(ora.ItemsCenter)
 
 										innerFlexContainer.Elements().Append(ui.NewText(func(text *ui.Text) {
 											text.Value().Set("Ein Text")
@@ -250,8 +250,8 @@ func main() {
 														dlg.Size().Set(ora.ElementSizeMedium)
 														dlg.Body().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 															flex.Orientation().Set(ora.OrientationVertical)
-															flex.ContentAlignment().Set(ora.FlexStart)
-															flex.ItemsAlignment().Set(ora.FlexStart)
+															flex.ContentAlignment().Set(ora.ContentStart)
+															flex.ItemsAlignment().Set(ora.ItemsStart)
 
 															flex.Elements().Append(ui.NewText(func(text *ui.Text) {
 																text.Value().Set("Ein Text")
@@ -290,7 +290,7 @@ func main() {
 															}))
 														}))
 														dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-															flex.ContentAlignment().Set(ora.FlexBetween)
+															flex.ContentAlignment().Set(ora.ContentBetween)
 
 															flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
 																btn.Caption().Set("Schließen")
@@ -300,7 +300,7 @@ func main() {
 																})
 															}))
 															flex.Elements().Append(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-																flex.ContentAlignment().Set(ora.FlexEnd)
+																flex.ContentAlignment().Set(ora.ContentEnd)
 
 																flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
 																	btn.Caption().Set("Behalten")
@@ -313,8 +313,8 @@ func main() {
 																				text.Value().Set("Mit einfachem Inhalt")
 																			}))
 																			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-																				flex.ContentAlignment().Set(ora.FlexEnd)
-																				flex.ItemsAlignment().Set(ora.FlexCenter)
+																				flex.ContentAlignment().Set(ora.ContentEnd)
+																				flex.ItemsAlignment().Set(ora.ItemsCenter)
 																				flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
 																					btn.Caption().Set("Schließen")
 																					btn.Action().Set(func() {

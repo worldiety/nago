@@ -15,8 +15,8 @@ func ShowMessage(ctx ui.ModalOwner, msg string) {
 
 		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 			flex.Orientation().Set(ora.OrientationHorizontal)
-			flex.ContentAlignment().Set(ora.FlexEnd)
-			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ContentAlignment().Set(ora.ContentEnd)
+			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 
 			flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
@@ -55,8 +55,8 @@ func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 
 		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 			flex.Orientation().Set(ora.OrientationHorizontal)
-			flex.ContentAlignment().Set(ora.FlexEnd)
-			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ContentAlignment().Set(ora.ContentEnd)
+			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 
 			flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
@@ -77,8 +77,8 @@ func ShowDelete(ctx ui.ModalOwner, msg string, onDelete, onCancel func()) {
 
 		dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 			flex.Orientation().Set(ora.OrientationHorizontal)
-			flex.ContentAlignment().Set(ora.FlexEnd)
-			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ContentAlignment().Set(ora.ContentEnd)
+			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 
 			flex.Elements().Append(

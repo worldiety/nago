@@ -8,9 +8,10 @@
 import type { FlexContainer } from '@/shared/protocol/ora/flexContainer';
 import { computed } from 'vue';
 import { Orientation } from '@/shared/protocol/ora/orientation';
-import { FlexAlignment } from '@/shared/protocol/ora/flexAlignment';
+import { ContentAlignment } from '@/shared/protocol/ora/contentAlignment';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { ElementSize } from '@/shared/protocol/ora/elementSize';
+import { ItemsAlignment } from '@/shared/protocol/ora/itemsAlignment';
 
 const props = defineProps<{
 	ui: FlexContainer;
@@ -31,16 +32,16 @@ const containerClasses = computed((): string => {
 	}
 
 	switch (props.ui.contentAlignment.v) {
-		case FlexAlignment.START:
+		case ContentAlignment.START:
 			containerClasses.push('justify-start');
 			break;
-		case FlexAlignment.CENTER:
+		case ContentAlignment.CENTER:
 			containerClasses.push('justify-center');
 			break;
-		case FlexAlignment.END:
+		case ContentAlignment.END:
 			containerClasses.push('justify-end');
 			break;
-		case FlexAlignment.BETWEEN:
+		case ContentAlignment.BETWEEN:
 			containerClasses.push('justify-between');
 			break;
 		default:
@@ -49,16 +50,16 @@ const containerClasses = computed((): string => {
 	}
 
 	switch (props.ui.itemsAlignment.v) {
-		case FlexAlignment.START:
+		case ItemsAlignment.START:
 			containerClasses.push('items-start');
 			break;
-		case FlexAlignment.CENTER:
+		case ItemsAlignment.CENTER:
 			containerClasses.push('items-center');
 			break;
-		case FlexAlignment.END:
+		case ItemsAlignment.END:
 			containerClasses.push('items-end');
 			break;
-		case FlexAlignment.STRETCH:
+		case ItemsAlignment.STRETCH:
 			containerClasses.push('items-stretch');
 			break;
 		default:

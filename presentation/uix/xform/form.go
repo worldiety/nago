@@ -18,8 +18,8 @@ var UserMustCorrectInput = fmt.Errorf("UserMustCorrectInput")
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-	~float32 | ~float64
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -54,10 +54,10 @@ func NewBinding() *Binding {
 	b := &Binding{
 		error: errView,
 		msgView: ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-			flex.ContentAlignment().Set(ora.FlexStart)
+			flex.ContentAlignment().Set(ora.ContentStart)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 			flex.Orientation().Set(ora.OrientationHorizontal)
-			flex.ItemsAlignment().Set(ora.FlexCenter)
+			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.Append(
 				ui.NewButton(func(btn *ui.Button) {
 					btn.Style().Set(ui.Destructive)
@@ -452,8 +452,8 @@ func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 
 			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
 				flex.Orientation().Set(ora.OrientationHorizontal)
-				flex.ContentAlignment().Set(ora.FlexEnd)
-				flex.ItemsAlignment().Set(ora.FlexCenter)
+				flex.ContentAlignment().Set(ora.ContentEnd)
+				flex.ItemsAlignment().Set(ora.ItemsCenter)
 				flex.ElementSize().Set(ora.ElementSizeAuto)
 
 				flex.Elements().Append(

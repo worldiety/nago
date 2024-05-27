@@ -5,8 +5,9 @@
 
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { ContentAlignment } from '@/shared/protocol/ora/contentAlignment';
 import type { ElementSize } from '@/shared/protocol/ora/elementSize';
-import type { FlexAlignment } from '@/shared/protocol/ora/flexAlignment';
+import type { ItemsAlignment } from '@/shared/protocol/ora/itemsAlignment';
 import type { Orientation } from '@/shared/protocol/ora/orientation';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
@@ -17,8 +18,8 @@ export interface FlexContainer {
     elements: Property<Component[]>;
     elementSize: Property<ElementSize>;
     orientation: Property<Orientation>;
-    contentAlignment: Property<FlexAlignment>;
-    itemsAlignment: Property<FlexAlignment>;
+    contentAlignment: Property<ContentAlignment>;
+    itemsAlignment: Property<ItemsAlignment>;
     visible: Property<boolean>;
 }
 
