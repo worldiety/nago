@@ -29,11 +29,12 @@
 <script lang="ts" setup>
 import type { Dialog } from '@/shared/protocol/ora/dialog';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { ElementSize } from '@/shared/protocol/ora/elementSize';
 
 const props = defineProps<{
 	ui: Dialog;
+	isActiveDialog: boolean;
 }>();
 
 const dialogContainer = ref<HTMLElement|undefined>();
@@ -41,17 +42,16 @@ let firstFocusableElement: HTMLElement|undefined;
 let lastFocusableElement: HTMLElement|undefined;
 
 onMounted(() => {
-	const focusableElements = dialogContainer.value?.querySelectorAll('[tabindex="0"], button:not([tabindex="-1"])') ?? [];
-	const firstFocusable = focusableElements[0];
-	const lastFocusable = focusableElements[focusableElements.length - 1];
-	if (firstFocusable) {
-		firstFocusableElement = firstFocusable as HTMLElement;
-		firstFocusableElement.focus();
+	if (props.isActiveDialog) {
+		captureFocusInDialog();
 	}
-	if (lastFocusable) {
-		lastFocusableElement = lastFocusable as HTMLElement;
+});
+
+watch(() => props.isActiveDialog, (newValue) => {
+	if (newValue) {
+		captureFocusInDialog();
 	}
-})
+});
 
 const dialogClasses = computed((): string => {
 	const dialogClasses: string[] = ['w-full'];
@@ -74,6 +74,19 @@ const dialogClasses = computed((): string => {
 	}
 	return dialogClasses.join(' ');
 });
+
+function captureFocusInDialog(): void {
+	const focusableElements = dialogContainer.value?.querySelectorAll('[tabindex="0"], button:not([tabindex="-1"])') ?? [];
+	const firstFocusable = focusableElements[0];
+	const lastFocusable = focusableElements[focusableElements.length - 1];
+	if (firstFocusable) {
+		firstFocusableElement = firstFocusable as HTMLElement;
+		firstFocusableElement.focus();
+	}
+	if (lastFocusable) {
+		lastFocusableElement = lastFocusable as HTMLElement;
+	}
+}
 
 function moveFocusForward(e: KeyboardEvent): void {
 	if (e.shiftKey) {

@@ -1,7 +1,7 @@
 <template>
 	<!-- Modals -->
 	<div v-for="(modal, index) in props.ui.modals.v" :key="index" class="modal-container fixed inset-0 pointer-events-none" :style="`--modal-z-index: ${index + 40};`">
-		<UiGeneric :ui="modal" />
+		<UiGeneric :ui="modal" :is-active-dialog="index === props.ui.modals.v.length - 1" />
 	</div>
 
 	<!-- Page content -->
