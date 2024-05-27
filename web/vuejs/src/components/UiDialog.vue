@@ -5,7 +5,7 @@
 		@keydown.tab.exact="moveFocusForward"
 		@keydown.shift.tab="moveFocusBackwards"
 	>
-		<div class="text-black dark:text-white rounded-xl shadow-md overflow-y-auto max-h-screen" :class="dialogClasses" @click.stop>
+		<div class="flex flex-col text-black dark:text-white rounded-xl shadow-md max-h-screen" :class="dialogClasses" @click.stop>
 			<!-- Dialog header -->
 			<div class="flex justify-start items-center gap-x-2 bg-[#F9F9F9] dark:bg-black rounded-t-xl px-6 py-3">
 				<div v-if="ui.icon.v" v-html="ui.icon.v" class="w-6 *:h-full"></div>
@@ -13,7 +13,7 @@
 			</div>
 
 			<!-- Dialog body -->
-			<div class="bg-white dark:bg-[#2B2B2B] pt-3.5 px-6 pb-6" :class="{'rounded-b-xl': !ui.footer.v}">
+			<div class="bg-white dark:bg-[#2B2B2B] pt-3.5 px-6 pb-6 overflow-y-auto" :class="{'rounded-b-xl': !ui.footer.v}">
 				<UiGeneric :ui="ui.body.v" />
 			</div>
 
