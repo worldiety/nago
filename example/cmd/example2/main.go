@@ -194,107 +194,6 @@ func main() {
 
 			page := ui.NewPage(nil)
 
-			var dialog *ui.Dialog
-			var secondaryDialog *ui.Dialog
-
-			page.Modals().Append(
-
-				ui.NewDialog(func(dlg *ui.Dialog) {
-					secondaryDialog = dlg
-					dlg.Visible().Set(false)
-					dlg.Title().Set("Sekundärer Dialog")
-					dlg.Size().Set(ora.ElementSizeSmall)
-					dlg.Body().Set(ui.NewText(func(text *ui.Text) {
-						text.Value().Set("Mit einfachem Inhalt")
-					}))
-					dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-						flex.ContentAlignment().Set(ora.FlexEnd)
-						flex.ItemsAlignment().Set(ora.FlexCenter)
-						flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("Schließen")
-							btn.Action().Set(func() {
-								dlg.CloseDialog()
-							})
-						}))
-					}))
-				}),
-
-				ui.NewDialog(func(dlg *ui.Dialog) {
-					dialog = dlg
-					dlg.Visible().Set(false)
-					dlg.Title().Set("Ein Dialog")
-					dlg.Icon().Set(icon.ExclamationTriangle)
-					dlg.Size().Set(ora.ElementSizeMedium)
-					dlg.Body().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-						flex.Orientation().Set(ora.OrientationVertical)
-						flex.ContentAlignment().Set(ora.FlexStart)
-						flex.ItemsAlignment().Set(ora.FlexStart)
-
-						flex.Elements().Append(ui.NewText(func(text *ui.Text) {
-							text.Value().Set("Ein Text")
-						}))
-
-						flex.Elements().Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
-							dropdown.Multiselect().Set(true)
-							dropdown.OnClicked().Set(func() {
-								dropdown.Expanded().Set(!dropdown.Expanded().Get())
-							})
-
-							dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
-								dropdownItem.Content().Set("Item A Item A Item A Item A Item A Item A Item A Item A Item A")
-								dropdownItem.OnClicked().Set(func() {
-									dropdown.Toggle(dropdownItem)
-								})
-							}))
-							dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
-								dropdownItem.Content().Set("Item B Item B Item B Item B Item B Item B Item B Item B Item B Item B")
-								dropdownItem.OnClicked().Set(func() {
-									dropdown.Toggle(dropdownItem)
-								})
-							}))
-						}))
-
-						flex.Elements().Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
-							datepicker.RangeMode().Set(true)
-							datepicker.Label().Set("Ein Datepicker")
-							datepicker.OnClicked().Set(func() {
-								datepicker.Expanded().Set(true)
-							})
-							datepicker.OnSelectionChanged().Set(func() {
-								fmt.Println("changed date")
-								datepicker.Expanded().Set(false)
-							})
-						}))
-					}))
-					dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-						flex.ContentAlignment().Set(ora.FlexBetween)
-
-						flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
-							btn.Caption().Set("Schließen")
-							btn.Style().Set(ui.SecondaryIntent)
-							btn.Action().Set(func() {
-								dlg.CloseDialog()
-							})
-						}))
-						flex.Elements().Append(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
-							flex.ContentAlignment().Set(ora.FlexEnd)
-
-							flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
-								btn.Caption().Set("Behalten")
-								btn.Style().Set(ui.SecondaryIntent)
-								btn.Action().Set(func() {
-									secondaryDialog.OpenDialog()
-								})
-							}))
-							flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
-								btn.Caption().Set("Löschen")
-								btn.Style().Set(ui.Destructive)
-							}))
-						}))
-					}))
-				}),
-			)
-
 			page.Body().Set(
 				ui.NewScaffold(func(scaffold *ui.Scaffold) {
 
@@ -343,7 +242,97 @@ func main() {
 											button.Caption().Set("Button A2")
 											button.Style().Set(ui.SecondaryIntent)
 											button.Action().Set(func() {
-												dialog.Visible().Set(true)
+												page.Modals().Append(
+
+													ui.NewDialog(func(dlg *ui.Dialog) {
+														dlg.Title().Set("Ein Dialog")
+														dlg.Icon().Set(icon.ExclamationTriangle)
+														dlg.Size().Set(ora.ElementSizeMedium)
+														dlg.Body().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+															flex.Orientation().Set(ora.OrientationVertical)
+															flex.ContentAlignment().Set(ora.FlexStart)
+															flex.ItemsAlignment().Set(ora.FlexStart)
+
+															flex.Elements().Append(ui.NewText(func(text *ui.Text) {
+																text.Value().Set("Ein Text")
+															}))
+
+															flex.Elements().Append(ui.NewDropdown(func(dropdown *ui.Dropdown) {
+																dropdown.Multiselect().Set(true)
+																dropdown.OnClicked().Set(func() {
+																	dropdown.Expanded().Set(!dropdown.Expanded().Get())
+																})
+
+																dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+																	dropdownItem.Content().Set("Item A Item A Item A Item A Item A Item A Item A Item A Item A")
+																	dropdownItem.OnClicked().Set(func() {
+																		dropdown.Toggle(dropdownItem)
+																	})
+																}))
+																dropdown.Items().Append(ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+																	dropdownItem.Content().Set("Item B Item B Item B Item B Item B Item B Item B Item B Item B Item B")
+																	dropdownItem.OnClicked().Set(func() {
+																		dropdown.Toggle(dropdownItem)
+																	})
+																}))
+															}))
+
+															flex.Elements().Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
+																datepicker.RangeMode().Set(true)
+																datepicker.Label().Set("Ein Datepicker")
+																datepicker.OnClicked().Set(func() {
+																	datepicker.Expanded().Set(true)
+																})
+																datepicker.OnSelectionChanged().Set(func() {
+																	fmt.Println("changed date")
+																	datepicker.Expanded().Set(false)
+																})
+															}))
+														}))
+														dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+															flex.ContentAlignment().Set(ora.FlexBetween)
+
+															flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+																btn.Caption().Set("Schließen")
+																btn.Style().Set(ui.SecondaryIntent)
+																btn.Action().Set(func() {
+																	page.Modals().Remove(dlg)
+																})
+															}))
+															flex.Elements().Append(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+																flex.ContentAlignment().Set(ora.FlexEnd)
+
+																flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+																	btn.Caption().Set("Behalten")
+																	btn.Style().Set(ui.SecondaryIntent)
+																	btn.Action().Set(func() {
+																		page.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
+																			dlg.Title().Set("Sekundärer Dialog")
+																			dlg.Size().Set(ora.ElementSizeSmall)
+																			dlg.Body().Set(ui.NewText(func(text *ui.Text) {
+																				text.Value().Set("Mit einfachem Inhalt")
+																			}))
+																			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+																				flex.ContentAlignment().Set(ora.FlexEnd)
+																				flex.ItemsAlignment().Set(ora.FlexCenter)
+																				flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+																					btn.Caption().Set("Schließen")
+																					btn.Action().Set(func() {
+																						page.Modals().Remove(dlg)
+																					})
+																				}))
+																			}))
+																		}))
+																	})
+																}))
+																flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+																	btn.Caption().Set("Löschen")
+																	btn.Style().Set(ui.Destructive)
+																}))
+															}))
+														}))
+													}),
+												)
 											})
 										}))
 									}))

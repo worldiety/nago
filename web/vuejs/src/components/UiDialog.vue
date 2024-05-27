@@ -1,13 +1,10 @@
 <template>
 	<div
-		v-if="ui.visible.v"
+		ref="dialogContainer"
 		class="relative flex justify-center items-center pointer-events-auto bg-black bg-opacity-60 h-full"
 		@keydown.tab.exact="moveFocusForward"
 		@keydown.shift.tab="moveFocusBackwards"
 	>
-		<!-- Upper focus boundary -->
-		<div ref="firstFocusableElement" tabindex="0" class="size-0 focus:outline-none focus:ring-0"></div>
-
 		<div class="text-black dark:text-white rounded-xl shadow-md overflow-y-auto max-h-screen" :class="dialogClasses" @click.stop>
 			<!-- Dialog header -->
 			<div class="flex justify-start items-center gap-x-2 bg-[#F9F9F9] dark:bg-black rounded-t-xl px-6 py-3">
@@ -25,9 +22,6 @@
 				<!-- Dialog footer -->
 				<UiGeneric :ui="ui.footer.v" />
 			</div>
-
-			<!-- Lower focus boundary -->
-			<div ref="lastFocusableElement" tabindex="0" class="size-0 focus:outline-none focus:ring-0"></div>
 		</div>
 	</div>
 </template>
@@ -35,21 +29,27 @@
 <script lang="ts" setup>
 import type { Dialog } from '@/shared/protocol/ora/dialog';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { ElementSize } from '@/shared/protocol/ora/elementSize';
 
 const props = defineProps<{
 	ui: Dialog;
 }>();
 
-const firstFocusableElement = ref<HTMLElement|undefined>();
-const lastFocusableElement = ref<HTMLElement|undefined>();
+const dialogContainer = ref<HTMLElement|undefined>();
+let firstFocusableElement: HTMLElement|undefined;
+let lastFocusableElement: HTMLElement|undefined;
 
-watch(() => props.ui.visible.v, (newValue) => {
-	if (newValue) {
-		nextTick(() => {
-			lastFocusableElement.value?.focus();
-		});
+onMounted(() => {
+	const focusableElements = dialogContainer.value?.querySelectorAll('[tabindex="0"], button:not([tabindex="-1"])') ?? [];
+	const firstFocusable = focusableElements[0];
+	const lastFocusable = focusableElements[focusableElements.length - 1];
+	if (firstFocusable) {
+		firstFocusableElement = firstFocusable as HTMLElement;
+		firstFocusableElement.focus();
+	}
+	if (lastFocusable) {
+		lastFocusableElement = lastFocusable as HTMLElement;
 	}
 })
 
@@ -79,17 +79,17 @@ function moveFocusForward(e: KeyboardEvent): void {
 	if (e.shiftKey) {
 		return;
 	}
-	if (document.activeElement as HTMLElement === lastFocusableElement.value) {
+	if (document.activeElement as HTMLElement === lastFocusableElement) {
 		e.preventDefault();
-		firstFocusableElement.value?.focus();
+		firstFocusableElement?.focus();
 		return;
 	}
 }
 
 function moveFocusBackwards(e: KeyboardEvent): void {
-	if (document.activeElement as HTMLElement === firstFocusableElement.value) {
+	if (document.activeElement as HTMLElement === firstFocusableElement) {
 		e.preventDefault();
-		lastFocusableElement.value?.focus();
+		lastFocusableElement?.focus();
 		return;
 	}
 }

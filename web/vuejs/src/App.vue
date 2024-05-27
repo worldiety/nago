@@ -11,7 +11,7 @@ import {useEventBus} from '@/composables/eventBus';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
-import {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
+import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
 
 enum State {
 	Loading,

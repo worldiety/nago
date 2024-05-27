@@ -1,11 +1,11 @@
 <template>
 	<!-- Modals -->
-	<div v-for="(modal, index) in modalsByTimestamp" :key="index" class="modal-container fixed inset-0 pointer-events-none" :style="`--modal-z-index: ${index + 40};`">
-		<UiDialog :ui="modal" />
+	<div v-for="(modal, index) in props.ui.modals.v" :key="index" class="modal-container fixed inset-0 pointer-events-none" :style="`--modal-z-index: ${index + 40};`">
+		<UiGeneric :ui="modal" />
 	</div>
 
 	<!-- Page content -->
-	<div class="fixed inset-0 bg-white dark:bg-darkmode-gray">
+	<div class="content-container bg-white dark:bg-darkmode-gray" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
 		<UiGeneric v-if="props.ui.body.v" :ui="props.ui.body.v"  />
 	</div>
 </template>
@@ -13,35 +13,37 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import type { Page } from "@/shared/protocol/ora/page";
-import { computed } from 'vue';
-import type { Dialog } from '@/shared/protocol/ora/dialog';
-import UiDialog from '@/components/UiDialog.vue';
+import { nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
 	ui: Page;
 }>();
 
-const modalsByTimestamp = computed((): Dialog[] => {
-	if (!props.ui.modals.v) {
-		return [];
-	}
-	return props.ui.modals.v
-		.flatMap((component) => {
-			return component.type === 'Dialog' ? [component as Dialog] : [];
+const anyModalVisible = ref<boolean>(false);
+const windowScrollY = ref<number>(0);
+
+watch(() => props.ui.modals.v, (newValue) => {
+	if (newValue) {
+		if (!anyModalVisible.value) {
+			windowScrollY.value = window.scrollY * -1;
+			anyModalVisible.value = true;
+		}
+	} else {
+		anyModalVisible.value = false;
+		nextTick(() => {
+			window.scrollTo(0, windowScrollY.value * -1);
 		})
-		.toSorted((a, b) => {
-			if (a.timestamp.v > b.timestamp.v) {
-				return 1;
-			} else if (a.timestamp.v < b.timestamp.v) {
-				return -1;
-			}
-			return 0;
-		});
+	}
 });
 </script>
 
 <style scoped>
 .modal-container {
 	z-index: var(--modal-z-index);
+}
+
+.content-container.content-container-freezed {
+	@apply fixed left-0 right-0;
+	top: var(--content-top-offset);
 }
 </style>

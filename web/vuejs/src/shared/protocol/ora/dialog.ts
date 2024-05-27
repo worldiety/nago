@@ -17,8 +17,6 @@ export interface Dialog {
     body: Property<Component>;
     footer: Property<Component>;
     icon: Property<SVG>;
-    visible: Property<boolean>;
-    timestamp: Property<number /*int64*/>;
     size: Property<ElementSize>;
 }
 
