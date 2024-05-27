@@ -3,7 +3,7 @@
 		<div class="text-black dark:text-white rounded-xl shadow-md overflow-y-auto max-h-screen" :class="dialogClasses" @click.stop>
 			<!-- Dialog header -->
 			<div class="flex justify-start items-center gap-x-2 bg-[#F9F9F9] dark:bg-black rounded-t-xl px-6 py-3">
-				<div v-html="ui.icon.v" class="w-6 *:h-full"></div>
+				<div v-if="ui.icon.v" v-html="ui.icon.v" class="w-6 *:h-full"></div>
 				<p class="font-bold">{{ ui.title.v }}</p>
 			</div>
 

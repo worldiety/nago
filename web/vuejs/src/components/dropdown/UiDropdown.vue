@@ -15,7 +15,7 @@
 					@keydown.enter="dropdownClicked(true)"
 				>
 					<div v-if="selectedItemNames" class="truncate text-black dark:text-white pr-6">{{ selectedItemNames}}</div>
-					<div v-else class="truncate text-placeholder-text">{{ 'Auswählen...' }}</div>
+					<div v-else class="truncate text-placeholder-text">{{ $t('dropdown.select') }}</div>
 					<ArrowDown class="absolute shrink-0 grow-0 duration-100 w-3.5 right-3" :class="{'rotate-180': props.ui.expanded.v}" />
 				</div>
 			</InputWrapper>

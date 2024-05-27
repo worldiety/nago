@@ -1,9 +1,50 @@
+<template>
+	<div>
+		<div class="relative">
+			<!-- Input field -->
+			<InputWrapper
+				:label="props.ui.label.v"
+				:error="props.ui.error.v"
+				:hint="props.ui.hint.v"
+				:disabled="props.ui.disabled.v"
+			>
+				<div
+					class="input-field relative z-0"
+					tabindex="0"
+					@click="showDatepicker()"
+					@keydown.enter="showDatepicker()">
+					<p :class="{'text-placeholder-text': !dateFormatted}">{{ dateFormatted ?? $t('datepicker.select') }}</p>
+					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black dark:text-white h-full">
+						<Calendar class="w-4" />
+					</div>
+				</div>
+			</InputWrapper>
+
+			<DatepickerOverlay
+				:expanded="props.ui.expanded.v"
+				:range-mode="props.ui.rangeMode.v"
+				:label="props.ui.label.v"
+				:start-date-selected="props.ui.startDateSelected.v"
+				:selected-start-day="props.ui.selectedStartDay.v"
+				:selected-start-month="props.ui.selectedStartMonth.v"
+				:selected-start-year="props.ui.selectedStartYear.v"
+				:end-date-selected="props.ui.endDateSelected.v"
+				:selected-end-day="props.ui.selectedEndDay.v"
+				:selected-end-month="props.ui.selectedEndMonth.v"
+				:selected-end-year="props.ui.selectedEndYear.v"
+				@close="closeDatepicker()"
+				@select="selectDate"
+			/>
+		</div>
+	</div>
+</template>
+
+
 <script setup lang="ts">
 import { computed } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
-import { useI18n } from 'vue-i18n';
 import type {DatePicker} from "@/shared/protocol/ora/datePicker";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 
@@ -11,12 +52,11 @@ const props = defineProps<{
 	ui:DatePicker;
 }>();
 
-const { t } = useI18n();
 const serviceAdapter = useServiceAdapter();
 
-const dateFormatted = computed((): string => {
+const dateFormatted = computed((): string|null => {
 	if (!props.ui.startDateSelected.v || (props.ui.rangeMode.v && !props.ui.endDateSelected.v)) {
-		return t('datepicker.select');
+		return null;
 	}
 
 	const startDate = new Date();
@@ -131,44 +171,3 @@ function selectEndDate(selectedDate: Date): void {
 	);
 }
 </script>
-
-<template>
-	<div>
-		<div class="relative">
-			<!-- Input field -->
-			<InputWrapper
-				:label="props.ui.label.v"
-				:error="props.ui.error.v"
-				:hint="props.ui.hint.v"
-				:disabled="props.ui.disabled.v"
-			>
-				<div
-					class="input-field relative z-0"
-					tabindex="0"
-					@click="showDatepicker()"
-					@keydown.enter="showDatepicker()">
-					<p>{{ dateFormatted }}</p>
-					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black dark:text-white h-full">
-						<Calendar class="w-4" />
-					</div>
-				</div>
-			</InputWrapper>
-
-			<DatepickerOverlay
-				:expanded="props.ui.expanded.v"
-				:range-mode="props.ui.rangeMode.v"
-				:label="props.ui.label.v"
-				:start-date-selected="props.ui.startDateSelected.v"
-				:selected-start-day="props.ui.selectedStartDay.v"
-				:selected-start-month="props.ui.selectedStartMonth.v"
-				:selected-start-year="props.ui.selectedStartYear.v"
-				:end-date-selected="props.ui.endDateSelected.v"
-				:selected-end-day="props.ui.selectedEndDay.v"
-				:selected-end-month="props.ui.selectedEndMonth.v"
-				:selected-end-year="props.ui.selectedEndYear.v"
-				@close="closeDatepicker()"
-				@select="selectDate"
-			/>
-		</div>
-	</div>
-</template>

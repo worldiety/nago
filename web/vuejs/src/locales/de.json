@@ -55,6 +55,9 @@
 		"confirm": "Bestätigen",
 		"select": "Auswählen..."
 	},
+	"dropdown": {
+		"select": "Auswählen..."
+	},
 	"inputWrapper": {
 		"error": "Fehler"
 	},

@@ -3,6 +3,7 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"time"
 )
 
 type ModalOwner interface {
@@ -10,29 +11,31 @@ type ModalOwner interface {
 }
 
 type Dialog struct {
-	id      ora.Ptr
-	title   String
-	body    *Shared[core.Component]
-	icon    *Shared[SVGSrc]
-	visible Bool
-	footer  *Shared[core.Component]
-	size    EmbeddedElementSize
+	id        ora.Ptr
+	title     String
+	body      *Shared[core.Component]
+	icon      *Shared[SVGSrc]
+	visible   Bool
+	timestamp Int
+	footer    *Shared[core.Component]
+	size      EmbeddedElementSize
 
 	properties []core.Property
 }
 
 func NewDialog(with func(dlg *Dialog)) *Dialog {
 	c := &Dialog{
-		id:      nextPtr(),
-		title:   NewShared[string]("title"),
-		icon:    NewShared[SVGSrc]("icon"),
-		body:    NewShared[core.Component]("body"),
-		visible: NewShared[bool]("visible"),
-		footer:  NewShared[core.Component]("footer"),
-		size:    NewShared[ElementSize]("size"),
+		id:        nextPtr(),
+		title:     NewShared[string]("title"),
+		icon:      NewShared[SVGSrc]("icon"),
+		body:      NewShared[core.Component]("body"),
+		visible:   NewShared[bool]("visible"),
+		timestamp: NewShared[int64]("timestamp"),
+		footer:    NewShared[core.Component]("footer"),
+		size:      NewShared[ElementSize]("size"),
 	}
 
-	c.properties = []core.Property{c.title, c.icon, c.body, c.visible, c.footer, c.size}
+	c.properties = []core.Property{c.title, c.icon, c.body, c.visible, c.timestamp, c.footer, c.size}
 
 	c.visible.Set(true)
 	c.size.Set(ora.ElementSizeAuto)
@@ -57,6 +60,10 @@ func (c *Dialog) Icon() *Shared[SVGSrc] {
 
 func (c *Dialog) Visible() Bool {
 	return c.visible
+}
+
+func (c *Dialog) Timestamp() Int {
+	return c.timestamp
 }
 
 func (c *Dialog) Footer() *Shared[core.Component] {
@@ -89,13 +96,23 @@ func (c *Dialog) Render() ora.Component {
 
 func (c *Dialog) render() ora.Dialog {
 	return ora.Dialog{
-		Ptr:     c.id,
-		Type:    ora.DialogT,
-		Title:   c.title.render(),
-		Body:    renderSharedComponent(c.body),
-		Icon:    c.icon.render(),
-		Visible: c.visible.render(),
-		Footer:  renderSharedComponent(c.footer),
-		Size:    c.size.render(),
+		Ptr:       c.id,
+		Type:      ora.DialogT,
+		Title:     c.title.render(),
+		Body:      renderSharedComponent(c.body),
+		Icon:      c.icon.render(),
+		Visible:   c.visible.render(),
+		Timestamp: c.timestamp.render(),
+		Footer:    renderSharedComponent(c.footer),
+		Size:      c.size.render(),
 	}
+}
+
+func (c *Dialog) OpenDialog() {
+	c.visible.Set(true)
+	c.timestamp.Set(time.Now().UnixMilli())
+}
+
+func (c *Dialog) CloseDialog() {
+	c.visible.Set(false)
 }

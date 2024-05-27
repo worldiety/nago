@@ -13,13 +13,13 @@ func Permissions() []Permission {
 // Permission represents a permission to call a distinct use case. It provides method accessors,
 // so that other permission consumers can accept their own interfaces.
 type Permission struct {
-	id   string
-	name string
-	desc string
+	identity string
+	name     string
+	desc     string
 }
 
-func (p Permission) ID() string {
-	return p.id
+func (p Permission) Identity() string {
+	return p.identity
 }
 
 func (p Permission) Name() string {
