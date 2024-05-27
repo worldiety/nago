@@ -22,6 +22,9 @@ const props = defineProps<{
 }>();
 
 const modalsByTimestamp = computed((): Dialog[] => {
+	if (!props.ui.modals.v) {
+		return [];
+	}
 	return props.ui.modals.v
 		.flatMap((component) => {
 			return component.type === 'Dialog' ? [component as Dialog] : [];
