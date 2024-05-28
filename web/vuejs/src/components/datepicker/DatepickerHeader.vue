@@ -4,7 +4,7 @@
 		<div class="flex justify-between items-center gap-x-2">
 			<p class="truncate">{{ label }}</p>
 			<div
-				class="effect-hover flex justify-center items-center rounded-full size-8 shrink-0 grow-0"
+				class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8 shrink-0 grow-0"
 				tabindex="0"
 				@click="$emit('close')"
 				@keydown.enter="$emit('close')"

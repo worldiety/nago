@@ -7,7 +7,7 @@
 				<!-- Datepicker content -->
 				<div class="flex justify-between items-center mb-4 h-8">
 					<div
-						class="effect-hover flex justify-center items-center rounded-full size-8"
+						class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8"
 						tabindex="0"
 						@click="decreaseMonth"
 						@keydown.enter="decreaseMonth"
@@ -16,7 +16,7 @@
 					</div>
 					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-default rounded-l-md w-full h-full px-2">
+							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white dark:bg-darkmode-gray text-right cursor-pointer rounded-l-md w-full h-full px-2">
 								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
 									{{ monthEntry[1] }}
 								</option>
@@ -27,7 +27,7 @@
 						</div>
 					</div>
 					<div
-						class="effect-hover flex justify-center items-center rounded-full size-8"
+						class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8"
 						tabindex="0"
 						@click="increaseMonth"
 						@keydown.enter="increaseMonth"
@@ -56,7 +56,7 @@
 						}"
 					>
 						<div
-							class="day effect-hover flex justify-center items-center cursor-default"
+							class="day effect-hover flex justify-center items-center cursor-pointer"
 							:class="{
 							'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,

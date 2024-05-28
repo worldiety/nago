@@ -186,6 +186,12 @@ function selectEndDate(selectedDate: Date): void {
 }
 
 function submitSelection(): void {
-	serviceAdapter.executeFunctions(props.ui.onSelectionChanged);
+	serviceAdapter.setPropertiesAndCallFunctions([
+			{
+				...props.ui.expanded,
+				v: false,
+			},
+		], [props.ui.onSelectionChanged],
+	);
 }
 </script>
