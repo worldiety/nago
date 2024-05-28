@@ -1,17 +1,39 @@
 progress {
-	@apply appearance-none border-none bg-disabled-background text-ora-orange rounded-full h-1;
+	@apply appearance-none border-none bg-disabled-background text-ora-orange rounded-full h-1 w-full;
 	@apply dark:bg-disabled-text;
 }
 
-progress::-webkit-progress-bar {
+progress[value]::-webkit-progress-bar {
 	@apply bg-disabled-background rounded-full;
 	@apply dark:bg-disabled-text;
 }
 
-progress::-moz-progress-bar {
+progress[value]::-moz-progress-bar {
 	@apply bg-ora-orange rounded-full;
 }
 
-progress::-webkit-progress-value {
+progress[value]::-webkit-progress-value {
 	@apply bg-ora-orange rounded-full;
+}
+
+/* https://css-tricks.com/stripes-css/ */
+progress:not([value])::-moz-progress-bar {
+	background: repeating-linear-gradient(
+		-55deg,
+		theme(colors.ora-orange),
+		theme(colors.ora-orange) 10px,
+		theme(colors.ora-orange / 75%) 10px,
+		theme(colors.ora-orange / 75%) 20px
+	);
+}
+
+progress:not([value])::-webkit-progress-bar {
+	@apply rounded-full;
+	background: repeating-linear-gradient(
+		-55deg,
+		theme(colors.ora-orange),
+		theme(colors.ora-orange) 10px,
+		theme(colors.ora-orange / 75%) 10px,
+		theme(colors.ora-orange / 75%) 20px
+	);
 }
