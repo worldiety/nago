@@ -1,39 +1,37 @@
 <template>
-	<div v-if="ui.visible.v">
-		<div class="relative" >
-			<!-- Input field -->
-			<InputWrapper
-				:label="props.ui.label.v"
-				:error="props.ui.error.v"
-				:hint="props.ui.hint.v"
-				:disabled="props.ui.disabled.v"
+	<div class="relative" >
+		<!-- Input field -->
+		<InputWrapper
+			:label="props.ui.label.v"
+			:error="props.ui.error.v"
+			:hint="props.ui.hint.v"
+			:disabled="props.ui.disabled.v"
+		>
+			<div
+				class="input-field flex justify-between gap-x-4 items-center cursor-default focus:bg-white dark:active:bg-ora-dropdown-background"
+				:tabindex="props.ui.disabled.v ? '-1': '0'"
+				@click="dropdownClicked(false)"
+				@keydown.enter="dropdownClicked(true)"
 			>
-				<div
-					class="input-field flex justify-between gap-x-4 items-center cursor-default focus:bg-white dark:active:bg-ora-dropdown-background"
-					:tabindex="props.ui.disabled.v ? '-1': '0'"
-					@click="dropdownClicked(false)"
-					@keydown.enter="dropdownClicked(true)"
-				>
-					<div v-if="selectedItemNames" class="truncate text-black dark:text-white pr-6">{{ selectedItemNames}}</div>
-					<div v-else class="truncate text-placeholder-text">{{ $t('dropdown.select') }}</div>
-					<ArrowDown class="absolute shrink-0 grow-0 duration-100 w-3.5 right-3" :class="{'rotate-180': props.ui.expanded.v}" />
-				</div>
-			</InputWrapper>
+				<div v-if="selectedItemNames" class="truncate text-black dark:text-white pr-6">{{ selectedItemNames}}</div>
+				<div v-else class="truncate text-placeholder-text">{{ $t('dropdown.select') }}</div>
+				<ArrowDown class="absolute shrink-0 grow-0 duration-100 w-3.5 right-3" :class="{'rotate-180': props.ui.expanded.v}" />
+			</div>
+		</InputWrapper>
 
-			<!-- Dropdown content -->
-			<div ref="dropdownOptions">
-				<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
-					<ui-dropdown-searchfilter  v-if="props.ui.searchable.v" @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
-					<ui-dropdown-item
-						v-for="(dropdownItem, index) in itemsFiltered"
-						:key="index"
-						:ui="dropdownItem"
-						:multiselect="props.ui.multiselect.v"
-						:selected="isSelected(dropdownItem)"
-					/>
-					<div v-if="props.ui.multiselect.v" class="flex justify-center p-2">
-						<button class="button-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
-					</div>
+		<!-- Dropdown content -->
+		<div ref="dropdownOptions">
+			<div v-if="props.ui.expanded.v" class="absolute bg-white top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40 dark:bg-ora-dropdown-background">
+				<ui-dropdown-searchfilter  v-if="props.ui.searchable.v" @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
+				<ui-dropdown-item
+					v-for="(dropdownItem, index) in itemsFiltered"
+					:key="index"
+					:ui="dropdownItem"
+					:multiselect="props.ui.multiselect.v"
+					:selected="isSelected(dropdownItem)"
+				/>
+				<div v-if="props.ui.multiselect.v" class="flex justify-center p-2">
+					<button class="button-primary w-full max-w-64" @click="dropdownClicked(true)">Schließen</button>
 				</div>
 			</div>
 		</div>
