@@ -13,5 +13,6 @@ type TextField struct {
 	Disabled      Property[bool]   `json:"disabled"`
 	Simple        Property[bool]   `json:"simple"` // TODO what is that? Better use a documented enum?
 	OnTextChanged Property[Ptr]    `json:"onTextChanged"`
+	Visible       Property[bool]   `json:"visible"`
 	component
 }

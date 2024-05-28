@@ -6,5 +6,6 @@ type Image struct {
 	Type    ComponentType    `json:"type" value:"Image"`
 	URI     Property[URI]    `json:"uri"`
 	Caption Property[string] `json:"caption"`
+	Visible Property[bool]   `json:"visible"`
 	component
 }

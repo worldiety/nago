@@ -18,5 +18,6 @@ export interface NumberField {
     disabled: Property<boolean>;
     simple: Property<boolean>;
     onValueChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

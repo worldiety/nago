@@ -14,5 +14,6 @@ export interface Chip {
     action: Property<Ptr>;
     onClose: Property<Ptr>;
     color: Property<string>;
+    visible: Property<boolean>;
 }
 

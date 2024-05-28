@@ -8,5 +8,6 @@ type Toggle struct {
 	Checked          Property[bool]   `json:"checked"`
 	Disabled         Property[bool]   `json:"disabled"`
 	OnCheckedChanged Property[Ptr]    `json:"onCheckedChanged"`
+	Visible          Property[bool]   `json:"visible"`
 	component
 }

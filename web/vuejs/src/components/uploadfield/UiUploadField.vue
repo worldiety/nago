@@ -1,4 +1,4 @@
-<template>
+<template v-if="ui.visible.v">
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>

@@ -20,6 +20,7 @@ function checkboxSelected(): void {
 
 <template>
 	<div
+		v-if="ui.visible.v"
 		class="input-checkbox rounded-full w-fit -ml-2.5"
 		:class="{'input-checkbox-disabled': ui.disabled.v}"
 		:tabindex="ui.disabled.v ? '-1' : '0'"

@@ -31,7 +31,7 @@ func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
 	return o
 }
 
-func (o *Options[E]) Delete(f func(E) error) {
+func (o *Options[E]) OnDelete(f func(E) error) {
 	o.AggregateActions = append(o.AggregateActions, AggregateAction[E]{
 		Icon:    icon.Trash,
 		Caption: "",
@@ -44,6 +44,62 @@ func (o *Options[E]) Delete(f func(E) error) {
 			return nil
 		},
 		Style: ora.Destructive,
+	})
+
+}
+
+func (o *Options[E]) OnUpdate(f func(E) error) {
+	opts := o
+	o.AggregateActions = append(o.AggregateActions, AggregateAction[E]{
+		Icon: icon.Pencil,
+		Action: func(owner ui.ModalOwner, e E) error {
+			ui.NewDialog(func(dlg *ui.Dialog) {
+				dlg.Title().Set("Eintrag bearbeiten")
+				form := opts.Binding.NewForm(Update)
+				dlg.Body().Set(form.Component)
+				// push actual model data into the view
+				for _, field := range form.Fields {
+					field.FromModel(e)
+				}
+
+				dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
+					ui.HStackAlignRight(hstack)
+					hstack.Append(ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("Abbrechen")
+						btn.Style().Set(ora.Secondary)
+						btn.Action().Set(func() {
+							owner.Modals().Remove(dlg)
+						})
+					}))
+					hstack.Append(ui.NewButton(func(btn *ui.Button) {
+						btn.Caption().Set("Aktualisieren")
+						btn.Action().Set(func() {
+							for _, field := range form.Fields {
+								m, err := field.IntoModel(e)
+								if err != nil {
+									field.SetError(err.Error())
+								} else {
+									field.SetError("")
+								}
+
+								e = m
+							}
+
+							if err := f(e); err != nil {
+								xdialog.HandleError(owner, "Speichern nicht möglich.", err)
+							} else {
+								owner.Modals().Remove(dlg)
+							}
+
+						})
+					}))
+				}))
+				owner.Modals().Append(dlg)
+			})
+
+			return nil
+		},
+		Style: ora.Primary,
 	})
 }
 
@@ -97,7 +153,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					btn.Action().Set(func() {
 						ui.NewDialog(func(dlg *ui.Dialog) {
 							dlg.Title().Set("Neuer Eintrag")
-							dlg.Body().Set(opts.Binding.Form())
+							form := opts.Binding.NewForm(Create)
+							dlg.Body().Set(form.Component)
 							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
 								ui.HStackAlignRight(hstack)
 								hstack.Append(ui.NewButton(func(btn *ui.Button) {
@@ -111,12 +168,12 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 									btn.Caption().Set("Erstellen")
 									btn.Action().Set(func() {
 										var model E
-										for _, field := range opts.Binding.fields {
-											m, err := field.Form.IntoModel(model)
+										for _, field := range form.Fields {
+											m, err := field.IntoModel(model)
 											if err != nil {
-												field.Form.SetError(err.Error())
+												field.SetError(err.Error())
 											} else {
-												field.Form.SetError("")
+												field.SetError("")
 											}
 
 											model = m

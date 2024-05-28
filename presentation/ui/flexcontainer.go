@@ -49,7 +49,7 @@ func NewHStack(with func(hstack *FlexContainer)) *FlexContainer {
 	f := NewFlexContainer(nil)
 	f.orientation.Set(ora.OrientationHorizontal)
 	f.contentAlignment.Set(ora.ContentStart) // here: vertical align, center each item on base line
-	f.itemsAlignment.Set(ora.ItemsStart)     // here: horizontal align: left
+	f.itemsAlignment.Set(ora.ItemsCenter)    // here: horizontal align: left
 	f.elementSize.Set(ora.ElementSizeAuto)   // auto size each item
 	if with != nil {
 		with(f)

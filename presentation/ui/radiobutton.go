@@ -10,6 +10,7 @@ type Radiobutton struct {
 	selected   Bool
 	onClicked  *Func
 	disabled   Bool
+	visible    Bool
 	properties []core.Property
 }
 
@@ -19,9 +20,11 @@ func NewRadiobutton(with func(rab *Radiobutton)) *Radiobutton {
 		selected:  NewShared[bool]("selected"),
 		onClicked: NewFunc("action"),
 		disabled:  NewShared[bool]("disabled"),
+		visible:   NewShared[bool]("visible"),
 	}
 
-	r.properties = []core.Property{r.selected, r.onClicked, r.disabled}
+	r.properties = []core.Property{r.selected, r.onClicked, r.disabled, r.visible}
+	r.visible.Set(true)
 	if with != nil {
 		with(r)
 	}
@@ -52,6 +55,10 @@ func (r *Radiobutton) OnClicked() *Func {
 
 func (r *Radiobutton) Disabled() Bool {
 	return r.disabled
+}
+
+func (r *Radiobutton) Visible() Bool {
+	return r.visible
 }
 
 func (r *Radiobutton) renderRadiobutton() ora.Radiobutton {

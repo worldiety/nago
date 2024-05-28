@@ -8,6 +8,9 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
+/**
+ * deprecated: use flexcontainer
+ */
 export interface VBox {
     id /*Ptr*/: Ptr;
     type: 'VBox'/*ComponentType*/;

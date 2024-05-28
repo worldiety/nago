@@ -16,10 +16,28 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 		opts.Create = func(role iam.Role) error {
 			return service.CreateRole(subject, role)
 		}
-		opts.Delete(func(role iam.Role) error {
+		opts.OnDelete(func(role iam.Role) error {
 			return service.DeleteRole(subject, role.ID)
 		})
+		opts.OnUpdate(func(role iam.Role) error {
+			return service.UpdateRole(subject, role)
+		})
 		opts.Binding = crud.NewBinding[iam.Role](func(bnd *crud.Binding[iam.Role]) {
+			crud.Text(bnd, crud.Field[iam.Role, string]{
+				Caption: "ID",
+				Stringer: func(role iam.Role) string {
+					return string(role.ID)
+				},
+				IntoModel: func(model iam.Role, value string) (iam.Role, error) {
+					model.ID = auth.RID(value)
+					return model, nil
+				},
+				RenderHints: crud.RenderHints{
+					crud.Update: crud.ReadOnly,
+					crud.Create: crud.Hidden,
+				},
+			})
+
 			crud.Text(bnd, crud.Field[iam.Role, string]{
 				Caption: "Name",
 				Stringer: func(role iam.Role) string {

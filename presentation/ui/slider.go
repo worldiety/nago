@@ -22,6 +22,7 @@ type Slider struct {
 	showLabel        Bool
 	labelSuffix      String
 	showTickMarks    Bool
+	visible          Bool
 	onChanged        *Func
 	properties       []core.Property
 }
@@ -44,11 +45,12 @@ func NewSlider(with func(slider *Slider)) *Slider {
 		showLabel:        NewShared[bool]("showLabel"),
 		labelSuffix:      NewShared[string]("labelSuffix"),
 		showTickMarks:    NewShared[bool]("showTickMarks"),
+		visible:          NewShared[bool]("visible"),
 		onChanged:        NewFunc("onChanged"),
 	}
 
-	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.rangeMode, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged}
-
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.rangeMode, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -115,6 +117,10 @@ func (c *Slider) ShowTickMarks() Bool {
 
 func (c *Slider) OnChanged() *Func { return c.onChanged }
 
+func (c *Slider) Visible() Bool {
+	return c.visible
+}
+
 func (c *Slider) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -146,6 +152,7 @@ func (c *Slider) render() ora.Slider {
 		ShowLabel:        c.showLabel.render(),
 		LabelSuffix:      c.labelSuffix.render(),
 		ShowTickMarks:    c.showTickMarks.render(),
+		Visible:          c.visible.render(),
 		OnChanged:        renderFunc(c.onChanged),
 	}
 }

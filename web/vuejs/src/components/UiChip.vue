@@ -51,6 +51,7 @@ const innerColor = computed<string>(() => {
 
 <template>
 	<span
+		v-if="ui.visible.v"
 		@click="onClick"
 		:class="outerColor"
 		class="me-2 inline-flex items-center rounded px-2 py-1 text-sm font-medium"

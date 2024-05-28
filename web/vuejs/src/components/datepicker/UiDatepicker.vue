@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-if="ui.visible.v">
 		<div class="relative">
 			<!-- Input field -->
 			<InputWrapper

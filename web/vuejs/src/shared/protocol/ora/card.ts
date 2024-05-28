@@ -13,5 +13,6 @@ export interface Card {
     type: 'Card'/*ComponentType*/;
     children: Property<Component[]>;
     action: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

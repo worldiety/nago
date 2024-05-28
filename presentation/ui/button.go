@@ -13,6 +13,7 @@ type Button struct {
 	color      *Shared[Color]
 	action     *Func
 	disabled   Bool
+	visible    Bool
 	properties []core.Property
 }
 
@@ -31,11 +32,13 @@ func NewButton(with func(btn *Button)) *Button {
 		postIcon: NewShared[SVGSrc]("postIcon"),
 		color:    NewShared[Color]("color"),
 		disabled: NewShared[bool]("disabled"),
+		visible:  NewShared[bool]("visible"),
 		action:   NewFunc("action"),
 	}
 
-	c.properties = []core.Property{c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action}
+	c.properties = []core.Property{c.caption, c.preIcon, c.postIcon, c.color, c.disabled, c.action, c.visible}
 	c.Style().Set(ora.Primary) // the default style is undefined, so make it primary by default
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -78,6 +81,10 @@ func (c *Button) Disabled() Bool {
 	return c.disabled
 }
 
+func (c *Button) Visible() Bool {
+	return c.visible
+}
+
 func (c *Button) Render() ora.Component {
 	return c.renderButton()
 }
@@ -91,6 +98,7 @@ func (c *Button) renderButton() ora.Button {
 		PostIcon: c.postIcon.render(),
 		Color:    c.color.render(),
 		Disabled: c.disabled.render(),
+		Visible:  c.visible.render(),
 		Action:   renderFunc(c.action),
 	}
 }

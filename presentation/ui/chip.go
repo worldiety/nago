@@ -11,6 +11,7 @@ type Chip struct {
 	caption    String
 	action     *Func
 	onClose    *Func
+	visible    Bool
 	color      *Shared[Color]
 	properties []core.Property
 }
@@ -21,11 +22,12 @@ func NewChip(with func(chip *Chip)) *Chip {
 		caption: NewShared[string]("caption"),
 		action:  NewFunc("action"),
 		onClose: NewFunc("onClose"),
+		visible: NewShared[bool]("visible"),
 		color:   NewShared[Color]("color"),
 	}
 
-	c.properties = []core.Property{c.caption, c.action, c.onClose, c.color}
-
+	c.properties = []core.Property{c.caption, c.action, c.onClose, c.color, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -47,6 +49,10 @@ func (c *Chip) Action() *Func {
 
 func (c *Chip) OnClose() *Func {
 	return c.onClose
+}
+
+func (c *Chip) Visible() Bool {
+	return c.visible
 }
 
 // TODO TBD: red, green, yellow
@@ -73,6 +79,7 @@ func (c *Chip) render() ora.Chip {
 		Caption: c.caption.render(),
 		Action:  renderFunc(c.action),
 		OnClose: renderFunc(c.onClose),
+		Visible: c.visible.render(),
 		Color: ora.Property[string]{
 			Ptr:   c.color.id,
 			Value: string(c.color.v),

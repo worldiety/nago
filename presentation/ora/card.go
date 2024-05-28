@@ -6,5 +6,6 @@ type Card struct {
 	Type     ComponentType         `json:"type" value:"Card"`
 	Children Property[[]Component] `json:"children"`
 	Action   Property[Ptr]         `json:"action"`
+	Visible  Property[bool]        `json:"visible"`
 	component
 }

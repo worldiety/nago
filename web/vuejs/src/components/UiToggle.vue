@@ -26,7 +26,7 @@ function onClick() {
 </script>
 
 <template>
-	<div>
+	<div v-if="ui.visible.v">
 		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
 		<div
 			class="toggle-switch-container"

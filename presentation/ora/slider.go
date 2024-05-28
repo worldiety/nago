@@ -20,5 +20,6 @@ type Slider struct {
 	LabelSuffix      Property[string]  `json:"labelSuffix"`
 	ShowTickMarks    Property[bool]    `json:"showTickMarks"`
 	OnChanged        Property[Ptr]     `json:"onChanged"`
+	Visible          Property[bool]    `json:"visible"`
 	component
 }

@@ -14,5 +14,6 @@ export interface Toggle {
     checked: Property<boolean>;
     disabled: Property<boolean>;
     onCheckedChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

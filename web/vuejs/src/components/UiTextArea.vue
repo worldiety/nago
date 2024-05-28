@@ -19,7 +19,7 @@ function isErr(): boolean {
 </script>
 
 <template>
-	<div>
+	<div v-if="ui.visible.v">
 		<label
 			:for="props.ui.id.toString()"
 			:class="isErr() ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'"

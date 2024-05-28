@@ -19,5 +19,6 @@ export interface TextField {
     disabled: Property<boolean>;
     simple: Property<boolean>;
     onTextChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

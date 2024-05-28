@@ -21,5 +21,6 @@ export interface Button {
     color: Property<Intent>;
     disabled: Property<boolean>;
     action: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

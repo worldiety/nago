@@ -20,6 +20,7 @@ function radioButtonClicked(): void {
 
 <template>
 	<div
+		v-if="ui.visible.v"
 		class="input-radio rounded-full w-fit -ml-2.5"
 		:class="{'input-radio-disabled': ui.disabled.v}"
 		:tabindex="ui.disabled.v ? '-1' : '0'"

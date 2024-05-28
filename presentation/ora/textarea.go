@@ -11,5 +11,6 @@ type TextArea struct {
 	Rows          Property[int64]  `json:"rows"`
 	Disabled      Property[bool]   `json:"disabled"`
 	OnTextChanged Property[Ptr]    `json:"onTextChanged"`
+	Visible       Property[bool]   `json:"visible"`
 	component
 }

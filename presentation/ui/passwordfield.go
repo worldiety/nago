@@ -16,6 +16,7 @@ type PasswordField struct {
 	error             String
 	disabled          Bool
 	simple            Bool
+	visible           Bool
 	onPasswordChanged *Func
 	properties        []core.Property
 }
@@ -32,11 +33,12 @@ func NewPasswordField(with func(passwordField *PasswordField)) *PasswordField {
 		disabled:          NewShared[bool]("disabled"),
 		help:              NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		simple:            NewShared[bool]("simple"), // TODO what is that?
+		visible:           NewShared[bool]("visible"),
 		onPasswordChanged: NewFunc("onPasswordChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.revealed, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onPasswordChanged}
-
+	c.properties = []core.Property{c.label, c.value, c.revealed, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onPasswordChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -84,6 +86,10 @@ func (l *PasswordField) Disabled() Bool {
 
 func (l *PasswordField) Simple() Bool { return l.simple }
 
+func (l *PasswordField) Visible() Bool {
+	return l.visible
+}
+
 func (l *PasswordField) Properties(yield func(core.Property) bool) {
 	for _, property := range l.properties {
 		if !yield(property) {
@@ -105,6 +111,7 @@ func (l *PasswordField) Render() ora.Component {
 		Placeholder:       l.placeholder.render(),
 		Disabled:          l.disabled.render(),
 		Simple:            l.simple.render(),
+		Visible:           l.visible.render(),
 		OnPasswordChanged: renderFunc(l.onPasswordChanged),
 	}
 }

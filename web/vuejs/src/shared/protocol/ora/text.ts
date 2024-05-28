@@ -17,5 +17,6 @@ export interface Text {
     onClick: Property<Ptr>;
     onHoverStart: Property<Ptr>;
     onHoverEnd: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

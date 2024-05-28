@@ -17,5 +17,6 @@ export interface TextArea {
     rows: Property<number /*int64*/>;
     disabled: Property<boolean>;
     onTextChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

@@ -23,6 +23,7 @@ type Datepicker struct {
 	selectedEndYear    Int
 	onClicked          *Func
 	onSelectionChanged *Func
+	visible            Bool
 	properties         []core.Property
 }
 
@@ -45,9 +46,11 @@ func NewDatepicker(with func(datepicker *Datepicker)) *Datepicker {
 		selectedEndYear:    NewShared[int64]("selectedEndYear"),
 		onClicked:          NewFunc("onClicked"),
 		onSelectionChanged: NewFunc("onSelectionChanged"),
+		visible:            NewShared[bool]("visible"),
 	}
 
-	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.endDateSelected, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged}
+	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.expanded, c.rangeMode, c.startDateSelected, c.selectedStartDay, c.selectedStartMonth, c.selectedStartYear, c.endDateSelected, c.selectedEndDay, c.selectedEndMonth, c.selectedEndYear, c.onClicked, c.onSelectionChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -122,6 +125,10 @@ func (c *Datepicker) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (c *Datepicker) Visible() Bool {
+	return c.visible
+}
+
 func (c *Datepicker) Render() ora.Component {
 	return c.render()
 }
@@ -146,5 +153,6 @@ func (c *Datepicker) render() ora.DatePicker {
 		SelectedEndYear:    c.selectedEndYear.render(),
 		OnClicked:          renderFunc(c.onClicked),
 		OnSelectionChanged: renderFunc(c.onSelectionChanged),
+		Visible:            c.visible.render(),
 	}
 }

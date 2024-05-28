@@ -14,6 +14,7 @@ type NumberField struct {
 	error          String
 	simple         Bool
 	disabled       Bool
+	visible        Bool
 	onValueChanged *Func
 	properties     []core.Property
 }
@@ -28,11 +29,12 @@ func NewNumberField(with func(numberField *NumberField)) *NumberField {
 		error:          NewShared[string]("error"),
 		simple:         NewShared[bool]("simple"),
 		disabled:       NewShared[bool]("disabled"),
+		visible:        NewShared[bool]("visible"),
 		onValueChanged: NewFunc("onValueChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.error, c.simple, c.disabled, c.disabled, c.onValueChanged}
-
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.error, c.simple, c.disabled, c.disabled, c.onValueChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -74,6 +76,10 @@ func (l *NumberField) Disabled() Bool {
 	return l.disabled
 }
 
+func (l *NumberField) Visible() Bool {
+	return l.visible
+}
+
 func (l *NumberField) Type() ora.ComponentType {
 	return ora.NumberFieldT
 }
@@ -101,6 +107,7 @@ func (l *NumberField) render() ora.NumberField {
 		Placeholder:    l.placeholder.render(),
 		Disabled:       l.disabled.render(),
 		Simple:         l.simple.render(),
+		Visible:        l.visible.render(),
 		OnValueChanged: renderFunc(l.onValueChanged),
 	}
 }

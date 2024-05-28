@@ -20,5 +20,6 @@ export interface PasswordField {
     disabled: Property<boolean>;
     simple: Property<boolean>;
     onPasswordChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

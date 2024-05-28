@@ -44,7 +44,7 @@ const iconOnly = computed<boolean>(() => {
 </script>
 
 <template>
-	<button :class="buttonClasses" :disabled="props.ui.disabled.v" @click="onClick">
+	<button v-if="ui.visible.v" :class="buttonClasses" :disabled="props.ui.disabled.v" @click="onClick">
 		<svg v-if="iconOnly" v-inline class="h-4 w-4" v-html="props.ui.preIcon.v"></svg>
 		<template v-else>
 			<svg v-if="props.ui.preIcon.v" class="mr-2 h-4 w-4" v-html="props.ui.preIcon.v"></svg>

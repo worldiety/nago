@@ -11,6 +11,7 @@ type TextArea struct {
 	value         String
 	hint          String
 	error         String
+	visible       Bool
 	rows          Int
 	disabled      Bool
 	onTextChanged *Func
@@ -26,11 +27,12 @@ func NewTextArea(with func(textArea *TextArea)) *TextArea {
 		error:         NewShared[string]("error"),
 		disabled:      NewShared[bool]("disabled"),
 		rows:          NewShared[int64]("rows"),
+		visible:       NewShared[bool]("visible"),
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged, c.rows}
-
+	c.properties = []core.Property{c.label, c.value, c.hint, c.error, c.disabled, c.disabled, c.onTextChanged, c.rows, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -66,6 +68,10 @@ func (c *TextArea) Disabled() Bool {
 	return c.disabled
 }
 
+func (c *TextArea) Visible() Bool {
+	return c.visible
+}
+
 func (c *TextArea) Type() string {
 	return "TextArea"
 }
@@ -96,6 +102,7 @@ func (c *TextArea) render() ora.TextArea {
 		Value:         c.value.render(),
 		Rows:          c.rows.render(),
 		Disabled:      c.disabled.render(),
+		Visible:       c.visible.render(),
 		OnTextChanged: renderFunc(c.onTextChanged),
 	}
 }

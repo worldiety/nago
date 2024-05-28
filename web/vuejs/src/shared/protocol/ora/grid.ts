@@ -13,7 +13,7 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * 
  * I vote for deletion, but what is the replacement?
  * 
- * deprecated
+ * deprecated: use flexcontainer
  */
 export interface Grid {
     id /*Ptr*/: Ptr;

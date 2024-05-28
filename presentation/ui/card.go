@@ -9,6 +9,7 @@ type Card struct {
 	id         ora.Ptr
 	children   *SharedList[core.Component]
 	properties []core.Property
+	visible    Bool
 	action     *Func
 }
 
@@ -17,9 +18,11 @@ func NewCard(with func(card *Card)) *Card {
 		id:       nextPtr(),
 		children: NewSharedList[core.Component]("children"),
 		action:   NewFunc("action"),
+		visible:  NewShared[bool]("visible"),
 	}
 
-	c.properties = []core.Property{c.children, c.action}
+	c.properties = []core.Property{c.children, c.action, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -47,6 +50,10 @@ func (c *Card) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (c *Card) Visible() Bool {
+	return c.visible
+}
+
 func (c *Card) Render() ora.Component {
 	return c.render()
 }
@@ -57,5 +64,6 @@ func (c *Card) render() ora.Card {
 		Type:     ora.CardT,
 		Children: renderSharedListComponents(c.children),
 		Action:   renderFunc(c.action),
+		Visible:  c.visible.render(),
 	}
 }

@@ -8,5 +8,6 @@ type Checkbox struct {
 	Selected  Property[bool] `json:"selected"`
 	OnClicked Property[Ptr]  `json:"onClicked"`
 	Disabled  Property[bool] `json:"disabled"`
+	Visible   Property[bool] `json:"visible"`
 	component
 }

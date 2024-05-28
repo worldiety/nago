@@ -11,6 +11,7 @@ type Toggle struct {
 	label            String
 	checked          Bool
 	disabled         Bool
+	visible          Bool
 	properties       []core.Property
 	onCheckedChanged *Func
 }
@@ -21,10 +22,12 @@ func NewToggle(with func(tgl *Toggle)) *Toggle {
 		label:            NewShared[string]("label"),
 		disabled:         NewShared[bool]("disabled"),
 		checked:          NewShared[bool]("checked"),
+		visible:          NewShared[bool]("visible"),
 		onCheckedChanged: NewFunc("onCheckedChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.disabled, c.checked, c.onCheckedChanged}
+	c.properties = []core.Property{c.label, c.disabled, c.checked, c.onCheckedChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -63,6 +66,10 @@ func (c *Toggle) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (c *Toggle) Visible() Bool {
+	return c.visible
+}
+
 func (c *Toggle) Render() ora.Component {
 	return c.render()
 }
@@ -75,5 +82,6 @@ func (c *Toggle) render() ora.Toggle {
 		Checked:          c.checked.render(),
 		Disabled:         c.disabled.render(),
 		OnCheckedChanged: renderFunc(c.onCheckedChanged),
+		Visible:          c.visible.render(),
 	}
 }

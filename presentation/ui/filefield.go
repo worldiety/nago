@@ -19,6 +19,7 @@ type FileField struct {
 	maxBytes     Int
 	disabled     Bool
 	filter       String
+	visible      Bool
 	properties   []core.Property
 	fileReceiver func(iter.Seq2[core.File, error]) error
 }
@@ -35,11 +36,12 @@ func NewFileField(with func(fileField *FileField)) *FileField {
 		multiple:  NewShared[bool]("multiple"),
 		maxBytes:  NewShared[int64]("maxBytes"),
 		filter:    NewShared[string]("filter"),
+		visible:   NewShared[bool]("visible"),
 	}
 	c.maxBytes.Set(1024 * 1024 * 16)
 
-	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.maxBytes, c.filter}
-
+	c.properties = []core.Property{c.label, c.value, c.hintLeft, c.hintRight, c.error, c.disabled, c.disabled, c.multiple, c.maxBytes, c.filter, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -107,6 +109,10 @@ func (c *FileField) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (c *FileField) Visible() Bool {
+	return c.visible
+}
+
 func (c *FileField) Render() ora.Component {
 	return c.render()
 }
@@ -123,5 +129,6 @@ func (c *FileField) render() ora.FileField {
 		Filter:    c.filter.render(),
 		Multiple:  c.Multiple().render(),
 		MaxBytes:  c.maxBytes.render(),
+		Visible:   c.visible.render(),
 	}
 }

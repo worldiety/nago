@@ -26,5 +26,6 @@ export interface DatePicker {
     selectedEndYear: Property<number /*int64*/>;
     onClicked: Property<Ptr>;
     onSelectionChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

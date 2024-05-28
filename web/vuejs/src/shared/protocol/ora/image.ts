@@ -13,5 +13,6 @@ export interface Image {
     type: 'Image'/*ComponentType*/;
     uri /*URI*/: Property<URI>;
     caption: Property<string>;
+    visible: Property<boolean>;
 }
 

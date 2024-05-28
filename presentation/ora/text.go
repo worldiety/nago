@@ -11,6 +11,7 @@ type Text struct {
 	OnClick      Property[Ptr]    `json:"onClick"`
 	OnHoverStart Property[Ptr]    `json:"onHoverStart"`
 	OnHoverEnd   Property[Ptr]    `json:"onHoverEnd"`
+	Visible      Property[bool]   `json:"visible"`
 
 	component
 }

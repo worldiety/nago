@@ -15,6 +15,7 @@ type TextField struct {
 	error         String
 	disabled      Bool
 	simple        Bool
+	visible       Bool
 	onTextChanged *Func
 	properties    []core.Property
 }
@@ -30,11 +31,12 @@ func NewTextField(with func(textField *TextField)) *TextField {
 		disabled:      NewShared[bool]("disabled"),
 		help:          NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
 		simple:        NewShared[bool]("simple"), // TODO what is that?
+		visible:       NewShared[bool]("visible"),
 		onTextChanged: NewFunc("onTextChanged"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged}
-
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -86,6 +88,10 @@ func (l *TextField) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (l *TextField) Visible() Bool {
+	return l.visible
+}
+
 func (l *TextField) Render() ora.Component {
 	return ora.TextField{
 		Ptr:           l.id,
@@ -98,6 +104,7 @@ func (l *TextField) Render() ora.Component {
 		Placeholder:   l.placeholder.render(),
 		Disabled:      l.disabled.render(),
 		Simple:        l.simple.render(),
+		Visible:       l.visible.render(),
 		OnTextChanged: renderFunc(l.onTextChanged),
 	}
 }

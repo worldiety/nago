@@ -13,6 +13,7 @@ type Image struct {
 	source     func() (io.Reader, error)
 	caption    String
 	properties []core.Property
+	visible    Bool
 }
 
 func NewImage(with func(img *Image)) *Image {
@@ -20,10 +21,12 @@ func NewImage(with func(img *Image)) *Image {
 		id:      nextPtr(),
 		uri:     NewShared[ora.URI]("url"),
 		caption: NewShared[string]("caption"),
+		visible: NewShared[bool]("visible"),
 	}
 
-	c.properties = []core.Property{c.uri, c.caption}
+	c.properties = []core.Property{c.uri, c.caption, c.visible}
 
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -55,6 +58,10 @@ func (c *Image) Caption() String {
 	return c.caption
 }
 
+func (c *Image) Visible() Bool {
+	return c.visible
+}
+
 func (c *Image) Properties(yield func(core.Property) bool) {
 	for _, property := range c.properties {
 		if !yield(property) {
@@ -73,5 +80,6 @@ func (c *Image) render() ora.Image {
 		Type:    ora.ImageT,
 		URI:     c.uri.render(),
 		Caption: c.caption.render(),
+		Visible: c.visible.render(),
 	}
 }

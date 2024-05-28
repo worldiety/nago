@@ -11,6 +11,7 @@ type Text struct {
 	color        *Shared[Color]
 	colorDark    *Shared[Color]
 	size         *Shared[Size]
+	visible      Bool
 	properties   []core.Property
 	onClick      *Func
 	onHoverStart *Func
@@ -29,7 +30,9 @@ func NewText(with func(*Text)) *Text {
 	c.size = NewShared[Size]("size")
 	c.color = NewShared[Color]("color")
 	c.colorDark = NewShared[Color]("colorDark")
-	c.properties = []core.Property{c.value, c.color, c.colorDark, c.size, c.onClick, c.onHoverStart, c.onHoverEnd}
+	c.visible = NewShared[bool]("visible")
+	c.properties = []core.Property{c.value, c.color, c.colorDark, c.size, c.onClick, c.onHoverStart, c.onHoverEnd, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -83,6 +86,10 @@ func (c *Text) Properties(yield func(core.Property) bool) {
 	}
 }
 
+func (c *Text) Visible() Bool {
+	return c.visible
+}
+
 func (c *Text) Render() ora.Component {
 	return ora.Text{
 		Ptr:   c.id,
@@ -103,5 +110,6 @@ func (c *Text) Render() ora.Component {
 		OnClick:      renderFunc(c.onClick),
 		OnHoverStart: renderFunc(c.onHoverStart),
 		OnHoverEnd:   renderFunc(c.onHoverEnd),
+		Visible:      c.visible.render(),
 	}
 }

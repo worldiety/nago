@@ -31,7 +31,7 @@ function clearInputValue(): void {
 </script>
 
 <template>
-	<div>
+	<div v-if="ui.visible.v">
 		<InputWrapper
 			:simple="props.ui.simple.v"
 			:label="props.ui.label.v"

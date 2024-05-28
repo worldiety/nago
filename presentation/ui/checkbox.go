@@ -10,6 +10,7 @@ type Checkbox struct {
 	selected   Bool
 	onClicked  *Func
 	disabled   Bool
+	visible    Bool
 	properties []core.Property
 }
 
@@ -19,9 +20,11 @@ func NewCheckbox(with func(chb *Checkbox)) *Checkbox {
 		selected:  NewShared[bool]("selected"),
 		onClicked: NewFunc("action"),
 		disabled:  NewShared[bool]("disabled"),
+		visible:   NewShared[bool]("visible"),
 	}
 
-	c.properties = []core.Property{c.selected, c.onClicked, c.disabled}
+	c.properties = []core.Property{c.selected, c.onClicked, c.disabled, c.visible}
+	c.visible.Set(true)
 	if with != nil {
 		with(c)
 	}
@@ -54,12 +57,17 @@ func (c *Checkbox) Disabled() Bool {
 	return c.disabled
 }
 
+func (c *Checkbox) Visible() Bool {
+	return c.visible
+}
+
 func (c *Checkbox) renderCheckbox() ora.Checkbox {
 	return ora.Checkbox{
 		Ptr:       c.id,
 		Type:      ora.CheckboxT,
 		Disabled:  c.disabled.render(),
 		Selected:  c.selected.render(),
+		Visible:   c.visible.render(),
 		OnClicked: renderFunc(c.onClicked),
 	}
 }

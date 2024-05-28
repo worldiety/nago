@@ -11,5 +11,6 @@ type Button struct {
 	Color    Property[Intent] `json:"color"`
 	Disabled Property[bool]   `json:"disabled"`
 	Action   Property[Ptr]    `json:"action"`
+	Visible  Property[bool]   `json:"visible"`
 	component
 }

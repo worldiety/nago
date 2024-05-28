@@ -57,3 +57,11 @@ func (s *Service) DeleteRole(subject auth.Subject, id auth.RID) error {
 
 	return s.roles.DeleteByID(id)
 }
+
+func (s *Service) UpdateRole(subject auth.Subject, role Role) error {
+	if err := subject.Audit(UpdateRole); err != nil {
+		return err
+	}
+
+	return s.roles.Save(role)
+}

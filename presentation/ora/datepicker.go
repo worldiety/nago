@@ -20,5 +20,6 @@ type DatePicker struct {
 	SelectedEndYear    Property[int64]  `json:"selectedEndYear"`
 	OnClicked          Property[Ptr]    `json:"onClicked"`
 	OnSelectionChanged Property[Ptr]    `json:"onSelectionChanged"`
+	Visible            Property[bool]   `json:"visible"`
 	component
 }

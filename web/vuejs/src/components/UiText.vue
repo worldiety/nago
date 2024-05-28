@@ -45,7 +45,7 @@ function onMouseLeave() {
 </script>
 
 <template>
-	<span :class="clazz" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">{{
+	<span v-if="ui.visible.v" :class="clazz" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">{{
 		props.ui.value.v
 	}}</span>
 </template>

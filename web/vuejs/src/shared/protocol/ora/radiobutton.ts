@@ -16,5 +16,6 @@ export interface Radiobutton {
     selected: Property<boolean>;
     onClicked: Property<Ptr>;
     disabled: Property<boolean>;
+    visible: Property<boolean>;
 }
 

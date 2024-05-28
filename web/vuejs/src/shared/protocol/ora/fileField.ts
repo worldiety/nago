@@ -18,5 +18,6 @@ export interface FileField {
     filter: Property<string>;
     multiple: Property<boolean>;
     maxBytes: Property<number /*int64*/>;
+    visible: Property<boolean>;
 }
 

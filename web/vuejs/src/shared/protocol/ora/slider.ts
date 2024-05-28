@@ -26,5 +26,6 @@ export interface Slider {
     labelSuffix: Property<string>;
     showTickMarks: Property<boolean>;
     onChanged: Property<Ptr>;
+    visible: Property<boolean>;
 }
 

@@ -20,8 +20,9 @@ func NewBinding[T any](with func(bnd *Binding[T])) *Binding[T] {
 
 func Text[Model any](b *Binding[Model], field Field[Model, string]) {
 	f := anyField[Model]{
-		Caption:  field.Caption,
-		Stringer: field.Stringer,
+		Caption:     field.Caption,
+		Stringer:    field.Stringer,
+		RenderHints: field.RenderHints,
 	}
 
 	if f.Stringer == nil {
@@ -36,52 +37,93 @@ func Text[Model any](b *Binding[Model], field Field[Model, string]) {
 		}
 	}
 
-	f.Form = formElement[Model]{
-		Component: ui.NewTextField(func(textField *ui.TextField) {
+	f.FormFactory = func(variant RenderHint) formElement[Model] {
+		component := ui.NewTextField(func(textField *ui.TextField) {
 			textField.Label().Set(f.Caption)
-		}),
-		FromModel: func(model Model) {
-			f.Form.Component.(*ui.TextField).Value().Set(f.Stringer(model))
-		},
-		IntoModel: func(model Model) (Model, error) {
-			tf := f.Form.Component.(*ui.TextField)
-			return field.IntoModel(model, tf.Value().Get())
-		},
+			switch variant {
+			case Visible:
+				textField.Visible().Set(true)
+			case ReadOnly:
+				textField.Disabled().Set(true)
+			case Hidden:
+				textField.Visible().Set(false)
+			}
+		})
 
-		SetError: func(err string) {
-			f.Form.Component.(*ui.TextField).Error().Set(err)
-		},
+		return formElement[Model]{
+			Component: component,
+			FromModel: func(model Model) {
+				component.Value().Set(f.Stringer(model))
+			},
+			IntoModel: func(model Model) (Model, error) {
+				return field.IntoModel(model, component.Value().Get())
+			},
+
+			SetError: func(err string) {
+				component.Error().Set(err)
+			},
+		}
 	}
 
 	b.fields = append(b.fields, f)
 }
 
-func (b *Binding[T]) Form() core.Component {
-	return ui.NewHStack(func(hstack *ui.FlexContainer) {
+type Form[Model any] struct {
+	Component core.Component
+	Fields    []formElement[Model]
+}
+
+func (b *Binding[T]) NewForm(variant RenderVariant) Form[T] {
+	var fields []formElement[T]
+	root := ui.NewVStack(func(hstack *ui.FlexContainer) {
 		for _, field := range b.fields {
-			hstack.Append(field.Form.Component)
+			hint := field.RenderHints[variant]
+			allocField := field.FormFactory(hint)
+			fields = append(fields, allocField)
+			hstack.Append(allocField.Component)
 		}
 	})
+
+	return Form[T]{
+		Component: root,
+		Fields:    fields,
+	}
 
 }
 
 type Field[Model, Presentation any] struct {
-	Caption   string               // e.g. a caption for a Column or Field rendering
-	Compare   func(a, b Model) int // Compares the two for ordering, if applicable, otherwise nil
-	ReadOnly  bool
-	Hidden    bool
-	Action    func(Model) error // an arbitrary action, instead of a field Rendering
-	Validate  func(Model) error // an arbitrary validation callback. The returned error is shown in the UI
+	Caption     string               // e.g. a caption for a Column or Field rendering
+	Compare     func(a, b Model) int // Compares the two for ordering, if applicable, otherwise nil
+	RenderHints RenderHints
+	//Action      func(Model) error // an arbitrary action, instead of a field Rendering
+	//Validate    func(Model) error // an arbitrary validation callback. The returned error is shown in the UI
 	IntoModel func(model Model, value Presentation) (Model, error)
 	FromModel func(Model) Presentation
 	Stringer  func(Model) string
 }
 
+type RenderVariant int
+
+const (
+	Overview RenderVariant = iota + 1
+	Create
+	Update
+)
+
+type RenderHints map[RenderVariant]RenderHint
+
+type RenderHint int
+
+const (
+	Visible RenderHint = iota
+	ReadOnly
+	Hidden
+)
+
 type anyField[T any] struct {
 	Caption      string
-	Form         formElement[T]
-	ReadOnly     bool
-	Hidden       bool
+	FormFactory  func(variant RenderHint) formElement[T] // we need to allocate that individually
+	RenderHints  RenderHints
 	Sortable     bool
 	CompareField func(a, b T) int
 	IntoModel    func(model T, value any) (T, error)
