@@ -12,5 +12,6 @@ export interface ProgressBar {
     type: 'ProgressBar'/*ComponentType*/;
     max: Property<number /*float64*/>;
     value: Property<number /*float64*/>;
+    showPercentage: Property<boolean>;
 }
 

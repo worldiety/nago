@@ -224,7 +224,8 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewProgressBar(func(progressBar *ui.ProgressBar) {
-
+								progressBar.Max().Set(113.43)
+								progressBar.Value().Set(47.32)
 							}))
 
 							vbox.Append(ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
