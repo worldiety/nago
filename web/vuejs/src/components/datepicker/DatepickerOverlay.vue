@@ -62,8 +62,8 @@
 							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
 						}"
 							tabindex="0"
-							@click="emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year)"
-							@keydown.enter="emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year)"
+							@click="selectDate(datepickerDay)"
+							@keydown.enter="selectDate(datepickerDay)"
 						>
 							<span>{{ datepickerDay.dayOfMonth }}</span>
 						</div>
@@ -77,7 +77,7 @@
 				<button
 					class="button-confirm button-primary"
 					:disabled="!startDateSelected || !endDateSelected"
-					@click="emit('close')"
+					@click="emit('submitSelection')"
 				>
 					{{ t('datepicker.confirm') }}
 				</button>
@@ -114,6 +114,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	(e: 'close'): void;
 	(e: 'select', day: number, month: number, year: number): void;
+	(e: 'submitSelection'): void;
 }>();
 
 const { t } = useI18n();
@@ -339,6 +340,13 @@ function increaseMonth(): void {
 		return;
 	}
 	currentMonthIndex.value += 1;
+}
+
+function selectDate(datepickerDay: DatepickerDay): void {
+	emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+	if (!props.rangeMode) {
+		emit('close');
+	}
 }
 </script>
 
