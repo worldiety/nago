@@ -65,7 +65,7 @@
 							@click="selectDate(datepickerDay)"
 							@keydown.enter="selectDate(datepickerDay)"
 						>
-							<span>{{ datepickerDay.dayOfMonth }}</span>
+							<span class="select-none">{{ datepickerDay.dayOfMonth }}</span>
 						</div>
 					</div>
 				</div>

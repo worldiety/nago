@@ -503,6 +503,16 @@ func main() {
 							vbox.Append(ui.NewDatepicker(func(datepicker *ui.Datepicker) {
 								datepicker.Label().Set("Datepicker-Label")
 
+								datepicker.SelectedStartDay().Set(1)
+								datepicker.SelectedStartMonth().Set(3)
+								datepicker.SelectedStartYear().Set(2023)
+								datepicker.StartDateSelected().Set(true)
+
+								datepicker.SelectedEndDay().Set(25)
+								datepicker.SelectedEndMonth().Set(10)
+								datepicker.SelectedEndYear().Set(2023)
+								datepicker.EndDateSelected().Set(true)
+
 								datepicker.OnClicked().Set(func() {
 									fmt.Println("clicked datepicker")
 								})
