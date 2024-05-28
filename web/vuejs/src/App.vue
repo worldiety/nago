@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import {onUnmounted, ref} from "vue";
+import { computed, onBeforeMount, onMounted, onUnmounted, ref } from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -12,6 +12,7 @@ import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
 import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
+import { Themes } from '@/shared/protocol/ora/themes';
 
 enum State {
 	Loading,
@@ -33,6 +34,8 @@ async function init(): Promise<void> {
 		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 		// restoration).
 		await serviceAdapter.initialize();
+		const config = await serviceAdapter.getConfiguration();
+		setThemes(config.themes);
 
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
@@ -131,7 +134,22 @@ addEventListener("popstate", (event) => {
 	serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
 		ui.value = invalidation.value;
 	})
-})
+});
+
+function setThemes(themes: Themes): void {
+	// TODO: Use values from themes once HSL is supported by backend
+	document.getElementsByTagName('html')[0].style.setProperty('--primary-hue', '0deg');
+	document.getElementsByTagName('html')[0].style.setProperty('--primary-saturation', '100%');
+	document.getElementsByTagName('html')[0].style.setProperty('--primary-lightness', '50%');
+
+	document.getElementsByTagName('html')[0].style.setProperty('--secondary-hue', '120deg');
+	document.getElementsByTagName('html')[0].style.setProperty('--secondary-saturation', '100%');
+	document.getElementsByTagName('html')[0].style.setProperty('--secondary-lightness', '50%');
+
+	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-hue', '240deg');
+	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-saturation', '100%');
+	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-lightness', '50%');
+}
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
@@ -140,7 +158,6 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
 });
-
 </script>
 
 <template>

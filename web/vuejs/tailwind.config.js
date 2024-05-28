@@ -7,18 +7,30 @@ export default {
 			screens: {
 				'xs': '400px',
 			},
-			colors: {
-				'wdy-green': '#1B8C30',
-				'ora-orange': '#F7A823',
-				'disabled': {
-					'text': '#848484',
-					'background': '#E2E2E2',
-				},
-				'placeholder-text': '#848484',
-				'error': '#FF543E',
-				'success': '#54FF3E',
-				'darkmode-gray': '#374151',
-				'ora-dropdown-background': '#2B2B2B',
+			colors: ({ colors }) => {
+				const customColors = {
+					// generic colors
+					// TODO: Remove legacy non-generic colors
+					'wdy-green': '#1B8C30',
+					'ora-orange': '#F7A823',
+					'disabled': {
+						'text': '#848484',
+						'background': '#E2E2E2',
+					},
+					'placeholder-text': '#848484',
+					'error': '#FF543E',
+					'success': '#54FF3E',
+					'darkmode-gray': '#374151',
+					'ora-dropdown-background': '#2B2B2B',
+				};
+				const colorSteps = [10, 12, 14, 17, 22, 30, 60, 70, 83, 87, 90, 92, 94, 96, 98];
+				colorSteps.forEach((step) => {
+					customColors[`primary-${step}`] = `hsl(var(--primary-${step}) / <alpha-value>)`;
+				});
+				customColors['primary'] = `hsl(var(--primary) / <alpha-value>)`;
+				customColors['secondary'] = `hsl(var(--secondary) / <alpha-value>)`;
+				customColors['tertiary'] = `hsl(var(--tertiary) / <alpha-value>)`;
+				return customColors;
 			},
 			boxShadow: {
 				'ora-shadow': '0 3px 6px rgba(0, 0, 0, 0.16)',
