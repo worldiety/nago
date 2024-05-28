@@ -16,6 +16,19 @@ func Values[Slice ~[]Elem, Elem any](s Slice) iter.Seq[Elem] {
 	}
 }
 
+// Values2 returns an iterator over the values in the slice,
+// starting with s[0].
+func Values2[Slice ~[]Elem, Elem, T any](s Slice) iter.Seq2[Elem, T] {
+	return func(yield func(Elem, T) bool) {
+		var zero T
+		for _, v := range s {
+			if !yield(v, zero) {
+				return
+			}
+		}
+	}
+}
+
 // Of is var args variant of Values which avoid declaring the slice type even though
 // it is technical absolutely the same.
 func Of[T any](v ...T) iter.Seq[T] {

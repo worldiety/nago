@@ -2,8 +2,15 @@ package crud
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"log/slog"
+	"math"
+	slices2 "slices"
+	"strings"
 )
 
 type Binding[T any] struct {
@@ -16,6 +23,132 @@ func NewBinding[T any](with func(bnd *Binding[T])) *Binding[T] {
 		with(b)
 	}
 	return b
+}
+
+func OneToMany[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
+	oneToN[Model, Foreign, ForeignKey](b, math.MaxInt, foreignKeyIter, stringer, field)
+}
+
+func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], n int, foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
+	f := anyField[Model]{
+		Caption:     field.Caption,
+		RenderHints: field.RenderHints,
+	}
+
+	var err error
+	itemSlice := slices.Collect(iter.BreakOnError(&err, foreignKeyIter))
+	if err != nil {
+		slog.Error("cannot get entity slice from iter for foreign keys", "err", err)
+		return
+	}
+
+	if field.FromModel == nil {
+		panic(fmt.Errorf("cannot process OneToMany declaration without FromModel func"))
+	}
+
+	strSliceOf := func(model Model) []string {
+		var tmp []string
+		fks := field.FromModel(model)
+		for _, fk := range fks {
+			for _, foreign := range itemSlice {
+				if foreign.Identity() == fk {
+					tmp = append(tmp, stringer(foreign))
+				}
+			}
+		}
+
+		slices2.Sort(tmp)
+		return tmp
+	}
+
+	if field.Stringer == nil {
+		field.Stringer = func(model Model) string {
+			return strings.Join(strSliceOf(model), ", ")
+		}
+	}
+
+	f.Stringer = field.Stringer
+
+	f.FormFactory = func(variant RenderHint) formElement[Model] {
+		component := ui.NewDropdown(func(dropdown *ui.Dropdown) {
+			dropdown.Label().Set(f.Caption)
+			switch variant {
+			case Visible:
+				dropdown.Visible().Set(true)
+			case ReadOnly:
+				dropdown.Disabled().Set(true)
+			case Hidden:
+				dropdown.Visible().Set(false)
+			}
+
+			if n > 1 {
+				dropdown.Multiselect().Set(true)
+			}
+
+			dropdown.OnClicked().Set(func() {
+				dropdown.Expanded().Set(!dropdown.Expanded().Get())
+			})
+
+		})
+
+		if len(itemSlice) > 10 {
+			component.Searchable().Set(true)
+		}
+
+		// always populate items
+
+		var selectedFKs []ForeignKey
+
+		for _, item := range itemSlice {
+			component.Items().Append(
+				ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+					dropdownItem.Content().Set(stringer(item))
+					dropdownItem.OnClicked().Set(func() {
+						component.Toggle(dropdownItem)
+						selectedFKs = nil
+
+						component.SelectedIndices().Iter(func(i int64) bool {
+							selectedFKs = append(selectedFKs, itemSlice[i].Identity())
+							return true
+						})
+
+					})
+				}),
+			)
+		}
+
+		return formElement[Model]{
+			Component: component,
+			FromModel: func(model Model) {
+				selectedFKs = nil
+				for i, item := range itemSlice {
+					isSelected := false
+					for _, id := range field.FromModel(model) {
+						if id == item.Identity() {
+							isSelected = true
+							break
+						}
+					}
+
+					if isSelected {
+						selectedFKs = append(selectedFKs, itemSlice[i].Identity())
+						component.SelectedIndices().Append(int64(i))
+					}
+
+				}
+
+			},
+			IntoModel: func(model Model) (Model, error) {
+				return field.IntoModel(model, selectedFKs)
+			},
+
+			SetError: func(err string) {
+				component.Error().Set(err)
+			},
+		}
+	}
+
+	b.fields = append(b.fields, f)
 }
 
 func Text[Model any](b *Binding[Model], field Field[Model, string]) {
