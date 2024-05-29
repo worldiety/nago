@@ -18,7 +18,9 @@ import type { Themes } from '@/shared/protocol/ora/themes';
  */
 export interface ConfigurationDefined {
     type: 'ConfigurationDefined'/*EventType*/;
+    applicationID: string;
     applicationName: string;
+    applicationVersion: string;
     availableLocales: string[];
     activeLocale: string;
     themes: Themes;

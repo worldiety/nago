@@ -7,13 +7,26 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"time"
 )
 
+var appIdRegex = regexp.MustCompile(`^[a-z]\w*(\.[a-z]\w*)+$`)
+
+type ApplicationID string
+
+func (a ApplicationID) Valid() bool {
+	return appIdRegex.FindString(string(a)) == string(a)
+}
+
 type OnWindowCreatedObserver func(wnd Window)
 
 type Application struct {
+	id                       ApplicationID
+	name                     string
+	version                  string
+	themes                   ora.Themes
 	mutex                    sync.Mutex
 	scopes                   *Scopes
 	factories                map[ora.ComponentFactoryId]ComponentFactory
@@ -38,6 +51,25 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 		tmpDir:                   tmpDir,
 		onWindowCreatedObservers: onWindowCreatedObservers,
 	}
+}
+
+func (a *Application) SetID(id ApplicationID) {
+	if !id.Valid() {
+		panic(fmt.Errorf("invalid application id"))
+	}
+	a.id = id
+}
+
+func (a *Application) SetName(name string) {
+	a.name = name
+}
+
+func (a *Application) SetVersion(version string) {
+	a.version = version
+}
+
+func (a *Application) SetThemes(themes ora.Themes) {
+	a.themes = themes
 }
 
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific

@@ -11,8 +11,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"regexp"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 )
@@ -27,28 +27,37 @@ type Configurator struct {
 	host                     string
 	port                     int
 	scheme                   string
-	applicationID            ApplicationID
+	applicationID            core.ApplicationID
+	applicationName          string
+	applicationVersion       string
+	themes                   ora.Themes
 	dataDir                  string
 	iamSettings              IAMSettings
 	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.Component
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
 }
 
-var appIdRegex = regexp.MustCompile(`^[a-z]\w*(\.[a-z]\w*)+$`)
-
-type ApplicationID string
-
-func (a ApplicationID) Valid() bool {
-	return appIdRegex.FindString(string(a)) == string(a)
-}
-
 func NewConfigurator() *Configurator {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
+	var buildInfo string
+	if info, ok := debug.ReadBuildInfo(); ok {
+		buildInfo = info.String()
+	} else {
+		buildInfo = fmt.Sprintf("%s %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version())
+	}
+
+	var themes ora.Themes
+	themes.Light = ora.DefaultTheme()
+	themes.Dark = ora.DefaultTheme()
+	// TODO add other default whitelabel themes
+
 	return &Configurator{
-		ctx:       ctx,
-		done:      done,
-		factories: map[ora.ComponentFactoryId]func(wnd core.Window) core.Component{},
+		ctx:                ctx,
+		done:               done,
+		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.Component{},
+		applicationName:    filepath.Base(os.Args[0]),
+		applicationVersion: buildInfo,
 
 		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
@@ -99,7 +108,7 @@ func (c *Configurator) Directory(name string) string {
 	return path
 }
 
-func (c *Configurator) ApplicationID() ApplicationID {
+func (c *Configurator) ApplicationID() core.ApplicationID {
 	if c.applicationID == "" {
 		panic("application id has not been set")
 	}
@@ -107,13 +116,27 @@ func (c *Configurator) ApplicationID() ApplicationID {
 }
 
 // SetApplicationID should be something like com.example.myapp
-func (c *Configurator) SetApplicationID(id ApplicationID) {
+func (c *Configurator) SetApplicationID(id core.ApplicationID) {
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid application id: %v", id))
 	}
 
 	c.applicationID = id
 	slog.Info("application id updated", slog.String("id", string(id)))
+}
+
+// SetName sets the applications name which is usually the internal code name or marketing phrase of the customer
+// to identify the product. This is likely shown somewhere in error reports or logs.
+func (c *Configurator) SetName(name string) {
+	c.applicationName = name
+}
+
+// SetVersion sets the applications version to something arbitrary. It is best practice to include information
+// about the build environment and git commit hash. This is likely shown in error reports or logs.
+// This must not be used as a marketing version for the customer, because a marketing version does not change
+// when bug fixes are released.
+func (c *Configurator) SetVersion(version string) {
+	c.applicationVersion = version
 }
 
 func (c *Configurator) getHost() string {

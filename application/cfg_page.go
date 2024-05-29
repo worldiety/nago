@@ -81,6 +81,7 @@ func (c *Configurator) newHandler() http.Handler {
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers)
+	app2.SetID(c.applicationID)
 	r := chi.NewRouter()
 	app2.SetOnSendFiles(func(scope *core.Scope, it iter.Seq2[core.File, error]) error {
 		var err error
