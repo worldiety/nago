@@ -73,7 +73,7 @@ func LightTheme() Theme {
 	primarySaturationPercentage := uint8(93)
 	primaryLightnessPercentage := uint8(55)
 
-	return generateTheme(
+	return GenerateTheme(
 		primaryHueAngle,
 		primarySaturationPercentage,
 		primaryLightnessPercentage,
@@ -91,7 +91,7 @@ func DarkTheme() Theme {
 	primarySaturationPercentage := uint8(68)
 	primaryLightnessPercentage := uint8(33)
 
-	return generateTheme(
+	return GenerateTheme(
 		primaryHueAngle,
 		primarySaturationPercentage,
 		primaryLightnessPercentage,
@@ -104,7 +104,7 @@ func DarkTheme() Theme {
 	)
 }
 
-func generateTheme(
+func GenerateTheme(
 	primaryHueAngle uint16,
 	primarySaturationPercentage uint8,
 	primaryLightnessPercentage uint8,
