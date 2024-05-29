@@ -177,6 +177,8 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.ERROR_OCCURRED, handleError);
 	eventBus.unsubscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
+	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 });
 </script>
 
