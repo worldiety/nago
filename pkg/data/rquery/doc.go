@@ -3,7 +3,6 @@
 package rquery
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -95,13 +94,20 @@ func contains(t any, what string) bool {
 			}
 
 			ftype := method.Func.Type()
-			fmt.Println(method.Name, ftype.NumIn(), ftype.NumOut())
+			//fmt.Println(method.Name, ftype.NumIn(), ftype.NumOut())
 			if ftype.NumIn() != 1 || ftype.NumOut() != 1 {
 				continue
 			}
 
 			res := method.Func.Call([]reflect.Value{reflect.ValueOf(t)})[0]
-			if contains(res.Interface(), what) {
+			val := res.Interface()
+			returnedType := reflect.TypeOf(val)
+			// stop searching when reaching foreign types
+			if returnedType.PkgPath() != "" && !strings.Contains(returnedType.PkgPath(), "wdy") {
+				continue
+			}
+
+			if contains(val, what) {
 				return true
 			}
 		}

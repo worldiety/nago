@@ -17,9 +17,9 @@ import (
 
 type Options[E any] struct {
 	Title            string
+	Actions          []core.Component // global components to show for the entire crud set, e.g. for custom create action
 	Create           func(E) error
 	FindAll          iter.Seq2[E, error]
-	Update           func(E) error
 	AggregateActions []AggregateAction[E]
 	Binding          *Binding[E]
 }
@@ -142,6 +142,10 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					textField.Placeholder().Set("Suchen")
 					textField.Simple().Set(true)
 				}))
+			}
+
+			for _, action := range opts.Actions {
+				hstack.Append(action)
 			}
 
 			if opts.Create != nil {
