@@ -5,8 +5,8 @@
 
 
 export interface Color {
-    h: 'no type resolved';
-    s: number /*uint8*/;
-    l: number /*uint8*/;
+    h: number /*float64*/;
+    s: number /*float64*/;
+    l: number /*float64*/;
 }
 

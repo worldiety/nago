@@ -68,52 +68,16 @@ type Theme struct {
 	Colors Colors `json:"colors"`
 }
 
-func LightTheme() Theme {
-	primaryHueAngle := uint16(38)
-	primarySaturationPercentage := uint8(93)
-	primaryLightnessPercentage := uint8(55)
-
-	return GenerateTheme(
-		primaryHueAngle,
-		primarySaturationPercentage,
-		primaryLightnessPercentage,
-		120,
-		100,
-		50,
-		240,
-		100,
-		50,
-	)
-}
-
-func DarkTheme() Theme {
-	primaryHueAngle := uint16(131)
-	primarySaturationPercentage := uint8(68)
-	primaryLightnessPercentage := uint8(33)
-
-	return GenerateTheme(
-		primaryHueAngle,
-		primarySaturationPercentage,
-		primaryLightnessPercentage,
-		120,
-		100,
-		50,
-		240,
-		100,
-		50,
-	)
-}
-
 func GenerateTheme(
-	primaryHueAngle uint16,
-	primarySaturationPercentage uint8,
-	primaryLightnessPercentage uint8,
-	secondaryHueAngle uint16,
-	secondarySaturationPercentage uint8,
-	secondaryLightnessPercentage uint8,
-	tertiaryHueAngle uint16,
-	tertiarySaturationPercentage uint8,
-	tertiaryLightnessPercentage uint8,
+	primaryHueAngle float64,
+	primarySaturationPercentage float64,
+	primaryLightnessPercentage float64,
+	secondaryHueAngle float64,
+	secondarySaturationPercentage float64,
+	secondaryLightnessPercentage float64,
+	tertiaryHueAngle float64,
+	tertiarySaturationPercentage float64,
+	tertiaryLightnessPercentage float64,
 ) Theme {
 	return Theme{
 		Colors: Colors{
@@ -163,15 +127,15 @@ type Colors struct {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Color struct {
-	H uint16 `json:"h"`
-	S uint8  `json:"s"`
-	L uint8  `json:"l"`
+	H float64 `json:"h"`
+	S float64 `json:"s"`
+	L float64 `json:"l"`
 }
 
-func HSL(hueAngle uint16, saturationPercentage uint8, lightnessPercentage uint8) Color {
-	h := uint16(math.Min(float64(hueAngle), 360))
-	s := uint8(math.Min(float64(saturationPercentage), 100))
-	l := uint8(math.Min(float64(lightnessPercentage), 100))
+func HSL(hueAngle float64, saturationPercentage float64, lightnessPercentage float64) Color {
+	h := math.Max(0, math.Min(hueAngle, 360))
+	s := math.Max(0, math.Min(saturationPercentage, 100))
+	l := math.Max(0, math.Min(lightnessPercentage, 100))
 	return Color{h, s, l}
 }
 

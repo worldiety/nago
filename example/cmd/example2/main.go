@@ -104,8 +104,28 @@ var exampleImg []byte
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetThemes(ora.Themes{
-			Light: ora.LightTheme(),
-			Dark:  ora.DarkTheme(),
+			Light: ora.GenerateTheme(
+				199,
+				78.8,
+				64.9,
+				120,
+				100,
+				50,
+				240,
+				100,
+				50,
+			),
+			Dark: ora.GenerateTheme(
+				131,
+				68,
+				33,
+				120,
+				100,
+				50,
+				240,
+				100,
+				50,
+			),
 		})
 
 		cfg.SetApplicationID("de.worldiety.nago.demo.kitchensink")
