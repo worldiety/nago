@@ -12,7 +12,6 @@ export interface Text {
     type: 'Text'/*ComponentType*/;
     value: Property<string>;
     color: Property<string>;
-    colorDark: Property<string>;
     size: Property<string>;
     onClick: Property<Ptr>;
     onHoverStart: Property<Ptr>;
