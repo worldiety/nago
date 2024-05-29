@@ -25,6 +25,10 @@ func NewBinding[T any](with func(bnd *Binding[T])) *Binding[T] {
 	return b
 }
 
+func OneToOne[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
+	oneToN[Model, Foreign, ForeignKey](b, 1, foreignKeyIter, stringer, field)
+}
+
 func OneToMany[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
 	oneToN[Model, Foreign, ForeignKey](b, math.MaxInt, foreignKeyIter, stringer, field)
 }
@@ -61,11 +65,12 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 		return tmp
 	}
 
-	if field.Stringer == nil {
-		field.Stringer = func(model Model) string {
-			return strings.Join(strSliceOf(model), ", ")
-		}
+	// TODO better try to do some magic in FromPtr, so that the user can still customize this stringer
+	//if field.Stringer == nil {
+	field.Stringer = func(model Model) string {
+		return strings.Join(strSliceOf(model), ", ")
 	}
+	//}
 
 	f.Stringer = field.Stringer
 
@@ -151,7 +156,7 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 	b.fields = append(b.fields, f)
 }
 
-func Text[Model any](b *Binding[Model], field Field[Model, string]) {
+func Text[Model any, T ~string](b *Binding[Model], field Field[Model, T]) {
 	f := anyField[Model]{
 		Caption:     field.Caption,
 		Stringer:    field.Stringer,
@@ -189,7 +194,7 @@ func Text[Model any](b *Binding[Model], field Field[Model, string]) {
 				component.Value().Set(f.Stringer(model))
 			},
 			IntoModel: func(model Model) (Model, error) {
-				return field.IntoModel(model, component.Value().Get())
+				return field.IntoModel(model, T(component.Value().Get()))
 			},
 
 			SetError: func(err string) {
@@ -235,6 +240,36 @@ type Field[Model, Presentation any] struct {
 	Stringer  func(Model) string
 }
 
+func (f *Field[Model, Presentation]) setRenderHints(hints RenderHints) {
+	f.RenderHints = hints
+}
+
+type FOption interface {
+	apply(interface{ setRenderHints(hints RenderHints) })
+}
+
+func FromPtr[Model, Presentation any](caption string, property func(*Model) *Presentation, opts ...FOption) Field[Model, Presentation] {
+
+	f := Field[Model, Presentation]{
+		Caption: caption,
+		Stringer: func(model Model) string {
+			return fmt.Sprintf("%v", *property(&model))
+		},
+		IntoModel: func(model Model, value Presentation) (Model, error) {
+			*property(&model) = value
+			return model, nil
+		},
+		FromModel: func(model Model) Presentation {
+			return *property(&model)
+		},
+	}
+	for _, opt := range opts {
+		opt.apply(&f)
+	}
+
+	return f
+}
+
 type RenderVariant int
 
 const (
@@ -244,6 +279,10 @@ const (
 )
 
 type RenderHints map[RenderVariant]RenderHint
+
+func (r RenderHints) apply(i interface{ setRenderHints(hints RenderHints) }) {
+	i.setRenderHints(r)
+}
 
 type RenderHint int
 

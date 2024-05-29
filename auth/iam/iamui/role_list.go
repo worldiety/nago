@@ -23,45 +23,26 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 			return service.UpdateRole(subject, role)
 		})
 		opts.Binding = crud.NewBinding[iam.Role](func(bnd *crud.Binding[iam.Role]) {
-			crud.Text(bnd, crud.Field[iam.Role, string]{
-				Caption: "ID",
-				Stringer: func(role iam.Role) string {
-					return string(role.ID)
-				},
-				IntoModel: func(model iam.Role, value string) (iam.Role, error) {
-					model.ID = auth.RID(value)
-					return model, nil
-				},
-				RenderHints: crud.RenderHints{
-					crud.Overview: crud.Hidden,
-					crud.Update:   crud.ReadOnly,
-					crud.Create:   crud.Visible,
-				},
-			})
 
-			crud.Text(bnd, crud.Field[iam.Role, string]{
-				Caption: "Name",
-				Stringer: func(role iam.Role) string {
-					return role.Name
-				},
-				IntoModel: func(model iam.Role, value string) (iam.Role, error) {
-					model.Name = value
-					return model, nil
-				},
-			})
+			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Role) *auth.RID {
+				return &model.ID
+			}, crud.RenderHints{
+				crud.Overview: crud.Hidden,
+				crud.Update:   crud.ReadOnly,
+				crud.Create:   crud.Visible,
+			}))
+
+			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Role) *iam.PID {
+				return &model.Name
+			}))
 
 			crud.OneToMany[iam.Role, iam.Permission, iam.PID](bnd, service.AllPermissions(subject), func(permission iam.Permission) string {
 				return permission.Name()
-			}, crud.Field[iam.Role, []iam.PID]{
-				Caption: "Berechtigungen",
-				FromModel: func(role iam.Role) []iam.PID {
-					return role.Permissions
-				},
-				IntoModel: func(model iam.Role, value []iam.PID) (iam.Role, error) {
-					model.Permissions = value
-					return model, nil
-				},
-			})
+			},
+				crud.FromPtr("Berechtigungen", func(model *iam.Role) *[]iam.PID {
+					return &model.Permissions
+				}),
+			)
 		})
 	}))
 }
