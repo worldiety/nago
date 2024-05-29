@@ -173,9 +173,12 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 		ApplicationName:  "todo",
 		AvailableLocales: []string{"de", "en"},
 		ActiveLocale:     "de",
-		Themes:           ora.Themes{Light: ora.DefaultTheme()},
-		Resources:        ora.Resources{},
-		RequestId:        evt.RequestId,
+		Themes: ora.Themes{
+			Light: ora.LightTheme(),
+			Dark:  ora.DarkTheme(),
+		},
+		Resources: ora.Resources{},
+		RequestId: evt.RequestId,
 	})
 }
 

@@ -1,8 +1,7 @@
 package ora
 
 import (
-	"encoding/json"
-	"fmt"
+	"math"
 )
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -67,59 +66,111 @@ type Theme struct {
 	Colors Colors `json:"colors"`
 }
 
-func DefaultTheme() Theme {
+func LightTheme() Theme {
+	primaryHueAngle := uint16(38)
+	primarySaturationPercentage := uint8(93)
+	primaryLightnessPercentage := uint8(55)
+
+	return generateTheme(
+		primaryHueAngle,
+		primarySaturationPercentage,
+		primaryLightnessPercentage,
+		120,
+		100,
+		50,
+		240,
+		100,
+		50,
+	)
+}
+
+func DarkTheme() Theme {
+	primaryHueAngle := uint16(131)
+	primarySaturationPercentage := uint8(68)
+	primaryLightnessPercentage := uint8(33)
+
+	return generateTheme(
+		primaryHueAngle,
+		primarySaturationPercentage,
+		primaryLightnessPercentage,
+		120,
+		100,
+		50,
+		240,
+		100,
+		50,
+	)
+}
+
+func generateTheme(
+	primaryHueAngle uint16,
+	primarySaturationPercentage uint8,
+	primaryLightnessPercentage uint8,
+	secondaryHueAngle uint16,
+	secondarySaturationPercentage uint8,
+	secondaryLightnessPercentage uint8,
+	tertiaryHueAngle uint16,
+	tertiarySaturationPercentage uint8,
+	tertiaryLightnessPercentage uint8,
+) Theme {
 	return Theme{
 		Colors: Colors{
-			Black:         RGB(0x000000),
-			White:         RGB(0xFFFFFF),
-			Primary:       RGB(0x1B8C30),
-			Interactive:   RGB(0xF7A823),
-			AlertNegative: RGB(0xFF543E),
-			AlertPositive: RGB(0x54FF3E),
+			Primary:            HSL(primaryHueAngle, primarySaturationPercentage, primaryLightnessPercentage),
+			PrimaryTen:         HSL(primaryHueAngle, primarySaturationPercentage, 10),
+			PrimaryTwelve:      HSL(primaryHueAngle, primarySaturationPercentage, 12),
+			PrimaryFourteen:    HSL(primaryHueAngle, primarySaturationPercentage, 14),
+			PrimarySeventeen:   HSL(primaryHueAngle, primarySaturationPercentage, 17),
+			PrimaryTwentyTwo:   HSL(primaryHueAngle, primarySaturationPercentage, 22),
+			PrimaryThirty:      HSL(primaryHueAngle, primarySaturationPercentage, 30),
+			PrimarySixty:       HSL(primaryHueAngle, primarySaturationPercentage, 60),
+			PrimarySeventy:     HSL(primaryHueAngle, primarySaturationPercentage, 70),
+			PrimaryEightyThree: HSL(primaryHueAngle, primarySaturationPercentage, 83),
+			PrimaryEightySeven: HSL(primaryHueAngle, primarySaturationPercentage, 87),
+			PrimaryNinety:      HSL(primaryHueAngle, primarySaturationPercentage, 90),
+			PrimaryNinetyTwo:   HSL(primaryHueAngle, primarySaturationPercentage, 92),
+			PrimaryNinetyFour:  HSL(primaryHueAngle, primarySaturationPercentage, 94),
+			PrimaryNinetySix:   HSL(primaryHueAngle, primarySaturationPercentage, 96),
+			PrimaryNinetyEight: HSL(primaryHueAngle, primarySaturationPercentage, 98),
+			Secondary:          HSL(secondaryHueAngle, secondarySaturationPercentage, secondaryLightnessPercentage),
+			Tertiary:           HSL(tertiaryHueAngle, tertiarySaturationPercentage, tertiaryLightnessPercentage),
 		},
 	}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Colors struct {
-	Black         Color `json:"black"`
-	White         Color `json:"white"`
-	Primary       Color `json:"primary"`
-	Interactive   Color `json:"interactive"`
-	AlertNegative Color `json:"alertNegative"`
-	AlertPositive Color `json:"alertPositive"`
+	Primary            Color `json:"primary"`
+	PrimaryTen         Color `json:"primary10"`
+	PrimaryTwelve      Color `json:"primary12"`
+	PrimaryFourteen    Color `json:"primary14"`
+	PrimarySeventeen   Color `json:"primary17"`
+	PrimaryTwentyTwo   Color `json:"primary22"`
+	PrimaryThirty      Color `json:"primary30"`
+	PrimarySixty       Color `json:"primary60"`
+	PrimarySeventy     Color `json:"primary70"`
+	PrimaryEightyThree Color `json:"primary83"`
+	PrimaryEightySeven Color `json:"primary87"`
+	PrimaryNinety      Color `json:"primary90"`
+	PrimaryNinetyTwo   Color `json:"primary92"`
+	PrimaryNinetyFour  Color `json:"primary94"`
+	PrimaryNinetySix   Color `json:"primary96"`
+	PrimaryNinetyEight Color `json:"primary98"`
+	Secondary          Color `json:"secondary"`
+	Tertiary           Color `json:"tertiary"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Color struct {
-	R uint8 `json:"r"`
-	G uint8 `json:"g"`
-	B uint8 `json:"b"`
-	A uint8 `json:"a"`
+	H uint16 `json:"h"`
+	S uint8  `json:"s"`
+	L uint8  `json:"l"`
 }
 
-func (c Color) MarshalJSON() ([]byte, error) {
-	if c.A == 0xFF {
-		return json.Marshal(fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B))
-	}
-
-	return json.Marshal(fmt.Sprintf("#%02X%02X%02X%02X", c.R, c.G, c.B, c.A))
-}
-
-func RGBA(color uint32) Color {
-	r := uint8((color >> 24) & 0xFF)
-	g := uint8((color >> 16) & 0xFF)
-	b := uint8((color >> 8) & 0xFF)
-	a := uint8(color & 0xFF)
-	return Color{r, g, b, a}
-}
-
-func RGB(color uint32) Color {
-	r := uint8((color >> 16) & 0xFF)
-	g := uint8((color >> 8) & 0xFF)
-	b := uint8((color >> 0) & 0xFF)
-	a := uint8(0xFF)
-	return Color{r, g, b, a}
+func HSL(hueAngle uint16, saturationPercentage uint8, lightnessPercentage uint8) Color {
+	h := uint16(math.Min(float64(hueAngle), 360))
+	s := uint8(math.Min(float64(saturationPercentage), 100))
+	l := uint8(math.Min(float64(lightnessPercentage), 100))
+	return Color{h, s, l}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

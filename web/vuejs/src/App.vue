@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import { computed, onBeforeMount, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -12,7 +12,9 @@ import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
 import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
-import { Themes } from '@/shared/protocol/ora/themes';
+import type { Themes } from '@/shared/protocol/ora/themes';
+import type { Theme } from '@/shared/protocol/ora/theme';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -22,6 +24,7 @@ enum State {
 
 const eventBus = useEventBus();
 const serviceAdapter = useServiceAdapter();
+const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
 
@@ -34,8 +37,11 @@ async function init(): Promise<void> {
 		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 		// restoration).
 		await serviceAdapter.initialize();
+
+		// request and apply configuration
 		const config = await serviceAdapter.getConfiguration();
-		setThemes(config.themes);
+		themeManager.setThemes(config.themes);
+		themeManager.applyActiveTheme();
 
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
@@ -121,35 +127,41 @@ function sendMultipleRequested(evt: Event): void {
 	document.body.removeChild(a);
 }
 
-init();
-addEventListener("popstate", (event) => {
-	if (event.state === null) {
-		return
+function setTheme(themes: Themes): void {
+	let activeTheme: Theme;
+	switch (localStorage.getItem('color-theme')) {
+		case 'light':
+			activeTheme = themes.light;
+			break;
+		case 'dark':
+			activeTheme = themes.dark;
+			break;
+		default:
+			activeTheme = themes.light;
+			break;
 	}
-
-	const req2 = history.state as NavigationForwardToRequested
-	if (ui.value) {
-		serviceAdapter.destroyComponent(ui.value.id)
-	}
-	serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
-		ui.value = invalidation.value;
-	})
-});
-
-function setThemes(themes: Themes): void {
-	// TODO: Use values from themes once HSL is supported by backend
-	document.getElementsByTagName('html')[0].style.setProperty('--primary-hue', '0deg');
-	document.getElementsByTagName('html')[0].style.setProperty('--primary-saturation', '100%');
-	document.getElementsByTagName('html')[0].style.setProperty('--primary-lightness', '50%');
-
-	document.getElementsByTagName('html')[0].style.setProperty('--secondary-hue', '120deg');
-	document.getElementsByTagName('html')[0].style.setProperty('--secondary-saturation', '100%');
-	document.getElementsByTagName('html')[0].style.setProperty('--secondary-lightness', '50%');
-
-	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-hue', '240deg');
-	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-saturation', '100%');
-	document.getElementsByTagName('html')[0].style.setProperty('--tertiary-lightness', '50%');
 }
+
+function addEventListeners(): void {
+	addEventListener("popstate", (event) => {
+		if (event.state === null) {
+			return
+		}
+
+		const req2 = history.state as NavigationForwardToRequested
+		if (ui.value) {
+			serviceAdapter.destroyComponent(ui.value.id)
+		}
+		serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
+			ui.value = invalidation.value;
+		})
+	});
+}
+
+onMounted(() => {
+	init();
+	addEventListeners();
+});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
