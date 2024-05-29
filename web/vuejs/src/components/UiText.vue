@@ -18,11 +18,11 @@ const clazz = computed<string>(() => {
 		tmp += 'text-black';
 	}
 
-	if (props.ui.colorDark.v) {
+	/*if (props.ui.colorDark.v) {
 		tmp += ' dark:' + textColor2Tailwind(props.ui.color.v);
 	} else {
 		tmp += ' dark:text-white';
-	}
+	}*/
 
 	if (props.ui.size.v) {
 		tmp += ' ' + textSize2Tailwind(props.ui.size.v);
