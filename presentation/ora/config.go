@@ -2,6 +2,8 @@ package ora
 
 import (
 	"math"
+	"strconv"
+	"strings"
 )
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -68,43 +70,62 @@ type Theme struct {
 	Colors Colors `json:"colors"`
 }
 
-func GenerateTheme(
-	primaryHueAngle float64,
-	primarySaturationPercentage float64,
-	primaryLightnessPercentage float64,
-	secondaryHueAngle float64,
-	secondarySaturationPercentage float64,
-	secondaryLightnessPercentage float64,
-	tertiaryHueAngle float64,
-	tertiarySaturationPercentage float64,
-	tertiaryLightnessPercentage float64,
-	backgroundHueAngle float64,
-	backgroundSaturationPercentage float64,
-	backgroundLightnessPercentage float64,
-) Theme {
-	return Theme{
-		Colors: Colors{
-			Primary:            HSL(primaryHueAngle, primarySaturationPercentage, primaryLightnessPercentage),
-			PrimaryTen:         HSL(primaryHueAngle, primarySaturationPercentage, 10),
-			PrimaryTwelve:      HSL(primaryHueAngle, primarySaturationPercentage, 12),
-			PrimaryFourteen:    HSL(primaryHueAngle, primarySaturationPercentage, 14),
-			PrimarySeventeen:   HSL(primaryHueAngle, primarySaturationPercentage, 17),
-			PrimaryTwentyTwo:   HSL(primaryHueAngle, primarySaturationPercentage, 22),
-			PrimaryThirty:      HSL(primaryHueAngle, primarySaturationPercentage, 30),
-			PrimarySixty:       HSL(primaryHueAngle, primarySaturationPercentage, 60),
-			PrimarySeventy:     HSL(primaryHueAngle, primarySaturationPercentage, 70),
-			PrimaryEightyThree: HSL(primaryHueAngle, primarySaturationPercentage, 83),
-			PrimaryEightySeven: HSL(primaryHueAngle, primarySaturationPercentage, 87),
-			PrimaryNinety:      HSL(primaryHueAngle, primarySaturationPercentage, 90),
-			PrimaryNinetyTwo:   HSL(primaryHueAngle, primarySaturationPercentage, 92),
-			PrimaryNinetyFour:  HSL(primaryHueAngle, primarySaturationPercentage, 94),
-			PrimaryNinetySix:   HSL(primaryHueAngle, primarySaturationPercentage, 96),
-			PrimaryNinetyEight: HSL(primaryHueAngle, primarySaturationPercentage, 98),
-			Secondary:          HSL(secondaryHueAngle, secondarySaturationPercentage, secondaryLightnessPercentage),
-			Tertiary:           HSL(tertiaryHueAngle, tertiarySaturationPercentage, tertiaryLightnessPercentage),
-			Background:         HSL(backgroundHueAngle, backgroundSaturationPercentage, backgroundLightnessPercentage),
-		},
+type ThemeOption interface {
+	apply(*Theme)
+}
+
+type themeFunc func(*Theme)
+
+func (f themeFunc) apply(dst *Theme) {
+	f(dst)
+}
+
+func PrimaryColor(color Color) ThemeOption {
+	return themeFunc(func(theme *Theme) {
+		theme.Colors.Primary = HSL(color.H, color.S, color.L)
+		theme.Colors.PrimaryTen = HSL(color.H, color.S, 10)
+		theme.Colors.PrimaryTwelve = HSL(color.H, color.S, 12)
+		theme.Colors.PrimaryFourteen = HSL(color.H, color.S, 14)
+		theme.Colors.PrimarySeventeen = HSL(color.H, color.S, 17)
+		theme.Colors.PrimaryTwentyTwo = HSL(color.H, color.S, 22)
+		theme.Colors.PrimaryThirty = HSL(color.H, color.S, 30)
+		theme.Colors.PrimarySixty = HSL(color.H, color.S, 60)
+		theme.Colors.PrimarySeventy = HSL(color.H, color.S, 70)
+		theme.Colors.PrimaryEightyThree = HSL(color.H, color.S, 83)
+		theme.Colors.PrimaryEightySeven = HSL(color.H, color.S, 87)
+		theme.Colors.PrimaryNinety = HSL(color.H, color.S, 90)
+		theme.Colors.PrimaryNinetyTwo = HSL(color.H, color.S, 92)
+		theme.Colors.PrimaryNinetyFour = HSL(color.H, color.S, 94)
+		theme.Colors.PrimaryNinetySix = HSL(color.H, color.S, 96)
+		theme.Colors.PrimaryNinetyEight = HSL(color.H, color.S, 98)
+	})
+}
+
+func SecondaryColor(color Color) ThemeOption {
+	return themeFunc(func(theme *Theme) {
+		theme.Colors.Secondary = color
+	})
+}
+
+func TertiaryColor(color Color) ThemeOption {
+	return themeFunc(func(theme *Theme) {
+		theme.Colors.Tertiary = color
+	})
+}
+
+func BackgroundColor(color Color) ThemeOption {
+	return themeFunc(func(theme *Theme) {
+		theme.Colors.Background = color
+	})
+}
+
+func GenerateTheme(opts ...ThemeOption) Theme {
+	var theme Theme
+	for _, opt := range opts {
+		opt.apply(&theme)
 	}
+
+	return theme
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -131,10 +152,10 @@ type Colors struct {
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type Color struct {
-	H float64 `json:"h"`
-	S float64 `json:"s"`
-	L float64 `json:"l"`
+type Color struct { // TODO this should be a HSL struct and may be introduce a Color interface and the ranges do not look idiomatic, probably must be 0-1 for each component
+	H float64 `json:"h"` // degree from 0 - 360
+	S float64 `json:"s"` // percent from 0 to 100
+	L float64 `json:"l"` // percent from 0 to 100
 }
 
 func HSL(hueAngle float64, saturationPercentage float64, lightnessPercentage float64) Color {
@@ -144,7 +165,66 @@ func HSL(hueAngle float64, saturationPercentage float64, lightnessPercentage flo
 	return Color{h, s, l}
 }
 
+func MustParseHSL(hex string) Color {
+	if strings.HasPrefix(hex, "#") {
+		hex = hex[1:]
+	}
+	r, g, b, _ := hexToRGBA(hex)
+	h, s, l := rgbToHSL(r, g, b)
+	return Color{H: h * 360, S: s * 100, L: l * 100} // convert from conventional to our "human" format
+}
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Resources struct {
 	SVG map[RIDSVG]SVG `json:"svgs"`
+}
+
+func hexToRGBA(hex string) (r, g, b, a uint8) {
+	if len(hex) == 6 {
+		hex += "FF"
+	}
+	rgba, _ := strconv.ParseUint(hex, 16, 32)
+	r = uint8((rgba >> 24) & 0xFF)
+	g = uint8((rgba >> 16) & 0xFF)
+	b = uint8((rgba >> 8) & 0xFF)
+	a = uint8(rgba & 0xFF)
+	return
+}
+
+func rgbToHSL(r, g, b uint8) (h, s, l float64) {
+	rf := float64(r) / 255.0
+	gf := float64(g) / 255.0
+	bf := float64(b) / 255.0
+
+	min := min(min(rf, gf), bf)
+	max := max(max(rf, gf), bf)
+
+	l = (max + min) / 2
+
+	if max == min {
+		h, s = 0.0, 0.0
+	} else {
+		d := max - min
+
+		if l > 0.5 {
+			s = d / (2.0 - max - min)
+		} else {
+			s = d / (max + min)
+		}
+
+		switch max {
+		case rf:
+			h = (gf - bf) / d
+			if g < b {
+				h += 6.0
+			}
+		case gf:
+			h = 2.0 + (bf-rf)/d
+		case bf:
+			h = 4.0 + (rf-gf)/d
+		}
+		h /= 6.0
+	}
+
+	return
 }

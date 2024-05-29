@@ -47,14 +47,30 @@ func NewConfigurator() *Configurator {
 		buildInfo = fmt.Sprintf("%s %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version())
 	}
 
+	// init our standard white label theme
+	themes := ora.Themes{
+		Dark: ora.GenerateTheme(
+			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
+			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
+			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
+			ora.BackgroundColor(ora.MustParseHSL("#000000")),
+		),
+		Light: ora.GenerateTheme(
+			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
+			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
+			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
+			ora.BackgroundColor(ora.MustParseHSL("#F9F9F9")),
+		),
+	}
+
 	return &Configurator{
 		ctx:                ctx,
 		done:               done,
 		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.Component{},
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
-
-		debug: strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
+		themes:             themes,
+		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 }
 
