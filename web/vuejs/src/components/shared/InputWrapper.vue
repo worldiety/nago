@@ -92,8 +92,8 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 .input-field-wrapper:hover .input-field,
 .input-field-wrapper .input-field:focus {
-  @apply border-ora-orange border-opacity-75 text-ora-orange;
-  @apply dark:border-ora-orange;
+  @apply border-primary border-opacity-75 text-primary;
+  @apply dark:border-primary;
 }
 
 .input-field-wrapper .input-field:focus {

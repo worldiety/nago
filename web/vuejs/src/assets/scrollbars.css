@@ -1,10 +1,10 @@
 /* Custom scrollbar styling: https://css-tricks.com/the-current-state-of-styling-scrollbars-in-css/ */
 .overflow-y-auto {
-	scrollbar-color: theme('colors.ora-orange') transparent;
+	scrollbar-color: theme('colors.primary') transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-	@apply bg-ora-orange rounded-full;
+	@apply bg-primary rounded-full;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {

@@ -15,7 +15,7 @@ const serviceAdapter = useServiceAdapter();
 	<div
 		class="cursor-pointer mx-1 py-4 focus:outline-none
 				highlighted
-					dark:hover:bg-ora-orange dark:hover:rounded-2lg dark:text-white dark:hover:text-ora-orange dark:hover:bg-opacity-25"
+					dark:hover:bg-primary dark:hover:rounded-2lg dark:text-white dark:hover:text-primary dark:hover:bg-opacity-25"
 		tabindex="0"
 		@click="serviceAdapter.executeFunctions(props.ui.onClicked)"
 		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"
@@ -35,6 +35,6 @@ const serviceAdapter = useServiceAdapter();
 <style scoped>
 .highlighted:hover,
 .highlighted:focus {
-	@apply text-ora-orange bg-ora-orange rounded-2lg bg-opacity-15
+	@apply text-primary bg-primary rounded-2lg bg-opacity-15
 }
 </style>

@@ -35,7 +35,7 @@ function radioButtonClicked(): void {
 
 <style scoped>
 .input-radio:hover {
-	@apply bg-ora-orange bg-opacity-25;
+	@apply bg-primary bg-opacity-25;
 }
 
 .input-radio:active {
@@ -55,7 +55,7 @@ function radioButtonClicked(): void {
 }
 
 .input-radio:hover input:not(:disabled) {
-	@apply border-ora-orange;
+	@apply border-primary;
 }
 
 .input-radio.input-radio-disabled:hover input:checked {

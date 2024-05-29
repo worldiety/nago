@@ -9,15 +9,15 @@
 }
 
 .button-primary {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-ora-orange;
+	@apply rounded-full h-10 w-fit px-5 text-white bg-primary;
 	@apply hover:bg-opacity-75;
 	@apply active:bg-opacity-65;
 	@apply disabled:text-disabled-text disabled:bg-disabled-background;
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 text-ora-orange border border-ora-orange;
-	@apply hover:bg-ora-orange hover:bg-opacity-25;
+	@apply rounded-full h-10 w-fit px-5 text-primary border border-primary;
+	@apply hover:bg-primary hover:bg-opacity-25;
 	@apply active:bg-opacity-35;
 	@apply focus-visible:border-transparent;
 	@apply disabled:text-disabled-text disabled:border-disabled-background disabled:bg-transparent;
@@ -25,10 +25,10 @@
 
 .button-tertiary {
 	@apply text-black rounded-full h-10 w-fit px-5;
-	@apply hover:text-ora-orange hover:bg-ora-orange hover:bg-opacity-25;
-	@apply active:bg-ora-orange active:bg-opacity-35 active:text-ora-orange;
+	@apply hover:text-primary hover:bg-primary hover:bg-opacity-25;
+	@apply active:bg-primary active:bg-opacity-35 active:text-primary;
 	@apply disabled:text-disabled-text disabled:bg-transparent;
-	@apply dark:text-white dark:hover:text-ora-orange dark:active:text-ora-orange dark:disabled:text-disabled-text dark:disabled:bg-transparent;
+	@apply dark:text-white dark:hover:text-primary dark:active:text-primary dark:disabled:text-disabled-text dark:disabled:bg-transparent;
 }
 
 .button-destructive {

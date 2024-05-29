@@ -45,7 +45,7 @@ function toggleRevealed(): void {
 			:help="props.ui.help.v"
 			:disabled="props.ui.disabled.v"
 		>
-			<div class="relative hover:text-ora-orange focus-within:text-ora-orange">
+			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="idPrefix + props.ui.id.toString()"
 					ref="passwordInput"

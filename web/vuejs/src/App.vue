@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import { onMounted, onUnmounted, ref } from "vue";
+import { onBeforeMount, onMounted, onUnmounted, ref } from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -29,20 +29,23 @@ const state = ref(State.Loading);
 const ui = ref<Component>();
 
 const errorHandler = useErrorHandling();
+let configurationPromise: Promise<void>|null = null;
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
-async function init(): Promise<void> {
+async function applyConfiguration(): Promise<void> {
+	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
+	// restoration).
+	await serviceAdapter.initialize();
+
+	// request and apply configuration
+	const config = await serviceAdapter.getConfiguration();
+	themeManager.setThemes(config.themes);
+	themeManager.applyActiveTheme();
+}
+
+async function initializeUi(): Promise<void> {
 	try {
-		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
-		// restoration).
-		await serviceAdapter.initialize();
-
-		// request and apply configuration
-		const config = await serviceAdapter.getConfiguration();
-		themeManager.setThemes(config.themes);
-		themeManager.applyActiveTheme();
-
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
 		if (factoryId.length === 0) {
@@ -63,7 +66,7 @@ async function init(): Promise<void> {
 		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
-		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested)
+		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 
 		updateUi(invalidation);
 	} catch {
@@ -158,8 +161,13 @@ function addEventListeners(): void {
 	});
 }
 
-onMounted(() => {
-	init();
+onBeforeMount(() => {
+	configurationPromise = applyConfiguration();
+});
+
+onMounted(async () => {
+	await configurationPromise;
+	await initializeUi();
 	addEventListeners();
 });
 

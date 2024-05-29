@@ -55,7 +55,7 @@ function onClick() {
 }
 
 .toggle-switch.toggle-switch-checked {
-	@apply after:translate-x-[105%] after:border-ora-orange after:bg-ora-orange;
+	@apply after:translate-x-[105%] after:border-primary after:bg-primary;
 }
 
 .toggle-switch-container {
@@ -63,7 +63,7 @@ function onClick() {
 }
 
 .toggle-switch-container:hover {
-	@apply bg-ora-orange bg-opacity-25;
+	@apply bg-primary bg-opacity-25;
 }
 
 .toggle-switch-container:active {
@@ -71,11 +71,11 @@ function onClick() {
 }
 
 .toggle-switch-container:hover .toggle-switch {
-	@apply outline-ora-orange;
+	@apply outline-primary;
 }
 
 .toggle-switch-container:hover .toggle-switch::after {
-	@apply border-ora-orange;
+	@apply border-primary;
 }
 
 .toggle-switch-container:focus-visible {

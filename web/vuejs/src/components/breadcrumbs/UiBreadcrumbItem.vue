@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex justify-start items-center gap-x-2 hover:text-ora-orange focus-visible:text-ora-orange hover:bg-ora-orange hover:bg-opacity-15 focus-visible:bg-ora-orange focus-visible:bg-opacity-15 active:bg-opacity-25 cursor-pointer rounded-full overflow-hidden px-3"
+		class="flex justify-start items-center gap-x-2 hover:text-primary focus-visible:text-primary hover:bg-primary hover:bg-opacity-15 focus-visible:bg-primary focus-visible:bg-opacity-15 active:bg-opacity-25 cursor-pointer rounded-full overflow-hidden px-3"
 		tabindex="0"
 		@click="executeAction"
 		@keydown.enter="executeAction"

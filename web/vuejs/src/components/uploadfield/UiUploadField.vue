@@ -5,7 +5,7 @@
 	<div v-else class="flex flex-col items-start justify-center gap-y-2 w-full">
 		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v || errorMessage }}</p>
 		<div
-			class="upload-field flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text hover:border-ora-orange bg-disabled-background bg-opacity-15 hover:bg-ora-orange hover:bg-opacity-15"
+			class="upload-field flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text hover:border-primary bg-disabled-background bg-opacity-15 hover:bg-primary hover:bg-opacity-15"
 			:class="{'upload-field-highlighted': dragAndDropActive}"
 			tabindex="0"
 			@dragover.prevent
@@ -222,10 +222,10 @@ function uploadFailedCallback(uploadId: string, statusCode: number): void {
 
 .upload-field:hover .upload-icon,
 .upload-field.upload-field-highlighted .upload-icon {
-	@apply text-ora-orange;
+	@apply text-primary;
 }
 
 .upload-field.upload-field-highlighted {
-	@apply border-ora-orange bg-ora-orange bg-opacity-15;
+	@apply border-primary bg-primary bg-opacity-15;
 }
 </style>

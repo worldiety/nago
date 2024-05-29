@@ -23,7 +23,7 @@
 			</div>
 			<div
 				v-if="inProgress"
-				class="text-disabled-text cursor-pointer hover:bg-ora-orange hover:bg-opacity-15 hover:text-ora-orange active:bg-opacity-20 rounded-full size-10 p-3"
+				class="text-disabled-text cursor-pointer hover:bg-primary hover:bg-opacity-15 hover:text-primary active:bg-opacity-20 rounded-full size-10 p-3"
 				tabindex="0"
 				@click="abortUpload"
 				@keydown.enter="abortUpload"

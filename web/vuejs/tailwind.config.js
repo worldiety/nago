@@ -12,7 +12,6 @@ export default {
 					// generic colors
 					// TODO: Remove legacy non-generic colors
 					'wdy-green': '#1B8C30',
-					'ora-orange': '#F7A823',
 					'disabled': {
 						'text': '#848484',
 						'background': '#E2E2E2',

@@ -27,7 +27,7 @@
 				<!-- Left slider thumb -->
 				<div
 					v-if="props.ui.rangeMode.v"
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-primary"
 					:class="{
 						'slider-thumb-dragging': startDragging,
 						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
@@ -47,11 +47,11 @@
 				<!-- Slider thumb connector -->
 				<div
 					v-if="sliderThumbConnectorVisible"
-					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
+					class="slider-thumb-connector absolute top-1/2 border-b border-b-primary z-0"
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-primary"
 					:class="{
 						'slider-thumb-dragging': endDragging,
 						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
@@ -365,7 +365,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider:not(.slider-disabled) .slider-tick-mark.slider-tick-mark-in-range {
-	@apply border-l-ora-orange;
+	@apply border-l-primary;
 }
 
 .slider.slider-disabled .slider-tick-mark.slider-tick-mark-in-range {
@@ -379,7 +379,7 @@ function increaseEndSliderValue(): void {
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
-	@apply bg-ora-orange;
+	@apply bg-primary;
 }
 
 .slider {
@@ -396,7 +396,7 @@ function increaseEndSliderValue(): void {
 
 .slider:not(.slider-disabled) .slider-thumb:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
-	@apply outline-none ring-8 ring-ora-orange ring-opacity-15;
+	@apply outline-none ring-8 ring-primary ring-opacity-15;
 	@apply dark:ring-opacity-25;
 }
 
@@ -423,7 +423,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-thumb-label {
-	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
+	@apply absolute left-0 right-0 flex justify-center text-primary text-sm whitespace-nowrap overflow-visible;
 	top: 150%;
 }
 

@@ -356,11 +356,11 @@ function selectDate(datepickerDay: DatepickerDay): void {
 }
 
 .selected-day {
-	@apply bg-ora-orange bg-opacity-25 text-ora-orange;
+	@apply bg-primary bg-opacity-25 text-primary;
 }
 
 .within-range-day {
-	@apply bg-ora-orange bg-opacity-5 text-ora-orange;
+	@apply bg-primary bg-opacity-5 text-primary;
 }
 
 /* Each day in the first column within the selection range except the selected days (after element) */
@@ -373,7 +373,7 @@ function selectDate(datepickerDay: DatepickerDay): void {
 /* Each day in the first grid column within the selected range that is not a selected day (before element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-ora-orange bg-opacity-5 rounded-l-full;
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-primary bg-opacity-5 rounded-l-full;
 }
 
 /* Each day in the last column within the selected range except the selected days (before element) */
@@ -386,7 +386,7 @@ function selectDate(datepickerDay: DatepickerDay): void {
 /* Each day in the last grid column within the selected range that is not a selected day (after element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-ora-orange bg-opacity-5 rounded-r-full;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-primary bg-opacity-5 rounded-r-full;
 }
 
 /* First day of selected range (before element) */

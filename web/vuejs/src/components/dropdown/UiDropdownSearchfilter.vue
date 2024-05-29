@@ -13,7 +13,7 @@ const searchQuery = ref<string>('')
 </script>
 
 <template>
-	<div class="border-b-2 border-ora-orange relative p-2.5 mx-2 my-2">
+	<div class="border-b-2 border-primary relative p-2.5 mx-2 my-2">
 	<input v-model="searchQuery" @input="$emit('searchQueryChanged', searchQuery)" class="focus:outline-none w-full cursor-text pl-6 dark:bg-ora-dropdown-background dark:text-white" type="text" placeholder="Suchen nach...">
 		<Magnifier class="absolute w-5 h-5 top-3.5 left-2 dark:text-white"/>
 	</div>

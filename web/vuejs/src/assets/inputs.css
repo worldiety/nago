@@ -5,7 +5,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="checkbox"]:checked {
-	@apply bg-ora-orange dark:bg-ora-orange border-ora-orange dark:border-ora-orange;
+	@apply bg-primary dark:bg-primary border-primary dark:border-primary;
 }
 
 input[type="radio"]:checked {
@@ -22,7 +22,7 @@ input[type="radio"] {
 }
 
 input[type="radio"]:hover {
-	@apply border-ora-orange;
+	@apply border-primary;
 }
 
 input[type="checkbox"]::before,
@@ -39,7 +39,7 @@ input[type="checkbox"]::before {
 }
 
 input[type="radio"]::before {
-	box-shadow: inset 1em 1em theme('colors.ora-orange');
+	box-shadow: inset 1em 1em theme('colors.primary');
 	clip-path: circle(100%);
 }
 
