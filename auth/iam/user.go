@@ -231,7 +231,7 @@ func (s *Service) FindUser(subject auth.Subject, id auth.UID) (std.Option[User],
 	return s.users.FindByID(id)
 }
 
-func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstname, lastname string, customPermissions []PID) error {
+func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstname, lastname string, customPermissions []PID, roles []auth.RID, groups []auth.GID) error {
 	if err := subject.Audit(UpdateUser); err != nil {
 		return err
 	}
@@ -269,6 +269,8 @@ func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstna
 	usr.Firstname = firstname
 	usr.Lastname = lastname
 	usr.Permissions = customPermissions
+	usr.Roles = roles
+	usr.Groups = groups
 
 	return s.users.Save(usr)
 }

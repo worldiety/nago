@@ -4,25 +4,22 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
-type Authenticated interface {
-	Audit(permission string) error
-}
-
 // sayHello greets everyone who has been authenticated.
 // #[@Usecase]
 // #[go.permission.audit]
-func sayHello(auth Authenticated) (string, error) {
+func sayHello(auth auth.Subject) (string, error) {
 	if err := auth.Audit("de.worldiety.tutorial.say_hello"); err != nil {
 		return "invalid", err
 	}
 
-	return "hello", nil
+	return "hello " + auth.Name(), nil
 }
 
 func main() {

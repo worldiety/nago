@@ -3,6 +3,7 @@ package iam
 import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
@@ -72,10 +73,31 @@ func (s *Service) Subject(id core.SessionID) auth.Subject {
 
 	usr := optUsr.Unwrap()
 
-	// TODO collect permissions from groups and roles
 	tmp := map[string]struct{}{}
 	for _, permission := range usr.Permissions {
 		tmp[permission] = struct{}{}
+	}
+
+	// collect inherited permissions from groups
+	s.roles.FindAllByID(slices2.Values(usr.Roles), func(role Role, e error) bool {
+		if e != nil {
+			err = e
+			return false
+		}
+
+		for _, permission := range role.Permissions {
+			tmp[permission] = struct{}{}
+		}
+
+		return true
+	})
+
+	if err != nil {
+		slog.Error("cannot load permissions from declared roles")
+		// important, the user may have been deleted, but we are lazy, so we have them as stale references here
+		return auth.InvalidSubject{
+			DeniedLog: s.logInvalidSubject,
+		}
 	}
 
 	return newNagoSubject(id, usr, tmp, func(session core.SessionID, usr User, permission string, granted bool) {

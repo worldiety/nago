@@ -19,7 +19,7 @@ func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core
 		opts.FindAll = service.AllUsers(subject)
 
 		opts.OnUpdate(func(user iam.User) error {
-			return service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions)
+			return service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
 		})
 
 		if subject.HasPermission(iam.CreateUser) {
@@ -44,6 +44,26 @@ func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core
 			}, crud.FromPtr("Berechtigungen", func(model *iam.User) *[]iam.PID {
 				return &model.Permissions
 			}))
+
+			crud.OneToMany(bnd,
+				service.AllGroups(subject),
+				func(usr iam.Group) string {
+					return usr.Name
+				},
+				crud.FromPtr("Gruppen", func(model *iam.User) *[]auth.GID {
+					return &model.Groups
+				}),
+			)
+
+			crud.OneToMany(bnd,
+				service.AllRoles(subject),
+				func(usr iam.Role) string {
+					return usr.Name
+				},
+				crud.FromPtr("Rollen", func(model *iam.User) *[]auth.RID {
+					return &model.Roles
+				}),
+			)
 		})
 	}))
 }

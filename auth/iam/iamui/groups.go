@@ -1,7 +1,6 @@
 package iamui
 
 import (
-	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
@@ -36,16 +35,9 @@ func Groups(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) co
 			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Group) *string {
 				return &model.Name
 			}))
-
-			crud.OneToMany[iam.Group, iam.User, auth.UID](bnd,
-				service.AllUsers(subject),
-				func(usr iam.User) string {
-					return fmt.Sprintf("%s %s", usr.Firstname, usr.Lastname)
-				},
-				crud.FromPtr("Nutzer", func(model *iam.Group) *[]auth.UID {
-					return &model.Users
-				}),
-			)
+			crud.Text(bnd, crud.FromPtr("Beschreibung", func(model *iam.Group) *string {
+				return &model.Description
+			}))
 		})
 	}))
 }

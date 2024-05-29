@@ -9,10 +9,9 @@ import (
 )
 
 type Group struct {
-	ID          auth.GID   `json:"id,omitempty"`
-	Name        string     `json:"name,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Users       []auth.UID `json:"permissions,omitempty"`
+	ID          auth.GID `json:"id,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
 func (r Group) Identity() auth.GID {
