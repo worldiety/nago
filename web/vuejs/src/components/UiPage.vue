@@ -28,7 +28,7 @@
 	</div>
 
 	<!-- Page content -->
-	<div class="content-container bg-white dark:bg-darkmode-gray" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
+	<div class="content-container bg-white" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
 		<UiGeneric v-if="props.ui.body.v" :ui="props.ui.body.v"  />
 	</div>
 </template>

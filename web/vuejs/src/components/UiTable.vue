@@ -9,10 +9,10 @@ const props = defineProps<{
 
 <template>
 	<div class="relative overflow-x-auto shadow-md">
-		<table class="w-full text-left text-sm text-gray-500 rtl:text-right dark:text-gray-400">
+		<table class="w-full text-left text-sm text-gray-500 rtl:text-right">
 			<thead
 				v-if="props.ui.headers.v"
-				class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400"
+				class="bg-gray-50 text-xs uppercase text-gray-700"
 			>
 				<tr>
 					<th v-for="head in props.ui.headers.v" scope="col" class="px-6 py-3">
@@ -24,7 +24,7 @@ const props = defineProps<{
 			<tbody>
 				<tr
 					v-for="row in props.ui.rows.v"
-					class="border-b odd:bg-white even:bg-gray-50 dark:border-gray-700 odd:dark:bg-gray-900 even:dark:bg-gray-800"
+					class="border-b odd:bg-white even:bg-gray-50"
 				>
 					<td v-for="cell in row.cells.v" class="px-6 py-4">
 						<ui-generic :ui="cell.body.v"  />

@@ -1,6 +1,6 @@
 <template>
-	<div class="fixed z-30 flex w-full flex-1 flex-col dark:text-white">
-		<nav class="flex h-16 justify-between bg-white px-4 shadow dark:bg-gray-700">
+	<div class="fixed z-30 flex w-full flex-1 flex-col">
+		<nav class="flex h-16 justify-between bg-white px-4 shadow">
 			<div class="flex items-center pl-4">
 				<ui-generic v-if="props.ui.topbarLeft.v" :ui="props.ui.topbarLeft.v"  />
 			</div>
@@ -20,23 +20,23 @@
 		class="fixed left-0 z-20 h-screen w-64 -translate-x-full pt-16 transition-transform sm:translate-x-0"
 		aria-label="Sidebar"
 	>
-		<div class="h-full overflow-y-auto bg-gray-50 px-3 py-4 dark:bg-gray-800">
+		<div class="h-full overflow-y-auto bg-gray-50 px-3 py-4">
 			<ul class="space-y-2 font-medium">
 				<li v-for="btn in props.ui.menu.v">
 					<a
 						@click="serviceAdapter.executeFunctions(btn.action)"
-						class="group flex cursor-pointer items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+						class="group flex cursor-pointer items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100"
 					>
 						<svg
 							v-inline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
 							v-if="btn.preIcon.v"
 							v-html="btn.preIcon.v"
 						></svg>
 						<span class="ms-3">{{ btn.caption.v }}</span>
 						<svg
 							v-inline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
 							v-if="btn.postIcon.v"
 							v-html="btn.postIcon.v"
 						></svg>
@@ -48,7 +48,7 @@
 				<div>
 					<button
 						type="button"
-						class="rounded-lg p-2.5 text-sm text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+						class="rounded-lg p-2.5 text-sm text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200"
 						@click="toggleDarkMode"
 					>
 						<MoonIcon v-if="darkModeActive" class="h-5 w-5" />
@@ -66,7 +66,7 @@
 					<li v-for="btn in props.ui.breadcrumbs.v" class="inline-flex items-center">
 						<a
 							@click="serviceAdapter.executeFunctions(btn.action)"
-							class="inline-flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+							class="inline-flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-blue-600"
 						>
 							<svg
 								v-inline
@@ -85,29 +85,29 @@
 	</div>
 
 	<div
-		class="fixed bottom-0 left-0 z-20 h-16 w-full border-t border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700 sm:hidden"
+		class="fixed bottom-0 left-0 z-20 h-16 w-full border-t border-gray-200 bg-white sm:hidden"
 	>
 		<div class="mx-auto grid h-full max-w-lg auto-cols-auto grid-flow-col font-medium">
 			<button
 				v-for="(button, index) in props.ui.menu.v"
 				:key="index"
 				type="button"
-				class="group inline-flex cursor-pointer flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800"
+				class="group inline-flex cursor-pointer flex-col items-center justify-center px-5 hover:bg-gray-50"
 				@click="serviceAdapter.executeFunctions(button.action)"
 			>
 				<svg
 					v-if="button.preIcon.v"
 					v-inline
-					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
+					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600"
 					v-html="button.preIcon.v"
 				></svg>
 				<span
-					class="text-sm text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
+					class="text-sm text-gray-500 group-hover:text-blue-600"
 				>{{ button.caption.v }}</span
 				>
 				<svg
 					v-inline
-					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-500"
+					class="mb-2 h-5 w-5 text-gray-500 group-hover:text-blue-600"
 					v-if="button.postIcon.v"
 					v-html="button.postIcon.v"
 				></svg>

@@ -1,7 +1,7 @@
 <template>
 	<button
 		type="button"
-		class="border border-black dark:border-white rounded-full size-10 p-2"
+		class="border border-black rounded-full size-10 p-2"
 		@click="toggleDarkMode"
 	>
 		<MoonIcon v-if="darkModeActive" class="h-full" />

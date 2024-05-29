@@ -1,11 +1,9 @@
 progress {
 	@apply appearance-none border-none bg-disabled-background text-primary rounded-full h-1 w-full;
-	@apply dark:bg-disabled-text;
 }
 
 progress[value]::-webkit-progress-bar {
 	@apply bg-disabled-background rounded-full;
-	@apply dark:bg-disabled-text;
 }
 
 progress[value]::-moz-progress-bar {

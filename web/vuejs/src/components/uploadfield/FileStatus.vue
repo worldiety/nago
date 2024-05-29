@@ -1,16 +1,16 @@
 <template>
 	<div
-		class="text-black dark:text-white bg-disabled-background bg-opacity-15 rounded-lg dark:bg-opacity-5 w-full py-2 pl-4"
+		class="text-black bg-disabled-background bg-opacity-15 rounded-lg dark:bg-opacity-5 w-full py-2 pl-4"
 		:class="inProgress || pending ? 'pr-1' : 'pr-4'"
 	>
 		<div class="flex justify-between items-center gap-x-4 h-full min-h-10">
 			<div class="relative">
 				<FileIcon class="h-4 text-disabled-text" />
 				<div v-if="fileUpload.status === FileUploadStatus.SUCCESS" class="absolute -bottom-1 -right-1 rounded-full bg-success h-3 p-0.5">
-					<CheckIcon class="text-white dark:text-darkmode-gray h-full" />
+					<CheckIcon class="text-white h-full" />
 				</div>
 				<div v-else-if="aborted || errorOccurred" class="absolute -bottom-1 -right-1 rounded-full bg-error h-3 p-[0.2rem]">
-					<CloseIcon class="text-white dark:text-darkmode-gray h-full" />
+					<CloseIcon class="text-white h-full" />
 				</div>
 			</div>
 			<div class="flex flex-col justify-between items-start gap-y-1 grow overflow-hidden">

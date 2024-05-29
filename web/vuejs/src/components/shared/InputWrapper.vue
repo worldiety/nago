@@ -46,14 +46,14 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const labelClass = computed((): string => {
+const labelClass = computed((): string|null => {
 	if (props.disabled) {
 		return 'text-disabled-text';
 	}
 	if (props.error) {
 		return 'text-error';
 	}
-	return 'dark:text-white';
+	return null;
 });
 
 const inputFieldWrapperClasses = computed((): string|null => {
@@ -73,17 +73,14 @@ const inputFieldWrapperClasses = computed((): string|null => {
 <style>
 .input-field-wrapper .input-field {
   @apply relative bg-transparent border-0 border-b border-b-black text-black cursor-default w-full px-0 py-2;
-  @apply dark:border-b-white dark:text-white;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {
 	@apply border border-black rounded-md px-3;
-  @apply dark:border-white;
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {
 	@apply border-error;
-  @apply dark:border-error;
 }
 
 .input-field-wrapper input::placeholder {
@@ -93,7 +90,6 @@ const inputFieldWrapperClasses = computed((): string|null => {
 .input-field-wrapper:hover .input-field,
 .input-field-wrapper .input-field:focus {
   @apply border-primary border-opacity-75 text-primary;
-  @apply dark:border-primary;
 }
 
 .input-field-wrapper .input-field:focus {
@@ -107,12 +103,10 @@ const inputFieldWrapperClasses = computed((): string|null => {
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field,
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
   @apply bg-disabled-background border-none;
-  @apply dark:bg-disabled-text dark:text-disabled-background;
 }
 
 .input-field-wrapper {
 	@apply text-black;
-	@apply dark:text-white;
 }
 
 .input-field-wrapper.input-field-wrapper-disabled {

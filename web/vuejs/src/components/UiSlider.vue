@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<span v-if="props.ui.label.v" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.v }}</span>
+		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
 
 		<div
 			class="slider"
@@ -72,8 +72,8 @@
 		</div>
 
 		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
-		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
+		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600">{{ props.ui.error.v }}</p>
+		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500">{{ props.ui.hint.v }}</p>
 	</div>
 </template>
 
@@ -347,7 +347,6 @@ function increaseEndSliderValue(): void {
 
 .slider-track {
 	@apply relative border-b border-b-black;
-	@apply dark:border-b-white;
 }
 
 .slider.slider-disabled .slider-track {
@@ -356,7 +355,6 @@ function increaseEndSliderValue(): void {
 
 .slider-tick-mark {
 	@apply absolute -top-[4px] border-l border-l-black h-[9px];
-	@apply dark:border-l-white;
 	left: var(--slider-tick-mark-offset);
 }
 
@@ -374,7 +372,6 @@ function increaseEndSliderValue(): void {
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
 	@apply bg-black;
-	@apply dark:bg-white;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
@@ -397,12 +394,10 @@ function increaseEndSliderValue(): void {
 .slider:not(.slider-disabled) .slider-thumb:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply outline-none ring-8 ring-primary ring-opacity-15;
-	@apply dark:ring-opacity-25;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply ring-opacity-25;
-	@apply dark:ring-opacity-35 !important;
 }
 
 .slider-thumb-start {
@@ -433,6 +428,5 @@ function increaseEndSliderValue(): void {
 
 .slider-thumb-label > span {
 	@apply bg-white rounded-lg px-1;
-	@apply dark:bg-darkmode-gray;
 }
 </style>

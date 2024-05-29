@@ -16,8 +16,8 @@
 			@keydown.enter="showUploadDialog"
 		>
 			<div class="flex flex-col items-center justify-center pb-6 pt-5 px-4">
-				<UploadIcon class="upload-icon mb-4 h-8 w-8 text-black dark:text-white" />
-				<p class="mb-2 text-sm text-black dark:text-white text-center">{{ props.ui.label.v }}</p>
+				<UploadIcon class="upload-icon mb-4 h-8 w-8 text-black" />
+				<p class="mb-2 text-sm text-black text-center">{{ props.ui.label.v }}</p>
 			</div>
 			<input
 				ref="fileInput"

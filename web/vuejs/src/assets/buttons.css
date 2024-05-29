@@ -28,7 +28,6 @@
 	@apply hover:text-primary hover:bg-primary hover:bg-opacity-25;
 	@apply active:bg-primary active:bg-opacity-35 active:text-primary;
 	@apply disabled:text-disabled-text disabled:bg-transparent;
-	@apply dark:text-white dark:hover:text-primary dark:active:text-primary dark:disabled:text-disabled-text dark:disabled:bg-transparent;
 }
 
 .button-destructive {
@@ -39,5 +38,5 @@
 }
 
 .button-default {
-	@apply rounded-full px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-200 dark:border-gray-600  dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus-visible:ring-gray-700;
+	@apply rounded-full px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-200;
 }
