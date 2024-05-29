@@ -36,9 +36,11 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 				return &model.Name
 			}))
 
-			crud.OneToMany[iam.Role, iam.Permission, iam.PID](bnd, service.AllPermissions(subject), func(permission iam.Permission) string {
-				return permission.Name()
-			},
+			crud.OneToMany[iam.Role, iam.Permission, iam.PID](bnd,
+				service.AllPermissions(subject),
+				func(permission iam.Permission) string {
+					return permission.Name()
+				},
 				crud.FromPtr("Berechtigungen", func(model *iam.Role) *[]iam.PID {
 					return &model.Permissions
 				}),

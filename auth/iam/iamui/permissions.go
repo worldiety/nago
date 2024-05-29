@@ -5,21 +5,22 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Permissions(subject auth.Subject, service *iam.Service) core.Component {
-	return ui.NewTable(func(table *ui.Table) {
-		table.Header().Append(ui.NewTextCell("Anwendungsfall"), ui.NewTextCell("Beschreibung"))
-		service.AllPermissions(subject)(func(permission iam.Permission, err error) bool {
-			table.Rows().Append(ui.NewTableRow(func(row *ui.TableRow) {
-				row.Cells().Append(
-					ui.NewTextCell(permission.Name()),
-					ui.NewTextCell(permission.Desc()),
-				)
+func Permissions(owner ui.ModalOwner, subject auth.Subject, service *iam.Service) core.Component {
+	return crud.NewView(owner, crud.NewOptions[iam.Permission](func(opts *crud.Options[iam.Permission]) {
+		opts.Title = "Berechtigungen"
+		opts.FindAll = service.AllPermissions(subject)
+		opts.Binding = crud.NewBinding(func(bnd *crud.Binding[iam.Permission]) {
+			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Permission) *string {
+				tmp := (*model).Name()
+				return &tmp
 			}))
-
-			return true
+			crud.Text(bnd, crud.FromPtr("Beschreibung", func(model *iam.Permission) *string {
+				tmp := (*model).Desc()
+				return &tmp
+			}))
 		})
-
-	})
+	}))
 }

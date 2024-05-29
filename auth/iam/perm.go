@@ -18,6 +18,11 @@ const (
 	CreateRole = "de.worldiety.ora.role.create"
 	UpdateRole = "de.worldiety.ora.role.update"
 	DeleteRole = "de.worldiety.ora.role.delete"
+
+	ReadGroup   = "de.worldiety.ora.group.read"
+	CreateGroup = "de.worldiety.ora.group.create"
+	UpdateGroup = "de.worldiety.ora.group.update"
+	DeleteGroup = "de.worldiety.ora.group.delete"
 )
 
 type iamPerm struct {
@@ -40,6 +45,7 @@ func (b iamPerm) Desc() string {
 
 func BuildInPermissions() []Permission {
 	return []Permission{
+		// users
 		iamPerm{
 			id:   CreateUser,
 			name: "Nutzer anlegen",
@@ -60,15 +66,60 @@ func BuildInPermissions() []Permission {
 			name: "Nutzer löschen",
 			desc: "Träger dieser Berechtigung können vorhandene Nutzer löschen.",
 		},
+		// permission are hardcoded and it does not make sense that these are in any way dynamic
 		iamPerm{
 			id:   ReadPermission,
 			name: "Berechtigungen anzeigen",
 			desc: "Träger dieser Berechtigung können alle vorhandenen Berechtigungen inkl. der Erläuterungstexte einsehen. Die Menge der Berechtigungen wird vom System vorgegeben und kann nicht dynamisch geändert werden.",
 		},
+		// roles
 		iamPerm{
 			id:   ReadRole,
 			name: "Rollen anzeigen",
 			desc: "Träger dieser Berechtigung können alle vorhandenen Rollen und die ihnen zugeordneten Berechtigungen anzeigen.",
+		},
+
+		iamPerm{
+			id:   CreateRole,
+			name: "Rollen erstellen",
+			desc: "Träger dieser Berechtigung können neue Rollen erstellen.",
+		},
+
+		iamPerm{
+			id:   UpdateRole,
+			name: "Rollen aktualisieren",
+			desc: "Träger dieser Berechtigung können vorhandene Rollen ändern.",
+		},
+
+		iamPerm{
+			id:   DeleteRole,
+			name: "Rollen löschen",
+			desc: "Träger dieser Berechtigung können Rollen entfernen.",
+		},
+
+		// groups
+		iamPerm{
+			id:   ReadGroup,
+			name: "Gruppen anzeigen",
+			desc: "Träger dieser Berechtigung können alle vorhandenen Gruppen und die ihnen zugeordneten Nutzer anzeigen.",
+		},
+
+		iamPerm{
+			id:   CreateGroup,
+			name: "Gruppen erstellen",
+			desc: "Träger dieser Berechtigung können neue Gruppen erstellen.",
+		},
+
+		iamPerm{
+			id:   UpdateGroup,
+			name: "Gruppen aktualisieren",
+			desc: "Träger dieser Berechtigung können vorhandene Gruppen ändern.",
+		},
+
+		iamPerm{
+			id:   DeleteGroup,
+			name: "Gruppen löschen",
+			desc: "Träger dieser Berechtigung können Gruppen entfernen.",
 		},
 	}
 }

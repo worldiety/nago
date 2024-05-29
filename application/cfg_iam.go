@@ -18,8 +18,15 @@ type IAMSettings struct {
 	Users       Users
 	Sessions    Sessions
 	Roles       Roles
+	Groups      Groups
 	Login       Login
 	Logout      Logout
+}
+
+type Groups struct {
+	// default to iam/groups
+	ID         ora.ComponentFactoryId
+	Repository iam.GroupRepository
 }
 
 type Roles struct {
@@ -79,6 +86,10 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Roles.ID = "iam/roles"
 	}
 
+	if settings.Groups.ID == "" {
+		settings.Groups.ID = "iam/groups"
+	}
+
 	if settings.Decorator == nil {
 		settings.Decorator = func(wnd core.Window, page *ui.Page, content core.Component) {
 			page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
@@ -126,6 +137,11 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 										menuEntry.Icon().Set(icon.Cog6Tooth)
 									}),
 									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+										menuEntry.Link(settings.Groups.ID, wnd, nil)
+										menuEntry.Title().Set("Gruppen")
+										menuEntry.Icon().Set(icon.Cog6Tooth)
+									}),
+									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 										menuEntry.Link(settings.Users.ID, wnd, nil)
 										menuEntry.Title().Set("Nutzerkonten")
 										menuEntry.Icon().Set(icon.Users)
@@ -153,15 +169,25 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Roles.Repository = json.NewSloppyJSONRepository[iam.Role](c.EntityStore("iam.roles"))
 	}
 
+	if settings.Groups.Repository == nil {
+		settings.Groups.Repository = json.NewSloppyJSONRepository[iam.Group](c.EntityStore("iam.groups"))
+	}
+
 	c.iamSettings = settings
 
-	service := iam.NewService(settings.Permissions.Permissions, settings.Users.Repository, settings.Sessions.Repository, settings.Roles.Repository)
+	service := iam.NewService(
+		settings.Permissions.Permissions,
+		settings.Users.Repository,
+		settings.Sessions.Repository,
+		settings.Roles.Repository,
+		settings.Groups.Repository,
+	)
 	if err := service.Bootstrap(); err != nil {
 		panic(fmt.Errorf("cannot bootstrap IAM service: %v", err))
 	}
 	c.Component(settings.Permissions.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
-		settings.Decorator(wnd, page, iamui.Permissions(wnd.Subject(), service))
+		settings.Decorator(wnd, page, iamui.Permissions(page, wnd.Subject(), service))
 		return page
 	})
 
@@ -186,6 +212,12 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 	c.Component(settings.Roles.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
 		settings.Decorator(wnd, page, iamui.Roles(wnd.Subject(), page, service))
+		return page
+	})
+
+	c.Component(settings.Groups.ID, func(wnd core.Window) core.Component {
+		page := ui.NewPage(nil)
+		settings.Decorator(wnd, page, iamui.Groups(wnd.Subject(), page, service))
 		return page
 	})
 

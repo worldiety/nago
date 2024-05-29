@@ -3,6 +3,7 @@
 package rquery
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -83,6 +84,24 @@ func contains(t any, what string) bool {
 			}
 
 			if contains(valOfPtr.Field(i).Interface(), what) {
+				return true
+			}
+		}
+
+		for i := range rType.NumMethod() {
+			method := rType.Method(i)
+			if !method.IsExported() {
+				continue
+			}
+
+			ftype := method.Func.Type()
+			fmt.Println(method.Name, ftype.NumIn(), ftype.NumOut())
+			if ftype.NumIn() != 1 || ftype.NumOut() != 1 {
+				continue
+			}
+
+			res := method.Func.Call([]reflect.Value{reflect.ValueOf(t)})[0]
+			if contains(res.Interface(), what) {
 				return true
 			}
 		}
