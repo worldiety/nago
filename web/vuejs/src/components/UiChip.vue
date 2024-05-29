@@ -25,26 +25,26 @@ const outerColor = computed<string>(() => {
 
 	switch (props.ui.color.v) {
 		case 'red':
-			return cursor + 'text-red-800 bg-red-100  dark:bg-red-900 dark:text-red-300';
+			return cursor + 'text-red-800 bg-red-100';
 		case 'green':
-			return cursor + 'text-green-800 bg-green-100  dark:bg-green-900 dark:text-green-300';
+			return cursor + 'text-green-800 bg-green-100';
 		case 'yellow':
-			return cursor + 'text-yellow-800 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300';
+			return cursor + 'text-yellow-800 bg-yellow-100';
 		default:
-			return cursor + 'text-gray-800 bg-gray-100 dark:bg-gray-700 dark:text-gray-300';
+			return cursor + 'text-gray-800 bg-gray-100';
 	}
 });
 
 const innerColor = computed<string>(() => {
 	switch (props.ui.color.v) {
 		case 'red':
-			return 'hover:bg-red-200 hover:text-red-900 dark:hover:bg-red-800 dark:hover:text-red-300 text-red-400';
+			return 'hover:bg-red-200 hover:text-red-900 text-red-400';
 		case 'green':
-			return 'hover:bg-green-200 hover:text-green-900 dark:hover:bg-green-800 dark:hover:text-green-300';
+			return 'hover:bg-green-200 hover:text-green-900';
 		case 'yellow':
-			return 'hover:bg-yellow-200 hover:text-yellow-900 dark:hover:bg-yellow-800 dark:hover:text-yellow-300';
+			return 'hover:bg-yellow-200 hover:text-yellow-900';
 		default:
-			return 'hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-gray-300';
+			return 'hover:bg-gray-200 hover:text-gray-900';
 	}
 });
 </script>

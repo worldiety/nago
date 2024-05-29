@@ -14,7 +14,7 @@
 					@click="showDatepicker"
 					@keydown.enter="showDatepicker">
 					<p :class="{'text-placeholder-text': !dateFormatted}">{{ dateFormatted ?? $t('datepicker.select') }}</p>
-					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black dark:text-white h-full">
+					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black h-full">
 						<Calendar class="w-4" />
 					</div>
 				</div>

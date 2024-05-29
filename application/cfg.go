@@ -47,11 +47,6 @@ func NewConfigurator() *Configurator {
 		buildInfo = fmt.Sprintf("%s %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version())
 	}
 
-	var themes ora.Themes
-	themes.Light = ora.DefaultTheme()
-	themes.Dark = ora.DefaultTheme()
-	// TODO add other default whitelabel themes
-
 	return &Configurator{
 		ctx:                ctx,
 		done:               done,

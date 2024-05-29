@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<span v-if="props.ui.label.v" class="block mb-2 text-sm dark:text-white">{{ props.ui.label.v }}</span>
+		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
 
 		<div
 			class="slider"
@@ -27,7 +27,7 @@
 				<!-- Left slider thumb -->
 				<div
 					v-if="props.ui.rangeMode.v"
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-primary"
 					:class="{
 						'slider-thumb-dragging': startDragging,
 						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
@@ -47,11 +47,11 @@
 				<!-- Slider thumb connector -->
 				<div
 					v-if="sliderThumbConnectorVisible"
-					class="slider-thumb-connector absolute top-1/2 border-b border-b-ora-orange z-0"
+					class="slider-thumb-connector absolute top-1/2 border-b border-b-primary z-0"
 				></div>
 				<!-- Right slider thumb -->
 				<div
-					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-ora-orange"
+					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-primary"
 					:class="{
 						'slider-thumb-dragging': endDragging,
 						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
@@ -72,8 +72,8 @@
 		</div>
 
 		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ props.ui.error.v }}</p>
-		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ props.ui.hint.v }}</p>
+		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600">{{ props.ui.error.v }}</p>
+		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500">{{ props.ui.hint.v }}</p>
 	</div>
 </template>
 
@@ -347,7 +347,6 @@ function increaseEndSliderValue(): void {
 
 .slider-track {
 	@apply relative border-b border-b-black;
-	@apply dark:border-b-white;
 }
 
 .slider.slider-disabled .slider-track {
@@ -356,7 +355,6 @@ function increaseEndSliderValue(): void {
 
 .slider-tick-mark {
 	@apply absolute -top-[4px] border-l border-l-black h-[9px];
-	@apply dark:border-l-white;
 	left: var(--slider-tick-mark-offset);
 }
 
@@ -365,7 +363,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider:not(.slider-disabled) .slider-tick-mark.slider-tick-mark-in-range {
-	@apply border-l-ora-orange;
+	@apply border-l-primary;
 }
 
 .slider.slider-disabled .slider-tick-mark.slider-tick-mark-in-range {
@@ -374,12 +372,11 @@ function increaseEndSliderValue(): void {
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
 	@apply bg-black;
-	@apply dark:bg-white;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
-	@apply bg-ora-orange;
+	@apply bg-primary;
 }
 
 .slider {
@@ -396,13 +393,11 @@ function increaseEndSliderValue(): void {
 
 .slider:not(.slider-disabled) .slider-thumb:hover,
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
-	@apply outline-none ring-8 ring-ora-orange ring-opacity-15;
-	@apply dark:ring-opacity-25;
+	@apply outline-none ring-8 ring-primary ring-opacity-15;
 }
 
 .slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
 	@apply ring-opacity-25;
-	@apply dark:ring-opacity-35 !important;
 }
 
 .slider-thumb-start {
@@ -423,7 +418,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-thumb-label {
-	@apply absolute left-0 right-0 flex justify-center text-ora-orange text-sm whitespace-nowrap overflow-visible;
+	@apply absolute left-0 right-0 flex justify-center text-primary text-sm whitespace-nowrap overflow-visible;
 	top: 150%;
 }
 
@@ -433,6 +428,5 @@ function increaseEndSliderValue(): void {
 
 .slider-thumb-label > span {
 	@apply bg-white rounded-lg px-1;
-	@apply dark:bg-darkmode-gray;
 }
 </style>

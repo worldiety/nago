@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import {onUnmounted, ref} from "vue";
+import { onBeforeMount, onMounted, onUnmounted, ref } from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -12,6 +12,9 @@ import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
 import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
+import type { Themes } from '@/shared/protocol/ora/themes';
+import type { Theme } from '@/shared/protocol/ora/theme';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -21,19 +24,28 @@ enum State {
 
 const eventBus = useEventBus();
 const serviceAdapter = useServiceAdapter();
+const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
 
 const errorHandler = useErrorHandling();
+let configurationPromise: Promise<void>|null = null;
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
-async function init(): Promise<void> {
-	try {
-		// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
-		// restoration).
-		await serviceAdapter.initialize();
+async function applyConfiguration(): Promise<void> {
+	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
+	// restoration).
+	await serviceAdapter.initialize();
 
+	// request and apply configuration
+	const config = await serviceAdapter.getConfiguration();
+	themeManager.setThemes(config.themes);
+	themeManager.applyActiveTheme();
+}
+
+async function initializeUi(): Promise<void> {
+	try {
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
 		if (factoryId.length === 0) {
@@ -54,7 +66,7 @@ async function init(): Promise<void> {
 		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
-		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested)
+		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 
 		updateUi(invalidation);
 	} catch {
@@ -118,20 +130,46 @@ function sendMultipleRequested(evt: Event): void {
 	document.body.removeChild(a);
 }
 
-init();
-addEventListener("popstate", (event) => {
-	if (event.state === null) {
-		return
+function setTheme(themes: Themes): void {
+	let activeTheme: Theme;
+	switch (localStorage.getItem('color-theme')) {
+		case 'light':
+			activeTheme = themes.light;
+			break;
+		case 'dark':
+			activeTheme = themes.dark;
+			break;
+		default:
+			activeTheme = themes.light;
+			break;
 	}
+}
 
-	const req2 = history.state as NavigationForwardToRequested
-	if (ui.value) {
-		serviceAdapter.destroyComponent(ui.value.id)
-	}
-	serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
-		ui.value = invalidation.value;
-	})
-})
+function addEventListeners(): void {
+	addEventListener("popstate", (event) => {
+		if (event.state === null) {
+			return
+		}
+
+		const req2 = history.state as NavigationForwardToRequested
+		if (ui.value) {
+			serviceAdapter.destroyComponent(ui.value.id)
+		}
+		serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
+			ui.value = invalidation.value;
+		})
+	});
+}
+
+onBeforeMount(() => {
+	configurationPromise = applyConfiguration();
+});
+
+onMounted(async () => {
+	await configurationPromise;
+	await initializeUi();
+	addEventListeners();
+});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
@@ -139,8 +177,9 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.ERROR_OCCURRED, handleError);
 	eventBus.unsubscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
+	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 });
-
 </script>
 
 <template>

@@ -12,12 +12,11 @@ import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropert
 import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
 import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
 import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
-import type { ColorScheme } from '@/shared/protocol/ora/colorScheme';
 import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
 import { v4 as uuidv4 } from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
 import { EventType } from '@/shared/eventbus/eventType';
-import {ScopeID} from "@/shared/protocol/ora/scopeID";
+import type {ScopeID} from "@/shared/protocol/ora/scopeID";
 
 export default class WebSocketAdapter implements ServiceAdapter {
 
@@ -167,12 +166,12 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		).then((event) => event as Acknowledged);
 	}
 
-	async getConfiguration(colorScheme: ColorScheme, acceptLanguages: string): Promise<ConfigurationDefined> {
+	async getConfiguration(): Promise<ConfigurationDefined> {
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
 			r: this.nextRequestId(), // TODO: Redundant, remove
-			acceptLanguage: acceptLanguages,
-			colorScheme: colorScheme,
+			acceptLanguage: 'de',
+			colorScheme: 'default',
 		};
 
 		return this.send(undefined, undefined, configurationRequested).then((event) => {

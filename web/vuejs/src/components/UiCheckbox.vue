@@ -36,7 +36,7 @@ function checkboxSelected(): void {
 
 <style scoped>
 .input-checkbox:hover {
-	@apply bg-ora-orange bg-opacity-25;
+	@apply bg-primary bg-opacity-25;
 }
 
 .input-checkbox:active {
@@ -56,7 +56,7 @@ function checkboxSelected(): void {
 }
 
 .input-checkbox:hover input:not(:checked) {
-	@apply border-ora-orange;
+	@apply border-primary;
 }
 
 .input-checkbox.input-checkbox-disabled:hover input:not(:checked) {

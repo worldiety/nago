@@ -12,7 +12,7 @@
 				<Close class="h-4" />
 			</div>
 		</div>
-		<div class="border-b border-b-ora-orange mt-2"></div>
+		<div class="border-b border-b-primary mt-2"></div>
 	</div>
 </template>
 

@@ -12,8 +12,8 @@ const props = defineProps<{
 			v-for="(step, index) in props.ui.steps.v"
 			:class="
 				index == props.ui.selectedIndex.v
-					? 'text-blue-600 dark:border-blue-500 dark:text-blue-500'
-					: 'text-gray-500 dark:text-gray-400'
+					? 'text-blue-600'
+					: 'text-gray-500'
 			"
 			class="flex items-center space-x-2.5 rtl:space-x-reverse"
 		>

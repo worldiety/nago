@@ -4,8 +4,31 @@
 		<UiGeneric :ui="modal" :is-active-dialog="index === props.ui.modals.v.length - 1" />
 	</div>
 
+	<div class="flex gap-x-4 ml-32">
+		<div>
+			<div class="size-8 bg-primary"></div>
+			<div class="size-8 bg-primary-10"></div>
+			<div class="size-8 bg-primary-12"></div>
+			<div class="size-8 bg-primary-14"></div>
+			<div class="size-8 bg-primary-17"></div>
+			<div class="size-8 bg-primary-22"></div>
+			<div class="size-8 bg-primary-30"></div>
+			<div class="size-8 bg-primary-60"></div>
+			<div class="size-8 bg-primary-70"></div>
+			<div class="size-8 bg-primary-83"></div>
+			<div class="size-8 bg-primary-87"></div>
+			<div class="size-8 bg-primary-90"></div>
+			<div class="size-8 bg-primary-92"></div>
+			<div class="size-8 bg-primary-94"></div>
+			<div class="size-8 bg-primary-96"></div>
+			<div class="size-8 bg-primary-98"></div>
+		</div>
+		<div class="size-8 bg-secondary"></div>
+		<div class="size-8 bg-tertiary"></div>
+	</div>
+
 	<!-- Page content -->
-	<div class="content-container bg-white dark:bg-darkmode-gray" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
+	<div class="content-container bg-white" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
 		<UiGeneric v-if="props.ui.body.v" :ui="props.ui.body.v"  />
 	</div>
 </template>

@@ -4,10 +4,11 @@ import App from '@/App.vue';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
-import { eventBusKey, serviceAdapterKey, uploadRepositoryKey } from '@/shared/injectionKeys';
+import { eventBusKey, serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import EventBus from '@/shared/eventbus/eventBus';
 import { UploadRepository } from '@/api/upload/uploadRepository';
+import ThemeManager from '@/shared/themeManager';
 
 const pinia = createPinia();
 
@@ -17,6 +18,7 @@ const eventBus = new EventBus();
 app.provide(serviceAdapterKey, new WebSocketAdapter(eventBus));
 app.provide(eventBusKey, eventBus);
 app.provide(uploadRepositoryKey, new UploadRepository());
+app.provide(themeManagerKey, new ThemeManager());
 
 app.directive('inline', (element: HTMLElement) => {
 	const parentCss = element.classList;

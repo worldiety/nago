@@ -6,11 +6,23 @@
 import type { Color } from '@/shared/protocol/ora/color';
 
 export interface Colors {
-    black: Color;
-    white: Color;
     primary: Color;
-    interactive: Color;
-    alertNegative: Color;
-    alertPositive: Color;
+    primary10 /*PrimaryTen*/: Color;
+    primary12 /*PrimaryTwelve*/: Color;
+    primary14 /*PrimaryFourteen*/: Color;
+    primary17 /*PrimarySeventeen*/: Color;
+    primary22 /*PrimaryTwentyTwo*/: Color;
+    primary30 /*PrimaryThirty*/: Color;
+    primary60 /*PrimarySixty*/: Color;
+    primary70 /*PrimarySeventy*/: Color;
+    primary83 /*PrimaryEightyThree*/: Color;
+    primary87 /*PrimaryEightySeven*/: Color;
+    primary90 /*PrimaryNinety*/: Color;
+    primary92 /*PrimaryNinetyTwo*/: Color;
+    primary94 /*PrimaryNinetyFour*/: Color;
+    primary96 /*PrimaryNinetySix*/: Color;
+    primary98 /*PrimaryNinetyEight*/: Color;
+    secondary: Color;
+    tertiary: Color;
 }
 

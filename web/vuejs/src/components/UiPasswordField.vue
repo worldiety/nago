@@ -45,7 +45,7 @@ function toggleRevealed(): void {
 			:help="props.ui.help.v"
 			:disabled="props.ui.disabled.v"
 		>
-			<div class="relative hover:text-ora-orange focus-within:text-ora-orange">
+			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="idPrefix + props.ui.id.toString()"
 					ref="passwordInput"
@@ -57,7 +57,7 @@ function toggleRevealed(): void {
 					:type="props.ui.revealed.v ? 'text' : 'password'"
 					@input="submitInputValue"
 				/>
-				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black dark:text-white h-full">
+				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black h-full">
 					<div :tabindex="props.ui.disabled.v ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">
 						<RevealIcon v-if="!props.ui.revealed.v" class="w-6" />
 						<HideIcon v-else class="w-6" />

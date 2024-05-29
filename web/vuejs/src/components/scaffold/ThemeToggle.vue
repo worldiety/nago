@@ -1,7 +1,7 @@
 <template>
 	<button
 		type="button"
-		class="border border-black dark:border-white rounded-full size-10 p-2"
+		class="border border-black rounded-full size-10 p-2"
 		@click="toggleDarkMode"
 	>
 		<MoonIcon v-if="darkModeActive" class="h-full" />
@@ -13,33 +13,17 @@
 import SunIcon from '@/assets/svg/sun.svg';
 import MoonIcon from '@/assets/svg/moon.svg';
 import { onMounted, ref } from 'vue';
+import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 
+const themeManager = useThemeManager();
 const darkModeActive = ref<boolean>(false);
 
 onMounted(() => {
-	darkModeActive.value = localStorage.getItem('color-theme') === 'dark' ||
-		(!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 });
 
-function toggleDarkMode(): void {
-	if ('color-theme' in localStorage) {
-		// if set via local storage previously
-		localStorage.getItem('color-theme') === 'light' ? activateDarkMode() : deactivateDarkMode();
-	} else {
-		// if NOT set via local storage previously
-		document.documentElement.classList.contains('dark') ? deactivateDarkMode() : activateDarkMode();
-	}
-}
-
-function activateDarkMode(): void {
-	document.documentElement.classList.add('dark');
-	localStorage.setItem('color-theme', 'dark');
-	darkModeActive.value = true;
-}
-
-function deactivateDarkMode(): void {
-	document.documentElement.classList.remove('dark');
-	localStorage.setItem('color-theme', 'light');
-	darkModeActive.value = false;
+function toggleDarkMode() {
+	themeManager.toggleDarkMode();
+	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 }
 </script>

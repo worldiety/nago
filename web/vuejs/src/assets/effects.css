@@ -1,5 +1,5 @@
 .effect-hover:hover {
-	@apply bg-ora-orange bg-opacity-15 text-ora-orange;
+	@apply bg-primary bg-opacity-15 text-primary;
 }
 
 *:focus-visible {

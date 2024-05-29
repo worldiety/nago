@@ -5,24 +5,24 @@ input[type="radio"]:checked::before {
 }
 
 input[type="checkbox"]:checked {
-	@apply bg-ora-orange dark:bg-ora-orange border-ora-orange dark:border-ora-orange;
+	@apply bg-primary border-primary;
 }
 
 input[type="radio"]:checked {
-	@apply bg-transparent border-black dark:border-white dark:bg-transparent;
+	@apply bg-transparent border-black;
 }
 
 input[type="checkbox"] {
-	@apply grid border border-black dark:border-white appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
+	@apply grid border border-black appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
 	font: inherit;
 }
 
 input[type="radio"] {
-	@apply grid border border-black rounded-full dark:border-white appearance-none bg-transparent place-content-center w-4 h-4 m-0;
+	@apply grid border border-black rounded-full appearance-none bg-transparent place-content-center w-4 h-4 m-0;
 }
 
 input[type="radio"]:hover {
-	@apply border-ora-orange;
+	@apply border-primary;
 }
 
 input[type="checkbox"]::before,
@@ -39,7 +39,7 @@ input[type="checkbox"]::before {
 }
 
 input[type="radio"]::before {
-	box-shadow: inset 1em 1em theme('colors.ora-orange');
+	box-shadow: inset 1em 1em theme('colors.primary');
 	clip-path: circle(100%);
 }
 

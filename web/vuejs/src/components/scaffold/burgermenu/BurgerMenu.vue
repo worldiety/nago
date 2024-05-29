@@ -1,5 +1,5 @@
 <template>
-	<div class="fixed top-0 left-0 right-0 text-black dark:text-white bg-white dark:bg-darkmode-gray border-b border-b-disabled-background dark:border-b-disabled-text h-24 py-4 px-8 z-30">
+	<div class="fixed top-0 left-0 right-0 text-black bg-white border-b border-b-disabled-background h-24 py-4 px-8 z-30">
 		<!-- Top bar -->
 		<div class="relative flex justify-start items-center h-full">
 			<MenuIcon class="relative cursor-pointer h-6 z-10" tabindex="0" @click="menuOpen = true" @keydown.enter="menuOpen = true" />
@@ -12,7 +12,7 @@
 		<Transition name="slide">
 			<div
 				v-if="menuOpen"
-				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-white dark:bg-darkmode-gray shadow-md z-20"
+				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-white shadow-md z-20"
 			>
 				<div class="flex justify-start items-center h-24 p-8">
 					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false" @keydown.enter="menuOpen = false" />
