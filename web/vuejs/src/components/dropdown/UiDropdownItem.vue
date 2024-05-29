@@ -13,9 +13,7 @@ const serviceAdapter = useServiceAdapter();
 
 <template>
 	<div
-		class="cursor-pointer mx-1 py-4 focus:outline-none
-				highlighted
-					dark:hover:rounded-2lg dark:hover:bg-opacity-25"
+		class="highlighted cursor-pointer mx-1 py-4 focus:outline-none"
 		tabindex="0"
 		@click="serviceAdapter.executeFunctions(props.ui.onClicked)"
 		@keydown.enter="serviceAdapter.executeFunctions(props.ui.onClicked)"

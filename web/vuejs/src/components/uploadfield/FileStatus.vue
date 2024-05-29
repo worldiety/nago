@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="text-black bg-disabled-background bg-opacity-15 rounded-lg dark:bg-opacity-5 w-full py-2 pl-4"
+		class="text-black bg-disabled-background bg-opacity-15 rounded-lg w-full py-2 pl-4"
 		:class="inProgress || pending ? 'pr-1' : 'pr-4'"
 	>
 		<div class="flex justify-between items-center gap-x-4 h-full min-h-10">
