@@ -7,8 +7,6 @@
 
 html {
 	font-size: 14px;
-	box-sizing: border-box;
-	overflow-x: hidden;
 
 	--primary: var(--primary-hue) var(--primary-saturation) var(--primary-lightness);
 	--secondary: var(--secondary-hue) var(--secondary-saturation) var(--secondary-lightness);
@@ -31,6 +29,10 @@ html {
 	--primary-98: var(--primary-hue) var(--primary-saturation) 98%;
 
 	--secondary-80: var(--secondary-hue) var(--secondary-saturation) 80%;
+}
+
+body {
+	@apply h-full;
 }
 
 @media screen(md) {
