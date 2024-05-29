@@ -167,18 +167,16 @@ func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidati
 }
 
 func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
-	// todo where is the configuration?
 	s.Publish(ora.ConfigurationDefined{
-		Type:             ora.ConfigurationDefinedT,
-		ApplicationName:  "todo",
-		AvailableLocales: []string{"de", "en"},
-		ActiveLocale:     "de",
-		Themes: ora.Themes{
-			Light: ora.LightTheme(),
-			Dark:  ora.DarkTheme(),
-		},
-		Resources: ora.Resources{},
-		RequestId: evt.RequestId,
+		Type:               ora.ConfigurationDefinedT,
+		ApplicationID:      string(s.app.id),
+		ApplicationName:    s.app.name,
+		ApplicationVersion: s.app.version,
+		AvailableLocales:   []string{"de", "en"}, //TODO
+		ActiveLocale:       "de",                 //TODO
+		Themes:             s.app.themes,
+		Resources:          ora.Resources{}, //TODO
+		RequestId:          evt.RequestId,
 	})
 }
 

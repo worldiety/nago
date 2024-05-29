@@ -33,8 +33,9 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 					return model, nil
 				},
 				RenderHints: crud.RenderHints{
-					crud.Update: crud.ReadOnly,
-					crud.Create: crud.Hidden,
+					crud.Overview: crud.Hidden,
+					crud.Update:   crud.ReadOnly,
+					crud.Create:   crud.Visible,
 				},
 			})
 
@@ -45,6 +46,19 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 				},
 				IntoModel: func(model iam.Role, value string) (iam.Role, error) {
 					model.Name = value
+					return model, nil
+				},
+			})
+
+			crud.OneToMany[iam.Role, iam.Permission, iam.PID](bnd, service.AllPermissions(subject), func(permission iam.Permission) string {
+				return permission.Name()
+			}, crud.Field[iam.Role, []iam.PID]{
+				Caption: "Berechtigungen",
+				FromModel: func(role iam.Role) []iam.PID {
+					return role.Permissions
+				},
+				IntoModel: func(model iam.Role, value []iam.PID) (iam.Role, error) {
+					model.Permissions = value
 					return model, nil
 				},
 			})

@@ -71,7 +71,7 @@ onUpdated(() => {
 
 const itemsFiltered = computed((): DropdownItem[] => {
 	const searchTerms = searchQuery.value.toLowerCase().trim().split(/\s+/);
-	return props.ui.items.v.filter((item: DropdownItem) => {
+	return props.ui.items.v?.filter((item: DropdownItem) => {
 		const combinedItem = item.content.v.toLowerCase().replace(/\s+/g, "");
 
 		return searchTerms.every(searchTerm => combinedItem.includes(searchTerm));

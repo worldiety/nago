@@ -37,13 +37,15 @@ func (e ConfigurationRequested) ReqID() RequestId {
 // A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type ConfigurationDefined struct {
-	Type             EventType `json:"type" value:"ConfigurationDefined"`
-	ApplicationName  string    `json:"applicationName"`
-	AvailableLocales []string  `json:"availableLocales"`
-	ActiveLocale     string    `json:"activeLocale"`
-	Themes           Themes    `json:"themes"`
-	Resources        Resources `json:"resources"`
-	RequestId        RequestId `json:"r"`
+	Type               EventType `json:"type" value:"ConfigurationDefined"`
+	ApplicationID      string    `json:"applicationID"`
+	ApplicationName    string    `json:"applicationName"`
+	ApplicationVersion string    `json:"applicationVersion"`
+	AvailableLocales   []string  `json:"availableLocales"`
+	ActiveLocale       string    `json:"activeLocale"`
+	Themes             Themes    `json:"themes"`
+	Resources          Resources `json:"resources"`
+	RequestId          RequestId `json:"r"`
 	event
 }
 

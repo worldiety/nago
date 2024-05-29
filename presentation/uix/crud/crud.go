@@ -2,24 +2,26 @@ package crud
 
 import (
 	"fmt"
-	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/pkg/iter"
+	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"log/slog"
+	"slices"
+	"strings"
 )
 
 type Options[E any] struct {
-	Title              string
-	Create             func(E) error
-	FindAll            iter.Seq2[E, error]
-	Update             func(E) error
-	AggregateActions   []AggregateAction[E]
-	ForeignKeyMappings []ForeignKeyMapping
-	Binding            *Binding[E]
+	Title            string
+	Create           func(E) error
+	FindAll          iter.Seq2[E, error]
+	Update           func(E) error
+	AggregateActions []AggregateAction[E]
+	Binding          *Binding[E]
 }
 
 func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
@@ -55,6 +57,7 @@ func (o *Options[E]) OnUpdate(f func(E) error) {
 		Action: func(owner ui.ModalOwner, e E) error {
 			ui.NewDialog(func(dlg *ui.Dialog) {
 				dlg.Title().Set("Eintrag bearbeiten")
+				dlg.Size().Set(ora.ElementSizeMedium)
 				form := opts.Binding.NewForm(Update)
 				dlg.Body().Set(form.Component)
 				// push actual model data into the view
@@ -110,13 +113,6 @@ type AggregateAction[T any] struct {
 	Style   ora.Intent
 }
 
-type ForeignKeyMapping struct {
-}
-
-func NewForeignKeyMapping[E data.Aggregate[ID], ID data.IDType]() *ForeignKeyMapping {
-	return nil
-}
-
 func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	if opts == nil {
 		opts = NewOptions[E](nil)
@@ -125,13 +121,14 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	if opts.Binding == nil {
 		panic(fmt.Errorf("reflection based binder not yet implemented, please provide a custom binding"))
 	}
-
+	var searchField *ui.TextField
 	toolbar := ui.NewHStack(func(hstack *ui.FlexContainer) {
 		hstack.ContentAlignment().Set(ora.ContentBetween)
 		// left side
 		hstack.Append(ui.MakeText(opts.Title))
 
 		// right side
+
 		hstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
 			canSearch := opts.FindAll != nil
 			if canSearch {
@@ -141,6 +138,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					btn.Style().Set(ora.Tertiary)
 				}))
 				hstack.Append(ui.NewTextField(func(textField *ui.TextField) {
+					searchField = textField
 					textField.Placeholder().Set("Suchen")
 					textField.Simple().Set(true)
 				}))
@@ -153,6 +151,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					btn.Action().Set(func() {
 						ui.NewDialog(func(dlg *ui.Dialog) {
 							dlg.Title().Set("Neuer Eintrag")
+							dlg.Size().Set(ora.ElementSizeMedium)
 							form := opts.Binding.NewForm(Create)
 							dlg.Body().Set(form.Component)
 							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
@@ -207,8 +206,36 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 				return
 			}
 
-			for _, field := range opts.Binding.fields {
-				table.Header().Append(ui.NewTextCell(field.Caption))
+			var allSortBtns []*ui.Button
+			sortAsc := true
+			sortByFieldIdx := -1
+
+			for i, field := range opts.Binding.fields {
+				if field.RenderHints[Overview] == Hidden {
+					continue
+				}
+				table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+					cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+						btn.Style().Set(ora.Tertiary)
+						btn.Caption().Set(field.Caption)
+						btn.PreIcon().Set(icon.ArrowUpDown)
+						allSortBtns = append(allSortBtns, btn)
+						btn.Action().Set(func() {
+							sortByFieldIdx = i
+							// reset that sort icon
+							for _, sortBtn := range allSortBtns {
+								sortBtn.PreIcon().Set(icon.ArrowUpDown)
+							}
+
+							sortAsc = !sortAsc
+							if sortAsc {
+								btn.PreIcon().Set(icon.ArrowUp)
+							} else {
+								btn.PreIcon().Set(icon.ArrowDown)
+							}
+						})
+					}))
+				}))
 			}
 
 			if hasAggregateOptions {
@@ -216,7 +243,47 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 			}
 
 			table.Rows().From(func(yield func(*ui.TableRow) bool) {
-				findAll(func(e E, err error) bool {
+				filtered := findAll
+				if searchField.Value().Get() != "" {
+					predicate := rquery.SimplePredicate[any](searchField.Value().Get())
+					filtered = iter.Filter2(func(model E, err error) bool {
+						if err != nil {
+							slog.Error("error in iter while filtering", "err", err)
+							return false
+						}
+
+						// note that this may be a security faux-pas, because we can search things which is not displayed,
+						// thus an attacker may "leak" information through search responses. However, this works as intended
+						// and allows to search after hidden but well known details, like internal entity identifiers.
+						// To mitigate security problems, the developer just needs to use a proper view model,
+						// as required by a reasonable architecture anyway.
+						return predicate(model)
+					}, findAll)
+				}
+
+				if sortByFieldIdx >= 0 {
+					var err error
+					tmpIter := iter.BreakOnError(&err, filtered)
+					collectedRows := slices2.Collect(tmpIter)
+					if err != nil {
+						slog.Error("error in iter while collecting", "err", err)
+						return
+					}
+
+					field := opts.Binding.fields[sortByFieldIdx]
+					slices.SortFunc(collectedRows, func(a, b E) int {
+						strA := field.Stringer(a)
+						strB := field.Stringer(b)
+						dir := 1
+						if !sortAsc {
+							dir = -1
+						}
+						return strings.Compare(strA, strB) * dir
+					})
+					filtered = slices2.Values2[[]E, E, error](collectedRows)
+				}
+
+				filtered(func(e E, err error) bool {
 					if err != nil {
 						slog.Error("cannot find entries", "err", err)
 						return false
@@ -224,6 +291,9 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 
 					yield(ui.NewTableRow(func(row *ui.TableRow) {
 						for _, field := range opts.Binding.fields {
+							if field.RenderHints[Overview] == Hidden {
+								continue
+							}
 							row.Cells().Append(ui.NewTextCell(field.Stringer(e)))
 						}
 

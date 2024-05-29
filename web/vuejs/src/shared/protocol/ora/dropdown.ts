@@ -21,5 +21,6 @@ export interface Dropdown {
     error: Property<string>;
     onClicked: Property<Ptr>;
     searchable: Property<boolean>;
+    visible: Property<boolean>;
 }
 
