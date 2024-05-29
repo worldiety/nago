@@ -1,6 +1,6 @@
 <template>
 	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black z-30">
-		<div class="relative bg-white rounded-xl shadow-lg max-w-96 p-6 z-10">
+		<div class="relative bg-background rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
 				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
 
@@ -16,14 +16,14 @@
 					</div>
 					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-white text-right cursor-pointer rounded-l-md w-full h-full px-2">
+							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-background text-right cursor-pointer rounded-l-md w-full h-full px-2">
 								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
 									{{ monthEntry[1] }}
 								</option>
 							</select>
 						</div>
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-white rounded-r-md text-left w-full h-full px-2">
+							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-background rounded-r-md text-left w-full h-full px-2">
 						</div>
 					</div>
 					<div
@@ -366,7 +366,7 @@ function selectDate(datepickerDay: DatepickerDay): void {
 /* Each day in the first column within the selection range except the selected days (after element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-start-day-container, .selected-start-day-container)::after {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-white;
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-background;
 }
 
 /* Each day in the first grid column within the selected range that is not a selected day (before element) */
@@ -378,7 +378,7 @@ function selectDate(datepickerDay: DatepickerDay): void {
 /* Each day in the last column within the selected range except the selected days (before element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-start-day-container, .selected-end-day-container)::before {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-white;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-background;
 }
 
 /* Each day in the last grid column within the selected range that is not a selected day (after element) */
@@ -391,14 +391,14 @@ function selectDate(datepickerDay: DatepickerDay): void {
 .datepicker-grid > .selected-start-day-container::before {
 	content: '';
 	width: calc(50% + 1rem);
-	@apply absolute top-0 left-0 bottom-0 bg-white rounded-r-full h-full;
+	@apply absolute top-0 left-0 bottom-0 bg-background rounded-r-full h-full;
 }
 
 /* Last day of selected range (after element) */
 .datepicker-grid > .selected-end-day-container::after {
 	content: '';
 	width: calc(50% + 1rem);
-	@apply absolute top-0 bottom-0 right-0 bg-white rounded-l-full h-full;
+	@apply absolute top-0 bottom-0 right-0 bg-background rounded-l-full h-full;
 }
 
 /* Selected start day container in last grid row */

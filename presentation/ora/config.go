@@ -78,6 +78,9 @@ func GenerateTheme(
 	tertiaryHueAngle float64,
 	tertiarySaturationPercentage float64,
 	tertiaryLightnessPercentage float64,
+	backgroundHueAngle float64,
+	backgroundSaturationPercentage float64,
+	backgroundLightnessPercentage float64,
 ) Theme {
 	return Theme{
 		Colors: Colors{
@@ -99,6 +102,7 @@ func GenerateTheme(
 			PrimaryNinetyEight: HSL(primaryHueAngle, primarySaturationPercentage, 98),
 			Secondary:          HSL(secondaryHueAngle, secondarySaturationPercentage, secondaryLightnessPercentage),
 			Tertiary:           HSL(tertiaryHueAngle, tertiarySaturationPercentage, tertiaryLightnessPercentage),
+			Background:         HSL(backgroundHueAngle, backgroundSaturationPercentage, backgroundLightnessPercentage),
 		},
 	}
 }
@@ -123,6 +127,7 @@ type Colors struct {
 	PrimaryNinetyEight Color `json:"primary98"`
 	Secondary          Color `json:"secondary"`
 	Tertiary           Color `json:"tertiary"`
+	Background         Color `json:"background"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

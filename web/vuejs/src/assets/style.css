@@ -7,28 +7,6 @@
 
 html {
 	font-size: 14px;
-
-	--primary: var(--primary-hue) var(--primary-saturation) var(--primary-lightness);
-	--secondary: var(--secondary-hue) var(--secondary-saturation) var(--secondary-lightness);
-	--tertiary: var(--tertiary-hue) var(--tertiary-saturation) var(--tertiary-lightness);
-
-	--primary-10: var(--primary-hue) var(--primary-saturation) 10%;
-	--primary-12: var(--primary-hue) var(--primary-saturation) 12%;
-	--primary-14: var(--primary-hue) var(--primary-saturation) 14%;
-	--primary-17: var(--primary-hue) var(--primary-saturation) 17%;
-	--primary-22: var(--primary-hue) var(--primary-saturation) 22%;
-	--primary-30: var(--primary-hue) var(--primary-saturation) 30%;
-	--primary-60: var(--primary-hue) var(--primary-saturation) 60%;
-	--primary-70: var(--primary-hue) var(--primary-saturation) 70%;
-	--primary-83: var(--primary-hue) var(--primary-saturation) 83%;
-	--primary-87: var(--primary-hue) var(--primary-saturation) 87%;
-	--primary-90: var(--primary-hue) var(--primary-saturation) 90%;
-	--primary-92: var(--primary-hue) var(--primary-saturation) 92%;
-	--primary-94: var(--primary-hue) var(--primary-saturation) 94%;
-	--primary-96: var(--primary-hue) var(--primary-saturation) 96%;
-	--primary-98: var(--primary-hue) var(--primary-saturation) 98%;
-
-	--secondary-80: var(--secondary-hue) var(--secondary-saturation) 80%;
 }
 
 body {

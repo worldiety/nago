@@ -1,8 +1,8 @@
 <template>
 	<nav class="fixed top-0 left-0 right-0 text-black h-24 z-30">
 		<!-- Top bar -->
-		<div class="relative bg-white h-full py-5 z-20">
-			<div class="website-content flex justify-between items-center h-full">
+		<div class="relative bg-background h-full py-5 z-20">
+			<div class="website-content flex justify-between items-center">
 				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
         <div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
@@ -27,7 +27,7 @@
 			<div
 				v-show="subMenuEntries.length > 0"
 				ref="subMenuTriangle"
-				class="sub-menu-triangle absolute -top-2 left-0 rotate-45 border border-disabled-background bg-white size-4 z-10"
+				class="sub-menu-triangle absolute -top-2 left-0 rotate-45 border border-disabled-background bg-background size-4 z-10"
 				:style="`--sub-menu-triangle-left-offset: ${subMenuTriangleLeftOffset}px`"
 			></div>
 		</div>
@@ -37,7 +37,7 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="relative bg-white rounded-b-2xl shadow-md pt-8 pb-10 z-0"
+				class="relative bg-background rounded-b-2xl shadow-md pt-8 pb-10 z-0"
 			>
 				<div class="website-content flex justify-center items-start gap-x-8">
 					<!-- Sub menu entries -->

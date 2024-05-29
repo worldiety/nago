@@ -5,7 +5,7 @@
 		aria-label="Sidebar"
 	>
 		<!-- Sidebar -->
-		<div class="relative flex flex-col items-center justify-start gap-y-4 bg-white h-full w-full pt-6 px-4 pb-7 z-10">
+		<div class="relative flex flex-col items-center justify-start gap-y-4 bg-background h-full w-full pt-6 px-4 pb-7 z-10">
 			<div v-if="ui.logo.v" class="w-full *:w-full mb-4" v-html="ui.logo.v"></div>
 			<!-- Top level menu entries -->
 			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
@@ -27,7 +27,7 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-white border-l border-l-disabled-background rounded-r-2xl shadow-md w-72 py-8 px-2 z-0"
+				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-background border-l border-l-disabled-background rounded-r-2xl shadow-md w-72 py-8 px-2 z-0"
 			>
 				<!-- Sub menu entries -->
 				<div

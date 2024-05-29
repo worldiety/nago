@@ -3,8 +3,8 @@
 	<Sidebar v-if="sidebarVisible" :ui="props.ui.navigationComponent.v" />
 	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui.navigationComponent.v" />
 
-  <div class="h-full" :class="bodyWrapperClass">
-    <div class="website-content h-full">
+  <div class="min-h-full" :class="bodyWrapperClass">
+    <div class="website-content min-h-full">
       <ui-generic :ui="props.ui.body.v"  />
     </div>
   </div>
