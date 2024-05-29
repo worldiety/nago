@@ -15,7 +15,7 @@ const clazz = computed<string>(() => {
 	if (props.ui.color.v) {
 		tmp += textColor2Tailwind(props.ui.color.v);
 	} else {
-		tmp += 'text-gray-900';
+		tmp += 'text-black';
 	}
 
 	if (props.ui.colorDark.v) {
