@@ -103,6 +103,11 @@ var exampleImg []byte
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
+		cfg.SetThemes(ora.Themes{
+			Light: ora.LightTheme(),
+			Dark:  ora.DarkTheme(),
+		})
+
 		cfg.SetApplicationID("de.worldiety.nago.demo.kitchensink")
 		//cfg.KeycloakAuthentication()
 		persons := application.SloppyRepository[Person, PID](cfg)
