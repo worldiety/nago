@@ -113,12 +113,6 @@ func TertiaryColor(color Color) ThemeOption {
 	})
 }
 
-func BackgroundColor(color Color) ThemeOption {
-	return themeFunc(func(theme *Theme) {
-		theme.Colors.Background = color
-	})
-}
-
 func GenerateTheme(opts ...ThemeOption) Theme {
 	var theme Theme
 	for _, opt := range opts {
@@ -148,7 +142,6 @@ type Colors struct {
 	PrimaryNinetyEight Color `json:"primary98"`
 	Secondary          Color `json:"secondary"`
 	Tertiary           Color `json:"tertiary"`
-	Background         Color `json:"background"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

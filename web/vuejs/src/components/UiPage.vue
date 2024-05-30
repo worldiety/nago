@@ -5,7 +5,7 @@
 	</div>
 
 	<!-- Page content -->
-	<div class="content-container bg-background min-h-screen" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
+	<div class="content-container bg-primary-98 darkmode:bg-primary-10 min-h-screen" :class="{'content-container-freezed': anyModalVisible}" :style="`--content-top-offset: ${windowScrollY}px;`">
 		<UiGeneric v-if="props.ui.body.v" :ui="props.ui.body.v"  />
 	</div>
 </template>

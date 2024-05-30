@@ -432,6 +432,6 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-thumb-label > span {
-	@apply bg-background rounded-lg px-1;
+	@apply bg-primary-98 darkmode:bg-primary-10 rounded-lg px-1;
 }
 </style>

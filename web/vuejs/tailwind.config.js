@@ -39,7 +39,6 @@ export default {
 				customColors['primary'] = `hsl(var(--primary) / <alpha-value>)`;
 				customColors['secondary'] = `hsl(var(--secondary) / <alpha-value>)`;
 				customColors['tertiary'] = `hsl(var(--tertiary) / <alpha-value>)`;
-				customColors['background'] = `hsl(var(--background) / <alpha-value>)`;
 				return customColors;
 			},
 			boxShadow: {

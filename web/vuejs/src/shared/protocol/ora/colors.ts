@@ -24,6 +24,5 @@ export interface Colors {
     primary98 /*PrimaryNinetyEight*/: Color;
     secondary: Color;
     tertiary: Color;
-    background: Color;
 }
 

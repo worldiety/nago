@@ -53,13 +53,11 @@ func NewConfigurator() *Configurator {
 			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
 			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
 			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
-			ora.BackgroundColor(ora.MustParseHSL("#000000")),
 		),
 		Light: ora.GenerateTheme(
 			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
 			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
 			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
-			ora.BackgroundColor(ora.MustParseHSL("#F9F9F9")),
 		),
 	}
 

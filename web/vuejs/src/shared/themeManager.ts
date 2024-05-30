@@ -91,7 +91,6 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].style.setProperty('--primary-98', `${theme.colors.primary98.h}deg ${theme.colors.primary98.s}% ${theme.colors.primary98.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--secondary', `${theme.colors.secondary.h}deg ${theme.colors.secondary.s}% ${theme.colors.secondary.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--tertiary', `${theme.colors.tertiary.h}deg ${theme.colors.tertiary.s}% ${theme.colors.tertiary.l}%`);
-		document.getElementsByTagName('html')[0].style.setProperty('--background', `${theme.colors.background.h}deg ${theme.colors.background.s}% ${theme.colors.background.l}%`);
 	}
 }
 

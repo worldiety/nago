@@ -21,7 +21,7 @@
 
 		<!-- Dropdown content -->
 		<div ref="dropdownOptions">
-			<div v-if="props.ui.expanded.v" class="absolute bg-background top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40">
+			<div v-if="props.ui.expanded.v" class="absolute bg-primary-98 darkmode:bg-primary-10 top-full left-0 right-0 shadow-ora-shadow rounded-2lg mt-2.5 py-2.5 z-40">
 				<ui-dropdown-searchfilter  v-if="props.ui.searchable.v" @searchQueryChanged="(updatedSearchQuery) => searchQuery = updatedSearchQuery"></ui-dropdown-searchfilter>
 				<ui-dropdown-item
 					v-for="(dropdownItem, index) in itemsFiltered"
