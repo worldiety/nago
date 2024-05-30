@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"bytes"
 	"encoding/base64"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
@@ -51,7 +52,11 @@ func (c *Image) URI() *Shared[ora.URI] {
 // SetDataURI encodes the given buffer as an URI with the embedded data image.
 func (c *Image) SetDataURI(buf []byte) {
 	b64 := base64.StdEncoding.EncodeToString(buf)
-	c.URI().Set(ora.URI(`data:application/octet-stream;base64,` + b64))
+	if bytes.HasPrefix(buf, []byte("<svg")) {
+		c.URI().Set(ora.URI(`data:image/svg+xml;base64,` + b64))
+	} else {
+		c.URI().Set(ora.URI(`data:application/octet-stream;base64,` + b64))
+	}
 }
 
 func (c *Image) Caption() String {
