@@ -54,8 +54,10 @@ func (s *Scaffold) Properties(yield func(core.Property) bool) {
 
 func (s *Scaffold) Render() ora.Component {
 	var navigationComponent ora.Property[ora.NavigationComponent]
-	navigationComponent.Ptr = s.navigationComponent.id
-	navigationComponent.Value = s.navigationComponent.v.renderNavigationComponent()
+	if s.navigationComponent.Get() != nil {
+		navigationComponent.Ptr = s.navigationComponent.id
+		navigationComponent.Value = s.navigationComponent.v.renderNavigationComponent()
+	}
 
 	return ora.Scaffold{
 		Ptr:                 s.id,

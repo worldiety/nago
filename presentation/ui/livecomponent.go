@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"reflect"
 	"strconv"
 )
 
@@ -59,6 +60,11 @@ func (s *Shared[T]) Iter(f func(T) bool) {
 }
 
 func (s *Shared[T]) AnyIter(f func(any) bool) {
+	if c, ok := any(s.v).(core.Component); ok {
+		if isNil(c) {
+			return
+		}
+	}
 	f(s.v)
 }
 
@@ -152,4 +158,12 @@ func renderFunc(lf *core.Func) ora.Property[ora.Ptr] {
 		Ptr:   lf.ID(), // TODO why is this not a Property or a Shared[func()]? it is a logical slot (itself a pointer) with a value set (again pointer)
 		Value: lf.ID(),
 	}
+}
+
+func isNil(i interface{}) bool {
+	vi := reflect.ValueOf(i)
+	if vi.Kind() == reflect.Ptr {
+		return vi.IsNil()
+	}
+	return false
 }
