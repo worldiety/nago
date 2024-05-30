@@ -23,6 +23,35 @@ type IAMSettings struct {
 	Logout      Logout
 }
 
+func (settings IAMSettings) DefaultMenuEntry(wnd core.Window) *ui.MenuEntry {
+	return ui.NewMenuEntry(func(usm *ui.MenuEntry) {
+		usm.Title().Set("Nutzerverwaltung")
+		usm.Icon().Set(icon.Users)
+		usm.Menu().Append(
+			ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+				menuEntry.Link(settings.Permissions.ID, wnd, nil)
+				menuEntry.Title().Set("Berechtigungen")
+				menuEntry.Icon().Set(icon.Users)
+			}),
+			ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+				menuEntry.Link(settings.Roles.ID, wnd, nil)
+				menuEntry.Title().Set("Rollen")
+				menuEntry.Icon().Set(icon.Cog6Tooth)
+			}),
+			ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+				menuEntry.Link(settings.Groups.ID, wnd, nil)
+				menuEntry.Title().Set("Gruppen")
+				menuEntry.Icon().Set(icon.Cog6Tooth)
+			}),
+			ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+				menuEntry.Link(settings.Users.ID, wnd, nil)
+				menuEntry.Title().Set("Nutzerkonten")
+				menuEntry.Icon().Set(icon.Users)
+			}),
+		)
+	})
+}
+
 type Groups struct {
 	// default to iam/groups
 	ID         ora.ComponentFactoryId
@@ -121,33 +150,7 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 					if auth.OneOf(subject, iam.ReadPermission, iam.ReadUser) {
 						navigationComponent.Menu().Append(
-
-							ui.NewMenuEntry(func(usm *ui.MenuEntry) {
-								usm.Title().Set("Nutzerverwaltung")
-								usm.Icon().Set(icon.Users)
-								usm.Menu().Append(
-									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-										menuEntry.Link(settings.Permissions.ID, wnd, nil)
-										menuEntry.Title().Set("Berechtigungen")
-										menuEntry.Icon().Set(icon.Users)
-									}),
-									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-										menuEntry.Link(settings.Roles.ID, wnd, nil)
-										menuEntry.Title().Set("Rollen")
-										menuEntry.Icon().Set(icon.Cog6Tooth)
-									}),
-									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-										menuEntry.Link(settings.Groups.ID, wnd, nil)
-										menuEntry.Title().Set("Gruppen")
-										menuEntry.Icon().Set(icon.Cog6Tooth)
-									}),
-									ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-										menuEntry.Link(settings.Users.ID, wnd, nil)
-										menuEntry.Title().Set("Nutzerkonten")
-										menuEntry.Icon().Set(icon.Users)
-									}),
-								)
-							}),
+							settings.DefaultMenuEntry(wnd),
 						)
 					}
 
