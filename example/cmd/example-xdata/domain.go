@@ -16,7 +16,7 @@ type Person struct {
 	ID         PersonID
 	Firstname  string
 	Lastname   string
-	Age        string
+	Age        int
 	Rank       Rank
 	Friends    []PersonID
 	BestFriend PersonID
@@ -36,7 +36,7 @@ type PersonView struct {
 	ID        PersonID `ignore:"true"`
 	Firstname string   `caption:"Vorname" sortable:"true"`
 	Lastname  string   `caption:"Nachname" sortable:"true"`
-	Age       string   `caption:"Alter" sortable:"true"`
+	Age       int      `caption:"Alter" sortable:"true"`
 	Rank      Rank     `sortable:"true"`
 	Friends   int      `caption:"Anzahl Freunde"`
 }

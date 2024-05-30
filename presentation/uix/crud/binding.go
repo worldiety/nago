@@ -29,6 +29,7 @@ func OneToOne[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDT
 	oneToN[Model, Foreign, ForeignKey](b, 1, foreignKeyIter, stringer, field)
 }
 
+// OneToMany converts foreign key (or ID) values into actual values by collecting them from the given iterator.
 func OneToMany[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
 	oneToN[Model, Foreign, ForeignKey](b, math.MaxInt, foreignKeyIter, stringer, field)
 }
@@ -39,15 +40,19 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 		RenderHints: field.RenderHints,
 	}
 
-	var err error
-	itemSlice := slices.Collect(iter.BreakOnError(&err, foreignKeyIter))
-	if err != nil {
-		slog.Error("cannot get entity slice from iter for foreign keys", "err", err)
-		return
-	}
+	var itemSlice []Foreign
+	initDataSet := func() {
+		var err error
+		itemSlice = slices.Collect(iter.BreakOnError(&err, foreignKeyIter))
+		if err != nil {
+			slog.Error("cannot get entity slice from iter for foreign keys", "err", err)
+			return
+		}
 
-	if field.FromModel == nil {
-		panic(fmt.Errorf("cannot process OneToMany declaration without FromModel func"))
+		if field.FromModel == nil {
+			panic(fmt.Errorf("cannot process OneToMany declaration without FromModel func"))
+		}
+
 	}
 
 	strSliceOf := func(model Model) []string {
@@ -74,7 +79,14 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 
 	f.Stringer = field.Stringer
 
+	// we need to init the dataset, because the field members are also used by other views without calling the factory
+	initDataSet()
+
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
+		// we need to re-init the entire foreign dataset, because it may have been invalidated by the preceeding modification.
+		// E.g. a Person with Person as friends will otherwise not update the list on itself
+		// TODO this may become very expensive, perhaps we should accept that bug?
+		initDataSet()
 		component := ui.NewDropdown(func(dropdown *ui.Dropdown) {
 			dropdown.Label().Set(f.Caption)
 			switch variant {

@@ -16,12 +16,13 @@ import (
 )
 
 type Options[E any] struct {
-	Title            string
-	Actions          []core.Component // global components to show for the entire crud set, e.g. for custom create action
-	Create           func(E) error
-	FindAll          iter.Seq2[E, error]
-	AggregateActions []AggregateAction[E]
-	Binding          *Binding[E]
+	title            string
+	actions          []core.Component // global components to show for the entire crud set, e.g. for custom create action
+	create           func(E) error
+	prepareCreate    func(E) (E, error)
+	findAll          iter.Seq2[E, error]
+	aggregateActions []AggregateAction[E]
+	binding          *Binding[E]
 }
 
 func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
@@ -33,8 +34,33 @@ func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
 	return o
 }
 
-func (o *Options[E]) OnDelete(f func(E) error) {
-	o.AggregateActions = append(o.AggregateActions, AggregateAction[E]{
+// Actions adds the given components into the CRUD global action area.
+func (o *Options[E]) Actions(actions ...core.Component) {
+	o.actions = append(o.actions, actions...)
+}
+
+func (o *Options[E]) Title(s string) *Options[E] {
+	o.title = s
+	return o
+}
+
+func (o *Options[E]) PrepareCreate(f func(E) (E, error)) *Options[E] {
+	o.prepareCreate = f
+	return o
+}
+
+func (o *Options[E]) Create(f func(E) error) *Options[E] {
+	o.create = f
+	return o
+}
+
+func (o *Options[E]) ReadAll(it iter.Seq2[E, error]) *Options[E] {
+	o.findAll = it
+	return o
+}
+
+func (o *Options[E]) Delete(f func(E) error) *Options[E] {
+	o.aggregateActions = append(o.aggregateActions, AggregateAction[E]{
 		Icon:    icon.Trash,
 		Caption: "",
 		Action: func(owner ui.ModalOwner, e E) error {
@@ -48,17 +74,29 @@ func (o *Options[E]) OnDelete(f func(E) error) {
 		Style: ora.Destructive,
 	})
 
+	return o
 }
 
-func (o *Options[E]) OnUpdate(f func(E) error) {
+// Bind allocates a new explicit data binding and sets it into the options.
+func (o *Options[E]) Bind(with func(binding *Binding[E])) *Options[E] {
+	o.binding = NewBinding[E](with)
+	return o
+}
+
+func (o *Options[E]) Binding(binding *Binding[E]) *Options[E] {
+	o.binding = binding
+	return o
+}
+
+func (o *Options[E]) Update(f func(E) error) *Options[E] {
 	opts := o
-	o.AggregateActions = append(o.AggregateActions, AggregateAction[E]{
+	o.aggregateActions = append(o.aggregateActions, AggregateAction[E]{
 		Icon: icon.Pencil,
 		Action: func(owner ui.ModalOwner, e E) error {
 			ui.NewDialog(func(dlg *ui.Dialog) {
 				dlg.Title().Set("Eintrag bearbeiten")
 				dlg.Size().Set(ora.ElementSizeMedium)
-				form := opts.Binding.NewForm(Update)
+				form := opts.binding.NewForm(Update)
 				dlg.Body().Set(form.Component)
 				// push actual model data into the view
 				for _, field := range form.Fields {
@@ -104,6 +142,8 @@ func (o *Options[E]) OnUpdate(f func(E) error) {
 		},
 		Style: ora.Primary,
 	})
+
+	return o
 }
 
 type AggregateAction[T any] struct {
@@ -118,19 +158,19 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 		opts = NewOptions[E](nil)
 	}
 
-	if opts.Binding == nil {
+	if opts.binding == nil {
 		panic(fmt.Errorf("reflection based binder not yet implemented, please provide a custom binding"))
 	}
 	var searchField *ui.TextField
 	toolbar := ui.NewHStack(func(hstack *ui.FlexContainer) {
 		hstack.ContentAlignment().Set(ora.ContentBetween)
 		// left side
-		hstack.Append(ui.MakeText(opts.Title))
+		hstack.Append(ui.MakeText(opts.title))
 
 		// right side
 
 		hstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
-			canSearch := opts.FindAll != nil
+			canSearch := opts.findAll != nil
 			if canSearch {
 				hstack.ItemsAlignment().Set(ora.ItemsEnd)
 				hstack.Append(ui.NewButton(func(btn *ui.Button) {
@@ -144,11 +184,11 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 				}))
 			}
 
-			for _, action := range opts.Actions {
+			for _, action := range opts.actions {
 				hstack.Append(action)
 			}
 
-			if opts.Create != nil {
+			if opts.create != nil {
 				hstack.Append(ui.NewButton(func(btn *ui.Button) {
 					btn.Caption().Set("Neuer Eintrag")
 					btn.PreIcon().Set(icon.Plus)
@@ -156,7 +196,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 						ui.NewDialog(func(dlg *ui.Dialog) {
 							dlg.Title().Set("Neuer Eintrag")
 							dlg.Size().Set(ora.ElementSizeMedium)
-							form := opts.Binding.NewForm(Create)
+							form := opts.binding.NewForm(Create)
 							dlg.Body().Set(form.Component)
 							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
 								ui.HStackAlignRight(hstack)
@@ -182,7 +222,14 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 											model = m
 										}
 
-										if err := opts.Create(model); err != nil {
+										if opts.prepareCreate != nil {
+											m, err := opts.prepareCreate(model)
+											if err != nil {
+												xdialog.HandleError(owner, "Vorbereiten zum Erstellen nicht möglich.", err)
+											}
+											model = m
+										}
+										if err := opts.create(model); err != nil {
 											xdialog.HandleError(owner, "Erstellen nicht möglich.", err)
 										} else {
 											owner.Modals().Remove(dlg)
@@ -199,14 +246,14 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 		}))
 	})
 
-	hasAggregateOptions := len(opts.AggregateActions) > 0
+	hasAggregateOptions := len(opts.aggregateActions) > 0
 
 	return ui.NewVStack(func(vstack *ui.FlexContainer) {
 		vstack.Append(toolbar)
 		vstack.Append(ui.NewTable(func(table *ui.Table) {
-			findAll := opts.FindAll
+			findAll := opts.findAll
 			if findAll == nil {
-				slog.Info("cannot build table, FindAll iter is nil")
+				slog.Info("cannot build table, findAll iter is nil")
 				return
 			}
 
@@ -214,7 +261,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 			sortAsc := true
 			sortByFieldIdx := -1
 
-			for i, field := range opts.Binding.fields {
+			for i, field := range opts.binding.fields {
 				if field.RenderHints[Overview] == Hidden {
 					continue
 				}
@@ -274,7 +321,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 						return
 					}
 
-					field := opts.Binding.fields[sortByFieldIdx]
+					field := opts.binding.fields[sortByFieldIdx]
 					slices.SortFunc(collectedRows, func(a, b E) int {
 						strA := field.Stringer(a)
 						strB := field.Stringer(b)
@@ -294,18 +341,18 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					}
 
 					yield(ui.NewTableRow(func(row *ui.TableRow) {
-						for _, field := range opts.Binding.fields {
+						for _, field := range opts.binding.fields {
 							if field.RenderHints[Overview] == Hidden {
 								continue
 							}
 							row.Cells().Append(ui.NewTextCell(field.Stringer(e)))
 						}
 
-						if len(opts.AggregateActions) > 0 {
+						if len(opts.aggregateActions) > 0 {
 							row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
 								cell.Body().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
 									ui.HStackAlignRight(hstack)
-									for _, action := range opts.AggregateActions {
+									for _, action := range opts.aggregateActions {
 										hstack.Append(ui.NewButton(func(btn *ui.Button) {
 											btn.Caption().Set(action.Caption)
 											btn.PreIcon().Set(action.Icon)

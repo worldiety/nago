@@ -11,6 +11,8 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/xdialog"
+	"log/slog"
+	"strconv"
 	"time"
 )
 
@@ -109,14 +111,18 @@ func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T,
 	})
 }
 
-func Int[T string](binding *Binding, target *T, opts Field) {
+func Int[T ~int](binding *Binding, target *T, opts Field) {
 	tf := ui.NewNumberField(nil)
 	tf.Label().Set(opts.Label)
-	tf.Value().Set(string(*target))
+	tf.Value().Set(fmt.Sprintf("%d", *target))
 	tf.Hint().Set(opts.Hint)
 	tf.Disabled().Set(opts.Disabled)
 	tf.OnValueChanged().Set(func() {
-		*target = T(tf.Value().Get())
+		v, err := strconv.ParseInt(tf.Value().Get(), 10, 64)
+		if err != nil {
+			slog.Error("number field returned unparseable int", "err", err, "value", tf.Value().Get())
+		}
+		*target = T(v)
 		if binding.OnChanged != nil {
 			binding.OnChanged()
 		}

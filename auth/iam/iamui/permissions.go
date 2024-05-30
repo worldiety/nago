@@ -10,9 +10,9 @@ import (
 
 func Permissions(owner ui.ModalOwner, subject auth.Subject, service *iam.Service) core.Component {
 	return crud.NewView(owner, crud.NewOptions[iam.Permission](func(opts *crud.Options[iam.Permission]) {
-		opts.Title = "Berechtigungen"
-		opts.FindAll = service.AllPermissions(subject)
-		opts.Binding = crud.NewBinding(func(bnd *crud.Binding[iam.Permission]) {
+		opts.Title("Berechtigungen")
+		opts.ReadAll(service.AllPermissions(subject))
+		opts.Bind(func(bnd *crud.Binding[iam.Permission]) {
 			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Permission) *string {
 				tmp := (*model).Name()
 				return &tmp

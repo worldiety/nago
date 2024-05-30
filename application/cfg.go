@@ -50,14 +50,14 @@ func NewConfigurator() *Configurator {
 	// init our standard white label theme
 	themes := ora.Themes{
 		Dark: ora.GenerateTheme(
-			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
-			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
-			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
+			ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
+			ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
+			ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
 		),
 		Light: ora.GenerateTheme(
-			ora.PrimaryColor(ora.MustParseHSL("#1B8C30")),
-			ora.SecondaryColor(ora.MustParseHSL("#F7A823")),
-			ora.TertiaryColor(ora.MustParseHSL("#17428C")),
+			ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
+			ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
+			ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
 		),
 	}
 

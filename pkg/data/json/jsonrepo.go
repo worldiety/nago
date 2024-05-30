@@ -210,6 +210,10 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 	})
 }
 
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteByEntity(e DomainModel) error {
+	return r.DeleteByID(e.Identity())
+}
+
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteAll() error {
 	return r.store.Update(func(tx blob.Tx) error {
 		var ids []string

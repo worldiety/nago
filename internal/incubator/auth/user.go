@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"go.wdy.de/nago/auth/iam"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type UserN interface {
 	// using this as a primary key in your domain logic is probably always wrong.
 	// It is almost always better to use UserID as a foreign key in your domain.
 	// An Email must be compared in an insensitive way, so use [Email.Equals].
-	Email() Email
+	Email() iam.Email
 
 	// EmailVerified is true if the user has been verified in some way, e.g. by double opt-in or by an administrator.
 	// This is often important, to only allow critical operations on verified users or to send confidential content.

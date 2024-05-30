@@ -73,6 +73,9 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// If the predicate returns [SkipAll], the implementation must stop the traversal and return without error.
 	Delete(predicate func(E) (bool, error)) error
 
+	// DeleteByEntity is like DeleteByID but provides a congruent API.
+	DeleteByEntity(E) error
+
 	// Each loops over each item without any particular order until the callee returns false or all entries have
 	// been visited.
 	// The order of traversal is undefined and may be even different between subsequent calls.

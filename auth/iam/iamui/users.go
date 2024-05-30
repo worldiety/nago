@@ -12,18 +12,18 @@ import (
 
 func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core.Component {
 	return crud.NewView(owner, crud.NewOptions[iam.User](func(opts *crud.Options[iam.User]) {
-		opts.Title = "Nutzerkonten"
-		opts.OnDelete(func(user iam.User) error {
+		opts.Title("Nutzerkonten")
+		opts.Delete(func(user iam.User) error {
 			return service.DeleteUser(subject, user.ID)
 		})
-		opts.FindAll = service.AllUsers(subject)
+		opts.ReadAll(service.AllUsers(subject))
 
-		opts.OnUpdate(func(user iam.User) error {
+		opts.Update(func(user iam.User) error {
 			return service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
 		})
 
 		if subject.HasPermission(iam.CreateUser) {
-			opts.Actions = append(opts.Actions, ui.NewButton(func(btn *ui.Button) {
+			opts.Actions(ui.NewButton(func(btn *ui.Button) {
 				btn.Caption().Set("Neuen Nutzer anlegen")
 				btn.PreIcon().Set(icon.UserPlus)
 				btn.Action().Set(func() {
@@ -32,7 +32,7 @@ func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core
 			}))
 		}
 
-		opts.Binding = crud.NewBinding[iam.User](func(bnd *crud.Binding[iam.User]) {
+		opts.Bind(func(bnd *crud.Binding[iam.User]) {
 			crud.Text(bnd, crud.FromPtr("Vorname", func(model *iam.User) *string {
 				return &model.Firstname
 			}))

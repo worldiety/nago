@@ -11,18 +11,18 @@ import (
 func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) core.Component {
 
 	return crud.NewView(modals, crud.NewOptions[iam.Role](func(opts *crud.Options[iam.Role]) {
-		opts.Title = "Rollen"
-		opts.FindAll = service.AllRoles(subject)
-		opts.Create = func(role iam.Role) error {
+		opts.Title("Rollen")
+		opts.ReadAll(service.AllRoles(subject))
+		opts.Create(func(role iam.Role) error {
 			return service.CreateRole(subject, role)
-		}
-		opts.OnDelete(func(role iam.Role) error {
+		})
+		opts.Delete(func(role iam.Role) error {
 			return service.DeleteRole(subject, role.ID)
 		})
-		opts.OnUpdate(func(role iam.Role) error {
+		opts.Update(func(role iam.Role) error {
 			return service.UpdateRole(subject, role)
 		})
-		opts.Binding = crud.NewBinding[iam.Role](func(bnd *crud.Binding[iam.Role]) {
+		opts.Bind(func(bnd *crud.Binding[iam.Role]) {
 
 			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Role) *auth.RID {
 				return &model.ID

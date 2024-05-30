@@ -23,7 +23,7 @@ type Server struct {
 // the http.Handler. It starts the listener, but does not start the server. If
 // an empty port is given, the server randomly chooses one.
 func NewServer(host string, port int) (*Server, error) {
-	// Create the net listener first, so the connection ready when we return. This
+	// create the net listener first, so the connection ready when we return. This
 	// guarantees that it can accept requests.
 	addr := fmt.Sprintf(host + ":" + strconv.Itoa(port))
 
