@@ -72,11 +72,11 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 <style>
 .input-field-wrapper .input-field {
-  @apply relative bg-transparent border-0 border-b border-b-black text-black cursor-default w-full px-0 py-2;
+  @apply relative bg-transparent border-0 border-b text-black cursor-default w-full px-0 py-2;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {
-	@apply border border-black rounded-md px-3;
+	@apply border rounded-md px-3;
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {

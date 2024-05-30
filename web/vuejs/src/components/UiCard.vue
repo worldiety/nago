@@ -17,9 +17,9 @@ function onClick() {
 <template>
 	<div
 		v-if="ui.visible.v"
-		@click="onClick"
+		class="block rounded-lg p-6 shadow-md bg-primary-94 darkmode:bg-primary-14"
 		:class="props.ui.action.v > 0 ? 'cursor-pointer hover:bg-gray-100' : ''"
-		class="block rounded-lg border border-gray-200 bg-white p-6 shadow"
+		@click="onClick"
 	>
 		<ui-generic v-for="(uiChild, index) in props.ui.children.v" :ui="uiChild" :key="index" />
 	</div>

@@ -13,6 +13,13 @@ body {
 	@apply h-full;
 }
 
+body *,
+body *::after,
+body *::before {
+	@apply text-primary-10 border-primary-10 outline-primary-10;
+	@apply darkmode:text-primary-98 darkmode:border-primary-98 darkmode:outline-primary-98;
+}
+
 @media screen(md) {
 	html {
 		font-size: 16px;

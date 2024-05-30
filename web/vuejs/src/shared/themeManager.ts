@@ -26,10 +26,10 @@ export default class ThemeManager {
 
 		switch (localStorage.getItem(this.localStorageKey)) {
 			case ThemeKey.LIGHT:
-				this.applyTheme(this.themes.light);
+				this.applyLightmodeTheme();
 				break;
 			case ThemeKey.DARK:
-				this.applyTheme(this.themes.dark);
+				this.applyDarkmodeTheme();
 				break;
 		}
 	}
@@ -45,13 +45,31 @@ export default class ThemeManager {
 		}
 
 		if (localStorage.getItem(this.localStorageKey) === ThemeKey.LIGHT) {
-			localStorage.setItem(this.localStorageKey, ThemeKey.DARK);
-			this.applyTheme(this.themes.dark);
+			this.applyDarkmodeTheme()
 			return;
 		} else if (localStorage.getItem(this.localStorageKey) === ThemeKey.DARK) {
-			localStorage.setItem(this.localStorageKey, ThemeKey.LIGHT);
-			this.applyTheme(this.themes.light);
+			this.applyLightmodeTheme();
 		}
+	}
+
+	private applyLightmodeTheme(): void {
+		if (!this.themes) {
+			return;
+		}
+
+		this.applyTheme(this.themes.light);
+		document.getElementsByTagName('html')[0].classList.remove('darkmode');
+		localStorage.setItem(this.localStorageKey, ThemeKey.LIGHT);
+	}
+
+	private applyDarkmodeTheme(): void {
+		if (!this.themes) {
+			return;
+		}
+
+		this.applyTheme(this.themes.dark);
+		document.getElementsByTagName('html')[0].classList.add('darkmode');
+		localStorage.setItem(this.localStorageKey, ThemeKey.DARK);
 	}
 
 	private applyTheme(theme: Theme): void {

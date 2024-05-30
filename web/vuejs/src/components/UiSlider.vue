@@ -47,7 +47,7 @@
 				<!-- Slider thumb connector -->
 				<div
 					v-if="sliderThumbConnectorVisible"
-					class="slider-thumb-connector absolute top-1/2 border-b border-b-primary z-0"
+					class="slider-thumb-connector absolute top-1/2 border-b border-b-primary darkmode:border-b-primary z-0"
 				></div>
 				<!-- Right slider thumb -->
 				<div
@@ -346,7 +346,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-track {
-	@apply relative border-b border-b-black;
+	@apply relative border-b;
 }
 
 .slider.slider-disabled .slider-track {
@@ -354,7 +354,7 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-tick-mark {
-	@apply absolute -top-[4px] border-l border-l-black h-[9px];
+	@apply absolute -top-[4px] border-l h-[9px];
 	left: var(--slider-tick-mark-offset);
 }
 
@@ -418,8 +418,13 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-thumb-label {
-	@apply absolute left-0 right-0 flex justify-center text-primary text-sm whitespace-nowrap overflow-visible;
+	@apply absolute left-0 right-0 flex justify-center text-sm whitespace-nowrap overflow-visible;
 	top: 150%;
+}
+
+.slider-thumb-label * {
+	@apply text-primary;
+	@apply darkmode:text-primary;
 }
 
 .slider.slider-disabled .slider-thumb-label {
@@ -427,6 +432,6 @@ function increaseEndSliderValue(): void {
 }
 
 .slider-thumb-label > span {
-	@apply bg-white rounded-lg px-1;
+	@apply bg-background rounded-lg px-1;
 }
 </style>

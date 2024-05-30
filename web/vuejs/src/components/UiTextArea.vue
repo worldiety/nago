@@ -33,10 +33,11 @@ function isErr(): boolean {
 			type="text"
 			:id="props.ui.id.toString()"
 			:rows="props.ui.rows.v"
+			class="rounded-lg bg-transparent border text-sm p-2.5 w-full"
 			:class="
 				isErr()
-					? 'block w-full rounded-lg border border-red-500 bg-red-50 p-2.5 text-sm text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500'
-					: 'block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500'
+					? 'border-error'
+					: 'border-gray-300'
 			"
 		>
 		</textarea>

@@ -1,6 +1,17 @@
+import plugin from "tailwindcss/plugin";
+
 export default {
 	content: [
 		"./src/**/*.{html,vue}",
+	],
+	plugins: [
+		plugin(function({addVariant}) {
+			addVariant('darkmode', '.darkmode &');
+			addVariant('contrast', '.contrast &');
+			addVariant('protanopia', '.protanopia &');
+			addVariant('deuteranopia', '.deuteranopia &');
+			addVariant('tritanopia', '.tritanopia &');
+		})
 	],
 	theme: {
 		extend: {

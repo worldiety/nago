@@ -108,13 +108,13 @@ func main() {
 				ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
 				ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
 				ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
-				ora.BackgroundColor(ora.MustParseHSL("#000000")),
+				ora.BackgroundColor(ora.MustParseHSL("#312002")),
 			),
 			Light: ora.GenerateTheme(
 				ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
 				ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
 				ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
-				ora.BackgroundColor(ora.MustParseHSL("#F9F9F9")),
+				ora.BackgroundColor(ora.MustParseHSL("#FDECCE")),
 			),
 		})
 
