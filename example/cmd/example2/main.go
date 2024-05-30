@@ -104,33 +104,17 @@ var exampleImg []byte
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetThemes(ora.Themes{
-			Light: ora.GenerateTheme(
-				199,
-				78.8,
-				64.9,
-				120,
-				100,
-				50,
-				240,
-				100,
-				50,
-				199,
-				78.8,
-				98,
-			),
 			Dark: ora.GenerateTheme(
-				131,
-				68,
-				33,
-				120,
-				100,
-				50,
-				240,
-				100,
-				50,
-				199,
-				78.8,
-				10,
+				ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
+				ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
+				ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
+				ora.BackgroundColor(ora.MustParseHSL("#000000")),
+			),
+			Light: ora.GenerateTheme(
+				ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
+				ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
+				ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
+				ora.BackgroundColor(ora.MustParseHSL("#F9F9F9")),
 			),
 		})
 
