@@ -70,12 +70,11 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 		return tmp
 	}
 
-	// TODO better try to do some magic in FromPtr, so that the user can still customize this stringer
-	//if field.Stringer == nil {
-	field.Stringer = func(model Model) string {
-		return strings.Join(strSliceOf(model), ", ")
+	if field.Stringer == nil || field.isPtrStringer {
+		field.Stringer = func(model Model) string {
+			return strings.Join(strSliceOf(model), ", ")
+		}
 	}
-	//}
 
 	f.Stringer = field.Stringer
 
@@ -247,9 +246,10 @@ type Field[Model, Presentation any] struct {
 	RenderHints RenderHints
 	//Action      func(Model) error // an arbitrary action, instead of a field Rendering
 	//Validate    func(Model) error // an arbitrary validation callback. The returned error is shown in the UI
-	IntoModel func(model Model, value Presentation) (Model, error)
-	FromModel func(Model) Presentation
-	Stringer  func(Model) string
+	IntoModel     func(model Model, value Presentation) (Model, error)
+	FromModel     func(Model) Presentation
+	Stringer      func(Model) string
+	isPtrStringer bool
 }
 
 func (f *Field[Model, Presentation]) setRenderHints(hints RenderHints) {
@@ -267,6 +267,7 @@ func FromPtr[Model, Presentation any](caption string, property func(*Model) *Pre
 		Stringer: func(model Model) string {
 			return fmt.Sprintf("%v", *property(&model))
 		},
+		isPtrStringer: true,
 		IntoModel: func(model Model, value Presentation) (Model, error) {
 			*property(&model) = value
 			return model, nil

@@ -13,6 +13,10 @@ func Permissions(owner ui.ModalOwner, subject auth.Subject, service *iam.Service
 		opts.Title("Berechtigungen")
 		opts.ReadAll(service.AllPermissions(subject))
 		opts.Bind(func(bnd *crud.Binding[iam.Permission]) {
+			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Permission) *string {
+				tmp := (*model).Identity()
+				return &tmp
+			}))
 			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Permission) *string {
 				tmp := (*model).Name()
 				return &tmp

@@ -8,6 +8,8 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/crud"
 	"go.wdy.de/nago/presentation/uix/xform"
+	"log/slog"
+	"strings"
 )
 
 func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core.Component {
@@ -41,9 +43,37 @@ func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core
 			}))
 			crud.OneToMany(bnd, service.AllPermissions(subject), func(permission iam.Permission) string {
 				return permission.Name()
-			}, crud.FromPtr("Berechtigungen", func(model *iam.User) *[]iam.PID {
-				return &model.Permissions
-			}))
+			}, crud.Field[iam.User, []iam.PID]{
+				Caption: "Berechtigungen",
+				Stringer: func(user iam.User) string {
+					// this is by intention: we show the entire inherited list of all permission, not just the customized ones
+					perms, err := service.FindAllUserPermissions(subject, user.ID)
+					if err != nil {
+						slog.Error("failed to find all user permissions", "err", err, "uid", user.ID)
+					}
+
+					actualPerms := service.AllPermissionsByIDs(subject, perms...)
+					var tmp []string
+					actualPerms(func(permission iam.Permission, e error) bool {
+						if e != nil {
+							err = e
+							return false
+						}
+
+						tmp = append(tmp, permission.Name())
+						return true
+					})
+
+					return strings.Join(tmp, ", ")
+				},
+				FromModel: func(user iam.User) []iam.PID {
+					return user.Permissions // this is by intention, only allow editing the custom ones
+				},
+				IntoModel: func(model iam.User, value []iam.PID) (iam.User, error) {
+					model.Permissions = value // this is by intention, only allow editing the custom ones
+					return model, nil
+				},
+			})
 
 			crud.OneToMany(bnd,
 				service.AllGroups(subject),

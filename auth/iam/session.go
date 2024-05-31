@@ -3,7 +3,6 @@ package iam
 import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
@@ -73,24 +72,7 @@ func (s *Service) Subject(id core.SessionID) auth.Subject {
 
 	usr := optUsr.Unwrap()
 
-	tmp := map[string]struct{}{}
-	for _, permission := range usr.Permissions {
-		tmp[permission] = struct{}{}
-	}
-
-	// collect inherited permissions from groups
-	s.roles.FindAllByID(slices2.Values(usr.Roles), func(role Role, e error) bool {
-		if e != nil {
-			err = e
-			return false
-		}
-
-		for _, permission := range role.Permissions {
-			tmp[permission] = struct{}{}
-		}
-
-		return true
-	})
+	tmp, err := s.collectPermissions(usr)
 
 	if err != nil {
 		slog.Error("cannot load permissions from declared roles")

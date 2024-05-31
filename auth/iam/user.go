@@ -7,11 +7,13 @@ import (
 	passwordvalidator "github.com/wagslane/go-password-validator"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/argon2"
 	"log/slog"
 	rand2 "math/rand"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
@@ -229,6 +231,58 @@ func (s *Service) FindUser(subject auth.Subject, id auth.UID) (std.Option[User],
 	}
 
 	return s.users.FindByID(id)
+}
+
+func (s *Service) collectPermissions(usr User) (map[PID]struct{}, error) {
+	var err error
+	tmp := map[string]struct{}{}
+	for _, permission := range usr.Permissions {
+		tmp[permission] = struct{}{}
+	}
+
+	// collect inherited permissions from roles
+	s.roles.FindAllByID(slices2.Values(usr.Roles), func(role Role, e error) bool {
+		if e != nil {
+			err = e
+			return false
+		}
+
+		for _, permission := range role.Permissions {
+			tmp[permission] = struct{}{}
+		}
+
+		return true
+	})
+
+	return tmp, err
+}
+
+func (s *Service) FindAllUserPermissions(subject auth.Subject, uid auth.UID) ([]PID, error) {
+	if err := subject.Audit(ReadUser); err != nil {
+		return nil, err
+	}
+
+	optUsr, err := s.users.FindByID(uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !optUsr.Valid {
+		return nil, nil
+	}
+
+	m, err := s.collectPermissions(optUsr.Unwrap())
+	if err != nil {
+		return nil, err
+	}
+
+	var tmp []PID
+	for pid, _ := range m {
+		tmp = append(tmp, pid)
+	}
+
+	slices.Sort(tmp)
+	return tmp, nil
 }
 
 func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstname, lastname string, customPermissions []PID, roles []auth.RID, groups []auth.GID) error {

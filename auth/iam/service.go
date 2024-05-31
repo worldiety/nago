@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/slices"
 	"log/slog"
 	"sync"
 	"time"
@@ -111,4 +112,20 @@ func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 	}
 
 	return s.users.Each
+}
+
+func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq2[Permission, error] {
+	if err := subject.Audit(ReadPermission); err != nil {
+		slog.Error("insufficient permission", "err", err)
+		return iter.Empty2[Permission, error]()
+	}
+
+	var tmp []Permission
+	for _, id := range ids {
+		if p, ok := s.permissions.Get(id); ok {
+			tmp = append(tmp, p)
+		}
+	}
+
+	return slices.Values2[[]Permission, Permission, error](tmp)
 }
