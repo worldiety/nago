@@ -69,6 +69,12 @@ func HStackAlignCenter(hstack *FlexContainer) *FlexContainer {
 	return hstack
 }
 
+// VStackAlignCenter aligns all items within the vstack to the middle
+func VStackAlignCenter(hstack *FlexContainer) *FlexContainer {
+	hstack.ItemsAlignment().Set(ora.ItemsCenter)
+	return hstack
+}
+
 func NewVStack(with func(vstack *FlexContainer)) *FlexContainer {
 	f := NewFlexContainer(nil)
 	f.orientation.Set(ora.OrientationVertical)
@@ -86,6 +92,11 @@ func (f *FlexContainer) Append(children ...core.Component) *FlexContainer {
 	return f
 }
 
+func (f *FlexContainer) Children() *SharedList[core.Component] {
+	return f.elements
+}
+
+// deprecated: this is called Children in other ViewGroups
 func (f *FlexContainer) Elements() *SharedList[core.Component] {
 	return f.elements
 }

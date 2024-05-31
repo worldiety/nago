@@ -23,6 +23,15 @@ type IAMSettings struct {
 	Logout      Logout
 }
 
+func (settings IAMSettings) LogoutMenuEntry(wnd core.Window) *ui.MenuEntry {
+	return ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
+		menuEntry.Link(settings.Logout.ID, wnd, nil)
+		menuEntry.Title().Set("Abmelden")
+		menuEntry.Icon().Set(icon.ArrowLeftStartOnRectangle)
+	})
+}
+
+// DefaultMenuEntry returns a user management menu entry.
 func (settings IAMSettings) DefaultMenuEntry(wnd core.Window) *ui.MenuEntry {
 	return ui.NewMenuEntry(func(usm *ui.MenuEntry) {
 		usm.Title().Set("Nutzerverwaltung")
@@ -140,11 +149,7 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 					if subject.Valid() {
 						navigationComponent.Menu().Append(
-							ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
-								menuEntry.Link(settings.Logout.ID, wnd, nil)
-								menuEntry.Title().Set("Abmelden")
-								menuEntry.Icon().Set(icon.ArrowLeftStartOnRectangle)
-							}),
+							settings.LogoutMenuEntry(wnd),
 						)
 					}
 
