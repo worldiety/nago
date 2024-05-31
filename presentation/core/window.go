@@ -21,6 +21,8 @@ type Window interface {
 	// Execute posts the task into the associated Executor. It will be executed in the associated event loop
 	// to allow race free processing.
 	// Use this to post updates from foreign goroutines into the ui components.
+	// Note, that an invalidation is not triggered automatically. Either use [ViewRoot.Invalidate] manually or
+	// even better use [Post], [PostDelayed] or [Schedule], because those have optimized lifecycle handling.
 	Execute(task func())
 
 	// Navigation allows access to the window navigation.

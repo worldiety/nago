@@ -9,6 +9,18 @@ type Executor interface {
 	Execute(task func())
 }
 
+// Post executes the given task from within the event loop in the next cycle.
+// It is not executed, if the Window is destroyed before. It invalidates the view root automatically.
+func Post(wnd Window, task func()) {
+	if root := wnd.ViewRoot(); root != nil && task != nil {
+		wnd.Execute(func() {
+			task()
+			root.Invalidate()
+		})
+
+	}
+}
+
 // PostDelayed executes the given task from within the event loop after the given duration.
 // It is not executed, if the Window is destroyed before. It invalidates the view root automatically.
 func PostDelayed(wnd Window, after time.Duration, task func()) {
