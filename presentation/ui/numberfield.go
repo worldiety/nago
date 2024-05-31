@@ -8,7 +8,7 @@ import (
 type NumberField struct {
 	id             ora.Ptr
 	label          String
-	value          String
+	value          String // TODO @Lukas: können wir das protokollseitig auf Integer forcieren?
 	placeholder    String
 	hint           String
 	error          String

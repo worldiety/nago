@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"math"
 	slices2 "slices"
+	"strconv"
 	"strings"
 )
 
@@ -206,6 +207,65 @@ func Text[Model any, T ~string](b *Binding[Model], field Field[Model, T]) {
 			},
 			IntoModel: func(model Model) (Model, error) {
 				return field.IntoModel(model, T(component.Value().Get()))
+			},
+
+			SetError: func(err string) {
+				component.Error().Set(err)
+			},
+		}
+	}
+
+	b.fields = append(b.fields, f)
+}
+
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+func Int[Model any, T Integer](b *Binding[Model], field Field[Model, T]) {
+	f := anyField[Model]{
+		Caption:     field.Caption,
+		Stringer:    field.Stringer,
+		RenderHints: field.RenderHints,
+	}
+
+	if f.Stringer == nil {
+		f.Stringer = func(model Model) string {
+			return fmt.Sprintf("%d", model)
+		}
+	}
+
+	if f.FromModel == nil {
+		f.FromModel = func(model Model) any {
+			return f.Stringer(model)
+		}
+	}
+
+	f.FormFactory = func(variant RenderHint) formElement[Model] {
+		component := ui.NewNumberField(func(textField *ui.NumberField) {
+			textField.Label().Set(f.Caption)
+			switch variant {
+			case Visible:
+				textField.Visible().Set(true)
+			case ReadOnly:
+				textField.Disabled().Set(true)
+			case Hidden:
+				textField.Visible().Set(false)
+			}
+		})
+
+		return formElement[Model]{
+			Component: component,
+			FromModel: func(model Model) {
+				component.Value().Set(f.Stringer(model))
+			},
+			IntoModel: func(model Model) (Model, error) {
+				v, err := strconv.ParseInt(component.Value().Get(), 10, 64)
+				if err != nil {
+					slog.Error("cannot parse number from numberfield", "err", err)
+				}
+				return field.IntoModel(model, T(v))
 			},
 
 			SetError: func(err string) {
