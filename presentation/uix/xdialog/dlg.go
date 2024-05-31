@@ -10,6 +10,10 @@ import (
 )
 
 func ShowMessage(ctx ui.ModalOwner, msg string) {
+	Confirm(ctx, msg, nil)
+}
+
+func Confirm(ctx ui.ModalOwner, msg string, confirmed func()) {
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
 		dlg.Body().Set(ui.MakeText(msg))
 
@@ -19,10 +23,13 @@ func ShowMessage(ctx ui.ModalOwner, msg string) {
 			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 
-			flex.Elements().Append(ui.NewButton(func(btn *ui.Button) {
+			flex.Children().Append(ui.NewButton(func(btn *ui.Button) {
 				btn.Caption().Set("Ok")
 				btn.Action().Set(func() {
 					ctx.Modals().Remove(dlg)
+					if confirmed != nil {
+						confirmed()
+					}
 				})
 			}))
 		}))

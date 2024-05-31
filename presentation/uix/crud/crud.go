@@ -361,7 +361,9 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 										hstack.Append(ui.NewButton(func(btn *ui.Button) {
 											btn.Caption().Set(action.Caption)
 											btn.PreIcon().Set(action.Icon)
-											btn.Style().Set(action.Style)
+											if action.Style != "" {
+												btn.Style().Set(action.Style)
+											}
 											btn.Action().Set(func() {
 												xdialog.HandleError(owner, fmt.Sprintf("Aktion '%s' nicht durchführbar.", action.Caption), action.Action(owner, e))
 											})
