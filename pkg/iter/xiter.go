@@ -17,7 +17,17 @@ func Empty[T any]() Seq[T] {
 
 func Empty2[T, V any]() Seq2[T, V] {
 	return func(yield func(T, V) bool) {
-		
+
+	}
+}
+
+// WithError yields the given error or does nothing if err is nil.
+func WithError[T any](err error) Seq2[T, error] {
+	return func(yield func(T, error) bool) {
+		if err != nil {
+			var zero T
+			yield(zero, err)
+		}
 	}
 }
 
