@@ -12,6 +12,14 @@ type InvalidSubject struct {
 	DeniedLog func(permission string)
 }
 
+func (i InvalidSubject) HasRole(rid RID) bool {
+	return false
+}
+
+func (i InvalidSubject) HasGroup(gid GID) bool {
+	return false
+}
+
 func (i InvalidSubject) Language() language.Tag {
 	return language.German // TODO
 }

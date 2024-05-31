@@ -29,9 +29,15 @@ type Subject interface {
 	// resource based access using role identifiers.
 	Roles(yield func(RID) bool)
 
+	// HasRole returns true, if the user has the associated role.
+	HasRole(RID) bool
+
 	// Groups yields over all associated groups. This is important if the domain needs to model
 	// resource based access using group identifiers.
 	Groups(yield func(GID) bool)
+
+	// HasGroup returns true, if the user is in the associated group.
+	HasGroup(GID) bool
 
 	// Audit checks if this identity has the actual use case permission and may save the positive or
 	// negative result in the audit log. An error indicates, that the Subject has not the given permission.

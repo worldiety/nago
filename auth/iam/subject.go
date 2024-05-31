@@ -56,6 +56,26 @@ func (n nagoSubject) Roles(yield func(auth.RID) bool) {
 	}
 }
 
+func (n nagoSubject) HasRole(id auth.RID) bool {
+	for _, role := range n.user.Roles {
+		if role == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (n nagoSubject) HasGroup(id auth.GID) bool {
+	for _, role := range n.user.Groups {
+		if role == id {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (n nagoSubject) EMail() Email {
 	return n.user.Email
 }
