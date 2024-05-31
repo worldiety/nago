@@ -39,6 +39,11 @@ func (o *Options[E]) Actions(actions ...core.Component) {
 	o.actions = append(o.actions, actions...)
 }
 
+// AggregateActions adds the given actions to each individual entity or aggregate entry.
+func (o *Options[E]) AggregateActions(actions ...AggregateAction[E]) {
+	o.aggregateActions = append(o.aggregateActions, actions...)
+}
+
 func (o *Options[E]) Title(s string) *Options[E] {
 	o.title = s
 	return o
@@ -78,7 +83,7 @@ func (o *Options[E]) Delete(f func(E) error) *Options[E] {
 }
 
 // Bind allocates a new explicit data binding and sets it into the options.
-func (o *Options[E]) Bind(with func(binding *Binding[E])) *Options[E] {
+func (o *Options[E]) Bind(with func(bnd *Binding[E])) *Options[E] {
 	o.binding = NewBinding[E](with)
 	return o
 }
