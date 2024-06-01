@@ -12,6 +12,8 @@ type Toggle struct {
 	checked          Bool
 	disabled         Bool
 	visible          Bool
+	error            String // TODO @Lukas/Philip/Kristin this is missing
+	hint             String // TODO @Lukas/Philip/Kristin this is missing
 	properties       []core.Property
 	onCheckedChanged *Func
 }

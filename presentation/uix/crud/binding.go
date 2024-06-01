@@ -169,6 +169,14 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 }
 
 func Text[Model any, T ~string](b *Binding[Model], field Field[Model, T]) {
+	text[Model, T](b, false, field)
+}
+
+func Secret[Model any, T ~string](b *Binding[Model], field Field[Model, T]) {
+	text[Model, T](b, true, field)
+}
+
+func text[Model any, T ~string](b *Binding[Model], isSecret bool, field Field[Model, T]) {
 	f := anyField[Model]{
 		Caption:     field.Caption,
 		Stringer:    field.Stringer,
@@ -187,21 +195,34 @@ func Text[Model any, T ~string](b *Binding[Model], field Field[Model, T]) {
 		}
 	}
 
+	type textOrPassfield interface {
+		Value() ui.String
+		Error() ui.String
+		Visible() ui.Bool
+		Disabled() ui.Bool
+		Label() ui.String
+	}
+
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
-		component := ui.NewTextField(func(textField *ui.TextField) {
-			textField.Label().Set(f.Caption)
-			switch variant {
-			case Visible:
-				textField.Visible().Set(true)
-			case ReadOnly:
-				textField.Disabled().Set(true)
-			case Hidden:
-				textField.Visible().Set(false)
-			}
-		})
+		var component textOrPassfield
+		if isSecret {
+			component = ui.NewPasswordField(nil)
+		} else {
+			component = ui.NewTextField(nil)
+		}
+
+		component.Label().Set(f.Caption)
+		switch variant {
+		case Visible:
+			component.Visible().Set(true)
+		case ReadOnly:
+			component.Disabled().Set(true)
+		case Hidden:
+			component.Visible().Set(false)
+		}
 
 		return formElement[Model]{
-			Component: component,
+			Component: component.(core.Component),
 			FromModel: func(model Model) {
 				component.Value().Set(f.Stringer(model))
 			},
@@ -232,7 +253,7 @@ func Int[Model any, T Integer](b *Binding[Model], field Field[Model, T]) {
 
 	if f.Stringer == nil {
 		f.Stringer = func(model Model) string {
-			return fmt.Sprintf("%d", model)
+			return fmt.Sprintf("%v", model)
 		}
 	}
 
@@ -270,6 +291,58 @@ func Int[Model any, T Integer](b *Binding[Model], field Field[Model, T]) {
 
 			SetError: func(err string) {
 				component.Error().Set(err)
+			},
+		}
+	}
+
+	b.fields = append(b.fields, f)
+}
+
+func Bool[Model any, T ~bool](b *Binding[Model], field Field[Model, T]) {
+	f := anyField[Model]{
+		Caption:     field.Caption,
+		Stringer:    field.Stringer,
+		RenderHints: field.RenderHints,
+	}
+
+	if f.Stringer == nil {
+		f.Stringer = func(model Model) string {
+			return fmt.Sprintf("%v", model)
+		}
+	}
+
+	if f.FromModel == nil {
+		f.FromModel = func(model Model) any {
+			return f.Stringer(model)
+		}
+	}
+
+	f.FormFactory = func(variant RenderHint) formElement[Model] {
+		component := ui.NewToggle(func(textField *ui.Toggle) {
+			textField.Label().Set(f.Caption)
+			switch variant {
+			case Visible:
+				textField.Visible().Set(true)
+			case ReadOnly:
+				textField.Disabled().Set(true)
+			case Hidden:
+				textField.Visible().Set(false)
+			}
+		})
+
+		return formElement[Model]{
+			Component: component,
+			FromModel: func(model Model) {
+				flag := field.FromModel(model)
+				component.Checked().Set(bool(flag))
+			},
+			IntoModel: func(model Model) (Model, error) {
+
+				return field.IntoModel(model, T(component.Checked().Get()))
+			},
+
+			SetError: func(err string) {
+				//component.Error().Set(err) TODO currently missing
 			},
 		}
 	}
