@@ -101,6 +101,10 @@ func Get(store Store, key string) (std.Option[[]byte], error) {
 			return err
 		}
 
+		if !optEnt.Valid {
+			return nil
+		}
+
 		reader, err := optEnt.Unwrap().Open()
 		if err != nil {
 			return err
