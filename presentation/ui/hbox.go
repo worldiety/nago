@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+// deprecated: use FlexContainer
 type HBox struct {
 	id         ora.Ptr
 	children   *SharedList[core.Component]
@@ -12,6 +13,7 @@ type HBox struct {
 	properties []core.Property
 }
 
+// deprecated: use FlexContainer or NewHStack()
 func NewHBox(with func(hbox *HBox)) *HBox {
 	c := &HBox{
 		id:        nextPtr(),

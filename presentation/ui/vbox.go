@@ -5,14 +5,14 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-// deprecated use FlexContainer
+// deprecated: use FlexContainer
 type VBox struct {
 	id         ora.Ptr
 	children   *SharedList[core.Component]
 	properties []core.Property
 }
 
-// deprecated use FlexContainer or NewVStack()
+// deprecated: use FlexContainer or NewVStack()
 func NewVBox(with func(vbox *VBox)) *VBox {
 	c := &VBox{
 		id:       nextPtr(),

@@ -417,8 +417,8 @@ nextElem:
 		}
 	}
 
-	return ui.NewFlexContainer(func(vbox *ui.FlexContainer) {
-		vbox.ElementSize().Set(ora.ElementSizeLarge)
+	return ui.NewVStack(func(vbox *ui.FlexContainer) {
+		vbox.ElementSize().Set(ora.ElementSizeMedium)
 		for i, g := range groups {
 			if len(g.elems) == 0 {
 				continue // do not show empty sections
