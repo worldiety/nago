@@ -20,8 +20,8 @@ var UserMustCorrectInput = fmt.Errorf("UserMustCorrectInput")
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+	~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -418,7 +418,7 @@ nextElem:
 	}
 
 	return ui.NewVStack(func(vbox *ui.FlexContainer) {
-		vbox.ElementSize().Set(ora.ElementSizeMedium)
+
 		for i, g := range groups {
 			if len(g.elems) == 0 {
 				continue // do not show empty sections
