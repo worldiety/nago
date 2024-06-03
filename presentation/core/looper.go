@@ -2,9 +2,9 @@ package core
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"log/slog"
 	"runtime/debug"
-	"slices"
 	"sync"
 )
 
@@ -29,14 +29,14 @@ type msg struct {
 type EventLoop struct {
 	// using go channels seems to be a bad choice, because their capacity is allocated eagerly and
 	// we may need to grow "unbound".
-	// Also
-	queue []msg
+	// Also, we want to control when and if at all we want to execute in batches or pause execution.
+	queue concurrent.Slice[msg]
 
 	mutex     sync.Mutex
 	batchChan chan []msg
 	done      chan bool
-	destroyed bool
-	onPanic   func(p any)
+	destroyed concurrent.Value[bool]
+	onPanic   concurrent.Value[func(p any)]
 }
 
 func NewEventLoop() *EventLoop {
@@ -68,11 +68,7 @@ func (l *EventLoop) saveExec(f func()) {
 			debug.PrintStack()
 			slog.Error("recovered from panic in EventLoop", slog.String("func", fmt.Sprintf("%#v", f)))
 
-			l.mutex.Lock()
-			panicHandler := l.onPanic
-			l.mutex.Unlock()
-
-			if panicHandler != nil {
+			if panicHandler := l.onPanic.Value(); panicHandler != nil {
 				panicHandler(r)
 			}
 		}
@@ -82,26 +78,21 @@ func (l *EventLoop) saveExec(f func()) {
 }
 
 func (l *EventLoop) SetOnPanicHandler(f func(p any)) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	l.onPanic = f
+	l.onPanic.SetValue(f)
 }
 
 // Post appends f to the internal queue. It will be executed in the next tick cycle.
 // This is a LiFo, so the oldest message is evaluated first.
 // A Post never blocks and keeps allocating space for messages infinitely.
 func (l *EventLoop) Post(f func()) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.destroyed {
+	// this is inprecise, because we may end up with neither this message nor an ever executed func
+	if l.destroyed.Value() {
 		debug.PrintStack()
 		slog.Error("someone posted to a destroyed EventLoop")
 		return
 	}
 
-	l.queue = append(l.queue, msg{
+	l.queue.Append(msg{
 		typ: msgFunc,
 		fn:  f,
 	})
@@ -109,15 +100,11 @@ func (l *EventLoop) Post(f func()) {
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.
 func (l *EventLoop) pull() []msg {
-
-	if l.destroyed {
+	if l.destroyed.Value() {
 		return nil
 	}
 
-	tmp := slices.Clone(l.queue)
-	clear(l.queue)        // remove hidden leaks
-	l.queue = l.queue[:0] // reset
-
+	tmp := l.queue.PopAll()
 	return tmp
 }
 
@@ -127,9 +114,6 @@ func (l *EventLoop) pull() []msg {
 // This is intentional, because it throttles e.g. a sender in a natural way (to many ticks and messages).
 // A Tick can never block a Post or vice versa.
 func (l *EventLoop) Tick() {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
 	l.tickWithoutLock()
 }
 
@@ -150,17 +134,17 @@ func (l *EventLoop) Destroy() {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	if l.destroyed {
+	if l.destroyed.Value() {
 		return
 	}
 
 	l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
 
-	l.destroyed = true
+	l.destroyed.SetValue(true)
 	l.done <- true
 	close(l.done)
 	close(l.batchChan)
-	clear(l.queue)
+	l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
 }
 
 /*
