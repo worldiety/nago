@@ -51,6 +51,9 @@ func NewSlider(with func(slider *Slider)) *Slider {
 
 	c.properties = []core.Property{c.disabled, c.label, c.hint, c.error, c.rangeMode, c.startValue, c.endValue, c.min, c.max, c.stepsize, c.startInitialized, c.endInitialized, c.showLabel, c.labelSuffix, c.showTickMarks, c.onChanged, c.visible}
 	c.visible.Set(true)
+	c.min.Set(0)
+	c.max.Set(100)
+	c.stepsize.Set(1)
 	if with != nil {
 		with(c)
 	}
