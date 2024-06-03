@@ -312,7 +312,7 @@ func (s *Scope) render(requestId ora.RequestId, component Component) ora.Compone
 // Do never call this from the event loop.
 // Note, that this may race logically when called concurrently.
 func (s *Scope) Destroy() {
-	if concurrent.CompareAndSwap(&s.destroyed, true, true) {
+	if !concurrent.CompareAndSwap(&s.destroyed, false, true) {
 		return
 	}
 

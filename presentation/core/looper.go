@@ -129,7 +129,7 @@ func (l *EventLoop) tickWithoutLock() {
 // Unprocessed messages are discarded.
 // Future Post calls are ignored.
 func (l *EventLoop) Destroy() {
-	if concurrent.CompareAndSwap(&l.destroyed, true, true) {
+	if !concurrent.CompareAndSwap(&l.destroyed, false, true) {
 		return
 	}
 

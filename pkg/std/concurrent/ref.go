@@ -1,6 +1,8 @@
 package concurrent
 
-import "sync"
+import (
+	"sync"
+)
 
 // Value is just a box which updates it value atomically.
 type Value[T any] struct {
