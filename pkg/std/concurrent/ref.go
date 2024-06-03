@@ -19,3 +19,15 @@ func (v *Value[T]) SetValue(val T) {
 	defer v.mutex.Unlock()
 	v.v = val
 }
+
+func CompareAndSwap[T comparable](v *Value[T], old, new T) (swapped bool) {
+	v.mutex.Lock()
+	defer v.mutex.Unlock()
+
+	if v.v != old {
+		return false
+	}
+
+	v.v = new
+	return true
+}

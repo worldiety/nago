@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -45,9 +45,9 @@ type Scope struct {
 	allocatedComponents map[ora.Ptr]allocatedComponent
 	lifetime            time.Duration
 	endOfLifeAt         atomic.Pointer[time.Time]
-	channel             AtomicRef[Channel]
-	chanDestructor      AtomicRef[func()]
-	destroyed           AtomicRef[bool]
+	channel             concurrent.Value[Channel]
+	chanDestructor      concurrent.Value[func()]
+	destroyed           concurrent.Value[bool]
 	eventLoop           *EventLoop
 	lastMessageType     ora.EventType
 	ctx                 context.Context
@@ -57,7 +57,7 @@ type Scope struct {
 	tempRootDir         string
 	tempDir             string
 	nextFileSeqNo       int64
-	onDestroyObservers  []func()
+	onDestroyObservers  concurrent.Slice[func()]
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
@@ -81,7 +81,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 			Message: fmt.Sprintf("panic in event loop: %v", p),
 		})
 	})
-	s.channel.Store(NopChannel{})
+	s.channel.SetValue(NopChannel{})
 	s.Tick()
 
 	return s
@@ -190,6 +190,8 @@ func (s *Scope) getTempDir() (string, error) {
 
 // Connect attaches the given channel to this Scope immediately. There must be exact 1 Scope per Channel.
 // The use case is, that Scopes can be transferred from one channel to another easily.
+// Note, that this is free of technical data races, however it may suffer from logical races, so do not connect
+// concurrently, because things like destructor invocations and updates will logically race.
 func (s *Scope) Connect(c Channel) {
 	if c == nil {
 		c = NopChannel{}
@@ -197,18 +199,15 @@ func (s *Scope) Connect(c Channel) {
 
 	slog.Info("scope connected to channel", slog.String("scopeId", string(s.id)), slog.String("channel", fmt.Sprintf("%T", c)))
 
-	s.chanDestructor.With(func(destructor func()) func() {
-		s.channel.Store(c)
+	if destructor := s.chanDestructor.Value(); destructor != nil {
+		destructor()
+	}
+	s.channel.SetValue(c)
 
-		if destructor != nil {
-			destructor()
-		}
-
-		return c.Subscribe(func(msg []byte) error {
-			defer s.eventLoop.Tick()
-			return s.handleMessage(msg)
-		})
-	})
+	s.chanDestructor.SetValue(c.Subscribe(func(msg []byte) error {
+		defer s.eventLoop.Tick()
+		return s.handleMessage(msg)
+	}))
 }
 
 func (s *Scope) handleMessage(buf []byte) error {
@@ -238,7 +237,7 @@ func (s *Scope) Publish(evt ora.Event) {
 		s.lastMessageType = ""
 	}
 
-	if err := s.channel.Load().Publish(ora.Marshal(evt)); err != nil {
+	if err := s.channel.Value().Publish(ora.Marshal(evt)); err != nil {
 		slog.Error(err.Error())
 	}
 }
@@ -311,37 +310,28 @@ func (s *Scope) render(requestId ora.RequestId, component Component) ora.Compone
 // Destroy frees all allocated components and removes factory pointers.
 // The scope is of no use afterward.
 // Do never call this from the event loop.
+// Note, that this may race logically when called concurrently.
 func (s *Scope) Destroy() {
-	s.destroyed.With(func(destroyed bool) bool {
-		if destroyed {
-			return true
+	if concurrent.CompareAndSwap(&s.destroyed, true, true) {
+		return
+	}
+
+	s.eventLoop.Post(func() {
+		// the event loop is panic protected, thus separate the observer execution
+		for _, f := range s.onDestroyObservers.PopAll() {
+			f()
 		}
-
-		var tmp []func()
-		tmp = slices.Clone(s.onDestroyObservers)
-
-		s.eventLoop.Post(func() {
-			// the event loop is panic protected, thus separate the observer execution
-			for _, f := range tmp {
-				f()
-			}
-		})
-		s.eventLoop.Post(func() {
-			s.destroy()
-		})
-
-		s.eventLoop.Destroy()
-
-		return true
 	})
+	s.eventLoop.Post(func() {
+		s.destroy()
+	})
+
+	s.eventLoop.Destroy()
 
 }
 
 func (s *Scope) AddOnDestroyObserver(f func()) {
-	s.destroyed.With(func(b bool) bool {
-		s.onDestroyObservers = append(s.onDestroyObservers, f)
-		return b
-	})
+	s.onDestroyObservers.Append(f)
 }
 
 // only for event loop
@@ -351,7 +341,7 @@ func (s *Scope) destroy() {
 		invokeDestructors(component)
 	}
 
-	s.channel.Store(NewPrintChannel()) // detach
+	s.channel.SetValue(NewPrintChannel()) // detach
 	clear(s.allocatedComponents)
 	//	clear(s.factories) // clearing this map would cause a data race, even though we use the factory as read-only
 }

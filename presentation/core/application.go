@@ -88,7 +88,8 @@ func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Rea
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
 func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	a.mutex.Lock()
-	defer a.mutex.Unlock()
+	// protect only the moment of connecting against races. perhaps it may be even ok, to remove the entire lock
+	// add say that concurrent calls to the same scope id is invalid (and normally cannot happen)
 
 	if len(id) < 32 {
 		id = ora.NewScopeID()
@@ -98,10 +99,11 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	if scope == nil {
 		scope = NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories)
 	}
-
-	scope.Connect(channel)
 	a.scopes.Put(scope)
 
+	a.mutex.Unlock()
+
+	scope.Connect(channel)
 	return scope
 }
 
@@ -116,8 +118,8 @@ func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, it 
 }
 
 func (a *Application) Destroy() {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
+	//a.mutex.Lock() probably unneeded locks
+	//defer a.mutex.Unlock()
 
 	a.scopes.Destroy()
 	a.cancelCtx()

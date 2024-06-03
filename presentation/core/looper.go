@@ -5,7 +5,6 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"log/slog"
 	"runtime/debug"
-	"sync"
 )
 
 type msgType int
@@ -32,7 +31,6 @@ type EventLoop struct {
 	// Also, we want to control when and if at all we want to execute in batches or pause execution.
 	queue concurrent.Slice[msg]
 
-	mutex     sync.Mutex
 	batchChan chan []msg
 	done      chan bool
 	destroyed concurrent.Value[bool]
@@ -131,16 +129,12 @@ func (l *EventLoop) tickWithoutLock() {
 // Unprocessed messages are discarded.
 // Future Post calls are ignored.
 func (l *EventLoop) Destroy() {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.destroyed.Value() {
+	if concurrent.CompareAndSwap(&l.destroyed, true, true) {
 		return
 	}
 
 	l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
 
-	l.destroyed.SetValue(true)
 	l.done <- true
 	close(l.done)
 	close(l.batchChan)

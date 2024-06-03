@@ -2,6 +2,7 @@ package core
 
 import "sync"
 
+// deprecated: this thing is just too dangerous due to deadlock. use std.concurrent.Value
 type AtomicRef[T any] struct {
 	mutex sync.Mutex
 	v     T
