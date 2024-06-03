@@ -35,6 +35,7 @@ type EventLoop struct {
 	done      chan bool
 	destroyed concurrent.Value[bool]
 	onPanic   concurrent.Value[func(p any)]
+	reloop    concurrent.Value[bool]
 }
 
 func NewEventLoop() *EventLoop {
@@ -53,6 +54,11 @@ func NewEventLoop() *EventLoop {
 					l.saveExec(m.fn)
 				}
 			}
+
+			if concurrent.CompareAndSwap(&l.reloop, true, false) {
+				l.tickWithoutLock()
+			}
+
 		}
 	}()
 
@@ -122,7 +128,16 @@ func (l *EventLoop) tickWithoutLock() {
 		return
 	}
 
-	l.batchChan <- messages
+	select {
+	case l.batchChan <- messages:
+		// as normal
+	default:
+		// the looper channel is busy and cannot accept.
+		// this happens if the looper triggers itself a Tick
+		l.queue.Append(messages...)
+		l.reloop.SetValue(true)
+	}
+
 }
 
 // Destroy stops the internal looper thread and releases all resources.
