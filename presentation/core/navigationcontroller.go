@@ -5,7 +5,8 @@ import "go.wdy.de/nago/presentation/ora"
 // TODO make me an interface?
 
 type NavigationController struct {
-	scope *Scope
+	destroyed bool
+	scope     *Scope
 }
 
 func NewNavigationController(scope *Scope) *NavigationController {
@@ -15,6 +16,10 @@ func NewNavigationController(scope *Scope) *NavigationController {
 }
 
 func (n *NavigationController) ForwardTo(id ora.ComponentFactoryId, values Values) {
+	if n.destroyed {
+		return
+	}
+
 	n.scope.Publish(ora.NavigationForwardToRequested{
 		Type:    ora.NavigationForwardToRequestedT,
 		Factory: id,
@@ -23,12 +28,20 @@ func (n *NavigationController) ForwardTo(id ora.ComponentFactoryId, values Value
 }
 
 func (n *NavigationController) Back() {
+	if n.destroyed {
+		return
+	}
+
 	n.scope.Publish(ora.NavigationBackRequested{
 		Type: ora.NavigationBackRequestedT,
 	})
 }
 
 func (n *NavigationController) ResetTo(id ora.ComponentFactoryId, values Values) {
+	if n.destroyed {
+		return
+	}
+
 	n.scope.Publish(ora.NavigationResetRequested{
 		Type:    ora.NavigationResetRequestedT,
 		Factory: id,

@@ -40,7 +40,7 @@ type EventLoop struct {
 
 func NewEventLoop() *EventLoop {
 	l := &EventLoop{
-		batchChan: make(chan []msg),
+		batchChan: make(chan []msg, 1024),
 		done:      make(chan bool),
 	}
 
@@ -55,9 +55,9 @@ func NewEventLoop() *EventLoop {
 				}
 			}
 
-			if concurrent.CompareAndSwap(&l.reloop, true, false) {
-				l.tickWithoutLock()
-			}
+			//if concurrent.CompareAndSwap(&l.reloop, true, false) {
+			l.tickWithoutLock()
+			//}
 
 		}
 	}()
@@ -96,10 +96,13 @@ func (l *EventLoop) Post(f func()) {
 		return
 	}
 
-	l.queue.Append(msg{
-		typ: msgFunc,
-		fn:  f,
-	})
+	/*
+		l.queue.Append(msg{
+			typ: msgFunc,
+			fn:  f,
+		})*/
+	l.batchChan <- []msg{msg{msgFunc, f}}
+
 }
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.
@@ -122,22 +125,22 @@ func (l *EventLoop) Tick() {
 }
 
 func (l *EventLoop) tickWithoutLock() {
+	/*
+		messages := l.pull()
+		if len(messages) == 0 {
+			return
+		}
 
-	messages := l.pull()
-	if len(messages) == 0 {
-		return
-	}
-
-	select {
-	case l.batchChan <- messages:
-		// as normal
-	default:
-		// the looper channel is busy and cannot accept.
-		// this happens if the looper triggers itself a Tick
-		l.queue.Append(messages...)
-		l.reloop.SetValue(true)
-	}
-
+		select {
+		case l.batchChan <- messages:
+			// as normal
+		default:
+			// the looper channel is busy and cannot accept.
+			// this happens if the looper triggers itself a Tick
+			l.queue.Append(messages...)
+			l.reloop.SetValue(true)
+		}
+	*/
 }
 
 // Destroy stops the internal looper thread and releases all resources.

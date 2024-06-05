@@ -11,6 +11,12 @@ func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
 	if ackRequired {
 		defer s.sendAck(t.ReqID())
 	}
+	/*
+		defer func() {
+			if ackRequired {
+				slog.Info(fmt.Sprintf("handleEvent done: %d %T", t.ReqID(), t))
+			}
+		}*/
 	switch evt := t.(type) {
 	case ora.EventsAggregated:
 		s.handleEventsAggregated(evt)
@@ -162,6 +168,10 @@ func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidati
 		return
 	}
 
+	if alloc.Destroyed {
+		return
+	}
+
 	renderTree := s.render(evt.RequestId, alloc.Component)
 	s.Publish(renderTree)
 }
@@ -183,16 +193,25 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestructionRequested) {
 	component, ok := s.allocatedComponents[evt.Component]
 	if !ok {
+		//slog.Info("e1")
 		s.Publish(ora.ErrorOccurred{
 			Type:      ora.ErrorOccurredT,
 			RequestId: evt.RequestId,
 			Message:   fmt.Sprintf("no such component: %d", evt.Component),
 		})
+		//slog.Info("e2")
 
 		return
 	}
 
+	component.Destroyed = true // TODO before or after calling destructors?
+	component.Window.destroyed = true
+	component.Window.navController.destroyed = true
+	if component.Window.viewRoot != nil {
+		component.Window.viewRoot.destroyed = true
+	}
+	//slog.Info("A")
 	invokeDestructors(component)
-
+	//slog.Info("B")
 	delete(s.allocatedComponents, evt.Component)
 }

@@ -89,6 +89,7 @@ type scopeWindow struct {
 	viewRoot      *scopeViewRoot
 	subject       auth.Subject
 	mutex         sync.Mutex
+	destroyed     bool
 }
 
 func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
@@ -120,6 +121,10 @@ func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values)
 }
 
 func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
+	if s.destroyed {
+		return "", nil
+	}
+
 	if callback := s.scope.app.onShareStream; callback != nil {
 		return callback(s.scope, open)
 	}
@@ -128,6 +133,10 @@ func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
 }
 
 func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
+	if s.destroyed {
+		return nil
+	}
+
 	if callback := s.scope.app.onSendFiles; callback != nil {
 		return callback(s.scope, it)
 	}
@@ -136,6 +145,10 @@ func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
 }
 
 func (s *scopeWindow) Execute(task func()) {
+	if s.destroyed {
+		return
+	}
+
 	s.scope.eventLoop.Post(task)
 	s.scope.eventLoop.Tick()
 }

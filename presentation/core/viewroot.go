@@ -19,6 +19,7 @@ type scopeViewRoot struct {
 	hnd       int
 	scope     *Scope
 	component Component
+	destroyed bool
 }
 
 func newScopeViewRoot(scope *Scope) *scopeViewRoot {
@@ -35,6 +36,7 @@ func (s *scopeViewRoot) AddDestroyObserver(fn func()) (removeObserver func()) {
 }
 
 func (s *scopeViewRoot) Destroy() {
+	s.destroyed = true
 	for _, f := range s.observers {
 		f()
 	}
@@ -48,6 +50,9 @@ func (s *scopeViewRoot) Invalidate() {
 		return
 	}
 
+	if s.destroyed {
+		return
+	}
 	evt := s.scope.render(0, s.component)
 	s.scope.Publish(evt)
 }

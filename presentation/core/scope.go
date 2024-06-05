@@ -23,6 +23,7 @@ type allocatedComponent struct {
 	Window      *scopeWindow
 	Component   Component
 	RenderState *RenderState
+	Destroyed   bool
 }
 
 type ComponentFactory func(Window, ora.NewComponentRequested) Component
@@ -226,13 +227,32 @@ func (s *Scope) handleMessage(buf []byte) error {
 		if tx, ok := t.(ora.EventsAggregated); ok {
 			wasEmptyTx = len(tx.Events) == 0
 		}
+
+		wasDestructed := isEvent[ora.ComponentDestructionRequested](t) || isEvent[ora.ScopeDestructionRequested](t)
+
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
-		if !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT {
+		if !wasDestructed && !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT {
 			s.renderIfRequired()
 		}
 	})
 
 	return nil
+}
+
+func isEvent[T ora.Event](e ora.Event) bool {
+	if _, ok := e.(T); ok {
+		return ok
+	}
+
+	if tx, ok := e.(ora.EventsAggregated); ok {
+		for _, event := range tx.Events {
+			if _, ok := event.(T); ok {
+				return ok
+			}
+		}
+	}
+
+	return false
 }
 
 func (s *Scope) Publish(evt ora.Event) {
@@ -292,6 +312,9 @@ func (s *Scope) renderIfRequired() {
 func (s *Scope) forceRender() {
 	for _, component := range s.allocatedComponents {
 		//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
+		if component.Destroyed {
+			continue
+		}
 		s.Publish(s.render(0, component.Component))
 	}
 }

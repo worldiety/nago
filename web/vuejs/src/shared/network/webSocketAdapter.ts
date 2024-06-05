@@ -1,39 +1,41 @@
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import type { Ping } from '@/shared/protocol/ora/ping';
-import type { Property } from '@/shared/protocol/ora/property';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { Event } from '@/shared/protocol/ora/event';
-import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
-import type { ConfigurationDefined } from '@/shared/protocol/ora/configurationDefined';
-import type { ConfigurationRequested } from '@/shared/protocol/ora/configurationRequested';
-import type { Acknowledged } from '@/shared/protocol/ora/acknowledged';
-import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
-import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
-import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
-import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
-import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
-import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
-import { v4 as uuidv4 } from 'uuid';
+import type {Ping} from '@/shared/protocol/ora/ping';
+import type {Property} from '@/shared/protocol/ora/property';
+import type {Ptr} from '@/shared/protocol/ora/ptr';
+import type {Event} from '@/shared/protocol/ora/event';
+import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
+import type {ConfigurationDefined} from '@/shared/protocol/ora/configurationDefined';
+import type {ConfigurationRequested} from '@/shared/protocol/ora/configurationRequested';
+import type {Acknowledged} from '@/shared/protocol/ora/acknowledged';
+import type {EventsAggregated} from '@/shared/protocol/ora/eventsAggregated';
+import type {SetPropertyValueRequested} from '@/shared/protocol/ora/setPropertyValueRequested';
+import type {FunctionCallRequested} from '@/shared/protocol/ora/functionCallRequested';
+import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequested';
+import type {ComponentDestructionRequested} from '@/shared/protocol/ora/componentDestructionRequested';
+import type {ComponentFactoryId} from '@/shared/protocol/ora/componentFactoryId';
+import {v4 as uuidv4} from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
-import { EventType } from '@/shared/eventbus/eventType';
+import {EventType} from '@/shared/eventbus/eventType';
 import type {ScopeID} from "@/shared/protocol/ora/scopeID";
 
 export default class WebSocketAdapter implements ServiceAdapter {
 
 	private eventBus: EventBus;
 	private pendingFutures: Map<number, Future>;
+	private destroyedComponents: Map<Ptr, any>;
 	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
 	private readonly scopeId: string;
-	private webSocket: WebSocket|null = null;
+	private webSocket: WebSocket | null = null;
 	private closedGracefully: boolean = false;
-	private retryTimeout: number|null = null;
+	private retryTimeout: number | null = null;
 	private activeLocale: string;
 	private requestId: number;
 
 	constructor(eventBus: EventBus) {
 		this.eventBus = eventBus;
 		this.pendingFutures = new Map();
+		this.destroyedComponents = new Map();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
@@ -82,8 +84,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 			this.webSocket.onopen = () => {
 				// this keeps our connection at least logically alive
-				setInterval(()=>{
-					if (this.closedGracefully){
+				setInterval(() => {
+					if (this.closedGracefully) {
 						return
 					}
 					const evt: Ping = {
@@ -91,7 +93,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 					};
 
 					this.webSocket?.send(JSON.stringify(evt))
-				},30000);
+				}, 30000);
 
 				resolve();
 			}
@@ -157,6 +159,9 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			ptr: ptr,
 		};
 
+		//console.log("async destroy component",ptr)
+		this.destroyedComponents.set(ptr, null)
+
 		return this.send(
 			undefined,
 			undefined,
@@ -205,13 +210,25 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
+			//console.log("received unmatched",event.type)
 			// something event driven from the backend happened, usually an invalidate or a navigation request
+			if (eventType == EventType.INVALIDATED) {
+				// it looks like we have a message interleaving problem, where we receive a component tree
+				// which is destroyed. The backend cannot send invalidation events of already destroyed components,
+				// thus it looks like a logical race at message layer.
+				let invalidated = event as ComponentInvalidated;
+				//console.log("component invalidated",invalidated.value.id)
+				if (this.destroyedComponents.has(invalidated.value.id)) {
+					//console.log("component invalidated illegal",invalidated.value.id)
+					return
+				}
+			}
 			this.eventBus.publish(eventType, event);
 			return;
 		}
 
 		if (eventType === EventType.ACKNOWLEDGED) {
-			// TODO: Backend needs to tell the frontend about the end of a transaction (EOT / amount of messages / ...)
+			// TODO: ack is always the last message of a transaction, however there may be also errors with or without ack.
 		}
 
 		this.resolveFuture(requestId, responseParsed);
@@ -296,6 +313,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		const future = this.pendingFutures.get(requestId);
 		if (!future) {
 			console.log(`error: got network response with unmatched request ID r=${requestId}`)
+			const eventType = response.type as EventType;
+			this.eventBus.publish(eventType, response);
 		} else {
 			this.pendingFutures.delete(requestId)
 			future.resolveFuture(response);

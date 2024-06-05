@@ -75,7 +75,8 @@ async function initializeUi(): Promise<void> {
 }
 
 function handleError(event: Event): void {
-	alert((event as ErrorOccurred).message);
+	//alert((event as ErrorOccurred).message);
+	console.log((event as ErrorOccurred).message)
 }
 
 function updateUi(event: Event): void {
@@ -88,9 +89,11 @@ function updateUi(event: Event): void {
 }
 
 async function navigateForward(event: Event): Promise<void> {
+	console.log("navigate forward",ui.value)
 	if (!ui.value) {
 		return;
 	}
+
 	const navigationForwardToRequested = (event as NavigationForwardToRequested);
 	await serviceAdapter.destroyComponent(ui.value?.id)
 	const componentInvalidated = await serviceAdapter.createComponent(navigationForwardToRequested.factory, navigationForwardToRequested.values);
