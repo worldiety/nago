@@ -220,8 +220,14 @@ func (s *Scope) handleMessage(buf []byte) error {
 
 	s.eventLoop.Post(func() {
 		s.handleEvent(t, true)
+
+		// todo the vue frontend sends a lot of empty transactions on mouse movements and vuejs makes garbage out of the viewtree
+		wasEmptyTx := false
+		if tx, ok := t.(ora.EventsAggregated); ok {
+			wasEmptyTx = len(tx.Events) == 0
+		}
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
-		if s.lastMessageType != ora.ComponentInvalidatedT {
+		if !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT {
 			s.renderIfRequired()
 		}
 	})

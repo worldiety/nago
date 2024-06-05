@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { textColor2Tailwind, textSize2Tailwind } from '@/shared/tailwindTranslator';
-import { computed } from 'vue';
+import {textColor2Tailwind, textSize2Tailwind} from '@/shared/tailwindTranslator';
+import {computed} from 'vue';
 import type {Text} from "@/shared/protocol/ora/text";
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Text;
@@ -26,20 +26,26 @@ const clazz = computed<string>(() => {
 });
 
 function onClick() {
-	serviceAdapter.executeFunctions(props.ui.onClick);
+	if (props.ui.onClick.v != 0) {
+		serviceAdapter.executeFunctions(props.ui.onClick);
+	}
 }
 
 function onMouseEnter() {
-	serviceAdapter.executeFunctions(props.ui.onHoverStart);
+	if (props.ui.onHoverEnd.v != 0) {
+		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
+	}
 }
 
 function onMouseLeave() {
-	serviceAdapter.executeFunctions(props.ui.onHoverEnd);
+	if (props.ui.onHoverEnd.v != 0) {
+		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
+	}
 }
 </script>
 
 <template>
 	<span v-if="ui.visible.v" :class="clazz" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">{{
-		props.ui.value.v
-	}}</span>
+			props.ui.value.v
+		}}</span>
 </template>
