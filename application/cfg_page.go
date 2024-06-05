@@ -425,7 +425,8 @@ func (c *Configurator) newHandler() http.Handler {
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
 		scope := app2.Connect(channel, ora.ScopeID(scopeID))
-		defer scope.Destroy()
+		_ = scope
+		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		cookie, _ := r.Cookie("wdy-ora-access")
 		if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{

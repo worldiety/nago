@@ -45,12 +45,20 @@ func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 	if root := wnd.ViewRoot(); root != nil {
 		ticker := time.NewTicker(d)
 		done := make(chan bool)
+		closed := false
 		root.AddDestroyObserver(func() {
 			ticker.Stop()
+			if closed {
+				return
+			}
 			done <- true
 		})
 
 		go func() {
+			defer func() {
+				close(done)
+				closed = true
+			}()
 			for {
 				select {
 				case <-done:
@@ -65,6 +73,10 @@ func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 		}()
 
 		return func() {
+			if closed {
+				return
+			}
+
 			done <- true
 		}
 	}
