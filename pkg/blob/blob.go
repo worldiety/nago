@@ -91,6 +91,27 @@ func Delete(store Store, key string) error {
 	})
 }
 
+func DeleteAll(store Store) error {
+	return store.Update(func(tx Tx) error {
+		var e error
+		tx.Each(func(entry Entry, err error) bool {
+			if err != nil {
+				e = err
+				return false
+			}
+			// TODO not sure if deleting while iterating should be well defined
+			if err := tx.Delete(entry.Key); err != nil {
+				e = err
+				return false
+			}
+
+			return true
+		})
+
+		return e
+	})
+}
+
 // Get is a shortcut function to read small slices from the store. Do not use for large blobs, because it allocates
 // the entire blob size without other limits.
 func Get(store Store, key string) (std.Option[[]byte], error) {
