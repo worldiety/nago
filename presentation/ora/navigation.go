@@ -1,5 +1,14 @@
 package ora
 
+type NavigationReloadRequested struct {
+	Type EventType `json:"type" value:"NavigationReloadRequested"`
+	event
+}
+
+func (e NavigationReloadRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
+}
+
 // NavigationForwardToRequested is an Event triggered by the backend which requests a forward navigation action within the frontend.
 // A frontend must put the new component to create by the factory on top of the current component within the scope.
 // The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.

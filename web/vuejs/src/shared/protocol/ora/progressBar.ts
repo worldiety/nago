@@ -7,6 +7,9 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
+/**
+ * TODO @Lukas/Philip/Kristin: sollte das nicht auch ein Label und Hint haben?
+ */
 export interface ProgressBar {
     id /*Ptr*/: Ptr;
     type: 'ProgressBar'/*ComponentType*/;

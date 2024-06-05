@@ -23,6 +23,7 @@ func init() {
 		reflect.TypeOf(FunctionCallRequested{}),
 		reflect.TypeOf(NavigationForwardToRequested{}),
 		reflect.TypeOf(NavigationResetRequested{}),
+		reflect.TypeOf(NavigationReloadRequested{}),
 		reflect.TypeOf(NavigationBackRequested{}),
 		reflect.TypeOf(SessionAssigned{}),
 		reflect.TypeOf(Ping{}),
@@ -32,7 +33,7 @@ func init() {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _event interface {
-	Acknowledged | EventsAggregated | NewComponentRequested | ComponentInvalidated | ComponentInvalidationRequested | ErrorOccurred | ComponentDestructionRequested | ScopeDestructionRequested | ConfigurationRequested | ConfigurationDefined | SetPropertyValueRequested | FunctionCallRequested | NavigationForwardToRequested | NavigationResetRequested | NavigationBackRequested | SessionAssigned | Ping | SendMultipleRequested
+	Acknowledged | EventsAggregated | NewComponentRequested | ComponentInvalidated | ComponentInvalidationRequested | ErrorOccurred | ComponentDestructionRequested | ScopeDestructionRequested | ConfigurationRequested | ConfigurationDefined | SetPropertyValueRequested | FunctionCallRequested | NavigationForwardToRequested | NavigationReloadRequested | NavigationResetRequested | NavigationBackRequested | SessionAssigned | Ping | SendMultipleRequested
 }
 
 func EventTypeDiscriminator(v Event) string {

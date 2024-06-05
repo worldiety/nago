@@ -14,6 +14,7 @@ import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
 import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
 import type { NavigationBackRequested } from '@/shared/protocol/ora/navigationBackRequested';
 import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
+import type { NavigationReloadRequested } from '@/shared/protocol/ora/navigationReloadRequested';
 import type { NavigationResetRequested } from '@/shared/protocol/ora/navigationResetRequested';
 import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
 import type { Ping } from '@/shared/protocol/ora/ping';
@@ -36,6 +37,7 @@ export type Event =
 | SetPropertyValueRequested
 | FunctionCallRequested
 | NavigationForwardToRequested
+| NavigationReloadRequested
 | NavigationResetRequested
 | NavigationBackRequested
 | SessionAssigned

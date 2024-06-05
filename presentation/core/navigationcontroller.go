@@ -50,5 +50,11 @@ func (n *NavigationController) ResetTo(id ora.ComponentFactoryId, values Values)
 }
 
 func (n *NavigationController) Reload() {
-	// TODO this does not change history stack but destroys the stack entirely
+	if n.destroyed {
+		return
+	}
+
+	n.scope.Publish(ora.NavigationReloadRequested{
+		Type: ora.NavigationReloadRequestedT,
+	})
 }

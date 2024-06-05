@@ -3,6 +3,7 @@ export enum EventType {
 	INVALIDATED = 'ComponentInvalidated',
 	INVALIDATION_REQUESTED = 'ComponentInvalidationRequested',
 	NAVIGATE_BACK_REQUESTED = 'NavigationBackRequested',
+	NAVIGATE_RELOAD_REQUESTED = 'NavigationReloadRequested',
 	SEND_MULTIPLE_REQUESTED = 'SendMultipleRequested',
 	NAVIGATE_FORWARD_REQUESTED = 'NavigationForwardToRequested',
 	NAVIGATION_RESET_REQUESTED = 'NavigationResetRequested',

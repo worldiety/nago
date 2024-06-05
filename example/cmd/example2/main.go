@@ -382,6 +382,13 @@ func main() {
 							}))
 
 							vbox.Append(ui.NewButton(func(btn *ui.Button) {
+								btn.Caption().Set("reload page")
+								btn.Action().Set(func() {
+									wnd.Navigation().Reload()
+								})
+							}))
+
+							vbox.Append(ui.NewButton(func(btn *ui.Button) {
 								btn.Caption().Set("download")
 								btn.Action().Set(func() {
 									err := wnd.SendFiles(application.FilesIter(mem.From(mem.Entries{

@@ -65,6 +65,7 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
 		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
 		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 
@@ -114,6 +115,10 @@ async function navigateForward(event: Event): Promise<void> {
 
 function navigateBack(): void {
 	history.back();
+}
+
+function navigateReload(): void {
+	location.reload()
 }
 
 function resetHistory(event: Event): void {

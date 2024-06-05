@@ -22,6 +22,7 @@ const (
 	NavigationForwardToRequestedT EventType = "NavigationForwardToRequested"
 	NavigationBackRequestedT      EventType = "NavigationBackRequested"
 	NavigationResetRequestedT     EventType = "NavigationResetRequested"
+	NavigationReloadRequestedT    EventType = "NavigationReloadRequested"
 	SessionAssignedT              EventType = "SessionAssigned"
 	SendMultipleRequestedT        EventType = "SendMultipleRequested"
 )
