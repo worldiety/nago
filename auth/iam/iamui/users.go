@@ -12,7 +12,8 @@ import (
 	"strings"
 )
 
-func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core.Component {
+func Users(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.Component {
+	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.User](func(opts *crud.Options[iam.User]) {
 		opts.Title("Nutzerkonten")
 		opts.Delete(func(user iam.User) error {
@@ -23,6 +24,8 @@ func Users(subject auth.Subject, owner ui.ModalOwner, service *iam.Service) core
 		opts.Update(func(user iam.User) error {
 			return service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
 		})
+
+		opts.Responsive(wnd)
 
 		if subject.HasPermission(iam.CreateUser) {
 			opts.Actions(ui.NewButton(func(btn *ui.Button) {

@@ -6,6 +6,7 @@
 import type { ColorScheme } from '@/shared/protocol/ora/colorScheme';
 import type { EventType } from '@/shared/protocol/ora/eventType';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
+import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
 
 /**
  * ConfigurationRequested is issued by the frontend to get the applications general configuration.
@@ -17,6 +18,7 @@ export interface ConfigurationRequested {
     type: 'ConfigurationRequested'/*EventType*/;
     acceptLanguage: string;
     colorScheme: ColorScheme;
+    windowInfo: WindowInfo;
     r /*RequestId*/: RequestId;
 }
 

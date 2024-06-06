@@ -23,6 +23,7 @@ type Options[E any] struct {
 	findAll          iter.Seq2[E, error]
 	aggregateActions []AggregateAction[E]
 	binding          *Binding[E]
+	wnd              core.Window
 }
 
 func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
@@ -61,6 +62,11 @@ func (o *Options[E]) Create(f func(E) error) *Options[E] {
 
 func (o *Options[E]) ReadAll(it iter.Seq2[E, error]) *Options[E] {
 	o.findAll = it
+	return o
+}
+
+func (o *Options[E]) Responsive(wnd core.Window) *Options[E] {
+	o.wnd = wnd
 	return o
 }
 
@@ -166,6 +172,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	if opts.binding == nil {
 		panic(fmt.Errorf("reflection based binder not yet implemented, please provide a custom binding"))
 	}
+
 	var searchField *ui.TextField
 	toolbar := ui.NewHStack(func(hstack *ui.FlexContainer) {
 		hstack.ContentAlignment().Set(ora.ContentBetween)
@@ -252,10 +259,13 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	})
 
 	hasAggregateOptions := len(opts.aggregateActions) > 0
+	var componentBody ui.Container
 
-	return ui.NewVStack(func(vstack *ui.FlexContainer) {
-		vstack.Append(toolbar)
-		vstack.Append(ui.NewTable(func(table *ui.Table) {
+	_ = toolbar
+	setupExpandedTable := func() {
+		componentBody.Children().Clear()
+		componentBody.Children().Append(toolbar)
+		componentBody.Children().Append(ui.NewTable(func(table *ui.Table) {
 			findAll := opts.findAll
 			if findAll == nil {
 				slog.Info("cannot build table, findAll iter is nil")
@@ -358,16 +368,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 								cell.Body().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
 									ui.HStackAlignRight(hstack)
 									for _, action := range opts.aggregateActions {
-										hstack.Append(ui.NewButton(func(btn *ui.Button) {
-											btn.Caption().Set(action.Caption)
-											btn.PreIcon().Set(action.Icon)
-											if action.Style != "" {
-												btn.Style().Set(action.Style)
-											}
-											btn.Action().Set(func() {
-												xdialog.HandleError(owner, fmt.Sprintf("Aktion '%s' nicht durchführbar.", action.Caption), action.Action(owner, e))
-											})
-										}))
+										hstack.Append(newAggregateActionButton(owner, action, e))
 									}
 								}))
 							}))
@@ -380,5 +381,149 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 			})
 
 		}))
+	}
+
+	setupListDataAsCards := func() {
+		componentBody.Children().Clear()
+		componentBody.Children().Append(toolbar)
+		componentBody.Children().Append(ui.NewVStack(func(vstack *ui.FlexContainer) {
+			vstack.ElementSize().Set(ora.ElementSizeLarge)
+			vstack.Children().From(func(yield func(core.Component) bool) {
+				findAll := opts.findAll
+				if findAll == nil {
+					slog.Info("cannot build table, findAll iter is nil")
+					return
+				}
+
+				filtered := findAll
+				if searchField.Value().Get() != "" {
+					predicate := rquery.SimplePredicate[any](searchField.Value().Get())
+					filtered = iter.Filter2(func(model E, err error) bool {
+						if err != nil {
+							slog.Error("error in iter while filtering", "err", err)
+							return false
+						}
+
+						// note that this may be a security faux-pas, because we can search things which is not displayed,
+						// thus an attacker may "leak" information through search responses. However, this works as intended
+						// and allows to search after hidden but well known details, like internal entity identifiers.
+						// To mitigate security problems, the developer just needs to use a proper view model,
+						// as required by a reasonable architecture anyway.
+						return predicate(model)
+					}, findAll)
+				}
+
+				filtered(func(e E, err error) bool {
+					if err != nil {
+						slog.Error("error in iter", "err", err)
+						yield(xdialog.ErrorView("iter failed", err))
+						return false
+					}
+
+					return yield(ui.NewCard(func(card *ui.Card) {
+						card.Append(ui.NewVStack(func(vstack *ui.FlexContainer) {
+							for _, field := range opts.binding.fields {
+								if field.RenderHints[Card] == Title {
+									vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
+										hstack.ContentAlignment().Set(ora.ContentBetween)
+										hstack.Append(ui.MakeText(field.Caption))
+										hstack.Append(ui.MakeText(field.Stringer(e)))
+									}))
+									vstack.Append(ui.NewDivider(nil))
+									break
+
+								}
+							}
+
+							for _, field := range opts.binding.fields {
+								if field.RenderHints[Overview] == Hidden {
+									continue
+								}
+
+								if field.RenderHints[Card] == Title {
+									continue
+								}
+
+								vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
+									hstack.ContentAlignment().Set(ora.ContentBetween)
+									hstack.Append(ui.NewText(func(t *ui.Text) {
+										t.Value().Set(field.Caption)
+										t.Size().Set("lg")
+									}))
+									hstack.Append(ui.MakeText(field.Stringer(e)))
+								}))
+
+							}
+
+							if len(opts.aggregateActions) > 0 {
+								vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
+									ui.HStackAlignRight(hstack)
+									for _, action := range opts.aggregateActions {
+
+										hstack.Append(newAggregateActionButton(owner, action, e))
+									}
+								}))
+							}
+
+						}))
+
+					}))
+
+				})
+			})
+		}))
+	}
+
+	sizeClass := ora.ExpandedWindow
+
+	renderBody := func() {
+		switch {
+		case ora.ExpandedWindow != sizeClass:
+			setupListDataAsCards()
+		default:
+			setupExpandedTable()
+		}
+
+	}
+
+	if opts.wnd != nil {
+		hasCardTitle := false
+		for _, field := range opts.binding.fields {
+			if field.RenderHints[Card] == Title {
+				hasCardTitle = true
+				break
+			}
+		}
+
+		if !hasCardTitle && len(opts.binding.fields) > 0 {
+			if opts.binding.fields[0].RenderHints == nil {
+				opts.binding.fields[0].RenderHints = map[RenderVariant]RenderHint{}
+			}
+			opts.binding.fields[0].RenderHints[Card] = Title
+		}
+
+		sizeClass = opts.wnd.WindowInfo().SizeClass()
+		opts.wnd.ViewRoot().AddWindowSizeClassObserver(func(size ora.WindowSizeClass) {
+			sizeClass = size
+			renderBody()
+		})
+	}
+
+	return ui.NewVStack(func(vstack *ui.FlexContainer) {
+		componentBody = vstack
+		renderBody()
+	})
+}
+
+func newAggregateActionButton[E any](owner ui.ModalOwner, action AggregateAction[E], e E) core.Component {
+	return ui.NewButton(func(btn *ui.Button) {
+		btn.Caption().Set(action.Caption)
+		btn.PreIcon().Set(action.Icon)
+		if action.Style != "" {
+			btn.Style().Set(action.Style)
+		}
+		btn.Action().Set(func() {
+			xdialog.HandleError(owner, fmt.Sprintf("Aktion '%s' nicht durchführbar.", action.Caption), action.Action(owner, e))
+		})
 	})
 }

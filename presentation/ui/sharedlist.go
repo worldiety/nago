@@ -238,14 +238,16 @@ func (s *SharedList[T]) Remove(t ...T) {
 	s.dirty = anyRemoved
 }
 
-// Clear removes any contained pointers and sets the length to 0. Has no effect if Source has been set.
+// Clear removes any contained pointers and sets the length to 0. If a source iter has been set, the iter is removed.
 func (s *SharedList[T]) Clear() {
-	if s.iter != nil {
-		panic("cannot clear data if Source has been set")
-	}
-
 	if s.frozen {
 		panic("cannot clear data if frozen")
+	}
+
+	if s.iter != nil {
+		s.iter = nil
+		s.dirty = true
+		return
 	}
 
 	var zero T
@@ -261,9 +263,10 @@ func renderSharedListButtons(s *SharedList[*Button]) ora.Property[[]ora.Button] 
 		Ptr: s.id,
 	}
 
-	for _, value := range s.values {
-		res.Value = append(res.Value, value.renderButton())
-	}
+	s.Iter(func(button *Button) bool {
+		res.Value = append(res.Value, button.renderButton())
+		return true
+	})
 
 	return res
 }
@@ -273,9 +276,10 @@ func renderSharedListMenuEntries(s *SharedList[*MenuEntry]) ora.Property[[]ora.M
 		Ptr: s.id,
 	}
 
-	for _, value := range s.values {
-		res.Value = append(res.Value, value.renderMenuEntry())
-	}
+	s.Iter(func(entry *MenuEntry) bool {
+		res.Value = append(res.Value, entry.renderMenuEntry())
+		return true
+	})
 
 	return res
 }
@@ -285,9 +289,10 @@ func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]or
 		Ptr: s.id,
 	}
 
-	for _, value := range s.values {
+	s.Iter(func(value core.Component) bool {
 		res.Value = append(res.Value, value.Render())
-	}
+		return true
+	})
 
 	return res
 }

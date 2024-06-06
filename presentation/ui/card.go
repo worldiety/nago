@@ -38,6 +38,10 @@ func (c *Card) Append(children ...core.Component) *Card {
 	return c
 }
 
+func (c *Card) Children() *SharedList[core.Component] {
+	return c.children
+}
+
 func (c *Card) ID() ora.Ptr {
 	return c.id
 }

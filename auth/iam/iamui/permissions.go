@@ -1,17 +1,18 @@
 package iamui
 
 import (
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Permissions(owner ui.ModalOwner, subject auth.Subject, service *iam.Service) core.Component {
+func Permissions(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.Component {
+	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.Permission](func(opts *crud.Options[iam.Permission]) {
 		opts.Title("Berechtigungen")
 		opts.ReadAll(service.AllPermissions(subject))
+		opts.Responsive(wnd)
 		opts.Bind(func(bnd *crud.Binding[iam.Permission]) {
 			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Permission) *string {
 				tmp := (*model).Identity()

@@ -25,6 +25,7 @@ const (
 	NavigationReloadRequestedT    EventType = "NavigationReloadRequested"
 	SessionAssignedT              EventType = "SessionAssigned"
 	SendMultipleRequestedT        EventType = "SendMultipleRequested"
+	WindowInfoChangedT            EventType = "WindowInfoChanged"
 )
 
 // Event is a sum type of

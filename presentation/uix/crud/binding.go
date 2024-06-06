@@ -422,6 +422,7 @@ const (
 	Overview RenderVariant = iota + 1
 	Create
 	Update
+	Card
 )
 
 type RenderHints map[RenderVariant]RenderHint
@@ -436,6 +437,7 @@ const (
 	Visible RenderHint = iota
 	ReadOnly
 	Hidden
+	Title
 )
 
 type anyField[T any] struct {

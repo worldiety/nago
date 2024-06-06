@@ -22,6 +22,7 @@ import type { ScopeDestructionRequested } from '@/shared/protocol/ora/scopeDestr
 import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
 import type { SessionAssigned } from '@/shared/protocol/ora/sessionAssigned';
 import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
+import type { WindowInfoChanged } from '@/shared/protocol/ora/windowInfoChanged';
 
 export type Event = 
 | Acknowledged
@@ -43,3 +44,4 @@ export type Event =
 | SessionAssigned
 | Ping
 | SendMultipleRequested
+| WindowInfoChanged

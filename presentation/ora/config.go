@@ -23,6 +23,7 @@ type ConfigurationRequested struct {
 	Type           EventType   `json:"type" value:"ConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
 	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
+	WindowInfo     WindowInfo  `json:"windowInfo"`
 	RequestId      RequestId   `json:"r" `
 	event
 }

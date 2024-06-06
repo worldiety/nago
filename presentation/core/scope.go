@@ -58,6 +58,7 @@ type Scope struct {
 	tempRootDir         string
 	tempDir             string
 	nextFileSeqNo       int64
+	windowInfo          ora.WindowInfo
 	onDestroyObservers  concurrent.Slice[func()]
 }
 

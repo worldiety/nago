@@ -14,9 +14,12 @@ import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequ
 import type {ComponentDestructionRequested} from '@/shared/protocol/ora/componentDestructionRequested';
 import type {ComponentFactoryId} from '@/shared/protocol/ora/componentFactoryId';
 import {v4 as uuidv4} from 'uuid';
-import type EventBus from '@/shared/eventbus/eventBus';
+import EventBus from '@/shared/eventbus/eventBus';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ScopeID} from "@/shared/protocol/ora/scopeID";
+import * as console from "node:console";
+import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
+import {WindowInfoChanged} from "@/shared/protocol/ora/windowInfoChanged";
 
 export default class WebSocketAdapter implements ServiceAdapter {
 
@@ -172,11 +175,18 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	async getConfiguration(): Promise<ConfigurationDefined> {
+		const winfo: WindowInfo = {
+			width: window.innerWidth,
+			height: window.innerHeight,
+			density: window.devicePixelRatio
+		}
+
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
 			r: this.nextRequestId(), // TODO: Redundant, remove
 			acceptLanguage: 'de',
 			colorScheme: 'default',
+			windowInfo: winfo,
 		};
 
 		return this.send(undefined, undefined, configurationRequested).then((event) => {
@@ -312,11 +322,13 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private resolveFuture(requestId: number, response: Event): void {
 		const future = this.pendingFutures.get(requestId);
 		if (!future) {
-			console.log(`error: got network response with unmatched request ID r=${requestId}`)
+
+			window.console.log(`error: got network response with unmatched request ID r=${requestId}`);
+
 			const eventType = response.type as EventType;
 			this.eventBus.publish(eventType, response);
 		} else {
-			this.pendingFutures.delete(requestId)
+			this.pendingFutures.delete(requestId);
 			future.resolveFuture(response);
 		}
 	}
@@ -324,6 +336,14 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private nextRequestId(): number {
 		this.requestId++;
 		return this.requestId;
+	}
+
+	updateWindowInfo(windowInfo: WindowInfo): void {
+		const infoChanged: WindowInfoChanged = {
+			type: EventType.WindowInfoChanged,
+			info: windowInfo
+		};
+		this.webSocket?.send(JSON.stringify(infoChanged));
 	}
 }
 
@@ -341,7 +361,7 @@ class Future {
 
 	resolveFuture(event: Event): void {
 		if (event.type === "ErrorOccurred") {
-			console.log(`future ${this.monotonicRequestId} is rejected`)
+			console.log(`future ${this.monotonicRequestId} is rejected`);
 			this.reject(event)
 			return
 		}

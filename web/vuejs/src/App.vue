@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import { onBeforeMount, onMounted, onUnmounted, ref } from "vue";
+import {onBeforeMount, onMounted, onUnmounted, ref} from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -12,9 +12,10 @@ import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
 import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
-import type { Themes } from '@/shared/protocol/ora/themes';
-import type { Theme } from '@/shared/protocol/ora/theme';
-import { useThemeManager } from '@/shared/themeManager';
+import type {Themes} from '@/shared/protocol/ora/themes';
+import type {Theme} from '@/shared/protocol/ora/theme';
+import {useThemeManager} from '@/shared/themeManager';
+import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
 
 enum State {
 	Loading,
@@ -29,7 +30,7 @@ const state = ref(State.Loading);
 const ui = ref<Component>();
 
 const errorHandler = useErrorHandling();
-let configurationPromise: Promise<void>|null = null;
+let configurationPromise: Promise<void> | null = null;
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
@@ -90,7 +91,7 @@ function updateUi(event: Event): void {
 }
 
 async function navigateForward(event: Event): Promise<void> {
-	console.log("navigate forward",ui.value)
+	console.log("navigate forward", ui.value)
 	if (!ui.value) {
 		return;
 	}
@@ -153,6 +154,15 @@ function setTheme(themes: Themes): void {
 	}
 }
 
+function sendWindowInfo() {
+	const winfo: WindowInfo = {
+		width: window.innerWidth,
+		height: window.innerHeight,
+		density: window.devicePixelRatio
+	}
+	serviceAdapter.updateWindowInfo(winfo);
+}
+
 function addEventListeners(): void {
 	addEventListener("popstate", (event) => {
 		if (event.state === null) {
@@ -166,6 +176,10 @@ function addEventListeners(): void {
 		serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
 			ui.value = invalidation.value;
 		})
+	});
+
+	window.addEventListener('resize', function (event) {
+		sendWindowInfo();
 	});
 }
 
@@ -188,6 +202,8 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 });
+
+
 </script>
 
 <template>

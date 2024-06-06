@@ -8,8 +8,8 @@ import (
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) core.Component {
-
+func Roles(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
+	subject := wnd.Subject()
 	return crud.NewView(modals, crud.NewOptions[iam.Role](func(opts *crud.Options[iam.Role]) {
 		opts.Title("Rollen")
 		opts.ReadAll(service.AllRoles(subject))
@@ -22,6 +22,8 @@ func Roles(subject auth.Subject, modals ui.ModalOwner, service *iam.Service) cor
 		opts.Update(func(role iam.Role) error {
 			return service.UpdateRole(subject, role)
 		})
+
+		opts.Responsive(wnd)
 		opts.Bind(func(bnd *crud.Binding[iam.Role]) {
 
 			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Role) *auth.RID {

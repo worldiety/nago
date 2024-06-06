@@ -21,6 +21,7 @@ type IAMSettings struct {
 	Groups      Groups
 	Login       Login
 	Logout      Logout
+	Service     *iam.Service
 }
 
 func (settings IAMSettings) LogoutMenuEntry(wnd core.Window) *ui.MenuEntry {
@@ -181,21 +182,26 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Groups.Repository = json.NewSloppyJSONRepository[iam.Group](c.EntityStore("iam.groups"))
 	}
 
+	service := settings.Service
+	if settings.Service == nil {
+		service = iam.NewService(
+			settings.Permissions.Permissions,
+			settings.Users.Repository,
+			settings.Sessions.Repository,
+			settings.Roles.Repository,
+			settings.Groups.Repository,
+		)
+		settings.Service = service
+	}
+
 	c.iamSettings = settings
 
-	service := iam.NewService(
-		settings.Permissions.Permissions,
-		settings.Users.Repository,
-		settings.Sessions.Repository,
-		settings.Roles.Repository,
-		settings.Groups.Repository,
-	)
 	if err := service.Bootstrap(); err != nil {
 		panic(fmt.Errorf("cannot bootstrap IAM service: %v", err))
 	}
 	c.Component(settings.Permissions.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
-		settings.Decorator(wnd, page, iamui.Permissions(page, wnd.Subject(), service))
+		settings.Decorator(wnd, page, iamui.Permissions(wnd, page, service))
 		return page
 	})
 
@@ -213,19 +219,19 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 	c.Component(settings.Users.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
-		settings.Decorator(wnd, page, iamui.Users(wnd.Subject(), page, service))
+		settings.Decorator(wnd, page, iamui.Users(wnd, page, service))
 		return page
 	})
 
 	c.Component(settings.Roles.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
-		settings.Decorator(wnd, page, iamui.Roles(wnd.Subject(), page, service))
+		settings.Decorator(wnd, page, iamui.Roles(wnd, page, service))
 		return page
 	})
 
 	c.Component(settings.Groups.ID, func(wnd core.Window) core.Component {
 		page := ui.NewPage(nil)
-		settings.Decorator(wnd, page, iamui.Groups(wnd.Subject(), page, service))
+		settings.Decorator(wnd, page, iamui.Groups(wnd, page, service))
 		return page
 	})
 

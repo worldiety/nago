@@ -37,9 +37,17 @@ func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
 	case ora.SessionAssigned:
 		s.handleSessionAssigned(evt)
 	case ora.Ping:
-		// do nothing, we already applied our keep-alive-tick
+	// do nothing, we already applied our keep-alive-tick
+	case ora.WindowInfoChanged:
+		s.handleWindowInfoChanged(evt)
 	default:
 		slog.Error("unexpected event type in scope processing", slog.String("type", fmt.Sprintf("%T", evt)))
+	}
+}
+
+func (s *Scope) handleWindowInfoChanged(evt ora.WindowInfoChanged) {
+	for _, allocC := range s.allocatedComponents {
+		allocC.Window.updateWindowInfo(evt.Info)
 	}
 }
 
@@ -108,6 +116,7 @@ func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
 
 func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 	window := newScopeWindow(s, evt.Factory, evt.Values)
+	window.updateWindowInfo(s.windowInfo)
 	fac := s.factories[evt.Factory]
 	var component Component
 	if fac == nil {
@@ -177,6 +186,11 @@ func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidati
 }
 
 func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
+	s.windowInfo = evt.WindowInfo
+	for _, component := range s.allocatedComponents {
+		component.Window.updateWindowInfo(evt.WindowInfo)
+	}
+
 	s.Publish(ora.ConfigurationDefined{
 		Type:               ora.ConfigurationDefinedT,
 		ApplicationID:      string(s.app.id),

@@ -61,9 +61,11 @@ type Window interface {
 	// Locale returns the negotiated language tag or locale identifier between the frontend and the backend.
 	Locale() language.Tag
 
-	// Location returns negotiated time zone location
+	// Location returns negotiated time zone location.
 	Location() *time.Location
-	// TODO add Locale, add Screen Metrics (density, pixel width and height, size classes etc)
+
+	// WindowInfo returns the screen metrics.
+	WindowInfo() ora.WindowInfo
 
 	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
@@ -151,6 +153,17 @@ func (s *scopeWindow) Execute(task func()) {
 
 	s.scope.eventLoop.Post(task)
 	s.scope.eventLoop.Tick()
+}
+
+func (s *scopeWindow) updateWindowInfo(winfo ora.WindowInfo) {
+	s.scope.windowInfo = winfo
+	if s.viewRoot != nil {
+		s.viewRoot.onWindowUpdated()
+	}
+}
+
+func (s *scopeWindow) WindowInfo() ora.WindowInfo {
+	return s.scope.windowInfo
 }
 
 func (s *scopeWindow) Navigation() *NavigationController {

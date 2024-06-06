@@ -11,8 +11,8 @@ import (
 func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 		flexContainer.ElementSize().Set(ora.ElementSizeLarge)
-		flexContainer.Elements().Append(
-			ui.NewVBox(func(vbox *ui.VBox) {
+		flexContainer.Children().Append(
+			ui.NewVStack(func(vbox *ui.FlexContainer) {
 				var mailLogin *ui.TextField
 				var pwdLogin *ui.PasswordField
 				var errMsg *ui.Text

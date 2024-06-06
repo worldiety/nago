@@ -34,6 +34,7 @@ func main() {
 			return ui.NewPage(func(page *ui.Page) {
 				page.Body().Set(crud.NewView[Person](page, crud.NewOptions(func(opts *crud.Options[Person]) {
 					opts.
+						Responsive(wnd). // you need to provide a window to make the view responsive
 						PrepareCreate(func(person Person) (Person, error) {
 							person.ID = data.RandIdent[PID]()
 							return person, nil
@@ -49,6 +50,7 @@ func main() {
 								}, crud.RenderHints{
 									crud.Create: crud.Hidden,
 									crud.Update: crud.ReadOnly,
+									crud.Card:   crud.Title, // you can customize the responsive card title
 								}),
 							)
 							crud.Text(bnd, crud.FromPtr("Vorname", func(model *Person) *string {
