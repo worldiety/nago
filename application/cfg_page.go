@@ -400,6 +400,8 @@ func (c *Configurator) newHandler() http.Handler {
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context())
 		logger.Info("wire is called, before upgrade")
+		queryParams := r.URL.Query()
+		scopeID := queryParams.Get("_sid")
 		_ = logger
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -409,13 +411,12 @@ func (c *Configurator) newHandler() http.Handler {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Print("upgrade:", err)
+			slog.Info("http websocket upgrade failed", "err", err, "id", scopeID)
 			return
 		}
 		defer conn.Close()
 
-		logger.Info("wire upgrade to websocket success")
-		queryParams := r.URL.Query()
-		scopeID := queryParams.Get("_sid")
+		logger.Info("wire upgrade to websocket success", "id", scopeID)
 
 		// todo new
 		defer func() {
@@ -438,14 +439,15 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 		if err := channel.Loop(); err != nil {
-			fmt.Println(err)
+			slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
+			scope.Connect(nil) // we cannot use that anymore, so clean it up
 			return
 		}
 
 	}))
 
 	for _, route := range r.Routes() {
-		fmt.Println(route.Pattern)
+		slog.Info("routes", "route", route.Pattern)
 	}
 
 	return r
