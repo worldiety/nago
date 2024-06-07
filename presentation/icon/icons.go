@@ -52,3 +52,6 @@ var Users ui.SVGSrc
 
 //go:embed magnifying-glass.svg
 var MagnifyingGlass ui.SVGSrc
+
+//go:embed bug.svg
+var Bug ui.SVGSrc

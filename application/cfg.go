@@ -42,9 +42,16 @@ func NewConfigurator() *Configurator {
 
 	var buildInfo string
 	if info, ok := debug.ReadBuildInfo(); ok {
-		buildInfo = info.String()
-	} else {
-		buildInfo = fmt.Sprintf("%s %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version())
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				buildInfo = setting.Value
+				break
+			}
+		}
+	}
+
+	if buildInfo == "" {
+		buildInfo = fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH)
 	}
 
 	// init our standard white label theme

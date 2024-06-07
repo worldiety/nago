@@ -64,6 +64,7 @@ func (ll *LinkedList[T]) Clear() {
 	ll.list.Init()
 }
 
+// Values copies the entire list into a slice. This has worst case performance.
 func (ll *LinkedList[T]) Values() []T {
 	ll.mutex.RLock()
 	defer ll.mutex.RUnlock()

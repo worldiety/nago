@@ -76,6 +76,8 @@ type Window interface {
 	// is returned from the open call. Note that open is usually not called from the event looper and the open call
 	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
 	AsURI(open func() (io.Reader, error)) (ora.URI, error)
+
+	Application() *Application
 }
 
 type SessionID string
@@ -94,6 +96,10 @@ type scopeWindow struct {
 	destroyed     bool
 }
 
+func (s *scopeWindow) Application() *Application {
+	return s.scope.app
+}
+
 func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -102,6 +108,7 @@ func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 
 func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
 	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope), viewRoot: newScopeViewRoot(scope)}
+	s.viewRoot.scopeWindow = s
 	if values == nil {
 		s.values = Values{}
 	}

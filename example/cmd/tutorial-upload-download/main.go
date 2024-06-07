@@ -46,7 +46,7 @@ func main() {
 													ui.NewButton(func(btn *ui.Button) {
 														btn.Caption().Set("download")
 														btn.Action().Set(func() {
-															must(any(nil), wnd.SendFiles(application.FilesIter(blob.Filter(fstore, namePredicate(key)))))
+															must(any(nil), wnd.SendFiles(core.FilesIter(blob.Filter(fstore, namePredicate(key)))))
 														})
 													}),
 												)
@@ -62,7 +62,7 @@ func main() {
 					ui.NewButton(func(btn *ui.Button) {
 						btn.Caption().Set("download all")
 						btn.Action().Set(func() {
-							must(any(nil), wnd.SendFiles(application.FilesIter(fstore)))
+							must(any(nil), wnd.SendFiles(core.FilesIter(fstore)))
 						})
 					}),
 				)

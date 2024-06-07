@@ -64,6 +64,18 @@ func (a *Application) SetName(name string) {
 	a.name = name
 }
 
+func (a *Application) Version() string {
+	return a.version
+}
+
+func (a *Application) Name() string {
+	return a.name
+}
+
+func (a *Application) ID() ApplicationID {
+	return a.id
+}
+
 func (a *Application) SetVersion(version string) {
 	a.version = version
 }

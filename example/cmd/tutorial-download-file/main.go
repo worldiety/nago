@@ -18,7 +18,7 @@ func main() {
 			return ui.NewButton(func(btn *ui.Button) {
 				btn.Caption().Set("download")
 				btn.Action().Set(func() {
-					err := wnd.SendFiles(application.FilesIter(mem.From(mem.Entries{
+					err := wnd.SendFiles(core.FilesIter(mem.From(mem.Entries{
 						"test.txt": []byte("hello world"),
 					})))
 					if err != nil {

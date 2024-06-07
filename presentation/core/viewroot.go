@@ -6,6 +6,8 @@ import (
 )
 
 type ViewRoot interface {
+	Factory() ora.ComponentFactoryId
+
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
 
@@ -32,6 +34,11 @@ type scopeViewRoot struct {
 	scope                  *Scope
 	component              Component
 	destroyed              bool
+	scopeWindow            *scopeWindow
+}
+
+func (s *scopeViewRoot) Factory() ora.ComponentFactoryId {
+	return s.scopeWindow.factory
 }
 
 func newScopeViewRoot(scope *Scope) *scopeViewRoot {
