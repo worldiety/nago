@@ -78,9 +78,11 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.webSocket.onclose = () => {
 				if (!this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
+					console.log("ws was intentionally closed");
 					this.retry();
 				} else {
 					// Keep the socket closed if it was closed gracefully (i.e. intentional)
+					console.log("ws was not closed gracefully");
 					this.closedGracefully = false;
 				}
 			}
