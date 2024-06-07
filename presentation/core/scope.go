@@ -265,7 +265,7 @@ func (s *Scope) Publish(evt ora.Event) {
 	}
 
 	if err := s.channel.Value().Publish(ora.Marshal(evt)); err != nil {
-		slog.Error(err.Error())
+		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Value())
 	}
 }
 
