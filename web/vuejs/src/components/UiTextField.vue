@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import {onUnmounted, ref, watch} from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import type {TextField} from "@/shared/protocol/ora/textField";
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: TextField;
@@ -18,6 +18,12 @@ watch(() => props.ui.value.v, (newValue) => {
 });
 
 function submitInputValue(): void {
+	debouncedInput()
+
+	if (props.ui.onTextChanged.p == 0) {
+		return
+	}
+
 	serviceAdapter.setPropertiesAndCallFunctions([{
 		...props.ui.value,
 		v: inputValue.value,
@@ -28,6 +34,30 @@ function clearInputValue(): void {
 	inputValue.value = '';
 	submitInputValue();
 }
+
+
+function deserializeGoDuration(durationInNanoseconds: number): number {
+	return durationInNanoseconds / 1e6;
+}
+
+let timer: number = 0;
+
+function debouncedInput() {
+	if (props.ui.onDebouncedTextChanged.p == 0) {
+		return;
+	}
+
+	// TODO this will always cause an { type: "ErrorOccurred", r: 15, message: "cannot call function: no such pointer found: 7325" } but I don't see why
+
+	clearTimeout(timer)
+	timer = window.setTimeout(() => {
+		serviceAdapter.setPropertiesAndCallFunctions([{
+			...props.ui.value,
+			v: inputValue.value,
+		}], [props.ui.onDebouncedTextChanged]);
+	}, deserializeGoDuration(props.ui.debounceTime.v))
+}
+
 </script>
 
 <template>
@@ -52,7 +82,7 @@ function clearInputValue(): void {
 					@input="submitInputValue"
 				/>
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<CloseIcon class="w-4" tabindex="0" @click="clearInputValue" @keydown.enter="clearInputValue" />
+					<CloseIcon class="w-4" tabindex="0" @click="clearInputValue" @keydown.enter="clearInputValue"/>
 				</div>
 			</div>
 		</InputWrapper>

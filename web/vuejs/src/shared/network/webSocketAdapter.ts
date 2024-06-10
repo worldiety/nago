@@ -138,7 +138,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	async createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
 		if (this.activeLocale == "") {
-			console.log("there is no configured active locale. Invoke getConfiguration to set it.")
+			window.console.log("there is no configured active locale. Invoke getConfiguration to set it.")
 		}
 
 		const newComponentRequested: NewComponentRequested = {
@@ -363,7 +363,7 @@ class Future {
 
 	resolveFuture(event: Event): void {
 		if (event.type === "ErrorOccurred") {
-			console.log(`future ${this.monotonicRequestId} is rejected`);
+			window.console.log(`future ${this.monotonicRequestId} is rejected`);
 			this.reject(event)
 			return
 		}

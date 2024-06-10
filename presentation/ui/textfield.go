@@ -3,40 +3,46 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"time"
 )
 
 type TextField struct {
-	id            ora.Ptr
-	label         String
-	value         String
-	placeholder   String
-	hint          String
-	help          String
-	error         String
-	disabled      Bool
-	simple        Bool
-	visible       Bool
-	onTextChanged *Func
-	properties    []core.Property
+	id                     ora.Ptr
+	label                  String
+	value                  String
+	placeholder            String
+	hint                   String
+	help                   String
+	error                  String
+	disabled               Bool
+	simple                 Bool
+	visible                Bool
+	onTextChanged          *Func
+	onDebouncedTextChanged *Func
+	debounceTime           *Shared[time.Duration]
+	properties             []core.Property
 }
 
 func NewTextField(with func(textField *TextField)) *TextField {
 	c := &TextField{
-		id:            nextPtr(),
-		label:         NewShared[string]("label"),
-		value:         NewShared[string]("value"),
-		placeholder:   NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		hint:          NewShared[string]("hint"),
-		error:         NewShared[string]("error"),
-		disabled:      NewShared[bool]("disabled"),
-		help:          NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		simple:        NewShared[bool]("simple"), // TODO what is that?
-		visible:       NewShared[bool]("visible"),
-		onTextChanged: NewFunc("onTextChanged"),
+		id:                     nextPtr(),
+		label:                  NewShared[string]("label"),
+		value:                  NewShared[string]("value"),
+		placeholder:            NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
+		hint:                   NewShared[string]("hint"),
+		error:                  NewShared[string]("error"),
+		disabled:               NewShared[bool]("disabled"),
+		help:                   NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
+		simple:                 NewShared[bool]("simple"), // TODO what is that?
+		visible:                NewShared[bool]("visible"),
+		onTextChanged:          NewFunc("onTextChanged"),
+		onDebouncedTextChanged: NewFunc("onDebouncedTextChanged"),
+		debounceTime:           NewShared[time.Duration]("debounceTime"),
 	}
 
-	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged, c.visible}
+	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged, c.visible, c.debounceTime, c.onTextChanged}
 	c.visible.Set(true)
+	c.debounceTime.Set(time.Millisecond * 500)
 	if with != nil {
 		with(c)
 	}
@@ -46,6 +52,14 @@ func NewTextField(with func(textField *TextField)) *TextField {
 
 func (l *TextField) OnTextChanged() *Func {
 	return l.onTextChanged
+}
+
+func (l *TextField) OnDebouncedTextChanged() *Func {
+	return l.onDebouncedTextChanged
+}
+
+func (l *TextField) DebounceTime() *Shared[time.Duration] {
+	return l.debounceTime
 }
 
 func (l *TextField) ID() ora.Ptr {
@@ -94,17 +108,19 @@ func (l *TextField) Visible() Bool {
 
 func (l *TextField) Render() ora.Component {
 	return ora.TextField{
-		Ptr:           l.id,
-		Type:          ora.TextFieldT,
-		Label:         l.label.render(),
-		Hint:          l.hint.render(),
-		Help:          l.help.render(),
-		Error:         l.error.render(),
-		Value:         l.value.render(),
-		Placeholder:   l.placeholder.render(),
-		Disabled:      l.disabled.render(),
-		Simple:        l.simple.render(),
-		Visible:       l.visible.render(),
-		OnTextChanged: renderFunc(l.onTextChanged),
+		Ptr:                    l.id,
+		Type:                   ora.TextFieldT,
+		Label:                  l.label.render(),
+		Hint:                   l.hint.render(),
+		Help:                   l.help.render(),
+		Error:                  l.error.render(),
+		Value:                  l.value.render(),
+		Placeholder:            l.placeholder.render(),
+		Disabled:               l.disabled.render(),
+		Simple:                 l.simple.render(),
+		Visible:                l.visible.render(),
+		DebounceTime:           l.debounceTime.render(),
+		OnDebouncedTextChanged: renderFunc(l.onDebouncedTextChanged),
+		OnTextChanged:          renderFunc(l.onTextChanged),
 	}
 }

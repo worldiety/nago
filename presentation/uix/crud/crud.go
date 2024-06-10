@@ -191,6 +191,9 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 				}))
 				hstack.Append(ui.NewTextField(func(textField *ui.TextField) {
 					searchField = textField
+					textField.OnDebouncedTextChanged().Set(func() {
+						// nothing to do, this will trigger invalidation anyway
+					})
 					textField.Placeholder().Set("Suchen")
 					textField.Simple().Set(true)
 				}))

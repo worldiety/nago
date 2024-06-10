@@ -19,6 +19,8 @@ export interface TextField {
     disabled: Property<boolean>;
     simple: Property<boolean>;
     onTextChanged: Property<Ptr>;
+    onDebouncedTextChanged: Property<Ptr>;
+    debounceTime: Property<number /*int64*/>;
     visible: Property<boolean>;
 }
 
