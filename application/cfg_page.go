@@ -407,6 +407,7 @@ func (c *Configurator) newHandler() http.Handler {
 			CheckOrigin: func(r *http.Request) bool {
 				return true //TODO security implications?
 			},
+			EnableCompression: true,
 		} // use default options
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -415,6 +416,8 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 		defer conn.Close()
+
+		conn.EnableWriteCompression(true)
 
 		logger.Info("wire upgrade to websocket success", "id", scopeID)
 
