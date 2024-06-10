@@ -19,6 +19,12 @@ export interface TextField {
     disabled: Property<boolean>;
     simple: Property<boolean>;
     onTextChanged: Property<Ptr>;
+
+    /**
+     * OnDebouncedTextChanged is called, after no changes within the DebounceTime have been seen.
+     * Note that the frontend is allowed to suppress any property updates, until the debouncer kicks in.
+     * This is by intention, to ensure that the backend does not re-render anyway due to always dirty views.
+     */
     onDebouncedTextChanged: Property<Ptr>;
     debounceTime: Property<number /*int64*/>;
     visible: Property<boolean>;

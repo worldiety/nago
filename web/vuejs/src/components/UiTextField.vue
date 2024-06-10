@@ -21,7 +21,10 @@ watch(() => props.ui.value.v, (newValue) => {
 function submitInputValue(): void {
 	debouncedInput()
 
-	if (isNil(props.ui.onTextChanged.p)) {
+	if (isNil(props.ui.onTextChanged.p) && !isNil(props.ui.onDebouncedTextChanged.p)) {
+		// this is a special case, to optimize re-render behavior for things like quick search:
+		// we delay the property update until the debounce callback triggers, so we cannot cause any dirty roundtrips
+		// TODO this has the known side effect, that you cannot read out the changed property AND have a debounced text changed event.
 		return
 	}
 
