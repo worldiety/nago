@@ -157,21 +157,21 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 								})
 							}))
 						} else {
-							cell.Body().Set(ui.MakeText(col.Caption))
+							cell.Body().Set(ui.NewStr(col.Caption))
 						}
 					}))
 				}
 
 				if hasEditColumn {
 					table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-						cell.Body().Set(ui.MakeText("Optionen")) // todo i18n
+						cell.Body().Set(ui.NewStr("Optionen")) // todo i18n
 					}))
 				}
 
 				table.Rows().From(func(yield func(*ui.TableRow) bool) {
 					rows, err := getData(items, binding, settings)
 					if err != nil {
-						vbox.Append(ui.MakeText(fmt.Sprintf("error: %v", err)))
+						vbox.Append(ui.NewStr(fmt.Sprintf("error: %v", err)))
 						return
 					}
 
@@ -179,7 +179,7 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 						yield(ui.NewTableRow(func(row *ui.TableRow) {
 							for _, colText := range rowDat.values {
 								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-									cell.Body().Set(ui.MakeText(colText))
+									cell.Body().Set(ui.NewStr(colText))
 								}))
 							}
 

@@ -3,6 +3,7 @@ import {textColor2Tailwind, textSize2Tailwind} from '@/shared/tailwindTranslator
 import {computed} from 'vue';
 import type {Text} from "@/shared/protocol/ora/text";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {isNil} from "@/shared/protocol/util";
 
 const props = defineProps<{
 	ui: Text;
@@ -26,19 +27,19 @@ const clazz = computed<string>(() => {
 });
 
 function onClick() {
-	if (props.ui.onClick.v != 0) {
+	if (!isNil(props.ui.onClick.v)) {
 		serviceAdapter.executeFunctions(props.ui.onClick);
 	}
 }
 
 function onMouseEnter() {
-	if (props.ui.onHoverEnd.v != 0) {
+	if (!isNil(props.ui.onHoverEnd.v)) {
 		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
 	}
 }
 
 function onMouseLeave() {
-	if (props.ui.onHoverEnd.v != 0) {
+	if (!isNil(props.ui.onHoverEnd.v)) {
 		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
 	}
 }

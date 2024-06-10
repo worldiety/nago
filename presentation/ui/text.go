@@ -38,6 +38,7 @@ func NewText(with func(*Text)) *Text {
 	return c
 }
 
+// deprecated: use NewStr instead which is a lot cheaper.
 func MakeText(s string) *Text {
 	return NewText(func(text *Text) {
 		text.Value().Set(s)

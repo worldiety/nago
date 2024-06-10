@@ -28,6 +28,7 @@ import UiCheckbox from "@/components/UiCheckbox.vue";
 import UiRadioButton from "@/components/UiRadioButton.vue";
 import UiFlexContainer from '@/components/UiFlexContainer.vue';
 import UiProgressBar from '@/components/UiProgressBar.vue';
+import UiStr from "@/components/UiStr.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -60,5 +61,6 @@ uiComponentsMap.set('Checkbox' , UiCheckbox);
 uiComponentsMap.set('Radiobutton', UiRadioButton);
 uiComponentsMap.set('FlexContainer', UiFlexContainer);
 uiComponentsMap.set('ProgressBar', UiProgressBar);
+uiComponentsMap.set('S',UiStr);
 
 export default uiComponentsMap;

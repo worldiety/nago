@@ -17,7 +17,6 @@ import {v4 as uuidv4} from 'uuid';
 import EventBus from '@/shared/eventbus/eventBus';
 import {EventType} from '@/shared/eventbus/eventType';
 import type {ScopeID} from "@/shared/protocol/ora/scopeID";
-import * as console from "node:console";
 import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
 import {WindowInfoChanged} from "@/shared/protocol/ora/windowInfoChanged";
 
@@ -273,7 +272,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			});
 
 		functions
-			?.filter((propertyFunc: Property<Ptr>) => propertyFunc.p !== 0 && propertyFunc.v !== 0)
+			// we may be undefined, because the ora protocol is now allowed to omit zero property pointer and values due to performance problems
+			?.filter((propertyFunc: Property<Ptr>) => propertyFunc.p != undefined && propertyFunc.p !== 0 && propertyFunc.v != undefined && propertyFunc.v !== 0)
 			.forEach((propertyFunc: Property<Ptr>) => {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',

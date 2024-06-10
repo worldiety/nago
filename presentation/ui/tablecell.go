@@ -14,7 +14,7 @@ type TableCell struct {
 // NewTextCell is a handy shortcut to just put some default text into a cell.
 func NewTextCell(text string) *TableCell {
 	return NewTableCell(func(cell *TableCell) {
-		cell.Body().Set(MakeText(text))
+		cell.Body().Set(NewStr(text))
 	})
 }
 

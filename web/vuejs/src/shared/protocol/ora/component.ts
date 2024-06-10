@@ -14,6 +14,7 @@ import type { Divider } from '@/shared/protocol/ora/divider';
 import type { Dropdown } from '@/shared/protocol/ora/dropdown';
 import type { DropdownItem } from '@/shared/protocol/ora/dropdownItem';
 import type { FileField } from '@/shared/protocol/ora/fileField';
+import type { FlexContainer } from '@/shared/protocol/ora/flexContainer';
 import type { Grid } from '@/shared/protocol/ora/grid';
 import type { GridCell } from '@/shared/protocol/ora/gridCell';
 import type { HBox } from '@/shared/protocol/ora/hBox';
@@ -27,6 +28,7 @@ import type { Scaffold } from '@/shared/protocol/ora/scaffold';
 import type { Slider } from '@/shared/protocol/ora/slider';
 import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 import type { Stepper } from '@/shared/protocol/ora/stepper';
+import type { Str } from '@/shared/protocol/ora/str';
 import type { Table } from '@/shared/protocol/ora/table';
 import type { TableCell } from '@/shared/protocol/ora/tableCell';
 import type { TableRow } from '@/shared/protocol/ora/tableRow';
@@ -71,3 +73,5 @@ export type Component =
 | MenuEntry
 | Grid
 | GridCell
+| FlexContainer
+| Str

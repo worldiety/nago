@@ -14,3 +14,15 @@ type Text struct {
 
 	component
 }
+
+// Str is a much more simple text type, which will never have special formatting options.
+// We introduced this, because our protocol encoding is so bloated by definition, that we must allocate
+// all properties and even send them over wire. In larger tables this creates mind-blowing render trees with
+// dozens of MiB in transfer size. Also, neither is the websocket compression working nor is it effective in practice.
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type Str struct {
+	Type  ComponentType `json:"type" value:"S"`
+	Value string        `json:"v,omitempty"`
+
+	component
+}

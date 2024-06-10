@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import {onUnmounted, ref, watch} from 'vue';
+import {ref, watch} from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import type {TextField} from "@/shared/protocol/ora/textField";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {isNil} from "@/shared/protocol/util";
 
 const props = defineProps<{
 	ui: TextField;
@@ -20,7 +21,7 @@ watch(() => props.ui.value.v, (newValue) => {
 function submitInputValue(): void {
 	debouncedInput()
 
-	if (props.ui.onTextChanged.p == 0) {
+	if (isNil(props.ui.onTextChanged.p)) {
 		return
 	}
 
@@ -43,7 +44,7 @@ function deserializeGoDuration(durationInNanoseconds: number): number {
 let timer: number = 0;
 
 function debouncedInput() {
-	if (props.ui.onDebouncedTextChanged.p == 0) {
+	if (isNil(props.ui.onDebouncedTextChanged.p)) {
 		return;
 	}
 

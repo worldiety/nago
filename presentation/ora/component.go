@@ -17,9 +17,9 @@ func (p Ptr) Nil() bool {
 type Property[T any] struct {
 	// Ptr is short for "Pointer" and references a property instance within the backend.
 	// Because it is so common, the json field name is just p.
-	Ptr Ptr `json:"p"`
+	Ptr Ptr `json:"p"` // TODO the frontend is not prepared for omitempty but we definitely should?
 	// Value contains the actual value specified by the generic type parameter and shortend to v in json.
-	Value T `json:"v"`
+	Value T `json:"v"` // TODO the frontend is not prepared for omitempty but we definitely should?
 }
 
 // ComponentType defines the defined set of components.
@@ -64,6 +64,7 @@ const (
 	RadiobuttonT         ComponentType = "Radiobutton"
 	FlexContainerT       ComponentType = "FlexContainer"
 	ProgressBarT         ComponentType = "ProgressBar"
+	StrT                 ComponentType = "S"
 )
 
 type Component interface {
@@ -110,12 +111,13 @@ func init() {
 		reflect.TypeOf(Checkbox{}),
 		reflect.TypeOf(Radiobutton{}),
 		reflect.TypeOf(FlexContainer{}),
+		reflect.TypeOf(Str{}),
 	}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Button | Page | Scaffold | NavigationComponent | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell
+	Button | Page | Scaffold | NavigationComponent | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer | Str
 }
 
 type component struct {

@@ -177,7 +177,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	toolbar := ui.NewHStack(func(hstack *ui.FlexContainer) {
 		hstack.ContentAlignment().Set(ora.ContentBetween)
 		// left side
-		hstack.Append(ui.MakeText(opts.title))
+		hstack.Append(ui.NewStr(opts.title))
 
 		// right side
 
@@ -429,8 +429,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 								if field.RenderHints[Card] == Title {
 									vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
 										hstack.ContentAlignment().Set(ora.ContentBetween)
-										hstack.Append(ui.MakeText(field.Caption))
-										hstack.Append(ui.MakeText(field.Stringer(e)))
+										hstack.Append(ui.NewStr(field.Caption))
+										hstack.Append(ui.NewStr(field.Stringer(e)))
 									}))
 									vstack.Append(ui.NewDivider(nil))
 									break
@@ -453,7 +453,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 										t.Value().Set(field.Caption)
 										t.Size().Set("lg")
 									}))
-									hstack.Append(ui.MakeText(field.Stringer(e)))
+									hstack.Append(ui.NewStr(field.Stringer(e)))
 								}))
 
 							}
