@@ -58,8 +58,9 @@ func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
 }
 
 func (s *Scope) handleScopeDestructionRequested(evt ora.ScopeDestructionRequested) {
-	s.destroy()
-	s.eventLoop.Destroy() // discards everything else queued
+	//s.destroy()
+	//s.eventLoop.Destroy() // discards everything else queued
+	s.Destroy()
 }
 
 func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequested) {

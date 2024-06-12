@@ -147,10 +147,9 @@ func (l *EventLoop) tickWithoutLock() {
 // Unprocessed messages are discarded.
 // Future Post calls are ignored.
 func (l *EventLoop) Destroy() {
-	if !concurrent.CompareAndSwap(&l.destroyed, false, true) {
+	if l.destroyed.Value() {
 		return
 	}
-
 	/*
 		l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
 
@@ -160,6 +159,10 @@ func (l *EventLoop) Destroy() {
 		l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
 	*/
 	l.Post(func() {
+		if !concurrent.CompareAndSwap(&l.destroyed, false, true) {
+			return
+		}
+
 		l.done <- true
 		close(l.done)
 		close(l.batchChan)
