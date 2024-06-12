@@ -151,12 +151,19 @@ func (l *EventLoop) Destroy() {
 		return
 	}
 
-	l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
+	/*
+		l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
 
-	l.done <- true
-	close(l.done)
-	close(l.batchChan)
-	l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
+		l.done <- true
+		close(l.done)
+		close(l.batchChan)
+		l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
+	*/
+	l.Post(func() {
+		l.done <- true
+		close(l.done)
+		close(l.batchChan)
+	})
 }
 
 /*
