@@ -55,3 +55,9 @@ var MagnifyingGlass ui.SVGSrc
 
 //go:embed bug.svg
 var Bug ui.SVGSrc
+
+//go:embed chevron-down.svg
+var ChevronDown ui.SVGSrc
+
+//go:embed chevron-up.svg
+var ChevronUp ui.SVGSrc
