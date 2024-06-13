@@ -13,6 +13,7 @@ type FlexContainer struct {
 	contentAlignment EmbeddedContentAlignment
 	itemsAlignment   EmbeddedItemsAlignment
 	properties       []core.Property
+	maxWidth         *Shared[ora.ElementSize]
 	visible          Bool
 }
 
@@ -25,9 +26,10 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 		contentAlignment: NewShared[ContentAlignment]("contentAlignment"),
 		itemsAlignment:   NewShared[ItemsAlignment]("itemsAlignment"),
 		visible:          NewShared[bool]("visible"),
+		maxWidth:         NewShared[ora.ElementSize]("maxWidth"),
 	}
 
-	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment, f.itemsAlignment}
+	f.properties = []core.Property{f.elements, f.elementSize, f.orientation, f.contentAlignment, f.itemsAlignment, f.maxWidth}
 
 	// the container is otherwise in an undefined state, so lets define it
 	f.orientation.Set(ora.OrientationHorizontal)
@@ -35,6 +37,7 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 	f.itemsAlignment.Set(ora.ItemsStretch)
 	f.elementSize.Set(ora.ElementSizeAuto)
 	f.visible.Set(true)
+	f.maxWidth.Set(ora.ElementSizeAuto)
 
 	if with != nil {
 		with(f)
@@ -96,6 +99,10 @@ func (f *FlexContainer) Children() *SharedList[core.Component] {
 	return f.elements
 }
 
+func (f *FlexContainer) MaxWidth() *Shared[ora.ElementSize] {
+	return f.maxWidth
+}
+
 // deprecated: this is called Children in other ViewGroups
 func (f *FlexContainer) Elements() *SharedList[core.Component] {
 	return f.elements
@@ -147,5 +154,6 @@ func (f *FlexContainer) Render() ora.Component {
 		ContentAlignment: f.contentAlignment.render(),
 		ItemsAlignment:   f.itemsAlignment.render(),
 		Visible:          f.visible.render(),
+		MaxWidth:         f.maxWidth.render(),
 	}
 }

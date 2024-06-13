@@ -513,6 +513,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	}
 
 	return ui.NewVStack(func(vstack *ui.FlexContainer) {
+		vstack.MaxWidth().Set(ora.ElementSizeMedium)
 		componentBody = vstack
 		renderBody()
 	})

@@ -21,5 +21,6 @@ export interface FlexContainer {
     contentAlignment: Property<ContentAlignment>;
     itemsAlignment: Property<ItemsAlignment>;
     visible: Property<boolean>;
+    maxWidth: Property<ElementSize>;
 }
 

@@ -60,6 +60,12 @@ const dialogClasses = computed((): string => {
 		case ElementSize.SIZE_AUTO:
 			dialogClasses.push('sm:w-auto');
 			break;
+		case ElementSize.SIZE_TINY:
+			dialogClasses.push('sm:w-[10rem]');
+			break;
+		case ElementSize.SIZE_SMALLER:
+			dialogClasses.push('sm:w-[17rem]');
+			break;
 		case ElementSize.SIZE_SMALL:
 			dialogClasses.push('sm:w-[25rem]');
 			break;

@@ -10,5 +10,6 @@ type FlexContainer struct {
 	ContentAlignment Property[ContentAlignment] `json:"contentAlignment"`
 	ItemsAlignment   Property[ItemsAlignment]   `json:"itemsAlignment"`
 	Visible          Property[bool]             `json:"visible"`
+	MaxWidth         Property[ElementSize]      `json:"maxWidth"`
 	component
 }

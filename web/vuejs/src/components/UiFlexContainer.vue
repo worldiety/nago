@@ -67,6 +67,28 @@ const containerClasses = computed((): string => {
 			break;
 	}
 
+	switch(props.ui.maxWidth.v){
+		case ElementSize.SIZE_TINY:
+			containerClasses.push('max-w-32')
+			break;
+		case ElementSize.SIZE_SMALLER:
+			containerClasses.push('max-w-xs')
+			break;
+		case ElementSize.SIZE_SMALL:
+			containerClasses.push('max-w-sm')
+			break;
+		case ElementSize.SIZE_MEDIUM:
+			containerClasses.push('max-w-4xl')
+			break;
+		case ElementSize.SIZE_LARGE:
+			containerClasses.push('max-w-6xl')
+			break;
+		case ElementSize.SIZE_AUTO:
+			// intentionally no limit
+			break;
+		default:
+	}
+
 	return containerClasses.join(' ');
 });
 
@@ -79,6 +101,12 @@ const elementClasses = computed((): string => {
 	switch (props.ui.elementSize.v) {
 		case ElementSize.SIZE_AUTO:
 			elementClasses.push('basis-auto');
+			break;
+		case ElementSize.SIZE_TINY:
+			elementClasses.push('basis-16');
+			break;
+		case ElementSize.SIZE_SMALLER:
+			elementClasses.push('basis-32');
 			break;
 		case ElementSize.SIZE_SMALL:
 			elementClasses.push('basis-64');
