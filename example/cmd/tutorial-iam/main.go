@@ -54,5 +54,9 @@ func main() {
 				vbox.Append(ui.MakeText(fmt.Sprintf("%s:%v", msg, err)))
 			})
 		})
+
+		cfg.OnDestroy(func() {
+			fmt.Println("regular shutdown")
+		})
 	}).Run()
 }

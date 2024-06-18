@@ -13,6 +13,7 @@ import (
 
 type SettingsID string
 
+// deprecated: use crud package
 type Settings struct {
 	ID              SettingsID
 	LastQuery       string
@@ -48,6 +49,7 @@ func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.Compon
 	return a.make(modals, t)
 }
 
+// deprecated: use crud package
 // NewEditAction dispatches a standard action for editing to the given callback.
 func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
@@ -83,6 +85,7 @@ func NewDeleteAction[T any](delFn func(T) error) AggregateAction[T] {
 	}
 }
 
+// deprecated: use crud package
 type Options[T any] struct {
 	InstanceID       SettingsID
 	Settings         data.Repository[Settings, SettingsID]
@@ -92,6 +95,7 @@ type Options[T any] struct {
 	Actions          []core.Component     // Action buttons are used for table specific actions
 }
 
+// deprecated: use crud package
 // NewTable creates a new simple data table view based on a repository.
 func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) core.Component {
 	if opts.PageSize == 0 {

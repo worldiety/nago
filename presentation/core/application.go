@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
 	"path/filepath"
@@ -37,12 +38,14 @@ type Application struct {
 	onSendFiles              func(*Scope, iter.Seq2[File, error]) error
 	onShareStream            func(*Scope, func() (io.Reader, error)) (ora.URI, error)
 	onWindowCreatedObservers []OnWindowCreatedObserver
+	destructors              *concurrent.LinkedList[func()]
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	return &Application{
+		destructors:              concurrent.NewLinkedList[func()](),
 		scopeLifetime:            time.Minute,
 		factories:                factories,
 		scopes:                   NewScopes(),
@@ -129,9 +132,18 @@ func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, it 
 	return scope.OnFilesReceived(receiver, it)
 }
 
+func (a *Application) AddDestructor(f func()) {
+	a.destructors.PushBack(f)
+}
+
 func (a *Application) Destroy() {
 	//a.mutex.Lock() probably unneeded locks
 	//defer a.mutex.Unlock()
+
+	for _, destructor := range a.destructors.Values() {
+		destructor()
+	}
+	a.destructors.Clear()
 
 	a.scopes.Destroy()
 	a.cancelCtx()

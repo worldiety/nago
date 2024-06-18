@@ -62,6 +62,10 @@ func (a *Application) Run() {
 		logger.Error("application error", err)
 	}
 
+	if app := a.cfg.app; app != nil {
+		app.Destroy()
+	}
+
 	logger.Info("successful shutdown")
 
 }

@@ -35,6 +35,8 @@ type Configurator struct {
 	iamSettings              IAMSettings
 	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.Component
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
+	destructors              []func()
+	app                      *core.Application // may be nil
 }
 
 func NewConfigurator() *Configurator {
@@ -82,6 +84,10 @@ func NewConfigurator() *Configurator {
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {
 	c.onWindowCreatedObservers = append(c.onWindowCreatedObservers, observer)
 	return c
+}
+
+func (c *Configurator) OnDestroy(f func()) {
+	c.destructors = append(c.destructors, f)
 }
 
 func (c *Configurator) DataDir() string {

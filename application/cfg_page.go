@@ -81,9 +81,15 @@ func (c *Configurator) newHandler() http.Handler {
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers)
+	c.app = app2
 	app2.SetID(c.applicationID)
 	app2.SetThemes(c.themes)
 	app2.SetVersion(c.applicationVersion)
+
+	// TODO we are in a weired order here
+	for _, destructor := range c.destructors {
+		app2.AddDestructor(destructor)
+	}
 	r := chi.NewRouter()
 	app2.SetOnSendFiles(func(scope *core.Scope, it iter.Seq2[core.File, error]) error {
 		var err error

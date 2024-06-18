@@ -1,3 +1,4 @@
+// deprecated: use crud package
 package xtable
 
 import "log/slog"
@@ -10,6 +11,7 @@ const (
 	Desc
 )
 
+// deprecated: use crud package
 type Binding[T any] struct {
 	Columns []AnyColumn
 }
@@ -24,6 +26,7 @@ func (b *Binding[T]) byCaption(caption string) (AnyColumn, bool) {
 	return AnyColumn{}, false
 }
 
+// deprecated: use crud package
 type Column[Aggregate any] struct {
 	Caption      string
 	Sortable     bool
@@ -31,6 +34,7 @@ type Column[Aggregate any] struct {
 	CompareField func(a, b Aggregate) int
 }
 
+// deprecated: use crud package
 type AnyColumn struct {
 	Caption      string
 	Sortable     bool
@@ -38,6 +42,7 @@ type AnyColumn struct {
 	CompareField func(a, b any) int
 }
 
+// deprecated: use crud package
 // NewBinding create a custom model-column binding configuration.
 // See also [NewModelBinding] and choose what suits best.
 func NewBinding[T any]() *Binding[T] {
