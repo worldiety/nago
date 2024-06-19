@@ -68,6 +68,7 @@ func (r *Radiobutton) renderRadiobutton() ora.Radiobutton {
 		Disabled:  r.disabled.render(),
 		Selected:  r.selected.render(),
 		OnClicked: renderFunc(r.onClicked),
+		Visible:   r.visible.render(),
 	}
 }
 
