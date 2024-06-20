@@ -14,7 +14,7 @@
 
 			<!-- Dialog body -->
 			<!-- TODO @Lukas: overflow-y-auto klappt in der Praxis für normale Dialoge mit Dropdown nicht, da es im overflow scrollt. Bei fullscreen height wäre das aber korrekt?-->
-			<div class="bg-primary-98 darkmode:bg-primary-10 pt-3.5 px-6 pb-6" :class="{'rounded-b-xl': !ui.footer.v}">
+			<div class="bg-primary-98 darkmode:bg-primary-10 pt-3.5 px-6 pb-6 overflow-y-auto" :class="{'rounded-b-xl': !ui.footer.v}">
 				<UiGeneric :ui="ui.body.v" />
 			</div>
 
