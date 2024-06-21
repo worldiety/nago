@@ -10,12 +10,14 @@ import (
 )
 
 type PID string
+type Score int
 type Person struct {
 	ID         PID
 	Firstname  string
 	Lastname   string
 	Friends    []PID // this is like foreign keys, however they become stale and are not automatically updated
 	BestFriend PID   // this the same as above, but the one-to-one case
+	Score      Score
 }
 
 func (p Person) Identity() PID {
@@ -59,6 +61,9 @@ func main() {
 							}))
 							crud.Text(bnd, crud.FromPtr("Nachname", func(model *Person) *string {
 								return &model.Lastname
+							}))
+							crud.Int(bnd, crud.FromPtr("Score", func(model *Person) *Score {
+								return &model.Score
 							}))
 							crud.OneToMany(bnd, persons.Each, func(person Person) string {
 								return person.Firstname

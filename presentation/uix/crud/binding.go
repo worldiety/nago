@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 	"math"
+	"reflect"
 	slices2 "slices"
 	"strconv"
 	"strings"
@@ -281,6 +282,8 @@ func Int[Model any, T Integer](b *Binding[Model], field Field[Model, T]) {
 		}
 	}
 
+	f.CompareField = field.Compare
+
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
 		component := ui.NewNumberField(func(textField *ui.NumberField) {
 			textField.Label().Set(f.Caption)
@@ -412,7 +415,6 @@ type FOption interface {
 }
 
 func FromPtr[Model, Presentation any](caption string, property func(*Model) *Presentation, opts ...FOption) Field[Model, Presentation] {
-
 	f := Field[Model, Presentation]{
 		Caption: caption,
 		Stringer: func(model Model) string {
@@ -429,6 +431,65 @@ func FromPtr[Model, Presentation any](caption string, property func(*Model) *Pre
 	}
 	for _, opt := range opts {
 		opt.apply(&f)
+	}
+
+	// create specialized sorting automatically
+	var zero Presentation
+	v := reflect.ValueOf(zero)
+
+	switch v.Kind() {
+	case reflect.Float32, reflect.Float64:
+		f.Compare = func(a, b Model) int {
+			pa := *property(&a)
+			pb := *property(&b)
+			vA := reflect.ValueOf(pa).Float()
+			vB := reflect.ValueOf(pb).Float()
+			d := vA - vB
+			if d == 0 {
+				return 0
+			}
+
+			if d > 0 {
+				return 1
+			}
+
+			return -1
+		}
+	case reflect.Int64, reflect.Int, reflect.Int16, reflect.Int8:
+		f.Compare = func(a, b Model) int {
+			pa := *property(&a)
+			pb := *property(&b)
+			vA := reflect.ValueOf(pa).Int()
+			vB := reflect.ValueOf(pb).Int()
+			d := vA - vB
+			if d == 0 {
+				return 0
+			}
+
+			if d > 0 {
+				return 1
+			}
+
+			return -1
+		}
+	case reflect.Uint64, reflect.Uint, reflect.Uint16, reflect.Uint8:
+		f.Compare = func(a, b Model) int {
+			pa := *property(&a)
+			pb := *property(&b)
+			vA := reflect.ValueOf(pa).Uint()
+			vB := reflect.ValueOf(pb).Uint()
+			d := vA - vB
+			if d == 0 {
+				return 0
+			}
+
+			if d > 0 {
+				return 1
+			}
+
+			return -1
+		}
+
 	}
 
 	return f

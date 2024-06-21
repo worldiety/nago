@@ -340,15 +340,26 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					}
 
 					field := opts.binding.fields[sortByFieldIdx]
-					slices.SortFunc(collectedRows, func(a, b E) int {
-						strA := field.Stringer(a)
-						strB := field.Stringer(b)
-						dir := 1
-						if !sortAsc {
-							dir = -1
-						}
-						return strings.Compare(strA, strB) * dir
-					})
+					if field.CompareField == nil {
+						slices.SortFunc(collectedRows, func(a, b E) int {
+							strA := field.Stringer(a)
+							strB := field.Stringer(b)
+							dir := 1
+							if !sortAsc {
+								dir = -1
+							}
+							return strings.Compare(strA, strB) * dir
+						})
+					} else {
+						slices.SortFunc(collectedRows, func(a, b E) int {
+							dir := 1
+							if !sortAsc {
+								dir = -1
+							}
+							return field.CompareField(a, b) * dir
+						})
+					}
+
 					filtered = slices2.Values2[[]E, E, error](collectedRows)
 				}
 
