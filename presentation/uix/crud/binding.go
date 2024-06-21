@@ -26,8 +26,26 @@ func NewBinding[T any](with func(bnd *Binding[T])) *Binding[T] {
 	return b
 }
 
-func OneToOne[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, []ForeignKey]) {
-	oneToN[Model, Foreign, ForeignKey](b, 1, foreignKeyIter, stringer, field)
+func OneToOne[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDType](b *Binding[Model], foreignKeyIter iter.Seq2[Foreign, error], stringer func(Foreign) string, field Field[Model, ForeignKey]) {
+	oneToN[Model, Foreign, ForeignKey](b, 1, foreignKeyIter, stringer, Field[Model, []ForeignKey]{
+		Caption:     field.Caption,
+		Compare:     field.Compare,
+		RenderHints: field.RenderHints,
+		IntoModel: func(model Model, value []ForeignKey) (Model, error) {
+			if len(value) > 0 {
+				return field.IntoModel(model, value[0])
+			}
+
+			// this happens, if nothing has been selected at all, e.g. opening the edit dialog and just hit save without selecting anything.
+			// we won't do anything here, because your domain code must be resilient against other foreign key problems anyway
+			return model, nil
+		},
+		FromModel: func(model Model) []ForeignKey {
+			return []ForeignKey{field.FromModel(model)}
+		},
+		Stringer:      field.Stringer,
+		isPtrStringer: field.isPtrStringer,
+	})
 }
 
 // OneToMany converts foreign key (or ID) values into actual values by collecting them from the given iterator.

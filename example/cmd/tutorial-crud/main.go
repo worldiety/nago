@@ -11,10 +11,11 @@ import (
 
 type PID string
 type Person struct {
-	ID        PID
-	Firstname string
-	Lastname  string
-	Friends   []PID // this is like foreign keys, however they become stale and are not automatically updated
+	ID         PID
+	Firstname  string
+	Lastname   string
+	Friends    []PID // this is like foreign keys, however they become stale and are not automatically updated
+	BestFriend PID   // this the same as above, but the one-to-one case
 }
 
 func (p Person) Identity() PID {
@@ -63,6 +64,12 @@ func main() {
 								return person.Firstname
 							}, crud.FromPtr("Freunde", func(model *Person) *[]PID {
 								return &model.Friends
+							}))
+
+							crud.OneToOne(bnd, persons.Each, func(person Person) string {
+								return person.Firstname
+							}, crud.FromPtr("Bester Freund", func(model *Person) *PID {
+								return &model.BestFriend
 							}))
 						})
 
