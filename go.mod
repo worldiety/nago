@@ -17,6 +17,7 @@ require (
 
 require (
 	github.com/bool64/dev v0.2.31 // indirect
+	github.com/clarketm/json v1.17.1 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
 	github.com/wagslane/go-password-validator v0.3.0 // indirect

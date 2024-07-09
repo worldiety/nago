@@ -88,7 +88,7 @@ func (s *Shared[T]) Parse(value string) error {
 		s.v = any(value).(T)
 	case SVGSrc:
 		s.v = any(value).(T)
-	case Color:
+	case ora.NamedColor:
 		s.v = any(value).(T)
 	case bool:
 		b, err := strconv.ParseBool(value)

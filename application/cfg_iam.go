@@ -134,7 +134,7 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 			page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
 				subject := wnd.Subject()
 				scaffold.NavigationComponent().Set(ui.NewNavigationComponent(func(navigationComponent *ui.NavigationComponent) {
-					navigationComponent.Alignment().Set(ora.AlignmentLeft)
+					navigationComponent.Alignment().Set(ora.Leading)
 					navigationComponent.Menu().Append(
 						ui.NewMenuEntry(func(menuEntry *ui.MenuEntry) {
 							menuEntry.Link(settings.Login.ID, wnd, nil)

@@ -2,11 +2,16 @@ package ora
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Text struct {
-	Ptr          Ptr              `json:"id"`
-	Type         ComponentType    `json:"type" value:"Text"`
-	Value        Property[string] `json:"value"`
-	Color        Property[string] `json:"color"` // TODO how to mix color and intent? A customer may want a special color
-	Size         Property[string] `json:"size"`  // TODO what is this size, which unit?
+	Ptr   Ptr              `json:"id"`
+	Type  ComponentType    `json:"type" value:"Text"`
+	Value Property[string] `json:"value"`
+	// Color denotes the text color. Leave empty, for the context sensitiv default theme color.
+	Color NamedColor `json:"color,omitempty"`
+
+	// BackgroundColor denotes the color of the text background.  Leave empty, for the context sensitiv default theme color.
+	BackgroundColor NamedColor `json:"backgroundColor,omitempty"`
+
+	Size         Property[string] `json:"size"` // TODO what is this size, which unit?
 	OnClick      Property[Ptr]    `json:"onClick"`
 	OnHoverStart Property[Ptr]    `json:"onHoverStart"`
 	OnHoverEnd   Property[Ptr]    `json:"onHoverEnd"`

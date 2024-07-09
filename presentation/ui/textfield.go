@@ -21,6 +21,7 @@ type TextField struct {
 	onDebouncedTextChanged *Func
 	debounceTime           *Shared[time.Duration]
 	properties             []core.Property
+	frame                  ora.Frame
 }
 
 func NewTextField(with func(textField *TextField)) *TextField {
@@ -94,6 +95,8 @@ func (l *TextField) Disabled() Bool {
 
 func (l *TextField) Simple() Bool { return l.simple }
 
+func (l *TextField) Frame() *ora.Frame { return &l.frame }
+
 func (l *TextField) Properties(yield func(core.Property) bool) {
 	for _, property := range l.properties {
 		if !yield(property) {
@@ -122,5 +125,6 @@ func (l *TextField) Render() ora.Component {
 		DebounceTime:           l.debounceTime.render(),
 		OnDebouncedTextChanged: renderFunc(l.onDebouncedTextChanged),
 		OnTextChanged:          renderFunc(l.onTextChanged),
+		Frame:                  l.frame,
 	}
 }

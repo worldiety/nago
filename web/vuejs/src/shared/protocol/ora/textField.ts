@@ -4,6 +4,7 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
@@ -28,5 +29,6 @@ export interface TextField {
     onDebouncedTextChanged: Property<Ptr>;
     debounceTime: Property<number /*int64*/>;
     visible: Property<boolean>;
+    frame/*omitempty*/? /*Frame*/: Frame;
 }
 

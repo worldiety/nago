@@ -46,50 +46,6 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 	return f
 }
 
-// NewHStack creates a FlexContainer which layouts its elements in a horizontal row, left-aligned.
-// Elements are centered at the baseline and their size is wrap-content.
-func NewHStack(with func(hstack *FlexContainer)) *FlexContainer {
-	f := NewFlexContainer(nil)
-	f.orientation.Set(ora.OrientationHorizontal)
-	f.contentAlignment.Set(ora.ContentStart) // here: vertical align, center each item on base line
-	f.itemsAlignment.Set(ora.ItemsCenter)    // here: horizontal align: left
-	f.elementSize.Set(ora.ElementSizeAuto)   // auto size each item
-	if with != nil {
-		with(f)
-	}
-	return f
-}
-
-// HStackAlignRight aligns all items within the hstack to the right
-func HStackAlignRight(hstack *FlexContainer) *FlexContainer {
-	hstack.contentAlignment.Set(ora.ContentEnd)
-	return hstack
-}
-
-// HStackAlignCenter aligns all items within the hstack to the right
-func HStackAlignCenter(hstack *FlexContainer) *FlexContainer {
-	hstack.contentAlignment.Set(ora.ContentCenter)
-	return hstack
-}
-
-// VStackAlignCenter aligns all items within the vstack to the middle
-func VStackAlignCenter(hstack *FlexContainer) *FlexContainer {
-	hstack.ItemsAlignment().Set(ora.ItemsCenter)
-	return hstack
-}
-
-func NewVStack(with func(vstack *FlexContainer)) *FlexContainer {
-	f := NewFlexContainer(nil)
-	f.orientation.Set(ora.OrientationVertical)
-	f.contentAlignment.Set(ora.ContentCenter) // here: vertical align, center each item vertically
-	f.itemsAlignment.Set(ora.ItemsStart)      // here: vertical align: top
-	f.elementSize.Set(ora.ElementSizeAuto)    // auto size each item
-	if with != nil {
-		with(f)
-	}
-	return f
-}
-
 func (f *FlexContainer) Append(children ...core.Component) *FlexContainer {
 	f.Elements().Append(children...)
 	return f

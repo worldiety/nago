@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import type { Button } from '@/shared/protocol/ora/button';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {computed} from 'vue';
+import type {Button} from '@/shared/protocol/ora/button';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {createFrameStyles} from "@/components/shared/frame";
+import {NamedColor, namedColorClasses} from "@/components/shared/namedcolors";
 
 const props = defineProps<{
 	ui: Button;
@@ -13,28 +15,40 @@ function onClick() {
 	serviceAdapter.executeFunctions(props.ui.action);
 }
 
+const buttonStyles = computed<string>(() => {
+	return createFrameStyles(props.ui.frame)
+});
+
 const buttonClasses = computed<string>(() => {
 	const classes: string[] = [];
 	switch (props.ui.color.v) {
-		case 'primary':
+		case NamedColor.Primary:
 			classes.push('button-primary');
 			break;
-		case 'secondary':
+		case NamedColor.Secondary:
 			classes.push('button-secondary');
 			break;
-		case 'tertiary':
+		case NamedColor.Tertiary:
 			classes.push('button-tertiary');
 			break;
 		case 'destructive':
 			classes.push('button-destructive');
 			break;
 		default:
-			classes.push('button-default');
+			let v = namedColorClasses(props.ui.color.v)
+			if (v === "" || v == "regular") {
+				classes.push('button-default');
+			} else {
+				classes.push(v)
+			}
+
 	}
 	if (iconOnly.value) {
 		// Make button round when it shows an icon only
 		classes.push('!p-0 !w-10');
 	}
+
+
 	return classes.join(' ');
 });
 
@@ -44,7 +58,8 @@ const iconOnly = computed<boolean>(() => {
 </script>
 
 <template>
-	<button v-if="ui.visible.v" :class="buttonClasses" :disabled="props.ui.disabled.v" @click="onClick">
+	<button v-if="ui.visible.v" :class="buttonClasses" :disabled="props.ui.disabled.v" @click="onClick"
+					:style="buttonStyles">
 		<svg v-if="iconOnly" v-inline class="h-4 w-4" v-html="props.ui.preIcon.v"></svg>
 		<template v-else>
 			<svg v-if="props.ui.preIcon.v" class="mr-2 h-4 w-4" v-html="props.ui.preIcon.v"></svg>

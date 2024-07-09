@@ -1,6 +1,6 @@
 package ora
 
-import "encoding/json"
+import "github.com/clarketm/json"
 
 // An EventsAggregated forms an envelope message which contains a bunch of the actual events, which shall be applied within a single event processing step at the receivers side in exactly the given order.
 // A receiver must ensure the sequential processing of the contained messages and must not apply them in different order, partially or in parallel. Nested transactions are invalid.

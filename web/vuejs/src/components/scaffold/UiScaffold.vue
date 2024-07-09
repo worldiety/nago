@@ -15,9 +15,10 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import type { Scaffold } from "@/shared/protocol/ora/scaffold";
 import Sidebar from '@/components/scaffold/Sidebar.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
-import { Alignment } from '@/shared/protocol/ora/alignment';
+
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import BurgerMenu from '@/components/scaffold/burgermenu/BurgerMenu.vue';
+import {Alignment} from "@/components/shared/alignments";
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -34,11 +35,11 @@ onUnmounted(() => {
 });
 
 const navigationBarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.TOP;
+	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.Top;
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.LEFT;
+	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.Leading;
 });
 
 const burgerMenuVisible = computed((): boolean => {

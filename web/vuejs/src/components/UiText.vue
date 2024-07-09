@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import {textColor2Tailwind, textSize2Tailwind} from '@/shared/tailwindTranslator';
 import {computed} from 'vue';
 import type {Text} from "@/shared/protocol/ora/text";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
+import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 
 const props = defineProps<{
 	ui: Text;
@@ -12,18 +12,21 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 
 const clazz = computed<string>(() => {
-	let tmp = '';
-	if (props.ui.color.v) {
-		tmp += textColor2Tailwind(props.ui.color.v);
-	} else {
-		tmp += 'text-black';
+	let classes = namedColorClasses(props.ui.color)
+
+	if (props.ui.backgroundColor != undefined && props.ui.backgroundColor !== "") {
+		classes += namedColorClasses(props.ui.backgroundColor)
 	}
 
-	if (props.ui.size.v) {
-		tmp += ' ' + textSize2Tailwind(props.ui.size.v);
-	}
+	return classes
 
-	return tmp;
+});
+
+const styles = computed<string>(() => {
+	let s = namedColorStyles("color",props.ui.color)
+	let c = namedColorStyles("background-color",props.ui.backgroundColor)
+
+	return [s,c].join(";")
 });
 
 function onClick() {
@@ -46,7 +49,8 @@ function onMouseLeave() {
 </script>
 
 <template>
-	<span v-if="ui.visible.v" :class="clazz" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">{{
+	<span v-if="ui.visible.v" :style="styles" :class="clazz" @click="onClick" @mouseenter="onMouseEnter"
+				@mouseleave="onMouseLeave">{{
 			props.ui.value.v
 		}}</span>
 </template>

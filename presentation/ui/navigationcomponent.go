@@ -23,7 +23,7 @@ func NewNavigationComponent(with func(navigationComponent *NavigationComponent))
 
 	n.properties = []core.Property{n.logo, n.menu, n.alignment}
 
-	n.Alignment().Set(ora.AlignmentLeft) // default alignment is left
+	n.Alignment().Set(ora.Leading) // default alignment is left
 	if with != nil {
 		with(n)
 	}

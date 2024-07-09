@@ -297,6 +297,17 @@ func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]or
 	return res
 }
 
+func renderSharedListComponentsFlat(s *SharedList[core.Component]) []ora.Component {
+	var res []ora.Component
+
+	s.Iter(func(value core.Component) bool {
+		res = append(res, value.Render())
+		return true
+	})
+
+	return res
+}
+
 func renderSharedComponent(s *Shared[core.Component]) ora.Property[ora.Component] {
 	res := ora.Property[ora.Component]{
 		Ptr: s.id,

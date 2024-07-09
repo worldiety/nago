@@ -4,7 +4,8 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Intent } from '@/shared/protocol/ora/intent';
+import type { Frame } from '@/shared/protocol/ora/frame';
+import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
@@ -18,9 +19,14 @@ export interface Button {
     caption: Property<string>;
     preIcon: Property<SVG>;
     postIcon: Property<SVG>;
-    color: Property<Intent>;
+    color: Property<NamedColor>;
     disabled: Property<boolean>;
     action: Property<Ptr>;
     visible: Property<boolean>;
+
+    /**
+     * Frame is omitted, if empty
+     */
+    frame/*omitempty*/? /*Frame*/: Frame;
 }
 

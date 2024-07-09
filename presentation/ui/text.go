@@ -6,15 +6,16 @@ import (
 )
 
 type Text struct {
-	id           ora.Ptr
-	value        String
-	color        *Shared[Color]
-	size         *Shared[Size]
-	visible      Bool
-	properties   []core.Property
-	onClick      *Func
-	onHoverStart *Func
-	onHoverEnd   *Func
+	id              ora.Ptr
+	value           String
+	color           ora.NamedColor
+	backgroundColor ora.NamedColor
+	size            *Shared[Size]
+	visible         Bool
+	properties      []core.Property
+	onClick         *Func
+	onHoverStart    *Func
+	onHoverEnd      *Func
 }
 
 func NewText(with func(*Text)) *Text {
@@ -27,9 +28,8 @@ func NewText(with func(*Text)) *Text {
 	c.onHoverStart = NewFunc("onHoverStart")
 	c.onHoverEnd = NewFunc("onHoverEnd")
 	c.size = NewShared[Size]("size")
-	c.color = NewShared[Color]("color")
 	c.visible = NewShared[bool]("visible")
-	c.properties = []core.Property{c.value, c.color, c.size, c.onClick, c.onHoverStart, c.onHoverEnd, c.visible}
+	c.properties = []core.Property{c.value, c.size, c.onClick, c.onHoverStart, c.onHoverEnd, c.visible}
 	c.visible.Set(true)
 	if with != nil {
 		with(c)
@@ -49,8 +49,20 @@ func (c *Text) Value() String {
 	return c.value
 }
 
-func (c *Text) Color() *Shared[Color] {
+func (c *Text) Color() ora.NamedColor {
 	return c.color
+}
+
+func (c *Text) SetColor(color ora.NamedColor) {
+	c.color = color
+}
+
+func (c *Text) BackgroundColor() ora.NamedColor {
+	return c.backgroundColor
+}
+
+func (c *Text) SetBackgroundColor(backgroundColor ora.NamedColor) {
+	c.backgroundColor = backgroundColor
 }
 
 func (c *Text) Size() *Shared[Size] {
@@ -87,13 +99,11 @@ func (c *Text) Visible() Bool {
 
 func (c *Text) Render() ora.Component {
 	return ora.Text{
-		Ptr:   c.id,
-		Type:  ora.TextT,
-		Value: c.value.render(),
-		Color: ora.Property[string]{
-			Ptr:   c.color.id,
-			Value: string(c.color.v),
-		},
+		Ptr:             c.id,
+		Type:            ora.TextT,
+		Value:           c.value.render(),
+		Color:           c.color,
+		BackgroundColor: c.backgroundColor,
 		Size: ora.Property[string]{
 			Ptr:   c.size.id,
 			Value: string(c.size.v),

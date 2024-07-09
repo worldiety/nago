@@ -1,8 +1,8 @@
 package ora
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/clarketm/json"
 	"reflect"
 )
 

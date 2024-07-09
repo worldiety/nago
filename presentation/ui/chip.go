@@ -12,7 +12,7 @@ type Chip struct {
 	action     *Func
 	onClose    *Func
 	visible    Bool
-	color      *Shared[Color]
+	color      *Shared[ora.NamedColor]
 	properties []core.Property
 }
 
@@ -23,7 +23,7 @@ func NewChip(with func(chip *Chip)) *Chip {
 		action:  NewFunc("action"),
 		onClose: NewFunc("onClose"),
 		visible: NewShared[bool]("visible"),
-		color:   NewShared[Color]("color"),
+		color:   NewShared[ora.NamedColor]("color"),
 	}
 
 	c.properties = []core.Property{c.caption, c.action, c.onClose, c.color, c.visible}
@@ -56,7 +56,7 @@ func (c *Chip) Visible() Bool {
 }
 
 // TODO TBD: red, green, yellow
-func (c *Chip) Color() *Shared[Color] {
+func (c *Chip) Color() *Shared[ora.NamedColor] {
 	return c.color
 }
 

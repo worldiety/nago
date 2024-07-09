@@ -15,8 +15,8 @@ import (
 // Footer returns a default formatted footer line, using the correct alignment rules.
 // Use this for your custom dialogs.
 func Footer(buttons ...*ui.Button) core.Component {
-	return ui.NewHStack(func(hstack *ui.FlexContainer) {
-		ui.HStackAlignRight(hstack)
+	return ui.NewHStack(func(hstack *ui.HStack) {
+		hstack.SetAlignment(ora.Leading)
 		for _, b := range buttons {
 			hstack.Append(b)
 		}
@@ -65,12 +65,9 @@ func RequestSupportView(wnd core.Window, err error) core.Component {
 	code := hex.EncodeToString(tmp[:])
 	slog.Error("captured unexpected failure in presentation code", slog.Any("err", err), slog.String("code", code))
 
-	return ui.NewVStack(func(vstack *ui.FlexContainer) {
-		ui.VStackAlignCenter(vstack)
-		vstack.ContentAlignment().Set(ora.ContentCenter)
+	return ui.NewVStack(func(vstack *ui.VStack) {
 		vstack.Append(
-			ui.NewHStack(func(hstack *ui.FlexContainer) {
-				ui.HStackAlignCenter(hstack)
+			ui.NewHStack(func(hstack *ui.HStack) {
 				hstack.Append(ui.NewImage(func(img *ui.Image) {
 					img.SetDataURI([]byte(icon.Bug))
 				}))
@@ -137,7 +134,7 @@ func HandleError(ctx ui.ModalOwner, msg string, err error) bool {
 	code := hex.EncodeToString(tmp[:])
 	slog.Error("captured failure on frontend", slog.Any("err", err), slog.String("code", code), slog.String("msg", msg))
 	ctx.Modals().Append(ui.NewDialog(func(dlg *ui.Dialog) {
-		dlg.Body().Set(ui.NewVStack(func(vstack *ui.FlexContainer) {
+		dlg.Body().Set(ui.NewVStack(func(vstack *ui.VStack) {
 			vstack.Append(
 				ui.MakeText(msg),
 				ui.MakeText("Die Fehlerkennung für den Support lautet: "+code),

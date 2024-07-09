@@ -1,4 +1,5 @@
 import plugin from "tailwindcss/plugin";
+import {NamedColor} from "./src/components/shared/namedcolors.js";
 
 export default {
 	content: [
@@ -28,8 +29,8 @@ export default {
 						'background': '#E2E2E2',
 					},
 					'placeholder-text': '#848484',
-					'error': '#FF543E',
-					'success': '#54FF3E',
+//					'error': '#FF543E',
+//					'success': '#54FF3E',
 					'darkmode-gray': '#374151',
 					'ora-dropdown-background': '#2B2B2B',
 				};
@@ -40,6 +41,14 @@ export default {
 				customColors['primary'] = `hsl(var(--primary) / <alpha-value>)`;
 				customColors['secondary'] = `hsl(var(--secondary) / <alpha-value>)`;
 				customColors['tertiary'] = `hsl(var(--tertiary) / <alpha-value>)`;
+
+				// TODO these are not themed, and not ready for light-dark mode, fix me
+				customColors["error"] = `red`;
+				customColors["warning"] = `yellow`;
+				customColors["regular"] = `black`;
+				customColors["informative"] = `blue`;
+				customColors["positive"] = `green`;
+
 				return customColors;
 			},
 			boxShadow: {

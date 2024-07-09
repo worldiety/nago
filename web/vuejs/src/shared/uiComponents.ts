@@ -19,7 +19,7 @@ import UiVBox from '@/components/UiVBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiSlider from '@/components/UiSlider.vue';
 import UiNumberField from '@/components/UiNumberField.vue';
-import type { Component } from 'vue';
+import type {Component} from 'vue';
 import UiWebView from "@/components/UiWebView.vue";
 import UiPage from "@/components/UiPage.vue";
 import UiPasswordField from '@/components/UiPasswordField.vue';
@@ -29,6 +29,8 @@ import UiRadioButton from "@/components/UiRadioButton.vue";
 import UiFlexContainer from '@/components/UiFlexContainer.vue';
 import UiProgressBar from '@/components/UiProgressBar.vue';
 import UiStr from "@/components/UiStr.vue";
+import UiHStack from "@/components/hstack/UiHStack.vue";
+import UiVStack from "@/components/vstack/UiVStack.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -54,13 +56,15 @@ uiComponentsMap.set('DatePicker', UiDatepicker);
 uiComponentsMap.set('Slider', UiSlider);
 uiComponentsMap.set('NumberField', UiNumberField);
 uiComponentsMap.set('WebView', UiWebView);
-uiComponentsMap.set('Page',UiPage);
-uiComponentsMap.set('PasswordField',UiPasswordField);
+uiComponentsMap.set('Page', UiPage);
+uiComponentsMap.set('PasswordField', UiPasswordField);
 uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
-uiComponentsMap.set('Checkbox' , UiCheckbox);
+uiComponentsMap.set('Checkbox', UiCheckbox);
 uiComponentsMap.set('Radiobutton', UiRadioButton);
 uiComponentsMap.set('FlexContainer', UiFlexContainer);
 uiComponentsMap.set('ProgressBar', UiProgressBar);
-uiComponentsMap.set('S',UiStr);
+uiComponentsMap.set('S', UiStr);
+uiComponentsMap.set('hs', UiHStack)
+uiComponentsMap.set('vs', UiVStack)
 
 export default uiComponentsMap;

@@ -12,14 +12,14 @@ func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Com
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 		flexContainer.ElementSize().Set(ora.ElementSizeLarge)
 		flexContainer.Children().Append(
-			ui.NewVStack(func(vbox *ui.FlexContainer) {
+			ui.NewVStack(func(vbox *ui.VStack) {
 				var mailLogin *ui.TextField
 				var pwdLogin *ui.PasswordField
 				var errMsg *ui.Text
 				vbox.Append(
 					ui.NewText(func(text *ui.Text) {
 						errMsg = text
-						text.Color().Set("red")
+						text.SetColor(ora.Error)
 					}),
 					ui.NewTextField(func(tf *ui.TextField) {
 						mailLogin = tf

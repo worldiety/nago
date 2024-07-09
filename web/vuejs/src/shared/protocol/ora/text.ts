@@ -4,6 +4,7 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
@@ -11,7 +12,16 @@ export interface Text {
     id /*Ptr*/: Ptr;
     type: 'Text'/*ComponentType*/;
     value: Property<string>;
-    color: Property<string>;
+
+    /**
+     * Color denotes the text color. Leave empty, for the context sensitiv default theme color.
+     */
+    color/*omitempty*/? /*Color*/: NamedColor;
+
+    /**
+     * BackgroundColor denotes the color of the text background.  Leave empty, for the context sensitiv default theme color.
+     */
+    backgroundColor/*omitempty*/? /*BackgroundColor*/: NamedColor;
     size: Property<string>;
     onClick: Property<Ptr>;
     onHoverStart: Property<Ptr>;

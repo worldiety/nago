@@ -21,5 +21,6 @@ type TextField struct {
 	OnDebouncedTextChanged Property[Ptr]           `json:"onDebouncedTextChanged"`
 	DebounceTime           Property[time.Duration] `json:"debounceTime"`
 	Visible                Property[bool]          `json:"visible"`
+	Frame                  Frame                   `json:"frame,omitempty"`
 	component
 }

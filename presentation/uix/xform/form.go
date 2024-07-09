@@ -20,8 +20,8 @@ var UserMustCorrectInput = fmt.Errorf("UserMustCorrectInput")
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-	~float32 | ~float64
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
 }
 
 type MapF[From, To any] func(From) To
@@ -62,7 +62,7 @@ func NewBinding() *Binding {
 			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.Append(
 				ui.NewButton(func(btn *ui.Button) {
-					btn.Style().Set(ui.Destructive)
+					btn.Style().Set(ora.Primary)
 					btn.PreIcon().Set(icon.ExclamationTriangle)
 				}),
 
@@ -417,7 +417,7 @@ nextElem:
 		}
 	}
 
-	return ui.NewVStack(func(vbox *ui.FlexContainer) {
+	return ui.NewVStack(func(vbox *ui.VStack) {
 
 		for i, g := range groups {
 			if len(g.elems) == 0 {

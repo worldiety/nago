@@ -23,7 +23,7 @@ func InputBoxText[T ~string](owner ui.ModalOwner, options InputBoxOptions[T]) {
 		var input *ui.TextField
 		dlg.Title().Set(options.Title)
 		dlg.Size().Set(ora.ElementSizeMedium)
-		dlg.Body().Set(ui.NewVStack(func(vstack *ui.FlexContainer) {
+		dlg.Body().Set(ui.NewVStack(func(vstack *ui.VStack) {
 			vstack.Append(
 				ui.MakeText(options.Prompt),
 				ui.NewTextField(func(textField *ui.TextField) {
@@ -69,7 +69,7 @@ func InputBoxInt[T Number](owner ui.ModalOwner, options InputBoxOptions[T]) {
 		var input *ui.NumberField
 		dlg.Title().Set(options.Title)
 		dlg.Size().Set(ora.ElementSizeMedium)
-		dlg.Body().Set(ui.NewVStack(func(vstack *ui.FlexContainer) {
+		dlg.Body().Set(ui.NewVStack(func(vstack *ui.VStack) {
 			vstack.Append(
 				ui.MakeText(options.Prompt),
 				ui.NewNumberField(func(textField *ui.NumberField) {

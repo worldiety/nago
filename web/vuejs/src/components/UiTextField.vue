@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import {ref, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import type {TextField} from "@/shared/protocol/ora/textField";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
+import {createFrameStyles} from "@/components/shared/frame";
 
 const props = defineProps<{
 	ui: TextField;
@@ -62,10 +63,14 @@ function debouncedInput() {
 	}, deserializeGoDuration(props.ui.debounceTime.v))
 }
 
+const frameStyles = computed<string>(() => {
+	return createFrameStyles(props.ui.frame)
+});
+
 </script>
 
 <template>
-	<div v-if="ui.visible.v">
+	<div v-if="ui.visible.v" :style="frameStyles">
 		<InputWrapper
 			:simple="props.ui.simple.v"
 			:label="props.ui.label.v"

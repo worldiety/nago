@@ -378,7 +378,7 @@ type Form[Model any] struct {
 
 func (b *Binding[T]) NewForm(variant RenderVariant) Form[T] {
 	var fields []formElement[T]
-	root := ui.NewVStack(func(hstack *ui.FlexContainer) {
+	root := ui.NewVStack(func(hstack *ui.VStack) {
 		for _, field := range b.fields {
 			hint := field.RenderHints[variant]
 			allocField := field.FormFactory(hint)

@@ -11,14 +11,14 @@ import (
 func Logout(wnd core.Window, service *iam.Service) core.Component {
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 		flexContainer.Children().Append(
-			ui.NewVStack(func(vstack *ui.FlexContainer) {
+			ui.NewVStack(func(vstack *ui.VStack) {
 				if wnd.Subject().Valid() {
 					//vstack.ItemsAlignment().Set(ora.ItemsCenter)
-					ui.VStackAlignCenter(vstack)
+					//ui.VStackAlignCenter(vstack)
 					vstack.Append(
 						ui.MakeText(fmt.Sprintf("Sie sind derzeit als %s angemeldet.", wnd.Subject().Name())),
 						ui.NewButton(func(btn *ui.Button) {
-							btn.Style().Set(ora.Destructive)
+							btn.Style().Set(ora.Primary)
 							btn.Caption().Set("Jetzt abmelden")
 							btn.Action().Set(func() {
 								service.Logout(wnd.SessionID())

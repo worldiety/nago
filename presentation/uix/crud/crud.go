@@ -82,7 +82,7 @@ func (o *Options[E]) Delete(f func(E) error) *Options[E] {
 			}, nil)
 			return nil
 		},
-		Style: ora.Destructive,
+		Style: ora.Primary,
 	})
 
 	return o
@@ -114,8 +114,8 @@ func (o *Options[E]) Update(f func(E) error) *Options[E] {
 					field.FromModel(e)
 				}
 
-				dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
-					ui.HStackAlignRight(hstack)
+				dlg.Footer().Set(ui.NewHStack(func(hstack *ui.HStack) {
+					hstack.SetAlignment(ora.Leading)
 					hstack.Append(ui.NewButton(func(btn *ui.Button) {
 						btn.Caption().Set("Abbrechen")
 						btn.Style().Set(ora.Secondary)
@@ -161,7 +161,7 @@ type AggregateAction[T any] struct {
 	Icon    ui.SVGSrc
 	Caption string
 	Action  func(ui.ModalOwner, T) error
-	Style   ora.Intent
+	Style   ora.NamedColor
 }
 
 func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
@@ -174,17 +174,17 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	}
 
 	var searchField *ui.TextField
-	toolbar := ui.NewHStack(func(hstack *ui.FlexContainer) {
-		hstack.ContentAlignment().Set(ora.ContentBetween)
+	toolbar := ui.NewHStack(func(hstack *ui.HStack) {
+		hstack.SetAlignment(ora.Trailing) // TODO this should be content between
 		// left side
 		hstack.Append(ui.NewStr(opts.title))
 
 		// right side
 
-		hstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
+		hstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
 			canSearch := opts.findAll != nil
 			if canSearch {
-				hstack.ItemsAlignment().Set(ora.ItemsEnd)
+				hstack.SetAlignment(ora.Trailing)
 				hstack.Append(ui.NewButton(func(btn *ui.Button) {
 					btn.PreIcon().Set(icon.MagnifyingGlass)
 					btn.Style().Set(ora.Tertiary)
@@ -213,8 +213,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 							dlg.Size().Set(ora.ElementSizeMedium)
 							form := opts.binding.NewForm(Create)
 							dlg.Body().Set(form.Component)
-							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
-								ui.HStackAlignRight(hstack)
+							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.HStack) {
+								hstack.SetAlignment(ora.Trailing)
 								hstack.Append(ui.NewButton(func(btn *ui.Button) {
 									btn.Caption().Set("Abbrechen")
 									btn.Style().Set(ora.Secondary)
@@ -379,8 +379,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 
 						if len(opts.aggregateActions) > 0 {
 							row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-								cell.Body().Set(ui.NewHStack(func(hstack *ui.FlexContainer) {
-									ui.HStackAlignRight(hstack)
+								cell.Body().Set(ui.NewHStack(func(hstack *ui.HStack) {
+									hstack.SetAlignment(ora.Trailing)
 									for _, action := range opts.aggregateActions {
 										hstack.Append(newAggregateActionButton(owner, action, e))
 									}
@@ -400,8 +400,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	setupListDataAsCards := func() {
 		componentBody.Children().Clear()
 		componentBody.Children().Append(toolbar)
-		componentBody.Children().Append(ui.NewVStack(func(vstack *ui.FlexContainer) {
-			vstack.ElementSize().Set(ora.ElementSizeLarge)
+		componentBody.Children().Append(ui.NewVStack(func(vstack *ui.VStack) {
+			//vstack.ElementSize().Set(ora.ElementSizeLarge) // TODO what do we make with the element size large thingy here?
 			vstack.Children().From(func(yield func(core.Component) bool) {
 				findAll := opts.findAll
 				if findAll == nil {
@@ -435,11 +435,11 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					}
 
 					return yield(ui.NewCard(func(card *ui.Card) {
-						card.Append(ui.NewVStack(func(vstack *ui.FlexContainer) {
+						card.Append(ui.NewVStack(func(vstack *ui.VStack) {
 							for _, field := range opts.binding.fields {
 								if field.RenderHints[Card] == Title {
-									vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
-										hstack.ContentAlignment().Set(ora.ContentBetween)
+									vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+										hstack.SetAlignment(ora.Trailing) // TODO this should be in-between
 										hstack.Append(ui.NewStr(field.Caption))
 										hstack.Append(ui.NewStr(field.Stringer(e)))
 									}))
@@ -458,8 +458,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 									continue
 								}
 
-								vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
-									hstack.ContentAlignment().Set(ora.ContentBetween)
+								vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+									hstack.SetAlignment(ora.Trailing) // TODO this should be inbetween
 									hstack.Append(ui.NewText(func(t *ui.Text) {
 										t.Value().Set(field.Caption)
 										t.Size().Set("lg")
@@ -470,8 +470,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 							}
 
 							if len(opts.aggregateActions) > 0 {
-								vstack.Append(ui.NewHStack(func(hstack *ui.FlexContainer) {
-									ui.HStackAlignRight(hstack)
+								vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+									hstack.SetAlignment(ora.Trailing)
 									for _, action := range opts.aggregateActions {
 
 										hstack.Append(newAggregateActionButton(owner, action, e))
@@ -523,7 +523,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 		})
 	}
 
-	return ui.NewVStack(func(vstack *ui.FlexContainer) {
+	return ui.NewVStack(func(vstack *ui.VStack) {
 		componentBody = vstack
 		renderBody()
 	})

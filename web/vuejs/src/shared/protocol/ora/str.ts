@@ -13,6 +13,6 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
  */
 export interface Str {
     type: 'S'/*ComponentType*/;
-    v,omitempty /*Value*/: string;
+    v/*omitempty*/? /*Value*/: string;
 }
 
