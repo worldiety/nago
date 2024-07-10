@@ -5,6 +5,8 @@ import {HStack} from "@/shared/protocol/ora/hStack";
 import {createFrameStyles} from "@/components/shared/frame";
 import {Alignment} from "@/components/shared/alignments";
 import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
+import {cssLengthValue} from "@/components/shared/length";
+import {createPaddingStyles} from "@/components/shared/padding";
 
 const props = defineProps<{
 	ui: HStack;
@@ -12,15 +14,20 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = createFrameStyles(props.ui.frame)
-	let c = namedColorStyles("background-color", props.ui.backgroundColor)
+	let s = createFrameStyles(props.ui.f)
+	let c = namedColorStyles("background-color", props.ui.bgc)
 
-	return [s,c].join(";")
+	let gap = ""
+	if (props.ui.g) {
+		gap = `column-gap:${cssLengthValue(props.ui.g)}`
+	}
+
+	return [s, c, gap, createPaddingStyles(props.ui.p)].join(";")
 });
 
 const clazz = computed<string>(() => {
 	let classes = "inline-flex ";
-	switch (props.ui.alignment) {
+	switch (props.ui.a) {
 		case Alignment.Leading:
 			classes += " justify-start items-center "
 			break
@@ -55,8 +62,8 @@ const clazz = computed<string>(() => {
 	}
 
 
-	if (props.ui.backgroundColor != undefined && props.ui.backgroundColor !== "") {
-		classes += namedColorClasses(props.ui.backgroundColor)
+	if (props.ui.bgc != undefined && props.ui.bgc !== "") {
+		classes += namedColorClasses(props.ui.bgc)
 	}
 
 
@@ -65,7 +72,7 @@ const clazz = computed<string>(() => {
 </script>
 
 <template v-if="props.ui.children">
-	<div :class="clazz" :style="frameStyles" >
-		<ui-generic  v-for="ui in props.ui.children" :ui="ui"/>
+	<div :class="clazz" :style="frameStyles">
+		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 </template>

@@ -16,6 +16,8 @@ type Text struct {
 	onClick         *Func
 	onHoverStart    *Func
 	onHoverEnd      *Func
+	Padding         ora.Padding
+	Frame           ora.Frame
 }
 
 func NewText(with func(*Text)) *Text {
@@ -112,5 +114,7 @@ func (c *Text) Render() ora.Component {
 		OnHoverStart: renderFunc(c.onHoverStart),
 		OnHoverEnd:   renderFunc(c.onHoverEnd),
 		Visible:      c.visible.render(),
+		Padding:      c.Padding,
+		Frame:        c.Frame,
 	}
 }

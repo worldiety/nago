@@ -9,7 +9,7 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { NamedColor } from '@/shared/protocol/ora/namedColor';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { Padding } from '@/shared/protocol/ora/padding';
 
 /**
  * An HStack aligns children elements in a horizontal row.
@@ -19,28 +19,28 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * - the inner gap between components should be around 2dp
  */
 export interface HStack {
-    id /*Ptr*/: Ptr;
     type: 'hs'/*ComponentType*/;
-    children/*omitempty*/? /*Children*/: Component[];
+    c/*omitempty*/? /*Children*/: Component[];
 
     /**
      * InnerGap is omitted, if empty
      */
-    innerGap/*omitempty*/? /*InnerGap*/: Length;
+    g/*omitempty*/? /*Gap*/: Length;
 
     /**
      * Frame is omitted if empty
      */
-    frame/*omitempty*/? /*Frame*/: Frame;
+    f/*omitempty*/? /*Frame*/: Frame;
 
     /**
      * Alignment may be empty and omitted. Then Center (=c) must be applied.
      */
-    alignment/*omitempty*/? /*Alignment*/: Alignment;
+    a/*omitempty*/? /*Alignment*/: Alignment;
 
     /**
      * BackgroundColor regular is always transparent
      */
-    backgroundColor/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    bgc/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    p/*omitempty*/? /*Padding*/: Padding;
 }
 

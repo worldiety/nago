@@ -3,6 +3,7 @@
  */
 
 
+import type { Box } from '@/shared/protocol/ora/box';
 import type { BreadcrumbItem } from '@/shared/protocol/ora/breadcrumbItem';
 import type { Breadcrumbs } from '@/shared/protocol/ora/breadcrumbs';
 import type { Button } from '@/shared/protocol/ora/button';
@@ -17,7 +18,6 @@ import type { FileField } from '@/shared/protocol/ora/fileField';
 import type { FlexContainer } from '@/shared/protocol/ora/flexContainer';
 import type { Grid } from '@/shared/protocol/ora/grid';
 import type { GridCell } from '@/shared/protocol/ora/gridCell';
-import type { HBox } from '@/shared/protocol/ora/hBox';
 import type { HStack } from '@/shared/protocol/ora/hStack';
 import type { Image } from '@/shared/protocol/ora/image';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
@@ -37,19 +37,17 @@ import type { Text } from '@/shared/protocol/ora/text';
 import type { TextArea } from '@/shared/protocol/ora/textArea';
 import type { TextField } from '@/shared/protocol/ora/textField';
 import type { Toggle } from '@/shared/protocol/ora/toggle';
-import type { VBox } from '@/shared/protocol/ora/vBox';
 import type { VStack } from '@/shared/protocol/ora/vStack';
 import type { WebView } from '@/shared/protocol/ora/webView';
 
 export type Component = 
+| Box
 | VStack
 | HStack
 | Button
 | Page
 | Scaffold
 | NavigationComponent
-| VBox
-| HBox
 | TextField
 | PasswordField
 | Table

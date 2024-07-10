@@ -4,6 +4,9 @@ import type {Text} from "@/shared/protocol/ora/text";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
 import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
+import {createFrameStyles} from "@/components/shared/frame";
+import {cssLengthValue} from "@/components/shared/length";
+import {createPaddingStyles} from "@/components/shared/padding";
 
 const props = defineProps<{
 	ui: Text;
@@ -23,11 +26,15 @@ const clazz = computed<string>(() => {
 });
 
 const styles = computed<string>(() => {
+	let f = createFrameStyles(props.ui.f)
 	let s = namedColorStyles("color",props.ui.color)
 	let c = namedColorStyles("background-color",props.ui.backgroundColor)
 
-	return [s,c].join(";")
+	return [f,s,c,createPaddingStyles(props.ui.p)].join(";")
 });
+
+
+
 
 function onClick() {
 	if (!isNil(props.ui.onClick.v)) {

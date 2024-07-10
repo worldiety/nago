@@ -1,29 +1,30 @@
 import {Frame} from "@/shared/protocol/ora/frame";
+import {cssLengthValue} from "@/components/shared/length";
 
-export function createFrameStyles(frame?: Frame):string {
+export function createFrameStyles(frame?: Frame): string {
 	const styles: string[] = [];
-	if (frame?.width) {
-		styles.push("width:"+frame.width.replaceAll("dp", "px"))
+	if (frame?.w) {
+		styles.push("width:" + cssLengthValue(frame.w))
 	}
 
-	if (frame?.minWidth) {
-		styles.push("min-width:"+frame.minWidth.replaceAll("dp", "px"))
+	if (frame?.wi) {
+		styles.push("min-width:" + cssLengthValue(frame.wi))
 	}
 
-	if (frame?.maxWidth) {
-		styles.push("max-width:"+frame.maxWidth.replaceAll("dp", "px"))
+	if (frame?.wx) {
+		styles.push("max-width:" + cssLengthValue(frame.wx))
 	}
 
-	if (frame?.height) {
-		styles.push("height:"+frame.height.replaceAll("dp", "px"))
+	if (frame?.h) {
+		styles.push("height:" + cssLengthValue(frame.h))
 	}
 
-	if (frame?.minHeight) {
-		styles.push("min-height:"+frame.minHeight.replaceAll("dp", "px"))
+	if (frame?.hi) {
+		styles.push("min-height:" + cssLengthValue(frame.hi))
 	}
 
-	if (frame?.maxHeight) {
-		styles.push("max-height:"+frame.maxHeight.replaceAll("dp", "px"))
+	if (frame?.hx) {
+		styles.push("max-height:" + cssLengthValue(frame.hx))
 	}
 
 	return styles.join('; ');

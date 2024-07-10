@@ -10,31 +10,31 @@ export interface Frame {
     /**
      * MinWidth is omitted if empty
      */
-    minWidth/*omitempty*/? /*MinWidth*/: Length;
+    wi/*omitempty*/? /*MinWidth*/: Length;
 
     /**
      * MaxWidth is omitted if empty
      */
-    maxWidth/*omitempty*/? /*MaxWidth*/: Length;
+    wx/*omitempty*/? /*MaxWidth*/: Length;
 
     /**
      * MinHeight is omitted if empty
      */
-    minHeight/*omitempty*/? /*MinHeight*/: Length;
+    hi/*omitempty*/? /*MinHeight*/: Length;
 
     /**
      * MaxHeight is omitted if empty
      */
-    maxHeight/*omitempty*/? /*MaxHeight*/: Length;
+    hx/*omitempty*/? /*MaxHeight*/: Length;
 
     /**
      * Width is omitted if empty
      */
-    width/*omitempty*/? /*Width*/: Length;
+    w/*omitempty*/? /*Width*/: Length;
 
     /**
      * Height is omitted if empty
      */
-    height/*omitempty*/? /*Height*/: Length;
+    h/*omitempty*/? /*Height*/: Length;
 }
 

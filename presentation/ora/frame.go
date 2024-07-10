@@ -35,19 +35,20 @@ type Weight float64
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Frame struct {
 	// MinWidth is omitted if empty
-	MinWidth Length `json:"minWidth,omitempty"`
+	MinWidth Length `json:"wi,omitempty"`
 	// MaxWidth is omitted if empty
-	MaxWidth Length `json:"maxWidth,omitempty"`
+	MaxWidth Length `json:"wx,omitempty"`
 	// MinHeight is omitted if empty
-	MinHeight Length `json:"minHeight,omitempty"`
+	MinHeight Length `json:"hi,omitempty"`
 	// MaxHeight is omitted if empty
-	MaxHeight Length `json:"maxHeight,omitempty"`
+	MaxHeight Length `json:"hx,omitempty"`
 	// Width is omitted if empty
-	Width Length `json:"width,omitempty"`
+	Width Length `json:"w,omitempty"`
 	// Height is omitted if empty
-	Height Length `json:"height,omitempty"`
+	Height Length `json:"h,omitempty"`
 }
 
+// @experiment: not clear if this API is an actual win
 func (f *Frame) With(do func(fr *Frame)) {
 	// this is a pattern derived from pascal world
 	if do != nil {

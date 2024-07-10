@@ -4,7 +4,9 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Frame } from '@/shared/protocol/ora/frame';
 import type { NamedColor } from '@/shared/protocol/ora/namedColor';
+import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
@@ -27,5 +29,7 @@ export interface Text {
     onHoverStart: Property<Ptr>;
     onHoverEnd: Property<Ptr>;
     visible: Property<boolean>;
+    p/*omitempty*/? /*Padding*/: Padding;
+    f/*omitempty*/? /*Frame*/: Frame;
 }
 

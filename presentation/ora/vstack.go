@@ -8,16 +8,16 @@ package ora
 //
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type VStack struct {
-	Ptr      Ptr           `json:"id"`
 	Type     ComponentType `json:"type" value:"vs"`
-	Children []Component   `json:"children,omitempty"`
+	Children []Component   `json:"c,omitempty"`
 	// InnerGap is omitted, if empty
-	InnerGap Length `json:"innerGap,omitempty"`
+	Gap Length `json:"g,omitempty"`
 	// Frame is omitted if empty
-	Frame Frame `json:"frame,omitempty"`
+	Frame Frame `json:"f,omitempty"`
 	// Alignment may be empty and omitted. Then Center (=c) must be applied.
-	Alignment Alignment `json:"alignment,omitempty"`
+	Alignment Alignment `json:"a,omitempty"`
 	// BackgroundColor regular is always transparent
-	BackgroundColor NamedColor `json:"backgroundColor,omitempty"`
+	BackgroundColor NamedColor `json:"bgc,omitempty"`
+	Padding         Padding    `json:"p,omitempty"`
 	component
 }

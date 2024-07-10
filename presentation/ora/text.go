@@ -17,6 +17,9 @@ type Text struct {
 	OnHoverEnd   Property[Ptr]    `json:"onHoverEnd"`
 	Visible      Property[bool]   `json:"visible"`
 
+	Padding Padding `json:"p,omitempty"`
+	Frame   Frame   `json:"f,omitempty"`
+
 	component
 }
 

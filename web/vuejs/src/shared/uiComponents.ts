@@ -5,7 +5,6 @@ import UiDialog from '@/components/UiDialog.vue';
 import UiDivider from '@/components/UiDivider.vue';
 import UiDropdown from '@/components/dropdown/UiDropdown.vue';
 import UiGrid from '@/components/UiGrid.vue';
-import UiHBox from '@/components/UiHBox.vue';
 import UiImage from '@/components/UiImage.vue';
 import UiScaffold from '@/components/scaffold/UiScaffold.vue';
 import UiStepper from '@/components/UiStepper.vue';
@@ -15,7 +14,6 @@ import UiTextArea from '@/components/UiTextArea.vue';
 import UiTextField from '@/components/UiTextField.vue';
 import UiToggle from '@/components/UiToggle.vue';
 import UiUploadField from '@/components/uploadfield/UiUploadField.vue';
-import UiVBox from '@/components/UiVBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiSlider from '@/components/UiSlider.vue';
 import UiNumberField from '@/components/UiNumberField.vue';
@@ -31,12 +29,11 @@ import UiProgressBar from '@/components/UiProgressBar.vue';
 import UiStr from "@/components/UiStr.vue";
 import UiHStack from "@/components/hstack/UiHStack.vue";
 import UiVStack from "@/components/vstack/UiVStack.vue";
+import UiBox from "@/components/box/UiBox.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
 uiComponentsMap.set('Scaffold', UiScaffold);
-uiComponentsMap.set('VBox', UiVBox);
-uiComponentsMap.set('HBox', UiHBox);
 uiComponentsMap.set('Chip', UiChip);
 uiComponentsMap.set('Dialog', UiDialog);
 uiComponentsMap.set('Divider', UiDivider);
@@ -66,5 +63,6 @@ uiComponentsMap.set('ProgressBar', UiProgressBar);
 uiComponentsMap.set('S', UiStr);
 uiComponentsMap.set('hs', UiHStack)
 uiComponentsMap.set('vs', UiVStack)
+uiComponentsMap.set('bx', UiBox)
 
 export default uiComponentsMap;

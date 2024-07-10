@@ -12,6 +12,8 @@ type HStack struct {
 	alignment       ora.Alignment
 	backgroundColor ora.NamedColor
 	frame           ora.Frame
+	gap             ora.Length
+	padding         ora.Padding
 }
 
 func NewHStack(with func(hstack *HStack)) *HStack {
@@ -27,6 +29,22 @@ func NewHStack(with func(hstack *HStack)) *HStack {
 	}
 
 	return c
+}
+
+func (c *HStack) Padding() ora.Padding {
+	return c.padding
+}
+
+func (c *HStack) SetPadding(padding ora.Padding) {
+	c.padding = padding
+}
+
+func (c *HStack) Gap() ora.Length {
+	return c.gap
+}
+
+func (c *HStack) SetGap(gap ora.Length) {
+	c.gap = gap
 }
 
 func (c *HStack) BackgroundColor() ora.NamedColor {
@@ -72,11 +90,12 @@ func (c *HStack) Frame() *ora.Frame {
 
 func (c *HStack) Render() ora.Component {
 	return ora.HStack{
-		Ptr:             c.id,
 		Type:            ora.HStackT,
 		Children:        renderSharedListComponentsFlat(c.children),
 		Frame:           c.frame,
 		Alignment:       c.alignment,
 		BackgroundColor: c.backgroundColor,
+		Gap:             c.gap,
+		Padding:         c.padding,
 	}
 }

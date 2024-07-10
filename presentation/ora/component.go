@@ -67,6 +67,7 @@ const (
 	StrT                 ComponentType = "S"
 	HStackT              ComponentType = "hs"
 	VStackT              ComponentType = "vs"
+	BoxT                 ComponentType = "bx"
 )
 
 type Component interface {
@@ -82,8 +83,6 @@ func init() {
 		reflect.TypeOf(Scaffold{}),
 		reflect.TypeOf(NavigationComponent{}),
 		reflect.TypeOf(MenuEntry{}),
-		reflect.TypeOf(VBox{}),
-		reflect.TypeOf(HBox{}),
 		reflect.TypeOf(TextField{}),
 		reflect.TypeOf(PasswordField{}),
 		reflect.TypeOf(Table{}),
@@ -116,12 +115,13 @@ func init() {
 		reflect.TypeOf(Str{}),
 		reflect.TypeOf(HStack{}),
 		reflect.TypeOf(VStack{}),
+		reflect.TypeOf(Box{}),
 	}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	VStack | HStack | Button | Page | Scaffold | NavigationComponent | VBox | HBox | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer | Str
+	Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer | Str
 }
 
 type component struct {
