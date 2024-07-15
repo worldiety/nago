@@ -30,9 +30,9 @@ func must(err error) {
 	}
 }
 
-func renderComponentProp(property core.Property, p core.Iterable[core.Component]) ora.Property[ora.Component] {
-	var first core.Component
-	p.Iter(func(component core.Component) bool {
+func renderComponentProp(property core.Property, p core.Iterable[core.View]) ora.Property[ora.Component] {
+	var first core.View
+	p.Iter(func(component core.View) bool {
 		first = component
 		return false
 	})
@@ -48,9 +48,9 @@ func renderComponentProp(property core.Property, p core.Iterable[core.Component]
 	}
 }
 
-func renderComponentsProp(property core.Property, p core.Iterable[core.Component]) ora.Property[[]ora.Component] {
+func renderComponentsProp(property core.Property, p core.Iterable[core.View]) ora.Property[[]ora.Component] {
 	var res []ora.Component
-	p.Iter(func(component core.Component) bool {
+	p.Iter(func(component core.View) bool {
 		res = append(res, component.Render())
 		return true
 	})

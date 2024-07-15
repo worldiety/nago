@@ -17,14 +17,23 @@ import type { Themes } from '@/shared/protocol/ora/themes';
  * A frontend may request acknowledges for each event, e.g. while typing in a text field, so this premature optimization is likely a win.
  */
 export interface ConfigurationDefined {
+    // Type
     type: 'ConfigurationDefined'/*EventType*/;
+    // ApplicationID
     applicationID: string;
+    // ApplicationName
     applicationName: string;
+    // ApplicationVersion
     applicationVersion: string;
+    // AvailableLocales
     availableLocales: string[];
+    // ActiveLocale
     activeLocale: string;
+    // Themes
     themes: Themes;
+    // Resources
     resources: Resources;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

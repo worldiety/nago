@@ -20,10 +20,15 @@ import type { RequestId } from '@/shared/protocol/ora/requestId';
  * However, often it does not make sense without additional parameters, e.g. because a detail view needs to know which entity has to be displayed.
  */
 export interface NewComponentRequested {
+    // Type
     type: 'NewComponentRequested'/*EventType*/;
+    // Locale
     activeLocale /*Locale*/: string;
+    // Factory
     factory: ComponentFactoryId;
+    // Values
     values: Record<string,string>;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

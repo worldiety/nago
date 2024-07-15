@@ -1,115 +1,100 @@
 package core
 
 import (
-	"go.wdy.de/nago/pkg/iter"
+	"fmt"
 	"go.wdy.de/nago/presentation/ora"
+	"log/slog"
 )
 
-type Component interface {
-	ID() ora.Ptr
-	Properties(yield func(Property) bool) // contract of iter.Seq[Property]
-	Render() ora.Component
+type RenderContext interface {
+	// MountCallback returns for non-nil funcs a pointer. This pointer is only unique for the current render state.
+	// This means, that subsequent calls which result in the same structural ora tree, will have the same
+	// pointers. This allows more efficient model deltas. The largest downside is, that an outdated frontend
+	// may invoke the wrong callbacks.
+	// All callbacks are removed between render calls.
+	MountCallback(func()) ora.Ptr
 }
 
-func IsDirty(dst Component) bool {
-	dirty := false
-	Visit(dst)(func(component Component) bool {
-		component.Properties(func(property Property) bool {
-			if property.Dirty() {
-				dirty = true
-				return false
-			}
+type State[T any] struct {
+	id    string
+	ptr   ora.Ptr
+	value T
+	valid bool
+}
 
-			return true
-		})
+func (s *State[T]) ID() ora.Ptr {
+	return s.ptr
+}
 
-		if dirty {
-			return false
+func (s *State[T]) Parse(v string) error {
+	s.value = any(v).(T)
+	return nil
+}
+
+func (s *State[T]) Get() T {
+	return s.value
+}
+
+func (s *State[T]) Ptr() ora.Ptr {
+	return s.ptr
+}
+
+func StateWithID[T any](wnd Window, id string) *State[T] {
+	w := wnd.(*scopeWindow)
+
+	if id == "" {
+		panic("empty id is not allowed, consider using AutoState instead")
+	}
+	some, ok := w.statesById[id]
+	if ok {
+		if found, ok := some.(*State[T]); ok {
+			return found
 		}
-
-		return true
-	})
-
-	return dirty
-}
-
-func ClearDirty(dst Component) {
-	Visit(dst)(func(component Component) bool {
-		component.Properties(func(property Property) bool {
-			if property.Dirty() {
-				property.SetDirty(false)
-			}
-
-			return true
-		})
-
-		return true
-	})
-}
-
-func Visit(root Component) iter.Seq[Component] {
-	return func(yield func(Component) bool) {
-		visitRecursive(root, false, func(component2 Component) bool {
-			return yield(component2)
-		})
-	}
-}
-
-func Freeze(c Component) {
-	Visit(c)(func(component Component) bool {
-		component.Properties(func(property Property) bool {
-			if freezable, ok := property.(Freezable); ok {
-				freezable.Freeze()
-			}
-
-			return true
-		})
-
-		return true
-	})
-}
-
-func Unfreeze(c Component) {
-	visitRecursive(c, true, func(component Component) bool {
-		component.Properties(func(property Property) bool {
-			if freezable, ok := property.(Freezable); ok {
-				freezable.Unfreeze()
-			}
-
-			return true
-		})
-
-		return true
-	})
-}
-
-func visitRecursive(root Component, depthFirst bool, walker func(Component) bool) bool {
-	if root == nil {
-		// by definition legal, properties may have just nil components but we don't want to visit them
-		return true
+		var zero T
+		slog.Error("restored view state does not match expected state type", "expected", fmt.Sprintf("%T", zero), "got", fmt.Sprintf("%T", some))
 	}
 
-	if !depthFirst {
-		if !walker(root) {
-			return false
+	w.lastStatePtrById++
+	state := &State[T]{
+		id:    id,
+		ptr:   w.lastStatePtrById,
+		valid: false,
+	}
+	w.states[w.lastStatePtrById] = state
+	w.statesById[id] = state
+
+	return state
+}
+
+func AutoState[T any](wnd Window) *State[T] {
+	w := wnd.(*scopeWindow)
+	w.lastAutoStatePtr++
+
+	if w.lastAutoStatePtr >= maxAutoPtr {
+		panic("auto state overflow, you have to many auto states. Having so many states indicates to large UIs. Reduce or use StateWithID instead")
+	}
+
+	fmt.Println("autostate ptr created", w.lastAutoStatePtr)
+	some, ok := w.states[w.lastAutoStatePtr]
+	if ok {
+		if found, ok := some.(*State[T]); ok {
+			return found
 		}
+		var zero T
+		slog.Error("restored view state does not match expected state type", "expected", fmt.Sprintf("%T", zero), "got", fmt.Sprintf("%T", some))
 	}
 
-	root.Properties(func(property Property) bool {
-		property.AnyIter(func(a any) bool {
-			if c, ok := a.(Component); ok {
-				return visitRecursive(c, depthFirst, walker)
-			}
-			return true
-		})
-		return true
-	})
-
-	if depthFirst {
-		if !walker(root) {
-			return false
-		}
+	state := &State[T]{
+		id:    "",
+		ptr:   w.lastAutoStatePtr,
+		valid: false,
 	}
+	w.states[w.lastAutoStatePtr] = state
 
-	return true
+	return state
+
+}
+
+type View interface {
+	Render(RenderContext) ora.Component
 }

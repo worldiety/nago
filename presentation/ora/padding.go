@@ -8,9 +8,10 @@ type Padding struct {
 	Bottom Length `json:"b,omitempty"`
 }
 
-func (p *Padding) All(pad Length) {
+func (p Padding) All(pad Length) Padding {
 	p.Left = pad
 	p.Right = pad
 	p.Bottom = pad
 	p.Top = pad
+	return p
 }

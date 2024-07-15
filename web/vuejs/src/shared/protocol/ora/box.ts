@@ -16,18 +16,23 @@ import type { Padding } from '@/shared/protocol/ora/padding';
  * - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
  */
 export interface Box {
+    // Type
     type: 'bx'/*ComponentType*/;
+    // Children
     c/*omitempty*/? /*Children*/: AlignedComponent[];
 
     /**
      * Frame is omitted if empty
      */
+    // Frame
     frame/*omitempty*/? /*Frame*/: Frame;
 
     /**
      * BackgroundColor regular is always transparent
      */
+    // BackgroundColor
     bgc/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    // Padding
     p/*omitempty*/? /*Padding*/: Padding;
 }
 

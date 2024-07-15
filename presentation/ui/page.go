@@ -7,15 +7,15 @@ import (
 
 type Page struct {
 	id         ora.Ptr
-	body       *Shared[core.Component]
-	modals     *SharedList[core.Component]
+	body       *Shared[core.View]
+	modals     *SharedList[core.View]
 	properties []core.Property
 }
 
 func NewPage(with func(page *Page)) *Page {
 	p := &Page{id: nextPtr()}
-	p.body = NewShared[core.Component]("body")
-	p.modals = NewSharedList[core.Component]("modals")
+	p.body = NewShared[core.View]("body")
+	p.modals = NewSharedList[core.View]("modals")
 	p.properties = []core.Property{p.body, p.modals}
 	if with != nil {
 		with(p)
@@ -44,10 +44,10 @@ func (p *Page) Render() ora.Component {
 	}
 }
 
-func (p *Page) Body() *Shared[core.Component] {
+func (p *Page) Body() *Shared[core.View] {
 	return p.body
 }
 
-func (p *Page) Modals() *SharedList[core.Component] {
+func (p *Page) Modals() *SharedList[core.View] {
 	return p.modals
 }

@@ -19,7 +19,9 @@ import type { RequestId } from '@/shared/protocol/ora/requestId';
  * It must not enveloped into a transaction.
  */
 export interface Acknowledged {
+    // Type
     type: 'A'/*EventType*/;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

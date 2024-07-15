@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func Logout(wnd core.Window, service *iam.Service) core.Component {
+func Logout(wnd core.Window, service *iam.Service) core.View {
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 		flexContainer.Children().Append(
 			ui.NewVStack(func(vstack *ui.VStack) {
@@ -23,7 +23,7 @@ func Logout(wnd core.Window, service *iam.Service) core.Component {
 							btn.Action().Set(func() {
 								service.Logout(wnd.SessionID())
 								wnd.UpdateSubject(service.Subject(wnd.SessionID()))
-								vstack.Children().Clear()
+								vstack.Children = nil
 								vstack.Append(
 									ui.MakeText("Sie wurden sicher abgemeldet."),
 									ui.NewActionButton("zur Startseite", func() {

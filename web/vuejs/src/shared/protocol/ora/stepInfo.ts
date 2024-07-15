@@ -8,10 +8,15 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface StepInfo {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'StepInfo'/*ComponentType*/;
+    // Number
     number: Property<string>;
+    // Caption
     caption: Property<string>;
+    // Details
     details: Property<string>;
 }
 

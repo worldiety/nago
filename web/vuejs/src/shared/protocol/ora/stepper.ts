@@ -9,9 +9,13 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 
 export interface Stepper {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Stepper'/*ComponentType*/;
+    // Steps
     steps: Property<StepInfo[]>;
+    // SelectedIndex
     selectedIndex: Property<number /*int64*/>;
 }
 

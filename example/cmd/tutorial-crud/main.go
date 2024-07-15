@@ -33,7 +33,7 @@ func main() {
 
 		persons := application.SloppyRepository[Person, PID](cfg)
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.NewPage(func(page *ui.Page) {
 				page.Body().Set(crud.NewView[Person](page, crud.NewOptions(func(opts *crud.Options[Person]) {
 					opts.

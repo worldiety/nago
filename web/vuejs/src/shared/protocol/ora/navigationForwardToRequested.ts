@@ -12,8 +12,11 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
  * The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.
  */
 export interface NavigationForwardToRequested {
+    // Type
     type: 'NavigationForwardToRequested'/*EventType*/;
+    // Factory
     factory: ComponentFactoryId;
+    // Values
     values: Record<string,string>;
 }
 

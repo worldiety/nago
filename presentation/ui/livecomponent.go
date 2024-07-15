@@ -60,7 +60,7 @@ func (s *Shared[T]) Iter(f func(T) bool) {
 }
 
 func (s *Shared[T]) AnyIter(f func(any) bool) {
-	if c, ok := any(s.v).(core.Component); ok {
+	if c, ok := any(s.v).(core.View); ok {
 		if isNil(c) {
 			return
 		}

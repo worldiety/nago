@@ -14,19 +14,29 @@ import type { SVG } from '@/shared/protocol/ora/sVG';
  * Button represents an user interface element which spans a visible area to click or tap from the user.
  */
 export interface Button {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Button'/*ComponentType*/;
+    // Caption
     caption: Property<string>;
+    // PreIcon
     preIcon: Property<SVG>;
+    // PostIcon
     postIcon: Property<SVG>;
+    // Color
     color: Property<NamedColor>;
+    // Disabled
     disabled: Property<boolean>;
+    // Action
     action: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 
     /**
      * Frame is omitted, if empty
      */
+    // Frame
     frame/*omitempty*/? /*Frame*/: Frame;
 }
 

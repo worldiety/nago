@@ -8,12 +8,19 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Toggle {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Toggle'/*ComponentType*/;
+    // Label
     label: Property<string>;
+    // Checked
     checked: Property<boolean>;
+    // Disabled
     disabled: Property<boolean>;
+    // OnCheckedChanged
     onCheckedChanged: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 }
 

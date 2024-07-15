@@ -3,10 +3,8 @@
  */
 
 
+import type { Border } from '@/shared/protocol/ora/border';
+import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 
-export interface Color {
-    h: number /*float64*/;
-    s: number /*float64*/;
-    l: number /*float64*/;
+func color(c NamedColor,)(Border,){
 }
-

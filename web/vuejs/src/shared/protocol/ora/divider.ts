@@ -7,7 +7,9 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Divider {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Divider'/*ComponentType*/;
 }
 

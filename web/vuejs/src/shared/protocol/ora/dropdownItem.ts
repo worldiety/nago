@@ -8,9 +8,13 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface DropdownItem {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'DropdownItem'/*ComponentType*/;
+    // Content
     content: Property<string>;
+    // OnClicked
     onClicked: Property<Ptr>;
 }
 

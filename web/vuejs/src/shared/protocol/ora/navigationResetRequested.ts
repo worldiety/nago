@@ -10,8 +10,11 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
  * NavigationResetRequested removes the entire history in the scope and pushes the target on top.
  */
 export interface NavigationResetRequested {
+    // Type
     type: 'NavigationResetRequested'/*EventType*/;
+    // Factory
     factory: ComponentFactoryId;
+    // Values
     values: Record<string,string>;
 }
 

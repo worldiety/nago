@@ -241,7 +241,7 @@ func text[Model any, T ~string](b *Binding[Model], isSecret bool, field Field[Mo
 		}
 
 		return formElement[Model]{
-			Component: component.(core.Component),
+			Component: component.(core.View),
 			FromModel: func(model Model) {
 				component.Value().Set(f.Stringer(model))
 			},
@@ -372,7 +372,7 @@ func Bool[Model any, T ~bool](b *Binding[Model], field Field[Model, T]) {
 }
 
 type Form[Model any] struct {
-	Component core.Component
+	Component core.View
 	Fields    []formElement[Model]
 }
 
@@ -531,7 +531,7 @@ type anyField[T any] struct {
 }
 
 type formElement[Model any] struct {
-	Component core.Component
+	Component core.View
 	FromModel func(Model)
 	IntoModel func(Model) (Model, error)
 	SetError  func(err string)

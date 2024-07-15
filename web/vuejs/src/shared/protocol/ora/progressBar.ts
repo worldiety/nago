@@ -11,10 +11,15 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * TODO @Lukas/Philip/Kristin: sollte das nicht auch ein Label und Hint haben?
  */
 export interface ProgressBar {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'ProgressBar'/*ComponentType*/;
+    // Max
     max: Property<number /*float64*/>;
+    // Value
     value: Property<number /*float64*/>;
+    // ShowPercentage
     showPercentage: Property<boolean>;
 }
 

@@ -6,15 +6,15 @@ import (
 )
 
 type ModalOwner interface {
-	Modals() *SharedList[core.Component]
+	Modals() *SharedList[core.View]
 }
 
 type Dialog struct {
 	id     ora.Ptr
 	title  String
-	body   *Shared[core.Component]
+	body   *Shared[core.View]
 	icon   *Shared[SVGSrc]
-	footer *Shared[core.Component]
+	footer *Shared[core.View]
 	size   EmbeddedElementSize
 
 	properties []core.Property
@@ -25,8 +25,8 @@ func NewDialog(with func(dlg *Dialog)) *Dialog {
 		id:     nextPtr(),
 		title:  NewShared[string]("title"),
 		icon:   NewShared[SVGSrc]("icon"),
-		body:   NewShared[core.Component]("body"),
-		footer: NewShared[core.Component]("footer"),
+		body:   NewShared[core.View]("body"),
+		footer: NewShared[core.View]("footer"),
 		size:   NewShared[ElementSize]("size"),
 	}
 
@@ -44,7 +44,7 @@ func (c *Dialog) Title() String {
 	return c.title
 }
 
-func (c *Dialog) Body() *Shared[core.Component] {
+func (c *Dialog) Body() *Shared[core.View] {
 	return c.body
 }
 
@@ -52,7 +52,7 @@ func (c *Dialog) Icon() *Shared[SVGSrc] {
 	return c.icon
 }
 
-func (c *Dialog) Footer() *Shared[core.Component] {
+func (c *Dialog) Footer() *Shared[core.View] {
 	return c.footer
 }
 

@@ -8,24 +8,43 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Slider {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Slider'/*ComponentType*/;
+    // Disabled
     disabled: Property<boolean>;
+    // Label
     label: Property<string>;
+    // Hint
     hint: Property<string>;
+    // Error
     error: Property<string>;
+    // RangeMode
     rangeMode: Property<boolean>;
+    // StartValue
     startValue: Property<number /*float64*/>;
+    // EndValue
     endValue: Property<number /*float64*/>;
+    // Min
     min: Property<number /*float64*/>;
+    // Max
     max: Property<number /*float64*/>;
+    // Stepsize
     stepsize: Property<number /*float64*/>;
+    // StartInitialized
     startInitialized: Property<boolean>;
+    // EndInitialized
     endInitialized: Property<boolean>;
+    // ShowLabel
     showLabel: Property<boolean>;
+    // LabelSuffix
     labelSuffix: Property<string>;
+    // ShowTickMarks
     showTickMarks: Property<boolean>;
+    // OnChanged
     onChanged: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 }
 

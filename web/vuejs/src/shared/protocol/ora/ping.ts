@@ -6,6 +6,7 @@
 import type { EventType } from '@/shared/protocol/ora/eventType';
 
 export interface Ping {
+    // Type
     type: 'Ping'/*EventType*/;
 }
 

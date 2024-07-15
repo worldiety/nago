@@ -11,11 +11,17 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * Radiobutton represents an user interface element which spans a visible area to click or tap from the user.
  */
 export interface Radiobutton {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Radiobutton'/*ComponentType*/;
+    // Selected
     selected: Property<boolean>;
+    // OnClicked
     onClicked: Property<Ptr>;
+    // Disabled
     disabled: Property<boolean>;
+    // Visible
     visible: Property<boolean>;
 }
 

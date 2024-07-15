@@ -39,7 +39,7 @@ uiComponentsMap.set('Dialog', UiDialog);
 uiComponentsMap.set('Divider', UiDivider);
 uiComponentsMap.set('Stepper', UiStepper);
 uiComponentsMap.set('FileField', UiUploadField);
-uiComponentsMap.set('Image', UiImage);
+uiComponentsMap.set('I', UiImage);
 uiComponentsMap.set('TextField', UiTextField);
 uiComponentsMap.set('TextArea', UiTextArea);
 uiComponentsMap.set('Toggle', UiToggle);

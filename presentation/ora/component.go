@@ -57,7 +57,7 @@ const (
 	WebViewT             ComponentType = "WebView"
 	TextAreaT            ComponentType = "TextArea"
 	FileFieldT           ComponentType = "FileField"
-	ImageT               ComponentType = "Image"
+	ImageT               ComponentType = "I"
 	BreadcrumbsT         ComponentType = "Breadcrumbs"
 	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
 	CheckboxT            ComponentType = "Checkbox"
@@ -72,9 +72,15 @@ const (
 
 type Component interface {
 	isComponent()
+	// VisitFuncs(yield()bool)
+	// VisitShared(yield()bool)
 }
 
 var Components []reflect.Type
+
+func Slice(elems ...Component) []Component {
+	return elems
+}
 
 func init() {
 	Components = []reflect.Type{

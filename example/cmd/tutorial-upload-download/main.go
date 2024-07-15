@@ -17,7 +17,7 @@ func main() {
 		fstore := cfg.FileStore("my-files")
 		must(any(nil), blob.Write(fstore, "bla.txt", bytes.NewBufferString("blub")))
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.NewVBox(func(vbox *ui.VBox) {
 				vbox.Append(
 					// configure the upload field

@@ -8,8 +8,11 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export interface ComponentDestructionRequested {
+    // Type
     type: 'ComponentDestructionRequested'/*EventType*/;
+    // RequestId
     r /*RequestId*/: RequestId;
+    // Component
     ptr /*Component*/: Ptr;
 }
 

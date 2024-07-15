@@ -9,10 +9,15 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Card {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Card'/*ComponentType*/;
+    // Children
     children: Property<Component[]>;
+    // Action
     action: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 }
 

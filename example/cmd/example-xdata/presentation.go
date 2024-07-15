@@ -37,7 +37,7 @@ func dataPage(wnd core.Window, persons *PersonService) *ui.Page {
 					},
 				},
 
-				Actions: []core.Component{
+				Actions: []core.View{
 					ui.NewButton(func(btn *ui.Button) {
 						btn.PreIcon().Set(icon.Plus)
 						btn.Caption().Set("Neu")

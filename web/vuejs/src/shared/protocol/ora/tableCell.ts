@@ -9,8 +9,11 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface TableCell {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'TableCell'/*ComponentType*/;
+    // Body
     body: Property<Component>;
 }
 

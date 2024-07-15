@@ -18,25 +18,26 @@ import (
 )
 
 type Configurator struct {
-	boltStore                *bbolt.DB
-	ctx                      context.Context
-	done                     context.CancelFunc
-	logger                   *slog.Logger
-	debug                    bool
-	fsys                     []fs.FS
-	host                     string
-	port                     int
-	scheme                   string
-	applicationID            core.ApplicationID
-	applicationName          string
-	applicationVersion       string
-	themes                   ora.Themes
-	dataDir                  string
-	iamSettings              IAMSettings
-	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.Component
+	boltStore          *bbolt.DB
+	ctx                context.Context
+	done               context.CancelFunc
+	logger             *slog.Logger
+	debug              bool
+	fsys               []fs.FS
+	host               string
+	port               int
+	scheme             string
+	applicationID      core.ApplicationID
+	applicationName    string
+	applicationVersion string
+	themes             ora.Themes
+	dataDir            string
+	//	iamSettings              IAMSettings
+	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.View
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
 	destructors              []func()
 	app                      *core.Application // may be nil
+	rawEndpoint              []rawEndpoint
 }
 
 func NewConfigurator() *Configurator {
@@ -73,7 +74,7 @@ func NewConfigurator() *Configurator {
 	return &Configurator{
 		ctx:                ctx,
 		done:               done,
-		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.Component{},
+		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.View{},
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
 		themes:             themes,

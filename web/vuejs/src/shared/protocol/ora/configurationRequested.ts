@@ -15,10 +15,15 @@ import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
  * It is expected, that this only happens once during initialization of the frontend process.
  */
 export interface ConfigurationRequested {
+    // Type
     type: 'ConfigurationRequested'/*EventType*/;
+    // AcceptLanguage
     acceptLanguage: string;
+    // ColorScheme
     colorScheme: ColorScheme;
+    // WindowInfo
     windowInfo: WindowInfo;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

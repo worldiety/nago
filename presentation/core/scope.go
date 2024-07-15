@@ -3,10 +3,12 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
-	"io"
+	"golang.org/x/text/language"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -19,14 +21,7 @@ type Destroyable interface {
 	Destroy()
 }
 
-type allocatedComponent struct {
-	Window      *scopeWindow
-	Component   Component
-	RenderState *RenderState
-	Destroyed   bool
-}
-
-type ComponentFactory func(Window, ora.NewComponentRequested) Component
+type ComponentFactory func(Window) View
 
 // A Scope manage its own area of associated pointers. A Pointer must be only unique per Scope.
 // Resolving or keeping pointers outside a scope is inherently unsafe (e.g. a lookup map).
@@ -40,42 +35,54 @@ type ComponentFactory func(Window, ora.NewComponentRequested) Component
 // as a cheap alternative, replace all event loops with the same looper instance.
 // However, we must be careful on destruction of the scopes sharing them.
 type Scope struct {
-	app                 *Application
-	id                  ora.ScopeID
-	factories           map[ora.ComponentFactoryId]ComponentFactory
-	allocatedComponents map[ora.Ptr]allocatedComponent
-	lifetime            time.Duration
-	endOfLifeAt         atomic.Pointer[time.Time]
-	channel             concurrent.Value[Channel]
-	chanDestructor      concurrent.Value[func()]
-	destroyed           concurrent.Value[bool]
-	eventLoop           *EventLoop
-	lastMessageType     ora.EventType
-	ctx                 context.Context
-	cancelCtx           func()
-	sessionID           SessionID
-	tempDirMutex        sync.Mutex
-	tempRootDir         string
-	tempDir             string
-	nextFileSeqNo       int64
-	windowInfo          ora.WindowInfo
-	onDestroyObservers  concurrent.Slice[func()]
+	app                *Application
+	id                 ora.ScopeID
+	factories          map[ora.ComponentFactoryId]ComponentFactory
+	allocatedRootView  std.Option[*scopeWindow]
+	lifetime           time.Duration
+	endOfLifeAt        atomic.Pointer[time.Time]
+	channel            concurrent.Value[Channel]
+	chanDestructor     concurrent.Value[func()]
+	destroyed          concurrent.Value[bool]
+	eventLoop          *EventLoop
+	lastMessageType    ora.EventType
+	ctx                context.Context
+	cancelCtx          func()
+	sessionID          SessionID
+	tempDirMutex       sync.Mutex
+	tempRootDir        string
+	tempDir            string
+	nextFileSeqNo      int64
+	windowInfo         ora.WindowInfo
+	onDestroyObservers concurrent.Slice[func()]
+	location           *time.Location
+	subject            concurrent.Value[auth.Subject]
+	locale             language.Tag
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
 
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
-		app:                 app,
-		id:                  id,
-		factories:           factories,
-		allocatedComponents: map[ora.Ptr]allocatedComponent{},
-		lifetime:            lifetime,
-		eventLoop:           NewEventLoop(),
-		ctx:                 scopeCtx,
-		cancelCtx:           cancel,
-		tempRootDir:         tempRootDir,
+		app:         app,
+		id:          id,
+		factories:   factories,
+		lifetime:    lifetime,
+		eventLoop:   NewEventLoop(),
+		ctx:         scopeCtx,
+		cancelCtx:   cancel,
+		tempRootDir: tempRootDir,
+		locale:      language.German, // TODO implement me
 	}
+
+	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me
+	if err != nil {
+		slog.Error("cannot load location", slog.Any("err", err))
+		loc = time.UTC
+	}
+	s.location = loc
+
+	s.subject.SetValue(auth.InvalidSubject{})
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
 		s.Publish(ora.ErrorOccurred{
@@ -102,20 +109,25 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, it iter.Seq2[File, error]) 
 	s.Tick() // keep this scope alive
 
 	s.eventLoop.Post(func() {
-		var receiver Component
+		var receiver FilesReceiver
+		alloc, err := s.allocatedRootView.Get()
+		if err != nil {
+			slog.Error("no view allocated, cannot receive files")
+			return
+		}
+
 		if receiverPtr.Nil() {
+			// this is required for native App support, because the user may just send files to us without any request
 			slog.Info("scope received unrequested files, trying to dispatch to any allocated root component...")
 
 			dispatched := false
-			for _, holder := range s.allocatedComponents {
-				if rec, ok := holder.Component.(FilesReceiver); ok {
-					if err := rec.OnFilesReceived(it); err != nil {
-						dispatched = false
-						slog.Error("failed to dispatch files", "err", err)
-						break
-					} else {
-						dispatched = true
-					}
+			for _, fn := range alloc.filesReceiver {
+				if err := fn(it); err != nil {
+					dispatched = false
+					slog.Error("failed to dispatch files", "err", err)
+					break
+				} else {
+					dispatched = true
 				}
 			}
 
@@ -128,32 +140,19 @@ func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, it iter.Seq2[File, error]) 
 
 			return
 		} else {
-			if cmp, ok := s.allocatedComponents[receiverPtr]; ok {
-				receiver = cmp.Component
-			} else {
-				for _, holder := range s.allocatedComponents {
-					if cmp, ok := holder.RenderState.elements[receiverPtr]; ok {
-						receiver = cmp
-					}
-				}
+			if cmp, ok := alloc.filesReceiver[receiverPtr]; ok {
+				receiver = cmp
 			}
+
 		}
 
 		if receiver == nil {
-			slog.Error("receiver component for data stream not found")
+			slog.Error("receiver component for data stream not found, files are lost")
 			return
 		}
 
-		switch receiver := receiver.(type) {
-		case FilesReceiver:
-			if err := receiver.OnFilesReceived(it); err != nil {
-				slog.Error("failed to dispatch files", "err", err)
-				if err := Release(it); err != nil {
-					slog.Error("cannot release received but unprocessed files", "err", err)
-				}
-			}
-		default:
-			slog.Error("receiver component for data stream has no compatible receiver interface, files are lost", "type", fmt.Sprintf("%T", receiver))
+		if err := receiver(it); err != nil {
+			slog.Error("failed to dispatch files", "err", err)
 			if err := Release(it); err != nil {
 				slog.Error("cannot release received but unprocessed files", "err", err)
 			}
@@ -188,6 +187,15 @@ func (s *Scope) getTempDir() (string, error) {
 
 	s.tempDir = path
 	return path, nil
+}
+
+func (s *Scope) updateWindowInfo(winfo ora.WindowInfo) {
+	s.windowInfo = winfo
+	if s.allocatedRootView.Valid {
+		for _, f := range s.allocatedRootView.V.windowChangedObservers {
+			f()
+		}
+	}
 }
 
 // Connect attaches the given channel to this Scope immediately. There must be exact 1 Scope per Channel.
@@ -233,7 +241,7 @@ func (s *Scope) handleMessage(buf []byte) error {
 
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
 		if !wasDestructed && !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT {
-			s.renderIfRequired()
+			s.forceRender()
 		}
 	})
 
@@ -300,40 +308,23 @@ func (s *Scope) sendPing() {
 }
 
 // only for event loop
-func (s *Scope) renderIfRequired() {
-	for _, component := range s.allocatedComponents {
-		if IsDirty(component.Component) {
-			//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
-			s.Publish(s.render(0, component.Component))
-		}
-	}
-}
-
-// only for event loop
 func (s *Scope) forceRender() {
-	for _, component := range s.allocatedComponents {
-		//slog.Info("component is dirty", slog.Int("ptr", int(component.Component.ID())))
-		if component.Destroyed {
-			continue
-		}
-		s.Publish(s.render(0, component.Component))
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
+		slog.Error("no view to render is allocated", "err", err)
+		return
 	}
+
+	s.Publish(s.render(0, alloc))
 }
 
 // only for event loop
-func (s *Scope) render(requestId ora.RequestId, component Component) ora.ComponentInvalidated {
-	Freeze(component)
-	defer Unfreeze(component)
-
-	rs := s.allocatedComponents[component.ID()].RenderState
-	rs.Clear()
-	rs.Scan(component)
-	ClearDirty(component)
+func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.ComponentInvalidated {
 
 	return ora.ComponentInvalidated{
 		Type:      ora.ComponentInvalidatedT,
 		RequestId: requestId,
-		Component: component.Render(),
+		Component: scopeWnd.render(),
 	}
 }
 
@@ -366,32 +357,33 @@ func (s *Scope) AddOnDestroyObserver(f func()) {
 
 // only for event loop
 func (s *Scope) destroy() {
+	if s.destroyed.Value() {
+		return
+	}
+
+	s.destroyed.SetValue(true)
+
 	s.cancelCtx()
-	for _, component := range s.allocatedComponents {
-		invokeDestructors(component)
+
+	for _, f := range s.onDestroyObservers.PopAll() {
+		f()
 	}
 
 	s.channel.SetValue(NewPrintChannel()) // detach
-	clear(s.allocatedComponents)
+
+	s.onDestroyObservers.Clear()
 	//	clear(s.factories) // clearing this map would cause a data race, even though we use the factory as read-only
+
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
+		return
+	}
+
+	alloc.destroy()
+
 }
 
 // only for event loop
 func (s *Scope) handleSessionAssigned(evt ora.SessionAssigned) {
 	s.sessionID = SessionID(evt.SessionID)
-}
-
-// only for event loop
-func invokeDestructors(component allocatedComponent) {
-	component.Window.viewRoot.Destroy()
-
-	if closer, ok := component.Component.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			slog.Error("error on closing Component", slog.Any("err", err), slog.String("type", fmt.Sprintf("%T", component)))
-		}
-	}
-
-	if destroyer, ok := component.Component.(Destroyable); ok {
-		destroyer.Destroy()
-	}
 }

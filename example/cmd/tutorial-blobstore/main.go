@@ -51,7 +51,7 @@ func main() {
 			panic(err)
 		}
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.MakeText(buf1.String() + " & " + buf2.String())
 		})
 	}).Run()

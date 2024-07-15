@@ -10,10 +10,15 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface Breadcrumbs {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Breadcrumbs'/*ComponentType*/;
+    // Items
     items: Property<BreadcrumbItem[]>;
+    // SelectedItemIndex
     selectedItemIndex: Property<number /*int64*/>;
+    // Icon
     icon: Property<SVG>;
 }
 

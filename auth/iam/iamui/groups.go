@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Groups(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
+func Groups(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(modals, crud.NewOptions[iam.Group](func(opts *crud.Options[iam.Group]) {
 		opts.Title("Gruppen")

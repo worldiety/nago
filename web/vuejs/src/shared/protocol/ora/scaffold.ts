@@ -10,9 +10,13 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Scaffold {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Scaffold'/*ComponentType*/;
+    // Body
     body: Property<Component>;
+    // NavigationComponent
     navigationComponent: Property<NavigationComponent>;
 }
 

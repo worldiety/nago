@@ -31,7 +31,7 @@ func main() {
 		iamCfg.Permissions.Permissions = iam.PermissionsFrom(Permissions())
 		iamCfg = cfg.IAM(iamCfg)
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.NewVBox(func(vbox *ui.VBox) {
 				vbox.Append(
 					ui.NewActionButton("Berechtigungen", func() {

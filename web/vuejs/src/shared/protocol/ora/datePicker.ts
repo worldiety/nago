@@ -8,24 +8,43 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface DatePicker {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'DatePicker'/*ComponentType*/;
+    // Disabled
     disabled: Property<boolean>;
+    // Label
     label: Property<string>;
+    // Hint
     hint: Property<string>;
+    // Error
     error: Property<string>;
+    // Expanded
     expanded: Property<boolean>;
+    // RangeMode
     rangeMode: Property<boolean>;
+    // StartDateSelected
     startDateSelected: Property<boolean>;
+    // SelectedStartDay
     selectedStartDay: Property<number /*int64*/>;
+    // SelectedStartMonth
     selectedStartMonth: Property<number /*int64*/>;
+    // SelectedStartYear
     selectedStartYear: Property<number /*int64*/>;
+    // EndDateSelected
     endDateSelected: Property<boolean>;
+    // SelectedEndDay
     selectedEndDay: Property<number /*int64*/>;
+    // SelectedEndMonth
     selectedEndMonth: Property<number /*int64*/>;
+    // SelectedEndYear
     selectedEndYear: Property<number /*int64*/>;
+    // OnClicked
     onClicked: Property<Ptr>;
+    // OnSelectionChanged
     onSelectionChanged: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 }
 

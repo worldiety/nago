@@ -86,6 +86,7 @@ function updateUi(event: Event): void {
 		return;
 	}
 	const componentInvalidated = event as ComponentInvalidated;
+	console.log("setting new view tree",componentInvalidated.value)
 	ui.value = componentInvalidated.value;
 	state.value = State.ShowUI;
 }

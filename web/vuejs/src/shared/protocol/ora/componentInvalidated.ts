@@ -8,8 +8,11 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export interface ComponentInvalidated {
+    // Type
     type: 'ComponentInvalidated'/*EventType*/;
+    // RequestId
     r /*RequestId*/: RequestId;
+    // Component
     value /*Component*/: Component;
 }
 

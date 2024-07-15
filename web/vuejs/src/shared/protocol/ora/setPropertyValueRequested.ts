@@ -8,9 +8,13 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export interface SetPropertyValueRequested {
+    // Type
     type: 'P'/*EventType*/;
+    // Ptr
     p /*Ptr*/: Ptr;
+    // Value
     v /*Value*/: string;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

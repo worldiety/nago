@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func Users(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.Component {
+func Users(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.User](func(opts *crud.Options[iam.User]) {
 		opts.Title("Nutzerkonten")

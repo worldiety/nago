@@ -12,7 +12,9 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
  * dozens of MiB in transfer size. Also, neither is the websocket compression working nor is it effective in practice.
  */
 export interface Str {
+    // Type
     type: 'S'/*ComponentType*/;
+    // Value
     v/*omitempty*/? /*Value*/: string;
 }
 

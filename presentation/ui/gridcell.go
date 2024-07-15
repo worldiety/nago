@@ -7,7 +7,7 @@ import (
 
 type GridCell struct {
 	id         ora.Ptr
-	body       *Shared[core.Component]
+	body       *Shared[core.View]
 	colStart   Int
 	colEnd     Int
 	colSpan    Int
@@ -24,7 +24,7 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 		id: nextPtr(),
 	}
 
-	c.body = NewShared[core.Component]("body")
+	c.body = NewShared[core.View]("body")
 	c.colStart = NewShared[int64]("colStart")
 	c.colEnd = NewShared[int64]("colEnd")
 	c.rowStart = NewShared[int64]("rowStart")
@@ -41,7 +41,7 @@ func NewGridCell(with func(cell *GridCell)) *GridCell {
 	return c
 }
 
-func (c *GridCell) Body() *Shared[core.Component] {
+func (c *GridCell) Body() *Shared[core.View] {
 	return c.body
 }
 

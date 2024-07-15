@@ -6,11 +6,17 @@
 import type { Theme } from '@/shared/protocol/ora/theme';
 
 export interface Themes {
+    // Dark
     dark: Theme;
+    // Light
     light: Theme;
+    // HighContrast
     highContrast: Theme;
+    // Protanopie
     protanopie: Theme;
+    // Deuteranopie
     deuteranopie: Theme;
+    // Tritanopie
     tritanopie: Theme;
 }
 

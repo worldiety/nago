@@ -5,7 +5,7 @@ import CloseIcon from '@/assets/svg/close.svg';
 import type {TextField} from "@/shared/protocol/ora/textField";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
-import {createFrameStyles} from "@/components/shared/frame";
+import {frameCSS} from "@/components/shared/frame";
 
 const props = defineProps<{
 	ui: TextField;
@@ -15,14 +15,26 @@ const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.value.v);
 const idPrefix = 'text-field-';
 
+watch(() => props.ui.value, (newValue) => {
+	console.log("textfield triggered props.ui.value")
+});
+
+watch(() => props.ui, (newValue) => {
+	console.log("textfield triggered props.ui")
+	inputValue.value = newValue.value.v;
+});
+
 watch(() => props.ui.value.v, (newValue) => {
+	console.log("textfield triggered props.ui.v")
+	// TODO this is sometimes broken!!!! or is this a logical race, where v inputvalue is never updated and thus keeps empty?
+	// see also https://vuejs.org/guide/essentials/watchers#deep-watchers
 	inputValue.value = newValue;
 });
 
 function submitInputValue(): void {
 	debouncedInput()
 
-	if (isNil(props.ui.onTextChanged.p) && !isNil(props.ui.onDebouncedTextChanged.p)) {
+	if (isNil(props.ui.onTextChanged) && !isNil(props.ui.onDebouncedTextChanged)) {
 		// this is a special case, to optimize re-render behavior for things like quick search:
 		// we delay the property update until the debounce callback triggers, so we cannot cause any dirty roundtrips
 		// TODO this has the known side effect, that you cannot read out the changed property AND have a debounced text changed event.
@@ -48,7 +60,7 @@ function deserializeGoDuration(durationInNanoseconds: number): number {
 let timer: number = 0;
 
 function debouncedInput() {
-	if (isNil(props.ui.onDebouncedTextChanged.p)) {
+	if (isNil(props.ui.onDebouncedTextChanged)) {
 		return;
 	}
 
@@ -60,33 +72,34 @@ function debouncedInput() {
 			...props.ui.value,
 			v: inputValue.value,
 		}], [props.ui.onDebouncedTextChanged]);
-	}, deserializeGoDuration(props.ui.debounceTime.v))
+	}, deserializeGoDuration(props.ui.debounceTime))
 }
 
 const frameStyles = computed<string>(() => {
-	return createFrameStyles(props.ui.frame)
+	return frameCSS(props.ui.frame).join(";")
 });
 
+// TODO check :id="idPrefix + props.ui.id.toString()"
 </script>
 
 <template>
-	<div v-if="ui.visible.v" :style="frameStyles">
+	<div v-if="!ui.visible" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.simple.v"
-			:label="props.ui.label.v"
-			:error="props.ui.error.v"
-			:hint="props.ui.hint.v"
-			:help="props.ui.help.v"
-			:disabled="props.ui.disabled.v"
+			:simple="props.ui.simple"
+			:label="props.ui.label"
+			:error="props.ui.error"
+			:hint="props.ui.hint"
+			:help="props.ui.help"
+			:disabled="props.ui.disabled"
 		>
 			<div class="relative">
 				<input
-					:id="idPrefix + props.ui.id.toString()"
+					:id="idPrefix"
 					v-model="inputValue"
 					class="input-field"
 					:class="{'!pr-10': inputValue}"
-					:placeholder="props.ui.placeholder.v"
-					:disabled="props.ui.disabled.v"
+					:placeholder="props.ui.placeholder"
+					:disabled="props.ui.disabled"
 					type="text"
 					@input="submitInputValue"
 				/>

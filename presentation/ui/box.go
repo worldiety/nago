@@ -7,7 +7,7 @@ import (
 )
 
 type AlignedComponent struct {
-	Component core.Component
+	Component core.View
 	Alignment Alignment
 }
 
@@ -44,7 +44,7 @@ func (c *Box) SetBackgroundColor(backgroundColor ora.NamedColor) {
 // Align adds the given child with the defined alignment. Added Order is Z-Order.
 // Aligning multiple children is not allowed, thus any other occurrence is removed and the new child
 // is appended.
-func (c *Box) Align(alignment Alignment, child core.Component) {
+func (c *Box) Align(alignment Alignment, child core.View) {
 	slices.DeleteFunc(c.children, func(component AlignedComponent) bool {
 		return component.Alignment == alignment
 	})

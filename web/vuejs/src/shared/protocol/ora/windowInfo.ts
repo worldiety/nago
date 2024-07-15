@@ -12,8 +12,11 @@ import type { Density } from '@/shared/protocol/ora/density';
  * changing the size of a browser window.
  */
 export interface WindowInfo {
+    // Width
     width: DP;
+    // Height
     height: DP;
+    // Density
     density: Density;
 }
 

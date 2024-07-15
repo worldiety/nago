@@ -16,14 +16,23 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * deprecated: use flexcontainer
  */
 export interface Grid {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Grid'/*ComponentType*/;
+    // Cells
     cells: Property<GridCell[]>;
+    // Rows
     rows: Property<number /*int64*/>;
+    // Columns
     columns: Property<number /*int64*/>;
+    // SMColumns
     smColumns /*SMColumns*/: Property<number /*int64*/>;
+    // MDColumns
     mdColumns /*MDColumns*/: Property<number /*int64*/>;
+    // LGColumns
     lgColumns /*LGColumns*/: Property<number /*int64*/>;
+    // Gap
     gap: Property<string>;
 }
 

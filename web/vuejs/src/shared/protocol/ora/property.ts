@@ -16,11 +16,13 @@ export interface Property<T> {
      * Ptr is short for "Pointer" and references a property instance within the backend.
      * Because it is so common, the json field name is just p.
      */
+    // Ptr
     p /*Ptr*/: Ptr;
 
     /**
      * Value contains the actual value specified by the generic type parameter and shortend to v in json.
      */
+    // Value
     v /*Value*/: T;
 }
 

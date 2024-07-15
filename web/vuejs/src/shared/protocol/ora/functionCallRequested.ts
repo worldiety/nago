@@ -8,8 +8,11 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export interface FunctionCallRequested {
+    // Type
     type: 'F'/*EventType*/;
+    // Ptr
     p /*Ptr*/: Ptr;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

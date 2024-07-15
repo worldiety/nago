@@ -7,7 +7,9 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 
 export interface ScopeDestructionRequested {
+    // Type
     type: 'ScopeDestructionRequested'/*EventType*/;
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

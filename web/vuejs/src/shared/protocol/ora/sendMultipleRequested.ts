@@ -15,7 +15,9 @@ import type { Resource } from '@/shared/protocol/ora/resource';
  * to select the receiving app.
  */
 export interface SendMultipleRequested {
+    // Type
     type: 'SendMultipleRequested'/*EventType*/;
+    // Resources
     resources: Resource[];
 }
 

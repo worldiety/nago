@@ -9,26 +9,39 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface TextField {
-    id /*Ptr*/: Ptr;
+    // Type
     type: 'TextField'/*ComponentType*/;
-    label: Property<string>;
-    hint: Property<string>;
-    help: Property<string>;
-    error: Property<string>;
-    value: Property<string>;
-    placeholder: Property<string>;
-    disabled: Property<boolean>;
-    simple: Property<boolean>;
-    onTextChanged: Property<Ptr>;
+    // Label
+    label: string;
+    // Hint
+    hint: string;
+    // Help
+    help: string;
+    // Error
+    error: string;
+    // Text
+    value /*Text*/: Property<string>;
+    // Placeholder
+    placeholder: string;
+    // Disabled
+    disabled: boolean;
+    // Simple
+    simple: boolean;
+    // OnTextChanged
+    onTextChanged: Ptr;
 
     /**
      * OnDebouncedTextChanged is called, after no changes within the DebounceTime have been seen.
      * Note that the frontend is allowed to suppress any property updates, until the debouncer kicks in.
      * This is by intention, to ensure that the backend does not re-render anyway due to always dirty views.
      */
-    onDebouncedTextChanged: Property<Ptr>;
-    debounceTime: Property<number /*int64*/>;
-    visible: Property<boolean>;
+    // OnDebouncedTextChanged
+    onDebouncedTextChanged: Ptr;
+    // DebounceTime
+    debounceTime: number /*int64*/;
+    // Invisible
+    visible /*Invisible*/: boolean;
+    // Frame
     frame/*omitempty*/? /*Frame*/: Frame;
 }
 

@@ -169,7 +169,7 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component("hello", func(wnd core.Window) core.Component {
+		cfg.Component("hello", func(wnd core.Window) core.View {
 			return ui.NewPage(func(page *ui.Page) {
 
 				type myParams struct {
@@ -202,7 +202,7 @@ func main() {
 		})
 
 		counter := 0
-		cfg.Component("1234", func(wnd core.Window) core.Component {
+		cfg.Component("1234", func(wnd core.Window) core.View {
 			// logging.FromContext(wnd.Context()).Info("user", slog.Any("user", wnd.User()), slog.String("session", string(wnd.SessionID())))
 
 			page := ui.NewPage(nil)

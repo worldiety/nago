@@ -10,9 +10,13 @@ import type { TableCell } from '@/shared/protocol/ora/tableCell';
 import type { TableRow } from '@/shared/protocol/ora/tableRow';
 
 export interface Table {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Table'/*ComponentType*/;
+    // Headers
     headers: Property<TableCell[]>;
+    // Rows
     rows: Property<TableRow[]>;
 }
 

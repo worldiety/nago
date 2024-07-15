@@ -29,10 +29,10 @@ type AggregateAction[T any] struct {
 	Icon    ui.SVGSrc
 	Caption string
 	Action  func(T) error
-	make    func(modals ui.ModalOwner, t T) core.Component
+	make    func(modals ui.ModalOwner, t T) core.View
 }
 
-func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.Component {
+func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.View {
 	if a.make == nil {
 		return ui.NewButton(func(btn *ui.Button) {
 			btn.Caption().Set(a.Caption)
@@ -53,7 +53,7 @@ func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.Compon
 // NewEditAction dispatches a standard action for editing to the given callback.
 func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
-		make: func(modals ui.ModalOwner, t T) core.Component {
+		make: func(modals ui.ModalOwner, t T) core.View {
 			return ui.NewButton(func(btn *ui.Button) {
 				btn.PreIcon().Set(icon.Pencil)
 				btn.Style().Set(ui.PrimaryIntent)
@@ -70,7 +70,7 @@ func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 // NewDeleteAction returns a ready-to-use action which just removes the aggregate from the repository.
 func NewDeleteAction[T any](delFn func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
-		make: func(modals ui.ModalOwner, t T) core.Component {
+		make: func(modals ui.ModalOwner, t T) core.View {
 			return ui.NewButton(func(btn *ui.Button) {
 				//TODO i18n
 				btn.PreIcon().Set(icon.Trash)
@@ -92,12 +92,12 @@ type Options[T any] struct {
 	CanSearch        bool
 	PageSize         int
 	AggregateActions []AggregateAction[T] // AggregateActions e.g. for editing (see [NewEditAction]) or delete (see [NewDeleteAction]) or something custom.
-	Actions          []core.Component     // Action buttons are used for table specific actions
+	Actions          []core.View          // Action buttons are used for table specific actions
 }
 
 // deprecated: use crud package
 // NewTable creates a new simple data table view based on a repository.
-func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) core.Component {
+func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) core.View {
 	if opts.PageSize == 0 {
 		opts.PageSize = 20 // TODO: does that make sense for mobile at all?
 	}

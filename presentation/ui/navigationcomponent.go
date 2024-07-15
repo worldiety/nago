@@ -74,7 +74,7 @@ func (n *NavigationComponent) renderNavigationComponent() ora.NavigationComponen
 }
 
 type ScaffoldTopBar struct {
-	Left  *Shared[core.Component]
-	Mid   *Shared[core.Component]
-	Right *Shared[core.Component]
+	Left  *Shared[core.View]
+	Mid   *Shared[core.View]
+	Right *Shared[core.View]
 }

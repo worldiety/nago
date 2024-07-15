@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Permissions(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.Component {
+func Permissions(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.Permission](func(opts *crud.Options[iam.Permission]) {
 		opts.Title("Berechtigungen")

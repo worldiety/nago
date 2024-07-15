@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Roles(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
+func Roles(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(modals, crud.NewOptions[iam.Role](func(opts *crud.Options[iam.Role]) {
 		opts.Title("Rollen")

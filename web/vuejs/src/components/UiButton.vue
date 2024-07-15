@@ -2,7 +2,7 @@
 import {computed} from 'vue';
 import type {Button} from '@/shared/protocol/ora/button';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {createFrameStyles} from "@/components/shared/frame";
+import {frameCSS} from "@/components/shared/frame";
 import {NamedColor, namedColorClasses} from "@/components/shared/namedcolors";
 
 const props = defineProps<{
@@ -16,7 +16,7 @@ function onClick() {
 }
 
 const buttonStyles = computed<string>(() => {
-	return createFrameStyles(props.ui.frame)
+	return frameCSS(props.ui.frame).join(";")
 });
 
 const buttonClasses = computed<string>(() => {

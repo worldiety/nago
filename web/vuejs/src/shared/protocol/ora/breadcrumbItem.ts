@@ -8,9 +8,13 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface BreadcrumbItem {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'BreadcrumbItem'/*ComponentType*/;
+    // Label
     label: Property<string>;
+    // Action
     action: Property<Ptr>;
 }
 

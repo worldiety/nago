@@ -71,6 +71,11 @@ func (l *TextField) Value() String {
 	return l.value
 }
 
+func (l *TextField) SetValue(s String) {
+	l.value = s
+	l.properties = append(l.properties, s)
+}
+
 func (l *TextField) Placeholder() String { return l.placeholder }
 
 func (l *TextField) Label() String {
@@ -110,21 +115,22 @@ func (l *TextField) Visible() Bool {
 }
 
 func (l *TextField) Render() ora.Component {
-	return ora.TextField{
-		Ptr:                    l.id,
-		Type:                   ora.TextFieldT,
-		Label:                  l.label.render(),
-		Hint:                   l.hint.render(),
-		Help:                   l.help.render(),
-		Error:                  l.error.render(),
-		Value:                  l.value.render(),
-		Placeholder:            l.placeholder.render(),
-		Disabled:               l.disabled.render(),
-		Simple:                 l.simple.render(),
-		Visible:                l.visible.render(),
-		DebounceTime:           l.debounceTime.render(),
-		OnDebouncedTextChanged: renderFunc(l.onDebouncedTextChanged),
-		OnTextChanged:          renderFunc(l.onTextChanged),
-		Frame:                  l.frame,
-	}
+	//return ora.TextField{
+	//	Ptr:                    l.id,
+	//	Type:                   ora.TextFieldT,
+	//	Label:                  l.label.render(),
+	//	Hint:                   l.hint.render(),
+	//	Help:                   l.help.render(),
+	//	Error:                  l.error.render(),
+	//	Value:                  l.value.render(),
+	//	Placeholder:            l.placeholder.render(),
+	//	Disabled:               l.disabled.render(),
+	//	Simple:                 l.simple.render(),
+	//	Visible:                l.visible.render(),
+	//	DebounceTime:           l.debounceTime.render(),
+	//	OnDebouncedTextChanged: renderFunc(l.onDebouncedTextChanged),
+	//	OnTextChanged:          renderFunc(l.onTextChanged),
+	//	Frame:                  l.frame,
+	//}
+	return nil
 }

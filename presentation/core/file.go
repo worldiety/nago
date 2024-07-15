@@ -23,9 +23,7 @@ type File interface {
 //
 // Intentionally there is no much sense on error return, because this callback is issued over the event looper and thus
 // the actual caller cannot be notified anymore. So, if errors occur, the callee must handle it itself.
-type FilesReceiver interface {
-	OnFilesReceived(it iter.Seq2[File, error]) error
-}
+type FilesReceiver func(it iter.Seq2[File, error]) error
 
 // Release tries to clear and close the given thing. If no such interfaces are implemented, the call has no side effects
 // and no error is returned.

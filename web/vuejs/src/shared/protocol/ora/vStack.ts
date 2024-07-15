@@ -19,28 +19,35 @@ import type { Padding } from '@/shared/protocol/ora/padding';
  * - the inner gap between components should be around 2dp
  */
 export interface VStack {
+    // Type
     type: 'vs'/*ComponentType*/;
+    // Children
     c/*omitempty*/? /*Children*/: Component[];
 
     /**
      * InnerGap is omitted, if empty
      */
+    // Gap
     g/*omitempty*/? /*Gap*/: Length;
 
     /**
      * Frame is omitted if empty
      */
+    // Frame
     f/*omitempty*/? /*Frame*/: Frame;
 
     /**
      * Alignment may be empty and omitted. Then Center (=c) must be applied.
      */
+    // Alignment
     a/*omitempty*/? /*Alignment*/: Alignment;
 
     /**
      * BackgroundColor regular is always transparent
      */
+    // BackgroundColor
     bgc/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    // Padding
     p/*omitempty*/? /*Padding*/: Padding;
 }
 

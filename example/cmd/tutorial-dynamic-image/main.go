@@ -26,7 +26,7 @@ func main() {
 
 		var invocationCount int64
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.NewImage(func(img *ui.Image) {
 				// tell the runtime, that we want a dynamic resource and need an uri for that
 				uri, err := wnd.AsURI(func() (io.Reader, error) {

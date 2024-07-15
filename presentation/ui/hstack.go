@@ -7,26 +7,28 @@ import (
 
 type HStack struct {
 	id              ora.Ptr
-	children        *SharedList[core.Component] // TODO why is this shared? do we need the dirty flag? do we need a pointer box? why not always render dirty?
+	children        *SharedList[core.View] // TODO why is this shared? do we need the dirty flag? do we need a pointer box? why not always render dirty?
 	properties      []core.Property
 	alignment       ora.Alignment
 	backgroundColor ora.NamedColor
 	frame           ora.Frame
 	gap             ora.Length
 	padding         ora.Padding
+	with            func(stack *HStack)
 }
 
 func NewHStack(with func(hstack *HStack)) *HStack {
 	c := &HStack{
 		id:       nextPtr(),
-		children: NewSharedList[core.Component]("children"),
+		children: NewSharedList[core.View]("children"),
 	}
 
 	c.alignment = "" // if nothing is defined, ora.Center must be applied by renderer
 	c.properties = []core.Property{c.children}
-	if with != nil {
-		with(c)
-	}
+	//if with != nil {
+	//	with(c)
+	//}
+	c.with = with
 
 	return c
 }
@@ -63,13 +65,9 @@ func (c *HStack) SetAlignment(alignment ora.Alignment) {
 	c.alignment = alignment
 }
 
-func (c *HStack) Append(children ...core.Component) {
+func (c *HStack) Append(children ...core.View) {
 	// this signature does not return builder pattern anymore, because it makes polymorphic interface usage impossible
 	c.children.Append(children...)
-}
-
-func (c *HStack) Children() *SharedList[core.Component] {
-	return c.children
 }
 
 func (c *HStack) ID() ora.Ptr {
@@ -89,6 +87,10 @@ func (c *HStack) Frame() *ora.Frame {
 }
 
 func (c *HStack) Render() ora.Component {
+	if c.with != nil {
+		c.with(c)
+	}
+
 	return ora.HStack{
 		Type:            ora.HStackT,
 		Children:        renderSharedListComponentsFlat(c.children),

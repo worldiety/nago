@@ -48,10 +48,8 @@ type Frame struct {
 	Height Length `json:"h,omitempty"`
 }
 
-// @experiment: not clear if this API is an actual win
-func (f *Frame) With(do func(fr *Frame)) {
-	// this is a pattern derived from pascal world
-	if do != nil {
-		do(f)
-	}
+func (f Frame) Size(w, h Length) Frame {
+	f.Height = h
+	f.Width = w
+	return f
 }

@@ -10,6 +10,7 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
  * The frontend may deora.Ptre to ignore that, if the stack would be empty/undefined otherwise.
  */
 export interface NavigationBackRequested {
+    // Type
     type: 'NavigationBackRequested'/*EventType*/;
 }
 

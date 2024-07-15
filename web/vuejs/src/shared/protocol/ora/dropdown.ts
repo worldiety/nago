@@ -9,18 +9,31 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Dropdown {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Dropdown'/*ComponentType*/;
+    // Items
     items: Property<DropdownItem[]>;
+    // SelectedIndices
     selectedIndices: Property<number /*int64*/[]>;
+    // Multiselect
     multiselect: Property<boolean>;
+    // Expanded
     expanded: Property<boolean>;
+    // Disabled
     disabled: Property<boolean>;
+    // Label
     label: Property<string>;
+    // Hint
     hint: Property<string>;
+    // Error
     error: Property<string>;
+    // OnClicked
     onClicked: Property<Ptr>;
+    // Searchable
     searchable: Property<boolean>;
+    // Visible
     visible: Property<boolean>;
 }
 

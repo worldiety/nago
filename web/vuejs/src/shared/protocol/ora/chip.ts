@@ -8,12 +8,19 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Chip {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Chip'/*ComponentType*/;
+    // Caption
     caption: Property<string>;
+    // Action
     action: Property<Ptr>;
+    // OnClose
     onClose: Property<Ptr>;
+    // Color
     color: Property<string>;
+    // Visible
     visible: Property<boolean>;
 }
 

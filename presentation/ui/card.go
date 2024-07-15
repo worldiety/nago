@@ -7,7 +7,7 @@ import (
 
 type Card struct {
 	id         ora.Ptr
-	children   *SharedList[core.Component]
+	children   *SharedList[core.View]
 	properties []core.Property
 	visible    Bool
 	action     *Func
@@ -16,7 +16,7 @@ type Card struct {
 func NewCard(with func(card *Card)) *Card {
 	c := &Card{
 		id:       nextPtr(),
-		children: NewSharedList[core.Component]("children"),
+		children: NewSharedList[core.View]("children"),
 		action:   NewFunc("action"),
 		visible:  NewShared[bool]("visible"),
 	}
@@ -33,12 +33,12 @@ func (c *Card) Action() *Func {
 	return c.action
 }
 
-func (c *Card) Append(children ...core.Component) *Card {
+func (c *Card) Append(children ...core.View) *Card {
 	c.children.Append(children...)
 	return c
 }
 
-func (c *Card) Children() *SharedList[core.Component] {
+func (c *Card) Children() *SharedList[core.View] {
 	return c.children
 }
 

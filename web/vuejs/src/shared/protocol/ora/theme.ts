@@ -6,6 +6,7 @@
 import type { Colors } from '@/shared/protocol/ora/colors';
 
 export interface Theme {
+    // Colors
     colors: Colors;
 }
 

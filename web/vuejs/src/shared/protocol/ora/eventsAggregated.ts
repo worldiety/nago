@@ -21,8 +21,11 @@ import type { RequestId } from '@/shared/protocol/ora/requestId';
  * The frontend must not freeze, but shall instead visualize the waiting, e.g. by debouncing interactive elements or by even disabling the entire screen and showing an indeterminate progress.
  */
 export interface EventsAggregated {
+    // Type
     type: 'T'/*EventType*/;
+    // Events
     events: Event[];
+    // RequestId
     r /*RequestId*/: RequestId;
 }
 

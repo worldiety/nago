@@ -11,12 +11,19 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface Dialog {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Dialog'/*ComponentType*/;
+    // Title
     title: Property<string>;
+    // Body
     body: Property<Component>;
+    // Footer
     footer: Property<Component>;
+    // Icon
     icon: Property<SVG>;
+    // Size
     size: Property<ElementSize>;
 }
 

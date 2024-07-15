@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 )
@@ -46,9 +47,7 @@ func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
 }
 
 func (s *Scope) handleWindowInfoChanged(evt ora.WindowInfoChanged) {
-	for _, allocC := range s.allocatedComponents {
-		allocC.Window.updateWindowInfo(evt.Info)
-	}
+	s.updateWindowInfo(evt.Info)
 }
 
 func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
@@ -64,73 +63,74 @@ func (s *Scope) handleScopeDestructionRequested(evt ora.ScopeDestructionRequeste
 }
 
 func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequested) {
-	// we do not expect many components, usually only 1 or 2 (e.g. 2 open activities on mobile)
-	for _, state := range s.allocatedComponents {
-		prop := state.RenderState.props[evt.Ptr]
-		if prop == nil {
-			continue
-		}
-
-		if err := prop.Parse(evt.Value); err != nil {
-			slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", prop)))
-			s.Publish(ora.ErrorOccurred{
-				Type:      ora.ErrorOccurredT,
-				RequestId: evt.RequestId,
-				Message:   fmt.Sprintf("cannot set property: invalid property value: %d", evt.Ptr),
-			})
-		}
-
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
+		slog.Error("no component has been allocated in scope")
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: evt.RequestId,
+			Message:   fmt.Sprintf("no component has been allocated in scope: %d", evt.Ptr),
+		})
 		return
 	}
 
-	slog.Error("property not found", slog.Any("evt", evt))
-	s.Publish(ora.ErrorOccurred{
-		Type:      ora.ErrorOccurredT,
-		RequestId: evt.RequestId,
-		Message:   fmt.Sprintf("cannot set property: no such pointer found: %d", evt.Ptr),
-	})
+	state, ok := alloc.states[evt.Ptr]
+	if !ok {
+		slog.Error("property not found", slog.Any("evt", evt))
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: evt.RequestId,
+			Message:   fmt.Sprintf("cannot set property: no such pointer found: %d", evt.Ptr),
+		})
+		return
+	}
 
-	return
+	if err := state.Parse(evt.Value); err != nil {
+		slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: evt.RequestId,
+			Message:   fmt.Sprintf("cannot set property: invalid property value: %d", evt.Ptr),
+		})
+	}
+
 }
 
 func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
-	// we do not expect many components, usually only 1 or 2 (e.g. 2 open activities on mobile)
-	for _, state := range s.allocatedComponents {
-		fn := state.RenderState.funcs[evt.Ptr]
-		if fn == nil {
-			continue
-		}
-
-		fn.Invoke()
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: evt.RequestId,
+			Message:   fmt.Sprintf("cannot call function: no view allocated: %d", evt.Ptr),
+		})
 		return
 	}
 
-	slog.Error("function not found", slog.Any("evt", evt))
-	s.Publish(ora.ErrorOccurred{
-		Type:      ora.ErrorOccurredT,
-		RequestId: evt.RequestId,
-		Message:   fmt.Sprintf("cannot call function: no such pointer found: %d", evt.Ptr),
-	})
+	fn := alloc.callbacks[evt.Ptr]
+	if fn == nil {
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: evt.RequestId,
+			Message:   fmt.Sprintf("cannot call function: no associated function found: %d", evt.Ptr),
+		})
+		return
+	}
 
-	return
+	fn()
+
 }
 
 func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
+	s.destroyView()
+	s.updateWindowInfo(s.windowInfo)
+
 	window := newScopeWindow(s, evt.Factory, evt.Values)
-	window.updateWindowInfo(s.windowInfo)
 	fac := s.factories[evt.Factory]
-	var component Component
 	if fac == nil {
 		slog.Error("frontend requested unknown factory", slog.String("path", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
 		fac = s.factories["_"]
-		if fac != nil {
-			notFoundComponent := fac(window, evt)
-			if notFoundComponent == nil {
-				slog.Error("notFound factory returned a nil component which is not allowed", slog.String("id", "_"), slog.Int("requestId", int(evt.RequestId)))
-				return
-			}
-			component = notFoundComponent
-		} else {
+		if fac == nil {
 			s.Publish(ora.ErrorOccurred{
 				Type:      ora.ErrorOccurredT,
 				RequestId: evt.RequestId,
@@ -139,36 +139,20 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 			return
 		}
 
-	} else {
-		component = fac(window, evt)
-		if component == nil {
-			slog.Error("factory returned a nil component which is not allowed", slog.String("id", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
-			s.Publish(ora.ErrorOccurred{
-				Type:      ora.ErrorOccurredT,
-				RequestId: evt.RequestId,
-				Message:   fmt.Sprintf("internal factory error: delivered null component"),
-			})
-			return
-		}
 	}
 
-	window.viewRoot.setComponent(component)
-
-	s.allocatedComponents[component.ID()] = allocatedComponent{
-		Window:      window,
-		Component:   component,
-		RenderState: NewRenderState(),
-	}
+	window.setFactory(fac)
+	s.allocatedRootView = std.Some(window)
 
 	// an allocation without rendering does not make sense, just perform in the same cycle
-	renderTree := s.render(evt.RequestId, component)
+	renderTree := s.render(evt.RequestId, window)
 	s.Publish(renderTree)
 
 }
 
 func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidationRequested) {
-	alloc, ok := s.allocatedComponents[evt.Component]
-	if !ok {
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
 		slog.Error("cannot invalidate: no such component in scope", slog.Any("evt", evt))
 		s.Publish(ora.ErrorOccurred{
 			Type:      ora.ErrorOccurredT,
@@ -178,19 +162,17 @@ func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidati
 		return
 	}
 
-	if alloc.Destroyed {
+	if alloc.destroyed {
 		return
 	}
 
-	renderTree := s.render(evt.RequestId, alloc.Component)
+	renderTree := s.render(evt.RequestId, alloc)
 	s.Publish(renderTree)
 }
 
 func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 	s.windowInfo = evt.WindowInfo
-	for _, component := range s.allocatedComponents {
-		component.Window.updateWindowInfo(evt.WindowInfo)
-	}
+	s.updateWindowInfo(evt.WindowInfo)
 
 	s.Publish(ora.ConfigurationDefined{
 		Type:               ora.ConfigurationDefinedT,
@@ -198,7 +180,7 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 		ApplicationName:    s.app.name,
 		ApplicationVersion: s.app.version,
 		AvailableLocales:   []string{"de", "en"}, //TODO
-		ActiveLocale:       "de",                 //TODO
+		ActiveLocale:       s.locale.String(),
 		Themes:             s.app.themes,
 		Resources:          ora.Resources{}, //TODO
 		RequestId:          evt.RequestId,
@@ -206,8 +188,8 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 }
 
 func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestructionRequested) {
-	component, ok := s.allocatedComponents[evt.Component]
-	if !ok {
+	_, err := s.allocatedRootView.Get()
+	if err != nil {
 		//slog.Info("e1")
 		s.Publish(ora.ErrorOccurred{
 			Type:      ora.ErrorOccurredT,
@@ -219,14 +201,17 @@ func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestruction
 		return
 	}
 
-	component.Destroyed = true // TODO before or after calling destructors?
-	component.Window.destroyed = true
-	component.Window.navController.destroyed = true
-	if component.Window.viewRoot != nil {
-		component.Window.viewRoot.destroyed = true
+	s.destroyView()
+
+}
+
+func (s *Scope) destroyView() {
+	alloc, err := s.allocatedRootView.Get()
+	if err != nil {
+		slog.Error("no root view to destroy, ignoring")
+		return
 	}
-	//slog.Info("A")
-	invokeDestructors(component)
-	//slog.Info("B")
-	delete(s.allocatedComponents, evt.Component)
+
+	alloc.destroy()
+	s.allocatedRootView = std.None[*scopeWindow]()
 }

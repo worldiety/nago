@@ -79,9 +79,9 @@ func (b *Binding) SetError(msg string) {
 	b.msgView.Visible().Set(msg != "")
 }
 
-func (b *Binding) AddComponent(c core.Component, field Field) {
+func (b *Binding) AddComponent(c core.View, field Field) {
 	b.elems = append(b.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return c
 		},
 		opts: field,
@@ -104,7 +104,7 @@ func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T,
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -128,7 +128,7 @@ func Int[T ~int](binding *Binding, target *T, opts Field) {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -163,7 +163,7 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 	})
 
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -175,7 +175,7 @@ func Text[T ~string](binding *Binding, target T, opts Field) *ui.Text {
 	tf.Value().Set(string(target))
 
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -197,7 +197,7 @@ func String[T ~string](binding *Binding, target *T, opts Field) *ui.TextField {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -219,7 +219,7 @@ func PasswordString[T ~string](binding *Binding, target *T, opts Field) *ui.Pass
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -241,7 +241,7 @@ func Bool[T ~bool](binding *Binding, target *T, opts Field) {
 		}
 	})
 	binding.elems = append(binding.elems, formElem{
-		getComponent: func() core.Component {
+		getComponent: func() core.View {
 			return tf
 		},
 		opts: opts,
@@ -263,7 +263,7 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 	itemSlice := slices.Collect(iter.BreakOnError(&err, items))
 	if err != nil {
 		binding.elems = append(binding.elems, formElem{
-			func() core.Component {
+			func() core.View {
 				return xdialog.ErrorView("cannot collect dropdown items", err)
 			}, opts})
 
@@ -298,7 +298,7 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 		)
 	}
 
-	binding.elems = append(binding.elems, formElem{func() core.Component {
+	binding.elems = append(binding.elems, formElem{func() core.View {
 		return cb
 	}, opts})
 }
@@ -317,7 +317,7 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 	itemSlice := slices.Collect(iter.BreakOnError(&err, items))
 	if err != nil {
 		binding.elems = append(binding.elems, formElem{
-			func() core.Component {
+			func() core.View {
 				return xdialog.ErrorView("cannot collect dropdown items", err)
 			}, opts})
 
@@ -361,13 +361,13 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 		)
 	}
 
-	binding.elems = append(binding.elems, formElem{func() core.Component {
+	binding.elems = append(binding.elems, formElem{func() core.View {
 		return cb
 	}, opts})
 }
 
 // NewForm creates a form, based on the given binding.
-func NewForm(binding *Binding) core.Component {
+func NewForm(binding *Binding) core.View {
 	type group struct {
 		definedGroup Group
 		elems        []formElem
@@ -447,7 +447,7 @@ nextElem:
 }
 
 type formElem struct {
-	getComponent func() core.Component
+	getComponent func() core.View
 	opts         Field
 }
 

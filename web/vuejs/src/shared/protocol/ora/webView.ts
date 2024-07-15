@@ -8,8 +8,11 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface WebView {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'WebView'/*ComponentType*/;
+    // Value
     value: Property<string>;
 }
 

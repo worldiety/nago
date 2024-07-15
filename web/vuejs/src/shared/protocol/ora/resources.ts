@@ -7,6 +7,7 @@ import type { RIDSVG } from '@/shared/protocol/ora/rIDSVG';
 import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface Resources {
+    // SVG
     svgs /*SVG*/: Record<RIDSVG,SVG>;
 }
 

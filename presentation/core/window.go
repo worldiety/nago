@@ -2,14 +2,11 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
 	"io"
-	"log/slog"
-	"sync"
 	"time"
 )
 
@@ -55,9 +52,6 @@ type Window interface {
 	// For sure, the user can always cancel that.
 	Authenticate()
 
-	// ViewRoot returns the access to the component which represents the current root.
-	ViewRoot() ViewRoot
-
 	// Locale returns the negotiated language tag or locale identifier between the frontend and the backend.
 	Locale() language.Tag
 
@@ -77,141 +71,29 @@ type Window interface {
 	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
 	AsURI(open func() (io.Reader, error)) (ora.URI, error)
 
+	// Application returns the parent application.
 	Application() *Application
+
+	// Factory returns the current active factory.
+	Factory() ora.ComponentFactoryId
+
+	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
+	AddDestroyObserver(fn func()) (removeObserver func())
+
+	// AddWindowChangedObserver registers an observer to be called, after the frontend has adjusted its size
+	// at least in a significant way. Frontends are free to optimize, e.g. they may send pixel exact events
+	// or only when the size class or a media break point was changed.
+	AddWindowChangedObserver(fn func()) (removeObserver func())
+
+	// AddWindowSizeClassObserver registers an observer which is always called if the size class changes.
+	AddWindowSizeClassObserver(fn func(sizeClass ora.WindowSizeClass)) (removeObserver func())
+
+	// Invalidate renders the tree and sends it to the actual frontend for displaying. Usually you should not use
+	// this directly, because the request-response cycles triggers this automatically. However, if backend
+	// data has changed due to other domain events, you have to notify the view tree to redraw and potentially
+	// to load the data again from repositories. In those cases you likely want to use [core.Iterable.Iter] to
+	// always rebuild the entire tree from the according property.
+	Invalidate()
 }
 
 type SessionID string
-
-var _ Window = (*scopeWindow)(nil)
-
-type scopeWindow struct {
-	factory       ora.ComponentFactoryId
-	scope         *Scope
-	navController *NavigationController
-	values        Values
-	location      *time.Location
-	viewRoot      *scopeViewRoot
-	subject       auth.Subject
-	mutex         sync.Mutex
-	destroyed     bool
-}
-
-func (s *scopeWindow) Application() *Application {
-	return s.scope.app
-}
-
-func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.subject = subject
-}
-
-func newScopeWindow(scope *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
-	s := &scopeWindow{factory: factory, scope: scope, values: values, navController: NewNavigationController(scope), viewRoot: newScopeViewRoot(scope)}
-	s.viewRoot.scopeWindow = s
-	if values == nil {
-		s.values = Values{}
-	}
-
-	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me
-	if err != nil {
-		slog.Error("cannot load location", slog.Any("err", err))
-		loc = time.UTC
-	}
-	s.location = loc
-
-	s.subject = auth.InvalidSubject{}
-
-	for _, observer := range s.scope.app.onWindowCreatedObservers {
-		observer(s)
-	}
-
-	return s
-}
-
-func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
-	if s.destroyed {
-		return "", nil
-	}
-
-	if callback := s.scope.app.onShareStream; callback != nil {
-		return callback(s.scope, open)
-	}
-
-	return "", fmt.Errorf("no share stream platform adapter has been configured")
-}
-
-func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
-	if s.destroyed {
-		return nil
-	}
-
-	if callback := s.scope.app.onSendFiles; callback != nil {
-		return callback(s.scope, it)
-	}
-
-	return fmt.Errorf("no send files platform adapter has been configured")
-}
-
-func (s *scopeWindow) Execute(task func()) {
-	if s.destroyed {
-		return
-	}
-
-	s.scope.eventLoop.Post(task)
-	s.scope.eventLoop.Tick()
-}
-
-func (s *scopeWindow) updateWindowInfo(winfo ora.WindowInfo) {
-	s.scope.windowInfo = winfo
-	if s.viewRoot != nil {
-		s.viewRoot.onWindowUpdated()
-	}
-}
-
-func (s *scopeWindow) WindowInfo() ora.WindowInfo {
-	return s.scope.windowInfo
-}
-
-func (s *scopeWindow) Navigation() *NavigationController {
-	return s.navController
-}
-
-func (s *scopeWindow) Values() Values {
-	return s.values
-}
-
-func (s *scopeWindow) Subject() auth.Subject {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	return s.subject
-}
-
-func (s *scopeWindow) Context() context.Context {
-	return s.scope.ctx
-}
-
-func (s *scopeWindow) SessionID() SessionID {
-	return s.scope.sessionID
-}
-
-func (s *scopeWindow) Authenticate() {
-	// TODO ????
-}
-
-func (s *scopeWindow) AuthenticatedObserver() {
-	// TODO how to implement that? trigger navigation
-}
-
-func (s *scopeWindow) ViewRoot() ViewRoot {
-	return s.viewRoot
-}
-
-func (s *scopeWindow) Locale() language.Tag {
-	return language.German // TODO implement me
-}
-
-func (s *scopeWindow) Location() *time.Location {
-	return s.location
-}

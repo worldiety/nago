@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
-import {createFrameStyles} from "@/components/shared/frame";
+import {frameCSS} from "@/components/shared/frame";
 import {Alignment} from "@/components/shared/alignments";
 import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {VStack} from "@/shared/protocol/ora/vStack";
 import {cssLengthValue} from "@/components/shared/length";
-import {createPaddingStyles} from "@/components/shared/padding";
+import {paddingCSS} from "@/components/shared/padding";
 
 const props = defineProps<{
 	ui: VStack;
@@ -14,7 +14,7 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = createFrameStyles(props.ui.f)
+	let s = frameCSS(props.ui.f).join(";")
 	let c = namedColorStyles("background-color", props.ui.bgc)
 
 	let gap = ""
@@ -22,7 +22,7 @@ const frameStyles = computed<string>(() => {
 		gap = `row-gap:${cssLengthValue(props.ui.g)}`
 	}
 
-	return [s, c, gap, createPaddingStyles(props.ui.p)].join(";")
+	return [s, c, gap, paddingCSS(props.ui.p).join(";")].join(";")
 });
 
 const clazz = computed<string>(() => {

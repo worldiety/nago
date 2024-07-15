@@ -7,7 +7,7 @@ import (
 
 type FlexContainer struct {
 	id               ora.Ptr
-	elements         *SharedList[core.Component]
+	elements         *SharedList[core.View]
 	elementSize      EmbeddedElementSize
 	orientation      EmbeddedOrientation
 	contentAlignment EmbeddedContentAlignment
@@ -20,7 +20,7 @@ type FlexContainer struct {
 func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 	f := &FlexContainer{
 		id:               nextPtr(),
-		elements:         NewSharedList[core.Component]("elements"),
+		elements:         NewSharedList[core.View]("elements"),
 		elementSize:      NewShared[ElementSize]("elementSize"),
 		orientation:      NewShared[Orientation]("orientation"),
 		contentAlignment: NewShared[ContentAlignment]("contentAlignment"),
@@ -46,12 +46,12 @@ func NewFlexContainer(with func(flex *FlexContainer)) *FlexContainer {
 	return f
 }
 
-func (f *FlexContainer) Append(children ...core.Component) *FlexContainer {
+func (f *FlexContainer) Append(children ...core.View) *FlexContainer {
 	f.Elements().Append(children...)
 	return f
 }
 
-func (f *FlexContainer) Children() *SharedList[core.Component] {
+func (f *FlexContainer) Children() *SharedList[core.View] {
 	return f.elements
 }
 
@@ -60,7 +60,7 @@ func (f *FlexContainer) MaxWidth() *Shared[ora.ElementSize] {
 }
 
 // deprecated: this is called Children in other ViewGroups
-func (f *FlexContainer) Elements() *SharedList[core.Component] {
+func (f *FlexContainer) Elements() *SharedList[core.View] {
 	return f.elements
 }
 

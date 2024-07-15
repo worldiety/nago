@@ -1,19 +1,25 @@
 <script lang="ts" setup>
 import type {Image} from "@/shared/protocol/ora/image";
+import {computed} from "vue";
+import {borderCSS} from "@/components/shared/border";
+import {frameCSS} from "@/components/shared/frame";
+import {paddingCSS} from "@/components/shared/padding";
 
 const props = defineProps<{
 	ui: Image;
 }>();
 
-console.log(props.ui.uri)
+const styles = computed<string>(() => {
+	let styles = borderCSS(props.ui.b)
+	styles.push(...frameCSS(props.ui.f))
+	styles.push(...paddingCSS(props.ui.p))
 
+	styles.push("object-fit: cover")
+
+	return styles.join(";")
+})
 </script>
 
 <template>
-	<figure v-if="ui.visible.v" class="">
-		<img class="h-auto max-w-full rounded-lg" :src="props.ui.uri.v" :alt="props.ui.caption.v" />
-		<figcaption v-if="props.ui.caption.v" class="mt-2 text-center text-sm text-gray-500">
-			{{ props.ui.caption.v }}
-		</figcaption>
-	</figure>
+	<img v-if="!ui.iv" class="h-auto max-w-full" :src="props.ui.u" :alt="props.ui.al" :style="styles"/>
 </template>

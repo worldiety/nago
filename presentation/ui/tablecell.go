@@ -7,7 +7,7 @@ import (
 
 type TableCell struct {
 	id         ora.Ptr
-	body       *Shared[core.Component]
+	body       *Shared[core.View]
 	properties []core.Property
 }
 
@@ -23,7 +23,7 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 		id: nextPtr(),
 	}
 
-	c.body = NewShared[core.Component]("body")
+	c.body = NewShared[core.View]("body")
 	c.properties = []core.Property{c.body}
 	if with != nil {
 		with(c)
@@ -32,7 +32,7 @@ func NewTableCell(with func(cell *TableCell)) *TableCell {
 	return c
 }
 
-func (c *TableCell) Body() *Shared[core.Component] {
+func (c *TableCell) Body() *Shared[core.View] {
 	return c.body
 }
 

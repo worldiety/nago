@@ -8,7 +8,7 @@ import (
 type Scaffold struct {
 	id                  ora.Ptr
 	navigationComponent *Shared[*NavigationComponent]
-	body                *Shared[core.Component]
+	body                *Shared[core.View]
 	properties          []core.Property
 }
 
@@ -16,7 +16,7 @@ func NewScaffold(with func(scaffold *Scaffold)) *Scaffold {
 	s := &Scaffold{
 		id:                  nextPtr(),
 		navigationComponent: NewShared[*NavigationComponent]("navigationComponent"),
-		body:                NewShared[core.Component]("body"),
+		body:                NewShared[core.View]("body"),
 	}
 
 	s.properties = []core.Property{s.navigationComponent, s.body}
@@ -28,7 +28,7 @@ func NewScaffold(with func(scaffold *Scaffold)) *Scaffold {
 	return s
 }
 
-func (s *Scaffold) Body() *Shared[core.Component] {
+func (s *Scaffold) Body() *Shared[core.View] {
 	return s.body
 }
 

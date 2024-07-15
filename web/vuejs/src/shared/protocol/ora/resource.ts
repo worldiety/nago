@@ -13,17 +13,20 @@ export interface Resource {
     /**
      * Name must not be a path, just the human readable (and not unique) file name.
      */
+    // Name
     name: string;
 
     /**
      * URI is likely an unreadable link to resolve the actual data. It may incorporate additional security tokens
      * and may have a limited lifetime and its scheme is undefined.
      */
+    // URI
     uri /*URI*/: URI;
 
     /**
      * MimeType is optional and is a hint about the anticipated content.
      */
+    // MimeType
     mimeType: string;
 }
 

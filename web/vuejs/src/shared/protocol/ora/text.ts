@@ -7,29 +7,40 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Padding } from '@/shared/protocol/ora/padding';
-import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Text {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Text'/*ComponentType*/;
-    value: Property<string>;
+    // Value
+    value/*omitempty*/? /*Value*/: string;
 
     /**
      * Color denotes the text color. Leave empty, for the context sensitiv default theme color.
      */
+    // Color
     color/*omitempty*/? /*Color*/: NamedColor;
 
     /**
      * BackgroundColor denotes the color of the text background.  Leave empty, for the context sensitiv default theme color.
      */
+    // BackgroundColor
     backgroundColor/*omitempty*/? /*BackgroundColor*/: NamedColor;
-    size: Property<string>;
-    onClick: Property<Ptr>;
-    onHoverStart: Property<Ptr>;
-    onHoverEnd: Property<Ptr>;
-    visible: Property<boolean>;
+    // Size
+    size/*omitempty*/? /*Size*/: string;
+    // OnClick
+    onClick/*omitempty*/? /*OnClick*/: Ptr;
+    // OnHoverStart
+    onHoverStart/*omitempty*/? /*OnHoverStart*/: Ptr;
+    // OnHoverEnd
+    onHoverEnd/*omitempty*/? /*OnHoverEnd*/: Ptr;
+    // Invisible
+    invisible/*omitempty*/? /*Invisible*/: boolean;
+    // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Frame
     f/*omitempty*/? /*Frame*/: Frame;
 }
 

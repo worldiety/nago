@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
-import {createFrameStyles} from "@/components/shared/frame";
+import {frameCSS} from "@/components/shared/frame";
 import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {Box} from "@/shared/protocol/ora/box";
 import {Alignment} from "@/shared/protocol/ora/alignment";
 
 import {Alignment as Al} from "@/components/shared/alignments";
-import {createPaddingStyles} from "@/components/shared/padding";
+import {paddingCSS} from "@/components/shared/padding";
 import {Padding} from "@/shared/protocol/ora/padding";
 import {cssLengthValue0Px} from "@/components/shared/length";
 
@@ -17,10 +17,10 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = createFrameStyles(props.ui.frame)
+	let s = frameCSS(props.ui.frame).join(";")
 	let c = namedColorStyles("background-color", props.ui.bgc)
 
-	return [s, c, createPaddingStyles(props.ui.p)].join(";")
+	return [s, c, paddingCSS(props.ui.p).join(";")].join(";")
 });
 
 const clazz = computed<string>(() => {

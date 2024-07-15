@@ -17,7 +17,7 @@ import (
 
 type Options[E any] struct {
 	title            string
-	actions          []core.Component // global components to show for the entire crud set, e.g. for custom create action
+	actions          []core.View // global components to show for the entire crud set, e.g. for custom create action
 	create           func(E) error
 	prepareCreate    func(E) (E, error)
 	findAll          iter.Seq2[E, error]
@@ -36,7 +36,7 @@ func NewOptions[E any](with func(opts *Options[E])) *Options[E] {
 }
 
 // Actions adds the given components into the CRUD global action area.
-func (o *Options[E]) Actions(actions ...core.Component) {
+func (o *Options[E]) Actions(actions ...core.View) {
 	o.actions = append(o.actions, actions...)
 }
 
@@ -164,7 +164,7 @@ type AggregateAction[T any] struct {
 	Style   ora.NamedColor
 }
 
-func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
+func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 	if opts == nil {
 		opts = NewOptions[E](nil)
 	}
@@ -402,7 +402,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 		componentBody.Children().Append(toolbar)
 		componentBody.Children().Append(ui.NewVStack(func(vstack *ui.VStack) {
 			//vstack.ElementSize().Set(ora.ElementSizeLarge) // TODO what do we make with the element size large thingy here?
-			vstack.Children().From(func(yield func(core.Component) bool) {
+			vstack.Bla = func(yield func(core.View) bool) {
 				findAll := opts.findAll
 				if findAll == nil {
 					slog.Info("cannot build table, findAll iter is nil")
@@ -484,7 +484,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 					}))
 
 				})
-			})
+			}
 		}))
 	}
 
@@ -524,12 +524,13 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.Component {
 	}
 
 	return ui.NewVStack(func(vstack *ui.VStack) {
-		componentBody = vstack
+		//componentBody = vstack
+		panic("fix me")
 		renderBody()
 	})
 }
 
-func newAggregateActionButton[E any](owner ui.ModalOwner, action AggregateAction[E], e E) core.Component {
+func newAggregateActionButton[E any](owner ui.ModalOwner, action AggregateAction[E], e E) core.View {
 	return ui.NewButton(func(btn *ui.Button) {
 		btn.Caption().Set(action.Caption)
 		btn.PreIcon().Set(action.Icon)

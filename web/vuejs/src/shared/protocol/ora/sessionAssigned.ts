@@ -11,7 +11,9 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
  * Native client (mobile or desktop) should use this event instead.
  */
 export interface SessionAssigned {
+    // Type
     type: 'SessionAssigned'/*EventType*/;
+    // SessionID
     sessionID: string;
 }
 

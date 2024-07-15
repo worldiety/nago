@@ -41,7 +41,7 @@ import (
 //
 // You cannot use path variables. Instead, use [core.Window.Values] to transport a state from one ViewRoot
 // (or window) to another.
-func (c *Configurator) Component(id ora.ComponentFactoryId, factory func(wnd core.Window) core.Component) {
+func (c *Configurator) Component(id ora.ComponentFactoryId, factory func(wnd core.Window) core.View) {
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid component factory id: %v", id))
 	}
@@ -69,7 +69,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
 	for id, f := range c.factories {
-		factories[id] = func(scope core.Window, requested ora.NewComponentRequested) core.Component {
+		factories[id] = func(scope core.Window) core.View {
 			return f(scope)
 		}
 	}
@@ -457,6 +457,10 @@ func (c *Configurator) newHandler() http.Handler {
 
 	for _, route := range r.Routes() {
 		slog.Info("routes", "route", route.Pattern)
+	}
+
+	for _, endpoint := range c.rawEndpoint {
+		r.Mount(endpoint.pattern, endpoint.handler)
 	}
 
 	return r

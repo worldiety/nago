@@ -13,14 +13,23 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface FlexContainer {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'FlexContainer'/*ComponentType*/;
+    // Elements
     elements: Property<Component[]>;
+    // ElementSize
     elementSize: Property<ElementSize>;
+    // Orientation
     orientation: Property<Orientation>;
+    // ContentAlignment
     contentAlignment: Property<ContentAlignment>;
+    // ItemsAlignment
     itemsAlignment: Property<ItemsAlignment>;
+    // Visible
     visible: Property<boolean>;
+    // MaxWidth
     maxWidth: Property<ElementSize>;
 }
 

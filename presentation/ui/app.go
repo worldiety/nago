@@ -32,7 +32,7 @@ type Application struct {
 	Version     string
 	Description string
 	OIDC        []OIDCProvider //deprecated must be unified/abstracted away
-	Components  map[ora.ComponentFactoryId]func(realm core.Window) core.Component
+	Components  map[ora.ComponentFactoryId]func(realm core.Window) core.View
 }
 
 // OIDCProvider does not perform any oauth workflow in the backend. Instead, it expects that workflow at the

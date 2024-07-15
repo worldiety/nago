@@ -11,10 +11,15 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface NavigationComponent {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'NavigationComponent'/*ComponentType*/;
+    // Logo
     logo: Property<SVG>;
+    // Menu
     menu: Property<MenuEntry[]>;
+    // Alignment
     alignment: Property<Alignment>;
 }
 

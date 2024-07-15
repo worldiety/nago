@@ -9,9 +9,13 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Page {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'Page'/*ComponentType*/;
+    // Body
     body: Property<Component>;
+    // Modals
     modals: Property<Component[]>;
 }
 

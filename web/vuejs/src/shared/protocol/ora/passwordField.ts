@@ -8,18 +8,31 @@ import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface PasswordField {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'PasswordField'/*ComponentType*/;
+    // Label
     label: Property<string>;
+    // Hint
     hint: Property<string>;
+    // Help
     help: Property<string>;
+    // Error
     error: Property<string>;
+    // Value
     value: Property<string>;
+    // Revealed
     revealed: Property<boolean>;
+    // Placeholder
     placeholder: Property<string>;
+    // Disabled
     disabled: Property<boolean>;
+    // Simple
     simple: Property<boolean>;
+    // OnPasswordChanged
     onPasswordChanged: Property<Ptr>;
+    // Visible
     visible: Property<boolean>;
 }
 

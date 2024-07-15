@@ -284,12 +284,12 @@ func renderSharedListMenuEntries(s *SharedList[*MenuEntry]) ora.Property[[]ora.M
 	return res
 }
 
-func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]ora.Component] {
+func renderSharedListComponents(s *SharedList[core.View]) ora.Property[[]ora.Component] {
 	res := ora.Property[[]ora.Component]{
 		Ptr: s.id,
 	}
 
-	s.Iter(func(value core.Component) bool {
+	s.Iter(func(value core.View) bool {
 		res.Value = append(res.Value, value.Render())
 		return true
 	})
@@ -297,10 +297,10 @@ func renderSharedListComponents(s *SharedList[core.Component]) ora.Property[[]or
 	return res
 }
 
-func renderSharedListComponentsFlat(s *SharedList[core.Component]) []ora.Component {
+func renderComponents(it iter.Seq[core.View]) []ora.Component {
 	var res []ora.Component
 
-	s.Iter(func(value core.Component) bool {
+	it(func(value core.View) bool {
 		res = append(res, value.Render())
 		return true
 	})
@@ -308,7 +308,18 @@ func renderSharedListComponentsFlat(s *SharedList[core.Component]) []ora.Compone
 	return res
 }
 
-func renderSharedComponent(s *Shared[core.Component]) ora.Property[ora.Component] {
+func renderSharedListComponentsFlat(s *SharedList[core.View]) []ora.Component {
+	var res []ora.Component
+
+	s.Iter(func(value core.View) bool {
+		res = append(res, value.Render())
+		return true
+	})
+
+	return res
+}
+
+func renderSharedComponent(s *Shared[core.View]) ora.Property[ora.Component] {
 	res := ora.Property[ora.Component]{
 		Ptr: s.id,
 	}

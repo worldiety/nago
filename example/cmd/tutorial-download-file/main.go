@@ -14,7 +14,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.Component {
+		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.NewButton(func(btn *ui.Button) {
 				btn.Caption().Set("download")
 				btn.Action().Set(func() {

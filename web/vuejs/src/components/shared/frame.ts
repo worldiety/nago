@@ -1,7 +1,7 @@
 import {Frame} from "@/shared/protocol/ora/frame";
 import {cssLengthValue} from "@/components/shared/length";
 
-export function createFrameStyles(frame?: Frame): string {
+export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];
 	if (frame?.w) {
 		styles.push("width:" + cssLengthValue(frame.w))
@@ -27,5 +27,5 @@ export function createFrameStyles(frame?: Frame): string {
 		styles.push("max-height:" + cssLengthValue(frame.hx))
 	}
 
-	return styles.join('; ');
+	return styles
 }

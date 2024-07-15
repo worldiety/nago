@@ -14,7 +14,7 @@ import (
 
 // Footer returns a default formatted footer line, using the correct alignment rules.
 // Use this for your custom dialogs.
-func Footer(buttons ...*ui.Button) core.Component {
+func Footer(buttons ...*ui.Button) core.View {
 	return ui.NewHStack(func(hstack *ui.HStack) {
 		hstack.SetAlignment(ora.Leading)
 		for _, b := range buttons {
@@ -42,7 +42,7 @@ func Confirm(owner ui.ModalOwner, msg string, confirmed func()) {
 }
 
 // deprecated: use RequestSupportView
-func ErrorView(msg string, err error) core.Component {
+func ErrorView(msg string, err error) core.View {
 	if err == nil {
 		return nil
 	}
@@ -55,7 +55,7 @@ func ErrorView(msg string, err error) core.Component {
 }
 
 // RequestSupportView allocates a new support view. See also RequestSupport.
-func RequestSupportView(wnd core.Window, err error) core.Component {
+func RequestSupportView(wnd core.Window, err error) core.View {
 	if err == nil {
 		err = fmt.Errorf("no error, but support requested")
 	}

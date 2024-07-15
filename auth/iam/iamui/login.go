@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/uix/xdialog"
 )
 
-func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.Component {
+func Login(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.View {
 	return ui.NewFlexContainer(func(flexContainer *ui.FlexContainer) {
 		flexContainer.ElementSize().Set(ora.ElementSizeLarge)
 		flexContainer.Children().Append(

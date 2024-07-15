@@ -10,16 +10,27 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface MenuEntry {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'MenuEntry'/*ComponentType*/;
+    // Icon
     icon: Property<SVG>;
+    // IconActive
     iconActive: Property<SVG>;
+    // Title
     title: Property<string>;
+    // Action
     action: Property<Ptr>;
+    // ComponentFactoryId
     componentFactoryId: Property<string>;
+    // Menu
     menu: Property<MenuEntry[]>;
+    // Badge
     badge: Property<string>;
+    // Expanded
     expanded: Property<boolean>;
+    // OnFocus
     onFocus: Property<Ptr>;
 }
 

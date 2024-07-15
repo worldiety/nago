@@ -12,7 +12,9 @@ import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
  * However, a frontend must guarantee to send such an event if the WindowSizeClass is changed.
  */
 export interface WindowInfoChanged {
+    // Type
     type: 'WindowInfoChanged'/*EventType*/;
+    // Info
     info: WindowInfo;
 }
 

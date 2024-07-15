@@ -16,16 +16,27 @@ import type { Ptr } from '@/shared/protocol/ora/ptr';
  * deprecated
  */
 export interface GridCell {
+    // Ptr
     id /*Ptr*/: Ptr;
+    // Type
     type: 'GridCell'/*ComponentType*/;
+    // Body
     body: Property<Component>;
+    // ColStart
     colStart: Property<number /*int64*/>;
+    // ColEnd
     colEnd: Property<number /*int64*/>;
+    // RowStart
     rowStart: Property<number /*int64*/>;
+    // RowEnd
     rowEnd: Property<number /*int64*/>;
+    // ColSpan
     colSpan: Property<number /*int64*/>;
+    // SmColSpan
     smColSpan: Property<number /*int64*/>;
+    // MdColSpan
     mdColSpan: Property<number /*int64*/>;
+    // LgColSpan
     lgColSpan: Property<number /*int64*/>;
 }
 

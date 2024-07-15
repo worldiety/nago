@@ -20,6 +20,12 @@ type Text struct {
 	Frame           ora.Frame
 }
 
+func NewTextF(with func(*Text)) func() core.View {
+	return func() core.View {
+		return NewText(with)
+	}
+}
+
 func NewText(with func(*Text)) *Text {
 	c := &Text{
 		id: nextPtr(),
@@ -100,21 +106,22 @@ func (c *Text) Visible() Bool {
 }
 
 func (c *Text) Render() ora.Component {
-	return ora.Text{
-		Ptr:             c.id,
-		Type:            ora.TextT,
-		Value:           c.value.render(),
-		Color:           c.color,
-		BackgroundColor: c.backgroundColor,
-		Size: ora.Property[string]{
-			Ptr:   c.size.id,
-			Value: string(c.size.v),
-		},
-		OnClick:      renderFunc(c.onClick),
-		OnHoverStart: renderFunc(c.onHoverStart),
-		OnHoverEnd:   renderFunc(c.onHoverEnd),
-		Visible:      c.visible.render(),
-		Padding:      c.Padding,
-		Frame:        c.Frame,
-	}
+	//return ora.Text{
+	//	Ptr:             c.id,
+	//	Type:            ora.TextT,
+	//	Value:           c.value.render(),
+	//	Color:           c.color,
+	//	BackgroundColor: c.backgroundColor,
+	//	Size: ora.Property[string]{
+	//		Ptr:   c.size.id,
+	//		Value: string(c.size.v),
+	//	},
+	//	OnClick:      renderFunc(c.onClick),
+	//	OnHoverStart: renderFunc(c.onHoverStart),
+	//	OnHoverEnd:   renderFunc(c.onHoverEnd),
+	//	Visible:      c.visible.render(),
+	//	Padding:      c.Padding,
+	//	Frame:        c.Frame,
+	//}
+	return nil
 }
