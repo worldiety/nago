@@ -41,8 +41,9 @@ func (o *Options[E]) Actions(actions ...core.Component) {
 }
 
 // AggregateActions adds the given actions to each individual entity or aggregate entry.
-func (o *Options[E]) AggregateActions(actions ...AggregateAction[E]) {
+func (o *Options[E]) AggregateActions(actions ...AggregateAction[E]) *Options[E] {
 	o.aggregateActions = append(o.aggregateActions, actions...)
+	return o
 }
 
 func (o *Options[E]) Title(s string) *Options[E] {
