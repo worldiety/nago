@@ -7,70 +7,38 @@ const props = defineProps<{
 	ui: GridCell;
 }>();
 
-const styleGridColStart = computed<string>(() => {
-	if (props.ui.colStart.v > 0) {
-		return `col-start-${props.ui.colStart.v} `;
+const style = computed<string>(() => {
+	const styles: string[] = [];
+
+	if (props.ui.cs) {
+		styles.push(`grid-column-start: ${props.ui.cs}`)
 	}
 
-	return '';
+	if (props.ui.ce) {
+		styles.push(`grid-column-end: ${props.ui.ce}`)
+	}
+
+	if (props.ui.rs) {
+		styles.push(`grid-row-start: ${props.ui.rs}`)
+	}
+
+	if (props.ui.re) {
+		styles.push(`grid-row-end: ${props.ui.re}`)
+	}
+
+	if (props.ui.cp) {
+		styles.push(`grid-column: span ${props.ui.cp} / span ${props.ui.cp}`)
+	}
+
+	if (props.ui.rp) {
+		styles.push(`grid-row: span ${props.ui.cp} / span ${props.ui.cp}`)
+	}
+
+
+	return styles.join(";");
 });
-
-const styleGridColEnd = computed<string>(() => {
-	if (props.ui.colEnd.v > 0) {
-		return `col-end-${props.ui.colEnd.v} `;
-	}
-	return '';
-});
-
-const styleGridRowStart = computed<string>(() => {
-	if (props.ui.rowStart.v > 0) {
-		return `row-start-${props.ui.rowStart.v} `;
-	}
-
-	return '';
-});
-
-const styleGridRowEnd = computed<string>(() => {
-	if (props.ui.rowEnd.v > 0) {
-		return `row-end-${props.ui.rowEnd.v} `;
-	}
-	return '';
-});
-
-const styleGridColSpan = computed<string>(() => {
-	let tmp = '';
-	if (props.ui.colSpan.v > 0) {
-		tmp += `col-span-${props.ui.colSpan.v} `;
-	}
-
-	if (props.ui.smColSpan.v > 0) {
-		tmp += ` sm:col-span-${props.ui.smColSpan.v} `;
-	}
-
-	if (props.ui.mdColSpan.v > 0) {
-		tmp += ` md:col-span-${props.ui.mdColSpan.v} `;
-	}
-
-	if (props.ui.lgColSpan.v > 0) {
-		tmp += ` lg:col-span-${props.ui.lgColSpan.v} `;
-	}
-
-	return tmp;
-});
-
-const style = computed(
-	() => `
-    ${styleGridColStart.value}
-    ${styleGridColEnd.value}
-    ${styleGridRowStart.value}
-    ${styleGridRowEnd.value}
-    ${styleGridColSpan.value}
-`
-);
 </script>
 
 <template>
-	<div :class="style">
-		<ui-generic :ui="props.ui.body.v" />
-	</div>
+		<ui-generic v-if="props.ui.b" :ui="props.ui.b" :style="style"/>
 </template>

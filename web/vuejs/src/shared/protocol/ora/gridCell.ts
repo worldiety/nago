@@ -3,40 +3,31 @@
  */
 
 
+import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Property } from '@/shared/protocol/ora/property';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 /**
- * TODO this entire type is so HTML like and hard to handle and port to mobile devices. It has no semantics.
- * 
- * I vote for deletion, but what is the replacement?
- * 
- * deprecated
+ * GridCell is undefined, if explicit row start/col start etc. is set and span values.
  */
 export interface GridCell {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'GridCell'/*ComponentType*/;
+    type: 'C'/*ComponentType*/;
     // Body
-    body: Property<Component>;
+    b/*omitempty*/? /*Body*/: Component;
+    // Alignment
+    a/*omitempty*/? /*Alignment*/: Alignment;
     // ColStart
-    colStart: Property<number /*int64*/>;
+    cs/*omitempty*/? /*ColStart*/: number /*int64*/;
     // ColEnd
-    colEnd: Property<number /*int64*/>;
+    ce/*omitempty*/? /*ColEnd*/: number /*int64*/;
     // RowStart
-    rowStart: Property<number /*int64*/>;
+    rs/*omitempty*/? /*RowStart*/: number /*int64*/;
     // RowEnd
-    rowEnd: Property<number /*int64*/>;
+    re/*omitempty*/? /*RowEnd*/: number /*int64*/;
     // ColSpan
-    colSpan: Property<number /*int64*/>;
-    // SmColSpan
-    smColSpan: Property<number /*int64*/>;
-    // MdColSpan
-    mdColSpan: Property<number /*int64*/>;
-    // LgColSpan
-    lgColSpan: Property<number /*int64*/>;
+    cp/*omitempty*/? /*ColSpan*/: number /*int64*/;
+    // RowSpan
+    rp/*omitempty*/? /*RowSpan*/: number /*int64*/;
 }
 

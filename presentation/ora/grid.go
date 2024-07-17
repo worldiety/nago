@@ -1,20 +1,12 @@
 package ora
 
-// TODO this entire type is so HTML like and hard to handle and port to mobile devices. It has no semantics.
-//
-//	I vote for deletion, but what is the replacement?
-//
-// deprecated: use flexcontainer
+// A Grid must support up to 12 Columns and a reasonable "unlimited" amount of rows.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Grid struct {
-	Ptr       Ptr                  `json:"id"`
-	Type      ComponentType        `json:"type" value:"Grid"`
-	Cells     Property[[]GridCell] `json:"cells"`
-	Rows      Property[int64]      `json:"rows"`
-	Columns   Property[int64]      `json:"columns"`
-	SMColumns Property[int64]      `json:"smColumns"`
-	MDColumns Property[int64]      `json:"mdColumns"`
-	LGColumns Property[int64]      `json:"lgColumns"`
-	Gap       Property[string]     `json:"gap"`
+	Type    ComponentType `json:"type" value:"G"`
+	Cells   []GridCell    `json:"b,omitempty"`
+	Rows    int64         `json:"r,omitempty"`
+	Columns int64         `json:"c,omitempty"`
+	Gap     Length        `json:"g,omitempty"`
 	component
 }

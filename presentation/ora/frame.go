@@ -51,8 +51,6 @@ func (l Length) Mul(s float64) Length {
 	return Length(fmt.Sprintf("%.3f%s", v*s, ext))
 }
 
-var Auto = Relative(0)
-
 var Full = Relative(1)
 
 // ViewportHeight is a magic value which sets the intrinsic size of an Element to be the smallest available viewport

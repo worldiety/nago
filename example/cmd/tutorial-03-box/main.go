@@ -58,15 +58,16 @@ func Avatar(data ora.URI) core.View {
 func PostedImage(data ora.URI) core.View {
 	return ui.Image().
 		URI(data).
-		Frame(ora.Frame{}.Size(ora.Full, ora.Undefined)).
-		Border(ora.Border{}.Radius(ora.L4))
+		Frame(ora.Frame{}.Size(ora.Full, ora.Auto)).
+		Border(ora.Border{}.Radius(ora.L4).Elevate(2))
 }
 
 func Details(headline, subheadline string) core.View {
 	return ui.VStack(
 		ui.Text(headline).Font(ora.Title),
 		ui.Text(subheadline),
-	).Alignment(ora.Leading).Padding(ora.Padding{}.Horizontal(ora.L20))
+	).Alignment(ora.Leading).
+		Padding(ora.Padding{}.Horizontal(ora.L20))
 }
 
 func Card(views ...core.View) core.View {
@@ -74,6 +75,6 @@ func Card(views ...core.View) core.View {
 		Gap(ora.L12).
 		Alignment(ora.Leading).
 		Border(ora.Border{}.Radius(ora.L4).Elevate(4)).
-		Frame(ora.Frame{}.Size(ora.L320, ora.Undefined)).
+		Frame(ora.Frame{}.Size(ora.L320, ora.Auto)).
 		Padding(ora.Padding{}.All(ora.L8))
 }

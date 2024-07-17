@@ -33,7 +33,7 @@ const (
 	L480 Length = "30rem"
 )
 
-const Undefined = ""
+const Auto = ""
 
 var (
 	Title = Font{

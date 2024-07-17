@@ -1,52 +1,38 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import {computed} from 'vue';
 import UiGridCell from '@/components/UiGridCell.vue';
-import { gapSize2Tailwind } from '@/shared/tailwindTranslator';
 import {Grid} from "@/shared/protocol/ora/grid";
 
 const props = defineProps<{
 	ui: Grid;
 }>();
 
-//TODO remove this entire type, because it has no semantic meaning and cannot be ported to different platforms without major glitches
+
 const style = computed<string>(() => {
-	let tmp = 'grid';
-	if (props.ui.columns.v > 0) {
-		tmp += ` grid-cols-${props.ui.columns.v}`;
+	const styles: string[] = [];
+
+	if (!props.ui.c || props.ui.c === 0) {
+		styles.push("grid-auto-columns: auto")
 	} else {
-		if (props.ui.rows.v > 0) {
-			tmp += ' grid-flow-col';
-		} else {
-			tmp += ' grid-cols-auto';
-		}
+		styles.push(`grid-template-columns: repeat(${props.ui.c}, minmax(0, 1fr))`)
 	}
 
-	if (props.ui.smColumns.v > 0) {
-		tmp += ` sm:grid-cols-${props.ui.smColumns.v}`;
-	}
-
-	if (props.ui.mdColumns.v > 0) {
-		tmp += ` md:grid-cols-${props.ui.mdColumns.v}`;
-	}
-
-	if (props.ui.lgColumns.v > 0) {
-		tmp += ` lg:grid-cols-${props.ui.lgColumns.v}`;
-	}
-
-	if (props.ui.rows.v > 0) {
-		tmp += ` grid-rows-${props.ui.rows.v}`;
+	if (!props.ui.r || props.ui.r === 0) {
+		styles.push("grid-auto-rows: auto")
 	} else {
-		tmp += ' grid-rows-auto';
+		styles.push(`grid-template-rows: repeat(${props.ui.r}, minmax(0, 1fr))`)
 	}
 
-	tmp += ' ' + gapSize2Tailwind(props.ui.gap.v);
+	if (props.ui.g) {
+		styles.push(`gap: ${props.ui.g}`)
+	}
 
-	return tmp;
+	return styles.join(";");
 });
 </script>
 
 <template>
-	<div :class="style">
-		<ui-grid-cell v-for="cell in props.ui.cells.v" :ui="cell"  />
+	<div class="grid" :style="style">
+		<ui-grid-cell v-for="cell in props.ui.b" :ui="cell"/>
 	</div>
 </template>

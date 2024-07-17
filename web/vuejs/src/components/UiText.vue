@@ -19,17 +19,17 @@ const serviceAdapter = useServiceAdapter();
 
 const styles = computed<string>(() => {
 	let styles = frameCSS(props.ui.f)
-	if (props.ui.color) {
-		styles.push(`color: ${colorValue(props.ui.color)}`)
+	if (props.ui.c) {
+		styles.push(`color: ${colorValue(props.ui.c)}`)
 	}
 
-	if (props.ui.backgroundColor) {
-		styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`)
+	if (props.ui.bgc) {
+		styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 	}
 
 	styles.push(...borderCSS(props.ui.b))
 	styles.push(...paddingCSS(props.ui.p))
-	styles.push(...fontCSS(props.ui.fn))
+	styles.push(...fontCSS(props.ui.o))
 
 	return styles.join(";")
 });
@@ -55,8 +55,8 @@ function onMouseLeave() {
 </script>
 
 <template>
-	<span v-if="!ui.invisible" :style="styles" @click="onClick" @mouseenter="onMouseEnter"
+	<span v-if="!ui.i" :style="styles" @click="onClick" @mouseenter="onMouseEnter"
 				@mouseleave="onMouseLeave">{{
-			props.ui.value
+			props.ui.v
 		}}</span>
 </template>

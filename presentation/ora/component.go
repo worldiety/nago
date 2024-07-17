@@ -28,10 +28,10 @@ type ComponentType string
 
 const (
 	ButtonT              ComponentType = "Button"
-	GridT                ComponentType = "Grid"
-	GridCellT            ComponentType = "GridCell"
+	GridT                ComponentType = "G"
+	GridCellT            ComponentType = "C"
 	DialogT              ComponentType = "Dialog"
-	TextT                ComponentType = "Text"
+	TextT                ComponentType = "T"
 	PageT                ComponentType = "Page"
 	VBoxT                ComponentType = "VBox"
 	HBoxT                ComponentType = "HBox"

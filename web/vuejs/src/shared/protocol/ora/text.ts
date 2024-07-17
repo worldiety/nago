@@ -12,24 +12,22 @@ import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface Text {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Text'/*ComponentType*/;
+    type: 'T'/*ComponentType*/;
     // Value
-    value/*omitempty*/? /*Value*/: string;
+    v/*omitempty*/? /*Value*/: string;
 
     /**
      * Color denotes the text color. Leave empty, for the context sensitiv default theme color.
      */
     // Color
-    color/*omitempty*/? /*Color*/: Color;
+    c/*omitempty*/? /*Color*/: Color;
 
     /**
      * BackgroundColor denotes the color of the text background.  Leave empty, for the context sensitiv default theme color.
      */
     // BackgroundColor
-    backgroundColor/*omitempty*/? /*BackgroundColor*/: Color;
+    bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // OnClick
     onClick/*omitempty*/? /*OnClick*/: Ptr;
     // OnHoverStart
@@ -37,7 +35,7 @@ export interface Text {
     // OnHoverEnd
     onHoverEnd/*omitempty*/? /*OnHoverEnd*/: Ptr;
     // Invisible
-    invisible/*omitempty*/? /*Invisible*/: boolean;
+    i/*omitempty*/? /*Invisible*/: boolean;
     // Border
     b/*omitempty*/? /*Border*/: Border;
     // Padding
@@ -51,6 +49,6 @@ export interface Text {
     // AccessibilityLabel
     al/*omitempty*/? /*AccessibilityLabel*/: string;
     // Font
-    fn/*omitempty*/? /*Font*/: Font;
+    o/*omitempty*/? /*Font*/: Font;
 }
 

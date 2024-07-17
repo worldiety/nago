@@ -1,22 +1,16 @@
 package ora
 
-// TODO this entire type is so HTML like and hard to handle and port to mobile devices. It has no semantics.
-//
-//	I vote for deletion, but what is the replacement?
-//
-// deprecated
+// GridCell is undefined, if explicit row start/col start etc. is set and span values.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type GridCell struct {
-	Ptr       Ptr                 `json:"id"`
-	Type      ComponentType       `json:"type" value:"GridCell"`
-	Body      Property[Component] `json:"body"`
-	ColStart  Property[int64]     `json:"colStart"`
-	ColEnd    Property[int64]     `json:"colEnd"`
-	RowStart  Property[int64]     `json:"rowStart"`
-	RowEnd    Property[int64]     `json:"rowEnd"`
-	ColSpan   Property[int64]     `json:"colSpan"`
-	SmColSpan Property[int64]     `json:"smColSpan"`
-	MdColSpan Property[int64]     `json:"mdColSpan"`
-	LgColSpan Property[int64]     `json:"lgColSpan"`
+	Type      ComponentType `json:"type" value:"C"`
+	Body      Component     `json:"b,omitempty"`
+	Alignment Alignment     `json:"a,omitempty"` // default (== empty) must stretch the element
+	ColStart  int64         `json:"cs,omitempty"`
+	ColEnd    int64         `json:"ce,omitempty"`
+	RowStart  int64         `json:"rs,omitempty"`
+	RowEnd    int64         `json:"re,omitempty"`
+	ColSpan   int64         `json:"cp,omitempty"`
+	RowSpan   int64         `json:"rp,omitempty"`
 	component
 }

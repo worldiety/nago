@@ -5,34 +5,21 @@
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { GridCell } from '@/shared/protocol/ora/gridCell';
-import type { Property } from '@/shared/protocol/ora/property';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { Length } from '@/shared/protocol/ora/length';
 
 /**
- * TODO this entire type is so HTML like and hard to handle and port to mobile devices. It has no semantics.
- * 
- * I vote for deletion, but what is the replacement?
- * 
- * deprecated: use flexcontainer
+ * A Grid must support up to 12 Columns and a reasonable "unlimited" amount of rows.
  */
 export interface Grid {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Grid'/*ComponentType*/;
+    type: 'G'/*ComponentType*/;
     // Cells
-    cells: Property<GridCell[]>;
+    b/*omitempty*/? /*Cells*/: GridCell[];
     // Rows
-    rows: Property<number /*int64*/>;
+    r/*omitempty*/? /*Rows*/: number /*int64*/;
     // Columns
-    columns: Property<number /*int64*/>;
-    // SMColumns
-    smColumns /*SMColumns*/: Property<number /*int64*/>;
-    // MDColumns
-    mdColumns /*MDColumns*/: Property<number /*int64*/>;
-    // LGColumns
-    lgColumns /*LGColumns*/: Property<number /*int64*/>;
+    c/*omitempty*/? /*Columns*/: number /*int64*/;
     // Gap
-    gap: Property<string>;
+    g/*omitempty*/? /*Gap*/: Length;
 }
 
