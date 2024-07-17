@@ -12,6 +12,7 @@ type THStack struct {
 	frame           ora.Frame
 	gap             ora.Length
 	padding         ora.Padding
+	font            ora.Font
 }
 
 func HStack(children ...core.View) *THStack {
@@ -43,6 +44,11 @@ func (c THStack) Frame(fr ora.Frame) THStack {
 	return c
 }
 
+func (c THStack) Font(font ora.Font) THStack {
+	c.font = font
+	return c
+}
+
 func (c THStack) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.HStack{
@@ -53,5 +59,6 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		BackgroundColor: c.backgroundColor,
 		Gap:             c.gap,
 		Padding:         c.padding,
+		Font:            c.font,
 	}
 }

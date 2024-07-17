@@ -23,5 +23,6 @@ type VStack struct {
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	AccessibilityLabel string `json:"al,omitempty"`
 	Invisible          bool   `json:"iv,omitempty"`
+	Font               Font   `json:"fn,omitempty"`
 	component
 }

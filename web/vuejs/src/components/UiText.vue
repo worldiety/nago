@@ -7,6 +7,7 @@ import {frameCSS} from "@/components/shared/frame";
 import {paddingCSS} from "@/components/shared/padding";
 import {cssLengthValue} from "@/components/shared/length";
 import {colorValue} from "@/components/shared/colors";
+import {fontCSS} from "@/components/shared/font";
 
 const props = defineProps<{
 	ui: Text;
@@ -26,10 +27,8 @@ const styles = computed<string>(() => {
 	}
 
 	styles.push(...paddingCSS(props.ui.p))
-	if (props.ui) {
-		styles.push(`font-size: ${cssLengthValue(props.ui.s)}`)
-	}
-	console.log(styles)
+	styles.push(...fontCSS(props.ui.fn))
+
 	return styles.join(";")
 });
 

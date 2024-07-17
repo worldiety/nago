@@ -14,6 +14,7 @@ type TVStack struct {
 	padding         ora.Padding
 	border          ora.Border
 	invisible       bool
+	font            ora.Font
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	accessibilityLabel string
 }
@@ -36,6 +37,11 @@ func (c TVStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
 
 func (c TVStack) Alignment(alignment ora.Alignment) TVStack {
 	c.alignment = alignment
+	return c
+}
+
+func (c TVStack) Font(font ora.Font) TVStack {
+	c.font = font
 	return c
 }
 
@@ -77,5 +83,6 @@ func (c TVStack) Render(ctx core.RenderContext) ora.Component {
 		Border:             c.border,
 		AccessibilityLabel: c.accessibilityLabel,
 		Invisible:          c.invisible,
+		Font:               c.font,
 	}
 }

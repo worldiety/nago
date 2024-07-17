@@ -7,6 +7,7 @@ import {Alignment} from "@/components/shared/alignments";
 import {cssLengthValue} from "@/components/shared/length";
 import {paddingCSS} from "@/components/shared/padding";
 import {colorValue} from "@/components/shared/colors";
+import {fontCSS} from "@/components/shared/font";
 
 const props = defineProps<{
 	ui: HStack;
@@ -24,6 +25,7 @@ const frameStyles = computed<string>(() => {
 	}
 
 	styles.push(...paddingCSS(props.ui.p))
+	styles.push(...fontCSS(props.ui.fn))
 
 	return styles.join(";")
 });

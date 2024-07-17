@@ -5,7 +5,6 @@
 
 
 /**
- * Color specifies the color, style or even semantics for the user when using a component.
- * See also https://experience.sap.com/fiori-design-web/how-to-use-semantic-colors/.
+ * Color specifies either a hex color like #rrggbb or #rrggbbaa or a custom color name.
  */
 export type Color = string 

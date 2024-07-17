@@ -19,5 +19,6 @@ type HStack struct {
 	// BackgroundColor regular is always transparent
 	BackgroundColor Color   `json:"bgc,omitempty"`
 	Padding         Padding `json:"p,omitempty"`
+	Font            Font    `json:"fn,omitempty"`
 	component
 }

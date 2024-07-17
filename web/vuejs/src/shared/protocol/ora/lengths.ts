@@ -5,12 +5,8 @@
 
 import type { Length } from '@/shared/protocol/ora/length';
 
-export interface LengthRule {
-    // Name
-    name: string;
-    // MinWidth
-    minWidth: Length;
-    // Value
-    value: Length;
+export interface Lengths {
+    // CustomLengths
+    customLengths: Record<string,Length>;
 }
 

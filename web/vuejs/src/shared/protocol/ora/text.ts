@@ -5,8 +5,8 @@
 
 import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Font } from '@/shared/protocol/ora/font';
 import type { Frame } from '@/shared/protocol/ora/frame';
-import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
@@ -29,8 +29,6 @@ export interface Text {
      */
     // BackgroundColor
     backgroundColor/*omitempty*/? /*BackgroundColor*/: Color;
-    // Size
-    s/*omitempty*/? /*Size*/: Length;
     // OnClick
     onClick/*omitempty*/? /*OnClick*/: Ptr;
     // OnHoverStart
@@ -49,5 +47,7 @@ export interface Text {
      */
     // AccessibilityLabel
     al/*omitempty*/? /*AccessibilityLabel*/: string;
+    // Font
+    fn/*omitempty*/? /*Font*/: Font;
 }
 

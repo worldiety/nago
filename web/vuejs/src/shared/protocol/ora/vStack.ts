@@ -8,6 +8,7 @@ import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Font } from '@/shared/protocol/ora/font';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
@@ -60,5 +61,7 @@ export interface VStack {
     al/*omitempty*/? /*AccessibilityLabel*/: string;
     // Invisible
     iv/*omitempty*/? /*Invisible*/: boolean;
+    // Font
+    fn/*omitempty*/? /*Font*/: Font;
 }
 

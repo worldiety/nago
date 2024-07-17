@@ -3,6 +3,7 @@
  */
 
 
+import type { Color } from '@/shared/protocol/ora/color';
 import type { HSLColor } from '@/shared/protocol/ora/hSLColor';
 
 export interface Colors {
@@ -42,5 +43,7 @@ export interface Colors {
     secondary: HSLColor;
     // Tertiary
     tertiary: HSLColor;
+    // CustomColors
+    customColors: Record<string,Color>;
 }
 

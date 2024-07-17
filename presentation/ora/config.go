@@ -57,54 +57,24 @@ func (e ConfigurationDefined) ReqID() RequestId {
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type ColorRule struct {
-	Name string `json:"name"`
-
-	// Light is the value for the user preferred color light mode
-	Light Color `json:"light"`
-
-	// Dark is the value for the user preferred color dark mode
-	Dark Color `json:"dark"`
-}
-
-func NewColorRule(colorName string, light Color, dark Color) ColorRule {
-	return ColorRule{
-		Name:  colorName,
-		Light: light,
-		Dark:  dark,
-	}
-}
-
-// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type LengthRule struct {
-	Name     string `json:"name"`
-	MinWidth Length `json:"minWidth"`
-	Value    Length `json:"value"`
-}
-
-func NewLengthRule(lengthName string, minWidth Length, value Length) LengthRule {
-	return LengthRule{
-		Name:     lengthName,
-		MinWidth: minWidth,
-		Value:    value,
-	}
-}
-
-// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Themes struct {
-	Colors       []ColorRule  `json:"colors"`
-	Lengths      []LengthRule `json:"lengths"`
-	Dark         Theme        `json:"dark"`
-	Light        Theme        `json:"light"`
-	HighContrast Theme        `json:"highContrast"`
-	Protanopie   Theme        `json:"protanopie"`
-	Deuteranopie Theme        `json:"deuteranopie"`
-	Tritanopie   Theme        `json:"tritanopie"`
+	Dark         Theme `json:"dark"`
+	Light        Theme `json:"light"`
+	HighContrast Theme `json:"highContrast"`
+	Protanopie   Theme `json:"protanopie"`
+	Deuteranopie Theme `json:"deuteranopie"`
+	Tritanopie   Theme `json:"tritanopie"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Theme struct {
-	Colors Colors `json:"colors"`
+	Colors  Colors  `json:"colors"`
+	Lengths Lengths `json:"lengths"`
+}
+
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type Lengths struct {
+	CustomLengths map[string]Length `json:"customLengths"`
 }
 
 type ThemeOption interface {
@@ -161,24 +131,25 @@ func GenerateTheme(opts ...ThemeOption) Theme {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Colors struct {
-	Primary            HSLColor `json:"primary"`
-	PrimaryTen         HSLColor `json:"primary10"`
-	PrimaryTwelve      HSLColor `json:"primary12"`
-	PrimaryFourteen    HSLColor `json:"primary14"`
-	PrimarySeventeen   HSLColor `json:"primary17"`
-	PrimaryTwentyTwo   HSLColor `json:"primary22"`
-	PrimaryThirty      HSLColor `json:"primary30"`
-	PrimarySixty       HSLColor `json:"primary60"`
-	PrimarySeventy     HSLColor `json:"primary70"`
-	PrimaryEightyThree HSLColor `json:"primary83"`
-	PrimaryEightySeven HSLColor `json:"primary87"`
-	PrimaryNinety      HSLColor `json:"primary90"`
-	PrimaryNinetyTwo   HSLColor `json:"primary92"`
-	PrimaryNinetyFour  HSLColor `json:"primary94"`
-	PrimaryNinetySix   HSLColor `json:"primary96"`
-	PrimaryNinetyEight HSLColor `json:"primary98"`
-	Secondary          HSLColor `json:"secondary"`
-	Tertiary           HSLColor `json:"tertiary"`
+	Primary            HSLColor         `json:"primary"`
+	PrimaryTen         HSLColor         `json:"primary10"`
+	PrimaryTwelve      HSLColor         `json:"primary12"`
+	PrimaryFourteen    HSLColor         `json:"primary14"`
+	PrimarySeventeen   HSLColor         `json:"primary17"`
+	PrimaryTwentyTwo   HSLColor         `json:"primary22"`
+	PrimaryThirty      HSLColor         `json:"primary30"`
+	PrimarySixty       HSLColor         `json:"primary60"`
+	PrimarySeventy     HSLColor         `json:"primary70"`
+	PrimaryEightyThree HSLColor         `json:"primary83"`
+	PrimaryEightySeven HSLColor         `json:"primary87"`
+	PrimaryNinety      HSLColor         `json:"primary90"`
+	PrimaryNinetyTwo   HSLColor         `json:"primary92"`
+	PrimaryNinetyFour  HSLColor         `json:"primary94"`
+	PrimaryNinetySix   HSLColor         `json:"primary96"`
+	PrimaryNinetyEight HSLColor         `json:"primary98"`
+	Secondary          HSLColor         `json:"secondary"`
+	Tertiary           HSLColor         `json:"tertiary"`
+	CustomColors       map[string]Color `json:"customColors"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

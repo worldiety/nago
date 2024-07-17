@@ -9,7 +9,7 @@ type TText struct {
 	content            string
 	color              ora.Color
 	backgroundColor    ora.Color
-	size               ora.Length
+	font               ora.Font
 	invisible          bool
 	onClick            func()
 	onHoverStart       func()
@@ -49,8 +49,8 @@ func (c TText) AccessibilityLabel(label string) core.DecoredView {
 	return c
 }
 
-func (c TText) Size(size ora.Length) TText {
-	c.size = size
+func (c TText) Font(font ora.Font) TText {
+	c.font = font
 	return c
 }
 
@@ -71,7 +71,7 @@ func (c TText) Render(ctx core.RenderContext) ora.Component {
 		Value:              c.content,
 		Color:              c.color,
 		BackgroundColor:    c.backgroundColor,
-		Size:               c.size,
+		Font:               c.font,
 		OnClick:            ctx.MountCallback(c.onClick),
 		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
 		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),

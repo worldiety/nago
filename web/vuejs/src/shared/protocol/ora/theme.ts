@@ -4,9 +4,12 @@
 
 
 import type { Colors } from '@/shared/protocol/ora/colors';
+import type { Lengths } from '@/shared/protocol/ora/lengths';
 
 export interface Theme {
     // Colors
     colors: Colors;
+    // Lengths
+    lengths: Lengths;
 }
 

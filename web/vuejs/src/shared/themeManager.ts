@@ -1,14 +1,12 @@
-import type { Theme } from '@/shared/protocol/ora/theme';
-import { inject } from 'vue';
-import { themeManagerKey } from '@/shared/injectionKeys';
-import type { Themes } from '@/shared/protocol/ora/themes';
-import {LengthRule} from "@/shared/protocol/ora/lengthRule";
-import {Length} from "@/shared/protocol/ora/length";
+import type {Theme} from '@/shared/protocol/ora/theme';
+import {inject} from 'vue';
+import {themeManagerKey} from '@/shared/injectionKeys';
+import type {Themes} from '@/shared/protocol/ora/themes';
 
 export default class ThemeManager {
 
 	private readonly localStorageKey = 'color-theme';
-	private themes: Themes|null = null;
+	private themes: Themes | null = null;
 
 	constructor() {
 		if (!localStorage.getItem(this.localStorageKey)) {
@@ -22,42 +20,42 @@ export default class ThemeManager {
 
 		// inject our custom color and length rules
 		// not sure about this, as it conflicts with the apply theme below
-		for (let color of themes.colors) {
-			let style = document.createElement('style');
-			style.innerHTML = `
-								
-				@media (prefers-color-scheme: light) {
-					:root {
-						--${color.name}: ${color.light};
-					}
-				}
-				
-					@media (prefers-color-scheme: dark) {
-					:root {
-						--${color.name}: ${color.dark};
-					}
-				}
-`;
-			document.head.appendChild(style);
-		}
-
-
-		//themes.lengths.sort((a, b) => {
-		//	return a.minWidth - b.minWidth
-		//})
-		for (let length of themes.lengths) {
-			let style = document.createElement('style');
-			style.innerHTML = `
-			
-					
-				@media (min-width: ${length.minWidth}) {
-					:root {
-						--${length.name}: ${length.value};
-					}
-				}
-`;
-			document.head.appendChild(style);
-		}
+// 		for (let color of themes.colors) {
+// 			let style = document.createElement('style');
+// 			style.innerHTML = `
+//
+// 				@media (prefers-color-scheme: light) {
+// 					:root {
+// 						--${color.name}: ${color.light};
+// 					}
+// 				}
+//
+// 					@media (prefers-color-scheme: dark) {
+// 					:root {
+// 						--${color.name}: ${color.dark};
+// 					}
+// 				}
+// `;
+// 			document.head.appendChild(style);
+// 		}
+//
+//
+// 		//themes.lengths.sort((a, b) => {
+// 		//	return a.minWidth - b.minWidth
+// 		//})
+// 		for (let length of themes.lengths) {
+// 			let style = document.createElement('style');
+// 			style.innerHTML = `
+//
+//
+// 				@media (min-width: ${length.minWidth}) {
+// 					:root {
+// 						--${length.name}: ${length.value};
+// 					}
+// 				}
+// `;
+// 			document.head.appendChild(style);
+// 		}
 	}
 
 	applyActiveTheme(): void {
@@ -75,7 +73,7 @@ export default class ThemeManager {
 		}
 	}
 
-	getActiveThemeKey(): ThemeKey|null {
+	getActiveThemeKey(): ThemeKey | null {
 		const activeThemeKey = localStorage.getItem(this.localStorageKey);
 		return activeThemeKey ? activeThemeKey as ThemeKey : null;
 	}
@@ -114,6 +112,7 @@ export default class ThemeManager {
 	}
 
 	private applyTheme(theme: Theme): void {
+		let elem = document.getElementsByTagName('html')[0];
 		document.getElementsByTagName('html')[0].style.setProperty('--primary', `${theme.colors.primary.h}deg ${theme.colors.primary.s}% ${theme.colors.primary.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--primary-10', `${theme.colors.primary10.h}deg ${theme.colors.primary10.s}% ${theme.colors.primary10.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--primary-12', `${theme.colors.primary12.h}deg ${theme.colors.primary12.s}% ${theme.colors.primary12.l}%`);
@@ -134,6 +133,18 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].style.setProperty('--tertiary', `${theme.colors.tertiary.h}deg ${theme.colors.tertiary.s}% ${theme.colors.tertiary.l}%`);
 
 		// TODO apply themes custom colors or move it into each theme?
+		if (theme.colors.customColors) {
+			for (const [key, value] of Object.entries(theme.colors.customColors)) {
+				elem.style.setProperty(`--${key}`, value)
+			}
+		}
+
+		if (theme.lengths.customLengths) {
+			for (const [key, value] of Object.entries(theme.lengths.customLengths)) {
+				elem.style.setProperty(`--${key}`, value)
+			}
+		}
+
 	}
 }
 

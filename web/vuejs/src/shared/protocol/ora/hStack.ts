@@ -7,6 +7,7 @@ import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Font } from '@/shared/protocol/ora/font';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
@@ -49,5 +50,7 @@ export interface HStack {
     bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Font
+    fn/*omitempty*/? /*Font*/: Font;
 }
 
