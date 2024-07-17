@@ -17,7 +17,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.VStack(func(vstack *ui.ViewVStack) {
+			return ui.VStack(func(vstack *ui.TVStack) {
 				vstack.Frame(ora.Frame{Height: ora.ViewportHeight, Width: ora.Full})
 
 				vstack.Of(

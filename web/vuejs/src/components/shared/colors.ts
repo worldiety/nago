@@ -1,3 +1,5 @@
+import {Color} from "@/shared/protocol/ora/color";
+
 export enum NamedColor {
 	// Primary call-to-action intention.
 	Primary = "p",
@@ -30,47 +32,14 @@ export enum NamedColor {
 }
 
 
-export function namedColorStyles(attr:string,v? :string):string{
-	if (!v){
+export function colorValue(color?: Color): string {
+	if (!color) {
 		return ""
 	}
 
-	if (v.startsWith("#")){
-		return `${attr}: ${v};`
+	if (color.startsWith("#")){
+		return color
 	}
 
-	return ""
-}
-
-export function namedColorClasses(v? :string):string{
-	if (!v || v===""){
-		return "regular"
-	}
-
-	if (v.startsWith("#")){
-		return ""
-	}
-
-	switch (v){
-		case NamedColor.Primary:
-			return "primary"
-		case NamedColor.Secondary:
-			return "secondary"
-		case NamedColor.Tertiary:
-			return "tertiary"
-		case NamedColor.Regular:
-			return "regular"
-		case NamedColor.Positive:
-			return "positive"
-		case NamedColor.Error:
-			return "error"
-		case NamedColor.Warning:
-			return "warning"
-		case NamedColor.Informative:
-			return "informative"
-		default:
-			console.log("unknown color class name",v)
-			return ""
-
-	}
+	return `var(--${color})`
 }

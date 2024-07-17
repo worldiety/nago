@@ -13,7 +13,7 @@ type AlignedComponent struct {
 
 type Box struct {
 	children        []AlignedComponent
-	backgroundColor ora.NamedColor
+	backgroundColor ora.Color
 	frame           ora.Frame
 	padding         ora.Padding
 	with            func(box *Box)
@@ -25,7 +25,7 @@ func NewBox(with func(box *Box)) *Box {
 	return c
 }
 
-func (c *Box) BackgroundColor(backgroundColor ora.NamedColor) {
+func (c *Box) BackgroundColor(backgroundColor ora.Color) {
 	c.backgroundColor = backgroundColor
 }
 

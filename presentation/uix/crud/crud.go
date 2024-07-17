@@ -161,7 +161,7 @@ type AggregateAction[T any] struct {
 	Icon    ui.SVGSrc
 	Caption string
 	Action  func(ui.ModalOwner, T) error
-	Style   ora.NamedColor
+	Style   ora.Color
 }
 
 func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {

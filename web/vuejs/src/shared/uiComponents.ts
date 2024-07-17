@@ -30,13 +30,14 @@ import UiStr from "@/components/UiStr.vue";
 import UiHStack from "@/components/hstack/UiHStack.vue";
 import UiVStack from "@/components/vstack/UiVStack.vue";
 import UiBox from "@/components/box/UiBox.vue";
+import UiSpacer from "@/components/spacer/UiSpacer.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
 uiComponentsMap.set('Scaffold', UiScaffold);
 uiComponentsMap.set('Chip', UiChip);
 uiComponentsMap.set('Dialog', UiDialog);
-uiComponentsMap.set('Divider', UiDivider);
+uiComponentsMap.set('d', UiDivider);
 uiComponentsMap.set('Stepper', UiStepper);
 uiComponentsMap.set('FileField', UiUploadField);
 uiComponentsMap.set('I', UiImage);
@@ -64,5 +65,6 @@ uiComponentsMap.set('S', UiStr);
 uiComponentsMap.set('hs', UiHStack)
 uiComponentsMap.set('vs', UiVStack)
 uiComponentsMap.set('bx', UiBox)
+uiComponentsMap.set('s',UiSpacer)
 
 export default uiComponentsMap;

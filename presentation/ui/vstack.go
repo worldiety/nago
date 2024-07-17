@@ -11,7 +11,7 @@ type VStack struct {
 	Bla             iter.Seq[core.View]
 	Children        []core.View //iter.Seq[core.View]
 	alignment       ora.Alignment
-	backgroundColor ora.NamedColor
+	backgroundColor ora.Color
 	frame           ora.Frame
 	gap             ora.Length
 	padding         ora.Padding
@@ -45,11 +45,11 @@ func (c *VStack) SetGap(gap ora.Length) {
 	c.gap = gap
 }
 
-func (c *VStack) BackgroundColor() ora.NamedColor {
+func (c *VStack) BackgroundColor() ora.Color {
 	return c.backgroundColor
 }
 
-func (c *VStack) SetBackgroundColor(backgroundColor ora.NamedColor) {
+func (c *VStack) SetBackgroundColor(backgroundColor ora.Color) {
 	c.backgroundColor = backgroundColor
 }
 

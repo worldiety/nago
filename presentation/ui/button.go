@@ -10,7 +10,7 @@ type Button struct {
 	caption    String
 	preIcon    EmbeddedSVG
 	postIcon   EmbeddedSVG
-	color      *Shared[ora.NamedColor]
+	color      *Shared[ora.Color]
 	action     *Func
 	disabled   Bool
 	visible    Bool
@@ -31,7 +31,7 @@ func NewButton(with func(btn *Button)) *Button {
 		caption:  NewShared[string]("caption"),
 		preIcon:  NewShared[SVGSrc]("preIcon"),
 		postIcon: NewShared[SVGSrc]("postIcon"),
-		color:    NewShared[ora.NamedColor]("color"),
+		color:    NewShared[ora.Color]("color"),
 		disabled: NewShared[bool]("disabled"),
 		visible:  NewShared[bool]("visible"),
 		action:   NewFunc("action"),
@@ -66,7 +66,7 @@ func (c *Button) Caption() String {
 	return c.caption
 }
 
-func (c *Button) Style() *Shared[ora.NamedColor] {
+func (c *Button) Style() *Shared[ora.Color] {
 	return c.color
 }
 

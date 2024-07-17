@@ -5,62 +5,79 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type ViewText struct {
-	content         string
-	color           ora.NamedColor
-	backgroundColor ora.NamedColor
-	size            int
-	invisible       bool
-	onClick         func()
-	onHoverStart    func()
-	onHoverEnd      func()
-	Padding         ora.Padding
-	frame           ora.Frame
-	with            func(*ViewText)
+type TText struct {
+	content            string
+	color              ora.Color
+	backgroundColor    ora.Color
+	size               ora.Length
+	invisible          bool
+	onClick            func()
+	onHoverStart       func()
+	onHoverEnd         func()
+	padding            ora.Padding
+	frame              ora.Frame
+	border             ora.Border
+	accessibilityLabel string
 }
 
-func Text(with func(*ViewText)) *ViewText {
-	c := &ViewText{
-		with: with,
-	}
+func Text(content string) TText {
+	return TText{content: content}
+}
 
+func (c TText) Padding(padding ora.Padding) core.DecoredView {
+	c.padding = padding
 	return c
 }
 
-func TextFrom(s string) *ViewText {
-	return Text(func(text *ViewText) {
-		text.Content(s)
-	})
+func (c TText) Frame(frame ora.Frame) core.DecoredView {
+	c.frame = frame
+	return c
 }
 
-func (c *ViewText) Content(v string) {
-	c.content = v
+func (c TText) Border(border ora.Border) core.DecoredView {
+	c.border = border
+	return c
 }
 
-func (c *ViewText) Color(color ora.NamedColor) {
+func (c TText) Visible(visible bool) core.DecoredView {
+	c.invisible = !visible
+	return c
+}
+
+func (c TText) AccessibilityLabel(label string) core.DecoredView {
+	c.accessibilityLabel = label
+	return c
+}
+
+func (c TText) Size(size ora.Length) TText {
+	c.size = size
+	return c
+}
+
+func (c TText) Color(color ora.Color) TText {
 	c.color = color
+	return c
 }
 
-func (c *ViewText) BackgroundColor(backgroundColor ora.NamedColor) {
+func (c TText) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
 	c.backgroundColor = backgroundColor
+	return c
 }
 
-func (c *ViewText) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c TText) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.Text{
-		Type:            ora.TextT,
-		Value:           c.content,
-		Color:           c.color,
-		BackgroundColor: c.backgroundColor,
-		Size:            "fix me",
-		OnClick:         ctx.MountCallback(c.onClick),
-		OnHoverStart:    ctx.MountCallback(c.onHoverStart),
-		OnHoverEnd:      ctx.MountCallback(c.onHoverEnd),
-		Invisible:       c.invisible,
-		Padding:         c.Padding,
-		Frame:           c.frame,
+		Type:               ora.TextT,
+		Value:              c.content,
+		Color:              c.color,
+		BackgroundColor:    c.backgroundColor,
+		Size:               c.size,
+		OnClick:            ctx.MountCallback(c.onClick),
+		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
+		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),
+		Invisible:          c.invisible,
+		Padding:            c.padding,
+		Frame:              c.frame,
+		AccessibilityLabel: c.accessibilityLabel,
 	}
 }

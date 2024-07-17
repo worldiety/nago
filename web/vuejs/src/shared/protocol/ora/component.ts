@@ -27,9 +27,9 @@ import type { Page } from '@/shared/protocol/ora/page';
 import type { PasswordField } from '@/shared/protocol/ora/passwordField';
 import type { Scaffold } from '@/shared/protocol/ora/scaffold';
 import type { Slider } from '@/shared/protocol/ora/slider';
+import type { Spacer } from '@/shared/protocol/ora/spacer';
 import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 import type { Stepper } from '@/shared/protocol/ora/stepper';
-import type { Str } from '@/shared/protocol/ora/str';
 import type { Table } from '@/shared/protocol/ora/table';
 import type { TableCell } from '@/shared/protocol/ora/tableCell';
 import type { TableRow } from '@/shared/protocol/ora/tableRow';
@@ -41,6 +41,7 @@ import type { VStack } from '@/shared/protocol/ora/vStack';
 import type { WebView } from '@/shared/protocol/ora/webView';
 
 export type Component = 
+| Spacer
 | Box
 | VStack
 | HStack
@@ -76,4 +77,3 @@ export type Component =
 | Grid
 | GridCell
 | FlexContainer
-| Str

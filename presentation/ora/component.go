@@ -47,7 +47,7 @@ const (
 	TableRowT            ComponentType = "TableRow"
 	ToggleT              ComponentType = "Toggle"
 	DatePickerT          ComponentType = "DatePicker"
-	DividerT             ComponentType = "Divider"
+	DividerT             ComponentType = "d"
 	DropdownT            ComponentType = "Dropdown"
 	DropdownItemT        ComponentType = "DropdownItem"
 	ChipT                ComponentType = "Chip"
@@ -68,6 +68,7 @@ const (
 	HStackT              ComponentType = "hs"
 	VStackT              ComponentType = "vs"
 	BoxT                 ComponentType = "bx"
+	SpacerT              ComponentType = "s"
 )
 
 type Component interface {
@@ -118,16 +119,16 @@ func init() {
 		reflect.TypeOf(Checkbox{}),
 		reflect.TypeOf(Radiobutton{}),
 		reflect.TypeOf(FlexContainer{}),
-		reflect.TypeOf(Str{}),
 		reflect.TypeOf(HStack{}),
 		reflect.TypeOf(VStack{}),
 		reflect.TypeOf(Box{}),
+		reflect.TypeOf(Spacer{}),
 	}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer | Str
+	Spacer | Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer
 }
 
 type component struct {

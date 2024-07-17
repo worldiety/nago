@@ -3,8 +3,14 @@
  */
 
 
-import type { Border } from '@/shared/protocol/ora/border';
 import type { Length } from '@/shared/protocol/ora/length';
 
-func shadow(radius Length,)(Border,){
+export interface LengthRule {
+    // Name
+    name: string;
+    // MinWidth
+    minWidth: Length;
+    // Value
+    value: Length;
 }
+

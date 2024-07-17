@@ -4,9 +4,9 @@ import {computed} from 'vue';
 import {HStack} from "@/shared/protocol/ora/hStack";
 import {frameCSS} from "@/components/shared/frame";
 import {Alignment} from "@/components/shared/alignments";
-import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {cssLengthValue} from "@/components/shared/length";
 import {paddingCSS} from "@/components/shared/padding";
+import {colorValue} from "@/components/shared/colors";
 
 const props = defineProps<{
 	ui: HStack;
@@ -14,15 +14,18 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = frameCSS(props.ui.f).join(";")
-	let c = namedColorStyles("background-color", props.ui.bgc)
-
-	let gap = ""
-	if (props.ui.g) {
-		gap = `column-gap:${cssLengthValue(props.ui.g)}`
+	let styles = frameCSS(props.ui.f)
+	if (props.ui.bgc) {
+		styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 	}
 
-	return [s, c, gap, paddingCSS(props.ui.p).join(";")].join(";")
+	if (props.ui.g) {
+		styles.push(`column-gap:${cssLengthValue(props.ui.g)}`)
+	}
+
+	styles.push(...paddingCSS(props.ui.p))
+
+	return styles.join(";")
 });
 
 const clazz = computed<string>(() => {
@@ -61,10 +64,6 @@ const clazz = computed<string>(() => {
 
 	}
 
-
-	if (props.ui.bgc != undefined && props.ui.bgc !== "") {
-		classes += namedColorClasses(props.ui.bgc)
-	}
 
 
 	return classes

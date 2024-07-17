@@ -1,11 +1,24 @@
 <script lang="ts" setup>
-import type { Divider } from '@/shared/protocol/ora/divider';
+import type {Divider} from '@/shared/protocol/ora/divider';
+import {computed} from "vue";
+import {borderCSS} from "@/components/shared/border";
+import {frameCSS} from "@/components/shared/frame";
+import {marginCSS} from "@/components/shared/padding";
 
-defineProps<{
+const props = defineProps<{
 	ui: Divider;
 }>();
+
+const styles = computed<string>(() => {
+	let styles = borderCSS(props.ui.b)
+	styles.push(...frameCSS(props.ui.f))
+	styles.push(...marginCSS(props.ui.p))
+
+	return styles.join(";")
+})
+
 </script>
 
 <template>
-	<hr class="border-t-1 opacity-100" />
+	<div :style="styles"/>
 </template>

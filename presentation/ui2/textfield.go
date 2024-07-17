@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type ViewTextField struct {
+type TTextField struct {
 	label                  string
 	text                   *core.State[string]
 	placeholder            string
@@ -20,68 +20,64 @@ type ViewTextField struct {
 	onDebouncedTextChanged func()
 	debounceTime           time.Duration
 	frame                  ora.Frame
-	with                   func(field *ViewTextField)
 }
 
-func TextField(text *core.State[string], with func(tField *ViewTextField)) *ViewTextField {
-	c := &ViewTextField{
-		text: text,
+func TextField(label string, text *core.State[string]) *TTextField {
+	c := &TTextField{
+		text:  text,
+		label: label,
 	}
 
 	c.debounceTime = time.Millisecond * 500
-	c.with = with
 
 	return c
 }
 
-func (c *ViewTextField) OnTextChanged(f func()) {
+func (c *TTextField) OnTextChanged(f func()) {
 	c.onTextChanged = f
 }
 
-func (c *ViewTextField) OnDebouncedTextChanged(f func()) {
+func (c *TTextField) OnDebouncedTextChanged(f func()) {
 	c.onDebouncedTextChanged = f
 }
 
-func (c *ViewTextField) DebounceTime(d time.Duration) {
+func (c *TTextField) DebounceTime(d time.Duration) {
 	c.debounceTime = d
 }
 
-func (c *ViewTextField) Placeholder(p string) {
+func (c *TTextField) Placeholder(p string) {
 	c.placeholder = p
 }
 
-func (c *ViewTextField) Label(label string) {
+func (c *TTextField) Label(label string) {
 	c.label = label
 }
 
-func (c *ViewTextField) Hint(hint string) {
+func (c *TTextField) Hint(hint string) {
 	c.hint = hint
 }
 
-func (c *ViewTextField) Help(help string) {
+func (c *TTextField) Help(help string) {
 	c.help = help
 }
 
-func (c *ViewTextField) Error(error string) {
+func (c *TTextField) Error(error string) {
 	c.error = error
 }
 
-func (c *ViewTextField) Disabled(disabled bool) {
+func (c *TTextField) Disabled(disabled bool) {
 	c.disabled = disabled
 }
 
-func (c *ViewTextField) Frame(frame ora.Frame) {
+func (c *TTextField) Frame(frame ora.Frame) {
 	c.frame = frame
 }
 
-func (c *ViewTextField) Visible(v bool) {
+func (c *TTextField) Visible(v bool) {
 	c.invisible = !v
 }
 
-func (c *ViewTextField) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c *TTextField) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.TextField{
 		Type:                   ora.TextFieldT,

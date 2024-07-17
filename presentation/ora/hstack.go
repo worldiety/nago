@@ -17,7 +17,7 @@ type HStack struct {
 	// Alignment may be empty and omitted. Then Center (=c) must be applied.
 	Alignment Alignment `json:"a,omitempty"`
 	// BackgroundColor regular is always transparent
-	BackgroundColor NamedColor `json:"bgc,omitempty"`
-	Padding         Padding    `json:"p,omitempty"`
+	BackgroundColor Color   `json:"bgc,omitempty"`
+	Padding         Padding `json:"p,omitempty"`
 	component
 }

@@ -3,9 +3,15 @@
  */
 
 
+import type { ColorRule } from '@/shared/protocol/ora/colorRule';
+import type { LengthRule } from '@/shared/protocol/ora/lengthRule';
 import type { Theme } from '@/shared/protocol/ora/theme';
 
 export interface Themes {
+    // Colors
+    colors: ColorRule[];
+    // Lengths
+    lengths: LengthRule[];
     // Dark
     dark: Theme;
     // Light

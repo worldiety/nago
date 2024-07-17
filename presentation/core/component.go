@@ -96,5 +96,51 @@ func AutoState[T any](wnd Window) *State[T] {
 }
 
 type View interface {
+	//Padding(padding ora.Padding) View
 	Render(RenderContext) ora.Component
+}
+
+type DecoredView interface {
+	View
+	Padding(padding ora.Padding) DecoredView
+	Frame(frame ora.Frame) DecoredView
+	Border(border ora.Border) DecoredView
+	Visible(visible bool) DecoredView
+	// AccessibilityLabel is used to help screen readers, see guidelines, when use them.
+	// https://www.w3.org/WAI/tutorials/images/decision-tree/
+	AccessibilityLabel(label string) DecoredView
+}
+
+type ViewPadding struct {
+	parent  View
+	padding *ora.Padding
+}
+
+func NewViewPadding(parent View, padding *ora.Padding) ViewPadding {
+	return ViewPadding{parent: parent, padding: padding}
+}
+
+func (p ViewPadding) Top(pad ora.Length) View {
+	p.padding.Top = pad
+	return p.parent
+}
+
+func (p ViewPadding) All(pad ora.Length) View {
+	p.padding.Left = pad
+	p.padding.Right = pad
+	p.padding.Bottom = pad
+	p.padding.Top = pad
+	return p.parent
+}
+
+func (p ViewPadding) Vertical(pad ora.Length) View {
+	p.padding.Bottom = pad
+	p.padding.Top = pad
+	return p.parent
+}
+
+func (p ViewPadding) Horizontal(pad ora.Length) View {
+	p.padding.Left = pad
+	p.padding.Right = pad
+	return p.parent
 }

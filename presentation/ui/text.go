@@ -8,8 +8,8 @@ import (
 type Text struct {
 	id              ora.Ptr
 	value           String
-	color           ora.NamedColor
-	backgroundColor ora.NamedColor
+	color           ora.Color
+	backgroundColor ora.Color
 	size            *Shared[Size]
 	visible         Bool
 	properties      []core.Property
@@ -57,19 +57,19 @@ func (c *Text) Value() String {
 	return c.value
 }
 
-func (c *Text) Color() ora.NamedColor {
+func (c *Text) Color() ora.Color {
 	return c.color
 }
 
-func (c *Text) SetColor(color ora.NamedColor) {
+func (c *Text) SetColor(color ora.Color) {
 	c.color = color
 }
 
-func (c *Text) BackgroundColor() ora.NamedColor {
+func (c *Text) BackgroundColor() ora.Color {
 	return c.backgroundColor
 }
 
-func (c *Text) SetBackgroundColor(backgroundColor ora.NamedColor) {
+func (c *Text) SetBackgroundColor(backgroundColor ora.Color) {
 	c.backgroundColor = backgroundColor
 }
 
@@ -110,7 +110,7 @@ func (c *Text) Render() ora.Component {
 	//	Ptr:             c.id,
 	//	Type:            ora.TextT,
 	//	Value:           c.value.render(),
-	//	Color:           c.color,
+	//	HSLColor:           c.color,
 	//	BackgroundColor: c.backgroundColor,
 	//	Size: ora.Property[string]{
 	//		Ptr:   c.size.id,

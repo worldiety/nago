@@ -4,11 +4,12 @@
 
 
 import type { Alignment } from '@/shared/protocol/ora/alignment';
+import type { Border } from '@/shared/protocol/ora/border';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
-import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Padding } from '@/shared/protocol/ora/padding';
 
 /**
@@ -46,8 +47,18 @@ export interface VStack {
      * BackgroundColor regular is always transparent
      */
     // BackgroundColor
-    bgc/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Border
+    b/*omitempty*/? /*Border*/: Border;
+
+    /**
+     * see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+     */
+    // AccessibilityLabel
+    al/*omitempty*/? /*AccessibilityLabel*/: string;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
 }
 

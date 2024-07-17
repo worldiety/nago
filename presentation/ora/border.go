@@ -2,10 +2,10 @@ package ora
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Shadow struct {
-	Color  NamedColor `json:"c,omitempty"`
-	Radius Length     `json:"r,omitempty"`
-	X      Length     `json:"x,omitempty"`
-	Y      Length     `json:"y,omitempty"`
+	Color  Color  `json:"c,omitempty"`
+	Radius Length `json:"r,omitempty"`
+	X      Length `json:"x,omitempty"`
+	Y      Length `json:"y,omitempty"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -20,10 +20,10 @@ type Border struct {
 	RightWidth  Length `json:"rw,omitempty"`
 	BottomWidth Length `json:"bw,omitempty"`
 
-	LeftColor   NamedColor `json:"lc,omitempty"`
-	TopColor    NamedColor `json:"tc,omitempty"`
-	RightColor  NamedColor `json:"rc,omitempty"`
-	BottomColor NamedColor `json:"bc,omitempty"`
+	LeftColor   Color `json:"lc,omitempty"`
+	TopColor    Color `json:"tc,omitempty"`
+	RightColor  Color `json:"rc,omitempty"`
+	BottomColor Color `json:"bc,omitempty"`
 
 	BoxShadow Shadow `json:"s,omitempty"`
 }
@@ -48,7 +48,7 @@ func (b Border) Width(width Length) Border {
 	return b
 }
 
-func (b Border) Color(c NamedColor) Border {
+func (b Border) Color(c Color) Border {
 	b.LeftColor = c
 	b.TopColor = c
 	b.BottomColor = c

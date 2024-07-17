@@ -3,10 +3,10 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
 import {frameCSS} from "@/components/shared/frame";
 import {Alignment} from "@/components/shared/alignments";
-import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {VStack} from "@/shared/protocol/ora/vStack";
 import {cssLengthValue} from "@/components/shared/length";
 import {paddingCSS} from "@/components/shared/padding";
+import {colorValue} from "@/components/shared/colors";
 
 const props = defineProps<{
 	ui: VStack;
@@ -14,15 +14,18 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = frameCSS(props.ui.f).join(";")
-	let c = namedColorStyles("background-color", props.ui.bgc)
-
-	let gap = ""
-	if (props.ui.g) {
-		gap = `row-gap:${cssLengthValue(props.ui.g)}`
+	let styles = frameCSS(props.ui.f)
+	if (props.ui.bgc) {
+		styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 	}
 
-	return [s, c, gap, paddingCSS(props.ui.p).join(";")].join(";")
+	if (props.ui.g) {
+		styles.push(`row-gap:${cssLengthValue(props.ui.g)}`)
+	}
+
+	styles.push(...paddingCSS(props.ui.p).join(";"))
+
+	return styles.join(";")
 });
 
 const clazz = computed<string>(() => {
@@ -60,12 +63,6 @@ const clazz = computed<string>(() => {
 			break
 
 	}
-
-
-	if (props.ui.bgc != undefined && props.ui.bgc !== "") {
-		classes += namedColorClasses(props.ui.bgc)
-	}
-
 
 	return classes
 });

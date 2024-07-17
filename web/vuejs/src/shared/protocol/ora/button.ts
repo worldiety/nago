@@ -3,9 +3,9 @@
  */
 
 
+import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
-import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { SVG } from '@/shared/protocol/ora/sVG';
@@ -25,7 +25,7 @@ export interface Button {
     // PostIcon
     postIcon: Property<SVG>;
     // Color
-    color: Property<NamedColor>;
+    color: Property<Color>;
     // Disabled
     disabled: Property<boolean>;
     // Action

@@ -2,7 +2,6 @@
 import UiGeneric from '@/components/UiGeneric.vue';
 import {computed} from 'vue';
 import {frameCSS} from "@/components/shared/frame";
-import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {Box} from "@/shared/protocol/ora/box";
 import {Alignment} from "@/shared/protocol/ora/alignment";
 
@@ -17,20 +16,18 @@ const props = defineProps<{
 
 
 const frameStyles = computed<string>(() => {
-	let s = frameCSS(props.ui.frame).join(";")
-	let c = namedColorStyles("background-color", props.ui.bgc)
+	let styles = frameCSS(props.ui.frame)
+	if (props.ui.bgc) {
+		styles.push(`background-color: ${props.ui.bgc}`)
+	}
 
-	return [s, c, paddingCSS(props.ui.p).join(";")].join(";")
+	styles.push(...paddingCSS(props.ui.p))
+
+	return styles.join(";")
 });
 
 const clazz = computed<string>(() => {
 	let classes = "relative flex";
-
-
-	if (props.ui.bgc != undefined && props.ui.bgc !== "") {
-		classes += namedColorClasses(props.ui.bgc)
-	}
-
 
 	return classes
 });

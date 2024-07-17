@@ -2,7 +2,9 @@ package ora
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Divider struct {
-	Ptr  Ptr           `json:"id"`
-	Type ComponentType `json:"type" value:"Divider"`
+	Type    ComponentType `json:"type" value:"d"`
+	Frame   Frame         `json:"f,omitempty"`
+	Border  Border        `json:"b,omitempty"`
+	Padding Padding       `json:"p,omitempty"`
 	component
 }

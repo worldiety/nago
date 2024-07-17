@@ -17,7 +17,11 @@ type VStack struct {
 	// Alignment may be empty and omitted. Then Center (=c) must be applied.
 	Alignment Alignment `json:"a,omitempty"`
 	// BackgroundColor regular is always transparent
-	BackgroundColor NamedColor `json:"bgc,omitempty"`
-	Padding         Padding    `json:"p,omitempty"`
+	BackgroundColor Color   `json:"bgc,omitempty"`
+	Padding         Padding `json:"p,omitempty"`
+	Border          Border  `json:"b,omitempty"`
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	AccessibilityLabel string `json:"al,omitempty"`
+	Invisible          bool   `json:"iv,omitempty"`
 	component
 }

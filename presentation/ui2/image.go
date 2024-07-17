@@ -7,20 +7,17 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type ImageView struct {
+type TImage struct {
 	uri                ora.URI
 	accessibilityLabel string
 	invisible          bool
-	with               func(*ImageView)
 	border             ora.Border
 	frame              ora.Frame
 	padding            ora.Padding
 }
 
-func Image(with func(img *ImageView)) *ImageView {
-	return &ImageView{
-		with: with,
-	}
+func Image() TImage {
+	return TImage{}
 }
 
 // URI can be used for static image resources which are not provided by
@@ -29,15 +26,16 @@ func Image(with func(img *ImageView)) *ImageView {
 // If you need optimized data access and caching policies, you have to use this
 // way.
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
-func (c *ImageView) URI(uri ora.URI) {
+func (c TImage) URI(uri ora.URI) TImage {
 	c.uri = uri
+	return c
 }
 
 // Embed encodes the given buffer as a URI within the components attributes. This may be fine to
 // load small images synchronously, but it may break the channel, the server or the frontend, if too large.
 // Better use [application.Resource] for large static images. Embedding image data in the range of 100-200 byte
 // is totally fine, though. The resource URI alone is already about 100 characters long.
-func (c *ImageView) Embed(buf []byte) {
+func (c TImage) Embed(buf []byte) {
 	b64 := base64.StdEncoding.EncodeToString(buf)
 	if bytes.Contains(buf[:100], []byte("<svg")) {
 		c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
@@ -47,38 +45,32 @@ func (c *ImageView) Embed(buf []byte) {
 }
 
 // AccessibilityLabel sets a label for screen readers. See also https://www.w3.org/WAI/tutorials/images/decision-tree/.
-func (c *ImageView) AccessibilityLabel(label string) {
+func (c TImage) AccessibilityLabel(label string) core.DecoredView {
 	c.accessibilityLabel = label
+	return c
 }
 
-func (c *ImageView) Visible(b bool) {
+func (c TImage) Visible(b bool) core.DecoredView {
 	c.invisible = b
+	return c
 }
 
-func (c *ImageView) Padding() ora.Padding {
-	return c.padding
-}
-
-func (c *ImageView) SetPadding(padding ora.Padding) {
+func (c TImage) Padding(padding ora.Padding) core.DecoredView {
 	c.padding = padding
+	return c
 }
 
-func (c *ImageView) Border(border ora.Border) {
+func (c TImage) Border(border ora.Border) core.DecoredView {
 	c.border = border
+	return c
 }
 
-func (c *ImageView) Frame() ora.Frame {
-	return c.frame
-}
-
-func (c *ImageView) SetFrame(frame ora.Frame) {
+func (c TImage) Frame(frame ora.Frame) core.DecoredView {
 	c.frame = frame
+	return c
 }
 
-func (c *ImageView) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c TImage) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.Image{
 		Type:               ora.ImageT,

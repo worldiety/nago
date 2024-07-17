@@ -3,13 +3,19 @@
  */
 
 
+import type { Border } from '@/shared/protocol/ora/border';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { Frame } from '@/shared/protocol/ora/frame';
+import type { Padding } from '@/shared/protocol/ora/padding';
 
 export interface Divider {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Divider'/*ComponentType*/;
+    type: 'd'/*ComponentType*/;
+    // Frame
+    f/*omitempty*/? /*Frame*/: Frame;
+    // Border
+    b/*omitempty*/? /*Border*/: Border;
+    // Padding
+    p/*omitempty*/? /*Padding*/: Padding;
 }
 

@@ -22,7 +22,7 @@ const (
 type ConfigurationRequested struct {
 	Type           EventType   `json:"type" value:"ConfigurationRequested"`
 	AcceptLanguage string      `json:"acceptLanguage"`
-	ColorScheme    ColorScheme `json:"colorScheme" description:"Color scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
+	ColorScheme    ColorScheme `json:"colorScheme" description:"HSLColor scheme hint which the frontend has picked. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend."`
 	WindowInfo     WindowInfo  `json:"windowInfo"`
 	RequestId      RequestId   `json:"r" `
 	event
@@ -57,13 +57,49 @@ func (e ConfigurationDefined) ReqID() RequestId {
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type ColorRule struct {
+	Name string `json:"name"`
+
+	// Light is the value for the user preferred color light mode
+	Light Color `json:"light"`
+
+	// Dark is the value for the user preferred color dark mode
+	Dark Color `json:"dark"`
+}
+
+func NewColorRule(colorName string, light Color, dark Color) ColorRule {
+	return ColorRule{
+		Name:  colorName,
+		Light: light,
+		Dark:  dark,
+	}
+}
+
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type LengthRule struct {
+	Name     string `json:"name"`
+	MinWidth Length `json:"minWidth"`
+	Value    Length `json:"value"`
+}
+
+func NewLengthRule(lengthName string, minWidth Length, value Length) LengthRule {
+	return LengthRule{
+		Name:     lengthName,
+		MinWidth: minWidth,
+		Value:    value,
+	}
+}
+
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Themes struct {
-	Dark         Theme `json:"dark"`
-	Light        Theme `json:"light"`
-	HighContrast Theme `json:"highContrast"`
-	Protanopie   Theme `json:"protanopie"`
-	Deuteranopie Theme `json:"deuteranopie"`
-	Tritanopie   Theme `json:"tritanopie"`
+	Colors       []ColorRule  `json:"colors"`
+	Lengths      []LengthRule `json:"lengths"`
+	Dark         Theme        `json:"dark"`
+	Light        Theme        `json:"light"`
+	HighContrast Theme        `json:"highContrast"`
+	Protanopie   Theme        `json:"protanopie"`
+	Deuteranopie Theme        `json:"deuteranopie"`
+	Tritanopie   Theme        `json:"tritanopie"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -81,7 +117,7 @@ func (f themeFunc) apply(dst *Theme) {
 	f(dst)
 }
 
-func PrimaryColor(color Color) ThemeOption {
+func PrimaryColor(color HSLColor) ThemeOption {
 	return themeFunc(func(theme *Theme) {
 		theme.Colors.Primary = HSL(color.H, color.S, color.L)
 		theme.Colors.PrimaryTen = HSL(color.H, color.S, 10)
@@ -102,13 +138,13 @@ func PrimaryColor(color Color) ThemeOption {
 	})
 }
 
-func SecondaryColor(color Color) ThemeOption {
+func SecondaryColor(color HSLColor) ThemeOption {
 	return themeFunc(func(theme *Theme) {
 		theme.Colors.Secondary = color
 	})
 }
 
-func TertiaryColor(color Color) ThemeOption {
+func TertiaryColor(color HSLColor) ThemeOption {
 	return themeFunc(func(theme *Theme) {
 		theme.Colors.Tertiary = color
 	})
@@ -125,47 +161,47 @@ func GenerateTheme(opts ...ThemeOption) Theme {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Colors struct {
-	Primary            Color `json:"primary"`
-	PrimaryTen         Color `json:"primary10"`
-	PrimaryTwelve      Color `json:"primary12"`
-	PrimaryFourteen    Color `json:"primary14"`
-	PrimarySeventeen   Color `json:"primary17"`
-	PrimaryTwentyTwo   Color `json:"primary22"`
-	PrimaryThirty      Color `json:"primary30"`
-	PrimarySixty       Color `json:"primary60"`
-	PrimarySeventy     Color `json:"primary70"`
-	PrimaryEightyThree Color `json:"primary83"`
-	PrimaryEightySeven Color `json:"primary87"`
-	PrimaryNinety      Color `json:"primary90"`
-	PrimaryNinetyTwo   Color `json:"primary92"`
-	PrimaryNinetyFour  Color `json:"primary94"`
-	PrimaryNinetySix   Color `json:"primary96"`
-	PrimaryNinetyEight Color `json:"primary98"`
-	Secondary          Color `json:"secondary"`
-	Tertiary           Color `json:"tertiary"`
+	Primary            HSLColor `json:"primary"`
+	PrimaryTen         HSLColor `json:"primary10"`
+	PrimaryTwelve      HSLColor `json:"primary12"`
+	PrimaryFourteen    HSLColor `json:"primary14"`
+	PrimarySeventeen   HSLColor `json:"primary17"`
+	PrimaryTwentyTwo   HSLColor `json:"primary22"`
+	PrimaryThirty      HSLColor `json:"primary30"`
+	PrimarySixty       HSLColor `json:"primary60"`
+	PrimarySeventy     HSLColor `json:"primary70"`
+	PrimaryEightyThree HSLColor `json:"primary83"`
+	PrimaryEightySeven HSLColor `json:"primary87"`
+	PrimaryNinety      HSLColor `json:"primary90"`
+	PrimaryNinetyTwo   HSLColor `json:"primary92"`
+	PrimaryNinetyFour  HSLColor `json:"primary94"`
+	PrimaryNinetySix   HSLColor `json:"primary96"`
+	PrimaryNinetyEight HSLColor `json:"primary98"`
+	Secondary          HSLColor `json:"secondary"`
+	Tertiary           HSLColor `json:"tertiary"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type Color struct { // TODO this should be a HSL struct and may be introduce a Color interface and the ranges do not look idiomatic, probably must be 0-1 for each component
+type HSLColor struct { // TODO this should be a HSL struct and may be introduce a HSLColor interface and the ranges do not look idiomatic, probably must be 0-1 for each component
 	H float64 `json:"h"` // degree from 0 - 360
 	S float64 `json:"s"` // percent from 0 to 100
 	L float64 `json:"l"` // percent from 0 to 100
 }
 
-func HSL(hueAngle float64, saturationPercentage float64, lightnessPercentage float64) Color {
+func HSL(hueAngle float64, saturationPercentage float64, lightnessPercentage float64) HSLColor {
 	h := math.Max(0, math.Min(hueAngle, 360))
 	s := math.Max(0, math.Min(saturationPercentage, 100))
 	l := math.Max(0, math.Min(lightnessPercentage, 100))
-	return Color{h, s, l}
+	return HSLColor{h, s, l}
 }
 
-func MustParseHSL(hex string) Color {
+func MustParseHSL(hex string) HSLColor {
 	if strings.HasPrefix(hex, "#") {
 		hex = hex[1:]
 	}
 	r, g, b, _ := hexToRGBA(hex)
 	h, s, l := rgbToHSL(r, g, b)
-	return Color{H: h * 360, S: s * 100, L: l * 100} // convert from conventional to our "human" format
+	return HSLColor{H: h * 360, S: s * 100, L: l * 100} // convert from conventional to our "human" format
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]

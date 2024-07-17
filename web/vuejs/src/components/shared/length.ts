@@ -1,12 +1,18 @@
 import {Length} from "@/shared/protocol/ora/length";
 
 export function cssLengthValue(l?: Length): string {
-	if (!l) {
+	if (!l || l === "") {
 		return ""
 	}
 
+	// px is just wrong in CSS, they always mean dp
 	l = l.replaceAll("dp", "px")
-	return l
+
+	if (l.charAt(0)==='-' || l.charAt(0) >= '0' && l.charAt(0) <= '9') {
+		return l
+	}
+
+	return `var(--${l})`
 }
 
 export function cssLengthValue0Px(l?: Length): string {

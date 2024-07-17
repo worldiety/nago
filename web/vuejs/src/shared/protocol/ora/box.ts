@@ -4,9 +4,9 @@
 
 
 import type { AlignedComponent } from '@/shared/protocol/ora/alignedComponent';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
-import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 import type { Padding } from '@/shared/protocol/ora/padding';
 
 /**
@@ -31,7 +31,7 @@ export interface Box {
      * BackgroundColor regular is always transparent
      */
     // BackgroundColor
-    bgc/*omitempty*/? /*BackgroundColor*/: NamedColor;
+    bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
 }

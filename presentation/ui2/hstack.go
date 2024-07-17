@@ -5,55 +5,45 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type HStack struct {
+type THStack struct {
 	children        []core.View
 	alignment       ora.Alignment
-	backgroundColor ora.NamedColor
+	backgroundColor ora.Color
 	frame           ora.Frame
 	gap             ora.Length
 	padding         ora.Padding
-	with            func(stack *HStack)
 }
 
-func NewHStack(with func(hstack *HStack)) *HStack {
-	c := &HStack{
-		with: with,
+func HStack(children ...core.View) *THStack {
+	c := &THStack{
+		children: children,
 	}
-
-	c.alignment = "" // if nothing is defined, ora.Center must be applied by renderer
 
 	return c
 }
 
-func (c *HStack) Padding(padding ora.Padding) {
+func (c THStack) Padding(padding ora.Padding) {
 	c.padding = padding
 }
 
-func (c *HStack) Gap(gap ora.Length) {
+func (c THStack) Gap(gap ora.Length) {
 	c.gap = gap
 }
 
-func (c *HStack) BackgroundColor(backgroundColor ora.NamedColor) {
+func (c THStack) BackgroundColor(backgroundColor ora.Color) {
 	c.backgroundColor = backgroundColor
 }
 
-func (c *HStack) Alignment(alignment ora.Alignment) {
+func (c THStack) Alignment(alignment ora.Alignment) {
 	c.alignment = alignment
 }
 
-func (c *HStack) Append(children ...core.View) {
-	// this signature does not return builder pattern anymore, because it makes polymorphic interface usage impossible
-	c.children = append(c.children, children...)
-}
-
-func (c *HStack) Frame(fr ora.Frame) {
+func (c THStack) Frame(fr ora.Frame) THStack {
 	c.frame = fr
+	return c
 }
 
-func (c *HStack) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c THStack) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.HStack{
 		Type:            ora.HStackT,

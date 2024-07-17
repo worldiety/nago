@@ -3,8 +3,9 @@
  */
 
 
-import type { Border } from '@/shared/protocol/ora/border';
-import type { NamedColor } from '@/shared/protocol/ora/namedColor';
 
-func color(c NamedColor,)(Border,){
-}
+/**
+ * Color specifies the color, style or even semantics for the user when using a component.
+ * See also https://experience.sap.com/fiori-design-web/how-to-use-semantic-colors/.
+ */
+export type Color = string 

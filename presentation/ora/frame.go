@@ -1,11 +1,30 @@
 package ora
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // why is this so stupid? Because it is more or less impossible (because so ineffective) to parse
 // adjacent encoded types in typescript
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Length string
+
+func (l Length) Negate() Length {
+	if strings.HasPrefix(string(l), "-") {
+		return l[1:]
+	}
+
+	if l == "" {
+		return ""
+	}
+
+	if l[0] >= '0' && l[0] <= '9' {
+		return "-" + l
+	}
+
+	panic("usage error: you cannot negate a non-number length")
+}
 
 var Auto = Relative(0)
 
@@ -51,5 +70,15 @@ type Frame struct {
 func (f Frame) Size(w, h Length) Frame {
 	f.Height = h
 	f.Width = w
+	return f
+}
+
+func (f Frame) FullWidth() Frame {
+	f.Width = "100%"
+	return f
+}
+
+func (f Frame) FullHeight() Frame {
+	f.Height = "100%"
 	return f
 }

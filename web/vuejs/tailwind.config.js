@@ -1,5 +1,5 @@
 import plugin from "tailwindcss/plugin";
-import {NamedColor} from "./src/components/shared/namedcolors.js";
+import {NamedColor} from "./src/components/shared/colors.ts";
 
 export default {
 	content: [

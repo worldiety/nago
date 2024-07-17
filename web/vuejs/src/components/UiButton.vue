@@ -3,7 +3,7 @@ import {computed} from 'vue';
 import type {Button} from '@/shared/protocol/ora/button';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {frameCSS} from "@/components/shared/frame";
-import {NamedColor, namedColorClasses} from "@/components/shared/namedcolors";
+import {NamedColor} from "@/components/shared/colors";
 
 const props = defineProps<{
 	ui: Button;
@@ -35,12 +35,7 @@ const buttonClasses = computed<string>(() => {
 			classes.push('button-destructive');
 			break;
 		default:
-			let v = namedColorClasses(props.ui.color.v)
-			if (v === "" || v == "regular") {
 				classes.push('button-default');
-			} else {
-				classes.push(v)
-			}
 
 	}
 	if (iconOnly.value) {

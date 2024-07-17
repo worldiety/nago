@@ -3,9 +3,10 @@ import {computed} from 'vue';
 import type {Text} from "@/shared/protocol/ora/text";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
-import {namedColorClasses, namedColorStyles} from "@/components/shared/namedcolors";
 import {frameCSS} from "@/components/shared/frame";
 import {paddingCSS} from "@/components/shared/padding";
+import {cssLengthValue} from "@/components/shared/length";
+import {colorValue} from "@/components/shared/colors";
 
 const props = defineProps<{
 	ui: Text;
@@ -13,23 +14,23 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const clazz = computed<string>(() => {
-	let classes = namedColorClasses(props.ui.color)
-
-	if (props.ui.backgroundColor != undefined && props.ui.backgroundColor !== "") {
-		classes += namedColorClasses(props.ui.backgroundColor)
-	}
-
-	return classes
-
-});
 
 const styles = computed<string>(() => {
-	let f = frameCSS(props.ui.f).join(";")
-	let s = namedColorStyles("color", props.ui.color)
-	let c = namedColorStyles("background-color", props.ui.backgroundColor)
+	let styles = frameCSS(props.ui.f)
+	if (props.ui.color) {
+		styles.push(`color: ${colorValue(props.ui.color)}`)
+	}
 
-	return [f, s, c, paddingCSS(props.ui.p).join(";")].join(";")
+	if (props.ui.backgroundColor) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`)
+	}
+
+	styles.push(...paddingCSS(props.ui.p))
+	if (props.ui) {
+		styles.push(`font-size: ${cssLengthValue(props.ui.s)}`)
+	}
+	console.log(styles)
+	return styles.join(";")
 });
 
 
@@ -53,7 +54,7 @@ function onMouseLeave() {
 </script>
 
 <template>
-	<span v-if="!ui.invisible" :style="styles" :class="clazz" @click="onClick" @mouseenter="onMouseEnter"
+	<span v-if="!ui.invisible" :style="styles" @click="onClick" @mouseenter="onMouseEnter"
 				@mouseleave="onMouseLeave">{{
 			props.ui.value
 		}}</span>

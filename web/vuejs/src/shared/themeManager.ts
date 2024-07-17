@@ -2,6 +2,8 @@ import type { Theme } from '@/shared/protocol/ora/theme';
 import { inject } from 'vue';
 import { themeManagerKey } from '@/shared/injectionKeys';
 import type { Themes } from '@/shared/protocol/ora/themes';
+import {LengthRule} from "@/shared/protocol/ora/lengthRule";
+import {Length} from "@/shared/protocol/ora/length";
 
 export default class ThemeManager {
 
@@ -17,6 +19,45 @@ export default class ThemeManager {
 
 	setThemes(themes: Themes): void {
 		this.themes = themes;
+
+		// inject our custom color and length rules
+		// not sure about this, as it conflicts with the apply theme below
+		for (let color of themes.colors) {
+			let style = document.createElement('style');
+			style.innerHTML = `
+								
+				@media (prefers-color-scheme: light) {
+					:root {
+						--${color.name}: ${color.light};
+					}
+				}
+				
+					@media (prefers-color-scheme: dark) {
+					:root {
+						--${color.name}: ${color.dark};
+					}
+				}
+`;
+			document.head.appendChild(style);
+		}
+
+
+		//themes.lengths.sort((a, b) => {
+		//	return a.minWidth - b.minWidth
+		//})
+		for (let length of themes.lengths) {
+			let style = document.createElement('style');
+			style.innerHTML = `
+			
+					
+				@media (min-width: ${length.minWidth}) {
+					:root {
+						--${length.name}: ${length.value};
+					}
+				}
+`;
+			document.head.appendChild(style);
+		}
 	}
 
 	applyActiveTheme(): void {
@@ -91,6 +132,8 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].style.setProperty('--primary-98', `${theme.colors.primary98.h}deg ${theme.colors.primary98.s}% ${theme.colors.primary98.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--secondary', `${theme.colors.secondary.h}deg ${theme.colors.secondary.s}% ${theme.colors.secondary.l}%`);
 		document.getElementsByTagName('html')[0].style.setProperty('--tertiary', `${theme.colors.tertiary.h}deg ${theme.colors.tertiary.s}% ${theme.colors.tertiary.l}%`);
+
+		// TODO apply themes custom colors or move it into each theme?
 	}
 }
 

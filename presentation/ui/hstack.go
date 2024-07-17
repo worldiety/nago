@@ -10,7 +10,7 @@ type HStack struct {
 	children        *SharedList[core.View] // TODO why is this shared? do we need the dirty flag? do we need a pointer box? why not always render dirty?
 	properties      []core.Property
 	alignment       ora.Alignment
-	backgroundColor ora.NamedColor
+	backgroundColor ora.Color
 	frame           ora.Frame
 	gap             ora.Length
 	padding         ora.Padding
@@ -49,11 +49,11 @@ func (c *HStack) SetGap(gap ora.Length) {
 	c.gap = gap
 }
 
-func (c *HStack) BackgroundColor() ora.NamedColor {
+func (c *HStack) BackgroundColor() ora.Color {
 	return c.backgroundColor
 }
 
-func (c *HStack) SetBackgroundColor(backgroundColor ora.NamedColor) {
+func (c *HStack) SetBackgroundColor(backgroundColor ora.Color) {
 	c.backgroundColor = backgroundColor
 }
 
