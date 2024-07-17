@@ -8,6 +8,7 @@ import {cssLengthValue} from "@/components/shared/length";
 import {paddingCSS} from "@/components/shared/padding";
 import {colorValue} from "@/components/shared/colors";
 import {fontCSS} from "@/components/shared/font";
+import {borderCSS} from "@/components/shared/border";
 
 const props = defineProps<{
 	ui: VStack;
@@ -24,7 +25,8 @@ const frameStyles = computed<string>(() => {
 		styles.push(`row-gap:${cssLengthValue(props.ui.g)}`)
 	}
 
-	styles.push(...paddingCSS(props.ui.p).join(";"))
+	styles.push(...borderCSS(props.ui.b))
+	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.fn))
 
 	return styles.join(";")

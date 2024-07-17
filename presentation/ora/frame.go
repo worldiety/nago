@@ -2,6 +2,7 @@ package ora
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -24,6 +25,30 @@ func (l Length) Negate() Length {
 	}
 
 	panic("usage error: you cannot negate a non-number length")
+}
+
+func (l Length) Mul(s float64) Length {
+	if l == "" {
+		return ""
+	}
+
+	var sb strings.Builder
+	var ext Length
+	for i, r := range l {
+		if r >= '0' && r <= '9' || r == '-' {
+			sb.WriteRune(r)
+		} else {
+			ext = l[i:]
+			break
+		}
+	}
+
+	v, err := strconv.ParseFloat(sb.String(), 64)
+	if err != nil {
+		panic("usage error: you cannot multiplicate a non-number length")
+	}
+
+	return Length(fmt.Sprintf("%.3f%s", v*s, ext))
 }
 
 var Auto = Relative(0)
@@ -70,6 +95,12 @@ type Frame struct {
 func (f Frame) Size(w, h Length) Frame {
 	f.Height = h
 	f.Width = w
+	return f
+}
+
+func (f Frame) MatchScreen() Frame {
+	f.Height = ViewportHeight
+	f.Width = Full
 	return f
 }
 

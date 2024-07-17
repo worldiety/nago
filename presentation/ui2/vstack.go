@@ -26,8 +26,9 @@ func VStack(children ...core.View) TVStack {
 	return c
 }
 
-func (c TVStack) Gap(gap ora.Length) {
+func (c TVStack) Gap(gap ora.Length) TVStack {
 	c.gap = gap
+	return c
 }
 
 func (c TVStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {

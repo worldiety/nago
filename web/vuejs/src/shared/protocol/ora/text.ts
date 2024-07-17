@@ -3,6 +3,7 @@
  */
 
 
+import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Font } from '@/shared/protocol/ora/font';
@@ -37,6 +38,8 @@ export interface Text {
     onHoverEnd/*omitempty*/? /*OnHoverEnd*/: Ptr;
     // Invisible
     invisible/*omitempty*/? /*Invisible*/: boolean;
+    // Border
+    b/*omitempty*/? /*Border*/: Border;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
     // Frame

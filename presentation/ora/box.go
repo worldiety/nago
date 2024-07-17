@@ -15,6 +15,7 @@ type Box struct {
 	// BackgroundColor regular is always transparent
 	BackgroundColor Color   `json:"bgc,omitempty"`
 	Padding         Padding `json:"p,omitempty"`
+	Border          Border  `json:"b,omitempty"`
 	component
 }
 

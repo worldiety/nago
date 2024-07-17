@@ -1,5 +1,7 @@
 package ora
 
+import "fmt"
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Shadow struct {
 	Color  Color  `json:"c,omitempty"`
@@ -61,5 +63,15 @@ func (b Border) Shadow(radius Length) Border {
 	b.BoxShadow.Color = "#00000054"
 	b.BoxShadow.X = ""
 	b.BoxShadow.Y = ""
+	return b
+}
+
+// Elevate by DP
+func (b Border) Elevate(elevation DP) Border {
+	rem := float64(elevation) / 16
+	b.BoxShadow.Radius = Length(fmt.Sprintf("%.2frem", rem*3))
+	b.BoxShadow.Color = "#00000030"
+	b.BoxShadow.X = ""
+	b.BoxShadow.Y = Length(fmt.Sprintf("%.2frem", rem))
 	return b
 }

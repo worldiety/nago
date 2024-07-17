@@ -9,6 +9,7 @@ import {Alignment as Al} from "@/components/shared/alignments";
 import {paddingCSS} from "@/components/shared/padding";
 import {Padding} from "@/shared/protocol/ora/padding";
 import {cssLengthValue0Px} from "@/components/shared/length";
+import {borderCSS} from "@/components/shared/border";
 
 const props = defineProps<{
 	ui: Box;
@@ -21,6 +22,7 @@ const frameStyles = computed<string>(() => {
 		styles.push(`background-color: ${props.ui.bgc}`)
 	}
 
+	styles.push(...borderCSS(props.ui.b))
 	styles.push(...paddingCSS(props.ui.p))
 
 	return styles.join(";")

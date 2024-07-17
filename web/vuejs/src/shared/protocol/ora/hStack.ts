@@ -4,6 +4,7 @@
 
 
 import type { Alignment } from '@/shared/protocol/ora/alignment';
+import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
@@ -42,14 +43,20 @@ export interface HStack {
      */
     // Alignment
     a/*omitempty*/? /*Alignment*/: Alignment;
-
-    /**
-     * BackgroundColor regular is always transparent
-     */
     // BackgroundColor
     bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Border
+    b/*omitempty*/? /*Border*/: Border;
+
+    /**
+     * see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+     */
+    // AccessibilityLabel
+    al/*omitempty*/? /*AccessibilityLabel*/: string;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
     // Font
     fn/*omitempty*/? /*Font*/: Font;
 }

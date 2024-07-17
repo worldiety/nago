@@ -19,11 +19,21 @@ const (
 	L40 Length = "2.5rem"
 	//L44 relates to about 44dp at default font scale.
 	L44 Length = "2.75rem"
+	//L80 relates to about 80dp at default font scale.
+	L80 Length = "5rem"
+	//L120 relates to about 12dp at default font scale.
+	L120 Length = "7.5rem"
 	//L160 relates to about 160dp at default font scale.
 	L160 Length = "10rem"
 	//L320 relates to about 320dp at default font scale.
 	L320 Length = "20rem"
+	//L400 relates to about 400dp at default font scale.
+	L400 Length = "25rem"
+	//L480 relates to about 480dp at default font scale.
+	L480 Length = "30rem"
 )
+
+const Undefined = ""
 
 var (
 	Title = Font{

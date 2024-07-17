@@ -17,14 +17,8 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.VStack(func(vstack *ui.TVStack) {
-				vstack.Frame(ora.Frame{Height: ora.ViewportHeight, Width: ora.Full})
-
-				vstack.Of(
-					ui.TextFrom("hello world"),
-				)
-			})
-
+			return ui.VStack(ui.Text("hello world")).
+				Frame(ora.Frame{}.MatchScreen())
 		})
 	}).
 		// don't forget to call the run method, which starts the entire thing and blocks until finished

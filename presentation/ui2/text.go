@@ -76,6 +76,7 @@ func (c TText) Render(ctx core.RenderContext) ora.Component {
 		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
 		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),
 		Invisible:          c.invisible,
+		Border:             c.border,
 		Padding:            c.padding,
 		Frame:              c.frame,
 		AccessibilityLabel: c.accessibilityLabel,

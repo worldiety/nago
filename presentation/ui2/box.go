@@ -3,59 +3,143 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
-	"slices"
 )
 
-type AlignedComponent struct {
+type alignedComponent struct {
 	Component core.View
 	Alignment ora.Alignment
 }
 
-type Box struct {
-	children        []AlignedComponent
-	backgroundColor ora.Color
-	frame           ora.Frame
-	padding         ora.Padding
-	with            func(box *Box)
+type BoxLayout struct {
+	Top            core.View
+	Center         core.View
+	Bottom         core.View
+	Leading        core.View
+	Trailing       core.View
+	TopLeading     core.View
+	TopTrailing    core.View
+	BottomLeading  core.View
+	BottomTrailing core.View
 }
 
-func NewBox(with func(box *Box)) *Box {
-	c := &Box{}
+type TBox struct {
+	children           []alignedComponent
+	backgroundColor    ora.Color
+	frame              ora.Frame
+	padding            ora.Padding
+	font               ora.Font
+	border             ora.Border
+	accessibilityLabel string
+	invisible          bool
+}
+
+func Box(layout BoxLayout) TBox {
+	c := TBox{
+		children: make([]alignedComponent, 0, 9),
+	}
+
+	if layout.Center != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.Center,
+			Alignment: ora.Center,
+		})
+	}
+
+	if layout.Top != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.Top,
+			Alignment: ora.Top,
+		})
+	}
+
+	if layout.Bottom != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.Bottom,
+			Alignment: ora.Bottom,
+		})
+	}
+
+	if layout.Leading != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.Leading,
+			Alignment: ora.Leading,
+		})
+	}
+
+	if layout.Trailing != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.Trailing,
+			Alignment: ora.Trailing,
+		})
+	}
+
+	if layout.TopLeading != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.TopLeading,
+			Alignment: ora.TopLeading,
+		})
+	}
+
+	if layout.BottomLeading != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.BottomLeading,
+			Alignment: ora.BottomLeading,
+		})
+	}
+
+	if layout.TopTrailing != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.TopTrailing,
+			Alignment: ora.TopTrailing,
+		})
+	}
+
+	if layout.BottomTrailing != nil {
+		c.children = append(c.children, alignedComponent{
+			Component: layout.BottomTrailing,
+			Alignment: ora.BottomTrailing,
+		})
+	}
 
 	return c
 }
 
-func (c *Box) BackgroundColor(backgroundColor ora.Color) {
-	c.backgroundColor = backgroundColor
-}
-
-// Align adds the given child with the defined alignment. Added Order is Z-Order.
-// Aligning multiple children is not allowed, thus any other occurrence is removed and the new child
-// is appended.
-func (c *Box) Align(alignment ora.Alignment, child core.View) {
-	slices.DeleteFunc(c.children, func(component AlignedComponent) bool {
-		return component.Alignment == alignment
-	})
-
-	c.children = append(c.children, AlignedComponent{
-		Component: child,
-		Alignment: alignment,
-	})
-}
-
-func (c *Box) Frame(f ora.Frame) {
-	c.frame = f
-}
-
-func (c *Box) Padding(p ora.Padding) {
+func (c TBox) Padding(p ora.Padding) core.DecoredView {
 	c.padding = p
+	return c
 }
 
-func (c *Box) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c TBox) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
+	c.backgroundColor = backgroundColor
+	return c
+}
 
+func (c TBox) Frame(fr ora.Frame) core.DecoredView {
+	c.frame = fr
+	return c
+}
+
+func (c TBox) Font(font ora.Font) core.DecoredView {
+	c.font = font
+	return c
+}
+
+func (c TBox) Border(border ora.Border) core.DecoredView {
+	c.border = border
+	return c
+}
+
+func (c TBox) Visible(visible bool) core.DecoredView {
+	c.invisible = !visible
+	return c
+}
+
+func (c TBox) AccessibilityLabel(label string) core.DecoredView {
+	c.accessibilityLabel = label
+	return c
+}
+
+func (c TBox) Render(ctx core.RenderContext) ora.Component {
 	var tmp []ora.AlignedComponent
 	for _, child := range c.children {
 		tmp = append(tmp, ora.AlignedComponent{
@@ -70,5 +154,6 @@ func (c *Box) Render(ctx core.RenderContext) ora.Component {
 		Frame:           c.frame,
 		BackgroundColor: c.backgroundColor,
 		Padding:         c.padding,
+		Border:          c.border,
 	}
 }

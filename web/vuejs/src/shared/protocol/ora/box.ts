@@ -4,6 +4,7 @@
 
 
 import type { AlignedComponent } from '@/shared/protocol/ora/alignedComponent';
+import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
@@ -34,5 +35,7 @@ export interface Box {
     bgc/*omitempty*/? /*BackgroundColor*/: Color;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Border
+    b/*omitempty*/? /*Border*/: Border;
 }
 
