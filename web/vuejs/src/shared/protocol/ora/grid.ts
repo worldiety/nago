@@ -3,9 +3,14 @@
  */
 
 
+import type { Border } from '@/shared/protocol/ora/border';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Font } from '@/shared/protocol/ora/font';
+import type { Frame } from '@/shared/protocol/ora/frame';
 import type { GridCell } from '@/shared/protocol/ora/gridCell';
 import type { Length } from '@/shared/protocol/ora/length';
+import type { Padding } from '@/shared/protocol/ora/padding';
 
 /**
  * A Grid must support up to 12 Columns and a reasonable "unlimited" amount of rows.
@@ -19,7 +24,41 @@ export interface Grid {
     r/*omitempty*/? /*Rows*/: number /*int64*/;
     // Columns
     c/*omitempty*/? /*Columns*/: number /*int64*/;
-    // Gap
-    g/*omitempty*/? /*Gap*/: Length;
+
+    /**
+     * InnerGap is omitted, if empty
+     */
+    // RowGap
+    rg/*omitempty*/? /*RowGap*/: Length;
+    // ColGap
+    cg/*omitempty*/? /*ColGap*/: Length;
+
+    /**
+     * Frame is omitted if empty
+     */
+    // Frame
+    f/*omitempty*/? /*Frame*/: Frame;
+
+    /**
+     * BackgroundColor regular is always transparent
+     */
+    // BackgroundColor
+    bgc/*omitempty*/? /*BackgroundColor*/: Color;
+    // Padding
+    p/*omitempty*/? /*Padding*/: Padding;
+    // Border
+    bd/*omitempty*/? /*Border*/: Border;
+
+    /**
+     * see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+     */
+    // AccessibilityLabel
+    al/*omitempty*/? /*AccessibilityLabel*/: string;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
+    // Font
+    fn/*omitempty*/? /*Font*/: Font;
+    // ColWidths
+    cw/*omitempty*/? /*ColWidths*/: Length[];
 }
 

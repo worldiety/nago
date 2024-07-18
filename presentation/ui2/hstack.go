@@ -40,7 +40,7 @@ func (c THStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
 	return c
 }
 
-func (c THStack) Alignment(alignment ora.Alignment) core.DecoredView {
+func (c THStack) Alignment(alignment ora.Alignment) THStack {
 	c.alignment = alignment
 	return c
 }

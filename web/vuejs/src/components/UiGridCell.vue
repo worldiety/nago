@@ -2,6 +2,7 @@
 import UiGeneric from '@/components/UiGeneric.vue';
 import { computed } from 'vue';
 import {GridCell} from "@/shared/protocol/ora/gridCell";
+import {marginCSS} from "@/components/shared/padding";
 
 const props = defineProps<{
 	ui: GridCell;
@@ -10,13 +11,6 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (props.ui.cs) {
-		styles.push(`grid-column-start: ${props.ui.cs}`)
-	}
-
-	if (props.ui.ce) {
-		styles.push(`grid-column-end: ${props.ui.ce}`)
-	}
 
 	if (props.ui.rs) {
 		styles.push(`grid-row-start: ${props.ui.rs}`)
@@ -34,6 +28,15 @@ const style = computed<string>(() => {
 		styles.push(`grid-row: span ${props.ui.cp} / span ${props.ui.cp}`)
 	}
 
+	if (props.ui.cs) {
+		styles.push(`grid-column-start: ${props.ui.cs}`)
+	}
+
+	if (props.ui.ce) {
+		styles.push(`grid-column-end: ${props.ui.ce}`)
+	}
+
+	styles.push(...marginCSS(props.ui.p))
 
 	return styles.join(";");
 });

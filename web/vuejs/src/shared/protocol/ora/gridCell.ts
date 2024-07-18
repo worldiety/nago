@@ -3,9 +3,9 @@
  */
 
 
-import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Padding } from '@/shared/protocol/ora/padding';
 
 /**
  * GridCell is undefined, if explicit row start/col start etc. is set and span values.
@@ -15,8 +15,6 @@ export interface GridCell {
     type: 'C'/*ComponentType*/;
     // Body
     b/*omitempty*/? /*Body*/: Component;
-    // Alignment
-    a/*omitempty*/? /*Alignment*/: Alignment;
     // ColStart
     cs/*omitempty*/? /*ColStart*/: number /*int64*/;
     // ColEnd
@@ -29,5 +27,7 @@ export interface GridCell {
     cp/*omitempty*/? /*ColSpan*/: number /*int64*/;
     // RowSpan
     rp/*omitempty*/? /*RowSpan*/: number /*int64*/;
+    // Padding
+    p/*omitempty*/? /*Padding*/: Padding;
 }
 

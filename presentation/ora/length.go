@@ -13,6 +13,8 @@ const (
 	L12 Length = "0.75rem"
 	// L14 corresponds to 14dp at default font scale.
 	L14 Length = "0.875rem"
+	// L16 relates to about 16dp at default font scale.
+	L16 Length = "1rem"
 	// L20 relates to about 20dp at default font scale.
 	L20 Length = "1.25rem"
 	//L40 relates to about 40dp at default font scale.
@@ -25,6 +27,8 @@ const (
 	L120 Length = "7.5rem"
 	//L160 relates to about 160dp at default font scale.
 	L160 Length = "10rem"
+	//L200 relates to about 200dp at default font scale.
+	L200 Length = "12.5rem"
 	//L320 relates to about 320dp at default font scale.
 	L320 Length = "20rem"
 	//L400 relates to about 400dp at default font scale.

@@ -213,7 +213,7 @@ onUnmounted(() => {
 	</div>
 
 
-	<div class="overflow-x-hidden bg-primary-98 darkmode:bg-primary-10">
+	<div class="bg-primary-98 darkmode:bg-primary-10">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>

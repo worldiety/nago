@@ -43,8 +43,8 @@ func main() {
 						ui.Text("WZO Terrasse"),
 						ui.Spacer(),
 						ui.Text("Oldenburg"),
-					).Frame(ora.Frame{}.FullWidth()).
-						Font(ora.Font{Size: ora.L12}),
+					).Font(ora.Font{Size: ora.L12}).
+						Frame(ora.Frame{}.FullWidth()),
 
 					ui.HDivider(),
 					ui.Text("Es gibt auch").Font(ora.Title),
