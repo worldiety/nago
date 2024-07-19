@@ -44,6 +44,10 @@ func (w WindowSizeClass) Ordinal() int {
 	}
 }
 
+func (w WindowSizeClass) Valid() bool {
+	return w.Ordinal() != 0
+}
+
 const (
 	// SizeClassSmall are devices below 640 dp screen width.
 	SizeClassSmall WindowSizeClass = "sm"

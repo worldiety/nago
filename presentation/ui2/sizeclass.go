@@ -3,6 +3,7 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"log/slog"
 )
 
 type ViewWithSizeClass struct {
@@ -24,6 +25,11 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 	}
 
 	class := wnd.Info().SizeClass
+	if !class.Valid() {
+		slog.Error("frontend has not submitted a window size class, assuming sm")
+		class = ora.SizeClassSmall
+	}
+
 	var best ViewWithSizeClass
 	for _, match := range matches {
 		if match.SizeClass.Ordinal() > best.SizeClass.Ordinal() && match.SizeClass.Ordinal() <= class.Ordinal() {

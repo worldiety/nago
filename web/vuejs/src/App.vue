@@ -156,7 +156,7 @@ function setTheme(themes: Themes): void {
 	}
 }
 
-const activeBreakpoint = ref('sm');
+const activeBreakpoint = ref('');
 
 function sendWindowInfo() {
 	const breakpoints = {
@@ -181,7 +181,7 @@ function sendWindowInfo() {
 		return
 	}
 
-	console.log("active breakpoint", activeBreakpoint.value)
+	//console.log("active breakpoint", activeBreakpoint.value)
 	const winfo: WindowInfo = {
 		width: window.innerWidth,
 		height: window.innerHeight,

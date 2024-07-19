@@ -28,6 +28,7 @@ func Image() TImage {
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
 func (c TImage) URI(uri ora.URI) TImage {
 	c.uri = uri
+	c.frame = ora.Frame{}.Size(ora.Auto, ora.L160)
 	return c
 }
 

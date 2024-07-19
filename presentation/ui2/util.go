@@ -8,6 +8,9 @@ import (
 func renderComponents(ctx core.RenderContext, c []core.View) []ora.Component {
 	res := make([]ora.Component, 0, len(c))
 	for _, component := range c {
+		if component == nil {
+			continue
+		}
 		res = append(res, component.Render(ctx))
 	}
 
@@ -21,16 +24,11 @@ func propertyOf[T any](ctx core.RenderContext, s *core.State[T]) ora.Property[T]
 	}
 }
 
-func reset(c *[]core.View) {
-	if c == nil {
-		return
+func If(b bool, view core.View) core.View {
+	if b {
+		return view
 	}
 
-	tmp := *c
-	for i := range tmp {
-		tmp[i] = nil // let the gc free slice elements
-	}
-
-	tmp = tmp[:0]
-	*c = tmp
+	// TODO implement non-nil view
+	return nil
 }

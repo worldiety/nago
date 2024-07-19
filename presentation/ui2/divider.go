@@ -5,73 +5,46 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type Divider struct {
+type TDivider struct {
 	frame   ora.Frame
 	border  ora.Border
 	padding ora.Padding
-	with    func(divider *Divider)
 }
 
-func NewDivider(with func(*Divider)) *Divider {
-	c := &Divider{
-		with: with,
-	}
+// HLine configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
+func HLine() TDivider {
+	return TDivider{}.
+		Border(ora.Border{TopWidth: "1px", TopColor: "#000000"}).
+		Frame(ora.Frame{}.FullWidth()).
+		Padding(ora.Padding{}.Vertical(ora.L16))
 
+}
+
+// VLine configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
+func VLine() TDivider {
+	return TDivider{}.
+		Border(ora.Border{TopWidth: "1px", TopColor: "#000000"}).
+		Frame(ora.Frame{}.FullHeight()).
+		Padding(ora.Padding{}.Horizontal(ora.L16))
+
+}
+
+func (c TDivider) Padding(padding ora.Padding) TDivider {
+	c.padding = padding
 	return c
 }
 
-// HDivider configures the Divider to be used as a horizontal divider, e.g. within a TVStack.
-func HDivider() *Divider {
-	return NewDivider(func(divider *Divider) {
-		var border ora.Border
-		border.TopWidth = "1px"
-		border.TopColor = "#00000019"
-		divider.SetBorder(border)
-		divider.SetFrame(ora.Frame{}.FullWidth())
-		divider.SetPadding(ora.Padding{}.Vertical("0.25rem"))
-	})
-}
-
-// VDivider configures a Divider to be used as a vertical divider, e.g. within a THStack.
-func VDivider() *Divider {
-	return NewDivider(func(divider *Divider) {
-		var border ora.Border
-		border.LeftWidth = "1px"
-		border.LeftColor = "#00000019"
-		divider.SetBorder(border)
-		divider.SetFrame(ora.Frame{}.FullHeight())
-		divider.SetPadding(ora.Padding{}.Horizontal("0.25rem"))
-	})
-}
-
-func (c *Divider) Padding() ora.Padding {
-	return c.padding
-}
-
-func (c *Divider) SetPadding(padding ora.Padding) {
-	c.padding = padding
-}
-
-func (c *Divider) Frame() ora.Frame {
-	return c.frame
-}
-
-func (c *Divider) SetFrame(frame ora.Frame) {
+func (c TDivider) Frame(frame ora.Frame) TDivider {
 	c.frame = frame
+	return c
 }
 
-func (c *Divider) Border() ora.Border {
-	return c.border
-}
-
-func (c *Divider) SetBorder(border ora.Border) {
+func (c TDivider) Border(border ora.Border) TDivider {
 	c.border = border
+	return c
 }
 
-func (c *Divider) Render(ctx core.RenderContext) ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c TDivider) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.Divider{
 		Type:    ora.DividerT,

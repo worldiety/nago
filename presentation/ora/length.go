@@ -29,6 +29,8 @@ const (
 	L160 Length = "10rem"
 	//L200 relates to about 200dp at default font scale.
 	L200 Length = "12.5rem"
+	//L256 relates to about 256dp at default font scale.
+	L256 Length = "16rem"
 	//L320 relates to about 320dp at default font scale.
 	L320 Length = "20rem"
 	//L400 relates to about 400dp at default font scale.
@@ -41,6 +43,7 @@ const Auto = ""
 
 var (
 	Title = Font{
-		Size: "1.5rem",
+		Size:   "1.5rem",
+		Weight: BoldFontWeight,
 	}
 )

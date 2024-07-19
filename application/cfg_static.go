@@ -1,6 +1,7 @@
 package application
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -25,11 +26,13 @@ func (r StaticBytes) configureResource(c *Configurator) ora.URI {
 	sum := sha256.Sum256(r)
 	token := hex.EncodeToString(sum[:])
 	pattern := fmt.Sprintf("/api/ora/v1/static/%s", token)
+	mimeType := magicMimeType(r)
 	c.rawEndpoint = append(c.rawEndpoint, rawEndpoint{
 		pattern: pattern,
 		handler: func(writer http.ResponseWriter, request *http.Request) {
 			// enable aggressive caching, because we have a stable resource identifier based on a hash sum
 			writer.Header().Set("Cache-Control", "public, max-age=31536000")
+			writer.Header().Set("Content-Type", mimeType)
 			expires := time.Now().Add(365 * 24 * time.Hour)
 			writer.Header().Set("Expires", expires.Format(http.TimeFormat))
 
@@ -40,6 +43,14 @@ func (r StaticBytes) configureResource(c *Configurator) ora.URI {
 	})
 
 	return ora.URI(pattern)
+}
+
+func magicMimeType(buf []byte) string {
+	if bytes.Contains(buf[:1024], []byte("<svg")) {
+		return "image/svg+xml"
+	}
+
+	return "application/octet-stream"
 }
 
 // Resource registers the given resource. It will likely result in an additional endpoint which looks like

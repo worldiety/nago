@@ -49,7 +49,7 @@ const style = computed<string>(() => {
 	}
 
 	if (props.ui.cg) {
-		styles.push(`col-gap: ${props.ui.cg}`)
+		styles.push(`column-gap: ${props.ui.cg}`)
 	}
 
 	if (props.ui.bgc) {
