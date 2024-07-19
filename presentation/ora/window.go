@@ -23,77 +23,32 @@ type Density float64
 
 // WindowSizeClass represents media break points of the screen which an ora application is shown.
 // The definition of a size class is disjunct and for all possible sizes, exact one size class will match.
-// See also https://developer.android.com/develop/ui/views/layout/window-size-classes.
-type WindowSizeClass struct {
-	// this looks weired, however it makes the WindowSizeClass comparable, because we compare
-	// the box pointer instead of the undefined func pointer
-	box *struct {
-		check func(width, height DP) bool
-	}
-	name string
-}
+// See also https://developer.android.com/develop/ui/views/layout/window-size-classes and
+// https://tailwindcss.com/docs/responsive-design.
+type WindowSizeClass string
 
-func (w WindowSizeClass) Match(width, height DP) bool {
-	return w.box.check(width, height)
-}
-
-func (w WindowSizeClass) String() string {
-	return w.name
-}
-
-var ExpandedWindow = WindowSizeClass{
-	name: "Expanded",
-	box: &struct {
-		check func(width DP, height DP) bool
-	}{check: func(width DP, height DP) bool {
-		return width >= 840
-	}},
-}
-
-var MediumWindow = WindowSizeClass{
-	name: "Medium",
-	box: &struct {
-		check func(width DP, height DP) bool
-	}{check: func(width DP, height DP) bool {
-		return 600 <= width && width < 840
-	}},
-}
-var CompactWindow = WindowSizeClass{
-	name: "Compact",
-	box: &struct {
-		check func(width DP, height DP) bool
-	}{check: func(width DP, height DP) bool {
-		return width < 600
-	}},
-}
-
-// ComputeSizeClass takes the given width and height and returns exactly one of the Ora specified size classes.
-// You can simply compare a size class with others.
-func ComputeSizeClass(width, height DP) WindowSizeClass {
-	switch {
-	case ExpandedWindow.Match(width, height):
-		return ExpandedWindow
-	case MediumWindow.Match(width, height):
-		return MediumWindow
-	case CompactWindow.Match(width, height):
-		return CompactWindow
-	default:
-		panic("unreachable")
-	}
-}
+const (
+	// SizeClassSmall are devices below 640 dp screen width.
+	SizeClassSmall WindowSizeClass = "sm"
+	// SizeClassMedium are devices below 768dp screen width.
+	SizeClassMedium WindowSizeClass = "md"
+	// SizeClassLarge are devices below 1024dp screen width.
+	SizeClassLarge WindowSizeClass = "lg"
+	// SizeClassXL are devices below 1280dp screen width.
+	SizeClassXL WindowSizeClass = "xl"
+	// SizeClass2XL are devices below 1536dp screen width.
+	SizeClass2XL WindowSizeClass = "2xl"
+)
 
 // WindowInfo describes the area into which the frontend renders the ora view tree.
 // A user can simply change the layout of the screen, e.g. by rotation the smartphone or
 // changing the size of a browser window.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type WindowInfo struct {
-	Width   DP      `json:"width"`
-	Height  DP      `json:"height"`
-	Density Density `json:"density"`
-}
-
-func (w WindowInfo) SizeClass() WindowSizeClass {
-	return ComputeSizeClass(w.Width, w.Height)
+	Width     DP              `json:"width"`
+	Height    DP              `json:"height"`
+	Density   Density         `json:"density"`
+	SizeClass WindowSizeClass `json:"sizeClass"`
 }
 
 // WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way.

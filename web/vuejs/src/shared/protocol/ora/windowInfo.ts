@@ -5,6 +5,7 @@
 
 import type { DP } from '@/shared/protocol/ora/dP';
 import type { Density } from '@/shared/protocol/ora/density';
+import type { WindowSizeClass } from '@/shared/protocol/ora/windowSizeClass';
 
 /**
  * WindowInfo describes the area into which the frontend renders the ora view tree.
@@ -18,5 +19,7 @@ export interface WindowInfo {
     height: DP;
     // Density
     density: Density;
+    // SizeClass
+    sizeClass: WindowSizeClass;
 }
 

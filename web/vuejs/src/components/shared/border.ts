@@ -82,7 +82,7 @@ export function borderCSS(border?: Border): string[] {
 		css.push(`box-shadow: ${cssLengthValue(border.s.x)} ${cssLengthValue(border.s.y)} ${cssLengthValue(border.s.r)} 0 ${border.s.c}`)
 	}
 
-	console.log(css)
+
 
 	return css
 }

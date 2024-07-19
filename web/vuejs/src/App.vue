@@ -43,6 +43,7 @@ async function applyConfiguration(): Promise<void> {
 	const config = await serviceAdapter.getConfiguration();
 	themeManager.setThemes(config.themes);
 	themeManager.applyActiveTheme();
+	sendWindowInfo();
 }
 
 async function initializeUi(): Promise<void> {
@@ -86,7 +87,7 @@ function updateUi(event: Event): void {
 		return;
 	}
 	const componentInvalidated = event as ComponentInvalidated;
-	console.log("setting new view tree",componentInvalidated.value)
+	console.log("setting new view tree", componentInvalidated.value)
 	ui.value = componentInvalidated.value;
 	state.value = State.ShowUI;
 }
@@ -155,12 +156,40 @@ function setTheme(themes: Themes): void {
 	}
 }
 
+const activeBreakpoint = ref('sm');
+
 function sendWindowInfo() {
+	const breakpoints = {
+		sm: 640,
+		md: 768,
+		lg: 1024,
+		xl: 1280,
+		'2xl': 1536,
+	};
+
+	const lastActiveBreakpoint = activeBreakpoint.value;
+
+	const width = window.innerWidth;
+	if (width >= breakpoints['2xl']) activeBreakpoint.value = '2xl';
+	else if (width >= breakpoints.xl) activeBreakpoint.value = 'xl';
+	else if (width >= breakpoints.lg) activeBreakpoint.value = 'lg';
+	else if (width >= breakpoints.md) activeBreakpoint.value = 'md';
+	else activeBreakpoint.value = 'sm';
+
+	if (lastActiveBreakpoint == activeBreakpoint.value) {
+		// avoid spamming the backend with messages from fluid window resizing
+		return
+	}
+
+	console.log("active breakpoint", activeBreakpoint.value)
 	const winfo: WindowInfo = {
 		width: window.innerWidth,
 		height: window.innerHeight,
-		density: window.devicePixelRatio
+		density: window.devicePixelRatio,
+		sizeClass: activeBreakpoint.value,
 	}
+
+
 	serviceAdapter.updateWindowInfo(winfo);
 }
 
@@ -192,6 +221,7 @@ onMounted(async () => {
 	await configurationPromise;
 	await initializeUi();
 	addEventListeners();
+
 });
 
 onUnmounted(() => {

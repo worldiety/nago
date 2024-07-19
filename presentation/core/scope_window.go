@@ -17,23 +17,22 @@ var _ Window = (*scopeWindow)(nil)
 const maxAutoPtr = 10_000
 
 type scopeWindow struct {
-	parent                 *Scope
-	rootFactory            std.Option[ComponentFactory]
-	lastRendering          std.Option[ora.Component]
-	destroyed              bool
-	callbackPtr            ora.Ptr
-	callbacks              map[ora.Ptr]func()
-	lastAutoStatePtr       ora.Ptr
-	lastStatePtrById       ora.Ptr
-	states                 map[ora.Ptr]Property
-	statesById             map[string]Property
-	filesReceiver          map[ora.Ptr]FilesReceiver
-	destroyObservers       map[int]func()
-	windowChangedObservers map[int]func()
-	hnd                    int
-	factory                ora.ComponentFactoryId
-	navController          *NavigationController
-	values                 Values
+	parent           *Scope
+	rootFactory      std.Option[ComponentFactory]
+	lastRendering    std.Option[ora.Component]
+	destroyed        bool
+	callbackPtr      ora.Ptr
+	callbacks        map[ora.Ptr]func()
+	lastAutoStatePtr ora.Ptr
+	lastStatePtrById ora.Ptr
+	states           map[ora.Ptr]Property
+	statesById       map[string]Property
+	filesReceiver    map[ora.Ptr]FilesReceiver
+	destroyObservers map[int]func()
+	hnd              int
+	factory          ora.ComponentFactoryId
+	navController    *NavigationController
+	values           Values
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -70,7 +69,6 @@ func (s *scopeWindow) reset() {
 	//clear(s.states)
 	clear(s.filesReceiver)
 	//clear(s.destroyObservers) ???
-	clear(s.windowChangedObservers)
 	clear(s.callbacks)
 }
 
@@ -94,18 +92,6 @@ func (s *scopeWindow) Factory() ora.ComponentFactoryId {
 	return s.factory
 }
 
-func (s *scopeWindow) AddWindowChangedObserver(fn func()) (removeObserver func()) {
-	s.hnd++
-	myHnd := s.hnd
-	s.windowChangedObservers[myHnd] = func() {
-		fn()
-		s.Invalidate()
-	}
-	return func() {
-		delete(s.windowChangedObservers, myHnd)
-	}
-}
-
 func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {
 	s.hnd++
 	myHnd := s.hnd
@@ -120,25 +106,6 @@ func (s *scopeWindow) Invalidate() {
 		return
 	}
 	s.parent.forceRender()
-}
-
-func (s *scopeWindow) AddWindowSizeClassObserver(fn func(sizeClass ora.WindowSizeClass)) (removeObserver func()) {
-	sizeClass := s.parent.windowInfo.SizeClass()
-
-	s.hnd++
-	myHnd := s.hnd
-	s.windowChangedObservers[myHnd] = func() {
-		newClass := s.parent.windowInfo.SizeClass()
-		if sizeClass != newClass {
-			sizeClass = newClass
-			fn(sizeClass)
-			s.Invalidate()
-		}
-	}
-
-	return func() {
-		delete(s.windowChangedObservers, myHnd)
-	}
 }
 
 func (s *scopeWindow) destroy() {
@@ -200,7 +167,7 @@ func (s *scopeWindow) Execute(task func()) {
 	s.parent.eventLoop.Tick()
 }
 
-func (s *scopeWindow) WindowInfo() ora.WindowInfo {
+func (s *scopeWindow) Info() ora.WindowInfo {
 	return s.parent.windowInfo
 }
 

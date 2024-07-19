@@ -58,8 +58,8 @@ type Window interface {
 	// Location returns negotiated time zone location.
 	Location() *time.Location
 
-	// WindowInfo returns the screen metrics.
-	WindowInfo() ora.WindowInfo
+	// Info returns the screen metrics.
+	Info() ora.WindowInfo
 
 	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
@@ -79,14 +79,6 @@ type Window interface {
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
-
-	// AddWindowChangedObserver registers an observer to be called, after the frontend has adjusted its size
-	// at least in a significant way. Frontends are free to optimize, e.g. they may send pixel exact events
-	// or only when the size class or a media break point was changed.
-	AddWindowChangedObserver(fn func()) (removeObserver func())
-
-	// AddWindowSizeClassObserver registers an observer which is always called if the size class changes.
-	AddWindowSizeClassObserver(fn func(sizeClass ora.WindowSizeClass)) (removeObserver func())
 
 	// Invalidate renders the tree and sends it to the actual frontend for displaying. Usually you should not use
 	// this directly, because the request-response cycles triggers this automatically. However, if backend

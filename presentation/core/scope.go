@@ -192,8 +192,8 @@ func (s *Scope) getTempDir() (string, error) {
 func (s *Scope) updateWindowInfo(winfo ora.WindowInfo) {
 	s.windowInfo = winfo
 	if s.allocatedRootView.Valid {
-		for _, f := range s.allocatedRootView.V.windowChangedObservers {
-			f()
+		if s.allocatedRootView.Valid {
+			s.allocatedRootView.Unwrap().Invalidate()
 		}
 	}
 }
