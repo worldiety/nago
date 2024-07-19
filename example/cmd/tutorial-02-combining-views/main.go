@@ -11,10 +11,10 @@ import (
 )
 
 //go:embed hummel.jpg
-var hummelData application.Bytes
+var hummelData application.StaticBytes
 
 //go:embed gras.jpg
-var grasData application.Bytes
+var grasData application.StaticBytes
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {

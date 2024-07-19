@@ -27,6 +27,23 @@ type Density float64
 // https://tailwindcss.com/docs/responsive-design.
 type WindowSizeClass string
 
+func (w WindowSizeClass) Ordinal() int {
+	switch w {
+	case SizeClassSmall:
+		return 1
+	case SizeClassMedium:
+		return 2
+	case SizeClassLarge:
+		return 3
+	case SizeClassXL:
+		return 4
+	case SizeClass2XL:
+		return 5
+	default:
+		return 0
+	}
+}
+
 const (
 	// SizeClassSmall are devices below 640 dp screen width.
 	SizeClassSmall WindowSizeClass = "sm"

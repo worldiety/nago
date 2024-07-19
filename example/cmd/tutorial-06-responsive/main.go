@@ -14,8 +14,26 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
+		cfg.Resource(application.StaticBytes{})
+
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.VStack(ui.Text(fmt.Sprintf("hello world %s", wnd.Info().SizeClass))).
+			firstname := core.AutoState[string](wnd)
+			lastname := core.AutoState[string](wnd)
+
+			return ui.VStack(
+				ui.ViewThatMatches(wnd,
+					ui.SizeClass(ora.SizeClass2XL, ui.HStack(
+						ui.TextField("Vorname", firstname),
+						ui.TextField("Nachname", lastname),
+					)),
+					ui.SizeClass(ora.SizeClassSmall, ui.VStack(
+						ui.TextField("Vorname", firstname),
+						ui.TextField("Nachname", lastname),
+					)),
+					ui.SizeClass(ora.SizeClassMedium, ui.Text("so mittel")),
+				),
+				ui.Text(fmt.Sprintf("hello world %s", wnd.Info().SizeClass)),
+			).
 				Frame(ora.Frame{}.MatchScreen())
 		})
 	}).Run()

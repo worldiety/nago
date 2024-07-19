@@ -19,12 +19,12 @@ type Resource interface {
 	configureResource(c *Configurator) ora.URI
 }
 
-type Bytes []byte
+type StaticBytes []byte
 
-func (r Bytes) configureResource(c *Configurator) ora.URI {
+func (r StaticBytes) configureResource(c *Configurator) ora.URI {
 	sum := sha256.Sum256(r)
 	token := hex.EncodeToString(sum[:])
-	pattern := fmt.Sprintf("/api/ora/v1/resource/%s", token)
+	pattern := fmt.Sprintf("/api/ora/v1/static/%s", token)
 	c.rawEndpoint = append(c.rawEndpoint, rawEndpoint{
 		pattern: pattern,
 		handler: func(writer http.ResponseWriter, request *http.Request) {

@@ -10,10 +10,10 @@ import (
 )
 
 //go:embed profile.jpg
-var profileData application.Bytes
+var profileData application.StaticBytes
 
 //go:embed gras.jpg
-var grasData application.Bytes
+var grasData application.StaticBytes
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
