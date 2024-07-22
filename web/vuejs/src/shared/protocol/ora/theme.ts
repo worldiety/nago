@@ -3,12 +3,13 @@
  */
 
 
-import type { Colors } from '@/shared/protocol/ora/colors';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { Lengths } from '@/shared/protocol/ora/lengths';
+import type { NamespaceName } from '@/shared/protocol/ora/namespaceName';
 
 export interface Theme {
     // Colors
-    colors: Colors;
+    colors: Record<NamespaceName,Record<string,Color>>;
     // Lengths
     lengths: Lengths;
 }

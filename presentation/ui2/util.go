@@ -24,11 +24,17 @@ func propertyOf[T any](ctx core.RenderContext, s *core.State[T]) ora.Property[T]
 	}
 }
 
-func If(b bool, view core.View) core.View {
+// If conditionally returns the view or nil. This can be used as a kind of inline ternary operator
+func If[T any](b bool, t T) T {
+	var zero T
+	return IfElse[T](b, t, zero)
+}
+
+// IfElse conditionally returns one or the other view. This can be used as a kind of inline ternary operator
+func IfElse[T any](b bool, ifTrue, ifFalse T) T {
 	if b {
-		return view
+		return ifTrue
 	}
 
-	// TODO implement non-nil view
-	return nil
+	return ifFalse
 }

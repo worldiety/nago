@@ -46,7 +46,7 @@ func main() {
 					).Font(ora.Font{Size: ora.L12}).
 						Frame(ora.Frame{}.FullWidth()),
 
-					ui.HDivider(),
+					ui.HLine(),
 					ui.Text("Es gibt auch").Font(ora.Title),
 					ui.Text("Andere Viecher"),
 				).Alignment(ora.Leading).

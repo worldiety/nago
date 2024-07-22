@@ -66,10 +66,11 @@ const (
 // changing the size of a browser window.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type WindowInfo struct {
-	Width     DP              `json:"width"`
-	Height    DP              `json:"height"`
-	Density   Density         `json:"density"`
-	SizeClass WindowSizeClass `json:"sizeClass"`
+	Width       DP              `json:"width"`
+	Height      DP              `json:"height"`
+	Density     Density         `json:"density"`
+	SizeClass   WindowSizeClass `json:"sizeClass"`
+	ColorScheme ColorScheme     `json:"colorScheme"`
 }
 
 // WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way.

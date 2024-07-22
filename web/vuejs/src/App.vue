@@ -2,7 +2,7 @@
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import {useErrorHandling} from '@/composables/errorhandling';
 import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import {onBeforeMount, onMounted, onUnmounted, ref} from "vue";
+import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from "vue";
 import type {Component} from "@/shared/protocol/ora/component";
 import GenericUi from "@/components/UiGeneric.vue";
 import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
@@ -181,12 +181,18 @@ function sendWindowInfo() {
 		return
 	}
 
+	let currentTheme = localStorage.getItem('color-theme')
+	if (!currentTheme) {
+		currentTheme = ""
+	}
+
 	//console.log("active breakpoint", activeBreakpoint.value)
 	const winfo: WindowInfo = {
 		width: window.innerWidth,
 		height: window.innerHeight,
 		density: window.devicePixelRatio,
 		sizeClass: activeBreakpoint.value,
+		colorScheme: currentTheme,
 	}
 
 
@@ -235,15 +241,50 @@ onUnmounted(() => {
 });
 
 
+//modal dialog support
+const anyModalVisible = ref<boolean>(false);
+const windowScrollY = ref<number>(0);
+
+// we just watch for changes
+// TODO dont know the render timing and states
+watch(() => ui.value, (newValue) => {
+	if (newValue) {
+		if (!anyModalVisible.value) {
+			windowScrollY.value = window.scrollY * -1;
+			anyModalVisible.value = true;
+		}
+	} else {
+		anyModalVisible.value = false;
+		nextTick(() => {
+			window.scrollTo(0, windowScrollY.value * -1);
+		})
+	}
+});
+
 </script>
+
+<style scoped>
+.modal-container {
+	z-index: var(--modal-z-index);
+}
+
+.content-container.content-container-freezed {
+	@apply fixed left-0 right-0;
+	top: var(--content-top-offset);
+}
+</style>
 
 <template>
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
+	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none">
 
-	<div class="bg-primary-98 darkmode:bg-primary-10">
+	</div>
+
+
+	<div class="bg-primary-98 darkmode:bg-primary-10 content-container  min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>

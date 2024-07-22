@@ -174,6 +174,28 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 	s.windowInfo = evt.WindowInfo
 	s.updateWindowInfo(evt.WindowInfo)
 
+	themes := ora.Themes{
+		Dark: ora.Theme{
+			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+		},
+		Light: ora.Theme{
+			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+		},
+	}
+
+	for scheme, m := range s.app.colorSets {
+		for name, set := range m {
+			switch scheme {
+			case ora.Dark:
+				themes.Dark.Colors[name] = ora.ConvertColorSetToMap(set)
+			case ora.Light:
+				themes.Dark.Colors[name] = ora.ConvertColorSetToMap(set)
+			default:
+				panic("implement me")
+			}
+		}
+	}
+
 	s.Publish(ora.ConfigurationDefined{
 		Type:               ora.ConfigurationDefinedT,
 		ApplicationID:      string(s.app.id),
@@ -181,8 +203,7 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 		ApplicationVersion: s.app.version,
 		AvailableLocales:   []string{"de", "en"}, //TODO
 		ActiveLocale:       s.locale.String(),
-		Themes:             s.app.themes,
-		Resources:          ora.Resources{}, //TODO
+		Themes:             themes,
 		RequestId:          evt.RequestId,
 	})
 }

@@ -3,6 +3,7 @@
  */
 
 
+import type { ColorScheme } from '@/shared/protocol/ora/colorScheme';
 import type { DP } from '@/shared/protocol/ora/dP';
 import type { Density } from '@/shared/protocol/ora/density';
 import type { WindowSizeClass } from '@/shared/protocol/ora/windowSizeClass';
@@ -21,5 +22,7 @@ export interface WindowInfo {
     density: Density;
     // SizeClass
     sizeClass: WindowSizeClass;
+    // ColorScheme
+    colorScheme: ColorScheme;
 }
 

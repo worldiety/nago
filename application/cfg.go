@@ -30,7 +30,6 @@ type Configurator struct {
 	applicationID      core.ApplicationID
 	applicationName    string
 	applicationVersion string
-	themes             ora.Themes
 	dataDir            string
 	//	iamSettings              IAMSettings
 	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.View
@@ -38,6 +37,7 @@ type Configurator struct {
 	destructors              []func()
 	app                      *core.Application // may be nil
 	rawEndpoint              []rawEndpoint
+	colorSets                map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet
 }
 
 func NewConfigurator() *Configurator {
@@ -57,29 +57,26 @@ func NewConfigurator() *Configurator {
 		buildInfo = fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH)
 	}
 
-	// init our standard white label theme
-	themes := ora.Themes{
-		Dark: ora.GenerateTheme(
-			ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
-			ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
-			ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
-		),
-		Light: ora.GenerateTheme(
-			ora.PrimaryColor(ora.MustParseHSL("#F7A823")),
-			ora.SecondaryColor(ora.MustParseHSL("#00FF00")),
-			ora.TertiaryColor(ora.MustParseHSL("#0000FF")),
-		),
-	}
-
-	return &Configurator{
+	cfg := &Configurator{
+		colorSets: map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet{
+			ora.Dark:  {},
+			ora.Light: {},
+		},
 		ctx:                ctx,
 		done:               done,
 		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.View{},
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
-		themes:             themes,
 		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
+
+	// init our standard white label theme
+	var primary, secondary, tertiary ora.Color
+	primary, secondary, tertiary = "#1B8C30", "#17428C", "#F7A823"
+	cfg.ColorSet(ora.Light, ora.DefaultColors(ora.Light, primary, secondary, tertiary))
+	cfg.ColorSet(ora.Dark, ora.DefaultColors(ora.Dark, primary, secondary, tertiary))
+
+	return cfg
 }
 
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {

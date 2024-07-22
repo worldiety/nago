@@ -69,6 +69,7 @@ const (
 	VStackT              ComponentType = "vs"
 	BoxT                 ComponentType = "bx"
 	SpacerT              ComponentType = "s"
+	ModalT               ComponentType = "M"
 )
 
 type Component interface {
@@ -123,12 +124,13 @@ func init() {
 		reflect.TypeOf(VStack{}),
 		reflect.TypeOf(Box{}),
 		reflect.TypeOf(Spacer{}),
+		reflect.TypeOf(Modal{}),
 	}
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Spacer | Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer
+	Modal | Spacer | Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | TextArea | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer
 }
 
 type component struct {

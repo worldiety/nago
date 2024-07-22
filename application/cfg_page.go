@@ -83,7 +83,13 @@ func (c *Configurator) newHandler() http.Handler {
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers)
 	c.app = app2
 	app2.SetID(c.applicationID)
-	app2.SetThemes(c.themes)
+	for scheme, m := range c.colorSets {
+		for _, set := range m {
+			app2.AddColorSet(scheme, set)
+		}
+
+	}
+
 	app2.SetVersion(c.applicationVersion)
 
 	// TODO we are in a weired order here

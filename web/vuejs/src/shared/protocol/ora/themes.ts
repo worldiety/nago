@@ -10,13 +10,5 @@ export interface Themes {
     dark: Theme;
     // Light
     light: Theme;
-    // HighContrast
-    highContrast: Theme;
-    // Protanopie
-    protanopie: Theme;
-    // Deuteranopie
-    deuteranopie: Theme;
-    // Tritanopie
-    tritanopie: Theme;
 }
 

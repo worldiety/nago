@@ -27,7 +27,6 @@ type Application struct {
 	id                       ApplicationID
 	name                     string
 	version                  string
-	themes                   ora.Themes
 	mutex                    sync.Mutex
 	scopes                   *Scopes
 	factories                map[ora.ComponentFactoryId]ComponentFactory
@@ -39,6 +38,7 @@ type Application struct {
 	onShareStream            func(*Scope, func() (io.Reader, error)) (ora.URI, error)
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
+	colorSets                map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver) *Application {
@@ -53,6 +53,10 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 		cancelCtx:                cancel,
 		tmpDir:                   tmpDir,
 		onWindowCreatedObservers: onWindowCreatedObservers,
+		colorSets: map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet{
+			ora.Light: {},
+			ora.Dark:  {},
+		},
 	}
 }
 
@@ -83,8 +87,8 @@ func (a *Application) SetVersion(version string) {
 	a.version = version
 }
 
-func (a *Application) SetThemes(themes ora.Themes) {
-	a.themes = themes
+func (a *Application) AddColorSet(scheme ora.ColorScheme, set ora.ColorSet) {
+	a.colorSets[scheme][set.Namespace()] = set
 }
 
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific

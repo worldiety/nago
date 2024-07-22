@@ -36,11 +36,6 @@ func (c *Configurator) EntityStore(bucketName string) blob.Store {
 	return bolt2.NewBlobStore(c.boltStore, bucketName)
 }
 
-// deprecated: use EntityStore
-func (c *Configurator) BlobStore(bucketName string) blob.Store {
-	return c.EntityStore(bucketName)
-}
-
 // FileStore returns a blob store which directly saves into the filesystem and is recommended for handling large
 // files. See also [blob.Read] and [blob.Write] helper functions.
 func (c *Configurator) FileStore(bucketName string) blob.Store {

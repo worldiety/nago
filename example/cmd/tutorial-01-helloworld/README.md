@@ -1,6 +1,4 @@
-# hello world
-
-Das obligatorische _hello world_ Beispiel.
+## Das obligatorische _hello world_ Beispiel.
 
 Sämtliche Tutorialbeispiele befinden sich auch als ausführbare Packages im [Nago-Projekt](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/example/cmd?ref_type=heads). Um ein Tutorial Paket auszuführen, reicht ein Aufruf wie `go run go.wdy.de/nago/example/cmd/tutorial-helloworld@latest`.
 
@@ -14,7 +12,8 @@ git config --global url."ssh://git@gitlab.worldiety.net/".insteadOf "https://git
 ```
 3. Nun muss das _go buildsystem_ noch wissen, dass es sich um ein privates Repository handelt und damit die öffentliche _notary sum database_ deaktiviert wird:
 ```bash
-# note the \* escaping for zsh go env -w GOPRIVATE=go.wdy.de/\*,gitlab.worldiety.net/\* 
+# note the \* escaping for zsh
+go env -w GOPRIVATE=go.wdy.de/\*,gitlab.worldiety.net/\* 
 ```
 4. Vergiss das initale `go mod tidy` bei deinem eigenen Projekt nicht, damit sich dein lokaler Modulecache die Abhängigkeiten zieht. Für ein `go run` ist das aber nicht erforderlich.
 
@@ -22,6 +21,7 @@ git config --global url."ssh://git@gitlab.worldiety.net/".insteadOf "https://git
 Somit sollten sich nun alle Beispiele bauen und ausführen lassen.
 Beim späteren Bauen in der CI/CD-Pipeline musst du diese Konfiguration in deiner `.gitlab-ci.yaml` entsprechend nachvollziehen.
 Alternativ kannst du sämtliche Abhängigkeiten auch mittels `go mod vendor` in deinem Projekt hinzufügen und kannst fortan offline reproduzierbare Builds erzeugen.
+
 
 Eine kommentierte _hello world_ Version
 ```go
@@ -31,7 +31,8 @@ package main
 import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -39,24 +40,12 @@ import (
 func main() {
 	// we use the applications package to bootstrap our configuration
 	application.Configure(func(cfg *application.Configurator) {
-		// the application id is used to place files in the applications storage directory
-		// e.g. in this case the directory is ~/.de.worldiety.tutorial
-		// this is also used for logging and identification in complex service environments
 		cfg.SetApplicationID("de.worldiety.tutorial")
-
-		// we tell the application to deliver the build-in VueJS frontend. It will communicate over regular http REST
-		// and websocket calls.
 		cfg.Serve(vuejs.Dist())
 
-		// Everything you see is based on scopes and components.
-		// A scope is created by a client (e.g. the vuejs frontend above) and used as a scratch space for
-		// allocating and freeing registered component factories.
-		// Below you can see how to register a component factory, which just returns Text component to display the
-		// obligatory 'hello world'. The dot . means the initial component, which represents the index page for the
-		// web.
-		cfg.Component(".", func(wnd core.Window) core.Component {
-			// MakeText is a shortcut for a default text component
-			return ui.MakeText("hello world")
+		cfg.Component(".", func(wnd core.Window) core.View {
+			return ui.VStack(ui.Text("hello world")).
+				Frame(ora.Frame{}.MatchScreen())
 		})
 	}).
 		// don't forget to call the run method, which starts the entire thing and blocks until finished
@@ -73,7 +62,8 @@ package main
 import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -81,8 +71,10 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
-		cfg.Component(".", func(wnd core.Window) core.Component {
-			return ui.MakeText("hello world")
+
+		cfg.Component(".", func(wnd core.Window) core.View {
+			return ui.VStack(ui.Text("hello world")).
+				Frame(ora.Frame{}.MatchScreen())
 		})
 	}).Run()
 }

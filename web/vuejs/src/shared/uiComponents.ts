@@ -31,6 +31,7 @@ import UiHStack from "@/components/hstack/UiHStack.vue";
 import UiVStack from "@/components/vstack/UiVStack.vue";
 import UiBox from "@/components/box/UiBox.vue";
 import UiSpacer from "@/components/spacer/UiSpacer.vue";
+import UiModal from "@/components/UiModal.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -66,5 +67,7 @@ uiComponentsMap.set('hs', UiHStack)
 uiComponentsMap.set('vs', UiVStack)
 uiComponentsMap.set('bx', UiBox)
 uiComponentsMap.set('s',UiSpacer)
+uiComponentsMap.set('M',UiModal)
+
 
 export default uiComponentsMap;

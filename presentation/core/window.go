@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
 	"io"
+	"log/slog"
 	"time"
 )
 
@@ -89,3 +90,24 @@ type Window interface {
 }
 
 type SessionID string
+
+// ColorSet returns a type safe value based ColorSet instance.
+func ColorSet[CS ora.ColorSet](wnd Window) CS {
+	var zero CS
+	scope := wnd.(*scopeWindow)
+
+	scheme := scope.parent.windowInfo.ColorScheme
+	colors, ok := scope.parent.app.colorSets[scheme]
+	if !ok {
+		slog.Error("could not find color set for scheme", "scheme", scheme)
+		return zero.Default(scheme).(CS)
+	}
+
+	set, ok := colors[zero.Namespace()]
+	if !ok {
+		slog.Error("could not find color set for namespace", "scheme", scheme, "namespace", zero.Namespace())
+		return zero.Default(scheme).(CS)
+	}
+
+	return set.(CS)
+}

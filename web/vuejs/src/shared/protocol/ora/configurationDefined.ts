@@ -5,7 +5,6 @@
 
 import type { EventType } from '@/shared/protocol/ora/eventType';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
-import type { Resources } from '@/shared/protocol/ora/resources';
 import type { Themes } from '@/shared/protocol/ora/themes';
 
 /**
@@ -31,8 +30,6 @@ export interface ConfigurationDefined {
     activeLocale: string;
     // Themes
     themes: Themes;
-    // Resources
-    resources: Resources;
     // RequestId
     r /*RequestId*/: RequestId;
 }
