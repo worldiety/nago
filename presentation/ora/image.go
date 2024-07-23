@@ -10,5 +10,6 @@ type Image struct {
 	Border             Border  `json:"b,omitempty"`
 	Frame              Frame   `json:"f,omitempty"`
 	Padding            Padding `json:"p,omitempty"`
+	SVG                SVG     `json:"s,omitempty"`
 	component
 }

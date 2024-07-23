@@ -14,6 +14,7 @@ type TImage struct {
 	border             ora.Border
 	frame              ora.Frame
 	padding            ora.Padding
+	svg                ora.SVG
 }
 
 func Image() TImage {
@@ -36,13 +37,18 @@ func (c TImage) URI(uri ora.URI) TImage {
 // load small images synchronously, but it may break the channel, the server or the frontend, if too large.
 // Better use [application.Resource] for large static images. Embedding image data in the range of 100-200 byte
 // is totally fine, though. The resource URI alone is already about 100 characters long.
-func (c TImage) Embed(buf []byte) {
-	b64 := base64.StdEncoding.EncodeToString(buf)
-	if bytes.Contains(buf[:100], []byte("<svg")) {
-		c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
-	} else {
-		c.uri = ora.URI(`data:application/octet-stream;base64,` + b64)
+func (c TImage) Embed(buf []byte) TImage {
+	isSvg := bytes.Contains(buf[:100], []byte("<svg"))
+	if isSvg {
+		c.svg = ora.SVG(buf)
+		c.uri = ""
+		return c
 	}
+
+	b64 := base64.StdEncoding.EncodeToString(buf)
+	//c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
+	c.uri = ora.URI(`data:application/octet-stream;base64,` + b64)
+	return c
 }
 
 // AccessibilityLabel sets a label for screen readers. See also https://www.w3.org/WAI/tutorials/images/decision-tree/.
@@ -81,5 +87,6 @@ func (c TImage) Render(ctx core.RenderContext) ora.Component {
 		Border:             c.border,
 		Frame:              c.frame,
 		Padding:            c.padding,
+		SVG:                c.svg,
 	}
 }

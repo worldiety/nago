@@ -7,6 +7,7 @@ import type { Border } from '@/shared/protocol/ora/border';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Padding } from '@/shared/protocol/ora/padding';
+import type { SVG } from '@/shared/protocol/ora/sVG';
 import type { URI } from '@/shared/protocol/ora/uRI';
 
 export interface Image {
@@ -28,5 +29,7 @@ export interface Image {
     f/*omitempty*/? /*Frame*/: Frame;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // SVG
+    s/*omitempty*/? /*SVG*/: SVG;
 }
 
