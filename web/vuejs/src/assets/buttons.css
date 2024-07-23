@@ -56,7 +56,7 @@
 }
 
 .button-destructive {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-error;
+	@apply rounded-full h-10 w-fit px-5 text-white bg-clE;
 	@apply hover:bg-opacity-75;
 	@apply active:bg-opacity-65;
 	@apply disabled:text-disabled-text disabled:bg-disabled-background;

@@ -14,7 +14,7 @@ type TDivider struct {
 // HLine configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
 func HLine() TDivider {
 	return TDivider{}.
-		Border(ora.Border{TopWidth: "1px", TopColor: "#000000"}).
+		Border(ora.Border{TopWidth: "1px", TopColor: "p5"}).
 		Frame(ora.Frame{}.FullWidth()).
 		Padding(ora.Padding{}.Vertical(ora.L16))
 
@@ -23,7 +23,7 @@ func HLine() TDivider {
 // VLine configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
 func VLine() TDivider {
 	return TDivider{}.
-		Border(ora.Border{TopWidth: "1px", TopColor: "#000000"}).
+		Border(ora.Border{TopWidth: "1px", TopColor: "p5"}).
 		Frame(ora.Frame{}.FullHeight()).
 		Padding(ora.Padding{}.Horizontal(ora.L16))
 

@@ -46,6 +46,10 @@ function commonStyles():string[]{
 		}
 	}
 
+	if (props.ui.t){
+		focusable.value= true
+	}
+
 	if (props.ui.fbc) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
@@ -75,11 +79,12 @@ function commonStyles():string[]{
 		}
 	}
 
+
 	// other stuff
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.fn))
 
-	if (focused.value){
+	if (focusable.value && focused.value){
 		styles.push("outline: 2px solid black") // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
 	}
 
@@ -97,7 +102,7 @@ const frameStyles = computed<string>(() => {
 });
 
 const clazz = computed<string>(() => {
-	let classes = "inline-flex flex-col ";
+	let classes = "overflow-clip inline-flex flex-col ";
 	switch (props.ui.a) {
 		case Alignment.Leading:
 			classes += " justify-center items-start "

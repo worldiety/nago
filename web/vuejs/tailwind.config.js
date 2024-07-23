@@ -38,16 +38,31 @@ export default {
 				colorSteps.forEach((step) => {
 					customColors[`primary-${step}`] = `hsl(var(--primary-${step}) / <alpha-value>)`;
 				});
-				customColors['primary'] = `hsl(var(--primary) / <alpha-value>)`;
-				customColors['secondary'] = `hsl(var(--secondary) / <alpha-value>)`;
-				customColors['tertiary'] = `hsl(var(--tertiary) / <alpha-value>)`;
 
-				// TODO these are not themed, and not ready for light-dark mode, fix me
-				customColors["error"] = `red`;
-				customColors["warning"] = `yellow`;
-				customColors["regular"] = `black`;
-				customColors["informative"] = `blue`;
-				customColors["positive"] = `green`;
+				// TODO we cannot apply tailwind alpha value, because we have
+				// 1. hex notation
+				// 2. already applied alpha values anyway => this is a system collision between ora and tailwind
+				customColors['primary'] = `var(--p0) `;
+				customColors['secondary'] = `var(--s0) `;
+				customColors['tertiary'] = `var(--t0)`;
+
+				customColors['clE'] = `var(--clE)`;
+				customColors['clW'] = `var(--clW)`;
+				customColors['clG'] = `var(--clG)`;
+				customColors['clI'] = `var(--clI)`;
+				customColors['clD'] = `var(--clD)`;
+				customColors['clT'] = `var(--clT)`;
+
+				customColors['p0'] = `var(--p0) `;
+				customColors['p1'] = `var(--p1) `;
+				customColors['p2'] = `var(--p2) `;
+				customColors['p3'] = `var(--p3) `;
+				customColors['p4'] = `var(--p4) `;
+				customColors['p5'] = `var(--p5) `;
+				customColors['p6'] = `var(--p6) `;
+				customColors['p7'] = `var(--p7) `;
+				customColors['p8'] = `var(--p8) `;
+				customColors['p9'] = `var(--p9) `;
 
 				return customColors;
 			},

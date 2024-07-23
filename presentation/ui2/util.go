@@ -5,6 +5,14 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+func render(ctx core.RenderContext, c core.View) ora.Component {
+	if c == nil {
+		return nil
+	}
+
+	return c.Render(ctx)
+}
+
 func renderComponents(ctx core.RenderContext, c []core.View) []ora.Component {
 	res := make([]ora.Component, 0, len(c))
 	for _, component := range c {

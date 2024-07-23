@@ -80,7 +80,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {
-	@apply border-error;
+	@apply border-clE;
 }
 
 .input-field-wrapper input::placeholder {

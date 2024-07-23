@@ -24,7 +24,9 @@ func Test_hsbToRGB(t *testing.T) {
 		t.Errorf("expected: %v, got: %v", "1b8c30", hsl.RGBHex())
 	}
 
-	fmt.Println(Color("#1b8c30").WithBrightness(30).WithAlpha(10))
+	fmt.Println(Color("#1b8c30").WithBrightness(30).WithTransparency(10))
+	fmt.Println(Color("#A6A5C2").WithBrightness(90))
+	fmt.Println(Color("#1B8C30").WithBrightness(90))
 }
 
 func nearlyEqual(a, b float64) bool {

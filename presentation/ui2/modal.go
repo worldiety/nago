@@ -17,7 +17,7 @@ func Modal(content core.View) TModal {
 func (c TModal) Render(context core.RenderContext) ora.Component {
 	return ora.Modal{
 		Type:             ora.ModalT,
-		Content:          c.content.Render(context),
+		Content:          render(context, c.content),
 		OnDismissRequest: context.MountCallback(c.onDismissRequest),
 	}
 }

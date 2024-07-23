@@ -7,6 +7,7 @@ import (
 )
 
 type RenderContext interface {
+	Window() Window
 	// MountCallback returns for non-nil funcs a pointer. This pointer is only unique for the current render state.
 	// This means, that subsequent calls which result in the same structural ora tree, will have the same
 	// pointers. This allows more efficient model deltas. The largest downside is, that an outdated frontend
@@ -33,6 +34,11 @@ func (s *State[T]) Parse(v string) error {
 
 func (s *State[T]) Get() T {
 	return s.value
+}
+
+func (s *State[T]) Set(v T) {
+	s.value = v
+	s.valid = true
 }
 
 func (s *State[T]) Ptr() ora.Ptr {

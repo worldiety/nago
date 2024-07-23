@@ -88,6 +88,10 @@ func (s *scopeWindow) render() ora.Component {
 	return component.Render(s)
 }
 
+func (s *scopeWindow) Window() Window {
+	return s
+}
+
 func (s *scopeWindow) Factory() ora.ComponentFactoryId {
 	return s.factory
 }

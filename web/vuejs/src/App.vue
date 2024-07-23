@@ -284,7 +284,7 @@ watch(() => ui.value, (newValue) => {
 	</div>
 
 
-	<div class="bg-primary-98 darkmode:bg-primary-10 content-container  min-h-screen">
+	<div class="bg-p1 darkmode:bg-p1 content-container  min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
