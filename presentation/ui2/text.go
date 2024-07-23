@@ -6,18 +6,25 @@ import (
 )
 
 type TText struct {
-	content            string
-	color              ora.Color
-	backgroundColor    ora.Color
-	font               ora.Font
-	invisible          bool
-	onClick            func()
-	onHoverStart       func()
-	onHoverEnd         func()
-	padding            ora.Padding
-	frame              ora.Frame
-	border             ora.Border
-	accessibilityLabel string
+	content                string
+	color                  ora.Color
+	backgroundColor        ora.Color
+	hoveredBackgroundColor ora.Color
+	pressedBackgroundColor ora.Color
+	focusedBackgroundColor ora.Color
+	font                   ora.Font
+	invisible              bool
+	onClick                func()
+	onHoverStart           func()
+	onHoverEnd             func()
+	padding                ora.Padding
+	frame                  ora.Frame
+	border                 ora.Border
+	hoveredBorder          ora.Border
+	focusedBorder          ora.Border
+	pressedBorder          ora.Border
+	accessibilityLabel     string
+	action                 func()
 }
 
 func Text(content string) TText {
@@ -36,6 +43,21 @@ func (c TText) Frame(frame ora.Frame) core.DecoredView {
 
 func (c TText) Border(border ora.Border) core.DecoredView {
 	c.border = border
+	return c
+}
+
+func (c TText) HoveredBorder(border ora.Border) TText {
+	c.hoveredBorder = border
+	return c
+}
+
+func (c TText) PressedBorder(border ora.Border) TText {
+	c.pressedBorder = border
+	return c
+}
+
+func (c TText) FocusedBorder(border ora.Border) TText {
+	c.focusedBorder = border
 	return c
 }
 
@@ -64,6 +86,11 @@ func (c TText) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
 	return c
 }
 
+func (c TText) Action(f func()) TText {
+	c.action = f
+	return c
+}
+
 func (c TText) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.Text{
@@ -80,5 +107,13 @@ func (c TText) Render(ctx core.RenderContext) ora.Component {
 		Padding:            c.padding,
 		Frame:              c.frame,
 		AccessibilityLabel: c.accessibilityLabel,
+
+		HoveredBackgroundColor: c.hoveredBackgroundColor,
+		PressedBackgroundColor: c.pressedBackgroundColor,
+		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBorder:          c.hoveredBorder,
+		FocusedBorder:          c.focusedBorder,
+		PressedBorder:          c.pressedBorder,
+		Action:                 ctx.MountCallback(c.action),
 	}
 }

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import UiGeneric from '@/components/UiGeneric.vue';
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 import {HStack} from "@/shared/protocol/ora/hStack";
 import {frameCSS} from "@/components/shared/frame";
 import {Alignment} from "@/components/shared/alignments";
@@ -9,11 +9,23 @@ import {paddingCSS} from "@/components/shared/padding";
 import {colorValue} from "@/components/shared/colors";
 import {fontCSS} from "@/components/shared/font";
 import {borderCSS} from "@/components/shared/border";
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const props = defineProps<{
 	ui: HStack;
 }>();
 
+const hover = ref(false);
+const pressed = ref(false);
+const focused = ref(false);
+const focusable = ref(false);
+const serviceAdapter = useServiceAdapter();
+
+function onClick() {
+	if (props.ui.t){
+		serviceAdapter.executeFunctions(props.ui.t);
+	}
+}
 
 const frameStyles = computed<string>(() => {
 	let styles = frameCSS(props.ui.f)
@@ -75,7 +87,7 @@ const clazz = computed<string>(() => {
 </script>
 
 <template v-if="props.ui.children">
-	<div :class="clazz" :style="frameStyles">
+	<div :class="clazz" :style="frameStyles" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 </template>

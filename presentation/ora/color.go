@@ -8,12 +8,22 @@ import (
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Color string
 
-func (c Color) WithAlpha(a int8) Color {
+// WithTransparency updates the alpha value part of the color (0-100), where 25% transparent means 75% opaque.
+func (c Color) WithTransparency(a int8) Color {
 	if len(c) == 8 {
 		c = c[:len(c)-2]
 	}
 
-	return Color(fmt.Sprintf("%s%02x", string(c), a))
+	// recalculate into 0-255 and invert
+	ai := 255 - int(min(max((float64(a)/100*255), 0), 255))
+
+	return Color(fmt.Sprintf("%s%02x", string(c), ai))
+}
+
+// WithBrightness recalculates the hex RGB value into HSL, set the given brightness (0-100) and returns
+// the new hex RGB value.
+func (c Color) WithBrightness(b int8) Color {
+	return mustParseHSL(string(c)).Brightness(float64(b)).RGBHex()
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -24,7 +34,7 @@ const (
 	Dark  ColorScheme = "dark"
 )
 
-// A ColorSet marks a simple struct with public color fields (like Colors) to be a set of colors.
+// A ColorSet marks a simple struct with public color fields (like [Colors]) to be a set of colors.
 // It returns its unique namespace and has a Default behavior, as a fallback.
 // Even though this looks quite cumbersome, for just defining some custom colors, it will play out its strength,
 // when designing custom views with complex color sets. If a component requires 10 additional color values and
@@ -129,17 +139,17 @@ func darkColors(primary, secondary, tertiary Color) Colors {
 	s := mustParseHSL(string(secondary))
 	c.S0 = secondary
 	c.S1 = secondary
-	c.S2 = secondary.WithAlpha(50)
-	c.S3 = secondary.WithAlpha(25)
+	c.S2 = secondary.WithTransparency(50)
+	c.S3 = secondary.WithTransparency(25)
 	c.S4 = s.Brightness(80).RGBHex()
-	c.S5 = s.Brightness(80).RGBHex().WithAlpha(50)
-	c.S6 = s.Brightness(80).RGBHex().WithAlpha(50)
+	c.S5 = s.Brightness(80).RGBHex().WithTransparency(50)
+	c.S6 = s.Brightness(80).RGBHex().WithTransparency(50)
 
 	_ = mustParseHSL(string(tertiary))
 	c.T0 = tertiary
 	c.T1 = tertiary
-	c.T2 = tertiary.WithAlpha(10)
-	c.T3 = tertiary.WithAlpha(25)
+	c.T2 = tertiary.WithTransparency(10)
+	c.T3 = tertiary.WithTransparency(25)
 
 	c.Error = "#F47954"
 	c.Warning = "#F7A823"
@@ -168,17 +178,17 @@ func lightColors(primary, secondary, tertiary Color) Colors {
 	s := mustParseHSL(string(secondary))
 	c.S0 = secondary
 	c.S1 = secondary
-	c.S2 = secondary.WithAlpha(50)
-	c.S3 = secondary.WithAlpha(25)
+	c.S2 = secondary.WithTransparency(50)
+	c.S3 = secondary.WithTransparency(25)
 	c.S4 = s.Brightness(80).RGBHex()
-	c.S5 = s.Brightness(80).RGBHex().WithAlpha(50)
-	c.S6 = s.Brightness(80).RGBHex().WithAlpha(50)
+	c.S5 = s.Brightness(80).RGBHex().WithTransparency(50)
+	c.S6 = s.Brightness(80).RGBHex().WithTransparency(50)
 
 	_ = mustParseHSL(string(tertiary))
 	c.T0 = tertiary
 	c.T1 = tertiary
-	c.T2 = tertiary.WithAlpha(10)
-	c.T3 = tertiary.WithAlpha(25)
+	c.T2 = tertiary.WithTransparency(10)
+	c.T3 = tertiary.WithTransparency(25)
 
 	c.Error = "#F47954"
 	c.Warning = "#F7A823"

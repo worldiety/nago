@@ -119,7 +119,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		}, 2000);
 	}
 
-	async executeFunctions(...functions: Property<Ptr>[]): Promise<ComponentInvalidated> {
+	async executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated> {
 		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);
 	}
 
@@ -199,7 +199,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	private send(
 		properties?: Property<unknown>[],
-		functions?: Property<Ptr>[],
+		functions?: Ptr[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
@@ -248,7 +248,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private createCallBatch(
 		requestId: number,
 		properties?: Property<unknown>[],
-		functions?: Property<Ptr>[],
+		functions?: Ptr[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
@@ -273,11 +273,11 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		functions
 			// we may be undefined, because the ora protocol is now allowed to omit zero property pointer and values due to performance problems
-			?.filter((propertyFunc: Property<Ptr>) => propertyFunc.p != undefined && propertyFunc.p !== 0 && propertyFunc.v != undefined && propertyFunc.v !== 0)
-			.forEach((propertyFunc: Property<Ptr>) => {
+			?.filter((propertyFunc: Ptr) => propertyFunc != undefined && propertyFunc !== 0 )
+			.forEach((propertyFunc: Ptr) => {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',
-					p: propertyFunc.v,
+					p: propertyFunc,
 					r: requestId,
 				};
 				callBatch.events.push(callServerFunc);

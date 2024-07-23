@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 import type {Text} from "@/shared/protocol/ora/text";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {isNil} from "@/shared/protocol/util";
@@ -14,7 +14,17 @@ const props = defineProps<{
 	ui: Text;
 }>();
 
+const hover = ref(false);
+const pressed = ref(false);
+const focused = ref(false);
+const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
+
+function onClick() {
+	if (props.ui.t){
+		serviceAdapter.executeFunctions(props.ui.t);
+	}
+}
 
 
 const styles = computed<string>(() => {
@@ -35,28 +45,10 @@ const styles = computed<string>(() => {
 });
 
 
-function onClick() {
-	if (!isNil(props.ui.onClick)) {
-		serviceAdapter.executeFunctions(props.ui.onClick);
-	}
-}
-
-function onMouseEnter() {
-	if (!isNil(props.ui.onHoverEnd)) {
-		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
-	}
-}
-
-function onMouseLeave() {
-	if (!isNil(props.ui.onHoverEnd)) {
-		serviceAdapter.executeFunctions(props.ui.onHoverEnd);
-	}
-}
 </script>
 
 <template>
-	<span v-if="!ui.i" :style="styles" @click="onClick" @mouseenter="onMouseEnter"
-				@mouseleave="onMouseLeave">{{
+	<span v-if="!ui.i" :style="styles" @click="onClick" >{{
 			props.ui.v
 		}}</span>
 </template>

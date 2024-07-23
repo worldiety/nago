@@ -22,6 +22,14 @@ type Text struct {
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/ but makes probably no sense.
 	AccessibilityLabel string `json:"al,omitempty"`
 
-	Font Font `json:"o,omitempty"`
+	Font   Font `json:"o,omitempty"`
+	Action Ptr  `json:"t,omitempty"`
+
+	HoveredBackgroundColor Color  `json:"hgc,omitempty"`
+	PressedBackgroundColor Color  `json:"pgc,omitempty"`
+	FocusedBackgroundColor Color  `json:"fbc,omitempty"`
+	HoveredBorder          Border `json:"hb,omitempty"`
+	PressedBorder          Border `json:"pb,omitempty"`
+	FocusedBorder          Border `json:"fb,omitempty"`
 	component
 }

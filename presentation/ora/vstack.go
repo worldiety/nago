@@ -24,5 +24,14 @@ type VStack struct {
 	AccessibilityLabel string `json:"al,omitempty"`
 	Invisible          bool   `json:"iv,omitempty"`
 	Font               Font   `json:"fn,omitempty"`
+	Action             Ptr    `json:"t,omitempty"`
+
+	HoveredBackgroundColor Color  `json:"hgc,omitempty"`
+	PressedBackgroundColor Color  `json:"pgc,omitempty"`
+	FocusedBackgroundColor Color  `json:"fbc,omitempty"`
+	HoveredBorder          Border `json:"hb,omitempty"`
+	PressedBorder          Border `json:"pb,omitempty"`
+	FocusedBorder          Border `json:"fb,omitempty"`
+
 	component
 }

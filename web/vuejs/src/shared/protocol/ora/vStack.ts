@@ -12,6 +12,7 @@ import type { Font } from '@/shared/protocol/ora/font';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 /**
  * An VStack aligns children elements in a vertical column.
@@ -63,5 +64,19 @@ export interface VStack {
     iv/*omitempty*/? /*Invisible*/: boolean;
     // Font
     fn/*omitempty*/? /*Font*/: Font;
+    // Action
+    t/*omitempty*/? /*Action*/: Ptr;
+    // HoveredBackgroundColor
+    hgc/*omitempty*/? /*HoveredBackgroundColor*/: Color;
+    // PressedBackgroundColor
+    pgc/*omitempty*/? /*PressedBackgroundColor*/: Color;
+    // FocusedBackgroundColor
+    fbc/*omitempty*/? /*FocusedBackgroundColor*/: Color;
+    // HoveredBorder
+    hb/*omitempty*/? /*HoveredBorder*/: Border;
+    // PressedBorder
+    pb/*omitempty*/? /*PressedBorder*/: Border;
+    // FocusedBorder
+    fb/*omitempty*/? /*FocusedBorder*/: Border;
 }
 

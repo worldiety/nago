@@ -1,3 +1,4 @@
+/* this breaks our custom design code
 .effect-hover:hover {
 	@apply bg-primary bg-opacity-15 text-primary;
 }
@@ -5,3 +6,6 @@
 *:focus-visible {
 	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
 }
+
+ */
+

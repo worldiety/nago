@@ -50,5 +50,19 @@ export interface Text {
     al/*omitempty*/? /*AccessibilityLabel*/: string;
     // Font
     o/*omitempty*/? /*Font*/: Font;
+    // Action
+    t/*omitempty*/? /*Action*/: Ptr;
+    // HoveredBackgroundColor
+    hgc/*omitempty*/? /*HoveredBackgroundColor*/: Color;
+    // PressedBackgroundColor
+    pgc/*omitempty*/? /*PressedBackgroundColor*/: Color;
+    // FocusedBackgroundColor
+    fbc/*omitempty*/? /*FocusedBackgroundColor*/: Color;
+    // HoveredBorder
+    hb/*omitempty*/? /*HoveredBorder*/: Border;
+    // PressedBorder
+    pb/*omitempty*/? /*PressedBorder*/: Border;
+    // FocusedBorder
+    fb/*omitempty*/? /*FocusedBorder*/: Border;
 }
 

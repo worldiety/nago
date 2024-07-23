@@ -10,6 +10,7 @@ type Shadow struct {
 	Y      Length `json:"y,omitempty"`
 }
 
+// Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Border struct {
 	TopLeftRadius     Length `json:"tlr,omitempty"`

@@ -13,7 +13,7 @@ export default interface ServiceAdapter {
 
 	teardown(): Promise<void>;
 
-	executeFunctions(...functions: Property<Ptr>[]): Promise<ComponentInvalidated>;
+	executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated>;
 
 	setProperties(...properties: Property<unknown>[]): Promise<ComponentInvalidated>;
 
