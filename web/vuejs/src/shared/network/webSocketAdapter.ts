@@ -33,11 +33,13 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private retryTimeout: number | null = null;
 	private activeLocale: string;
 	private requestId: number;
+	private bufferCache: Map<Ptr, string>; // TODO reset me, if new component (== new scope) is requested
 
 	constructor(eventBus: EventBus) {
 		this.eventBus = eventBus;
 		this.pendingFutures = new Map();
 		this.destroyedComponents = new Map();
+		this.bufferCache = new Map<Ptr, string>();
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
@@ -133,6 +135,14 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	getScopeID(): ScopeID {
 		return this.scopeId
+	}
+
+	getBufferFromCache(ptr: Ptr): string | undefined {
+		return this.bufferCache.get(ptr)
+	}
+
+	setBufferToCache(ptr: Ptr, data: string): void {
+		this.bufferCache.set(ptr, data)
 	}
 
 	async createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
@@ -273,7 +283,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		functions
 			// we may be undefined, because the ora protocol is now allowed to omit zero property pointer and values due to performance problems
-			?.filter((propertyFunc: Ptr) => propertyFunc != undefined && propertyFunc !== 0 )
+			?.filter((propertyFunc: Ptr) => propertyFunc != undefined && propertyFunc !== 0)
 			.forEach((propertyFunc: Ptr) => {
 				const callServerFunc: FunctionCallRequested = {
 					type: 'F',

@@ -15,6 +15,8 @@ type TImage struct {
 	frame              ora.Frame
 	padding            ora.Padding
 	svg                ora.SVG
+	fillColor          ora.Color
+	strokeColor        ora.Color
 }
 
 func Image() TImage {
@@ -33,14 +35,31 @@ func (c TImage) URI(uri ora.URI) TImage {
 	return c
 }
 
-// Embed encodes the given buffer as a URI within the components attributes. This may be fine to
+// FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor.
+// Otherwise, a broken or no effect will be seen.
+func (c TImage) FillColor(color ora.Color) TImage {
+	c.fillColor = color
+	return c
+}
+
+// StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor.
+// Otherwise, a broken or no effect will be seen.
+func (c TImage) StrokeColor(color ora.Color) TImage {
+	c.strokeColor = color
+	return c
+}
+
+// Embed encodes the given buffer within the components attributes. This may be fine to
 // load small images synchronously, but it may break the channel, the server or the frontend, if too large.
 // Better use [application.Resource] for large static images. Embedding image data in the range of 100-200 byte
 // is totally fine, though. The resource URI alone is already about 100 characters long.
+// Usually, embedding SVGs in the range of 1-2KiB is also fine. To optimize render performance,
+// the system uses a special caching technique. Important: due to caching, do not submit ever-changing SVGs, because
+// the backend and the frontend may suffer from cache overflow.
 func (c TImage) Embed(buf []byte) TImage {
 	isSvg := bytes.Contains(buf[:100], []byte("<svg"))
 	if isSvg {
-		c.svg = ora.SVG(buf)
+		c.svg = buf
 		c.uri = ""
 		return c
 	}
@@ -78,6 +97,13 @@ func (c TImage) Frame(frame ora.Frame) core.DecoredView {
 }
 
 func (c TImage) Render(ctx core.RenderContext) ora.Component {
+	svgData := c.svg
+	ptr, created := ctx.Handle(c.svg)
+	if ptr != 0 && !created {
+		// if ptr is not nil and it has already been created, we can omit the data
+		// because the client already knows how the data looks for the handle pointer.
+		svgData = nil
+	}
 
 	return ora.Image{
 		Type:               ora.ImageT,
@@ -87,6 +113,9 @@ func (c TImage) Render(ctx core.RenderContext) ora.Component {
 		Border:             c.border,
 		Frame:              c.frame,
 		Padding:            c.padding,
-		SVG:                c.svg,
+		SVG:                svgData,
+		CachedSVG:          ptr,
+		FillColor:          c.fillColor,
+		StrokeColor:        c.strokeColor,
 	}
 }

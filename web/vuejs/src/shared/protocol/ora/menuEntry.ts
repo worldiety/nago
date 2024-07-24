@@ -7,7 +7,6 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface MenuEntry {
     // Ptr
@@ -15,9 +14,9 @@ export interface MenuEntry {
     // Type
     type: 'MenuEntry'/*ComponentType*/;
     // Icon
-    icon: Property<SVG>;
+    icon: Property;
     // IconActive
-    iconActive: Property<SVG>;
+    iconActive: Property;
     // Title
     title: Property<string>;
     // Action

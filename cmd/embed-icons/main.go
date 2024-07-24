@@ -26,6 +26,8 @@ func realMain() error {
 	paths := []string{
 		"presentation/icons/hero/solid",
 		"presentation/icons/hero/outline",
+		"presentation/icons/flowbite/solid",
+		"presentation/icons/flowbite/outline",
 	}
 
 	for _, path := range paths {

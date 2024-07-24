@@ -28,4 +28,8 @@ export default interface ServiceAdapter {
 	getConfiguration(): Promise<ConfigurationDefined>;
 
 	getScopeID(): ScopeID;
+
+	getBufferFromCache(ptr: Ptr): string | undefined
+
+	setBufferToCache(ptr: Ptr, data: string): void;
 }

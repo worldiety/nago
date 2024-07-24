@@ -16,23 +16,30 @@ var _ Window = (*scopeWindow)(nil)
 
 const maxAutoPtr = 10_000
 
+type declaredBufferKey struct {
+	ptr *byte
+	len int
+}
+
 type scopeWindow struct {
-	parent           *Scope
-	rootFactory      std.Option[ComponentFactory]
-	lastRendering    std.Option[ora.Component]
-	destroyed        bool
-	callbackPtr      ora.Ptr
-	callbacks        map[ora.Ptr]func()
-	lastAutoStatePtr ora.Ptr
-	lastStatePtrById ora.Ptr
-	states           map[ora.Ptr]Property
-	statesById       map[string]Property
-	filesReceiver    map[ora.Ptr]FilesReceiver
-	destroyObservers map[int]func()
-	hnd              int
-	factory          ora.ComponentFactoryId
-	navController    *NavigationController
-	values           Values
+	parent                *Scope
+	rootFactory           std.Option[ComponentFactory]
+	lastRendering         std.Option[ora.Component]
+	destroyed             bool
+	callbackPtr           ora.Ptr
+	callbacks             map[ora.Ptr]func()
+	lastAutoStatePtr      ora.Ptr
+	lastStatePtrById      ora.Ptr
+	states                map[ora.Ptr]Property
+	statesById            map[string]Property
+	filesReceiver         map[ora.Ptr]FilesReceiver
+	destroyObservers      map[int]func()
+	hnd                   int
+	factory               ora.ComponentFactoryId
+	navController         *NavigationController
+	values                Values
+	declaredBuffers       map[declaredBufferKey]ora.Ptr
+	lastDeclaredBufferPtr ora.Ptr
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -42,6 +49,7 @@ func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values
 	s.states = map[ora.Ptr]Property{}
 	s.statesById = map[string]Property{}
 	s.lastStatePtrById = maxAutoPtr
+	s.declaredBuffers = map[declaredBufferKey]ora.Ptr{}
 	if values == nil {
 		s.values = Values{}
 	}
@@ -118,6 +126,26 @@ func (s *scopeWindow) destroy() {
 		f()
 	}
 	clear(s.destroyObservers)
+}
+
+func (s *scopeWindow) Handle(buf []byte) (ora.Ptr, bool) {
+	if len(buf) == 0 {
+		return 0, false
+	}
+
+	key := declaredBufferKey{
+		ptr: &buf[0],
+		len: len(buf),
+	}
+
+	ptr, ok := s.declaredBuffers[key]
+	if ok {
+		return ptr, false
+	}
+
+	s.lastDeclaredBufferPtr++
+	s.declaredBuffers[key] = s.lastDeclaredBufferPtr
+	return s.lastDeclaredBufferPtr, true
 }
 
 func (s *scopeWindow) MountCallback(f func()) ora.Ptr {

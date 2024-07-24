@@ -8,7 +8,6 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface NavigationComponent {
     // Ptr
@@ -16,7 +15,7 @@ export interface NavigationComponent {
     // Type
     type: 'NavigationComponent'/*ComponentType*/;
     // Logo
-    logo: Property<SVG>;
+    logo: Property;
     // Menu
     menu: Property<MenuEntry[]>;
     // Alignment

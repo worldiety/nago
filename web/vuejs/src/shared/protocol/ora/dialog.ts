@@ -8,7 +8,6 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { ElementSize } from '@/shared/protocol/ora/elementSize';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface Dialog {
     // Ptr
@@ -22,7 +21,7 @@ export interface Dialog {
     // Footer
     footer: Property<Component>;
     // Icon
-    icon: Property<SVG>;
+    icon: Property;
     // Size
     size: Property<ElementSize>;
 }

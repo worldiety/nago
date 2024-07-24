@@ -4,10 +4,14 @@ import {computed} from "vue";
 import {borderCSS} from "@/components/shared/border";
 import {frameCSS} from "@/components/shared/frame";
 import {paddingCSS} from "@/components/shared/padding";
+import {colorValue} from "@/components/shared/colors";
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const props = defineProps<{
 	ui: Image;
 }>();
+
+const serviceAdapter = useServiceAdapter();
 
 const styles = computed<string>(() => {
 	let styles = borderCSS(props.ui.b)
@@ -18,19 +22,44 @@ const styles = computed<string>(() => {
 		styles.push("object-fit: cover")
 	}
 
+	if (props.ui.c) {
+		styles.push(`fill: ${colorValue(props.ui.c)}`)
+	}
+
+	if (props.ui.k) {
+		styles.push(`stroke: ${colorValue(props.ui.k)}`)
+	}
+
 	return styles.join(";")
 })
 
 const rewriteSVG = computed<string>(() => {
-	if (!props.ui.s){
+	if (!props.ui.s && !props.ui.v) {
 		return ""
 	}
 
-		return props.ui.s.replace('<svg ', '<svg style="width: 100px; height: 100px; color: red;" ');
+	let data = "svg cache error"
+	if (props.ui.s) {
+		data = props.ui.s
+	} else {
+		if (props.ui.v) {
+			let tmp = serviceAdapter.getBufferFromCache(props.ui.v)
+			if (tmp) {
+				data = tmp
+			}
+		}
+	}
+
+	if (props.ui.s && props.ui.v) {
+		serviceAdapter.setBufferToCache(props.ui.v, props.ui.s)
+	}
+
+	return data.replace('<svg ', `<svg style="${styles.value}" `);
 })
 </script>
 
 <template>
-	<img v-if="!ui.iv && !ui.s" class="h-auto max-w-full" :src="props.ui.u" :alt="props.ui.al" :style="styles"/>
-	<div v-if="props.ui.s" :style="styles" class="" v-html="rewriteSVG"></div>
+	<img v-if="!ui.iv && !ui.s && !props.ui.v" class="h-auto max-w-full" :src="props.ui.u" :alt="props.ui.al"
+			 :style="styles"/>
+	<div v-if="props.ui.s || props.ui.v" v-html="rewriteSVG"></div>
 </template>

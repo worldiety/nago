@@ -4,10 +4,11 @@
 
 
 import type { Border } from '@/shared/protocol/ora/border';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Padding } from '@/shared/protocol/ora/padding';
-import type { SVG } from '@/shared/protocol/ora/sVG';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { URI } from '@/shared/protocol/ora/uRI';
 
 export interface Image {
@@ -30,6 +31,12 @@ export interface Image {
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
     // SVG
-    s/*omitempty*/? /*SVG*/: SVG;
+    s/*omitempty*/? /*SVG*/: 'no type resolved';
+    // CachedSVG
+    v/*omitempty*/? /*CachedSVG*/: Ptr;
+    // FillColor
+    c/*omitempty*/? /*FillColor*/: Color;
+    // StrokeColor
+    k/*omitempty*/? /*StrokeColor*/: Color;
 }
 

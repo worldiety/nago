@@ -7,13 +7,22 @@ import (
 )
 
 type RenderContext interface {
+	// Window returns the associated Window instance.
 	Window() Window
+
 	// MountCallback returns for non-nil funcs a pointer. This pointer is only unique for the current render state.
 	// This means, that subsequent calls which result in the same structural ora tree, will have the same
 	// pointers. This allows more efficient model deltas. The largest downside is, that an outdated frontend
 	// may invoke the wrong callbacks.
 	// All callbacks are removed between render calls.
 	MountCallback(func()) ora.Ptr
+
+	// Handle returns a unique pointer based on the contents of the given buffer. Note, that for performance reasons
+	// the implementation may assume static slices and short circuit based on the slice pointer. It is only guaranteed
+	// that the returned pointer is valid during the window lifetime. The first time, a handle is created, the returned
+	// flag is true. Also check, if hnd is 0, e.g. due to nil slices. Important: the returned pointers are only valid
+	// for the scope lifetime.
+	Handle([]byte) (hnd ora.Ptr, created bool)
 }
 
 type State[T any] struct {

@@ -11,5 +11,8 @@ type Image struct {
 	Frame              Frame   `json:"f,omitempty"`
 	Padding            Padding `json:"p,omitempty"`
 	SVG                SVG     `json:"s,omitempty"`
+	CachedSVG          Ptr     `json:"v,omitempty"`
+	FillColor          Color   `json:"c,omitempty"`
+	StrokeColor        Color   `json:"k,omitempty"`
 	component
 }

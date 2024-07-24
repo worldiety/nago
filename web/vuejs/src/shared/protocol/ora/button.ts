@@ -8,7 +8,6 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { SVG } from '@/shared/protocol/ora/sVG';
 
 /**
  * Button represents an user interface element which spans a visible area to click or tap from the user.
@@ -21,9 +20,9 @@ export interface Button {
     // Caption
     caption: Property<string>;
     // PreIcon
-    preIcon: Property<SVG>;
+    preIcon: Property;
     // PostIcon
-    postIcon: Property<SVG>;
+    postIcon: Property;
     // Color
     color: Property<Color>;
     // Disabled

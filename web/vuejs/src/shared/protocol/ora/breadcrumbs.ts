@@ -7,7 +7,6 @@ import type { BreadcrumbItem } from '@/shared/protocol/ora/breadcrumbItem';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { SVG } from '@/shared/protocol/ora/sVG';
 
 export interface Breadcrumbs {
     // Ptr
@@ -19,6 +18,6 @@ export interface Breadcrumbs {
     // SelectedItemIndex
     selectedItemIndex: Property<number /*int64*/>;
     // Icon
-    icon: Property<SVG>;
+    icon: Property;
 }
 
