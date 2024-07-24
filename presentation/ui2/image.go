@@ -55,7 +55,8 @@ func (c TImage) StrokeColor(color ora.Color) TImage {
 // is totally fine, though. The resource URI alone is already about 100 characters long.
 // Usually, embedding SVGs in the range of 1-2KiB is also fine. To optimize render performance,
 // the system uses a special caching technique. Important: due to caching, do not submit ever-changing SVGs, because
-// the backend and the frontend may suffer from cache overflow.
+// the backend and the frontend may suffer from cache overflow. This will half the typical required bandwidth
+// for icon heavy use cases. The larger the SVG, the better the effect.
 func (c TImage) Embed(buf []byte) TImage {
 	isSvg := bytes.Contains(buf[:100], []byte("<svg"))
 	if isSvg {

@@ -28,6 +28,11 @@ func realMain() error {
 		"presentation/icons/hero/outline",
 		"presentation/icons/flowbite/solid",
 		"presentation/icons/flowbite/outline",
+		"presentation/icons/material/filled",
+		"presentation/icons/material/outlined",
+		"presentation/icons/material/round",
+		"presentation/icons/material/sharp",
+		"presentation/icons/material/two-tone",
 	}
 
 	for _, path := range paths {
@@ -79,6 +84,7 @@ func deploy(dir string) error {
 
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
+		fmt.Println(buf.String())
 		return err
 	}
 
@@ -90,5 +96,8 @@ func makeVarName(s string) string {
 	name = strings.ReplaceAll(name, "-", " ")
 	name = strings.Title(name)
 	name = strings.ReplaceAll(name, " ", "")
+	if name[0] >= '0' && name[0] <= '9' {
+		return "I" + name
+	}
 	return name
 }

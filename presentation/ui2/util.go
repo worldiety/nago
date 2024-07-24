@@ -46,3 +46,12 @@ func IfElse[T any](b bool, ifTrue, ifFalse T) T {
 
 	return ifFalse
 }
+
+// With can be used to simply intercept a builder chain without resorting to local variables.
+func With[T any](t T, with func(T) T) T {
+	if with == nil {
+		return t
+	}
+
+	return with(t)
+}

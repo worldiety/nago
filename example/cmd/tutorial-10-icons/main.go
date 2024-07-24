@@ -1,17 +1,30 @@
 package main
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/maps"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
-	outlineIcons "go.wdy.de/nago/presentation/icons/hero/outline"
-	solidIcons "go.wdy.de/nago/presentation/icons/hero/solid"
+	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
+	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
+	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
+	materialFilled "go.wdy.de/nago/presentation/icons/material/filled"
+	materialOutlined "go.wdy.de/nago/presentation/icons/material/outlined"
 	"go.wdy.de/nago/presentation/ora"
 	"go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
+
+type IconSet struct {
+	Icons []Icon
+}
+
+type Icon struct {
+	Name            string
+	UsesStrokeColor bool
+	SVG             ora.SVG
+}
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
@@ -19,32 +32,62 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
+
 			return ui.VStack(
-				slices.Collect(func(yield func(view core.View) bool) {
-					yield(ui.Text("trigger invalidate").
-						Action(func() {
-							fmt.Println("causing a render roundtrip, to see if draw-by-reference cache kicks in")
-						}))
+				ui.Text("Hero Outline"),
+				Preview(makeIconSet(true, heroOutline.All)),
 
-					for _, key := range maps.SortedKeys(solidIcons.All) {
-						yield(ui.HStack(
-							ui.Text(key),
-							ui.Image().Embed(solidIcons.All[key]).
-								FillColor("#ff0000").
-								Padding(ora.Padding{}.All(ora.L4)).
-								Border(ora.Border{}.Circle().Color("#00ff00").Width(ora.L4)).
-								Frame(ora.Frame{}.Size(ora.L44, ora.L44)),
-							ui.Image().Embed(outlineIcons.All[key]).
-								StrokeColor("#0000ff").
-								Padding(ora.Padding{}.All(ora.L4)).
-								Border(ora.Border{}.Circle().Color("#00ff00").Width(ora.L4)).
-								Frame(ora.Frame{}.Size(ora.L44, ora.L44)),
-						))
+				ui.Text("Hero Solid"),
+				Preview(makeIconSet(false, heroSolid.All)),
 
-					}
+				ui.Text("Flowbite Outline"),
+				Preview(makeIconSet(true, flowbiteOutline.All)),
 
-				})...,
-			).Alignment(ora.Trailing)
+				ui.Text("Flowbite Solid"),
+				Preview(makeIconSet(false, flowbiteSolid.All)),
+
+				ui.Text("Material Filled"),
+				Preview(makeIconSet(false, materialFilled.All)),
+
+				ui.Text("Material Outlined"),
+				Preview(makeIconSet(false, materialOutlined.All)),
+			).Frame(ora.Frame{}.FullWidth())
 		})
 	}).Run()
+}
+
+func Card(ico Icon) core.View {
+	return ui.VStack(
+		ui.Text(ico.Name),
+		ui.With(ui.Image().Embed(ico.SVG), func(image ui.TImage) ui.TImage {
+			if ico.UsesStrokeColor {
+				return image.StrokeColor("#ff0000")
+			}
+
+			return image.FillColor("#ff0000")
+		}).Padding(ora.Padding{}.All(ora.L4)).
+			Border(ora.Border{}.Circle().Color("#00ff00").Width(ora.L4)).
+			Frame(ora.Frame{}.Size(ora.L44, ora.L44)),
+	)
+}
+
+func Preview(set IconSet) core.View {
+	return ui.Grid(slices.Collect(func(yield func(cell ui.TGridCell) bool) {
+		for _, icon := range set.Icons {
+			yield(ui.GridCell(Card(icon)))
+		}
+	})...).Gap(ora.L8).Columns(6)
+}
+
+func makeIconSet(stroke bool, icons map[string]ora.SVG) IconSet {
+	res := IconSet{}
+	for _, key := range maps.SortedKeys(icons) {
+		res.Icons = append(res.Icons, Icon{
+			Name:            key,
+			SVG:             icons[key],
+			UsesStrokeColor: stroke,
+		})
+	}
+
+	return res
 }
