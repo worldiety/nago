@@ -189,7 +189,7 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 			case ora.Dark:
 				themes.Dark.Colors[name] = ora.ConvertColorSetToMap(set)
 			case ora.Light:
-				themes.Dark.Colors[name] = ora.ConvertColorSetToMap(set)
+				themes.Light.Colors[name] = ora.ConvertColorSetToMap(set)
 			default:
 				panic("implement me")
 			}

@@ -17,13 +17,14 @@ export default class ThemeManager {
 
 	setThemes(themes: Themes): void {
 		this.themes = themes;
-
+	console.log(this.themes)
 	}
 
 	applyActiveTheme(): void {
 		if (!this.themes) {
 			return;
 		}
+
 
 		switch (localStorage.getItem(this.localStorageKey)) {
 			case ThemeKey.LIGHT:
@@ -76,10 +77,11 @@ export default class ThemeManager {
 	private applyTheme(theme: Theme): void {
 		let elem = document.getElementsByTagName('html')[0];
 
+		// document.getElementsByTagName('html')[0].style.setProperty('--primary', `${theme.colors.primary.h}deg ${theme.colors.primary.s}% ${theme.colors.primary.l}%`);
 		if (theme.colors) {
 			for (const [ns, nameValuePairs] of Object.entries(theme.colors)) {
 				for (const [colorName, colorValue] of Object.entries(nameValuePairs)) {
-					elem.style.setProperty(`--${colorName}`, colorValue)
+					elem.style.setProperty(`--${colorName}`, colorValue)//"150deg 30% 60%")//
 					console.log(colorName,"=",colorValue)
 				}
 

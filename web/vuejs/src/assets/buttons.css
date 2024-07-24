@@ -9,16 +9,15 @@
 }
 
 .button-primary {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-primary;
+	@apply rounded-full h-10 w-fit px-5 text-white bg-s0;
 	@apply hover:bg-opacity-75;
 	@apply active:bg-opacity-65;
 	@apply disabled:text-disabled-text disabled:bg-disabled-background;
 }
 
-.button-primary *,
-.button-destructive * {
-	@apply text-primary-10;
-	@apply darkmode:text-primary-10;
+.button-primary * {
+	@apply text-p8;
+	@apply darkmode:text-p8;
 }
 
 .button-primary:disabled * {
@@ -27,18 +26,18 @@
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-primary;
-	@apply hover:bg-primary hover:bg-opacity-25;
+	@apply rounded-full h-10 w-fit px-5 border border-s0;
+	@apply hover:bg-s0 hover:bg-opacity-25;
 	@apply active:bg-opacity-35;
 	@apply focus-visible:border-transparent;
 	@apply disabled:border-disabled-background disabled:bg-transparent darkmode:disabled:border-disabled-background;
-	@apply darkmode:border-primary;
+	@apply darkmode:border-s0;
 }
 
 .button-secondary *,
 .button-tertiary:hover *,
 .button-tertiary:active * {
-	@apply text-primary;
+	@apply text-s0;
 	@apply darkmode:text-primary;
 }
 
@@ -50,18 +49,10 @@
 
 .button-tertiary {
 	@apply rounded-full h-10 w-fit px-5;
-	@apply hover:bg-primary hover:bg-opacity-25;
-	@apply active:bg-primary active:bg-opacity-35;
+	@apply hover:bg-s0 hover:bg-opacity-25;
+	@apply active:bg-s0 active:bg-opacity-35;
 	@apply disabled:bg-transparent;
 }
 
-.button-destructive {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-clE;
-	@apply hover:bg-opacity-75;
-	@apply active:bg-opacity-65;
-	@apply disabled:text-disabled-text disabled:bg-disabled-background;
-}
 
-.button-default {
-	@apply rounded-full px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-200;
-}
+

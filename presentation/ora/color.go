@@ -76,24 +76,12 @@ type Colors struct {
 	// S1 is for progressbars, charts, some accented headlines or borders.
 	S1 Color `json:"s1"`
 	// S2 is still tbd.
-	S2 Color `json:"s2"
-	// S3 is still tbd.`
-	S3 Color `json:"s3"`
-	// S4 is still tbd.
-	S4 Color `json:"s4"`
-	// S5 is still tbd.
-	S5 Color `json:"s5"`
-	// S6 is still tbd.
-	S6 Color `json:"s6"`
+	S2 Color `json:"s2"`
 
 	// T0 is the tertiary source color and represents a non-area interactive element color accent.
 	T0 Color `json:"t0"`
 	// T1 is used for buttons.
 	T1 Color `json:"t1"`
-	// T2 is used for hovered buttons.
-	T2 Color `json:"t2"`
-	// T3 is used for pressed buttons.
-	T3 Color `json:"t3"`
 
 	// Error describes a negative or a destructive intention. In Western Europe usually red. Use it, when the
 	// user cannot continue normally and has to fix the problem first.
@@ -136,20 +124,14 @@ func darkColors(primary, secondary, tertiary Color) Colors {
 	c.P8 = p.Brightness(90).RGBHex()
 	c.P9 = p.Brightness(14).RGBHex()
 
-	s := mustParseHSL(string(secondary))
+	_ = mustParseHSL(string(secondary))
 	c.S0 = secondary
 	c.S1 = secondary
-	c.S2 = secondary.WithTransparency(50)
-	c.S3 = secondary.WithTransparency(25)
-	c.S4 = s.Brightness(80).RGBHex()
-	c.S5 = s.Brightness(80).RGBHex().WithTransparency(50)
-	c.S6 = s.Brightness(80).RGBHex().WithTransparency(50)
+	c.S2 = secondary.WithBrightness(80)
 
 	_ = mustParseHSL(string(tertiary))
 	c.T0 = tertiary
 	c.T1 = tertiary
-	c.T2 = tertiary.WithTransparency(10)
-	c.T3 = tertiary.WithTransparency(25)
 
 	c.Error = "#F47954"
 	c.Warning = "#F7A823"
@@ -175,20 +157,14 @@ func lightColors(primary, secondary, tertiary Color) Colors {
 	c.P8 = p.Brightness(10).RGBHex()
 	c.P9 = p.Brightness(92).RGBHex()
 
-	s := mustParseHSL(string(secondary))
+	_ = mustParseHSL(string(secondary))
 	c.S0 = secondary
 	c.S1 = secondary
-	c.S2 = secondary.WithTransparency(50)
-	c.S3 = secondary.WithTransparency(25)
-	c.S4 = s.Brightness(80).RGBHex()
-	c.S5 = s.Brightness(80).RGBHex().WithTransparency(50)
-	c.S6 = s.Brightness(80).RGBHex().WithTransparency(50)
+	c.S2 = secondary.WithBrightness(80)
 
 	_ = mustParseHSL(string(tertiary))
 	c.T0 = tertiary
 	c.T1 = tertiary
-	c.T2 = tertiary.WithTransparency(10)
-	c.T3 = tertiary.WithTransparency(25)
 
 	c.Error = "#F47954"
 	c.Warning = "#F7A823"

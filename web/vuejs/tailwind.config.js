@@ -39,30 +39,36 @@ export default {
 					customColors[`primary-${step}`] = `hsl(var(--primary-${step}) / <alpha-value>)`;
 				});
 
-				// TODO we cannot apply tailwind alpha value, because we have
-				// 1. hex notation
-				// 2. already applied alpha values anyway => this is a system collision between ora and tailwind
-				customColors['primary'] = `var(--p0) `;
-				customColors['secondary'] = `var(--s0) `;
-				customColors['tertiary'] = `var(--t0)`;
 
-				customColors['clE'] = `var(--clE)`;
-				customColors['clW'] = `var(--clW)`;
-				customColors['clG'] = `var(--clG)`;
-				customColors['clI'] = `var(--clI)`;
-				customColors['clD'] = `var(--clD)`;
-				customColors['clT'] = `var(--clT)`;
+				customColors['primary'] = 'rgb(from var(--p0) r g b / <alpha-value>)';
+				customColors['secondary'] = 'rgb(from var(--s0) r g b / <alpha-value>)';
+				customColors['tertiary'] = 'rgb(from var(--t0) r g b / <alpha-value>)';
 
-				customColors['p0'] = `var(--p0) `;
-				customColors['p1'] = `var(--p1) `;
-				customColors['p2'] = `var(--p2) `;
-				customColors['p3'] = `var(--p3) `;
-				customColors['p4'] = `var(--p4) `;
-				customColors['p5'] = `var(--p5) `;
-				customColors['p6'] = `var(--p6) `;
-				customColors['p7'] = `var(--p7) `;
-				customColors['p8'] = `var(--p8) `;
-				customColors['p9'] = `var(--p9) `;
+				customColors['clE'] = 'rgb(from var(--clE) r g b / <alpha-value>)';
+				customColors['clW'] = 'rgb(from var(--clW) r g b / <alpha-value>)';
+				customColors['clG'] = 'rgb(from var(--clG) r g b / <alpha-value>)';
+				customColors['clI'] = 'rgb(from var(--clI) r g b / <alpha-value>)';
+				customColors['clD'] = 'rgb(from var(--clD) r g b / <alpha-value>)';
+				customColors['clT'] = 'rgb(from var(--clT) r g b / <alpha-value>)';
+
+				//customColors['p0'] = 'hsl(var(--p0) / <alpha-value>)';
+				customColors['p0'] = 'rgb(from var(--p0) r g b / <alpha-value>)';
+				customColors['p1'] = 'rgb(from var(--p1) r g b / <alpha-value>)';
+				customColors['p2'] = 'rgb(from var(--p2) r g b / <alpha-value>)';
+				customColors['p3'] = 'rgb(from var(--p3) r g b / <alpha-value>)';
+				customColors['p4'] = 'rgb(from var(--p4) r g b / <alpha-value>)';
+				customColors['p5'] = 'rgb(from var(--p5) r g b / <alpha-value>)';
+				customColors['p6'] = 'rgb(from var(--p6) r g b / <alpha-value>)';
+				customColors['p7'] = 'rgb(from var(--p7) r g b / <alpha-value>)';
+				customColors['p8'] = 'rgb(from var(--p8) r g b / <alpha-value>)';
+				customColors['p9'] = 'rgb(from var(--p9) r g b / <alpha-value>)';
+
+				customColors['s0'] = 'rgb(from var(--s0) r g b / <alpha-value>)';
+				customColors['s1'] = 'rgb(from var(--s1) r g b / <alpha-value>)';
+				customColors['s2'] = 'rgb(from var(--s2) r g b / <alpha-value>)';
+
+				customColors['t0'] = 'rgb(from var(--s0) r g b / <alpha-value>)';
+				customColors['t1'] = 'rgb(from var(--s1) r g b / <alpha-value>)';
 
 				return customColors;
 			},

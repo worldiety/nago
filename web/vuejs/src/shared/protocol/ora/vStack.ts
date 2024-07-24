@@ -13,6 +13,7 @@ import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { StylePreset } from '@/shared/protocol/ora/stylePreset';
 
 /**
  * An VStack aligns children elements in a vertical column.
@@ -78,5 +79,7 @@ export interface VStack {
     pb/*omitempty*/? /*PressedBorder*/: Border;
     // FocusedBorder
     fb/*omitempty*/? /*FocusedBorder*/: Border;
+    // StylePreset
+    s/*omitempty*/? /*StylePreset*/: StylePreset;
 }
 

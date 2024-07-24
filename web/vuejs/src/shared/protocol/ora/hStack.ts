@@ -13,6 +13,7 @@ import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Length } from '@/shared/protocol/ora/length';
 import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { StylePreset } from '@/shared/protocol/ora/stylePreset';
 
 /**
  * An HStack aligns children elements in a horizontal row.
@@ -74,5 +75,7 @@ export interface HStack {
     pb/*omitempty*/? /*PressedBorder*/: Border;
     // FocusedBorder
     fb/*omitempty*/? /*FocusedBorder*/: Border;
+    // StylePreset
+    s/*omitempty*/? /*StylePreset*/: StylePreset;
 }
 

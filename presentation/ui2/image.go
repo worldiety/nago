@@ -58,7 +58,7 @@ func (c TImage) StrokeColor(color ora.Color) TImage {
 // the backend and the frontend may suffer from cache overflow. This will half the typical required bandwidth
 // for icon heavy use cases. The larger the SVG, the better the effect.
 func (c TImage) Embed(buf []byte) TImage {
-	isSvg := bytes.Contains(buf[:100], []byte("<svg"))
+	isSvg := bytes.Contains(buf[:min(len(buf), 100)], []byte("<svg"))
 	if isSvg {
 		c.svg = buf
 		c.uri = ""

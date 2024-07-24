@@ -72,7 +72,7 @@ func NewConfigurator() *Configurator {
 
 	// init our standard white label theme
 	var primary, secondary, tertiary ora.Color
-	primary, secondary, tertiary = "#1B8C30", "#17428C", "#F7A823"
+	primary, secondary, tertiary = "#1B8C30", "#F7A823", "#F7A823"
 	cfg.ColorSet(ora.Light, ora.DefaultColors(ora.Light, primary, secondary, tertiary))
 	cfg.ColorSet(ora.Dark, ora.DefaultColors(ora.Dark, primary, secondary, tertiary))
 

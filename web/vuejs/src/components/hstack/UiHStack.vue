@@ -22,72 +22,156 @@ const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	if (props.ui.t){
+	if (props.ui.t) {
 		serviceAdapter.executeFunctions(props.ui.t);
 	}
 }
 
-const frameStyles = computed<string>(() => {
+// copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
+function commonStyles():string[]{
 	let styles = frameCSS(props.ui.f)
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
+
+	// background handling
+	if (props.ui.pgc && pressed.value) {
+		styles.push(`background-color: ${colorValue(props.ui.pgc)}`)
+	} else {
+		if (props.ui.hgc) {
+			if (hover.value) {
+				styles.push(`background-color: ${colorValue(props.ui.hgc)}`)
+			} else {
+				styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
+			}
+		}else{
+			styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
+		}
 	}
+
+	if (props.ui.t){
+		focusable.value= true
+	}
+
+	if (props.ui.fbc) {
+		focusable.value = true;
+		if (focused.value && !pressed.value) {
+			styles.push(`background-color: ${colorValue(props.ui.fbc)}`)
+		}
+	}
+
+	// border handling
+	if (props.ui.pb && pressed.value){
+		styles.push(...borderCSS(props.ui.pb))
+	}else{
+		if (props.ui.hb){
+			if (hover.value){
+				styles.push(...borderCSS(props.ui.hb))
+			}else{
+				styles.push(...borderCSS(props.ui.b))
+			}
+		}else{
+			styles.push(...borderCSS(props.ui.b))
+		}
+	}
+
+	if (props.ui.fb){
+		focusable.value = true;
+		if (focused.value && !pressed.value) {
+			styles.push(...borderCSS(props.ui.fb))
+		}
+	}
+
+
+	// other stuff
+	styles.push(...paddingCSS(props.ui.p))
+	styles.push(...fontCSS(props.ui.fn))
+
+	if (focusable.value && focused.value){
+		styles.push("outline: 2px solid black") // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
+	}
+
+	return styles
+}
+
+const frameStyles = computed<string>(() => {
+	let styles = commonStyles()
+
 
 	if (props.ui.g) {
 		styles.push(`column-gap:${cssLengthValue(props.ui.g)}`)
 	}
 
-	styles.push(...borderCSS(props.ui.b))
-	styles.push(...paddingCSS(props.ui.p))
-	styles.push(...fontCSS(props.ui.fn))
 
 	return styles.join(";")
 });
 
+const StyleButtonPrimary = "p"
+const StyleButtonSecondary = "s"
+const StyleButtonTertiary = "t"
+
+
 const clazz = computed<string>(() => {
-	let classes = "inline-flex ";
+	let classes = ["inline-flex"];
 	switch (props.ui.a) {
 		case Alignment.Leading:
-			classes += " justify-start items-center "
+			classes.push("justify-start", "items-center")
 			break
 		case Alignment.Trailing:
-			classes += " justify-end items-center "
+			classes.push("justify-end", "items-center")
 			break
 		case Alignment.Center:
-			classes += " justify-center items-center "
+			classes.push("justify-center", "items-center")
 			break
 		case Alignment.TopLeading:
-			classes += " justify-start items-start "
+			classes.push("justify-start", "items-start")
 			break
 		case Alignment.BottomLeading:
-			classes += " justify-start items-end "
+			classes.push("justify-start", "items-end")
 			break
 		case Alignment.TopTrailing:
-			classes += " justify-end items-start "
+			classes.push("justify-end", "items-start")
 			break
 		case Alignment.Top:
-			classes += " justify-center items-start "
+			classes.push("justify-center", "items-start")
 			break
 		case Alignment.BottomTrailing:
-			classes += " justify-end items-end "
+			classes.push("justify-end", "items-end")
 			break
 		case Alignment.Bottom:
-			classes += " justify-center items-end "
+			classes.push("justify-center", "items-end")
 			break
 		default:
-			classes += " justify-center items-center "
+			classes.push("justify-center", "items-center")
 			break
 
 	}
 
+	if (props.ui.t){
+		classes.push("cursor-pointer")
+	}
 
+	switch (props.ui.s){
+		case StyleButtonPrimary:
+			classes.push("button-primary")
+			break
+		case StyleButtonSecondary:
+			classes.push("button-secondary")
+			break
+		case StyleButtonTertiary:
+			classes.push("button-tertiary")
+			break
+	}
 
-	return classes
+	return classes.join(" ")
 });
 </script>
 
 <template v-if="props.ui.children">
-	<div :class="clazz" :style="frameStyles" @click="onClick">
+	<div v-if="!props.ui.s" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
+			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
+			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
+
+	<button v-if="props.ui.s" :class="clazz" :style="frameStyles" @click="onClick">
+		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
+	</button>
 </template>

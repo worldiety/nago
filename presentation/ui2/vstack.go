@@ -19,6 +19,7 @@ type TVStack struct {
 	hoveredBorder          ora.Border
 	focusedBorder          ora.Border
 	pressedBorder          ora.Border
+	stylePreset            ora.StylePreset
 
 	invisible bool
 	font      ora.Font
@@ -36,6 +37,11 @@ func VStack(children ...core.View) TVStack {
 
 func (c TVStack) Gap(gap ora.Length) TVStack {
 	c.gap = gap
+	return c
+}
+
+func (c TVStack) StylePreset(preset ora.StylePreset) TVStack {
+	c.stylePreset = preset
 	return c
 }
 
@@ -128,6 +134,7 @@ func (c TVStack) Render(ctx core.RenderContext) ora.Component {
 		AccessibilityLabel: c.accessibilityLabel,
 		Invisible:          c.invisible,
 		Font:               c.font,
+		StylePreset:        c.stylePreset,
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,
 		PressedBackgroundColor: c.pressedBackgroundColor,

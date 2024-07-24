@@ -101,54 +101,74 @@ const frameStyles = computed<string>(() => {
 	return styles.join(";")
 });
 
+const StyleButtonPrimary   = "p"
+const StyleButtonSecondary = "s"
+const StyleButtonTertiary   = "t"
+
 const clazz = computed<string>(() => {
-	let classes = "overflow-clip inline-flex flex-col ";
+	let classes = ["overflow-clip", "inline-flex", "flex-col"];
 	switch (props.ui.a) {
 		case Alignment.Leading:
-			classes += " justify-center items-start "
+			classes.push("justify-center","items-start")
 			break
 		case Alignment.Trailing:
-			classes += " justify-center items-end "
+			classes.push("justify-center", "items-end")
 			break
 		case Alignment.Center:
-			classes += " justify-center items-center "
+			classes.push( "justify-center", "items-center")
 			break
 		case Alignment.TopLeading:
-			classes += " justify-start items-start "
+			classes.push( "justify-start", "items-start")
 			break
 		case Alignment.BottomLeading:
-			classes += " justify-end items-start "
+			classes.push( "justify-end", "items-start")
 			break
 		case Alignment.TopTrailing:
-			classes += " justify-start items-end "
+			classes.push( "justify-start", "items-end")
 			break
 		case Alignment.Top:
-			classes += " justify-start items-center "
+			classes.push( "justify-start", "items-center")
 			break
 		case Alignment.BottomTrailing:
-			classes += " justify-end items-end "
+			classes.push( "justify-end","items-end")
 			break
 		case Alignment.Bottom:
-			classes += " justify-end items-center "
+			classes.push( "justify-end", "items-center")
 			break
 		default:
-			classes += " justify-center items-center "
+			classes.push( "justify-center", "items-center")
 			break
 
 	}
 
 	if (props.ui.t){
-		classes+=" cursor-pointer "
+		classes.push("cursor-pointer")
 	}
 
-	return classes
+	switch (props.ui.s){
+		case StyleButtonPrimary:
+			classes.push("button-primary")
+			break
+		case StyleButtonSecondary:
+			classes.push("button-secondary")
+			break
+		case StyleButtonTertiary:
+			classes.push("button-tertiary")
+			break
+	}
+
+	return classes.join(" ")
 });
 </script>
 
 <template v-if="props.ui.children">
-	<div :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
+	<div v-if="!props.ui.s" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
 			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
+
+	<button v-if="props.ui.s" :class="clazz" :style="frameStyles"  @click="onClick">
+		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
+	</button>
 </template>

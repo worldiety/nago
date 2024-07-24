@@ -23,6 +23,7 @@ type THStack struct {
 	accessibilityLabel     string
 	invisible              bool
 	action                 func()
+	stylePreset            ora.StylePreset
 }
 
 func HStack(children ...core.View) *THStack {
@@ -74,6 +75,11 @@ func (c THStack) Frame(fr ora.Frame) core.DecoredView {
 
 func (c THStack) Font(font ora.Font) core.DecoredView {
 	c.font = font
+	return c
+}
+
+func (c THStack) StylePreset(preset ora.StylePreset) THStack {
+	c.stylePreset = preset
 	return c
 }
 
@@ -134,5 +140,7 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
 		Action:                 ctx.MountCallback(c.action),
+
+		StylePreset: c.stylePreset,
 	}
 }
