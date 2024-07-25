@@ -51,6 +51,10 @@ func (c TFilledButton) Render(context core.RenderContext) ora.Component {
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(ora.Frame{}.Size(ora.L16, ora.L16))),
 	).Action(c.action))
 
+	if (c.title == "" && len(c.preIcon) != 0) || (c.title == "" && len(c.postIcon) != 0) {
+		decView = decView.Frame(ora.Frame{Width: ora.L40, Height: ora.L40}).Padding(ora.Padding{}.Horizontal("0dp"))
+	}
+
 	var zero ora.Frame
 	if c.frame != zero {
 		decView = decView.Frame(c.frame)
@@ -75,6 +79,7 @@ func customButton(fillColor ora.Color, hstack THStack) core.DecoredView {
 		PressedBackgroundColor(fillColor.WithTransparency(35)).
 		PressedBorder(ora.Border{}.Circle().Color("#00000000").Width(ora.L2)).
 		FocusedBorder(ora.Border{}.Circle().Color("#ffffff").Width(ora.L2)).
+		Gap(ora.L4).
 		BackgroundColor(fillColor).
 		Frame(ora.Frame{Height: "2.375rem"}).
 		Padding(ora.Padding{}.Horizontal("1.125rem")).

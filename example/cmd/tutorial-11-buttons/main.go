@@ -53,13 +53,25 @@ func defaultButtons() core.View {
 }
 
 func customButtons(wnd core.Window) core.View {
-	colors := core.ColorSet[ora.Colors](wnd)
+	colors := core.ColorSet[ora.Colors](wnd) // grab our active ColorSet
 	return ui.VStack(
 		ui.Text("Custom Buttons").Font(ora.Title),
-		// we cannot use the variable "I0" because the function needs to calculate active and hover derivates
+
+		// we cannot use the variable "I0" because the function needs to calculate active and hover derivates itself
 		ui.FilledButton(colors.I0, func() {
 			fmt.Println("clicked a custom filled button")
 		}).Title("fake primary button"),
+
+		ui.FilledButton(colors.I0, nil).
+			PreIcon(icons.SpeakerWave).
+			Title("fake primary button"),
+
+		ui.FilledButton(colors.I0, nil).
+			PostIcon(icons.SpeakerWave).
+			Title("fake primary button"),
+
+		ui.FilledButton(colors.I0, nil).
+			PreIcon(icons.SpeakerWave),
 
 		// hardcoded button, which does not react to color changes
 		ui.FilledButton("#EF8A97", nil).TextColor("#ffffff").Title("arbitrary color"),

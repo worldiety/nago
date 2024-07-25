@@ -8,7 +8,9 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
+// MyCustomColors is a ColorSet which provides a namespace and the type safe color fields.
 type MyCustomColors struct {
+	// Colors must be flat in this struct, public and of type color
 	MySuperColor ora.Color
 }
 
@@ -35,18 +37,11 @@ func main() {
 
 		cfg.Component(".", func(wnd core.Window) core.View {
 			colors := core.ColorSet[MyCustomColors](wnd)
-			defCols := core.ColorSet[ora.Colors](wnd)
+			oraColors := core.ColorSet[ora.Colors](wnd)
 			return ui.VStack(
-				ui.Text("hello world"),
-
-				ui.Modal(
-					ui.Box(ui.BoxLayout{Center: ui.VStack(
-						ui.Text("ich bin modal2"),
-						ui.VStack(ui.Text("hover me")).HoveredBackgroundColor("#ff0000").FocusedBackgroundColor(),
-					).BackgroundColor(defCols.M1).Frame(ora.Frame{}.Size("300dp", "200dp"))}).
-						BackgroundColor(colors.MySuperColor),
-				),
-			)
+				ui.Text("hello world").Color(oraColors.I0).BackgroundColor(oraColors.M0),
+				ui.FilledButton(colors.MySuperColor, nil).Title("my super button"),
+			).Gap(ora.L16).Frame(ora.Frame{}.MatchScreen())
 		})
 	}).Run()
 }
