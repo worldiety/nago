@@ -35,34 +35,33 @@ import UiModal from "@/components/UiModal.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
-uiComponentsMap.set('Scaffold', UiScaffold);
-uiComponentsMap.set('Chip', UiChip);
-uiComponentsMap.set('Dialog', UiDialog);
+// uiComponentsMap.set('Scaffold', UiScaffold);
+// uiComponentsMap.set('Chip', UiChip);
+// uiComponentsMap.set('Dialog', UiDialog);
 uiComponentsMap.set('d', UiDivider);
-uiComponentsMap.set('Stepper', UiStepper);
-uiComponentsMap.set('FileField', UiUploadField);
+// uiComponentsMap.set('Stepper', UiStepper);
+// uiComponentsMap.set('FileField', UiUploadField);
 uiComponentsMap.set('I', UiImage);
-uiComponentsMap.set('TextField', UiTextField);
-uiComponentsMap.set('TextArea', UiTextArea);
-uiComponentsMap.set('Toggle', UiToggle);
+// uiComponentsMap.set('TextField', UiTextField);
+// uiComponentsMap.set('TextArea', UiTextArea);
+// uiComponentsMap.set('Toggle', UiToggle);
 uiComponentsMap.set('T', UiText);
-uiComponentsMap.set('Button', UiButton);
+// uiComponentsMap.set('Button', UiButton);
 uiComponentsMap.set('G', UiGrid);
-uiComponentsMap.set('Table', UiTable);
-uiComponentsMap.set('Card', UiCard);
-uiComponentsMap.set('Dropdown', UiDropdown);
-uiComponentsMap.set('DatePicker', UiDatepicker);
-uiComponentsMap.set('Slider', UiSlider);
-uiComponentsMap.set('NumberField', UiNumberField);
-uiComponentsMap.set('WebView', UiWebView);
-uiComponentsMap.set('Page', UiPage);
-uiComponentsMap.set('PasswordField', UiPasswordField);
-uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
-uiComponentsMap.set('Checkbox', UiCheckbox);
-uiComponentsMap.set('Radiobutton', UiRadioButton);
-uiComponentsMap.set('FlexContainer', UiFlexContainer);
-uiComponentsMap.set('ProgressBar', UiProgressBar);
-uiComponentsMap.set('S', UiStr);
+// uiComponentsMap.set('Table', UiTable);
+// uiComponentsMap.set('Card', UiCard);
+// uiComponentsMap.set('Dropdown', UiDropdown);
+//uiComponentsMap.set('DatePicker', UiDatepicker);
+// uiComponentsMap.set('Slider', UiSlider);
+// uiComponentsMap.set('NumberField', UiNumberField);
+// uiComponentsMap.set('WebView', UiWebView);
+// uiComponentsMap.set('Page', UiPage);
+// uiComponentsMap.set('PasswordField', UiPasswordField);
+// uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
+// uiComponentsMap.set('Checkbox', UiCheckbox);
+// uiComponentsMap.set('Radiobutton', UiRadioButton);
+// uiComponentsMap.set('FlexContainer', UiFlexContainer);
+// uiComponentsMap.set('ProgressBar', UiProgressBar);
 uiComponentsMap.set('hs', UiHStack)
 uiComponentsMap.set('vs', UiVStack)
 uiComponentsMap.set('bx', UiBox)

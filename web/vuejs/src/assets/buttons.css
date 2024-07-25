@@ -9,48 +9,48 @@
 }
 
 .button-primary {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-s0;
+	@apply rounded-full h-10 w-fit px-5 text-white bg-I0;
 	@apply hover:bg-opacity-75;
 	@apply active:bg-opacity-65;
-	@apply disabled:text-disabled-text disabled:bg-disabled-background;
+	@apply disabled:text-ST0 disabled:bg-SI0;
 }
 
 .button-primary * {
-	@apply text-p8;
-	@apply darkmode:text-p8;
+	@apply text-M8;
+	@apply darkmode:text-M8;
 }
 
 .button-primary:disabled * {
-	@apply text-disabled-text;
-	@apply darkmode:text-disabled-text;
+	@apply text-ST0;
+	@apply darkmode:text-ST0;
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-s0;
-	@apply hover:bg-s0 hover:bg-opacity-25;
+	@apply rounded-full h-10 w-fit px-5 border border-I0;
+	@apply hover:bg-I0 hover:bg-opacity-25;
 	@apply active:bg-opacity-35;
 	@apply focus-visible:border-transparent;
-	@apply disabled:border-disabled-background disabled:bg-transparent darkmode:disabled:border-disabled-background;
-	@apply darkmode:border-s0;
+	@apply disabled:border-SI0 disabled:bg-transparent darkmode:disabled:border-SI0;
+	@apply darkmode:border-I0;
 }
 
 .button-secondary *,
 .button-tertiary:hover *,
 .button-tertiary:active * {
-	@apply text-s0;
-	@apply darkmode:text-primary;
+	@apply text-I0;
+	@apply darkmode:text-M8;
 }
 
 .button-secondary:disabled *,
 .button-tertiary:disabled * {
-	@apply text-disabled-text;
-	@apply darkmode:text-disabled-text;
+	@apply text-ST0;
+	@apply darkmode:text-ST0;
 }
 
 .button-tertiary {
 	@apply rounded-full h-10 w-fit px-5;
-	@apply hover:bg-s0 hover:bg-opacity-25;
-	@apply active:bg-s0 active:bg-opacity-35;
+	@apply hover:bg-I0 hover:bg-opacity-25;
+	@apply active:bg-I0 active:bg-opacity-35;
 	@apply disabled:bg-transparent;
 }
 

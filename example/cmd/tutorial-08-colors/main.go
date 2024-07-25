@@ -43,7 +43,7 @@ func main() {
 					ui.Box(ui.BoxLayout{Center: ui.VStack(
 						ui.Text("ich bin modal2"),
 						ui.VStack(ui.Text("hover me")).HoveredBackgroundColor("#ff0000").FocusedBackgroundColor(),
-					).BackgroundColor(defCols.P1).Frame(ora.Frame{}.Size("300dp", "200dp"))}).
+					).BackgroundColor(defCols.M1).Frame(ora.Frame{}.Size("300dp", "200dp"))}).
 						BackgroundColor(colors.MySuperColor),
 				),
 			)

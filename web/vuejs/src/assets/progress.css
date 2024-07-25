@@ -1,27 +1,27 @@
 progress {
-	@apply appearance-none border-none bg-disabled-background text-primary rounded-full h-1 w-full;
+	@apply appearance-none border-none bg-SI0 text-M8 rounded-full h-1 w-full;
 }
 
 progress[value]::-webkit-progress-bar {
-	@apply bg-disabled-background rounded-full;
+	@apply bg-I0 rounded-full;
 }
 
 progress[value]::-moz-progress-bar {
-	@apply bg-primary rounded-full;
+	@apply bg-I0 rounded-full;
 }
 
 progress[value]::-webkit-progress-value {
-	@apply bg-primary rounded-full;
+	@apply bg-I0 rounded-full;
 }
 
 /* https://css-tricks.com/stripes-css/ */
 progress:not([value])::-moz-progress-bar {
 	background: repeating-linear-gradient(
 		-55deg,
-		theme(colors.primary),
-		theme(colors.primary) 10px,
-		theme(colors.primary / 75%) 10px,
-		theme(colors.primary / 75%) 20px
+		theme(colors.I0),
+		theme(colors.I0) 10px,
+		theme(colors.I0 / 75%) 10px,
+		theme(colors.I0 / 75%) 20px
 	);
 }
 
@@ -29,9 +29,9 @@ progress:not([value])::-webkit-progress-bar {
 	@apply rounded-full;
 	background: repeating-linear-gradient(
 		-55deg,
-		theme(colors.primary),
-		theme(colors.primary) 10px,
-		theme(colors.primary / 75%) 10px,
-		theme(colors.primary / 75%) 20px
+		theme(colors.I0),
+		theme(colors.I0) 10px,
+		theme(colors.I0 / 75%) 10px,
+		theme(colors.I0 / 75%) 20px
 	);
 }

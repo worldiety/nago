@@ -5,7 +5,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="checkbox"]:checked {
-	@apply bg-primary border-primary;
+	@apply bg-M0 border-M0;
 }
 
 input[type="radio"]:checked {
@@ -22,7 +22,7 @@ input[type="radio"] {
 }
 
 input[type="radio"]:hover {
-	@apply border-primary;
+	@apply border-M0;
 }
 
 input[type="checkbox"]::before,
@@ -39,26 +39,26 @@ input[type="checkbox"]::before {
 }
 
 input[type="radio"]::before {
-	box-shadow: inset 1em 1em theme('colors.primary');
+	box-shadow: inset 1em 1em theme('colors.I0');
 	clip-path: circle(100%);
 }
 
 input[type="checkbox"]:checked:disabled {
-	@apply bg-disabled-background;
+	@apply bg-SI0;
 }
 
 input[type="radio"]:checked:disabled {
-	@apply bg-transparent border-disabled-text;
+	@apply bg-transparent border-ST0;
 }
 
 input[type="checkbox"]:disabled:not(:checked),
 input[type="radio"]:disabled:not(:checked) {
-	@apply border-disabled-text;
+	@apply border-ST0;
 }
 
 input[type="checkbox"]:disabled::before,
 input[type="radio"]:disabled::before {
-	box-shadow: inset 1em 1em theme('colors.disabled.text');
+	box-shadow: inset 1em 1em theme('colors.SI0');
 }
 
 select {

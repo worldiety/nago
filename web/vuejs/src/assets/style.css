@@ -16,8 +16,7 @@ body {
 body *,
 body *::after,
 body *::before {
-	@apply text-p8 border-p8 outline-p8;
-	@apply darkmode:text-p8 darkmode:border-p8 darkmode:outline-p8;
+	@apply text-M8 border-A0 outline-A0;
 }
 
 @media screen(md) {

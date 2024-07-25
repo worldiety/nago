@@ -32,7 +32,7 @@ func (c TDialog) Footer(footer core.View) TDialog {
 func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 	colors := core.ColorSet[ora.Colors](ctx.Window())
 	dlg := Box(BoxLayout{Center: VStack(
-		If(c.title != nil, HStack(c.title).Alignment(ora.Leading).BackgroundColor(colors.P4).Frame(ora.Frame{}.FullWidth()).Padding(ora.Padding{Left: ora.L20, Top: ora.L12, Bottom: ora.L12})),
+		If(c.title != nil, HStack(c.title).Alignment(ora.Leading).BackgroundColor(colors.M4).Frame(ora.Frame{}.FullWidth()).Padding(ora.Padding{Left: ora.L20, Top: ora.L12, Bottom: ora.L12})),
 		VStack(
 			c.body,
 			If(c.footer != nil, HLine()),
@@ -41,7 +41,7 @@ func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 			Frame(ora.Frame{MaxWidth: ora.L400}.FullWidth()).
 			Padding(ora.Padding{Left: ora.L20, Top: ora.L16, Right: ora.L20, Bottom: ora.L20}),
 	).
-		BackgroundColor(colors.P1).
+		BackgroundColor(colors.M1).
 		Border(ora.Border{}.Radius(ora.L20).Elevate(4)).
 		Frame(ora.Frame{MinWidth: ora.L400})},
 	).

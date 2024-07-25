@@ -22,7 +22,7 @@ func main() {
 					fmt.Println("clicked the real primary")
 				}).Title("primary button"),
 
-				ui.FilledButton(colors.S0, func() {
+				ui.FilledButton(colors.I0, func() {
 					fmt.Println("clicked the fake primary")
 				}).Title("primary button"),
 
