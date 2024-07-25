@@ -19,6 +19,7 @@ const hover = ref(false);
 const pressed = ref(false);
 const focused = ref(false);
 const focusable = ref(false);
+const focusVisible = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
@@ -27,8 +28,13 @@ function onClick() {
 	}
 }
 
+function checkFocusVisible(event: Event) {
+	const element = event.target as HTMLElement;
+	focusVisible.value = element.matches(":focus-visible");
+}
+
 // copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
-function commonStyles():string[]{
+function commonStyles(): string[] {
 	let styles = frameCSS(props.ui.f)
 
 	// background handling
@@ -41,13 +47,13 @@ function commonStyles():string[]{
 			} else {
 				styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 			}
-		}else{
+		} else {
 			styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 		}
 	}
 
-	if (props.ui.t){
-		focusable.value= true
+	if (props.ui.t) {
+		focusable.value = true
 	}
 
 	if (props.ui.fbc) {
@@ -58,23 +64,23 @@ function commonStyles():string[]{
 	}
 
 	// border handling
-	if (props.ui.pb && pressed.value){
+	if (props.ui.pb && pressed.value) {
 		styles.push(...borderCSS(props.ui.pb))
-	}else{
-		if (props.ui.hb){
-			if (hover.value){
+	} else {
+		if (props.ui.hb) {
+			if (hover.value) {
 				styles.push(...borderCSS(props.ui.hb))
-			}else{
+			} else {
 				styles.push(...borderCSS(props.ui.b))
 			}
-		}else{
+		} else {
 			styles.push(...borderCSS(props.ui.b))
 		}
 	}
 
-	if (props.ui.fb){
+	if (props.ui.fb) {
 		focusable.value = true;
-		if (focused.value && !pressed.value) {
+		if (focusVisible.value) {
 			styles.push(...borderCSS(props.ui.fb))
 		}
 	}
@@ -84,7 +90,7 @@ function commonStyles():string[]{
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.fn))
 
-	if (focusable.value && focused.value){
+	if (focusVisible.value) {
 		styles.push("outline: 2px solid black") // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
 	}
 
@@ -144,11 +150,11 @@ const clazz = computed<string>(() => {
 
 	}
 
-	if (props.ui.t){
+	if (props.ui.t) {
 		classes.push("cursor-pointer")
 	}
 
-	switch (props.ui.s){
+	switch (props.ui.s) {
 		case StyleButtonPrimary:
 			classes.push("button-primary")
 			break
@@ -160,14 +166,22 @@ const clazz = computed<string>(() => {
 			break
 	}
 
+
+	// preset special round icon mode in buttons
+	if (props.ui.s) {
+		if (props.ui.c && props.ui.c.length == 1 && props.ui.c[0].type == "I") {
+			classes.push('!p-0', '!w-10')
+		}
+	}
+
 	return classes.join(" ")
 });
 </script>
 
-<template v-if="props.ui.children">
+<template>
 	<div v-if="!props.ui.s" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
-			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick">
+			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @focus="checkFocusVisible">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 

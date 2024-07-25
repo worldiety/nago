@@ -33,13 +33,14 @@ func propertyOf[T any](ctx core.RenderContext, s *core.State[T]) ora.Property[T]
 }
 
 // If conditionally returns the view or nil. This can be used as a kind of inline ternary operator
-func If[T any](b bool, t T) T {
-	var zero T
-	return IfElse[T](b, t, zero)
+func If(b bool, t core.View) core.View {
+	return IfElse(b, t, nil)
 }
 
-// IfElse conditionally returns one or the other view. This can be used as a kind of inline ternary operator
-func IfElse[T any](b bool, ifTrue, ifFalse T) T {
+// IfElse conditionally returns one or the other view. This can be used as a kind of inline ternary operator.
+// This is intentionally not generic, because the zero value of our value view types are not nil and therefore
+// we cannot distinguish between an absent or zero value view (e.g. an empty text)
+func IfElse(b bool, ifTrue, ifFalse core.View) core.View {
 	if b {
 		return ifTrue
 	}

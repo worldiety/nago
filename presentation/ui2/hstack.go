@@ -39,8 +39,9 @@ func (c THStack) Padding(padding ora.Padding) core.DecoredView {
 	return c
 }
 
-func (c THStack) Gap(gap ora.Length) {
+func (c THStack) Gap(gap ora.Length) THStack {
 	c.gap = gap
+	return c
 }
 
 func (c THStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {

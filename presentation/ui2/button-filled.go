@@ -73,7 +73,7 @@ func customButton(fillColor ora.Color, hstack THStack) core.DecoredView {
 	return hstack.
 		HoveredBackgroundColor(fillColor.WithTransparency(25)).
 		PressedBackgroundColor(fillColor.WithTransparency(35)).
-		PressedBorder(ora.Border{}.Circle().Color("#ffffff").Width(ora.L2)).
+		PressedBorder(ora.Border{}.Circle().Color("#00000000").Width(ora.L2)).
 		FocusedBorder(ora.Border{}.Circle().Color("#ffffff").Width(ora.L2)).
 		BackgroundColor(fillColor).
 		Frame(ora.Frame{Height: "2.375rem"}).
