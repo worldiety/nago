@@ -13,13 +13,34 @@ import (
 	"time"
 )
 
+var (
+	bootstrapAdminPermissions []PID = []PID{
+		CreateUser,
+		ReadUser,
+		UpdateUser,
+		DeleteUser,
+		ReadPermission,
+
+		CreateRole,
+		ReadRole,
+		UpdateRole,
+		DeleteRole,
+
+		CreateGroup,
+		ReadGroup,
+		UpdateGroup,
+		DeleteGroup,
+	}
+)
+
 type Service struct {
-	permissions *Permissions
-	users       UserRepository
-	sessions    SessionRepository
-	roles       RoleRepository
-	groups      GroupRepository
-	mutex       sync.Mutex
+	permissions       *Permissions
+	users             UserRepository
+	sessions          SessionRepository
+	roles             RoleRepository
+	groups            GroupRepository
+	mutex             sync.Mutex
+	bootstrapAdminUid *auth.UID
 }
 
 func NewService(permissions *Permissions, users UserRepository, sessions SessionRepository, roles RoleRepository, groups GroupRepository) *Service {
@@ -55,23 +76,7 @@ func (s *Service) Bootstrap() error {
 
 	// we are not allowed to have domain specific permissions, only those to bootstrap other users.
 	// even admins must not see customers secret domain stuff.
-	usr.Permissions = []PID{
-		CreateUser,
-		ReadUser,
-		UpdateUser,
-		DeleteUser,
-		ReadPermission,
-
-		CreateRole,
-		ReadRole,
-		UpdateRole,
-		DeleteRole,
-
-		CreateGroup,
-		ReadGroup,
-		UpdateGroup,
-		DeleteGroup,
-	}
+	usr.Permissions = bootstrapAdminPermissions
 
 	// we always generate a new random password at startup, which makes accidental information leak
 	// from environment variables impossible. You must compromise the machine and log file, which only involves
@@ -92,6 +97,27 @@ func (s *Service) Bootstrap() error {
 	}
 
 	slog.Info("enabled bootstrap admin user with 1 hour lifetime and random password", "login", usr.Email, "password", randPwd, "validUntil", deadline)
+
+	s.bootstrapAdminUid = &usr.ID
+	return nil
+}
+
+// IsBootstrapAdminAcccount checks whether the given subject is the boostrap admin account
+// When error is nil, the check was successful, otherwise error tells you what went wrong
+func (s *Service) IsBootstrapAdminAcccount(subject auth.Subject) error {
+	if s.bootstrapAdminUid == nil {
+		return fmt.Errorf("No boostrap admin was created")
+	}
+
+	if subject.ID() != *s.bootstrapAdminUid {
+		return fmt.Errorf("id does not match")
+	}
+
+	for _, neededPermission := range bootstrapAdminPermissions {
+		if err := subject.Audit(neededPermission); err != nil {
+			return fmt.Errorf("Not all permissions for the boostrap admin available: %w", err)
+		}
+	}
 
 	return nil
 }
