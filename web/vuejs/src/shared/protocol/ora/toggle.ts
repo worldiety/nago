@@ -4,23 +4,29 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
+/**
+ * Toggle is just a kind of checkbox without a label.
+ */
 export interface Toggle {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Toggle'/*ComponentType*/;
-    // Label
-    label: Property<string>;
-    // Checked
-    checked: Property<boolean>;
+    type: 't'/*ComponentType*/;
+
+    /**
+     * Value is the initial checked value.
+     */
+    // Value
+    v/*omitempty*/? /*Value*/: boolean;
+
+    /**
+     * InputValue is where updated value of the checked states are written.
+     */
+    // InputValue
+    i/*omitempty*/? /*InputValue*/: Ptr;
     // Disabled
-    disabled: Property<boolean>;
-    // OnCheckedChanged
-    onCheckedChanged: Property<Ptr>;
-    // Visible
-    visible: Property<boolean>;
+    d/*omitempty*/? /*Disabled*/: boolean;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
 }
 

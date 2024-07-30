@@ -20,6 +20,7 @@ type TTextField struct {
 	debounceTime    time.Duration
 	invisible       bool
 	frame           ora.Frame
+	lines           int
 }
 
 func TextField(label string, value string) *TTextField {
@@ -89,6 +90,12 @@ func (c TTextField) Frame(frame ora.Frame) TTextField {
 	return c
 }
 
+// Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
+func (c TTextField) Lines(lines int) TTextField {
+	c.lines = lines
+	return c
+}
+
 func (c TTextField) Visible(v bool) TTextField {
 	c.invisible = !v
 	return c
@@ -111,5 +118,6 @@ func (c TTextField) Render(ctx core.RenderContext) ora.Component {
 		DisableDebounce: c.disableDebounce,
 		Invisible:       c.invisible,
 		Frame:           c.frame,
+		Lines:           c.lines,
 	}
 }

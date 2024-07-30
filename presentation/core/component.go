@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
+	"strconv"
 )
 
 type RenderContext interface {
@@ -40,8 +41,30 @@ func (s *State[T]) ID() ora.Ptr {
 	return s.ptr
 }
 
-func (s *State[T]) Parse(v string) error {
-	s.value = any(v).(T)
+func (s *State[T]) parse(v string) error {
+	switch any(s.value).(type) {
+	case bool:
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return err
+		}
+		s.value = any(b).(T)
+	case float64:
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return err
+		}
+		s.value = any(f).(T)
+	case int64:
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+		s.value = any(i).(T)
+	default:
+		s.value = any(v).(T)
+	}
+
 	return nil
 }
 
@@ -55,6 +78,9 @@ func (s *State[T]) Set(v T) {
 }
 
 func (s *State[T]) Ptr() ora.Ptr {
+	if s == nil {
+		return 0
+	}
 	return s.ptr
 }
 

@@ -85,7 +85,7 @@ func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequeste
 		return
 	}
 
-	if err := state.Parse(evt.Value); err != nil {
+	if err := state.parse(evt.Value); err != nil {
 		slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
 		s.Publish(ora.ErrorOccurred{
 			Type:      ora.ErrorOccurredT,

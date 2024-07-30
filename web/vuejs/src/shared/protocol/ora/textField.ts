@@ -66,6 +66,12 @@ export interface TextField {
     dt/*omitempty*/? /*DebounceTime*/: number /*int64*/;
 
     /**
+     * Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
+     */
+    // Lines
+    li/*omitempty*/? /*Lines*/: number /*int*/;
+
+    /**
      * DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip
      * for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
      */

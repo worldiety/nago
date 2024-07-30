@@ -101,14 +101,28 @@ const frameStyles = computed<string>(() => {
 		>
 			<div class="relative">
 				<input
+					v-if="!props.ui.li"
 					:id="idPrefix"
 					v-model="inputValue"
 					class="input-field !pr-10"
 					:disabled="props.ui.d"
 					type="text"
+					:rows="props.ui.li"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
+				<textarea
+					v-if="props.ui.li"
+					:id="idPrefix"
+					v-model="inputValue"
+					class="input-field !pr-10"
+					:disabled="props.ui.d"
+					type="text"
+					:rows="props.ui.li"
+					@focusout="submitInputValue(true)"
+					@input="submitInputValue(false)"
+				/>
+
 				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
 				</div>

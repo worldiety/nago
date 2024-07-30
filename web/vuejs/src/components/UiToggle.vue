@@ -1,37 +1,40 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import {ref, watch} from 'vue';
 import type {Toggle} from "@/shared/protocol/ora/toggle";
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 
 const props = defineProps<{
 	ui: Toggle;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const checked = ref<boolean>(props.ui.checked.v);
+const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
 
-watch(() => props.ui.checked.v, (newValue) => {
-	checked.value = newValue;
+watch(() => props.ui.v, (newValue) => {
+	if (newValue) {
+		checked.value = newValue;
+	} else {
+		checked.value = false;
+	}
 })
 
 function onClick() {
-	if (props.ui.disabled.v) {
+	if (props.ui.d) {
 		return;
 	}
-	serviceAdapter.setPropertiesAndCallFunctions([{
-		...props.ui.checked,
+	serviceAdapter.setProperties({
+		p: props.ui.i,
 		v: !checked.value,
-	}], [props.ui.onCheckedChanged]);
+	});
 }
 </script>
 
 <template>
-	<div v-if="ui.visible.v">
-		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
+	<div v-if="!ui.iv">
 		<div
 			class="toggle-switch-container"
-			:class="{'toggle-switch-container-disabled': props.ui.disabled.v}"
-			:tabindex="props.ui.disabled.v ? '-1' : '0'"
+			:class="{'toggle-switch-container-disabled': props.ui.d}"
+			:tabindex="props.ui.d ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>
@@ -53,7 +56,7 @@ function onClick() {
 }
 
 .toggle-switch.toggle-switch-checked {
-	@apply after:translate-x-[105%] after:border-primary after:bg-primary;
+	@apply after:translate-x-[105%] after:border-I0 after:bg-I0;
 }
 
 .toggle-switch-container {
@@ -61,7 +64,7 @@ function onClick() {
 }
 
 .toggle-switch-container:hover {
-	@apply bg-primary bg-opacity-25;
+	@apply bg-I0 bg-opacity-25;
 }
 
 .toggle-switch-container:active {
@@ -69,11 +72,11 @@ function onClick() {
 }
 
 .toggle-switch-container:hover .toggle-switch {
-	@apply outline-primary;
+	@apply outline-I0;
 }
 
 .toggle-switch-container:hover .toggle-switch::after {
-	@apply border-primary;
+	@apply border-I0;
 }
 
 .toggle-switch-container:focus-visible {
@@ -89,14 +92,14 @@ function onClick() {
 }
 
 .toggle-switch-container.toggle-switch-container-disabled .toggle-switch {
-	@apply outline-disabled-text;
+	@apply outline-ST0;
 }
 
 .toggle-switch-container.toggle-switch-container-disabled .toggle-switch::after {
-	@apply bg-transparent border-disabled-text;
+	@apply bg-transparent border-ST0;
 }
 
 .toggle-switch-container.toggle-switch-container-disabled .toggle-switch.toggle-switch-checked::after {
-	@apply bg-disabled-text;
+	@apply bg-ST0;
 }
 </style>

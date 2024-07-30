@@ -45,7 +45,7 @@ const (
 	TableT               ComponentType = "Table"
 	TableCellT           ComponentType = "TableCell"
 	TableRowT            ComponentType = "TableRow"
-	ToggleT              ComponentType = "Toggle"
+	ToggleT              ComponentType = "t"
 	DatePickerT          ComponentType = "DatePicker"
 	DividerT             ComponentType = "d"
 	DropdownT            ComponentType = "Dropdown"

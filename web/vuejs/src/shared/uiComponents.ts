@@ -44,7 +44,7 @@ uiComponentsMap.set('d', UiDivider);
 uiComponentsMap.set('I', UiImage);
 uiComponentsMap.set('F', UiTextField);
 // uiComponentsMap.set('TextArea', UiTextArea);
-// uiComponentsMap.set('Toggle', UiToggle);
+uiComponentsMap.set('t', UiToggle);
 uiComponentsMap.set('T', UiText);
 // uiComponentsMap.set('Button', UiButton);
 uiComponentsMap.set('G', UiGrid);

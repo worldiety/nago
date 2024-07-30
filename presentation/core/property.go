@@ -9,5 +9,5 @@ type Property interface {
 	// boundaries.
 	ID() ora.Ptr
 
-	Parse(v string) error
+	parse(v string) error
 }

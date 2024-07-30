@@ -8,7 +8,6 @@ import (
 	"go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/alert"
 	"go.wdy.de/nago/web/vuejs"
-	"strings"
 )
 
 func main() {
@@ -17,16 +16,12 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			firstname := core.AutoState[string](wnd)
+			checked := core.AutoState[bool](wnd)
 			showAlert := core.AutoState[bool](wnd)
 
 			return ui.VStack(
-				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", firstname), showAlert, alert.Ok()),
-				ui.TextField("hello world", firstname.Get()).InputValue(firstname),
-				// you can re-use the state, but be careful of the effects
-				ui.TextField("just numbers", numsOf(firstname.Get())).InputValue(firstname).Style(ora.TextFieldReduced),
-
-				ui.TextField("text area", "hello\nworld").Lines(3),
+				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", checked), showAlert, alert.Ok()),
+				ui.Toggle(checked.Get()).InputChecked(checked),
 				ui.PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),
@@ -34,15 +29,4 @@ func main() {
 				Frame(ora.Frame{}.MatchScreen())
 		})
 	}).Run()
-}
-
-func numsOf(s string) string {
-	var sb strings.Builder
-	for _, r := range s {
-		if r >= '0' && r <= '9' {
-			sb.WriteRune(r)
-		}
-	}
-
-	return sb.String()
 }
