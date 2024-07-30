@@ -38,7 +38,7 @@ function checkboxSelected(): void {
 		@click="checkboxSelected"
 		@keydown.enter="checkboxSelected"
 	>
-		<div class="">
+		<div class="p-2.5">
 			<input :checked="checked" type="checkbox" class="pointer-events-none" tabindex="-1" :disabled="ui.d">
 		</div>
 	</div>

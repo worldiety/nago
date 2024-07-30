@@ -61,7 +61,7 @@ const (
 	BreadcrumbsT         ComponentType = "Breadcrumbs"
 	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
 	CheckboxT            ComponentType = "c"
-	RadiobuttonT         ComponentType = "Radiobutton"
+	RadiobuttonT         ComponentType = "R"
 	FlexContainerT       ComponentType = "FlexContainer"
 	ProgressBarT         ComponentType = "ProgressBar"
 	StrT                 ComponentType = "S"

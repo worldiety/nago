@@ -27,10 +27,15 @@ type RenderContext interface {
 }
 
 type State[T any] struct {
-	id    string
-	ptr   ora.Ptr
-	value T
-	valid bool
+	id       string
+	ptr      ora.Ptr
+	value    T
+	valid    bool
+	observer []func(newValue T)
+}
+
+func (s *State[T]) Observe(f func(newValue T)) {
+	s.observer = append(s.observer, f)
 }
 
 func (s *State[T]) String() string {
@@ -63,6 +68,10 @@ func (s *State[T]) parse(v string) error {
 		s.value = any(i).(T)
 	default:
 		s.value = any(v).(T)
+	}
+
+	for _, f := range s.observer {
+		f(s.value)
 	}
 
 	return nil

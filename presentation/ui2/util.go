@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
@@ -55,4 +56,24 @@ func With[T any](t T, with func(T) T) T {
 	}
 
 	return with(t)
+}
+
+func Each[T any](seq iter.Seq[T], m func(T) core.View) []core.View {
+	var res []core.View
+	seq(func(t T) bool {
+		res = append(res, m(t))
+		return true
+	})
+
+	return res
+}
+
+func Each2[K, V any](seq iter.Seq2[K, V], m func(K, V) core.View) []core.View {
+	var res []core.View
+	seq(func(k K, v V) bool {
+		res = append(res, m(k, v))
+		return true
+	})
+
+	return res
 }
