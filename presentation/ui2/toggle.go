@@ -12,8 +12,10 @@ type TToggle struct {
 	invisible  bool
 }
 
-func Toggle(checked bool) *TToggle {
-	c := &TToggle{
+// Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation
+// functions. In contrast to that, use a checkbox for form things without an immediate effect.
+func Toggle(checked bool) TToggle {
+	c := TToggle{
 		value: checked,
 	}
 

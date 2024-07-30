@@ -5,7 +5,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="checkbox"]:checked {
-	@apply bg-M0 border-M0;
+	@apply bg-I0 border-I0;
 }
 
 input[type="radio"]:checked {
@@ -22,7 +22,7 @@ input[type="radio"] {
 }
 
 input[type="radio"]:hover {
-	@apply border-M0;
+	@apply border-I0;
 }
 
 input[type="checkbox"]::before,

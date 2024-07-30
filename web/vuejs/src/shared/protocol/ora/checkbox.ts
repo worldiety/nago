@@ -4,24 +4,30 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 /**
- * Checkbox represents an user interface element which spans a visible area to click or tap from the user.
+ * Checkbox represents a user interface element which spans a visible area to click or tap from the user.
+ * Use it for controls, which do not cause an immediate effect. See also [Toggle].
  */
 export interface Checkbox {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Checkbox'/*ComponentType*/;
-    // Selected
-    selected: Property<boolean>;
-    // OnClicked
-    onClicked: Property<Ptr>;
+    type: 'c'/*ComponentType*/;
+
+    /**
+     * Value is the initial checked value.
+     */
+    // Value
+    v/*omitempty*/? /*Value*/: boolean;
+
+    /**
+     * InputValue is where updated value of the checked states are written.
+     */
+    // InputValue
+    i/*omitempty*/? /*InputValue*/: Ptr;
     // Disabled
-    disabled: Property<boolean>;
-    // Visible
-    visible: Property<boolean>;
+    d/*omitempty*/? /*Disabled*/: boolean;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
 }
 

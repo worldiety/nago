@@ -23,8 +23,8 @@ type TTextField struct {
 	lines           int
 }
 
-func TextField(label string, value string) *TTextField {
-	c := &TTextField{
+func TextField(label string, value string) TTextField {
+	c := TTextField{
 		label: label,
 		value: value,
 	}

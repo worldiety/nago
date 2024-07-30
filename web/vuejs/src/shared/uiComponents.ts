@@ -58,7 +58,7 @@ uiComponentsMap.set('G', UiGrid);
 // uiComponentsMap.set('Page', UiPage);
 // uiComponentsMap.set('PasswordField', UiPasswordField);
 // uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
-// uiComponentsMap.set('Checkbox', UiCheckbox);
+ uiComponentsMap.set('c', UiCheckbox);
 // uiComponentsMap.set('Radiobutton', UiRadioButton);
 // uiComponentsMap.set('FlexContainer', UiFlexContainer);
 // uiComponentsMap.set('ProgressBar', UiProgressBar);

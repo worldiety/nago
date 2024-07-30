@@ -41,6 +41,10 @@ const styles = computed<string>(() => {
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.o))
 
+	if (props.ui.t){
+		styles.push("cursor: pointer")
+	}
+
 	return styles.join(";")
 });
 

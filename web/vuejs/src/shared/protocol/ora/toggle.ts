@@ -7,7 +7,8 @@ import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 /**
- * Toggle is just a kind of checkbox without a label.
+ * Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation
+ * functions. In contrast to that, use a checkbox for form things without an immediate effect.
  */
 export interface Toggle {
     // Type

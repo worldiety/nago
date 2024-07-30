@@ -60,7 +60,7 @@ const (
 	ImageT               ComponentType = "I"
 	BreadcrumbsT         ComponentType = "Breadcrumbs"
 	BreadcrumbItemT      ComponentType = "BreadcrumbItem"
-	CheckboxT            ComponentType = "Checkbox"
+	CheckboxT            ComponentType = "c"
 	RadiobuttonT         ComponentType = "Radiobutton"
 	FlexContainerT       ComponentType = "FlexContainer"
 	ProgressBarT         ComponentType = "ProgressBar"

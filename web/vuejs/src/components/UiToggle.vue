@@ -22,6 +22,7 @@ function onClick() {
 	if (props.ui.d) {
 		return;
 	}
+
 	serviceAdapter.setProperties({
 		p: props.ui.i,
 		v: !checked.value,
@@ -60,7 +61,7 @@ function onClick() {
 }
 
 .toggle-switch-container {
-	@apply inline-block rounded-full p-1.5 -ml-1.5;
+	@apply inline-block rounded-full;
 }
 
 .toggle-switch-container:hover {

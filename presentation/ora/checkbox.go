@@ -1,13 +1,15 @@
 package ora
 
-// Checkbox represents an user interface element which spans a visible area to click or tap from the user.
+// Checkbox represents a user interface element which spans a visible area to click or tap from the user.
+// Use it for controls, which do not cause an immediate effect. See also [Toggle].
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Checkbox struct {
-	Ptr       Ptr            `json:"id"`
-	Type      ComponentType  `json:"type" value:"Checkbox"`
-	Selected  Property[bool] `json:"selected"`
-	OnClicked Property[Ptr]  `json:"onClicked"`
-	Disabled  Property[bool] `json:"disabled"`
-	Visible   Property[bool] `json:"visible"`
+	Type ComponentType `json:"type" value:"c"`
+	// Value is the initial checked value.
+	Value bool `json:"v,omitempty"`
+	// InputValue is where updated value of the checked states are written.
+	InputValue Ptr  `json:"i,omitempty"`
+	Disabled   bool `json:"d,omitempty"`
+	Invisible  bool `json:"iv,omitempty"`
 	component
 }
