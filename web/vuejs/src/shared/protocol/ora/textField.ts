@@ -3,45 +3,77 @@
  */
 
 
+import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
-import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { TextFieldStyle } from '@/shared/protocol/ora/textFieldStyle';
 
 export interface TextField {
     // Type
-    type: 'TextField'/*ComponentType*/;
+    type: 'F'/*ComponentType*/;
     // Label
-    label: string;
-    // Hint
-    hint: string;
-    // Help
-    help: string;
-    // Error
-    error: string;
-    // Text
-    value /*Text*/: Property<string>;
-    // Placeholder
-    placeholder: string;
-    // Disabled
-    disabled: boolean;
-    // Simple
-    simple: boolean;
-    // OnTextChanged
-    onTextChanged: Ptr;
+    l/*omitempty*/? /*Label*/: string;
+    // SupportingText
+    s/*omitempty*/? /*SupportingText*/: string;
 
     /**
-     * OnDebouncedTextChanged is called, after no changes within the DebounceTime have been seen.
-     * Note that the frontend is allowed to suppress any property updates, until the debouncer kicks in.
-     * This is by intention, to ensure that the backend does not re-render anyway due to always dirty views.
+     * ErrorText is shown instead of SupportingText, even if they are (today) independent
      */
-    // OnDebouncedTextChanged
-    onDebouncedTextChanged: Ptr;
+    // ErrorText
+    e/*omitempty*/? /*ErrorText*/: string;
+
+    /**
+     * Value contains the text, which shall be shown.
+     */
+    // Value
+    v/*omitempty*/? /*Value*/: string;
+
+    /**
+     * InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer
+     * to a [Property].
+     */
+    // InputValue
+    p /*InputValue*/: Ptr;
+    // Disabled
+    d/*omitempty*/? /*Disabled*/: boolean;
+
+    /**
+     * Leading shows the given component usually at the left (or right if RTL). This can be used for additional
+     * symbols like a magnifying glass for searching.
+     */
+    // Leading
+    a/*omitempty*/? /*Leading*/: Component;
+
+    /**
+     * Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button)
+     * must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.
+     */
+    // Trailing
+    r/*omitempty*/? /*Trailing*/: Component;
+
+    /**
+     * Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you
+     * need to reduce it. By default, the TextFieldOutlined is applied.
+     */
+    // Style
+    t/*omitempty*/? /*Style*/: TextFieldStyle;
+
+    /**
+     * DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+     */
     // DebounceTime
-    debounceTime: number /*int64*/;
+    dt/*omitempty*/? /*DebounceTime*/: number /*int64*/;
+
+    /**
+     * DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip
+     * for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+     */
+    // DisableDebounce
+    i/*omitempty*/? /*DisableDebounce*/: boolean;
     // Invisible
-    visible /*Invisible*/: boolean;
+    iv/*omitempty*/? /*Invisible*/: boolean;
     // Frame
-    frame/*omitempty*/? /*Frame*/: Frame;
+    f/*omitempty*/? /*Frame*/: Frame;
 }
 

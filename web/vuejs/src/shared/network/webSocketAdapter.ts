@@ -269,6 +269,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			r: requestId,
 		};
 
+
 		properties
 			?.filter((property: Property<unknown>) => property.p !== 0)
 			.forEach((property: Property<unknown>) => {

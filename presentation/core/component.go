@@ -32,6 +32,10 @@ type State[T any] struct {
 	valid bool
 }
 
+func (s *State[T]) String() string {
+	return fmt.Sprintf("%v", s.value)
+}
+
 func (s *State[T]) ID() ora.Ptr {
 	return s.ptr
 }

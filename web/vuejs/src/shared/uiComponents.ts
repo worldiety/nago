@@ -42,7 +42,7 @@ uiComponentsMap.set('d', UiDivider);
 // uiComponentsMap.set('Stepper', UiStepper);
 // uiComponentsMap.set('FileField', UiUploadField);
 uiComponentsMap.set('I', UiImage);
-// uiComponentsMap.set('TextField', UiTextField);
+uiComponentsMap.set('F', UiTextField);
 // uiComponentsMap.set('TextArea', UiTextArea);
 // uiComponentsMap.set('Toggle', UiToggle);
 uiComponentsMap.set('T', UiText);

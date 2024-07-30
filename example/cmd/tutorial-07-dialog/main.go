@@ -22,9 +22,9 @@ func main() {
 				ui.If(isPresented.Get(), ui.Modal(
 					ui.Dialog(ui.Text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.")).
 						Title(ui.Text("Titel")).
-						Footer(ui.Text("Schließen").Action(func() {
+						Footer(ui.PrimaryButton(func() {
 							isPresented.Set(false)
-						})),
+						}).Title("Schließen")),
 				)),
 			).Frame(ora.Frame{}.MatchScreen())
 		})

@@ -40,7 +40,7 @@ const (
 	NavigationComponentT ComponentType = "NavigationComponent"
 	MenuEntryT           ComponentType = "MenuEntry"
 	NumberFieldT         ComponentType = "NumberField"
-	TextFieldT           ComponentType = "TextField"
+	TextFieldT           ComponentType = "F"
 	PasswordFieldT       ComponentType = "PasswordField"
 	TableT               ComponentType = "Table"
 	TableCellT           ComponentType = "TableCell"

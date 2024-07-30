@@ -279,7 +279,7 @@ watch(() => ui.value, (newValue) => {
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
-	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none">
+	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
 
 	</div>
 

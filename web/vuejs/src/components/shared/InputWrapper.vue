@@ -48,10 +48,10 @@ const { t } = useI18n();
 
 const labelClass = computed((): string|null => {
 	if (props.disabled) {
-		return 'text-disabled-text';
+		return 'text-ST0';
 	}
 	if (props.error) {
-		return 'text-error';
+		return 'text-SE0';
 	}
 	return null;
 });
@@ -72,7 +72,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 <style>
 .input-field-wrapper .input-field {
-  @apply relative bg-transparent border-0 border-b text-black cursor-default w-full px-0 py-2;
+  @apply relative bg-transparent border-0 border-b text-M8 cursor-default w-full px-0 py-2;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {
@@ -80,16 +80,24 @@ const inputFieldWrapperClasses = computed((): string|null => {
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {
-	@apply border-clE;
+	@apply border-SE0;
 }
 
 .input-field-wrapper input::placeholder {
-  @apply text-disabled-text;
+  @apply text-ST0;
 }
 
 .input-field-wrapper:hover .input-field,
 .input-field-wrapper .input-field:focus {
-  @apply border-primary border-opacity-75 text-primary;
+  @apply border-A0 border-opacity-75 text-M8;
+}
+
+.input-field-wrapper .input-field:focus {
+	@apply border-I0 border-opacity-75 text-M8;
+}
+
+.input-field-wrapper .input-field:focus {
+	@apply border-I0 border-opacity-75 text-M8;
 }
 
 .input-field-wrapper .input-field:focus {
@@ -97,19 +105,19 @@ const inputFieldWrapperClasses = computed((): string|null => {
 }
 
 .input-field-wrapper.input-field-wrapper-disabled .input-field {
-  @apply border-b-disabled-text text-disabled-text;
+  @apply border-b-ST0 text-ST0;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field,
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
-  @apply bg-disabled-background border-none;
+  @apply bg-SI0 border-none;
 }
 
 .input-field-wrapper {
-	@apply text-black;
+	@apply text-M8;
 }
 
 .input-field-wrapper.input-field-wrapper-disabled {
-	@apply text-disabled-text pointer-events-none;
+	@apply text-ST0 pointer-events-none;
 }
 </style>

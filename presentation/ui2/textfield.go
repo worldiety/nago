@@ -7,92 +7,109 @@ import (
 )
 
 type TTextField struct {
-	label                  string
-	text                   *core.State[string]
-	placeholder            string
-	hint                   string
-	help                   string
-	error                  string
-	disabled               bool
-	simple                 bool
-	invisible              bool
-	onTextChanged          func()
-	onDebouncedTextChanged func()
-	debounceTime           time.Duration
-	frame                  ora.Frame
+	label           string
+	value           string
+	inputValue      *core.State[string]
+	supportingText  string
+	errorText       string
+	disabled        bool
+	leading         core.View
+	trailing        core.View
+	style           ora.TextFieldStyle
+	disableDebounce bool
+	debounceTime    time.Duration
+	invisible       bool
+	frame           ora.Frame
 }
 
-func TextField(label string, text *core.State[string]) *TTextField {
+func TextField(label string, value string) *TTextField {
 	c := &TTextField{
-		text:  text,
 		label: label,
+		value: value,
 	}
-
-	c.debounceTime = time.Millisecond * 500
 
 	return c
 }
 
-func (c *TTextField) OnTextChanged(f func()) {
-	c.onTextChanged = f
+func (c TTextField) SupportingText(text string) TTextField {
+	c.supportingText = text
+	return c
 }
 
-func (c *TTextField) OnDebouncedTextChanged(f func()) {
-	c.onDebouncedTextChanged = f
+func (c TTextField) ErrorText(text string) TTextField {
+	c.errorText = text
+	return c
 }
 
-func (c *TTextField) DebounceTime(d time.Duration) {
+func (c TTextField) Leading(v core.View) TTextField {
+	c.leading = v
+	return c
+}
+
+func (c TTextField) Trailing(v core.View) TTextField {
+	c.trailing = v
+	return c
+}
+
+// Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
+func (c TTextField) Style(s ora.TextFieldStyle) TTextField {
+	c.style = s
+	return c
+}
+
+// DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied.
+// You can disable debouncing, but be very careful with that, as it may break your server, the client or network.
+func (c TTextField) DebounceTime(d time.Duration) TTextField {
 	c.debounceTime = d
+	return c
 }
 
-func (c *TTextField) Placeholder(p string) {
-	c.placeholder = p
+// Debounce is enabled by default. See also DebounceTime.
+func (c TTextField) Debounce(enabled bool) TTextField {
+	c.disableDebounce = !enabled
+	return c
 }
 
-func (c *TTextField) Label(label string) {
+func (c TTextField) Label(label string) {
 	c.label = label
 }
 
-func (c *TTextField) Hint(hint string) {
-	c.hint = hint
+func (c TTextField) InputValue(input *core.State[string]) TTextField {
+	c.inputValue = input
+	return c
 }
 
-func (c *TTextField) Help(help string) {
-	c.help = help
-}
-
-func (c *TTextField) Error(error string) {
-	c.error = error
-}
-
-func (c *TTextField) Disabled(disabled bool) {
+func (c TTextField) Disabled(disabled bool) TTextField {
 	c.disabled = disabled
+	return c
 }
 
-func (c *TTextField) Frame(frame ora.Frame) {
+func (c TTextField) Frame(frame ora.Frame) TTextField {
 	c.frame = frame
+	return c
 }
 
-func (c *TTextField) Visible(v bool) {
+func (c TTextField) Visible(v bool) TTextField {
 	c.invisible = !v
+	return c
 }
 
-func (c *TTextField) Render(ctx core.RenderContext) ora.Component {
+func (c TTextField) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.TextField{
-		Type:                   ora.TextFieldT,
-		Label:                  c.label,
-		Hint:                   c.hint,
-		Help:                   c.help,
-		Error:                  c.error,
-		Text:                   propertyOf(ctx, c.text),
-		Placeholder:            c.placeholder,
-		Disabled:               c.disabled,
-		Simple:                 c.simple,
-		Invisible:              c.invisible,
-		DebounceTime:           c.debounceTime,
-		OnDebouncedTextChanged: ctx.MountCallback(c.onDebouncedTextChanged),
-		OnTextChanged:          ctx.MountCallback(c.onTextChanged),
-		Frame:                  c.frame,
+		Type:            ora.TextFieldT,
+		Label:           c.label,
+		SupportingText:  c.supportingText,
+		ErrorText:       c.errorText,
+		Value:           c.value,
+		InputValue:      c.inputValue.Ptr(),
+		Disabled:        c.disabled,
+		Leading:         render(ctx, c.leading),
+		Trailing:        render(ctx, c.trailing),
+		Style:           c.style,
+		DebounceTime:    c.debounceTime,
+		DisableDebounce: c.disableDebounce,
+		Invisible:       c.invisible,
+		Frame:           c.frame,
 	}
 }
