@@ -51,7 +51,7 @@ uiComponentsMap.set('G', UiGrid);
 // uiComponentsMap.set('Table', UiTable);
 // uiComponentsMap.set('Card', UiCard);
 // uiComponentsMap.set('Dropdown', UiDropdown);
-//uiComponentsMap.set('DatePicker', UiDatepicker);
+uiComponentsMap.set('P', UiDatepicker);
 // uiComponentsMap.set('Slider', UiSlider);
 // uiComponentsMap.set('NumberField', UiNumberField);
 // uiComponentsMap.set('WebView', UiWebView);

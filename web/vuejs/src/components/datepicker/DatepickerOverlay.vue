@@ -1,6 +1,6 @@
 <template>
 	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black z-30">
-		<div class="relative bg-primary-98 darkmode:bg-primary-10 rounded-xl shadow-lg max-w-96 p-6 z-10">
+		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
 				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
 
@@ -16,14 +16,14 @@
 					</div>
 					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-primary-98 darkmode:bg-primary-10 text-right cursor-pointer rounded-l-md w-full h-full px-2">
+							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-M1  text-right cursor-pointer rounded-l-md w-full h-full px-2">
 								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
 									{{ monthEntry[1] }}
 								</option>
 							</select>
 						</div>
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-primary-98 darkmode:bg-primary-10 rounded-r-md text-left w-full h-full px-2">
+							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-M1 rounded-r-md text-left w-full h-full px-2">
 						</div>
 					</div>
 					<div
@@ -85,7 +85,7 @@
 		</div>
 
 		<!-- Blurred Background -->
-		<div class="absolute top-0 left-0 bottom-0 right-0 backdrop-blur z-0" @click="emit('close')"></div>
+		<div class="absolute top-0 left-0 bottom-0 right-0 bg-opacity-60 bg-black z-0" @click="emit('close')"></div>
 	</div>
 </template>
 
@@ -316,8 +316,11 @@ function isSelectedEndDay(day: number, monthIndex: number, year: number): boolea
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
 	if (!props.startDateSelected || !props.endDateSelected) {
+		//console.log("not in range",day,monthIndex,year)
 		return false;
 	}
+
+	//console.log("check range",day,monthIndex,year)
 	const dateToCheck = new Date(year, monthIndex, day, 0, 0, 0, 0);
 	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
 }
@@ -356,53 +359,49 @@ function selectDate(datepickerDay: DatepickerDay): void {
 }
 
 .selected-day {
-	@apply bg-primary bg-opacity-25 text-primary;
+	@apply bg-I0 bg-opacity-25 text-M8;
 }
 
 .within-range-day {
-	@apply bg-primary bg-opacity-5 text-primary;
+	@apply bg-I0 bg-opacity-5 text-M8;
 }
 
 /* Each day in the first column within the selection range except the selected days (after element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-start-day-container, .selected-start-day-container)::after {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-primary-98;
-	@apply darkmode:bg-primary-10;
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-M1;
 }
 
 /* Each day in the first grid column within the selected range that is not a selected day (before element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-primary bg-opacity-5 rounded-l-full;
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-I0 bg-opacity-5 rounded-l-full;
 }
 
 /* Each day in the last column within the selected range except the selected days (before element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-start-day-container, .selected-end-day-container)::before {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-primary-98;
-	@apply darkmode:bg-primary-10;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-M1;
 }
 
 /* Each day in the last grid column within the selected range that is not a selected day (after element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-primary bg-opacity-5 rounded-r-full;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-I0 bg-opacity-5 rounded-r-full;
 }
 
 /* First day of selected range (before element) */
 .datepicker-grid > .selected-start-day-container::before {
 	content: '';
 	width: calc(50% + 1rem);
-	@apply absolute top-0 left-0 bottom-0 bg-primary-98 rounded-r-full h-full;
-	@apply darkmode:bg-primary-10;
+	@apply absolute top-0 left-0 bottom-0 bg-M1 rounded-r-full h-full;
 }
 
 /* Last day of selected range (after element) */
 .datepicker-grid > .selected-end-day-container::after {
 	content: '';
 	width: calc(50% + 1rem);
-	@apply absolute top-0 bottom-0 right-0 bg-primary-98 rounded-l-full h-full;
-	@apply darkmode:bg-primary-10;
+	@apply absolute top-0 bottom-0 right-0 bg-M1 rounded-l-full h-full;
 }
 
 /* Selected start day container in last grid row */

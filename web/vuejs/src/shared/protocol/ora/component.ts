@@ -35,7 +35,6 @@ import type { Table } from '@/shared/protocol/ora/table';
 import type { TableCell } from '@/shared/protocol/ora/tableCell';
 import type { TableRow } from '@/shared/protocol/ora/tableRow';
 import type { Text } from '@/shared/protocol/ora/text';
-import type { TextArea } from '@/shared/protocol/ora/textArea';
 import type { TextField } from '@/shared/protocol/ora/textField';
 import type { Toggle } from '@/shared/protocol/ora/toggle';
 import type { VStack } from '@/shared/protocol/ora/vStack';
@@ -70,7 +69,6 @@ export type Component =
 | Stepper
 | StepInfo
 | WebView
-| TextArea
 | FileField
 | Image
 | Breadcrumbs

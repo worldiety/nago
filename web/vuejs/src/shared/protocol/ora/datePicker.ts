@@ -4,47 +4,57 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { Date } from '@/shared/protocol/ora/date';
+import type { DatePickerStyle } from '@/shared/protocol/ora/datePickerStyle';
 import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface DatePicker {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'DatePicker'/*ComponentType*/;
+    type: 'P'/*ComponentType*/;
     // Disabled
-    disabled: Property<boolean>;
+    d?: boolean;
     // Label
-    label: Property<string>;
-    // Hint
-    hint: Property<string>;
-    // Error
-    error: Property<string>;
-    // Expanded
-    expanded: Property<boolean>;
-    // RangeMode
-    rangeMode: Property<boolean>;
-    // StartDateSelected
-    startDateSelected: Property<boolean>;
-    // SelectedStartDay
-    selectedStartDay: Property<number /*int64*/>;
-    // SelectedStartMonth
-    selectedStartMonth: Property<number /*int64*/>;
-    // SelectedStartYear
-    selectedStartYear: Property<number /*int64*/>;
-    // EndDateSelected
-    endDateSelected: Property<boolean>;
-    // SelectedEndDay
-    selectedEndDay: Property<number /*int64*/>;
-    // SelectedEndMonth
-    selectedEndMonth: Property<number /*int64*/>;
-    // SelectedEndYear
-    selectedEndYear: Property<number /*int64*/>;
-    // OnClicked
-    onClicked: Property<Ptr>;
-    // OnSelectionChanged
-    onSelectionChanged: Property<Ptr>;
-    // Visible
-    visible: Property<boolean>;
+    l/*omitempty*/? /*Label*/: string;
+    // SupportingText
+    s/*omitempty*/? /*SupportingText*/: string;
+
+    /**
+     * ErrorText is shown instead of SupportingText, even if they are (today) independent
+     */
+    // ErrorText
+    e/*omitempty*/? /*ErrorText*/: string;
+
+    /**
+     * Style determines if the picker shall use the range or single mode. Default is single selection
+     */
+    // Style
+    y/*omitempty*/? /*Style*/: DatePickerStyle;
+
+    /**
+     * Value is the initial single value or start value of the picker.
+     */
+    // Value
+    v /*Value*/: Date;
+
+    /**
+     * InputValue is the picked single value or end value of the picker.
+     */
+    // InputValue
+    p /*InputValue*/: Ptr;
+
+    /**
+     * EndValue is the initial end value of the picker.
+     */
+    // EndValue
+    ev /*EndValue*/: Date;
+
+    /**
+     * EndInputValue is the picked end value of the picker.
+     */
+    // EndInputValue
+    ep /*EndInputValue*/: Ptr;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: Property<boolean>;
 }
 

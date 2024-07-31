@@ -46,26 +46,33 @@ func (s *State[T]) ID() ora.Ptr {
 	return s.ptr
 }
 
-func (s *State[T]) parse(v string) error {
+func (s *State[T]) parse(v any) error {
 	switch any(s.value).(type) {
 	case bool:
-		b, err := strconv.ParseBool(v)
+		b, err := strconv.ParseBool(fmt.Sprintf("%v", v))
 		if err != nil {
 			return err
 		}
 		s.value = any(b).(T)
 	case float64:
-		f, err := strconv.ParseFloat(v, 64)
+		f, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
 		if err != nil {
 			return err
 		}
 		s.value = any(f).(T)
 	case int64:
-		i, err := strconv.ParseInt(v, 10, 64)
+		i, err := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
 		if err != nil {
 			return err
 		}
 		s.value = any(i).(T)
+	case ora.Date:
+		obj := v.(map[string]interface{})
+		var d ora.Date
+		d.Day = int(obj["d"].(float64))
+		d.Month = int(obj["m"].(float64))
+		d.Year = int(obj["y"].(float64))
+		s.value = any(d).(T)
 	default:
 		s.value = any(v).(T)
 	}

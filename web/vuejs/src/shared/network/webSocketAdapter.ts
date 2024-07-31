@@ -214,6 +214,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
 	): Promise<Event> {
+		console.log("shall send",properties)
 		return new Promise<Event>((resolve, reject) => {
 			const requestId = this.nextRequestId();
 			const future = new Future(requestId, resolve, reject);
@@ -276,7 +277,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				const action: SetPropertyValueRequested = {
 					type: 'P',
 					p: property.p,
-					v: String(property.v),
+					v: property.v,
 					r: requestId,
 				};
 				callBatch.events.push(action);
