@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/uix/crud"
 	"go.wdy.de/nago/web/vuejs"
@@ -46,6 +47,18 @@ func main() {
 						ReadAll(persons.Each).
 						Update(persons.Save).
 						Delete(persons.DeleteByEntity).
+						AggregateActions(
+							crud.AggregateAction[Person]{ // we also support more actions
+								Icon:    icon.UserPlus,
+								Caption: "Freunde zum Feiern einladen",
+								Action: func(ui.ModalOwner, Person) error {
+									// call something in our domain
+									return nil
+								},
+								Style: "",
+								// we can also show and hide any actions based on a property of our model
+							}.WithOptions(crud.AggregationActionOptionVisibility(func(p Person) bool { return len(p.Friends) > 0 })),
+						).
 						Bind(func(bnd *crud.Binding[Person]) {
 							crud.Text(bnd,
 								crud.FromPtr("ID", func(model *Person) *PID {
