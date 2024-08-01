@@ -91,6 +91,7 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	app2.SetVersion(c.applicationVersion)
+	app2.SetAppIcon(c.appIconUri)
 
 	// TODO we are in a weired order here
 	for _, destructor := range c.destructors {

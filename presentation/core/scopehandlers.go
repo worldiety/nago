@@ -201,6 +201,7 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 		ApplicationID:      string(s.app.id),
 		ApplicationName:    s.app.name,
 		ApplicationVersion: s.app.version,
+		AppIcon:            s.app.appIcon,
 		AvailableLocales:   []string{"de", "en"}, //TODO
 		ActiveLocale:       s.locale.String(),
 		Themes:             themes,

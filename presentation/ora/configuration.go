@@ -31,6 +31,7 @@ type ConfigurationDefined struct {
 	ApplicationName    string    `json:"applicationName"`
 	ApplicationVersion string    `json:"applicationVersion"`
 	AvailableLocales   []string  `json:"availableLocales"`
+	AppIcon            URI       `json:"appIcon"`
 	ActiveLocale       string    `json:"activeLocale"`
 	Themes             Themes    `json:"themes"`
 	RequestId          RequestId `json:"r"`

@@ -27,6 +27,7 @@ type Application struct {
 	id                       ApplicationID
 	name                     string
 	version                  string
+	appIcon                  ora.URI
 	mutex                    sync.Mutex
 	scopes                   *Scopes
 	factories                map[ora.ComponentFactoryId]ComponentFactory
@@ -85,6 +86,10 @@ func (a *Application) ID() ApplicationID {
 
 func (a *Application) SetVersion(version string) {
 	a.version = version
+}
+
+func (a *Application) SetAppIcon(appIcon ora.URI) {
+	a.appIcon = appIcon
 }
 
 func (a *Application) AddColorSet(scheme ora.ColorScheme, set ora.ColorSet) {

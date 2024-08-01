@@ -3,9 +3,9 @@
  */
 
 
-import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
+import type { ScaffoldAlignment } from '@/shared/protocol/ora/scaffoldAlignment';
 import type { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 /**
@@ -25,6 +25,6 @@ export interface Scaffold {
      * Alignment defaults to Leading (usually Left).
      */
     // Alignment
-    a/*omitempty*/? /*Alignment*/: Alignment;
+    a/*omitempty*/? /*Alignment*/: ScaffoldAlignment;
 }
 

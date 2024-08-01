@@ -16,6 +16,7 @@ import type {Themes} from '@/shared/protocol/ora/themes';
 import type {Theme} from '@/shared/protocol/ora/theme';
 import {useThemeManager} from '@/shared/themeManager';
 import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
+import {URI} from "@/shared/protocol/ora/uRI";
 
 enum State {
 	Loading,
@@ -43,7 +44,24 @@ async function applyConfiguration(): Promise<void> {
 	const config = await serviceAdapter.getConfiguration();
 	themeManager.setThemes(config.themes);
 	themeManager.applyActiveTheme();
+	updateFavicon(config.appIcon)
 	sendWindowInfo();
+}
+
+function updateFavicon(uri: URI) {
+	if (!uri || uri.length == 0) {
+		return
+	}
+
+
+	var link = document.querySelector("link[rel~='icon']");
+	if (!link) {
+		link = document.createElement('link');
+		link.rel = 'icon';
+		document.head.appendChild(link);
+	}
+
+	link.href = uri
 }
 
 async function initializeUi(): Promise<void> {

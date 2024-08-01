@@ -6,6 +6,7 @@
 import type { EventType } from '@/shared/protocol/ora/eventType';
 import type { RequestId } from '@/shared/protocol/ora/requestId';
 import type { Themes } from '@/shared/protocol/ora/themes';
+import type { URI } from '@/shared/protocol/ora/uRI';
 
 /**
  * A ConfigurationDefined event is the response to a [ConfigurationRequested] event.
@@ -26,6 +27,8 @@ export interface ConfigurationDefined {
     applicationVersion: string;
     // AvailableLocales
     availableLocales: string[];
+    // AppIcon
+    appIcon: URI;
     // ActiveLocale
     activeLocale: string;
     // Themes

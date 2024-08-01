@@ -37,8 +37,10 @@ import type { TextField } from '@/shared/protocol/ora/textField';
 import type { Toggle } from '@/shared/protocol/ora/toggle';
 import type { VStack } from '@/shared/protocol/ora/vStack';
 import type { WebView } from '@/shared/protocol/ora/webView';
+import type { WindowTitle } from '@/shared/protocol/ora/windowTitle';
 
 export type Component = 
+| WindowTitle
 | Modal
 | Spacer
 | Box

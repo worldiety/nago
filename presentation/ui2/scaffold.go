@@ -5,22 +5,25 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type MenuEntry struct {
-	Icon       core.View
+type ScaffoldMenuEntry struct {
+	Icon core.View
+	// IconActive is optional
 	IconActive core.View
 	Title      string
 	Action     func()
-	Factory    ora.ComponentFactoryId
-	Menu       []MenuEntry
-	Badge      string
-	Expanded   bool
+	// MarkAsActiveAt contains the factory id at which this entry shall be highlighted automatically as active.
+	// Use . for index.
+	MarkAsActiveAt ora.ComponentFactoryId
+	Menu           []ScaffoldMenuEntry
+
+	// intentionally left out expanded and badge, because badge can be emulated with Box layout and expanded is automatic
 }
 
 type TScaffold struct {
 	logo      core.View
 	body      core.View
 	alignment ora.ScaffoldAlignment
-	menu      []MenuEntry
+	menu      []ScaffoldMenuEntry
 }
 
 func Scaffold(alignment ora.ScaffoldAlignment) TScaffold {
@@ -37,7 +40,7 @@ func (c TScaffold) Body(view core.View) TScaffold {
 	return c
 }
 
-func (c TScaffold) Menu(items ...MenuEntry) TScaffold {
+func (c TScaffold) Menu(items ...ScaffoldMenuEntry) TScaffold {
 	c.menu = items
 	return c
 }
@@ -53,7 +56,7 @@ func (c TScaffold) Render(ctx core.RenderContext) ora.Component {
 	}
 }
 
-func makeMenu(ctx core.RenderContext, menu []MenuEntry) []ora.ScaffoldMenuEntry {
+func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []ora.ScaffoldMenuEntry {
 	if len(menu) == 0 {
 		return nil
 	}
@@ -65,10 +68,8 @@ func makeMenu(ctx core.RenderContext, menu []MenuEntry) []ora.ScaffoldMenuEntry 
 			IconActive: render(ctx, entry.IconActive),
 			Title:      entry.Title,
 			Action:     ctx.MountCallback(entry.Action),
-			Factory:    entry.Factory,
+			Factory:    entry.MarkAsActiveAt,
 			Menu:       makeMenu(ctx, entry.Menu),
-			Badge:      entry.Badge,
-			Expanded:   entry.Expanded,
 		})
 	}
 

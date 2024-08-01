@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
@@ -11,36 +12,38 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
+//go:embed ORA_logo.svg
+var appIco application.StaticBytes
+
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
+		// update the global app icon
+		cfg.AppIcon(cfg.Resource(appIco))
+
 		cfg.Component(".", func(wnd core.Window) core.View {
 
 			return ui.Scaffold(ora.ScaffoldAlignmentTop).
-				Body(ui.Text("hello body")).
+				Body(ui.VStack(
+					// this only causes the side effect of setting the current page title
+					ui.WindowTitle("scaffold example"),
+					ui.Text("hello body"),
+				)).
 				Logo(ui.Image().Embed(icons.SpeakerWave).Frame(ora.Frame{}.Size(ora.L20, ora.L20))).
 				Menu(
-					ui.MenuEntry{
-						Icon:       nil,
-						IconActive: nil,
-						Title:      "Entry 1",
+					ui.ScaffoldMenuEntry{
+						Title: "Entry 1",
 						Action: func() {
 							fmt.Println("clicked entry 1")
 						},
-						Factory:  "",
-						Menu:     nil,
-						Badge:    "",
-						Expanded: false,
 					},
-					ui.MenuEntry{
-						Icon:       ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						IconActive: nil,
-						Title:      "Entry 2",
-						Action:     nil,
-						Factory:    ".",
-						Menu: []ui.MenuEntry{
+					ui.ScaffoldMenuEntry{
+						Icon:           ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+						Title:          "Entry 2",
+						MarkAsActiveAt: ".",
+						Menu: []ui.ScaffoldMenuEntry{
 							{
 								Title: "sub a",
 							},
@@ -48,27 +51,20 @@ func main() {
 								Title: "sub b",
 							},
 						},
-						Badge:    "",
-						Expanded: false,
 					},
 
-					ui.MenuEntry{
-						Icon:       ui.Image().Embed(icons.Window).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						IconActive: ui.Image().Embed(icons2.Grid).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						Title:      "Entry 3",
-						Action:     nil,
-						Factory:    ".",
-						Menu:       nil,
-						Badge:      "42",
-						Expanded:   false,
+					ui.ScaffoldMenuEntry{
+						Icon:           ui.Image().Embed(icons.Window).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+						IconActive:     ui.Image().Embed(icons2.Grid).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+						Title:          "Entry 3",
+						MarkAsActiveAt: ".",
 					},
-					ui.MenuEntry{
-						Icon:       ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						IconActive: ui.Image().Embed(icons2.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						Title:      "nested top",
-						Action:     nil,
-						Factory:    ".",
-						Menu: []ui.MenuEntry{
+					ui.ScaffoldMenuEntry{
+						Icon:           ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+						IconActive:     ui.Image().Embed(icons2.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+						Title:          "nested top",
+						MarkAsActiveAt: ".",
+						Menu: []ui.ScaffoldMenuEntry{
 							{
 								Title: "sub 1",
 							},
@@ -76,8 +72,6 @@ func main() {
 								Title: "sub 2",
 							},
 						},
-						Badge:    "",
-						Expanded: false,
 					},
 				)
 		})

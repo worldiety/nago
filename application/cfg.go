@@ -38,6 +38,7 @@ type Configurator struct {
 	app                      *core.Application // may be nil
 	rawEndpoint              []rawEndpoint
 	colorSets                map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet
+	appIconUri               ora.URI
 }
 
 func NewConfigurator() *Configurator {
@@ -86,6 +87,11 @@ func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedO
 
 func (c *Configurator) OnDestroy(f func()) {
 	c.destructors = append(c.destructors, f)
+}
+
+func (c *Configurator) AppIcon(ico ora.URI) *core.Application {
+	c.appIconUri = ico
+	return c.app
 }
 
 func (c *Configurator) DataDir() string {
