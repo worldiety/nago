@@ -1,15 +1,19 @@
 <template>
 	<nav
 		ref="sidebar"
-		class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30"
+		class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4"
 		aria-label="Sidebar"
 	>
 		<!-- Sidebar -->
-		<div class="relative flex flex-col items-center justify-start gap-y-4 bg-primary-98 darkmode:bg-primary-10 h-full w-full pt-6 px-4 pb-7 z-10">
-			<div v-if="ui.logo.v" class="w-full *:w-full mb-4" v-html="ui.logo.v"></div>
+		<div
+			class="relative flex flex-col items-center justify-start gap-y-4 h-full w-full pt-6 px-4 pb-7 z-10 bg-M4">
+			<div v-if="ui.l" class="w-full *:w-full mb-4">
+				<ui-generic :ui="ui.l"/>
+			</div>
+
 			<!-- Top level menu entries -->
 			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
-				<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="w-full">
+				<div v-for="(menuEntry, index) in ui.m" :key="index" ref="menuEntryElements" class="w-full">
 					<MenuEntryComponent
 						:ui="menuEntry"
 						:menu-entry-index="index"
@@ -19,7 +23,7 @@
 					/>
 				</div>
 			</div>
-			<ThemeToggle />
+			<ThemeToggle/>
 		</div>
 
 		<!-- Sub menu -->
@@ -27,7 +31,7 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-primary-98 darkmode:bg-primary-10 border-l border-l-disabled-background rounded-r-2xl shadow-md w-72 py-8 px-2 z-0"
+				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-M1 border-l border-l-M5 rounded-r-2xl shadow-md w-72 py-8 px-2 z-0 bg-M4"
 			>
 				<!-- Sub menu entries -->
 				<div
@@ -46,15 +50,15 @@
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
 					>
-						<p class="font-medium">{{ subMenuEntry.title.v }}</p>
+						<p class="font-medium">{{ subMenuEntry.t }}</p>
 						<TriangleDown
-							v-if="subMenuEntry.menu.v?.length > 0"
+							v-if="subMenuEntry.m?.length > 0"
 							class="duration-150 w-2 -mr-1"
-							:class="{'rotate-180': subMenuEntry.expanded.v}"
+							:class="{'rotate-180': subMenuEntry.x}"
 						/>
 					</div>
 					<div
-						v-if="subMenuEntry.expanded.v && subMenuEntry.menu.v?.length > 0"
+						v-if="subMenuEntry.x && subMenuEntry.m?.length > 0"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
 						<!-- Sub sub menu entries -->
@@ -64,14 +68,14 @@
 							ref="subSubMenuEntryElements"
 							class="rounded-full py-2 px-4"
 							:class="{
-								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': subSubMenuEntry.action.v,
+								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': subSubMenuEntry.a,
 								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
+							:tabindex="subSubMenuEntry.a ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.title.v }}
+							{{ subSubMenuEntry.t }}
 						</p>
 					</div>
 				</div>
@@ -81,22 +85,22 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Property } from '@/shared/protocol/ora/property';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {Scaffold} from "@/shared/protocol/ora/scaffold";
+import UiGeneric from "@/components/UiGeneric.vue";
+import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
 
 const props = defineProps<{
-	ui: NavigationComponent;
+	ui: Scaffold;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const sidebar = ref<HTMLElement|undefined>();
-const subMenu = ref<HTMLElement|undefined>();
+const sidebar = ref<HTMLElement | undefined>();
+const subMenu = ref<HTMLElement | undefined>();
 const subMenuEntryElements = ref<HTMLElement[]>([]);
 const subSubMenuEntryElements = ref<HTMLElement[]>([]);
 
@@ -108,35 +112,36 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', handleMouseMove);
 });
 
-const expandedMenuEntry = computed((): MenuEntry|undefined => {
-	return props.ui.menu.v?.find((menuEntry) => menuEntry.expanded.v);
+const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
+	return props.ui.m?.find((menuEntry) => menuEntry.x);
 });
 
-const subMenuEntries = computed((): MenuEntry[] => {
-	const entries: MenuEntry[] = props.ui.menu.v
-		?.filter((menuEntry) => menuEntry.expanded.v)
-		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
+	const entries: ScaffoldMenuEntry[] = props.ui.m
+		?.filter((menuEntry) => menuEntry.x)
+		.flatMap((menuEntry) => menuEntry.m ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries?.length > 0 && expandedMenuEntry.value?.action.v) {
+	if (entries?.length > 0 && expandedMenuEntry.value?.a) {
 		entries.unshift({
 			...expandedMenuEntry.value,
-			menu: {
-				...expandedMenuEntry.value.menu,
-				v: [],
+			m: {
+				...expandedMenuEntry.value.m,
+				//v: [],
 			}
 		});
 	}
 	return entries ?? [];
 });
 
-function isClickableMenuEntry(menuEntry: MenuEntry): boolean {
+function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	return !!menuEntry.action.v || menuEntry.menu.v && menuEntry.menu.v.length > 0;
+	let clickable = menuEntry.a != undefined || (menuEntry.m && menuEntry.m.length > 0);
+	return !!clickable;
 }
 
-function isActiveMenuEntry(menuEntry: MenuEntry): boolean {
+function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	return `/${menuEntry.componentFactoryId.v}` === window.location.pathname;
+	return `/${menuEntry.f}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -145,10 +150,10 @@ function handleMouseMove(event: MouseEvent): void {
 		?? 0;
 	if (event.x > threshold) {
 		// Collapse the sub menu when threshold is passed
-		const updatedExpandedProperties = props.ui.menu.v
-			?.filter((menuEntry) => menuEntry.expanded.v)
+		const updatedExpandedProperties = props.ui.m
+			?.filter((menuEntry) => menuEntry.x)
 			.map((menuEntry) => ({
-				...menuEntry.expanded,
+				...menuEntry.x,
 				v: false,
 			}));
 		if (updatedExpandedProperties?.length > 0) {
@@ -164,27 +169,27 @@ function focusFirstLinkedSubMenuEntry(): void {
 	elementToFocus?.focus();
 }
 
-function menuEntryClicked(menuEntry: MenuEntry): void {
+function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 	if (isClickableMenuEntry(menuEntry)) {
-		if (menuEntry.menu.v && menuEntry.menu.v.length > 0) {
+		if (menuEntry.m && menuEntry.m.length > 0) {
 			serviceAdapter.setProperties({
-				...menuEntry.expanded,
-				v: !menuEntry.expanded.v,
+				...menuEntry.x,
+				v: !menuEntry.x,
 			});
-		} else if (menuEntry.action.v) {
-			serviceAdapter.executeFunctions(menuEntry.action);
+		} else if (menuEntry.a) {
+			serviceAdapter.executeFunctions(menuEntry.a);
 		}
 	}
 }
 
-function getSubSubMenuEntries(subMenuEntry: MenuEntry): MenuEntry[] {
-	const entries: MenuEntry[] = [...subMenuEntry.menu.v];
+function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntry[] {
+	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.m];
 	// Add the sub menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && subMenuEntry.action.v) {
+	if (entries.length > 0 && subMenuEntry.a) {
 		entries.unshift({
 			...subMenuEntry,
-			menu: {
-				...subMenuEntry.menu,
+			m: {
+				...subMenuEntry.m,
 				v: [],
 			}
 		});
@@ -192,15 +197,26 @@ function getSubSubMenuEntries(subMenuEntry: MenuEntry): MenuEntry[] {
 	return entries;
 }
 
-function expandMenuEntry(menuEntry: MenuEntry): void {
-	const propertiesToSet: Property<boolean>[] = props.ui.menu.v.map((entry) => {
+function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
+	/*const propertiesToSet: Property<boolean>[] = props.ui.m.map((entry) => {
 		return {
-			...entry.expanded,
+			...entry.x,
 			v: entry.id === menuEntry.id,
 		};
-	});
+	});*/
+	if (!props.ui.m) {
+		return
+	}
 
-	serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
+	for (let i = 0; i < props.ui.m.length; i++) {
+		let m = props.ui.m.at(i)
+		m.x = false
+
+	}
+
+	menuEntry.x = true
+
+	//serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]); //TODO?
 }
 </script>
 

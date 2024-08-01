@@ -6,14 +6,13 @@
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Date } from '@/shared/protocol/ora/date';
 import type { DatePickerStyle } from '@/shared/protocol/ora/datePickerStyle';
-import type { Property } from '@/shared/protocol/ora/property';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface DatePicker {
     // Type
     type: 'P'/*ComponentType*/;
     // Disabled
-    d?: boolean;
+    d/*omitempty*/? /*Disabled*/: boolean;
     // Label
     l/*omitempty*/? /*Label*/: string;
     // SupportingText
@@ -55,6 +54,6 @@ export interface DatePicker {
     // EndInputValue
     ep /*EndInputValue*/: Ptr;
     // Invisible
-    iv/*omitempty*/? /*Invisible*/: Property<boolean>;
+    iv/*omitempty*/? /*Invisible*/: boolean;
 }
 

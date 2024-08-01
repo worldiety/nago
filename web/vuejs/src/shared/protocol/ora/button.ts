@@ -20,9 +20,9 @@ export interface Button {
     // Caption
     caption: Property<string>;
     // PreIcon
-    preIcon: Property;
+    preIcon: Property<number /*uint8*/[]>;
     // PostIcon
-    postIcon: Property;
+    postIcon: Property<number /*uint8*/[]>;
     // Color
     color: Property<Color>;
     // Disabled

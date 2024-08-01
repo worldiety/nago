@@ -1,11 +1,11 @@
 <template>
-	<NavigationBar v-if="navigationBarVisible" :ui="props.ui.navigationComponent.v" />
-	<Sidebar v-if="sidebarVisible" :ui="props.ui.navigationComponent.v" />
-	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui.navigationComponent.v" />
+	<NavigationBar v-if="navigationBarVisible" :ui="props.ui" />
+	<Sidebar v-if="sidebarVisible" :ui="props.ui" />
+	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui" />
 
   <div class="min-h-full" :class="bodyWrapperClass">
     <div class="website-content min-h-full">
-      <ui-generic :ui="props.ui.body.v"  />
+      <ui-generic :ui="props.ui.b"  />
     </div>
   </div>
 </template>
@@ -35,11 +35,11 @@ onUnmounted(() => {
 });
 
 const navigationBarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.Top;
+	return windowWidth.value >= 768 && props.ui.a === Alignment.Top;
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.navigationComponent.v.alignment.v === Alignment.Leading;
+	return windowWidth.value >= 768 && props.ui.a === Alignment.Leading;
 });
 
 const burgerMenuVisible = computed((): boolean => {

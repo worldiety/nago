@@ -3,20 +3,28 @@
  */
 
 
+import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
-import type { Property } from '@/shared/protocol/ora/property';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
+/**
+ * Scaffold is only defined as a root view. Other use cases are undefined and will likely break the rendering.
+ */
 export interface Scaffold {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'Scaffold'/*ComponentType*/;
+    type: 'A'/*ComponentType*/;
     // Body
-    body: Property<Component>;
-    // NavigationComponent
-    navigationComponent: Property<NavigationComponent>;
+    b/*omitempty*/? /*Body*/: Component;
+    // Logo
+    l/*omitempty*/? /*Logo*/: Component;
+    // Menu
+    m/*omitempty*/? /*Menu*/: ScaffoldMenuEntry[];
+
+    /**
+     * Alignment defaults to Leading (usually Left).
+     */
+    // Alignment
+    a/*omitempty*/? /*Alignment*/: Alignment;
 }
 

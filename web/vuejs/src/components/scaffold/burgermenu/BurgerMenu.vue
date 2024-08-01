@@ -1,10 +1,14 @@
 <template>
-	<div class="fixed top-0 left-0 right-0 text-black bg-primary-98 darkmode:bg-primary-10 border-b border-b-disabled-background h-24 py-4 px-8 z-30">
+	<div class="fixed top-0 left-0 right-0 text-black bg-M4 border-b border-b-disabled-background h-24 py-4 px-8 z-30">
 		<!-- Top bar -->
 		<div class="relative flex justify-start items-center h-full">
-			<MenuIcon class="relative cursor-pointer h-6 z-10" tabindex="0" @click="menuOpen = true" @keydown.enter="menuOpen = true" />
+			<MenuIcon class="relative cursor-pointer h-6 z-10" tabindex="0" @click="menuOpen = true"
+								@keydown.enter="menuOpen = true"/>
 			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0">
-				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
+				<div class="">
+					<ui-generic v-if="props.ui.l" :ui="props.ui.l"/>
+				</div>
+
 			</div>
 		</div>
 
@@ -12,16 +16,17 @@
 		<Transition name="slide">
 			<div
 				v-if="menuOpen"
-				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-primary-98 darkmode:bg-primary-10 shadow-md z-20"
+				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-M4 shadow-md z-20"
 			>
 				<div class="flex justify-start items-center h-24 p-8">
-					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false" @keydown.enter="menuOpen = false" />
+					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false"
+										 @keydown.enter="menuOpen = false"/>
 				</div>
 				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry
-							v-for="(menuEntry, index) in ui.menu.v"
+							v-for="(menuEntry, index) in ui.m"
 							:key="index"
 							:ui="menuEntry"
 							:top-level="true"
@@ -37,11 +42,12 @@
 							@keydown.enter="returnToTopLevelMenu"
 						>
 							<div class="h-6">
-								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto" />
+								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto"/>
 							</div>
 							<p class="leading-tight font-semibold">{{ $t('scaffold.toMenu') }}</p>
 						</div>
 						<!-- Top level menu entry title button -->
+
 						<div
 							:tabindex="expandedTopLevelMenuEntryLinked ? '0' : '-1'"
 							class="flex justify-start items-center gap-x-2 rounded-full w-full p-4"
@@ -53,7 +59,7 @@
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>
 							<div class="flex justify-start items-center h-6">
-								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title.v }}</p>
+								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.t }}</p>
 							</div>
 						</div>
 						<!-- Sub menu entries -->
@@ -67,7 +73,7 @@
 					</div>
 				</div>
 				<div class="flex justify-center items-center w-full p-4">
-					<ThemeToggle />
+					<ThemeToggle/>
 				</div>
 			</div>
 		</Transition>
@@ -78,70 +84,78 @@
 import MenuIcon from '@/assets/svg/menu.svg';
 import CloseIcon from '@/assets/svg/closeBold.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
-import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
-import { computed, ref, watch } from 'vue';
+import {computed, ref} from 'vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type {MenuEntry} from '@/shared/protocol/ora/menuEntry';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {Scaffold} from "@/shared/protocol/ora/scaffold";
+import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
+import UiGeneric from "@/components/UiGeneric.vue";
 
 const props = defineProps<{
-	ui: NavigationComponent;
+	ui: Scaffold;
 }>();
 
 const serviceAdapter = useServiceAdapter();
 const menuOpen = ref<boolean>(false);
 
-const expandedTopLevelMenuEntry = computed((): MenuEntry|null => {
-	return props.ui.menu.v?.find((menuEntry: MenuEntry) => menuEntry.expanded.v) ?? null;
+const expandedTopLevelMenuEntry = computed((): ScaffoldMenuEntry | null => {
+	return props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x) ?? null;
 });
 
 const expandedTopLevelMenuEntryLinked = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.action.v;
+	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.a;
 });
 
 const expandedTopLevelMenuEntryActive = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.componentFactoryId.v}` === window.location.pathname;
+	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.f}` === window.location.pathname;
 });
 
 const subMenuVisible = computed((): boolean => {
-	const expandedTopLevelMenuEntry = props.ui.menu.v?.find((menuEntry: MenuEntry) => menuEntry.expanded.v);
-	return !!expandedTopLevelMenuEntry?.menu.v;
+	const expandedTopLevelMenuEntry = props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x);
+	console.log("!!!!",!!expandedTopLevelMenuEntry?.m)
+	return !!expandedTopLevelMenuEntry?.m;
 });
 
 const subMenuEntries = computed((): MenuEntry[] => {
-	if (!props.ui.menu.v) {
+	if (!props.ui.m) {
 		return [];
 	}
-	const expandedTopLevelMenuEntry = props.ui.menu.v?.find((menuEntry: MenuEntry) => menuEntry.expanded.v);
+	const expandedTopLevelMenuEntry = props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x);
 	if (!expandedTopLevelMenuEntry) {
-		return props.ui.menu.v;
+		return props.ui.m;
 	}
-	return expandedTopLevelMenuEntry.menu.v ?? props.ui.menu.v;
+	return expandedTopLevelMenuEntry.m ?? props.ui.m;
 });
 
 function navigateToExpandedTopLevelMenuEntry(): void {
-	if (!expandedTopLevelMenuEntry.value?.action.v) {
+	if (!expandedTopLevelMenuEntry.value?.a) {
 		return;
 	}
 	menuEntryClicked(expandedTopLevelMenuEntry.value);
 }
 
-function menuEntryClicked(menuEntry: MenuEntry): void {
-	if (!menuEntry.action.v) {
+function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
+
+	if (!menuEntry.a) {
 		return;
 	}
-	serviceAdapter.executeFunctions(menuEntry.action);
+
+
+	serviceAdapter.executeFunctions(menuEntry.a);
 }
 
 function returnToTopLevelMenu(): void {
 	if (!expandedTopLevelMenuEntry.value) {
 		return;
 	}
-	serviceAdapter.setPropertiesAndCallFunctions([{
-		...expandedTopLevelMenuEntry.value.expanded,
-		v: false,
-	}], [expandedTopLevelMenuEntry.value.onFocus])
+	// serviceAdapter.setPropertiesAndCallFunctions([{
+	// 	...expandedTopLevelMenuEntry.value.x,
+	// 	v: false,
+	// }], [expandedTopLevelMenuEntry.value.onFocus])
+
+	expandedTopLevelMenuEntry.value.x=false
 }
 </script>
 

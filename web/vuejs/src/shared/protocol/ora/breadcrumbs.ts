@@ -18,6 +18,6 @@ export interface Breadcrumbs {
     // SelectedItemIndex
     selectedItemIndex: Property<number /*int64*/>;
     // Icon
-    icon: Property;
+    icon: Property<number /*uint8*/[]>;
 }
 

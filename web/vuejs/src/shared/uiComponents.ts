@@ -35,7 +35,7 @@ import UiModal from "@/components/UiModal.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
-// uiComponentsMap.set('Scaffold', UiScaffold);
+ uiComponentsMap.set('A', UiScaffold);
 // uiComponentsMap.set('Chip', UiChip);
 // uiComponentsMap.set('Dialog', UiDialog);
 uiComponentsMap.set('d', UiDivider);

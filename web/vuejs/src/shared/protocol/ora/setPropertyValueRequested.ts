@@ -13,7 +13,7 @@ export interface SetPropertyValueRequested {
     // Ptr
     p /*Ptr*/: Ptr;
     // Value
-    v /*Value*/: string;
+    v /*Value*/: any;
     // RequestId
     r /*RequestId*/: RequestId;
 }

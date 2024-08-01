@@ -7,6 +7,8 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+const svgFrontendCacheSupport = false
+
 type TImage struct {
 	uri                ora.URI
 	accessibilityLabel string
@@ -99,11 +101,15 @@ func (c TImage) Frame(frame ora.Frame) core.DecoredView {
 
 func (c TImage) Render(ctx core.RenderContext) ora.Component {
 	svgData := c.svg
-	ptr, created := ctx.Handle(c.svg)
-	if ptr != 0 && !created {
-		// if ptr is not nil and it has already been created, we can omit the data
-		// because the client already knows how the data looks for the handle pointer.
-		svgData = nil
+	var cachePointer ora.Ptr
+	if svgFrontendCacheSupport {
+		ptr, created := ctx.Handle(c.svg)
+		if ptr != 0 && !created {
+			// if ptr is not nil and it has already been created, we can omit the data
+			// because the client already knows how the data looks for the handle pointer.
+			svgData = nil
+			cachePointer = ptr
+		}
 	}
 
 	return ora.Image{
@@ -115,7 +121,7 @@ func (c TImage) Render(ctx core.RenderContext) ora.Component {
 		Frame:              c.frame,
 		Padding:            c.padding,
 		SVG:                svgData,
-		CachedSVG:          ptr,
+		CachedSVG:          cachePointer,
 		FillColor:          c.fillColor,
 		StrokeColor:        c.strokeColor,
 	}

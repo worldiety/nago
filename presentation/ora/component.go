@@ -36,7 +36,7 @@ const (
 	VBoxT                ComponentType = "VBox"
 	HBoxT                ComponentType = "HBox"
 	SliderT              ComponentType = "Slider"
-	ScaffoldT            ComponentType = "Scaffold"
+	ScaffoldT            ComponentType = "A"
 	NavigationComponentT ComponentType = "NavigationComponent"
 	MenuEntryT           ComponentType = "MenuEntry"
 	NumberFieldT         ComponentType = "NumberField"
@@ -89,8 +89,6 @@ func init() {
 		reflect.TypeOf(Button{}),
 		reflect.TypeOf(Page{}),
 		reflect.TypeOf(Scaffold{}),
-		reflect.TypeOf(NavigationComponent{}),
-		reflect.TypeOf(MenuEntry{}),
 		reflect.TypeOf(TextField{}),
 		reflect.TypeOf(PasswordField{}),
 		reflect.TypeOf(Table{}),
@@ -129,7 +127,7 @@ func init() {
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type _component interface {
-	Modal | Spacer | Box | VStack | HStack | Button | Page | Scaffold | NavigationComponent | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | FileField | Image | Breadcrumbs | BreadcrumbItem | MenuEntry | Grid | GridCell | FlexContainer
+	Modal | Spacer | Box | VStack | HStack | Button | Page | Scaffold | TextField | PasswordField | Table | TableCell | TableRow | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | FileField | Image | Breadcrumbs | BreadcrumbItem | Grid | GridCell | FlexContainer
 }
 
 type component struct {

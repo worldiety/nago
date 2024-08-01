@@ -1,12 +1,16 @@
 <template>
-	<nav class="fixed top-0 left-0 right-0 text-black h-24 z-30">
+	<nav class="fixed top-0 left-0 right-0 text-black h-24 z-30 bg-M4">
 		<!-- Top bar -->
-		<div class="relative bg-primary-98 darkmode:bg-primary-10 h-full py-5 z-20">
-			<div class="website-content flex justify-between items-center">
-				<div class="h-full *:h-full" v-html="ui.logo.v"></div>
-        <div class="flex justify-end items-center gap-x-6 h-full">
+		<div class="relative bg-M4 h-full py-5 z-20 flex items-center">
+			<div class="website-content  w-full flex justify-between items-center">
+				<div class="h-full *:h-full">
+					<!-- nav bar icon -->
+					<ui-generic v-if="props.ui.l" :ui="props.ui.l"/>
+				</div>
+				<div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
-					<div v-for="(menuEntry, index) in ui.menu.v" :key="index" ref="menuEntryElements" class="h-full" :data-index="index">
+					<div v-for="(menuEntry, index) in ui.m" :key="index" ref="menuEntryElements" class="h-full"
+							 :data-index="index">
 						<TopLevelMenuEntry
 							:ui="menuEntry"
 							:menu-entry-index="index"
@@ -15,14 +19,15 @@
 							@expand="expandMenuEntry"
 						/>
 					</div>
-          <ThemeToggle />
-        </div>
+					<ThemeToggle/>
+				</div>
 			</div>
 		</div>
 
 		<div class="relative z-10">
 			<!-- Navigation bar border -->
-			<div ref="navigationBarBorder" class="absolute top-0 left-0 right-0 border-b border-b-disabled-background z-0"></div>
+			<div ref="navigationBarBorder"
+					 class="absolute top-0 left-0 right-0 border-b border-b-M5 z-0"></div>
 			<!-- Sub menu triangle -->
 			<div
 				v-show="subMenuEntries.length > 0"
@@ -37,7 +42,7 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="relative bg-primary-98 darkmode:bg-primary-10 rounded-b-2xl shadow-md pt-8 pb-10 z-0"
+				class="relative bg-M4 rounded-b-2xl shadow-md pt-8 pb-10 z-0"
 			>
 				<div class="website-content flex justify-center items-start gap-x-8">
 					<!-- Sub menu entries -->
@@ -46,31 +51,31 @@
 							ref="subMenuEntryElements"
 							class="font-medium rounded-full px-2"
 							:class="{
-							'mb-4': subMenuEntry.menu.v?.length > 0,
-							'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action.v,
-							'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subMenuEntry),
+							'mb-4': subMenuEntry.m?.length > 0,
+							'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.a,
+							'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 						}"
-							:tabindex="subMenuEntry.action.v ? '0' : '-1'"
+							:tabindex="subMenuEntry.a ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
-							{{ subMenuEntry.title.v }}
+							{{ subMenuEntry.t }}
 						</p>
 						<!-- Sub sub menu entries -->
 						<p
-							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.v"
+							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.m"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
 							class="sub-sub-menu-entry rounded-full px-2"
 							:class="{
-								'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.action.v,
-								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
+								'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.a,
+								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="subSubMenuEntry.action.v ? '0' : '-1'"
+							:tabindex="subSubMenuEntry.a ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.title.v }}
+							{{ subSubMenuEntry.t }}
 						</p>
 					</div>
 				</div>
@@ -80,30 +85,30 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
-import type { Property } from '@/shared/protocol/ora/property';
+import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
+import {Scaffold} from "@/shared/protocol/ora/scaffold";
+import UiGeneric from "@/components/UiGeneric.vue";
 
 const props = defineProps<{
-	ui: NavigationComponent;
+	ui: Scaffold;
 }>();
 
 const serviceAdapter = useServiceAdapter();
 const subMenuEntryElements = ref<HTMLElement[]>([]);
 const subSubMenuEntryElements = ref<HTMLElement[]>([]);
-const navigationBarBorder = ref<HTMLElement|undefined>();
-const subMenu = ref<HTMLElement|undefined>();
+const navigationBarBorder = ref<HTMLElement | undefined>();
+const subMenu = ref<HTMLElement | undefined>();
 const menuEntryElements = ref<HTMLElement[]>([]);
-const subMenuTriangle = ref<HTMLElement|undefined>();
+const subMenuTriangle = ref<HTMLElement | undefined>();
 const subMenuTriangleLeftOffset = ref<number>(0);
 
 onMounted(() => {
 	document.addEventListener('mousemove', handleMouseMove);
-	window.addEventListener('resize', updateSubMenuTriangleLeftOffset, { passive: true });
+	window.addEventListener('resize', updateSubMenuTriangleLeftOffset, {passive: true});
 });
 
 onUnmounted(() => {
@@ -115,20 +120,20 @@ watch(() => props.ui, () => {
 	nextTick(updateSubMenuTriangleLeftOffset);
 });
 
-const expandedMenuEntry = computed((): MenuEntry|undefined => {
-	return props.ui.menu.v?.find((menuEntry) => menuEntry.expanded.v);
+const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
+	return props.ui.m?.find((menuEntry) => menuEntry.x);
 });
 
-const subMenuEntries = computed((): MenuEntry[] => {
-	const entries: MenuEntry[] = props.ui.menu.v
-		?.filter((menuEntry) => menuEntry.expanded.v)
-		.flatMap((menuEntry) => menuEntry.menu.v ?? []);
+const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
+	const entries: ScaffoldMenuEntry[] = props.ui.m
+		?.filter((menuEntry) => menuEntry.x)
+		.flatMap((menuEntry) => menuEntry.m ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && expandedMenuEntry.value?.action.v) {
+	if (entries.length > 0 && expandedMenuEntry.value?.a) {
 		entries.unshift({
 			...expandedMenuEntry.value,
-			menu: {
-				...expandedMenuEntry.value.menu,
+			m: {
+				...expandedMenuEntry.value.m,
 				v: [],
 			}
 		});
@@ -136,9 +141,13 @@ const subMenuEntries = computed((): MenuEntry[] => {
 	return entries;
 });
 
-function isActiveMenuEntry(menuEntry: MenuEntry): boolean {
+function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	return `/${menuEntry.componentFactoryId.v}` === window.location.pathname;
+	if (menuEntry.f == "." && (window.location.pathname == "" || window.location.pathname == "/")) {
+		return true
+	}
+
+	return `/${menuEntry.f}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -147,20 +156,22 @@ function handleMouseMove(event: MouseEvent): void {
 		?? 0;
 	if (event.y > threshold) {
 		// Collapse the sub menu when threshold is passed
-		const updatedExpandedProperties = props.ui.menu.v
-			?.filter((menuEntry) => menuEntry.expanded.v)
-			.map((menuEntry) => ({
-				...menuEntry.expanded,
-				v: false,
-			}));
-		if (updatedExpandedProperties.length > 0) {
-			serviceAdapter.setProperties(...updatedExpandedProperties);
-		}
+		// const updatedExpandedProperties = props.ui.m
+		// 	?.filter((menuEntry) => menuEntry.x)
+		// 	.map((menuEntry) => ({
+		// 		...menuEntry.x,
+		// 		v: false,
+		// 	}));
+		// if (updatedExpandedProperties.length > 0) {
+		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
+		// }
+
+		props.ui.m?.forEach(value => value.x = false)
 	}
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	const activeMenuEntryIndex: number|undefined = props.ui.menu.v?.findIndex((menuEntry) => menuEntry.expanded.v);
+	const activeMenuEntryIndex: number | undefined = props.ui.m?.findIndex((menuEntry) => menuEntry.x);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
 	}
@@ -173,9 +184,9 @@ function updateSubMenuTriangleLeftOffset(): void {
 	subMenuTriangleLeftOffset.value = activeMenuEntryElement.getBoundingClientRect().x + activeMenuEntryElement.offsetWidth / 2 - subMenuTriangle.value.offsetWidth / 2;
 }
 
-function menuEntryClicked(menuEntry: MenuEntry): void {
-	if (menuEntry.action.v) {
-		serviceAdapter.executeFunctions(menuEntry.action);
+function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
+	if (menuEntry.a) {
+		serviceAdapter.executeFunctions(menuEntry.a);
 	}
 }
 
@@ -186,15 +197,30 @@ function focusFirstLinkedSubMenuEntry(): void {
 	elementToFocus?.focus();
 }
 
-function expandMenuEntry(menuEntry: MenuEntry): void {
-	const propertiesToSet: Property<boolean>[] = props.ui.menu.v.map((entry) => {
-		return {
-			...entry.expanded,
-			v: entry.id === menuEntry.id,
-		};
-	});
+function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
+	// const propertiesToSet: Property<boolean>[] = props.ui.m.map((entry) => {
+	// 	return {
+	// 		...entry.x,
+	// 		v: entry.id === menuEntry.id,
+	// 	};
+	// });
+	//
+	// serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 
-	serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
+	if (!props.ui.m) {
+		return
+	}
+
+
+	for (let i = 0; i < props.ui.m.length; i++) {
+		let m = props.ui.m.at(i)!
+		m.x = false
+
+	}
+
+	menuEntry.x = true
+
+	updateSubMenuTriangleLeftOffset()
 }
 </script>
 

@@ -31,7 +31,7 @@ export interface Image {
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
     // SVG
-    s/*omitempty*/? /*SVG*/: 'no type resolved';
+    s/*omitempty*/? /*SVG*/: number /*uint8*/[];
     // CachedSVG
     v/*omitempty*/? /*CachedSVG*/: Ptr;
     // FillColor

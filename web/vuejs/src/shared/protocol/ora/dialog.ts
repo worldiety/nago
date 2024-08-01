@@ -21,7 +21,7 @@ export interface Dialog {
     // Footer
     footer: Property<Component>;
     // Icon
-    icon: Property;
+    icon: Property<number /*uint8*/[]>;
     // Size
     size: Property<ElementSize>;
 }

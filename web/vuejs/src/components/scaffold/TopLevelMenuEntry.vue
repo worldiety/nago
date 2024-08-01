@@ -13,24 +13,32 @@
 		@focus="emit('expand', ui);"
 	>
 		<div
-			v-if="ui.icon.v"
+			v-if="ui.i"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{
-				'bg-disabled-background bg-opacity-25': ui.expanded.v,
+				'bg-M7 bg-opacity-25': ui.x,
 				'bg-opacity-35': interacted,
-				'bg-disabled-background bg-opacity-35': active,
+				'bg-M7 bg-opacity-35': active,
 			}"
 		>
 			<div class="relative w-4">
-				<div v-if="ui.expanded.v" class="*:h-full" v-html="activeIcon()"></div>
-				<div v-else class="*:h-full" v-html="ui.icon.v"></div>
+				<div class="*:h-full" v-if="ui.x && ui.v">
+					<ui-generic  :ui="props.ui.v"  />
+				</div>
+				<div v-else class="*:h-full">
+					<ui-generic  :ui="props.ui.i"  />
+				</div>
+
+
+
+
 				<!-- Optional red badge -->
-				<div v-if="ui.badge.v" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-error">
-					<p class="text-xs text-white">{{ ui.badge.v }}</p>
+				<div v-if="ui.b" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-A0">
+					<p class="text-xs text-white">{{ ui.b }}</p>
 				</div>
 			</div>
 		</div>
-		<p class="text-sm text-center font-medium select-none hyphens-auto w-full" :class="{'font-semibold': linksToCurrentPage}">{{ ui.title.v }}</p>
+		<p class="text-sm text-center font-medium select-none hyphens-auto w-full" :class="{'font-semibold': linksToCurrentPage}">{{ ui.t }}</p>
 	</div>
 </template>
 
@@ -39,14 +47,16 @@ import { computed, ref } from 'vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import type {SVG} from "@/shared/protocol/ora/sVG";
+import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
+import UiGeneric from "@/components/UiGeneric.vue";
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
-	(e: 'expand', menuEntry: MenuEntry): void;
+	(e: 'expand', menuEntry: ScaffoldMenuEntry): void;
 }>();
 
 const props = defineProps<{
-	ui: MenuEntry;
+	ui: ScaffoldMenuEntry;
 	menuEntryIndex: number;
 	mode: 'navigationBar'|'sidebar';
 }>();
@@ -55,7 +65,11 @@ const serviceAdapter = useServiceAdapter();
 const interacted = ref<boolean>(false);
 
 const linksToCurrentPage = computed((): boolean => {
-	return `/${props.ui.componentFactoryId.v}` === window.location.pathname;
+	if (props.ui.f == "." && (window.location.pathname == "" || window.location.pathname == "/")) {
+		return true
+	}
+
+	return `/${props.ui.f}` === window.location.pathname;
 })
 
 const active = computed((): boolean => {
@@ -63,21 +77,15 @@ const active = computed((): boolean => {
 });
 
 const hasSubMenuEntries = computed((): boolean => {
-	return props.ui.menu.v && props.ui.menu.v.length > 0;
+	return !!(props.ui.m && props.ui.m.length > 0);
 });
 
-function activeIcon(): SVG{
-	if (props.ui.iconActive.v){
-		return props.ui.iconActive.v
-	}
 
-	return props.ui.icon.v
-}
 
 function handleClick(): void {
-	if (props.ui.action.v && !hasSubMenuEntries.value) {
+	if (props.ui.a && !hasSubMenuEntries.value) {
 		// If the menu entry has an action and no sub menu entries, execute the action
-		serviceAdapter.executeFunctions(props.ui.action);
+		serviceAdapter.executeFunctions(props.ui.a);
 	} else {
 		// Else expand the menu entry
 		emit('expand', props.ui);
@@ -88,15 +96,16 @@ function handleMouseLeave(): void {
 	interacted.value = false;
 	if (!hasSubMenuEntries.value) {
 		// Collapse the menu entry if it has no sub menu entries
-		serviceAdapter.setProperties({
-			...props.ui.expanded,
+		/*serviceAdapter.setProperties({
+			...props.ui.x,
 			v: false,
-		});
+		});*/
+		props.ui.x=false
 	}
 }
 
 function focusFirstLinkedSubMenuEntry(keyPressed: 'down'|'right'): void {
-	if (!props.ui.menu.v || props.ui.menu.v.length === 0) {
+	if (!props.ui.m || props.ui.m.length === 0) {
 		return;
 	}
 	if (props.mode === 'navigationBar' && keyPressed === 'down' || props.mode === 'sidebar' && keyPressed === 'right') {

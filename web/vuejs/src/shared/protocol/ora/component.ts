@@ -20,9 +20,7 @@ import type { Grid } from '@/shared/protocol/ora/grid';
 import type { GridCell } from '@/shared/protocol/ora/gridCell';
 import type { HStack } from '@/shared/protocol/ora/hStack';
 import type { Image } from '@/shared/protocol/ora/image';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
 import type { Modal } from '@/shared/protocol/ora/modal';
-import type { NavigationComponent } from '@/shared/protocol/ora/navigationComponent';
 import type { NumberField } from '@/shared/protocol/ora/numberField';
 import type { Page } from '@/shared/protocol/ora/page';
 import type { PasswordField } from '@/shared/protocol/ora/passwordField';
@@ -49,7 +47,6 @@ export type Component =
 | Button
 | Page
 | Scaffold
-| NavigationComponent
 | TextField
 | PasswordField
 | Table
@@ -73,7 +70,6 @@ export type Component =
 | Image
 | Breadcrumbs
 | BreadcrumbItem
-| MenuEntry
 | Grid
 | GridCell
 | FlexContainer
