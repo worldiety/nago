@@ -18,6 +18,10 @@ export interface TableRow {
     h/*omitempty*/? /*Height*/: Length;
     // BackgroundColor
     b/*omitempty*/? /*BackgroundColor*/: Color;
+    // HoveredBackgroundColor
+    k/*omitempty*/? /*HoveredBackgroundColor*/: Color;
+    // Hovered
+    hovered/*omitempty*/? /*Hovered*/: boolean;
     // Action
     a/*omitempty*/? /*Action*/: Ptr;
 }

@@ -29,6 +29,10 @@ export interface TableCell {
     a/*omitempty*/? /*Alignment*/: Alignment;
     // BackgroundColor
     b/*omitempty*/? /*BackgroundColor*/: Color;
+    // HoveredBackgroundColor
+    k/*omitempty*/? /*HoveredBackgroundColor*/: Color;
+    // Hovered
+    hovered/*omitempty*/? /*Hovered*/: boolean;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
     // Border

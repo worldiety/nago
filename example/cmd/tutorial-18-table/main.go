@@ -17,18 +17,21 @@ func main() {
 		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.VStack(
 				ui.Table(
-					ui.TableColumn(ui.Text("col 1")),
+					ui.TableColumn(ui.Text("col 1")).
+						Width(ora.L20),
 					ui.TableColumn(ui.Text("col 2")).
 						Action(func() {
 							fmt.Println("clicked header cell 2")
-						}),
+						}).
+						HoveredBackgroundColor("I0"),
 					ui.TableColumn(ui.Text("col 3")),
 				).Rows(
 					ui.TableRow(
 						ui.TableCell(ui.Text("row 1 col 1")).
 							Action(func() {
 								fmt.Println("clicked cell 1/1")
-							}),
+							}).
+							HoveredBackgroundColor("I0"),
 						ui.TableCell(ui.Text("row 1 col 2")).BackgroundColor("I0"),
 						ui.TableCell(ui.Text("row 1 col 3")),
 					).Action(func() {
@@ -38,7 +41,10 @@ func main() {
 						ui.TableCell(ui.Text("row 2 col 1")),
 						ui.TableCell(ui.Text("row 2 col 2")),
 						ui.TableCell(ui.Text("row 2 col 3")),
-					).Height(ora.L80).BackgroundColor("M2"),
+					).
+						Height(ora.L80).
+						BackgroundColor("M2").
+						HoveredBackgroundColor("I0"),
 					ui.TableRow(
 						ui.TableCell(ui.Text("row 3 col 1")),
 						ui.TableCell(ui.Text("row 3 col 2+3").Color("#ffffff")).

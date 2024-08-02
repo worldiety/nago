@@ -24,10 +24,12 @@ type TableHeader struct {
 // TableRow p
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type TableRow struct {
-	Cells           []TableCell `json:"c,omitempty"`
-	Height          Length      `json:"h,omitempty"`
-	BackgroundColor Color       `json:"b,omitempty"`
-	Action          Ptr         `json:"a,omitempty"`
+	Cells                  []TableCell `json:"c,omitempty"`
+	Height                 Length      `json:"h,omitempty"`
+	BackgroundColor        Color       `json:"b,omitempty"`
+	HoveredBackgroundColor Color       `json:"k,omitempty"`
+	Hovered                bool        `json:"hovered,omitempty"`
+	Action                 Ptr         `json:"a,omitempty"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
@@ -36,21 +38,27 @@ type TableCell struct {
 	// Values higher than 65534 are clipped.
 	RowSpan int `json:"rs,omitempty"`
 	// Values higher than 1000 are clipped.
-	ColSpan         int       `json:"cs,omitempty"`
-	Alignment       Alignment `json:"a,omitempty"`
-	BackgroundColor Color     `json:"b,omitempty"`
-	Padding         Padding   `json:"p,omitempty"`
-	Border          Border    `json:"o,omitempty"`
-	Action          Ptr       `json:"t,omitempty"`
+	ColSpan                int       `json:"cs,omitempty"`
+	Alignment              Alignment `json:"a,omitempty"`
+	BackgroundColor        Color     `json:"b,omitempty"`
+	HoveredBackgroundColor Color     `json:"k,omitempty"`
+	Hovered                bool      `json:"hovered,omitempty"`
+	Padding                Padding   `json:"p,omitempty"`
+	Border                 Border    `json:"o,omitempty"`
+	Action                 Ptr       `json:"t,omitempty"`
 }
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type TableColumn struct {
 	Content Component `json:"c,omitempty"`
 	// Values higher than 1000 are clipped.
-	ColSpan         int       `json:"cs,omitempty"`
-	Width           Length    `json:"w,omitempty"`
-	Alignment       Alignment `json:"a,omitempty"`
-	BackgroundColor Color     `json:"b,omitempty"`
-	CellAction      Ptr       `json:"t,omitempty"`
+	ColSpan                    int       `json:"cs,omitempty"`
+	Width                      Length    `json:"w,omitempty"`
+	Alignment                  Alignment `json:"a,omitempty"`
+	CellBackgroundColor        Color     `json:"b,omitempty"`
+	CellAction                 Ptr       `json:"t,omitempty"`
+	CellPadding                Padding   `json:"p,omitempty"`
+	CellBorder                 Border    `json:"o,omitempty"`
+	CellHoveredBackgroundColor Color     `json:"k,omitempty"`
+	CellHovered                bool      `json:"cellHovered,omitempty"`
 }

@@ -4,9 +4,11 @@
 
 
 import type { Alignment } from '@/shared/protocol/ora/alignment';
+import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { Length } from '@/shared/protocol/ora/length';
+import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface TableColumn {
@@ -22,9 +24,17 @@ export interface TableColumn {
     w/*omitempty*/? /*Width*/: Length;
     // Alignment
     a/*omitempty*/? /*Alignment*/: Alignment;
-    // BackgroundColor
-    b/*omitempty*/? /*BackgroundColor*/: Color;
+    // CellBackgroundColor
+    b/*omitempty*/? /*CellBackgroundColor*/: Color;
     // CellAction
     t/*omitempty*/? /*CellAction*/: Ptr;
+    // CellPadding
+    p/*omitempty*/? /*CellPadding*/: Padding;
+    // CellBorder
+    o/*omitempty*/? /*CellBorder*/: Border;
+    // CellHoveredBackgroundColor
+    k/*omitempty*/? /*CellHoveredBackgroundColor*/: Color;
+    // CellHovered
+    cellHovered/*omitempty*/? /*CellHovered*/: boolean;
 }
 
