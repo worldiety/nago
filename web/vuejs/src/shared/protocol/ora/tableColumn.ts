@@ -4,36 +4,27 @@
 
 
 import type { Alignment } from '@/shared/protocol/ora/alignment';
-import type { Border } from '@/shared/protocol/ora/border';
 import type { Color } from '@/shared/protocol/ora/color';
 import type { Component } from '@/shared/protocol/ora/component';
-import type { Padding } from '@/shared/protocol/ora/padding';
+import type { Length } from '@/shared/protocol/ora/length';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
-export interface TableCell {
+export interface TableColumn {
     // Content
     c/*omitempty*/? /*Content*/: Component;
-
-    /**
-     * Values higher than 65534 are clipped.
-     */
-    // RowSpan
-    rs/*omitempty*/? /*RowSpan*/: number /*int*/;
 
     /**
      * Values higher than 1000 are clipped.
      */
     // ColSpan
     cs/*omitempty*/? /*ColSpan*/: number /*int*/;
+    // Width
+    w/*omitempty*/? /*Width*/: Length;
     // Alignment
     a/*omitempty*/? /*Alignment*/: Alignment;
     // BackgroundColor
     b/*omitempty*/? /*BackgroundColor*/: Color;
-    // Padding
-    p/*omitempty*/? /*Padding*/: Padding;
-    // Border
-    o/*omitempty*/? /*Border*/: Border;
-    // Action
-    t/*omitempty*/? /*Action*/: Ptr;
+    // CellAction
+    t/*omitempty*/? /*CellAction*/: Ptr;
 }
 

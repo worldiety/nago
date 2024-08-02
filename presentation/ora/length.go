@@ -3,6 +3,8 @@ package ora
 // The following Length sizes are common for the ORA design system and will automatically adjust to the root elements font size.
 // It is similar to the effect of Androids SP unit, however its factor is by default at 16, because we just use the CSS semantics.
 const (
+	// L1 relates to hairline which is always 1dp.
+	L1 Length = "1px"
 	// L2 relates to about 2dp at default font scale.
 	L2 Length = "0.125rem"
 	// L4 relates to about 4dp at default font scale.
@@ -17,6 +19,8 @@ const (
 	L16 Length = "1rem"
 	// L20 relates to about 20dp at default font scale.
 	L20 Length = "1.25rem"
+	//L24 relates to about 24dp at default font scale.
+	L24 Length = "1.5rem"
 	//L40 relates to about 40dp at default font scale.
 	L40 Length = "2.5rem"
 	//L44 relates to about 44dp at default font scale.

@@ -30,8 +30,6 @@ import type { Spacer } from '@/shared/protocol/ora/spacer';
 import type { StepInfo } from '@/shared/protocol/ora/stepInfo';
 import type { Stepper } from '@/shared/protocol/ora/stepper';
 import type { Table } from '@/shared/protocol/ora/table';
-import type { TableCell } from '@/shared/protocol/ora/tableCell';
-import type { TableRow } from '@/shared/protocol/ora/tableRow';
 import type { Text } from '@/shared/protocol/ora/text';
 import type { TextField } from '@/shared/protocol/ora/textField';
 import type { Toggle } from '@/shared/protocol/ora/toggle';
@@ -52,8 +50,6 @@ export type Component =
 | TextField
 | PasswordField
 | Table
-| TableCell
-| TableRow
 | Text
 | Dialog
 | Toggle

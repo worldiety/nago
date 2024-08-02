@@ -15,6 +15,7 @@ import UiBox from "@/components/box/UiBox.vue";
 import UiSpacer from "@/components/spacer/UiSpacer.vue";
 import UiModal from "@/components/UiModal.vue";
 import UiWindowTitle from "@/components/UiWindowTitle.vue";
+import UiTable from "@/components/table/UiTable.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -31,7 +32,7 @@ uiComponentsMap.set('t', UiToggle);
 uiComponentsMap.set('T', UiText);
 // uiComponentsMap.set('Button', UiButton);
 uiComponentsMap.set('G', UiGrid);
-// uiComponentsMap.set('Table', UiTable);
+ uiComponentsMap.set('B', UiTable);
 // uiComponentsMap.set('Card', UiCard);
 // uiComponentsMap.set('Dropdown', UiDropdown);
 uiComponentsMap.set('P', UiDatepicker);

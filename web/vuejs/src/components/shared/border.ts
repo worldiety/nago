@@ -1,6 +1,7 @@
 import {Frame} from "@/shared/protocol/ora/frame";
 import {Border} from "@/shared/protocol/ora/border";
 import {cssLengthValue} from "@/components/shared/length";
+import {colorValue} from "@/components/shared/colors";
 
 export function borderCSS(border?: Border): string[] {
 	const css: string[] = [];
@@ -28,19 +29,19 @@ export function borderCSS(border?: Border): string[] {
 
 	// border color
 	if (border.tc){
-		css.push(`border-top-color: ${border.tc}`)
+		css.push(`border-top-color: ${colorValue(border.tc)}`)
 	}
 
 	if (border.bc){
-		css.push(`border-bottom-color: ${border.bc}`)
+		css.push(`border-bottom-color: ${colorValue(border.bc)}`)
 	}
 
 	if (border.lc){
-		css.push(`border-left-color: ${border.lc}`)
+		css.push(`border-left-color: ${colorValue(border.lc)}`)
 	}
 
 	if (border.rc){
-		css.push(`border-right-color: ${border.rc}`)
+		css.push(`border-right-color: ${colorValue(border.rc)}`)
 	}
 
 	// border width

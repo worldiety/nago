@@ -58,6 +58,17 @@ func With[T any](t T, with func(T) T) T {
 	return with(t)
 }
 
+/*// Yield is a shortcut of iter.Collect(iter.Seq(func(core.View))
+func Yield[T any](seq iter.Seq[T]) []T {
+	var res []T
+	seq(func(view T) bool {
+		res = append(res, view)
+		return true
+	})
+
+	return res
+}*/
+
 func Each[T any](seq iter.Seq[T], m func(T) core.View) []core.View {
 	var res []core.View
 	seq(func(t T) bool {

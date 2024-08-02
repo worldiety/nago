@@ -3,17 +3,22 @@
  */
 
 
-import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Property } from '@/shared/protocol/ora/property';
+import type { Color } from '@/shared/protocol/ora/color';
+import type { Length } from '@/shared/protocol/ora/length';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { TableCell } from '@/shared/protocol/ora/tableCell';
 
+/**
+ * TableRow p
+ */
 export interface TableRow {
-    // Ptr
-    id /*Ptr*/: Ptr;
-    // Type
-    type: 'TableRow'/*ComponentType*/;
     // Cells
-    cells: Property<TableCell[]>;
+    c/*omitempty*/? /*Cells*/: TableCell[];
+    // Height
+    h/*omitempty*/? /*Height*/: Length;
+    // BackgroundColor
+    b/*omitempty*/? /*BackgroundColor*/: Color;
+    // Action
+    a/*omitempty*/? /*Action*/: Ptr;
 }
 
