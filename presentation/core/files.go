@@ -19,6 +19,8 @@ func (b blobIterFile) Name() string {
 	return b.entry.Key
 }
 
+// FilesIter opens a transaction and yields the entries. The iterator must consume each file exactly within
+// the yield and must neither retain a File nor the io.ReadCloser from Open.
 func FilesIter(src blob.Store) iter.Seq2[File, error] {
 	return func(yield func(File, error) bool) {
 		var cancelled bool

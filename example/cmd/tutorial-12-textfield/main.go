@@ -21,7 +21,7 @@ func main() {
 			showAlert := core.AutoState[bool](wnd)
 
 			return VStack(
-				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v\nsecret: %v", firstname, secret), showAlert, alert.Ok()),
+				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v\nsecret: %v", firstname, secret)), showAlert, alert.Ok()),
 				TextField("hello world", firstname.Get()).InputValue(firstname),
 				// you can re-use the state, but be careful of the effects
 				TextField("just numbers", numsOf(firstname.Get())).

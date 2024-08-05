@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	. "go.wdy.de/nago/presentation/ui2"
+	"go.wdy.de/nago/presentation/ui2/tracking"
 	"go.wdy.de/nago/web/vuejs"
-	"log/slog"
 )
 
 func main() {
@@ -15,17 +16,19 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.NewButton(func(btn *ui.Button) {
-				btn.Caption().Set("download")
-				btn.Action().Set(func() {
+			return VStack(
+				tracking.SupportRequestDialog(wnd),
+				PrimaryButton(func() {
 					err := wnd.SendFiles(core.FilesIter(mem.From(mem.Entries{
 						"test.txt": []byte("hello world"),
 					})))
+
+					err = fmt.Errorf("this is an unhandled infrastructure test error: %w", err)
 					if err != nil {
-						slog.Error("cannot send files", slog.Any("err", err))
+						tracking.RequestSupport(wnd, fmt.Errorf("cannot send files by doing this use case: %w", err))
 					}
-				})
-			})
+				}).Title("Download"),
+			).Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

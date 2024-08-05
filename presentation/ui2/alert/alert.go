@@ -28,7 +28,7 @@ func Ok() Option {
 	})
 }
 
-func Dialog(title, message string, isPresented *core.State[bool], opts ...Option) core.View {
+func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) core.View {
 	var options alertOpts
 	options.state = isPresented
 	for _, opt := range opts {
@@ -36,14 +36,16 @@ func Dialog(title, message string, isPresented *core.State[bool], opts ...Option
 	}
 
 	return ui.If(isPresented.Get(), ui.Modal(
-		ui.With(ui.Dialog(ui.VStack(ui.Text(message)).Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())).
+		ui.With(ui.Dialog(ui.VStack(body).Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())).
 			Title(ui.Text(title)), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			if options.okBtn != nil {
 				btns = append(btns, options.okBtn)
 			}
 
-			dialog = dialog.Footer(ui.HStack(btns...))
+			if len(btns) > 0 {
+				dialog = dialog.Footer(ui.HStack(btns...))
+			}
 			return dialog
 		})),
 	)
