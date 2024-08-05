@@ -5,7 +5,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/alert"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -30,16 +30,16 @@ func main() {
 			}
 			showAlert := core.AutoState[bool](wnd)
 
-			return ui.VStack(
+			return VStack(
 				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v, start=%v end=%v", date, start, end), showAlert, alert.Ok()),
-				ui.SingleDatePicker("Geburtstag", date.Get(), date),
+				SingleDatePicker("Geburtstag", date.Get(), date),
 
-				ui.RangeDatePicker("Urlaub", start.Get(), start, end.Get(), end),
-				ui.PrimaryButton(func() {
+				RangeDatePicker("Urlaub", start.Get(), start, end.Get(), end),
+				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),
-			).Gap(ora.L16).
-				Frame(ora.Frame{}.MatchScreen())
+			).Gap(L16).
+				Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

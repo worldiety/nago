@@ -166,7 +166,7 @@ func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 	s.parent.subject.SetValue(subject)
 }
 
-func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (ora.URI, error) {
+func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
 	if s.destroyed {
 		return "", nil
 	}
@@ -199,7 +199,7 @@ func (s *scopeWindow) Execute(task func()) {
 	s.parent.eventLoop.Tick()
 }
 
-func (s *scopeWindow) Info() ora.WindowInfo {
+func (s *scopeWindow) Info() WindowInfo {
 	return s.parent.windowInfo
 }
 

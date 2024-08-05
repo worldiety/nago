@@ -7,8 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons2 "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	icons "go.wdy.de/nago/presentation/icons/hero/solid"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -25,25 +24,25 @@ func main() {
 
 		cfg.Component(".", func(wnd core.Window) core.View {
 
-			return ui.Scaffold(ora.ScaffoldAlignmentTop).
-				Body(ui.VStack(
+			return Scaffold(ScaffoldAlignmentTop).
+				Body(VStack(
 					// this only causes the side effect of setting the current page title
-					ui.WindowTitle("scaffold example"),
-					ui.Text("hello body"),
+					WindowTitle("scaffold example"),
+					Text("hello body"),
 				)).
-				Logo(ui.Image().Embed(icons.SpeakerWave).Frame(ora.Frame{}.Size(ora.L20, ora.L20))).
+				Logo(Image().Embed(icons.SpeakerWave).Frame(Frame{}.Size(L20, L20))).
 				Menu(
-					ui.ScaffoldMenuEntry{
+					ScaffoldMenuEntry{
 						Title: "Entry 1",
 						Action: func() {
 							fmt.Println("clicked entry 1")
 						},
 					},
-					ui.ScaffoldMenuEntry{
-						Icon:           ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+					ScaffoldMenuEntry{
+						Icon:           Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)),
 						Title:          "Entry 2",
 						MarkAsActiveAt: ".",
-						Menu: []ui.ScaffoldMenuEntry{
+						Menu: []ScaffoldMenuEntry{
 							{
 								Title: "sub a",
 							},
@@ -53,18 +52,18 @@ func main() {
 						},
 					},
 
-					ui.ScaffoldMenuEntry{
-						Icon:           ui.Image().Embed(icons.Window).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						IconActive:     ui.Image().Embed(icons2.Grid).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+					ScaffoldMenuEntry{
+						Icon:           Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)),
+						IconActive:     Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)),
 						Title:          "Entry 3",
 						MarkAsActiveAt: ".",
 					},
-					ui.ScaffoldMenuEntry{
-						Icon:           ui.Image().Embed(icons.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-						IconActive:     ui.Image().Embed(icons2.User).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
+					ScaffoldMenuEntry{
+						Icon:           Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)),
+						IconActive:     Image().Embed(icons2.User).Frame(Frame{}.Size(L20, L20)),
 						Title:          "nested top",
 						MarkAsActiveAt: ".",
-						Menu: []ui.ScaffoldMenuEntry{
+						Menu: []ScaffoldMenuEntry{
 							{
 								Title: "sub 1",
 							},

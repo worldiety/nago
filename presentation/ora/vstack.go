@@ -7,12 +7,6 @@ package ora
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type StylePreset string
 
-const (
-	StyleButtonPrimary   StylePreset = "p"
-	StyleButtonSecondary StylePreset = "s"
-	StyleButtonTertiary  StylePreset = "t"
-)
-
 // An VStack aligns children elements in a vertical column.
 // - the intrinsic component dimensions are the sum of all sizes of the contained children
 // - the parent can define a custom width and height

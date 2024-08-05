@@ -22,8 +22,8 @@ func GridCell(body core.View) TGridCell {
 	return TGridCell{body: body}
 }
 
-func (c TGridCell) Padding(p ora.Padding) TGridCell {
-	c.padding = p
+func (c TGridCell) Padding(p Padding) TGridCell {
+	c.padding = p.ora()
 	return c
 }
 
@@ -115,19 +115,19 @@ func (c TGrid) Rows(rows int) TGrid {
 }
 
 // Gap sets RowGap and ColGap equally.
-func (c TGrid) Gap(g ora.Length) TGrid {
-	c.rowGap = g
-	c.colGap = g
+func (c TGrid) Gap(g Length) TGrid {
+	c.rowGap = g.ora()
+	c.colGap = g.ora()
 	return c
 }
 
-func (c TGrid) RowGap(g ora.Length) TGrid {
-	c.rowGap = g
+func (c TGrid) RowGap(g Length) TGrid {
+	c.rowGap = g.ora()
 	return c
 }
 
-func (c TGrid) ColGap(g ora.Length) TGrid {
-	c.colGap = g
+func (c TGrid) ColGap(g Length) TGrid {
+	c.colGap = g.ora()
 	return c
 }
 
@@ -140,43 +140,46 @@ func (c TGrid) Columns(cols int) TGrid {
 
 // Widths are optional column width from left to right. If not all width are defined, the rest
 // of widths are equally distributed based on the remaining amount of space.
-func (c TGrid) Widths(colWidths ...ora.Length) TGrid {
-	c.colWidths = colWidths
+func (c TGrid) Widths(colWidths ...Length) TGrid {
+	c.colWidths = make([]ora.Length, 0, len(colWidths))
+	for _, width := range colWidths {
+		c.colWidths = append(c.colWidths, width.ora())
+	}
 	return c
 }
 
-func (c TGrid) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
-	c.backgroundColor = backgroundColor
+func (c TGrid) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TGrid) Frame(fr ora.Frame) core.DecoredView {
-	c.frame = fr
+func (c TGrid) Frame(fr Frame) DecoredView {
+	c.frame = fr.ora()
 	return c
 }
 
-func (c TGrid) Font(font ora.Font) core.DecoredView {
-	c.font = font
+func (c TGrid) Font(font Font) DecoredView {
+	c.font = font.ora()
 	return c
 }
 
-func (c TGrid) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c TGrid) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c TGrid) Visible(visible bool) core.DecoredView {
+func (c TGrid) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
-func (c TGrid) AccessibilityLabel(label string) core.DecoredView {
+func (c TGrid) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
-func (c TGrid) Padding(padding ora.Padding) core.DecoredView {
-	c.padding = padding
+func (c TGrid) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 

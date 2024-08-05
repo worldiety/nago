@@ -5,6 +5,17 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+type ScaffoldAlignment string
+
+func (s ScaffoldAlignment) ora() ora.ScaffoldAlignment {
+	return ora.ScaffoldAlignment(s)
+}
+
+const (
+	ScaffoldAlignmentTop     ScaffoldAlignment = "u"
+	ScaffoldAlignmentLeading ScaffoldAlignment = "l"
+)
+
 type ScaffoldMenuEntry struct {
 	Icon core.View
 	// IconActive is optional
@@ -26,8 +37,8 @@ type TScaffold struct {
 	menu      []ScaffoldMenuEntry
 }
 
-func Scaffold(alignment ora.ScaffoldAlignment) TScaffold {
-	return TScaffold{alignment: alignment}
+func Scaffold(alignment ScaffoldAlignment) TScaffold {
+	return TScaffold{alignment: alignment.ora()}
 }
 
 func (c TScaffold) Logo(view core.View) TScaffold {

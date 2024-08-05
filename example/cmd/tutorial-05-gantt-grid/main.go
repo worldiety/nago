@@ -4,8 +4,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -18,16 +17,16 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.VStack(gantt()).Frame(ora.Frame{}.FullWidth()).Padding(ora.Padding{}.All(ora.L44))
+			return VStack(gantt()).Frame(Frame{}.FullWidth()).Padding(Padding{}.All(L44))
 		})
 	}).Run()
 }
 
 func gantt() core.View {
-	return ui.Grid(
-		slices.Collect(func(yield func(cell ui.TGridCell) bool) {
+	return Grid(
+		slices.Collect(func(yield func(cell TGridCell) bool) {
 			for _, view := range ganttHeader() {
-				yield(ui.GridCell(view))
+				yield(GridCell(view))
 			}
 
 			for i, name := range names {
@@ -39,13 +38,13 @@ func gantt() core.View {
 			yield(vacation())
 		})...,
 	). // be careful with cols and rows and be better as explicit as possible
-		Widths(ora.L160).
+		Widths(L160).
 		Columns(13).
-		RowGap(ora.L8).
+		RowGap(L8).
 		Rows(len(names) + 1).
-		Padding(ora.Padding{Bottom: ora.L8}).
-		Border(ora.Border{}.TopRadius(ora.L16).Elevate(8)).
-		Frame(ora.Frame{}.Size(ora.Full, ora.Auto))
+		Padding(Padding{Bottom: L8}).
+		Border(Border{}.TopRadius(L16).Elevate(8)).
+		Frame(Frame{}.Size(Full, Auto))
 }
 
 func ganttHeader() []core.View {
@@ -57,17 +56,17 @@ func ganttHeader() []core.View {
 	})
 }
 
-func ganttRow(idx int, name string) []ui.TGridCell {
-	return slices.Collect(func(yield func(cell ui.TGridCell) bool) {
-		yield(ui.GridCell(ui.Box(ui.BoxLayout{Center: ui.Text(name)})).
+func ganttRow(idx int, name string) []TGridCell {
+	return slices.Collect(func(yield func(cell TGridCell) bool) {
+		yield(GridCell(Box(BoxLayout{Center: Text(name)})).
 			ColStart(1).
 			ColEnd(2),
 		)
-		yield(ui.GridCell(ui.Box(ui.BoxLayout{
-			Leading: ui.Text("verplant")}).
+		yield(GridCell(Box(BoxLayout{
+			Leading: Text("verplant")}).
 			BackgroundColor("#2ecaac").
-			Padding(ora.Padding{Left: ora.L8}).
-			Border(ora.Border{}.Circle()),
+			Padding(Padding{Left: L8}).
+			Border(Border{}.Circle()),
 		). // be careful with cols and rows and be better as explicit as possible
 			ColStart(idx*2 + 2).
 			ColEnd(idx*2 + 5).
@@ -77,20 +76,20 @@ func ganttRow(idx int, name string) []ui.TGridCell {
 	})
 }
 
-func vacation() ui.TGridCell {
-	return ui.GridCell(
-		ui.Box(ui.BoxLayout{Center: ui.Text("Urlaub").Font(ora.Title).Color("#ffffff")}).
-			BackgroundColor("#ff6252aa").Border(ora.Border{}.Radius(ora.L8).Shadow(ora.L16)),
+func vacation() TGridCell {
+	return GridCell(
+		Box(BoxLayout{Center: Text("Urlaub").Font(Title).Color("#ffffff")}).
+			BackgroundColor("#ff6252aa").Border(Border{}.Radius(L8).Shadow(L16)),
 	).
 		RowStart(2).
 		RowEnd(6).
 		ColStart(5).
 		ColEnd(9).
-		Padding(ora.Padding{}.All(ora.L8))
+		Padding(Padding{}.All(L8))
 }
 
 func headCell(text string) core.View {
-	return ui.VStack(
-		ui.Text(text).Color("#ffffff")).
-		BackgroundColor("#0a3444").Frame(ora.Frame{Height: ora.L44})
+	return VStack(
+		Text(text).Color("#ffffff")).
+		BackgroundColor("#0a3444").Frame(Frame{Height: L44})
 }

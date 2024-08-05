@@ -41,100 +41,100 @@ func Box(layout BoxLayout) TBox {
 	if layout.Center != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.Center,
-			Alignment: ora.Center,
+			Alignment: Center.ora(),
 		})
 	}
 
 	if layout.Top != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.Top,
-			Alignment: ora.Top,
+			Alignment: Top.ora(),
 		})
 	}
 
 	if layout.Bottom != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.Bottom,
-			Alignment: ora.Bottom,
+			Alignment: Bottom.ora(),
 		})
 	}
 
 	if layout.Leading != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.Leading,
-			Alignment: ora.Leading,
+			Alignment: Leading.ora(),
 		})
 	}
 
 	if layout.Trailing != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.Trailing,
-			Alignment: ora.Trailing,
+			Alignment: Trailing.ora(),
 		})
 	}
 
 	if layout.TopLeading != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.TopLeading,
-			Alignment: ora.TopLeading,
+			Alignment: TopLeading.ora(),
 		})
 	}
 
 	if layout.BottomLeading != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.BottomLeading,
-			Alignment: ora.BottomLeading,
+			Alignment: BottomLeading.ora(),
 		})
 	}
 
 	if layout.TopTrailing != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.TopTrailing,
-			Alignment: ora.TopTrailing,
+			Alignment: TopTrailing.ora(),
 		})
 	}
 
 	if layout.BottomTrailing != nil {
 		c.children = append(c.children, alignedComponent{
 			Component: layout.BottomTrailing,
-			Alignment: ora.BottomTrailing,
+			Alignment: BottomTrailing.ora(),
 		})
 	}
 
 	return c
 }
 
-func (c TBox) Padding(p ora.Padding) core.DecoredView {
-	c.padding = p
+func (c TBox) Padding(p Padding) DecoredView {
+	c.padding = p.ora()
 	return c
 }
 
-func (c TBox) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
-	c.backgroundColor = backgroundColor
+func (c TBox) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TBox) Frame(fr ora.Frame) core.DecoredView {
-	c.frame = fr
+func (c TBox) Frame(fr Frame) DecoredView {
+	c.frame = fr.ora()
 	return c
 }
 
-func (c TBox) Font(font ora.Font) core.DecoredView {
-	c.font = font
+func (c TBox) Font(font Font) DecoredView {
+	c.font = font.ora()
 	return c
 }
 
-func (c TBox) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c TBox) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c TBox) Visible(visible bool) core.DecoredView {
+func (c TBox) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
-func (c TBox) AccessibilityLabel(label string) core.DecoredView {
+func (c TBox) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }

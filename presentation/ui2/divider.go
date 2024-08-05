@@ -14,33 +14,33 @@ type TDivider struct {
 // HLine configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
 func HLine() TDivider {
 	return TDivider{}.
-		Border(ora.Border{TopWidth: "1px", TopColor: "A0"}).
-		Frame(ora.Frame{}.FullWidth()).
-		Padding(ora.Padding{}.Vertical(ora.L16))
+		Border(Border{TopWidth: "1px", TopColor: "A0"}).
+		Frame(Frame{}.FullWidth()).
+		Padding(Padding{}.Vertical(L16))
 
 }
 
 // VLine configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
 func VLine() TDivider {
 	return TDivider{}.
-		Border(ora.Border{TopWidth: "1px", TopColor: "A0"}).
-		Frame(ora.Frame{}.FullHeight()).
-		Padding(ora.Padding{}.Horizontal(ora.L16))
+		Border(Border{TopWidth: "1px", TopColor: "A0"}).
+		Frame(Frame{}.FullHeight()).
+		Padding(Padding{}.Horizontal(L16))
 
 }
 
-func (c TDivider) Padding(padding ora.Padding) TDivider {
-	c.padding = padding
+func (c TDivider) Padding(padding Padding) TDivider {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TDivider) Frame(frame ora.Frame) TDivider {
-	c.frame = frame
+func (c TDivider) Frame(frame Frame) TDivider {
+	c.frame = frame.ora()
 	return c
 }
 
-func (c TDivider) Border(border ora.Border) TDivider {
-	c.border = border
+func (c TDivider) Border(border Border) TDivider {
+	c.border = border.ora()
 	return c
 }
 

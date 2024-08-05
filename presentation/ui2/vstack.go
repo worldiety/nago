@@ -35,28 +35,28 @@ func VStack(children ...core.View) TVStack {
 	return c
 }
 
-func (c TVStack) Gap(gap ora.Length) TVStack {
-	c.gap = gap
+func (c TVStack) Gap(gap Length) TVStack {
+	c.gap = gap.ora()
 	return c
 }
 
-func (c TVStack) StylePreset(preset ora.StylePreset) TVStack {
-	c.stylePreset = preset
+func (c TVStack) StylePreset(preset StylePreset) TVStack {
+	c.stylePreset = preset.ora()
 	return c
 }
 
-func (c TVStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
-	c.backgroundColor = backgroundColor
+func (c TVStack) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TVStack) HoveredBackgroundColor(backgroundColor ora.Color) TVStack {
-	c.hoveredBackgroundColor = backgroundColor
+func (c TVStack) HoveredBackgroundColor(backgroundColor Color) TVStack {
+	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TVStack) PressedBackgroundColor(backgroundColor ora.Color) TVStack {
-	c.pressedBackgroundColor = backgroundColor
+func (c TVStack) PressedBackgroundColor(backgroundColor Color) TVStack {
+	c.pressedBackgroundColor = backgroundColor.ora()
 	return c
 }
 
@@ -70,8 +70,8 @@ func (c TVStack) Action(f func()) TVStack {
 	return c
 }
 
-func (c TVStack) Alignment(alignment ora.Alignment) TVStack {
-	c.alignment = alignment
+func (c TVStack) Alignment(alignment Alignment) TVStack {
+	c.alignment = alignment.ora()
 	return c
 }
 
@@ -80,42 +80,42 @@ func (c TVStack) Font(font ora.Font) TVStack {
 	return c
 }
 
-func (c TVStack) Frame(f ora.Frame) core.DecoredView {
-	c.frame = f
+func (c TVStack) Frame(f Frame) DecoredView {
+	c.frame = f.ora()
 	return c
 }
 
-func (c TVStack) Padding(padding ora.Padding) core.DecoredView {
-	c.padding = padding
+func (c TVStack) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TVStack) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c TVStack) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c TVStack) HoveredBorder(border ora.Border) TVStack {
-	c.hoveredBorder = border
+func (c TVStack) HoveredBorder(border Border) TVStack {
+	c.hoveredBorder = border.ora()
 	return c
 }
 
-func (c TVStack) PressedBorder(border ora.Border) TVStack {
-	c.pressedBorder = border
+func (c TVStack) PressedBorder(border Border) TVStack {
+	c.pressedBorder = border.ora()
 	return c
 }
 
-func (c TVStack) FocusedBorder(border ora.Border) TVStack {
-	c.focusedBorder = border
+func (c TVStack) FocusedBorder(border Border) TVStack {
+	c.focusedBorder = border.ora()
 	return c
 }
 
-func (c TVStack) Visible(visible bool) core.DecoredView {
+func (c TVStack) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
-func (c TVStack) AccessibilityLabel(label string) core.DecoredView {
+func (c TVStack) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ora"
@@ -47,7 +48,14 @@ func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
 }
 
 func (s *Scope) handleWindowInfoChanged(evt ora.WindowInfoChanged) {
-	s.updateWindowInfo(evt.Info)
+	winfo := evt.Info
+	s.updateWindowInfo(WindowInfo{
+		Width:       DP(winfo.Width),
+		Height:      DP(winfo.Height),
+		Density:     Density(winfo.Density),
+		SizeClass:   WindowSizeClass(winfo.SizeClass),
+		ColorScheme: ColorScheme(winfo.ColorScheme),
+	})
 }
 
 func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
@@ -170,9 +178,32 @@ func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidati
 	s.Publish(renderTree)
 }
 
+func convertColorSetToMap(colorSet ColorSet) map[string]ora.Color {
+	// expensive but simple variant of going typesafe to arbitrary
+	var res map[string]ora.Color
+	buf, err := json.Marshal(colorSet)
+	if err != nil {
+		panic(fmt.Errorf("unreachable: %w", err))
+	}
+
+	err = json.Unmarshal(buf, &res)
+	if err != nil {
+		panic(fmt.Errorf("unreachable: %w", err))
+	}
+
+	return res
+}
+
 func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
-	s.windowInfo = evt.WindowInfo
-	s.updateWindowInfo(evt.WindowInfo)
+	winfo := evt.WindowInfo
+	s.windowInfo = WindowInfo{
+		Width:       DP(winfo.Width),
+		Height:      DP(winfo.Height),
+		Density:     Density(winfo.Density),
+		SizeClass:   WindowSizeClass(winfo.SizeClass),
+		ColorScheme: ColorScheme(winfo.ColorScheme),
+	}
+	s.updateWindowInfo(s.windowInfo)
 
 	themes := ora.Themes{
 		Dark: ora.Theme{
@@ -186,10 +217,10 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 	for scheme, m := range s.app.colorSets {
 		for name, set := range m {
 			switch scheme {
-			case ora.Dark:
-				themes.Dark.Colors[name] = ora.ConvertColorSetToMap(set)
-			case ora.Light:
-				themes.Light.Colors[name] = ora.ConvertColorSetToMap(set)
+			case Dark:
+				themes.Dark.Colors[ora.NamespaceName(name)] = convertColorSetToMap(set)
+			case Light:
+				themes.Light.Colors[ora.NamespaceName(name)] = convertColorSetToMap(set)
 			default:
 				panic("implement me")
 			}

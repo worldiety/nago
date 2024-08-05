@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+// we have observed several malfunctions during development, so it is not clear if this is due to the dev server.
 const svgFrontendCacheSupport = false
 
 type TImage struct {
@@ -31,9 +32,9 @@ func Image() TImage {
 // If you need optimized data access and caching policies, you have to use this
 // way.
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
-func (c TImage) URI(uri ora.URI) TImage {
-	c.uri = uri
-	c.frame = ora.Frame{}.Size(ora.Auto, ora.L160)
+func (c TImage) URI(uri core.URI) TImage {
+	c.uri = ora.URI(uri)
+	c.frame = Frame{}.Size(Auto, L160).ora()
 	return c
 }
 
@@ -74,28 +75,28 @@ func (c TImage) Embed(buf []byte) TImage {
 }
 
 // AccessibilityLabel sets a label for screen readers. See also https://www.w3.org/WAI/tutorials/images/decision-tree/.
-func (c TImage) AccessibilityLabel(label string) core.DecoredView {
+func (c TImage) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
-func (c TImage) Visible(b bool) core.DecoredView {
+func (c TImage) Visible(b bool) DecoredView {
 	c.invisible = b
 	return c
 }
 
-func (c TImage) Padding(padding ora.Padding) core.DecoredView {
-	c.padding = padding
+func (c TImage) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TImage) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c TImage) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c TImage) Frame(frame ora.Frame) core.DecoredView {
-	c.frame = frame
+func (c TImage) Frame(frame Frame) DecoredView {
+	c.frame = frame.ora()
 	return c
 }
 

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/alert"
 	"go.wdy.de/nago/web/vuejs"
 	"strings"
@@ -20,18 +19,18 @@ func main() {
 			firstname := core.AutoState[string](wnd)
 			showAlert := core.AutoState[bool](wnd)
 
-			return ui.VStack(
+			return VStack(
 				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", firstname), showAlert, alert.Ok()),
-				ui.TextField("hello world", firstname.Get()).InputValue(firstname),
+				TextField("hello world", firstname.Get()).InputValue(firstname),
 				// you can re-use the state, but be careful of the effects
-				ui.TextField("just numbers", numsOf(firstname.Get())).InputValue(firstname).Style(ora.TextFieldReduced),
+				TextField("just numbers", numsOf(firstname.Get())).InputValue(firstname).Style(TextFieldReduced),
 
-				ui.TextField("text area", "hello\nworld").Lines(3),
-				ui.PrimaryButton(func() {
+				TextField("text area", "hello\nworld").Lines(3),
+				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),
-			).Gap(ora.L16).
-				Frame(ora.Frame{}.MatchScreen())
+			).Gap(L16).
+				Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

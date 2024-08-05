@@ -6,7 +6,7 @@ import (
 )
 
 type TDialog struct {
-	uri    ora.URI
+	uri    core.URI
 	dlg    ora.VStack
 	body   core.View
 	footer core.View
@@ -30,22 +30,22 @@ func (c TDialog) Footer(footer core.View) TDialog {
 }
 
 func (c TDialog) Render(ctx core.RenderContext) ora.Component {
-	colors := core.ColorSet[ora.Colors](ctx.Window())
+	colors := core.Colors[Colors](ctx.Window())
 	dlg := Box(BoxLayout{Center: VStack(
-		If(c.title != nil, HStack(c.title).Alignment(ora.Leading).BackgroundColor(colors.M4).Frame(ora.Frame{}.FullWidth()).Padding(ora.Padding{Left: ora.L20, Top: ora.L12, Bottom: ora.L12})),
+		If(c.title != nil, HStack(c.title).Alignment(Leading).BackgroundColor(colors.M4).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Top: L12, Bottom: L12})),
 		VStack(
 			c.body,
 			If(c.footer != nil, HLine()),
-			HStack(c.footer).Alignment(ora.Trailing).Frame(ora.Frame{}.FullWidth()),
+			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
 		).
-			Frame(ora.Frame{MaxWidth: ora.L400}.FullWidth()).
-			Padding(ora.Padding{Left: ora.L20, Top: ora.L16, Right: ora.L20, Bottom: ora.L20}),
+			Frame(Frame{MaxWidth: L400}.FullWidth()).
+			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 	).
 		BackgroundColor(colors.M1).
-		Border(ora.Border{}.Radius(ora.L20).Elevate(4)).
-		Frame(ora.Frame{MinWidth: ora.L400})},
+		Border(Border{}.Radius(L20).Elevate(4)).
+		Frame(Frame{MinWidth: L400})},
 	).
-		BackgroundColor(ora.Color("#000000").WithTransparency(40))
+		BackgroundColor(Color("#000000").WithTransparency(40))
 
 	return dlg.Render(ctx)
 }

@@ -1,7 +1,5 @@
 package ora
 
-import "fmt"
-
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Shadow struct {
 	Color  Color  `json:"c,omitempty"`
@@ -29,56 +27,4 @@ type Border struct {
 	BottomColor Color `json:"bc,omitempty"`
 
 	BoxShadow Shadow `json:"s,omitempty"`
-}
-
-func (b Border) Radius(radius Length) Border {
-	b.TopLeftRadius = radius
-	b.TopRightRadius = radius
-	b.BottomLeftRadius = radius
-	b.BottomRightRadius = radius
-	return b
-}
-
-func (b Border) TopRadius(radius Length) Border {
-	b.TopLeftRadius = radius
-	b.TopRightRadius = radius
-	return b
-}
-
-func (b Border) Circle() Border {
-	return b.Radius("999999dp")
-}
-
-func (b Border) Width(width Length) Border {
-	b.LeftWidth = width
-	b.TopWidth = width
-	b.RightWidth = width
-	b.BottomWidth = width
-	return b
-}
-
-func (b Border) Color(c Color) Border {
-	b.LeftColor = c
-	b.TopColor = c
-	b.BottomColor = c
-	b.RightColor = c
-	return b
-}
-
-func (b Border) Shadow(radius Length) Border {
-	b.BoxShadow.Radius = radius
-	b.BoxShadow.Color = "#00000054"
-	b.BoxShadow.X = ""
-	b.BoxShadow.Y = ""
-	return b
-}
-
-// Elevate by DP
-func (b Border) Elevate(elevation DP) Border {
-	rem := float64(elevation) / 16
-	b.BoxShadow.Radius = Length(fmt.Sprintf("%.2frem", rem*3))
-	b.BoxShadow.Color = "#00000030"
-	b.BoxShadow.X = ""
-	b.BoxShadow.Y = Length(fmt.Sprintf("%.2frem", rem))
-	return b
 }

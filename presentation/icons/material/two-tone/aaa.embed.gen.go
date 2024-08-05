@@ -4,6376 +4,6376 @@ package icons
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/core"
 )
 
 //go:embed 10k.svg
-var I10k ora.SVG
+var I10k core.SVG
 
 //go:embed 10mp.svg
-var I10mp ora.SVG
+var I10mp core.SVG
 
 //go:embed 11mp.svg
-var I11mp ora.SVG
+var I11mp core.SVG
 
 //go:embed 123.svg
-var I123 ora.SVG
+var I123 core.SVG
 
 //go:embed 12mp.svg
-var I12mp ora.SVG
+var I12mp core.SVG
 
 //go:embed 13mp.svg
-var I13mp ora.SVG
+var I13mp core.SVG
 
 //go:embed 14mp.svg
-var I14mp ora.SVG
+var I14mp core.SVG
 
 //go:embed 15mp.svg
-var I15mp ora.SVG
+var I15mp core.SVG
 
 //go:embed 16mp.svg
-var I16mp ora.SVG
+var I16mp core.SVG
 
 //go:embed 17mp.svg
-var I17mp ora.SVG
+var I17mp core.SVG
 
 //go:embed 18_up_rating.svg
-var I18_up_rating ora.SVG
+var I18_up_rating core.SVG
 
 //go:embed 18mp.svg
-var I18mp ora.SVG
+var I18mp core.SVG
 
 //go:embed 19mp.svg
-var I19mp ora.SVG
+var I19mp core.SVG
 
 //go:embed 1k.svg
-var I1k ora.SVG
+var I1k core.SVG
 
 //go:embed 1k_plus.svg
-var I1k_plus ora.SVG
+var I1k_plus core.SVG
 
 //go:embed 1x_mobiledata.svg
-var I1x_mobiledata ora.SVG
+var I1x_mobiledata core.SVG
 
 //go:embed 20mp.svg
-var I20mp ora.SVG
+var I20mp core.SVG
 
 //go:embed 21mp.svg
-var I21mp ora.SVG
+var I21mp core.SVG
 
 //go:embed 22mp.svg
-var I22mp ora.SVG
+var I22mp core.SVG
 
 //go:embed 23mp.svg
-var I23mp ora.SVG
+var I23mp core.SVG
 
 //go:embed 24mp.svg
-var I24mp ora.SVG
+var I24mp core.SVG
 
 //go:embed 2k.svg
-var I2k ora.SVG
+var I2k core.SVG
 
 //go:embed 2k_plus.svg
-var I2k_plus ora.SVG
+var I2k_plus core.SVG
 
 //go:embed 2mp.svg
-var I2mp ora.SVG
+var I2mp core.SVG
 
 //go:embed 30fps.svg
-var I30fps ora.SVG
+var I30fps core.SVG
 
 //go:embed 30fps_select.svg
-var I30fps_select ora.SVG
+var I30fps_select core.SVG
 
 //go:embed 360.svg
-var I360 ora.SVG
+var I360 core.SVG
 
 //go:embed 3d_rotation.svg
-var I3d_rotation ora.SVG
+var I3d_rotation core.SVG
 
 //go:embed 3g_mobiledata.svg
-var I3g_mobiledata ora.SVG
+var I3g_mobiledata core.SVG
 
 //go:embed 3k.svg
-var I3k ora.SVG
+var I3k core.SVG
 
 //go:embed 3k_plus.svg
-var I3k_plus ora.SVG
+var I3k_plus core.SVG
 
 //go:embed 3mp.svg
-var I3mp ora.SVG
+var I3mp core.SVG
 
 //go:embed 3p.svg
-var I3p ora.SVG
+var I3p core.SVG
 
 //go:embed 4g_mobiledata.svg
-var I4g_mobiledata ora.SVG
+var I4g_mobiledata core.SVG
 
 //go:embed 4g_plus_mobiledata.svg
-var I4g_plus_mobiledata ora.SVG
+var I4g_plus_mobiledata core.SVG
 
 //go:embed 4k.svg
-var I4k ora.SVG
+var I4k core.SVG
 
 //go:embed 4k_plus.svg
-var I4k_plus ora.SVG
+var I4k_plus core.SVG
 
 //go:embed 4mp.svg
-var I4mp ora.SVG
+var I4mp core.SVG
 
 //go:embed 5g.svg
-var I5g ora.SVG
+var I5g core.SVG
 
 //go:embed 5k.svg
-var I5k ora.SVG
+var I5k core.SVG
 
 //go:embed 5k_plus.svg
-var I5k_plus ora.SVG
+var I5k_plus core.SVG
 
 //go:embed 5mp.svg
-var I5mp ora.SVG
+var I5mp core.SVG
 
 //go:embed 60fps.svg
-var I60fps ora.SVG
+var I60fps core.SVG
 
 //go:embed 60fps_select.svg
-var I60fps_select ora.SVG
+var I60fps_select core.SVG
 
 //go:embed 6_ft_apart.svg
-var I6_ft_apart ora.SVG
+var I6_ft_apart core.SVG
 
 //go:embed 6k.svg
-var I6k ora.SVG
+var I6k core.SVG
 
 //go:embed 6k_plus.svg
-var I6k_plus ora.SVG
+var I6k_plus core.SVG
 
 //go:embed 6mp.svg
-var I6mp ora.SVG
+var I6mp core.SVG
 
 //go:embed 7k.svg
-var I7k ora.SVG
+var I7k core.SVG
 
 //go:embed 7k_plus.svg
-var I7k_plus ora.SVG
+var I7k_plus core.SVG
 
 //go:embed 7mp.svg
-var I7mp ora.SVG
+var I7mp core.SVG
 
 //go:embed 8k.svg
-var I8k ora.SVG
+var I8k core.SVG
 
 //go:embed 8k_plus.svg
-var I8k_plus ora.SVG
+var I8k_plus core.SVG
 
 //go:embed 8mp.svg
-var I8mp ora.SVG
+var I8mp core.SVG
 
 //go:embed 9k.svg
-var I9k ora.SVG
+var I9k core.SVG
 
 //go:embed 9k_plus.svg
-var I9k_plus ora.SVG
+var I9k_plus core.SVG
 
 //go:embed 9mp.svg
-var I9mp ora.SVG
+var I9mp core.SVG
 
 //go:embed abc.svg
-var Abc ora.SVG
+var Abc core.SVG
 
 //go:embed ac_unit.svg
-var Ac_unit ora.SVG
+var Ac_unit core.SVG
 
 //go:embed access_alarm.svg
-var Access_alarm ora.SVG
+var Access_alarm core.SVG
 
 //go:embed access_alarms.svg
-var Access_alarms ora.SVG
+var Access_alarms core.SVG
 
 //go:embed access_time.svg
-var Access_time ora.SVG
+var Access_time core.SVG
 
 //go:embed access_time_filled.svg
-var Access_time_filled ora.SVG
+var Access_time_filled core.SVG
 
 //go:embed accessibility.svg
-var Accessibility ora.SVG
+var Accessibility core.SVG
 
 //go:embed accessibility_new.svg
-var Accessibility_new ora.SVG
+var Accessibility_new core.SVG
 
 //go:embed accessible.svg
-var Accessible ora.SVG
+var Accessible core.SVG
 
 //go:embed accessible_forward.svg
-var Accessible_forward ora.SVG
+var Accessible_forward core.SVG
 
 //go:embed account_balance.svg
-var Account_balance ora.SVG
+var Account_balance core.SVG
 
 //go:embed account_balance_wallet.svg
-var Account_balance_wallet ora.SVG
+var Account_balance_wallet core.SVG
 
 //go:embed account_box.svg
-var Account_box ora.SVG
+var Account_box core.SVG
 
 //go:embed account_circle.svg
-var Account_circle ora.SVG
+var Account_circle core.SVG
 
 //go:embed account_tree.svg
-var Account_tree ora.SVG
+var Account_tree core.SVG
 
 //go:embed ad_units.svg
-var Ad_units ora.SVG
+var Ad_units core.SVG
 
 //go:embed adb.svg
-var Adb ora.SVG
+var Adb core.SVG
 
 //go:embed add.svg
-var Add ora.SVG
+var Add core.SVG
 
 //go:embed add_a_photo.svg
-var Add_a_photo ora.SVG
+var Add_a_photo core.SVG
 
 //go:embed add_alarm.svg
-var Add_alarm ora.SVG
+var Add_alarm core.SVG
 
 //go:embed add_alert.svg
-var Add_alert ora.SVG
+var Add_alert core.SVG
 
 //go:embed add_box.svg
-var Add_box ora.SVG
+var Add_box core.SVG
 
 //go:embed add_business.svg
-var Add_business ora.SVG
+var Add_business core.SVG
 
 //go:embed add_card.svg
-var Add_card ora.SVG
+var Add_card core.SVG
 
 //go:embed add_chart.svg
-var Add_chart ora.SVG
+var Add_chart core.SVG
 
 //go:embed add_circle.svg
-var Add_circle ora.SVG
+var Add_circle core.SVG
 
 //go:embed add_circle_outline.svg
-var Add_circle_outline ora.SVG
+var Add_circle_outline core.SVG
 
 //go:embed add_comment.svg
-var Add_comment ora.SVG
+var Add_comment core.SVG
 
 //go:embed add_home.svg
-var Add_home ora.SVG
+var Add_home core.SVG
 
 //go:embed add_home_work.svg
-var Add_home_work ora.SVG
+var Add_home_work core.SVG
 
 //go:embed add_ic_call.svg
-var Add_ic_call ora.SVG
+var Add_ic_call core.SVG
 
 //go:embed add_link.svg
-var Add_link ora.SVG
+var Add_link core.SVG
 
 //go:embed add_location.svg
-var Add_location ora.SVG
+var Add_location core.SVG
 
 //go:embed add_location_alt.svg
-var Add_location_alt ora.SVG
+var Add_location_alt core.SVG
 
 //go:embed add_moderator.svg
-var Add_moderator ora.SVG
+var Add_moderator core.SVG
 
 //go:embed add_photo_alternate.svg
-var Add_photo_alternate ora.SVG
+var Add_photo_alternate core.SVG
 
 //go:embed add_reaction.svg
-var Add_reaction ora.SVG
+var Add_reaction core.SVG
 
 //go:embed add_road.svg
-var Add_road ora.SVG
+var Add_road core.SVG
 
 //go:embed add_shopping_cart.svg
-var Add_shopping_cart ora.SVG
+var Add_shopping_cart core.SVG
 
 //go:embed add_task.svg
-var Add_task ora.SVG
+var Add_task core.SVG
 
 //go:embed add_to_drive.svg
-var Add_to_drive ora.SVG
+var Add_to_drive core.SVG
 
 //go:embed add_to_home_screen.svg
-var Add_to_home_screen ora.SVG
+var Add_to_home_screen core.SVG
 
 //go:embed add_to_photos.svg
-var Add_to_photos ora.SVG
+var Add_to_photos core.SVG
 
 //go:embed add_to_queue.svg
-var Add_to_queue ora.SVG
+var Add_to_queue core.SVG
 
 //go:embed addchart.svg
-var Addchart ora.SVG
+var Addchart core.SVG
 
 //go:embed adf_scanner.svg
-var Adf_scanner ora.SVG
+var Adf_scanner core.SVG
 
 //go:embed adjust.svg
-var Adjust ora.SVG
+var Adjust core.SVG
 
 //go:embed admin_panel_settings.svg
-var Admin_panel_settings ora.SVG
+var Admin_panel_settings core.SVG
 
 //go:embed ads_click.svg
-var Ads_click ora.SVG
+var Ads_click core.SVG
 
 //go:embed agriculture.svg
-var Agriculture ora.SVG
+var Agriculture core.SVG
 
 //go:embed air.svg
-var Air ora.SVG
+var Air core.SVG
 
 //go:embed airline_seat_flat.svg
-var Airline_seat_flat ora.SVG
+var Airline_seat_flat core.SVG
 
 //go:embed airline_seat_flat_angled.svg
-var Airline_seat_flat_angled ora.SVG
+var Airline_seat_flat_angled core.SVG
 
 //go:embed airline_seat_individual_suite.svg
-var Airline_seat_individual_suite ora.SVG
+var Airline_seat_individual_suite core.SVG
 
 //go:embed airline_seat_legroom_extra.svg
-var Airline_seat_legroom_extra ora.SVG
+var Airline_seat_legroom_extra core.SVG
 
 //go:embed airline_seat_legroom_normal.svg
-var Airline_seat_legroom_normal ora.SVG
+var Airline_seat_legroom_normal core.SVG
 
 //go:embed airline_seat_legroom_reduced.svg
-var Airline_seat_legroom_reduced ora.SVG
+var Airline_seat_legroom_reduced core.SVG
 
 //go:embed airline_seat_recline_extra.svg
-var Airline_seat_recline_extra ora.SVG
+var Airline_seat_recline_extra core.SVG
 
 //go:embed airline_seat_recline_normal.svg
-var Airline_seat_recline_normal ora.SVG
+var Airline_seat_recline_normal core.SVG
 
 //go:embed airline_stops.svg
-var Airline_stops ora.SVG
+var Airline_stops core.SVG
 
 //go:embed airlines.svg
-var Airlines ora.SVG
+var Airlines core.SVG
 
 //go:embed airplane_ticket.svg
-var Airplane_ticket ora.SVG
+var Airplane_ticket core.SVG
 
 //go:embed airplanemode_active.svg
-var Airplanemode_active ora.SVG
+var Airplanemode_active core.SVG
 
 //go:embed airplanemode_inactive.svg
-var Airplanemode_inactive ora.SVG
+var Airplanemode_inactive core.SVG
 
 //go:embed airplay.svg
-var Airplay ora.SVG
+var Airplay core.SVG
 
 //go:embed airport_shuttle.svg
-var Airport_shuttle ora.SVG
+var Airport_shuttle core.SVG
 
 //go:embed alarm.svg
-var Alarm ora.SVG
+var Alarm core.SVG
 
 //go:embed alarm_add.svg
-var Alarm_add ora.SVG
+var Alarm_add core.SVG
 
 //go:embed alarm_off.svg
-var Alarm_off ora.SVG
+var Alarm_off core.SVG
 
 //go:embed alarm_on.svg
-var Alarm_on ora.SVG
+var Alarm_on core.SVG
 
 //go:embed album.svg
-var Album ora.SVG
+var Album core.SVG
 
 //go:embed align_horizontal_center.svg
-var Align_horizontal_center ora.SVG
+var Align_horizontal_center core.SVG
 
 //go:embed align_horizontal_left.svg
-var Align_horizontal_left ora.SVG
+var Align_horizontal_left core.SVG
 
 //go:embed align_horizontal_right.svg
-var Align_horizontal_right ora.SVG
+var Align_horizontal_right core.SVG
 
 //go:embed align_vertical_bottom.svg
-var Align_vertical_bottom ora.SVG
+var Align_vertical_bottom core.SVG
 
 //go:embed align_vertical_center.svg
-var Align_vertical_center ora.SVG
+var Align_vertical_center core.SVG
 
 //go:embed align_vertical_top.svg
-var Align_vertical_top ora.SVG
+var Align_vertical_top core.SVG
 
 //go:embed all_inbox.svg
-var All_inbox ora.SVG
+var All_inbox core.SVG
 
 //go:embed all_inclusive.svg
-var All_inclusive ora.SVG
+var All_inclusive core.SVG
 
 //go:embed all_out.svg
-var All_out ora.SVG
+var All_out core.SVG
 
 //go:embed alt_route.svg
-var Alt_route ora.SVG
+var Alt_route core.SVG
 
 //go:embed alternate_email.svg
-var Alternate_email ora.SVG
+var Alternate_email core.SVG
 
 //go:embed analytics.svg
-var Analytics ora.SVG
+var Analytics core.SVG
 
 //go:embed anchor.svg
-var Anchor ora.SVG
+var Anchor core.SVG
 
 //go:embed android.svg
-var Android ora.SVG
+var Android core.SVG
 
 //go:embed animation.svg
-var Animation ora.SVG
+var Animation core.SVG
 
 //go:embed announcement.svg
-var Announcement ora.SVG
+var Announcement core.SVG
 
 //go:embed aod.svg
-var Aod ora.SVG
+var Aod core.SVG
 
 //go:embed apartment.svg
-var Apartment ora.SVG
+var Apartment core.SVG
 
 //go:embed api.svg
-var Api ora.SVG
+var Api core.SVG
 
 //go:embed app_blocking.svg
-var App_blocking ora.SVG
+var App_blocking core.SVG
 
 //go:embed app_registration.svg
-var App_registration ora.SVG
+var App_registration core.SVG
 
 //go:embed app_settings_alt.svg
-var App_settings_alt ora.SVG
+var App_settings_alt core.SVG
 
 //go:embed app_shortcut.svg
-var App_shortcut ora.SVG
+var App_shortcut core.SVG
 
 //go:embed approval.svg
-var Approval ora.SVG
+var Approval core.SVG
 
 //go:embed apps.svg
-var Apps ora.SVG
+var Apps core.SVG
 
 //go:embed apps_outage.svg
-var Apps_outage ora.SVG
+var Apps_outage core.SVG
 
 //go:embed architecture.svg
-var Architecture ora.SVG
+var Architecture core.SVG
 
 //go:embed archive.svg
-var Archive ora.SVG
+var Archive core.SVG
 
 //go:embed area_chart.svg
-var Area_chart ora.SVG
+var Area_chart core.SVG
 
 //go:embed arrow_back.svg
-var Arrow_back ora.SVG
+var Arrow_back core.SVG
 
 //go:embed arrow_back_ios.svg
-var Arrow_back_ios ora.SVG
+var Arrow_back_ios core.SVG
 
 //go:embed arrow_back_ios_new.svg
-var Arrow_back_ios_new ora.SVG
+var Arrow_back_ios_new core.SVG
 
 //go:embed arrow_circle_down.svg
-var Arrow_circle_down ora.SVG
+var Arrow_circle_down core.SVG
 
 //go:embed arrow_circle_left.svg
-var Arrow_circle_left ora.SVG
+var Arrow_circle_left core.SVG
 
 //go:embed arrow_circle_right.svg
-var Arrow_circle_right ora.SVG
+var Arrow_circle_right core.SVG
 
 //go:embed arrow_circle_up.svg
-var Arrow_circle_up ora.SVG
+var Arrow_circle_up core.SVG
 
 //go:embed arrow_downward.svg
-var Arrow_downward ora.SVG
+var Arrow_downward core.SVG
 
 //go:embed arrow_drop_down.svg
-var Arrow_drop_down ora.SVG
+var Arrow_drop_down core.SVG
 
 //go:embed arrow_drop_down_circle.svg
-var Arrow_drop_down_circle ora.SVG
+var Arrow_drop_down_circle core.SVG
 
 //go:embed arrow_drop_up.svg
-var Arrow_drop_up ora.SVG
+var Arrow_drop_up core.SVG
 
 //go:embed arrow_forward.svg
-var Arrow_forward ora.SVG
+var Arrow_forward core.SVG
 
 //go:embed arrow_forward_ios.svg
-var Arrow_forward_ios ora.SVG
+var Arrow_forward_ios core.SVG
 
 //go:embed arrow_left.svg
-var Arrow_left ora.SVG
+var Arrow_left core.SVG
 
 //go:embed arrow_outward.svg
-var Arrow_outward ora.SVG
+var Arrow_outward core.SVG
 
 //go:embed arrow_right.svg
-var Arrow_right ora.SVG
+var Arrow_right core.SVG
 
 //go:embed arrow_right_alt.svg
-var Arrow_right_alt ora.SVG
+var Arrow_right_alt core.SVG
 
 //go:embed arrow_upward.svg
-var Arrow_upward ora.SVG
+var Arrow_upward core.SVG
 
 //go:embed art_track.svg
-var Art_track ora.SVG
+var Art_track core.SVG
 
 //go:embed article.svg
-var Article ora.SVG
+var Article core.SVG
 
 //go:embed aspect_ratio.svg
-var Aspect_ratio ora.SVG
+var Aspect_ratio core.SVG
 
 //go:embed assessment.svg
-var Assessment ora.SVG
+var Assessment core.SVG
 
 //go:embed assignment.svg
-var Assignment ora.SVG
+var Assignment core.SVG
 
 //go:embed assignment_ind.svg
-var Assignment_ind ora.SVG
+var Assignment_ind core.SVG
 
 //go:embed assignment_late.svg
-var Assignment_late ora.SVG
+var Assignment_late core.SVG
 
 //go:embed assignment_return.svg
-var Assignment_return ora.SVG
+var Assignment_return core.SVG
 
 //go:embed assignment_returned.svg
-var Assignment_returned ora.SVG
+var Assignment_returned core.SVG
 
 //go:embed assignment_turned_in.svg
-var Assignment_turned_in ora.SVG
+var Assignment_turned_in core.SVG
 
 //go:embed assist_walker.svg
-var Assist_walker ora.SVG
+var Assist_walker core.SVG
 
 //go:embed assistant.svg
-var Assistant ora.SVG
+var Assistant core.SVG
 
 //go:embed assistant_direction.svg
-var Assistant_direction ora.SVG
+var Assistant_direction core.SVG
 
 //go:embed assistant_photo.svg
-var Assistant_photo ora.SVG
+var Assistant_photo core.SVG
 
 //go:embed assured_workload.svg
-var Assured_workload ora.SVG
+var Assured_workload core.SVG
 
 //go:embed atm.svg
-var Atm ora.SVG
+var Atm core.SVG
 
 //go:embed attach_email.svg
-var Attach_email ora.SVG
+var Attach_email core.SVG
 
 //go:embed attach_file.svg
-var Attach_file ora.SVG
+var Attach_file core.SVG
 
 //go:embed attach_money.svg
-var Attach_money ora.SVG
+var Attach_money core.SVG
 
 //go:embed attachment.svg
-var Attachment ora.SVG
+var Attachment core.SVG
 
 //go:embed attractions.svg
-var Attractions ora.SVG
+var Attractions core.SVG
 
 //go:embed attribution.svg
-var Attribution ora.SVG
+var Attribution core.SVG
 
 //go:embed audio_file.svg
-var Audio_file ora.SVG
+var Audio_file core.SVG
 
 //go:embed audiotrack.svg
-var Audiotrack ora.SVG
+var Audiotrack core.SVG
 
 //go:embed auto_awesome.svg
-var Auto_awesome ora.SVG
+var Auto_awesome core.SVG
 
 //go:embed auto_awesome_mosaic.svg
-var Auto_awesome_mosaic ora.SVG
+var Auto_awesome_mosaic core.SVG
 
 //go:embed auto_awesome_motion.svg
-var Auto_awesome_motion ora.SVG
+var Auto_awesome_motion core.SVG
 
 //go:embed auto_delete.svg
-var Auto_delete ora.SVG
+var Auto_delete core.SVG
 
 //go:embed auto_fix_high.svg
-var Auto_fix_high ora.SVG
+var Auto_fix_high core.SVG
 
 //go:embed auto_fix_normal.svg
-var Auto_fix_normal ora.SVG
+var Auto_fix_normal core.SVG
 
 //go:embed auto_fix_off.svg
-var Auto_fix_off ora.SVG
+var Auto_fix_off core.SVG
 
 //go:embed auto_graph.svg
-var Auto_graph ora.SVG
+var Auto_graph core.SVG
 
 //go:embed auto_mode.svg
-var Auto_mode ora.SVG
+var Auto_mode core.SVG
 
 //go:embed auto_stories.svg
-var Auto_stories ora.SVG
+var Auto_stories core.SVG
 
 //go:embed autofps_select.svg
-var Autofps_select ora.SVG
+var Autofps_select core.SVG
 
 //go:embed autorenew.svg
-var Autorenew ora.SVG
+var Autorenew core.SVG
 
 //go:embed av_timer.svg
-var Av_timer ora.SVG
+var Av_timer core.SVG
 
 //go:embed baby_changing_station.svg
-var Baby_changing_station ora.SVG
+var Baby_changing_station core.SVG
 
 //go:embed back_hand.svg
-var Back_hand ora.SVG
+var Back_hand core.SVG
 
 //go:embed backpack.svg
-var Backpack ora.SVG
+var Backpack core.SVG
 
 //go:embed backspace.svg
-var Backspace ora.SVG
+var Backspace core.SVG
 
 //go:embed backup.svg
-var Backup ora.SVG
+var Backup core.SVG
 
 //go:embed backup_table.svg
-var Backup_table ora.SVG
+var Backup_table core.SVG
 
 //go:embed badge.svg
-var Badge ora.SVG
+var Badge core.SVG
 
 //go:embed bakery_dining.svg
-var Bakery_dining ora.SVG
+var Bakery_dining core.SVG
 
 //go:embed balance.svg
-var Balance ora.SVG
+var Balance core.SVG
 
 //go:embed balcony.svg
-var Balcony ora.SVG
+var Balcony core.SVG
 
 //go:embed ballot.svg
-var Ballot ora.SVG
+var Ballot core.SVG
 
 //go:embed bar_chart.svg
-var Bar_chart ora.SVG
+var Bar_chart core.SVG
 
 //go:embed batch_prediction.svg
-var Batch_prediction ora.SVG
+var Batch_prediction core.SVG
 
 //go:embed bathroom.svg
-var Bathroom ora.SVG
+var Bathroom core.SVG
 
 //go:embed bathtub.svg
-var Bathtub ora.SVG
+var Bathtub core.SVG
 
 //go:embed battery_0_bar.svg
-var Battery_0_bar ora.SVG
+var Battery_0_bar core.SVG
 
 //go:embed battery_1_bar.svg
-var Battery_1_bar ora.SVG
+var Battery_1_bar core.SVG
 
 //go:embed battery_2_bar.svg
-var Battery_2_bar ora.SVG
+var Battery_2_bar core.SVG
 
 //go:embed battery_3_bar.svg
-var Battery_3_bar ora.SVG
+var Battery_3_bar core.SVG
 
 //go:embed battery_4_bar.svg
-var Battery_4_bar ora.SVG
+var Battery_4_bar core.SVG
 
 //go:embed battery_5_bar.svg
-var Battery_5_bar ora.SVG
+var Battery_5_bar core.SVG
 
 //go:embed battery_6_bar.svg
-var Battery_6_bar ora.SVG
+var Battery_6_bar core.SVG
 
 //go:embed battery_alert.svg
-var Battery_alert ora.SVG
+var Battery_alert core.SVG
 
 //go:embed battery_charging_full.svg
-var Battery_charging_full ora.SVG
+var Battery_charging_full core.SVG
 
 //go:embed battery_full.svg
-var Battery_full ora.SVG
+var Battery_full core.SVG
 
 //go:embed battery_saver.svg
-var Battery_saver ora.SVG
+var Battery_saver core.SVG
 
 //go:embed battery_std.svg
-var Battery_std ora.SVG
+var Battery_std core.SVG
 
 //go:embed battery_unknown.svg
-var Battery_unknown ora.SVG
+var Battery_unknown core.SVG
 
 //go:embed beach_access.svg
-var Beach_access ora.SVG
+var Beach_access core.SVG
 
 //go:embed bed.svg
-var Bed ora.SVG
+var Bed core.SVG
 
 //go:embed bedroom_baby.svg
-var Bedroom_baby ora.SVG
+var Bedroom_baby core.SVG
 
 //go:embed bedroom_child.svg
-var Bedroom_child ora.SVG
+var Bedroom_child core.SVG
 
 //go:embed bedroom_parent.svg
-var Bedroom_parent ora.SVG
+var Bedroom_parent core.SVG
 
 //go:embed bedtime.svg
-var Bedtime ora.SVG
+var Bedtime core.SVG
 
 //go:embed bedtime_off.svg
-var Bedtime_off ora.SVG
+var Bedtime_off core.SVG
 
 //go:embed beenhere.svg
-var Beenhere ora.SVG
+var Beenhere core.SVG
 
 //go:embed bento.svg
-var Bento ora.SVG
+var Bento core.SVG
 
 //go:embed bike_scooter.svg
-var Bike_scooter ora.SVG
+var Bike_scooter core.SVG
 
 //go:embed biotech.svg
-var Biotech ora.SVG
+var Biotech core.SVG
 
 //go:embed blender.svg
-var Blender ora.SVG
+var Blender core.SVG
 
 //go:embed blind.svg
-var Blind ora.SVG
+var Blind core.SVG
 
 //go:embed blinds.svg
-var Blinds ora.SVG
+var Blinds core.SVG
 
 //go:embed blinds_closed.svg
-var Blinds_closed ora.SVG
+var Blinds_closed core.SVG
 
 //go:embed block.svg
-var Block ora.SVG
+var Block core.SVG
 
 //go:embed bloodtype.svg
-var Bloodtype ora.SVG
+var Bloodtype core.SVG
 
 //go:embed bluetooth.svg
-var Bluetooth ora.SVG
+var Bluetooth core.SVG
 
 //go:embed bluetooth_audio.svg
-var Bluetooth_audio ora.SVG
+var Bluetooth_audio core.SVG
 
 //go:embed bluetooth_connected.svg
-var Bluetooth_connected ora.SVG
+var Bluetooth_connected core.SVG
 
 //go:embed bluetooth_disabled.svg
-var Bluetooth_disabled ora.SVG
+var Bluetooth_disabled core.SVG
 
 //go:embed bluetooth_drive.svg
-var Bluetooth_drive ora.SVG
+var Bluetooth_drive core.SVG
 
 //go:embed bluetooth_searching.svg
-var Bluetooth_searching ora.SVG
+var Bluetooth_searching core.SVG
 
 //go:embed blur_circular.svg
-var Blur_circular ora.SVG
+var Blur_circular core.SVG
 
 //go:embed blur_linear.svg
-var Blur_linear ora.SVG
+var Blur_linear core.SVG
 
 //go:embed blur_off.svg
-var Blur_off ora.SVG
+var Blur_off core.SVG
 
 //go:embed blur_on.svg
-var Blur_on ora.SVG
+var Blur_on core.SVG
 
 //go:embed bolt.svg
-var Bolt ora.SVG
+var Bolt core.SVG
 
 //go:embed book.svg
-var Book ora.SVG
+var Book core.SVG
 
 //go:embed book_online.svg
-var Book_online ora.SVG
+var Book_online core.SVG
 
 //go:embed bookmark.svg
-var Bookmark ora.SVG
+var Bookmark core.SVG
 
 //go:embed bookmark_add.svg
-var Bookmark_add ora.SVG
+var Bookmark_add core.SVG
 
 //go:embed bookmark_added.svg
-var Bookmark_added ora.SVG
+var Bookmark_added core.SVG
 
 //go:embed bookmark_border.svg
-var Bookmark_border ora.SVG
+var Bookmark_border core.SVG
 
 //go:embed bookmark_remove.svg
-var Bookmark_remove ora.SVG
+var Bookmark_remove core.SVG
 
 //go:embed bookmarks.svg
-var Bookmarks ora.SVG
+var Bookmarks core.SVG
 
 //go:embed border_all.svg
-var Border_all ora.SVG
+var Border_all core.SVG
 
 //go:embed border_bottom.svg
-var Border_bottom ora.SVG
+var Border_bottom core.SVG
 
 //go:embed border_clear.svg
-var Border_clear ora.SVG
+var Border_clear core.SVG
 
 //go:embed border_color.svg
-var Border_color ora.SVG
+var Border_color core.SVG
 
 //go:embed border_horizontal.svg
-var Border_horizontal ora.SVG
+var Border_horizontal core.SVG
 
 //go:embed border_inner.svg
-var Border_inner ora.SVG
+var Border_inner core.SVG
 
 //go:embed border_left.svg
-var Border_left ora.SVG
+var Border_left core.SVG
 
 //go:embed border_outer.svg
-var Border_outer ora.SVG
+var Border_outer core.SVG
 
 //go:embed border_right.svg
-var Border_right ora.SVG
+var Border_right core.SVG
 
 //go:embed border_style.svg
-var Border_style ora.SVG
+var Border_style core.SVG
 
 //go:embed border_top.svg
-var Border_top ora.SVG
+var Border_top core.SVG
 
 //go:embed border_vertical.svg
-var Border_vertical ora.SVG
+var Border_vertical core.SVG
 
 //go:embed boy.svg
-var Boy ora.SVG
+var Boy core.SVG
 
 //go:embed branding_watermark.svg
-var Branding_watermark ora.SVG
+var Branding_watermark core.SVG
 
 //go:embed breakfast_dining.svg
-var Breakfast_dining ora.SVG
+var Breakfast_dining core.SVG
 
 //go:embed brightness_1.svg
-var Brightness_1 ora.SVG
+var Brightness_1 core.SVG
 
 //go:embed brightness_2.svg
-var Brightness_2 ora.SVG
+var Brightness_2 core.SVG
 
 //go:embed brightness_3.svg
-var Brightness_3 ora.SVG
+var Brightness_3 core.SVG
 
 //go:embed brightness_4.svg
-var Brightness_4 ora.SVG
+var Brightness_4 core.SVG
 
 //go:embed brightness_5.svg
-var Brightness_5 ora.SVG
+var Brightness_5 core.SVG
 
 //go:embed brightness_6.svg
-var Brightness_6 ora.SVG
+var Brightness_6 core.SVG
 
 //go:embed brightness_7.svg
-var Brightness_7 ora.SVG
+var Brightness_7 core.SVG
 
 //go:embed brightness_auto.svg
-var Brightness_auto ora.SVG
+var Brightness_auto core.SVG
 
 //go:embed brightness_high.svg
-var Brightness_high ora.SVG
+var Brightness_high core.SVG
 
 //go:embed brightness_low.svg
-var Brightness_low ora.SVG
+var Brightness_low core.SVG
 
 //go:embed brightness_medium.svg
-var Brightness_medium ora.SVG
+var Brightness_medium core.SVG
 
 //go:embed broadcast_on_home.svg
-var Broadcast_on_home ora.SVG
+var Broadcast_on_home core.SVG
 
 //go:embed broadcast_on_personal.svg
-var Broadcast_on_personal ora.SVG
+var Broadcast_on_personal core.SVG
 
 //go:embed broken_image.svg
-var Broken_image ora.SVG
+var Broken_image core.SVG
 
 //go:embed browse_gallery.svg
-var Browse_gallery ora.SVG
+var Browse_gallery core.SVG
 
 //go:embed browser_not_supported.svg
-var Browser_not_supported ora.SVG
+var Browser_not_supported core.SVG
 
 //go:embed browser_updated.svg
-var Browser_updated ora.SVG
+var Browser_updated core.SVG
 
 //go:embed brunch_dining.svg
-var Brunch_dining ora.SVG
+var Brunch_dining core.SVG
 
 //go:embed brush.svg
-var Brush ora.SVG
+var Brush core.SVG
 
 //go:embed bubble_chart.svg
-var Bubble_chart ora.SVG
+var Bubble_chart core.SVG
 
 //go:embed bug_report.svg
-var Bug_report ora.SVG
+var Bug_report core.SVG
 
 //go:embed build.svg
-var Build ora.SVG
+var Build core.SVG
 
 //go:embed build_circle.svg
-var Build_circle ora.SVG
+var Build_circle core.SVG
 
 //go:embed bungalow.svg
-var Bungalow ora.SVG
+var Bungalow core.SVG
 
 //go:embed burst_mode.svg
-var Burst_mode ora.SVG
+var Burst_mode core.SVG
 
 //go:embed bus_alert.svg
-var Bus_alert ora.SVG
+var Bus_alert core.SVG
 
 //go:embed business.svg
-var Business ora.SVG
+var Business core.SVG
 
 //go:embed business_center.svg
-var Business_center ora.SVG
+var Business_center core.SVG
 
 //go:embed cabin.svg
-var Cabin ora.SVG
+var Cabin core.SVG
 
 //go:embed cable.svg
-var Cable ora.SVG
+var Cable core.SVG
 
 //go:embed cached.svg
-var Cached ora.SVG
+var Cached core.SVG
 
 //go:embed cake.svg
-var Cake ora.SVG
+var Cake core.SVG
 
 //go:embed calculate.svg
-var Calculate ora.SVG
+var Calculate core.SVG
 
 //go:embed calendar_month.svg
-var Calendar_month ora.SVG
+var Calendar_month core.SVG
 
 //go:embed calendar_today.svg
-var Calendar_today ora.SVG
+var Calendar_today core.SVG
 
 //go:embed calendar_view_day.svg
-var Calendar_view_day ora.SVG
+var Calendar_view_day core.SVG
 
 //go:embed calendar_view_month.svg
-var Calendar_view_month ora.SVG
+var Calendar_view_month core.SVG
 
 //go:embed calendar_view_week.svg
-var Calendar_view_week ora.SVG
+var Calendar_view_week core.SVG
 
 //go:embed call.svg
-var Call ora.SVG
+var Call core.SVG
 
 //go:embed call_end.svg
-var Call_end ora.SVG
+var Call_end core.SVG
 
 //go:embed call_made.svg
-var Call_made ora.SVG
+var Call_made core.SVG
 
 //go:embed call_merge.svg
-var Call_merge ora.SVG
+var Call_merge core.SVG
 
 //go:embed call_missed.svg
-var Call_missed ora.SVG
+var Call_missed core.SVG
 
 //go:embed call_missed_outgoing.svg
-var Call_missed_outgoing ora.SVG
+var Call_missed_outgoing core.SVG
 
 //go:embed call_received.svg
-var Call_received ora.SVG
+var Call_received core.SVG
 
 //go:embed call_split.svg
-var Call_split ora.SVG
+var Call_split core.SVG
 
 //go:embed call_to_action.svg
-var Call_to_action ora.SVG
+var Call_to_action core.SVG
 
 //go:embed camera.svg
-var Camera ora.SVG
+var Camera core.SVG
 
 //go:embed camera_alt.svg
-var Camera_alt ora.SVG
+var Camera_alt core.SVG
 
 //go:embed camera_enhance.svg
-var Camera_enhance ora.SVG
+var Camera_enhance core.SVG
 
 //go:embed camera_front.svg
-var Camera_front ora.SVG
+var Camera_front core.SVG
 
 //go:embed camera_indoor.svg
-var Camera_indoor ora.SVG
+var Camera_indoor core.SVG
 
 //go:embed camera_outdoor.svg
-var Camera_outdoor ora.SVG
+var Camera_outdoor core.SVG
 
 //go:embed camera_rear.svg
-var Camera_rear ora.SVG
+var Camera_rear core.SVG
 
 //go:embed camera_roll.svg
-var Camera_roll ora.SVG
+var Camera_roll core.SVG
 
 //go:embed cameraswitch.svg
-var Cameraswitch ora.SVG
+var Cameraswitch core.SVG
 
 //go:embed campaign.svg
-var Campaign ora.SVG
+var Campaign core.SVG
 
 //go:embed cancel.svg
-var Cancel ora.SVG
+var Cancel core.SVG
 
 //go:embed cancel_presentation.svg
-var Cancel_presentation ora.SVG
+var Cancel_presentation core.SVG
 
 //go:embed cancel_schedule_send.svg
-var Cancel_schedule_send ora.SVG
+var Cancel_schedule_send core.SVG
 
 //go:embed candlestick_chart.svg
-var Candlestick_chart ora.SVG
+var Candlestick_chart core.SVG
 
 //go:embed car_crash.svg
-var Car_crash ora.SVG
+var Car_crash core.SVG
 
 //go:embed car_rental.svg
-var Car_rental ora.SVG
+var Car_rental core.SVG
 
 //go:embed car_repair.svg
-var Car_repair ora.SVG
+var Car_repair core.SVG
 
 //go:embed card_giftcard.svg
-var Card_giftcard ora.SVG
+var Card_giftcard core.SVG
 
 //go:embed card_membership.svg
-var Card_membership ora.SVG
+var Card_membership core.SVG
 
 //go:embed card_travel.svg
-var Card_travel ora.SVG
+var Card_travel core.SVG
 
 //go:embed carpenter.svg
-var Carpenter ora.SVG
+var Carpenter core.SVG
 
 //go:embed cases.svg
-var Cases ora.SVG
+var Cases core.SVG
 
 //go:embed casino.svg
-var Casino ora.SVG
+var Casino core.SVG
 
 //go:embed cast.svg
-var Cast ora.SVG
+var Cast core.SVG
 
 //go:embed cast_connected.svg
-var Cast_connected ora.SVG
+var Cast_connected core.SVG
 
 //go:embed cast_for_education.svg
-var Cast_for_education ora.SVG
+var Cast_for_education core.SVG
 
 //go:embed castle.svg
-var Castle ora.SVG
+var Castle core.SVG
 
 //go:embed catching_pokemon.svg
-var Catching_pokemon ora.SVG
+var Catching_pokemon core.SVG
 
 //go:embed category.svg
-var Category ora.SVG
+var Category core.SVG
 
 //go:embed celebration.svg
-var Celebration ora.SVG
+var Celebration core.SVG
 
 //go:embed cell_tower.svg
-var Cell_tower ora.SVG
+var Cell_tower core.SVG
 
 //go:embed cell_wifi.svg
-var Cell_wifi ora.SVG
+var Cell_wifi core.SVG
 
 //go:embed center_focus_strong.svg
-var Center_focus_strong ora.SVG
+var Center_focus_strong core.SVG
 
 //go:embed center_focus_weak.svg
-var Center_focus_weak ora.SVG
+var Center_focus_weak core.SVG
 
 //go:embed chair.svg
-var Chair ora.SVG
+var Chair core.SVG
 
 //go:embed chair_alt.svg
-var Chair_alt ora.SVG
+var Chair_alt core.SVG
 
 //go:embed chalet.svg
-var Chalet ora.SVG
+var Chalet core.SVG
 
 //go:embed change_circle.svg
-var Change_circle ora.SVG
+var Change_circle core.SVG
 
 //go:embed change_history.svg
-var Change_history ora.SVG
+var Change_history core.SVG
 
 //go:embed charging_station.svg
-var Charging_station ora.SVG
+var Charging_station core.SVG
 
 //go:embed chat.svg
-var Chat ora.SVG
+var Chat core.SVG
 
 //go:embed chat_bubble.svg
-var Chat_bubble ora.SVG
+var Chat_bubble core.SVG
 
 //go:embed chat_bubble_outline.svg
-var Chat_bubble_outline ora.SVG
+var Chat_bubble_outline core.SVG
 
 //go:embed check.svg
-var Check ora.SVG
+var Check core.SVG
 
 //go:embed check_box.svg
-var Check_box ora.SVG
+var Check_box core.SVG
 
 //go:embed check_box_outline_blank.svg
-var Check_box_outline_blank ora.SVG
+var Check_box_outline_blank core.SVG
 
 //go:embed check_circle.svg
-var Check_circle ora.SVG
+var Check_circle core.SVG
 
 //go:embed check_circle_outline.svg
-var Check_circle_outline ora.SVG
+var Check_circle_outline core.SVG
 
 //go:embed checklist.svg
-var Checklist ora.SVG
+var Checklist core.SVG
 
 //go:embed checklist_rtl.svg
-var Checklist_rtl ora.SVG
+var Checklist_rtl core.SVG
 
 //go:embed checkroom.svg
-var Checkroom ora.SVG
+var Checkroom core.SVG
 
 //go:embed chevron_left.svg
-var Chevron_left ora.SVG
+var Chevron_left core.SVG
 
 //go:embed chevron_right.svg
-var Chevron_right ora.SVG
+var Chevron_right core.SVG
 
 //go:embed child_care.svg
-var Child_care ora.SVG
+var Child_care core.SVG
 
 //go:embed child_friendly.svg
-var Child_friendly ora.SVG
+var Child_friendly core.SVG
 
 //go:embed chrome_reader_mode.svg
-var Chrome_reader_mode ora.SVG
+var Chrome_reader_mode core.SVG
 
 //go:embed church.svg
-var Church ora.SVG
+var Church core.SVG
 
 //go:embed circle.svg
-var Circle ora.SVG
+var Circle core.SVG
 
 //go:embed circle_notifications.svg
-var Circle_notifications ora.SVG
+var Circle_notifications core.SVG
 
 //go:embed class.svg
-var Class ora.SVG
+var Class core.SVG
 
 //go:embed clean_hands.svg
-var Clean_hands ora.SVG
+var Clean_hands core.SVG
 
 //go:embed cleaning_services.svg
-var Cleaning_services ora.SVG
+var Cleaning_services core.SVG
 
 //go:embed clear.svg
-var Clear ora.SVG
+var Clear core.SVG
 
 //go:embed clear_all.svg
-var Clear_all ora.SVG
+var Clear_all core.SVG
 
 //go:embed close.svg
-var Close ora.SVG
+var Close core.SVG
 
 //go:embed close_fullscreen.svg
-var Close_fullscreen ora.SVG
+var Close_fullscreen core.SVG
 
 //go:embed closed_caption.svg
-var Closed_caption ora.SVG
+var Closed_caption core.SVG
 
 //go:embed closed_caption_disabled.svg
-var Closed_caption_disabled ora.SVG
+var Closed_caption_disabled core.SVG
 
 //go:embed closed_caption_off.svg
-var Closed_caption_off ora.SVG
+var Closed_caption_off core.SVG
 
 //go:embed cloud.svg
-var Cloud ora.SVG
+var Cloud core.SVG
 
 //go:embed cloud_circle.svg
-var Cloud_circle ora.SVG
+var Cloud_circle core.SVG
 
 //go:embed cloud_done.svg
-var Cloud_done ora.SVG
+var Cloud_done core.SVG
 
 //go:embed cloud_download.svg
-var Cloud_download ora.SVG
+var Cloud_download core.SVG
 
 //go:embed cloud_off.svg
-var Cloud_off ora.SVG
+var Cloud_off core.SVG
 
 //go:embed cloud_queue.svg
-var Cloud_queue ora.SVG
+var Cloud_queue core.SVG
 
 //go:embed cloud_sync.svg
-var Cloud_sync ora.SVG
+var Cloud_sync core.SVG
 
 //go:embed cloud_upload.svg
-var Cloud_upload ora.SVG
+var Cloud_upload core.SVG
 
 //go:embed co2.svg
-var Co2 ora.SVG
+var Co2 core.SVG
 
 //go:embed co_present.svg
-var Co_present ora.SVG
+var Co_present core.SVG
 
 //go:embed code.svg
-var Code ora.SVG
+var Code core.SVG
 
 //go:embed code_off.svg
-var Code_off ora.SVG
+var Code_off core.SVG
 
 //go:embed coffee.svg
-var Coffee ora.SVG
+var Coffee core.SVG
 
 //go:embed coffee_maker.svg
-var Coffee_maker ora.SVG
+var Coffee_maker core.SVG
 
 //go:embed collections.svg
-var Collections ora.SVG
+var Collections core.SVG
 
 //go:embed collections_bookmark.svg
-var Collections_bookmark ora.SVG
+var Collections_bookmark core.SVG
 
 //go:embed color_lens.svg
-var Color_lens ora.SVG
+var Color_lens core.SVG
 
 //go:embed colorize.svg
-var Colorize ora.SVG
+var Colorize core.SVG
 
 //go:embed comment.svg
-var Comment ora.SVG
+var Comment core.SVG
 
 //go:embed comment_bank.svg
-var Comment_bank ora.SVG
+var Comment_bank core.SVG
 
 //go:embed comments_disabled.svg
-var Comments_disabled ora.SVG
+var Comments_disabled core.SVG
 
 //go:embed commit.svg
-var Commit ora.SVG
+var Commit core.SVG
 
 //go:embed commute.svg
-var Commute ora.SVG
+var Commute core.SVG
 
 //go:embed compare.svg
-var Compare ora.SVG
+var Compare core.SVG
 
 //go:embed compare_arrows.svg
-var Compare_arrows ora.SVG
+var Compare_arrows core.SVG
 
 //go:embed compass_calibration.svg
-var Compass_calibration ora.SVG
+var Compass_calibration core.SVG
 
 //go:embed compost.svg
-var Compost ora.SVG
+var Compost core.SVG
 
 //go:embed compress.svg
-var Compress ora.SVG
+var Compress core.SVG
 
 //go:embed computer.svg
-var Computer ora.SVG
+var Computer core.SVG
 
 //go:embed confirmation_number.svg
-var Confirmation_number ora.SVG
+var Confirmation_number core.SVG
 
 //go:embed connect_without_contact.svg
-var Connect_without_contact ora.SVG
+var Connect_without_contact core.SVG
 
 //go:embed connected_tv.svg
-var Connected_tv ora.SVG
+var Connected_tv core.SVG
 
 //go:embed connecting_airports.svg
-var Connecting_airports ora.SVG
+var Connecting_airports core.SVG
 
 //go:embed construction.svg
-var Construction ora.SVG
+var Construction core.SVG
 
 //go:embed contact_emergency.svg
-var Contact_emergency ora.SVG
+var Contact_emergency core.SVG
 
 //go:embed contact_mail.svg
-var Contact_mail ora.SVG
+var Contact_mail core.SVG
 
 //go:embed contact_page.svg
-var Contact_page ora.SVG
+var Contact_page core.SVG
 
 //go:embed contact_phone.svg
-var Contact_phone ora.SVG
+var Contact_phone core.SVG
 
 //go:embed contact_support.svg
-var Contact_support ora.SVG
+var Contact_support core.SVG
 
 //go:embed contactless.svg
-var Contactless ora.SVG
+var Contactless core.SVG
 
 //go:embed contacts.svg
-var Contacts ora.SVG
+var Contacts core.SVG
 
 //go:embed content_copy.svg
-var Content_copy ora.SVG
+var Content_copy core.SVG
 
 //go:embed content_cut.svg
-var Content_cut ora.SVG
+var Content_cut core.SVG
 
 //go:embed content_paste.svg
-var Content_paste ora.SVG
+var Content_paste core.SVG
 
 //go:embed content_paste_go.svg
-var Content_paste_go ora.SVG
+var Content_paste_go core.SVG
 
 //go:embed content_paste_off.svg
-var Content_paste_off ora.SVG
+var Content_paste_off core.SVG
 
 //go:embed content_paste_search.svg
-var Content_paste_search ora.SVG
+var Content_paste_search core.SVG
 
 //go:embed contrast.svg
-var Contrast ora.SVG
+var Contrast core.SVG
 
 //go:embed control_camera.svg
-var Control_camera ora.SVG
+var Control_camera core.SVG
 
 //go:embed control_point.svg
-var Control_point ora.SVG
+var Control_point core.SVG
 
 //go:embed control_point_duplicate.svg
-var Control_point_duplicate ora.SVG
+var Control_point_duplicate core.SVG
 
 //go:embed cookie.svg
-var Cookie ora.SVG
+var Cookie core.SVG
 
 //go:embed copy_all.svg
-var Copy_all ora.SVG
+var Copy_all core.SVG
 
 //go:embed copyright.svg
-var Copyright ora.SVG
+var Copyright core.SVG
 
 //go:embed coronavirus.svg
-var Coronavirus ora.SVG
+var Coronavirus core.SVG
 
 //go:embed corporate_fare.svg
-var Corporate_fare ora.SVG
+var Corporate_fare core.SVG
 
 //go:embed cottage.svg
-var Cottage ora.SVG
+var Cottage core.SVG
 
 //go:embed countertops.svg
-var Countertops ora.SVG
+var Countertops core.SVG
 
 //go:embed create.svg
-var Create ora.SVG
+var Create core.SVG
 
 //go:embed create_new_folder.svg
-var Create_new_folder ora.SVG
+var Create_new_folder core.SVG
 
 //go:embed credit_card.svg
-var Credit_card ora.SVG
+var Credit_card core.SVG
 
 //go:embed credit_card_off.svg
-var Credit_card_off ora.SVG
+var Credit_card_off core.SVG
 
 //go:embed credit_score.svg
-var Credit_score ora.SVG
+var Credit_score core.SVG
 
 //go:embed crib.svg
-var Crib ora.SVG
+var Crib core.SVG
 
 //go:embed crisis_alert.svg
-var Crisis_alert ora.SVG
+var Crisis_alert core.SVG
 
 //go:embed crop.svg
-var Crop ora.SVG
+var Crop core.SVG
 
 //go:embed crop_16_9.svg
-var Crop_16_9 ora.SVG
+var Crop_16_9 core.SVG
 
 //go:embed crop_3_2.svg
-var Crop_3_2 ora.SVG
+var Crop_3_2 core.SVG
 
 //go:embed crop_5_4.svg
-var Crop_5_4 ora.SVG
+var Crop_5_4 core.SVG
 
 //go:embed crop_7_5.svg
-var Crop_7_5 ora.SVG
+var Crop_7_5 core.SVG
 
 //go:embed crop_din.svg
-var Crop_din ora.SVG
+var Crop_din core.SVG
 
 //go:embed crop_free.svg
-var Crop_free ora.SVG
+var Crop_free core.SVG
 
 //go:embed crop_landscape.svg
-var Crop_landscape ora.SVG
+var Crop_landscape core.SVG
 
 //go:embed crop_original.svg
-var Crop_original ora.SVG
+var Crop_original core.SVG
 
 //go:embed crop_portrait.svg
-var Crop_portrait ora.SVG
+var Crop_portrait core.SVG
 
 //go:embed crop_rotate.svg
-var Crop_rotate ora.SVG
+var Crop_rotate core.SVG
 
 //go:embed crop_square.svg
-var Crop_square ora.SVG
+var Crop_square core.SVG
 
 //go:embed cruelty_free.svg
-var Cruelty_free ora.SVG
+var Cruelty_free core.SVG
 
 //go:embed css.svg
-var Css ora.SVG
+var Css core.SVG
 
 //go:embed currency_bitcoin.svg
-var Currency_bitcoin ora.SVG
+var Currency_bitcoin core.SVG
 
 //go:embed currency_exchange.svg
-var Currency_exchange ora.SVG
+var Currency_exchange core.SVG
 
 //go:embed currency_franc.svg
-var Currency_franc ora.SVG
+var Currency_franc core.SVG
 
 //go:embed currency_lira.svg
-var Currency_lira ora.SVG
+var Currency_lira core.SVG
 
 //go:embed currency_pound.svg
-var Currency_pound ora.SVG
+var Currency_pound core.SVG
 
 //go:embed currency_ruble.svg
-var Currency_ruble ora.SVG
+var Currency_ruble core.SVG
 
 //go:embed currency_rupee.svg
-var Currency_rupee ora.SVG
+var Currency_rupee core.SVG
 
 //go:embed currency_yen.svg
-var Currency_yen ora.SVG
+var Currency_yen core.SVG
 
 //go:embed currency_yuan.svg
-var Currency_yuan ora.SVG
+var Currency_yuan core.SVG
 
 //go:embed curtains.svg
-var Curtains ora.SVG
+var Curtains core.SVG
 
 //go:embed curtains_closed.svg
-var Curtains_closed ora.SVG
+var Curtains_closed core.SVG
 
 //go:embed cyclone.svg
-var Cyclone ora.SVG
+var Cyclone core.SVG
 
 //go:embed dangerous.svg
-var Dangerous ora.SVG
+var Dangerous core.SVG
 
 //go:embed dark_mode.svg
-var Dark_mode ora.SVG
+var Dark_mode core.SVG
 
 //go:embed dashboard.svg
-var Dashboard ora.SVG
+var Dashboard core.SVG
 
 //go:embed dashboard_customize.svg
-var Dashboard_customize ora.SVG
+var Dashboard_customize core.SVG
 
 //go:embed data_array.svg
-var Data_array ora.SVG
+var Data_array core.SVG
 
 //go:embed data_exploration.svg
-var Data_exploration ora.SVG
+var Data_exploration core.SVG
 
 //go:embed data_object.svg
-var Data_object ora.SVG
+var Data_object core.SVG
 
 //go:embed data_saver_off.svg
-var Data_saver_off ora.SVG
+var Data_saver_off core.SVG
 
 //go:embed data_saver_on.svg
-var Data_saver_on ora.SVG
+var Data_saver_on core.SVG
 
 //go:embed data_thresholding.svg
-var Data_thresholding ora.SVG
+var Data_thresholding core.SVG
 
 //go:embed data_usage.svg
-var Data_usage ora.SVG
+var Data_usage core.SVG
 
 //go:embed dataset.svg
-var Dataset ora.SVG
+var Dataset core.SVG
 
 //go:embed dataset_linked.svg
-var Dataset_linked ora.SVG
+var Dataset_linked core.SVG
 
 //go:embed date_range.svg
-var Date_range ora.SVG
+var Date_range core.SVG
 
 //go:embed deblur.svg
-var Deblur ora.SVG
+var Deblur core.SVG
 
 //go:embed deck.svg
-var Deck ora.SVG
+var Deck core.SVG
 
 //go:embed dehaze.svg
-var Dehaze ora.SVG
+var Dehaze core.SVG
 
 //go:embed delete.svg
-var Delete ora.SVG
+var Delete core.SVG
 
 //go:embed delete_forever.svg
-var Delete_forever ora.SVG
+var Delete_forever core.SVG
 
 //go:embed delete_outline.svg
-var Delete_outline ora.SVG
+var Delete_outline core.SVG
 
 //go:embed delete_sweep.svg
-var Delete_sweep ora.SVG
+var Delete_sweep core.SVG
 
 //go:embed delivery_dining.svg
-var Delivery_dining ora.SVG
+var Delivery_dining core.SVG
 
 //go:embed density_large.svg
-var Density_large ora.SVG
+var Density_large core.SVG
 
 //go:embed density_medium.svg
-var Density_medium ora.SVG
+var Density_medium core.SVG
 
 //go:embed density_small.svg
-var Density_small ora.SVG
+var Density_small core.SVG
 
 //go:embed departure_board.svg
-var Departure_board ora.SVG
+var Departure_board core.SVG
 
 //go:embed description.svg
-var Description ora.SVG
+var Description core.SVG
 
 //go:embed deselect.svg
-var Deselect ora.SVG
+var Deselect core.SVG
 
 //go:embed design_services.svg
-var Design_services ora.SVG
+var Design_services core.SVG
 
 //go:embed desk.svg
-var Desk ora.SVG
+var Desk core.SVG
 
 //go:embed desktop_access_disabled.svg
-var Desktop_access_disabled ora.SVG
+var Desktop_access_disabled core.SVG
 
 //go:embed desktop_mac.svg
-var Desktop_mac ora.SVG
+var Desktop_mac core.SVG
 
 //go:embed desktop_windows.svg
-var Desktop_windows ora.SVG
+var Desktop_windows core.SVG
 
 //go:embed details.svg
-var Details ora.SVG
+var Details core.SVG
 
 //go:embed developer_board.svg
-var Developer_board ora.SVG
+var Developer_board core.SVG
 
 //go:embed developer_board_off.svg
-var Developer_board_off ora.SVG
+var Developer_board_off core.SVG
 
 //go:embed developer_mode.svg
-var Developer_mode ora.SVG
+var Developer_mode core.SVG
 
 //go:embed device_hub.svg
-var Device_hub ora.SVG
+var Device_hub core.SVG
 
 //go:embed device_thermostat.svg
-var Device_thermostat ora.SVG
+var Device_thermostat core.SVG
 
 //go:embed device_unknown.svg
-var Device_unknown ora.SVG
+var Device_unknown core.SVG
 
 //go:embed devices.svg
-var Devices ora.SVG
+var Devices core.SVG
 
 //go:embed devices_fold.svg
-var Devices_fold ora.SVG
+var Devices_fold core.SVG
 
 //go:embed devices_other.svg
-var Devices_other ora.SVG
+var Devices_other core.SVG
 
 //go:embed dialer_sip.svg
-var Dialer_sip ora.SVG
+var Dialer_sip core.SVG
 
 //go:embed dialpad.svg
-var Dialpad ora.SVG
+var Dialpad core.SVG
 
 //go:embed diamond.svg
-var Diamond ora.SVG
+var Diamond core.SVG
 
 //go:embed difference.svg
-var Difference ora.SVG
+var Difference core.SVG
 
 //go:embed dining.svg
-var Dining ora.SVG
+var Dining core.SVG
 
 //go:embed dinner_dining.svg
-var Dinner_dining ora.SVG
+var Dinner_dining core.SVG
 
 //go:embed directions.svg
-var Directions ora.SVG
+var Directions core.SVG
 
 //go:embed directions_bike.svg
-var Directions_bike ora.SVG
+var Directions_bike core.SVG
 
 //go:embed directions_boat.svg
-var Directions_boat ora.SVG
+var Directions_boat core.SVG
 
 //go:embed directions_boat_filled.svg
-var Directions_boat_filled ora.SVG
+var Directions_boat_filled core.SVG
 
 //go:embed directions_bus.svg
-var Directions_bus ora.SVG
+var Directions_bus core.SVG
 
 //go:embed directions_bus_filled.svg
-var Directions_bus_filled ora.SVG
+var Directions_bus_filled core.SVG
 
 //go:embed directions_car.svg
-var Directions_car ora.SVG
+var Directions_car core.SVG
 
 //go:embed directions_car_filled.svg
-var Directions_car_filled ora.SVG
+var Directions_car_filled core.SVG
 
 //go:embed directions_off.svg
-var Directions_off ora.SVG
+var Directions_off core.SVG
 
 //go:embed directions_railway.svg
-var Directions_railway ora.SVG
+var Directions_railway core.SVG
 
 //go:embed directions_railway_filled.svg
-var Directions_railway_filled ora.SVG
+var Directions_railway_filled core.SVG
 
 //go:embed directions_run.svg
-var Directions_run ora.SVG
+var Directions_run core.SVG
 
 //go:embed directions_subway.svg
-var Directions_subway ora.SVG
+var Directions_subway core.SVG
 
 //go:embed directions_subway_filled.svg
-var Directions_subway_filled ora.SVG
+var Directions_subway_filled core.SVG
 
 //go:embed directions_transit.svg
-var Directions_transit ora.SVG
+var Directions_transit core.SVG
 
 //go:embed directions_transit_filled.svg
-var Directions_transit_filled ora.SVG
+var Directions_transit_filled core.SVG
 
 //go:embed directions_walk.svg
-var Directions_walk ora.SVG
+var Directions_walk core.SVG
 
 //go:embed dirty_lens.svg
-var Dirty_lens ora.SVG
+var Dirty_lens core.SVG
 
 //go:embed disabled_by_default.svg
-var Disabled_by_default ora.SVG
+var Disabled_by_default core.SVG
 
 //go:embed disabled_visible.svg
-var Disabled_visible ora.SVG
+var Disabled_visible core.SVG
 
 //go:embed disc_full.svg
-var Disc_full ora.SVG
+var Disc_full core.SVG
 
 //go:embed discount.svg
-var Discount ora.SVG
+var Discount core.SVG
 
 //go:embed display_settings.svg
-var Display_settings ora.SVG
+var Display_settings core.SVG
 
 //go:embed diversity_1.svg
-var Diversity_1 ora.SVG
+var Diversity_1 core.SVG
 
 //go:embed diversity_2.svg
-var Diversity_2 ora.SVG
+var Diversity_2 core.SVG
 
 //go:embed diversity_3.svg
-var Diversity_3 ora.SVG
+var Diversity_3 core.SVG
 
 //go:embed dns.svg
-var Dns ora.SVG
+var Dns core.SVG
 
 //go:embed do_disturb.svg
-var Do_disturb ora.SVG
+var Do_disturb core.SVG
 
 //go:embed do_disturb_alt.svg
-var Do_disturb_alt ora.SVG
+var Do_disturb_alt core.SVG
 
 //go:embed do_disturb_off.svg
-var Do_disturb_off ora.SVG
+var Do_disturb_off core.SVG
 
 //go:embed do_disturb_on.svg
-var Do_disturb_on ora.SVG
+var Do_disturb_on core.SVG
 
 //go:embed do_not_disturb.svg
-var Do_not_disturb ora.SVG
+var Do_not_disturb core.SVG
 
 //go:embed do_not_disturb_alt.svg
-var Do_not_disturb_alt ora.SVG
+var Do_not_disturb_alt core.SVG
 
 //go:embed do_not_disturb_off.svg
-var Do_not_disturb_off ora.SVG
+var Do_not_disturb_off core.SVG
 
 //go:embed do_not_disturb_on.svg
-var Do_not_disturb_on ora.SVG
+var Do_not_disturb_on core.SVG
 
 //go:embed do_not_disturb_on_total_silence.svg
-var Do_not_disturb_on_total_silence ora.SVG
+var Do_not_disturb_on_total_silence core.SVG
 
 //go:embed do_not_step.svg
-var Do_not_step ora.SVG
+var Do_not_step core.SVG
 
 //go:embed do_not_touch.svg
-var Do_not_touch ora.SVG
+var Do_not_touch core.SVG
 
 //go:embed dock.svg
-var Dock ora.SVG
+var Dock core.SVG
 
 //go:embed document_scanner.svg
-var Document_scanner ora.SVG
+var Document_scanner core.SVG
 
 //go:embed domain.svg
-var Domain ora.SVG
+var Domain core.SVG
 
 //go:embed domain_add.svg
-var Domain_add ora.SVG
+var Domain_add core.SVG
 
 //go:embed domain_disabled.svg
-var Domain_disabled ora.SVG
+var Domain_disabled core.SVG
 
 //go:embed domain_verification.svg
-var Domain_verification ora.SVG
+var Domain_verification core.SVG
 
 //go:embed done.svg
-var Done ora.SVG
+var Done core.SVG
 
 //go:embed done_all.svg
-var Done_all ora.SVG
+var Done_all core.SVG
 
 //go:embed done_outline.svg
-var Done_outline ora.SVG
+var Done_outline core.SVG
 
 //go:embed donut_large.svg
-var Donut_large ora.SVG
+var Donut_large core.SVG
 
 //go:embed donut_small.svg
-var Donut_small ora.SVG
+var Donut_small core.SVG
 
 //go:embed door_back.svg
-var Door_back ora.SVG
+var Door_back core.SVG
 
 //go:embed door_front.svg
-var Door_front ora.SVG
+var Door_front core.SVG
 
 //go:embed door_sliding.svg
-var Door_sliding ora.SVG
+var Door_sliding core.SVG
 
 //go:embed doorbell.svg
-var Doorbell ora.SVG
+var Doorbell core.SVG
 
 //go:embed double_arrow.svg
-var Double_arrow ora.SVG
+var Double_arrow core.SVG
 
 //go:embed downhill_skiing.svg
-var Downhill_skiing ora.SVG
+var Downhill_skiing core.SVG
 
 //go:embed download.svg
-var Download ora.SVG
+var Download core.SVG
 
 //go:embed download_done.svg
-var Download_done ora.SVG
+var Download_done core.SVG
 
 //go:embed download_for_offline.svg
-var Download_for_offline ora.SVG
+var Download_for_offline core.SVG
 
 //go:embed downloading.svg
-var Downloading ora.SVG
+var Downloading core.SVG
 
 //go:embed drafts.svg
-var Drafts ora.SVG
+var Drafts core.SVG
 
 //go:embed drag_handle.svg
-var Drag_handle ora.SVG
+var Drag_handle core.SVG
 
 //go:embed drag_indicator.svg
-var Drag_indicator ora.SVG
+var Drag_indicator core.SVG
 
 //go:embed draw.svg
-var Draw ora.SVG
+var Draw core.SVG
 
 //go:embed drive_eta.svg
-var Drive_eta ora.SVG
+var Drive_eta core.SVG
 
 //go:embed drive_file_move.svg
-var Drive_file_move ora.SVG
+var Drive_file_move core.SVG
 
 //go:embed drive_file_move_rtl.svg
-var Drive_file_move_rtl ora.SVG
+var Drive_file_move_rtl core.SVG
 
 //go:embed drive_file_rename_outline.svg
-var Drive_file_rename_outline ora.SVG
+var Drive_file_rename_outline core.SVG
 
 //go:embed drive_folder_upload.svg
-var Drive_folder_upload ora.SVG
+var Drive_folder_upload core.SVG
 
 //go:embed dry.svg
-var Dry ora.SVG
+var Dry core.SVG
 
 //go:embed dry_cleaning.svg
-var Dry_cleaning ora.SVG
+var Dry_cleaning core.SVG
 
 //go:embed duo.svg
-var Duo ora.SVG
+var Duo core.SVG
 
 //go:embed dvr.svg
-var Dvr ora.SVG
+var Dvr core.SVG
 
 //go:embed dynamic_feed.svg
-var Dynamic_feed ora.SVG
+var Dynamic_feed core.SVG
 
 //go:embed dynamic_form.svg
-var Dynamic_form ora.SVG
+var Dynamic_form core.SVG
 
 //go:embed e_mobiledata.svg
-var E_mobiledata ora.SVG
+var E_mobiledata core.SVG
 
 //go:embed earbuds.svg
-var Earbuds ora.SVG
+var Earbuds core.SVG
 
 //go:embed earbuds_battery.svg
-var Earbuds_battery ora.SVG
+var Earbuds_battery core.SVG
 
 //go:embed east.svg
-var East ora.SVG
+var East core.SVG
 
 //go:embed edgesensor_high.svg
-var Edgesensor_high ora.SVG
+var Edgesensor_high core.SVG
 
 //go:embed edgesensor_low.svg
-var Edgesensor_low ora.SVG
+var Edgesensor_low core.SVG
 
 //go:embed edit.svg
-var Edit ora.SVG
+var Edit core.SVG
 
 //go:embed edit_attributes.svg
-var Edit_attributes ora.SVG
+var Edit_attributes core.SVG
 
 //go:embed edit_calendar.svg
-var Edit_calendar ora.SVG
+var Edit_calendar core.SVG
 
 //go:embed edit_location.svg
-var Edit_location ora.SVG
+var Edit_location core.SVG
 
 //go:embed edit_location_alt.svg
-var Edit_location_alt ora.SVG
+var Edit_location_alt core.SVG
 
 //go:embed edit_note.svg
-var Edit_note ora.SVG
+var Edit_note core.SVG
 
 //go:embed edit_notifications.svg
-var Edit_notifications ora.SVG
+var Edit_notifications core.SVG
 
 //go:embed edit_off.svg
-var Edit_off ora.SVG
+var Edit_off core.SVG
 
 //go:embed edit_road.svg
-var Edit_road ora.SVG
+var Edit_road core.SVG
 
 //go:embed egg.svg
-var Egg ora.SVG
+var Egg core.SVG
 
 //go:embed egg_alt.svg
-var Egg_alt ora.SVG
+var Egg_alt core.SVG
 
 //go:embed eject.svg
-var Eject ora.SVG
+var Eject core.SVG
 
 //go:embed elderly.svg
-var Elderly ora.SVG
+var Elderly core.SVG
 
 //go:embed elderly_woman.svg
-var Elderly_woman ora.SVG
+var Elderly_woman core.SVG
 
 //go:embed electric_bike.svg
-var Electric_bike ora.SVG
+var Electric_bike core.SVG
 
 //go:embed electric_bolt.svg
-var Electric_bolt ora.SVG
+var Electric_bolt core.SVG
 
 //go:embed electric_car.svg
-var Electric_car ora.SVG
+var Electric_car core.SVG
 
 //go:embed electric_meter.svg
-var Electric_meter ora.SVG
+var Electric_meter core.SVG
 
 //go:embed electric_moped.svg
-var Electric_moped ora.SVG
+var Electric_moped core.SVG
 
 //go:embed electric_rickshaw.svg
-var Electric_rickshaw ora.SVG
+var Electric_rickshaw core.SVG
 
 //go:embed electric_scooter.svg
-var Electric_scooter ora.SVG
+var Electric_scooter core.SVG
 
 //go:embed electrical_services.svg
-var Electrical_services ora.SVG
+var Electrical_services core.SVG
 
 //go:embed elevator.svg
-var Elevator ora.SVG
+var Elevator core.SVG
 
 //go:embed email.svg
-var Email ora.SVG
+var Email core.SVG
 
 //go:embed emergency.svg
-var Emergency ora.SVG
+var Emergency core.SVG
 
 //go:embed emergency_recording.svg
-var Emergency_recording ora.SVG
+var Emergency_recording core.SVG
 
 //go:embed emergency_share.svg
-var Emergency_share ora.SVG
+var Emergency_share core.SVG
 
 //go:embed emoji_emotions.svg
-var Emoji_emotions ora.SVG
+var Emoji_emotions core.SVG
 
 //go:embed emoji_events.svg
-var Emoji_events ora.SVG
+var Emoji_events core.SVG
 
 //go:embed emoji_food_beverage.svg
-var Emoji_food_beverage ora.SVG
+var Emoji_food_beverage core.SVG
 
 //go:embed emoji_nature.svg
-var Emoji_nature ora.SVG
+var Emoji_nature core.SVG
 
 //go:embed emoji_objects.svg
-var Emoji_objects ora.SVG
+var Emoji_objects core.SVG
 
 //go:embed emoji_people.svg
-var Emoji_people ora.SVG
+var Emoji_people core.SVG
 
 //go:embed emoji_symbols.svg
-var Emoji_symbols ora.SVG
+var Emoji_symbols core.SVG
 
 //go:embed emoji_transportation.svg
-var Emoji_transportation ora.SVG
+var Emoji_transportation core.SVG
 
 //go:embed energy_savings_leaf.svg
-var Energy_savings_leaf ora.SVG
+var Energy_savings_leaf core.SVG
 
 //go:embed engineering.svg
-var Engineering ora.SVG
+var Engineering core.SVG
 
 //go:embed enhanced_encryption.svg
-var Enhanced_encryption ora.SVG
+var Enhanced_encryption core.SVG
 
 //go:embed equalizer.svg
-var Equalizer ora.SVG
+var Equalizer core.SVG
 
 //go:embed error.svg
-var Error ora.SVG
+var Error core.SVG
 
 //go:embed error_outline.svg
-var Error_outline ora.SVG
+var Error_outline core.SVG
 
 //go:embed escalator.svg
-var Escalator ora.SVG
+var Escalator core.SVG
 
 //go:embed escalator_warning.svg
-var Escalator_warning ora.SVG
+var Escalator_warning core.SVG
 
 //go:embed euro.svg
-var Euro ora.SVG
+var Euro core.SVG
 
 //go:embed euro_symbol.svg
-var Euro_symbol ora.SVG
+var Euro_symbol core.SVG
 
 //go:embed ev_station.svg
-var Ev_station ora.SVG
+var Ev_station core.SVG
 
 //go:embed event.svg
-var Event ora.SVG
+var Event core.SVG
 
 //go:embed event_available.svg
-var Event_available ora.SVG
+var Event_available core.SVG
 
 //go:embed event_busy.svg
-var Event_busy ora.SVG
+var Event_busy core.SVG
 
 //go:embed event_note.svg
-var Event_note ora.SVG
+var Event_note core.SVG
 
 //go:embed event_repeat.svg
-var Event_repeat ora.SVG
+var Event_repeat core.SVG
 
 //go:embed event_seat.svg
-var Event_seat ora.SVG
+var Event_seat core.SVG
 
 //go:embed exit_to_app.svg
-var Exit_to_app ora.SVG
+var Exit_to_app core.SVG
 
 //go:embed expand.svg
-var Expand ora.SVG
+var Expand core.SVG
 
 //go:embed expand_circle_down.svg
-var Expand_circle_down ora.SVG
+var Expand_circle_down core.SVG
 
 //go:embed expand_less.svg
-var Expand_less ora.SVG
+var Expand_less core.SVG
 
 //go:embed expand_more.svg
-var Expand_more ora.SVG
+var Expand_more core.SVG
 
 //go:embed explicit.svg
-var Explicit ora.SVG
+var Explicit core.SVG
 
 //go:embed explore.svg
-var Explore ora.SVG
+var Explore core.SVG
 
 //go:embed explore_off.svg
-var Explore_off ora.SVG
+var Explore_off core.SVG
 
 //go:embed exposure.svg
-var Exposure ora.SVG
+var Exposure core.SVG
 
 //go:embed exposure_neg_1.svg
-var Exposure_neg_1 ora.SVG
+var Exposure_neg_1 core.SVG
 
 //go:embed exposure_neg_2.svg
-var Exposure_neg_2 ora.SVG
+var Exposure_neg_2 core.SVG
 
 //go:embed exposure_plus_1.svg
-var Exposure_plus_1 ora.SVG
+var Exposure_plus_1 core.SVG
 
 //go:embed exposure_plus_2.svg
-var Exposure_plus_2 ora.SVG
+var Exposure_plus_2 core.SVG
 
 //go:embed exposure_zero.svg
-var Exposure_zero ora.SVG
+var Exposure_zero core.SVG
 
 //go:embed extension.svg
-var Extension ora.SVG
+var Extension core.SVG
 
 //go:embed extension_off.svg
-var Extension_off ora.SVG
+var Extension_off core.SVG
 
 //go:embed face.svg
-var Face ora.SVG
+var Face core.SVG
 
 //go:embed face_2.svg
-var Face_2 ora.SVG
+var Face_2 core.SVG
 
 //go:embed face_3.svg
-var Face_3 ora.SVG
+var Face_3 core.SVG
 
 //go:embed face_4.svg
-var Face_4 ora.SVG
+var Face_4 core.SVG
 
 //go:embed face_5.svg
-var Face_5 ora.SVG
+var Face_5 core.SVG
 
 //go:embed face_6.svg
-var Face_6 ora.SVG
+var Face_6 core.SVG
 
 //go:embed face_retouching_natural.svg
-var Face_retouching_natural ora.SVG
+var Face_retouching_natural core.SVG
 
 //go:embed face_retouching_off.svg
-var Face_retouching_off ora.SVG
+var Face_retouching_off core.SVG
 
 //go:embed fact_check.svg
-var Fact_check ora.SVG
+var Fact_check core.SVG
 
 //go:embed factory.svg
-var Factory ora.SVG
+var Factory core.SVG
 
 //go:embed family_restroom.svg
-var Family_restroom ora.SVG
+var Family_restroom core.SVG
 
 //go:embed fast_forward.svg
-var Fast_forward ora.SVG
+var Fast_forward core.SVG
 
 //go:embed fast_rewind.svg
-var Fast_rewind ora.SVG
+var Fast_rewind core.SVG
 
 //go:embed fastfood.svg
-var Fastfood ora.SVG
+var Fastfood core.SVG
 
 //go:embed favorite.svg
-var Favorite ora.SVG
+var Favorite core.SVG
 
 //go:embed favorite_border.svg
-var Favorite_border ora.SVG
+var Favorite_border core.SVG
 
 //go:embed fax.svg
-var Fax ora.SVG
+var Fax core.SVG
 
 //go:embed featured_play_list.svg
-var Featured_play_list ora.SVG
+var Featured_play_list core.SVG
 
 //go:embed featured_video.svg
-var Featured_video ora.SVG
+var Featured_video core.SVG
 
 //go:embed feed.svg
-var Feed ora.SVG
+var Feed core.SVG
 
 //go:embed feedback.svg
-var Feedback ora.SVG
+var Feedback core.SVG
 
 //go:embed female.svg
-var Female ora.SVG
+var Female core.SVG
 
 //go:embed fence.svg
-var Fence ora.SVG
+var Fence core.SVG
 
 //go:embed festival.svg
-var Festival ora.SVG
+var Festival core.SVG
 
 //go:embed fiber_dvr.svg
-var Fiber_dvr ora.SVG
+var Fiber_dvr core.SVG
 
 //go:embed fiber_manual_record.svg
-var Fiber_manual_record ora.SVG
+var Fiber_manual_record core.SVG
 
 //go:embed fiber_new.svg
-var Fiber_new ora.SVG
+var Fiber_new core.SVG
 
 //go:embed fiber_pin.svg
-var Fiber_pin ora.SVG
+var Fiber_pin core.SVG
 
 //go:embed fiber_smart_record.svg
-var Fiber_smart_record ora.SVG
+var Fiber_smart_record core.SVG
 
 //go:embed file_copy.svg
-var File_copy ora.SVG
+var File_copy core.SVG
 
 //go:embed file_download.svg
-var File_download ora.SVG
+var File_download core.SVG
 
 //go:embed file_download_done.svg
-var File_download_done ora.SVG
+var File_download_done core.SVG
 
 //go:embed file_download_off.svg
-var File_download_off ora.SVG
+var File_download_off core.SVG
 
 //go:embed file_open.svg
-var File_open ora.SVG
+var File_open core.SVG
 
 //go:embed file_present.svg
-var File_present ora.SVG
+var File_present core.SVG
 
 //go:embed file_upload.svg
-var File_upload ora.SVG
+var File_upload core.SVG
 
 //go:embed filter.svg
-var Filter ora.SVG
+var Filter core.SVG
 
 //go:embed filter_1.svg
-var Filter_1 ora.SVG
+var Filter_1 core.SVG
 
 //go:embed filter_2.svg
-var Filter_2 ora.SVG
+var Filter_2 core.SVG
 
 //go:embed filter_3.svg
-var Filter_3 ora.SVG
+var Filter_3 core.SVG
 
 //go:embed filter_4.svg
-var Filter_4 ora.SVG
+var Filter_4 core.SVG
 
 //go:embed filter_5.svg
-var Filter_5 ora.SVG
+var Filter_5 core.SVG
 
 //go:embed filter_6.svg
-var Filter_6 ora.SVG
+var Filter_6 core.SVG
 
 //go:embed filter_7.svg
-var Filter_7 ora.SVG
+var Filter_7 core.SVG
 
 //go:embed filter_8.svg
-var Filter_8 ora.SVG
+var Filter_8 core.SVG
 
 //go:embed filter_9.svg
-var Filter_9 ora.SVG
+var Filter_9 core.SVG
 
 //go:embed filter_9_plus.svg
-var Filter_9_plus ora.SVG
+var Filter_9_plus core.SVG
 
 //go:embed filter_alt.svg
-var Filter_alt ora.SVG
+var Filter_alt core.SVG
 
 //go:embed filter_alt_off.svg
-var Filter_alt_off ora.SVG
+var Filter_alt_off core.SVG
 
 //go:embed filter_b_and_w.svg
-var Filter_b_and_w ora.SVG
+var Filter_b_and_w core.SVG
 
 //go:embed filter_center_focus.svg
-var Filter_center_focus ora.SVG
+var Filter_center_focus core.SVG
 
 //go:embed filter_drama.svg
-var Filter_drama ora.SVG
+var Filter_drama core.SVG
 
 //go:embed filter_frames.svg
-var Filter_frames ora.SVG
+var Filter_frames core.SVG
 
 //go:embed filter_hdr.svg
-var Filter_hdr ora.SVG
+var Filter_hdr core.SVG
 
 //go:embed filter_list.svg
-var Filter_list ora.SVG
+var Filter_list core.SVG
 
 //go:embed filter_list_off.svg
-var Filter_list_off ora.SVG
+var Filter_list_off core.SVG
 
 //go:embed filter_none.svg
-var Filter_none ora.SVG
+var Filter_none core.SVG
 
 //go:embed filter_tilt_shift.svg
-var Filter_tilt_shift ora.SVG
+var Filter_tilt_shift core.SVG
 
 //go:embed filter_vintage.svg
-var Filter_vintage ora.SVG
+var Filter_vintage core.SVG
 
 //go:embed find_in_page.svg
-var Find_in_page ora.SVG
+var Find_in_page core.SVG
 
 //go:embed find_replace.svg
-var Find_replace ora.SVG
+var Find_replace core.SVG
 
 //go:embed fingerprint.svg
-var Fingerprint ora.SVG
+var Fingerprint core.SVG
 
 //go:embed fire_extinguisher.svg
-var Fire_extinguisher ora.SVG
+var Fire_extinguisher core.SVG
 
 //go:embed fire_hydrant_alt.svg
-var Fire_hydrant_alt ora.SVG
+var Fire_hydrant_alt core.SVG
 
 //go:embed fire_truck.svg
-var Fire_truck ora.SVG
+var Fire_truck core.SVG
 
 //go:embed fireplace.svg
-var Fireplace ora.SVG
+var Fireplace core.SVG
 
 //go:embed first_page.svg
-var First_page ora.SVG
+var First_page core.SVG
 
 //go:embed fit_screen.svg
-var Fit_screen ora.SVG
+var Fit_screen core.SVG
 
 //go:embed fitbit.svg
-var Fitbit ora.SVG
+var Fitbit core.SVG
 
 //go:embed fitness_center.svg
-var Fitness_center ora.SVG
+var Fitness_center core.SVG
 
 //go:embed flag.svg
-var Flag ora.SVG
+var Flag core.SVG
 
 //go:embed flag_circle.svg
-var Flag_circle ora.SVG
+var Flag_circle core.SVG
 
 //go:embed flaky.svg
-var Flaky ora.SVG
+var Flaky core.SVG
 
 //go:embed flare.svg
-var Flare ora.SVG
+var Flare core.SVG
 
 //go:embed flash_auto.svg
-var Flash_auto ora.SVG
+var Flash_auto core.SVG
 
 //go:embed flash_off.svg
-var Flash_off ora.SVG
+var Flash_off core.SVG
 
 //go:embed flash_on.svg
-var Flash_on ora.SVG
+var Flash_on core.SVG
 
 //go:embed flashlight_off.svg
-var Flashlight_off ora.SVG
+var Flashlight_off core.SVG
 
 //go:embed flashlight_on.svg
-var Flashlight_on ora.SVG
+var Flashlight_on core.SVG
 
 //go:embed flatware.svg
-var Flatware ora.SVG
+var Flatware core.SVG
 
 //go:embed flight.svg
-var Flight ora.SVG
+var Flight core.SVG
 
 //go:embed flight_class.svg
-var Flight_class ora.SVG
+var Flight_class core.SVG
 
 //go:embed flight_land.svg
-var Flight_land ora.SVG
+var Flight_land core.SVG
 
 //go:embed flight_takeoff.svg
-var Flight_takeoff ora.SVG
+var Flight_takeoff core.SVG
 
 //go:embed flip.svg
-var Flip ora.SVG
+var Flip core.SVG
 
 //go:embed flip_camera_android.svg
-var Flip_camera_android ora.SVG
+var Flip_camera_android core.SVG
 
 //go:embed flip_camera_ios.svg
-var Flip_camera_ios ora.SVG
+var Flip_camera_ios core.SVG
 
 //go:embed flip_to_back.svg
-var Flip_to_back ora.SVG
+var Flip_to_back core.SVG
 
 //go:embed flip_to_front.svg
-var Flip_to_front ora.SVG
+var Flip_to_front core.SVG
 
 //go:embed flood.svg
-var Flood ora.SVG
+var Flood core.SVG
 
 //go:embed fluorescent.svg
-var Fluorescent ora.SVG
+var Fluorescent core.SVG
 
 //go:embed flutter_dash.svg
-var Flutter_dash ora.SVG
+var Flutter_dash core.SVG
 
 //go:embed fmd_bad.svg
-var Fmd_bad ora.SVG
+var Fmd_bad core.SVG
 
 //go:embed fmd_good.svg
-var Fmd_good ora.SVG
+var Fmd_good core.SVG
 
 //go:embed folder.svg
-var Folder ora.SVG
+var Folder core.SVG
 
 //go:embed folder_copy.svg
-var Folder_copy ora.SVG
+var Folder_copy core.SVG
 
 //go:embed folder_delete.svg
-var Folder_delete ora.SVG
+var Folder_delete core.SVG
 
 //go:embed folder_off.svg
-var Folder_off ora.SVG
+var Folder_off core.SVG
 
 //go:embed folder_open.svg
-var Folder_open ora.SVG
+var Folder_open core.SVG
 
 //go:embed folder_shared.svg
-var Folder_shared ora.SVG
+var Folder_shared core.SVG
 
 //go:embed folder_special.svg
-var Folder_special ora.SVG
+var Folder_special core.SVG
 
 //go:embed folder_zip.svg
-var Folder_zip ora.SVG
+var Folder_zip core.SVG
 
 //go:embed follow_the_signs.svg
-var Follow_the_signs ora.SVG
+var Follow_the_signs core.SVG
 
 //go:embed font_download.svg
-var Font_download ora.SVG
+var Font_download core.SVG
 
 //go:embed font_download_off.svg
-var Font_download_off ora.SVG
+var Font_download_off core.SVG
 
 //go:embed food_bank.svg
-var Food_bank ora.SVG
+var Food_bank core.SVG
 
 //go:embed forest.svg
-var Forest ora.SVG
+var Forest core.SVG
 
 //go:embed fork_left.svg
-var Fork_left ora.SVG
+var Fork_left core.SVG
 
 //go:embed fork_right.svg
-var Fork_right ora.SVG
+var Fork_right core.SVG
 
 //go:embed format_align_center.svg
-var Format_align_center ora.SVG
+var Format_align_center core.SVG
 
 //go:embed format_align_justify.svg
-var Format_align_justify ora.SVG
+var Format_align_justify core.SVG
 
 //go:embed format_align_left.svg
-var Format_align_left ora.SVG
+var Format_align_left core.SVG
 
 //go:embed format_align_right.svg
-var Format_align_right ora.SVG
+var Format_align_right core.SVG
 
 //go:embed format_bold.svg
-var Format_bold ora.SVG
+var Format_bold core.SVG
 
 //go:embed format_clear.svg
-var Format_clear ora.SVG
+var Format_clear core.SVG
 
 //go:embed format_color_fill.svg
-var Format_color_fill ora.SVG
+var Format_color_fill core.SVG
 
 //go:embed format_color_reset.svg
-var Format_color_reset ora.SVG
+var Format_color_reset core.SVG
 
 //go:embed format_color_text.svg
-var Format_color_text ora.SVG
+var Format_color_text core.SVG
 
 //go:embed format_indent_decrease.svg
-var Format_indent_decrease ora.SVG
+var Format_indent_decrease core.SVG
 
 //go:embed format_indent_increase.svg
-var Format_indent_increase ora.SVG
+var Format_indent_increase core.SVG
 
 //go:embed format_italic.svg
-var Format_italic ora.SVG
+var Format_italic core.SVG
 
 //go:embed format_line_spacing.svg
-var Format_line_spacing ora.SVG
+var Format_line_spacing core.SVG
 
 //go:embed format_list_bulleted.svg
-var Format_list_bulleted ora.SVG
+var Format_list_bulleted core.SVG
 
 //go:embed format_list_numbered.svg
-var Format_list_numbered ora.SVG
+var Format_list_numbered core.SVG
 
 //go:embed format_list_numbered_rtl.svg
-var Format_list_numbered_rtl ora.SVG
+var Format_list_numbered_rtl core.SVG
 
 //go:embed format_overline.svg
-var Format_overline ora.SVG
+var Format_overline core.SVG
 
 //go:embed format_paint.svg
-var Format_paint ora.SVG
+var Format_paint core.SVG
 
 //go:embed format_quote.svg
-var Format_quote ora.SVG
+var Format_quote core.SVG
 
 //go:embed format_shapes.svg
-var Format_shapes ora.SVG
+var Format_shapes core.SVG
 
 //go:embed format_size.svg
-var Format_size ora.SVG
+var Format_size core.SVG
 
 //go:embed format_strikethrough.svg
-var Format_strikethrough ora.SVG
+var Format_strikethrough core.SVG
 
 //go:embed format_textdirection_l_to_r.svg
-var Format_textdirection_l_to_r ora.SVG
+var Format_textdirection_l_to_r core.SVG
 
 //go:embed format_textdirection_r_to_l.svg
-var Format_textdirection_r_to_l ora.SVG
+var Format_textdirection_r_to_l core.SVG
 
 //go:embed format_underlined.svg
-var Format_underlined ora.SVG
+var Format_underlined core.SVG
 
 //go:embed fort.svg
-var Fort ora.SVG
+var Fort core.SVG
 
 //go:embed forum.svg
-var Forum ora.SVG
+var Forum core.SVG
 
 //go:embed forward.svg
-var Forward ora.SVG
+var Forward core.SVG
 
 //go:embed forward_10.svg
-var Forward_10 ora.SVG
+var Forward_10 core.SVG
 
 //go:embed forward_30.svg
-var Forward_30 ora.SVG
+var Forward_30 core.SVG
 
 //go:embed forward_5.svg
-var Forward_5 ora.SVG
+var Forward_5 core.SVG
 
 //go:embed forward_to_inbox.svg
-var Forward_to_inbox ora.SVG
+var Forward_to_inbox core.SVG
 
 //go:embed foundation.svg
-var Foundation ora.SVG
+var Foundation core.SVG
 
 //go:embed free_breakfast.svg
-var Free_breakfast ora.SVG
+var Free_breakfast core.SVG
 
 //go:embed free_cancellation.svg
-var Free_cancellation ora.SVG
+var Free_cancellation core.SVG
 
 //go:embed front_hand.svg
-var Front_hand ora.SVG
+var Front_hand core.SVG
 
 //go:embed fullscreen.svg
-var Fullscreen ora.SVG
+var Fullscreen core.SVG
 
 //go:embed fullscreen_exit.svg
-var Fullscreen_exit ora.SVG
+var Fullscreen_exit core.SVG
 
 //go:embed functions.svg
-var Functions ora.SVG
+var Functions core.SVG
 
 //go:embed g_mobiledata.svg
-var G_mobiledata ora.SVG
+var G_mobiledata core.SVG
 
 //go:embed g_translate.svg
-var G_translate ora.SVG
+var G_translate core.SVG
 
 //go:embed gamepad.svg
-var Gamepad ora.SVG
+var Gamepad core.SVG
 
 //go:embed games.svg
-var Games ora.SVG
+var Games core.SVG
 
 //go:embed garage.svg
-var Garage ora.SVG
+var Garage core.SVG
 
 //go:embed gas_meter.svg
-var Gas_meter ora.SVG
+var Gas_meter core.SVG
 
 //go:embed gavel.svg
-var Gavel ora.SVG
+var Gavel core.SVG
 
 //go:embed generating_tokens.svg
-var Generating_tokens ora.SVG
+var Generating_tokens core.SVG
 
 //go:embed gesture.svg
-var Gesture ora.SVG
+var Gesture core.SVG
 
 //go:embed get_app.svg
-var Get_app ora.SVG
+var Get_app core.SVG
 
 //go:embed gif.svg
-var Gif ora.SVG
+var Gif core.SVG
 
 //go:embed gif_box.svg
-var Gif_box ora.SVG
+var Gif_box core.SVG
 
 //go:embed girl.svg
-var Girl ora.SVG
+var Girl core.SVG
 
 //go:embed gite.svg
-var Gite ora.SVG
+var Gite core.SVG
 
 //go:embed golf_course.svg
-var Golf_course ora.SVG
+var Golf_course core.SVG
 
 //go:embed gpp_bad.svg
-var Gpp_bad ora.SVG
+var Gpp_bad core.SVG
 
 //go:embed gpp_good.svg
-var Gpp_good ora.SVG
+var Gpp_good core.SVG
 
 //go:embed gpp_maybe.svg
-var Gpp_maybe ora.SVG
+var Gpp_maybe core.SVG
 
 //go:embed gps_fixed.svg
-var Gps_fixed ora.SVG
+var Gps_fixed core.SVG
 
 //go:embed gps_not_fixed.svg
-var Gps_not_fixed ora.SVG
+var Gps_not_fixed core.SVG
 
 //go:embed gps_off.svg
-var Gps_off ora.SVG
+var Gps_off core.SVG
 
 //go:embed grade.svg
-var Grade ora.SVG
+var Grade core.SVG
 
 //go:embed gradient.svg
-var Gradient ora.SVG
+var Gradient core.SVG
 
 //go:embed grading.svg
-var Grading ora.SVG
+var Grading core.SVG
 
 //go:embed grain.svg
-var Grain ora.SVG
+var Grain core.SVG
 
 //go:embed graphic_eq.svg
-var Graphic_eq ora.SVG
+var Graphic_eq core.SVG
 
 //go:embed grass.svg
-var Grass ora.SVG
+var Grass core.SVG
 
 //go:embed grid_3x3.svg
-var Grid_3x3 ora.SVG
+var Grid_3x3 core.SVG
 
 //go:embed grid_4x4.svg
-var Grid_4x4 ora.SVG
+var Grid_4x4 core.SVG
 
 //go:embed grid_goldenratio.svg
-var Grid_goldenratio ora.SVG
+var Grid_goldenratio core.SVG
 
 //go:embed grid_off.svg
-var Grid_off ora.SVG
+var Grid_off core.SVG
 
 //go:embed grid_on.svg
-var Grid_on ora.SVG
+var Grid_on core.SVG
 
 //go:embed grid_view.svg
-var Grid_view ora.SVG
+var Grid_view core.SVG
 
 //go:embed group.svg
-var Group ora.SVG
+var Group core.SVG
 
 //go:embed group_add.svg
-var Group_add ora.SVG
+var Group_add core.SVG
 
 //go:embed group_off.svg
-var Group_off ora.SVG
+var Group_off core.SVG
 
 //go:embed group_remove.svg
-var Group_remove ora.SVG
+var Group_remove core.SVG
 
 //go:embed group_work.svg
-var Group_work ora.SVG
+var Group_work core.SVG
 
 //go:embed groups.svg
-var Groups ora.SVG
+var Groups core.SVG
 
 //go:embed groups_2.svg
-var Groups_2 ora.SVG
+var Groups_2 core.SVG
 
 //go:embed groups_3.svg
-var Groups_3 ora.SVG
+var Groups_3 core.SVG
 
 //go:embed h_mobiledata.svg
-var H_mobiledata ora.SVG
+var H_mobiledata core.SVG
 
 //go:embed h_plus_mobiledata.svg
-var H_plus_mobiledata ora.SVG
+var H_plus_mobiledata core.SVG
 
 //go:embed hail.svg
-var Hail ora.SVG
+var Hail core.SVG
 
 //go:embed handshake.svg
-var Handshake ora.SVG
+var Handshake core.SVG
 
 //go:embed handyman.svg
-var Handyman ora.SVG
+var Handyman core.SVG
 
 //go:embed hardware.svg
-var Hardware ora.SVG
+var Hardware core.SVG
 
 //go:embed hd.svg
-var Hd ora.SVG
+var Hd core.SVG
 
 //go:embed hdr_auto.svg
-var Hdr_auto ora.SVG
+var Hdr_auto core.SVG
 
 //go:embed hdr_auto_select.svg
-var Hdr_auto_select ora.SVG
+var Hdr_auto_select core.SVG
 
 //go:embed hdr_enhanced_select.svg
-var Hdr_enhanced_select ora.SVG
+var Hdr_enhanced_select core.SVG
 
 //go:embed hdr_off.svg
-var Hdr_off ora.SVG
+var Hdr_off core.SVG
 
 //go:embed hdr_off_select.svg
-var Hdr_off_select ora.SVG
+var Hdr_off_select core.SVG
 
 //go:embed hdr_on.svg
-var Hdr_on ora.SVG
+var Hdr_on core.SVG
 
 //go:embed hdr_on_select.svg
-var Hdr_on_select ora.SVG
+var Hdr_on_select core.SVG
 
 //go:embed hdr_plus.svg
-var Hdr_plus ora.SVG
+var Hdr_plus core.SVG
 
 //go:embed hdr_strong.svg
-var Hdr_strong ora.SVG
+var Hdr_strong core.SVG
 
 //go:embed hdr_weak.svg
-var Hdr_weak ora.SVG
+var Hdr_weak core.SVG
 
 //go:embed headphones.svg
-var Headphones ora.SVG
+var Headphones core.SVG
 
 //go:embed headphones_battery.svg
-var Headphones_battery ora.SVG
+var Headphones_battery core.SVG
 
 //go:embed headset.svg
-var Headset ora.SVG
+var Headset core.SVG
 
 //go:embed headset_mic.svg
-var Headset_mic ora.SVG
+var Headset_mic core.SVG
 
 //go:embed headset_off.svg
-var Headset_off ora.SVG
+var Headset_off core.SVG
 
 //go:embed healing.svg
-var Healing ora.SVG
+var Healing core.SVG
 
 //go:embed health_and_safety.svg
-var Health_and_safety ora.SVG
+var Health_and_safety core.SVG
 
 //go:embed hearing.svg
-var Hearing ora.SVG
+var Hearing core.SVG
 
 //go:embed hearing_disabled.svg
-var Hearing_disabled ora.SVG
+var Hearing_disabled core.SVG
 
 //go:embed heart_broken.svg
-var Heart_broken ora.SVG
+var Heart_broken core.SVG
 
 //go:embed heat_pump.svg
-var Heat_pump ora.SVG
+var Heat_pump core.SVG
 
 //go:embed height.svg
-var Height ora.SVG
+var Height core.SVG
 
 //go:embed help.svg
-var Help ora.SVG
+var Help core.SVG
 
 //go:embed help_center.svg
-var Help_center ora.SVG
+var Help_center core.SVG
 
 //go:embed help_outline.svg
-var Help_outline ora.SVG
+var Help_outline core.SVG
 
 //go:embed hevc.svg
-var Hevc ora.SVG
+var Hevc core.SVG
 
 //go:embed hexagon.svg
-var Hexagon ora.SVG
+var Hexagon core.SVG
 
 //go:embed hide_image.svg
-var Hide_image ora.SVG
+var Hide_image core.SVG
 
 //go:embed hide_source.svg
-var Hide_source ora.SVG
+var Hide_source core.SVG
 
 //go:embed high_quality.svg
-var High_quality ora.SVG
+var High_quality core.SVG
 
 //go:embed highlight.svg
-var Highlight ora.SVG
+var Highlight core.SVG
 
 //go:embed highlight_alt.svg
-var Highlight_alt ora.SVG
+var Highlight_alt core.SVG
 
 //go:embed highlight_off.svg
-var Highlight_off ora.SVG
+var Highlight_off core.SVG
 
 //go:embed hiking.svg
-var Hiking ora.SVG
+var Hiking core.SVG
 
 //go:embed history.svg
-var History ora.SVG
+var History core.SVG
 
 //go:embed history_edu.svg
-var History_edu ora.SVG
+var History_edu core.SVG
 
 //go:embed history_toggle_off.svg
-var History_toggle_off ora.SVG
+var History_toggle_off core.SVG
 
 //go:embed hive.svg
-var Hive ora.SVG
+var Hive core.SVG
 
 //go:embed hls.svg
-var Hls ora.SVG
+var Hls core.SVG
 
 //go:embed hls_off.svg
-var Hls_off ora.SVG
+var Hls_off core.SVG
 
 //go:embed holiday_village.svg
-var Holiday_village ora.SVG
+var Holiday_village core.SVG
 
 //go:embed home.svg
-var Home ora.SVG
+var Home core.SVG
 
 //go:embed home_max.svg
-var Home_max ora.SVG
+var Home_max core.SVG
 
 //go:embed home_mini.svg
-var Home_mini ora.SVG
+var Home_mini core.SVG
 
 //go:embed home_repair_service.svg
-var Home_repair_service ora.SVG
+var Home_repair_service core.SVG
 
 //go:embed home_work.svg
-var Home_work ora.SVG
+var Home_work core.SVG
 
 //go:embed horizontal_distribute.svg
-var Horizontal_distribute ora.SVG
+var Horizontal_distribute core.SVG
 
 //go:embed horizontal_rule.svg
-var Horizontal_rule ora.SVG
+var Horizontal_rule core.SVG
 
 //go:embed horizontal_split.svg
-var Horizontal_split ora.SVG
+var Horizontal_split core.SVG
 
 //go:embed hot_tub.svg
-var Hot_tub ora.SVG
+var Hot_tub core.SVG
 
 //go:embed hotel.svg
-var Hotel ora.SVG
+var Hotel core.SVG
 
 //go:embed hotel_class.svg
-var Hotel_class ora.SVG
+var Hotel_class core.SVG
 
 //go:embed hourglass_bottom.svg
-var Hourglass_bottom ora.SVG
+var Hourglass_bottom core.SVG
 
 //go:embed hourglass_disabled.svg
-var Hourglass_disabled ora.SVG
+var Hourglass_disabled core.SVG
 
 //go:embed hourglass_empty.svg
-var Hourglass_empty ora.SVG
+var Hourglass_empty core.SVG
 
 //go:embed hourglass_full.svg
-var Hourglass_full ora.SVG
+var Hourglass_full core.SVG
 
 //go:embed hourglass_top.svg
-var Hourglass_top ora.SVG
+var Hourglass_top core.SVG
 
 //go:embed house.svg
-var House ora.SVG
+var House core.SVG
 
 //go:embed house_siding.svg
-var House_siding ora.SVG
+var House_siding core.SVG
 
 //go:embed houseboat.svg
-var Houseboat ora.SVG
+var Houseboat core.SVG
 
 //go:embed how_to_reg.svg
-var How_to_reg ora.SVG
+var How_to_reg core.SVG
 
 //go:embed how_to_vote.svg
-var How_to_vote ora.SVG
+var How_to_vote core.SVG
 
 //go:embed html.svg
-var Html ora.SVG
+var Html core.SVG
 
 //go:embed http.svg
-var Http ora.SVG
+var Http core.SVG
 
 //go:embed https.svg
-var Https ora.SVG
+var Https core.SVG
 
 //go:embed hub.svg
-var Hub ora.SVG
+var Hub core.SVG
 
 //go:embed hvac.svg
-var Hvac ora.SVG
+var Hvac core.SVG
 
 //go:embed ice_skating.svg
-var Ice_skating ora.SVG
+var Ice_skating core.SVG
 
 //go:embed icecream.svg
-var Icecream ora.SVG
+var Icecream core.SVG
 
 //go:embed image.svg
-var Image ora.SVG
+var Image core.SVG
 
 //go:embed image_aspect_ratio.svg
-var Image_aspect_ratio ora.SVG
+var Image_aspect_ratio core.SVG
 
 //go:embed image_not_supported.svg
-var Image_not_supported ora.SVG
+var Image_not_supported core.SVG
 
 //go:embed image_search.svg
-var Image_search ora.SVG
+var Image_search core.SVG
 
 //go:embed imagesearch_roller.svg
-var Imagesearch_roller ora.SVG
+var Imagesearch_roller core.SVG
 
 //go:embed import_contacts.svg
-var Import_contacts ora.SVG
+var Import_contacts core.SVG
 
 //go:embed import_export.svg
-var Import_export ora.SVG
+var Import_export core.SVG
 
 //go:embed important_devices.svg
-var Important_devices ora.SVG
+var Important_devices core.SVG
 
 //go:embed inbox.svg
-var Inbox ora.SVG
+var Inbox core.SVG
 
 //go:embed incomplete_circle.svg
-var Incomplete_circle ora.SVG
+var Incomplete_circle core.SVG
 
 //go:embed indeterminate_check_box.svg
-var Indeterminate_check_box ora.SVG
+var Indeterminate_check_box core.SVG
 
 //go:embed info.svg
-var Info ora.SVG
+var Info core.SVG
 
 //go:embed input.svg
-var Input ora.SVG
+var Input core.SVG
 
 //go:embed insert_chart.svg
-var Insert_chart ora.SVG
+var Insert_chart core.SVG
 
 //go:embed insert_chart_outlined.svg
-var Insert_chart_outlined ora.SVG
+var Insert_chart_outlined core.SVG
 
 //go:embed insert_comment.svg
-var Insert_comment ora.SVG
+var Insert_comment core.SVG
 
 //go:embed insert_drive_file.svg
-var Insert_drive_file ora.SVG
+var Insert_drive_file core.SVG
 
 //go:embed insert_emoticon.svg
-var Insert_emoticon ora.SVG
+var Insert_emoticon core.SVG
 
 //go:embed insert_invitation.svg
-var Insert_invitation ora.SVG
+var Insert_invitation core.SVG
 
 //go:embed insert_link.svg
-var Insert_link ora.SVG
+var Insert_link core.SVG
 
 //go:embed insert_page_break.svg
-var Insert_page_break ora.SVG
+var Insert_page_break core.SVG
 
 //go:embed insert_photo.svg
-var Insert_photo ora.SVG
+var Insert_photo core.SVG
 
 //go:embed insights.svg
-var Insights ora.SVG
+var Insights core.SVG
 
 //go:embed install_desktop.svg
-var Install_desktop ora.SVG
+var Install_desktop core.SVG
 
 //go:embed install_mobile.svg
-var Install_mobile ora.SVG
+var Install_mobile core.SVG
 
 //go:embed integration_instructions.svg
-var Integration_instructions ora.SVG
+var Integration_instructions core.SVG
 
 //go:embed interests.svg
-var Interests ora.SVG
+var Interests core.SVG
 
 //go:embed interpreter_mode.svg
-var Interpreter_mode ora.SVG
+var Interpreter_mode core.SVG
 
 //go:embed inventory.svg
-var Inventory ora.SVG
+var Inventory core.SVG
 
 //go:embed inventory_2.svg
-var Inventory_2 ora.SVG
+var Inventory_2 core.SVG
 
 //go:embed invert_colors.svg
-var Invert_colors ora.SVG
+var Invert_colors core.SVG
 
 //go:embed invert_colors_off.svg
-var Invert_colors_off ora.SVG
+var Invert_colors_off core.SVG
 
 //go:embed ios_share.svg
-var Ios_share ora.SVG
+var Ios_share core.SVG
 
 //go:embed iron.svg
-var Iron ora.SVG
+var Iron core.SVG
 
 //go:embed iso.svg
-var Iso ora.SVG
+var Iso core.SVG
 
 //go:embed javascript.svg
-var Javascript ora.SVG
+var Javascript core.SVG
 
 //go:embed join_full.svg
-var Join_full ora.SVG
+var Join_full core.SVG
 
 //go:embed join_inner.svg
-var Join_inner ora.SVG
+var Join_inner core.SVG
 
 //go:embed join_left.svg
-var Join_left ora.SVG
+var Join_left core.SVG
 
 //go:embed join_right.svg
-var Join_right ora.SVG
+var Join_right core.SVG
 
 //go:embed kayaking.svg
-var Kayaking ora.SVG
+var Kayaking core.SVG
 
 //go:embed kebab_dining.svg
-var Kebab_dining ora.SVG
+var Kebab_dining core.SVG
 
 //go:embed key.svg
-var Key ora.SVG
+var Key core.SVG
 
 //go:embed key_off.svg
-var Key_off ora.SVG
+var Key_off core.SVG
 
 //go:embed keyboard.svg
-var Keyboard ora.SVG
+var Keyboard core.SVG
 
 //go:embed keyboard_alt.svg
-var Keyboard_alt ora.SVG
+var Keyboard_alt core.SVG
 
 //go:embed keyboard_arrow_down.svg
-var Keyboard_arrow_down ora.SVG
+var Keyboard_arrow_down core.SVG
 
 //go:embed keyboard_arrow_left.svg
-var Keyboard_arrow_left ora.SVG
+var Keyboard_arrow_left core.SVG
 
 //go:embed keyboard_arrow_right.svg
-var Keyboard_arrow_right ora.SVG
+var Keyboard_arrow_right core.SVG
 
 //go:embed keyboard_arrow_up.svg
-var Keyboard_arrow_up ora.SVG
+var Keyboard_arrow_up core.SVG
 
 //go:embed keyboard_backspace.svg
-var Keyboard_backspace ora.SVG
+var Keyboard_backspace core.SVG
 
 //go:embed keyboard_capslock.svg
-var Keyboard_capslock ora.SVG
+var Keyboard_capslock core.SVG
 
 //go:embed keyboard_command_key.svg
-var Keyboard_command_key ora.SVG
+var Keyboard_command_key core.SVG
 
 //go:embed keyboard_control_key.svg
-var Keyboard_control_key ora.SVG
+var Keyboard_control_key core.SVG
 
 //go:embed keyboard_double_arrow_down.svg
-var Keyboard_double_arrow_down ora.SVG
+var Keyboard_double_arrow_down core.SVG
 
 //go:embed keyboard_double_arrow_left.svg
-var Keyboard_double_arrow_left ora.SVG
+var Keyboard_double_arrow_left core.SVG
 
 //go:embed keyboard_double_arrow_right.svg
-var Keyboard_double_arrow_right ora.SVG
+var Keyboard_double_arrow_right core.SVG
 
 //go:embed keyboard_double_arrow_up.svg
-var Keyboard_double_arrow_up ora.SVG
+var Keyboard_double_arrow_up core.SVG
 
 //go:embed keyboard_hide.svg
-var Keyboard_hide ora.SVG
+var Keyboard_hide core.SVG
 
 //go:embed keyboard_option_key.svg
-var Keyboard_option_key ora.SVG
+var Keyboard_option_key core.SVG
 
 //go:embed keyboard_return.svg
-var Keyboard_return ora.SVG
+var Keyboard_return core.SVG
 
 //go:embed keyboard_tab.svg
-var Keyboard_tab ora.SVG
+var Keyboard_tab core.SVG
 
 //go:embed keyboard_voice.svg
-var Keyboard_voice ora.SVG
+var Keyboard_voice core.SVG
 
 //go:embed king_bed.svg
-var King_bed ora.SVG
+var King_bed core.SVG
 
 //go:embed kitchen.svg
-var Kitchen ora.SVG
+var Kitchen core.SVG
 
 //go:embed kitesurfing.svg
-var Kitesurfing ora.SVG
+var Kitesurfing core.SVG
 
 //go:embed label.svg
-var Label ora.SVG
+var Label core.SVG
 
 //go:embed label_important.svg
-var Label_important ora.SVG
+var Label_important core.SVG
 
 //go:embed label_off.svg
-var Label_off ora.SVG
+var Label_off core.SVG
 
 //go:embed lan.svg
-var Lan ora.SVG
+var Lan core.SVG
 
 //go:embed landscape.svg
-var Landscape ora.SVG
+var Landscape core.SVG
 
 //go:embed landslide.svg
-var Landslide ora.SVG
+var Landslide core.SVG
 
 //go:embed language.svg
-var Language ora.SVG
+var Language core.SVG
 
 //go:embed laptop.svg
-var Laptop ora.SVG
+var Laptop core.SVG
 
 //go:embed laptop_chromebook.svg
-var Laptop_chromebook ora.SVG
+var Laptop_chromebook core.SVG
 
 //go:embed laptop_mac.svg
-var Laptop_mac ora.SVG
+var Laptop_mac core.SVG
 
 //go:embed laptop_windows.svg
-var Laptop_windows ora.SVG
+var Laptop_windows core.SVG
 
 //go:embed last_page.svg
-var Last_page ora.SVG
+var Last_page core.SVG
 
 //go:embed launch.svg
-var Launch ora.SVG
+var Launch core.SVG
 
 //go:embed layers.svg
-var Layers ora.SVG
+var Layers core.SVG
 
 //go:embed layers_clear.svg
-var Layers_clear ora.SVG
+var Layers_clear core.SVG
 
 //go:embed leaderboard.svg
-var Leaderboard ora.SVG
+var Leaderboard core.SVG
 
 //go:embed leak_add.svg
-var Leak_add ora.SVG
+var Leak_add core.SVG
 
 //go:embed leak_remove.svg
-var Leak_remove ora.SVG
+var Leak_remove core.SVG
 
 //go:embed legend_toggle.svg
-var Legend_toggle ora.SVG
+var Legend_toggle core.SVG
 
 //go:embed lens.svg
-var Lens ora.SVG
+var Lens core.SVG
 
 //go:embed lens_blur.svg
-var Lens_blur ora.SVG
+var Lens_blur core.SVG
 
 //go:embed library_add.svg
-var Library_add ora.SVG
+var Library_add core.SVG
 
 //go:embed library_add_check.svg
-var Library_add_check ora.SVG
+var Library_add_check core.SVG
 
 //go:embed library_books.svg
-var Library_books ora.SVG
+var Library_books core.SVG
 
 //go:embed library_music.svg
-var Library_music ora.SVG
+var Library_music core.SVG
 
 //go:embed light.svg
-var Light ora.SVG
+var Light core.SVG
 
 //go:embed light_mode.svg
-var Light_mode ora.SVG
+var Light_mode core.SVG
 
 //go:embed lightbulb.svg
-var Lightbulb ora.SVG
+var Lightbulb core.SVG
 
 //go:embed lightbulb_circle.svg
-var Lightbulb_circle ora.SVG
+var Lightbulb_circle core.SVG
 
 //go:embed line_axis.svg
-var Line_axis ora.SVG
+var Line_axis core.SVG
 
 //go:embed line_style.svg
-var Line_style ora.SVG
+var Line_style core.SVG
 
 //go:embed line_weight.svg
-var Line_weight ora.SVG
+var Line_weight core.SVG
 
 //go:embed linear_scale.svg
-var Linear_scale ora.SVG
+var Linear_scale core.SVG
 
 //go:embed link.svg
-var Link ora.SVG
+var Link core.SVG
 
 //go:embed link_off.svg
-var Link_off ora.SVG
+var Link_off core.SVG
 
 //go:embed linked_camera.svg
-var Linked_camera ora.SVG
+var Linked_camera core.SVG
 
 //go:embed liquor.svg
-var Liquor ora.SVG
+var Liquor core.SVG
 
 //go:embed list.svg
-var List ora.SVG
+var List core.SVG
 
 //go:embed list_alt.svg
-var List_alt ora.SVG
+var List_alt core.SVG
 
 //go:embed live_help.svg
-var Live_help ora.SVG
+var Live_help core.SVG
 
 //go:embed live_tv.svg
-var Live_tv ora.SVG
+var Live_tv core.SVG
 
 //go:embed living.svg
-var Living ora.SVG
+var Living core.SVG
 
 //go:embed local_activity.svg
-var Local_activity ora.SVG
+var Local_activity core.SVG
 
 //go:embed local_airport.svg
-var Local_airport ora.SVG
+var Local_airport core.SVG
 
 //go:embed local_atm.svg
-var Local_atm ora.SVG
+var Local_atm core.SVG
 
 //go:embed local_bar.svg
-var Local_bar ora.SVG
+var Local_bar core.SVG
 
 //go:embed local_cafe.svg
-var Local_cafe ora.SVG
+var Local_cafe core.SVG
 
 //go:embed local_car_wash.svg
-var Local_car_wash ora.SVG
+var Local_car_wash core.SVG
 
 //go:embed local_convenience_store.svg
-var Local_convenience_store ora.SVG
+var Local_convenience_store core.SVG
 
 //go:embed local_dining.svg
-var Local_dining ora.SVG
+var Local_dining core.SVG
 
 //go:embed local_drink.svg
-var Local_drink ora.SVG
+var Local_drink core.SVG
 
 //go:embed local_fire_department.svg
-var Local_fire_department ora.SVG
+var Local_fire_department core.SVG
 
 //go:embed local_florist.svg
-var Local_florist ora.SVG
+var Local_florist core.SVG
 
 //go:embed local_gas_station.svg
-var Local_gas_station ora.SVG
+var Local_gas_station core.SVG
 
 //go:embed local_grocery_store.svg
-var Local_grocery_store ora.SVG
+var Local_grocery_store core.SVG
 
 //go:embed local_hospital.svg
-var Local_hospital ora.SVG
+var Local_hospital core.SVG
 
 //go:embed local_hotel.svg
-var Local_hotel ora.SVG
+var Local_hotel core.SVG
 
 //go:embed local_laundry_service.svg
-var Local_laundry_service ora.SVG
+var Local_laundry_service core.SVG
 
 //go:embed local_library.svg
-var Local_library ora.SVG
+var Local_library core.SVG
 
 //go:embed local_mall.svg
-var Local_mall ora.SVG
+var Local_mall core.SVG
 
 //go:embed local_movies.svg
-var Local_movies ora.SVG
+var Local_movies core.SVG
 
 //go:embed local_offer.svg
-var Local_offer ora.SVG
+var Local_offer core.SVG
 
 //go:embed local_parking.svg
-var Local_parking ora.SVG
+var Local_parking core.SVG
 
 //go:embed local_pharmacy.svg
-var Local_pharmacy ora.SVG
+var Local_pharmacy core.SVG
 
 //go:embed local_phone.svg
-var Local_phone ora.SVG
+var Local_phone core.SVG
 
 //go:embed local_pizza.svg
-var Local_pizza ora.SVG
+var Local_pizza core.SVG
 
 //go:embed local_play.svg
-var Local_play ora.SVG
+var Local_play core.SVG
 
 //go:embed local_police.svg
-var Local_police ora.SVG
+var Local_police core.SVG
 
 //go:embed local_post_office.svg
-var Local_post_office ora.SVG
+var Local_post_office core.SVG
 
 //go:embed local_printshop.svg
-var Local_printshop ora.SVG
+var Local_printshop core.SVG
 
 //go:embed local_see.svg
-var Local_see ora.SVG
+var Local_see core.SVG
 
 //go:embed local_shipping.svg
-var Local_shipping ora.SVG
+var Local_shipping core.SVG
 
 //go:embed local_taxi.svg
-var Local_taxi ora.SVG
+var Local_taxi core.SVG
 
 //go:embed location_city.svg
-var Location_city ora.SVG
+var Location_city core.SVG
 
 //go:embed location_disabled.svg
-var Location_disabled ora.SVG
+var Location_disabled core.SVG
 
 //go:embed location_off.svg
-var Location_off ora.SVG
+var Location_off core.SVG
 
 //go:embed location_on.svg
-var Location_on ora.SVG
+var Location_on core.SVG
 
 //go:embed location_searching.svg
-var Location_searching ora.SVG
+var Location_searching core.SVG
 
 //go:embed lock.svg
-var Lock ora.SVG
+var Lock core.SVG
 
 //go:embed lock_clock.svg
-var Lock_clock ora.SVG
+var Lock_clock core.SVG
 
 //go:embed lock_open.svg
-var Lock_open ora.SVG
+var Lock_open core.SVG
 
 //go:embed lock_person.svg
-var Lock_person ora.SVG
+var Lock_person core.SVG
 
 //go:embed lock_reset.svg
-var Lock_reset ora.SVG
+var Lock_reset core.SVG
 
 //go:embed login.svg
-var Login ora.SVG
+var Login core.SVG
 
 //go:embed logo_dev.svg
-var Logo_dev ora.SVG
+var Logo_dev core.SVG
 
 //go:embed logout.svg
-var Logout ora.SVG
+var Logout core.SVG
 
 //go:embed looks.svg
-var Looks ora.SVG
+var Looks core.SVG
 
 //go:embed looks_3.svg
-var Looks_3 ora.SVG
+var Looks_3 core.SVG
 
 //go:embed looks_4.svg
-var Looks_4 ora.SVG
+var Looks_4 core.SVG
 
 //go:embed looks_5.svg
-var Looks_5 ora.SVG
+var Looks_5 core.SVG
 
 //go:embed looks_6.svg
-var Looks_6 ora.SVG
+var Looks_6 core.SVG
 
 //go:embed looks_one.svg
-var Looks_one ora.SVG
+var Looks_one core.SVG
 
 //go:embed looks_two.svg
-var Looks_two ora.SVG
+var Looks_two core.SVG
 
 //go:embed loop.svg
-var Loop ora.SVG
+var Loop core.SVG
 
 //go:embed loupe.svg
-var Loupe ora.SVG
+var Loupe core.SVG
 
 //go:embed low_priority.svg
-var Low_priority ora.SVG
+var Low_priority core.SVG
 
 //go:embed loyalty.svg
-var Loyalty ora.SVG
+var Loyalty core.SVG
 
 //go:embed lte_mobiledata.svg
-var Lte_mobiledata ora.SVG
+var Lte_mobiledata core.SVG
 
 //go:embed lte_plus_mobiledata.svg
-var Lte_plus_mobiledata ora.SVG
+var Lte_plus_mobiledata core.SVG
 
 //go:embed luggage.svg
-var Luggage ora.SVG
+var Luggage core.SVG
 
 //go:embed lunch_dining.svg
-var Lunch_dining ora.SVG
+var Lunch_dining core.SVG
 
 //go:embed lyrics.svg
-var Lyrics ora.SVG
+var Lyrics core.SVG
 
 //go:embed macro_off.svg
-var Macro_off ora.SVG
+var Macro_off core.SVG
 
 //go:embed mail.svg
-var Mail ora.SVG
+var Mail core.SVG
 
 //go:embed mail_lock.svg
-var Mail_lock ora.SVG
+var Mail_lock core.SVG
 
 //go:embed mail_outline.svg
-var Mail_outline ora.SVG
+var Mail_outline core.SVG
 
 //go:embed male.svg
-var Male ora.SVG
+var Male core.SVG
 
 //go:embed man.svg
-var Man ora.SVG
+var Man core.SVG
 
 //go:embed man_2.svg
-var Man_2 ora.SVG
+var Man_2 core.SVG
 
 //go:embed man_3.svg
-var Man_3 ora.SVG
+var Man_3 core.SVG
 
 //go:embed man_4.svg
-var Man_4 ora.SVG
+var Man_4 core.SVG
 
 //go:embed manage_accounts.svg
-var Manage_accounts ora.SVG
+var Manage_accounts core.SVG
 
 //go:embed manage_history.svg
-var Manage_history ora.SVG
+var Manage_history core.SVG
 
 //go:embed manage_search.svg
-var Manage_search ora.SVG
+var Manage_search core.SVG
 
 //go:embed map.svg
-var Map ora.SVG
+var Map core.SVG
 
 //go:embed maps_home_work.svg
-var Maps_home_work ora.SVG
+var Maps_home_work core.SVG
 
 //go:embed maps_ugc.svg
-var Maps_ugc ora.SVG
+var Maps_ugc core.SVG
 
 //go:embed margin.svg
-var Margin ora.SVG
+var Margin core.SVG
 
 //go:embed mark_as_unread.svg
-var Mark_as_unread ora.SVG
+var Mark_as_unread core.SVG
 
 //go:embed mark_chat_read.svg
-var Mark_chat_read ora.SVG
+var Mark_chat_read core.SVG
 
 //go:embed mark_chat_unread.svg
-var Mark_chat_unread ora.SVG
+var Mark_chat_unread core.SVG
 
 //go:embed mark_email_read.svg
-var Mark_email_read ora.SVG
+var Mark_email_read core.SVG
 
 //go:embed mark_email_unread.svg
-var Mark_email_unread ora.SVG
+var Mark_email_unread core.SVG
 
 //go:embed mark_unread_chat_alt.svg
-var Mark_unread_chat_alt ora.SVG
+var Mark_unread_chat_alt core.SVG
 
 //go:embed markunread.svg
-var Markunread ora.SVG
+var Markunread core.SVG
 
 //go:embed markunread_mailbox.svg
-var Markunread_mailbox ora.SVG
+var Markunread_mailbox core.SVG
 
 //go:embed masks.svg
-var Masks ora.SVG
+var Masks core.SVG
 
 //go:embed maximize.svg
-var Maximize ora.SVG
+var Maximize core.SVG
 
 //go:embed media_bluetooth_off.svg
-var Media_bluetooth_off ora.SVG
+var Media_bluetooth_off core.SVG
 
 //go:embed media_bluetooth_on.svg
-var Media_bluetooth_on ora.SVG
+var Media_bluetooth_on core.SVG
 
 //go:embed mediation.svg
-var Mediation ora.SVG
+var Mediation core.SVG
 
 //go:embed medical_information.svg
-var Medical_information ora.SVG
+var Medical_information core.SVG
 
 //go:embed medical_services.svg
-var Medical_services ora.SVG
+var Medical_services core.SVG
 
 //go:embed medication.svg
-var Medication ora.SVG
+var Medication core.SVG
 
 //go:embed medication_liquid.svg
-var Medication_liquid ora.SVG
+var Medication_liquid core.SVG
 
 //go:embed meeting_room.svg
-var Meeting_room ora.SVG
+var Meeting_room core.SVG
 
 //go:embed memory.svg
-var Memory ora.SVG
+var Memory core.SVG
 
 //go:embed menu.svg
-var Menu ora.SVG
+var Menu core.SVG
 
 //go:embed menu_book.svg
-var Menu_book ora.SVG
+var Menu_book core.SVG
 
 //go:embed menu_open.svg
-var Menu_open ora.SVG
+var Menu_open core.SVG
 
 //go:embed merge.svg
-var Merge ora.SVG
+var Merge core.SVG
 
 //go:embed merge_type.svg
-var Merge_type ora.SVG
+var Merge_type core.SVG
 
 //go:embed message.svg
-var Message ora.SVG
+var Message core.SVG
 
 //go:embed mic.svg
-var Mic ora.SVG
+var Mic core.SVG
 
 //go:embed mic_external_off.svg
-var Mic_external_off ora.SVG
+var Mic_external_off core.SVG
 
 //go:embed mic_external_on.svg
-var Mic_external_on ora.SVG
+var Mic_external_on core.SVG
 
 //go:embed mic_none.svg
-var Mic_none ora.SVG
+var Mic_none core.SVG
 
 //go:embed mic_off.svg
-var Mic_off ora.SVG
+var Mic_off core.SVG
 
 //go:embed microwave.svg
-var Microwave ora.SVG
+var Microwave core.SVG
 
 //go:embed military_tech.svg
-var Military_tech ora.SVG
+var Military_tech core.SVG
 
 //go:embed minimize.svg
-var Minimize ora.SVG
+var Minimize core.SVG
 
 //go:embed minor_crash.svg
-var Minor_crash ora.SVG
+var Minor_crash core.SVG
 
 //go:embed miscellaneous_services.svg
-var Miscellaneous_services ora.SVG
+var Miscellaneous_services core.SVG
 
 //go:embed missed_video_call.svg
-var Missed_video_call ora.SVG
+var Missed_video_call core.SVG
 
 //go:embed mms.svg
-var Mms ora.SVG
+var Mms core.SVG
 
 //go:embed mobile_friendly.svg
-var Mobile_friendly ora.SVG
+var Mobile_friendly core.SVG
 
 //go:embed mobile_off.svg
-var Mobile_off ora.SVG
+var Mobile_off core.SVG
 
 //go:embed mobile_screen_share.svg
-var Mobile_screen_share ora.SVG
+var Mobile_screen_share core.SVG
 
 //go:embed mobiledata_off.svg
-var Mobiledata_off ora.SVG
+var Mobiledata_off core.SVG
 
 //go:embed mode.svg
-var Mode ora.SVG
+var Mode core.SVG
 
 //go:embed mode_comment.svg
-var Mode_comment ora.SVG
+var Mode_comment core.SVG
 
 //go:embed mode_edit.svg
-var Mode_edit ora.SVG
+var Mode_edit core.SVG
 
 //go:embed mode_edit_outline.svg
-var Mode_edit_outline ora.SVG
+var Mode_edit_outline core.SVG
 
 //go:embed mode_fan_off.svg
-var Mode_fan_off ora.SVG
+var Mode_fan_off core.SVG
 
 //go:embed mode_night.svg
-var Mode_night ora.SVG
+var Mode_night core.SVG
 
 //go:embed mode_of_travel.svg
-var Mode_of_travel ora.SVG
+var Mode_of_travel core.SVG
 
 //go:embed mode_standby.svg
-var Mode_standby ora.SVG
+var Mode_standby core.SVG
 
 //go:embed model_training.svg
-var Model_training ora.SVG
+var Model_training core.SVG
 
 //go:embed monetization_on.svg
-var Monetization_on ora.SVG
+var Monetization_on core.SVG
 
 //go:embed money.svg
-var Money ora.SVG
+var Money core.SVG
 
 //go:embed money_off.svg
-var Money_off ora.SVG
+var Money_off core.SVG
 
 //go:embed money_off_csred.svg
-var Money_off_csred ora.SVG
+var Money_off_csred core.SVG
 
 //go:embed monitor.svg
-var Monitor ora.SVG
+var Monitor core.SVG
 
 //go:embed monitor_heart.svg
-var Monitor_heart ora.SVG
+var Monitor_heart core.SVG
 
 //go:embed monitor_weight.svg
-var Monitor_weight ora.SVG
+var Monitor_weight core.SVG
 
 //go:embed monochrome_photos.svg
-var Monochrome_photos ora.SVG
+var Monochrome_photos core.SVG
 
 //go:embed mood.svg
-var Mood ora.SVG
+var Mood core.SVG
 
 //go:embed mood_bad.svg
-var Mood_bad ora.SVG
+var Mood_bad core.SVG
 
 //go:embed moped.svg
-var Moped ora.SVG
+var Moped core.SVG
 
 //go:embed more.svg
-var More ora.SVG
+var More core.SVG
 
 //go:embed more_horiz.svg
-var More_horiz ora.SVG
+var More_horiz core.SVG
 
 //go:embed more_time.svg
-var More_time ora.SVG
+var More_time core.SVG
 
 //go:embed more_vert.svg
-var More_vert ora.SVG
+var More_vert core.SVG
 
 //go:embed mosque.svg
-var Mosque ora.SVG
+var Mosque core.SVG
 
 //go:embed motion_photos_auto.svg
-var Motion_photos_auto ora.SVG
+var Motion_photos_auto core.SVG
 
 //go:embed motion_photos_off.svg
-var Motion_photos_off ora.SVG
+var Motion_photos_off core.SVG
 
 //go:embed motion_photos_on.svg
-var Motion_photos_on ora.SVG
+var Motion_photos_on core.SVG
 
 //go:embed motion_photos_pause.svg
-var Motion_photos_pause ora.SVG
+var Motion_photos_pause core.SVG
 
 //go:embed motion_photos_paused.svg
-var Motion_photos_paused ora.SVG
+var Motion_photos_paused core.SVG
 
 //go:embed mouse.svg
-var Mouse ora.SVG
+var Mouse core.SVG
 
 //go:embed move_down.svg
-var Move_down ora.SVG
+var Move_down core.SVG
 
 //go:embed move_to_inbox.svg
-var Move_to_inbox ora.SVG
+var Move_to_inbox core.SVG
 
 //go:embed move_up.svg
-var Move_up ora.SVG
+var Move_up core.SVG
 
 //go:embed movie.svg
-var Movie ora.SVG
+var Movie core.SVG
 
 //go:embed movie_creation.svg
-var Movie_creation ora.SVG
+var Movie_creation core.SVG
 
 //go:embed movie_filter.svg
-var Movie_filter ora.SVG
+var Movie_filter core.SVG
 
 //go:embed moving.svg
-var Moving ora.SVG
+var Moving core.SVG
 
 //go:embed mp.svg
-var Mp ora.SVG
+var Mp core.SVG
 
 //go:embed multiline_chart.svg
-var Multiline_chart ora.SVG
+var Multiline_chart core.SVG
 
 //go:embed multiple_stop.svg
-var Multiple_stop ora.SVG
+var Multiple_stop core.SVG
 
 //go:embed museum.svg
-var Museum ora.SVG
+var Museum core.SVG
 
 //go:embed music_note.svg
-var Music_note ora.SVG
+var Music_note core.SVG
 
 //go:embed music_off.svg
-var Music_off ora.SVG
+var Music_off core.SVG
 
 //go:embed music_video.svg
-var Music_video ora.SVG
+var Music_video core.SVG
 
 //go:embed my_location.svg
-var My_location ora.SVG
+var My_location core.SVG
 
 //go:embed nat.svg
-var Nat ora.SVG
+var Nat core.SVG
 
 //go:embed nature.svg
-var Nature ora.SVG
+var Nature core.SVG
 
 //go:embed nature_people.svg
-var Nature_people ora.SVG
+var Nature_people core.SVG
 
 //go:embed navigate_before.svg
-var Navigate_before ora.SVG
+var Navigate_before core.SVG
 
 //go:embed navigate_next.svg
-var Navigate_next ora.SVG
+var Navigate_next core.SVG
 
 //go:embed navigation.svg
-var Navigation ora.SVG
+var Navigation core.SVG
 
 //go:embed near_me.svg
-var Near_me ora.SVG
+var Near_me core.SVG
 
 //go:embed near_me_disabled.svg
-var Near_me_disabled ora.SVG
+var Near_me_disabled core.SVG
 
 //go:embed nearby_error.svg
-var Nearby_error ora.SVG
+var Nearby_error core.SVG
 
 //go:embed nearby_off.svg
-var Nearby_off ora.SVG
+var Nearby_off core.SVG
 
 //go:embed nest_cam_wired_stand.svg
-var Nest_cam_wired_stand ora.SVG
+var Nest_cam_wired_stand core.SVG
 
 //go:embed network_cell.svg
-var Network_cell ora.SVG
+var Network_cell core.SVG
 
 //go:embed network_check.svg
-var Network_check ora.SVG
+var Network_check core.SVG
 
 //go:embed network_locked.svg
-var Network_locked ora.SVG
+var Network_locked core.SVG
 
 //go:embed network_ping.svg
-var Network_ping ora.SVG
+var Network_ping core.SVG
 
 //go:embed network_wifi.svg
-var Network_wifi ora.SVG
+var Network_wifi core.SVG
 
 //go:embed network_wifi_1_bar.svg
-var Network_wifi_1_bar ora.SVG
+var Network_wifi_1_bar core.SVG
 
 //go:embed network_wifi_2_bar.svg
-var Network_wifi_2_bar ora.SVG
+var Network_wifi_2_bar core.SVG
 
 //go:embed network_wifi_3_bar.svg
-var Network_wifi_3_bar ora.SVG
+var Network_wifi_3_bar core.SVG
 
 //go:embed new_label.svg
-var New_label ora.SVG
+var New_label core.SVG
 
 //go:embed new_releases.svg
-var New_releases ora.SVG
+var New_releases core.SVG
 
 //go:embed newspaper.svg
-var Newspaper ora.SVG
+var Newspaper core.SVG
 
 //go:embed next_plan.svg
-var Next_plan ora.SVG
+var Next_plan core.SVG
 
 //go:embed next_week.svg
-var Next_week ora.SVG
+var Next_week core.SVG
 
 //go:embed nfc.svg
-var Nfc ora.SVG
+var Nfc core.SVG
 
 //go:embed night_shelter.svg
-var Night_shelter ora.SVG
+var Night_shelter core.SVG
 
 //go:embed nightlife.svg
-var Nightlife ora.SVG
+var Nightlife core.SVG
 
 //go:embed nightlight.svg
-var Nightlight ora.SVG
+var Nightlight core.SVG
 
 //go:embed nightlight_round.svg
-var Nightlight_round ora.SVG
+var Nightlight_round core.SVG
 
 //go:embed nights_stay.svg
-var Nights_stay ora.SVG
+var Nights_stay core.SVG
 
 //go:embed no_accounts.svg
-var No_accounts ora.SVG
+var No_accounts core.SVG
 
 //go:embed no_adult_content.svg
-var No_adult_content ora.SVG
+var No_adult_content core.SVG
 
 //go:embed no_backpack.svg
-var No_backpack ora.SVG
+var No_backpack core.SVG
 
 //go:embed no_cell.svg
-var No_cell ora.SVG
+var No_cell core.SVG
 
 //go:embed no_crash.svg
-var No_crash ora.SVG
+var No_crash core.SVG
 
 //go:embed no_drinks.svg
-var No_drinks ora.SVG
+var No_drinks core.SVG
 
 //go:embed no_encryption.svg
-var No_encryption ora.SVG
+var No_encryption core.SVG
 
 //go:embed no_encryption_gmailerrorred.svg
-var No_encryption_gmailerrorred ora.SVG
+var No_encryption_gmailerrorred core.SVG
 
 //go:embed no_flash.svg
-var No_flash ora.SVG
+var No_flash core.SVG
 
 //go:embed no_food.svg
-var No_food ora.SVG
+var No_food core.SVG
 
 //go:embed no_luggage.svg
-var No_luggage ora.SVG
+var No_luggage core.SVG
 
 //go:embed no_meals.svg
-var No_meals ora.SVG
+var No_meals core.SVG
 
 //go:embed no_meeting_room.svg
-var No_meeting_room ora.SVG
+var No_meeting_room core.SVG
 
 //go:embed no_photography.svg
-var No_photography ora.SVG
+var No_photography core.SVG
 
 //go:embed no_sim.svg
-var No_sim ora.SVG
+var No_sim core.SVG
 
 //go:embed no_stroller.svg
-var No_stroller ora.SVG
+var No_stroller core.SVG
 
 //go:embed no_transfer.svg
-var No_transfer ora.SVG
+var No_transfer core.SVG
 
 //go:embed noise_aware.svg
-var Noise_aware ora.SVG
+var Noise_aware core.SVG
 
 //go:embed noise_control_off.svg
-var Noise_control_off ora.SVG
+var Noise_control_off core.SVG
 
 //go:embed nordic_walking.svg
-var Nordic_walking ora.SVG
+var Nordic_walking core.SVG
 
 //go:embed north.svg
-var North ora.SVG
+var North core.SVG
 
 //go:embed north_east.svg
-var North_east ora.SVG
+var North_east core.SVG
 
 //go:embed north_west.svg
-var North_west ora.SVG
+var North_west core.SVG
 
 //go:embed not_accessible.svg
-var Not_accessible ora.SVG
+var Not_accessible core.SVG
 
 //go:embed not_interested.svg
-var Not_interested ora.SVG
+var Not_interested core.SVG
 
 //go:embed not_listed_location.svg
-var Not_listed_location ora.SVG
+var Not_listed_location core.SVG
 
 //go:embed not_started.svg
-var Not_started ora.SVG
+var Not_started core.SVG
 
 //go:embed note.svg
-var Note ora.SVG
+var Note core.SVG
 
 //go:embed note_add.svg
-var Note_add ora.SVG
+var Note_add core.SVG
 
 //go:embed note_alt.svg
-var Note_alt ora.SVG
+var Note_alt core.SVG
 
 //go:embed notes.svg
-var Notes ora.SVG
+var Notes core.SVG
 
 //go:embed notification_add.svg
-var Notification_add ora.SVG
+var Notification_add core.SVG
 
 //go:embed notification_important.svg
-var Notification_important ora.SVG
+var Notification_important core.SVG
 
 //go:embed notifications.svg
-var Notifications ora.SVG
+var Notifications core.SVG
 
 //go:embed notifications_active.svg
-var Notifications_active ora.SVG
+var Notifications_active core.SVG
 
 //go:embed notifications_none.svg
-var Notifications_none ora.SVG
+var Notifications_none core.SVG
 
 //go:embed notifications_off.svg
-var Notifications_off ora.SVG
+var Notifications_off core.SVG
 
 //go:embed notifications_paused.svg
-var Notifications_paused ora.SVG
+var Notifications_paused core.SVG
 
 //go:embed numbers.svg
-var Numbers ora.SVG
+var Numbers core.SVG
 
 //go:embed offline_bolt.svg
-var Offline_bolt ora.SVG
+var Offline_bolt core.SVG
 
 //go:embed offline_pin.svg
-var Offline_pin ora.SVG
+var Offline_pin core.SVG
 
 //go:embed offline_share.svg
-var Offline_share ora.SVG
+var Offline_share core.SVG
 
 //go:embed oil_barrel.svg
-var Oil_barrel ora.SVG
+var Oil_barrel core.SVG
 
 //go:embed on_device_training.svg
-var On_device_training ora.SVG
+var On_device_training core.SVG
 
 //go:embed ondemand_video.svg
-var Ondemand_video ora.SVG
+var Ondemand_video core.SVG
 
 //go:embed online_prediction.svg
-var Online_prediction ora.SVG
+var Online_prediction core.SVG
 
 //go:embed opacity.svg
-var Opacity ora.SVG
+var Opacity core.SVG
 
 //go:embed open_in_browser.svg
-var Open_in_browser ora.SVG
+var Open_in_browser core.SVG
 
 //go:embed open_in_full.svg
-var Open_in_full ora.SVG
+var Open_in_full core.SVG
 
 //go:embed open_in_new.svg
-var Open_in_new ora.SVG
+var Open_in_new core.SVG
 
 //go:embed open_in_new_off.svg
-var Open_in_new_off ora.SVG
+var Open_in_new_off core.SVG
 
 //go:embed open_with.svg
-var Open_with ora.SVG
+var Open_with core.SVG
 
 //go:embed other_houses.svg
-var Other_houses ora.SVG
+var Other_houses core.SVG
 
 //go:embed outbound.svg
-var Outbound ora.SVG
+var Outbound core.SVG
 
 //go:embed outbox.svg
-var Outbox ora.SVG
+var Outbox core.SVG
 
 //go:embed outdoor_grill.svg
-var Outdoor_grill ora.SVG
+var Outdoor_grill core.SVG
 
 //go:embed outlet.svg
-var Outlet ora.SVG
+var Outlet core.SVG
 
 //go:embed outlined_flag.svg
-var Outlined_flag ora.SVG
+var Outlined_flag core.SVG
 
 //go:embed output.svg
-var Output ora.SVG
+var Output core.SVG
 
 //go:embed padding.svg
-var Padding ora.SVG
+var Padding core.SVG
 
 //go:embed pages.svg
-var Pages ora.SVG
+var Pages core.SVG
 
 //go:embed pageview.svg
-var Pageview ora.SVG
+var Pageview core.SVG
 
 //go:embed paid.svg
-var Paid ora.SVG
+var Paid core.SVG
 
 //go:embed palette.svg
-var Palette ora.SVG
+var Palette core.SVG
 
 //go:embed pan_tool.svg
-var Pan_tool ora.SVG
+var Pan_tool core.SVG
 
 //go:embed pan_tool_alt.svg
-var Pan_tool_alt ora.SVG
+var Pan_tool_alt core.SVG
 
 //go:embed panorama.svg
-var Panorama ora.SVG
+var Panorama core.SVG
 
 //go:embed panorama_fish_eye.svg
-var Panorama_fish_eye ora.SVG
+var Panorama_fish_eye core.SVG
 
 //go:embed panorama_horizontal.svg
-var Panorama_horizontal ora.SVG
+var Panorama_horizontal core.SVG
 
 //go:embed panorama_horizontal_select.svg
-var Panorama_horizontal_select ora.SVG
+var Panorama_horizontal_select core.SVG
 
 //go:embed panorama_photosphere.svg
-var Panorama_photosphere ora.SVG
+var Panorama_photosphere core.SVG
 
 //go:embed panorama_photosphere_select.svg
-var Panorama_photosphere_select ora.SVG
+var Panorama_photosphere_select core.SVG
 
 //go:embed panorama_vertical.svg
-var Panorama_vertical ora.SVG
+var Panorama_vertical core.SVG
 
 //go:embed panorama_vertical_select.svg
-var Panorama_vertical_select ora.SVG
+var Panorama_vertical_select core.SVG
 
 //go:embed panorama_wide_angle.svg
-var Panorama_wide_angle ora.SVG
+var Panorama_wide_angle core.SVG
 
 //go:embed panorama_wide_angle_select.svg
-var Panorama_wide_angle_select ora.SVG
+var Panorama_wide_angle_select core.SVG
 
 //go:embed paragliding.svg
-var Paragliding ora.SVG
+var Paragliding core.SVG
 
 //go:embed park.svg
-var Park ora.SVG
+var Park core.SVG
 
 //go:embed party_mode.svg
-var Party_mode ora.SVG
+var Party_mode core.SVG
 
 //go:embed password.svg
-var Password ora.SVG
+var Password core.SVG
 
 //go:embed pattern.svg
-var Pattern ora.SVG
+var Pattern core.SVG
 
 //go:embed pause.svg
-var Pause ora.SVG
+var Pause core.SVG
 
 //go:embed pause_circle.svg
-var Pause_circle ora.SVG
+var Pause_circle core.SVG
 
 //go:embed pause_circle_filled.svg
-var Pause_circle_filled ora.SVG
+var Pause_circle_filled core.SVG
 
 //go:embed pause_circle_outline.svg
-var Pause_circle_outline ora.SVG
+var Pause_circle_outline core.SVG
 
 //go:embed pause_presentation.svg
-var Pause_presentation ora.SVG
+var Pause_presentation core.SVG
 
 //go:embed payment.svg
-var Payment ora.SVG
+var Payment core.SVG
 
 //go:embed payments.svg
-var Payments ora.SVG
+var Payments core.SVG
 
 //go:embed pedal_bike.svg
-var Pedal_bike ora.SVG
+var Pedal_bike core.SVG
 
 //go:embed pending.svg
-var Pending ora.SVG
+var Pending core.SVG
 
 //go:embed pending_actions.svg
-var Pending_actions ora.SVG
+var Pending_actions core.SVG
 
 //go:embed pentagon.svg
-var Pentagon ora.SVG
+var Pentagon core.SVG
 
 //go:embed people.svg
-var People ora.SVG
+var People core.SVG
 
 //go:embed people_alt.svg
-var People_alt ora.SVG
+var People_alt core.SVG
 
 //go:embed people_outline.svg
-var People_outline ora.SVG
+var People_outline core.SVG
 
 //go:embed percent.svg
-var Percent ora.SVG
+var Percent core.SVG
 
 //go:embed perm_camera_mic.svg
-var Perm_camera_mic ora.SVG
+var Perm_camera_mic core.SVG
 
 //go:embed perm_contact_calendar.svg
-var Perm_contact_calendar ora.SVG
+var Perm_contact_calendar core.SVG
 
 //go:embed perm_data_setting.svg
-var Perm_data_setting ora.SVG
+var Perm_data_setting core.SVG
 
 //go:embed perm_device_information.svg
-var Perm_device_information ora.SVG
+var Perm_device_information core.SVG
 
 //go:embed perm_identity.svg
-var Perm_identity ora.SVG
+var Perm_identity core.SVG
 
 //go:embed perm_media.svg
-var Perm_media ora.SVG
+var Perm_media core.SVG
 
 //go:embed perm_phone_msg.svg
-var Perm_phone_msg ora.SVG
+var Perm_phone_msg core.SVG
 
 //go:embed perm_scan_wifi.svg
-var Perm_scan_wifi ora.SVG
+var Perm_scan_wifi core.SVG
 
 //go:embed person.svg
-var Person ora.SVG
+var Person core.SVG
 
 //go:embed person_2.svg
-var Person_2 ora.SVG
+var Person_2 core.SVG
 
 //go:embed person_3.svg
-var Person_3 ora.SVG
+var Person_3 core.SVG
 
 //go:embed person_4.svg
-var Person_4 ora.SVG
+var Person_4 core.SVG
 
 //go:embed person_add.svg
-var Person_add ora.SVG
+var Person_add core.SVG
 
 //go:embed person_add_alt.svg
-var Person_add_alt ora.SVG
+var Person_add_alt core.SVG
 
 //go:embed person_add_alt_1.svg
-var Person_add_alt_1 ora.SVG
+var Person_add_alt_1 core.SVG
 
 //go:embed person_add_disabled.svg
-var Person_add_disabled ora.SVG
+var Person_add_disabled core.SVG
 
 //go:embed person_off.svg
-var Person_off ora.SVG
+var Person_off core.SVG
 
 //go:embed person_outline.svg
-var Person_outline ora.SVG
+var Person_outline core.SVG
 
 //go:embed person_pin.svg
-var Person_pin ora.SVG
+var Person_pin core.SVG
 
 //go:embed person_pin_circle.svg
-var Person_pin_circle ora.SVG
+var Person_pin_circle core.SVG
 
 //go:embed person_remove.svg
-var Person_remove ora.SVG
+var Person_remove core.SVG
 
 //go:embed person_remove_alt_1.svg
-var Person_remove_alt_1 ora.SVG
+var Person_remove_alt_1 core.SVG
 
 //go:embed person_search.svg
-var Person_search ora.SVG
+var Person_search core.SVG
 
 //go:embed personal_injury.svg
-var Personal_injury ora.SVG
+var Personal_injury core.SVG
 
 //go:embed personal_video.svg
-var Personal_video ora.SVG
+var Personal_video core.SVG
 
 //go:embed pest_control.svg
-var Pest_control ora.SVG
+var Pest_control core.SVG
 
 //go:embed pest_control_rodent.svg
-var Pest_control_rodent ora.SVG
+var Pest_control_rodent core.SVG
 
 //go:embed pets.svg
-var Pets ora.SVG
+var Pets core.SVG
 
 //go:embed phishing.svg
-var Phishing ora.SVG
+var Phishing core.SVG
 
 //go:embed phone.svg
-var Phone ora.SVG
+var Phone core.SVG
 
 //go:embed phone_android.svg
-var Phone_android ora.SVG
+var Phone_android core.SVG
 
 //go:embed phone_bluetooth_speaker.svg
-var Phone_bluetooth_speaker ora.SVG
+var Phone_bluetooth_speaker core.SVG
 
 //go:embed phone_callback.svg
-var Phone_callback ora.SVG
+var Phone_callback core.SVG
 
 //go:embed phone_disabled.svg
-var Phone_disabled ora.SVG
+var Phone_disabled core.SVG
 
 //go:embed phone_enabled.svg
-var Phone_enabled ora.SVG
+var Phone_enabled core.SVG
 
 //go:embed phone_forwarded.svg
-var Phone_forwarded ora.SVG
+var Phone_forwarded core.SVG
 
 //go:embed phone_iphone.svg
-var Phone_iphone ora.SVG
+var Phone_iphone core.SVG
 
 //go:embed phone_locked.svg
-var Phone_locked ora.SVG
+var Phone_locked core.SVG
 
 //go:embed phone_missed.svg
-var Phone_missed ora.SVG
+var Phone_missed core.SVG
 
 //go:embed phone_paused.svg
-var Phone_paused ora.SVG
+var Phone_paused core.SVG
 
 //go:embed phonelink.svg
-var Phonelink ora.SVG
+var Phonelink core.SVG
 
 //go:embed phonelink_erase.svg
-var Phonelink_erase ora.SVG
+var Phonelink_erase core.SVG
 
 //go:embed phonelink_lock.svg
-var Phonelink_lock ora.SVG
+var Phonelink_lock core.SVG
 
 //go:embed phonelink_off.svg
-var Phonelink_off ora.SVG
+var Phonelink_off core.SVG
 
 //go:embed phonelink_ring.svg
-var Phonelink_ring ora.SVG
+var Phonelink_ring core.SVG
 
 //go:embed phonelink_setup.svg
-var Phonelink_setup ora.SVG
+var Phonelink_setup core.SVG
 
 //go:embed photo.svg
-var Photo ora.SVG
+var Photo core.SVG
 
 //go:embed photo_album.svg
-var Photo_album ora.SVG
+var Photo_album core.SVG
 
 //go:embed photo_camera.svg
-var Photo_camera ora.SVG
+var Photo_camera core.SVG
 
 //go:embed photo_camera_back.svg
-var Photo_camera_back ora.SVG
+var Photo_camera_back core.SVG
 
 //go:embed photo_camera_front.svg
-var Photo_camera_front ora.SVG
+var Photo_camera_front core.SVG
 
 //go:embed photo_filter.svg
-var Photo_filter ora.SVG
+var Photo_filter core.SVG
 
 //go:embed photo_library.svg
-var Photo_library ora.SVG
+var Photo_library core.SVG
 
 //go:embed photo_size_select_actual.svg
-var Photo_size_select_actual ora.SVG
+var Photo_size_select_actual core.SVG
 
 //go:embed photo_size_select_large.svg
-var Photo_size_select_large ora.SVG
+var Photo_size_select_large core.SVG
 
 //go:embed photo_size_select_small.svg
-var Photo_size_select_small ora.SVG
+var Photo_size_select_small core.SVG
 
 //go:embed php.svg
-var Php ora.SVG
+var Php core.SVG
 
 //go:embed piano.svg
-var Piano ora.SVG
+var Piano core.SVG
 
 //go:embed piano_off.svg
-var Piano_off ora.SVG
+var Piano_off core.SVG
 
 //go:embed picture_as_pdf.svg
-var Picture_as_pdf ora.SVG
+var Picture_as_pdf core.SVG
 
 //go:embed picture_in_picture.svg
-var Picture_in_picture ora.SVG
+var Picture_in_picture core.SVG
 
 //go:embed picture_in_picture_alt.svg
-var Picture_in_picture_alt ora.SVG
+var Picture_in_picture_alt core.SVG
 
 //go:embed pie_chart.svg
-var Pie_chart ora.SVG
+var Pie_chart core.SVG
 
 //go:embed pie_chart_outline.svg
-var Pie_chart_outline ora.SVG
+var Pie_chart_outline core.SVG
 
 //go:embed pin.svg
-var Pin ora.SVG
+var Pin core.SVG
 
 //go:embed pin_drop.svg
-var Pin_drop ora.SVG
+var Pin_drop core.SVG
 
 //go:embed pin_end.svg
-var Pin_end ora.SVG
+var Pin_end core.SVG
 
 //go:embed pin_invoke.svg
-var Pin_invoke ora.SVG
+var Pin_invoke core.SVG
 
 //go:embed pinch.svg
-var Pinch ora.SVG
+var Pinch core.SVG
 
 //go:embed pivot_table_chart.svg
-var Pivot_table_chart ora.SVG
+var Pivot_table_chart core.SVG
 
 //go:embed pix.svg
-var Pix ora.SVG
+var Pix core.SVG
 
 //go:embed place.svg
-var Place ora.SVG
+var Place core.SVG
 
 //go:embed plagiarism.svg
-var Plagiarism ora.SVG
+var Plagiarism core.SVG
 
 //go:embed play_arrow.svg
-var Play_arrow ora.SVG
+var Play_arrow core.SVG
 
 //go:embed play_circle.svg
-var Play_circle ora.SVG
+var Play_circle core.SVG
 
 //go:embed play_circle_filled.svg
-var Play_circle_filled ora.SVG
+var Play_circle_filled core.SVG
 
 //go:embed play_circle_outline.svg
-var Play_circle_outline ora.SVG
+var Play_circle_outline core.SVG
 
 //go:embed play_disabled.svg
-var Play_disabled ora.SVG
+var Play_disabled core.SVG
 
 //go:embed play_for_work.svg
-var Play_for_work ora.SVG
+var Play_for_work core.SVG
 
 //go:embed play_lesson.svg
-var Play_lesson ora.SVG
+var Play_lesson core.SVG
 
 //go:embed playlist_add.svg
-var Playlist_add ora.SVG
+var Playlist_add core.SVG
 
 //go:embed playlist_add_check.svg
-var Playlist_add_check ora.SVG
+var Playlist_add_check core.SVG
 
 //go:embed playlist_add_check_circle.svg
-var Playlist_add_check_circle ora.SVG
+var Playlist_add_check_circle core.SVG
 
 //go:embed playlist_add_circle.svg
-var Playlist_add_circle ora.SVG
+var Playlist_add_circle core.SVG
 
 //go:embed playlist_play.svg
-var Playlist_play ora.SVG
+var Playlist_play core.SVG
 
 //go:embed playlist_remove.svg
-var Playlist_remove ora.SVG
+var Playlist_remove core.SVG
 
 //go:embed plumbing.svg
-var Plumbing ora.SVG
+var Plumbing core.SVG
 
 //go:embed plus_one.svg
-var Plus_one ora.SVG
+var Plus_one core.SVG
 
 //go:embed podcasts.svg
-var Podcasts ora.SVG
+var Podcasts core.SVG
 
 //go:embed point_of_sale.svg
-var Point_of_sale ora.SVG
+var Point_of_sale core.SVG
 
 //go:embed policy.svg
-var Policy ora.SVG
+var Policy core.SVG
 
 //go:embed poll.svg
-var Poll ora.SVG
+var Poll core.SVG
 
 //go:embed polyline.svg
-var Polyline ora.SVG
+var Polyline core.SVG
 
 //go:embed polymer.svg
-var Polymer ora.SVG
+var Polymer core.SVG
 
 //go:embed pool.svg
-var Pool ora.SVG
+var Pool core.SVG
 
 //go:embed portable_wifi_off.svg
-var Portable_wifi_off ora.SVG
+var Portable_wifi_off core.SVG
 
 //go:embed portrait.svg
-var Portrait ora.SVG
+var Portrait core.SVG
 
 //go:embed post_add.svg
-var Post_add ora.SVG
+var Post_add core.SVG
 
 //go:embed power.svg
-var Power ora.SVG
+var Power core.SVG
 
 //go:embed power_input.svg
-var Power_input ora.SVG
+var Power_input core.SVG
 
 //go:embed power_off.svg
-var Power_off ora.SVG
+var Power_off core.SVG
 
 //go:embed power_settings_new.svg
-var Power_settings_new ora.SVG
+var Power_settings_new core.SVG
 
 //go:embed precision_manufacturing.svg
-var Precision_manufacturing ora.SVG
+var Precision_manufacturing core.SVG
 
 //go:embed pregnant_woman.svg
-var Pregnant_woman ora.SVG
+var Pregnant_woman core.SVG
 
 //go:embed present_to_all.svg
-var Present_to_all ora.SVG
+var Present_to_all core.SVG
 
 //go:embed preview.svg
-var Preview ora.SVG
+var Preview core.SVG
 
 //go:embed price_change.svg
-var Price_change ora.SVG
+var Price_change core.SVG
 
 //go:embed price_check.svg
-var Price_check ora.SVG
+var Price_check core.SVG
 
 //go:embed print.svg
-var Print ora.SVG
+var Print core.SVG
 
 //go:embed print_disabled.svg
-var Print_disabled ora.SVG
+var Print_disabled core.SVG
 
 //go:embed priority_high.svg
-var Priority_high ora.SVG
+var Priority_high core.SVG
 
 //go:embed privacy_tip.svg
-var Privacy_tip ora.SVG
+var Privacy_tip core.SVG
 
 //go:embed private_connectivity.svg
-var Private_connectivity ora.SVG
+var Private_connectivity core.SVG
 
 //go:embed production_quantity_limits.svg
-var Production_quantity_limits ora.SVG
+var Production_quantity_limits core.SVG
 
 //go:embed propane.svg
-var Propane ora.SVG
+var Propane core.SVG
 
 //go:embed propane_tank.svg
-var Propane_tank ora.SVG
+var Propane_tank core.SVG
 
 //go:embed psychology.svg
-var Psychology ora.SVG
+var Psychology core.SVG
 
 //go:embed psychology_alt.svg
-var Psychology_alt ora.SVG
+var Psychology_alt core.SVG
 
 //go:embed public.svg
-var Public ora.SVG
+var Public core.SVG
 
 //go:embed public_off.svg
-var Public_off ora.SVG
+var Public_off core.SVG
 
 //go:embed publish.svg
-var Publish ora.SVG
+var Publish core.SVG
 
 //go:embed published_with_changes.svg
-var Published_with_changes ora.SVG
+var Published_with_changes core.SVG
 
 //go:embed punch_clock.svg
-var Punch_clock ora.SVG
+var Punch_clock core.SVG
 
 //go:embed push_pin.svg
-var Push_pin ora.SVG
+var Push_pin core.SVG
 
 //go:embed qr_code.svg
-var Qr_code ora.SVG
+var Qr_code core.SVG
 
 //go:embed qr_code_2.svg
-var Qr_code_2 ora.SVG
+var Qr_code_2 core.SVG
 
 //go:embed qr_code_scanner.svg
-var Qr_code_scanner ora.SVG
+var Qr_code_scanner core.SVG
 
 //go:embed query_builder.svg
-var Query_builder ora.SVG
+var Query_builder core.SVG
 
 //go:embed query_stats.svg
-var Query_stats ora.SVG
+var Query_stats core.SVG
 
 //go:embed question_answer.svg
-var Question_answer ora.SVG
+var Question_answer core.SVG
 
 //go:embed question_mark.svg
-var Question_mark ora.SVG
+var Question_mark core.SVG
 
 //go:embed queue.svg
-var Queue ora.SVG
+var Queue core.SVG
 
 //go:embed queue_music.svg
-var Queue_music ora.SVG
+var Queue_music core.SVG
 
 //go:embed queue_play_next.svg
-var Queue_play_next ora.SVG
+var Queue_play_next core.SVG
 
 //go:embed quickreply.svg
-var Quickreply ora.SVG
+var Quickreply core.SVG
 
 //go:embed quiz.svg
-var Quiz ora.SVG
+var Quiz core.SVG
 
 //go:embed r_mobiledata.svg
-var R_mobiledata ora.SVG
+var R_mobiledata core.SVG
 
 //go:embed radar.svg
-var Radar ora.SVG
+var Radar core.SVG
 
 //go:embed radio.svg
-var Radio ora.SVG
+var Radio core.SVG
 
 //go:embed radio_button_checked.svg
-var Radio_button_checked ora.SVG
+var Radio_button_checked core.SVG
 
 //go:embed radio_button_unchecked.svg
-var Radio_button_unchecked ora.SVG
+var Radio_button_unchecked core.SVG
 
 //go:embed railway_alert.svg
-var Railway_alert ora.SVG
+var Railway_alert core.SVG
 
 //go:embed ramen_dining.svg
-var Ramen_dining ora.SVG
+var Ramen_dining core.SVG
 
 //go:embed ramp_left.svg
-var Ramp_left ora.SVG
+var Ramp_left core.SVG
 
 //go:embed ramp_right.svg
-var Ramp_right ora.SVG
+var Ramp_right core.SVG
 
 //go:embed rate_review.svg
-var Rate_review ora.SVG
+var Rate_review core.SVG
 
 //go:embed raw_off.svg
-var Raw_off ora.SVG
+var Raw_off core.SVG
 
 //go:embed raw_on.svg
-var Raw_on ora.SVG
+var Raw_on core.SVG
 
 //go:embed read_more.svg
-var Read_more ora.SVG
+var Read_more core.SVG
 
 //go:embed real_estate_agent.svg
-var Real_estate_agent ora.SVG
+var Real_estate_agent core.SVG
 
 //go:embed receipt.svg
-var Receipt ora.SVG
+var Receipt core.SVG
 
 //go:embed receipt_long.svg
-var Receipt_long ora.SVG
+var Receipt_long core.SVG
 
 //go:embed recent_actors.svg
-var Recent_actors ora.SVG
+var Recent_actors core.SVG
 
 //go:embed recommend.svg
-var Recommend ora.SVG
+var Recommend core.SVG
 
 //go:embed record_voice_over.svg
-var Record_voice_over ora.SVG
+var Record_voice_over core.SVG
 
 //go:embed rectangle.svg
-var Rectangle ora.SVG
+var Rectangle core.SVG
 
 //go:embed recycling.svg
-var Recycling ora.SVG
+var Recycling core.SVG
 
 //go:embed redeem.svg
-var Redeem ora.SVG
+var Redeem core.SVG
 
 //go:embed redo.svg
-var Redo ora.SVG
+var Redo core.SVG
 
 //go:embed reduce_capacity.svg
-var Reduce_capacity ora.SVG
+var Reduce_capacity core.SVG
 
 //go:embed refresh.svg
-var Refresh ora.SVG
+var Refresh core.SVG
 
 //go:embed remember_me.svg
-var Remember_me ora.SVG
+var Remember_me core.SVG
 
 //go:embed remove.svg
-var Remove ora.SVG
+var Remove core.SVG
 
 //go:embed remove_circle.svg
-var Remove_circle ora.SVG
+var Remove_circle core.SVG
 
 //go:embed remove_circle_outline.svg
-var Remove_circle_outline ora.SVG
+var Remove_circle_outline core.SVG
 
 //go:embed remove_done.svg
-var Remove_done ora.SVG
+var Remove_done core.SVG
 
 //go:embed remove_from_queue.svg
-var Remove_from_queue ora.SVG
+var Remove_from_queue core.SVG
 
 //go:embed remove_moderator.svg
-var Remove_moderator ora.SVG
+var Remove_moderator core.SVG
 
 //go:embed remove_red_eye.svg
-var Remove_red_eye ora.SVG
+var Remove_red_eye core.SVG
 
 //go:embed remove_road.svg
-var Remove_road ora.SVG
+var Remove_road core.SVG
 
 //go:embed remove_shopping_cart.svg
-var Remove_shopping_cart ora.SVG
+var Remove_shopping_cart core.SVG
 
 //go:embed reorder.svg
-var Reorder ora.SVG
+var Reorder core.SVG
 
 //go:embed repartition.svg
-var Repartition ora.SVG
+var Repartition core.SVG
 
 //go:embed repeat.svg
-var Repeat ora.SVG
+var Repeat core.SVG
 
 //go:embed repeat_on.svg
-var Repeat_on ora.SVG
+var Repeat_on core.SVG
 
 //go:embed repeat_one.svg
-var Repeat_one ora.SVG
+var Repeat_one core.SVG
 
 //go:embed repeat_one_on.svg
-var Repeat_one_on ora.SVG
+var Repeat_one_on core.SVG
 
 //go:embed replay.svg
-var Replay ora.SVG
+var Replay core.SVG
 
 //go:embed replay_10.svg
-var Replay_10 ora.SVG
+var Replay_10 core.SVG
 
 //go:embed replay_30.svg
-var Replay_30 ora.SVG
+var Replay_30 core.SVG
 
 //go:embed replay_5.svg
-var Replay_5 ora.SVG
+var Replay_5 core.SVG
 
 //go:embed replay_circle_filled.svg
-var Replay_circle_filled ora.SVG
+var Replay_circle_filled core.SVG
 
 //go:embed reply.svg
-var Reply ora.SVG
+var Reply core.SVG
 
 //go:embed reply_all.svg
-var Reply_all ora.SVG
+var Reply_all core.SVG
 
 //go:embed report.svg
-var Report ora.SVG
+var Report core.SVG
 
 //go:embed report_gmailerrorred.svg
-var Report_gmailerrorred ora.SVG
+var Report_gmailerrorred core.SVG
 
 //go:embed report_off.svg
-var Report_off ora.SVG
+var Report_off core.SVG
 
 //go:embed report_problem.svg
-var Report_problem ora.SVG
+var Report_problem core.SVG
 
 //go:embed request_page.svg
-var Request_page ora.SVG
+var Request_page core.SVG
 
 //go:embed request_quote.svg
-var Request_quote ora.SVG
+var Request_quote core.SVG
 
 //go:embed reset_tv.svg
-var Reset_tv ora.SVG
+var Reset_tv core.SVG
 
 //go:embed restart_alt.svg
-var Restart_alt ora.SVG
+var Restart_alt core.SVG
 
 //go:embed restaurant.svg
-var Restaurant ora.SVG
+var Restaurant core.SVG
 
 //go:embed restaurant_menu.svg
-var Restaurant_menu ora.SVG
+var Restaurant_menu core.SVG
 
 //go:embed restore.svg
-var Restore ora.SVG
+var Restore core.SVG
 
 //go:embed restore_from_trash.svg
-var Restore_from_trash ora.SVG
+var Restore_from_trash core.SVG
 
 //go:embed restore_page.svg
-var Restore_page ora.SVG
+var Restore_page core.SVG
 
 //go:embed reviews.svg
-var Reviews ora.SVG
+var Reviews core.SVG
 
 //go:embed rice_bowl.svg
-var Rice_bowl ora.SVG
+var Rice_bowl core.SVG
 
 //go:embed ring_volume.svg
-var Ring_volume ora.SVG
+var Ring_volume core.SVG
 
 //go:embed rocket.svg
-var Rocket ora.SVG
+var Rocket core.SVG
 
 //go:embed rocket_launch.svg
-var Rocket_launch ora.SVG
+var Rocket_launch core.SVG
 
 //go:embed roller_shades.svg
-var Roller_shades ora.SVG
+var Roller_shades core.SVG
 
 //go:embed roller_shades_closed.svg
-var Roller_shades_closed ora.SVG
+var Roller_shades_closed core.SVG
 
 //go:embed roller_skating.svg
-var Roller_skating ora.SVG
+var Roller_skating core.SVG
 
 //go:embed roofing.svg
-var Roofing ora.SVG
+var Roofing core.SVG
 
 //go:embed room.svg
-var Room ora.SVG
+var Room core.SVG
 
 //go:embed room_preferences.svg
-var Room_preferences ora.SVG
+var Room_preferences core.SVG
 
 //go:embed room_service.svg
-var Room_service ora.SVG
+var Room_service core.SVG
 
 //go:embed rotate_90_degrees_ccw.svg
-var Rotate_90_degrees_ccw ora.SVG
+var Rotate_90_degrees_ccw core.SVG
 
 //go:embed rotate_90_degrees_cw.svg
-var Rotate_90_degrees_cw ora.SVG
+var Rotate_90_degrees_cw core.SVG
 
 //go:embed rotate_left.svg
-var Rotate_left ora.SVG
+var Rotate_left core.SVG
 
 //go:embed rotate_right.svg
-var Rotate_right ora.SVG
+var Rotate_right core.SVG
 
 //go:embed roundabout_left.svg
-var Roundabout_left ora.SVG
+var Roundabout_left core.SVG
 
 //go:embed roundabout_right.svg
-var Roundabout_right ora.SVG
+var Roundabout_right core.SVG
 
 //go:embed rounded_corner.svg
-var Rounded_corner ora.SVG
+var Rounded_corner core.SVG
 
 //go:embed route.svg
-var Route ora.SVG
+var Route core.SVG
 
 //go:embed router.svg
-var Router ora.SVG
+var Router core.SVG
 
 //go:embed rowing.svg
-var Rowing ora.SVG
+var Rowing core.SVG
 
 //go:embed rss_feed.svg
-var Rss_feed ora.SVG
+var Rss_feed core.SVG
 
 //go:embed rsvp.svg
-var Rsvp ora.SVG
+var Rsvp core.SVG
 
 //go:embed rtt.svg
-var Rtt ora.SVG
+var Rtt core.SVG
 
 //go:embed rule.svg
-var Rule ora.SVG
+var Rule core.SVG
 
 //go:embed rule_folder.svg
-var Rule_folder ora.SVG
+var Rule_folder core.SVG
 
 //go:embed run_circle.svg
-var Run_circle ora.SVG
+var Run_circle core.SVG
 
 //go:embed running_with_errors.svg
-var Running_with_errors ora.SVG
+var Running_with_errors core.SVG
 
 //go:embed rv_hookup.svg
-var Rv_hookup ora.SVG
+var Rv_hookup core.SVG
 
 //go:embed safety_check.svg
-var Safety_check ora.SVG
+var Safety_check core.SVG
 
 //go:embed safety_divider.svg
-var Safety_divider ora.SVG
+var Safety_divider core.SVG
 
 //go:embed sailing.svg
-var Sailing ora.SVG
+var Sailing core.SVG
 
 //go:embed sanitizer.svg
-var Sanitizer ora.SVG
+var Sanitizer core.SVG
 
 //go:embed satellite.svg
-var Satellite ora.SVG
+var Satellite core.SVG
 
 //go:embed satellite_alt.svg
-var Satellite_alt ora.SVG
+var Satellite_alt core.SVG
 
 //go:embed save.svg
-var Save ora.SVG
+var Save core.SVG
 
 //go:embed save_alt.svg
-var Save_alt ora.SVG
+var Save_alt core.SVG
 
 //go:embed save_as.svg
-var Save_as ora.SVG
+var Save_as core.SVG
 
 //go:embed saved_search.svg
-var Saved_search ora.SVG
+var Saved_search core.SVG
 
 //go:embed savings.svg
-var Savings ora.SVG
+var Savings core.SVG
 
 //go:embed scale.svg
-var Scale ora.SVG
+var Scale core.SVG
 
 //go:embed scanner.svg
-var Scanner ora.SVG
+var Scanner core.SVG
 
 //go:embed scatter_plot.svg
-var Scatter_plot ora.SVG
+var Scatter_plot core.SVG
 
 //go:embed schedule.svg
-var Schedule ora.SVG
+var Schedule core.SVG
 
 //go:embed schedule_send.svg
-var Schedule_send ora.SVG
+var Schedule_send core.SVG
 
 //go:embed schema.svg
-var Schema ora.SVG
+var Schema core.SVG
 
 //go:embed school.svg
-var School ora.SVG
+var School core.SVG
 
 //go:embed science.svg
-var Science ora.SVG
+var Science core.SVG
 
 //go:embed score.svg
-var Score ora.SVG
+var Score core.SVG
 
 //go:embed scoreboard.svg
-var Scoreboard ora.SVG
+var Scoreboard core.SVG
 
 //go:embed screen_lock_landscape.svg
-var Screen_lock_landscape ora.SVG
+var Screen_lock_landscape core.SVG
 
 //go:embed screen_lock_portrait.svg
-var Screen_lock_portrait ora.SVG
+var Screen_lock_portrait core.SVG
 
 //go:embed screen_lock_rotation.svg
-var Screen_lock_rotation ora.SVG
+var Screen_lock_rotation core.SVG
 
 //go:embed screen_rotation.svg
-var Screen_rotation ora.SVG
+var Screen_rotation core.SVG
 
 //go:embed screen_rotation_alt.svg
-var Screen_rotation_alt ora.SVG
+var Screen_rotation_alt core.SVG
 
 //go:embed screen_search_desktop.svg
-var Screen_search_desktop ora.SVG
+var Screen_search_desktop core.SVG
 
 //go:embed screen_share.svg
-var Screen_share ora.SVG
+var Screen_share core.SVG
 
 //go:embed screenshot.svg
-var Screenshot ora.SVG
+var Screenshot core.SVG
 
 //go:embed screenshot_monitor.svg
-var Screenshot_monitor ora.SVG
+var Screenshot_monitor core.SVG
 
 //go:embed scuba_diving.svg
-var Scuba_diving ora.SVG
+var Scuba_diving core.SVG
 
 //go:embed sd.svg
-var Sd ora.SVG
+var Sd core.SVG
 
 //go:embed sd_card.svg
-var Sd_card ora.SVG
+var Sd_card core.SVG
 
 //go:embed sd_card_alert.svg
-var Sd_card_alert ora.SVG
+var Sd_card_alert core.SVG
 
 //go:embed sd_storage.svg
-var Sd_storage ora.SVG
+var Sd_storage core.SVG
 
 //go:embed search.svg
-var Search ora.SVG
+var Search core.SVG
 
 //go:embed search_off.svg
-var Search_off ora.SVG
+var Search_off core.SVG
 
 //go:embed security.svg
-var Security ora.SVG
+var Security core.SVG
 
 //go:embed security_update.svg
-var Security_update ora.SVG
+var Security_update core.SVG
 
 //go:embed security_update_good.svg
-var Security_update_good ora.SVG
+var Security_update_good core.SVG
 
 //go:embed security_update_warning.svg
-var Security_update_warning ora.SVG
+var Security_update_warning core.SVG
 
 //go:embed segment.svg
-var Segment ora.SVG
+var Segment core.SVG
 
 //go:embed select_all.svg
-var Select_all ora.SVG
+var Select_all core.SVG
 
 //go:embed self_improvement.svg
-var Self_improvement ora.SVG
+var Self_improvement core.SVG
 
 //go:embed sell.svg
-var Sell ora.SVG
+var Sell core.SVG
 
 //go:embed send.svg
-var Send ora.SVG
+var Send core.SVG
 
 //go:embed send_and_archive.svg
-var Send_and_archive ora.SVG
+var Send_and_archive core.SVG
 
 //go:embed send_time_extension.svg
-var Send_time_extension ora.SVG
+var Send_time_extension core.SVG
 
 //go:embed send_to_mobile.svg
-var Send_to_mobile ora.SVG
+var Send_to_mobile core.SVG
 
 //go:embed sensor_door.svg
-var Sensor_door ora.SVG
+var Sensor_door core.SVG
 
 //go:embed sensor_occupied.svg
-var Sensor_occupied ora.SVG
+var Sensor_occupied core.SVG
 
 //go:embed sensor_window.svg
-var Sensor_window ora.SVG
+var Sensor_window core.SVG
 
 //go:embed sensors.svg
-var Sensors ora.SVG
+var Sensors core.SVG
 
 //go:embed sensors_off.svg
-var Sensors_off ora.SVG
+var Sensors_off core.SVG
 
 //go:embed sentiment_dissatisfied.svg
-var Sentiment_dissatisfied ora.SVG
+var Sentiment_dissatisfied core.SVG
 
 //go:embed sentiment_neutral.svg
-var Sentiment_neutral ora.SVG
+var Sentiment_neutral core.SVG
 
 //go:embed sentiment_satisfied.svg
-var Sentiment_satisfied ora.SVG
+var Sentiment_satisfied core.SVG
 
 //go:embed sentiment_satisfied_alt.svg
-var Sentiment_satisfied_alt ora.SVG
+var Sentiment_satisfied_alt core.SVG
 
 //go:embed sentiment_very_dissatisfied.svg
-var Sentiment_very_dissatisfied ora.SVG
+var Sentiment_very_dissatisfied core.SVG
 
 //go:embed sentiment_very_satisfied.svg
-var Sentiment_very_satisfied ora.SVG
+var Sentiment_very_satisfied core.SVG
 
 //go:embed set_meal.svg
-var Set_meal ora.SVG
+var Set_meal core.SVG
 
 //go:embed settings.svg
-var Settings ora.SVG
+var Settings core.SVG
 
 //go:embed settings_accessibility.svg
-var Settings_accessibility ora.SVG
+var Settings_accessibility core.SVG
 
 //go:embed settings_applications.svg
-var Settings_applications ora.SVG
+var Settings_applications core.SVG
 
 //go:embed settings_backup_restore.svg
-var Settings_backup_restore ora.SVG
+var Settings_backup_restore core.SVG
 
 //go:embed settings_bluetooth.svg
-var Settings_bluetooth ora.SVG
+var Settings_bluetooth core.SVG
 
 //go:embed settings_brightness.svg
-var Settings_brightness ora.SVG
+var Settings_brightness core.SVG
 
 //go:embed settings_cell.svg
-var Settings_cell ora.SVG
+var Settings_cell core.SVG
 
 //go:embed settings_ethernet.svg
-var Settings_ethernet ora.SVG
+var Settings_ethernet core.SVG
 
 //go:embed settings_input_antenna.svg
-var Settings_input_antenna ora.SVG
+var Settings_input_antenna core.SVG
 
 //go:embed settings_input_component.svg
-var Settings_input_component ora.SVG
+var Settings_input_component core.SVG
 
 //go:embed settings_input_composite.svg
-var Settings_input_composite ora.SVG
+var Settings_input_composite core.SVG
 
 //go:embed settings_input_hdmi.svg
-var Settings_input_hdmi ora.SVG
+var Settings_input_hdmi core.SVG
 
 //go:embed settings_input_svideo.svg
-var Settings_input_svideo ora.SVG
+var Settings_input_svideo core.SVG
 
 //go:embed settings_overscan.svg
-var Settings_overscan ora.SVG
+var Settings_overscan core.SVG
 
 //go:embed settings_phone.svg
-var Settings_phone ora.SVG
+var Settings_phone core.SVG
 
 //go:embed settings_power.svg
-var Settings_power ora.SVG
+var Settings_power core.SVG
 
 //go:embed settings_remote.svg
-var Settings_remote ora.SVG
+var Settings_remote core.SVG
 
 //go:embed settings_suggest.svg
-var Settings_suggest ora.SVG
+var Settings_suggest core.SVG
 
 //go:embed settings_system_daydream.svg
-var Settings_system_daydream ora.SVG
+var Settings_system_daydream core.SVG
 
 //go:embed settings_voice.svg
-var Settings_voice ora.SVG
+var Settings_voice core.SVG
 
 //go:embed severe_cold.svg
-var Severe_cold ora.SVG
+var Severe_cold core.SVG
 
 //go:embed shape_line.svg
-var Shape_line ora.SVG
+var Shape_line core.SVG
 
 //go:embed share.svg
-var Share ora.SVG
+var Share core.SVG
 
 //go:embed share_location.svg
-var Share_location ora.SVG
+var Share_location core.SVG
 
 //go:embed shield.svg
-var Shield ora.SVG
+var Shield core.SVG
 
 //go:embed shield_moon.svg
-var Shield_moon ora.SVG
+var Shield_moon core.SVG
 
 //go:embed shop.svg
-var Shop ora.SVG
+var Shop core.SVG
 
 //go:embed shop_2.svg
-var Shop_2 ora.SVG
+var Shop_2 core.SVG
 
 //go:embed shop_two.svg
-var Shop_two ora.SVG
+var Shop_two core.SVG
 
 //go:embed shopping_bag.svg
-var Shopping_bag ora.SVG
+var Shopping_bag core.SVG
 
 //go:embed shopping_basket.svg
-var Shopping_basket ora.SVG
+var Shopping_basket core.SVG
 
 //go:embed shopping_cart.svg
-var Shopping_cart ora.SVG
+var Shopping_cart core.SVG
 
 //go:embed shopping_cart_checkout.svg
-var Shopping_cart_checkout ora.SVG
+var Shopping_cart_checkout core.SVG
 
 //go:embed short_text.svg
-var Short_text ora.SVG
+var Short_text core.SVG
 
 //go:embed shortcut.svg
-var Shortcut ora.SVG
+var Shortcut core.SVG
 
 //go:embed show_chart.svg
-var Show_chart ora.SVG
+var Show_chart core.SVG
 
 //go:embed shower.svg
-var Shower ora.SVG
+var Shower core.SVG
 
 //go:embed shuffle.svg
-var Shuffle ora.SVG
+var Shuffle core.SVG
 
 //go:embed shuffle_on.svg
-var Shuffle_on ora.SVG
+var Shuffle_on core.SVG
 
 //go:embed shutter_speed.svg
-var Shutter_speed ora.SVG
+var Shutter_speed core.SVG
 
 //go:embed sick.svg
-var Sick ora.SVG
+var Sick core.SVG
 
 //go:embed sign_language.svg
-var Sign_language ora.SVG
+var Sign_language core.SVG
 
 //go:embed signal_cellular_0_bar.svg
-var Signal_cellular_0_bar ora.SVG
+var Signal_cellular_0_bar core.SVG
 
 //go:embed signal_cellular_4_bar.svg
-var Signal_cellular_4_bar ora.SVG
+var Signal_cellular_4_bar core.SVG
 
 //go:embed signal_cellular_alt.svg
-var Signal_cellular_alt ora.SVG
+var Signal_cellular_alt core.SVG
 
 //go:embed signal_cellular_alt_1_bar.svg
-var Signal_cellular_alt_1_bar ora.SVG
+var Signal_cellular_alt_1_bar core.SVG
 
 //go:embed signal_cellular_alt_2_bar.svg
-var Signal_cellular_alt_2_bar ora.SVG
+var Signal_cellular_alt_2_bar core.SVG
 
 //go:embed signal_cellular_connected_no_internet_0_bar.svg
-var Signal_cellular_connected_no_internet_0_bar ora.SVG
+var Signal_cellular_connected_no_internet_0_bar core.SVG
 
 //go:embed signal_cellular_connected_no_internet_4_bar.svg
-var Signal_cellular_connected_no_internet_4_bar ora.SVG
+var Signal_cellular_connected_no_internet_4_bar core.SVG
 
 //go:embed signal_cellular_no_sim.svg
-var Signal_cellular_no_sim ora.SVG
+var Signal_cellular_no_sim core.SVG
 
 //go:embed signal_cellular_nodata.svg
-var Signal_cellular_nodata ora.SVG
+var Signal_cellular_nodata core.SVG
 
 //go:embed signal_cellular_null.svg
-var Signal_cellular_null ora.SVG
+var Signal_cellular_null core.SVG
 
 //go:embed signal_cellular_off.svg
-var Signal_cellular_off ora.SVG
+var Signal_cellular_off core.SVG
 
 //go:embed signal_wifi_0_bar.svg
-var Signal_wifi_0_bar ora.SVG
+var Signal_wifi_0_bar core.SVG
 
 //go:embed signal_wifi_4_bar.svg
-var Signal_wifi_4_bar ora.SVG
+var Signal_wifi_4_bar core.SVG
 
 //go:embed signal_wifi_4_bar_lock.svg
-var Signal_wifi_4_bar_lock ora.SVG
+var Signal_wifi_4_bar_lock core.SVG
 
 //go:embed signal_wifi_bad.svg
-var Signal_wifi_bad ora.SVG
+var Signal_wifi_bad core.SVG
 
 //go:embed signal_wifi_connected_no_internet_4.svg
-var Signal_wifi_connected_no_internet_4 ora.SVG
+var Signal_wifi_connected_no_internet_4 core.SVG
 
 //go:embed signal_wifi_off.svg
-var Signal_wifi_off ora.SVG
+var Signal_wifi_off core.SVG
 
 //go:embed signal_wifi_statusbar_4_bar.svg
-var Signal_wifi_statusbar_4_bar ora.SVG
+var Signal_wifi_statusbar_4_bar core.SVG
 
 //go:embed signal_wifi_statusbar_connected_no_internet_4.svg
-var Signal_wifi_statusbar_connected_no_internet_4 ora.SVG
+var Signal_wifi_statusbar_connected_no_internet_4 core.SVG
 
 //go:embed signal_wifi_statusbar_null.svg
-var Signal_wifi_statusbar_null ora.SVG
+var Signal_wifi_statusbar_null core.SVG
 
 //go:embed signpost.svg
-var Signpost ora.SVG
+var Signpost core.SVG
 
 //go:embed sim_card.svg
-var Sim_card ora.SVG
+var Sim_card core.SVG
 
 //go:embed sim_card_alert.svg
-var Sim_card_alert ora.SVG
+var Sim_card_alert core.SVG
 
 //go:embed sim_card_download.svg
-var Sim_card_download ora.SVG
+var Sim_card_download core.SVG
 
 //go:embed single_bed.svg
-var Single_bed ora.SVG
+var Single_bed core.SVG
 
 //go:embed sip.svg
-var Sip ora.SVG
+var Sip core.SVG
 
 //go:embed skateboarding.svg
-var Skateboarding ora.SVG
+var Skateboarding core.SVG
 
 //go:embed skip_next.svg
-var Skip_next ora.SVG
+var Skip_next core.SVG
 
 //go:embed skip_previous.svg
-var Skip_previous ora.SVG
+var Skip_previous core.SVG
 
 //go:embed sledding.svg
-var Sledding ora.SVG
+var Sledding core.SVG
 
 //go:embed slideshow.svg
-var Slideshow ora.SVG
+var Slideshow core.SVG
 
 //go:embed slow_motion_video.svg
-var Slow_motion_video ora.SVG
+var Slow_motion_video core.SVG
 
 //go:embed smart_button.svg
-var Smart_button ora.SVG
+var Smart_button core.SVG
 
 //go:embed smart_display.svg
-var Smart_display ora.SVG
+var Smart_display core.SVG
 
 //go:embed smart_screen.svg
-var Smart_screen ora.SVG
+var Smart_screen core.SVG
 
 //go:embed smart_toy.svg
-var Smart_toy ora.SVG
+var Smart_toy core.SVG
 
 //go:embed smartphone.svg
-var Smartphone ora.SVG
+var Smartphone core.SVG
 
 //go:embed smoke_free.svg
-var Smoke_free ora.SVG
+var Smoke_free core.SVG
 
 //go:embed smoking_rooms.svg
-var Smoking_rooms ora.SVG
+var Smoking_rooms core.SVG
 
 //go:embed sms.svg
-var Sms ora.SVG
+var Sms core.SVG
 
 //go:embed sms_failed.svg
-var Sms_failed ora.SVG
+var Sms_failed core.SVG
 
 //go:embed snippet_folder.svg
-var Snippet_folder ora.SVG
+var Snippet_folder core.SVG
 
 //go:embed snooze.svg
-var Snooze ora.SVG
+var Snooze core.SVG
 
 //go:embed snowboarding.svg
-var Snowboarding ora.SVG
+var Snowboarding core.SVG
 
 //go:embed snowmobile.svg
-var Snowmobile ora.SVG
+var Snowmobile core.SVG
 
 //go:embed snowshoeing.svg
-var Snowshoeing ora.SVG
+var Snowshoeing core.SVG
 
 //go:embed soap.svg
-var Soap ora.SVG
+var Soap core.SVG
 
 //go:embed social_distance.svg
-var Social_distance ora.SVG
+var Social_distance core.SVG
 
 //go:embed solar_power.svg
-var Solar_power ora.SVG
+var Solar_power core.SVG
 
 //go:embed sort.svg
-var Sort ora.SVG
+var Sort core.SVG
 
 //go:embed sort_by_alpha.svg
-var Sort_by_alpha ora.SVG
+var Sort_by_alpha core.SVG
 
 //go:embed sos.svg
-var Sos ora.SVG
+var Sos core.SVG
 
 //go:embed soup_kitchen.svg
-var Soup_kitchen ora.SVG
+var Soup_kitchen core.SVG
 
 //go:embed source.svg
-var Source ora.SVG
+var Source core.SVG
 
 //go:embed south.svg
-var South ora.SVG
+var South core.SVG
 
 //go:embed south_america.svg
-var South_america ora.SVG
+var South_america core.SVG
 
 //go:embed south_east.svg
-var South_east ora.SVG
+var South_east core.SVG
 
 //go:embed south_west.svg
-var South_west ora.SVG
+var South_west core.SVG
 
 //go:embed spa.svg
-var Spa ora.SVG
+var Spa core.SVG
 
 //go:embed space_bar.svg
-var Space_bar ora.SVG
+var Space_bar core.SVG
 
 //go:embed space_dashboard.svg
-var Space_dashboard ora.SVG
+var Space_dashboard core.SVG
 
 //go:embed spatial_audio.svg
-var Spatial_audio ora.SVG
+var Spatial_audio core.SVG
 
 //go:embed spatial_audio_off.svg
-var Spatial_audio_off ora.SVG
+var Spatial_audio_off core.SVG
 
 //go:embed spatial_tracking.svg
-var Spatial_tracking ora.SVG
+var Spatial_tracking core.SVG
 
 //go:embed speaker.svg
-var Speaker ora.SVG
+var Speaker core.SVG
 
 //go:embed speaker_group.svg
-var Speaker_group ora.SVG
+var Speaker_group core.SVG
 
 //go:embed speaker_notes.svg
-var Speaker_notes ora.SVG
+var Speaker_notes core.SVG
 
 //go:embed speaker_notes_off.svg
-var Speaker_notes_off ora.SVG
+var Speaker_notes_off core.SVG
 
 //go:embed speaker_phone.svg
-var Speaker_phone ora.SVG
+var Speaker_phone core.SVG
 
 //go:embed speed.svg
-var Speed ora.SVG
+var Speed core.SVG
 
 //go:embed spellcheck.svg
-var Spellcheck ora.SVG
+var Spellcheck core.SVG
 
 //go:embed splitscreen.svg
-var Splitscreen ora.SVG
+var Splitscreen core.SVG
 
 //go:embed spoke.svg
-var Spoke ora.SVG
+var Spoke core.SVG
 
 //go:embed sports.svg
-var Sports ora.SVG
+var Sports core.SVG
 
 //go:embed sports_bar.svg
-var Sports_bar ora.SVG
+var Sports_bar core.SVG
 
 //go:embed sports_baseball.svg
-var Sports_baseball ora.SVG
+var Sports_baseball core.SVG
 
 //go:embed sports_basketball.svg
-var Sports_basketball ora.SVG
+var Sports_basketball core.SVG
 
 //go:embed sports_cricket.svg
-var Sports_cricket ora.SVG
+var Sports_cricket core.SVG
 
 //go:embed sports_esports.svg
-var Sports_esports ora.SVG
+var Sports_esports core.SVG
 
 //go:embed sports_football.svg
-var Sports_football ora.SVG
+var Sports_football core.SVG
 
 //go:embed sports_golf.svg
-var Sports_golf ora.SVG
+var Sports_golf core.SVG
 
 //go:embed sports_gymnastics.svg
-var Sports_gymnastics ora.SVG
+var Sports_gymnastics core.SVG
 
 //go:embed sports_handball.svg
-var Sports_handball ora.SVG
+var Sports_handball core.SVG
 
 //go:embed sports_hockey.svg
-var Sports_hockey ora.SVG
+var Sports_hockey core.SVG
 
 //go:embed sports_kabaddi.svg
-var Sports_kabaddi ora.SVG
+var Sports_kabaddi core.SVG
 
 //go:embed sports_martial_arts.svg
-var Sports_martial_arts ora.SVG
+var Sports_martial_arts core.SVG
 
 //go:embed sports_mma.svg
-var Sports_mma ora.SVG
+var Sports_mma core.SVG
 
 //go:embed sports_motorsports.svg
-var Sports_motorsports ora.SVG
+var Sports_motorsports core.SVG
 
 //go:embed sports_rugby.svg
-var Sports_rugby ora.SVG
+var Sports_rugby core.SVG
 
 //go:embed sports_score.svg
-var Sports_score ora.SVG
+var Sports_score core.SVG
 
 //go:embed sports_soccer.svg
-var Sports_soccer ora.SVG
+var Sports_soccer core.SVG
 
 //go:embed sports_tennis.svg
-var Sports_tennis ora.SVG
+var Sports_tennis core.SVG
 
 //go:embed sports_volleyball.svg
-var Sports_volleyball ora.SVG
+var Sports_volleyball core.SVG
 
 //go:embed square.svg
-var Square ora.SVG
+var Square core.SVG
 
 //go:embed square_foot.svg
-var Square_foot ora.SVG
+var Square_foot core.SVG
 
 //go:embed ssid_chart.svg
-var Ssid_chart ora.SVG
+var Ssid_chart core.SVG
 
 //go:embed stacked_bar_chart.svg
-var Stacked_bar_chart ora.SVG
+var Stacked_bar_chart core.SVG
 
 //go:embed stacked_line_chart.svg
-var Stacked_line_chart ora.SVG
+var Stacked_line_chart core.SVG
 
 //go:embed stadium.svg
-var Stadium ora.SVG
+var Stadium core.SVG
 
 //go:embed stairs.svg
-var Stairs ora.SVG
+var Stairs core.SVG
 
 //go:embed star.svg
-var Star ora.SVG
+var Star core.SVG
 
 //go:embed star_border.svg
-var Star_border ora.SVG
+var Star_border core.SVG
 
 //go:embed star_border_purple500.svg
-var Star_border_purple500 ora.SVG
+var Star_border_purple500 core.SVG
 
 //go:embed star_half.svg
-var Star_half ora.SVG
+var Star_half core.SVG
 
 //go:embed star_outline.svg
-var Star_outline ora.SVG
+var Star_outline core.SVG
 
 //go:embed star_purple500.svg
-var Star_purple500 ora.SVG
+var Star_purple500 core.SVG
 
 //go:embed star_rate.svg
-var Star_rate ora.SVG
+var Star_rate core.SVG
 
 //go:embed stars.svg
-var Stars ora.SVG
+var Stars core.SVG
 
 //go:embed start.svg
-var Start ora.SVG
+var Start core.SVG
 
 //go:embed stay_current_landscape.svg
-var Stay_current_landscape ora.SVG
+var Stay_current_landscape core.SVG
 
 //go:embed stay_current_portrait.svg
-var Stay_current_portrait ora.SVG
+var Stay_current_portrait core.SVG
 
 //go:embed stay_primary_landscape.svg
-var Stay_primary_landscape ora.SVG
+var Stay_primary_landscape core.SVG
 
 //go:embed stay_primary_portrait.svg
-var Stay_primary_portrait ora.SVG
+var Stay_primary_portrait core.SVG
 
 //go:embed sticky_note_2.svg
-var Sticky_note_2 ora.SVG
+var Sticky_note_2 core.SVG
 
 //go:embed stop.svg
-var Stop ora.SVG
+var Stop core.SVG
 
 //go:embed stop_circle.svg
-var Stop_circle ora.SVG
+var Stop_circle core.SVG
 
 //go:embed stop_screen_share.svg
-var Stop_screen_share ora.SVG
+var Stop_screen_share core.SVG
 
 //go:embed storage.svg
-var Storage ora.SVG
+var Storage core.SVG
 
 //go:embed store.svg
-var Store ora.SVG
+var Store core.SVG
 
 //go:embed store_mall_directory.svg
-var Store_mall_directory ora.SVG
+var Store_mall_directory core.SVG
 
 //go:embed storefront.svg
-var Storefront ora.SVG
+var Storefront core.SVG
 
 //go:embed storm.svg
-var Storm ora.SVG
+var Storm core.SVG
 
 //go:embed straight.svg
-var Straight ora.SVG
+var Straight core.SVG
 
 //go:embed straighten.svg
-var Straighten ora.SVG
+var Straighten core.SVG
 
 //go:embed stream.svg
-var Stream ora.SVG
+var Stream core.SVG
 
 //go:embed streetview.svg
-var Streetview ora.SVG
+var Streetview core.SVG
 
 //go:embed strikethrough_s.svg
-var Strikethrough_s ora.SVG
+var Strikethrough_s core.SVG
 
 //go:embed stroller.svg
-var Stroller ora.SVG
+var Stroller core.SVG
 
 //go:embed style.svg
-var Style ora.SVG
+var Style core.SVG
 
 //go:embed subdirectory_arrow_left.svg
-var Subdirectory_arrow_left ora.SVG
+var Subdirectory_arrow_left core.SVG
 
 //go:embed subdirectory_arrow_right.svg
-var Subdirectory_arrow_right ora.SVG
+var Subdirectory_arrow_right core.SVG
 
 //go:embed subject.svg
-var Subject ora.SVG
+var Subject core.SVG
 
 //go:embed subscript.svg
-var Subscript ora.SVG
+var Subscript core.SVG
 
 //go:embed subscriptions.svg
-var Subscriptions ora.SVG
+var Subscriptions core.SVG
 
 //go:embed subtitles.svg
-var Subtitles ora.SVG
+var Subtitles core.SVG
 
 //go:embed subtitles_off.svg
-var Subtitles_off ora.SVG
+var Subtitles_off core.SVG
 
 //go:embed subway.svg
-var Subway ora.SVG
+var Subway core.SVG
 
 //go:embed summarize.svg
-var Summarize ora.SVG
+var Summarize core.SVG
 
 //go:embed superscript.svg
-var Superscript ora.SVG
+var Superscript core.SVG
 
 //go:embed supervised_user_circle.svg
-var Supervised_user_circle ora.SVG
+var Supervised_user_circle core.SVG
 
 //go:embed supervisor_account.svg
-var Supervisor_account ora.SVG
+var Supervisor_account core.SVG
 
 //go:embed support.svg
-var Support ora.SVG
+var Support core.SVG
 
 //go:embed support_agent.svg
-var Support_agent ora.SVG
+var Support_agent core.SVG
 
 //go:embed surfing.svg
-var Surfing ora.SVG
+var Surfing core.SVG
 
 //go:embed surround_sound.svg
-var Surround_sound ora.SVG
+var Surround_sound core.SVG
 
 //go:embed swap_calls.svg
-var Swap_calls ora.SVG
+var Swap_calls core.SVG
 
 //go:embed swap_horiz.svg
-var Swap_horiz ora.SVG
+var Swap_horiz core.SVG
 
 //go:embed swap_horizontal_circle.svg
-var Swap_horizontal_circle ora.SVG
+var Swap_horizontal_circle core.SVG
 
 //go:embed swap_vert.svg
-var Swap_vert ora.SVG
+var Swap_vert core.SVG
 
 //go:embed swap_vertical_circle.svg
-var Swap_vertical_circle ora.SVG
+var Swap_vertical_circle core.SVG
 
 //go:embed swipe.svg
-var Swipe ora.SVG
+var Swipe core.SVG
 
 //go:embed swipe_down.svg
-var Swipe_down ora.SVG
+var Swipe_down core.SVG
 
 //go:embed swipe_down_alt.svg
-var Swipe_down_alt ora.SVG
+var Swipe_down_alt core.SVG
 
 //go:embed swipe_left.svg
-var Swipe_left ora.SVG
+var Swipe_left core.SVG
 
 //go:embed swipe_left_alt.svg
-var Swipe_left_alt ora.SVG
+var Swipe_left_alt core.SVG
 
 //go:embed swipe_right.svg
-var Swipe_right ora.SVG
+var Swipe_right core.SVG
 
 //go:embed swipe_right_alt.svg
-var Swipe_right_alt ora.SVG
+var Swipe_right_alt core.SVG
 
 //go:embed swipe_up.svg
-var Swipe_up ora.SVG
+var Swipe_up core.SVG
 
 //go:embed swipe_up_alt.svg
-var Swipe_up_alt ora.SVG
+var Swipe_up_alt core.SVG
 
 //go:embed swipe_vertical.svg
-var Swipe_vertical ora.SVG
+var Swipe_vertical core.SVG
 
 //go:embed switch_access_shortcut.svg
-var Switch_access_shortcut ora.SVG
+var Switch_access_shortcut core.SVG
 
 //go:embed switch_access_shortcut_add.svg
-var Switch_access_shortcut_add ora.SVG
+var Switch_access_shortcut_add core.SVG
 
 //go:embed switch_account.svg
-var Switch_account ora.SVG
+var Switch_account core.SVG
 
 //go:embed switch_camera.svg
-var Switch_camera ora.SVG
+var Switch_camera core.SVG
 
 //go:embed switch_left.svg
-var Switch_left ora.SVG
+var Switch_left core.SVG
 
 //go:embed switch_right.svg
-var Switch_right ora.SVG
+var Switch_right core.SVG
 
 //go:embed switch_video.svg
-var Switch_video ora.SVG
+var Switch_video core.SVG
 
 //go:embed synagogue.svg
-var Synagogue ora.SVG
+var Synagogue core.SVG
 
 //go:embed sync.svg
-var Sync ora.SVG
+var Sync core.SVG
 
 //go:embed sync_alt.svg
-var Sync_alt ora.SVG
+var Sync_alt core.SVG
 
 //go:embed sync_disabled.svg
-var Sync_disabled ora.SVG
+var Sync_disabled core.SVG
 
 //go:embed sync_lock.svg
-var Sync_lock ora.SVG
+var Sync_lock core.SVG
 
 //go:embed sync_problem.svg
-var Sync_problem ora.SVG
+var Sync_problem core.SVG
 
 //go:embed system_security_update.svg
-var System_security_update ora.SVG
+var System_security_update core.SVG
 
 //go:embed system_security_update_good.svg
-var System_security_update_good ora.SVG
+var System_security_update_good core.SVG
 
 //go:embed system_security_update_warning.svg
-var System_security_update_warning ora.SVG
+var System_security_update_warning core.SVG
 
 //go:embed system_update.svg
-var System_update ora.SVG
+var System_update core.SVG
 
 //go:embed system_update_alt.svg
-var System_update_alt ora.SVG
+var System_update_alt core.SVG
 
 //go:embed tab.svg
-var Tab ora.SVG
+var Tab core.SVG
 
 //go:embed tab_unselected.svg
-var Tab_unselected ora.SVG
+var Tab_unselected core.SVG
 
 //go:embed table_bar.svg
-var Table_bar ora.SVG
+var Table_bar core.SVG
 
 //go:embed table_chart.svg
-var Table_chart ora.SVG
+var Table_chart core.SVG
 
 //go:embed table_restaurant.svg
-var Table_restaurant ora.SVG
+var Table_restaurant core.SVG
 
 //go:embed table_rows.svg
-var Table_rows ora.SVG
+var Table_rows core.SVG
 
 //go:embed table_view.svg
-var Table_view ora.SVG
+var Table_view core.SVG
 
 //go:embed tablet.svg
-var Tablet ora.SVG
+var Tablet core.SVG
 
 //go:embed tablet_android.svg
-var Tablet_android ora.SVG
+var Tablet_android core.SVG
 
 //go:embed tablet_mac.svg
-var Tablet_mac ora.SVG
+var Tablet_mac core.SVG
 
 //go:embed tag.svg
-var Tag ora.SVG
+var Tag core.SVG
 
 //go:embed tag_faces.svg
-var Tag_faces ora.SVG
+var Tag_faces core.SVG
 
 //go:embed takeout_dining.svg
-var Takeout_dining ora.SVG
+var Takeout_dining core.SVG
 
 //go:embed tap_and_play.svg
-var Tap_and_play ora.SVG
+var Tap_and_play core.SVG
 
 //go:embed tapas.svg
-var Tapas ora.SVG
+var Tapas core.SVG
 
 //go:embed task.svg
-var Task ora.SVG
+var Task core.SVG
 
 //go:embed task_alt.svg
-var Task_alt ora.SVG
+var Task_alt core.SVG
 
 //go:embed taxi_alert.svg
-var Taxi_alert ora.SVG
+var Taxi_alert core.SVG
 
 //go:embed temple_buddhist.svg
-var Temple_buddhist ora.SVG
+var Temple_buddhist core.SVG
 
 //go:embed temple_hindu.svg
-var Temple_hindu ora.SVG
+var Temple_hindu core.SVG
 
 //go:embed terminal.svg
-var Terminal ora.SVG
+var Terminal core.SVG
 
 //go:embed terrain.svg
-var Terrain ora.SVG
+var Terrain core.SVG
 
 //go:embed text_decrease.svg
-var Text_decrease ora.SVG
+var Text_decrease core.SVG
 
 //go:embed text_fields.svg
-var Text_fields ora.SVG
+var Text_fields core.SVG
 
 //go:embed text_format.svg
-var Text_format ora.SVG
+var Text_format core.SVG
 
 //go:embed text_increase.svg
-var Text_increase ora.SVG
+var Text_increase core.SVG
 
 //go:embed text_rotate_up.svg
-var Text_rotate_up ora.SVG
+var Text_rotate_up core.SVG
 
 //go:embed text_rotate_vertical.svg
-var Text_rotate_vertical ora.SVG
+var Text_rotate_vertical core.SVG
 
 //go:embed text_rotation_angledown.svg
-var Text_rotation_angledown ora.SVG
+var Text_rotation_angledown core.SVG
 
 //go:embed text_rotation_angleup.svg
-var Text_rotation_angleup ora.SVG
+var Text_rotation_angleup core.SVG
 
 //go:embed text_rotation_down.svg
-var Text_rotation_down ora.SVG
+var Text_rotation_down core.SVG
 
 //go:embed text_rotation_none.svg
-var Text_rotation_none ora.SVG
+var Text_rotation_none core.SVG
 
 //go:embed text_snippet.svg
-var Text_snippet ora.SVG
+var Text_snippet core.SVG
 
 //go:embed textsms.svg
-var Textsms ora.SVG
+var Textsms core.SVG
 
 //go:embed texture.svg
-var Texture ora.SVG
+var Texture core.SVG
 
 //go:embed theater_comedy.svg
-var Theater_comedy ora.SVG
+var Theater_comedy core.SVG
 
 //go:embed theaters.svg
-var Theaters ora.SVG
+var Theaters core.SVG
 
 //go:embed thermostat.svg
-var Thermostat ora.SVG
+var Thermostat core.SVG
 
 //go:embed thermostat_auto.svg
-var Thermostat_auto ora.SVG
+var Thermostat_auto core.SVG
 
 //go:embed thumb_down.svg
-var Thumb_down ora.SVG
+var Thumb_down core.SVG
 
 //go:embed thumb_down_alt.svg
-var Thumb_down_alt ora.SVG
+var Thumb_down_alt core.SVG
 
 //go:embed thumb_down_off_alt.svg
-var Thumb_down_off_alt ora.SVG
+var Thumb_down_off_alt core.SVG
 
 //go:embed thumb_up.svg
-var Thumb_up ora.SVG
+var Thumb_up core.SVG
 
 //go:embed thumb_up_alt.svg
-var Thumb_up_alt ora.SVG
+var Thumb_up_alt core.SVG
 
 //go:embed thumb_up_off_alt.svg
-var Thumb_up_off_alt ora.SVG
+var Thumb_up_off_alt core.SVG
 
 //go:embed thumbs_up_down.svg
-var Thumbs_up_down ora.SVG
+var Thumbs_up_down core.SVG
 
 //go:embed thunderstorm.svg
-var Thunderstorm ora.SVG
+var Thunderstorm core.SVG
 
 //go:embed time_to_leave.svg
-var Time_to_leave ora.SVG
+var Time_to_leave core.SVG
 
 //go:embed timelapse.svg
-var Timelapse ora.SVG
+var Timelapse core.SVG
 
 //go:embed timeline.svg
-var Timeline ora.SVG
+var Timeline core.SVG
 
 //go:embed timer.svg
-var Timer ora.SVG
+var Timer core.SVG
 
 //go:embed timer_10.svg
-var Timer_10 ora.SVG
+var Timer_10 core.SVG
 
 //go:embed timer_10_select.svg
-var Timer_10_select ora.SVG
+var Timer_10_select core.SVG
 
 //go:embed timer_3.svg
-var Timer_3 ora.SVG
+var Timer_3 core.SVG
 
 //go:embed timer_3_select.svg
-var Timer_3_select ora.SVG
+var Timer_3_select core.SVG
 
 //go:embed timer_off.svg
-var Timer_off ora.SVG
+var Timer_off core.SVG
 
 //go:embed tips_and_updates.svg
-var Tips_and_updates ora.SVG
+var Tips_and_updates core.SVG
 
 //go:embed tire_repair.svg
-var Tire_repair ora.SVG
+var Tire_repair core.SVG
 
 //go:embed title.svg
-var Title ora.SVG
+var Title core.SVG
 
 //go:embed toc.svg
-var Toc ora.SVG
+var Toc core.SVG
 
 //go:embed today.svg
-var Today ora.SVG
+var Today core.SVG
 
 //go:embed toggle_off.svg
-var Toggle_off ora.SVG
+var Toggle_off core.SVG
 
 //go:embed toggle_on.svg
-var Toggle_on ora.SVG
+var Toggle_on core.SVG
 
 //go:embed token.svg
-var Token ora.SVG
+var Token core.SVG
 
 //go:embed toll.svg
-var Toll ora.SVG
+var Toll core.SVG
 
 //go:embed tonality.svg
-var Tonality ora.SVG
+var Tonality core.SVG
 
 //go:embed topic.svg
-var Topic ora.SVG
+var Topic core.SVG
 
 //go:embed tornado.svg
-var Tornado ora.SVG
+var Tornado core.SVG
 
 //go:embed touch_app.svg
-var Touch_app ora.SVG
+var Touch_app core.SVG
 
 //go:embed tour.svg
-var Tour ora.SVG
+var Tour core.SVG
 
 //go:embed toys.svg
-var Toys ora.SVG
+var Toys core.SVG
 
 //go:embed track_changes.svg
-var Track_changes ora.SVG
+var Track_changes core.SVG
 
 //go:embed traffic.svg
-var Traffic ora.SVG
+var Traffic core.SVG
 
 //go:embed train.svg
-var Train ora.SVG
+var Train core.SVG
 
 //go:embed tram.svg
-var Tram ora.SVG
+var Tram core.SVG
 
 //go:embed transcribe.svg
-var Transcribe ora.SVG
+var Transcribe core.SVG
 
 //go:embed transfer_within_a_station.svg
-var Transfer_within_a_station ora.SVG
+var Transfer_within_a_station core.SVG
 
 //go:embed transform.svg
-var Transform ora.SVG
+var Transform core.SVG
 
 //go:embed transgender.svg
-var Transgender ora.SVG
+var Transgender core.SVG
 
 //go:embed transit_enterexit.svg
-var Transit_enterexit ora.SVG
+var Transit_enterexit core.SVG
 
 //go:embed translate.svg
-var Translate ora.SVG
+var Translate core.SVG
 
 //go:embed travel_explore.svg
-var Travel_explore ora.SVG
+var Travel_explore core.SVG
 
 //go:embed trending_down.svg
-var Trending_down ora.SVG
+var Trending_down core.SVG
 
 //go:embed trending_flat.svg
-var Trending_flat ora.SVG
+var Trending_flat core.SVG
 
 //go:embed trending_up.svg
-var Trending_up ora.SVG
+var Trending_up core.SVG
 
 //go:embed trip_origin.svg
-var Trip_origin ora.SVG
+var Trip_origin core.SVG
 
 //go:embed troubleshoot.svg
-var Troubleshoot ora.SVG
+var Troubleshoot core.SVG
 
 //go:embed try.svg
-var Try ora.SVG
+var Try core.SVG
 
 //go:embed tsunami.svg
-var Tsunami ora.SVG
+var Tsunami core.SVG
 
 //go:embed tty.svg
-var Tty ora.SVG
+var Tty core.SVG
 
 //go:embed tune.svg
-var Tune ora.SVG
+var Tune core.SVG
 
 //go:embed tungsten.svg
-var Tungsten ora.SVG
+var Tungsten core.SVG
 
 //go:embed turn_left.svg
-var Turn_left ora.SVG
+var Turn_left core.SVG
 
 //go:embed turn_right.svg
-var Turn_right ora.SVG
+var Turn_right core.SVG
 
 //go:embed turn_sharp_left.svg
-var Turn_sharp_left ora.SVG
+var Turn_sharp_left core.SVG
 
 //go:embed turn_sharp_right.svg
-var Turn_sharp_right ora.SVG
+var Turn_sharp_right core.SVG
 
 //go:embed turn_slight_left.svg
-var Turn_slight_left ora.SVG
+var Turn_slight_left core.SVG
 
 //go:embed turn_slight_right.svg
-var Turn_slight_right ora.SVG
+var Turn_slight_right core.SVG
 
 //go:embed turned_in.svg
-var Turned_in ora.SVG
+var Turned_in core.SVG
 
 //go:embed turned_in_not.svg
-var Turned_in_not ora.SVG
+var Turned_in_not core.SVG
 
 //go:embed tv.svg
-var Tv ora.SVG
+var Tv core.SVG
 
 //go:embed tv_off.svg
-var Tv_off ora.SVG
+var Tv_off core.SVG
 
 //go:embed two_wheeler.svg
-var Two_wheeler ora.SVG
+var Two_wheeler core.SVG
 
 //go:embed type_specimen.svg
-var Type_specimen ora.SVG
+var Type_specimen core.SVG
 
 //go:embed u_turn_left.svg
-var U_turn_left ora.SVG
+var U_turn_left core.SVG
 
 //go:embed u_turn_right.svg
-var U_turn_right ora.SVG
+var U_turn_right core.SVG
 
 //go:embed umbrella.svg
-var Umbrella ora.SVG
+var Umbrella core.SVG
 
 //go:embed unarchive.svg
-var Unarchive ora.SVG
+var Unarchive core.SVG
 
 //go:embed undo.svg
-var Undo ora.SVG
+var Undo core.SVG
 
 //go:embed unfold_less.svg
-var Unfold_less ora.SVG
+var Unfold_less core.SVG
 
 //go:embed unfold_less_double.svg
-var Unfold_less_double ora.SVG
+var Unfold_less_double core.SVG
 
 //go:embed unfold_more.svg
-var Unfold_more ora.SVG
+var Unfold_more core.SVG
 
 //go:embed unfold_more_double.svg
-var Unfold_more_double ora.SVG
+var Unfold_more_double core.SVG
 
 //go:embed unpublished.svg
-var Unpublished ora.SVG
+var Unpublished core.SVG
 
 //go:embed unsubscribe.svg
-var Unsubscribe ora.SVG
+var Unsubscribe core.SVG
 
 //go:embed upcoming.svg
-var Upcoming ora.SVG
+var Upcoming core.SVG
 
 //go:embed update.svg
-var Update ora.SVG
+var Update core.SVG
 
 //go:embed update_disabled.svg
-var Update_disabled ora.SVG
+var Update_disabled core.SVG
 
 //go:embed upgrade.svg
-var Upgrade ora.SVG
+var Upgrade core.SVG
 
 //go:embed upload.svg
-var Upload ora.SVG
+var Upload core.SVG
 
 //go:embed upload_file.svg
-var Upload_file ora.SVG
+var Upload_file core.SVG
 
 //go:embed usb.svg
-var Usb ora.SVG
+var Usb core.SVG
 
 //go:embed usb_off.svg
-var Usb_off ora.SVG
+var Usb_off core.SVG
 
 //go:embed vaccines.svg
-var Vaccines ora.SVG
+var Vaccines core.SVG
 
 //go:embed vape_free.svg
-var Vape_free ora.SVG
+var Vape_free core.SVG
 
 //go:embed vaping_rooms.svg
-var Vaping_rooms ora.SVG
+var Vaping_rooms core.SVG
 
 //go:embed verified.svg
-var Verified ora.SVG
+var Verified core.SVG
 
 //go:embed verified_user.svg
-var Verified_user ora.SVG
+var Verified_user core.SVG
 
 //go:embed vertical_align_bottom.svg
-var Vertical_align_bottom ora.SVG
+var Vertical_align_bottom core.SVG
 
 //go:embed vertical_align_center.svg
-var Vertical_align_center ora.SVG
+var Vertical_align_center core.SVG
 
 //go:embed vertical_align_top.svg
-var Vertical_align_top ora.SVG
+var Vertical_align_top core.SVG
 
 //go:embed vertical_distribute.svg
-var Vertical_distribute ora.SVG
+var Vertical_distribute core.SVG
 
 //go:embed vertical_shades.svg
-var Vertical_shades ora.SVG
+var Vertical_shades core.SVG
 
 //go:embed vertical_shades_closed.svg
-var Vertical_shades_closed ora.SVG
+var Vertical_shades_closed core.SVG
 
 //go:embed vertical_split.svg
-var Vertical_split ora.SVG
+var Vertical_split core.SVG
 
 //go:embed vibration.svg
-var Vibration ora.SVG
+var Vibration core.SVG
 
 //go:embed video_call.svg
-var Video_call ora.SVG
+var Video_call core.SVG
 
 //go:embed video_camera_back.svg
-var Video_camera_back ora.SVG
+var Video_camera_back core.SVG
 
 //go:embed video_camera_front.svg
-var Video_camera_front ora.SVG
+var Video_camera_front core.SVG
 
 //go:embed video_chat.svg
-var Video_chat ora.SVG
+var Video_chat core.SVG
 
 //go:embed video_file.svg
-var Video_file ora.SVG
+var Video_file core.SVG
 
 //go:embed video_label.svg
-var Video_label ora.SVG
+var Video_label core.SVG
 
 //go:embed video_library.svg
-var Video_library ora.SVG
+var Video_library core.SVG
 
 //go:embed video_settings.svg
-var Video_settings ora.SVG
+var Video_settings core.SVG
 
 //go:embed video_stable.svg
-var Video_stable ora.SVG
+var Video_stable core.SVG
 
 //go:embed videocam.svg
-var Videocam ora.SVG
+var Videocam core.SVG
 
 //go:embed videocam_off.svg
-var Videocam_off ora.SVG
+var Videocam_off core.SVG
 
 //go:embed videogame_asset.svg
-var Videogame_asset ora.SVG
+var Videogame_asset core.SVG
 
 //go:embed videogame_asset_off.svg
-var Videogame_asset_off ora.SVG
+var Videogame_asset_off core.SVG
 
 //go:embed view_agenda.svg
-var View_agenda ora.SVG
+var View_agenda core.SVG
 
 //go:embed view_array.svg
-var View_array ora.SVG
+var View_array core.SVG
 
 //go:embed view_carousel.svg
-var View_carousel ora.SVG
+var View_carousel core.SVG
 
 //go:embed view_column.svg
-var View_column ora.SVG
+var View_column core.SVG
 
 //go:embed view_comfy.svg
-var View_comfy ora.SVG
+var View_comfy core.SVG
 
 //go:embed view_comfy_alt.svg
-var View_comfy_alt ora.SVG
+var View_comfy_alt core.SVG
 
 //go:embed view_compact.svg
-var View_compact ora.SVG
+var View_compact core.SVG
 
 //go:embed view_compact_alt.svg
-var View_compact_alt ora.SVG
+var View_compact_alt core.SVG
 
 //go:embed view_cozy.svg
-var View_cozy ora.SVG
+var View_cozy core.SVG
 
 //go:embed view_day.svg
-var View_day ora.SVG
+var View_day core.SVG
 
 //go:embed view_headline.svg
-var View_headline ora.SVG
+var View_headline core.SVG
 
 //go:embed view_in_ar.svg
-var View_in_ar ora.SVG
+var View_in_ar core.SVG
 
 //go:embed view_kanban.svg
-var View_kanban ora.SVG
+var View_kanban core.SVG
 
 //go:embed view_list.svg
-var View_list ora.SVG
+var View_list core.SVG
 
 //go:embed view_module.svg
-var View_module ora.SVG
+var View_module core.SVG
 
 //go:embed view_quilt.svg
-var View_quilt ora.SVG
+var View_quilt core.SVG
 
 //go:embed view_sidebar.svg
-var View_sidebar ora.SVG
+var View_sidebar core.SVG
 
 //go:embed view_stream.svg
-var View_stream ora.SVG
+var View_stream core.SVG
 
 //go:embed view_timeline.svg
-var View_timeline ora.SVG
+var View_timeline core.SVG
 
 //go:embed view_week.svg
-var View_week ora.SVG
+var View_week core.SVG
 
 //go:embed vignette.svg
-var Vignette ora.SVG
+var Vignette core.SVG
 
 //go:embed villa.svg
-var Villa ora.SVG
+var Villa core.SVG
 
 //go:embed visibility.svg
-var Visibility ora.SVG
+var Visibility core.SVG
 
 //go:embed visibility_off.svg
-var Visibility_off ora.SVG
+var Visibility_off core.SVG
 
 //go:embed voice_chat.svg
-var Voice_chat ora.SVG
+var Voice_chat core.SVG
 
 //go:embed voice_over_off.svg
-var Voice_over_off ora.SVG
+var Voice_over_off core.SVG
 
 //go:embed voicemail.svg
-var Voicemail ora.SVG
+var Voicemail core.SVG
 
 //go:embed volcano.svg
-var Volcano ora.SVG
+var Volcano core.SVG
 
 //go:embed volume_down.svg
-var Volume_down ora.SVG
+var Volume_down core.SVG
 
 //go:embed volume_mute.svg
-var Volume_mute ora.SVG
+var Volume_mute core.SVG
 
 //go:embed volume_off.svg
-var Volume_off ora.SVG
+var Volume_off core.SVG
 
 //go:embed volume_up.svg
-var Volume_up ora.SVG
+var Volume_up core.SVG
 
 //go:embed volunteer_activism.svg
-var Volunteer_activism ora.SVG
+var Volunteer_activism core.SVG
 
 //go:embed vpn_key.svg
-var Vpn_key ora.SVG
+var Vpn_key core.SVG
 
 //go:embed vpn_key_off.svg
-var Vpn_key_off ora.SVG
+var Vpn_key_off core.SVG
 
 //go:embed vpn_lock.svg
-var Vpn_lock ora.SVG
+var Vpn_lock core.SVG
 
 //go:embed vrpano.svg
-var Vrpano ora.SVG
+var Vrpano core.SVG
 
 //go:embed wallet.svg
-var Wallet ora.SVG
+var Wallet core.SVG
 
 //go:embed wallpaper.svg
-var Wallpaper ora.SVG
+var Wallpaper core.SVG
 
 //go:embed warehouse.svg
-var Warehouse ora.SVG
+var Warehouse core.SVG
 
 //go:embed warning.svg
-var Warning ora.SVG
+var Warning core.SVG
 
 //go:embed warning_amber.svg
-var Warning_amber ora.SVG
+var Warning_amber core.SVG
 
 //go:embed wash.svg
-var Wash ora.SVG
+var Wash core.SVG
 
 //go:embed watch.svg
-var Watch ora.SVG
+var Watch core.SVG
 
 //go:embed watch_later.svg
-var Watch_later ora.SVG
+var Watch_later core.SVG
 
 //go:embed watch_off.svg
-var Watch_off ora.SVG
+var Watch_off core.SVG
 
 //go:embed water.svg
-var Water ora.SVG
+var Water core.SVG
 
 //go:embed water_damage.svg
-var Water_damage ora.SVG
+var Water_damage core.SVG
 
 //go:embed water_drop.svg
-var Water_drop ora.SVG
+var Water_drop core.SVG
 
 //go:embed waterfall_chart.svg
-var Waterfall_chart ora.SVG
+var Waterfall_chart core.SVG
 
 //go:embed waves.svg
-var Waves ora.SVG
+var Waves core.SVG
 
 //go:embed waving_hand.svg
-var Waving_hand ora.SVG
+var Waving_hand core.SVG
 
 //go:embed wb_auto.svg
-var Wb_auto ora.SVG
+var Wb_auto core.SVG
 
 //go:embed wb_cloudy.svg
-var Wb_cloudy ora.SVG
+var Wb_cloudy core.SVG
 
 //go:embed wb_incandescent.svg
-var Wb_incandescent ora.SVG
+var Wb_incandescent core.SVG
 
 //go:embed wb_iridescent.svg
-var Wb_iridescent ora.SVG
+var Wb_iridescent core.SVG
 
 //go:embed wb_shade.svg
-var Wb_shade ora.SVG
+var Wb_shade core.SVG
 
 //go:embed wb_sunny.svg
-var Wb_sunny ora.SVG
+var Wb_sunny core.SVG
 
 //go:embed wb_twilight.svg
-var Wb_twilight ora.SVG
+var Wb_twilight core.SVG
 
 //go:embed wc.svg
-var Wc ora.SVG
+var Wc core.SVG
 
 //go:embed web.svg
-var Web ora.SVG
+var Web core.SVG
 
 //go:embed web_asset.svg
-var Web_asset ora.SVG
+var Web_asset core.SVG
 
 //go:embed web_asset_off.svg
-var Web_asset_off ora.SVG
+var Web_asset_off core.SVG
 
 //go:embed web_stories.svg
-var Web_stories ora.SVG
+var Web_stories core.SVG
 
 //go:embed webhook.svg
-var Webhook ora.SVG
+var Webhook core.SVG
 
 //go:embed weekend.svg
-var Weekend ora.SVG
+var Weekend core.SVG
 
 //go:embed west.svg
-var West ora.SVG
+var West core.SVG
 
 //go:embed whatshot.svg
-var Whatshot ora.SVG
+var Whatshot core.SVG
 
 //go:embed wheelchair_pickup.svg
-var Wheelchair_pickup ora.SVG
+var Wheelchair_pickup core.SVG
 
 //go:embed where_to_vote.svg
-var Where_to_vote ora.SVG
+var Where_to_vote core.SVG
 
 //go:embed widgets.svg
-var Widgets ora.SVG
+var Widgets core.SVG
 
 //go:embed width_full.svg
-var Width_full ora.SVG
+var Width_full core.SVG
 
 //go:embed width_normal.svg
-var Width_normal ora.SVG
+var Width_normal core.SVG
 
 //go:embed width_wide.svg
-var Width_wide ora.SVG
+var Width_wide core.SVG
 
 //go:embed wifi.svg
-var Wifi ora.SVG
+var Wifi core.SVG
 
 //go:embed wifi_1_bar.svg
-var Wifi_1_bar ora.SVG
+var Wifi_1_bar core.SVG
 
 //go:embed wifi_2_bar.svg
-var Wifi_2_bar ora.SVG
+var Wifi_2_bar core.SVG
 
 //go:embed wifi_calling.svg
-var Wifi_calling ora.SVG
+var Wifi_calling core.SVG
 
 //go:embed wifi_calling_3.svg
-var Wifi_calling_3 ora.SVG
+var Wifi_calling_3 core.SVG
 
 //go:embed wifi_channel.svg
-var Wifi_channel ora.SVG
+var Wifi_channel core.SVG
 
 //go:embed wifi_find.svg
-var Wifi_find ora.SVG
+var Wifi_find core.SVG
 
 //go:embed wifi_lock.svg
-var Wifi_lock ora.SVG
+var Wifi_lock core.SVG
 
 //go:embed wifi_off.svg
-var Wifi_off ora.SVG
+var Wifi_off core.SVG
 
 //go:embed wifi_password.svg
-var Wifi_password ora.SVG
+var Wifi_password core.SVG
 
 //go:embed wifi_protected_setup.svg
-var Wifi_protected_setup ora.SVG
+var Wifi_protected_setup core.SVG
 
 //go:embed wifi_tethering.svg
-var Wifi_tethering ora.SVG
+var Wifi_tethering core.SVG
 
 //go:embed wifi_tethering_error.svg
-var Wifi_tethering_error ora.SVG
+var Wifi_tethering_error core.SVG
 
 //go:embed wifi_tethering_off.svg
-var Wifi_tethering_off ora.SVG
+var Wifi_tethering_off core.SVG
 
 //go:embed wind_power.svg
-var Wind_power ora.SVG
+var Wind_power core.SVG
 
 //go:embed window.svg
-var Window ora.SVG
+var Window core.SVG
 
 //go:embed wine_bar.svg
-var Wine_bar ora.SVG
+var Wine_bar core.SVG
 
 //go:embed woman.svg
-var Woman ora.SVG
+var Woman core.SVG
 
 //go:embed woman_2.svg
-var Woman_2 ora.SVG
+var Woman_2 core.SVG
 
 //go:embed work.svg
-var Work ora.SVG
+var Work core.SVG
 
 //go:embed work_history.svg
-var Work_history ora.SVG
+var Work_history core.SVG
 
 //go:embed work_off.svg
-var Work_off ora.SVG
+var Work_off core.SVG
 
 //go:embed work_outline.svg
-var Work_outline ora.SVG
+var Work_outline core.SVG
 
 //go:embed workspace_premium.svg
-var Workspace_premium ora.SVG
+var Workspace_premium core.SVG
 
 //go:embed workspaces.svg
-var Workspaces ora.SVG
+var Workspaces core.SVG
 
 //go:embed wrap_text.svg
-var Wrap_text ora.SVG
+var Wrap_text core.SVG
 
 //go:embed wrong_location.svg
-var Wrong_location ora.SVG
+var Wrong_location core.SVG
 
 //go:embed wysiwyg.svg
-var Wysiwyg ora.SVG
+var Wysiwyg core.SVG
 
 //go:embed yard.svg
-var Yard ora.SVG
+var Yard core.SVG
 
 //go:embed youtube_searched_for.svg
-var Youtube_searched_for ora.SVG
+var Youtube_searched_for core.SVG
 
 //go:embed zoom_in.svg
-var Zoom_in ora.SVG
+var Zoom_in core.SVG
 
 //go:embed zoom_in_map.svg
-var Zoom_in_map ora.SVG
+var Zoom_in_map core.SVG
 
 //go:embed zoom_out.svg
-var Zoom_out ora.SVG
+var Zoom_out core.SVG
 
 //go:embed zoom_out_map.svg
-var Zoom_out_map ora.SVG
+var Zoom_out_map core.SVG
 
-var All = map[string]ora.SVG{
+var All = map[string]core.SVG{
 	"I10k":                            I10k,
 	"I10mp":                           I10mp,
 	"I11mp":                           I11mp,

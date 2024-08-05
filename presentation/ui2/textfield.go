@@ -6,6 +6,20 @@ import (
 	"time"
 )
 
+type TextFieldStyle string
+
+func (t TextFieldStyle) ora() ora.TextFieldStyle {
+	return ora.TextFieldStyle(t)
+}
+
+const (
+	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
+	TextFieldReduced TextFieldStyle = "r"
+
+	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
+	TextFieldOutlined TextFieldStyle = "o"
+)
+
 type TTextField struct {
 	label           string
 	value           string
@@ -53,8 +67,8 @@ func (c TTextField) Trailing(v core.View) TTextField {
 }
 
 // Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
-func (c TTextField) Style(s ora.TextFieldStyle) TTextField {
-	c.style = s
+func (c TTextField) Style(s TextFieldStyle) TTextField {
+	c.style = s.ora()
 	return c
 }
 

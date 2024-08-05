@@ -10,11 +10,3 @@ type SVG []byte
 func (svg SVG) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(svg))
 }
-
-func (svg SVG) AsBytes() []byte {
-	return []byte(svg)
-}
-
-// RIDSVG is a Resource IDentifier for a Scalable Vector Graphics.
-// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type RIDSVG int64

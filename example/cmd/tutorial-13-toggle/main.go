@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/alert"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -19,14 +18,14 @@ func main() {
 			checked := core.AutoState[bool](wnd)
 			showAlert := core.AutoState[bool](wnd)
 
-			return ui.VStack(
+			return VStack(
 				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", checked), showAlert, alert.Ok()),
-				ui.Toggle(checked.Get()).InputChecked(checked),
-				ui.PrimaryButton(func() {
+				Toggle(checked.Get()).InputChecked(checked),
+				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),
-			).Gap(ora.L16).
-				Frame(ora.Frame{}.MatchScreen())
+			).Gap(L16).
+				Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

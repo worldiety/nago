@@ -27,40 +27,6 @@ type Density float64
 // https://tailwindcss.com/docs/responsive-design.
 type WindowSizeClass string
 
-func (w WindowSizeClass) Ordinal() int {
-	switch w {
-	case SizeClassSmall:
-		return 1
-	case SizeClassMedium:
-		return 2
-	case SizeClassLarge:
-		return 3
-	case SizeClassXL:
-		return 4
-	case SizeClass2XL:
-		return 5
-	default:
-		return 0
-	}
-}
-
-func (w WindowSizeClass) Valid() bool {
-	return w.Ordinal() != 0
-}
-
-const (
-	// SizeClassSmall are devices below 640 dp screen width.
-	SizeClassSmall WindowSizeClass = "sm"
-	// SizeClassMedium are devices below 768dp screen width.
-	SizeClassMedium WindowSizeClass = "md"
-	// SizeClassLarge are devices below 1024dp screen width.
-	SizeClassLarge WindowSizeClass = "lg"
-	// SizeClassXL are devices below 1280dp screen width.
-	SizeClassXL WindowSizeClass = "xl"
-	// SizeClass2XL are devices below 1536dp screen width.
-	SizeClass2XL WindowSizeClass = "2xl"
-)
-
 // WindowInfo describes the area into which the frontend renders the ora view tree.
 // A user can simply change the layout of the screen, e.g. by rotation the smartphone or
 // changing the size of a browser window.

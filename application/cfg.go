@@ -6,6 +6,7 @@ import (
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	ui "go.wdy.de/nago/presentation/ui2"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -37,7 +38,7 @@ type Configurator struct {
 	destructors              []func()
 	app                      *core.Application // may be nil
 	rawEndpoint              []rawEndpoint
-	colorSets                map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet
+	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri               ora.URI
 }
 
@@ -59,9 +60,9 @@ func NewConfigurator() *Configurator {
 	}
 
 	cfg := &Configurator{
-		colorSets: map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet{
-			ora.Dark:  {},
-			ora.Light: {},
+		colorSets: map[core.ColorScheme]map[core.NamespaceName]core.ColorSet{
+			core.Dark:  {},
+			core.Light: {},
 		},
 		ctx:                ctx,
 		done:               done,
@@ -72,10 +73,10 @@ func NewConfigurator() *Configurator {
 	}
 
 	// init our standard white label theme
-	var main, accent, interactive ora.Color
+	var main, accent, interactive ui.Color
 	main, accent, interactive = "#1B8C30", "#17428C", "#F7A823"
-	cfg.ColorSet(ora.Light, ora.DefaultColors(ora.Light, main, accent, interactive))
-	cfg.ColorSet(ora.Dark, ora.DefaultColors(ora.Dark, main, accent, interactive))
+	cfg.ColorSet(core.Light, ui.DefaultColors(core.Light, main, accent, interactive))
+	cfg.ColorSet(core.Dark, ui.DefaultColors(core.Dark, main, accent, interactive))
 
 	return cfg
 }
@@ -89,8 +90,8 @@ func (c *Configurator) OnDestroy(f func()) {
 	c.destructors = append(c.destructors, f)
 }
 
-func (c *Configurator) AppIcon(ico ora.URI) *core.Application {
-	c.appIconUri = ico
+func (c *Configurator) AppIcon(ico core.URI) *core.Application {
+	c.appIconUri = ora.URI(ico)
 	return c.app
 }
 

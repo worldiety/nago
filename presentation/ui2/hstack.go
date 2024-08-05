@@ -34,82 +34,82 @@ func HStack(children ...core.View) *THStack {
 	return c
 }
 
-func (c THStack) Padding(padding ora.Padding) core.DecoredView {
-	c.padding = padding
+func (c THStack) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c THStack) Gap(gap ora.Length) THStack {
-	c.gap = gap
+func (c THStack) Gap(gap Length) THStack {
+	c.gap = gap.ora()
 	return c
 }
 
-func (c THStack) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
-	c.backgroundColor = backgroundColor
+func (c THStack) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c THStack) HoveredBackgroundColor(backgroundColor ora.Color) THStack {
-	c.hoveredBackgroundColor = backgroundColor
+func (c THStack) HoveredBackgroundColor(backgroundColor Color) THStack {
+	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c THStack) PressedBackgroundColor(backgroundColor ora.Color) THStack {
-	c.pressedBackgroundColor = backgroundColor
+func (c THStack) PressedBackgroundColor(backgroundColor Color) THStack {
+	c.pressedBackgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c THStack) FocusedBackgroundColor(backgroundColor ora.Color) THStack {
-	c.focusedBackgroundColor = backgroundColor
+func (c THStack) FocusedBackgroundColor(backgroundColor Color) THStack {
+	c.focusedBackgroundColor = ora.Color(backgroundColor)
 	return c
 }
 
-func (c THStack) Alignment(alignment ora.Alignment) THStack {
-	c.alignment = alignment
+func (c THStack) Alignment(alignment Alignment) THStack {
+	c.alignment = alignment.ora()
 	return c
 }
 
-func (c THStack) Frame(fr ora.Frame) core.DecoredView {
-	c.frame = fr
+func (c THStack) Frame(fr Frame) DecoredView {
+	c.frame = fr.ora()
 	return c
 }
 
-func (c THStack) Font(font ora.Font) core.DecoredView {
-	c.font = font
+func (c THStack) Font(font Font) DecoredView {
+	c.font = font.ora()
 	return c
 }
 
-func (c THStack) StylePreset(preset ora.StylePreset) THStack {
-	c.stylePreset = preset
+func (c THStack) StylePreset(preset StylePreset) THStack {
+	c.stylePreset = preset.ora()
 	return c
 }
 
-func (c THStack) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c THStack) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c THStack) HoveredBorder(border ora.Border) THStack {
-	c.hoveredBorder = border
+func (c THStack) HoveredBorder(border Border) THStack {
+	c.hoveredBorder = border.ora()
 	return c
 }
 
-func (c THStack) PressedBorder(border ora.Border) THStack {
-	c.pressedBorder = border
+func (c THStack) PressedBorder(border Border) THStack {
+	c.pressedBorder = border.ora()
 	return c
 }
 
-func (c THStack) FocusedBorder(border ora.Border) THStack {
-	c.focusedBorder = border
+func (c THStack) FocusedBorder(border Border) THStack {
+	c.focusedBorder = border.ora()
 	return c
 }
 
-func (c THStack) Visible(visible bool) core.DecoredView {
+func (c THStack) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
-func (c THStack) AccessibilityLabel(label string) core.DecoredView {
+func (c THStack) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/alert"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -19,26 +18,26 @@ func main() {
 			checked := core.AutoState[bool](wnd)
 			showAlert := core.AutoState[bool](wnd)
 
-			return ui.VStack(
+			return VStack(
 				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", checked), showAlert, alert.Ok()),
-				ui.Checkbox(checked.Get()).InputChecked(checked),
-				ui.HStack(
-					ui.Checkbox(checked.Get()).InputChecked(checked),
-					ui.Text("check right").Action(func() {
+				Checkbox(checked.Get()).InputChecked(checked),
+				HStack(
+					Checkbox(checked.Get()).InputChecked(checked),
+					Text("check right").Action(func() {
 						checked.Set(!checked.Get())
 					}),
 				),
-				ui.HStack(
-					ui.Text("check left").Action(func() {
+				HStack(
+					Text("check left").Action(func() {
 						checked.Set(!checked.Get())
 					}),
-					ui.Checkbox(checked.Get()).InputChecked(checked),
-				).Gap(ora.L16),
-				ui.PrimaryButton(func() {
+					Checkbox(checked.Get()).InputChecked(checked),
+				).Gap(L16),
+				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),
-			).Gap(ora.L16).
-				Frame(ora.Frame{}.MatchScreen())
+			).Gap(L16).
+				Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/ora" // TODO remove this protocol leak from public contract
 	"golang.org/x/text/language"
 	"io"
 	"log/slog"
@@ -60,7 +60,7 @@ type Window interface {
 	Location() *time.Location
 
 	// Info returns the screen metrics.
-	Info() ora.WindowInfo
+	Info() WindowInfo
 
 	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
@@ -70,13 +70,13 @@ type Window interface {
 	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
 	// is returned from the open call. Note that open is usually not called from the event looper and the open call
 	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
-	AsURI(open func() (io.Reader, error)) (ora.URI, error)
+	AsURI(open func() (io.Reader, error)) (URI, error) // TODO remove this protocol leak from public contract
 
 	// Application returns the parent application.
 	Application() *Application
 
 	// Factory returns the current active factory.
-	Factory() ora.ComponentFactoryId
+	Factory() ora.ComponentFactoryId // TODO remove this protocol leak from public contract
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
@@ -91,8 +91,8 @@ type Window interface {
 
 type SessionID string
 
-// ColorSet returns a type safe value based ColorSet instance.
-func ColorSet[CS ora.ColorSet](wnd Window) CS {
+// Colors returns a type safe value based ColorSet instance.
+func Colors[CS ColorSet](wnd Window) CS {
 	var zero CS
 	scope := wnd.(*scopeWindow)
 

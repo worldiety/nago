@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -26,47 +25,47 @@ func main() {
 
 		cfg.Component(".", func(wnd core.Window) core.View {
 			fmt.Println("hello")
-			return ui.VStack(
-				ui.Image().
+			return VStack(
+				Image().
 					URI(grasUri).
-					Frame(ora.Frame{}.Size("", ora.L320)),
+					Frame(Frame{}.Size("", L320)),
 
 				CircleImage(hummelUri).
 					AccessibilityLabel("Hummel an Lavendel").
-					Padding(ora.Padding{Top: ora.L160.Negate()}),
+					Padding(Padding{Top: L160.Negate()}),
 
-				ui.VStack(
-					ui.Text("Hummel").
-						Font(ora.Title),
+				VStack(
+					Text("Hummel").
+						Font(Title),
 
-					ui.HStack(
-						ui.Text("WZO Terrasse"),
-						ui.Spacer(),
-						ui.Text("Oldenburg"),
-					).Font(ora.Font{Size: ora.L12}).
-						Frame(ora.Frame{}.FullWidth()),
+					HStack(
+						Text("WZO Terrasse"),
+						Spacer(),
+						Text("Oldenburg"),
+					).Font(Font{Size: L12}).
+						Frame(Frame{}.FullWidth()),
 
-					ui.HLine(),
-					ui.Text("Es gibt auch").Font(ora.Title),
-					ui.Text("Andere Viecher"),
-				).Alignment(ora.Leading).
-					Frame(ora.Frame{Width: ora.L320}),
+					HLine(),
+					Text("Es gibt auch").Font(Title),
+					Text("Andere Viecher"),
+				).Alignment(Leading).
+					Frame(Frame{Width: L320}),
 			).
-				Frame(ora.Frame{Height: ora.ViewportHeight, Width: ora.Full})
+				Frame(Frame{Height: ViewportHeight, Width: Full})
 
 		})
 
 	}).Run()
 }
 
-func CircleImage(data ora.URI) core.DecoredView {
-	return ui.Image().
+func CircleImage(data core.URI) DecoredView {
+	return Image().
 		URI(data).
-		Border(ora.Border{}.
-			Shadow(ora.L8).
+		Border(Border{}.
+			Shadow(L8).
 			Color("#ffffff").
-			Width(ora.L4).
+			Width(L4).
 			Circle()).
-		Frame(ora.Frame{}.Size(ora.L320, ora.L320))
+		Frame(Frame{}.Size(L320, L320))
 
 }

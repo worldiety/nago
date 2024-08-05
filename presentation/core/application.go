@@ -36,10 +36,10 @@ type Application struct {
 	cancelCtx                func()
 	tmpDir                   string
 	onSendFiles              func(*Scope, iter.Seq2[File, error]) error
-	onShareStream            func(*Scope, func() (io.Reader, error)) (ora.URI, error)
+	onShareStream            func(*Scope, func() (io.Reader, error)) (URI, error)
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
-	colorSets                map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet
+	colorSets                map[ColorScheme]map[NamespaceName]ColorSet
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver) *Application {
@@ -54,9 +54,9 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 		cancelCtx:                cancel,
 		tmpDir:                   tmpDir,
 		onWindowCreatedObservers: onWindowCreatedObservers,
-		colorSets: map[ora.ColorScheme]map[ora.NamespaceName]ora.ColorSet{
-			ora.Light: {},
-			ora.Dark:  {},
+		colorSets: map[ColorScheme]map[NamespaceName]ColorSet{
+			Light: {},
+			Dark:  {},
 		},
 	}
 }
@@ -92,7 +92,7 @@ func (a *Application) SetAppIcon(appIcon ora.URI) {
 	a.appIcon = appIcon
 }
 
-func (a *Application) AddColorSet(scheme ora.ColorScheme, set ora.ColorSet) {
+func (a *Application) AddColorSet(scheme ColorScheme, set ColorSet) {
 	a.colorSets[scheme][set.Namespace()] = set
 }
 
@@ -105,7 +105,7 @@ func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, iter.Seq2[File, er
 
 // SetOnShareStream set the callback which is called the by the window to convert any dynamic stream into a fixed
 // URI. A webbrowser will get an url resource, which must not be cached. Android needs a custom content provider.
-func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Reader, error)) (ora.URI, error)) {
+func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Reader, error)) (URI, error)) {
 	a.onShareStream = onShareStream
 }
 

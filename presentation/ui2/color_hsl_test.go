@@ -1,4 +1,4 @@
-package ora
+package ui
 
 import (
 	"fmt"

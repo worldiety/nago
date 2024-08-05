@@ -4,8 +4,7 @@ import (
 	_ "embed"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -24,57 +23,57 @@ func main() {
 		grassURI := cfg.Resource(grasData)
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.VStack(
+			return VStack(
 				Card(
-					ui.HStack(
+					HStack(
 						Avatar(profileURI),
 						Details("Sir Gopher", "3 minutes ago"),
 					),
 					PostedImage(grassURI),
 				),
-			).Frame(ora.Frame{}.MatchScreen())
+			).Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }
 
-func Avatar(data ora.URI) core.View {
-	return ui.Box(ui.BoxLayout{
-		Center: ui.Image().
+func Avatar(data core.URI) core.View {
+	return Box(BoxLayout{
+		Center: Image().
 			URI(data).
-			Frame(ora.Frame{}.Size(ora.L120, ora.L120)).
-			Border(ora.Border{}.Circle().Width(ora.L4).Color("#ffffff").Shadow(ora.L4)),
-		BottomTrailing: ui.Box(ui.BoxLayout{
-			Center: ui.Text("42").
-				Font(ora.Font{Weight: ora.BoldFontWeight}).
+			Frame(Frame{}.Size(L120, L120)).
+			Border(Border{}.Circle().Width(L4).Color("#ffffff").Shadow(L4)),
+		BottomTrailing: Box(BoxLayout{
+			Center: Text("42").
+				Font(Font{Weight: BoldFontWeight}).
 				Color("#2d6187"),
 		}).
 			BackgroundColor("#52eb8f").
-			Border(ora.Border{}.Circle().Width(ora.L4).Color("#ffffff")).
-			Frame(ora.Frame{}.Size(ora.L44, ora.L44)),
+			Border(Border{}.Circle().Width(L4).Color("#ffffff")).
+			Frame(Frame{}.Size(L44, L44)),
 	}).
-		Frame(ora.Frame{}.Size(ora.L120, ora.L120))
+		Frame(Frame{}.Size(L120, L120))
 }
 
-func PostedImage(data ora.URI) core.View {
-	return ui.Image().
+func PostedImage(data core.URI) core.View {
+	return Image().
 		URI(data).
-		Frame(ora.Frame{}.Size(ora.Full, ora.Auto)).
-		Border(ora.Border{}.Radius(ora.L4).Elevate(2))
+		Frame(Frame{}.Size(Full, Auto)).
+		Border(Border{}.Radius(L4).Elevate(2))
 }
 
 func Details(headline, subheadline string) core.View {
-	return ui.VStack(
-		ui.Text(headline).Font(ora.Title),
-		ui.Text(subheadline),
-	).Alignment(ora.Leading).
-		Padding(ora.Padding{}.Horizontal(ora.L20))
+	return VStack(
+		Text(headline).Font(Title),
+		Text(subheadline),
+	).Alignment(Leading).
+		Padding(Padding{}.Horizontal(L20))
 }
 
 func Card(views ...core.View) core.View {
-	return ui.VStack(views...).
-		Gap(ora.L12).
-		Alignment(ora.Leading).
-		Border(ora.Border{}.Radius(ora.L4).Elevate(4)).
-		Frame(ora.Frame{}.Size(ora.L320, ora.Auto)).
-		Padding(ora.Padding{}.All(ora.L8))
+	return VStack(views...).
+		Gap(L12).
+		Alignment(Leading).
+		Border(Border{}.Radius(L4).Elevate(4)).
+		Frame(Frame{}.Size(L320, Auto)).
+		Padding(Padding{}.All(L8))
 }

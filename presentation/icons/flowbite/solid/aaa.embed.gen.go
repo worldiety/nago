@@ -4,727 +4,727 @@ package icons
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/core"
 )
 
 //go:embed X.svg
-var X ora.SVG
+var X core.SVG
 
 //go:embed address-book.svg
-var AddressBook ora.SVG
+var AddressBook core.SVG
 
 //go:embed adjustments-horizontal.svg
-var AdjustmentsHorizontal ora.SVG
+var AdjustmentsHorizontal core.SVG
 
 //go:embed adjustments-vertical.svg
-var AdjustmentsVertical ora.SVG
+var AdjustmentsVertical core.SVG
 
 //go:embed annotation.svg
-var Annotation ora.SVG
+var Annotation core.SVG
 
 //go:embed apple.svg
-var Apple ora.SVG
+var Apple core.SVG
 
 //go:embed archive-arrow-down.svg
-var ArchiveArrowDown ora.SVG
+var ArchiveArrowDown core.SVG
 
 //go:embed archive.svg
-var Archive ora.SVG
+var Archive core.SVG
 
 //go:embed arrow-right-alt.svg
-var ArrowRightAlt ora.SVG
+var ArrowRightAlt core.SVG
 
 //go:embed arrow-up-right-from-square.svg
-var ArrowUpRightFromSquare ora.SVG
+var ArrowUpRightFromSquare core.SVG
 
 //go:embed award.svg
-var Award ora.SVG
+var Award core.SVG
 
 //go:embed backward-step.svg
-var BackwardStep ora.SVG
+var BackwardStep core.SVG
 
 //go:embed badge-check.svg
-var BadgeCheck ora.SVG
+var BadgeCheck core.SVG
 
 //go:embed bell-active-alt.svg
-var BellActiveAlt ora.SVG
+var BellActiveAlt core.SVG
 
 //go:embed bell-active.svg
-var BellActive ora.SVG
+var BellActive core.SVG
 
 //go:embed bell-ring.svg
-var BellRing ora.SVG
+var BellRing core.SVG
 
 //go:embed bell.svg
-var Bell ora.SVG
+var Bell core.SVG
 
 //go:embed blender-phone.svg
-var BlenderPhone ora.SVG
+var BlenderPhone core.SVG
 
 //go:embed book-open.svg
-var BookOpen ora.SVG
+var BookOpen core.SVG
 
 //go:embed book.svg
-var Book ora.SVG
+var Book core.SVG
 
 //go:embed bookmark.svg
-var Bookmark ora.SVG
+var Bookmark core.SVG
 
 //go:embed brain.svg
-var Brain ora.SVG
+var Brain core.SVG
 
 //go:embed briefcase.svg
-var Briefcase ora.SVG
+var Briefcase core.SVG
 
 //go:embed bug.svg
-var Bug ora.SVG
+var Bug core.SVG
 
 //go:embed building.svg
-var Building ora.SVG
+var Building core.SVG
 
 //go:embed bullhorn.svg
-var Bullhorn ora.SVG
+var Bullhorn core.SVG
 
 //go:embed calendar-edit.svg
-var CalendarEdit ora.SVG
+var CalendarEdit core.SVG
 
 //go:embed calendar-month.svg
-var CalendarMonth ora.SVG
+var CalendarMonth core.SVG
 
 //go:embed calendar-plus.svg
-var CalendarPlus ora.SVG
+var CalendarPlus core.SVG
 
 //go:embed calendar-week.svg
-var CalendarWeek ora.SVG
+var CalendarWeek core.SVG
 
 //go:embed camera-photo.svg
-var CameraPhoto ora.SVG
+var CameraPhoto core.SVG
 
 //go:embed caption.svg
-var Caption ora.SVG
+var Caption core.SVG
 
 //go:embed caret-down.svg
-var CaretDown ora.SVG
+var CaretDown core.SVG
 
 //go:embed caret-left.svg
-var CaretLeft ora.SVG
+var CaretLeft core.SVG
 
 //go:embed caret-right.svg
-var CaretRight ora.SVG
+var CaretRight core.SVG
 
 //go:embed caret-sort.svg
-var CaretSort ora.SVG
+var CaretSort core.SVG
 
 //go:embed caret-up.svg
-var CaretUp ora.SVG
+var CaretUp core.SVG
 
 //go:embed cart-plus-alt.svg
-var CartPlusAlt ora.SVG
+var CartPlusAlt core.SVG
 
 //go:embed cart-plus.svg
-var CartPlus ora.SVG
+var CartPlus core.SVG
 
 //go:embed cart.svg
-var Cart ora.SVG
+var Cart core.SVG
 
 //go:embed cash.svg
-var Cash ora.SVG
+var Cash core.SVG
 
 //go:embed chart-mixed-dollar.svg
-var ChartMixedDollar ora.SVG
+var ChartMixedDollar core.SVG
 
 //go:embed chart-pie.svg
-var ChartPie ora.SVG
+var ChartPie core.SVG
 
 //go:embed check-circle.svg
-var CheckCircle ora.SVG
+var CheckCircle core.SVG
 
 //go:embed check-plus-circle.svg
-var CheckPlusCircle ora.SVG
+var CheckPlusCircle core.SVG
 
 //go:embed circle-minus.svg
-var CircleMinus ora.SVG
+var CircleMinus core.SVG
 
 //go:embed circle-pause.svg
-var CirclePause ora.SVG
+var CirclePause core.SVG
 
 //go:embed circle-plus.svg
-var CirclePlus ora.SVG
+var CirclePlus core.SVG
 
 //go:embed clapperboard-play.svg
-var ClapperboardPlay ora.SVG
+var ClapperboardPlay core.SVG
 
 //go:embed clipboard-check.svg
-var ClipboardCheck ora.SVG
+var ClipboardCheck core.SVG
 
 //go:embed clipboard-clean.svg
-var ClipboardClean ora.SVG
+var ClipboardClean core.SVG
 
 //go:embed clipboard-list.svg
-var ClipboardList ora.SVG
+var ClipboardList core.SVG
 
 //go:embed clipboard.svg
-var Clipboard ora.SVG
+var Clipboard core.SVG
 
 //go:embed clock.svg
-var Clock ora.SVG
+var Clock core.SVG
 
 //go:embed close-circle.svg
-var CloseCircle ora.SVG
+var CloseCircle core.SVG
 
 //go:embed cloud-arrow-up.svg
-var CloudArrowUp ora.SVG
+var CloudArrowUp core.SVG
 
 //go:embed code-branch.svg
-var CodeBranch ora.SVG
+var CodeBranch core.SVG
 
 //go:embed code-fork.svg
-var CodeFork ora.SVG
+var CodeFork core.SVG
 
 //go:embed code-merge.svg
-var CodeMerge ora.SVG
+var CodeMerge core.SVG
 
 //go:embed code-pull-request.svg
-var CodePullRequest ora.SVG
+var CodePullRequest core.SVG
 
 //go:embed cog.svg
-var Cog ora.SVG
+var Cog core.SVG
 
 //go:embed column.svg
-var Column ora.SVG
+var Column core.SVG
 
 //go:embed computer-speaker.svg
-var ComputerSpeaker ora.SVG
+var ComputerSpeaker core.SVG
 
 //go:embed credit-card-plus.svg
-var CreditCardPlus ora.SVG
+var CreditCardPlus core.SVG
 
 //go:embed credit-card.svg
-var CreditCard ora.SVG
+var CreditCard core.SVG
 
 //go:embed css.svg
-var Css ora.SVG
+var Css core.SVG
 
 //go:embed database.svg
-var Database ora.SVG
+var Database core.SVG
 
 //go:embed desktop-pc.svg
-var DesktopPc ora.SVG
+var DesktopPc core.SVG
 
 //go:embed discord.svg
-var Discord ora.SVG
+var Discord core.SVG
 
 //go:embed download.svg
-var Download ora.SVG
+var Download core.SVG
 
 //go:embed draw-square.svg
-var DrawSquare ora.SVG
+var DrawSquare core.SVG
 
 //go:embed dribbble.svg
-var Dribbble ora.SVG
+var Dribbble core.SVG
 
 //go:embed dropbox.svg
-var Dropbox ora.SVG
+var Dropbox core.SVG
 
 //go:embed edit.svg
-var Edit ora.SVG
+var Edit core.SVG
 
 //go:embed envelope-open.svg
-var EnvelopeOpen ora.SVG
+var EnvelopeOpen core.SVG
 
 //go:embed envelope.svg
-var Envelope ora.SVG
+var Envelope core.SVG
 
 //go:embed exclamation-circle.svg
-var ExclamationCircle ora.SVG
+var ExclamationCircle core.SVG
 
 //go:embed eye-slash.svg
-var EyeSlash ora.SVG
+var EyeSlash core.SVG
 
 //go:embed eye.svg
-var Eye ora.SVG
+var Eye core.SVG
 
 //go:embed face-explode.svg
-var FaceExplode ora.SVG
+var FaceExplode core.SVG
 
 //go:embed face-grin-stars.svg
-var FaceGrinStars ora.SVG
+var FaceGrinStars core.SVG
 
 //go:embed face-grin.svg
-var FaceGrin ora.SVG
+var FaceGrin core.SVG
 
 //go:embed face-laugh.svg
-var FaceLaugh ora.SVG
+var FaceLaugh core.SVG
 
 //go:embed facebook.svg
-var Facebook ora.SVG
+var Facebook core.SVG
 
 //go:embed file-chart-bar.svg
-var FileChartBar ora.SVG
+var FileChartBar core.SVG
 
 //go:embed file-check.svg
-var FileCheck ora.SVG
+var FileCheck core.SVG
 
 //go:embed file-circle-plus.svg
-var FileCirclePlus ora.SVG
+var FileCirclePlus core.SVG
 
 //go:embed file-clone.svg
-var FileClone ora.SVG
+var FileClone core.SVG
 
 //go:embed file-code.svg
-var FileCode ora.SVG
+var FileCode core.SVG
 
 //go:embed file-copy-alt.svg
-var FileCopyAlt ora.SVG
+var FileCopyAlt core.SVG
 
 //go:embed file-copy.svg
-var FileCopy ora.SVG
+var FileCopy core.SVG
 
 //go:embed file-csv.svg
-var FileCsv ora.SVG
+var FileCsv core.SVG
 
 //go:embed file-doc.svg
-var FileDoc ora.SVG
+var FileDoc core.SVG
 
 //go:embed file-export.svg
-var FileExport ora.SVG
+var FileExport core.SVG
 
 //go:embed file-image.svg
-var FileImage ora.SVG
+var FileImage core.SVG
 
 //go:embed file-import.svg
-var FileImport ora.SVG
+var FileImport core.SVG
 
 //go:embed file-invoice.svg
-var FileInvoice ora.SVG
+var FileInvoice core.SVG
 
 //go:embed file-lines.svg
-var FileLines ora.SVG
+var FileLines core.SVG
 
 //go:embed file-music.svg
-var FileMusic ora.SVG
+var FileMusic core.SVG
 
 //go:embed file-paste.svg
-var FilePaste ora.SVG
+var FilePaste core.SVG
 
 //go:embed file-pdf.svg
-var FilePdf ora.SVG
+var FilePdf core.SVG
 
 //go:embed file-pen.svg
-var FilePen ora.SVG
+var FilePen core.SVG
 
 //go:embed file-ppt.svg
-var FilePpt ora.SVG
+var FilePpt core.SVG
 
 //go:embed file-search.svg
-var FileSearch ora.SVG
+var FileSearch core.SVG
 
 //go:embed file-shield.svg
-var FileShield ora.SVG
+var FileShield core.SVG
 
 //go:embed file-video.svg
-var FileVideo ora.SVG
+var FileVideo core.SVG
 
 //go:embed file-word.svg
-var FileWord ora.SVG
+var FileWord core.SVG
 
 //go:embed file-zip.svg
-var FileZip ora.SVG
+var FileZip core.SVG
 
 //go:embed file.svg
-var File ora.SVG
+var File core.SVG
 
 //go:embed filter.svg
-var Filter ora.SVG
+var Filter core.SVG
 
 //go:embed fire.svg
-var Fire ora.SVG
+var Fire core.SVG
 
 //go:embed flag.svg
-var Flag ora.SVG
+var Flag core.SVG
 
 //go:embed floppy-disk-alt.svg
-var FloppyDiskAlt ora.SVG
+var FloppyDiskAlt core.SVG
 
 //go:embed floppy-disk.svg
-var FloppyDisk ora.SVG
+var FloppyDisk core.SVG
 
 //go:embed flowbite.svg
-var Flowbite ora.SVG
+var Flowbite core.SVG
 
 //go:embed folder-arrow-right.svg
-var FolderArrowRight ora.SVG
+var FolderArrowRight core.SVG
 
 //go:embed folder-duplicate.svg
-var FolderDuplicate ora.SVG
+var FolderDuplicate core.SVG
 
 //go:embed folder-open.svg
-var FolderOpen ora.SVG
+var FolderOpen core.SVG
 
 //go:embed folder-plus.svg
-var FolderPlus ora.SVG
+var FolderPlus core.SVG
 
 //go:embed folder.svg
-var Folder ora.SVG
+var Folder core.SVG
 
 //go:embed forward-step.svg
-var ForwardStep ora.SVG
+var ForwardStep core.SVG
 
 //go:embed forward.svg
-var Forward ora.SVG
+var Forward core.SVG
 
 //go:embed gift-box.svg
-var GiftBox ora.SVG
+var GiftBox core.SVG
 
 //go:embed github.svg
-var Github ora.SVG
+var Github core.SVG
 
 //go:embed globe.svg
-var Globe ora.SVG
+var Globe core.SVG
 
 //go:embed google.svg
-var Google ora.SVG
+var Google core.SVG
 
 //go:embed grid-plus.svg
-var GridPlus ora.SVG
+var GridPlus core.SVG
 
 //go:embed grid.svg
-var Grid ora.SVG
+var Grid core.SVG
 
 //go:embed headphones.svg
-var Headphones ora.SVG
+var Headphones core.SVG
 
 //go:embed heart.svg
-var Heart ora.SVG
+var Heart core.SVG
 
 //go:embed home.svg
-var Home ora.SVG
+var Home core.SVG
 
 //go:embed hourglass.svg
-var Hourglass ora.SVG
+var Hourglass core.SVG
 
 //go:embed html.svg
-var Html ora.SVG
+var Html core.SVG
 
 //go:embed image.svg
-var Image ora.SVG
+var Image core.SVG
 
 //go:embed inbox-full.svg
-var InboxFull ora.SVG
+var InboxFull core.SVG
 
 //go:embed inbox.svg
-var Inbox ora.SVG
+var Inbox core.SVG
 
 //go:embed indent.svg
-var Indent ora.SVG
+var Indent core.SVG
 
 //go:embed info-circle.svg
-var InfoCircle ora.SVG
+var InfoCircle core.SVG
 
 //go:embed instagram.svg
-var Instagram ora.SVG
+var Instagram core.SVG
 
 //go:embed keyboard.svg
-var Keyboard ora.SVG
+var Keyboard core.SVG
 
 //go:embed label.svg
-var Label ora.SVG
+var Label core.SVG
 
 //go:embed landmark.svg
-var Landmark ora.SVG
+var Landmark core.SVG
 
 //go:embed layers.svg
-var Layers ora.SVG
+var Layers core.SVG
 
 //go:embed life-saver.svg
-var LifeSaver ora.SVG
+var LifeSaver core.SVG
 
 //go:embed lightbulb.svg
-var Lightbulb ora.SVG
+var Lightbulb core.SVG
 
 //go:embed linkedin.svg
-var Linkedin ora.SVG
+var Linkedin core.SVG
 
 //go:embed list-music.svg
-var ListMusic ora.SVG
+var ListMusic core.SVG
 
 //go:embed lock-open.svg
-var LockOpen ora.SVG
+var LockOpen core.SVG
 
 //go:embed lock-time.svg
-var LockTime ora.SVG
+var LockTime core.SVG
 
 //go:embed lock.svg
-var Lock ora.SVG
+var Lock core.SVG
 
 //go:embed mail-box.svg
-var MailBox ora.SVG
+var MailBox core.SVG
 
 //go:embed map-pin-alt.svg
-var MapPinAlt ora.SVG
+var MapPinAlt core.SVG
 
 //go:embed map-pin.svg
-var MapPin ora.SVG
+var MapPin core.SVG
 
 //go:embed mastercard.svg
-var Mastercard ora.SVG
+var Mastercard core.SVG
 
 //go:embed message-caption.svg
-var MessageCaption ora.SVG
+var MessageCaption core.SVG
 
 //go:embed message-dots.svg
-var MessageDots ora.SVG
+var MessageDots core.SVG
 
 //go:embed messages.svg
-var Messages ora.SVG
+var Messages core.SVG
 
 //go:embed microphone-slash.svg
-var MicrophoneSlash ora.SVG
+var MicrophoneSlash core.SVG
 
 //go:embed microphone.svg
-var Microphone ora.SVG
+var Microphone core.SVG
 
 //go:embed mobile-phone.svg
-var MobilePhone ora.SVG
+var MobilePhone core.SVG
 
 //go:embed moon.svg
-var Moon ora.SVG
+var Moon core.SVG
 
 //go:embed newspaper.svg
-var Newspaper ora.SVG
+var Newspaper core.SVG
 
 //go:embed npm.svg
-var Npm ora.SVG
+var Npm core.SVG
 
 //go:embed objects-column.svg
-var ObjectsColumn ora.SVG
+var ObjectsColumn core.SVG
 
 //go:embed outdent.svg
-var Outdent ora.SVG
+var Outdent core.SVG
 
 //go:embed palette.svg
-var Palette ora.SVG
+var Palette core.SVG
 
 //go:embed paper-plane.svg
-var PaperPlane ora.SVG
+var PaperPlane core.SVG
 
 //go:embed paragraph.svg
-var Paragraph ora.SVG
+var Paragraph core.SVG
 
 //go:embed pause.svg
-var Pause ora.SVG
+var Pause core.SVG
 
 //go:embed pen-nib.svg
-var PenNib ora.SVG
+var PenNib core.SVG
 
 //go:embed pen.svg
-var Pen ora.SVG
+var Pen core.SVG
 
 //go:embed phone-hangup.svg
-var PhoneHangup ora.SVG
+var PhoneHangup core.SVG
 
 //go:embed phone.svg
-var Phone ora.SVG
+var Phone core.SVG
 
 //go:embed play.svg
-var Play ora.SVG
+var Play core.SVG
 
 //go:embed printer.svg
-var Printer ora.SVG
+var Printer core.SVG
 
 //go:embed profile-card.svg
-var ProfileCard ora.SVG
+var ProfileCard core.SVG
 
 //go:embed question-circle.svg
-var QuestionCircle ora.SVG
+var QuestionCircle core.SVG
 
 //go:embed quote.svg
-var Quote ora.SVG
+var Quote core.SVG
 
 //go:embed react.svg
-var React ora.SVG
+var React core.SVG
 
 //go:embed receipt.svg
-var Receipt ora.SVG
+var Receipt core.SVG
 
 //go:embed rectangle-list.svg
-var RectangleList ora.SVG
+var RectangleList core.SVG
 
 //go:embed reddit.svg
-var Reddit ora.SVG
+var Reddit core.SVG
 
 //go:embed reply-all.svg
-var ReplyAll ora.SVG
+var ReplyAll core.SVG
 
 //go:embed reply.svg
-var Reply ora.SVG
+var Reply core.SVG
 
 //go:embed rocket.svg
-var Rocket ora.SVG
+var Rocket core.SVG
 
 //go:embed sale-percent.svg
-var SalePercent ora.SVG
+var SalePercent core.SVG
 
 //go:embed scale-balanced.svg
-var ScaleBalanced ora.SVG
+var ScaleBalanced core.SVG
 
 //go:embed search.svg
-var Search ora.SVG
+var Search core.SVG
 
 //go:embed server.svg
-var Server ora.SVG
+var Server core.SVG
 
 //go:embed share-all.svg
-var ShareAll ora.SVG
+var ShareAll core.SVG
 
 //go:embed share-nodes.svg
-var ShareNodes ora.SVG
+var ShareNodes core.SVG
 
 //go:embed shield-check.svg
-var ShieldCheck ora.SVG
+var ShieldCheck core.SVG
 
 //go:embed shield.svg
-var Shield ora.SVG
+var Shield core.SVG
 
 //go:embed shopping-bag.svg
-var ShoppingBag ora.SVG
+var ShoppingBag core.SVG
 
 //go:embed stackoverflow.svg
-var Stackoverflow ora.SVG
+var Stackoverflow core.SVG
 
 //go:embed star-half-stroke.svg
-var StarHalfStroke ora.SVG
+var StarHalfStroke core.SVG
 
 //go:embed star-half.svg
-var StarHalf ora.SVG
+var StarHalf core.SVG
 
 //go:embed star.svg
-var Star ora.SVG
+var Star core.SVG
 
 //go:embed stop.svg
-var Stop ora.SVG
+var Stop core.SVG
 
 //go:embed store.svg
-var Store ora.SVG
+var Store core.SVG
 
 //go:embed sun.svg
-var Sun ora.SVG
+var Sun core.SVG
 
 //go:embed swatchbook.svg
-var Swatchbook ora.SVG
+var Swatchbook core.SVG
 
 //go:embed table-column.svg
-var TableColumn ora.SVG
+var TableColumn core.SVG
 
 //go:embed table-row.svg
-var TableRow ora.SVG
+var TableRow core.SVG
 
 //go:embed tablet.svg
-var Tablet ora.SVG
+var Tablet core.SVG
 
 //go:embed tag.svg
-var Tag ora.SVG
+var Tag core.SVG
 
 //go:embed tailwind.svg
-var Tailwind ora.SVG
+var Tailwind core.SVG
 
 //go:embed terminal.svg
-var Terminal ora.SVG
+var Terminal core.SVG
 
 //go:embed thumbs-down.svg
-var ThumbsDown ora.SVG
+var ThumbsDown core.SVG
 
 //go:embed thumbs-up.svg
-var ThumbsUp ora.SVG
+var ThumbsUp core.SVG
 
 //go:embed ticket.svg
-var Ticket ora.SVG
+var Ticket core.SVG
 
 //go:embed trash-bin.svg
-var TrashBin ora.SVG
+var TrashBin core.SVG
 
 //go:embed truck.svg
-var Truck ora.SVG
+var Truck core.SVG
 
 //go:embed twitter.svg
-var Twitter ora.SVG
+var Twitter core.SVG
 
 //go:embed upload.svg
-var Upload ora.SVG
+var Upload core.SVG
 
 //go:embed user-add.svg
-var UserAdd ora.SVG
+var UserAdd core.SVG
 
 //go:embed user-circle.svg
-var UserCircle ora.SVG
+var UserCircle core.SVG
 
 //go:embed user-edit.svg
-var UserEdit ora.SVG
+var UserEdit core.SVG
 
 //go:embed user-headset.svg
-var UserHeadset ora.SVG
+var UserHeadset core.SVG
 
 //go:embed user-remove.svg
-var UserRemove ora.SVG
+var UserRemove core.SVG
 
 //go:embed user-settings.svg
-var UserSettings ora.SVG
+var UserSettings core.SVG
 
 //go:embed user.svg
-var User ora.SVG
+var User core.SVG
 
 //go:embed users-group.svg
-var UsersGroup ora.SVG
+var UsersGroup core.SVG
 
 //go:embed users.svg
-var Users ora.SVG
+var Users core.SVG
 
 //go:embed video-camera.svg
-var VideoCamera ora.SVG
+var VideoCamera core.SVG
 
 //go:embed visa.svg
-var Visa ora.SVG
+var Visa core.SVG
 
 //go:embed volume-down.svg
-var VolumeDown ora.SVG
+var VolumeDown core.SVG
 
 //go:embed volume-mute.svg
-var VolumeMute ora.SVG
+var VolumeMute core.SVG
 
 //go:embed volume-up.svg
-var VolumeUp ora.SVG
+var VolumeUp core.SVG
 
 //go:embed vue.svg
-var Vue ora.SVG
+var Vue core.SVG
 
 //go:embed wallet.svg
-var Wallet ora.SVG
+var Wallet core.SVG
 
 //go:embed wand-magic-sparkles.svg
-var WandMagicSparkles ora.SVG
+var WandMagicSparkles core.SVG
 
 //go:embed whatsapp.svg
-var Whatsapp ora.SVG
+var Whatsapp core.SVG
 
 //go:embed window-restore.svg
-var WindowRestore ora.SVG
+var WindowRestore core.SVG
 
 //go:embed window.svg
-var Window ora.SVG
+var Window core.SVG
 
 //go:embed windows.svg
-var Windows ora.SVG
+var Windows core.SVG
 
 //go:embed youtube.svg
-var Youtube ora.SVG
+var Youtube core.SVG
 
 //go:embed zoom-in.svg
-var ZoomIn ora.SVG
+var ZoomIn core.SVG
 
 //go:embed zoom-out.svg
-var ZoomOut ora.SVG
+var ZoomOut core.SVG
 
-var All = map[string]ora.SVG{
+var All = map[string]core.SVG{
 	"X":                      X,
 	"AddressBook":            AddressBook,
 	"AdjustmentsHorizontal":  AdjustmentsHorizontal,

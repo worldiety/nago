@@ -161,17 +161,6 @@ type View interface {
 	Render(RenderContext) ora.Component
 }
 
-type DecoredView interface {
-	View
-	Padding(padding ora.Padding) DecoredView
-	Frame(frame ora.Frame) DecoredView
-	Border(border ora.Border) DecoredView
-	Visible(visible bool) DecoredView
-	// AccessibilityLabel is used to help screen readers, see guidelines, when use them.
-	// https://www.w3.org/WAI/tutorials/images/decision-tree/
-	AccessibilityLabel(label string) DecoredView
-}
-
 type ViewPadding struct {
 	parent  View
 	padding *ora.Padding

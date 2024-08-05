@@ -5,8 +5,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -20,11 +19,11 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.HStack(
+			return HStack(
 				withTitle("box", box()),
 				withTitle("vstack", vstack()),
 				withTitle("hstack", hstack()),
-			).Alignment(ora.Top).Frame(ora.Frame{}.FullWidth())
+			).Alignment(Top).Frame(Frame{}.FullWidth())
 
 		})
 
@@ -32,28 +31,28 @@ func main() {
 }
 
 func box() core.View {
-	return ui.Box(ui.BoxLayout{
-		Top:            ui.Text("top").BackgroundColor(red),
-		Center:         ui.Text("center").BackgroundColor(red),
-		Bottom:         ui.Text("bottom").BackgroundColor(red),
-		Leading:        ui.Text("leading").BackgroundColor(red),
-		Trailing:       ui.Text("trailing").BackgroundColor(red),
-		TopLeading:     ui.Text("top-leading").BackgroundColor(red),
-		TopTrailing:    ui.Text("top-trailing").BackgroundColor(red),
-		BottomLeading:  ui.Text("bottom-leading").BackgroundColor(red),
-		BottomTrailing: ui.Text("bottom-trailing").BackgroundColor(red),
-	}).BackgroundColor(green).Frame(ora.Frame{}.Size(ora.L320, ora.L320))
+	return Box(BoxLayout{
+		Top:            Text("top").BackgroundColor(red),
+		Center:         Text("center").BackgroundColor(red),
+		Bottom:         Text("bottom").BackgroundColor(red),
+		Leading:        Text("leading").BackgroundColor(red),
+		Trailing:       Text("trailing").BackgroundColor(red),
+		TopLeading:     Text("top-leading").BackgroundColor(red),
+		TopTrailing:    Text("top-trailing").BackgroundColor(red),
+		BottomLeading:  Text("bottom-leading").BackgroundColor(red),
+		BottomTrailing: Text("bottom-trailing").BackgroundColor(red),
+	}).BackgroundColor(green).Frame(Frame{}.Size(L320, L320))
 }
 
 func vstack() core.View {
-	return ui.VStack(
+	return VStack(
 		slices.Collect[core.View](func(yield func(view core.View) bool) {
-			for _, alignment := range ora.Alignments() {
+			for _, alignment := range Alignments() {
 				yield(withTitle(fmt.Sprintf("vstack %s", alignment.String()),
-					ui.VStack(someViews()...).
+					VStack(someViews()...).
 						Alignment(alignment).
 						BackgroundColor(green).
-						Frame(ora.Frame{}.Size(ora.L200, ora.L200)),
+						Frame(Frame{}.Size(L200, L200)),
 				))
 			}
 		})...,
@@ -61,14 +60,14 @@ func vstack() core.View {
 }
 
 func hstack() core.View {
-	return ui.VStack(
+	return VStack(
 		slices.Collect[core.View](func(yield func(view core.View) bool) {
-			for _, alignment := range ora.Alignments() {
+			for _, alignment := range Alignments() {
 				yield(withTitle(fmt.Sprintf("hstack %s", alignment.String()),
-					ui.HStack(someViews()...).
+					HStack(someViews()...).
 						Alignment(alignment).
 						BackgroundColor(green).
-						Frame(ora.Frame{}.Size(ora.L200, ora.L200)),
+						Frame(Frame{}.Size(L200, L200)),
 				))
 			}
 		})...,
@@ -76,16 +75,16 @@ func hstack() core.View {
 }
 
 func withTitle(title string, view core.View) core.View {
-	return ui.VStack(
-		ui.Text(title).Font(ora.Title),
+	return VStack(
+		Text(title).Font(Title),
 		view,
 	)
 }
 
 func someViews() []core.View {
 	return []core.View{
-		ui.Text("1").BackgroundColor(red).Frame(ora.Frame{}.Size(ora.L16, ora.L16)),
-		ui.Text("2").BackgroundColor(red).Frame(ora.Frame{}.Size(ora.L20, ora.L20)),
-		ui.Text("3").BackgroundColor(red).Frame(ora.Frame{}.Size(ora.L40, ora.L40)),
+		Text("1").BackgroundColor(red).Frame(Frame{}.Size(L16, L16)),
+		Text("2").BackgroundColor(red).Frame(Frame{}.Size(L20, L20)),
+		Text("3").BackgroundColor(red).Frame(Frame{}.Size(L40, L40)),
 	}
 }

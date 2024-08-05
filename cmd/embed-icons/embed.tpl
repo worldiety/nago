@@ -4,16 +4,16 @@ package icons
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/core"
 )
 
 {{range .Vars}}
 //go:embed {{.Filename}}
-var {{.Varname}} ora.SVG
+var {{.Varname}} core.SVG
 {{end}}
 
 
-var All = map[string]ora.SVG{
+var All = map[string]core.SVG{
     {{range .Vars -}}
     "{{- .Varname}}" : {{.Varname -}},
     {{end}}

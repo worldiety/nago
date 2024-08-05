@@ -196,7 +196,7 @@ func (c *Configurator) newHandler() http.Handler {
 		return nil
 	})
 
-	app2.SetOnShareStream(func(scope *core.Scope, f func() (io.Reader, error)) (ora.URI, error) {
+	app2.SetOnShareStream(func(scope *core.Scope, f func() (io.Reader, error)) (core.URI, error) {
 		downloadFilesMutex.Lock()
 		defer downloadFilesMutex.Unlock()
 
@@ -208,7 +208,7 @@ func (c *Configurator) newHandler() http.Handler {
 			delete(downloadStreams, token)
 		})
 
-		uri := ora.URI("/api/ora/v1/share?token=" + token)
+		uri := core.URI("/api/ora/v1/share?token=" + token)
 		downloadStreams[token] = f
 		return uri, nil
 	})

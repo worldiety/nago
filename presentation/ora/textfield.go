@@ -2,15 +2,8 @@ package ora
 
 import "time"
 
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type TextFieldStyle string
-
-const (
-	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
-	TextFieldReduced TextFieldStyle = "r"
-
-	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
-	TextFieldOutlined TextFieldStyle = "o"
-)
 
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type TextField struct {

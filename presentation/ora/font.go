@@ -17,15 +17,5 @@ type Font struct {
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type FontStyle string
 
-const (
-	ItalicFontStyle FontStyle = "i"
-	NormalFontStyle           = "n"
-)
-
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type FontWeight int
-
-const (
-	NormalFontWeight FontWeight = 400
-	BoldFontWeight   FontWeight = 700
-)

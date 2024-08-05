@@ -27,33 +27,33 @@ func (c TTableColumn) Action(action func()) TTableColumn {
 	return c
 }
 
-func (c TTableColumn) HoveredBackgroundColor(backgroundColor ora.Color) TTableColumn {
-	c.hoveredBackgroundColor = backgroundColor
+func (c TTableColumn) HoveredBackgroundColor(backgroundColor Color) TTableColumn {
+	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TTableColumn) Width(width ora.Length) TTableColumn {
-	c.width = width
+func (c TTableColumn) Width(width Length) TTableColumn {
+	c.width = width.ora()
 	return c
 }
 
-func (c TTableColumn) Alignment(alignment ora.Alignment) TTableColumn {
-	c.alignment = alignment
+func (c TTableColumn) Alignment(alignment Alignment) TTableColumn {
+	c.alignment = alignment.ora()
 	return c
 }
 
-func (c TTableColumn) BackgroundColor(backgroundColor ora.Color) TTableColumn {
-	c.backgroundColor = backgroundColor
+func (c TTableColumn) BackgroundColor(backgroundColor Color) TTableColumn {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TTableColumn) Padding(padding ora.Padding) TTableColumn {
-	c.padding = padding
+func (c TTableColumn) Padding(padding Padding) TTableColumn {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TTableColumn) Border(border ora.Border) TTableColumn {
-	c.border = border
+func (c TTableColumn) Border(border Border) TTableColumn {
+	c.border = border.ora()
 	return c
 }
 
@@ -95,28 +95,28 @@ func (c TTableCell) RowSpan(rowSpan int) TTableCell {
 	return c
 }
 
-func (c TTableCell) Alignment(alignment ora.Alignment) TTableCell {
-	c.alignment = alignment
+func (c TTableCell) Alignment(alignment Alignment) TTableCell {
+	c.alignment = alignment.ora()
 	return c
 }
 
-func (c TTableCell) BackgroundColor(backgroundColor ora.Color) TTableCell {
-	c.backgroundColor = backgroundColor
+func (c TTableCell) BackgroundColor(backgroundColor Color) TTableCell {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TTableCell) HoveredBackgroundColor(backgroundColor ora.Color) TTableCell {
-	c.hoveredBackgroundColor = backgroundColor
+func (c TTableCell) HoveredBackgroundColor(backgroundColor Color) TTableCell {
+	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TTableCell) Padding(padding ora.Padding) TTableCell {
-	c.padding = padding
+func (c TTableCell) Padding(padding Padding) TTableCell {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TTableCell) Border(border ora.Border) TTableCell {
-	c.border = border
+func (c TTableCell) Border(border Border) TTableCell {
+	c.border = border.ora()
 	return c
 }
 
@@ -139,18 +139,18 @@ func (r TTableRow) Action(action func()) TTableRow {
 	return r
 }
 
-func (r TTableRow) Height(height ora.Length) TTableRow {
-	r.height = height
+func (r TTableRow) Height(height Length) TTableRow {
+	r.height = height.ora()
 	return r
 }
 
-func (r TTableRow) BackgroundColor(backgroundColor ora.Color) TTableRow {
-	r.backgroundColor = backgroundColor
+func (r TTableRow) BackgroundColor(backgroundColor Color) TTableRow {
+	r.backgroundColor = backgroundColor.ora()
 	return r
 }
 
-func (c TTableRow) HoveredBackgroundColor(backgroundColor ora.Color) TTableRow {
-	c.hoveredBackgroundColor = backgroundColor
+func (c TTableRow) HoveredBackgroundColor(backgroundColor Color) TTableRow {
+	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
@@ -168,23 +168,23 @@ func Table(columns ...TTableColumn) TTable {
 	return TTable{columns: columns}
 }
 
-func (c TTable) BackgroundColor(backgroundColor ora.Color) TTable {
-	c.backgroundColor = backgroundColor
+func (c TTable) BackgroundColor(backgroundColor Color) TTable {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
-func (c TTable) Border(border ora.Border) TTable {
-	c.border = border
+func (c TTable) Border(border Border) TTable {
+	c.border = border.ora()
 	return c
 }
 
-func (c TTable) Frame(frame ora.Frame) TTable {
-	c.frame = frame
+func (c TTable) Frame(frame Frame) TTable {
+	c.frame = frame.ora()
 	return c
 }
 
-func (c TTable) RowDividerColor(color ora.Color) TTable {
-	c.rowDividerColor = color
+func (c TTable) RowDividerColor(color Color) TTable {
+	c.rowDividerColor = color.ora()
 	return c
 }
 
@@ -195,8 +195,8 @@ func (c TTable) Rows(rows ...TTableRow) TTable {
 
 // CellPadding sets the default cell padding for all cells at once.
 // Individual cell paddings take precedence.
-func (c TTable) CellPadding(padding ora.Padding) TTable {
-	c.defaultCellPaddings = padding
+func (c TTable) CellPadding(padding Padding) TTable {
+	c.defaultCellPaddings = padding.ora()
 	return c
 }
 

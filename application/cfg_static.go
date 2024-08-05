@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	ui "go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"net/http"
@@ -55,6 +56,6 @@ func magicMimeType(buf []byte) string {
 
 // Resource registers the given resource. It will likely result in an additional endpoint which looks like
 // /api/ora/v1/resource/<some random identifier>
-func (c *Configurator) Resource(r Resource) ora.URI {
-	return r.configureResource(c)
+func (c *Configurator) Resource(r Resource) ui.URI {
+	return ui.URI(r.configureResource(c))
 }

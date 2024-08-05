@@ -53,7 +53,7 @@ type Scope struct {
 	tempRootDir        string
 	tempDir            string
 	nextFileSeqNo      int64
-	windowInfo         ora.WindowInfo
+	windowInfo         WindowInfo
 	onDestroyObservers concurrent.Slice[func()]
 	location           *time.Location
 	subject            concurrent.Value[auth.Subject]
@@ -189,7 +189,7 @@ func (s *Scope) getTempDir() (string, error) {
 	return path, nil
 }
 
-func (s *Scope) updateWindowInfo(winfo ora.WindowInfo) {
+func (s *Scope) updateWindowInfo(winfo WindowInfo) {
 	s.windowInfo = winfo
 	if s.allocatedRootView.Valid {
 		if s.allocatedRootView.Valid {

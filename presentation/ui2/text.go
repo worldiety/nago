@@ -31,58 +31,58 @@ func Text(content string) TText {
 	return TText{content: content}
 }
 
-func (c TText) Padding(padding ora.Padding) core.DecoredView {
-	c.padding = padding
+func (c TText) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 
-func (c TText) Frame(frame ora.Frame) core.DecoredView {
-	c.frame = frame
+func (c TText) Frame(frame Frame) DecoredView {
+	c.frame = frame.ora()
 	return c
 }
 
-func (c TText) Border(border ora.Border) core.DecoredView {
-	c.border = border
+func (c TText) Border(border Border) DecoredView {
+	c.border = border.ora()
 	return c
 }
 
-func (c TText) HoveredBorder(border ora.Border) TText {
-	c.hoveredBorder = border
+func (c TText) HoveredBorder(border Border) TText {
+	c.hoveredBorder = border.ora()
 	return c
 }
 
-func (c TText) PressedBorder(border ora.Border) TText {
-	c.pressedBorder = border
+func (c TText) PressedBorder(border Border) TText {
+	c.pressedBorder = border.ora()
 	return c
 }
 
-func (c TText) FocusedBorder(border ora.Border) TText {
-	c.focusedBorder = border
+func (c TText) FocusedBorder(border Border) TText {
+	c.focusedBorder = border.ora()
 	return c
 }
 
-func (c TText) Visible(visible bool) core.DecoredView {
+func (c TText) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
-func (c TText) AccessibilityLabel(label string) core.DecoredView {
+func (c TText) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
-func (c TText) Font(font ora.Font) TText {
-	c.font = font
+func (c TText) Font(font Font) TText {
+	c.font = font.ora()
 	return c
 }
 
-func (c TText) Color(color ora.Color) TText {
-	c.color = color
+func (c TText) Color(color Color) TText {
+	c.color = color.ora()
 	return c
 }
 
-func (c TText) BackgroundColor(backgroundColor ora.Color) core.DecoredView {
-	c.backgroundColor = backgroundColor
+func (c TText) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 

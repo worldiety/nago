@@ -6,16 +6,16 @@ import (
 )
 
 type TFilledButton struct {
-	fillColor ora.Color
-	textColor ora.Color
+	fillColor Color
+	textColor Color
 	title     string
 	preIcon   ora.SVG
 	postIcon  ora.SVG
-	frame     ora.Frame
+	frame     Frame
 	action    func()
 }
 
-func FilledButton(fillColor ora.Color, action func()) TFilledButton {
+func FilledButton(fillColor Color, action func()) TFilledButton {
 	return TFilledButton{fillColor: fillColor, action: action}
 }
 
@@ -24,38 +24,38 @@ func (c TFilledButton) Title(text string) TFilledButton {
 	return c
 }
 
-func (c TFilledButton) PreIcon(svg ora.SVG) TFilledButton {
-	c.preIcon = svg
+func (c TFilledButton) PreIcon(svg core.SVG) TFilledButton {
+	c.preIcon = ora.SVG(svg)
 	return c
 }
 
-func (c TFilledButton) PostIcon(svg ora.SVG) TFilledButton {
-	c.postIcon = svg
+func (c TFilledButton) PostIcon(svg core.SVG) TFilledButton {
+	c.postIcon = ora.SVG(svg)
 	return c
 }
 
-func (c TFilledButton) TextColor(color ora.Color) TFilledButton {
+func (c TFilledButton) TextColor(color Color) TFilledButton {
 	c.textColor = color
 	return c
 }
 
-func (c TFilledButton) Frame(frame ora.Frame) TFilledButton {
+func (c TFilledButton) Frame(frame Frame) TFilledButton {
 	c.frame = frame
 	return c
 }
 
 func (c TFilledButton) Render(context core.RenderContext) ora.Component {
 	decView := customButton(c.fillColor, HStack(
-		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(ora.Frame{}.Size(ora.L16, ora.L16))),
+		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
 		If(c.title != "", btnTitle(c.title, c.textColor)),
-		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(ora.Frame{}.Size(ora.L16, ora.L16))),
+		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Action(c.action))
 
 	if (c.title == "" && len(c.preIcon) != 0) || (c.title == "" && len(c.postIcon) != 0) {
-		decView = decView.Frame(ora.Frame{Width: ora.L40, Height: ora.L40}).Padding(ora.Padding{}.Horizontal("0dp"))
+		decView = decView.Frame(Frame{Width: L40, Height: L40}).Padding(Padding{}.Horizontal("0dp"))
 	}
 
-	var zero ora.Frame
+	var zero Frame
 	if c.frame != zero {
 		decView = decView.Frame(c.frame)
 	}
@@ -63,8 +63,8 @@ func (c TFilledButton) Render(context core.RenderContext) ora.Component {
 	return decView.Render(context)
 }
 
-func btnTitle(text string, color ora.Color) TText {
-	t := Text(text).Font(ora.Font{Size: ora.L14, Weight: 500})
+func btnTitle(text string, color Color) TText {
+	t := Text(text).Font(Font{Size: L14, Weight: 500})
 	if color != "" {
 		t = t.Color(color)
 	}
@@ -72,18 +72,17 @@ func btnTitle(text string, color ora.Color) TText {
 	return t
 }
 
-func customButton(fillColor ora.Color, hstack THStack) core.DecoredView {
-	// TODO the pressed+focus logic is (perhaps?) broken in the frontend
+func customButton(fillColor Color, hstack THStack) DecoredView {
 	return hstack.
 		HoveredBackgroundColor(fillColor.WithTransparency(25)).
 		PressedBackgroundColor(fillColor.WithTransparency(35)).
-		PressedBorder(ora.Border{}.Circle().Color("#00000000").Width(ora.L2)).
-		FocusedBorder(ora.Border{}.Circle().Color("#ffffff").Width(ora.L2)).
-		Gap(ora.L4).
+		PressedBorder(Border{}.Circle().Color("#00000000").Width(L2)).
+		FocusedBorder(Border{}.Circle().Color("#ffffff").Width(L2)).
+		Gap(L4).
 		BackgroundColor(fillColor).
-		Frame(ora.Frame{Height: "2.375rem"}).
-		Padding(ora.Padding{}.Horizontal("1.125rem")).
+		Frame(Frame{Height: "2.375rem"}).
+		Padding(Padding{}.Horizontal("1.125rem")).
 		// add invisible default border, to avoid dimension changes,
 		// note, that we need to fix that with frame and padding above
-		Border(ora.Border{}.Circle().Color("#00000000").Width(ora.L2))
+		Border(Border{}.Circle().Color("#00000000").Width(L2))
 }
