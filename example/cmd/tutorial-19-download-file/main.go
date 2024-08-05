@@ -19,10 +19,12 @@ func main() {
 			return VStack(
 				tracking.SupportRequestDialog(wnd),
 				PrimaryButton(func() {
+					// CAUTION: this must always be within an action, do not put this into the render tree
 					err := wnd.SendFiles(core.FilesIter(mem.From(mem.Entries{
 						"test.txt": []byte("hello world"),
 					})))
 
+					// this is just for illustration
 					err = fmt.Errorf("this is an unhandled infrastructure test error: %w", err)
 					if err != nil {
 						tracking.RequestSupport(wnd, fmt.Errorf("cannot send files by doing this use case: %w", err))

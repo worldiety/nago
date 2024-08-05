@@ -67,10 +67,11 @@ type Window interface {
 	// a _send multiple intent_. See also AsURI which does not trigger such intent.
 	SendFiles(it iter.Seq2[File, error]) error
 
+	// TODO
 	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
 	// is returned from the open call. Note that open is usually not called from the event looper and the open call
 	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
-	AsURI(open func() (io.Reader, error)) (URI, error) // TODO remove this protocol leak from public contract
+	AsURI(open func() (io.Reader, error)) (URI, error)
 
 	// Application returns the parent application.
 	Application() *Application
@@ -87,6 +88,9 @@ type Window interface {
 	// to load the data again from repositories. In those cases you likely want to use [core.Iterable.Iter] to
 	// always rebuild the entire tree from the according property.
 	Invalidate()
+
+	// Once executes the given function only once for this window. The identity is asserted by the given id.
+	Once(id string, fn func())
 }
 
 type SessionID string

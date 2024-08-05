@@ -65,7 +65,9 @@ func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 					return
 				case <-ticker.C:
 					wnd.Execute(func() {
-						task()
+						if task != nil {
+							task()
+						}
 						wnd.Invalidate()
 					})
 				}

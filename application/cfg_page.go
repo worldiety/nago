@@ -462,12 +462,12 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}))
 
-	for _, route := range r.Routes() {
-		slog.Info("routes", "route", route.Pattern)
-	}
-
 	for _, endpoint := range c.rawEndpoint {
 		r.Mount(endpoint.pattern, endpoint.handler)
+	}
+
+	for _, route := range r.Routes() {
+		slog.Info("routes", "route", route.Pattern)
 	}
 
 	return r

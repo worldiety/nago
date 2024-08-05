@@ -40,6 +40,7 @@ type scopeWindow struct {
 	values                Values
 	declaredBuffers       map[declaredBufferKey]ora.Ptr
 	lastDeclaredBufferPtr ora.Ptr
+	once                  map[string]func()
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -105,6 +106,9 @@ func (s *scopeWindow) Factory() ora.ComponentFactoryId {
 }
 
 func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {
+	if s.destroyObservers == nil {
+		s.destroyObservers = make(map[int]func())
+	}
 	s.hnd++
 	myHnd := s.hnd
 	s.destroyObservers[myHnd] = fn
@@ -126,6 +130,7 @@ func (s *scopeWindow) destroy() {
 		f()
 	}
 	clear(s.destroyObservers)
+	clear(s.once)
 }
 
 func (s *scopeWindow) Handle(buf []byte) (ora.Ptr, bool) {
@@ -233,4 +238,17 @@ func (s *scopeWindow) Locale() language.Tag {
 
 func (s *scopeWindow) Location() *time.Location {
 	return s.parent.location
+}
+
+func (s *scopeWindow) Once(id string, fn func()) {
+	if s.once == nil {
+		s.once = map[string]func(){}
+	}
+
+	if _, ok := s.once[id]; ok {
+		return
+	}
+
+	s.once[id] = fn
+	fn()
 }
