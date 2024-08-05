@@ -84,8 +84,26 @@ const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.f).join(";")
 });
 
-// TODO check :id="idPrefix + props.ui.id.toString()"
+const inputMode = computed<string>(() => {
+	switch (props.ui.o?.k){
+		case "i":
+			return "numeric"
+		case "f":
+			return "decimal"
+		case "m":
+			return "email"
+		case "p":
+			return "tel"
+		case "u":
+			return "url"
+		case "s":
+			return "search"
+	}
 
+	return "text"
+})
+
+// TODO check :id="idPrefix + props.ui.id.toString()"
 
 // TODO this is not properly modelled: the padding trick below does not work with arbitrary content (prefix, postfix). Use focus-within and a border around flex flex-row, so that we don't need that padding stuff
 </script>
@@ -107,7 +125,7 @@ const frameStyles = computed<string>(() => {
 					class="input-field !pr-10"
 					:disabled="props.ui.d"
 					type="text"
-					:rows="props.ui.li"
+					:inputmode="inputMode"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>

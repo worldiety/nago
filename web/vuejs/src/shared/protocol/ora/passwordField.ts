@@ -4,35 +4,73 @@
 
 
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
-import type { Property } from '@/shared/protocol/ora/property';
+import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { TextFieldStyle } from '@/shared/protocol/ora/textFieldStyle';
 
 export interface PasswordField {
-    // Ptr
-    id /*Ptr*/: Ptr;
     // Type
-    type: 'PasswordField'/*ComponentType*/;
+    type: 'p'/*ComponentType*/;
     // Label
-    label: Property<string>;
-    // Hint
-    hint: Property<string>;
-    // Help
-    help: Property<string>;
-    // Error
-    error: Property<string>;
+    l/*omitempty*/? /*Label*/: string;
+    // SupportingText
+    s/*omitempty*/? /*SupportingText*/: string;
+
+    /**
+     * ErrorText is shown instead of SupportingText, even if they are (today) independent
+     */
+    // ErrorText
+    e/*omitempty*/? /*ErrorText*/: string;
+
+    /**
+     * Value contains the text, which shall be shown.
+     */
     // Value
-    value: Property<string>;
-    // Revealed
-    revealed: Property<boolean>;
-    // Placeholder
-    placeholder: Property<string>;
+    v/*omitempty*/? /*Value*/: string;
+
+    /**
+     * InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer
+     * to a [Property].
+     */
+    // InputValue
+    p /*InputValue*/: Ptr;
     // Disabled
-    disabled: Property<boolean>;
-    // Simple
-    simple: Property<boolean>;
-    // OnPasswordChanged
-    onPasswordChanged: Property<Ptr>;
-    // Visible
-    visible: Property<boolean>;
+    d/*omitempty*/? /*Disabled*/: boolean;
+
+    /**
+     * Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you
+     * need to reduce it. By default, the TextFieldOutlined is applied.
+     */
+    // Style
+    t/*omitempty*/? /*Style*/: TextFieldStyle;
+
+    /**
+     * DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+     */
+    // DebounceTime
+    dt/*omitempty*/? /*DebounceTime*/: number /*int64*/;
+
+    /**
+     * Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
+     */
+    // Lines
+    li/*omitempty*/? /*Lines*/: number /*int*/;
+
+    /**
+     * DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip
+     * for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+     */
+    // DisableDebounce
+    i/*omitempty*/? /*DisableDebounce*/: boolean;
+    // Invisible
+    iv/*omitempty*/? /*Invisible*/: boolean;
+    // Frame
+    f/*omitempty*/? /*Frame*/: Frame;
+
+    /**
+     * If Revealed the password is shown
+     */
+    // Revealed
+    rv/*omitempty*/? /*Revealed*/: boolean;
 }
 

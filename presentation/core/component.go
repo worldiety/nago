@@ -73,6 +73,8 @@ func (s *State[T]) parse(v any) error {
 		d.Month = int(obj["m"].(float64))
 		d.Year = int(obj["y"].(float64))
 		s.value = any(d).(T)
+	case string:
+		s.value = any(fmt.Sprintf("%v", v)).(T)
 	default:
 		s.value = any(v).(T)
 	}

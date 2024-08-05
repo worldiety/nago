@@ -3,8 +3,17 @@
  */
 
 
-import type { Border } from '@/shared/protocol/ora/border';
+import type { Color } from '@/shared/protocol/ora/color';
 import type { Length } from '@/shared/protocol/ora/length';
 
-func shadow(radius Length,)(Border,){
+export interface Shadow {
+    // Color
+    c/*omitempty*/? /*Color*/: Color;
+    // Radius
+    r/*omitempty*/? /*Radius*/: Length;
+    // X
+    x/*omitempty*/? /*X*/: Length;
+    // Y
+    y/*omitempty*/? /*Y*/: Length;
 }
+

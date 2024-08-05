@@ -41,8 +41,9 @@ type TextField struct {
 
 	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip
 	// for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	DisableDebounce bool  `json:"i,omitempty"`
-	Invisible       bool  `json:"iv,omitempty"`
-	Frame           Frame `json:"f,omitempty"`
+	DisableDebounce bool            `json:"i,omitempty"`
+	Invisible       bool            `json:"iv,omitempty"`
+	Frame           Frame           `json:"f,omitempty"`
+	KeyboardOptions KeyboardOptions `json:"o,omitempty"`
 	component
 }

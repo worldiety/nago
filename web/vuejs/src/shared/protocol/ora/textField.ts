@@ -6,6 +6,7 @@
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Frame } from '@/shared/protocol/ora/frame';
+import type { KeyboardOptions } from '@/shared/protocol/ora/keyboardOptions';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 import type { TextFieldStyle } from '@/shared/protocol/ora/textFieldStyle';
 
@@ -81,5 +82,7 @@ export interface TextField {
     iv/*omitempty*/? /*Invisible*/: boolean;
     // Frame
     f/*omitempty*/? /*Frame*/: Frame;
+    // KeyboardOptions
+    o/*omitempty*/? /*KeyboardOptions*/: KeyboardOptions;
 }
 

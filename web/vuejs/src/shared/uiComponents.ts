@@ -16,6 +16,7 @@ import UiSpacer from "@/components/spacer/UiSpacer.vue";
 import UiModal from "@/components/UiModal.vue";
 import UiWindowTitle from "@/components/UiWindowTitle.vue";
 import UiTable from "@/components/table/UiTable.vue";
+import UiPasswordField from "@/components/UiPasswordField.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -40,7 +41,7 @@ uiComponentsMap.set('P', UiDatepicker);
 // uiComponentsMap.set('NumberField', UiNumberField);
 // uiComponentsMap.set('WebView', UiWebView);
 // uiComponentsMap.set('Page', UiPage);
-// uiComponentsMap.set('PasswordField', UiPasswordField);
+ uiComponentsMap.set('p', UiPasswordField);
 // uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
 uiComponentsMap.set('c', UiCheckbox);
 uiComponentsMap.set('R', UiRadioButton);

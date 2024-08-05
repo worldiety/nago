@@ -35,6 +35,7 @@ type TTextField struct {
 	invisible       bool
 	frame           ora.Frame
 	lines           int
+	keyboardOptions TKeyboardOptions
 }
 
 func TextField(label string, value string) TTextField {
@@ -115,6 +116,16 @@ func (c TTextField) Visible(v bool) TTextField {
 	return c
 }
 
+func (c TTextField) KeyboardOptions(options TKeyboardOptions) TTextField {
+	c.keyboardOptions = options
+	return c
+}
+
+func (c TTextField) KeyboardType(keyboardType KeyboardType) TTextField {
+	c.keyboardOptions.keyboardType = keyboardType
+	return c
+}
+
 func (c TTextField) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.TextField{
@@ -133,5 +144,6 @@ func (c TTextField) Render(ctx core.RenderContext) ora.Component {
 		Invisible:       c.invisible,
 		Frame:           c.frame,
 		Lines:           c.lines,
+		KeyboardOptions: c.keyboardOptions.ora(),
 	}
 }

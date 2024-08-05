@@ -2,7 +2,6 @@ package alert
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
 	ui "go.wdy.de/nago/presentation/ui2"
 )
 
@@ -37,7 +36,7 @@ func Dialog(title, message string, isPresented *core.State[bool], opts ...Option
 	}
 
 	return ui.If(isPresented.Get(), ui.Modal(
-		ui.With(ui.Dialog(ui.VStack(ui.Text(message)).Alignment(ora.Leading).Frame(ora.Frame{}.FullWidth())).
+		ui.With(ui.Dialog(ui.VStack(ui.Text(message)).Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())).
 			Title(ui.Text(title)), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			if options.okBtn != nil {

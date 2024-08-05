@@ -41,7 +41,7 @@ const (
 	MenuEntryT           ComponentType = "MenuEntry"
 	NumberFieldT         ComponentType = "NumberField"
 	TextFieldT           ComponentType = "F"
-	PasswordFieldT       ComponentType = "PasswordField"
+	PasswordFieldT       ComponentType = "p"
 	TableT               ComponentType = "B"
 	ToggleT              ComponentType = "t"
 	DatePickerT          ComponentType = "P"
