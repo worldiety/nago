@@ -2,10 +2,11 @@ package application
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	"go.wdy.de/nago/internal/server"
 	"log/slog"
 	"runtime/debug"
+
+	"github.com/joho/godotenv"
+	"go.wdy.de/nago/internal/server"
 )
 
 type Application struct {
@@ -37,6 +38,7 @@ func (a *Application) init(configure func(cfg *Configurator)) (success bool) {
 	a.cfg = NewConfigurator()
 	configure(a.cfg)
 
+	a.cfg.LoadConfigFromEnv()
 	return true
 }
 
