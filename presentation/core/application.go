@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
@@ -36,7 +35,7 @@ type Application struct {
 	ctx                      context.Context
 	cancelCtx                func()
 	tmpDir                   string
-	onSendFiles              func(*Scope, iter.Seq2[File, error]) error
+	onSendFiles              func(scope *Scope, options ExportFilesOptions) error
 	onShareStream            func(*Scope, func() (io.Reader, error)) (URI, error)
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
@@ -100,7 +99,7 @@ func (a *Application) AddColorSet(scheme ColorScheme, set ColorSet) {
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific
 // "send files" behavior. On webbrowser the according download events may be issued and on other platforms
 // like Android a custom content provider may be created which exposes these blobs as URIs.
-func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, iter.Seq2[File, error]) error) {
+func (a *Application) SetOnSendFiles(onSendFiles func(scope *Scope, options ExportFilesOptions) error) {
 	a.onSendFiles = onSendFiles
 }
 
@@ -108,6 +107,10 @@ func (a *Application) SetOnSendFiles(onSendFiles func(*Scope, iter.Seq2[File, er
 // URI. A webbrowser will get an url resource, which must not be cached. Android needs a custom content provider.
 func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Reader, error)) (URI, error)) {
 	a.onShareStream = onShareStream
+}
+
+func (a *Application) Scope(id ora.ScopeID) (*Scope, bool) {
+	return a.scopes.Get(id)
 }
 
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
@@ -132,14 +135,24 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	return scope
 }
 
-func (a *Application) GetImportFilesOptions(scopeId ora.ScopeID, uploadId string) (ImportFilesOptions, bool) {
+func (a *Application) ImportFilesOptions(scopeId ora.ScopeID, uploadId string) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		slog.Error("no such scope to receive stream", "scope", scope.id)
+		slog.Error("no such scope to import files", "scope", scope.id)
 		return ImportFilesOptions{}, false
 	}
 
-	return scope.GetImportFilesOptions(uploadId)
+	return scope.ImportFilesOptions(uploadId)
+}
+
+func (a *Application) ExportFilesOptions(scopeId ora.ScopeID, downloadId string) (ExportFilesOptions, bool) {
+	scope, ok := a.scopes.Get(scopeId)
+	if !ok {
+		slog.Error("no such scope to export files", "scope", scope.id)
+		return ExportFilesOptions{}, false
+	}
+
+	return scope.ExportFilesOptions(downloadId)
 }
 
 func (a *Application) AddDestructor(f func()) {

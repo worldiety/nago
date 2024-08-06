@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ora"
 	"golang.org/x/text/language"
 	"io"
+	"log/slog"
 	"time"
 )
 
@@ -35,6 +35,7 @@ type scopeWindow struct {
 	filesReceiver         map[ora.Ptr]FilesReceiver
 	destroyObservers      map[int]func()
 	importFilesReceivers  map[string]ImportFilesOptions
+	exportFilesReceivers  map[string]ExportFilesOptions
 	hnd                   int
 	factory               ora.ComponentFactoryId
 	navController         *NavigationController
@@ -107,8 +108,8 @@ func (s *scopeWindow) Window() Window {
 	return s
 }
 
-func (s *scopeWindow) Factory() ora.ComponentFactoryId {
-	return s.factory
+func (s *scopeWindow) Factory() RootViewFactory {
+	return RootViewFactory(s.factory)
 }
 
 func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {
@@ -227,20 +228,35 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 	})
 }
 
-func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
+func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 	if s.destroyed {
-		return nil
+		return
 	}
 
 	if s.isRendering {
 		panic("you must not call SendFiles from the render loop, only from action or post is allowed")
 	}
 
-	if callback := s.parent.app.onSendFiles; callback != nil {
-		return callback(s.parent, it)
+	if options.ID == "" {
+		s.callbackPtr++
+		options.ID = fmt.Sprintf("auto-%d", s.callbackPtr)
 	}
 
-	return fmt.Errorf("no send files platform adapter has been configured")
+	if s.exportFilesReceivers == nil {
+		s.exportFilesReceivers = map[string]ExportFilesOptions{}
+	}
+
+	s.exportFilesReceivers[options.ID] = options
+
+	if callback := s.parent.app.onSendFiles; callback != nil {
+		if err := callback(s.parent, options); err != nil {
+			slog.Error("cannot export files", "err", err)
+		}
+
+		return
+	}
+
+	slog.Error("no send files platform adapter has been configured")
 }
 
 func (s *scopeWindow) Execute(task func()) {

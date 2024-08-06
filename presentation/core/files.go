@@ -11,6 +11,24 @@ type blobIterFile struct {
 	entry blob.Entry
 }
 
+func (b blobIterFile) Transfer(dst io.Writer) (int64, error) {
+	reader, err := b.entry.Open()
+	if err != nil {
+		return 0, err
+	}
+	defer reader.Close()
+
+	return io.Copy(dst, reader)
+}
+
+func (b blobIterFile) MimeType() (string, bool) {
+	return "", false
+}
+
+func (b blobIterFile) Size() (int64, bool) {
+	return 0, false
+}
+
 func (b blobIterFile) Open() (io.ReadCloser, error) {
 	return b.entry.Open()
 }

@@ -1,15 +1,59 @@
 package core
 
 import (
+	"bytes"
 	"go.wdy.de/nago/pkg/iter"
 	"io"
 )
 
-// File provides a simple File interface. It is way more minimalized.
+// File provides a simple File interface.
+// It has a pull semantics, where the data is opened and
+// kept alive until closed. See also [PullFile].
 type File interface {
 	Open() (io.ReadCloser, error)
 	// Name of the file
 	Name() string
+	// MimeType returns the known mime type, if available.
+	MimeType() (string, bool)
+	// Size returns the known file size, if available.
+	Size() (int64, bool)
+	// Transfer copies the underlying bytes into dst.
+	Transfer(dst io.Writer) (int64, error)
+}
+
+type MemFile struct {
+	Filename     string
+	MimeTypeHint string
+	Bytes        []byte
+}
+
+func (b MemFile) Transfer(dst io.Writer) (int64, error) {
+	n, err := dst.Write(b.Bytes)
+	return int64(n), err
+}
+
+func (b MemFile) Open() (io.ReadCloser, error) {
+	return readerReadCloser{bytes.NewReader(b.Bytes)}, nil
+}
+
+func (b MemFile) Name() string {
+	return b.Filename
+}
+
+func (b MemFile) MimeType() (string, bool) {
+	return b.MimeTypeHint, b.MimeTypeHint != ""
+}
+
+func (b MemFile) Size() (int64, bool) {
+	return int64(len(b.Bytes)), true
+}
+
+type readerReadCloser struct {
+	*bytes.Reader
+}
+
+func (r readerReadCloser) Close() error {
+	return nil
 }
 
 // FilesReceiver must be implemented by components which requested a file selection.

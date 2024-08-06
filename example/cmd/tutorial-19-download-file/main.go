@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/presentation/ui2/tracking"
@@ -20,17 +19,26 @@ func main() {
 				tracking.SupportRequestDialog(wnd),
 				PrimaryButton(func() {
 					// CAUTION: this must always be within an action, do not put this into the render tree
-					err := wnd.SendFiles(core.FilesIter(mem.From(mem.Entries{
-						"test.txt": []byte("hello world"),
-					})))
+					wnd.ExportFiles(core.ExportFile("test.txt", []byte("hello world")))
 
 					// this is just for illustration
+					var err error
 					err = fmt.Errorf("this is an unhandled infrastructure test error: %w", err)
 					if err != nil {
 						tracking.RequestSupport(wnd, fmt.Errorf("cannot send files by doing this use case: %w", err))
 					}
-				}).Title("Download"),
-			).Frame(Frame{}.MatchScreen())
+				}).Title("Download Single File"),
+
+				PrimaryButton(func() {
+					wnd.ExportFiles(core.ExportFilesOptions{
+						Files: []core.File{
+							core.MemFile{Filename: "file1.txt", Bytes: []byte("hello world in file 1")},
+							core.MemFile{Filename: "file2.txt", Bytes: []byte("hello world in file 2")},
+						},
+					})
+
+				}).Title("Download Multiple"),
+			).Gap(L44).Frame(Frame{}.MatchScreen())
 		})
 	}).Run()
 }

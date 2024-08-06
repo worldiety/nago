@@ -95,7 +95,28 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 	return s
 }
 
-func (s *Scope) GetImportFilesOptions(id string) (ImportFilesOptions, bool) {
+func (s *Scope) ID() ora.ScopeID {
+	return s.id
+}
+
+func (s *Scope) ExportFilesOptions(id string) (ExportFilesOptions, bool) {
+	s.Tick() // keep this scope alive
+	root, err := s.allocatedRootView.Get()
+	if err != nil {
+		slog.Error("no such rootview allocated")
+		return ExportFilesOptions{}, false
+	}
+
+	files, ok := root.exportFilesReceivers[id]
+	if !ok {
+		slog.Error("unknown import file", slog.Any("id", id))
+		return ExportFilesOptions{}, false
+	}
+
+	return files, true
+}
+
+func (s *Scope) ImportFilesOptions(id string) (ImportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
 	root, err := s.allocatedRootView.Get()
 	if err != nil {

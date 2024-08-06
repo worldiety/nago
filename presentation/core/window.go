@@ -3,10 +3,7 @@ package core
 import (
 	"context"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/presentation/ora" // TODO remove this protocol leak from public contract
 	"golang.org/x/text/language"
-	"io"
 	"log/slog"
 	"time"
 )
@@ -27,6 +24,29 @@ type ImportFilesOptions struct {
 	// leaks to mal functions. Process data (e.g. by copying) within the completion handler entirely.
 	OnCompletion func(files []File)
 }
+
+type ExportFilesOptions struct {
+	// ID of your export request. If empty, an automatic ID based on your structure
+	// is created, which may work. If your structure changes between renderings,
+	// consider using a unique static ID.
+	ID string
+	// Files is the pull way of sending a file.
+	Files []File
+}
+
+func ExportFile(name string, buf []byte) ExportFilesOptions {
+	return ExportFilesOptions{
+		ID: name,
+		Files: []File{
+			MemFile{
+				Filename: name,
+				Bytes:    buf,
+			},
+		},
+	}
+}
+
+type RootViewFactory string
 
 // A Window owns the lifecycle of a component and is part of a Scope.
 // Ora does not define (yet) what a window is.
@@ -79,27 +99,22 @@ type Window interface {
 	// Info returns the screen metrics.
 	Info() WindowInfo
 
-	// SendFiles takes all contained files and tries to offer them to the user using whatever is native for the
+	// ExportFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
-	// a _send multiple intent_. See also AsURI which does not trigger such intent.
-	SendFiles(it iter.Seq2[File, error]) error
+	// a _send multiple intent_. See also AsURI which does not trigger such intent and is used
+	// to stream data into the frontend.
+	ExportFiles(options ExportFilesOptions)
 
 	// ImportFiles is the opposite of SendFiles. The identity of the request is
 	// derived by the given identifier. If the ID is empty, a structural identifier is
 	// automatically created.
 	ImportFiles(options ImportFilesOptions)
 
-	// TODO
-	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
-	// is returned from the open call. Note that open is usually not called from the event looper and the open call
-	// must not modify your view tree. See also SendFiles to explicitly export binary into the user environment.
-	AsURI(open func() (io.Reader, error)) (URI, error)
-
 	// Application returns the parent application.
 	Application() *Application
 
 	// Factory returns the current active factory.
-	Factory() ora.ComponentFactoryId // TODO remove this protocol leak from public contract
+	Factory() RootViewFactory
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())

@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	"go.wdy.de/nago/presentation/ui2"
@@ -112,11 +111,6 @@ func sendReport(wnd core.Window, code AnonymousErrorCode) {
 	msg += fmt.Sprintf("values: %v\n", wnd.Values())
 	msg += fmt.Sprintf("code: %s\n", code)
 
-	sendErr := wnd.SendFiles(core.FilesIter(mem.From(mem.Entries{
-		"report.txt": []byte(msg),
-	})))
+	wnd.ExportFiles(core.ExportFile("report.txt", []byte(msg)))
 
-	if sendErr != nil {
-		slog.Error("failed to send report", slog.Any("err", sendErr))
-	}
 }

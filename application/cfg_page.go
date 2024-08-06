@@ -1,6 +1,7 @@
 package application
 
 import (
+	"archive/zip"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -8,8 +9,6 @@ import (
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
 	"go.wdy.de/nago/logging"
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/ora"
@@ -20,7 +19,6 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime/debug"
 	"strings"
@@ -37,7 +35,8 @@ import (
 //
 // You cannot use path variables. Instead, use [core.Window.Values] to transport a state from one ViewRoot
 // (or window) to another.
-func (c *Configurator) Component(id ora.ComponentFactoryId, factory func(wnd core.Window) core.View) {
+func (c *Configurator) Component(viewRootID core.RootViewFactory, factory func(wnd core.Window) core.View) {
+	id := ora.ComponentFactoryId(viewRootID)
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid component factory id: %v", id))
 	}
@@ -61,6 +60,31 @@ type httpFileDownload struct {
 	Mimetype     string
 }
 
+func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
+	total := len(options.Files)
+	if total == 0 {
+		return
+	}
+
+	if total > 1 {
+		mimetype = "application/zip"
+		name = "files.zip"
+		return
+	}
+
+	if len(options.Files) == 1 {
+		name = options.Files[0].Name()
+		mimetype, _ = options.Files[0].MimeType()
+		if mimetype == "" {
+			mimetype = mime.TypeByExtension(filepath.Ext(name))
+		}
+
+		return
+	}
+
+	return
+}
+
 func (c *Configurator) newHandler() http.Handler {
 
 	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
@@ -70,7 +94,6 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 	}
 
-	downloadFiles := map[string]httpFileDownload{}
 	downloadStreams := map[string]func() (io.Reader, error){}
 	var downloadFilesMutex sync.Mutex
 
@@ -94,100 +117,23 @@ func (c *Configurator) newHandler() http.Handler {
 		app2.AddDestructor(destructor)
 	}
 	r := chi.NewRouter()
-	app2.SetOnSendFiles(func(scope *core.Scope, it iter.Seq2[core.File, error]) error {
-		var err error
-		collectedFiles := slices.Collect(iter.BreakOnError(&err, it))
-		if err != nil {
-			return err
+	app2.SetOnSendFiles(func(scope *core.Scope, options core.ExportFilesOptions) error {
+		if len(options.Files) == 0 {
+			return fmt.Errorf("no files to send")
 		}
 
-		switch len(collectedFiles) {
-		case 0:
-			return fmt.Errorf("no files found in fsys: %v", it)
-		case 1:
-			// issue a direct link
-			token := string(ora.NewScopeID())
-			tmpFile := filepath.Join(c.Directory("download"), token)
-			if err := copyFile(collectedFiles[0], tmpFile); err != nil {
-				return fmt.Errorf("could not copy file %v: %v", tmpFile, err)
-			}
+		name, mimetype := nameAndMime(options)
 
-			scope.AddOnDestroyObserver(func() {
-				if err := os.Remove(tmpFile); err != nil {
-					slog.Error("cannot remove download file", "file", tmpFile, "err", err)
-				}
-
-				downloadFilesMutex.Lock()
-				defer downloadFilesMutex.Unlock()
-				delete(downloadFiles, token)
-			})
-
-			download := httpFileDownload{
-				Token:        token,
-				Name:         collectedFiles[0].Name(),
-				AbsolutePath: tmpFile,
-			}
-
-			mime := mime.TypeByExtension(filepath.Ext(download.Name))
-			if mime == "" {
-				mime = "application/octet-stream"
-			}
-
-			download.Mimetype = mime
-			downloadFilesMutex.Lock()
-			downloadFiles[token] = download
-			downloadFilesMutex.Unlock()
-
-			scope.Publish(ora.SendMultipleRequested{
-				Type: ora.SendMultipleRequestedT,
-				Resources: []ora.Resource{
-					{
-						Name:     download.Name,
-						URI:      ora.URI("/api/ora/v1/download?token=" + token),
-						MimeType: download.Mimetype,
-					},
+		scope.Publish(ora.SendMultipleRequested{
+			Type: ora.SendMultipleRequestedT,
+			Resources: []ora.Resource{
+				{
+					Name:     name,
+					URI:      ora.URI(fmt.Sprintf("/api/ora/v1/download?scope=%v&id=%v", scope.ID(), options.ID)),
+					MimeType: mimetype,
 				},
-			})
-
-		default:
-			// issue a zip file
-			token := string(ora.NewScopeID())
-			zipFile := filepath.Join(c.Directory("download"), token)
-			err := makeZip(zipFile, it)
-			if err != nil {
-				return fmt.Errorf("cannot create zip file for multi download: %w", err)
-			}
-
-			scope.AddOnDestroyObserver(func() {
-				if err := os.Remove(zipFile); err != nil {
-					slog.Error("cannot remove zip file", "file", zipFile, "err", err)
-				}
-			})
-
-			download := httpFileDownload{
-				Token:        token,
-				Name:         "files.zip",
-				AbsolutePath: zipFile,
-				Mimetype:     "application/zip",
-			}
-
-			downloadFilesMutex.Lock()
-			downloadFiles[token] = download
-			downloadFilesMutex.Unlock()
-
-			scope.Publish(ora.SendMultipleRequested{
-				Type: ora.SendMultipleRequestedT,
-				Resources: []ora.Resource{
-					{
-						Name:     download.Name,
-						URI:      ora.URI("/api/ora/v1/download?token=" + token),
-						MimeType: download.Mimetype,
-					},
-				},
-			})
-		}
-
-		scope.Tick()
+			},
+		})
 
 		return nil
 	})
@@ -299,32 +245,61 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	r.Mount("/api/ora/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.URL.Query().Get("token")
-		downloadFilesMutex.Lock()
-		download, ok := downloadFiles[token]
-		downloadFilesMutex.Unlock()
+		scopeID := r.URL.Query().Get("scope")
+		downloadID := r.URL.Query().Get("id")
 
+		options, ok := app2.ExportFilesOptions(ora.ScopeID(scopeID), downloadID)
 		if !ok {
-			// TODO how to make DOS or id brute force attacks harder?
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
 
-		file, err := os.Open(download.AbsolutePath)
-		if err != nil {
-			slog.Error("cannot open file for download", "file", download.AbsolutePath, "err", err)
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		now := time.Now()
+		name, mimetype := nameAndMime(options)
+		multiple := len(options.Files) > 1
+		if multiple {
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, name))
+			w.Header().Set("Content-Type", "application/zip")
+			zipWriter := zip.NewWriter(w)
+			defer zipWriter.Close()
+
+			for _, file := range options.Files {
+				header := &zip.FileHeader{
+					Name:     file.Name(),
+					Method:   zip.Deflate,
+					Modified: now,
+				}
+				f, err := zipWriter.CreateHeader(header)
+				if err != nil {
+					slog.Error("failed to open create zip file entry", "file", file.Name(), "err", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				if _, err := file.Transfer(f); err != nil {
+					slog.Error("failed to write file body into zip entry", "file", file.Name(), "err", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
+
 			return
 		}
 
-		defer file.Close()
+		// single file case, push file
+		if len(options.Files) > 0 {
+			file := options.Files[0]
+			w.Header().Set("Content-Type", mimetype)
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, name))
 
-		w.Header().Set("Content-Type", download.Mimetype)
-		w.Header().Set("Content-Disposition", "attachment; filename=\""+download.Name+"\"")
-		if _, err := io.Copy(w, file); err != nil {
-			slog.Error("cannot write download file", "file", download.AbsolutePath, "err", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			if _, err := file.Transfer(w); err != nil {
+				slog.Error("cannot write pull file", "file", file.Name, "err", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			return
 		}
+
 	}))
 
 	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -360,7 +335,7 @@ func (c *Configurator) newHandler() http.Handler {
 				}
 			}
 
-			importer, ok := app2.GetImportFilesOptions(scopeID, uploadId)
+			importer, ok := app2.ImportFilesOptions(scopeID, uploadId)
 			if !ok {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
@@ -443,6 +418,24 @@ func (c *Configurator) newHandler() http.Handler {
 
 type mulitPartFileHeaderAdapter struct {
 	header *multipart.FileHeader
+}
+
+func (m mulitPartFileHeaderAdapter) Transfer(dst io.Writer) (int64, error) {
+	reader, err := m.header.Open()
+	if err != nil {
+		return 0, err
+	}
+	defer reader.Close()
+
+	return io.Copy(dst, reader)
+}
+
+func (m mulitPartFileHeaderAdapter) MimeType() (string, bool) {
+	return m.header.Header.Get("Content-Type"), true
+}
+
+func (m mulitPartFileHeaderAdapter) Size() (int64, bool) {
+	return m.header.Size, true
 }
 
 func (m mulitPartFileHeaderAdapter) Open() (io.ReadCloser, error) {
