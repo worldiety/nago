@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 )
 
@@ -26,15 +26,15 @@ func (s Settings) Identity() SettingsID {
 }
 
 type AggregateAction[T any] struct {
-	Icon    ui.SVGSrc
+	Icon    uilegacy.SVGSrc
 	Caption string
 	Action  func(T) error
-	make    func(modals ui.ModalOwner, t T) core.View
+	make    func(modals uilegacy.ModalOwner, t T) core.View
 }
 
-func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.View {
+func (a AggregateAction[T]) makeComponent(modals uilegacy.ModalOwner, t T) core.View {
 	if a.make == nil {
-		return ui.NewButton(func(btn *ui.Button) {
+		return uilegacy.NewButton(func(btn *uilegacy.Button) {
 			btn.Caption().Set(a.Caption)
 			if a.Icon != "" {
 				btn.PreIcon().Set(a.Icon)
@@ -53,10 +53,10 @@ func (a AggregateAction[T]) makeComponent(modals ui.ModalOwner, t T) core.View {
 // NewEditAction dispatches a standard action for editing to the given callback.
 func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
-		make: func(modals ui.ModalOwner, t T) core.View {
-			return ui.NewButton(func(btn *ui.Button) {
+		make: func(modals uilegacy.ModalOwner, t T) core.View {
+			return uilegacy.NewButton(func(btn *uilegacy.Button) {
 				btn.PreIcon().Set(icon.Pencil)
-				btn.Style().Set(ui.PrimaryIntent)
+				btn.Style().Set(uilegacy.PrimaryIntent)
 				btn.Action().Set(func() {
 					//TODO i18n
 					// usually does not happen, but who knows
@@ -70,11 +70,11 @@ func NewEditAction[T any](onEdit func(T) error) AggregateAction[T] {
 // NewDeleteAction returns a ready-to-use action which just removes the aggregate from the repository.
 func NewDeleteAction[T any](delFn func(T) error) AggregateAction[T] {
 	return AggregateAction[T]{
-		make: func(modals ui.ModalOwner, t T) core.View {
-			return ui.NewButton(func(btn *ui.Button) {
+		make: func(modals uilegacy.ModalOwner, t T) core.View {
+			return uilegacy.NewButton(func(btn *uilegacy.Button) {
 				//TODO i18n
 				btn.PreIcon().Set(icon.Trash)
-				btn.Style().Set(ui.Destructive)
+				btn.Style().Set(uilegacy.Destructive)
 				btn.Action().Set(func() {
 					xdialog.ShowDelete(modals, "Soll der Eintrag wirklich unwiderruflich gelöscht werden?", func() {
 						xdialog.HandleError(modals, "Beim Löschen ist ein Fehler aufgetreten.", delFn(t))
@@ -97,7 +97,7 @@ type Options[T any] struct {
 
 // deprecated: use crud package
 // NewTable creates a new simple data table view based on a repository.
-func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) core.View {
+func NewTable[T any](modals uilegacy.ModalOwner, items iter.Seq2[T, error], binding *Binding[T], opts Options[T]) core.View {
 	if opts.PageSize == 0 {
 		opts.PageSize = 20 // TODO: does that make sense for mobile at all?
 	}
@@ -112,10 +112,10 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 		}
 	}
 
-	return ui.NewVBox(func(vbox *ui.VBox) {
+	return uilegacy.NewVBox(func(vbox *uilegacy.VBox) {
 		if opts.CanSearch {
 			vbox.Append(
-				ui.NewTextField(func(searchField *ui.TextField) {
+				uilegacy.NewTextField(func(searchField *uilegacy.TextField) {
 					searchField.Label().Set("Filtern nach Stichworten")
 					searchField.OnTextChanged().Set(func() {
 						settings.LastQuery = searchField.Value().Get()
@@ -125,7 +125,7 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 		}
 
 		if len(opts.Actions) > 0 {
-			vbox.Append(ui.NewHBox(func(hbox *ui.HBox) {
+			vbox.Append(uilegacy.NewHBox(func(hbox *uilegacy.HBox) {
 				hbox.Alignment().Set("flex-right") // TODO this is to web-centric
 				for _, action := range opts.Actions {
 					hbox.Append(action)
@@ -133,14 +133,14 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 			}))
 		}
 
-		var allSortBtns []*ui.Button
+		var allSortBtns []*uilegacy.Button
 
 		vbox.Append(
-			ui.NewTable(func(table *ui.Table) {
+			uilegacy.NewTable(func(table *uilegacy.Table) {
 				for _, col := range binding.Columns {
-					table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
+					table.Header().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
 						if col.Sortable {
-							cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+							cell.Body().Set(uilegacy.NewButton(func(btn *uilegacy.Button) {
 								allSortBtns = append(allSortBtns, btn)
 								btn.Caption().Set(col.Caption)
 								btn.Style().Set(ora.Tertiary)
@@ -161,35 +161,35 @@ func NewTable[T any](modals ui.ModalOwner, items iter.Seq2[T, error], binding *B
 								})
 							}))
 						} else {
-							cell.Body().Set(ui.NewStr(col.Caption))
+							cell.Body().Set(uilegacy.NewStr(col.Caption))
 						}
 					}))
 				}
 
 				if hasEditColumn {
-					table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-						cell.Body().Set(ui.NewStr("Optionen")) // todo i18n
+					table.Header().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
+						cell.Body().Set(uilegacy.NewStr("Optionen")) // todo i18n
 					}))
 				}
 
-				table.Rows().From(func(yield func(*ui.TableRow) bool) {
+				table.Rows().From(func(yield func(*uilegacy.TableRow) bool) {
 					rows, err := getData(items, binding, settings)
 					if err != nil {
-						vbox.Append(ui.NewStr(fmt.Sprintf("error: %v", err)))
+						vbox.Append(uilegacy.NewStr(fmt.Sprintf("error: %v", err)))
 						return
 					}
 
 					for _, rowDat := range rows {
-						yield(ui.NewTableRow(func(row *ui.TableRow) {
+						yield(uilegacy.NewTableRow(func(row *uilegacy.TableRow) {
 							for _, colText := range rowDat.values {
-								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-									cell.Body().Set(ui.NewStr(colText))
+								row.Cells().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
+									cell.Body().Set(uilegacy.NewStr(colText))
 								}))
 							}
 
 							if hasEditColumn {
-								row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-									cell.Body().Set(ui.NewHBox(func(hbox *ui.HBox) {
+								row.Cells().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
+									cell.Body().Set(uilegacy.NewHBox(func(hbox *uilegacy.HBox) {
 										for _, action := range opts.AggregateActions {
 											hbox.Append(action.makeComponent(modals, rowDat.model))
 										}

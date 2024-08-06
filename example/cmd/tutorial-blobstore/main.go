@@ -5,7 +5,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -52,7 +52,7 @@ func main() {
 		}
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.MakeText(buf1.String() + " & " + buf2.String())
+			return uilegacy.MakeText(buf1.String() + " & " + buf2.String())
 		})
 	}).Run()
 }

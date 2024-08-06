@@ -6,7 +6,7 @@ import (
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
-	ui "go.wdy.de/nago/presentation/ui2"
+	ui "go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log/slog"
 	"os"

@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -32,26 +32,26 @@ func main() {
 		iamCfg = cfg.IAM(iamCfg)
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.NewVBox(func(vbox *ui.VBox) {
+			return uilegacy.NewVBox(func(vbox *uilegacy.VBox) {
 				vbox.Append(
-					ui.NewActionButton("Berechtigungen", func() {
+					uilegacy.NewActionButton("Berechtigungen", func() {
 						wnd.Navigation().ForwardTo(iamCfg.Permissions.ID, nil)
 					}),
 
-					ui.NewActionButton("Benutzer", func() {
+					uilegacy.NewActionButton("Benutzer", func() {
 						wnd.Navigation().ForwardTo(iamCfg.Users.ID, nil)
 					}),
 
-					ui.NewActionButton("Anmelden", func() {
+					uilegacy.NewActionButton("Anmelden", func() {
 						wnd.Navigation().ForwardTo(iamCfg.Login.ID, nil)
 					}),
-					ui.NewActionButton("Abmelden", func() {
+					uilegacy.NewActionButton("Abmelden", func() {
 						wnd.Navigation().ForwardTo(iamCfg.Logout.ID, nil)
 					}),
 				)
 
 				msg, err := sayHello(wnd.Subject())
-				vbox.Append(ui.MakeText(fmt.Sprintf("%s:%v", msg, err)))
+				vbox.Append(uilegacy.MakeText(fmt.Sprintf("%s:%v", msg, err)))
 			})
 		})
 

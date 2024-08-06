@@ -4,11 +4,11 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Groups(wnd core.Window, modals ui.ModalOwner, service *iam.Service) core.View {
+func Groups(wnd core.Window, modals uilegacy.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(modals, crud.NewOptions[iam.Group](func(opts *crud.Options[iam.Group]) {
 		opts.Title("Gruppen")

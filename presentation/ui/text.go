@@ -5,123 +5,115 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type Text struct {
-	id              ora.Ptr
-	value           String
-	color           ora.Color
-	backgroundColor ora.Color
-	size            *Shared[Size]
-	visible         Bool
-	properties      []core.Property
-	onClick         *Func
-	onHoverStart    *Func
-	onHoverEnd      *Func
-	Padding         ora.Padding
-	Frame           ora.Frame
+type TText struct {
+	content                string
+	color                  ora.Color
+	backgroundColor        ora.Color
+	hoveredBackgroundColor ora.Color
+	pressedBackgroundColor ora.Color
+	focusedBackgroundColor ora.Color
+	font                   ora.Font
+	invisible              bool
+	onClick                func()
+	onHoverStart           func()
+	onHoverEnd             func()
+	padding                ora.Padding
+	frame                  ora.Frame
+	border                 ora.Border
+	hoveredBorder          ora.Border
+	focusedBorder          ora.Border
+	pressedBorder          ora.Border
+	accessibilityLabel     string
+	action                 func()
 }
 
-func NewTextF(with func(*Text)) func() core.View {
-	return func() core.View {
-		return NewText(with)
-	}
+func Text(content string) TText {
+	return TText{content: content}
 }
 
-func NewText(with func(*Text)) *Text {
-	c := &Text{
-		id: nextPtr(),
-	}
-
-	c.value = NewShared[string]("value")
-	c.onClick = NewFunc("onClick")
-	c.onHoverStart = NewFunc("onHoverStart")
-	c.onHoverEnd = NewFunc("onHoverEnd")
-	c.size = NewShared[Size]("size")
-	c.visible = NewShared[bool]("visible")
-	c.properties = []core.Property{c.value, c.size, c.onClick, c.onHoverStart, c.onHoverEnd, c.visible}
-	c.visible.Set(true)
-	if with != nil {
-		with(c)
-	}
-
+func (c TText) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
 	return c
 }
 
-// deprecated: use NewStr instead which is a lot cheaper.
-func MakeText(s string) *Text {
-	return NewText(func(text *Text) {
-		text.Value().Set(s)
-	})
+func (c TText) Frame(frame Frame) DecoredView {
+	c.frame = frame.ora()
+	return c
 }
 
-func (c *Text) Value() String {
-	return c.value
+func (c TText) Border(border Border) DecoredView {
+	c.border = border.ora()
+	return c
 }
 
-func (c *Text) Color() ora.Color {
-	return c.color
+func (c TText) HoveredBorder(border Border) TText {
+	c.hoveredBorder = border.ora()
+	return c
 }
 
-func (c *Text) SetColor(color ora.Color) {
-	c.color = color
+func (c TText) PressedBorder(border Border) TText {
+	c.pressedBorder = border.ora()
+	return c
 }
 
-func (c *Text) BackgroundColor() ora.Color {
-	return c.backgroundColor
+func (c TText) FocusedBorder(border Border) TText {
+	c.focusedBorder = border.ora()
+	return c
 }
 
-func (c *Text) SetBackgroundColor(backgroundColor ora.Color) {
-	c.backgroundColor = backgroundColor
+func (c TText) Visible(visible bool) DecoredView {
+	c.invisible = !visible
+	return c
 }
 
-func (c *Text) Size() *Shared[Size] {
-	return c.size
+func (c TText) AccessibilityLabel(label string) DecoredView {
+	c.accessibilityLabel = label
+	return c
 }
 
-func (c *Text) OnClick() *Func {
-	return c.onClick
+func (c TText) Font(font Font) TText {
+	c.font = font.ora()
+	return c
 }
 
-func (c *Text) OnHoverStart() *Func {
-	return c.onHoverStart
+func (c TText) Color(color Color) TText {
+	c.color = color.ora()
+	return c
 }
 
-func (c *Text) OnHoverEnd() *Func {
-	return c.onHoverEnd
+func (c TText) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *Text) ID() ora.Ptr {
-	return c.id
+func (c TText) Action(f func()) TText {
+	c.action = f
+	return c
 }
 
-func (c *Text) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
-		if !yield(property) {
-			return
-		}
+func (c TText) Render(ctx core.RenderContext) ora.Component {
+
+	return ora.Text{
+		Type:               ora.TextT,
+		Value:              c.content,
+		Color:              c.color,
+		BackgroundColor:    c.backgroundColor,
+		Font:               c.font,
+		OnClick:            ctx.MountCallback(c.onClick),
+		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
+		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),
+		Invisible:          c.invisible,
+		Border:             c.border,
+		Padding:            c.padding,
+		Frame:              c.frame,
+		AccessibilityLabel: c.accessibilityLabel,
+
+		HoveredBackgroundColor: c.hoveredBackgroundColor,
+		PressedBackgroundColor: c.pressedBackgroundColor,
+		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBorder:          c.hoveredBorder,
+		FocusedBorder:          c.focusedBorder,
+		PressedBorder:          c.pressedBorder,
+		Action:                 ctx.MountCallback(c.action),
 	}
-}
-
-func (c *Text) Visible() Bool {
-	return c.visible
-}
-
-func (c *Text) Render() ora.Component {
-	//return ora.Text{
-	//	Ptr:             c.id,
-	//	Type:            ora.TextT,
-	//	Value:           c.value.render(),
-	//	HSLColor:           c.color,
-	//	BackgroundColor: c.backgroundColor,
-	//	Size: ora.Property[string]{
-	//		Ptr:   c.size.id,
-	//		Value: string(c.size.v),
-	//	},
-	//	OnClick:      renderFunc(c.onClick),
-	//	OnHoverStart: renderFunc(c.onHoverStart),
-	//	OnHoverEnd:   renderFunc(c.onHoverEnd),
-	//	Visible:      c.visible.render(),
-	//	Padding:      c.Padding,
-	//	Frame:        c.Frame,
-	//}
-	return nil
 }

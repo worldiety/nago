@@ -6,7 +6,7 @@ import (
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"log/slog"
 	"math"
 	"reflect"
@@ -106,7 +106,7 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 		// E.g. a Person with Person as friends will otherwise not update the list on itself
 		// TODO this may become very expensive, perhaps we should accept that bug?
 		initDataSet()
-		component := ui.NewDropdown(func(dropdown *ui.Dropdown) {
+		component := uilegacy.NewDropdown(func(dropdown *uilegacy.Dropdown) {
 			dropdown.Label().Set(f.Caption)
 			switch variant {
 			case Visible:
@@ -137,7 +137,7 @@ func oneToN[Model any, Foreign data.Aggregate[ForeignKey], ForeignKey data.IDTyp
 
 		for _, item := range itemSlice {
 			component.Items().Append(
-				ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+				uilegacy.NewDropdownItem(func(dropdownItem *uilegacy.DropdownItem) {
 					dropdownItem.Content().Set(stringer(item))
 					dropdownItem.OnClicked().Set(func() {
 						component.Toggle(dropdownItem)
@@ -215,19 +215,19 @@ func text[Model any, T ~string](b *Binding[Model], isSecret bool, field Field[Mo
 	}
 
 	type textOrPassfield interface {
-		Value() ui.String
-		Error() ui.String
-		Visible() ui.Bool
-		Disabled() ui.Bool
-		Label() ui.String
+		Value() uilegacy.String
+		Error() uilegacy.String
+		Visible() uilegacy.Bool
+		Disabled() uilegacy.Bool
+		Label() uilegacy.String
 	}
 
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
 		var component textOrPassfield
 		if isSecret {
-			component = ui.NewPasswordField(nil)
+			component = uilegacy.NewPasswordField(nil)
 		} else {
-			component = ui.NewTextField(nil)
+			component = uilegacy.NewTextField(nil)
 		}
 
 		component.Label().Set(f.Caption)
@@ -285,7 +285,7 @@ func Int[Model any, T Integer](b *Binding[Model], field Field[Model, T]) {
 	f.CompareField = field.Compare
 
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
-		component := ui.NewNumberField(func(textField *ui.NumberField) {
+		component := uilegacy.NewNumberField(func(textField *uilegacy.NumberField) {
 			textField.Label().Set(f.Caption)
 			switch variant {
 			case Visible:
@@ -339,7 +339,7 @@ func Bool[Model any, T ~bool](b *Binding[Model], field Field[Model, T]) {
 	}
 
 	f.FormFactory = func(variant RenderHint) formElement[Model] {
-		component := ui.NewToggle(func(textField *ui.Toggle) {
+		component := uilegacy.NewToggle(func(textField *uilegacy.Toggle) {
 			textField.Label().Set(f.Caption)
 			switch variant {
 			case Visible:
@@ -378,7 +378,7 @@ type Form[Model any] struct {
 
 func (b *Binding[T]) NewForm(variant RenderVariant) Form[T] {
 	var fields []formElement[T]
-	root := ui.NewVStack(func(hstack *ui.VStack) {
+	root := uilegacy.NewVStack(func(hstack *uilegacy.VStack) {
 		for _, field := range b.fields {
 			hint := field.RenderHints[variant]
 			allocField := field.FormFactory(hint)

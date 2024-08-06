@@ -9,7 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"log/slog"
 	"strconv"
@@ -47,21 +47,21 @@ type Binding struct {
 	elems     []formElem
 	Groups    []Group // defines the order and settings of form groups, e.g. if collapsed etc.
 	OnChanged func()
-	error     *ui.Text
-	msgView   *ui.FlexContainer
+	error     *uilegacy.Text
+	msgView   *uilegacy.FlexContainer
 }
 
 func NewBinding() *Binding {
-	errView := ui.NewText(nil)
+	errView := uilegacy.NewText(nil)
 	b := &Binding{
 		error: errView,
-		msgView: ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+		msgView: uilegacy.NewFlexContainer(func(flex *uilegacy.FlexContainer) {
 			flex.ContentAlignment().Set(ora.ContentStart)
 			flex.ElementSize().Set(ora.ElementSizeAuto)
 			flex.Orientation().Set(ora.OrientationHorizontal)
 			flex.ItemsAlignment().Set(ora.ItemsCenter)
 			flex.Append(
-				ui.NewButton(func(btn *ui.Button) {
+				uilegacy.NewButton(func(btn *uilegacy.Button) {
 					btn.Style().Set(ora.Primary)
 					btn.PreIcon().Set(icon.ExclamationTriangle)
 				}),
@@ -89,7 +89,7 @@ func (b *Binding) AddComponent(c core.View, field Field) {
 }
 
 func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T, opts Field) {
-	tf := ui.NewSlider(nil)
+	tf := uilegacy.NewSlider(nil)
 	tf.Label().Set(opts.Label)
 	tf.Min().Set(float64(*target))
 	tf.Hint().Set(opts.Hint)
@@ -112,7 +112,7 @@ func Slider[T Number](binding *Binding, target *T, minIncl, maxIncl, stepSize T,
 }
 
 func Int[T ~int](binding *Binding, target *T, opts Field) {
-	tf := ui.NewNumberField(nil)
+	tf := uilegacy.NewNumberField(nil)
 	tf.Label().Set(opts.Label)
 	tf.Value().Set(fmt.Sprintf("%d", *target))
 	tf.Hint().Set(opts.Hint)
@@ -142,7 +142,7 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 		*target = time.Now() // TODO don't know, but the zero value is unusable
 	}
 	tz := target.Location()
-	tf := ui.NewDatepicker(nil)
+	tf := uilegacy.NewDatepicker(nil)
 	tf.Label().Set(opts.Label)
 	tme := *target
 	tf.SelectedStartYear().Set(int64(tme.Year()))
@@ -170,8 +170,8 @@ func Date(binding *Binding, target *time.Time, opts Field) {
 	})
 }
 
-func Text[T ~string](binding *Binding, target T, opts Field) *ui.Text {
-	tf := ui.NewText(nil)
+func Text[T ~string](binding *Binding, target T, opts Field) *uilegacy.Text {
+	tf := uilegacy.NewText(nil)
 	tf.Value().Set(string(target))
 
 	binding.elems = append(binding.elems, formElem{
@@ -184,8 +184,8 @@ func Text[T ~string](binding *Binding, target T, opts Field) *ui.Text {
 	return tf
 }
 
-func String[T ~string](binding *Binding, target *T, opts Field) *ui.TextField {
-	tf := ui.NewTextField(nil)
+func String[T ~string](binding *Binding, target *T, opts Field) *uilegacy.TextField {
+	tf := uilegacy.NewTextField(nil)
 	tf.Label().Set(opts.Label)
 	tf.Value().Set(string(*target))
 	tf.Hint().Set(opts.Hint)
@@ -206,8 +206,8 @@ func String[T ~string](binding *Binding, target *T, opts Field) *ui.TextField {
 	return tf
 }
 
-func PasswordString[T ~string](binding *Binding, target *T, opts Field) *ui.PasswordField {
-	tf := ui.NewPasswordField(nil)
+func PasswordString[T ~string](binding *Binding, target *T, opts Field) *uilegacy.PasswordField {
+	tf := uilegacy.NewPasswordField(nil)
 	tf.Label().Set(opts.Label)
 	tf.Value().Set(string(*target))
 	tf.Hint().Set(opts.Hint)
@@ -229,7 +229,7 @@ func PasswordString[T ~string](binding *Binding, target *T, opts Field) *ui.Pass
 }
 
 func Bool[T ~bool](binding *Binding, target *T, opts Field) {
-	tf := ui.NewToggle(nil)
+	tf := uilegacy.NewToggle(nil)
 	tf.Label().Set(opts.Label)
 	tf.Checked().Set(bool(*target))
 	// tf.Hint().Set(opts.Hint) // TODO hint is missing
@@ -249,7 +249,7 @@ func Bool[T ~bool](binding *Binding, target *T, opts Field) {
 }
 
 func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID, items iter.Seq2[E, error], itemCaptionizer MapF[E, string], opts Field) {
-	cb := ui.NewDropdown(nil)
+	cb := uilegacy.NewDropdown(nil)
 	cb.Label().Set(opts.Label)
 	cb.Hint().Set(opts.Hint)
 	cb.OnClicked().Set(func() {
@@ -279,7 +279,7 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 		}
 
 		cb.Items().Append(
-			ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+			uilegacy.NewDropdownItem(func(dropdownItem *uilegacy.DropdownItem) {
 				dropdownItem.Content().Set(itemCaptionizer(item))
 				dropdownItem.OnClicked().Set(func() {
 					cb.Toggle(dropdownItem)
@@ -304,7 +304,7 @@ func OneToOne[E data.Aggregate[ID], ID data.IDType](binding *Binding, target *ID
 }
 
 func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Binding, target *Slice, items iter.Seq2[E, error], itemCaptionizer MapF[E, string], opts Field) {
-	cb := ui.NewDropdown(nil)
+	cb := uilegacy.NewDropdown(nil)
 	cb.Label().Set(opts.Label)
 	cb.OnClicked().Set(func() {
 		cb.Expanded().Set(!cb.Expanded().Get())
@@ -342,7 +342,7 @@ func OneToMany[Slice ~[]ID, E data.Aggregate[ID], ID data.IDType](binding *Bindi
 		}
 
 		cb.Items().Append(
-			ui.NewDropdownItem(func(dropdownItem *ui.DropdownItem) {
+			uilegacy.NewDropdownItem(func(dropdownItem *uilegacy.DropdownItem) {
 				dropdownItem.Content().Set(itemCaptionizer(item))
 				dropdownItem.OnClicked().Set(func() {
 					cb.Toggle(dropdownItem)
@@ -417,7 +417,7 @@ nextElem:
 		}
 	}
 
-	return ui.NewVStack(func(vbox *ui.VStack) {
+	return uilegacy.NewVStack(func(vbox *uilegacy.VStack) {
 
 		for i, g := range groups {
 			if len(g.elems) == 0 {
@@ -426,7 +426,7 @@ nextElem:
 
 			if g.definedGroup.ID != "" {
 				// only add a section header for defined groups
-				vbox.Append(ui.NewText(func(text *ui.Text) {
+				vbox.Append(uilegacy.NewText(func(text *uilegacy.Text) {
 					text.Size().Set("xl")
 					text.Value().Set(g.definedGroup.Label)
 				}))
@@ -437,7 +437,7 @@ nextElem:
 			}
 
 			if i < len(groups)-2 {
-				vbox.Append(ui.NewDivider(nil))
+				vbox.Append(uilegacy.NewDivider(nil))
 			}
 		}
 
@@ -451,28 +451,28 @@ type formElem struct {
 	opts         Field
 }
 
-func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
+func Show(modals uilegacy.ModalOwner, binding *Binding, onSave func() error) {
 	modals.Modals().Append(
-		ui.NewDialog(func(dlg *ui.Dialog) {
+		uilegacy.NewDialog(func(dlg *uilegacy.Dialog) {
 			dlg.Title().Set("Felder bearbeiten")
 			dlg.Body().Set(NewForm(binding))
 			dlg.Size().Set(ora.ElementSizeSmall)
 
-			dlg.Footer().Set(ui.NewFlexContainer(func(flex *ui.FlexContainer) {
+			dlg.Footer().Set(uilegacy.NewFlexContainer(func(flex *uilegacy.FlexContainer) {
 				flex.Orientation().Set(ora.OrientationHorizontal)
 				flex.ContentAlignment().Set(ora.ContentEnd)
 				flex.ItemsAlignment().Set(ora.ItemsCenter)
 				flex.ElementSize().Set(ora.ElementSizeAuto)
 
 				flex.Elements().Append(
-					ui.NewButton(func(btn *ui.Button) {
+					uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.Caption().Set("Speichern")
 						btn.Style().Set(ora.Primary)
 						btn.Action().Set(func() {
 							// automatically clear all errors on retry
 							binding.SetError("")
 							for _, elem := range binding.elems {
-								if errorText, ok := elem.getComponent().(interface{ Error() ui.String }); ok {
+								if errorText, ok := elem.getComponent().(interface{ Error() uilegacy.String }); ok {
 									errorText.Error().Set("")
 								}
 							}
@@ -490,7 +490,7 @@ func Show(modals ui.ModalOwner, binding *Binding, onSave func() error) {
 						})
 					}),
 
-					ui.NewButton(func(btn *ui.Button) {
+					uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.Caption().Set("Abbrechen")
 						btn.Style().Set(ora.Secondary)
 						btn.Action().Set(func() {

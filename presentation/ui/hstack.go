@@ -5,99 +5,143 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type HStack struct {
-	id              ora.Ptr
-	children        *SharedList[core.View] // TODO why is this shared? do we need the dirty flag? do we need a pointer box? why not always render dirty?
-	properties      []core.Property
-	alignment       ora.Alignment
-	backgroundColor ora.Color
-	frame           ora.Frame
-	gap             ora.Length
-	padding         ora.Padding
-	with            func(stack *HStack)
+type THStack struct {
+	children               []core.View
+	alignment              ora.Alignment
+	backgroundColor        ora.Color
+	hoveredBackgroundColor ora.Color
+	pressedBackgroundColor ora.Color
+	focusedBackgroundColor ora.Color
+	frame                  ora.Frame
+	gap                    ora.Length
+	padding                ora.Padding
+	font                   ora.Font
+	border                 ora.Border
+	hoveredBorder          ora.Border
+	focusedBorder          ora.Border
+	pressedBorder          ora.Border
+	accessibilityLabel     string
+	invisible              bool
+	action                 func()
+	stylePreset            ora.StylePreset
 }
 
-func NewHStack(with func(hstack *HStack)) *HStack {
-	c := &HStack{
-		id:       nextPtr(),
-		children: NewSharedList[core.View]("children"),
+func HStack(children ...core.View) *THStack {
+	c := &THStack{
+		children: children,
 	}
-
-	c.alignment = "" // if nothing is defined, ora.Center must be applied by renderer
-	c.properties = []core.Property{c.children}
-	//if with != nil {
-	//	with(c)
-	//}
-	c.with = with
 
 	return c
 }
 
-func (c *HStack) Padding() ora.Padding {
-	return c.padding
+func (c THStack) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
+	return c
 }
 
-func (c *HStack) SetPadding(padding ora.Padding) {
-	c.padding = padding
+func (c THStack) Gap(gap Length) THStack {
+	c.gap = gap.ora()
+	return c
 }
 
-func (c *HStack) Gap() ora.Length {
-	return c.gap
+func (c THStack) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *HStack) SetGap(gap ora.Length) {
-	c.gap = gap
+func (c THStack) HoveredBackgroundColor(backgroundColor Color) THStack {
+	c.hoveredBackgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *HStack) BackgroundColor() ora.Color {
-	return c.backgroundColor
+func (c THStack) PressedBackgroundColor(backgroundColor Color) THStack {
+	c.pressedBackgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *HStack) SetBackgroundColor(backgroundColor ora.Color) {
-	c.backgroundColor = backgroundColor
+func (c THStack) FocusedBackgroundColor(backgroundColor Color) THStack {
+	c.focusedBackgroundColor = ora.Color(backgroundColor)
+	return c
 }
 
-func (c *HStack) Alignment() ora.Alignment {
-	return c.alignment
+func (c THStack) Alignment(alignment Alignment) THStack {
+	c.alignment = alignment.ora()
+	return c
 }
 
-func (c *HStack) SetAlignment(alignment ora.Alignment) {
-	c.alignment = alignment
+func (c THStack) Frame(fr Frame) DecoredView {
+	c.frame = fr.ora()
+	return c
 }
 
-func (c *HStack) Append(children ...core.View) {
-	// this signature does not return builder pattern anymore, because it makes polymorphic interface usage impossible
-	c.children.Append(children...)
+func (c THStack) Font(font Font) DecoredView {
+	c.font = font.ora()
+	return c
 }
 
-func (c *HStack) ID() ora.Ptr {
-	return c.id
+func (c THStack) StylePreset(preset StylePreset) THStack {
+	c.stylePreset = preset.ora()
+	return c
 }
 
-func (c *HStack) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
-		if !yield(property) {
-			return
-		}
-	}
+func (c THStack) Border(border Border) DecoredView {
+	c.border = border.ora()
+	return c
 }
 
-func (c *HStack) Frame() *ora.Frame {
-	return &c.frame
+func (c THStack) HoveredBorder(border Border) THStack {
+	c.hoveredBorder = border.ora()
+	return c
 }
 
-func (c *HStack) Render() ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c THStack) PressedBorder(border Border) THStack {
+	c.pressedBorder = border.ora()
+	return c
+}
+
+func (c THStack) FocusedBorder(border Border) THStack {
+	c.focusedBorder = border.ora()
+	return c
+}
+
+func (c THStack) Visible(visible bool) DecoredView {
+	c.invisible = !visible
+	return c
+}
+
+func (c THStack) AccessibilityLabel(label string) DecoredView {
+	c.accessibilityLabel = label
+	return c
+}
+
+func (c THStack) Action(f func()) THStack {
+	c.action = f
+	return c
+}
+
+func (c THStack) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.HStack{
-		Type:            ora.HStackT,
-		Children:        renderSharedListComponentsFlat(c.children),
-		Frame:           c.frame,
-		Alignment:       c.alignment,
-		BackgroundColor: c.backgroundColor,
-		Gap:             c.gap,
-		Padding:         c.padding,
+		Type:               ora.HStackT,
+		Children:           renderComponents(ctx, c.children),
+		Gap:                c.gap,
+		Frame:              c.frame,
+		Alignment:          c.alignment,
+		BackgroundColor:    c.backgroundColor,
+		Padding:            c.padding,
+		Border:             c.border,
+		AccessibilityLabel: c.accessibilityLabel,
+		Invisible:          c.invisible,
+		Font:               c.font,
+
+		HoveredBackgroundColor: c.hoveredBackgroundColor,
+		PressedBackgroundColor: c.pressedBackgroundColor,
+		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBorder:          c.hoveredBorder,
+		FocusedBorder:          c.focusedBorder,
+		PressedBorder:          c.pressedBorder,
+		Action:                 ctx.MountCallback(c.action),
+
+		StylePreset: c.stylePreset,
 	}
 }

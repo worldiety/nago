@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons2 "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	icons "go.wdy.de/nago/presentation/icons/hero/solid"
-	. "go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 

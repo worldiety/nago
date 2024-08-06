@@ -3,115 +3,106 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"time"
 )
 
-type PasswordField struct {
-	id                ora.Ptr
-	label             String
-	value             String
-	revealed          Bool
-	placeholder       String
-	hint              String
-	help              String
-	error             String
-	disabled          Bool
-	simple            Bool
-	visible           Bool
-	onPasswordChanged *Func
-	properties        []core.Property
+type TPasswordField struct {
+	label           string
+	value           string
+	inputValue      *core.State[string]
+	supportingText  string
+	errorText       string
+	disabled        bool
+	style           ora.TextFieldStyle
+	disableDebounce bool
+	debounceTime    time.Duration
+	invisible       bool
+	frame           ora.Frame
+	lines           int
 }
 
-func NewPasswordField(with func(passwordField *PasswordField)) *PasswordField {
-	c := &PasswordField{
-		id:                nextPtr(),
-		label:             NewShared[string]("label"),
-		value:             NewShared[string]("value"),
-		revealed:          NewShared[bool]("revealed"),
-		placeholder:       NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		hint:              NewShared[string]("hint"),
-		error:             NewShared[string]("error"),
-		disabled:          NewShared[bool]("disabled"),
-		help:              NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		simple:            NewShared[bool]("simple"), // TODO what is that?
-		visible:           NewShared[bool]("visible"),
-		onPasswordChanged: NewFunc("onPasswordChanged"),
-	}
-
-	c.properties = []core.Property{c.label, c.value, c.revealed, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onPasswordChanged, c.visible}
-	c.visible.Set(true)
-	if with != nil {
-		with(c)
+func PasswordField(label string) TPasswordField {
+	c := TPasswordField{
+		label: label,
 	}
 
 	return c
 }
 
-func (l *PasswordField) OnPasswordChanged() *Func {
-	return l.onPasswordChanged
+func (c TPasswordField) SupportingText(text string) TPasswordField {
+	c.supportingText = text
+	return c
 }
 
-func (l *PasswordField) ID() ora.Ptr {
-	return l.id
+func (c TPasswordField) ErrorText(text string) TPasswordField {
+	c.errorText = text
+	return c
 }
 
-func (l *PasswordField) Value() String {
-	return l.value
+// Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
+func (c TPasswordField) Style(s TextFieldStyle) TPasswordField {
+	c.style = s.ora()
+	return c
 }
 
-func (l *PasswordField) Revealed() Bool {
-	return l.revealed
+// DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied.
+// You can disable debouncing, but be very careful with that, as it may break your server, the client or network.
+func (c TPasswordField) DebounceTime(d time.Duration) TPasswordField {
+	c.debounceTime = d
+	return c
 }
 
-func (l *PasswordField) Placeholder() String { return l.placeholder }
-
-func (l *PasswordField) Label() String {
-	return l.label
+// Debounce is enabled by default. See also DebounceTime.
+func (c TPasswordField) Debounce(enabled bool) TPasswordField {
+	c.disableDebounce = !enabled
+	return c
 }
 
-func (l *PasswordField) Hint() String {
-	return l.hint
+func (c TPasswordField) Label(label string) {
+	c.label = label
 }
 
-func (l *PasswordField) Help() String {
-	return l.help
+func (c TPasswordField) InputValue(input *core.State[string]) TPasswordField {
+	c.inputValue = input
+	return c
 }
 
-func (l *PasswordField) Error() String {
-	return l.error
+func (c TPasswordField) Disabled(disabled bool) TPasswordField {
+	c.disabled = disabled
+	return c
 }
 
-func (l *PasswordField) Disabled() Bool {
-	return l.disabled
+func (c TPasswordField) Frame(frame ora.Frame) TPasswordField {
+	c.frame = frame
+	return c
 }
 
-func (l *PasswordField) Simple() Bool { return l.simple }
-
-func (l *PasswordField) Visible() Bool {
-	return l.visible
+// Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
+func (c TPasswordField) Lines(lines int) TPasswordField {
+	c.lines = lines
+	return c
 }
 
-func (l *PasswordField) Properties(yield func(core.Property) bool) {
-	for _, property := range l.properties {
-		if !yield(property) {
-			return
-		}
-	}
+func (c TPasswordField) Visible(v bool) TPasswordField {
+	c.invisible = !v
+	return c
 }
 
-func (l *PasswordField) Render() ora.Component {
+func (c TPasswordField) Render(ctx core.RenderContext) ora.Component {
+
 	return ora.PasswordField{
-		Ptr:               l.id,
-		Type:              ora.PasswordFieldT,
-		Label:             l.label.render(),
-		Hint:              l.hint.render(),
-		Help:              l.help.render(),
-		Error:             l.error.render(),
-		Value:             l.value.render(),
-		Revealed:          l.revealed.render(),
-		Placeholder:       l.placeholder.render(),
-		Disabled:          l.disabled.render(),
-		Simple:            l.simple.render(),
-		Visible:           l.visible.render(),
-		OnPasswordChanged: renderFunc(l.onPasswordChanged),
+		Type:            ora.PasswordFieldT,
+		Label:           c.label,
+		SupportingText:  c.supportingText,
+		ErrorText:       c.errorText,
+		Value:           c.value,
+		InputValue:      c.inputValue.Ptr(),
+		Disabled:        c.disabled,
+		Style:           c.style,
+		DebounceTime:    c.debounceTime,
+		DisableDebounce: c.disableDebounce,
+		Invisible:       c.invisible,
+		Frame:           c.frame,
+		Lines:           c.lines,
 	}
 }

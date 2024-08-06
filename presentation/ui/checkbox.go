@@ -5,69 +5,45 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type Checkbox struct {
-	id         ora.Ptr
-	selected   Bool
-	onClicked  *Func
-	disabled   Bool
-	visible    Bool
-	properties []core.Property
+type TCheckbox struct {
+	value      bool
+	inputValue *core.State[bool]
+	disabled   bool
+	invisible  bool
 }
 
-func NewCheckbox(with func(chb *Checkbox)) *Checkbox {
-	c := &Checkbox{
-		id:        nextPtr(),
-		selected:  NewShared[bool]("selected"),
-		onClicked: NewFunc("action"),
-		disabled:  NewShared[bool]("disabled"),
-		visible:   NewShared[bool]("visible"),
+// Checkbox represents a user interface element which spans a visible area to click or tap from the user.
+// Use it for controls, which do not cause an immediate effect. See also [Toggle].
+func Checkbox(checked bool) TCheckbox {
+	c := TCheckbox{
+		value: checked,
 	}
 
-	c.properties = []core.Property{c.selected, c.onClicked, c.disabled, c.visible}
-	c.visible.Set(true)
-	if with != nil {
-		with(c)
-	}
 	return c
 }
 
-func (c *Checkbox) ID() ora.Ptr {
-	return c.id
+func (c TCheckbox) InputChecked(input *core.State[bool]) TCheckbox {
+	c.inputValue = input
+	return c
 }
 
-func (c *Checkbox) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
-		if !yield(property) {
-			return
-		}
-	}
+func (c TCheckbox) Disabled(disabled bool) TCheckbox {
+	c.disabled = disabled
+	return c
 }
 
-func (c *Checkbox) Render() ora.Component {
-	return c.renderCheckbox()
+func (c TCheckbox) Visible(v bool) TCheckbox {
+	c.invisible = !v
+	return c
 }
 
-func (c *Checkbox) Selected() Bool { return c.selected }
+func (c TCheckbox) Render(ctx core.RenderContext) ora.Component {
 
-func (c *Checkbox) OnClicked() *Func {
-	return c.onClicked
-}
-
-func (c *Checkbox) Disabled() Bool {
-	return c.disabled
-}
-
-func (c *Checkbox) Visible() Bool {
-	return c.visible
-}
-
-func (c *Checkbox) renderCheckbox() ora.Checkbox {
 	return ora.Checkbox{
-		Ptr:       c.id,
-		Type:      ora.CheckboxT,
-		Disabled:  c.disabled.render(),
-		Selected:  c.selected.render(),
-		Visible:   c.visible.render(),
-		OnClicked: renderFunc(c.onClicked),
+		Type:       ora.CheckboxT,
+		Value:      c.value,
+		InputValue: c.inputValue.Ptr(),
+		Disabled:   c.disabled,
+		Invisible:  c.invisible,
 	}
 }

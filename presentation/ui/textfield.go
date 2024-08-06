@@ -6,131 +6,144 @@ import (
 	"time"
 )
 
-type TextField struct {
-	id                     ora.Ptr
-	label                  String
-	value                  String
-	placeholder            String
-	hint                   String
-	help                   String
-	error                  String
-	disabled               Bool
-	simple                 Bool
-	visible                Bool
-	onTextChanged          *Func
-	onDebouncedTextChanged *Func
-	debounceTime           *Shared[time.Duration]
-	properties             []core.Property
-	frame                  ora.Frame
+type TextFieldStyle string
+
+func (t TextFieldStyle) ora() ora.TextFieldStyle {
+	return ora.TextFieldStyle(t)
 }
 
-func NewTextField(with func(textField *TextField)) *TextField {
-	c := &TextField{
-		id:                     nextPtr(),
-		label:                  NewShared[string]("label"),
-		value:                  NewShared[string]("value"),
-		placeholder:            NewShared[string]("placeholder"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		hint:                   NewShared[string]("hint"),
-		error:                  NewShared[string]("error"),
-		disabled:               NewShared[bool]("disabled"),
-		help:                   NewShared[string]("help"), // TODO remove me, does not make sense from UX perspective, we have Label and Hint
-		simple:                 NewShared[bool]("simple"), // TODO what is that?
-		visible:                NewShared[bool]("visible"),
-		onTextChanged:          NewFunc("onTextChanged"),
-		onDebouncedTextChanged: NewFunc("onDebouncedTextChanged"),
-		debounceTime:           NewShared[time.Duration]("debounceTime"),
-	}
+const (
+	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
+	TextFieldReduced TextFieldStyle = "r"
 
-	c.properties = []core.Property{c.label, c.value, c.placeholder, c.hint, c.help, c.error, c.disabled, c.simple, c.onTextChanged, c.visible, c.debounceTime, c.onTextChanged}
-	c.visible.Set(true)
-	c.debounceTime.Set(time.Millisecond * 500)
-	if with != nil {
-		with(c)
+	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
+	TextFieldOutlined TextFieldStyle = "o"
+)
+
+type TTextField struct {
+	label           string
+	value           string
+	inputValue      *core.State[string]
+	supportingText  string
+	errorText       string
+	disabled        bool
+	leading         core.View
+	trailing        core.View
+	style           ora.TextFieldStyle
+	disableDebounce bool
+	debounceTime    time.Duration
+	invisible       bool
+	frame           ora.Frame
+	lines           int
+	keyboardOptions TKeyboardOptions
+}
+
+func TextField(label string, value string) TTextField {
+	c := TTextField{
+		label: label,
+		value: value,
 	}
 
 	return c
 }
 
-func (l *TextField) OnTextChanged() *Func {
-	return l.onTextChanged
+func (c TTextField) SupportingText(text string) TTextField {
+	c.supportingText = text
+	return c
 }
 
-func (l *TextField) OnDebouncedTextChanged() *Func {
-	return l.onDebouncedTextChanged
+func (c TTextField) ErrorText(text string) TTextField {
+	c.errorText = text
+	return c
 }
 
-func (l *TextField) DebounceTime() *Shared[time.Duration] {
-	return l.debounceTime
+func (c TTextField) Leading(v core.View) TTextField {
+	c.leading = v
+	return c
 }
 
-func (l *TextField) ID() ora.Ptr {
-	return l.id
+func (c TTextField) Trailing(v core.View) TTextField {
+	c.trailing = v
+	return c
 }
 
-func (l *TextField) Value() String {
-	return l.value
+// Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
+func (c TTextField) Style(s TextFieldStyle) TTextField {
+	c.style = s.ora()
+	return c
 }
 
-func (l *TextField) SetValue(s String) {
-	l.value = s
-	l.properties = append(l.properties, s)
+// DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied.
+// You can disable debouncing, but be very careful with that, as it may break your server, the client or network.
+func (c TTextField) DebounceTime(d time.Duration) TTextField {
+	c.debounceTime = d
+	return c
 }
 
-func (l *TextField) Placeholder() String { return l.placeholder }
-
-func (l *TextField) Label() String {
-	return l.label
+// Debounce is enabled by default. See also DebounceTime.
+func (c TTextField) Debounce(enabled bool) TTextField {
+	c.disableDebounce = !enabled
+	return c
 }
 
-func (l *TextField) Hint() String {
-	return l.hint
+func (c TTextField) Label(label string) {
+	c.label = label
 }
 
-func (l *TextField) Help() String {
-	return l.help
+func (c TTextField) InputValue(input *core.State[string]) TTextField {
+	c.inputValue = input
+	return c
 }
 
-func (l *TextField) Error() String {
-	return l.error
+func (c TTextField) Disabled(disabled bool) TTextField {
+	c.disabled = disabled
+	return c
 }
 
-func (l *TextField) Disabled() Bool {
-	return l.disabled
+func (c TTextField) Frame(frame ora.Frame) TTextField {
+	c.frame = frame
+	return c
 }
 
-func (l *TextField) Simple() Bool { return l.simple }
+// Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
+func (c TTextField) Lines(lines int) TTextField {
+	c.lines = lines
+	return c
+}
 
-func (l *TextField) Frame() *ora.Frame { return &l.frame }
+func (c TTextField) Visible(v bool) TTextField {
+	c.invisible = !v
+	return c
+}
 
-func (l *TextField) Properties(yield func(core.Property) bool) {
-	for _, property := range l.properties {
-		if !yield(property) {
-			return
-		}
+func (c TTextField) KeyboardOptions(options TKeyboardOptions) TTextField {
+	c.keyboardOptions = options
+	return c
+}
+
+func (c TTextField) KeyboardType(keyboardType KeyboardType) TTextField {
+	c.keyboardOptions.keyboardType = keyboardType
+	return c
+}
+
+func (c TTextField) Render(ctx core.RenderContext) ora.Component {
+
+	return ora.TextField{
+		Type:            ora.TextFieldT,
+		Label:           c.label,
+		SupportingText:  c.supportingText,
+		ErrorText:       c.errorText,
+		Value:           c.value,
+		InputValue:      c.inputValue.Ptr(),
+		Disabled:        c.disabled,
+		Leading:         render(ctx, c.leading),
+		Trailing:        render(ctx, c.trailing),
+		Style:           c.style,
+		DebounceTime:    c.debounceTime,
+		DisableDebounce: c.disableDebounce,
+		Invisible:       c.invisible,
+		Frame:           c.frame,
+		Lines:           c.lines,
+		KeyboardOptions: c.keyboardOptions.ora(),
 	}
-}
-
-func (l *TextField) Visible() Bool {
-	return l.visible
-}
-
-func (l *TextField) Render() ora.Component {
-	//return ora.TextField{
-	//	Ptr:                    l.id,
-	//	Type:                   ora.TextFieldT,
-	//	Label:                  l.label.render(),
-	//	Hint:                   l.hint.render(),
-	//	Help:                   l.help.render(),
-	//	Error:                  l.error.render(),
-	//	Value:                  l.value.render(),
-	//	Placeholder:            l.placeholder.render(),
-	//	Disabled:               l.disabled.render(),
-	//	Simple:                 l.simple.render(),
-	//	Visible:                l.visible.render(),
-	//	DebounceTime:           l.debounceTime.render(),
-	//	OnDebouncedTextChanged: renderFunc(l.onDebouncedTextChanged),
-	//	OnTextChanged:          renderFunc(l.onTextChanged),
-	//	Frame:                  l.frame,
-	//}
-	return nil
 }

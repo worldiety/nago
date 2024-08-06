@@ -2,62 +2,62 @@ package icon
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 )
 
 //go:embed arrow-down.svg
-var ArrowDown ui.SVGSrc
+var ArrowDown uilegacy.SVGSrc
 
 //go:embed arrow-up.svg
-var ArrowUp ui.SVGSrc
+var ArrowUp uilegacy.SVGSrc
 
 //go:embed arrows-up-down.svg
-var ArrowUpDown ui.SVGSrc
+var ArrowUpDown uilegacy.SVGSrc
 
 //go:embed trash.svg
-var Trash ui.SVGSrc
+var Trash uilegacy.SVGSrc
 
 //go:embed pencil.svg
-var Pencil ui.SVGSrc
+var Pencil uilegacy.SVGSrc
 
 //go:embed cog-6-tooth.svg
-var Cog6Tooth ui.SVGSrc
+var Cog6Tooth uilegacy.SVGSrc
 
 //go:embed plus.svg
-var Plus ui.SVGSrc
+var Plus uilegacy.SVGSrc
 
 //go:embed ora-logo.svg
-var OraLogo ui.SVGSrc
+var OraLogo uilegacy.SVGSrc
 
 //go:embed package-outlined.svg
-var PackageOutlined ui.SVGSrc
+var PackageOutlined uilegacy.SVGSrc
 
 //go:embed package-filled.svg
-var PackageFilled ui.SVGSrc
+var PackageFilled uilegacy.SVGSrc
 
 //go:embed dashboard.svg
-var Dashboard ui.SVGSrc
+var Dashboard uilegacy.SVGSrc
 
 //go:embed exclamation-triangle.svg
-var ExclamationTriangle ui.SVGSrc
+var ExclamationTriangle uilegacy.SVGSrc
 
 //go:embed arrow-left-start-on-rectangle.svg
-var ArrowLeftStartOnRectangle ui.SVGSrc
+var ArrowLeftStartOnRectangle uilegacy.SVGSrc
 
 //go:embed user-plus.svg
-var UserPlus ui.SVGSrc
+var UserPlus uilegacy.SVGSrc
 
 //go:embed users.svg
-var Users ui.SVGSrc
+var Users uilegacy.SVGSrc
 
 //go:embed magnifying-glass.svg
-var MagnifyingGlass ui.SVGSrc
+var MagnifyingGlass uilegacy.SVGSrc
 
 //go:embed bug.svg
-var Bug ui.SVGSrc
+var Bug uilegacy.SVGSrc
 
 //go:embed chevron-down.svg
-var ChevronDown ui.SVGSrc
+var ChevronDown uilegacy.SVGSrc
 
 //go:embed chevron-up.svg
-var ChevronUp ui.SVGSrc
+var ChevronUp uilegacy.SVGSrc

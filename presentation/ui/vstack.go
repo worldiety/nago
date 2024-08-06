@@ -1,97 +1,147 @@
 package ui
 
 import (
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type VStack struct {
-	Bla             iter.Seq[core.View]
-	Children        []core.View //iter.Seq[core.View]
-	alignment       ora.Alignment
-	backgroundColor ora.Color
-	frame           ora.Frame
-	gap             ora.Length
-	padding         ora.Padding
-	with            func(stack *VStack)
+type TVStack struct {
+	children               []core.View
+	alignment              ora.Alignment
+	backgroundColor        ora.Color
+	hoveredBackgroundColor ora.Color
+	pressedBackgroundColor ora.Color
+	focusedBackgroundColor ora.Color
+	frame                  ora.Frame
+	gap                    ora.Length
+	padding                ora.Padding
+	border                 ora.Border
+	hoveredBorder          ora.Border
+	focusedBorder          ora.Border
+	pressedBorder          ora.Border
+	stylePreset            ora.StylePreset
 
-	blub *SharedList[core.View]
+	invisible bool
+	font      ora.Font
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	accessibilityLabel string
+	action             func()
 }
 
-func NewVStackF(with func(hstack *VStack)) func() core.View {
-	return func() core.View {
-		return NewVStack(with)
+func VStack(children ...core.View) TVStack {
+	c := TVStack{
+		children: children,
 	}
-}
-
-func NewVStack(with func(hstack *VStack)) *VStack {
-	c := &VStack{
-		blub: NewSharedList[core.View]("asd"),
-	}
-
-	c.alignment = "" // if nothing is defined, ora.Center must be applied by renderer
-	c.with = with
-
 	return c
 }
 
-func (c *VStack) Gap() ora.Length {
-	return c.gap
+func (c TVStack) Gap(gap Length) TVStack {
+	c.gap = gap.ora()
+	return c
 }
 
-func (c *VStack) SetGap(gap ora.Length) {
-	c.gap = gap
+func (c TVStack) StylePreset(preset StylePreset) TVStack {
+	c.stylePreset = preset.ora()
+	return c
 }
 
-func (c *VStack) BackgroundColor() ora.Color {
-	return c.backgroundColor
+func (c TVStack) BackgroundColor(backgroundColor Color) DecoredView {
+	c.backgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *VStack) SetBackgroundColor(backgroundColor ora.Color) {
-	c.backgroundColor = backgroundColor
+func (c TVStack) HoveredBackgroundColor(backgroundColor Color) TVStack {
+	c.hoveredBackgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *VStack) Alignment() ora.Alignment {
-	return c.alignment
+func (c TVStack) PressedBackgroundColor(backgroundColor Color) TVStack {
+	c.pressedBackgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c *VStack) SetAlignment(alignment ora.Alignment) {
-	c.alignment = alignment
+func (c TVStack) FocusedBackgroundColor(backgroundColor ora.Color) TVStack {
+	c.focusedBackgroundColor = backgroundColor
+	return c
 }
 
-func (c *VStack) ID() ora.Ptr {
-	return 0
+func (c TVStack) Action(f func()) TVStack {
+	c.action = f
+	return c
 }
 
-func (c *VStack) Properties(yield func(core.Property) bool) {
-	if !c.blub.frozen {
-		c.blub.values = c.Children
-	}
-	yield(c.blub)
+func (c TVStack) Alignment(alignment Alignment) TVStack {
+	c.alignment = alignment.ora()
+	return c
 }
 
-func (c *VStack) Frame() *ora.Frame {
-	return &c.frame
+func (c TVStack) Font(font ora.Font) TVStack {
+	c.font = font
+	return c
 }
 
-func (c *VStack) Append(...core.View) {
-
+func (c TVStack) Frame(f Frame) DecoredView {
+	c.frame = f.ora()
+	return c
 }
 
-func (c *VStack) Render() ora.Component {
-	if c.with != nil {
-		c.with(c)
-	}
+func (c TVStack) Padding(padding Padding) DecoredView {
+	c.padding = padding.ora()
+	return c
+}
+
+func (c TVStack) Border(border Border) DecoredView {
+	c.border = border.ora()
+	return c
+}
+
+func (c TVStack) HoveredBorder(border Border) TVStack {
+	c.hoveredBorder = border.ora()
+	return c
+}
+
+func (c TVStack) PressedBorder(border Border) TVStack {
+	c.pressedBorder = border.ora()
+	return c
+}
+
+func (c TVStack) FocusedBorder(border Border) TVStack {
+	c.focusedBorder = border.ora()
+	return c
+}
+
+func (c TVStack) Visible(visible bool) DecoredView {
+	c.invisible = !visible
+	return c
+}
+
+func (c TVStack) AccessibilityLabel(label string) DecoredView {
+	c.accessibilityLabel = label
+	return c
+}
+
+func (c TVStack) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.VStack{
-		Type:            ora.VStackT,
-		Children:        renderComponents(slices.Values(c.Children)),
-		Frame:           c.frame,
-		Alignment:       c.alignment,
-		BackgroundColor: c.backgroundColor,
-		Gap:             c.gap,
-		Padding:         c.padding,
+		Type:               ora.VStackT,
+		Children:           renderComponents(ctx, c.children),
+		Frame:              c.frame,
+		Alignment:          c.alignment,
+		BackgroundColor:    c.backgroundColor,
+		Gap:                c.gap,
+		Padding:            c.padding,
+		Border:             c.border,
+		AccessibilityLabel: c.accessibilityLabel,
+		Invisible:          c.invisible,
+		Font:               c.font,
+		StylePreset:        c.stylePreset,
+
+		HoveredBackgroundColor: c.hoveredBackgroundColor,
+		PressedBackgroundColor: c.pressedBackgroundColor,
+		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBorder:          c.hoveredBorder,
+		FocusedBorder:          c.focusedBorder,
+		PressedBorder:          c.pressedBorder,
+		Action:                 ctx.MountCallback(c.action),
 	}
 }

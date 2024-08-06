@@ -5,14 +5,14 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/crud"
 	"go.wdy.de/nago/presentation/uix/xform"
 	"log/slog"
 	"strings"
 )
 
-func Users(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.View {
+func Users(wnd core.Window, owner uilegacy.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.User](func(opts *crud.Options[iam.User]) {
 		opts.Title("Nutzerkonten")
@@ -28,7 +28,7 @@ func Users(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.View
 		opts.Responsive(wnd)
 
 		if subject.HasPermission(iam.CreateUser) {
-			opts.Actions(ui.NewButton(func(btn *ui.Button) {
+			opts.Actions(uilegacy.NewButton(func(btn *uilegacy.Button) {
 				btn.Caption().Set("Neuen Nutzer anlegen")
 				btn.PreIcon().Set(icon.UserPlus)
 				btn.Action().Set(func() {
@@ -109,7 +109,7 @@ type createUser struct {
 	Password2 string
 }
 
-func create(subject auth.Subject, modals ui.ModalOwner, users *iam.Service) {
+func create(subject auth.Subject, modals uilegacy.ModalOwner, users *iam.Service) {
 	var model createUser
 	b := xform.NewBinding()
 	xform.String(b, &model.Firstname, xform.Field{Label: "Vorname"})

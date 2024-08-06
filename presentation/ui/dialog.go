@@ -5,89 +5,47 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type ModalOwner interface {
-	Modals() *SharedList[core.View]
+type TDialog struct {
+	uri    core.URI
+	dlg    ora.VStack
+	body   core.View
+	footer core.View
+	title  core.View
 }
 
-type Dialog struct {
-	id     ora.Ptr
-	title  String
-	body   *Shared[core.View]
-	icon   *Shared[SVGSrc]
-	footer *Shared[core.View]
-	size   EmbeddedElementSize
-
-	properties []core.Property
+func Dialog(body core.View) TDialog {
+	return TDialog{
+		body: body,
+	}
 }
 
-func NewDialog(with func(dlg *Dialog)) *Dialog {
-	c := &Dialog{
-		id:     nextPtr(),
-		title:  NewShared[string]("title"),
-		icon:   NewShared[SVGSrc]("icon"),
-		body:   NewShared[core.View]("body"),
-		footer: NewShared[core.View]("footer"),
-		size:   NewShared[ElementSize]("size"),
-	}
-
-	c.properties = []core.Property{c.title, c.icon, c.body, c.footer, c.size}
-
-	c.size.Set(ora.ElementSizeAuto)
-
-	if with != nil {
-		with(c)
-	}
+func (c TDialog) Title(title core.View) TDialog {
+	c.title = title
 	return c
 }
 
-func (c *Dialog) Title() String {
-	return c.title
+func (c TDialog) Footer(footer core.View) TDialog {
+	c.footer = footer
+	return c
 }
 
-func (c *Dialog) Body() *Shared[core.View] {
-	return c.body
-}
+func (c TDialog) Render(ctx core.RenderContext) ora.Component {
+	colors := core.Colors[Colors](ctx.Window())
+	dlg := Box(BoxLayout{Center: VStack(
+		If(c.title != nil, HStack(c.title).Alignment(Leading).BackgroundColor(colors.M4).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Top: L12, Bottom: L12})),
+		VStack(
+			c.body,
+			If(c.footer != nil, HLine()),
+			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
+		).
+			Frame(Frame{MaxWidth: L400}.FullWidth()).
+			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
+	).
+		BackgroundColor(colors.M1).
+		Border(Border{}.Radius(L20).Elevate(4)).
+		Frame(Frame{MinWidth: L400})},
+	).
+		BackgroundColor(Color("#000000").WithTransparency(40))
 
-func (c *Dialog) Icon() *Shared[SVGSrc] {
-	return c.icon
-}
-
-func (c *Dialog) Footer() *Shared[core.View] {
-	return c.footer
-}
-
-func (c *Dialog) Size() EmbeddedElementSize {
-	return c.size
-}
-
-func (c *Dialog) ID() ora.Ptr {
-	return c.id
-}
-
-func (c *Dialog) Type() ora.ComponentType {
-	return ora.DialogT
-}
-
-func (c *Dialog) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
-		if !yield(property) {
-			return
-		}
-	}
-}
-
-func (c *Dialog) Render() ora.Component {
-	return c.render()
-}
-
-func (c *Dialog) render() ora.Dialog {
-	return ora.Dialog{
-		Ptr:    c.id,
-		Type:   ora.DialogT,
-		Title:  c.title.render(),
-		Body:   renderSharedComponent(c.body),
-		Icon:   c.icon.render(),
-		Footer: renderSharedComponent(c.footer),
-		Size:   c.size.render(),
-	}
+	return dlg.Render(ctx)
 }

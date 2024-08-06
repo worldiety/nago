@@ -35,7 +35,7 @@ func main() {
 		persons := application.SloppyRepository[Person, PID](cfg)
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			return ui.NewPage(func(page *ui.Page) {
+			return uilegacy.NewPage(func(page *uilegacy.Page) {
 				page.Body().Set(crud.NewView[Person](page, crud.NewOptions(func(opts *crud.Options[Person]) {
 					opts.
 						Responsive(wnd). // you need to provide a window to make the view responsive
@@ -51,7 +51,7 @@ func main() {
 							crud.AggregateAction[Person]{ // we also support more actions
 								Icon:    icon.UserPlus,
 								Caption: "Freunde zum Feiern einladen",
-								Action: func(ui.ModalOwner, Person) error {
+								Action: func(uilegacy.ModalOwner, Person) error {
 									// call something in our domain
 									return nil
 								},

@@ -11,7 +11,7 @@ import (
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	materialFilled "go.wdy.de/nago/presentation/icons/material/filled"
 	materialOutlined "go.wdy.de/nago/presentation/icons/material/outlined"
-	. "go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 

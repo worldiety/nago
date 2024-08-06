@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	. "go.wdy.de/nago/presentation/ui2"
+	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 

@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"log/slog"
 	"slices"
@@ -83,7 +83,7 @@ func (o *Options[E]) Delete(f func(E) error, options ...AggregeActionOption[E]) 
 	a := AggregateAction[E]{
 		Icon:    icon.Trash,
 		Caption: "",
-		Action: func(owner ui.ModalOwner, e E) error {
+		Action: func(owner uilegacy.ModalOwner, e E) error {
 			xdialog.ShowDelete(owner, "Soll der Eintrag wirklich gelöscht werden?", func() {
 				if err := f(e); err != nil {
 					xdialog.HandleError(owner, "Beim Löschen ist ein Fehler aufgetreten.", err)
@@ -119,8 +119,8 @@ func (o *Options[E]) Update(f func(E) error, options ...AggregeActionOption[E]) 
 	opts := o
 	action := AggregateAction[E]{
 		Icon: icon.Pencil,
-		Action: func(owner ui.ModalOwner, e E) error {
-			ui.NewDialog(func(dlg *ui.Dialog) {
+		Action: func(owner uilegacy.ModalOwner, e E) error {
+			uilegacy.NewDialog(func(dlg *uilegacy.Dialog) {
 				dlg.Title().Set("Eintrag bearbeiten")
 				dlg.Size().Set(ora.ElementSizeMedium)
 				form := opts.binding.NewForm(Update)
@@ -130,16 +130,16 @@ func (o *Options[E]) Update(f func(E) error, options ...AggregeActionOption[E]) 
 					field.FromModel(e)
 				}
 
-				dlg.Footer().Set(ui.NewHStack(func(hstack *ui.HStack) {
+				dlg.Footer().Set(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 					hstack.SetAlignment(ora.Leading)
-					hstack.Append(ui.NewButton(func(btn *ui.Button) {
+					hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.Caption().Set("Abbrechen")
 						btn.Style().Set(ora.Secondary)
 						btn.Action().Set(func() {
 							owner.Modals().Remove(dlg)
 						})
 					}))
-					hstack.Append(ui.NewButton(func(btn *ui.Button) {
+					hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.Caption().Set("Aktualisieren")
 						btn.Action().Set(func() {
 							for _, field := range form.Fields {
@@ -176,9 +176,9 @@ func (o *Options[E]) Update(f func(E) error, options ...AggregeActionOption[E]) 
 }
 
 type AggregateAction[T any] struct {
-	Icon    ui.SVGSrc
+	Icon    uilegacy.SVGSrc
 	Caption string
-	Action  func(ui.ModalOwner, T) error
+	Action  func(uilegacy.ModalOwner, T) error
 <<<<<<< HEAD
 	Style   ora.Color
 =======
@@ -194,7 +194,7 @@ func (a AggregateAction[T]) WithOptions(options ...AggregeActionOption[T]) Aggre
 >>>>>>> 8898002c6c3b896349032d4f8b92f2318d75a45d
 }
 
-func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
+func NewView[E any](owner uilegacy.ModalOwner, opts *Options[E]) core.View {
 	if opts == nil {
 		opts = NewOptions[E](nil)
 	}
@@ -203,23 +203,23 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 		panic(fmt.Errorf("reflection based binder not yet implemented, please provide a custom binding"))
 	}
 
-	var searchField *ui.TextField
-	toolbar := ui.NewHStack(func(hstack *ui.HStack) {
+	var searchField *uilegacy.TextField
+	toolbar := uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 		hstack.SetAlignment(ora.Trailing) // TODO this should be content between
 		// left side
-		hstack.Append(ui.NewStr(opts.title))
+		hstack.Append(uilegacy.NewStr(opts.title))
 
 		// right side
 
-		hstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+		hstack.Append(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 			canSearch := opts.findAll != nil
 			if canSearch {
 				hstack.SetAlignment(ora.Trailing)
-				hstack.Append(ui.NewButton(func(btn *ui.Button) {
+				hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 					btn.PreIcon().Set(icon.MagnifyingGlass)
 					btn.Style().Set(ora.Tertiary)
 				}))
-				hstack.Append(ui.NewTextField(func(textField *ui.TextField) {
+				hstack.Append(uilegacy.NewTextField(func(textField *uilegacy.TextField) {
 					searchField = textField
 					textField.OnDebouncedTextChanged().Set(func() {
 						// nothing to do, this will trigger invalidation anyway
@@ -234,25 +234,25 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 			}
 
 			if opts.create != nil {
-				hstack.Append(ui.NewButton(func(btn *ui.Button) {
+				hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 					btn.Caption().Set("Neuer Eintrag")
 					btn.PreIcon().Set(icon.Plus)
 					btn.Action().Set(func() {
-						ui.NewDialog(func(dlg *ui.Dialog) {
+						uilegacy.NewDialog(func(dlg *uilegacy.Dialog) {
 							dlg.Title().Set("Neuer Eintrag")
 							dlg.Size().Set(ora.ElementSizeMedium)
 							form := opts.binding.NewForm(Create)
 							dlg.Body().Set(form.Component)
-							dlg.Footer().Set(ui.NewHStack(func(hstack *ui.HStack) {
+							dlg.Footer().Set(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 								hstack.SetAlignment(ora.Trailing)
-								hstack.Append(ui.NewButton(func(btn *ui.Button) {
+								hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 									btn.Caption().Set("Abbrechen")
 									btn.Style().Set(ora.Secondary)
 									btn.Action().Set(func() {
 										owner.Modals().Remove(dlg)
 									})
 								}))
-								hstack.Append(ui.NewButton(func(btn *ui.Button) {
+								hstack.Append(uilegacy.NewButton(func(btn *uilegacy.Button) {
 									btn.Caption().Set("Erstellen")
 									btn.Action().Set(func() {
 										var model E
@@ -292,20 +292,20 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 	})
 
 	hasAggregateOptions := len(opts.aggregateActions) > 0
-	var componentBody ui.Container
+	var componentBody uilegacy.Container
 
 	_ = toolbar
 	setupExpandedTable := func() {
 		componentBody.Children().Clear()
 		componentBody.Children().Append(toolbar)
-		componentBody.Children().Append(ui.NewTable(func(table *ui.Table) {
+		componentBody.Children().Append(uilegacy.NewTable(func(table *uilegacy.Table) {
 			findAll := opts.findAll
 			if findAll == nil {
 				slog.Info("cannot build table, findAll iter is nil")
 				return
 			}
 
-			var allSortBtns []*ui.Button
+			var allSortBtns []*uilegacy.Button
 			sortAsc := true
 			sortByFieldIdx := -1
 
@@ -313,8 +313,8 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 				if field.RenderHints[Overview] == Hidden {
 					continue
 				}
-				table.Header().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-					cell.Body().Set(ui.NewButton(func(btn *ui.Button) {
+				table.Header().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
+					cell.Body().Set(uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.Style().Set(ora.Tertiary)
 						btn.Caption().Set(field.Caption)
 						btn.PreIcon().Set(icon.ArrowUpDown)
@@ -338,10 +338,10 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 			}
 
 			if hasAggregateOptions {
-				table.Header().Append(ui.NewTextCell("Aktionen"))
+				table.Header().Append(uilegacy.NewTextCell("Aktionen"))
 			}
 
-			table.Rows().From(func(yield func(*ui.TableRow) bool) {
+			table.Rows().From(func(yield func(*uilegacy.TableRow) bool) {
 				filtered := findAll
 				if searchField.Value().Get() != "" {
 					predicate := rquery.SimplePredicate[any](searchField.Value().Get())
@@ -399,17 +399,17 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 						return false
 					}
 
-					yield(ui.NewTableRow(func(row *ui.TableRow) {
+					yield(uilegacy.NewTableRow(func(row *uilegacy.TableRow) {
 						for _, field := range opts.binding.fields {
 							if field.RenderHints[Overview] == Hidden {
 								continue
 							}
-							row.Cells().Append(ui.NewTextCell(field.Stringer(e)))
+							row.Cells().Append(uilegacy.NewTextCell(field.Stringer(e)))
 						}
 
 						if len(opts.aggregateActions) > 0 {
-							row.Cells().Append(ui.NewTableCell(func(cell *ui.TableCell) {
-								cell.Body().Set(ui.NewHStack(func(hstack *ui.HStack) {
+							row.Cells().Append(uilegacy.NewTableCell(func(cell *uilegacy.TableCell) {
+								cell.Body().Set(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 									hstack.SetAlignment(ora.Trailing)
 									for _, action := range opts.aggregateActions {
 										hstack.Append(newAggregateActionButton(owner, action, e))
@@ -430,7 +430,7 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 	setupListDataAsCards := func() {
 		componentBody.Children().Clear()
 		componentBody.Children().Append(toolbar)
-		componentBody.Children().Append(ui.NewVStack(func(vstack *ui.VStack) {
+		componentBody.Children().Append(uilegacy.NewVStack(func(vstack *uilegacy.VStack) {
 			//vstack.ElementSize().Set(ora.ElementSizeLarge) // TODO what do we make with the element size large thingy here?
 			vstack.Bla = func(yield func(core.View) bool) {
 				findAll := opts.findAll
@@ -464,16 +464,16 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 						return false
 					}
 
-					return yield(ui.NewCard(func(card *ui.Card) {
-						card.Append(ui.NewVStack(func(vstack *ui.VStack) {
+					return yield(uilegacy.NewCard(func(card *uilegacy.Card) {
+						card.Append(uilegacy.NewVStack(func(vstack *uilegacy.VStack) {
 							for _, field := range opts.binding.fields {
 								if field.RenderHints[Card] == Title {
-									vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+									vstack.Append(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 										hstack.SetAlignment(ora.Trailing) // TODO this should be in-between
-										hstack.Append(ui.NewStr(field.Caption))
-										hstack.Append(ui.NewStr(field.Stringer(e)))
+										hstack.Append(uilegacy.NewStr(field.Caption))
+										hstack.Append(uilegacy.NewStr(field.Stringer(e)))
 									}))
-									vstack.Append(ui.NewDivider(nil))
+									vstack.Append(uilegacy.NewDivider(nil))
 									break
 
 								}
@@ -488,19 +488,19 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 									continue
 								}
 
-								vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+								vstack.Append(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 									hstack.SetAlignment(ora.Trailing) // TODO this should be inbetween
-									hstack.Append(ui.NewText(func(t *ui.Text) {
+									hstack.Append(uilegacy.NewText(func(t *uilegacy.Text) {
 										t.Value().Set(field.Caption)
 										t.Size().Set("lg")
 									}))
-									hstack.Append(ui.NewStr(field.Stringer(e)))
+									hstack.Append(uilegacy.NewStr(field.Stringer(e)))
 								}))
 
 							}
 
 							if len(opts.aggregateActions) > 0 {
-								vstack.Append(ui.NewHStack(func(hstack *ui.HStack) {
+								vstack.Append(uilegacy.NewHStack(func(hstack *uilegacy.HStack) {
 									hstack.SetAlignment(ora.Trailing)
 									for _, action := range opts.aggregateActions {
 
@@ -553,15 +553,15 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 		})
 	}
 
-	return ui.NewVStack(func(vstack *ui.VStack) {
+	return uilegacy.NewVStack(func(vstack *uilegacy.VStack) {
 		//componentBody = vstack
 		panic("fix me")
 		renderBody()
 	})
 }
 
-func newAggregateActionButton[E any](owner ui.ModalOwner, action AggregateAction[E], e E) core.View {
-	return ui.NewButton(func(btn *ui.Button) {
+func newAggregateActionButton[E any](owner uilegacy.ModalOwner, action AggregateAction[E], e E) core.View {
+	return uilegacy.NewButton(func(btn *uilegacy.Button) {
 		if action.visible != nil {
 			btn.Visible().Set(action.visible(e))
 		}

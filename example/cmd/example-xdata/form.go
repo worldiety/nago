@@ -1,11 +1,11 @@
 package main
 
 import (
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/xform"
 )
 
-func edit(modals ui.ModalOwner, persons *PersonService, person *Person) {
+func edit(modals uilegacy.ModalOwner, persons *PersonService, person *Person) {
 	b := xform.NewBinding()
 	xform.String(b, &person.Firstname, xform.Field{Label: "Vorname", Group: "Namenszeug"})
 	xform.String(b, &person.Lastname, xform.Field{Label: "Nachname", Group: "Namenszeug"})

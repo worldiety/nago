@@ -5,77 +5,90 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-type Radiobutton struct {
-	id         ora.Ptr
-	selected   Bool
-	onClicked  *Func
-	disabled   Bool
-	visible    Bool
-	properties []core.Property
+type RadioStateGroup struct {
+	states []*core.State[bool]
 }
 
-func NewRadiobutton(with func(rab *Radiobutton)) *Radiobutton {
-	r := &Radiobutton{
-		id:        nextPtr(),
-		selected:  NewShared[bool]("selected"),
-		onClicked: NewFunc("action"),
-		disabled:  NewShared[bool]("disabled"),
-		visible:   NewShared[bool]("visible"),
+func AutoRadioStateGroup(wnd core.Window, states int) RadioStateGroup {
+	var wndStates = make([]*core.State[bool], 0, states)
+	for i := range states {
+		state := core.AutoState[bool](wnd)
+		state.Observe(func(newValue bool) {
+			for i2, wndState := range wndStates {
+				wndState.Set(i == i2)
+			}
+		})
+		wndStates = append(wndStates, state)
 	}
 
-	r.properties = []core.Property{r.selected, r.onClicked, r.disabled, r.visible}
-	r.visible.Set(true)
-	if with != nil {
-		with(r)
+	return RadioStateGroup{states: wndStates}
+}
+
+func (s RadioStateGroup) SetSelectedIndex(idx int) {
+	for i, state := range s.states {
+		state.Set(idx == i)
 	}
-	return r
 }
 
-func (r *Radiobutton) ID() ora.Ptr {
-	return r.id
+// SelectedIndex returns -1 or the selected index.
+func (s RadioStateGroup) SelectedIndex() int {
+	for i, state := range s.states {
+		if state.Get() {
+			return i
+		}
+	}
+
+	return -1
 }
 
-func (r *Radiobutton) Properties(yield func(core.Property) bool) {
-	for _, property := range r.properties {
-		if !yield(property) {
+func (s RadioStateGroup) States(yield func(idx int, state *core.State[bool]) bool) {
+	for i := range s.states {
+		if !yield(i, s.states[i]) {
 			return
 		}
 	}
 }
 
-func (r *Radiobutton) Render() ora.Component {
-	return r.renderRadiobutton()
+type TRadioButton struct {
+	value      bool
+	inputValue *core.State[bool]
+	disabled   bool
+	invisible  bool
 }
 
-func (r *Radiobutton) Selected() Bool { return r.selected }
-
-func (r *Radiobutton) OnClicked() *Func {
-	return r.onClicked
-}
-
-func (r *Radiobutton) Disabled() Bool {
-	return r.disabled
-}
-
-func (r *Radiobutton) Visible() Bool {
-	return r.visible
-}
-
-func (r *Radiobutton) renderRadiobutton() ora.Radiobutton {
-	return ora.Radiobutton{
-		Ptr:       r.id,
-		Type:      ora.RadiobuttonT,
-		Disabled:  r.disabled.render(),
-		Selected:  r.selected.render(),
-		OnClicked: renderFunc(r.onClicked),
-		Visible:   r.visible.render(),
+// RadioButton represents a user interface element which spans a visible area to click or tap from the user.
+// Use it for controls, which do not cause an immediate effect and only one element can be picked at a time.
+// See also [Toggle], [Checkbox] and [Select].
+func RadioButton(checked bool) TRadioButton {
+	c := TRadioButton{
+		value: checked,
 	}
+
+	return c
 }
 
-func (r *Radiobutton) UpdateRadioButtons(radiobuttons []*Radiobutton, selectedButton *Radiobutton) {
-	for _, v := range radiobuttons {
-		if v != selectedButton {
-			v.Selected().Set(false)
-		}
+func (c TRadioButton) InputChecked(input *core.State[bool]) TRadioButton {
+	c.inputValue = input
+	return c
+}
+
+func (c TRadioButton) Disabled(disabled bool) TRadioButton {
+	c.disabled = disabled
+	return c
+}
+
+func (c TRadioButton) Visible(v bool) TRadioButton {
+	c.invisible = !v
+	return c
+}
+
+func (c TRadioButton) Render(ctx core.RenderContext) ora.Component {
+
+	return ora.Radiobutton{
+		Type:       ora.RadiobuttonT,
+		Value:      c.value,
+		InputValue: c.inputValue.Ptr(),
+		Disabled:   c.disabled,
+		Invisible:  c.invisible,
 	}
 }

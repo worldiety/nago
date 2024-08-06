@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -24,7 +24,7 @@ func main() {
 		})
 
 		cfg.Component("button", func(wnd core.Window) core.View {
-			return ui.NewButton(func(btn *ui.Button) {
+			return uilegacy.NewButton(func(btn *uilegacy.Button) {
 				btn.Caption().Set("hello world")
 				btn.Action().Set(func() {
 					fmt.Println("clicked btn")

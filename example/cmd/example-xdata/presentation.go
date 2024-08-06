@@ -6,14 +6,14 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/presentation/uix/xtable"
 )
 
-func dataPage(wnd core.Window, persons *PersonService) *ui.Page {
-	return ui.NewPage(func(page *ui.Page) {
-		page.Body().Set(ui.NewScaffold(func(scaffold *ui.Scaffold) {
+func dataPage(wnd core.Window, persons *PersonService) *uilegacy.Page {
+	return uilegacy.NewPage(func(page *uilegacy.Page) {
+		page.Body().Set(uilegacy.NewScaffold(func(scaffold *uilegacy.Scaffold) {
 			scaffold.Body().Set(xtable.NewTable(page, persons.ViewPersons(), xtable.NewModelBinding[PersonView](), xtable.Options[PersonView]{
 				CanSearch: true,
 				AggregateActions: []xtable.AggregateAction[PersonView]{
@@ -38,7 +38,7 @@ func dataPage(wnd core.Window, persons *PersonService) *ui.Page {
 				},
 
 				Actions: []core.View{
-					ui.NewButton(func(btn *ui.Button) {
+					uilegacy.NewButton(func(btn *uilegacy.Button) {
 						btn.PreIcon().Set(icon.Plus)
 						btn.Caption().Set("Neu")
 						btn.Action().Set(func() {

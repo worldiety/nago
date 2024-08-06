@@ -3,11 +3,11 @@ package iamui
 import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/crud"
 )
 
-func Permissions(wnd core.Window, owner ui.ModalOwner, service *iam.Service) core.View {
+func Permissions(wnd core.Window, owner uilegacy.ModalOwner, service *iam.Service) core.View {
 	subject := wnd.Subject()
 	return crud.NewView(owner, crud.NewOptions[iam.Permission](func(opts *crud.Options[iam.Permission]) {
 		opts.Title("Berechtigungen")

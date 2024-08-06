@@ -23,7 +23,8 @@ Insbesondere sollte darauf verzichtet werden Passwörter oder Sessions zu verarb
 Der vorliegende Code wurde ge-reviewed und wird zentral gepflegt. 
 
 Schaue dir am besten die IAM-Settings genau an und was die `cfg.IAM` Methode im Detail macht, um deine Möglichkeiten der Anpassung auszunutzen.
-Insbesondere sind sicherlich die `ComponentFactoryID`s und der Decorator von besonderem Interesse, damit du das IAM-System nahtlos in deine eigene Seitenstruktur einbetten kannst und es zu keinen Brüchen in Navigation und Layout kommt. 
+Insbesondere sind sicherlich die `ComponentFactoryID`s und der Decorator von besonderem Interesse, damit du das IAM-System nahtlos in deine eigene Seitenstruktur einbetten kannst und es zu keinen Brüchen in Navigation und Layout kommt.
+
 ```go
 // #[go.permission.generateTable]
 package main
@@ -34,7 +35,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/web/vuejs"
 )
 

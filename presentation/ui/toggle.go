@@ -5,85 +5,45 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-// Toggle is like a checkbox, which is either on or off.
-type Toggle struct {
-	id               ora.Ptr
-	label            String
-	checked          Bool
-	disabled         Bool
-	visible          Bool
-	error            String // TODO @Lukas/Philip/Kristin this is missing
-	hint             String // TODO @Lukas/Philip/Kristin this is missing
-	properties       []core.Property
-	onCheckedChanged *Func
+type TToggle struct {
+	value      bool
+	inputValue *core.State[bool]
+	disabled   bool
+	invisible  bool
 }
 
-func NewToggle(with func(tgl *Toggle)) *Toggle {
-	c := &Toggle{
-		id:               nextPtr(),
-		label:            NewShared[string]("label"),
-		disabled:         NewShared[bool]("disabled"),
-		checked:          NewShared[bool]("checked"),
-		visible:          NewShared[bool]("visible"),
-		onCheckedChanged: NewFunc("onCheckedChanged"),
+// Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation
+// functions. In contrast to that, use a checkbox for form things without an immediate effect.
+func Toggle(checked bool) TToggle {
+	c := TToggle{
+		value: checked,
 	}
 
-	c.properties = []core.Property{c.label, c.disabled, c.checked, c.onCheckedChanged, c.visible}
-	c.visible.Set(true)
-	if with != nil {
-		with(c)
-	}
 	return c
 }
 
-func (c *Toggle) ID() ora.Ptr {
-	return c.id
+func (c TToggle) InputChecked(input *core.State[bool]) TToggle {
+	c.inputValue = input
+	return c
 }
 
-func (c *Toggle) Type() string {
-	return "Toggle"
+func (c TToggle) Disabled(disabled bool) TToggle {
+	c.disabled = disabled
+	return c
 }
 
-func (c *Toggle) OnCheckedChanged() *Func {
-	return c.onCheckedChanged
+func (c TToggle) Visible(v bool) TToggle {
+	c.invisible = !v
+	return c
 }
 
-func (c *Toggle) Label() String {
-	return c.label
-}
+func (c TToggle) Render(ctx core.RenderContext) ora.Component {
 
-func (c *Toggle) Disabled() Bool {
-	return c.disabled
-}
-
-func (c *Toggle) Checked() Bool {
-	return c.checked
-}
-
-func (c *Toggle) Properties(yield func(core.Property) bool) {
-	for _, property := range c.properties {
-		if !yield(property) {
-			return
-		}
-	}
-}
-
-func (c *Toggle) Visible() Bool {
-	return c.visible
-}
-
-func (c *Toggle) Render() ora.Component {
-	return c.render()
-}
-
-func (c *Toggle) render() ora.Toggle {
 	return ora.Toggle{
-		Ptr:              c.id,
-		Type:             ora.ToggleT,
-		Label:            c.label.render(),
-		Checked:          c.checked.render(),
-		Disabled:         c.disabled.render(),
-		OnCheckedChanged: renderFunc(c.onCheckedChanged),
-		Visible:          c.visible.render(),
+		Type:       ora.ToggleT,
+		Value:      c.value,
+		InputValue: c.inputValue.Ptr(),
+		Disabled:   c.disabled,
+		Invisible:  c.invisible,
 	}
 }
