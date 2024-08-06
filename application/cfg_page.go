@@ -1,15 +1,12 @@
 package application
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
-	"go.wdy.de/nago/internal/incubator/tmpfiles"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/slices"
@@ -26,7 +23,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -341,9 +337,9 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 
-		receiverPtr, err := strconv.Atoi(r.Header.Get("x-receiver"))
-		if err != nil {
-			slog.Error("upload request has no parseable x-receiver header", "err", err)
+		uploadId := r.Header.Get("x-receiver")
+		if uploadId == "" {
+			slog.Error("upload request has no parseable x-receiver header")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -356,49 +352,21 @@ func (c *Configurator) newHandler() http.Handler {
 				return
 			}
 
-			var tmp [32]byte
-			if _, err := rand.Read(tmp[:]); err != nil {
-				panic(err)
-			}
-			uplTmpDir := c.Directory(filepath.Join("upload", hex.EncodeToString(tmp[:])))
-
-			fsys, err := tmpfiles.New(uplTmpDir)
-			if err != nil {
-				slog.Error("cannot create tmpfs filesystem", "err", err)
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-				return
-			}
-
+			var files []core.File
 			for _, headers := range r.MultipartForm.File {
 				// we don't care about specific field names and instead just collect everything what looks like a file
 				for _, header := range headers {
-					file, err := header.Open()
-					if err != nil {
-						defer fsys.Close()
-						slog.Error("cannot open multipart form file", "err", err)
-						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-						return
-					}
-
-					defer file.Close()
-
-					if err := fsys.Import(header.Filename, file); err != nil {
-						defer fsys.Close()
-						slog.Error("cannot import multipart form file", "err", err)
-						http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-						return
-					}
-
-					slog.Info("imported multipart form file", "file", header.Filename)
+					files = append(files, mulitPartFileHeaderAdapter{header})
 				}
 			}
 
-			if err := app2.OnFilesReceived(scopeID, ora.Ptr(receiverPtr), fsys.Each); err != nil {
-				defer fsys.Close()
-				slog.Error("cannot process received stream", "err", err)
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			importer, ok := app2.GetImportFilesOptions(scopeID, uploadId)
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
+
+			importer.OnCompletion(files)
 
 			slog.Info("multipart upload complete")
 			return
@@ -473,29 +441,14 @@ func (c *Configurator) newHandler() http.Handler {
 	return r
 }
 
-type httpFileStream struct {
-	file     multipart.File
-	header   *multipart.FileHeader
-	scopeID  ora.ScopeID
-	receiver ora.Ptr
+type mulitPartFileHeaderAdapter struct {
+	header *multipart.FileHeader
 }
 
-func newHttpFileStream(file multipart.File, header *multipart.FileHeader, scopeID ora.ScopeID, receiver ora.Ptr) *httpFileStream {
-	return &httpFileStream{file: file, header: header, scopeID: scopeID, receiver: receiver}
+func (m mulitPartFileHeaderAdapter) Open() (io.ReadCloser, error) {
+	return m.header.Open()
 }
 
-func (h *httpFileStream) Read(p []byte) (n int, err error) {
-	return h.file.Read(p)
-}
-
-func (h *httpFileStream) Name() string {
-	return h.header.Filename
-}
-
-func (h *httpFileStream) Receiver() ora.Ptr {
-	return h.receiver
-}
-
-func (h *httpFileStream) ScopeID() ora.ScopeID {
-	return h.scopeID
+func (m mulitPartFileHeaderAdapter) Name() string {
+	return m.header.Filename
 }

@@ -34,6 +34,7 @@ type scopeWindow struct {
 	statesById            map[string]Property
 	filesReceiver         map[ora.Ptr]FilesReceiver
 	destroyObservers      map[int]func()
+	importFilesReceivers  map[string]ImportFilesOptions
 	hnd                   int
 	factory               ora.ComponentFactoryId
 	navController         *NavigationController
@@ -41,6 +42,7 @@ type scopeWindow struct {
 	declaredBuffers       map[declaredBufferKey]ora.Ptr
 	lastDeclaredBufferPtr ora.Ptr
 	once                  map[string]func()
+	isRendering           bool
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -82,6 +84,10 @@ func (s *scopeWindow) reset() {
 }
 
 func (s *scopeWindow) render() ora.Component {
+	s.isRendering = true
+	defer func() {
+		s.isRendering = false
+	}()
 
 	if !s.rootFactory.Valid {
 		panic("invalid root factory")
@@ -183,9 +189,51 @@ func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
 	return "", fmt.Errorf("no share stream platform adapter has been configured")
 }
 
+func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
+	if s.destroyed {
+		return
+	}
+
+	if s.isRendering {
+		panic("you must not call ImportFiles from the render loop, only from action or post is allowed")
+	}
+
+	if options.OnCompletion == nil {
+		panic("OnCompletion is required")
+	}
+
+	if options.ID == "" {
+		s.callbackPtr++
+		options.ID = fmt.Sprintf("auto-%d", s.callbackPtr)
+	}
+
+	if s.importFilesReceivers == nil {
+		s.importFilesReceivers = map[string]ImportFilesOptions{}
+	}
+
+	if options.MaxBytes == 0 {
+		options.MaxBytes = 1024 * 1024 * 512 // defaults to 512MiB
+	}
+
+	s.importFilesReceivers[options.ID] = options
+
+	s.parent.Publish(ora.FileImportRequested{
+		Type:             ora.FileImportRequestedT,
+		ID:               options.ID,
+		ScopeID:          string(s.parent.id),
+		Multiple:         options.Multiple,
+		MaxBytes:         options.MaxBytes,
+		AllowedMimeTypes: options.AllowedMimeTypes,
+	})
+}
+
 func (s *scopeWindow) SendFiles(it iter.Seq2[File, error]) error {
 	if s.destroyed {
 		return nil
+	}
+
+	if s.isRendering {
+		panic("you must not call SendFiles from the render loop, only from action or post is allowed")
 	}
 
 	if callback := s.parent.app.onSendFiles; callback != nil {

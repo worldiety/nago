@@ -29,6 +29,7 @@ func init() {
 		reflect.TypeOf(Ping{}),
 		reflect.TypeOf(SendMultipleRequested{}),
 		reflect.TypeOf(WindowInfoChanged{}),
+		reflect.TypeOf(FileImportRequested{}),
 	}
 }
 

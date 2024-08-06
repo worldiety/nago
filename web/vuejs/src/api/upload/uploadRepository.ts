@@ -1,7 +1,7 @@
-import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { ScopeID } from '@/shared/protocol/ora/scopeID';
-import { inject } from 'vue';
-import { uploadRepositoryKey } from '@/shared/injectionKeys';
+import type {Ptr} from '@/shared/protocol/ora/ptr';
+import type {ScopeID} from '@/shared/protocol/ora/scopeID';
+import {inject} from 'vue';
+import {uploadRepositoryKey} from '@/shared/injectionKeys';
 
 export class UploadRepository {
 
@@ -45,7 +45,7 @@ export class UploadRepository {
 
 			request.open('POST', '/api/ora/v1/upload');
 			request.setRequestHeader("x-scope", scope)
-			request.setRequestHeader("x-receiver", String(receiverPtr))
+			request.setRequestHeader("x-receiver", uploadId)
 			request.send(formData);
 			this.uploads.set(uploadId, request);
 		});

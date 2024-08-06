@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
@@ -96,75 +95,21 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 	return s
 }
 
-// OnFilesReceived provides a side channel for sending large streams of blobs which must not
-// block the lightweight and responsive connected event Channel.
-// If e.g. this scope is part of a http web server, each multipart form (one or many files) must trigger a call here.
-// Note, that the origin could also be from different sources, like the content resolver within an Android App
-// directly issued over FFI calls or other activity intents.
-// The so-stored files are kept an undefined amount of time but at least as long the callback runs.
-// However, the system may reclaim the used disk space if running short on storage space or it may keep it for
-// even for years.
-// So, to ensure a correct cleanup, use [FS.Clear] to remove all temporary files.
-func (s *Scope) OnFilesReceived(receiverPtr ora.Ptr, it iter.Seq2[File, error]) error {
+func (s *Scope) GetImportFilesOptions(id string) (ImportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
+	root, err := s.allocatedRootView.Get()
+	if err != nil {
+		slog.Error("no such rootview allocated")
+		return ImportFilesOptions{}, false
+	}
 
-	s.eventLoop.Post(func() {
-		var receiver FilesReceiver
-		alloc, err := s.allocatedRootView.Get()
-		if err != nil {
-			slog.Error("no view allocated, cannot receive files")
-			return
-		}
+	files, ok := root.importFilesReceivers[id]
+	if !ok {
+		slog.Error("unknown import file", slog.Any("id", id))
+		return ImportFilesOptions{}, false
+	}
 
-		if receiverPtr.Nil() {
-			// this is required for native App support, because the user may just send files to us without any request
-			slog.Info("scope received unrequested files, trying to dispatch to any allocated root component...")
-
-			dispatched := false
-			for _, fn := range alloc.filesReceiver {
-				if err := fn(it); err != nil {
-					dispatched = false
-					slog.Error("failed to dispatch files", "err", err)
-					break
-				} else {
-					dispatched = true
-				}
-			}
-
-			if !dispatched {
-				slog.Error("scope received unrequested files, but could not find any allocated root component, file are lost")
-				if err := Release(it); err != nil {
-					slog.Error("cannot release received but unprocessed files", "err", err)
-				}
-			}
-
-			return
-		} else {
-			if cmp, ok := alloc.filesReceiver[receiverPtr]; ok {
-				receiver = cmp
-			}
-
-		}
-
-		if receiver == nil {
-			slog.Error("receiver component for data stream not found, files are lost")
-			return
-		}
-
-		if err := receiver(it); err != nil {
-			slog.Error("failed to dispatch files", "err", err)
-			if err := Release(it); err != nil {
-				slog.Error("cannot release received but unprocessed files", "err", err)
-			}
-		}
-
-		s.forceRender() // the callback likely changed some domain state, so invalidate
-		s.eventLoop.Tick()
-	})
-
-	s.eventLoop.Tick() // trigger event loop processing, so that our post is actually processed.
-
-	return nil
+	return files, true
 }
 
 func (s *Scope) getTempDir() (string, error) {

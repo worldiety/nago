@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
+	"log/slog"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -131,14 +132,14 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	return scope
 }
 
-// OnFilesReceived delegates the received fs into according scope.
-func (a *Application) OnFilesReceived(scopeId ora.ScopeID, receiver ora.Ptr, it iter.Seq2[File, error]) error {
+func (a *Application) GetImportFilesOptions(scopeId ora.ScopeID, uploadId string) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		return fmt.Errorf("no such scope to receive stream: %s", scope.id)
+		slog.Error("no such scope to receive stream", "scope", scope.id)
+		return ImportFilesOptions{}, false
 	}
 
-	return scope.OnFilesReceived(receiver, it)
+	return scope.GetImportFilesOptions(uploadId)
 }
 
 func (a *Application) AddDestructor(f func()) {

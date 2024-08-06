@@ -26,6 +26,7 @@ const (
 	SessionAssignedT              EventType = "SessionAssigned"
 	SendMultipleRequestedT        EventType = "SendMultipleRequested"
 	WindowInfoChangedT            EventType = "WindowInfoChanged"
+	FileImportRequestedT          EventType = "FileImportRequested"
 )
 
 // Event is a sum type of

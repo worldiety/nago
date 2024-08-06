@@ -17,6 +17,8 @@ import type {Theme} from '@/shared/protocol/ora/theme';
 import {useThemeManager} from '@/shared/themeManager';
 import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
 import {URI} from "@/shared/protocol/ora/uRI";
+import {FileImportRequested} from "@/shared/protocol/ora/fileImportRequested";
+import {useUploadRepository} from "@/api/upload/uploadRepository";
 
 enum State {
 	Loading,
@@ -88,6 +90,7 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
+		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
 
 		updateUi(invalidation);
 	} catch {
@@ -145,6 +148,49 @@ function navigateReload(): void {
 function resetHistory(event: Event): void {
 	// todo this seems not possible in the web
 	navigateForward(event)
+}
+
+const uploadRepository = useUploadRepository();
+
+function fileImportRequested(evt: Event): void {
+	let msg = evt as FileImportRequested;
+	let input = document.createElement('input');
+	input.className = "hidden"
+	input.type = "file"
+	input.id = msg.id
+	input.multiple = msg.multiple
+	input.onchange = event => {
+		const item = event.target as HTMLInputElement;
+		if (!item.files) {
+			return;
+		}
+		for (let i = 0; i < item.files.length; i++) {
+			uploadRepository.fetchUpload(
+				item.files[i],
+				msg.id,
+				0,
+				msg.scopeID,
+				(uploauploadId: string, progress: number, total: number) => {
+					console.log("progress", progress)
+				},
+				uploadId => {
+				},
+				uploadId => {
+				},
+				uploadId => {
+					console.log("upload failed")
+				},
+			)
+		}
+
+
+	}
+	if (msg.allowedMimeTypes) {
+		input.accept = msg.allowedMimeTypes.join(",")
+	}
+	document.body.appendChild(input);
+	input.click()
+	document.body.removeChild(input);
 }
 
 function sendMultipleRequested(evt: Event): void {
@@ -256,6 +302,7 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
 	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
+	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
 });
 
 

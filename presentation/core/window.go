@@ -11,6 +11,23 @@ import (
 	"time"
 )
 
+type ImportFilesOptions struct {
+	// ID of your import request. If empty, an automatic ID based on your structure
+	// is created, which may work. If your structure changes between renderings,
+	// consider using a unique static ID.
+	ID       string
+	Multiple bool
+	// MaxBytes is a recommendation and an attacker may ignore that, so don't
+	// count on that for security reasons.
+	MaxBytes         int64
+	AllowedMimeTypes []string
+	// OnCompletion may be performance optimized and thus may be called from
+	// a non-ui goroutine. Thus, be careful of data races, when modifying your state.
+	// Note, that keeping the file reference is illegal and may cause anything from resource
+	// leaks to mal functions. Process data (e.g. by copying) within the completion handler entirely.
+	OnCompletion func(files []File)
+}
+
 // A Window owns the lifecycle of a component and is part of a Scope.
 // Ora does not define (yet) what a window is.
 // However, obviously every component lives inside a window of the frontend and navigation is related to that.
@@ -66,6 +83,11 @@ type Window interface {
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
 	// a _send multiple intent_. See also AsURI which does not trigger such intent.
 	SendFiles(it iter.Seq2[File, error]) error
+
+	// ImportFiles is the opposite of SendFiles. The identity of the request is
+	// derived by the given identifier. If the ID is empty, a structural identifier is
+	// automatically created.
+	ImportFiles(options ImportFilesOptions)
 
 	// TODO
 	// AsURI takes the open closure and provides a URI accessor for it. Whenever the URI is opened, the data
