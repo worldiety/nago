@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -79,6 +80,50 @@ func NewConfigurator() *Configurator {
 	cfg.ColorSet(core.Dark, ui.DefaultColors(core.Dark, main, accent, interactive))
 
 	return cfg
+}
+
+type envVarConfig struct {
+	key      string
+	required bool
+	cb       func(envVarConfig, string, *Configurator, *slog.Logger) error
+}
+
+var envConfig []envVarConfig = []envVarConfig{
+	{
+		key:      "NAGO_HOST",
+		required: false,
+		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			cfg.SetHost(s)
+			return nil
+		}},
+	{
+		key:      "NAGO_PORT",
+		required: false,
+		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			parsed, err := strconv.Atoi(s)
+			if err != nil {
+				return fmt.Errorf("Invalid port value %v in %s: %w", s, env.key, err)
+			}
+			cfg.port = parsed
+			return nil
+		}},
+}
+
+func (c *Configurator) LoadConfigFromEnv() {
+	logger := c.defaultLogger()
+	for _, envVar := range envConfig {
+		readFromEnv := os.Getenv(envVar.key)
+		if readFromEnv == "" {
+			if envVar.required {
+				panic(fmt.Sprintf("Required environment variable %s not found", envVar.key))
+			}
+			continue
+		}
+
+		if err := envVar.cb(envVar, readFromEnv, c, logger); err != nil {
+			panic(fmt.Sprintf("failed to set config from env var %s: %v", envVar.key, err))
+		}
+	}
 }
 
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {

@@ -41,8 +41,9 @@ func (o *Options[E]) Actions(actions ...core.View) {
 }
 
 // AggregateActions adds the given actions to each individual entity or aggregate entry.
-func (o *Options[E]) AggregateActions(actions ...AggregateAction[E]) {
+func (o *Options[E]) AggregateActions(actions ...AggregateAction[E]) *Options[E] {
 	o.aggregateActions = append(o.aggregateActions, actions...)
+	return o
 }
 
 func (o *Options[E]) Title(s string) *Options[E] {
@@ -70,8 +71,16 @@ func (o *Options[E]) Responsive(wnd core.Window) *Options[E] {
 	return o
 }
 
-func (o *Options[E]) Delete(f func(E) error) *Options[E] {
-	o.aggregateActions = append(o.aggregateActions, AggregateAction[E]{
+type AggregeActionOption[E any] func(*AggregateAction[E])
+
+func AggregationActionOptionVisibility[E any](f func(E) bool) AggregeActionOption[E] {
+	return func(action *AggregateAction[E]) {
+		action.visible = f
+	}
+}
+
+func (o *Options[E]) Delete(f func(E) error, options ...AggregeActionOption[E]) *Options[E] {
+	a := AggregateAction[E]{
 		Icon:    icon.Trash,
 		Caption: "",
 		Action: func(owner ui.ModalOwner, e E) error {
@@ -82,8 +91,15 @@ func (o *Options[E]) Delete(f func(E) error) *Options[E] {
 			}, nil)
 			return nil
 		},
+<<<<<<< HEAD
 		Style: ora.Primary,
 	})
+=======
+		Style: ora.Destructive,
+	}.WithOptions(options...)
+
+	o.aggregateActions = append(o.aggregateActions, a)
+>>>>>>> 8898002c6c3b896349032d4f8b92f2318d75a45d
 
 	return o
 }
@@ -99,9 +115,9 @@ func (o *Options[E]) Binding(binding *Binding[E]) *Options[E] {
 	return o
 }
 
-func (o *Options[E]) Update(f func(E) error) *Options[E] {
+func (o *Options[E]) Update(f func(E) error, options ...AggregeActionOption[E]) *Options[E] {
 	opts := o
-	o.aggregateActions = append(o.aggregateActions, AggregateAction[E]{
+	action := AggregateAction[E]{
 		Icon: icon.Pencil,
 		Action: func(owner ui.ModalOwner, e E) error {
 			ui.NewDialog(func(dlg *ui.Dialog) {
@@ -152,7 +168,9 @@ func (o *Options[E]) Update(f func(E) error) *Options[E] {
 			return nil
 		},
 		Style: ora.Primary,
-	})
+	}.WithOptions(options...)
+
+	o.aggregateActions = append(o.aggregateActions, action)
 
 	return o
 }
@@ -161,7 +179,19 @@ type AggregateAction[T any] struct {
 	Icon    ui.SVGSrc
 	Caption string
 	Action  func(ui.ModalOwner, T) error
+<<<<<<< HEAD
 	Style   ora.Color
+=======
+	Style   ora.Intent
+	visible func(T) bool
+}
+
+func (a AggregateAction[T]) WithOptions(options ...AggregeActionOption[T]) AggregateAction[T] {
+	for _, opt := range options {
+		opt(&a)
+	}
+	return a
+>>>>>>> 8898002c6c3b896349032d4f8b92f2318d75a45d
 }
 
 func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
@@ -532,6 +562,9 @@ func NewView[E any](owner ui.ModalOwner, opts *Options[E]) core.View {
 
 func newAggregateActionButton[E any](owner ui.ModalOwner, action AggregateAction[E], e E) core.View {
 	return ui.NewButton(func(btn *ui.Button) {
+		if action.visible != nil {
+			btn.Visible().Set(action.visible(e))
+		}
 		btn.Caption().Set(action.Caption)
 		btn.PreIcon().Set(action.Icon)
 		if action.Style != "" {
