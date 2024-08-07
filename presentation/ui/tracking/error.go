@@ -75,8 +75,8 @@ func RequestSupport(wnd core.Window, err error) {
 		return
 	}
 
-	showErrState := core.StateWithID[bool](wnd, ".nago.global.errors.show")
-	errState := core.StateWithID[UnhandledErrors](wnd, ".nago.global.errors")
+	showErrState := core.StateOf[bool](wnd, ".nago.global.errors.show")
+	errState := core.StateOf[UnhandledErrors](wnd, ".nago.global.errors")
 	errors := errState.Get()
 	errors.Put(wnd, err)
 	errState.Set(errors)
@@ -87,12 +87,12 @@ func RequestSupport(wnd core.Window, err error) {
 // anonymous error code, to avoid security sensitive details. Use
 // [RequestSupport] to insert an error into the global error list.
 func SupportRequestDialog(wnd core.Window) core.View {
-	showErrState := core.StateWithID[bool](wnd, ".nago.global.errors.show")
+	showErrState := core.StateOf[bool](wnd, ".nago.global.errors.show")
 	if !showErrState.Get() {
 		return nil
 	}
 
-	errState := core.StateWithID[UnhandledErrors](wnd, ".nago.global.errors")
+	errState := core.StateOf[UnhandledErrors](wnd, ".nago.global.errors")
 	if len(errState.Get().errors) == 0 {
 		panic("unreachable")
 	}

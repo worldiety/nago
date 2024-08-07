@@ -22,13 +22,13 @@ type declaredBufferKey struct {
 }
 
 type scopeWindow struct {
-	parent                *Scope
-	rootFactory           std.Option[ComponentFactory]
-	lastRendering         std.Option[ora.Component]
-	destroyed             bool
-	callbackPtr           ora.Ptr
-	callbacks             map[ora.Ptr]func()
-	lastAutoStatePtr      ora.Ptr
+	parent        *Scope
+	rootFactory   std.Option[ComponentFactory]
+	lastRendering std.Option[ora.Component]
+	destroyed     bool
+	callbackPtr   ora.Ptr
+	callbacks     map[ora.Ptr]func()
+	//lastAutoStatePtr      ora.Ptr
 	lastStatePtrById      ora.Ptr
 	states                map[ora.Ptr]Property
 	statesById            map[string]Property
@@ -44,6 +44,7 @@ type scopeWindow struct {
 	lastDeclaredBufferPtr ora.Ptr
 	once                  map[string]func()
 	isRendering           bool
+	generation            int64
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
@@ -54,6 +55,7 @@ func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values
 	s.statesById = map[string]Property{}
 	s.lastStatePtrById = maxAutoPtr
 	s.declaredBuffers = map[declaredBufferKey]ora.Ptr{}
+	s.generation = 0
 	if values == nil {
 		s.values = Values{}
 	}
@@ -76,18 +78,30 @@ func (s *scopeWindow) setFactory(view ComponentFactory) {
 }
 
 func (s *scopeWindow) reset() {
-	s.callbackPtr = 0      // make them stable
-	s.lastAutoStatePtr = 0 // make them stable
+	s.callbackPtr = 0 // make them stable
+	//s.lastAutoStatePtr = 0 // make them stable
 	//clear(s.states)
 	clear(s.filesReceiver)
 	//clear(s.destroyObservers) ???
 	clear(s.callbacks)
 }
 
+func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
+	for id, property := range s.statesById {
+		if property.getGeneration() < currentGeneration {
+			delete(s.statesById, id)
+			delete(s.states, property.ID())
+			slog.Info("purged unused state", "id", id, "expected", currentGeneration, "has", property.getGeneration())
+		}
+	}
+}
+
 func (s *scopeWindow) render() ora.Component {
 	s.isRendering = true
+	s.generation++
 	defer func() {
 		s.isRendering = false
+		s.removeDetachedStates(s.generation)
 	}()
 
 	if !s.rootFactory.Valid {

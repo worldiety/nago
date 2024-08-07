@@ -91,15 +91,11 @@ func (o *Options[E]) Delete(f func(E) error, options ...AggregeActionOption[E]) 
 			}, nil)
 			return nil
 		},
-<<<<<<< HEAD
 		Style: ora.Primary,
 	})
-=======
-		Style: ora.Destructive,
 	}.WithOptions(options...)
 
 	o.aggregateActions = append(o.aggregateActions, a)
->>>>>>> 8898002c6c3b896349032d4f8b92f2318d75a45d
 
 	return o
 }
@@ -179,10 +175,7 @@ type AggregateAction[T any] struct {
 	Icon    uilegacy.SVGSrc
 	Caption string
 	Action  func(uilegacy.ModalOwner, T) error
-<<<<<<< HEAD
 	Style   ora.Color
-=======
-	Style   ora.Intent
 	visible func(T) bool
 }
 
@@ -191,7 +184,6 @@ func (a AggregateAction[T]) WithOptions(options ...AggregeActionOption[T]) Aggre
 		opt(&a)
 	}
 	return a
->>>>>>> 8898002c6c3b896349032d4f8b92f2318d75a45d
 }
 
 func NewView[E any](owner uilegacy.ModalOwner, opts *Options[E]) core.View {

@@ -1,10 +1,14 @@
 package core
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
+	"runtime"
 	"strconv"
+	"unsafe"
 )
 
 type RenderContext interface {
@@ -26,12 +30,18 @@ type RenderContext interface {
 	Handle([]byte) (hnd ora.Ptr, created bool)
 }
 
+// A State is held within the root composition (which is a scope)
+// and survives a render call. However, after each render cycle,
+// the state generation is checked, and unused states are removed because
+// their associated views are obviously detached from the tree.
+// This also avoids memory leaks by unused states.
 type State[T any] struct {
-	id       string
-	ptr      ora.Ptr
-	value    T
-	valid    bool
-	observer []func(newValue T)
+	id         string
+	ptr        ora.Ptr
+	value      T
+	valid      bool
+	observer   []func(newValue T)
+	generation int64
 }
 
 func (s *State[T]) Observe(f func(newValue T)) {
@@ -44,6 +54,10 @@ func (s *State[T]) String() string {
 
 func (s *State[T]) ID() ora.Ptr {
 	return s.ptr
+}
+
+func (s *State[T]) getGeneration() int64 {
+	return s.generation
 }
 
 func (s *State[T]) parse(v any) error {
@@ -102,7 +116,17 @@ func (s *State[T]) Ptr() ora.Ptr {
 	return s.ptr
 }
 
-func StateWithID[T any](wnd Window, id string) *State[T] {
+// From executes the given func if the State has been
+// just initialized and is still invalid.
+func (s *State[T]) From(fn func() T) *State[T] {
+	if !s.valid {
+		s.valid = true
+		s.value = fn()
+	}
+	return s
+}
+
+func StateOf[T any](wnd Window, id string) *State[T] {
 	w := wnd.(*scopeWindow)
 
 	if id == "" {
@@ -111,6 +135,7 @@ func StateWithID[T any](wnd Window, id string) *State[T] {
 	some, ok := w.statesById[id]
 	if ok {
 		if found, ok := some.(*State[T]); ok {
+			found.generation = w.generation
 			return found
 		}
 		var zero T
@@ -119,9 +144,10 @@ func StateWithID[T any](wnd Window, id string) *State[T] {
 
 	w.lastStatePtrById++
 	state := &State[T]{
-		id:    id,
-		ptr:   w.lastStatePtrById,
-		valid: false,
+		id:         id,
+		ptr:        w.lastStatePtrById,
+		valid:      false,
+		generation: w.generation,
 	}
 	w.states[w.lastStatePtrById] = state
 	w.statesById[id] = state
@@ -129,33 +155,41 @@ func StateWithID[T any](wnd Window, id string) *State[T] {
 	return state
 }
 
+// AutoState uses the structural identity to associate
+// the actual state in the composition. The implementation
+// may change over time to improve reliability or performance.
+// Currently, the implementation calculates an identifier based
+// on the program counter of the callee, which is quite expensive
+// but more stable than just incrementing a naive invocation counter.
+//
+// Compare that to jetpack compose, which inserts structural identifiers
+// into each composable function, see also the article of Leland
+// Richardson "Under the hood of Jetpack Compose".
 func AutoState[T any](wnd Window) *State[T] {
-	w := wnd.(*scopeWindow)
-	w.lastAutoStatePtr++
+	// TODO we have multiple render entry points which results in a loss of states for the first cycle: what shall we do?
+	// TODO handleNewComponentRequested vs forceRender vs scheduler etc.
+	// for now, we truncate, but that may be totally wrong
+	var pcs [3]uintptr
+	n := runtime.Callers(2, pcs[:])
 
-	if w.lastAutoStatePtr >= maxAutoPtr {
-		panic("auto state overflow, you have to many auto states. Having so many states indicates to large UIs. Reduce or use StateWithID instead")
-	}
-
-	fmt.Println("autostate ptr created", w.lastAutoStatePtr)
-	some, ok := w.states[w.lastAutoStatePtr]
-	if ok {
-		if found, ok := some.(*State[T]); ok {
-			return found
+	// be as efficient as possible
+	id := sha512.Sum512_224((*[2 * unsafe.Sizeof(uintptr(0))]byte)(unsafe.Pointer(&pcs[0]))[:n])
+	const debug = false
+	if debug {
+		frames := runtime.CallersFrames(pcs[:n])
+		fmt.Println("---->")
+		for {
+			frame, more := frames.Next()
+			fmt.Printf("%d Function: %s, Line: %d %d =>%s\n", frame.PC, frame.Function, frame.Line, frame.Entry, hex.EncodeToString(id[:]))
+			if !more {
+				break
+			}
 		}
-		var zero T
-		slog.Error("restored view state does not match expected state type", "expected", fmt.Sprintf("%T", zero), "got", fmt.Sprintf("%T", some))
+		fmt.Println("<----")
 	}
 
-	state := &State[T]{
-		id:    "",
-		ptr:   w.lastAutoStatePtr,
-		valid: false,
-	}
-	w.states[w.lastAutoStatePtr] = state
-
-	return state
-
+	// be as efficient as possible, I know, this is not unicode
+	return StateOf[T](wnd, unsafe.String(&id[0], len(id)))
 }
 
 type View interface {

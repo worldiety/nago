@@ -10,4 +10,5 @@ type Property interface {
 	ID() ora.Ptr
 
 	parse(v any) error
+	getGeneration() int64
 }
