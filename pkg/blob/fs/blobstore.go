@@ -114,7 +114,7 @@ func (f *fsTx) Put(entry blob.Entry) error {
 		return fmt.Errorf("cannot get random bytes: %w", err)
 	}
 
-	tmpFname := hex.EncodeToString(rbuf[:]) + ".tmp"
+	tmpFname := filepath.Join(f.parent.baseDir, hex.EncodeToString(rbuf[:])+".tmp")
 	tmp, err := os.OpenFile(tmpFname, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("cannot create temp file '%s': %w", tmpFname, err)
