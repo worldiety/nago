@@ -18,5 +18,5 @@ func Form[T any](bnd *Binding[T], value *T) ui.DecoredView {
 			}
 
 		})...,
-	)
+	).Gap(ui.L16)
 }

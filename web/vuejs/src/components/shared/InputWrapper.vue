@@ -83,6 +83,10 @@ const inputFieldWrapperClasses = computed((): string|null => {
 	@apply border-SE0;
 }
 
+.text-error {
+	@apply text-SE0;
+}
+
 .input-field-wrapper input::placeholder {
   @apply text-ST0;
 }

@@ -56,7 +56,13 @@ func main() {
 			bnd.Add(
 				crud.Text("Vorname", func(entity *Person) *string {
 					return &entity.Firstname
-				}),
+				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
+					if person.Firstname != "Torben" {
+						return "Du bist nicht Torben", nil
+					}
+
+					return "", nil
+				}).WithSupportingText("Gib Torben ein"),
 				crud.Text("Nachname", func(entity *Person) *string {
 					return &entity.Lastname
 				}),

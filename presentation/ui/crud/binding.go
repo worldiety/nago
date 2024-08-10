@@ -4,39 +4,11 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"strings"
 )
 
-type ValidationResult struct {
-	infrastructureError error
-	validationHint      string
-}
-
-// WithError returns a ValidationResult with the state of an error in the infrastructure.
-// The given error will be logged, but the details are never displayed to the user due to possible security concerns.
-// E.g. if the error is passed from the infrastructure layer, it may expose confidential details to an attacker.
-func (r ValidationResult) WithError(err error) ValidationResult {
-	r.validationHint = ""
-	r.infrastructureError = err
-	return r
-}
-
-// Ok returns true if neither an infrastructure error has been defined nor a validation hint has been set.
-// This is also the zero value.
-func (r ValidationResult) Ok() bool {
-	return r.infrastructureError == nil && r.validationHint == ""
-}
-
-// Error returns nil or an error.
-func (r ValidationResult) Error() error {
-	return r.infrastructureError
-}
-
-// ValidationHint returns either an empty string or a hint to show.
-func (r ValidationResult) ValidationHint() string {
-	return r.validationHint
-}
-
+// A Field is a binding to a field of T. All members are intentionally public, to make customization as flexible as
+// possible in most typical CRUD situations. Try to stick to the prebuild factories:
+//   - [Text]
 type Field[T any] struct {
 	// ID must be a unique identifier, at least when multiple binding are rendered at the same time or if different
 	// bindings are displayed immediately after each other. A good candidate may be an entity ID.
@@ -64,7 +36,10 @@ type Field[T any] struct {
 	Window core.Window
 
 	// Validate may be nil, if nothing can be validated.
-	Validate func(T) ValidationResult
+	// The given error will be logged, but the details are never displayed to the user due to possible security concerns.
+	// E.g. if the error is passed from the infrastructure layer, it may expose confidential details to an attacker.
+	// Return an errorText, if you want to mark the field as errornous.
+	Validate func(T) (errorText string, infrastructureError error)
 
 	// Disabled is true, if the element shall be shown but must not be editable.
 	Disabled bool
@@ -77,8 +52,18 @@ type Field[T any] struct {
 	Stringer func(e T) string
 }
 
-func (f *Field[T]) DisableSorting() *Field[T] {
+func (f Field[T]) WithoutSorting() Field[T] {
 	f.Comparator = nil
+	return f
+}
+
+func (f Field[T]) WithValidation(fn func(T) (errorText string, infrastructureError error)) Field[T] {
+	f.Validate = fn
+	return f
+}
+
+func (f Field[T]) WithSupportingText(str string) Field[T] {
+	f.SupportingText = str
 	return f
 }
 
@@ -114,35 +99,5 @@ func (b *Binding[T]) Add(fields ...Field[T]) {
 		}
 		field.Window = b.wnd
 		b.fields = append(b.fields, field)
-	}
-}
-
-func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
-	return Field[E]{
-		Label: label,
-		RenderFormElement: func(self Field[E], entity *E) ui.DecoredView {
-			state := core.StateOf[string](self.Window, self.ID).From(func() string {
-				return string(*property(entity))
-			})
-
-			state.Observe(func(newValue string) {
-				f := property(entity)
-				*f = T(newValue)
-			})
-
-			return ui.TextField(label, state.String()).InputValue(state)
-		},
-		RenderTableCell: func(self Field[E], entity E) ui.TTableCell {
-			v := *property(&entity)
-			return ui.TableCell(ui.Text(string(v)))
-		},
-		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
-			return strings.Compare(string(av), string(bv))
-		},
-		Stringer: func(e E) string {
-			return string(*property(&e))
-		},
 	}
 }
