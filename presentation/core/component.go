@@ -11,6 +11,8 @@ import (
 	"unsafe"
 )
 
+const Debug = true // TODO make be a compile time flagged const
+
 type RenderContext interface {
 	// Window returns the associated Window instance.
 	Window() Window

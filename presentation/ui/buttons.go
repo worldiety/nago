@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"runtime/debug"
 )
 
 type TButton struct {
@@ -14,28 +15,42 @@ type TButton struct {
 	frame              Frame
 	preset             StylePreset
 	action             func()
+	trace              string
 }
 
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
 func PrimaryButton(action func()) TButton {
-	return TButton{action: action, preset: StyleButtonPrimary}
+	return initButton(action, StyleButtonPrimary)
 }
 
-// Secondary uses an internal preset to represent a secondary button. See also FilledButton for a custom-colored
+// SecondaryButton uses an internal preset to represent a secondary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
-func Secondary(action func()) TButton {
-	return TButton{action: action, preset: StyleButtonSecondary}
+func SecondaryButton(action func()) TButton {
+	return initButton(action, StyleButtonSecondary)
 }
 
-// Tertiary uses an internal preset to represent a tertiary button. See also FilledButton for a custom-colored
+// TertiaryButton uses an internal preset to represent a tertiary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
-func Tertiary(action func()) TButton {
-	return TButton{action: action, preset: StyleButtonTertiary}
+func TertiaryButton(action func()) TButton {
+	return initButton(action, StyleButtonTertiary)
+}
+
+func initButton(action func(), preset StylePreset) TButton {
+	btn := TButton{action: action, preset: preset}
+	if core.Debug {
+		btn.trace = string(debug.Stack())
+	}
+	return btn
 }
 
 func (c TButton) Title(text string) TButton {
 	c.title = text
+	return c
+}
+
+func (c TButton) AccessibilityLabel(label string) TButton {
+	c.accessibilityLabel = label
 	return c
 }
 
@@ -60,8 +75,10 @@ func (c TButton) Render(context core.RenderContext) ora.Component {
 		alabel = c.accessibilityLabel
 	}
 
-	if alabel == "" {
-		panic(fmt.Errorf("the ora guidelines forbid buttons without accessibility label"))
+	if core.Debug {
+		if alabel == "" {
+			panic(fmt.Errorf("the ora guidelines forbid buttons without accessibility label, allocated here: %s", c.trace))
+		}
 	}
 
 	return HStack(
@@ -72,6 +89,6 @@ func (c TButton) Render(context core.RenderContext) ora.Component {
 		Action(c.action).
 		StylePreset(c.preset).
 		Frame(c.frame).
-		AccessibilityLabel(alabel).
+		AccessibilityLabel(alabel). // this is redundant and requires the text twice, however we are "just" an hstack
 		Render(context)
 }

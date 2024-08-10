@@ -53,7 +53,7 @@ func main() {
 		example := Person{Firstname: "Mr. Singleton"}
 
 		cfg.Component(".", func(wnd core.Window) core.View {
-			bnd := crud.NewBinding[Person](wnd, "1234")
+			bnd := crud.NewBinding[Person](wnd)
 			bnd.Add(
 				crud.Text("Vorname", func(entity *Person) *string {
 					return &entity.Firstname
@@ -68,11 +68,11 @@ func main() {
 					return &entity.Lastname
 				}),
 
-				crud.Views("Optionen", func(e *Person) core.View {
-					return ui.PrimaryButton(func() {
-						fmt.Println("delete", e)
-					}).Title("Löschen")
-				}),
+				crud.Views("Optionen",
+					crud.ButtonDelete[Person](wnd, func(p *Person) error {
+						return fmt.Errorf("not implemented")
+					}),
+				),
 			)
 
 			opts := &crud.Options[Person, PID]{}

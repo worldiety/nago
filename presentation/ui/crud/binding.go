@@ -88,16 +88,22 @@ type Binding[T any] struct {
 	fields []Field[T]
 }
 
-// NewBinding allocates a new binding using the given window and id.
+// NewBinding allocates a new binding using the given window.
+// See also [Binding.SetID].
+func NewBinding[T any](wnd core.Window) *Binding[T] {
+	return &Binding[T]{
+		wnd: wnd,
+	}
+}
+
+// SetID sets the internal binding id, which is used to render a field binding.
 // If you bind a specific entity, just use Identity as id.
 // If you don't have an identity, it may work, if left empty,
 // but ensure you read the doc at [Binding.Add] and understood
 // the state-render mechanics to see potential unwanted side effects.
-func NewBinding[T any](wnd core.Window, id string) *Binding[T] {
-	return &Binding[T]{
-		id:  id,
-		wnd: wnd,
-	}
+func (b *Binding[T]) SetID(id string) *Binding[T] {
+	b.id = id
+	return b
 }
 
 // Add appends the given fields to this binding container.

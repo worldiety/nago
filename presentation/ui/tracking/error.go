@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"log/slog"
+	"runtime/debug"
 )
 
 type AnonymousErrorCode string
@@ -51,15 +52,19 @@ func (e *UnhandledErrors) Put(wnd core.Window, err error) AnonymousErrorCode {
 
 // requestSupportView allocates a new support view. See also RequestSupport.
 func requestSupportView(wnd core.Window, code AnonymousErrorCode) core.View {
+	showErrState := core.StateOf[bool](wnd, ".nago.global.errors.show")
 
 	return ui.VStack(
 		ui.HStack(ui.Image().Embed(icons.Bug).Frame(ui.Frame{}.Size(ui.L44, ui.L44))),
 		ui.Text("Ein unerwarteter Fehler ist aufgetreten.").Font(ui.Title),
 		ui.Text("Wir entschuldigen uns für diese Unannehmlichkeit."),
 		ui.Text("Sie können uns einen Bericht schicken."),
-		ui.Secondary(func() {
+		ui.SecondaryButton(func() {
 			sendReport(wnd, code)
 		}).Title("Bericht erstellen"),
+		ui.SecondaryButton(func() {
+			showErrState.Set(false)
+		}).Title("weiter versuchen"),
 		ui.PrimaryButton(wnd.Navigation().Reload).Title("Anwendung neu laden"),
 	).Gap(ui.L16)
 
@@ -78,7 +83,11 @@ func RequestSupport(wnd core.Window, err error) {
 	showErrState := core.StateOf[bool](wnd, ".nago.global.errors.show")
 	errState := core.StateOf[UnhandledErrors](wnd, ".nago.global.errors")
 	errors := errState.Get()
-	errors.Put(wnd, err)
+	if core.Debug {
+		errors.Put(wnd, fmt.Errorf("error: %w, caught near: %s", err, debug.Stack()))
+	} else {
+		errors.Put(wnd, err)
+	}
 	errState.Set(errors)
 	showErrState.Set(true)
 }

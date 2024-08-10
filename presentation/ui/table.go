@@ -165,7 +165,13 @@ type TTable struct {
 }
 
 func Table(columns ...TTableColumn) TTable {
-	return TTable{columns: columns}
+	return TTable{
+		columns:             columns,
+		backgroundColor:     M2.ora(),
+		defaultCellPaddings: Padding{}.Horizontal(L24).Vertical(L16).ora(),
+		rowDividerColor:     M5.ora(),
+		border:              Border{}.Radius(L20).ora(),
+	}
 }
 
 func (c TTable) BackgroundColor(backgroundColor Color) TTable {
