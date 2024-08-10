@@ -17,3 +17,7 @@ type Options[Entity data.Aggregate[ID], ID data.IDType] struct {
 	//binding          *Binding[E]
 	wnd core.Window
 }
+
+func (o *Options[Entity, ID]) FindAll(it iter.Seq2[Entity, error]) {
+	o.findAll = it
+}

@@ -38,6 +38,21 @@ type TTextField struct {
 	keyboardOptions TKeyboardOptions
 }
 
+func (c TTextField) Padding(padding Padding) DecoredView {
+	// TODO implement me or reduce interface
+	return c
+}
+
+func (c TTextField) Border(border Border) DecoredView {
+	// TODO implement me or reduce interface
+	return c
+}
+
+func (c TTextField) AccessibilityLabel(label string) DecoredView {
+	// TODO implement me or reduce interface
+	return c
+}
+
 func TextField(label string, value string) TTextField {
 	c := TTextField{
 		label: label,
@@ -100,8 +115,8 @@ func (c TTextField) Disabled(disabled bool) TTextField {
 	return c
 }
 
-func (c TTextField) Frame(frame ora.Frame) TTextField {
-	c.frame = frame
+func (c TTextField) Frame(frame Frame) DecoredView {
+	c.frame = frame.ora()
 	return c
 }
 
@@ -111,7 +126,7 @@ func (c TTextField) Lines(lines int) TTextField {
 	return c
 }
 
-func (c TTextField) Visible(v bool) TTextField {
+func (c TTextField) Visible(v bool) DecoredView {
 	c.invisible = !v
 	return c
 }

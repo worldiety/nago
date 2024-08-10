@@ -11,4 +11,5 @@ type Property interface {
 
 	parse(v any) error
 	getGeneration() int64
+	clearObservers()
 }

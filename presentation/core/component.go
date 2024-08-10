@@ -48,6 +48,11 @@ func (s *State[T]) Observe(f func(newValue T)) {
 	s.observer = append(s.observer, f)
 }
 
+func (s *State[T]) clearObservers() {
+	clear(s.observer)           // nil out so that GC can collect them
+	s.observer = s.observer[:0] // ensure buffer re-usage between re-renderings
+}
+
 func (s *State[T]) String() string {
 	return fmt.Sprintf("%v", s.value)
 }

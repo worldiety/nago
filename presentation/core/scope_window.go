@@ -84,6 +84,10 @@ func (s *scopeWindow) reset() {
 	clear(s.filesReceiver)
 	//clear(s.destroyObservers) ???
 	clear(s.callbacks)
+
+	for _, property := range s.states {
+		property.clearObservers()
+	}
 }
 
 func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {

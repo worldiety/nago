@@ -69,8 +69,8 @@ func Yield[T any](seq iter.Seq[T]) []T {
 	return res
 }*/
 
-func Each[T any](seq iter.Seq[T], m func(T) core.View) []core.View {
-	var res []core.View
+func Each[T any, V any](seq iter.Seq[T], m func(T) V) []V {
+	var res []V
 	seq(func(t T) bool {
 		res = append(res, m(t))
 		return true

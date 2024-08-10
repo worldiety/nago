@@ -10,21 +10,28 @@ import (
 type dataSource[Entity data.Aggregate[ID], ID data.IDType] struct {
 	it          iter.Seq2[Entity, error]
 	errors      []error
-	binding     *Binding[Entity, ID]
-	sortByField *Field[Entity, ID]
+	binding     *Binding[Entity]
+	sortByField *Field[Entity]
 	query       string
 }
 
 func (ds *dataSource[Entity, ID]) List() []Entity {
 	predicate := rquery.SimplePredicate[string](ds.query)
 	var res []Entity
+
+	// collect what is possible, e.g. ignore errors for single entries, which may be caused
+	// by broken json persistence models
 	ds.it(func(e Entity, err error) bool {
 		if err != nil {
+			// we could argue that we should collect errors per id, however general IO errors
+			// are not id related, and also Entity is totally undefined in error case.
 			ds.errors = append(ds.errors, err)
 		} else {
 			if ds.query != "" {
+				// only add those entries which apply to the given predicate filter
 				for _, field := range ds.binding.fields {
 					if field.Stringer != nil {
+						// micro-optimization to avoid unneeded string allocations for non-filter conditions
 						str := field.Stringer(e)
 						if predicate(str) {
 							res = append(res, e)
@@ -40,8 +47,34 @@ func (ds *dataSource[Entity, ID]) List() []Entity {
 		return true
 	})
 
+	// only apply sorting on the pre-filtered entries, if applicable
 	if ds.sortByField != nil && ds.sortByField.Comparator != nil {
-		slices.SortFunc(res, ds.sortByField.Comparator)
+		slices.SortFunc(res, func(a, b Entity) int {
+			v := ds.sortByField.Comparator(a, b)
+			if v != 0 {
+				return v
+			}
+
+			// the fields are equal, thus ensure that we have a stable return order for each rendering
+			if a.Identity() > b.Identity() {
+				return 1
+			} else if a.Identity() < b.Identity() {
+				return -1
+			}
+
+			return 0 // actually, can only happen for non-unique iterator
+		})
+	} else {
+		// ensure that we have a stable return order for each rendering, e.g. map-based sources have a random order
+		slices.SortFunc(res, func(a, b Entity) int {
+			if a.Identity() > b.Identity() {
+				return 1
+			} else if a.Identity() < b.Identity() {
+				return -1
+			}
+
+			return 0 // actually, can only happen for non-unique iterator
+		})
 	}
 
 	return res
