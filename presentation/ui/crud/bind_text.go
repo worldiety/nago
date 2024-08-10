@@ -48,9 +48,18 @@ func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get())
 		},
-		RenderTableCell: func(self Field[E], entity E) ui.TTableCell {
-			v := *property(&entity)
+		RenderTableCell: func(self Field[E], entity *E) ui.TTableCell {
+			v := *property(entity)
 			return ui.TableCell(ui.Text(string(v)))
+		},
+		RenderCardElement: func(self Field[E], entity *E) ui.DecoredView {
+			v := *property(entity)
+			return ui.VStack(
+				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
+					Alignment(ui.Leading).
+					Frame(ui.Frame{}.FullWidth()),
+				ui.Text(string(v)),
+			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
 			av := *property(&a)

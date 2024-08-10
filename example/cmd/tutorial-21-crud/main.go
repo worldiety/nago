@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
@@ -66,6 +67,12 @@ func main() {
 				crud.Text("Nachname", func(entity *Person) *string {
 					return &entity.Lastname
 				}),
+
+				crud.Views("Optionen", func(e *Person) core.View {
+					return ui.PrimaryButton(func() {
+						fmt.Println("delete", e)
+					}).Title("Löschen")
+				}),
 			)
 
 			opts := &crud.Options[Person, PID]{}
@@ -75,7 +82,8 @@ func main() {
 			return ui.VStack(
 				crud.NewView[Person, PID](wnd, opts, bnd),
 				crud.Form[Person](bnd, &example),
-			)
+				crud.Card[Person](bnd, &example).Frame(ui.Frame{Width: ui.L320}),
+			).Padding(ui.Padding{}.All(ui.L16))
 		})
 	}).Run()
 }

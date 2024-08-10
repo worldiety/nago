@@ -1,17 +1,19 @@
 package ui
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
 
 type TButton struct {
-	title    string
-	preIcon  ora.SVG
-	postIcon ora.SVG
-	frame    Frame
-	preset   StylePreset
-	action   func()
+	title              string
+	accessibilityLabel string
+	preIcon            ora.SVG
+	postIcon           ora.SVG
+	frame              Frame
+	preset             StylePreset
+	action             func()
 }
 
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
@@ -53,6 +55,15 @@ func (c TButton) Frame(frame Frame) TButton {
 }
 
 func (c TButton) Render(context core.RenderContext) ora.Component {
+	alabel := c.title
+	if alabel == "" {
+		alabel = c.accessibilityLabel
+	}
+
+	if alabel == "" {
+		panic(fmt.Errorf("the ora guidelines forbid buttons without accessibility label"))
+	}
+
 	return HStack(
 		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
 		If(c.title != "", Text(c.title)),
@@ -61,5 +72,6 @@ func (c TButton) Render(context core.RenderContext) ora.Component {
 		Action(c.action).
 		StylePreset(c.preset).
 		Frame(c.frame).
+		AccessibilityLabel(alabel).
 		Render(context)
 }

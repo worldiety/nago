@@ -29,6 +29,11 @@ var (
 		Size:   "1.5rem",
 		Weight: BoldFontWeight,
 	}
+
+	SubTitle = Font{
+		Size:   "1rem",
+		Weight: BoldFontWeight,
+	}
 )
 
 type FontStyle string

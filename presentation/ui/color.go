@@ -29,3 +29,35 @@ func (c Color) WithTransparency(a int8) Color {
 func (c Color) WithBrightness(b int8) Color {
 	return mustParseHSL(string(c)).Brightness(float64(b)).RGBHex()
 }
+
+const (
+	// M0 is the main color variable name.
+	M0 Color = "M0"
+
+	// M1 is a variable name usually used for the background.
+	M1 Color = "M1"
+
+	// M2 is a variable name usually used as the background for first level container.
+	M2 Color = "M2"
+
+	// M3 is a variable name usually used for a card bottom area.
+	M3 Color = "M3"
+
+	// M4 is a variable name usually used for a card body area.
+	M4 Color = "M4"
+
+	// M5 is a variable name usually used for Line / Dot on SC.
+	M5 Color = "M5"
+
+	// M6 is a variable name usually used for hovered containers.
+	M6 Color = "M6"
+
+	// M7 is a variable name usually used for Text or muted icons.
+	M7 Color = "M7"
+
+	// M8 is a variable name usually used for Text or icons.
+	M8 Color = "M8"
+
+	// M9 is a variable name usually used for card Top area.
+	M9 Color = "M9"
+)

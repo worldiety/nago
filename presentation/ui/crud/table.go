@@ -19,7 +19,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts *Options[Entity, ID],
 				if field.RenderTableCell == nil {
 					cells = append(cells, ui.TableCell(nil))
 				} else {
-					cells = append(cells, field.RenderTableCell(field, entity))
+					cells = append(cells, field.RenderTableCell(field, &entity))
 				}
 			}
 

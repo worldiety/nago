@@ -26,10 +26,10 @@ type Field[T any] struct {
 	RenderFormElement func(self Field[T], entity *T) ui.DecoredView
 
 	// RenderTableCell may be nil, if it shall not be shown in tables.
-	RenderTableCell func(self Field[T], entity T) ui.TTableCell
+	RenderTableCell func(self Field[T], entity *T) ui.TTableCell
 
 	// RenderCardElement may be nil, if it shall not be shown on a card.
-	RenderCardElement func(self Field[T], entity T) ui.DecoredView
+	RenderCardElement func(self Field[T], entity *T) ui.DecoredView
 
 	// Window is needed to hold states while editing, to allow downloads and be responsive.
 	// It must not be nil.
@@ -54,6 +54,21 @@ type Field[T any] struct {
 
 func (f Field[T]) WithoutSorting() Field[T] {
 	f.Comparator = nil
+	return f
+}
+
+func (f Field[T]) WithoutCard() Field[T] {
+	f.RenderCardElement = nil
+	return f
+}
+
+func (f Field[T]) WithoutForm() Field[T] {
+	f.RenderFormElement = nil
+	return f
+}
+
+func (f Field[T]) WithoutTable() Field[T] {
+	f.RenderTableCell = nil
 	return f
 }
 

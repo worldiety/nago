@@ -6,46 +6,28 @@ import (
 )
 
 type TSpacer struct {
-	alignment       ora.Alignment
 	backgroundColor ora.Color
 	frame           ora.Frame
 	border          ora.Border
 }
 
+// Spacer is used in VStack or HStack to grow and shrink as required.
 func Spacer() TSpacer {
 	return TSpacer{}
 }
 
-func (c TSpacer) Alignment() ora.Alignment {
-	return c.alignment
+func (c TSpacer) BackgroundColor(backgroundColor Color) TSpacer {
+	c.backgroundColor = backgroundColor.ora()
+	return c
 }
 
-func (c TSpacer) SetAlignment(alignment ora.Alignment) {
-	c.alignment = alignment
+func (c TSpacer) Frame(frame Frame) TSpacer {
+	c.frame = frame.ora()
+	return c
 }
 
-func (c TSpacer) BackgroundColor() ora.Color {
-	return c.backgroundColor
-}
-
-func (c TSpacer) SetBackgroundColor(backgroundColor ora.Color) {
-	c.backgroundColor = backgroundColor
-}
-
-func (c TSpacer) Frame() ora.Frame {
-	return c.frame
-}
-
-func (c TSpacer) SetFrame(frame ora.Frame) {
-	c.frame = frame
-}
-
-func (c TSpacer) Border() ora.Border {
-	return c.border
-}
-
-func (c TSpacer) SetBorder(border ora.Border) {
-	c.border = border
+func (c TSpacer) Border(border Border) {
+	c.border = border.ora()
 }
 
 func (c TSpacer) Render(ctx core.RenderContext) ora.Component {
