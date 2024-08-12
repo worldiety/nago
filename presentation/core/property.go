@@ -11,5 +11,8 @@ type Property interface {
 
 	parse(v any) error
 	getGeneration() int64
+	setGeneration(g int64)
 	clearObservers()
+	destroy()
+	isDestroyed() bool
 }

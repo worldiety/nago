@@ -256,11 +256,11 @@ function onRowMouseLeave(rowIdx: number) {
 		<table class="w-full text-left  rtl:text-right" :style="frameStyles">
 			<thead
 				v-if="props.ui.h?.c"
-				class="font-medium"
+				class=""
 				:style="headStyles()"
 			>
 			<tr>
-				<th v-for="(head,headIdx) in props.ui.h.c" scope="col" :style="headCellStyles(headIdx)"
+				<th class="font-normal" v-for="(head,headIdx) in props.ui.h.c" scope="col" :style="headCellStyles(headIdx)"
 						@click.stop="onClickHeaderCell(headIdx)"
 						@mouseenter="onHeadCellMouseEnter(headIdx)" @mouseleave="onHeadCellMouseLeave(headIdx)"
 				>

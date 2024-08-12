@@ -15,7 +15,9 @@ type PermissionDenied interface {
 	PermissionDenied() bool
 }
 
-func ButtonDelete[E any](wnd core.Window, deleteFn func(*E) error) func(*E) core.View {
+type ElementViewFactory[E any] func(*E) core.View
+
+func ButtonDelete[E any](wnd core.Window, deleteFn func(*E) error) ElementViewFactory[E] {
 	return func(e *E) core.View {
 		noSuchPermisionPresented := core.AutoState[bool](wnd)
 		areYouSurePresented := core.AutoState[bool](wnd)
@@ -44,7 +46,7 @@ func ButtonDelete[E any](wnd core.Window, deleteFn func(*E) error) func(*E) core
 // Views creates a field binding to E and renders with the binded E the given options.
 // Keep in mind, to remove Render* functions, if it does not make sense or may cause
 // malfunctions in the context, e.g. deleting an E without navigation.
-func Views[E any](label string, options ...func(*E) core.View) Field[E] {
+func Views[E any](label string, options ...ElementViewFactory[E]) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderTableCell: func(self Field[E], entity *E) ui.TTableCell {
@@ -53,8 +55,11 @@ func Views[E any](label string, options ...func(*E) core.View) Field[E] {
 					yield(option(entity))
 				}
 			})...).
+				// hstack
 				Gap(ui.L4).
-				Alignment(ui.Trailing))
+				Alignment(ui.Trailing)).
+				//table cell
+				Alignment(ui.Trailing)
 		},
 		RenderCardElement: func(self Field[E], entity *E) ui.DecoredView {
 			return ui.HStack(slices.Collect(func(yield func(cell core.View) bool) {

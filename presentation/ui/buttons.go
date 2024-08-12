@@ -14,6 +14,7 @@ type TButton struct {
 	postIcon           ora.SVG
 	frame              Frame
 	preset             StylePreset
+	font               Font
 	action             func()
 	trace              string
 }
@@ -46,6 +47,11 @@ func initButton(action func(), preset StylePreset) TButton {
 
 func (c TButton) Title(text string) TButton {
 	c.title = text
+	return c
+}
+
+func (c TButton) Font(font Font) TButton {
+	c.font = font
 	return c
 }
 
@@ -83,7 +89,7 @@ func (c TButton) Render(context core.RenderContext) ora.Component {
 
 	return HStack(
 		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
-		If(c.title != "", Text(c.title)),
+		If(c.title != "", Text(c.title).Font(c.font)),
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
 		Action(c.action).

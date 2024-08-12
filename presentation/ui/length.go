@@ -76,6 +76,8 @@ func (l Length) Mul(s float64) Length {
 // The following Length sizes are common for the ORA design system and will automatically adjust to the root elements font size.
 // It is similar to the effect of Androids SP unit, however its factor is by default at 16, because we just use the CSS semantics.
 const (
+	// L0 relates to 0px which has usually a different meaning than Auto.
+	L0 Length = "0px"
 	// L1 relates to hairline which is always 1dp.
 	L1 Length = "1px"
 	// L2 relates to about 2dp at default font scale.

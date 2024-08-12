@@ -155,3 +155,5 @@ func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq
 
 	return slices.Values2[[]Permission, Permission, error](tmp)
 }
+
+// TODO add observer to changed users

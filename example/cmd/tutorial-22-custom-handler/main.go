@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"strings"
 	"sync/atomic"
-	"time"
 )
 
 //go:embed animated-green-astronaut-helmet.svg
@@ -37,16 +36,10 @@ func main() {
 			}
 		})
 
+		// press reload in your browser and watch how the image is loaded
 		cfg.Component(".", func(wnd core.Window) core.View {
-			wnd.Once("my-timer", func() {
-				// schedule will attach the given task callback to the lifecycle of the window.
-				// CAUTION: only attach once, because we are rendered arbitrary often.
-				core.Schedule(wnd, 5*time.Second, nil)
-			})
-
 			// use a little trick to trigger a reload in the native image view by changing the uri a bit
 			return ui.Image().URI(core.URI(fmt.Sprintf("%s?version=%d", uri, atomic.LoadInt64(&invocationCount))))
-
 		})
 	}).Run()
 }

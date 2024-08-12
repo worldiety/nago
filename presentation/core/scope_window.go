@@ -42,7 +42,6 @@ type scopeWindow struct {
 	values                Values
 	declaredBuffers       map[declaredBufferKey]ora.Ptr
 	lastDeclaredBufferPtr ora.Ptr
-	once                  map[string]func()
 	isRendering           bool
 	generation            int64
 }
@@ -95,6 +94,8 @@ func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
 		if property.getGeneration() < currentGeneration {
 			delete(s.statesById, id)
 			delete(s.states, property.ID())
+			property.destroy()
+
 			slog.Info("purged unused state", "id", id, "expected", currentGeneration, "has", property.getGeneration())
 		}
 	}
@@ -143,19 +144,28 @@ func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {
 }
 
 func (s *scopeWindow) Invalidate() {
-	if s.destroyed {
-		return
-	}
-	s.parent.forceRender()
+	s.Execute(func() {
+		if s.destroyed {
+			return
+		}
+		s.parent.forceRender()
+	})
+
 }
 
 func (s *scopeWindow) destroy() {
 	s.destroyed = true
+
+	for _, property := range s.states {
+		property.clearObservers()
+		property.destroy()
+	}
+
 	for _, f := range s.destroyObservers {
 		f()
 	}
 	clear(s.destroyObservers)
-	clear(s.once)
+
 }
 
 func (s *scopeWindow) Handle(buf []byte) (ora.Ptr, bool) {
@@ -320,17 +330,4 @@ func (s *scopeWindow) Locale() language.Tag {
 
 func (s *scopeWindow) Location() *time.Location {
 	return s.parent.location
-}
-
-func (s *scopeWindow) Once(id string, fn func()) {
-	if s.once == nil {
-		s.once = map[string]func(){}
-	}
-
-	if _, ok := s.once[id]; ok {
-		return
-	}
-
-	s.once[id] = fn
-	fn()
 }
