@@ -24,9 +24,9 @@ func main() {
 			return VStack(
 				Text(fmt.Sprintf("size class %s", wnd.Info().SizeClass)),
 				ViewThatMatches(wnd,
-					SizeClass(SizeClass2XL, largeLayout(oraImgUri)),
-					SizeClass(SizeClassSmall, smallLayout()),
-					SizeClass(SizeClassMedium, mediumLayout(oraImgUri)),
+					SizeClass(core.SizeClass2XL, largeLayout(oraImgUri)),
+					SizeClass(core.SizeClassSmall, smallLayout()),
+					SizeClass(core.SizeClassMedium, mediumLayout(oraImgUri)),
 				),
 			).BackgroundColor("#F5F5F5").
 				Frame(Frame{}.FullWidth()).Padding(Padding{}.All(L44))

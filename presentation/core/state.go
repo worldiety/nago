@@ -134,7 +134,7 @@ func (s *State[T]) Set(v T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration())
+	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration()) // TODO set this once in the scope_window for better performance
 	s.value = v
 	s.valid = true
 }

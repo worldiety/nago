@@ -13,6 +13,7 @@ type alertOpts struct {
 	state     *core.State[bool]
 	okBtn     core.View
 	delBtn    core.View
+	saveBtn   core.View
 	cancelBtn core.View
 }
 
@@ -38,6 +39,20 @@ func Delete(onDelete func()) Option {
 				onDelete()
 			}
 		}).Title("Löschen")
+	})
+}
+
+func Save(onSave func() (close bool)) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.saveBtn = ui.PrimaryButton(func() {
+			open := false
+			if onSave != nil {
+				open = !onSave()
+			}
+
+			opts.state.Set(open)
+
+		}).Title("Speichern")
 	})
 }
 
@@ -74,6 +89,10 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 
 			if options.delBtn != nil {
 				btns = append(btns, options.delBtn)
+			}
+
+			if options.saveBtn != nil {
+				btns = append(btns, options.saveBtn)
 			}
 
 			if len(btns) > 0 {

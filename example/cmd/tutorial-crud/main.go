@@ -5,7 +5,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
-	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/uilegacy"
 	"go.wdy.de/nago/presentation/uix/crud"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -28,6 +28,7 @@ func (p Person) Identity() PID {
 type Persons data.Repository[Person, PID]
 
 func main() {
+
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())

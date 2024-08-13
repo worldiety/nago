@@ -23,13 +23,13 @@ type Field[T any] struct {
 	SupportingText string
 
 	// RenderFormElement may be nil, if it shall not be shown in a form.
-	RenderFormElement func(self Field[T], entity *T) ui.DecoredView
+	RenderFormElement func(self Field[T], entity *core.State[T]) ui.DecoredView
 
 	// RenderTableCell may be nil, if it shall not be shown in tables.
-	RenderTableCell func(self Field[T], entity *T) ui.TTableCell
+	RenderTableCell func(self Field[T], entity *core.State[T]) ui.TTableCell
 
 	// RenderCardElement may be nil, if it shall not be shown on a card.
-	RenderCardElement func(self Field[T], entity *T) ui.DecoredView
+	RenderCardElement func(self Field[T], entity *core.State[T]) ui.DecoredView
 
 	// Window is needed to hold states while editing, to allow downloads and be responsive.
 	// It must not be nil.
@@ -94,6 +94,22 @@ func NewBinding[T any](wnd core.Window) *Binding[T] {
 	return &Binding[T]{
 		wnd: wnd,
 	}
+}
+
+// Inherit returns a defensive copy with the new id set.
+func (b *Binding[T]) Inherit(id string) *Binding[T] {
+	cpy := &Binding[T]{
+		id:     id,
+		wnd:    b.wnd,
+		fields: make([]Field[T], 0, len(b.fields)),
+	}
+
+	for _, field := range b.fields {
+		field.ID = ""
+		cpy.Add(field)
+	}
+
+	return cpy
 }
 
 // SetID sets the internal binding id, which is used to render a field binding.

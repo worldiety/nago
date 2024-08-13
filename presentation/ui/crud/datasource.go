@@ -35,6 +35,7 @@ func (ds *dataSource[Entity, ID]) List() []Entity {
 						str := field.Stringer(e)
 						if predicate(str) {
 							res = append(res, e)
+							break
 						}
 					}
 				}

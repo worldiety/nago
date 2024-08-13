@@ -1,7 +1,5 @@
 package core
 
-import "log/slog"
-
 // DP is Density-independent pixels: an abstract unit that is based on the physical density of the screen.
 // These units are relative to a 160 dpi (dots per inch) screen, on which 1 dp is roughly equal to 1 px.
 // When running on a higher density screen, the number of pixels used to draw 1 dp is scaled up by a factor
@@ -73,45 +71,3 @@ const (
 	// SizeClass2XL are devices below 1536dp screen width.
 	SizeClass2XL WindowSizeClass = "2xl"
 )
-
-type ViewWithSizeClass struct {
-	SizeClass WindowSizeClass
-	View      View
-}
-
-func SizeClass(class WindowSizeClass, view View) ViewWithSizeClass {
-	return ViewWithSizeClass{
-		SizeClass: class,
-		View:      view,
-	}
-}
-
-// ViewThatMatches returns the best logical match for the given view with size class matcher.
-func ViewThatMatches(wnd Window, matches ...ViewWithSizeClass) View {
-	if len(matches) == 0 {
-		panic("you must provide at least a single matcher")
-	}
-
-	class := wnd.Info().SizeClass
-	if !class.Valid() {
-		slog.Error("frontend has not submitted a window size class, assuming sm")
-		class = SizeClassSmall
-	}
-
-	var best ViewWithSizeClass
-	for _, match := range matches {
-		if match.SizeClass.Ordinal() > best.SizeClass.Ordinal() && match.SizeClass.Ordinal() <= class.Ordinal() {
-			best = match
-		}
-	}
-
-	if best.SizeClass == "" && best.View == nil {
-		panic("unreachable")
-	}
-
-	if best.View == nil {
-		panic("you must not provide an empty view in match")
-	}
-
-	return best.View
-}

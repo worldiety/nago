@@ -295,6 +295,7 @@ func (s *Scope) updateTick(now time.Time) {
 			return
 		}
 
+		// TODO replace individual flags with a single flag per scope_window
 		requiresRender := false
 		for _, property := range alloc.states {
 			if property.dirty() {

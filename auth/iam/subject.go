@@ -14,6 +14,10 @@ func (e PermissionDeniedError) Error() string {
 	return fmt.Sprintf("permission denied: %s", string(e))
 }
 
+func (e PermissionDeniedError) PermissionDenied() bool {
+	return true
+}
+
 var _ auth.Subject = nagoSubject{}
 
 type nagoSubject struct {

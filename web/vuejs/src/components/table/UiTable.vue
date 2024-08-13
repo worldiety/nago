@@ -252,8 +252,8 @@ function onRowMouseLeave(rowIdx: number) {
 </script>
 
 <template>
-	<div class="relative overflow-x-auto">
-		<table class="w-full text-left  rtl:text-right" :style="frameStyles">
+
+		<table class="w-full text-left  rtl:text-right overflow-x-auto" :style="frameStyles">
 			<thead
 				v-if="props.ui.h?.c"
 				class=""
@@ -285,5 +285,5 @@ function onRowMouseLeave(rowIdx: number) {
 			</tr>
 			</tbody>
 		</table>
-	</div>
+
 </template>

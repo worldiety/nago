@@ -1,14 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
 	"go.wdy.de/nago/web/vuejs"
+	"log"
+	"log/slog"
+	"net/http"
 )
+
+import _ "net/http/pprof"
 
 type PID string
 type Score int
@@ -28,6 +33,10 @@ func (p Person) Identity() PID {
 type Persons data.Repository[Person, PID]
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
@@ -50,12 +59,10 @@ func main() {
 			})
 		})
 
-		example := Person{Firstname: "Mr. Singleton"}
-
 		cfg.Component(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Person](wnd)
 			bnd.Add(
-				crud.Text("Vorname", func(entity *Person) *string {
+				crud.TextField("Vorname", func(entity *Person) *string {
 					return &entity.Firstname
 				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
 					if person.Firstname != "Torben" {
@@ -64,25 +71,30 @@ func main() {
 
 					return "", nil
 				}).WithSupportingText("Gib Torben ein"),
-				crud.Text("Nachname", func(entity *Person) *string {
+				crud.TextField("Nachname", func(entity *Person) *string {
 					return &entity.Lastname
 				}),
 
-				crud.Views("Optionen",
-					crud.ButtonDelete[Person](wnd, func(p *Person) error {
-						return fmt.Errorf("not implemented")
+				crud.OptionsField("Optionen",
+					crud.ButtonDelete[Person](wnd, func(p Person) error {
+						slog.Info("delete person", "id", p.ID)
+						return iam.PermissionDeniedError("bla")
+					}),
+					crud.ButtonEdit[Person](wnd, bnd, func(p Person) (string, error) {
+						slog.Info("update person", "id", p.ID, p)
+						return "", persons.Save(p)
 					}),
 				),
 			)
 
-			opts := &crud.Options[Person, PID]{}
-
-			opts.FindAll(persons.Each)
-
 			return ui.VStack(
-				crud.NewView[Person, PID](wnd, opts, bnd),
-				crud.Form[Person](bnd, &example),
-				crud.Card[Person](bnd, &example).Frame(ui.Frame{Width: ui.L320}),
+				crud.NewView[Person, PID](
+					crud.Options[Person, PID](wnd, bnd).
+						FindAll(persons.Each).
+						Title("Personen"),
+				),
+				//	crud.Form[Person](bnd, &example),
+				//	crud.Card[Person](bnd, &example).Frame(ui.Frame{Width: ui.L320}),
 			).Padding(ui.Padding{}.All(ui.L16))
 		})
 	}).Run()

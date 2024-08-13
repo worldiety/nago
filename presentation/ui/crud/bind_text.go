@@ -10,21 +10,29 @@ import (
 	"strings"
 )
 
-func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
+func TextField[E any, T ~string](label string, property func(*E) *T) Field[E] {
 	return Field[E]{
 		Label: label,
-		RenderFormElement: func(self Field[E], entity *E) ui.DecoredView {
-			state := core.StateOf[string](self.Window, self.ID).From(func() string {
-				return string(*property(entity))
+		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
+			fmt.Println("render form fuck")
+			state := core.StateOf[string](self.Window, self.ID+"bla").From(func() string {
+				fmt.Println("fuck new", entity.Get())
+				var tmp E
+				tmp = entity.Get()
+				return string(*property(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
 
 			state.Observe(func(newValue string) {
-				f := property(entity)
+				var tmp E
+				tmp = entity.Get()
+				f := property(&tmp)
 				*f = T(newValue)
+				entity.Set(tmp)
+				fmt.Println("shall update", newValue, entity)
 				if self.Validate != nil {
-					errText, err := self.Validate(*entity)
+					errText, err := self.Validate(entity.Get())
 					if err != nil {
 						if errText == "" {
 							var tmp [16]byte
@@ -46,14 +54,18 @@ func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
 			return ui.TextField(label, state.String()).
 				InputValue(state).
 				SupportingText(self.SupportingText).
-				ErrorText(errState.Get())
+				ErrorText(errState.Get()).
+				Frame(ui.Frame{}.FullWidth())
 		},
-		RenderTableCell: func(self Field[E], entity *E) ui.TTableCell {
-			v := *property(entity)
+		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
+			tmp := entity.Get()
+			v := *property(&tmp)
 			return ui.TableCell(ui.Text(string(v)))
 		},
-		RenderCardElement: func(self Field[E], entity *E) ui.DecoredView {
-			v := *property(entity)
+		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
+			var tmp E
+			tmp = entity.Get()
+			v := *property(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).

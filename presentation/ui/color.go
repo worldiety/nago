@@ -31,7 +31,7 @@ func (c Color) WithBrightness(b int8) Color {
 }
 
 const (
-	// M0 is the main color variable name.
+	// M0 is the source main color variable name.
 	M0 Color = "M0"
 
 	// M1 is a variable name usually used for the background.
@@ -60,4 +60,34 @@ const (
 
 	// M9 is a variable name usually used for card Top area.
 	M9 Color = "M9"
+
+	// A0 is the source accent color name.
+	A0 Color = "A0"
+
+	// A1 is a variable name usually used for card progress bars, H2 or Borders.
+	A1 Color = "A1"
+
+	// I0 is the source interactive color name.
+	I0 Color = "I0"
+
+	// I1 is a variable name usually used for buttons.
+	I1 Color = "I1"
+
+	// SE0 is the source error color variable name.
+	SE0 Color = "SE0"
+
+	// SW0 is the source warning color variable name.
+	SW0 Color = "SW0"
+
+	// SG0 is the source good color variable name.
+	SG0 Color = "SG0"
+
+	// SV0 is the source Informative color variable name.
+	SV0 Color = "SV0"
+
+	// SI0 is the source disabled input color variable name.
+	SI0 Color = "SI0"
+
+	// ST0 is the source disabled text color variable name.
+	ST0 Color = "ST0"
 )
