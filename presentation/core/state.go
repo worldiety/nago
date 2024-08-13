@@ -263,7 +263,7 @@ func AutoState[T any](wnd Window) *State[T] {
 }
 
 // OnAppear executes the given function only once for the given identity state. It triggers an invalidation
-// after the fn is done, but if you need to redraw while running, use [Window.Invalidate].
+// after the fn is eolDone, but if you need to redraw while running, use [Window.Invalidate].
 // The identity is asserted by the given id. If empty, an AutoState derived by structural identity is assumed.
 // This is similar to Jetpack Compose LaunchedEffect, see also
 // https://developer.android.com/develop/ui/compose/side-effects#launchedeffect.
@@ -294,7 +294,7 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 			// not sure what to do here: this may mean, that the ctx escaped to another go-routine in fn
 			defer cancel()
 			fn(ctx)
-			wnd.Invalidate()
+			//wnd.Invalidate()
 		}()
 
 		return true
@@ -317,7 +317,7 @@ func OnDisappear(wnd Window, id string, fn func(ctx context.Context)) {
 			go func() {
 				defer cancel()
 				fn(ctx)
-				wnd.Invalidate()
+				//wnd.Invalidate()
 			}()
 		})
 

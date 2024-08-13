@@ -151,10 +151,10 @@ func (l *EventLoop) Destroy() {
 		return
 	}
 	/*
-		l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the done channel
+		l.tickWithoutLock() // tick is posting messages into batchChan, but it is not clear if this has a defined timing regarding the eolDone channel
 
-		l.done <- true
-		close(l.done)
+		l.eolDone <- true
+		close(l.eolDone)
 		close(l.batchChan)
 		l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
 	*/
@@ -163,7 +163,13 @@ func (l *EventLoop) Destroy() {
 			return
 		}
 
-		l.done <- true
+		select {
+		case l.done <- true:
+		default:
+			panic("eolDone cannot accept destruction twice")
+			return
+		}
+
 		close(l.done)
 		close(l.batchChan)
 	})

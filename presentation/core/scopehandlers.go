@@ -16,7 +16,7 @@ func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
 	/*
 		defer func() {
 			if ackRequired {
-				slog.Info(fmt.Sprintf("handleEvent done: %d %T", t.ReqID(), t))
+				slog.Info(fmt.Sprintf("handleEvent eolDone: %d %T", t.ReqID(), t))
 			}
 		}*/
 	switch evt := t.(type) {

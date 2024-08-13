@@ -41,6 +41,7 @@ type Configurator struct {
 	rawEndpoint              []rawEndpoint
 	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri               ora.URI
+	fps                      int
 }
 
 func NewConfigurator() *Configurator {
@@ -65,6 +66,7 @@ func NewConfigurator() *Configurator {
 			core.Dark:  {},
 			core.Light: {},
 		},
+		fps:                10,
 		ctx:                ctx,
 		done:               done,
 		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.View{},
@@ -165,6 +167,16 @@ func (c *Configurator) DataDir() string {
 func (c *Configurator) SetDataDir(dir string) {
 	c.dataDir = dir
 	slog.Info("data directory updated", slog.String("dir", c.dataDir))
+}
+
+// SetFPS sets the internal application-wide update rate, at which state-induced rendering shall at most happen.
+// This will cause a linear overhead depending on the amount of active scopes and states. Default is 10fps, which
+// means that the application will check in 100ms slices, if a state has changed within a window and trigger a render.
+// The higher the fps, the more CPU cycles will be burned. Keep in mind, that you have a website with a
+// high-latency and small throughput channel. If you are unsure, if you need to adjust this, you probably won't need
+// it.
+func (c *Configurator) SetFPS(fps int) {
+	c.fps = fps
 }
 
 // Directory returns an allocated local directory underneath the data dir

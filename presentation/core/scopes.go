@@ -9,25 +9,43 @@ import (
 
 // Scopes manages all available scopes and their lifetimes.
 type Scopes struct {
-	ticker    *time.Ticker
-	done      chan bool
-	scopes    concurrent.CoWMap[ora.ScopeID, *Scope]
-	destroyed concurrent.Value[bool]
+	eolTicker    *time.Ticker
+	eolDone      chan bool
+	updateTicker *time.Ticker
+	updateDone   chan bool
+	scopes       concurrent.CoWMap[ora.ScopeID, *Scope]
+	destroyed    concurrent.Value[bool]
 }
 
-func NewScopes() *Scopes {
-	s := &Scopes{ticker: time.NewTicker(time.Minute), done: make(chan bool)}
+func NewScopes(fps int) *Scopes {
+	s := &Scopes{
+		eolTicker:    time.NewTicker(time.Minute),
+		eolDone:      make(chan bool),
+		updateTicker: time.NewTicker(time.Duration(1000/fps) * time.Millisecond),
+	}
 	go func() {
 		for {
 			select {
-			case <-s.done:
+			case <-s.eolDone:
 				return
-			case t := <-s.ticker.C:
+			case t := <-s.eolTicker.C:
 				s.tick(t)
 			}
 		}
 
 	}()
+
+	go func() {
+		for {
+			select {
+			case <-s.updateDone:
+				return
+			case t := <-s.updateTicker.C:
+				s.updateTick(t)
+			}
+		}
+	}()
+
 	return s
 }
 
@@ -54,13 +72,22 @@ func (s *Scopes) tick(now time.Time) {
 
 }
 
+func (s *Scopes) updateTick(now time.Time) {
+	s.scopes.Each(func(key ora.ScopeID, scope *Scope) bool {
+		scope.updateTick(now)
+		return true
+	})
+
+}
+
 // Destroy stops the internal timer and frees all contained scopes.
 func (s *Scopes) Destroy() {
 	if !concurrent.CompareAndSwap(&s.destroyed, false, true) {
 		return
 	}
 
-	s.ticker.Stop()
+	s.eolTicker.Stop()
+	s.updateTicker.Stop()
 
 	s.scopes.Each(func(key ora.ScopeID, scope *Scope) bool {
 		scope.Destroy()

@@ -99,7 +99,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
-	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers)
+	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps)
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {

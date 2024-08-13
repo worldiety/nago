@@ -46,27 +46,27 @@ type Executor interface {
 // the schedule is cancelled explicitly. It invalidates the view root automatically.
 //func Schedule(wnd Window, d time.Duration, task func()) (cancel func()) {
 //	if wnd != nil {
-//		ticker := time.NewTicker(d)
-//		done := make(chan bool)
+//		eolTicker := time.NewTicker(d)
+//		eolDone := make(chan bool)
 //		closed := false
 //		wnd.AddDestroyObserver(func() {
-//			ticker.Stop()
+//			eolTicker.Stop()
 //			if closed {
 //				return
 //			}
-//			done <- true
+//			eolDone <- true
 //		})
 //
 //		go func() {
 //			defer func() {
-//				close(done)
+//				close(eolDone)
 //				closed = true
 //			}()
 //			for {
 //				select {
-//				case <-done:
+//				case <-eolDone:
 //					return
-//				case <-ticker.C:
+//				case <-eolTicker.C:
 //					wnd.Execute(func() {
 //						if task != nil {
 //							task()
@@ -82,7 +82,7 @@ type Executor interface {
 //				return
 //			}
 //
-//			done <- true
+//			eolDone <- true
 //		}
 //	}
 //

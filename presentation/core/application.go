@@ -42,14 +42,14 @@ type Application struct {
 	colorSets                map[ColorScheme]map[NamespaceName]ColorSet
 }
 
-func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver) *Application {
+func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver, fps int) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	return &Application{
 		destructors:              concurrent.NewLinkedList[func()](),
 		scopeLifetime:            time.Minute,
 		factories:                factories,
-		scopes:                   NewScopes(),
+		scopes:                   NewScopes(fps),
 		ctx:                      cancelCtx,
 		cancelCtx:                cancel,
 		tmpDir:                   tmpDir,

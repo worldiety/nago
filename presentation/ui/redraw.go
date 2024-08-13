@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
+// RedrawAtFixedRate just passes the given view and causes a redraw using the given rate.
+// Note, that a rate lower than the applications fps rate, will have no effect and changes
+// between render cycles become not visible.
 func RedrawAtFixedRate[T core.View](wnd core.Window, rate time.Duration, v T) T {
+	frames := core.AutoState[int64](wnd)
 	core.OnAppear(wnd, "", func(ctx context.Context) {
 		for {
 			if ctx.Err() != nil {
@@ -14,7 +18,8 @@ func RedrawAtFixedRate[T core.View](wnd core.Window, rate time.Duration, v T) T 
 			}
 
 			time.Sleep(rate)
-			wnd.Invalidate()
+			// mark the state as dirty in the current render generation and cause a sliced redraw
+			frames.Set(frames.Get() + 1)
 		}
 	})
 

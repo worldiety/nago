@@ -15,4 +15,5 @@ type Property interface {
 	clearObservers()
 	destroy()
 	isDestroyed() bool
+	dirty() bool
 }

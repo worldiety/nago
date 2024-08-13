@@ -8,11 +8,17 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"log"
 	"log/slog"
+	"net/http"
 	"time"
 )
+import _ "net/http/pprof"
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
@@ -24,21 +30,17 @@ func main() {
 				slog.Info("launched")
 				for {
 					if ctx.Err() != nil {
-						slog.Error("my-timer has exited")
+						slog.Info("my-timer has exited")
 						break // exit
 					}
 
 					time.Sleep(time.Second)
 
-					// states are thread safe for setting and getting
+					// states are thread safe for setting and getting and
+					// will trigger a time-sliced re-render automatically
 					seconds.Set(seconds.Get() + 1)
 
 					slog.Info("my seconds", slog.Int("secs", seconds.Get()))
-
-					// Note, that this endless-loop is one of the rare situations, where you have to
-					// issue a manual invalidation, otherwise the window does not know when to render.
-					// On the other hand, if this func is done, an invalidation is triggered automatically.
-					wnd.Invalidate()
 				}
 				slog.Info("exit")
 			})

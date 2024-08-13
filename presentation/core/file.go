@@ -61,7 +61,7 @@ func (r readerReadCloser) Close() error {
 // within a different executor.
 // Small files and fast processing times are usually never a problem, because we don't need to invalidate within
 // millisecond range as mobile apps itself.
-// Note, that you must close the files carefully and release the FS manually, when you are done,
+// Note, that you must close the files carefully and release the FS manually, when you are eolDone,
 // because the scope don't know if you have spawned a concurrent go routine or want to continue processing later.
 // Use [Release] for that, as you can't assert which implementation you will actually get.
 //

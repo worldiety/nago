@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,11 +16,12 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
+		var redrawCounter atomic.Uint64
 		cfg.Component(".", func(wnd core.Window) core.View {
-			redraws := core.AutoState[int](wnd)
-			redraws.Set(redraws.Get() + 1)
+			// this shows how to redraw views with a fixed rate, without using states to signal view invalidation
+			redrawCounter.Add(1)
 
-			return ui.RedrawAtFixedRate(wnd, time.Second, ui.Text(fmt.Sprintf("redraw: %v", redraws)))
+			return ui.RedrawAtFixedRate(wnd, time.Second, ui.Text(fmt.Sprintf("redraw: %v", redrawCounter.Load())))
 		})
 	}).Run()
 }

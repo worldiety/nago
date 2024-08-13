@@ -284,6 +284,31 @@ func (s *Scope) forceRender() {
 	s.Publish(s.render(0, alloc))
 }
 
+// updateTick is called with a fixed rate. There is one application wide update ticker, thus this must not block at
+// all.
+func (s *Scope) updateTick(now time.Time) {
+	s.eventLoop.Post(func() {
+		// I can't estimate how expensive this becomes, to post for thousands of scopes at once. However, the updater
+		// will throttle automatically, if it becomes to slow.
+		alloc, err := s.allocatedRootView.Get()
+		if err != nil {
+			return
+		}
+
+		requiresRender := false
+		for _, property := range alloc.states {
+			if property.dirty() {
+				requiresRender = true
+				break
+			}
+		}
+
+		if requiresRender {
+			s.forceRender()
+		}
+	})
+}
+
 // only for event loop
 func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.ComponentInvalidated {
 
@@ -299,6 +324,7 @@ func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.Compo
 // Do never call this from the event loop.
 // Note, that this may race logically when called concurrently.
 func (s *Scope) Destroy() {
+	fmt.Println("scope.Destroy")
 	if !concurrent.CompareAndSwap(&s.destroyed, false, true) {
 		return
 	}
@@ -323,11 +349,11 @@ func (s *Scope) AddOnDestroyObserver(f func()) {
 
 // only for event loop
 func (s *Scope) destroy() {
-	if s.destroyed.Value() {
-		return
-	}
-
-	s.destroyed.SetValue(true)
+	//if s.destroyed.Value() {
+	//	return
+	//}
+	//
+	//s.destroyed.SetValue(true)
 
 	s.cancelCtx()
 

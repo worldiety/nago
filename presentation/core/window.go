@@ -53,12 +53,6 @@ type RootViewFactory string
 // However, obviously every component lives inside a window of the frontend and navigation is related to that.
 // Today, a frontend client must treat a scope as a window.
 type Window interface {
-	// Execute posts the task into the associated Executor. It will be executed in the associated event loop
-	// to allow race free processing.
-	// Use this to post updates from foreign goroutines into the ui components.
-	// Note, that an invalidation is not triggered automatically. Either use [ViewRoot.Invalidate] manually or
-	// even better use [Post], [PostDelayed] or [Schedule], because those have optimized lifecycle handling.
-	Execute(task func())
 
 	// Navigation allows access to the window navigation.
 	Navigation() *NavigationController
@@ -118,14 +112,21 @@ type Window interface {
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
-
-	// Invalidate enforces a render cycle sometimes in the future.
-	// Usually you should not use
-	// this directly, because the request-response cycles triggers this automatically. However, if backend
-	// data has changed due to other domain events, you have to notify the view tree to redraw and potentially
-	// to load the data again from repositories.
-	Invalidate()
 }
+
+// Execute posts the task into the associated Executor. It will be executed in the associated event loop
+// to allow race free processing.
+// Use this to post updates from foreign goroutines into the ui components.
+// Note, that an invalidation is not triggered automatically. Either use [ViewRoot.Invalidate] manually or
+// even better use [Post], [PostDelayed] or [Schedule], because those have optimized lifecycle handling.
+//Execute(task func())
+
+// Invalidate enforces a render cycle sometimes in the future.
+// Usually you should not use
+// this directly, because the request-response cycles triggers this automatically. However, if backend
+// data has changed due to other domain events, you have to notify the view tree to redraw and potentially
+// to load the data again from repositories.
+//Invalidate()
 
 type SessionID string
 
