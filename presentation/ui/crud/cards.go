@@ -3,9 +3,9 @@ package crud
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"slices"
 )
 
 func Cards[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/xiter"
+	"iter"
 	"strings"
 )
 
@@ -22,7 +23,7 @@ type GroupRepository = data.Repository[Group, auth.GID]
 
 func (s *Service) AllGroups(subject auth.Subject) iter.Seq2[Group, error] {
 	if err := subject.Audit(ReadGroup); err != nil {
-		return iter.Empty2[Group, error]()
+		return xiter.Empty2[Group, error]()
 	}
 
 	return s.groups.Each

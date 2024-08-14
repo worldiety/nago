@@ -1,11 +1,10 @@
 package uilegacy
 
 import (
-	"fmt"
-	"go.wdy.de/nago/pkg/iter"
-	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"iter"
+	slices2 "slices"
 )
 
 type SharedList[T any] struct {

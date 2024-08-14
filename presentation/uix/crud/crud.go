@@ -3,8 +3,8 @@ package crud
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data/rquery"
-	"go.wdy.de/nago/pkg/iter"
-	slices2 "go.wdy.de/nago/pkg/slices"
+	"iter"
+	slices2 "slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"

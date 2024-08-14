@@ -1,9 +1,7 @@
 package main
 
 import (
-	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/pkg/maps"
-	"go.wdy.de/nago/pkg/slices"
+	"go.wdy.de/nago/pkg/xmaps"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
@@ -13,6 +11,7 @@ import (
 	materialOutlined "go.wdy.de/nago/presentation/icons/material/outlined"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"slices"
 )
 
 type IconSet struct {
@@ -80,7 +79,7 @@ func Preview(set IconSet) core.View {
 
 func makeIconSet(stroke bool, icons map[string]core.SVG) IconSet {
 	res := IconSet{}
-	for _, key := range maps.SortedKeys(icons) {
+	for _, key := range xmaps.SortedKeys(icons) {
 		res.Icons = append(res.Icons, Icon{
 			Name:            key,
 			SVG:             icons[key],

@@ -6,7 +6,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func NewView[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
+func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
 
 	quickSearch := core.AutoState[string](opts.wnd).From(func() string {
 		return opts.query

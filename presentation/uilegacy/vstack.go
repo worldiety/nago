@@ -1,12 +1,11 @@
 package uilegacy
 
 import (
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"iter"
+	"slices"
 )
-
 type VStack struct {
 	Bla             iter.Seq[core.View]
 	Children        []core.View //iter.Seq[core.View]

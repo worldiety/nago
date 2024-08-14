@@ -1,13 +1,12 @@
 package rquery
 
 import (
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
+	"iter"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
-
 type MyRef string
 type Addr struct {
 	ID     MyRef

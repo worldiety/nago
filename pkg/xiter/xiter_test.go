@@ -1,9 +1,9 @@
-package iter_test
+package xiter_test
 
 import (
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
+	"iter"
 	"reflect"
+	"slices"
 	"strconv"
 	"testing"
 )

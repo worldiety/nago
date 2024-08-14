@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/blob/mem"
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/icon"
 	"go.wdy.de/nago/presentation/ora"
@@ -14,6 +12,8 @@ import (
 	"go.wdy.de/nago/presentation/uix/xdialog"
 	"go.wdy.de/nago/web/vuejs"
 	"io"
+	"iter"
+	"slices"
 )
 
 type PID string

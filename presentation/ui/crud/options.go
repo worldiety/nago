@@ -2,8 +2,8 @@ package crud
 
 import (
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
+	"iter"
 )
 
 type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {

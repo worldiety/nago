@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
+	"go.wdy.de/nago/pkg/xiter"
+	"go.wdy.de/nago/pkg/xslices"
+	"iter"
 	"log/slog"
 	"sync"
 	"time"
@@ -125,7 +126,7 @@ func (s *Service) IsBootstrapAdminAcccount(subject auth.Subject) error {
 func (s *Service) AllPermissions(subject auth.Subject) iter.Seq2[Permission, error] {
 	if err := subject.Audit(ReadPermission); err != nil {
 		slog.Error("insufficient permission", "err", err)
-		return iter.Empty2[Permission, error]()
+		return xiter.Empty2[Permission, error]()
 	}
 
 	return s.permissions.Each
@@ -134,7 +135,7 @@ func (s *Service) AllPermissions(subject auth.Subject) iter.Seq2[Permission, err
 func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 	if err := subject.Audit(ReadUser); err != nil {
 		slog.Error("insufficient permission", "err", err)
-		return iter.Empty2[User, error]()
+		return xiter.Empty2[User, error]()
 	}
 
 	return s.users.Each
@@ -143,7 +144,7 @@ func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq2[Permission, error] {
 	if err := subject.Audit(ReadPermission); err != nil {
 		slog.Error("insufficient permission", "err", err)
-		return iter.Empty2[Permission, error]()
+		return xiter.Empty2[Permission, error]()
 	}
 
 	var tmp []Permission
@@ -153,7 +154,7 @@ func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq
 		}
 	}
 
-	return slices.Values2[[]Permission, Permission, error](tmp)
+	return xslices.Values2[[]Permission, Permission, error](tmp)
 }
 
 // TODO add observer to changed users

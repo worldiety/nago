@@ -2,8 +2,8 @@ package core
 
 import (
 	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/iter"
 	"io"
+	"iter"
 )
 
 type blobIterFile struct {

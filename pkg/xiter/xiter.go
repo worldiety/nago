@@ -4,28 +4,24 @@
 // be changed to aliases. Signatures will change to always be compatible with
 // https://github.com/golang/go/issues/61898 results. E.g. currently order of arguments
 // look awkward.
-package iter
+package xiter
 
-// deprecated
-type Seq[V any] func(yield func(V) bool)
+import "iter"
 
-// deprecated
-type Seq2[K, V any] func(yield func(K, V) bool)
-
-func Empty[T any]() Seq[T] {
+func Empty[T any]() iter.Seq[T] {
 	return func(yield func(T) bool) {
 
 	}
 }
 
-func Empty2[T, V any]() Seq2[T, V] {
+func Empty2[T, V any]() iter.Seq2[T, V] {
 	return func(yield func(T, V) bool) {
 
 	}
 }
 
 // WithError yields the given error or does nothing if err is nil.
-func WithError[T any](err error) Seq2[T, error] {
+func WithError[T any](err error) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
 		if err != nil {
 			var zero T
@@ -34,7 +30,7 @@ func WithError[T any](err error) Seq2[T, error] {
 	}
 }
 
-func Find[V comparable](it Seq[V], predicate func(V) bool) (V, bool) {
+func Find[V comparable](it iter.Seq[V], predicate func(V) bool) (V, bool) {
 	contains := false
 	var res V
 	it(func(v V) bool {
@@ -52,7 +48,7 @@ func Find[V comparable](it Seq[V], predicate func(V) bool) (V, bool) {
 
 // Filter returns an iterator over seq that only includes
 // the values v for which f(v) is true.
-func Filter[V any](f func(V) bool, seq Seq[V]) Seq[V] {
+func Filter[V any](f func(V) bool, seq iter.Seq[V]) iter.Seq[V] {
 	return func(yield func(V) bool) {
 		seq(func(v V) bool {
 			if f(v) && !yield(v) {
@@ -66,7 +62,7 @@ func Filter[V any](f func(V) bool, seq Seq[V]) Seq[V] {
 
 // Filter2 returns an iterator over seq that only includes
 // the pairs k, v for which f(k, v) is true.
-func Filter2[K, V any](f func(K, V) bool, seq Seq2[K, V]) Seq2[K, V] {
+func Filter2[K, V any](f func(K, V) bool, seq iter.Seq2[K, V]) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		seq(func(k K, v V) bool {
 			if f(k, v) && !yield(k, v) {
@@ -79,7 +75,7 @@ func Filter2[K, V any](f func(K, V) bool, seq Seq2[K, V]) Seq2[K, V] {
 }
 
 // Map returns an iterator over f applied to seq.
-func Map[In, Out any](f func(In) Out, seq Seq[In]) Seq[Out] {
+func Map[In, Out any](f func(In) Out, seq iter.Seq[In]) iter.Seq[Out] {
 	return func(yield func(Out) bool) {
 		seq(func(in In) bool {
 			if !yield(f(in)) {
@@ -92,7 +88,7 @@ func Map[In, Out any](f func(In) Out, seq Seq[In]) Seq[Out] {
 }
 
 // Map2 returns an iterator over f applied to seq.
-func Map2[KIn, VIn, KOut, VOut any](f func(KIn, VIn) (KOut, VOut), seq Seq2[KIn, VIn]) Seq2[KOut, VOut] {
+func Map2[KIn, VIn, KOut, VOut any](f func(KIn, VIn) (KOut, VOut), seq iter.Seq2[KIn, VIn]) iter.Seq2[KOut, VOut] {
 	return func(yield func(KOut, VOut) bool) {
 		seq(func(in KIn, in2 VIn) bool {
 			if !yield(f(in, in2)) {
@@ -109,7 +105,7 @@ func Map2[KIn, VIn, KOut, VOut any](f func(KIn, VIn) (KOut, VOut), seq Seq2[KIn,
 // and then returns the final sum.
 // For example, if iterating over seq yields v1, v2, v3,
 // Reduce returns f(f(f(sum, v1), v2), v3).
-func Reduce[Sum, V any](sum Sum, f func(Sum, V) Sum, seq Seq[V]) Sum {
+func Reduce[Sum, V any](sum Sum, f func(Sum, V) Sum, seq iter.Seq[V]) Sum {
 	seq(func(v V) bool {
 		sum = f(sum, v)
 		return true
@@ -123,7 +119,7 @@ func Reduce[Sum, V any](sum Sum, f func(Sum, V) Sum, seq Seq[V]) Sum {
 // and then returns the final sum.
 // For example, if iterating over seq yields (k1, v1), (k2, v2), (k3, v3)
 // Reduce returns f(f(f(sum, k1, v1), k2, v2), k3, v3).
-func Reduce2[Sum, K, V any](sum Sum, f func(Sum, K, V) Sum, seq Seq2[K, V]) Sum {
+func Reduce2[Sum, K, V any](sum Sum, f func(Sum, K, V) Sum, seq iter.Seq2[K, V]) Sum {
 	seq(func(k K, v V) bool {
 		sum = f(sum, k, v)
 		return true
@@ -132,7 +128,7 @@ func Reduce2[Sum, K, V any](sum Sum, f func(Sum, K, V) Sum, seq Seq2[K, V]) Sum 
 }
 
 // Limit returns an iterator over seq that stops after n values.
-func Limit[V any](seq Seq[V], n int) Seq[V] {
+func Limit[V any](seq iter.Seq[V], n int) iter.Seq[V] {
 	return func(yield func(V) bool) {
 		seq(func(v V) bool {
 			if n <= 0 {
@@ -153,7 +149,7 @@ func Limit[V any](seq Seq[V], n int) Seq[V] {
 }
 
 // Limit2 returns an iterator over seq that stops after n key-value pairs.
-func Limit2[K, V any](seq Seq2[K, V], n int) Seq2[K, V] {
+func Limit2[K, V any](seq iter.Seq2[K, V], n int) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		seq(func(k K, v V) bool {
 			if n <= 0 {
@@ -175,7 +171,7 @@ func Limit2[K, V any](seq Seq2[K, V], n int) Seq2[K, V] {
 }
 
 // BreakOnError stops iteration and sets err on the first err in s
-func BreakOnError[K any](err *error, s Seq2[K, error]) Seq[K] {
+func BreakOnError[K any](err *error, s iter.Seq2[K, error]) iter.Seq[K] {
 	return func(yield func(K) bool) {
 		s(func(k K, e2 error) bool {
 			if e2 != nil {

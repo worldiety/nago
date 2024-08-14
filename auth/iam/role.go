@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
+	"go.wdy.de/nago/pkg/xiter"
+	"iter"
 	"strings"
 )
 
@@ -23,7 +24,7 @@ type RoleRepository = data.Repository[Role, auth.RID]
 
 func (s *Service) AllRoles(subject auth.Subject) iter.Seq2[Role, error] {
 	if err := subject.Audit(ReadRole); err != nil {
-		return iter.Empty2[Role, error]()
+		return xiter.Empty2[Role, error]()
 	}
 
 	return s.roles.Each

@@ -3,10 +3,10 @@ package crud
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"reflect"
+	"slices"
 )
 
 func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
@@ -24,6 +24,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).From(func() Entity {
 				return entity
 			})
+
 			if !reflect.DeepEqual(entityState.Get(), entity) {
 				entityState.Set(entity)
 			}

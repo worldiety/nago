@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"iter"
 )
 
 func render(ctx core.RenderContext, c core.View) ora.Component {

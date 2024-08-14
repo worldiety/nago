@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
+	"iter"
 	"reflect"
 	"strconv"
 )
@@ -50,7 +50,7 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// Implementations with transaction support must find within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	// The yield signature intentionally matches the according [iter.Seq2] part. See also [Repository.Each].
-	FindAllByID(ids iter.Seq[ID], yield func(E, error) bool)
+	FindAllByID(ids iter.Seq[ID]) iter.Seq2[E, error]
 
 	// DeleteByID removes the specified aggregate. If no such entity exists, no error is returned.
 	// Returned errors are unspecified infrastructure errors of the implementation.

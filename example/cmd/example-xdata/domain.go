@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/pkg/std"
+	"iter"
 	"math/rand"
 	"time"
 )

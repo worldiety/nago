@@ -3,7 +3,7 @@ package crud
 import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/rquery"
-	"go.wdy.de/nago/pkg/iter"
+	"iter"
 	"slices"
 )
 

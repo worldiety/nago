@@ -76,10 +76,13 @@ func main() {
 				}),
 
 				crud.AggregateActions("Optionen",
-					crud.ButtonDelete[Person](wnd, func(p Person) error {
+					crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error {
 						slog.Info("delete person", "id", p.ID)
 						return iam.PermissionDeniedError("bla")
+					}), func(person Person) bool {
+						return person.ID != "1"
 					}),
+
 					crud.ButtonEdit[Person](wnd, bnd, func(p Person) (string, error) {
 						slog.Info("update person", "id", p.ID, p)
 						return "", persons.Save(p)
@@ -88,13 +91,11 @@ func main() {
 			)
 
 			return ui.VStack(
-				crud.NewView[Person, PID](
+				crud.View[Person, PID](
 					crud.Options[Person, PID](wnd, bnd).
 						FindAll(persons.Each).
 						Title("Personen"),
 				),
-				//	crud.Form[Person](bnd, &example),
-				//	crud.Card[Person](bnd, &example).Frame(ui.Frame{Width: ui.L320}),
 			).Padding(ui.Padding{}.All(ui.L16))
 		})
 	}).Run()

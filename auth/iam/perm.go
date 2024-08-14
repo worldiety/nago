@@ -1,9 +1,8 @@
 package iam
 
 import (
-	"go.wdy.de/nago/pkg/maps"
-	"go.wdy.de/nago/pkg/slices"
-	slices2 "slices"
+	"maps"
+	"slices"
 )
 
 const (
@@ -155,7 +154,7 @@ func PermissionsFrom[T Permission](slice []T) *Permissions {
 
 func (p *Permissions) Each(yield func(permission Permission, err error) bool) {
 	sorted := slices.Collect(maps.Keys(p.permissions))
-	slices2.Sort(sorted)
+	slices.Sort(sorted)
 	for _, t := range sorted {
 		if !yield(p.permissions[t], nil) {
 			return

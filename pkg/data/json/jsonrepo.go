@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/iter"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"io"
+	"iter"
+	"slices"
 )
 
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
@@ -105,48 +105,51 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) enc
 
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByID(ids iter.Seq[DomainID], yield func(DomainModel, error) bool) {
-	var zeroDomain DomainModel
-	idents := slices.Collect(ids)
-	stopIter := false
-	err := r.store.View(func(tx blob.Tx) error {
-		for _, ident := range idents {
-			optEnt, err := tx.Get(data.Idtos(ident))
-			if err != nil {
-				// continue iteration, perhaps a little more robust
-				if !yield(zeroDomain, err) {
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByID(ids iter.Seq[DomainID]) iter.Seq2[DomainModel, error] {
+
+	return func(yield func(DomainModel, error) bool) {
+		var zeroDomain DomainModel
+		idents := slices.Collect(ids)
+		stopIter := false
+		err := r.store.View(func(tx blob.Tx) error {
+			for _, ident := range idents {
+				optEnt, err := tx.Get(data.Idtos(ident))
+				if err != nil {
+					// continue iteration, perhaps a little more robust
+					if !yield(zeroDomain, err) {
+						stopIter = true
+						return err
+					}
+				}
+
+				if !optEnt.Valid {
+					continue // just a not-found case
+				}
+
+				domainModel, err := r.decode(optEnt.Unwrap())
+				if err != nil {
+					// continue iteration, perhaps a little more robust e.g. due to JSON unmarshal incompatibility
+					if !yield(zeroDomain, err) {
+						stopIter = true
+						return err
+					}
+
+					continue
+				}
+
+				if !yield(domainModel, nil) {
 					stopIter = true
-					return err
+					return nil
 				}
 			}
 
-			if !optEnt.Valid {
-				continue // just a not-found case
-			}
+			return nil
+		})
 
-			domainModel, err := r.decode(optEnt.Unwrap())
-			if err != nil {
-				// continue iteration, perhaps a little more robust e.g. due to JSON unmarshal incompatibility
-				if !yield(zeroDomain, err) {
-					stopIter = true
-					return err
-				}
-
-				continue
-			}
-
-			if !yield(domainModel, nil) {
-				stopIter = true
-				return nil
-			}
+		// errors after iteration shall stop, are suppressed. That seems the proposal design
+		if !stopIter && err != nil {
+			yield(zeroDomain, err)
 		}
-
-		return nil
-	})
-
-	// errors after iteration shall stop, are suppressed. That seems the proposal design
-	if !stopIter && err != nil {
-		yield(zeroDomain, err)
 	}
 }
 

@@ -1,7 +1,7 @@
 package concurrent
 
 import (
-	"go.wdy.de/nago/pkg/iter"
+	"iter"
 	"maps"
 	"sync"
 )

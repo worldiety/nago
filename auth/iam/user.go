@@ -7,13 +7,13 @@ import (
 	passwordvalidator "github.com/wagslane/go-password-validator"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	slices2 "go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/argon2"
 	"log/slog"
 	rand2 "math/rand"
 	"regexp"
 	"slices"
+	slices2 "slices"
 	"strings"
 	"time"
 )
@@ -241,18 +241,17 @@ func (s *Service) collectPermissions(usr User) (map[PID]struct{}, error) {
 	}
 
 	// collect inherited permissions from roles
-	s.roles.FindAllByID(slices2.Values(usr.Roles), func(role Role, e error) bool {
+	for role, e := range s.roles.FindAllByID(slices2.Values(usr.Roles)) {
 		if e != nil {
 			err = e
-			return false
+			break
 		}
 
 		for _, permission := range role.Permissions {
 			tmp[permission] = struct{}{}
 		}
 
-		return true
-	})
+	}
 
 	return tmp, err
 }

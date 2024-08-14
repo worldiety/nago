@@ -2,8 +2,8 @@ package core
 
 import (
 	"bytes"
-	"go.wdy.de/nago/pkg/iter"
 	"io"
+	"iter"
 )
 
 // File provides a simple File interface.

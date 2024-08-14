@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/slices"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/tracking"
+	"slices"
 )
 
 type PermissionDenied interface {
@@ -18,6 +18,17 @@ type PermissionDenied interface {
 }
 
 type ElementViewFactory[E any] func(*core.State[E]) core.View
+
+// Optional makes an ElementViewFactory optional based on the given predicate and returns nil if predicate returns false.
+func Optional[T any](fac ElementViewFactory[T], predicate func(T) bool) ElementViewFactory[T] {
+	return func(c *core.State[T]) core.View {
+		if predicate(c.Get()) {
+			return fac(c)
+		}
+
+		return nil
+	}
+}
 
 func ButtonEdit[E data.Aggregate[ID], ID data.IDType](wnd core.Window, bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
 	return func(e *core.State[E]) core.View {
@@ -106,7 +117,10 @@ func Custom[E any](label string, options ...ElementViewFactory[E]) Field[E] {
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			return ui.TableCell(ui.HStack(slices.Collect(func(yield func(cell core.View) bool) {
 				for _, option := range options {
-					yield(option(entity))
+					view := option(entity)
+					if view != nil {
+						yield(view)
+					}
 				}
 			})...).
 				// hstack

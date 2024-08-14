@@ -6,11 +6,11 @@ import (
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/data"
-	slices2 "go.wdy.de/nago/pkg/slices"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
+	slices2 "slices"
 	"strings"
 	"testing"
 )

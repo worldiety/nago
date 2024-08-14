@@ -1,9 +1,9 @@
 package uilegacy
 
 import (
-	"go.wdy.de/nago/pkg/iter"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"iter"
 )
 
 var _ core.FilesReceiver = (*FileField)(nil)
