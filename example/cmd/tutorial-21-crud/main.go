@@ -83,7 +83,7 @@ func main() {
 						return person.ID != "1"
 					}),
 
-					crud.ButtonEdit[Person](wnd, bnd, func(p Person) (string, error) {
+					crud.ButtonEdit[Person](bnd, func(p Person) (string, error) {
 						slog.Info("update person", "id", p.ID, p)
 						return "", persons.Save(p)
 					}),
@@ -93,10 +93,19 @@ func main() {
 			return ui.VStack(
 				crud.View[Person, PID](
 					crud.Options[Person, PID](wnd, bnd).
+						Actions(
+							crud.ButtonCreate[Person](bnd, Person{ID: data.RandIdent[PID]()}, func(person Person) (errorText string, infrastructureError error) {
+								if person.Firstname == "" {
+									return "Vorname darf nicht leer sein", nil
+								}
+
+								return "", persons.Save(person)
+							}),
+						).
 						FindAll(persons.Each).
 						Title("Personen"),
 				),
-			).Padding(ui.Padding{}.All(ui.L16))
+			).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth())
 		})
 	}).Run()
 }

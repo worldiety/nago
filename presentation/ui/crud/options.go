@@ -38,6 +38,11 @@ func (o TOptions[Entity, ID]) QuickFilterQuery(query string) TOptions[Entity, ID
 	return o
 }
 
+func (o TOptions[Entity, ID]) Actions(actions ...core.View) TOptions[Entity, ID] {
+	o.actions = actions
+	return o
+}
+
 func (o TOptions[Entity, ID]) datasource() dataSource[Entity, ID] {
 	return dataSource[Entity, ID]{
 		it:          o.findAll,

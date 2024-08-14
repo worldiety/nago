@@ -30,7 +30,57 @@ func Optional[T any](fac ElementViewFactory[T], predicate func(T) bool) ElementV
 	}
 }
 
-func ButtonEdit[E data.Aggregate[ID], ID data.IDType](wnd core.Window, bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
+func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial E, createFn func(E) (errorText string, infrastructureError error)) core.View {
+	wnd := bnd.wnd
+	// we have a unique state problem here, at least we can have multiple crud views with distinct types
+	var typ = fmt.Sprintf("%T", initial)
+	entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.create.entity.%s", typ)).From(func() E {
+		return initial
+	})
+	formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.create.form.%s", typ))
+	noSuchPermissionPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.create.npp.%s", typ))
+	stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.create.errmsg.%s", typ))
+	return ui.VStack(
+		alert.Dialog("Erstellen nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu erstellen."), noSuchPermissionPresented, alert.Ok()),
+		alert.Dialog("Bearbeiten", ui.Composable(func() core.View {
+			subBnd := bnd.Inherit(string(initial.Identity()))
+
+			return ui.VStack(
+				ui.If(stateErrMsg.Get() != "", ui.Text(stateErrMsg.Get()).Color(ui.SE0)),
+				Form(subBnd, entityState),
+			).Frame(ui.Frame{}.FullWidth())
+		}), formPresented, alert.Cancel(func() {
+			entityState.Set(initial)
+		}), alert.Save(func() bool {
+			errMsg, err := createFn(entityState.Get())
+			if err != nil {
+				var denied PermissionDenied
+				if errors.As(err, &denied) {
+					noSuchPermissionPresented.Set(true)
+				} else {
+					tracking.RequestSupport(wnd, err)
+				}
+
+				return false
+			}
+
+			stateErrMsg.Set(errMsg)
+			if errMsg != "" {
+				return false
+			}
+
+			entityState.Set(initial)
+			return true
+		})),
+
+		ui.PrimaryButton(func() {
+			formPresented.Set(true)
+		},
+		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
+}
+
+func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
+	wnd := bnd.wnd
 	return func(e *core.State[E]) core.View {
 		entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.edit.entity.%v", e.Get().Identity())).From(func() E {
 			return e.Get()

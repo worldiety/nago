@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"slices"
 )
 
 func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
@@ -16,8 +17,13 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 
 	return ui.VStack(
 		ui.Box(ui.BoxLayout{
-			Trailing: ui.TextField("", quickSearch.String()).InputValue(quickSearch).Style(ui.TextFieldReduced),
-			Leading:  ui.Text(opts.title).Font(ui.Title),
+			Trailing: ui.HStack(slices.Collect[core.View](func(yield func(core.View) bool) {
+				yield(ui.TextField("", quickSearch.String()).InputValue(quickSearch).Style(ui.TextFieldReduced))
+				for _, action := range opts.actions {
+					yield(action)
+				}
+			})...).Gap(ui.L4),
+			Leading: ui.Text(opts.title).Font(ui.Title),
 		}).Frame(ui.Frame{Height: ui.L80}.FullWidth()),
 
 		ui.ViewThatMatches(opts.wnd,

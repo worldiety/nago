@@ -33,6 +33,10 @@ type TBox struct {
 	invisible          bool
 }
 
+// Box is a container, in which the given children will be layout to the according BoxLayout
+// rules. Note, that per definition the container clips its children. Thus, if working with shadows,
+// you need to apply additional padding. Important: this container requires usually absolute height and width
+// attributes and cannot work properly using wrap content semantics, because it intentionally allows overlapping.
 func Box(layout BoxLayout) TBox {
 	c := TBox{
 		children: make([]alignedComponent, 0, 9),

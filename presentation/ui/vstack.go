@@ -28,6 +28,9 @@ type TVStack struct {
 	action             func()
 }
 
+// VStack is a container, in which the given children will be layout in a column according to the applied
+// alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
+// you need to apply additional padding.
 func VStack(children ...core.View) TVStack {
 	c := TVStack{
 		children: children,
