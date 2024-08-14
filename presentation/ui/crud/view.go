@@ -9,16 +9,10 @@ import (
 
 func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
 
-	quickSearch := core.AutoState[string](opts.wnd).From(func() string {
-		return opts.query
-	})
-
-	opts.queryState = quickSearch
-
 	return ui.VStack(
 		ui.Box(ui.BoxLayout{
 			Trailing: ui.HStack(slices.Collect[core.View](func(yield func(core.View) bool) {
-				yield(ui.TextField("", quickSearch.String()).InputValue(quickSearch).Style(ui.TextFieldReduced))
+				yield(ui.TextField("", opts.queryState.String()).InputValue(opts.queryState).Style(ui.TextFieldReduced))
 				for _, action := range opts.actions {
 					yield(action)
 				}
