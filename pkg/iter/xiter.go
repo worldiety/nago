@@ -6,7 +6,10 @@
 // look awkward.
 package iter
 
+// deprecated
 type Seq[V any] func(yield func(V) bool)
+
+// deprecated
 type Seq2[K, V any] func(yield func(K, V) bool)
 
 func Empty[T any]() Seq[T] {

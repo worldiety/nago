@@ -37,10 +37,9 @@ func Of[T any](v ...T) iter.Seq[T] {
 
 // Append appends the values from seq to the slice and returns the extended slice.
 func Append[Slice ~[]Elem, Elem any](x Slice, seq iter.Seq[Elem]) Slice {
-	seq(func(elem Elem) bool {
+	for elem := range seq {
 		x = append(x, elem)
-		return true
-	})
+	}
 
 	return x
 }

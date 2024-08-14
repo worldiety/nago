@@ -62,7 +62,7 @@ func main() {
 		cfg.Component(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Person](wnd)
 			bnd.Add(
-				crud.TextField("Vorname", func(entity *Person) *string {
+				crud.Text("Vorname", func(entity *Person) *string {
 					return &entity.Firstname
 				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
 					if person.Firstname != "Torben" {
@@ -71,11 +71,11 @@ func main() {
 
 					return "", nil
 				}).WithSupportingText("Gib Torben ein"),
-				crud.TextField("Nachname", func(entity *Person) *string {
+				crud.Text("Nachname", func(entity *Person) *string {
 					return &entity.Lastname
 				}),
 
-				crud.OptionsField("Optionen",
+				crud.AggregateActions("Optionen",
 					crud.ButtonDelete[Person](wnd, func(p Person) error {
 						slog.Info("delete person", "id", p.ID)
 						return iam.PermissionDeniedError("bla")

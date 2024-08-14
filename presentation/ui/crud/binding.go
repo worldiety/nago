@@ -1,9 +1,12 @@
 package crud
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"log/slog"
 )
 
 // A Field is a binding to a field of T. All members are intentionally public, to make customization as flexible as
@@ -23,13 +26,13 @@ type Field[T any] struct {
 	SupportingText string
 
 	// RenderFormElement may be nil, if it shall not be shown in a form.
-	RenderFormElement func(self Field[T], entity *core.State[T]) ui.DecoredView
+	RenderFormElement func(self Field[T], entity *core.State[T]) ui.DecoredView // TODO this state does not make any sense, each render scope has its own state anyway
 
 	// RenderTableCell may be nil, if it shall not be shown in tables.
-	RenderTableCell func(self Field[T], entity *core.State[T]) ui.TTableCell
+	RenderTableCell func(self Field[T], entity *core.State[T]) ui.TTableCell // TODO this state does not make any sense, each render scope has its own state anyway
 
 	// RenderCardElement may be nil, if it shall not be shown on a card.
-	RenderCardElement func(self Field[T], entity *core.State[T]) ui.DecoredView
+	RenderCardElement func(self Field[T], entity *core.State[T]) ui.DecoredView // TODO this state does not make any sense, each render scope has its own state anyway
 
 	// Window is needed to hold states while editing, to allow downloads and be responsive.
 	// It must not be nil.
@@ -136,5 +139,25 @@ func (b *Binding[T]) Add(fields ...Field[T]) {
 		}
 		field.Window = b.wnd
 		b.fields = append(b.fields, field)
+	}
+}
+
+func handleValidation[E any](self Field[E], entity *core.State[E], errMsg *core.State[string]) {
+	if self.Validate != nil {
+		errText, err := self.Validate(entity.Get())
+		if err != nil {
+			if errText == "" {
+				var tmp [16]byte
+				if _, err := rand.Read(tmp[:]); err != nil {
+					panic(err)
+				}
+				incidentToken := hex.EncodeToString(tmp[:])
+				errText = fmt.Sprintf("Unerwarteter Infrastrukturfehler: %s", incidentToken)
+			}
+
+			slog.Error(errText, "err", err)
+		}
+
+		errMsg.Set(errText)
 	}
 }

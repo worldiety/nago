@@ -1,22 +1,17 @@
 package crud
 
 import (
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"log/slog"
 	"strings"
 )
 
-func TextField[E any, T ~string](label string, property func(*E) *T) Field[E] {
+func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
-			fmt.Println("render form fuck")
-			state := core.StateOf[string](self.Window, self.ID+"bla").From(func() string {
-				fmt.Println("fuck new", entity.Get())
+			// here we create a copy for the local form field
+			state := core.StateOf[string](self.Window, self.ID+"-form.local").From(func() string {
 				var tmp E
 				tmp = entity.Get()
 				return string(*property(&tmp))
@@ -24,31 +19,15 @@ func TextField[E any, T ~string](label string, property func(*E) *T) Field[E] {
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
 
+			// if the local field changes, we push our stuff into the given state (whatever that is)
 			state.Observe(func(newValue string) {
 				var tmp E
 				tmp = entity.Get()
 				f := property(&tmp)
 				*f = T(newValue)
 				entity.Set(tmp)
-				fmt.Println("shall update", newValue, entity)
-				if self.Validate != nil {
-					errText, err := self.Validate(entity.Get())
-					if err != nil {
-						if errText == "" {
-							var tmp [16]byte
-							if _, err := rand.Read(tmp[:]); err != nil {
-								panic(err)
-							}
-							incidentToken := hex.EncodeToString(tmp[:])
-							errText = fmt.Sprintf("Unerwarteter Infrastrukturfehler: %s", incidentToken)
-						}
 
-						slog.Error(errText, "err", err)
-					}
-
-					errState.Set(errText)
-				}
-
+				handleValidation(self, entity, errState)
 			})
 
 			return ui.TextField(label, state.String()).
