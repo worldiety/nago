@@ -3,6 +3,8 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"log/slog"
+	"strconv"
 	"time"
 )
 
@@ -60,6 +62,64 @@ func TextField(label string, value string) TTextField {
 	}
 
 	return c
+}
+
+// IntField is just a TextField using the according keyboard hints. Remember, that these IME hints are no guarantees
+// and a user may enter non-integer stuff anyway. However, any
+// incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state.
+func IntField(label string, value int64, state *core.State[int64]) TTextField {
+	strState := core.StateOf[string](state.Window(), state.ID()+".int64").From(func() string {
+		return strconv.FormatInt(value, 10)
+	})
+
+	strState.Observe(func(newValue string) {
+		v, err := strconv.ParseInt(newValue, 10, 64)
+		if err != nil {
+			slog.Error("cannot parse IntField value from TextField state", "strState", strState.ID(), "err", err)
+		}
+
+		if v != state.Get() {
+			state.Set(v)
+		}
+	})
+
+	state.Observe(func(newValue int64) {
+		i := strconv.FormatInt(value, 10)
+		if strState.Get() != i {
+			strState.Set(i)
+		}
+	})
+
+	return TextField(label, strState.Get()).InputValue(strState).KeyboardType(KeyboardInteger)
+}
+
+// FloatField is just a TextField using the according keyboard hints. Remember, that these IME hints are no guarantees
+// and a user may enter non-integer stuff anyway. However, any
+// incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state.
+func FloatField(label string, value float64, state *core.State[float64]) TTextField {
+	strState := core.StateOf[string](state.Window(), state.ID()+".float64").From(func() string {
+		return strconv.FormatFloat(value, 'g', -1, 64)
+	})
+
+	strState.Observe(func(newValue string) {
+		v, err := strconv.ParseFloat(newValue, 64)
+		if err != nil {
+			slog.Error("cannot parse FloatField value from TextField state", "strState", strState.ID(), "err", err)
+		}
+
+		if v != state.Get() {
+			state.Set(v)
+		}
+	})
+
+	state.Observe(func(newValue float64) {
+		i := strconv.FormatFloat(value, 'g', -1, 64)
+		if strState.Get() != i {
+			strState.Set(i)
+		}
+	})
+
+	return TextField(label, strState.Get()).InputValue(strState).KeyboardType(KeyboardFloat)
 }
 
 func (c TTextField) SupportingText(text string) TTextField {

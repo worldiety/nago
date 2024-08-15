@@ -37,6 +37,17 @@ type State[T any] struct {
 	mutex                 sync.Mutex
 	observerLock          sync.RWMutex
 	destroyed             bool
+	wnd                   Window
+}
+
+// ID returns the window unique state identifier which is internally mapped into an ora.Ptr.
+func (s *State[T]) ID() string {
+	return s.id
+}
+
+// Window returns the window in which this state has been allocated.
+func (s *State[T]) Window() Window {
+	return s.wnd
 }
 
 func (s *State[T]) Observe(f func(newValue T)) {
@@ -58,7 +69,7 @@ func (s *State[T]) String() string {
 	return fmt.Sprintf("%v", s.value)
 }
 
-func (s *State[T]) ID() ora.Ptr {
+func (s *State[T]) ptrId() ora.Ptr {
 	return s.ptr
 }
 
@@ -214,6 +225,7 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 
 	w.lastStatePtrById++
 	state := &State[T]{
+		wnd:        wnd,
 		id:         id,
 		ptr:        w.lastStatePtrById,
 		valid:      false,

@@ -19,15 +19,20 @@ func main() {
 			firstname := core.AutoState[string](wnd)
 			secret := core.AutoState[string](wnd)
 			showAlert := core.AutoState[bool](wnd)
+			myIntState := core.AutoState[int64](wnd)
+			myFloatState := core.AutoState[float64](wnd)
 
 			return VStack(
-				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v\nsecret: %v", firstname, secret)), showAlert, alert.Ok()),
+				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v", firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()),
 				TextField("hello world", firstname.Get()).InputValue(firstname),
 				// you can re-use the state, but be careful of the effects
 				TextField("just numbers", numsOf(firstname.Get())).
 					InputValue(firstname).
 					KeyboardType(KeyboardInteger).
 					Style(TextFieldReduced),
+
+				IntField("int-field", 42, myIntState),
+				FloatField("float-field", 42.5, myFloatState),
 
 				TextField("text area", "hello\nworld").Lines(3),
 				PrimaryButton(func() {

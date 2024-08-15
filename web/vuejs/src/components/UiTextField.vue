@@ -11,9 +11,41 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const inputValue = ref<string>(props.ui.v?props.ui.v:"");
+const inputValue = ref<string>(props.ui.v ? props.ui.v : "");
 const idPrefix = 'text-field-';
 
+
+/**
+ * Validates the input value and submits it, if it is valid.
+ * The '-' sign and the empty string are treated as 0.
+ * If the input value is invalid, the value gets reset to the last known valid value.
+ */
+watch(inputValue, (newValue, oldValue) => {
+	if (newValue == oldValue) {
+		return
+	}
+
+	if (props.ui.o?.k == "i") {
+		if (newValue === '' || newValue === '-') {
+			inputValue.value = '0';
+		} else if (!newValue.match(/^-?[0-9]+$/)) {
+			inputValue.value = oldValue;
+		}
+
+		return
+	}
+
+	if (props.ui.o?.k == "f") {
+		if (newValue === '' || newValue === '-') {
+			inputValue.value = '0';
+		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
+			inputValue.value = oldValue;
+		}
+
+		return
+	}
+
+});
 
 watch(() => props.ui.v, (newValue) => {
 	if (newValue) {
@@ -85,7 +117,7 @@ const frameStyles = computed<string>(() => {
 });
 
 const inputMode = computed<string>(() => {
-	switch (props.ui.o?.k){
+	switch (props.ui.o?.k) {
 		case "i":
 			return "numeric"
 		case "f":

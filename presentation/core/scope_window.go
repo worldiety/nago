@@ -93,7 +93,7 @@ func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
 	for id, property := range s.statesById {
 		if property.getGeneration() < currentGeneration {
 			delete(s.statesById, id)
-			delete(s.states, property.ID())
+			delete(s.states, property.ptrId())
 			property.destroy()
 
 			slog.Info("purged unused state", "id", id, "expected", currentGeneration, "has", property.getGeneration())
