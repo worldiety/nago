@@ -82,7 +82,7 @@ export default class ThemeManager {
 			for (const [ns, nameValuePairs] of Object.entries(theme.colors)) {
 				for (const [colorName, colorValue] of Object.entries(nameValuePairs)) {
 					elem.style.setProperty(`--${colorName}`, colorValue)//"150deg 30% 60%")//
-					console.log(colorName,"=",colorValue)
+					//console.log(colorName,"=",colorValue)
 				}
 
 			}

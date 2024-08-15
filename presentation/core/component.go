@@ -4,7 +4,7 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
-const Debug = true // TODO make be a compile time flagged const
+const Debug = false // TODO make be a compile time flagged const
 
 type RenderContext interface {
 	// Window returns the associated Window instance.

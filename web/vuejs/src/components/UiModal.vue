@@ -20,7 +20,7 @@ import {Modal} from "@/shared/protocol/ora/modal";
 
 const props = defineProps<{
 	ui: Modal;
-	isActiveDialog: boolean;
+	//isActiveDialog: boolean|undefined;
 }>();
 
 const dialogContainer = ref<HTMLElement | undefined>();
@@ -28,12 +28,12 @@ let firstFocusableElement: HTMLElement | undefined;
 let lastFocusableElement: HTMLElement | undefined;
 
 onMounted(() => {
-	if (props.isActiveDialog) {
+	//if (props.isActiveDialog) {
 		captureFocusInDialog();
-	}
+	//}
 });
 
-watch(() => props.isActiveDialog, (newValue) => {
+watch(() => props.ui, (newValue) => {
 	if (newValue) {
 		captureFocusInDialog();
 	}

@@ -24,6 +24,7 @@ const serviceAdapter = useServiceAdapter();
 
 function onClick() {
 	if (props.ui.t) {
+
 		serviceAdapter.executeFunctions(props.ui.t);
 	}
 }
@@ -115,6 +116,7 @@ const StyleButtonTertiary = "t"
 
 
 const clazz = computed<string>(() => {
+
 	let classes = ["inline-flex"];
 	switch (props.ui.a) {
 		case Alignment.Leading:

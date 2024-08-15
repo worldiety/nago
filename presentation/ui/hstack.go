@@ -1,8 +1,11 @@
 package ui
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"runtime/debug"
+	"strings"
 )
 
 type THStack struct {
@@ -24,6 +27,7 @@ type THStack struct {
 	invisible              bool
 	action                 func()
 	stylePreset            ora.StylePreset
+	originTrace            string
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -32,6 +36,10 @@ type THStack struct {
 func HStack(children ...core.View) *THStack {
 	c := &THStack{
 		children: children,
+	}
+
+	if core.Debug {
+		c.originTrace = strings.Split(string(debug.Stack()), "\n")[6]
 	}
 
 	return c
@@ -123,7 +131,10 @@ func (c THStack) Action(f func()) THStack {
 }
 
 func (c THStack) Render(ctx core.RenderContext) ora.Component {
-
+	ptr := ctx.MountCallback(c.action)
+	if core.Debug {
+		fmt.Printf("hstack got %d @%s\n", ptr, c.originTrace)
+	}
 	return ora.HStack{
 		Type:               ora.HStackT,
 		Children:           renderComponents(ctx, c.children),
@@ -143,7 +154,7 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
-		Action:                 ctx.MountCallback(c.action),
+		Action:                 ptr,
 
 		StylePreset: c.stylePreset,
 	}

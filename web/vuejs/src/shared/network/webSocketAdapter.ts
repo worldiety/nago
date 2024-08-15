@@ -242,6 +242,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		const event = responseParsed as Event;
 		const eventType = event.type as EventType;
 
+		console.log(responseParsed)
+
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
 			//console.log("received unmatched",event.type)
@@ -252,10 +254,12 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				// thus it looks like a logical race at message layer.
 				let invalidated = event as ComponentInvalidated;
 				//console.log("component invalidated",invalidated.value.id)
-				if (this.destroyedComponents.has(invalidated.value.id)) {
-					//console.log("component invalidated illegal",invalidated.value.id)
-					return
-				}
+
+				// TODO not sure if this can still be the case
+				// if (this.destroyedComponents.has(invalidated.value.id)) {
+				// 	console.log("component invalidated illegal",invalidated.value.id)
+				// 	return
+				// }
 			}
 			this.eventBus.publish(eventType, event);
 			return;
@@ -346,6 +350,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	private resolveFuture(requestId: number, response: Event): void {
+
 		const future = this.pendingFutures.get(requestId);
 		if (!future) {
 

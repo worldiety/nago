@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-//go:embed dist/favicon.ico dist/index.html dist/assets/*
+//go:embed  dist/index.html dist/assets/*
 var Frontend embed.FS
 
 func Dist() fs.FS {

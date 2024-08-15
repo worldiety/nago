@@ -31,6 +31,7 @@ const serviceAdapter = useServiceAdapter();
 const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
+const componentKey = ref(0);
 
 const errorHandler = useErrorHandling();
 let configurationPromise: Promise<void> | null = null;
@@ -123,6 +124,9 @@ async function navigateForward(event: Event): Promise<void> {
 	await serviceAdapter.destroyComponent(ui.value?.id)
 	const componentInvalidated = await serviceAdapter.createComponent(navigationForwardToRequested.factory, navigationForwardToRequested.values);
 	ui.value = componentInvalidated.value;
+
+	componentKey.value += 1;
+	console.log("componentkey",componentKey.value)
 
 	let url = `/${navigationForwardToRequested.factory}`
 	if (navigationForwardToRequested.values && Object.entries(navigationForwardToRequested.values).length > 0) {
@@ -344,12 +348,12 @@ watch(() => ui.value, (newValue) => {
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
-	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
+	<div  id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
 
 	</div>
 
 
-	<div class="bg-M1 content-container  min-h-screen">
+	<div class="bg-M1 content-container  min-h-screen" >
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
