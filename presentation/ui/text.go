@@ -5,6 +5,15 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+type TextAlignment string
+
+const (
+	TextAlignStart   TextAlignment = "s"
+	TextAlignEnd     TextAlignment = "e"
+	TextAlignCenter  TextAlignment = "c"
+	TextAlignJustify TextAlignment = "j"
+)
+
 type TText struct {
 	content                string
 	color                  ora.Color
@@ -24,6 +33,7 @@ type TText struct {
 	focusedBorder          ora.Border
 	pressedBorder          ora.Border
 	accessibilityLabel     string
+	textAlignment          TextAlignment
 	action                 func()
 }
 
@@ -58,6 +68,11 @@ func (c TText) PressedBorder(border Border) TText {
 
 func (c TText) FocusedBorder(border Border) TText {
 	c.focusedBorder = border.ora()
+	return c
+}
+
+func (c TText) TextAlignment(align TextAlignment) TText {
+	c.textAlignment = align
 	return c
 }
 
@@ -114,6 +129,7 @@ func (c TText) Render(ctx core.RenderContext) ora.Component {
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
+		TextAlignment:          ora.TextAlignment(c.textAlignment),
 		Action:                 ctx.MountCallback(c.action),
 	}
 }

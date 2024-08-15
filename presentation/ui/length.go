@@ -13,7 +13,7 @@ var Full = Relative(1)
 // ViewportHeight is a magic value which sets the intrinsic size of an Element to be the smallest available viewport
 // height. This is useful, if you have to center a component vertically on screen. Note, that scrollbars may
 // or truncated views may appear, if contained view is larger than the view ports height.
-const ViewportHeight = "100svh"
+const ViewportHeight = "100dvh"
 
 func Absolute(v core.DP) Length {
 	return Length(fmt.Sprintf("%vdp", v))

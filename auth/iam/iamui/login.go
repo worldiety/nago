@@ -29,6 +29,6 @@ func Login(wnd core.Window, service *iam.Service) core.View {
 				wnd.Navigation().ForwardTo(".", nil)
 			}
 		}).Title("Anmelden"),
-	)
+	).Gap(ui.L4).Frame(ui.Frame{}.MatchScreen())
 
 }

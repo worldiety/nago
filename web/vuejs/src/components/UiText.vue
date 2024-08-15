@@ -41,6 +41,21 @@ const styles = computed<string>(() => {
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.o))
 
+	switch (props.ui.a){
+		case "s":
+			styles.push("text-align: start")
+			break
+		case "e":
+			styles.push("text-align: end")
+			break
+		case "c":
+			styles.push("text-align: center")
+			break
+		case "j":
+			styles.push("text-align: justify","text-justify: inter-character") // inter-character just looks so much better
+			break
+	}
+
 	if (props.ui.t){
 		styles.push("cursor: pointer")
 	}

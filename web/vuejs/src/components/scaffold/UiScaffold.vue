@@ -51,7 +51,7 @@ const bodyWrapperClass = computed((): string|undefined => {
 		return 'pt-28';
 	}
   if (sidebarVisible.value) {
-    return 'py-8 pl-32';
+    return 'pl-32'; // py-8 would cause to introduce scrollbar with 100dvh
   }
 	return undefined;
 });

@@ -382,18 +382,20 @@ func (c *Configurator) newHandler() http.Handler {
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		cookie, _ := r.Cookie("wdy-ora-access")
-		if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{
-			Type:      ora.SessionAssignedT,
-			SessionID: cookie.Value,
-		})); err != nil {
-			slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
-			return
-		}
+		if cookie != nil {
+			if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{
+				Type:      ora.SessionAssignedT,
+				SessionID: cookie.Value,
+			})); err != nil {
+				slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
+				return
+			}
 
-		if err := channel.Loop(); err != nil {
-			slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
-			scope.Connect(nil) // we cannot use that anymore, so clean it up
-			return
+			if err := channel.Loop(); err != nil {
+				slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
+				scope.Connect(nil) // we cannot use that anymore, so clean it up
+				return
+			}
 		}
 
 	}))

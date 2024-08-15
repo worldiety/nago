@@ -10,6 +10,7 @@ import type { Font } from '@/shared/protocol/ora/font';
 import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Padding } from '@/shared/protocol/ora/padding';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { TextAlignment } from '@/shared/protocol/ora/textAlignment';
 
 export interface Text {
     // Type
@@ -52,6 +53,8 @@ export interface Text {
     o/*omitempty*/? /*Font*/: Font;
     // Action
     t/*omitempty*/? /*Action*/: Ptr;
+    // TextAlignment
+    a/*omitempty*/? /*TextAlignment*/: TextAlignment;
     // HoveredBackgroundColor
     hgc/*omitempty*/? /*HoveredBackgroundColor*/: Color;
     // PressedBackgroundColor

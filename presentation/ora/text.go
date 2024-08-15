@@ -1,5 +1,15 @@
 package ora
 
+// TextAlignment constants are
+//
+//   - start (left) = s
+//   - end (right) = e
+//   - center = c
+//   - justify = j
+//
+// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
+type TextAlignment string
+
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Text struct {
 	Type  ComponentType `json:"type" value:"T"`
@@ -24,6 +34,8 @@ type Text struct {
 
 	Font   Font `json:"o,omitempty"`
 	Action Ptr  `json:"t,omitempty"`
+
+	TextAlignment TextAlignment `json:"a,omitempty"`
 
 	HoveredBackgroundColor Color  `json:"hgc,omitempty"`
 	PressedBackgroundColor Color  `json:"pgc,omitempty"`
