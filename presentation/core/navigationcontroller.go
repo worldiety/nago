@@ -15,14 +15,14 @@ func NewNavigationController(scope *Scope) *NavigationController {
 	}
 }
 
-func (n *NavigationController) ForwardTo(id ora.ComponentFactoryId, values Values) {
+func (n *NavigationController) ForwardTo(id NavigationPath, values Values) {
 	if n.destroyed {
 		return
 	}
 
 	n.scope.Publish(ora.NavigationForwardToRequested{
 		Type:    ora.NavigationForwardToRequestedT,
-		Factory: id,
+		Factory: ora.ComponentFactoryId(id),
 		Values:  values,
 	})
 }
@@ -37,14 +37,14 @@ func (n *NavigationController) Back() {
 	})
 }
 
-func (n *NavigationController) ResetTo(id ora.ComponentFactoryId, values Values) {
+func (n *NavigationController) ResetTo(id NavigationPath, values Values) {
 	if n.destroyed {
 		return
 	}
 
 	n.scope.Publish(ora.NavigationResetRequested{
 		Type:    ora.NavigationResetRequestedT,
-		Factory: id,
+		Factory: ora.ComponentFactoryId(id),
 		Values:  values,
 	})
 }

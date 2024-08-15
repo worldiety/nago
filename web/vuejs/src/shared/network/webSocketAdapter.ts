@@ -214,6 +214,18 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		newComponentRequested?: NewComponentRequested,
 		componentDestructionRequested?: ComponentDestructionRequested,
 	): Promise<Event> {
+		if (properties?.length>0){
+			if (properties?.at(0).p==undefined){
+				throw "fix me"
+			}
+		}
+
+		if (functions?.length>0){
+			if (functions?.at(0)==0){
+				throw "fix me"
+			}
+		}
+
 		console.log("shall send",properties)
 		return new Promise<Event>((resolve, reject) => {
 			const requestId = this.nextRequestId();

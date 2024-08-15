@@ -3,63 +3,32 @@ package iamui
 import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
-	"go.wdy.de/nago/presentation/uilegacy"
-	"go.wdy.de/nago/presentation/uix/xdialog"
+	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-func Login(wnd core.Window, modals uilegacy.ModalOwner, service *iam.Service) core.View {
-	return uilegacy.NewFlexContainer(func(flexContainer *uilegacy.FlexContainer) {
-		flexContainer.ElementSize().Set(ora.ElementSizeLarge)
-		flexContainer.Children().Append(
-			uilegacy.NewVStack(func(vbox *uilegacy.VStack) {
-				var mailLogin *uilegacy.TextField
-				var pwdLogin *uilegacy.PasswordField
-				var errMsg *uilegacy.Text
-				vbox.Append(
-					uilegacy.NewText(func(text *uilegacy.Text) {
-						errMsg = text
-						text.SetColor(ora.Error)
-					}),
-					uilegacy.NewTextField(func(tf *uilegacy.TextField) {
-						mailLogin = tf
-						if email, ok := service.Subject(wnd.SessionID()).(interface{ EMail() iam.Email }); ok {
-							tf.Value().Set(string(email.EMail()))
-						}
-						tf.Label().Set("E-Mail Adresse")
-					}),
-					uilegacy.NewPasswordField(func(passwordField *uilegacy.PasswordField) {
-						pwdLogin = passwordField
-						passwordField.Label().Set("Kennwort")
-					}),
-					uilegacy.NewButton(func(text *uilegacy.Button) {
-						text.Caption().Set("Passwort vergessen")
-						text.Style().Set(ora.Tertiary)
-						text.Action().Set(func() {
-							xdialog.ShowMessage(modals, "Die Self-Service Funktion steht nicht zur Verfügung. Bitte wenden Sie sich an Ihren Administrator.")
-						})
-					}),
-					uilegacy.NewFlexContainer(func(flex *uilegacy.FlexContainer) {
-						flex.Append(
-							uilegacy.NewButton(func(btn *uilegacy.Button) {
-								btn.Caption().Set("Anmelden")
-								btn.Action().Set(func() {
-									ok := service.Login(wnd.SessionID(), mailLogin.Value().Get(), pwdLogin.Value().Get())
-									if !ok {
-										errMsg.Value().Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
-									}
+func Login(wnd core.Window, service *iam.Service) core.View {
+	login := core.AutoState[string](wnd)
+	password := core.AutoState[string](wnd)
+	noSelfServicePresented := core.AutoState[bool](wnd)
+	invalidLoginText := core.AutoState[string](wnd)
 
-									if ok {
-										errMsg.Value().Set("")
-										wnd.Navigation().Back()
-									}
-								})
-							}),
-						)
-					}),
-				)
-			}),
-		)
-	})
+	return ui.VStack(
+		alert.Dialog("Hinweis", ui.Text("Die Self-Service Funktion steht nicht zur Verfügung. Bitte wenden Sie sich an Ihren Administrator."), noSelfServicePresented, alert.Ok()),
+		ui.Text(invalidLoginText.String()).Color(ui.SE0),
+		ui.TextField("E-Mail Adresse", ""),
+		ui.PasswordField("Kennwort"),
+		ui.TertiaryButton(func() {
+			noSelfServicePresented.Set(true)
+		}).Title("Kennwort vergessen"),
+		ui.PrimaryButton(func() {
+			ok := service.Login(wnd.SessionID(), login.Get(), password.Get())
+			if !ok {
+				invalidLoginText.Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
+			} else {
+				wnd.Navigation().ForwardTo(".", nil)
+			}
+		}).Title("Anmelden"),
+	)
 
 }

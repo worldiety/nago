@@ -15,7 +15,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			firstname := core.AutoState[string](wnd)
 			secret := core.AutoState[string](wnd)
 			showAlert := core.AutoState[bool](wnd)

@@ -34,7 +34,7 @@ func main() {
 			MySuperColor: "#ff0000",
 		})
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			colors := core.Colors[MyCustomColors](wnd)
 			oraColors := core.Colors[Colors](wnd)
 			return VStack(

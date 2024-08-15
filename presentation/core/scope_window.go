@@ -127,8 +127,8 @@ func (s *scopeWindow) Window() Window {
 	return s
 }
 
-func (s *scopeWindow) Factory() RootViewFactory {
-	return RootViewFactory(s.factory)
+func (s *scopeWindow) Path() NavigationPath {
+	return NavigationPath(s.factory)
 }
 
 func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {

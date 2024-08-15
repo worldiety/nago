@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Text[E any, T ~string](label string, property func(*E) *T) Field[E] {
+func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {

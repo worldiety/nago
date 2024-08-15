@@ -5,7 +5,6 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -17,7 +16,7 @@ func main() {
 		fstore := cfg.FileStore("my-files")
 		must(any(nil), blob.Write(fstore, "bla.txt", bytes.NewBufferString("blub")))
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			return uilegacy.NewVBox(func(vbox *uilegacy.VBox) {
 				vbox.Append(
 					// configure the upload field

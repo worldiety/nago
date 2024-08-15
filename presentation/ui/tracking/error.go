@@ -39,7 +39,7 @@ func (e *UnhandledErrors) Put(wnd core.Window, err error) AnonymousErrorCode {
 	var tmp [16]byte
 	_, _ = rand.Read(tmp[:])
 	code := AnonymousErrorCode(hex.EncodeToString(tmp[:]))
-	slog.Error("captured unexpected failure in presentation code", slog.String("rootView", string(wnd.Factory())), slog.Any("err", err), slog.String("code", string(code)))
+	slog.Error("captured unexpected failure in presentation code", slog.String("rootView", string(wnd.Path())), slog.Any("err", err), slog.String("code", string(code)))
 
 	e.errors = append(e.errors, UnhandledError{
 		FirstErr: err,
@@ -116,7 +116,7 @@ func sendReport(wnd core.Window, code AnonymousErrorCode) {
 	msg += fmt.Sprintf("application-id: %s\n", wnd.Application().ID())
 	msg += fmt.Sprintf("application-name: %s\n", wnd.Application().Name())
 	msg += fmt.Sprintf("application-version: %s\n", wnd.Application().Version())
-	msg += fmt.Sprintf("component: %s\n", wnd.Factory())
+	msg += fmt.Sprintf("component: %s\n", wnd.Path())
 	msg += fmt.Sprintf("values: %v\n", wnd.Values())
 	msg += fmt.Sprintf("code: %s\n", code)
 

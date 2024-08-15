@@ -13,7 +13,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			return VStack(
 				PrimaryButton(func() {
 					wnd.ImportFiles(core.ImportFilesOptions{

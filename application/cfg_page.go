@@ -26,16 +26,16 @@ import (
 	"time"
 )
 
-// Component registers a factory to create a [core.ViewRoot] within a [core.Scope].
+// RootView registers a factory to create a [core.View] within a [core.Scope].
 // For example, a web browser will create at least a single ViewRoot for each open tab.
 // Note, that leading or succeeding slashes in the factory ids are not allowed, otherwise you can
 // use them in arbitrary ways.
 // Keep in mind, that web browsers will expose these ids to the user and they become part of your public
 // API or contract with the user. A user may bookmark them.
 //
-// You cannot use path variables. Instead, use [core.Window.Values] to transport a state from one ViewRoot
+// You cannot use path variables. Instead, use [core.Values] to transport a state from one ViewRoot
 // (or window) to another.
-func (c *Configurator) Component(viewRootID core.RootViewFactory, factory func(wnd core.Window) core.View) {
+func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
 	id := ora.ComponentFactoryId(viewRootID)
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid component factory id: %v", id))
@@ -51,13 +51,6 @@ func (c *Configurator) Component(viewRootID core.RootViewFactory, factory func(w
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	c.fsys = append(c.fsys, fsys)
 	return c
-}
-
-type httpFileDownload struct {
-	Token        string
-	Name         string
-	AbsolutePath string
-	Mimetype     string
 }
 
 func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {

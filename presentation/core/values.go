@@ -7,6 +7,25 @@ import (
 	"strconv"
 )
 
+// A NavigationPath defines a unique declaration to a root view.
+// When initializing the window to render the associated root view, additional [Values] can be submitted, but these
+// are never part of the navigation path.
+// Technically, this may be serialized data from e.g. an Android Intent or just get-parameters from a Web-URL.
+// Reserved paths:
+//   - Main Activity resp. index page: .
+//   - Fallback resp. not found page: _
+//
+// Valid examples:
+//   - a
+//   - a/b/c
+//
+// Invalid examples:
+//
+//	-
+//	- a?b=c&d=e
+//	- \a b \c
+type NavigationPath string
+
 // Values contains string serialized key-value pairs.
 // See also UnmarshalValues.
 type Values map[string]string

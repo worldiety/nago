@@ -23,7 +23,7 @@ func main() {
 		hummelUri := cfg.Resource(hummelData)
 		grasUri := cfg.Resource(grasData)
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			fmt.Println("hello")
 			return VStack(
 				Image().

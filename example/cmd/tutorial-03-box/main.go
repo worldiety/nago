@@ -22,7 +22,7 @@ func main() {
 		profileURI := cfg.Resource(profileData)
 		grassURI := cfg.Resource(grasData)
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			return VStack(
 				Card(
 					HStack(

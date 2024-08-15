@@ -150,15 +150,20 @@ function handleMouseMove(event: MouseEvent): void {
 		?? 0;
 	if (event.x > threshold) {
 		// Collapse the sub menu when threshold is passed
-		const updatedExpandedProperties = props.ui.m
-			?.filter((menuEntry) => menuEntry.x)
-			.map((menuEntry) => ({
-				...menuEntry.x,
-				v: false,
-			}));
-		if (updatedExpandedProperties?.length > 0) {
-			serviceAdapter.setProperties(...updatedExpandedProperties);
-		}
+		// const updatedExpandedProperties = props.ui.m
+		// 	?.filter((menuEntry) => menuEntry.x)
+		// 	.map((menuEntry) => ({
+		// 		...menuEntry.x,
+		// 		v: false,
+		// 	}));
+		// if (updatedExpandedProperties?.length > 0) {
+		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
+		// }
+
+		props.ui.m?.forEach(value => {
+			value.x=false
+		})
+
 	}
 }
 

@@ -37,7 +37,7 @@ func main() {
 		})
 
 		// press reload in your browser and watch how the image is loaded
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			// use a little trick to trigger a reload in the native image view by changing the uri a bit
 			return ui.Image().URI(core.URI(fmt.Sprintf("%s?version=%d", uri, atomic.LoadInt64(&invocationCount))))
 		})

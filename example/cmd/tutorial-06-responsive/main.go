@@ -19,7 +19,7 @@ func main() {
 
 		oraImgUri := cfg.Resource(imgData)
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return VStack(
 				Text(fmt.Sprintf("size class %s", wnd.Info().SizeClass)),

@@ -16,6 +16,8 @@ const (
 	ScaffoldAlignmentLeading ScaffoldAlignment = "l"
 )
 
+// ScaffoldMenuEntry represents either a menu node or leaf. See also helper functions [ForwardScaffoldMenuEntry] and
+// [ParentScaffoldMenuEntry].
 type ScaffoldMenuEntry struct {
 	Icon core.View
 	// IconActive is optional
@@ -24,10 +26,29 @@ type ScaffoldMenuEntry struct {
 	Action     func()
 	// MarkAsActiveAt contains the factory id at which this entry shall be highlighted automatically as active.
 	// Use . for index.
-	MarkAsActiveAt ora.ComponentFactoryId
+	MarkAsActiveAt core.NavigationPath
 	Menu           []ScaffoldMenuEntry
 
 	// intentionally left out expanded and badge, because badge can be emulated with Box layout and expanded is automatic
+}
+
+func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst core.NavigationPath) ScaffoldMenuEntry {
+	return ScaffoldMenuEntry{
+		Icon:  Image().Embed(icon),
+		Title: title,
+		Action: func() {
+			wnd.Navigation().ForwardTo(dst, nil)
+		},
+		MarkAsActiveAt: dst,
+	}
+}
+
+func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, children ...ScaffoldMenuEntry) ScaffoldMenuEntry {
+	return ScaffoldMenuEntry{
+		Icon:  Image().Embed(icon),
+		Title: title,
+		Menu:  children,
+	}
 }
 
 type TScaffold struct {
@@ -79,7 +100,7 @@ func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []ora.ScaffoldMe
 			IconActive: render(ctx, entry.IconActive),
 			Title:      entry.Title,
 			Action:     ctx.MountCallback(entry.Action),
-			Factory:    entry.MarkAsActiveAt,
+			Factory:    ora.ComponentFactoryId(entry.MarkAsActiveAt),
 			Menu:       makeMenu(ctx, entry.Menu),
 		})
 	}

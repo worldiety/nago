@@ -1,7 +1,6 @@
 package main
 
 import (
-	""
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
@@ -16,7 +15,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			return VStack(gantt()).Frame(Frame{}.FullWidth()).Padding(Padding{}.All(L44))
 		})
 	}).Run()

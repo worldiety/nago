@@ -22,7 +22,7 @@ func main() {
 		// update the global app icon
 		cfg.AppIcon(cfg.Resource(appIco))
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return Scaffold(ScaffoldAlignmentTop).
 				Body(VStack(

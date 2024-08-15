@@ -17,7 +17,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		var redrawCounter atomic.Uint64
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			// this shows how to redraw views with a fixed rate, without using states to signal view invalidation
 			redrawCounter.Add(1)
 

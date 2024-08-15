@@ -130,7 +130,7 @@ func (b *Binding[T]) SetID(id string) *Binding[T] {
 // is assigned, which should normally be enough. However, there may be corner situations like prev/next navigation
 // between entities on the same form, which may cause unwanted state re-usage, if you do not provide a unique id
 // to the binding constructor.
-func (b *Binding[T]) Add(fields ...Field[T]) {
+func (b *Binding[T]) Add(fields ...Field[T]) *Binding[T] {
 	off := len(b.fields)
 	for i, field := range fields {
 		if field.ID == "" {
@@ -140,6 +140,8 @@ func (b *Binding[T]) Add(fields ...Field[T]) {
 		field.Window = b.wnd
 		b.fields = append(b.fields, field)
 	}
+
+	return b
 }
 
 func handleValidation[E any](self Field[E], entity *core.State[E], errMsg *core.State[string]) {

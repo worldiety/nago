@@ -4,41 +4,39 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/uilegacy"
-	"go.wdy.de/nago/presentation/uix/crud"
+	"go.wdy.de/nago/presentation/ui/crud"
 )
 
-func Groups(wnd core.Window, modals uilegacy.ModalOwner, service *iam.Service) core.View {
+func Groups(wnd core.Window, service *iam.Service) core.View {
 	subject := wnd.Subject()
-	return crud.NewView(modals, crud.NewOptions[iam.Group](func(opts *crud.Options[iam.Group]) {
-		opts.Title("Gruppen")
-		opts.ReadAll(service.AllGroups(subject))
-		opts.Create(func(group iam.Group) error {
-			return service.CreateGroup(subject, group)
-		})
-		opts.Responsive(wnd)
-		opts.Delete(func(group iam.Group) error {
-			return service.DeleteGroup(subject, group.ID)
-		})
-		opts.Update(func(group iam.Group) error {
-			return service.UpdateGroup(subject, group)
-		})
-		opts.Bind(func(bnd *crud.Binding[iam.Group]) {
 
-			crud.Text(bnd, crud.FromPtr("ID", func(model *iam.Group) *auth.GID {
-				return &model.ID
-			}, crud.RenderHints{
-				crud.Overview: crud.Hidden,
-				crud.Update:   crud.ReadOnly,
-				crud.Create:   crud.Visible,
-			}))
+	bnd := crud.NewBinding[iam.Group](wnd)
+	bnd.Add(
+		crud.Text("ID", func(e *iam.Group) *auth.GID {
+			return &e.ID // TODO 	crud.Update:   crud.ReadOnly,
+		}).WithoutTable(),
+		crud.Text("Name", func(e *iam.Group) *string {
+			return &e.Name
+		}),
+		crud.Text("Beschreibung", func(e *iam.Group) *string {
+			return &e.Description
+		}),
+		crud.AggregateActions(
+			"Optionen",
+			crud.ButtonDelete(wnd, func(group iam.Group) error {
+				return service.DeleteGroup(subject, group.ID)
+			}),
+			crud.ButtonEdit(bnd, func(group iam.Group) (errorText string, infrastructureError error) {
+				return "", service.UpdateGroup(subject, group)
+			}),
+		),
+	)
 
-			crud.Text(bnd, crud.FromPtr("Name", func(model *iam.Group) *string {
-				return &model.Name
-			}))
-			crud.Text(bnd, crud.FromPtr("Beschreibung", func(model *iam.Group) *string {
-				return &model.Description
-			}))
-		})
-	}))
+	opts := crud.Options(bnd).
+		Actions(crud.ButtonCreate(bnd, iam.Group{}, func(group iam.Group) (errorText string, infrastructureError error) {
+			return "", service.CreateGroup(subject, group)
+		})).Title("Gruppen").
+		FindAll(service.AllGroups(subject))
+
+	return crud.View[iam.Group](opts)
 }

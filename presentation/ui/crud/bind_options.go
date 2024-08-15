@@ -42,7 +42,7 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 	stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.create.errmsg.%s", typ))
 	return ui.VStack(
 		alert.Dialog("Erstellen nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu erstellen."), noSuchPermissionPresented, alert.Ok()),
-		alert.Dialog("Bearbeiten", ui.Composable(func() core.View {
+		alert.Dialog("Neu erstellen", ui.Composable(func() core.View {
 			subBnd := bnd.Inherit(string(initial.Identity()))
 
 			return ui.VStack(

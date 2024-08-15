@@ -24,8 +24,8 @@ type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {
 	sortDirState     *core.State[sortDir]
 }
 
-func Options[Entity data.Aggregate[ID], ID data.IDType](wnd core.Window, bnd *Binding[Entity]) TOptions[Entity, ID] {
-
+func Options[Entity data.Aggregate[ID], ID data.IDType](bnd *Binding[Entity]) TOptions[Entity, ID] {
+	wnd := bnd.wnd
 	return TOptions[Entity, ID]{
 		wnd:              wnd,
 		bnd:              bnd,

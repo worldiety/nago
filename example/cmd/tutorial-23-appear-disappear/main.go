@@ -18,7 +18,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			seconds := core.AutoState[int](wnd)
 
 			core.OnAppear(wnd, "my-time", func(ctx context.Context) {

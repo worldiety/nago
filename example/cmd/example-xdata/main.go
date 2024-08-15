@@ -19,11 +19,11 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		persons := NewPersonService(personRepo)
-		cfg.Component("hello", func(wnd core.Window) core.View {
+		cfg.RootView("hello", func(wnd core.Window) core.View {
 			return dataPage(wnd, persons)
 		})
 
-		cfg.Component("button", func(wnd core.Window) core.View {
+		cfg.RootView("button", func(wnd core.Window) core.View {
 			return uilegacy.NewButton(func(btn *uilegacy.Button) {
 				btn.Caption().Set("hello world")
 				btn.Action().Set(func() {

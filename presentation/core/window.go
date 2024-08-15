@@ -46,8 +46,6 @@ func ExportFile(name string, buf []byte) ExportFilesOptions {
 	}
 }
 
-type RootViewFactory string
-
 // A Window owns the lifecycle of a component and is part of a Scope.
 // Ora does not define (yet) what a window is.
 // However, obviously every component lives inside a window of the frontend and navigation is related to that.
@@ -107,8 +105,8 @@ type Window interface {
 	// Application returns the parent application.
 	Application() *Application
 
-	// Factory returns the current active factory.
-	Factory() RootViewFactory
+	// Path returns the current active navigation path.
+	Path() NavigationPath
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())

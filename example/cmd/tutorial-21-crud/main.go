@@ -59,7 +59,7 @@ func main() {
 			})
 		})
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Person](wnd)
 			bnd.Add(
 				crud.Text("Vorname", func(entity *Person) *string {
@@ -92,7 +92,7 @@ func main() {
 
 			return ui.VStack(
 				crud.View[Person, PID](
-					crud.Options[Person, PID](wnd, bnd).
+					crud.Options[Person, PID](bnd).
 						Actions(
 							crud.ButtonCreate[Person](bnd, Person{ID: data.RandIdent[PID]()}, func(person Person) (errorText string, infrastructureError error) {
 								if person.Firstname == "" {

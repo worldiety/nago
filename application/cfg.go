@@ -20,20 +20,20 @@ import (
 )
 
 type Configurator struct {
-	boltStore          *bbolt.DB
-	ctx                context.Context
-	done               context.CancelFunc
-	logger             *slog.Logger
-	debug              bool
-	fsys               []fs.FS
-	host               string
-	port               int
-	scheme             string
-	applicationID      core.ApplicationID
-	applicationName    string
-	applicationVersion string
-	dataDir            string
-	//	iamSettings              IAMSettings
+	boltStore                *bbolt.DB
+	ctx                      context.Context
+	done                     context.CancelFunc
+	logger                   *slog.Logger
+	debug                    bool
+	fsys                     []fs.FS
+	host                     string
+	port                     int
+	scheme                   string
+	applicationID            core.ApplicationID
+	applicationName          string
+	applicationVersion       string
+	dataDir                  string
+	iamSettings              IAMSettings
 	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.View
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
 	destructors              []func()

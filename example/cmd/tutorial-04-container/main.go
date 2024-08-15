@@ -17,7 +17,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 			return HStack(
 				withTitle("box", box()),
 				withTitle("vstack", vstack()),
