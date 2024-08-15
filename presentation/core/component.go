@@ -25,9 +25,10 @@ type RenderContext interface {
 	Handle([]byte) (hnd ora.Ptr, created bool)
 }
 
+type RenderNode = ora.Component
+
 type View interface {
-	//Padding(padding ora.Padding) View
-	Render(RenderContext) ora.Component
+	Render(RenderContext) RenderNode
 }
 
 type ViewPadding struct {

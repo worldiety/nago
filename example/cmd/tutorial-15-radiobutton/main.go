@@ -15,14 +15,14 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			stateGroup := AutoRadioStateGroup(wnd, 3)
+			stateGroup := AutoRadioStateGroup(wnd, "my-state-group", 3)
 			if stateGroup.SelectedIndex() == -1 {
 				stateGroup.SetSelectedIndex(1)
 			}
 			showAlert := core.AutoState[bool](wnd)
 
 			return VStack(
-				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", stateGroup.SelectedIndex()), showAlert, alert.Ok()),
+				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", stateGroup.SelectedIndex())), showAlert, alert.Ok()),
 				VStack(Each2(stateGroup.States, func(idx int, checked *core.State[bool]) core.View {
 					return HStack(
 						RadioButton(checked.Get()).

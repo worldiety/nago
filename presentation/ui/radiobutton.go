@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 )
@@ -9,10 +10,10 @@ type RadioStateGroup struct {
 	states []*core.State[bool]
 }
 
-func AutoRadioStateGroup(wnd core.Window, states int) RadioStateGroup {
+func AutoRadioStateGroup(wnd core.Window, id string, states int) RadioStateGroup {
 	var wndStates = make([]*core.State[bool], 0, states)
 	for i := range states {
-		state := core.AutoState[bool](wnd)
+		state := core.StateOf[bool](wnd, fmt.Sprintf("%s-%d", id, i))
 		state.Observe(func(newValue bool) {
 			for i2, wndState := range wndStates {
 				wndState.Set(i == i2)

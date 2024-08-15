@@ -31,7 +31,7 @@ func main() {
 			showAlert := core.AutoState[bool](wnd)
 
 			return VStack(
-				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v, start=%v end=%v", date, start, end), showAlert, alert.Ok()),
+				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v, start=%v end=%v", date, start, end)), showAlert, alert.Ok()),
 				SingleDatePicker("Geburtstag", date.Get(), date),
 
 				RangeDatePicker("Urlaub", start.Get(), start, end.Get(), end),

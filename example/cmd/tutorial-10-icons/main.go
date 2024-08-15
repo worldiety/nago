@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/xmaps"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -29,7 +30,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		cfg.Component(".", func(wnd core.Window) core.View {
+		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return VStack(
 				Text("Hero Outline"),

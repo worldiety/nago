@@ -19,7 +19,7 @@ func main() {
 			showAlert := core.AutoState[bool](wnd)
 
 			return VStack(
-				alert.Dialog("Achtung", fmt.Sprintf("Deine Eingabe: %v", checked), showAlert, alert.Ok()),
+				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", checked)), showAlert, alert.Ok()),
 				Checkbox(checked.Get()).InputChecked(checked),
 				HStack(
 					Checkbox(checked.Get()).InputChecked(checked),

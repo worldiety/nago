@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"slices"
 )
 
 var months = []string{"Januar", "Februar", "March", "April", "May", "June", "Juli", "August", "September", "October", "November", "Dezember"}

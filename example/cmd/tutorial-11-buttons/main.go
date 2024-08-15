@@ -45,8 +45,8 @@ func defaultButtons() core.View {
 		PrimaryButton(nil).
 			PreIcon(icons.SpeakerWave),
 
-		Secondary(nil).Title("secondary button"),
-		Tertiary(nil).Title("tertiary button"),
+		SecondaryButton(nil).Title("secondary button"),
+		TertiaryButton(nil).Title("tertiary button"),
 	).Gap(L16).
 		Padding(Padding{}.All(L16))
 }
