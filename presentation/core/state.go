@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
+	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
@@ -50,11 +51,12 @@ func (s *State[T]) Window() Window {
 	return s.wnd
 }
 
-func (s *State[T]) Observe(f func(newValue T)) {
+func (s *State[T]) Observe(f func(newValue T)) *State[T] {
 	s.observerLock.Lock()
 	defer s.observerLock.Unlock()
 
 	s.observer = append(s.observer, f)
+	return s
 }
 
 func (s *State[T]) clearObservers() {
@@ -141,9 +143,17 @@ func (s *State[T]) Get() T {
 	return s.value
 }
 
+// Set updates the state with the given value and marks this state as valid (so no From initialization will ever happen)
+// and it marks this state as dirty (it updates the render generation marker). However, it uses a deep equals
+// logic to decide whether the state becomes dirty.
 func (s *State[T]) Set(v T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	// TODO not sure, if this is a good idea but it breaks reactive code loops setting values all over again however this causes a massive escaping ballast and is often unneeded (int, bool, string etc). fix me if generics get a type switch
+	if reflect.DeepEqual(s.value, v) {
+		return
+	}
 
 	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration()) // TODO set this once in the scope_window for better performance
 	s.value = v
@@ -235,6 +245,16 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 	w.statesById[id] = state
 
 	return state
+}
+
+// DerivedState takes the window and the id of the parent state and creates a new state by applying the postfix to the id.
+// It does not mean, that if the parent state changes, the child will also be changed. They just share their window
+// and parts the id.
+func DerivedState[T, X any](parent *State[X], idPostfix string) *State[T] {
+	if idPostfix == "" {
+		panic(fmt.Errorf("it is a programming error to provide an empty postfix, because that would collide with the given state"))
+	}
+	return StateOf[T](parent.wnd, parent.id+idPostfix)
 }
 
 // AutoState uses the structural identity to associate

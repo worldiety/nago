@@ -146,6 +146,10 @@ function headCellStyles(colIdx: number): string {
 		styles.push(`background-color: ${colorValue(cell.k)}`)
 	}
 
+	if (cell.w){
+		styles.push(`width: ${cell.w}`)
+	}
+
 	switch (cell.a) {
 		case Alignment.Leading:
 			styles.push("vertical-align: middle", "text-align: start")

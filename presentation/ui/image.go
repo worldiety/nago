@@ -40,15 +40,15 @@ func (c TImage) URI(uri core.URI) TImage {
 
 // FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor.
 // Otherwise, a broken or no effect will be seen.
-func (c TImage) FillColor(color ora.Color) TImage {
-	c.fillColor = color
+func (c TImage) FillColor(color Color) TImage {
+	c.fillColor = color.ora()
 	return c
 }
 
 // StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor.
 // Otherwise, a broken or no effect will be seen.
-func (c TImage) StrokeColor(color ora.Color) TImage {
-	c.strokeColor = color
+func (c TImage) StrokeColor(color Color) TImage {
+	c.strokeColor = color.ora()
 	return c
 }
 

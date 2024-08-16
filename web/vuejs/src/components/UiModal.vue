@@ -33,11 +33,12 @@ onMounted(() => {
 	//}
 });
 
-watch(() => props.ui, (newValue) => {
-	if (newValue) {
-		captureFocusInDialog();
-	}
-});
+// TODO the following code causes focus-lost event in input elements and seems not be appropriate anymore - this is a port from a dialog
+// watch(() => props.ui, (newValue) => {
+// 	if (newValue) {
+// 		captureFocusInDialog();
+// 	}
+// });
 
 
 function captureFocusInDialog(): void {

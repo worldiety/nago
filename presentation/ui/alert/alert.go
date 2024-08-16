@@ -15,6 +15,7 @@ type alertOpts struct {
 	delBtn    core.View
 	saveBtn   core.View
 	cancelBtn core.View
+	custom    []core.View
 }
 
 type optFunc func(opts *alertOpts)
@@ -56,6 +57,15 @@ func Save(onSave func() (close bool)) Option {
 	})
 }
 
+// Custom adds a custom footer (button) element.
+func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.custom = append(opts.custom, makeCustomView(func(closeDlg bool) {
+			opts.state.Set(!closeDlg)
+		}))
+	})
+}
+
 func Cancel(onCancel func()) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
@@ -94,6 +104,8 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 			if options.saveBtn != nil {
 				btns = append(btns, options.saveBtn)
 			}
+
+			btns = append(btns, options.custom...)
 
 			if len(btns) > 0 {
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))

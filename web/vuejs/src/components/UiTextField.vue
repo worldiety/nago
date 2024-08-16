@@ -138,6 +138,7 @@ const inputMode = computed<string>(() => {
 // TODO check :id="idPrefix + props.ui.id.toString()"
 
 // TODO this is not properly modelled: the padding trick below does not work with arbitrary content (prefix, postfix). Use focus-within and a border around flex flex-row, so that we don't need that padding stuff
+// TODO implement TextFieldBasic (b) render mode
 </script>
 
 <template>

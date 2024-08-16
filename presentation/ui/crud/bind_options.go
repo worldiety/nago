@@ -153,15 +153,15 @@ func ButtonDelete[E data.Aggregate[ID], ID data.IDType](wnd core.Window, deleteF
 	}
 }
 
-// AggregateActions is like [Custom] but omits the views from the form to avoid render recursion.
-func AggregateActions[E any](label string, options ...ElementViewFactory[E]) Field[E] {
-	return Custom[E](label, options...).WithoutForm()
-}
-
-// Custom creates a field binding to E and renders with the bound E the given options.
+// AggregateActions creates a field binding to E and renders with the bound E the given options.
 // Keep in mind, to remove Render* functions, if it does not make sense or may cause
 // malfunctions in the context, e.g. deleting an E without navigation.
-func Custom[E any](label string, options ...ElementViewFactory[E]) Field[E] {
+// AggregateActions omits the views from the form to avoid render recursion.
+func AggregateActions[E any](label string, options ...ElementViewFactory[E]) Field[E] {
+	return rowInField[E](label, options...).WithoutForm()
+}
+
+func rowInField[E any](label string, options ...ElementViewFactory[E]) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
