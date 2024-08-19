@@ -38,7 +38,7 @@ func (c TCheckbox) Visible(v bool) TCheckbox {
 }
 
 func (c TCheckbox) Render(ctx core.RenderContext) ora.Component {
-
+	// TODO this component has an intrinsic padding which must be removed
 	return ora.Checkbox{
 		Type:       ora.CheckboxT,
 		Value:      c.value,

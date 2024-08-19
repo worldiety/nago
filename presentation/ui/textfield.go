@@ -24,7 +24,7 @@ const (
 	// TextFieldBasic removes as much as decorations as possible. There may be limitations based on the platform.
 	// Note, that an implementation is allowed to ignore leading, trailing, supporting and errorText for this mode.
 	// It may serve as a building-block for custom fields.
-	TextFieldBasic TextFieldStyle = "b"
+	TextFieldBasic TextFieldStyle = "b" // TODO this is not consistent with checkbox and toggle api
 )
 
 type TTextField struct {

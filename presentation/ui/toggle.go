@@ -38,7 +38,7 @@ func (c TToggle) Visible(v bool) TToggle {
 }
 
 func (c TToggle) Render(ctx core.RenderContext) ora.Component {
-
+	// TODO toggle has a screwed intrinsic padding/offset into top
 	return ora.Toggle{
 		Type:       ora.ToggleT,
 		Value:      c.value,

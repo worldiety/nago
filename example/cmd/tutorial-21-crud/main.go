@@ -27,6 +27,7 @@ type Person struct {
 	BestFriend PID   // this the same as above, but the one-to-one case
 	Score      Score
 	Grade      Grade
+	Proofed    bool
 }
 
 func (p Person) Identity() PID {
@@ -85,6 +86,14 @@ func main() {
 				crud.Float("Grade", func(model *Person) *Grade {
 					return &model.Grade
 				}),
+
+				crud.Bool("Proofed", func(model *Person) *bool {
+					return &model.Proofed
+				}).WithSupportingText("Check me if this is ok"),
+
+				crud.BoolToggle("Proofed2", func(model *Person) *bool {
+					return &model.Proofed
+				}).WithSupportingText("don't bind same fields into the same form"),
 
 				crud.AggregateActions("Optionen",
 					crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error {
