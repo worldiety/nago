@@ -12,6 +12,10 @@ export function cssLengthValue(l?: Length): string {
 		return l
 	}
 
+	if (l.startsWith("calc")){
+		return l
+	}
+
 	return `var(--${l})`
 }
 

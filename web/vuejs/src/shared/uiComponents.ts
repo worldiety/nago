@@ -17,6 +17,7 @@ import UiModal from "@/components/UiModal.vue";
 import UiWindowTitle from "@/components/UiWindowTitle.vue";
 import UiTable from "@/components/table/UiTable.vue";
 import UiPasswordField from "@/components/UiPasswordField.vue";
+import UiScrollView from "@/components/scrollview/UiScrollView.vue";
 
 // Add new UI components to the following map
 const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
@@ -53,5 +54,6 @@ uiComponentsMap.set('bx', UiBox)
 uiComponentsMap.set('s', UiSpacer)
 uiComponentsMap.set('M', UiModal)
 uiComponentsMap.set('W', UiWindowTitle)
+uiComponentsMap.set('V', UiScrollView)
 
 export default uiComponentsMap;

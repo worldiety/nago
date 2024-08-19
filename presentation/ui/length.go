@@ -26,7 +26,17 @@ func Relative(v core.Weight) Length {
 	return Length(fmt.Sprintf("%v%%", v*100))
 }
 
-// Length is a very variable type.
+// Length is a very variable type, supporting a variety of declaration types:
+//   - absolute units in dp e.g. 42dp
+//   - relative units in rem e.g. 0.75rem
+//   - relative units in percent e.g. 42%
+//   - auto or default is the empty string
+//   - current viewport height is 100dvh
+//   - calc operator with constants, e.g. calc(100dvh - 2rem)
+//   - experimental: everything else is interpreted as a variable name, like for [Color]
+//
+// Important: everything else is undefined, especially if using other units and calc quirks which are just
+// implementation dependent e.g. because passed through directly into CSS.
 type Length string
 
 func (l Length) ora() ora.Length {

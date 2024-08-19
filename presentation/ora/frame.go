@@ -1,7 +1,7 @@
 package ora
 
 // why is this so stupid? Because it is more or less impossible (because so ineffective) to parse
-// adjacent encoded types in typescript
+// adjacent encoded types in typescript.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Length string
 

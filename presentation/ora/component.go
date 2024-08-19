@@ -69,6 +69,7 @@ const (
 	SpacerT              ComponentType = "s"
 	ModalT               ComponentType = "M"
 	WindowTitleT         ComponentType = "W"
+	ScrollViewT          ComponentType = "V"
 )
 
 type Component interface {
@@ -120,6 +121,7 @@ func init() {
 		reflect.TypeOf(Spacer{}),
 		reflect.TypeOf(Modal{}),
 		reflect.TypeOf(WindowTitle{}),
+		reflect.TypeOf(ScrollView{}),
 	}
 }
 
