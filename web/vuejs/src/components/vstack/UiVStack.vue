@@ -159,16 +159,18 @@ const clazz = computed<string>(() => {
 
 	return classes.join(" ")
 });
+
+
 </script>
 
-<template v-if="props.ui.children">
-	<div v-if="!props.ui.s" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
+<template>
+	<div v-if="!props.ui.s &&!props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
 			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 
-	<button v-if="props.ui.s" :class="clazz" :style="frameStyles"  @click="onClick">
+	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles"  @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</button>
 </template>

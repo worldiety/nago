@@ -31,5 +31,7 @@ export interface Table {
     p/*omitempty*/? /*DefaultCellPadding*/: Padding;
     // RowDividerColor
     rdc/*omitempty*/? /*RowDividerColor*/: Color;
+    // HeaderDividerColor
+    hdc/*omitempty*/? /*HeaderDividerColor*/: Color;
 }
 

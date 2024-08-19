@@ -17,7 +17,7 @@ func (p Person) String() string {
 	return fmt.Sprintf("%s %s", p.Vorname, p.Nachname)
 }
 
-var names = []string{"Emma", "Noah", "Ethan", "Olivia", "Isabella", "Jacob", "Ava", "Liam", "Logan", "Sophia", "Emily", "Michael", "Madison", "Matthew", "Jack", "Mia", "Hannah", "Ryan", "Abigail"}
+var names = []string{"Baba", "Noah", "Ethan", "Olivia", "Isabella", "Jacob", "Ava", "Liam", "Logan", "Sophia", "Emily", "Michael", "Madison", "Matthew", "Jack", "Mia", "Hannah", "Ryan", "Abigail"}
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
@@ -39,7 +39,7 @@ func main() {
 				picker.Picker[Person]("Personen", persons, personState).
 					SupportingText("Wähle jemanden aus").
 					Title("Alle Personen").
-					MultiSelect().
+					MultiSelect(true).
 					//ErrorText("Falsch").
 					Frame(Frame{Width: L320}),
 				PrimaryButton(func() {

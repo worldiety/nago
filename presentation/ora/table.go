@@ -11,6 +11,7 @@ type Table struct {
 	Border             Border        `json:"b,omitempty"`
 	DefaultCellPadding Padding       `json:"p,omitempty"`
 	RowDividerColor    Color         `json:"rdc,omitempty"`
+	HeaderDividerColor Color         `json:"hdc,omitempty"`
 	component
 }
 

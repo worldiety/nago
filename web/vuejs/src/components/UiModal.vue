@@ -2,7 +2,7 @@
 	<Teleport to="#ora-modals">
 		<div
 			ref="dialogContainer"
-			class="pointer-events-auto"
+			class="pointer-events-auto fixed"
 			@keydown.tab.exact="moveFocusForward"
 			@keydown.shift.tab="moveFocusBackwards"
 		>

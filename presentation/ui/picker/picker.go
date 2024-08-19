@@ -22,7 +22,8 @@ type TPicker[T any] struct {
 	frame                ui.Frame
 	title                string
 	selectAllCheckbox    *core.State[bool]
-	selectedState        *core.State[[]T]
+	targetSelectedState  *core.State[[]T]
+	currentSelectedState *core.State[[]T]
 	pickerPresented      *core.State[bool]
 	multiselect          *core.State[bool]
 	checkboxStates       []*core.State[bool]
@@ -41,7 +42,8 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		quickSearch:          core.DerivedState[string](selectedState, ".pck.qs"),
 		label:                label,
 		values:               values,
-		selectedState:        selectedState,
+		targetSelectedState:  selectedState,
+		currentSelectedState: core.DerivedState[[]T](selectedState, ".pck.tmp"),
 		selectAllSupported:   true,
 		quickFilterSupported: true,
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
@@ -67,7 +69,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 						count++
 					}
 				}
-				c.selectedState.Set(selected)
+				c.currentSelectedState.Set(selected)
 
 				c.selectAllCheckbox.Set(count == len(c.values))
 			}))
@@ -79,34 +81,63 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		}
 
 		if !newValue {
-			c.selectedState.Set(nil)
+			c.currentSelectedState.Set(nil)
 		} else {
-			c.selectedState.Set(append([]T{}, c.values...))
+			c.currentSelectedState.Set(append([]T{}, c.values...))
 		}
 	})
 
 	// init the checkbox state exactly once
 	c.selectAllCheckbox.From(func() bool {
-		for _, t := range c.selectedState.Get() {
-			for i, value := range c.values {
-				if reflect.DeepEqual(value, t) {
-					c.checkboxStates[i].Set(true)
-				}
-			}
-		}
+		c.syncCheckboxStates(c.targetSelectedState)
 		return false
 	})
 
 	return c
 }
 
-func (c TPicker[T]) Title(title string) TPicker[T] {
-	c.title = title
+func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {
+	for i, value := range c.values {
+		found := false
+		for _, t := range state.Get() {
+			if reflect.DeepEqual(value, t) {
+				found = true
+				break
+			}
+		}
+
+		c.checkboxStates[i].Set(found)
+	}
+
+}
+
+func (c TPicker[T]) Padding(padding ui.Padding) ui.DecoredView {
+	//TODO implement me
 	return c
 }
 
-func (c TPicker[T]) Frame(frame ui.Frame) TPicker[T] {
+func (c TPicker[T]) Frame(frame ui.Frame) ui.DecoredView {
 	c.frame = frame
+	return c
+}
+
+func (c TPicker[T]) Border(border ui.Border) ui.DecoredView {
+	//TODO implement me
+	return c
+}
+
+func (c TPicker[T]) Visible(visible bool) ui.DecoredView {
+	//TODO implement me
+	return c
+}
+
+func (c TPicker[T]) AccessibilityLabel(label string) ui.DecoredView {
+	//TODO implement me
+	return c
+}
+
+func (c TPicker[T]) Title(title string) TPicker[T] {
+	c.title = title
 	return c
 }
 
@@ -120,13 +151,9 @@ func (c TPicker[T]) ErrorText(text string) TPicker[T] {
 	return c
 }
 
-func (c TPicker[T]) SingleSelect() TPicker[T] {
-	c.multiselect.Set(false)
-	return c
-}
-
-func (c TPicker[T]) MultiSelect() TPicker[T] {
-	c.multiselect.Set(true)
+// MultiSelect is by default false.
+func (c TPicker[T]) MultiSelect(mv bool) TPicker[T] {
+	c.multiselect.Set(mv)
 	return c
 }
 
@@ -168,6 +195,8 @@ func (c TPicker[T]) pickerTable() core.View {
 		quickSearchHelpText = fmt.Sprintf("%d Einträge durchsuchen", len(c.values))
 	}
 
+	quickFilterVisible := c.quickFilterSupported && len(c.values) > 10
+	selectAllVisible := c.multiselect.Get() && c.selectAllSupported && quickFilterVisible
 	return ui.VStack(
 		ui.HStack(
 			ui.Image().
@@ -179,12 +208,12 @@ func (c TPicker[T]) pickerTable() core.View {
 				SupportingText(quickSearchHelpText).
 				Frame(ui.Frame{}.FullWidth()),
 		).Gap(ui.L4).
-			Visible(c.quickFilterSupported && len(c.values) > 10).
+			Visible(quickFilterVisible).
 			Frame(ui.Frame{}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16}),
 
-		ui.Table(
-			ui.TableColumn(ui.Checkbox(c.selectAllCheckbox.Get()).InputChecked(c.selectAllCheckbox).Visible(c.multiselect.Get() && c.selectAllSupported)).Width(ui.L20),
-			ui.TableColumn(ui.Text("alles auswählen").Visible(c.multiselect.Get())).Width(ui.L320),
+		ui.With(ui.Table(
+			ui.TableColumn(ui.Checkbox(c.selectAllCheckbox.Get()).InputChecked(c.selectAllCheckbox).Visible(selectAllVisible)).Width(ui.L20),
+			ui.TableColumn(ui.Text("alles auswählen").Visible(selectAllVisible)).Width(ui.L320),
 		).CellPadding(ui.Padding{}).
 			BackgroundColor(ui.M1).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
 
@@ -196,7 +225,13 @@ func (c TPicker[T]) pickerTable() core.View {
 					ui.TableCell(c.renderToSelect(value))),
 				)
 			}
-		})...),
+		})...), func(table ui.TTable) ui.TTable {
+			if !quickFilterVisible {
+				table = table.HeaderDividerColor("")
+				table = table.RowDividerColor("")
+			}
+			return table
+		}),
 	)
 }
 
@@ -236,12 +271,18 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	inner := ui.HStack(
-		alert.Dialog(c.title, ui.ScrollView(c.pickerTable()).Frame(ui.Frame{MaxHeight: "calc(100dvh - 12rem)"}), c.pickerPresented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
+		alert.Dialog(c.title, ui.ScrollView(c.pickerTable()).Frame(ui.Frame{MaxHeight: "calc(100dvh - 12rem)"}), c.pickerPresented, alert.Cancel(func() {
+			c.currentSelectedState.Set(c.targetSelectedState.Get())
+			c.syncCheckboxStates(c.targetSelectedState)
+		}), alert.Custom(func(close func(closeDlg bool)) core.View {
+			// positive case
 			return ui.PrimaryButton(func() {
+				c.targetSelectedState.Set(c.currentSelectedState.Get())
+				c.targetSelectedState.Notify() // invoke observers
 				close(true)
 			}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
 		})),
-		c.renderPicked(c.selectedState.Get()),
+		c.renderPicked(c.targetSelectedState.Get()),
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {

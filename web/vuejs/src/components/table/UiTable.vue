@@ -67,7 +67,9 @@ function rowStyles(idx: number): string {
 
 function headStyles() {
 	const styles: string[] = [];
-	if (props.ui.rdc) {
+	if (props.ui.hdc) {
+		styles.push("border-collapse: collapse", "border-bottom-width: 2px", `border-color: ${colorValue(props.ui.hdc)}`)
+	} else if (props.ui.rdc) {
 		styles.push("border-collapse: collapse", "border-bottom-width: 2px", `border-color: ${colorValue(props.ui.rdc)}`)
 	}
 
@@ -146,7 +148,7 @@ function headCellStyles(colIdx: number): string {
 		styles.push(`background-color: ${colorValue(cell.k)}`)
 	}
 
-	if (cell.w){
+	if (cell.w) {
 		styles.push(`width: ${cell.w}`)
 	}
 
@@ -257,37 +259,37 @@ function onRowMouseLeave(rowIdx: number) {
 
 <template>
 
-		<table class="w-full text-left  rtl:text-right overflow-x-auto" :style="frameStyles">
-			<thead
-				v-if="props.ui.h?.c"
-				class=""
-				:style="headStyles()"
+	<table class="w-full text-left  rtl:text-right overflow-x-auto" :style="frameStyles">
+		<thead
+			v-if="props.ui.h?.c"
+			class=""
+			:style="headStyles()"
+		>
+		<tr>
+			<th class="font-normal" v-for="(head,headIdx) in props.ui.h.c" scope="col" :style="headCellStyles(headIdx)"
+					@click.stop="onClickHeaderCell(headIdx)"
+					@mouseenter="onHeadCellMouseEnter(headIdx)" @mouseleave="onHeadCellMouseLeave(headIdx)"
 			>
-			<tr>
-				<th class="font-normal" v-for="(head,headIdx) in props.ui.h.c" scope="col" :style="headCellStyles(headIdx)"
-						@click.stop="onClickHeaderCell(headIdx)"
-						@mouseenter="onHeadCellMouseEnter(headIdx)" @mouseleave="onHeadCellMouseLeave(headIdx)"
-				>
-					<ui-generic v-if="head.c" :ui="head.c"
-					/>
-				</th>
-			</tr>
-			</thead>
+				<ui-generic v-if="head.c" :ui="head.c"
+				/>
+			</th>
+		</tr>
+		</thead>
 
-			<tbody class="">
-			<tr
-				v-for="(row,rowIdx) in props.ui.r"
-				:style="rowStyles(rowIdx)"
-				@click="onClickRow(rowIdx)"
-				@mouseenter="onRowMouseEnter(rowIdx)" @mouseleave="onRowMouseLeave(rowIdx)"
-			>
-				<td :rowspan="cell.rs" :colspan="cell.cs" v-for="(cell,colIdx) in row.c"
-						:style="cellStyles(rowIdx,colIdx)" @click.stop="onClickCell(rowIdx,colIdx)"
-						@mouseenter="onCellMouseEnter(rowIdx,colIdx)" @mouseleave="onCellMouseLeave(rowIdx,colIdx)">
-					<ui-generic v-if="cell.c" :ui="cell.c"/>
-				</td>
-			</tr>
-			</tbody>
-		</table>
+		<tbody class="">
+		<tr
+			v-for="(row,rowIdx) in props.ui.r"
+			:style="rowStyles(rowIdx)"
+			@click="onClickRow(rowIdx)"
+			@mouseenter="onRowMouseEnter(rowIdx)" @mouseleave="onRowMouseLeave(rowIdx)"
+		>
+			<td :rowspan="cell.rs" :colspan="cell.cs" v-for="(cell,colIdx) in row.c"
+					:style="cellStyles(rowIdx,colIdx)" @click.stop="onClickCell(rowIdx,colIdx)"
+					@mouseenter="onCellMouseEnter(rowIdx,colIdx)" @mouseleave="onCellMouseLeave(rowIdx,colIdx)">
+				<ui-generic v-if="cell.c" :ui="cell.c"/>
+			</td>
+		</tr>
+		</tbody>
+	</table>
 
 </template>

@@ -162,6 +162,7 @@ type TTable struct {
 	backgroundColor     ora.Color
 	defaultCellPaddings ora.Padding
 	rowDividerColor     ora.Color
+	headerDividerColor  ora.Color
 }
 
 func Table(columns ...TTableColumn) TTable {
@@ -191,6 +192,11 @@ func (c TTable) Frame(frame Frame) TTable {
 
 func (c TTable) RowDividerColor(color Color) TTable {
 	c.rowDividerColor = color.ora()
+	return c
+}
+
+func (c TTable) HeaderDividerColor(color Color) TTable {
+	c.headerDividerColor = color.ora()
 	return c
 }
 
@@ -256,5 +262,6 @@ func (c TTable) Render(ctx core.RenderContext) ora.Component {
 		BackgroundColor:    c.backgroundColor,
 		DefaultCellPadding: c.defaultCellPaddings,
 		RowDividerColor:    c.rowDividerColor,
+		HeaderDividerColor: c.headerDividerColor,
 	}
 }
