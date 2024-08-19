@@ -24,6 +24,7 @@ type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {
 	sortDirState     *core.State[sortDir]
 }
 
+// Options creates the global settings for a [crud.View] instance.
 func Options[Entity data.Aggregate[ID], ID data.IDType](bnd *Binding[Entity]) TOptions[Entity, ID] {
 	wnd := bnd.wnd
 	return TOptions[Entity, ID]{

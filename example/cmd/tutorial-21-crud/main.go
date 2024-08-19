@@ -17,13 +17,16 @@ import _ "net/http/pprof"
 
 type PID string
 type Score int
+type Grade float64
 type Person struct {
 	ID         PID
+	Title      string
 	Firstname  string
 	Lastname   string
 	Friends    []PID // this is like foreign keys, however they become stale and are not automatically updated
 	BestFriend PID   // this the same as above, but the one-to-one case
 	Score      Score
+	Grade      Grade
 }
 
 func (p Person) Identity() PID {
@@ -73,6 +76,14 @@ func main() {
 				}).WithSupportingText("Gib Torben ein"),
 				crud.Text("Nachname", func(entity *Person) *string {
 					return &entity.Lastname
+				}),
+
+				crud.Int("Score", func(model *Person) *Score {
+					return &model.Score
+				}),
+
+				crud.Float("Grade", func(model *Person) *Grade {
+					return &model.Grade
 				}),
 
 				crud.AggregateActions("Optionen",

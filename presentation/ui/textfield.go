@@ -85,11 +85,12 @@ func IntField(label string, value int64, state *core.State[int64]) TTextField {
 
 		if v != state.Get() {
 			state.Set(v)
+			state.Notify() // delegate the observable event, because it was caused by the ui
 		}
 	})
 
 	state.Observe(func(newValue int64) {
-		i := strconv.FormatInt(value, 10)
+		i := strconv.FormatInt(newValue, 10)
 		if strState.Get() != i {
 			strState.Set(i)
 		}
@@ -103,7 +104,7 @@ func IntField(label string, value int64, state *core.State[int64]) TTextField {
 // incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state.
 func FloatField(label string, value float64, state *core.State[float64]) TTextField {
 	strState := core.StateOf[string](state.Window(), state.ID()+".float64").From(func() string {
-		return strconv.FormatFloat(value, 'g', -1, 64)
+		return strconv.FormatFloat(value, 'f', -1, 64)
 	})
 
 	strState.Observe(func(newValue string) {
@@ -114,11 +115,12 @@ func FloatField(label string, value float64, state *core.State[float64]) TTextFi
 
 		if v != state.Get() {
 			state.Set(v)
+			state.Notify() // delegate the observable event, because it was caused by the ui
 		}
 	})
 
 	state.Observe(func(newValue float64) {
-		i := strconv.FormatFloat(value, 'g', -1, 64)
+		i := strconv.FormatFloat(newValue, 'f', -1, 64)
 		if strState.Get() != i {
 			strState.Set(i)
 		}

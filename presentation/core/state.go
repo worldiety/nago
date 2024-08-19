@@ -126,12 +126,7 @@ func (s *State[T]) parse(v any) error {
 		}
 	}
 
-	s.observerLock.RLock()
-	defer s.observerLock.RUnlock()
-
-	for _, f := range s.observer {
-		f(s.value)
-	}
+	s.Notify()
 
 	return nil
 }
@@ -143,9 +138,24 @@ func (s *State[T]) Get() T {
 	return s.value
 }
 
+// Notify triggers all listeners. Usually, you may just want to
+// use [State.Set] without any observers, because that is entirely user/frontend-driven
+// and to avoid causing infinite cycles in your UI.
+func (s *State[T]) Notify() {
+	s.observerLock.RLock()
+	defer s.observerLock.RUnlock()
+
+	for _, f := range s.observer {
+		f(s.value)
+	}
+}
+
 // Set updates the state with the given value and marks this state as valid (so no From initialization will ever happen)
 // and it marks this state as dirty (it updates the render generation marker). However, it uses a deep equals
 // logic to decide whether the state becomes dirty.
+//
+// Important: this does not trigger any registered observer. Observers are triggers by the frontend.
+// See also [State.SetObservable].
 func (s *State[T]) Set(v T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
