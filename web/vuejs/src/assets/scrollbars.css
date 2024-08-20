@@ -14,3 +14,20 @@
 .overflow-y-auto::-webkit-scrollbar {
 	width: 8px;
 }
+
+
+.overflow-x-auto {
+	scrollbar-color: theme('colors.I0') transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+	@apply bg-I1 rounded-full;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+	background: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+	height: 8px;
+}

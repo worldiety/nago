@@ -29,20 +29,28 @@ const classes = computed<string>(() => {
 
 	// note, that we defined its style in scrollbars.css
 	switch (props.ui.a) {
-		case "v":
-			css.push("overflow-x-auto")
+
 		case "h":
-			css.push("overflow-y-auto")
+			css.push("overflow-x-auto", "overflow-y-hidden")
+			break
+		default:
+			css.push("overflow-y-auto", "overflow-x-hidden")
+			break
 	}
 
 	return css.join(" ")
 })
+
+// note that we need the max-content hack, otherwise we get layout bugs at least for horizontal areas
 </script>
 
 
 <template v-if="props.ui.iv">
+	<!-- UiScrollView -->
 	<div :class="classes" :style="styles">
+		<div style="width: max-content; height: max-content">
 		<UiGeneric v-if="ui.c" :ui="ui.c"/>
+		</div>
 
 	</div>
 </template>
