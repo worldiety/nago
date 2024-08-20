@@ -156,6 +156,10 @@ const clazz = computed<string>(() => {
 		classes.push("cursor-pointer")
 	}
 
+	if (props.ui.w){
+		classes.push("flex-wrap")
+	}
+
 	switch (props.ui.s) {
 		case StyleButtonPrimary:
 			classes.push("button-primary")

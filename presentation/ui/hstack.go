@@ -28,6 +28,7 @@ type THStack struct {
 	action                 func()
 	stylePreset            ora.StylePreset
 	originTrace            string
+	wrap                   bool
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -52,6 +53,15 @@ func (c THStack) Padding(padding Padding) DecoredView {
 
 func (c THStack) Gap(gap Length) THStack {
 	c.gap = gap.ora()
+	return c
+}
+
+// Wrap tries to reproduce the flex-box wrap behavior. This means, that if the HStack has a limited width,
+// it must create multiple rows to place its children. Note, that the text layout behavior is unspecified
+// (it may layout without word-wrap or use some sensible defaults). Each row and each element may have its own
+// custom size, so this must not use a grid-like layouting.
+func (c THStack) Wrap(wrap bool) THStack {
+	c.wrap = wrap
 	return c
 }
 
@@ -155,6 +165,7 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
 		Action:                 ptr,
+		Wrap:                   c.wrap,
 
 		StylePreset: c.stylePreset,
 	}

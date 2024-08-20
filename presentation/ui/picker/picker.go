@@ -171,6 +171,20 @@ func (c TPicker[T]) QuickFilterSupported(flag bool) TPicker[T] {
 	return c
 }
 
+// ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown
+// within the selected window for the currently selected items.
+func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
+	c.renderPicked = fn
+	return c
+}
+
+// ItemRenderer can be customized to return a non-text view for the given T. This is
+// shown within the picker popup and invoked for each entry to pick from.
+func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
+	c.renderToSelect = fn
+	return c
+}
+
 func (c TPicker[T]) pickerTable() core.View {
 	filtered := c.values
 	if c.quickSearch.Get() != "" {

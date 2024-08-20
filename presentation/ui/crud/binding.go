@@ -85,6 +85,11 @@ func (f Field[T]) WithSupportingText(str string) Field[T] {
 	return f
 }
 
+func (f Field[T]) WithStringer(fn func(e T) string) Field[T] {
+	f.Stringer = fn
+	return f
+}
+
 type Binding[T any] struct {
 	id     string
 	wnd    core.Window

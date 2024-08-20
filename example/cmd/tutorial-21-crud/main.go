@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data"
@@ -25,8 +26,8 @@ type Person struct {
 	Title         string
 	Firstname     string
 	Lastname      string
-	Friends       []PID // this is like foreign keys, however they become stale and are not automatically updated
-	BestFriend    PID   // this the same as above, but the one-to-one case
+	Friends       []PID           // this is like foreign keys, however they become stale and are not automatically updated
+	BestFriend    std.Option[PID] // this the same as above, but the one-to-one case
 	Score         Score
 	Grade         Grade
 	Proofed       bool
@@ -62,7 +63,7 @@ func main() {
 				ID:         "2",
 				Firstname:  "Frodo",
 				Lastname:   "Beutlin",
-				BestFriend: "1",
+				BestFriend: std.Some[PID]("1"),
 				Score:      2,
 			})
 		})
@@ -105,6 +106,18 @@ func main() {
 
 				crud.PickOne("Color", []Color{"red", "green", "blue"}, func(model *Person) *std.Option[Color] {
 					return &model.FavoriteColor
+				}),
+
+				crud.OneToMany("Friendos", persons.Each, func(t Person) core.View {
+					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
+				}, func(model *Person) *[]PID {
+					return &model.Friends
+				}),
+
+				crud.OneToOne("Best Friend", persons.Each, func(t Person) core.View {
+					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
+				}, func(model *Person) *std.Option[PID] {
+					return &model.BestFriend
 				}),
 
 				crud.AggregateActions("Optionen",

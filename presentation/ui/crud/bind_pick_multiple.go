@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// PickMultiple binds a slice of an arbitrary value type to an associate picker. To pick an entity based
+// on a foreign key semantics, use [OneToMany].
 func PickMultiple[E any, T any](label string, values []T, property func(model *E) *[]T) Field[E] {
 	return Field[E]{
 		Label: label,

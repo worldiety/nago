@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// PickOne binds a single field of an arbitrary value type to an associate picker. To pick an entity based
+// on a foreign key semantics, use [OneToOne].
 func PickOne[E any, T any](label string, values []T, property func(model *E) *std.Option[T]) Field[E] {
 	return Field[E]{
 		Label: label,

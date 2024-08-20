@@ -3,9 +3,11 @@ package std
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/fs"
 )
+
+var NotAvailable = errors.New("not available")
 
 // Option is introduced because range over func can only represent at most 2 arguments. Processing
 // a (T, ok, error) becomes impossible. Also, it is not correct to always use pointers for modelling or
@@ -38,7 +40,7 @@ func None[T any]() Option[T] {
 	return Option[T]{}
 }
 
-// Unwrap makes the assertion that the Option is valid and otherwise panics.
+// Unwrap makes the assertion that the Option is valid and otherwise panics. Such panic is always a programming error.
 func (o Option[T]) Unwrap() T {
 	if !o.Valid {
 		panic(fmt.Errorf("unwrapped invalid option"))
@@ -47,13 +49,23 @@ func (o Option[T]) Unwrap() T {
 	return o.V
 }
 
-// Get returns the value or [fs.ErrNotExist].
+// Get returns the value or [NotAvailable].
 func (o Option[T]) Get() (T, error) {
 	if o.Valid {
 		return o.V, nil
+	} // TODO better T,bool?
+
+	return o.V, NotAvailable
+}
+
+// UnwrapOrZero returns either the valid contained value or the default zero value of T.
+func (o Option[T]) UnwrapOrZero() T {
+	if o.Valid {
+		return o.V
 	}
 
-	return o.V, fs.ErrNotExist
+	var zero T
+	return zero
 }
 
 // Unpack2 is a shorthand for evaluating option and error and returns [fs.ErrNotExist] if no error and not exists,
@@ -66,7 +78,8 @@ func Unpack2[T any](opt Option[T], err error) (T, error) {
 	return opt.Get()
 }
 
-// Iter allows iteration over the possibly contained value. Iter is a [iter.Seq].
+// Iter allows iteration over the possibly contained value. Iter is a [iter.Seq]. This allows to apply
+// any map, reduce, filter pipelines on Option.
 func (o Option[T]) Iter(yield func(T) bool) {
 	if o.Valid {
 		yield(o.V)
