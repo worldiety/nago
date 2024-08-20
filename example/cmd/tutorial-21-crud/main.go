@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
@@ -29,7 +30,7 @@ type Person struct {
 	Score         Score
 	Grade         Grade
 	Proofed       bool
-	FavoriteColor Color
+	FavoriteColor std.Option[Color]
 	Colors        []Color
 }
 
@@ -100,6 +101,10 @@ func main() {
 
 				crud.PickMultiple("Colors", []Color{"red", "green", "blue"}, func(model *Person) *[]Color {
 					return &model.Colors
+				}),
+
+				crud.PickOne("Color", []Color{"red", "green", "blue"}, func(model *Person) *std.Option[Color] {
+					return &model.FavoriteColor
 				}),
 
 				crud.AggregateActions("Optionen",

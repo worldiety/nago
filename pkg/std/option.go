@@ -11,7 +11,7 @@ import (
 // a (T, ok, error) becomes impossible. Also, it is not correct to always use pointers for modelling or
 // to use hidden error types for clear optional cases where an absent thing is never an error by definition.
 // Intentionally it shares the same field layout as the stdlib [sql.Null] type.
-// This also helps for performance edge cases, where you can technically express, that a value is really
+// This also helps for performance edge cases, where you can technically express that a value is really
 // just a value and does not escape.
 //
 // It sports also a non-nesting custom JSON serialization, which just uses NULL as representation.
