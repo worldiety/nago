@@ -1,6 +1,6 @@
 <template>
-	<div v-if="!ui.iv">
-		<div class="relative">
+
+		<div v-if="!ui.iv" class="relative" :style="frameStyles">
 			<!-- Input field -->
 			<InputWrapper
 				:label="props.ui.l"
@@ -37,7 +37,7 @@
 				@submit-selection="submitSelection"
 			/>
 		</div>
-	</div>
+
 </template>
 
 
@@ -48,6 +48,7 @@ import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import type {DatePicker} from "@/shared/protocol/ora/datePicker";
 import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {frameCSS} from "@/components/shared/frame";
 
 const props = defineProps<{
 	ui: DatePicker;
@@ -232,4 +233,8 @@ function submitSelection(): void {
 	expanded.value = false
 
 }
+
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.f).join(";")
+});
 </script>

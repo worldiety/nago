@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
 	"reflect"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unsafe"
 )
 
@@ -106,11 +108,11 @@ func (s *State[T]) parse(v any) error {
 		}
 
 		s.Set(any(i).(T))
-	case ora.Date:
+	case xtime.Date:
 		obj := v.(map[string]interface{})
-		var d ora.Date
+		var d xtime.Date
 		d.Day = int(obj["d"].(float64))
-		d.Month = int(obj["m"].(float64))
+		d.Month = time.Month(obj["m"].(float64))
 		d.Year = int(obj["y"].(float64))
 
 		s.Set(any(d).(T))

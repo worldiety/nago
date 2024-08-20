@@ -23,8 +23,8 @@ var NotAvailable = errors.New("not available")
 //
 // If you already have a pointer, just use its zero value which is nil and not Option.
 type Option[T any] struct {
-	V     T
-	Valid bool
+	V     T    // TODO this encourages broken access patterns
+	Valid bool // TODO this encourages broken access patterns
 }
 
 // Some is a factory to create a valid option.

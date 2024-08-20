@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
@@ -21,6 +22,7 @@ type PID string
 type Score int
 type Grade float64
 type Color string
+type Birthday xtime.Date
 type Person struct {
 	ID            PID
 	Title         string
@@ -33,6 +35,7 @@ type Person struct {
 	Proofed       bool
 	FavoriteColor std.Option[Color]
 	Colors        []Color
+	Birthday      Birthday
 }
 
 func (p Person) Identity() PID {
@@ -118,6 +121,10 @@ func main() {
 					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
 				}, func(model *Person) *std.Option[PID] {
 					return &model.BestFriend
+				}),
+
+				crud.Date("Geburtstag", func(model *Person) *Birthday {
+					return &model.Birthday
 				}),
 
 				crud.AggregateActions("Optionen",

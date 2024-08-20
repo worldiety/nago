@@ -16,10 +16,6 @@ type Date struct {
 	Year  int `json:"y,omitempty"`
 }
 
-func (d Date) Zero() bool {
-	return d == Date{}
-}
-
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type DatePicker struct {
 	Type           ComponentType `json:"type" value:"P"`
@@ -45,5 +41,8 @@ type DatePicker struct {
 	EndInputValue Ptr `json:"ep"`
 
 	Invisible bool `json:"iv,omitempty"`
+
+	Frame Frame `json:"f,omitempty"`
+
 	component
 }

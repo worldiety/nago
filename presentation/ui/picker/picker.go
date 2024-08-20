@@ -179,7 +179,7 @@ func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
 }
 
 // ItemRenderer can be customized to return a non-text view for the given T. This is
-// shown within the picker popup and invoked for each entry to pick from.
+// shown within the picker popup
 func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 	c.renderToSelect = fn
 	return c
@@ -285,7 +285,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	inner := ui.HStack(
-		alert.Dialog(c.title, ui.ScrollView(c.pickerTable()).Frame(ui.Frame{MaxHeight: "calc(100dvh - 12rem)"}), c.pickerPresented, alert.Cancel(func() {
+		alert.Dialog(c.title, c.pickerTable(), c.pickerPresented, alert.Cancel(func() {
 			c.currentSelectedState.Set(c.targetSelectedState.Get())
 			c.syncCheckboxStates(c.targetSelectedState)
 		}), alert.Custom(func(close func(closeDlg bool)) core.View {
@@ -301,10 +301,10 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {
 		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithBrightness(75)).Width(ui.L2).Radius(ui.L8)).
+	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithBrightness(75)).Width(ui.L1).Radius("0.375rem")).
 		Gap(ui.L8).
 		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(ui.I1).Width(ui.L2).Radius(ui.L8)).
+		Border(ui.Border{}.Color(ui.A0).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))
 
 	return ui.VStack(

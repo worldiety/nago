@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
@@ -16,18 +16,18 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			date := core.AutoState[ora.Date](wnd)
-			if date.Get().Zero() {
-				date.Set(ora.Date{1, 6, 2024})
-			}
-			start := core.AutoState[ora.Date](wnd)
-			if start.Get().Zero() {
-				start.Set(ora.Date{2, 7, 2024})
-			}
-			end := core.AutoState[ora.Date](wnd)
-			if end.Get().Zero() {
-				end.Set(ora.Date{20, 7, 2024})
-			}
+			date := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+				return xtime.Date{1, 6, 2024}
+			})
+
+			start := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+				return xtime.Date{2, 7, 2024}
+			})
+
+			end := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+				return xtime.Date{20, 7, 2024}
+			})
+
 			showAlert := core.AutoState[bool](wnd)
 
 			return VStack(

@@ -41,6 +41,22 @@ const classes = computed<string>(() => {
 	return css.join(" ")
 })
 
+const innerStyles = computed<string>(() => {
+	let css = borderCSS(props.ui.b)
+
+	switch (props.ui.a) {
+
+		case "h":
+			css.push("width: max-content")
+			break
+		default:
+			css.push("height: max-content")
+			break
+	}
+
+	return css.join(";")
+});
+
 // note that we need the max-content hack, otherwise we get layout bugs at least for horizontal areas
 </script>
 
@@ -48,8 +64,8 @@ const classes = computed<string>(() => {
 <template v-if="props.ui.iv">
 	<!-- UiScrollView -->
 	<div :class="classes" :style="styles">
-		<div style="width: max-content; height: max-content">
-		<UiGeneric v-if="ui.c" :ui="ui.c"/>
+		<div :style="innerStyles">
+			<UiGeneric v-if="ui.c" :ui="ui.c"/>
 		</div>
 
 	</div>

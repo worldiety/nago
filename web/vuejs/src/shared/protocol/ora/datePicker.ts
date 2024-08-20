@@ -6,6 +6,7 @@
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Date } from '@/shared/protocol/ora/date';
 import type { DatePickerStyle } from '@/shared/protocol/ora/datePickerStyle';
+import type { Frame } from '@/shared/protocol/ora/frame';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
 
 export interface DatePicker {
@@ -55,5 +56,7 @@ export interface DatePicker {
     ep /*EndInputValue*/: Ptr;
     // Invisible
     iv/*omitempty*/? /*Invisible*/: boolean;
+    // Frame
+    f/*omitempty*/? /*Frame*/: Frame;
 }
 
