@@ -23,6 +23,10 @@ type Score int
 type Grade float64
 type Color string
 type Birthday xtime.Date
+type Vacation struct {
+	Start xtime.Date
+	End   xtime.Date
+}
 type Person struct {
 	ID            PID
 	Title         string
@@ -36,6 +40,7 @@ type Person struct {
 	FavoriteColor std.Option[Color]
 	Colors        []Color
 	Birthday      Birthday
+	Vacation      Vacation
 }
 
 func (p Person) Identity() PID {
@@ -125,6 +130,12 @@ func main() {
 
 				crud.Date("Geburtstag", func(model *Person) *Birthday {
 					return &model.Birthday
+				}),
+
+				crud.DateRange("Urlaub", func(model *Person) *xtime.Date {
+					return &model.Vacation.Start
+				}, func(model *Person) *xtime.Date {
+					return &model.Vacation.End
 				}),
 
 				crud.AggregateActions("Optionen",
