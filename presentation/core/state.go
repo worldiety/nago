@@ -143,6 +143,7 @@ func (s *State[T]) Get() T {
 // Notify triggers all listeners. Usually, you may just want to
 // use [State.Set] without any observers, because that is entirely user/frontend-driven
 // and to avoid causing infinite cycles in your UI.
+// TODO it is not clear, if this is really useful. Why should we decide between internal and external event observations?
 func (s *State[T]) Notify() {
 	s.observerLock.RLock()
 	defer s.observerLock.RUnlock()
