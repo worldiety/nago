@@ -95,6 +95,11 @@ func (c THStack) Frame(fr Frame) DecoredView {
 	return c
 }
 
+func (c THStack) FullWidth() THStack {
+	c.frame.Width = "100%"
+	return c
+}
+
 func (c THStack) Font(font Font) DecoredView {
 	c.font = font.ora()
 	return c

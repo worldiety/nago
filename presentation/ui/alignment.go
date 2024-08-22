@@ -22,7 +22,7 @@ import "go.wdy.de/nago/presentation/ora"
 //	│                                              │
 //	└BottomLeading───────Bottom──────BottomTrailing┘
 //
-// An empty Alignment must be interpreted as Center (="c").
+// An empty Alignment must be interpreted as Center (="c"), if not otherwise specified.
 //
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Alignment string

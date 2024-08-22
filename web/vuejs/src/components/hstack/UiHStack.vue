@@ -186,6 +186,7 @@ const clazz = computed<string>(() => {
 </script>
 
 <template >
+	<!-- hstack -->
 	<div v-if="!props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
 			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @focus="checkFocusVisible">

@@ -62,6 +62,7 @@ const style = computed<string>(() => {
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.fn))
 
+
 	return styles.join(";");
 });
 
@@ -77,7 +78,7 @@ const clazz = computed<string>(() => {
 
 <template>
 
-
+	<!-- grid -->
 	<div :class="clazz" :style="style">
 		<ui-grid-cell v-for="cell in props.ui.b" :ui="cell"/>
 	</div>

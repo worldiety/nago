@@ -7,23 +7,33 @@ import (
 )
 
 type TGridCell struct {
-	body     core.View
-	colStart int
-	colEnd   int
-	rowStart int
-	rowEnd   int
-	colSpan  int
-	rowSpan  int
-	padding  ora.Padding
+	body      core.View
+	colStart  int
+	colEnd    int
+	rowStart  int
+	rowEnd    int
+	colSpan   int
+	rowSpan   int
+	padding   ora.Padding
+	alignment Alignment
 }
 
 // GridCell creates a cell based on the given body. Rows and Columns start at 1, not zero.
+// Without any alignment rules, the cell will stretch its body automatically to the calculated
+// cell dimensions. Otherwise, if a cell alignment is set, the size is wrap-content semantics
+// and the background of the grid will be visible. Thus, the default specification of no-alignment
+// is different here.
 func GridCell(body core.View) TGridCell {
 	return TGridCell{body: body}
 }
 
 func (c TGridCell) Padding(p Padding) TGridCell {
 	c.padding = p.ora()
+	return c
+}
+
+func (c TGridCell) Alignment(a Alignment) TGridCell {
+	c.alignment = a
 	return c
 }
 
@@ -72,15 +82,16 @@ func (c TGridCell) render(ctx core.RenderContext) ora.GridCell {
 	}
 
 	return ora.GridCell{
-		Type:     ora.GridT,
-		Body:     body,
-		ColStart: int64(c.colStart),
-		ColEnd:   int64(c.colEnd),
-		RowStart: int64(c.rowStart),
-		RowEnd:   int64(c.rowEnd),
-		ColSpan:  int64(c.colSpan),
-		RowSpan:  int64(c.rowSpan),
-		Padding:  c.padding,
+		Type:      ora.GridT,
+		Body:      body,
+		ColStart:  int64(c.colStart),
+		ColEnd:    int64(c.colEnd),
+		RowStart:  int64(c.rowStart),
+		RowEnd:    int64(c.rowEnd),
+		ColSpan:   int64(c.colSpan),
+		RowSpan:   int64(c.rowSpan),
+		Padding:   c.padding,
+		Alignment: c.alignment.ora(),
 	}
 }
 
@@ -155,6 +166,11 @@ func (c TGrid) BackgroundColor(backgroundColor Color) DecoredView {
 
 func (c TGrid) Frame(fr Frame) DecoredView {
 	c.frame = fr.ora()
+	return c
+}
+
+func (c TGrid) FullWidth() TGrid {
+	c.frame.Width = "100%"
 	return c
 }
 

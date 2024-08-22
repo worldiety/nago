@@ -3,6 +3,7 @@
  */
 
 
+import type { Alignment } from '@/shared/protocol/ora/alignment';
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentType } from '@/shared/protocol/ora/componentType';
 import type { Padding } from '@/shared/protocol/ora/padding';
@@ -29,5 +30,7 @@ export interface GridCell {
     rp/*omitempty*/? /*RowSpan*/: number /*int64*/;
     // Padding
     p/*omitempty*/? /*Padding*/: Padding;
+    // Alignment
+    a/*omitempty*/? /*Alignment*/: Alignment;
 }
 

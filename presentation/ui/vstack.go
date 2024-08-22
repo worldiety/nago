@@ -88,6 +88,11 @@ func (c TVStack) Frame(f Frame) DecoredView {
 	return c
 }
 
+func (c TVStack) FullWidth() TVStack {
+	c.frame.Width = "100%"
+	return c
+}
+
 func (c TVStack) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
 	return c

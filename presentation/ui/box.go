@@ -123,6 +123,11 @@ func (c TBox) Frame(fr Frame) DecoredView {
 	return c
 }
 
+func (c TBox) FullWidth() TBox {
+	c.frame.Width = "100%"
+	return c
+}
+
 func (c TBox) Font(font Font) DecoredView {
 	c.font = font.ora()
 	return c

@@ -38,6 +38,8 @@ type TPicker struct {
 	format               PickerFormat
 }
 
+// TODO introduce generic int64 type and scale factor
+
 // Picker renders a time.Duration either in clock time format or in decomposed format.
 // Default is [ClockFormat]. By default, the Picker decides automatically which
 // parts must be displayed, but you can be specific by setting the according flags.

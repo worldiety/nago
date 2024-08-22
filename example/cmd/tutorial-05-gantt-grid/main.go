@@ -58,7 +58,7 @@ func ganttHeader() []core.View {
 
 func ganttRow(idx int, name string) []TGridCell {
 	return slices.Collect(func(yield func(cell TGridCell) bool) {
-		yield(GridCell(Box(BoxLayout{Center: Text(name)})).
+		yield(GridCell(Box(BoxLayout{Center: Text(name)}).BackgroundColor("#ff0000")).
 			ColStart(1).
 			ColEnd(2),
 		)
