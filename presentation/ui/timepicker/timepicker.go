@@ -2,6 +2,7 @@ package timepicker
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -14,125 +15,126 @@ type PickerFormat int
 
 const (
 	// ClockFormat interprets a duration as a clock e.g. 18:30. Note, that days and seconds
-	// are also rendered the same way, so you may get also something like 01:18:30:42.
+	// are also rendered the same way, so you may get also something like 01:18:30:42 to display.
 	ClockFormat PickerFormat = iota
 
 	// DecomposedFormat interprets a duration as distinct days, hours, minutes and seconds e.g.
-	// 18 Std. 30 Min. At worst, you may get 1 T 18 Std. 30 Min. 42 Sek.
+	// 18 Std. 30 Min. At worst, you may get 1 T 18 Std. 30 Min. 42 Sek to display.
 	DecomposedFormat
 )
 
-type TPicker struct {
+type TPicker[Duration std.Integer] struct {
 	label                string
 	supportingText       string
 	errorText            string
 	frame                ui.Frame
 	pickerPresented      *core.State[bool]
-	targetSelectedState  *core.State[time.Duration]
-	currentSelectedState *core.State[time.Duration]
+	targetSelectedState  *core.State[Duration]
+	currentSelectedState *core.State[Duration]
 	title                string
 	showDays             bool
 	showHours            bool
 	showMinutes          bool
 	showSeconds          bool
+	scaleToSeconds       int64
 	format               PickerFormat
 }
-
-// TODO introduce generic int64 type and scale factor
 
 // Picker renders a time.Duration either in clock time format or in decomposed format.
 // Default is [ClockFormat]. By default, the Picker decides automatically which
 // parts must be displayed, but you can be specific by setting the according flags.
 // Keep in mind, that the picker also clamps to the natural limits, e.g. you cannot set
 // 25 hours, instead you must enable the day flag, so that the user can configure 1 day and 1 hour.
-func Picker(label string, selectedState *core.State[time.Duration]) TPicker {
-	p := TPicker{
+// Note, that you need to provide scaleToSeconds, to properly calculate the times from it.
+func Picker[Duration std.Integer](label string, scaleToSeconds int64, selectedState *core.State[Duration]) TPicker[Duration] {
+	p := TPicker[Duration]{
 		label:               label,
 		format:              ClockFormat,
 		targetSelectedState: selectedState,
+		scaleToSeconds:      scaleToSeconds,
 		pickerPresented:     core.DerivedState[bool](selectedState, ".pck.pre"),
-		currentSelectedState: core.DerivedState[time.Duration](selectedState, ".pck.tmp").From(func() time.Duration {
+		currentSelectedState: core.DerivedState[Duration](selectedState, ".pck.tmp").From(func() Duration {
 			return selectedState.Get()
 		}),
 	}
 
-	p.currentSelectedState.Observe(func(newValue time.Duration) {
+	p.currentSelectedState.Observe(func(newValue Duration) {
 		p.targetSelectedState.Set(newValue)
 	})
 
 	return p
 }
 
-func (c TPicker) Padding(padding ui.Padding) ui.DecoredView {
+func (c TPicker[D]) Padding(padding ui.Padding) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
-func (c TPicker) Frame(frame ui.Frame) ui.DecoredView {
+func (c TPicker[D]) Frame(frame ui.Frame) ui.DecoredView {
 	c.frame = frame
 	return c
 }
 
-func (c TPicker) Border(border ui.Border) ui.DecoredView {
+func (c TPicker[D]) Border(border ui.Border) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
-func (c TPicker) Visible(visible bool) ui.DecoredView {
+func (c TPicker[D]) Visible(visible bool) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
-func (c TPicker) AccessibilityLabel(label string) ui.DecoredView {
+func (c TPicker[D]) AccessibilityLabel(label string) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
-func (c TPicker) Title(title string) TPicker {
+func (c TPicker[D]) Title(title string) TPicker[D] {
 	c.title = title
 	return c
 }
 
-func (c TPicker) Format(format PickerFormat) TPicker {
+func (c TPicker[D]) Format(format PickerFormat) TPicker[D] {
 	c.format = format
 	return c
 }
 
-func (c TPicker) SupportingText(text string) TPicker {
+func (c TPicker[D]) SupportingText(text string) TPicker[D] {
 	c.supportingText = text
 	return c
 }
 
-func (c TPicker) ErrorText(text string) TPicker {
+func (c TPicker[D]) ErrorText(text string) TPicker[D] {
 	c.errorText = text
 	return c
 }
 
-func (c TPicker) Hours(showHours bool) TPicker {
+func (c TPicker[D]) Hours(showHours bool) TPicker[D] {
 	c.showHours = showHours
 	return c
 }
 
-func (c TPicker) Minutes(showMinutes bool) TPicker {
+func (c TPicker[D]) Minutes(showMinutes bool) TPicker[D] {
 	c.showMinutes = showMinutes
 	return c
 }
 
-func (c TPicker) Days(showDays bool) TPicker {
+func (c TPicker[D]) Days(showDays bool) TPicker[D] {
 	c.showDays = showDays
 	return c
 }
 
-func (c TPicker) Seconds(showSeconds bool) TPicker {
+func (c TPicker[D]) Seconds(showSeconds bool) TPicker[D] {
 	c.showSeconds = showSeconds
 	return c
 }
 
-func (c TPicker) auto() bool {
+func (c TPicker[D]) auto() bool {
 	return !c.showDays && !c.showHours && !c.showMinutes && !c.showSeconds
 }
 
-func (c TPicker) fmtDurationTime(d time.Duration) string {
+func (c TPicker[D]) fmtDurationTime(d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
 	if c.auto() {
 		c.showDays = days != 0
@@ -166,7 +168,7 @@ func (c TPicker) fmtDurationTime(d time.Duration) string {
 	return strings.Join(segments, " ")
 }
 
-func (c TPicker) fmtClockTime(d time.Duration) string {
+func (c TPicker[D]) fmtClockTime(d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
 
 	if c.auto() {
@@ -201,80 +203,80 @@ func (c TPicker) fmtClockTime(d time.Duration) string {
 	return strings.Join(segments, "\u202F:\u202F") // use thin space instead of space
 }
 
-func (c TPicker) dayDown() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) dayDown() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	days--
 	if days < 0 {
 		days = 99
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) dayUp() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) dayUp() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	days++
 	if days > 99 {
 		days = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) hourDown() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) hourDown() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	hours--
 	if hours < 0 {
 		hours = 23
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) hourUp() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) hourUp() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	hours++
 	if hours >= 24 {
 		hours = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) minDown() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) minDown() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	minutes--
 	if minutes < 0 {
 		minutes = 59
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) minUp() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) minUp() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	minutes++
 	if minutes > 59 {
 		minutes = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) secDown() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) secDown() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	seconds--
 	if seconds < 0 {
 		seconds = 59
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) secUp() {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) secUp() {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 	seconds++
 	if seconds > 59 {
 		seconds = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.FromTime(Duration(days, hours, minutes, seconds)))
 }
 
-func (c TPicker) renderPicker() core.View {
-	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+func (c TPicker[D]) renderPicker() core.View {
+	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 
 	if c.auto() {
 		c.showDays = days != 0
@@ -336,13 +338,21 @@ func (c TPicker) renderPicker() core.View {
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
-func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
+func (c TPicker[D]) IntoTime(d D) time.Duration {
+	return time.Duration(int64(d)/c.scaleToSeconds) * time.Second
+}
+
+func (c TPicker[D]) FromTime(d time.Duration) D {
+	return D(int64(d.Seconds()) * c.scaleToSeconds)
+}
+
+func (c TPicker[D]) Render(ctx core.RenderContext) core.RenderNode {
 	var durationText string
 	switch c.format {
 	case DecomposedFormat:
-		durationText = c.fmtDurationTime(c.targetSelectedState.Get())
+		durationText = c.fmtDurationTime(c.IntoTime(c.targetSelectedState.Get()))
 	default:
-		durationText = c.fmtClockTime(c.targetSelectedState.Get())
+		durationText = c.fmtClockTime(c.IntoTime(c.targetSelectedState.Get()))
 	}
 
 	colors := core.Colors[ui.Colors](ctx.Window())

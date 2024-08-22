@@ -1,13 +1,13 @@
 package crud
 
 import (
-	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"strconv"
 )
 
-func Float[E any, T data.Float](label string, property func(model *E) *T) Field[E] {
+func Float[E any, T std.Float](label string, property func(model *E) *T) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {

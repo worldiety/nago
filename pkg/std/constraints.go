@@ -1,4 +1,4 @@
-package data
+package std
 
 type Integer interface {
 	Signed | Unsigned

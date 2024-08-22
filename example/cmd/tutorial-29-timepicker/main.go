@@ -19,7 +19,7 @@ func main() {
 				return time.Minute * 61
 			})
 			return VStack(
-				timepicker.Picker("Dauer", duration).
+				timepicker.Picker("Dauer", int64(time.Second), duration).
 					SupportingText("Wähle eine tolle Zeit").
 					Format(timepicker.DecomposedFormat).
 					Days(true).
