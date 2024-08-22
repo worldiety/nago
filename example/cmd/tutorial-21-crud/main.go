@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
+	"go.wdy.de/nago/presentation/ui/timepicker"
 	"go.wdy.de/nago/web/vuejs"
 	"log"
 	"log/slog"
@@ -27,6 +28,9 @@ type Vacation struct {
 	Start xtime.Date
 	End   xtime.Date
 }
+
+type TimeInSec int64
+
 type Person struct {
 	ID            PID
 	Title         string
@@ -41,6 +45,7 @@ type Person struct {
 	Colors        []Color
 	Birthday      Birthday
 	Vacation      Vacation
+	WorkDuration  TimeInSec
 }
 
 func (p Person) Identity() PID {
@@ -136,6 +141,10 @@ func main() {
 					return &model.Vacation.Start
 				}, func(model *Person) *xtime.Date {
 					return &model.Vacation.End
+				}),
+
+				crud.Time("Arbeitszeit", 1, false, true, true, false, timepicker.DecomposedFormat, func(model *Person) *TimeInSec {
+					return &model.WorkDuration
 				}),
 
 				crud.AggregateActions("Optionen",

@@ -52,16 +52,18 @@ func Picker[Duration std.Integer](label string, scaleToSeconds int64, selectedSt
 		format:              ClockFormat,
 		targetSelectedState: selectedState,
 		scaleToSeconds:      scaleToSeconds,
-		pickerPresented:     core.DerivedState[bool](selectedState, ".pck.pre"),
-		currentSelectedState: core.DerivedState[Duration](selectedState, ".pck.tmp").From(func() Duration {
-			return selectedState.Get()
-		}),
 	}
 
-	p.currentSelectedState.Observe(func(newValue Duration) {
-		p.targetSelectedState.Set(newValue)
-	})
+	if selectedState != nil {
+		p.pickerPresented = core.DerivedState[bool](selectedState, ".pck.pre")
+		p.currentSelectedState = core.DerivedState[Duration](selectedState, ".pck.tmp").From(func() Duration {
+			return selectedState.Get()
+		})
 
+		p.currentSelectedState.Observe(func(newValue Duration) {
+			p.targetSelectedState.Set(newValue)
+		})
+	}
 	return p
 }
 
@@ -130,73 +132,73 @@ func (c TPicker[D]) Seconds(showSeconds bool) TPicker[D] {
 	return c
 }
 
-func (c TPicker[D]) auto() bool {
-	return !c.showDays && !c.showHours && !c.showMinutes && !c.showSeconds
+func auto(showDays, showHours, showMinutes, showSeconds bool) bool {
+	return !showDays && !showHours && !showMinutes && !showSeconds
 }
 
-func (c TPicker[D]) fmtDurationTime(d time.Duration) string {
+func fmtDurationTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
-	if c.auto() {
-		c.showDays = days != 0
-		c.showHours = hours != 0
-		c.showMinutes = minutes != 0
-		c.showSeconds = seconds != 0
+	if auto(showDays, showHours, showMinutes, showSeconds) {
+		showDays = days != 0
+		showHours = hours != 0
+		showMinutes = minutes != 0
+		showSeconds = seconds != 0
 	}
 
-	if c.auto() {
-		c.showHours = true
-		c.showMinutes = true
+	if auto(showDays, showHours, showMinutes, showSeconds) {
+		showHours = true
+		showMinutes = true
 	}
 
 	var segments []string
-	if c.showDays {
+	if showDays {
 		segments = append(segments, fmt.Sprintf("%d T", days))
 	}
 
-	if c.showHours {
+	if showHours {
 		segments = append(segments, fmt.Sprintf("%d Std.", hours))
 	}
 
-	if c.showMinutes {
+	if showMinutes {
 		segments = append(segments, fmt.Sprintf("%d Min.", minutes))
 	}
 
-	if c.showSeconds {
+	if showSeconds {
 		segments = append(segments, fmt.Sprintf("%d Sek.", seconds))
 	}
 
 	return strings.Join(segments, " ")
 }
 
-func (c TPicker[D]) fmtClockTime(d time.Duration) string {
+func fmtClockTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
 
-	if c.auto() {
-		c.showDays = days != 0
-		c.showHours = hours != 0
-		c.showMinutes = minutes != 0
-		c.showSeconds = seconds != 0
+	if auto(showDays, showHours, showMinutes, showSeconds) {
+		showDays = days != 0
+		showHours = hours != 0
+		showMinutes = minutes != 0
+		showSeconds = seconds != 0
 	}
 
-	if c.auto() {
-		c.showHours = true
-		c.showMinutes = true
+	if auto(showDays, showHours, showMinutes, showSeconds) {
+		showHours = true
+		showMinutes = true
 	}
 
 	var segments []string
-	if c.showDays {
+	if showDays {
 		segments = append(segments, fmt.Sprintf("%02d", days))
 	}
 
-	if c.showHours {
+	if showHours {
 		segments = append(segments, fmt.Sprintf("%02d", hours))
 	}
 
-	if c.showMinutes {
+	if showMinutes {
 		segments = append(segments, fmt.Sprintf("%02d", minutes))
 	}
 
-	if c.showSeconds {
+	if showSeconds {
 		segments = append(segments, fmt.Sprintf("%02d", seconds))
 	}
 
@@ -278,14 +280,14 @@ func (c TPicker[D]) secUp() {
 func (c TPicker[D]) renderPicker() core.View {
 	days, hours, minutes, seconds := FromDuration(c.IntoTime(c.currentSelectedState.Get()))
 
-	if c.auto() {
+	if auto(c.showDays, c.showHours, c.showMinutes, c.showSeconds) {
 		c.showDays = days != 0
 		c.showHours = hours != 0
 		c.showMinutes = minutes != 0
 		c.showSeconds = seconds != 0
 	}
 
-	if c.auto() {
+	if auto(c.showDays, c.showHours, c.showMinutes, c.showSeconds) {
 		c.showHours = true
 		c.showMinutes = true
 	}
@@ -347,13 +349,7 @@ func (c TPicker[D]) FromTime(d time.Duration) D {
 }
 
 func (c TPicker[D]) Render(ctx core.RenderContext) core.RenderNode {
-	var durationText string
-	switch c.format {
-	case DecomposedFormat:
-		durationText = c.fmtDurationTime(c.IntoTime(c.targetSelectedState.Get()))
-	default:
-		durationText = c.fmtClockTime(c.IntoTime(c.targetSelectedState.Get()))
-	}
+	durationText := Format[D](c.scaleToSeconds, c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
 
 	colors := core.Colors[ui.Colors](ctx.Window())
 	inner := ui.HStack(
@@ -416,4 +412,18 @@ func FromDuration(d time.Duration) (days, hours, minutes, seconds int) {
 // Duration creates time.Duration based on the decomposed individual durations.
 func Duration(days, hours, minutes, seconds int) time.Duration {
 	return time.Hour*24*time.Duration(days) + time.Hour*time.Duration(hours) + time.Minute*time.Duration(minutes) + time.Second*time.Duration(seconds)
+}
+
+func Format[T std.Integer](scaleToSeconds int64, showDays, showHours, showMinutes, showSeconds bool, format PickerFormat, duration T) string {
+	dur := time.Duration(int64(duration)/scaleToSeconds) * time.Second
+
+	var durationText string
+	switch format {
+	case DecomposedFormat:
+		durationText = fmtDurationTime(showDays, showHours, showMinutes, showSeconds, dur)
+	default:
+		durationText = fmtClockTime(showDays, showHours, showMinutes, showSeconds, dur)
+	}
+
+	return durationText
 }

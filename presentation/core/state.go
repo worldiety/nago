@@ -230,6 +230,12 @@ func (s *State[T]) From(fn func() T) *State[T] {
 	return s
 }
 
+//func DetachedState[T any]() *State[T] {
+//	return &State[T]{
+//		valid: false,
+//	}
+//}
+
 func StateOf[T any](wnd Window, id string) *State[T] {
 	w := wnd.(*scopeWindow)
 
@@ -267,6 +273,7 @@ func DerivedState[T, X any](parent *State[X], idPostfix string) *State[T] {
 	if idPostfix == "" {
 		panic(fmt.Errorf("it is a programming error to provide an empty postfix, because that would collide with the given state"))
 	}
+
 	return StateOf[T](parent.wnd, parent.id+idPostfix)
 }
 
