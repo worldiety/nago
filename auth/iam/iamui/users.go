@@ -4,7 +4,9 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
+	"log/slog"
 )
 
 func Users(wnd core.Window, service *iam.Service) core.View {
@@ -13,68 +15,44 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 	bnd := crud.NewBinding[iam.User](wnd)
 	bnd.Add(
 		crud.Text("ID", func(e *iam.User) *auth.UID {
-			return &e.ID // TODO 	crud.Update:   crud.ReadOnly,
-		}).WithoutTable(),
+			return &e.ID
+		}).ReadOnly(true).WithoutTable(),
 		crud.Text("Vorname", func(e *iam.User) *string {
 			return &e.Firstname
 		}),
 		crud.Text("Nachname", func(e *iam.User) *string {
 			return &e.Lastname
 		}),
-		// TODO oneToMany is missing
-		//crud.OneToMany(bnd, service.AllPermissions(subject), func(permission iam.Permission) string {
-		//				return permission.Name()
-		//			}, crud.Field[iam.User, []iam.PID]{
-		//				Caption: "Berechtigungen",
-		//				Stringer: func(user iam.User) string {
-		//					// this is by intention: we show the entire inherited list of all permission, not just the customized ones
-		//					perms, err := service.FindAllUserPermissions(subject, user.ID)
-		//					if err != nil {
-		//						slog.Error("failed to find all user permissions", "err", err, "uid", user.ID)
-		//					}
-		//
-		//					actualPerms := service.AllPermissionsByIDs(subject, perms...)
-		//					var tmp []string
-		//					actualPerms(func(permission iam.Permission, e error) bool {
-		//						if e != nil {
-		//							err = e
-		//							return false
-		//						}
-		//
-		//						tmp = append(tmp, permission.Name())
-		//						return true
-		//					})
-		//
-		//					return strings.Join(tmp, ", ")
-		//				},
-		//				FromModel: func(user iam.User) []iam.PID {
-		//					return user.Permissions // this is by intention, only allow editing the custom ones
-		//				},
-		//				IntoModel: func(model iam.User, value []iam.PID) (iam.User, error) {
-		//					model.Permissions = value // this is by intention, only allow editing the custom ones
-		//					return model, nil
-		//				},
-		//			})
-		//
-		//			crud.OneToMany(bnd,
-		//				service.AllGroups(subject),
-		//				func(usr iam.Group) string {
-		//					return usr.Name
-		//				},
-		//				crud.FromPtr("Gruppen", func(model *iam.User) *[]auth.GID {
-		//					return &model.Groups
-		//				}),
-		//			)
-		//
-		//			crud.OneToMany(bnd,
-		//				service.AllRoles(subject),
-		//				func(usr iam.Role) string {
-		//					return usr.Name
-		//				},
-		//				crud.FromPtr("Rollen", func(model *iam.User) *[]auth.RID {
-		//					return &model.Roles
-		//				}),
-		//			)
+		crud.OneToMany("Vererbte Berechtigungen", service.AllPermissions(subject), func(t iam.Permission) core.View {
+			return ui.Text(t.Name())
+		}, func(user *iam.User) *[]iam.PID {
+			// this is by intention: we show the entire inherited list of all permission, not just the customized ones
+			perms, err := service.FindAllUserPermissions(subject, user.ID)
+			if err != nil {
+				slog.Error("failed to find all user permissions", "err", err, "uid", user.ID)
+			}
+
+			return &perms
+		}).ReadOnly(true),
+
+		crud.OneToMany("Einzelberechtigungen", service.AllPermissions(subject), func(t iam.Permission) core.View {
+			return ui.Text(t.Name())
+		}, func(user *iam.User) *[]iam.PID {
+			return &user.Permissions
+		}),
+
+		crud.OneToMany("Gruppen", service.AllGroups(subject), func(t iam.Group) core.View {
+			return ui.Text(t.Name)
+		}, func(model *iam.User) *[]auth.GID {
+			return &model.Groups
+		}),
+
+		crud.OneToMany("Rollen", service.AllRoles(subject), func(t iam.Role) core.View {
+			return ui.Text(t.Name)
+		}, func(model *iam.User) *[]auth.RID {
+			return &model.Roles
+		}),
+
 		crud.AggregateActions(
 			"Optionen",
 			crud.ButtonDelete(wnd, func(group iam.User) error {

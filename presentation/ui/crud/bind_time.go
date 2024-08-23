@@ -41,6 +41,7 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 				Hours(hours).
 				Minutes(minutes).
 				Seconds(seconds).
+				Disabled(self.Disabled).
 				ErrorText(errState.Get()).
 				SupportingText(self.SupportingText).
 				Frame(ui.Frame{}.FullWidth())

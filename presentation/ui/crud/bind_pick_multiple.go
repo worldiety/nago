@@ -37,6 +37,7 @@ func PickMultiple[E any, T any](label string, values []T, property func(model *E
 			return picker.Picker[T](label, values, state).
 				Title(self.Label).
 				MultiSelect(true).
+				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
 				Frame(ui.Frame{}.FullWidth())

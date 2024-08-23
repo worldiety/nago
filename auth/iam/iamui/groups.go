@@ -13,8 +13,8 @@ func Groups(wnd core.Window, service *iam.Service) core.View {
 	bnd := crud.NewBinding[iam.Group](wnd)
 	bnd.Add(
 		crud.Text("ID", func(e *iam.Group) *auth.GID {
-			return &e.ID // TODO 	crud.Update:   crud.ReadOnly,
-		}).WithoutTable(),
+			return &e.ID
+		}).ReadOnly(true).WithoutTable(),
 		crud.Text("Name", func(e *iam.Group) *string {
 			return &e.Name
 		}),
@@ -32,8 +32,11 @@ func Groups(wnd core.Window, service *iam.Service) core.View {
 		),
 	)
 
+	createBnd := bnd.Inherit("create")
+	createBnd.SetDisabledByLabel("ID", false)
+
 	opts := crud.Options(bnd).
-		Actions(crud.ButtonCreate(bnd, iam.Group{}, func(group iam.Group) (errorText string, infrastructureError error) {
+		Actions(crud.ButtonCreate(createBnd, iam.Group{}, func(group iam.Group) (errorText string, infrastructureError error) {
 			return "", service.CreateGroup(subject, group)
 		})).Title("Gruppen").
 		FindAll(service.AllGroups(subject))

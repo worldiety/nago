@@ -65,6 +65,10 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, 
 				handleValidation(self, entity, errState)
 			})
 
+			textColor := ui.Color("")
+			if self.Disabled {
+				textColor = "ST0"
+			}
 			return picker.Picker[T](label, values, state).
 				Title(self.Label).
 				ItemRenderer(func(t T) core.View {
@@ -73,14 +77,15 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, 
 				ItemPickedRenderer(func(t []T) core.View {
 					switch len(t) {
 					case 0:
-						return ui.Text("nichts gewählt")
+						return ui.Text("nichts gewählt").Color(textColor)
 					case 1:
 						return fkRenderer(t[0])
 					default:
-						return ui.Text(fmt.Sprintf("%d gewählt", len(t)))
+						return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
 					}
 				}).
 				MultiSelect(true).
+				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
 				Frame(ui.Frame{}.FullWidth())

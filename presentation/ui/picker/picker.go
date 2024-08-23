@@ -30,6 +30,7 @@ type TPicker[T any] struct {
 	quickSearch          *core.State[string]
 	selectAllSupported   bool
 	quickFilterSupported bool
+	disabled             bool
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -185,6 +186,11 @@ func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 	return c
 }
 
+func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
+	c.disabled = disabled
+	return c
+}
+
 func (c TPicker[T]) pickerTable() core.View {
 	filtered := c.values
 	if c.quickSearch.Get() != "" {
@@ -251,15 +257,26 @@ func (c TPicker[T]) pickerTable() core.View {
 
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	colors := core.Colors[ui.Colors](ctx.Window())
+	borderColor := ui.Color("")
+	backgroundColor := ui.Color("")
+	textColor := ui.Color("")
+	if c.disabled {
+		borderColor = ""
+		backgroundColor = colors.Disabled
+		textColor = colors.DisabledText
+	} else {
+		borderColor = colors.I1.WithBrightness(75)
+	}
+
 	if c.renderPicked == nil {
 		c.renderPicked = func(t []T) core.View {
 			switch len(t) {
 			case 0:
-				return ui.Text("nichts gewählt")
+				return ui.Text("nichts gewählt").Color(textColor)
 			case 1:
-				return ui.Text(fmt.Sprintf("%v", t[0]))
+				return ui.Text(fmt.Sprintf("%v", t[0])).Color(textColor)
 			default:
-				return ui.Text(fmt.Sprintf("%d gewählt", len(t)))
+				return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
 			}
 
 		}
@@ -300,9 +317,13 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {
+		if c.disabled {
+			return
+		}
 		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithBrightness(75)).Width(ui.L1).Radius("0.375rem")).
+	}).HoveredBorder(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
 		Gap(ui.L8).
+		BackgroundColor(backgroundColor).
 		Frame(ui.Frame{}.FullWidth()).
 		Border(ui.Border{}.Color(ui.A0).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))

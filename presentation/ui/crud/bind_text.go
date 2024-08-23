@@ -32,6 +32,7 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 
 			return ui.TextField(label, state.String()).
 				InputValue(state).
+				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
 				Frame(ui.Frame{}.FullWidth())

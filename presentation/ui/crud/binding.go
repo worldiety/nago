@@ -55,6 +55,11 @@ type Field[T any] struct {
 	Stringer func(e T) string
 }
 
+func (f Field[T]) ReadOnly(readOnly bool) Field[T] {
+	f.Disabled = readOnly
+	return f
+}
+
 func (f Field[T]) WithoutSorting() Field[T] {
 	f.Comparator = nil
 	return f
@@ -118,6 +123,36 @@ func (b *Binding[T]) Inherit(id string) *Binding[T] {
 	}
 
 	return cpy
+}
+
+// SetDisabledByLabel updates all fields named by the given label
+func (b *Binding[T]) SetDisabledByLabel(label string, disabled bool) {
+	for i, field := range b.fields {
+		if field.Label == label {
+			b.fields[i].Disabled = disabled
+		}
+	}
+}
+
+// FieldByLabel returns the first field value which has the given label
+func (b *Binding[T]) FieldByLabel(label string) (Field[T], bool) {
+	for _, field := range b.fields {
+		if field.Label == label {
+			return field, true
+		}
+	}
+
+	return Field[T]{}, false
+}
+
+// UpdateFieldByLabel replaces the first field which has the given label with the given field.
+func (b *Binding[T]) UpdateFieldByLabel(field Field[T]) {
+	for i, f := range b.fields {
+		if f.Label == field.Label {
+			b.fields[i] = field
+			return
+		}
+	}
 }
 
 // SetID sets the internal binding id, which is used to render a field binding.

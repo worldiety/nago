@@ -38,6 +38,7 @@ type TPicker[Duration std.Integer] struct {
 	showSeconds          bool
 	scaleToSeconds       int64
 	format               PickerFormat
+	disabled             bool
 }
 
 // Picker renders a time.Duration either in clock time format or in decomposed format.
@@ -89,6 +90,11 @@ func (c TPicker[D]) Visible(visible bool) ui.DecoredView {
 
 func (c TPicker[D]) AccessibilityLabel(label string) ui.DecoredView {
 	//TODO implement me
+	return c
+}
+
+func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
+	c.disabled = disabled
 	return c
 }
 
@@ -367,6 +373,9 @@ func (c TPicker[D]) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {
+		if c.disabled {
+			return
+		}
 		c.pickerPresented.Set(true)
 	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithBrightness(75)).Width(ui.L1).Radius("0.375rem")).
 		Gap(ui.L8).

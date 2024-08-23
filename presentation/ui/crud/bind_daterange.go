@@ -60,6 +60,7 @@ func DateRange[E any, T ~struct {
 			).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
+				Disabled(self.Disabled).
 				Frame(ui.Frame{}.FullWidth())
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
