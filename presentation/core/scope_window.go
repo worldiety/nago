@@ -55,8 +55,11 @@ func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values
 	s.lastStatePtrById = maxAutoPtr
 	s.declaredBuffers = map[declaredBufferKey]ora.Ptr{}
 	s.generation = 0
+
 	if values == nil {
 		s.values = Values{}
+	} else {
+		s.values = values
 	}
 
 	s.navController = NewNavigationController(parent)
