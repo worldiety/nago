@@ -2,11 +2,21 @@ package blob
 
 import (
 	"bytes"
+	"context"
 	"go.wdy.de/nago/pkg/std"
 	"io"
+	"iter"
 )
 
+// Deprecated: the implications cause scale issues and deadlock headaches
 // Store abstraction for generic binary streams.
+// TODO this transactional spec does not work properly:
+//   - bbolt cannot nest transactions without deadlocks
+//   - fs, s3 do not support transactions at all
+//   - only universally supported by postgresql
+//   - mariadb/mysql do not support transactions for schema changes (== creating and deleting buckets)
+//   - mongodb, aws documentdb (one per session, thus not nested) not sure about GCP Firestore
+//   - session logic will have a huge scaling problem, if required and applied in contrast to eventual and non transactional systems
 type Store interface {
 	// Update executes a read-write transaction. This may block any other write and read transactions
 	// (implementation dependent).
@@ -16,6 +26,49 @@ type Store interface {
 	View(f func(Tx) error) error
 }
 
+type ListOptions struct {
+	// If non-zero, the result set will only contain keys which starts with the given prefix.
+	Prefix string
+	// If non-zero, MinInc marks the inclusive minimal starting key in the result set.
+	MinInc string
+	// If non-zero, MaxInc marks the inclusive minimal ending key in the result set.
+	MaxInc string
+}
+
+// Store represents a single bucket store for blobs. Note, that individual methods are thread safe, however
+// it is not possible to represent transactions.
+// This limitation is intentionally, because neither simple implementations (an ordinary filesystem) nor
+// scaling out implementations (eventual consistent clustered cloud storage) support proper transactions.
+type Store2 interface {
+	// List takes a snapshot of all available entries and returns an iterator for it.
+	// While iterating, any operation on the dataset can be performed without blocking, however
+	// these changes must not cause the iterator to return garbage (like missed or doubled entries).
+	// Note that this may become very inefficient, when used on very large datasets containing
+	// millions or even billions of entries. The order of the returned keys is implementation dependent.
+	// Implementations must support Prefix and Range filters.
+	List(ctx context.Context, opts ListOptions) iter.Seq2[string, error]
+
+	// Exists returns only true, if at least at some time such blob existed. Note, that in concurrent situations
+	// such a statement is not very useful.
+	Exists(ctx context.Context, key string) (bool, error)
+
+	// Delete removes the denoted entry. It is not an error to remove a non-existent file.
+	Delete(ctx context.Context, key string) error
+
+	// NewReader opens the blob to be read.
+	NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error)
+
+	// NewWriter open the blob to be created or overwritten. Either of them will only
+	// if the writer has been closed and the context has not been cancelled.
+	// A Write is always atomic and implementations must ensure, that
+	// a partial write is never visible.
+	NewWriter(ctx context.Context, key string) (io.WriteCloser, error)
+}
+
+type ListObjectsOptions struct {
+	Prefix string
+}
+
 // Entry represents either a new or an existing entry and is usually only valid within its scoping
 // and pending transaction. This allows to optimize iteration of entries based on keys.
 type Entry struct {
@@ -23,6 +76,8 @@ type Entry struct {
 	Open func() (io.ReadCloser, error) // caller must close within the lifetime of transaction
 }
 
+// Deprecated: the implications cause scale issues and deadlock headaches
+//
 // Tx is a transaction scope. Implementations without transaction support will just provide a fake Tx instance.
 // It is generally not safe to nest transactions and may easily cause deadlocks, depending on the actual implementation.
 type Tx interface {

@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"io/fs"
+	"iter"
 )
 
 type BlobStore struct {
@@ -44,6 +45,74 @@ func (b *BlobStore) View(f func(blob.Tx) error) error {
 		txn.valid = true
 		return f(txn)
 	})
+}
+
+func (b *BlobStore) Get(key string) (std.Option[blob.Entry], error) {
+	var res std.Option[blob.Entry]
+	err := b.db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(b.bucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		buf := bucket.Get([]byte(key))
+		if buf == nil {
+			return nil
+		}
+
+		tmp := bytes.Clone(buf) // buf is owned by tx
+		res = std.Some[blob.Entry](blob.Entry{
+			Key: key,
+			Open: func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewReader(tmp)), nil
+			},
+		})
+
+		return nil
+	})
+
+	return res, err
+}
+
+func (b *BlobStore) Range(lowInc, highInc string) iter.Seq2[blob.Entry, error] {
+	var collectedKeys []string // ensure that we never have a nested transaction, which may deadlock see https://github.com/etcd-io/bbolt?tab=readme-ov-file#transactions
+	err := b.View(func(t blob.Tx) error {
+		tx := t.(*boltTx)
+		for entry, err := range tx.PrefixRange(lowInc, highInc) {
+			if err != nil {
+				panic(fmt.Errorf("unreachable: bbolt has no err in this code path, its mmapped"))
+			}
+
+			collectedKeys = append(collectedKeys, entry.Key)
+		}
+
+		return nil
+	})
+
+	return func(yield func(blob.Entry, error) bool) {
+		if err != nil {
+			yield(blob.Entry{}, nil)
+			return
+		}
+
+		for _, key := range collectedKeys {
+			entOpt, err := b.Get(key)
+			if err != nil {
+				if !yield(blob.Entry{}, err) {
+					return
+				}
+			}
+
+			if !yield(entOpt.Unwrap(), nil) {
+				return
+			}
+		}
+	}
+}
+
+func (b *BlobStore) Prefix(prefix string) iter.Seq2[blob.Entry, error] {
+	//TODO implement me
+	panic("implement me")
 }
 
 type boltTx struct {
@@ -142,4 +211,51 @@ func (b *boltTx) Get(key string) (std.Option[blob.Entry], error) {
 			return readerCloser{Reader: bytes.NewReader(buf)}, nil
 		},
 	}), nil
+}
+
+func (b *boltTx) PrefixRange(lowInc, highInc string) iter.Seq2[blob.Entry, error] {
+	bucket := b.tx.Bucket(b.parent.bucketName)
+	if bucket == nil {
+		return func(yield func(blob.Entry, error) bool) {
+
+		}
+	}
+
+	c := bucket.Cursor()
+	min := []byte(lowInc)
+	max := []byte(highInc)
+
+	return func(yield func(blob.Entry, error) bool) {
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			yield(blob.Entry{
+				Key: string(k),
+				Open: func() (io.ReadCloser, error) {
+					return readerCloser{Reader: bytes.NewReader(v)}, nil
+				},
+			}, nil)
+		}
+	}
+}
+
+func (b *boltTx) Prefix(prefix string) iter.Seq2[blob.Entry, error] {
+	bucket := b.tx.Bucket(b.parent.bucketName)
+	if bucket == nil {
+		return func(yield func(blob.Entry, error) bool) {
+
+		}
+	}
+
+	c := bucket.Cursor()
+	pfix := []byte(prefix)
+
+	return func(yield func(blob.Entry, error) bool) {
+		for k, v := c.Seek(pfix); k != nil && bytes.HasPrefix(k, pfix); k, v = c.Next() {
+			yield(blob.Entry{
+				Key: string(k),
+				Open: func() (io.ReadCloser, error) {
+					return readerCloser{Reader: bytes.NewReader(v)}, nil
+				},
+			}, nil)
+		}
+	}
 }

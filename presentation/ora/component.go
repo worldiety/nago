@@ -65,6 +65,7 @@ const (
 	StrT                 ComponentType = "S"
 	HStackT              ComponentType = "hs"
 	VStackT              ComponentType = "vs"
+	TextLayoutT          ComponentType = "ts"
 	BoxT                 ComponentType = "bx"
 	SpacerT              ComponentType = "s"
 	ModalT               ComponentType = "M"

@@ -40,6 +40,7 @@ const styles = computed<string>(() => {
 	styles.push(...borderCSS(props.ui.b))
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.o))
+	styles.push("white-space:pre-wrap") // TODO not sure if this is the intentional effect for all platforms
 
 	switch (props.ui.a){
 		case "s":

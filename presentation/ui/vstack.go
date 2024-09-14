@@ -78,8 +78,8 @@ func (c TVStack) Alignment(alignment Alignment) TVStack {
 	return c
 }
 
-func (c TVStack) Font(font ora.Font) TVStack {
-	c.font = font
+func (c TVStack) Font(font Font) TVStack {
+	c.font = font.ora()
 	return c
 }
 

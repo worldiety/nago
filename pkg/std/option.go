@@ -22,8 +22,11 @@ var NotAvailable = errors.New("not available")
 // way anyway.
 //
 // If you already have a pointer, just use its zero value which is nil and not Option.
+// TODO see also https://github.com/samber/mo
 type Option[T any] struct {
-	V     T    // TODO this encourages broken access patterns
+	// Deprecated: do not use directly, use Unwrap* methods.
+	V T // TODO this encourages broken access patterns
+	// Deprecated: do not use directly, use [Option.IsSome] or [Option.IsNone]
 	Valid bool // TODO this encourages broken access patterns
 }
 
@@ -47,6 +50,14 @@ func (o Option[T]) Unwrap() T {
 	}
 
 	return o.V
+}
+
+func (o Option[T]) IsSome() bool {
+	return o.Valid
+}
+
+func (o Option[T]) IsNone() bool {
+	return !o.Valid
 }
 
 // Get returns the value or [NotAvailable].

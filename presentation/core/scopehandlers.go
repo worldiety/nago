@@ -146,7 +146,6 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 			})
 			return
 		}
-
 	}
 
 	window.setFactory(fac)
