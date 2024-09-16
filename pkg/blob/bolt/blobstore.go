@@ -2,15 +2,16 @@ package bolt
 
 import (
 	"bytes"
-	"errors"
+	"context"
 	"fmt"
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/std"
 	"io"
-	"io/fs"
 	"iter"
 )
+
+var _ blob.Store = (*BlobStore)(nil)
 
 type BlobStore struct {
 	db         *bbolt.DB
@@ -21,241 +22,168 @@ func NewBlobStore(db *bbolt.DB, bucketName string) *BlobStore {
 	return &BlobStore{db: db, bucketName: []byte(bucketName)}
 }
 
-func (b *BlobStore) Update(f func(blob.Tx) error) error {
-	txn := &boltTx{parent: b}
-	defer func() {
-		txn.valid = false
-	}()
-
-	return b.db.Update(func(tx *bbolt.Tx) error {
-		txn.tx = tx
-		txn.valid = true
-		return f(txn)
-	})
-}
-
-func (b *BlobStore) View(f func(blob.Tx) error) error {
-	txn := &boltTx{parent: b}
-	defer func() {
-		txn.valid = false
-	}()
-
-	return b.db.View(func(tx *bbolt.Tx) error {
-		txn.tx = tx
-		txn.valid = true
-		return f(txn)
-	})
-}
-
-func (b *BlobStore) Get(key string) (std.Option[blob.Entry], error) {
-	var res std.Option[blob.Entry]
-	err := b.db.View(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket(b.bucketName)
-		if bucket == nil {
-			return nil
-		}
-
-		buf := bucket.Get([]byte(key))
-		if buf == nil {
-			return nil
-		}
-
-		tmp := bytes.Clone(buf) // buf is owned by tx
-		res = std.Some[blob.Entry](blob.Entry{
-			Key: key,
-			Open: func() (io.ReadCloser, error) {
-				return io.NopCloser(bytes.NewReader(tmp)), nil
-			},
-		})
-
-		return nil
-	})
-
-	return res, err
-}
-
-func (b *BlobStore) Range(lowInc, highInc string) iter.Seq2[blob.Entry, error] {
-	var collectedKeys []string // ensure that we never have a nested transaction, which may deadlock see https://github.com/etcd-io/bbolt?tab=readme-ov-file#transactions
-	err := b.View(func(t blob.Tx) error {
-		tx := t.(*boltTx)
-		for entry, err := range tx.PrefixRange(lowInc, highInc) {
-			if err != nil {
-				panic(fmt.Errorf("unreachable: bbolt has no err in this code path, its mmapped"))
+func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
+	var res []string
+	return func(yield func(string, error) bool) {
+		err := b.db.View(func(tx *bbolt.Tx) error {
+			if opts.Prefix != "" && (opts.MinInc != "" || opts.MaxInc != "") {
+				return fmt.Errorf("applying prefix and range at the same time is not supported")
 			}
 
-			collectedKeys = append(collectedKeys, entry.Key)
-		}
+			if opts.Prefix != "" {
+				res = prefix(tx, b.bucketName, opts.Prefix)
+				return nil
+			}
 
-		return nil
-	})
+			if opts.MinInc != "" {
+				res = ranger(tx, b.bucketName, opts.MinInc, opts.MaxInc)
+				return nil
+			}
 
-	return func(yield func(blob.Entry, error) bool) {
+			// no filter case
+			bucket := tx.Bucket(b.bucketName)
+			if bucket == nil {
+				return nil
+			}
+
+			err := bucket.ForEach(func(k, v []byte) error {
+				res = append(res, string(k))
+				return nil
+			})
+
+			return err
+		})
+
 		if err != nil {
-			yield(blob.Entry{}, nil)
+			yield("", err)
 			return
 		}
 
-		for _, key := range collectedKeys {
-			entOpt, err := b.Get(key)
-			if err != nil {
-				if !yield(blob.Entry{}, err) {
-					return
-				}
-			}
-
-			if !yield(entOpt.Unwrap(), nil) {
+		// we must not yield from the transaction, because the loop body of yield may start a write transaction
+		// which cannot be upgraded and we get a deadlock per definition
+		for _, key := range res {
+			if !yield(key, nil) {
 				return
 			}
 		}
 	}
 }
 
-func (b *BlobStore) Prefix(prefix string) iter.Seq2[blob.Entry, error] {
-	//TODO implement me
-	panic("implement me")
-}
-
-type boltTx struct {
-	parent *BlobStore
-	tx     *bbolt.Tx
-	valid  bool
-}
-
-func (b *boltTx) Each(yield func(blob.Entry, error) bool) {
-	bucket := b.tx.Bucket(b.parent.bucketName)
-	if bucket == nil {
-		return
-	}
-
-	yieldStopped := false
-	err := bucket.ForEach(func(k, v []byte) error {
-		valid := true
-		yieldStopped = !yield(blob.Entry{
-			Key: string(k), // we cannot use unsafe, because consumer expects to let the string key escape safely
-			Open: func() (io.ReadCloser, error) {
-				if !valid {
-					return nil, fmt.Errorf("open outside of according yield call is invalid")
-				}
-
-				return readerCloser{Reader: bytes.NewReader(v)}, nil
-			},
-		}, nil)
-		valid = false
-
-		if yieldStopped {
-			return fs.SkipAll
+func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
+	exists := false
+	err := b.db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(b.bucketName)
+		if bucket == nil {
+			return nil
 		}
 
+		exists = bucket.Get([]byte(key)) != nil
 		return nil
 	})
 
-	// do not yield if iteration has been cancelled
-	if err != nil && !errors.Is(err, fs.SkipAll) {
-		yield(blob.Entry{}, err)
-	}
+	return exists, err
 }
 
-func (b *boltTx) Delete(key string) error {
-	bucket := b.tx.Bucket(b.parent.bucketName)
-	if bucket == nil {
-		return nil
-	}
-
-	return bucket.Delete([]byte(key))
-}
-
-func (b *boltTx) Put(entry blob.Entry) error {
-	bucket := b.tx.Bucket(b.parent.bucketName)
-	if bucket == nil {
-		bck, err := b.tx.CreateBucketIfNotExists(b.parent.bucketName)
-		if err != nil {
-			return err
+func (b *BlobStore) Delete(ctx context.Context, key string) error {
+	err := b.db.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(b.bucketName)
+		if bucket == nil {
+			return nil
 		}
 
-		bucket = bck
-	}
+		return bucket.Delete([]byte(key))
+	})
 
-	reader, err := entry.Open()
-	if err != nil {
-		return err
-	}
-
-	defer reader.Close()
-
-	buf, err := io.ReadAll(reader)
-	if err != nil {
-		return err
-	}
-
-	return bucket.Put([]byte(entry.Key), buf)
+	return err
 }
 
-func (b *boltTx) Get(key string) (std.Option[blob.Entry], error) {
-	bucket := b.tx.Bucket(b.parent.bucketName)
+// NewReader opens a read transaction and returns it through the given ReadCloser. You must
+// ensure to close the reader, otherwise you will block any writes infinitely. Otherwise, it protects
+// you against other issues arising with bbolt while mixing read and write transactions.
+func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error) {
+	var res std.Option[io.ReadCloser]
+
+	// start the transaction and keep it alive until the reader is closed.
+	// this will avoid another full allocation of a byte slice which is mostly very short-lived just
+	// for unmarshalling json data.
+	tx, err := b.db.Begin(false)
+	if err != nil {
+		return res, err
+	}
+
+	bucket := tx.Bucket(b.bucketName)
 	if bucket == nil {
-		return std.None[blob.Entry](), nil
+		// even the bucket does not exist
+		if err := tx.Rollback(); err != nil {
+			panic(fmt.Errorf("unreachable: %w", err))
+		}
+
+		return res, nil
 	}
 
-	buf := bucket.Get([]byte(key))
-	if buf == nil {
-		return std.None[blob.Entry](), nil
+	mmapBuf := bucket.Get([]byte(key))
+	if mmapBuf == nil {
+		// by definition of bbolt, this means that no such entry exists
+		if err := tx.Rollback(); err != nil {
+			panic(fmt.Errorf("unreachable: %w", err))
+		}
+
+		return res, nil
 	}
 
-	return std.Some(blob.Entry{
-		Key: key,
-		Open: func() (io.ReadCloser, error) {
-			if !b.valid {
-				return nil, fmt.Errorf("open call outside of transaction")
-			}
-
-			return readerCloser{Reader: bytes.NewReader(buf)}, nil
-		},
+	return std.Some[io.ReadCloser](&readerCloser{
+		Reader: bytes.NewReader(mmapBuf),
+		tx:     tx,
 	}), nil
 }
 
-func (b *boltTx) PrefixRange(lowInc, highInc string) iter.Seq2[blob.Entry, error] {
-	bucket := b.tx.Bucket(b.parent.bucketName)
-	if bucket == nil {
-		return func(yield func(blob.Entry, error) bool) {
+// NewWriter creates a write buffer which is written at one piece when closed, so you must check that error, to ensure
+// persistence. This way, we can guarantee to be deadlock-free due to stalled bbolt transactions.
+func (b *BlobStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, error) {
+	// this works differently than the read. First of all, we likely have a 10_000:1 read-write-ratio due to
+	// the way the renderer works and secondly, delayed writes are deadlock prone and thirdly bbolt has no
+	// streaming API anyway, thus we need a full buffered slice.
 
-		}
+	return &writeCloser{
+		bucketName: b.bucketName,
+		db:         b.db,
+		Buffer:     &bytes.Buffer{},
+		key:        key,
+		ctx:        ctx,
+	}, nil
+}
+
+func ranger(tx *bbolt.Tx, bucketName []byte, lowInc, highInc string) []string {
+	bucket := tx.Bucket(bucketName)
+	if bucket == nil {
+		return nil
 	}
 
 	c := bucket.Cursor()
 	min := []byte(lowInc)
 	max := []byte(highInc)
+	var res []string
+	for k, _ := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, _ = c.Next() {
+		res = append(res, string(k))
 
-	return func(yield func(blob.Entry, error) bool) {
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
-			yield(blob.Entry{
-				Key: string(k),
-				Open: func() (io.ReadCloser, error) {
-					return readerCloser{Reader: bytes.NewReader(v)}, nil
-				},
-			}, nil)
-		}
 	}
+
+	return res
 }
 
-func (b *boltTx) Prefix(prefix string) iter.Seq2[blob.Entry, error] {
-	bucket := b.tx.Bucket(b.parent.bucketName)
+func prefix(tx *bbolt.Tx, bucketName []byte, prefix string) []string {
+	bucket := tx.Bucket(bucketName)
 	if bucket == nil {
-		return func(yield func(blob.Entry, error) bool) {
-
-		}
+		return nil
 	}
 
 	c := bucket.Cursor()
 	pfix := []byte(prefix)
 
-	return func(yield func(blob.Entry, error) bool) {
-		for k, v := c.Seek(pfix); k != nil && bytes.HasPrefix(k, pfix); k, v = c.Next() {
-			yield(blob.Entry{
-				Key: string(k),
-				Open: func() (io.ReadCloser, error) {
-					return readerCloser{Reader: bytes.NewReader(v)}, nil
-				},
-			}, nil)
-		}
+	var res []string
+	for k, _ := c.Seek(pfix); k != nil && bytes.HasPrefix(k, pfix); k, _ = c.Next() {
+		res = append(res, string(k))
 	}
+
+	return res
 }

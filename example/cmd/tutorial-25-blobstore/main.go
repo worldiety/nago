@@ -28,7 +28,7 @@ func main() {
 
 		// read them out
 		var buf1 bytes.Buffer
-		if err := blob.Read(dbstore, "my key", &buf1); err != nil {
+		if ok, err := blob.Read(dbstore, "my key", &buf1); err != nil || !ok {
 			panic(err)
 		}
 
@@ -47,7 +47,7 @@ func main() {
 
 		// read them out
 		var buf2 bytes.Buffer
-		if err := blob.Read(fstore, "my key", &buf2); err != nil {
+		if ok, err := blob.Read(fstore, "my key", &buf2); err != nil || !ok {
 			panic(err)
 		}
 

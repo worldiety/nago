@@ -10,7 +10,6 @@ import (
 // It has a pull semantics, where the data is opened and
 // kept alive until closed. See also [PullFile].
 type File interface {
-	Open() (io.ReadCloser, error)
 	// Name of the file
 	Name() string
 	// MimeType returns the known mime type, if available.

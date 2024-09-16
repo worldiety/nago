@@ -7,12 +7,13 @@ import (
 	"fmt"
 )
 
+// Deprecated: think about the logic to introduce Option on the one hand and on the other hand provide an Error. This will confuse people when to use Option and when not (error for technical stuff and domain is option)
 var NotAvailable = errors.New("not available")
 
 // Option is introduced because range over func can only represent at most 2 arguments. Processing
 // a (T, ok, error) becomes impossible. Also, it is not correct to always use pointers for modelling or
 // to use hidden error types for clear optional cases where an absent thing is never an error by definition.
-// Intentionally it shares the same field layout as the stdlib [sql.Null] type.
+// Intentionally it shares the same field layout as the stdlib [sql.Null] type (TODO this will be changed).
 // This also helps for performance edge cases, where you can technically express that a value is really
 // just a value and does not escape.
 //
@@ -60,6 +61,7 @@ func (o Option[T]) IsNone() bool {
 	return !o.Valid
 }
 
+// Deprecated: returning error in case of not available is exactly the thing, why I introduced this Option, so the existence of this does not make sense at all
 // Get returns the value or [NotAvailable].
 func (o Option[T]) Get() (T, error) {
 	if o.Valid {
@@ -79,6 +81,7 @@ func (o Option[T]) UnwrapOrZero() T {
 	return zero
 }
 
+// Deprecated: this inherits the NotAvailable error behavior from Get.
 // Unpack2 is a shorthand for evaluating option and error and returns [fs.ErrNotExist] if no error and not exists,
 // express that fact as oneliner.
 func Unpack2[T any](opt Option[T], err error) (T, error) {
@@ -91,7 +94,7 @@ func Unpack2[T any](opt Option[T], err error) (T, error) {
 
 // Iter allows iteration over the possibly contained value. Iter is a [iter.Seq]. This allows to apply
 // any map, reduce, filter pipelines on Option.
-func (o Option[T]) Iter(yield func(T) bool) {
+func (o Option[T]) Iter(yield func(T) bool) { // TODO the convention wants All not Iter
 	if o.Valid {
 		yield(o.V)
 	}

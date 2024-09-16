@@ -18,3 +18,16 @@ func Values2[Slice ~[]Elem, Elem, T any](s Slice) iter.Seq2[Elem, T] {
 		}
 	}
 }
+
+func Collect2[Slice ~[]Elem, Elem any](s iter.Seq2[Elem, error]) (Slice, error) {
+	var err error
+	var res Slice
+	for elem, e := range s {
+		if e != nil {
+			return res, err
+		}
+		res = append(res, elem)
+	}
+
+	return res, nil
+}

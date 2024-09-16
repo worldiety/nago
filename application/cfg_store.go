@@ -41,7 +41,12 @@ func (c *Configurator) EntityStore(bucketName string) blob.Store {
 func (c *Configurator) FileStore(bucketName string) blob.Store {
 	dir := c.Directory(filepath.Join("files", bucketName))
 	slog.Info(fmt.Sprintf("file store '%s' stores in '%s'", bucketName, dir))
-	return fs.NewBlobStore(dir)
+	store, err := fs.NewBlobStore(dir)
+	if err != nil {
+		panic(fmt.Errorf("cannot open file blob store '%s': %w", dir, err))
+	}
+
+	return store
 }
 
 // SloppyRepository returns a default Repository implementation for the given type, which just serializes the domain

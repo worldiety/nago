@@ -25,20 +25,20 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
-	t.Run("mem", func(t *testing.T) {
-		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
-	})
-
-	t.Run("fs", func(t *testing.T) {
-		testSuite(t, NewSloppyJSONRepository[Person, string](fs.NewBlobStore(t.TempDir())))
-	})
-
 	t.Run("bbolt", func(t *testing.T) {
 		db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 		testSuite(t, NewSloppyJSONRepository[Person, string](bolt.NewBlobStore(db, "test")))
+	})
+
+	t.Run("mem", func(t *testing.T) {
+		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
+	})
+
+	t.Run("fs", func(t *testing.T) {
+		testSuite(t, NewSloppyJSONRepository[Person, string](unwrap(fs.NewBlobStore(t.TempDir()))))
 	})
 
 }
@@ -111,14 +111,12 @@ func testSuite(t *testing.T, repo data.Repository[Person, string]) {
 
 	// again but different
 	tmp = nil
-	repo.FindAllByID(slices2.Values([]string{"3", "2", "1"}), func(person Person, err error) bool {
+	for person, err := range repo.FindAllByID(slices.Values([]string{"3", "2", "1"})) {
 		tmp = append(tmp, person)
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		return true
-	})
+	}
 
 	slices.SortFunc(tmp, func(a, b Person) int {
 		return strings.Compare(a.ID, b.ID)

@@ -1,30 +1,12 @@
 package blob
 
 import (
-	"bytes"
 	"context"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xslices"
 	"io"
 	"iter"
 )
-
-// Deprecated: the implications cause scale issues and deadlock headaches
-// Store abstraction for generic binary streams.
-// TODO this transactional spec does not work properly:
-//   - bbolt cannot nest transactions without deadlocks
-//   - fs, s3 do not support transactions at all
-//   - only universally supported by postgresql
-//   - mariadb/mysql do not support transactions for schema changes (== creating and deleting buckets)
-//   - mongodb, aws documentdb (one per session, thus not nested) not sure about GCP Firestore
-//   - session logic will have a huge scaling problem, if required and applied in contrast to eventual and non transactional systems
-type Store interface {
-	// Update executes a read-write transaction. This may block any other write and read transactions
-	// (implementation dependent).
-	Update(f func(Tx) error) error
-	// View executes a read-only transaction, which allows usually higher concurrency optimizations
-	// (implementation dependent).
-	View(f func(Tx) error) error
-}
 
 type ListOptions struct {
 	// If non-zero, the result set will only contain keys which starts with the given prefix.
@@ -39,7 +21,10 @@ type ListOptions struct {
 // it is not possible to represent transactions.
 // This limitation is intentionally, because neither simple implementations (an ordinary filesystem) nor
 // scaling out implementations (eventual consistent clustered cloud storage) support proper transactions.
-type Store2 interface {
+// Providing a transactional closure will also either provide surprising behavior or deadlocks by definition
+// (start a read transaction and nest a write transaction - what shall happen?). Massive scalable cloud systems
+// are also only scalable and fast, if used in a non-transactional and eventual-consistent way.
+type Store interface {
 	// List takes a snapshot of all available entries and returns an iterator for it.
 	// While iterating, any operation on the dataset can be performed without blocking, however
 	// these changes must not cause the iterator to return garbage (like missed or doubled entries).
@@ -58,171 +43,99 @@ type Store2 interface {
 	// NewReader opens the blob to be read.
 	NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error)
 
-	// NewWriter open the blob to be created or overwritten. Either of them will only
+	// NewWriter open the blob to be created or overwritten. Either of them will only happen
 	// if the writer has been closed and the context has not been cancelled.
 	// A Write is always atomic and implementations must ensure, that
 	// a partial write is never visible.
 	NewWriter(ctx context.Context, key string) (io.WriteCloser, error)
 }
 
-type ListObjectsOptions struct {
-	Prefix string
-}
-
-// Entry represents either a new or an existing entry and is usually only valid within its scoping
-// and pending transaction. This allows to optimize iteration of entries based on keys.
-type Entry struct {
-	Key  string
-	Open func() (io.ReadCloser, error) // caller must close within the lifetime of transaction
-}
-
-// Deprecated: the implications cause scale issues and deadlock headaches
-//
-// Tx is a transaction scope. Implementations without transaction support will just provide a fake Tx instance.
-// It is generally not safe to nest transactions and may easily cause deadlocks, depending on the actual implementation.
-type Tx interface {
-	// Each loops over each entry and provides an open function.
-	// [Entry.Open] is owned by the yield and only valid during the yield call.
-	// Entry is only valid for the lifetime of the Tx.
-	// This is a [iter.Seq2].
-	Each(yield func(Entry, error) bool)
-	// Delete removes an entry. it is not an error to delete a non-existing entry.
-	Delete(key string) error
-	// Put creates or updates the target entry.
-	Put(entry Entry) error
-	// Get returns the entry which is only valid for the lifetime of the enclosing Tx.
-	Get(key string) (std.Option[Entry], error)
-}
-
 // Read transfers from the store all bytes into the given writer, e.g. into a http response.
-func Read(store Store, key string, dst io.Writer) error {
-	err := store.View(func(tx Tx) error {
-		optEnt, err := tx.Get(key)
-		if err != nil {
-			return err
-		}
+func Read(store Store, key string, dst io.Writer) (exists bool, err error) {
+	optR, err := store.NewReader(context.Background(), key)
+	if err != nil {
+		return false, err
+	}
 
-		reader, err := optEnt.Unwrap().Open()
-		if err != nil {
-			return err
-		}
+	if optR.IsNone() {
+		return false, nil
+	}
 
-		defer reader.Close()
+	r := optR.Unwrap()
 
-		_, err = io.Copy(dst, reader)
-		return err
-	})
-
-	return err
+	_, err = io.Copy(dst, r)
+	return true, err
 }
 
 // Write transfers all bytes from the given source into the store, e.g. from a request body.
-func Write(store Store, key string, src io.Reader) error {
-	return store.Update(func(tx Tx) error {
-		return tx.Put(Entry{
-			Key: key,
-			Open: func() (io.ReadCloser, error) {
-				return readerCloser{Reader: src}, nil
-			},
-		})
-	})
+func Write(store Store, key string, src io.Reader) (err error) {
+	w, err := store.NewWriter(context.Background(), key)
+	if err != nil {
+		return err
+	}
+
+	defer std.Try(w.Close, &err)
+
+	_, err = io.Copy(w, src)
+	return
 }
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
-func Put(store Store, key string, value []byte) error {
-	return store.Update(func(tx Tx) error {
-		return tx.Put(Entry{
-			Key: key,
-			Open: func() (io.ReadCloser, error) {
-				return readerCloser{Reader: bytes.NewReader(value)}, nil
-			},
-		})
-	})
+func Put(store Store, key string, value []byte) (err error) {
+	w, err := store.NewWriter(context.Background(), key)
+	if err != nil {
+		return err
+	}
+
+	defer std.Try(w.Close, &err)
+
+	_, err = w.Write(value)
+	return
 }
 
 func Delete(store Store, key string) error {
-	return store.Update(func(tx Tx) error {
-		return tx.Delete(key)
-	})
+	return store.Delete(context.Background(), key)
 }
 
+// DeleteAll removes all known entries at certain point of time. Due to concurrency and eventual consistency
+// the store may not be empty after iteration.
 func DeleteAll(store Store) error {
-	return store.Update(func(tx Tx) error {
-		var e error
-		tx.Each(func(entry Entry, err error) bool {
-			if err != nil {
-				e = err
-				return false
-			}
-			// TODO not sure if deleting while iterating should be well defined
-			if err := tx.Delete(entry.Key); err != nil {
-				e = err
-				return false
-			}
+	for key, err := range store.List(context.Background(), ListOptions{}) {
+		if err != nil {
+			return err
+		}
 
-			return true
-		})
+		if err := store.Delete(context.Background(), key); err != nil {
+			return err
+		}
+	}
 
-		return e
-	})
+	return nil
 }
 
 // Get is a shortcut function to read small slices from the store. Do not use for large blobs, because it allocates
 // the entire blob size without other limits.
 func Get(store Store, key string) (std.Option[[]byte], error) {
-	var res std.Option[[]byte]
-	err := store.View(func(tx Tx) error {
-		optEnt, err := tx.Get(key)
-		if err != nil {
-			return err
-		}
+	optReader, err := store.NewReader(context.Background(), key)
+	if err != nil {
+		return std.None[[]byte](), err
+	}
 
-		if !optEnt.Valid {
-			return nil
-		}
+	if optReader.IsNone() {
+		return std.None[[]byte](), nil
+	}
 
-		reader, err := optEnt.Unwrap().Open()
-		if err != nil {
-			return err
-		}
+	r := optReader.Unwrap()
+	defer r.Close()
 
-		defer reader.Close()
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return std.None[[]byte](), err
+	}
 
-		buf, err := io.ReadAll(reader)
-		if err != nil {
-			return err
-		}
-
-		res = std.Some(buf)
-		return nil
-	})
-
-	return res, err
-}
-
-type readerCloser struct {
-	io.Reader
-}
-
-func (readerCloser) Close() error {
-	return nil
+	return std.Some(buf), nil
 }
 
 func Keys(store Store) ([]string, error) {
-	var keys []string
-	err := store.View(func(tx Tx) error {
-		var e error
-		tx.Each(func(entry Entry, err error) bool {
-			if err != nil {
-				e = err
-				return false
-			}
-
-			keys = append(keys, entry.Key)
-			return true
-		})
-		return e
-	})
-
-	return keys, err
+	return xslices.Collect2[[]string](store.List(context.Background(), ListOptions{}))
 }

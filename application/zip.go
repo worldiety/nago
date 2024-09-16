@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"io"
 	"iter"
 	"os"
 )
@@ -31,20 +30,14 @@ func makeZip(dstFile string, it iter.Seq2[core.File, error]) error {
 			//UncompressedSize64: uint64(file.Size()),
 		}
 
-		r, e := file.Open()
-		if e != nil {
-			err = e
-			return false
-		}
-		defer r.Close()
-
 		writer, e := zipWriter.CreateHeader(header)
 		if e != nil {
 			err = e
 			return false
 		}
 
-		_, e = io.Copy(writer, r)
+		_, e = file.Transfer(writer)
+
 		if e != nil {
 			err = e
 		}

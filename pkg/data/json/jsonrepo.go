@@ -1,7 +1,7 @@
 package json
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +10,6 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
-	"slices"
 )
 
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
@@ -43,174 +42,130 @@ func NewSloppyJSONRepository[DomainModel data.Aggregate[DomainID], DomainID data
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindByID(id DomainID) (std.Option[DomainModel], error) {
 	var res std.Option[DomainModel]
-	err := r.store.View(func(tx blob.Tx) error {
-		entry, err := tx.Get(data.Idtos(id))
-		if err != nil {
-			return fmt.Errorf("cannot retrieve data from store: %w", err)
-		}
+	// we use the reader directly here, because it allows potential optimizations. Using blob.Get requires at least another additional full slice allocation
+	optR, err := r.store.NewReader(context.Background(), data.Idtos(id))
 
-		if !entry.Valid {
-			return nil // this means that we just return a none option => non-existing entry
-		}
+	if err != nil {
+		return res, err
+	}
 
-		domainModel, err := r.decode(entry.Unwrap())
-		if err != nil {
-			return err
-		}
+	if optR.IsNone() {
+		return res, nil
+	}
 
-		res = std.Some(domainModel)
+	var domainModel DomainModel
+	reader := optR.Unwrap()
+	defer reader.Close() // otherwise we get a deadlock
 
-		return nil
-	})
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&domainModel); err != nil {
+		return res, err
+	}
 
-	return res, err
+	return std.Some(domainModel), nil
+
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) decode(entry blob.Entry) (DomainModel, error) {
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) decode(reader io.Reader) (DomainModel, error) {
 	var persistenceModel PersistenceModel
 	var zeroDomain DomainModel
 
-	reader, err := entry.Open()
-	if err != nil {
-		return zeroDomain, err
-	}
-
-	defer reader.Close() // don't care about read-closer errors
-
 	dec := json.NewDecoder(reader)
-	if err := dec.Decode(&persistenceModel); err != nil {
+	err := dec.Decode(&persistenceModel)
+	if err != nil {
 		return zeroDomain, err
 	}
 
 	return r.intoDomain(persistenceModel)
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) encode(domainModel DomainModel) (blob.Entry, error) {
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) encode(domainModel DomainModel) (string, []byte, error) {
 	persistenceModel, err := r.intoPersistence(domainModel)
 	if err != nil {
-		return blob.Entry{}, err
+		return "", nil, err
 	}
 
 	buf, err := json.Marshal(persistenceModel)
 	if err != nil {
-		return blob.Entry{}, err
+		return "", nil, err
 	}
 
-	return blob.Entry{
-		Key: data.Idtos(domainModel.Identity()),
-		Open: func() (io.ReadCloser, error) {
-			return readerCloser{Reader: bytes.NewReader(buf)}, nil
-		},
-	}, nil
-
+	return data.Idtos(domainModel.Identity()), buf, nil
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByID(ids iter.Seq[DomainID]) iter.Seq2[DomainModel, error] {
-
 	return func(yield func(DomainModel, error) bool) {
 		var zeroDomain DomainModel
-		idents := slices.Collect(ids)
-		stopIter := false
-		err := r.store.View(func(tx blob.Tx) error {
-			for _, ident := range idents {
-				optEnt, err := tx.Get(data.Idtos(ident))
-				if err != nil {
-					// continue iteration, perhaps a little more robust
-					if !yield(zeroDomain, err) {
-						stopIter = true
-						return err
-					}
-				}
-
-				if !optEnt.Valid {
-					continue // just a not-found case
-				}
-
-				domainModel, err := r.decode(optEnt.Unwrap())
-				if err != nil {
-					// continue iteration, perhaps a little more robust e.g. due to JSON unmarshal incompatibility
-					if !yield(zeroDomain, err) {
-						stopIter = true
-						return err
-					}
-
-					continue
-				}
-
-				if !yield(domainModel, nil) {
-					stopIter = true
-					return nil
+		for id := range ids {
+			optModel, err := r.FindByID(id)
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
 				}
 			}
 
-			return nil
-		})
+			if optModel.IsNone() {
+				continue
+			}
 
-		// errors after iteration shall stop, are suppressed. That seems the proposal design
-		if !stopIter && err != nil {
-			yield(zeroDomain, err)
+			if !yield(optModel.Unwrap(), nil) {
+				return
+			}
+
 		}
 	}
+
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Each(yield func(DomainModel, error) bool) {
 	var zeroDomain DomainModel
-	stopIter := false
-	err := r.store.View(func(tx blob.Tx) error {
-		tx.Each(func(entry blob.Entry, err error) bool {
-			if err != nil {
-				// continue iteration, perhaps a little more robust e.g. due to JSON unmarshal incompatibility
-				if !yield(zeroDomain, err) {
-					stopIter = true
-					return false
-				}
-				return true
+	for id, err := range r.store.List(context.Background(), blob.ListOptions{}) {
+		if err != nil {
+			if !yield(zeroDomain, err) {
+				return
 			}
+		}
 
-			if !yield(r.decode(entry)) {
-				stopIter = true
-				return false
+		did, err := data.Stoid[DomainID](id)
+		if err != nil {
+			if !yield(zeroDomain, err) {
+				return
 			}
+		}
 
-			return true
-		})
-		return nil
-	})
+		optModel, err := r.FindByID(did)
+		if err != nil {
+			if !yield(zeroDomain, err) {
+				return
+			}
+		}
 
-	// errors after iteration shall stop, are suppressed. That seems the proposal design
-	if !stopIter && err != nil {
-		yield(zeroDomain, err)
+		if optModel.IsNone() {
+			// was deleted in the meantime
+			continue
+		}
+
+		if !yield(optModel.Unwrap(), nil) {
+			return
+		}
+
 	}
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Count() (int, error) {
-	var count int
-	var firstErr error
-	err := r.store.View(func(tx blob.Tx) error {
-		tx.Each(func(entry blob.Entry, err error) bool {
-			if err != nil && firstErr == nil {
-				firstErr = err
-			} else if err == nil {
-				count++
-			}
-
-			return true
-		})
-
-		return nil
-	})
-
-	if firstErr == nil && err != nil {
-		firstErr = err
+	count := 0
+	for _, err := range r.store.List(context.Background(), blob.ListOptions{}) {
+		if err != nil {
+			return count, err
+		}
+		count++
 	}
 
-	return count, firstErr
+	return count, nil
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteByID(id DomainID) error {
-	return r.store.Update(func(tx blob.Tx) error {
-		return tx.Delete(data.Idtos(id))
-	})
+	return r.store.Delete(context.Background(), data.Idtos(id))
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteByEntity(e DomainModel) error {
@@ -218,51 +173,21 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteAll() error {
-	return r.store.Update(func(tx blob.Tx) error {
-		var ids []string
-		var firstErr error
-		tx.Each(func(entry blob.Entry, err error) bool {
-			if err != nil {
-				firstErr = err
-				return false
-			}
-
-			ids = append(ids, entry.Key)
-			return true
-		})
-
-		if firstErr == nil {
-			for _, id := range ids {
-				if err := tx.Delete(id); err != nil {
-					return err
-				}
-			}
-		}
-
-		return firstErr
-	})
+	return blob.DeleteAll(r.store)
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteAllByID(ids iter.Seq[DomainID]) error {
-	return r.store.Update(func(tx blob.Tx) error {
-		var err error
-		ids(func(id DomainID) bool {
-			err = tx.Delete(data.Idtos(id))
-			if err != nil {
-				return false
-			}
+	for id := range ids {
+		if err := r.store.Delete(context.Background(), data.Idtos(id)); err != nil {
+			return err
+		}
+	}
 
-			return true
-		})
-		return err
-	})
-
+	return nil
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Delete(predicate func(DomainModel) (bool, error)) error {
 	var firstErr error
-	var deleteList []DomainID
-	// we avoid intentionally the nesting of transactions
 	r.Each(func(d DomainModel, err error) bool {
 		doDelete, err := predicate(d)
 		if err != nil {
@@ -275,7 +200,10 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 		}
 
 		if doDelete {
-			deleteList = append(deleteList, d.Identity())
+			if err := r.DeleteByID(d.Identity()); err != nil {
+				firstErr = err
+				return false
+			}
 		}
 
 		return true
@@ -285,38 +213,24 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 		return firstErr
 	}
 
-	return r.DeleteAllByID(slices.Values(deleteList))
+	return nil
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Save(e DomainModel) error {
-	return r.store.Update(func(tx blob.Tx) error {
-		entry, err := r.encode(e)
-		if err != nil {
-			return err
-		}
+	key, buf, err := r.encode(e)
+	if err != nil {
+		return err
+	}
 
-		return tx.Put(entry)
-	})
+	return blob.Put(r.store, key, buf)
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) SaveAll(it iter.Seq[DomainModel]) error {
-	return r.store.Update(func(tx blob.Tx) error {
-		var firstError error
-		it(func(model DomainModel) bool {
-			entry, err := r.encode(model)
-			if err != nil {
-				firstError = err
-				return false
-			}
+	for model := range it {
+		if err := r.Save(model); err != nil {
+			return fmt.Errorf("cannot save %v: %w", model.Identity(), err)
+		}
+	}
 
-			if err := tx.Put(entry); err != nil {
-				firstError = err
-				return false
-			}
-
-			return true
-		})
-
-		return firstError
-	})
+	return nil
 }

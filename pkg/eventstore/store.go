@@ -103,7 +103,7 @@ type jsonMessage struct {
 }
 
 type Store struct {
-	store blob.Store2
+	store blob.Store
 	ctx   context.Context
 }
 

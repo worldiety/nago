@@ -16,7 +16,7 @@ func GetOrZero[T any](store blob.Store, key string) T {
 		return zero
 	}
 
-	return optT.V
+	return optT.Unwrap()
 }
 
 // Get reads the value identified by key using the same unmarshalling as JSON [Repository].
@@ -27,7 +27,7 @@ func Get[T any](store blob.Store, key string) (std.Option[T], error) {
 		return std.None[T](), err
 	}
 
-	if !optBuf.Valid {
+	if optBuf.IsNone() {
 		return std.None[T](), nil
 	}
 
