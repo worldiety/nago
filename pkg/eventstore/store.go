@@ -90,11 +90,14 @@ func timeIntoID(now time.Time) ID {
 	return ID(fmt.Sprintf("%d/%02d/%02d/%02d/%02d/%02d/%04d/%s/%d", year, month, day, hour, minute, sec, ms, instanceName, seqNo))
 }
 
-type ConsumerID [32]byte
-
 type Message struct {
-	ID   ID
-	Data []byte
+	ID          ID
+	ContentType string
+	Data        []byte
+}
+
+type jsonConsumerInfo struct {
+	Accepted ID `json:"i"` // the offset which has been committed
 }
 
 type jsonMessage struct {
@@ -105,6 +108,13 @@ type jsonMessage struct {
 type Store struct {
 	store blob.Store
 	ctx   context.Context
+}
+
+func NewStore(store blob.Store) *Store {
+	return &Store{
+		store: store,
+		ctx:   context.Background(),
+	}
 }
 
 // Replay returns a sequence which iterates over all messages which occurred after the given offset ID. Thus,
@@ -124,25 +134,56 @@ func (s *Store) Replay(offsetExcl ID) iter.Seq2[Message, error] {
 			return Message{}, fs.ErrNotExist // TODO better omit the entire entry, but we delay closing when used with filter?
 		}
 
-		return fromEntry(key, optReader.Unwrap())
+		reader := optReader.Unwrap()
+		defer reader.Close()
+
+		return fromEntry(key, reader)
 	}, s.store.List(s.ctx, blob.ListOptions{
 		MinInc: string(offsetExcl),
 		MaxInc: string(Max),
 	}))
 }
 
+func (s *Store) Load(id ID) (std.Option[Message], error) {
+	optReader, err := s.store.NewReader(s.ctx, string(id))
+	if err != nil {
+		return std.None[Message](), err
+	}
+
+	if !optReader.IsNone() {
+		return std.None[Message](), fs.ErrNotExist
+	}
+
+	reader := optReader.Unwrap()
+	defer reader.Close()
+
+	msg, err := fromEntry(string(id), reader)
+	if err != nil {
+		return std.None[Message](), err
+	}
+
+	return std.Some(msg), nil
+}
+
 // Save persists the given data to the underlying store and returns the generated unique ID to identify it.
 // Without considering edge cases like manipulating the unix time clock, the returned ID is strictly monotonic and
 // will never cause any collision. If used in a cluster context, you must ensure that the EVENTSTORE_INSTANCE_NAME
 // environment variable is unique for each node, to guarantee that no collisions arise.
-func (s *Store) Save(data []byte) (ID, error) {
+func (s *Store) Save(contentType string, data []byte) (ID, error) {
 	id := NewID()
 	w, err := s.store.NewWriter(s.ctx, string(id))
 	if err != nil {
 		return "", fmt.Errorf("cannot open writer %w", err)
 	}
 
-	if _, err := w.Write(data); err != nil {
+	jsnMsg := jsonMessage{
+		ContentType: contentType,
+		Data:        data,
+	}
+
+	encoder := json.NewEncoder(w)
+
+	if err := encoder.Encode(jsnMsg); err != nil {
 		_ = w.Close() // suppressing any followup failures
 		return "", fmt.Errorf("cannot write message %w", err)
 	}
@@ -158,19 +199,70 @@ func consumerNameToStoreKey(consumer string) string {
 	return fmt.Sprintf("$%s", consumer)
 }
 
-func (s *Store) Offset(consumer string, accepted ID) (msg Message, err error) {
+// Commit saves the given ID for the given consumer as accepted which semantically includes all messages including
+// the given ID>
+func (s *Store) Commit(consumer string, accepted ID) (err error) {
 	w, err := s.store.NewWriter(s.ctx, consumerNameToStoreKey(consumer))
 	if err != nil {
-		return Message{}, fmt.Errorf("cannot open writer %w", err)
+		return fmt.Errorf("cannot open writer %w", err)
 	}
 
 	defer std.Try(w.Close, &err)
-	return Message{}, nil
+
+	consumerInfo := jsonConsumerInfo{
+		Accepted: accepted,
+	}
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(consumerInfo); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteConsumer removes all associated consumer information, especially the committed offset.
+func (s *Store) DeleteConsumer(consumer string) error {
+	return s.store.Delete(s.ctx, consumerNameToStoreKey(consumer))
+}
+
+// Offset reads the current offset for the given consumer. See also [Store.Commit].
+func (s *Store) Offset(consumer string) (std.Option[ID], error) {
+	optR, err := s.store.NewReader(s.ctx, consumerNameToStoreKey(consumer))
+	if err != nil {
+		return std.None[ID](), err
+	}
+
+	if !optR.IsNone() {
+		return s.First()
+	}
+
+	reader := optR.Unwrap()
+	defer reader.Close()
+
+	var consumerInfo jsonConsumerInfo
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&consumerInfo); err != nil {
+		return std.None[ID](), err
+	}
+
+	return std.Some(consumerInfo.Accepted), nil
+}
+
+// First returns the very first stored message.
+func (s *Store) First() (std.Option[ID], error) {
+	for key, err := range s.store.List(s.ctx, blob.ListOptions{Limit: 1}) {
+		if err != nil {
+			return std.None[ID](), err
+		}
+
+		return std.Some[ID](ID(key)), nil
+	}
+
+	return std.None[ID](), nil
 }
 
 func fromEntry(key string, r io.ReadCloser) (Message, error) {
-	defer r.Close()
-
 	var msg jsonMessage
 	dec := json.NewDecoder(r)
 	if err := dec.Decode(&msg); err != nil {
@@ -178,13 +270,8 @@ func fromEntry(key string, r io.ReadCloser) (Message, error) {
 	}
 
 	return Message{
-		ID:   ID(key),
-		Data: msg.Data,
+		ID:          ID(key),
+		ContentType: msg.ContentType,
+		Data:        msg.Data,
 	}, nil
-}
-
-// Unmarshal loads a distinct message by id and calls the given callback for decoding. The message is owned by
-// the store and must not escape.
-func Unmarshal[T any](store Store, seq int64, fn func(Message) (T, error)) (std.Option[Message], error) {
-	panic("@")
 }

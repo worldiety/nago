@@ -3,9 +3,11 @@ package bolt
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
@@ -31,12 +33,12 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 			}
 
 			if opts.Prefix != "" {
-				res = prefix(tx, b.bucketName, opts.Prefix)
+				res = prefix(tx, b.bucketName, opts.Prefix, opts.Limit)
 				return nil
 			}
 
 			if opts.MinInc != "" {
-				res = ranger(tx, b.bucketName, opts.MinInc, opts.MaxInc)
+				res = ranger(tx, b.bucketName, opts.MinInc, opts.MaxInc, opts.Limit)
 				return nil
 			}
 
@@ -48,8 +50,16 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 
 			err := bucket.ForEach(func(k, v []byte) error {
 				res = append(res, string(k))
+				if opts.Limit > 0 && len(res) >= opts.Limit {
+					return data.SkipAll
+				}
+
 				return nil
 			})
+
+			if errors.Is(err, data.SkipAll) {
+				return nil
+			}
 
 			return err
 		})
@@ -153,7 +163,7 @@ func (b *BlobStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, 
 	}, nil
 }
 
-func ranger(tx *bbolt.Tx, bucketName []byte, lowInc, highInc string) []string {
+func ranger(tx *bbolt.Tx, bucketName []byte, lowInc, highInc string, limit int) []string {
 	bucket := tx.Bucket(bucketName)
 	if bucket == nil {
 		return nil
@@ -165,13 +175,15 @@ func ranger(tx *bbolt.Tx, bucketName []byte, lowInc, highInc string) []string {
 	var res []string
 	for k, _ := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, _ = c.Next() {
 		res = append(res, string(k))
-
+		if limit > 0 && len(res) >= limit {
+			break
+		}
 	}
 
 	return res
 }
 
-func prefix(tx *bbolt.Tx, bucketName []byte, prefix string) []string {
+func prefix(tx *bbolt.Tx, bucketName []byte, prefix string, limit int) []string {
 	bucket := tx.Bucket(bucketName)
 	if bucket == nil {
 		return nil
@@ -183,6 +195,9 @@ func prefix(tx *bbolt.Tx, bucketName []byte, prefix string) []string {
 	var res []string
 	for k, _ := c.Seek(pfix); k != nil && bytes.HasPrefix(k, pfix); k, _ = c.Next() {
 		res = append(res, string(k))
+		if limit > 0 && len(res) >= limit {
+			break
+		}
 	}
 
 	return res

@@ -48,6 +48,10 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 				}
 			}
 
+			if opts.Limit > 0 && len(keys) == opts.Limit {
+				break
+			}
+
 			keys = append(keys, k)
 		}
 

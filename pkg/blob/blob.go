@@ -15,6 +15,9 @@ type ListOptions struct {
 	MinInc string
 	// If non-zero, MaxInc marks the inclusive minimal ending key in the result set.
 	MaxInc string
+
+	// If not zero, returns at most the amount of given entries.
+	Limit int
 }
 
 // Store represents a single bucket store for blobs. Note, that individual methods are thread safe, however
@@ -29,7 +32,8 @@ type Store interface {
 	// While iterating, any operation on the dataset can be performed without blocking, however
 	// these changes must not cause the iterator to return garbage (like missed or doubled entries).
 	// Note that this may become very inefficient, when used on very large datasets containing
-	// millions or even billions of entries. The order of the returned keys is implementation dependent.
+	// millions or even billions of entries. The order of the returned keys is sorted lexicographically from
+	// smallest to largest. Thus, the smallest key in a Store can be efficiently queries, using just a Limit of 1.
 	// Implementations must support Prefix and Range filters.
 	List(ctx context.Context, opts ListOptions) iter.Seq2[string, error]
 

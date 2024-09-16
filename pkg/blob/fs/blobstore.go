@@ -81,6 +81,10 @@ func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
 	return b.storePathIndex.Exists(ctx, key)
 }
 
+func (b *BlobStore) Close() error {
+	return b.db.Close()
+}
+
 func (b *BlobStore) Delete(ctx context.Context, key string) error {
 	// this is more complicated, because we can actually only delete the file, if our rc drops to zero
 	return b.db.Update(func(tx *bbolt.Tx) error {

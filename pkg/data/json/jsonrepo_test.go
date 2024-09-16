@@ -43,7 +43,39 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 
 }
 
-func testSuite(t *testing.T, repo data.Repository[Person, string]) {
+func BenchmarkNewSloppyJSONRepository(b *testing.B) {
+
+	b.Run("bbolt", func(t *testing.B) {
+		for n := 0; n < b.N; n++ {
+			db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			testSuite(t, NewSloppyJSONRepository[Person, string](bolt.NewBlobStore(db, "test")))
+			db.Close()
+		}
+
+	})
+
+	b.Run("mem", func(t *testing.B) {
+		for n := 0; n < b.N; n++ {
+			testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
+		}
+	})
+
+	b.Run("fs", func(t *testing.B) {
+		for n := 0; n < b.N; n++ {
+			store := unwrap(fs.NewBlobStore(t.TempDir()))
+			testSuite(t, NewSloppyJSONRepository[Person, string](store))
+			store.Close()
+		}
+	})
+}
+
+func testSuite(t interface {
+	Fatalf(format string, args ...any)
+	Fatal(...any)
+}, repo data.Repository[Person, string]) {
 	if v := unwrap(repo.Count()); v != 0 {
 		t.Fatalf("expected 0 but got %v", v)
 	}
