@@ -2,6 +2,7 @@ package json
 
 import (
 	"go.etcd.io/bbolt"
+	"go.wdy.de/nago/pkg/blob/badger"
 	"go.wdy.de/nago/pkg/blob/bolt"
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
@@ -25,6 +26,14 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
+	t.Run("badger", func(t *testing.T) {
+		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+	})
+
 	t.Run("bbolt", func(t *testing.T) {
 		db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
 		if err != nil {

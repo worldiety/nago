@@ -1,10 +1,8 @@
 package eventstore
 
 import (
-	"go.etcd.io/bbolt"
-	"go.wdy.de/nago/pkg/blob/bolt"
+	"go.wdy.de/nago/pkg/blob/badger"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -27,14 +25,12 @@ func TestNewID(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	db, err := bbolt.Open(filepath.Join(t.TempDir(), "blub.db"), os.ModePerm, &bbolt.Options{
-		NoSync: true, // this is ridiculous slow, even on a Mac with broken fsync we get at best 100 tps, with sync we are at 10.000
-	})
+	store, err := badger.Open(filepath.Join(t.TempDir(), "badger-test"))
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	store := bolt.NewBlobStore(db, "events")
+	defer store.Close()
 
 	testSet := makeTestSet()
 	events := NewStore(store)
@@ -75,8 +71,8 @@ func TestStore(t *testing.T) {
 func makeTestSet() [][]byte {
 	var res [][]byte
 	rnd := rand.New(rand.NewSource(1234))
-	for range 1000 {
-		length := rnd.Intn(16 * 1024)
+	for range 10_000 {
+		length := rnd.Intn(8 * 1024)
 		buf := make([]byte, length)
 		rnd.Read(buf)
 		res = append(res, buf)
