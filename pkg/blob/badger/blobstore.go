@@ -20,6 +20,7 @@ type BlobStore struct {
 	ticker *time.Ticker
 	done   chan bool
 	closed bool
+	prefix []byte
 }
 
 // Open opens a directory with a badger database using a kind of eventual consistency.
@@ -33,7 +34,7 @@ type BlobStore struct {
 // only looses latest data and not everything.
 func Open(dir string) (*BlobStore, error) {
 	opts := badger.DefaultOptions(dir)
-	opts.SyncWrites = false // most important tradeoff, difference between 100 tps and ???
+	opts.SyncWrites = false // most important tradeoff, difference between 100 tps in bbolt and 100.000 in badgerdb
 	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, err
@@ -61,6 +62,12 @@ func NewBlobStore(db *badger.DB) *BlobStore {
 	return &BlobStore{db: db}
 }
 
+// SetPrefix sets a store global prefix, e.g. if you want to partition the store in a transparent way, the given
+// prefix is added and removed automatically.
+func (b *BlobStore) SetPrefix(prefix string) {
+	b.prefix = []byte(prefix)
+}
+
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
 	var res []string
 	err := b.db.View(func(txn *badger.Txn) error {
@@ -69,11 +76,15 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		it := txn.NewIterator(bopts)
 		defer it.Close()
 
+		if len(b.prefix) > 0 {
+			opts.Prefix = string(b.prefix) + opts.Prefix
+		}
+
 		var zero blob.ListOptions
 		if opts == zero {
 			res = allKeys(it)
 		} else {
-			res = prefixAndRange(it, opts)
+			res = b.prefixAndRange(it, opts)
 		}
 
 		return nil
@@ -94,7 +105,7 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 	}
 }
 
-func prefixAndRange(it *badger.Iterator, opts blob.ListOptions) []string {
+func (b *BlobStore) prefixAndRange(it *badger.Iterator, opts blob.ListOptions) []string {
 	var res []string
 
 	var prefix []byte
@@ -124,7 +135,11 @@ func prefixAndRange(it *badger.Iterator, opts blob.ListOptions) []string {
 			break
 		}
 
-		res = append(res, string(k))
+		if b.prefix != nil {
+			res = append(res, string(k[len(b.prefix):]))
+		} else {
+			res = append(res, string(k))
+		}
 	}
 
 	return res
@@ -142,10 +157,18 @@ func allKeys(it *badger.Iterator) []string {
 	return res
 }
 
+func (b *BlobStore) keyWithPrefix(key string) []byte {
+	if len(b.prefix) == 0 {
+		return []byte(key)
+	}
+
+	return append(b.prefix, []byte(key)...)
+}
+
 func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
 	var found bool
 	err := b.db.View(func(txn *badger.Txn) error {
-		_, err := txn.Get([]byte(key))
+		_, err := txn.Get(b.keyWithPrefix(key))
 		if err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
 				return nil
@@ -167,7 +190,7 @@ func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
 
 func (b *BlobStore) Delete(ctx context.Context, key string) error {
 	return b.db.Update(func(txn *badger.Txn) error {
-		return txn.Delete([]byte(key))
+		return txn.Delete(b.keyWithPrefix(key))
 	})
 }
 
@@ -178,7 +201,7 @@ func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.Re
 	// this will avoid another full allocation of a byte slice which is mostly very short-lived just
 	// for unmarshalling json data.
 	tx := b.db.NewTransaction(false)
-	item, err := tx.Get([]byte(key))
+	item, err := tx.Get(b.keyWithPrefix(key))
 	if err != nil {
 		tx.Discard()
 
@@ -205,7 +228,7 @@ func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.Re
 
 func (b *BlobStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, error) {
 	return &writeCloser{
-		db:     b.db,
+		parent: b,
 		Buffer: &bytes.Buffer{},
 		key:    key,
 		ctx:    ctx,
@@ -232,4 +255,8 @@ func (b *BlobStore) Close() error {
 	b.closed = true
 
 	return nil
+}
+
+func (b *BlobStore) Backup() {
+	b.db.Backup()
 }

@@ -26,6 +26,18 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
+	t.Run("badger-prefix", func(t *testing.T) {
+		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test-prefix"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		db.SetPrefix("blub")
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+		db.SetPrefix("blub2")
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+	})
+
 	t.Run("badger", func(t *testing.T) {
 		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test"))
 		if err != nil {
@@ -147,7 +159,7 @@ func testSuite(t interface {
 	})
 
 	if !reflect.DeepEqual(testSet, tmp) {
-		t.Fatalf("unexpected %+v", tmp)
+		t.Fatalf("unexpected %+v %+v", tmp, testSet)
 	}
 
 	// again but different

@@ -7,7 +7,7 @@ import (
 )
 
 type writeCloser struct {
-	db *badger.DB
+	parent *BlobStore
 	*bytes.Buffer
 	closed bool
 	key    string // conversion inline below is probably GC free, inlined and optimized away
@@ -26,8 +26,8 @@ func (w *writeCloser) Close() error {
 
 	// using this approach, we can guarantee deadlock-free behavior, because a write transaction does never need
 	// to await for something external.
-	err := w.db.Update(func(txn *badger.Txn) error {
-		return txn.Set([]byte(w.key), w.Buffer.Bytes())
+	err := w.parent.db.Update(func(txn *badger.Txn) error {
+		return txn.Set(w.parent.keyWithPrefix(w.key), w.Buffer.Bytes())
 	})
 
 	if err != nil {
