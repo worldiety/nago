@@ -3,10 +3,12 @@ package application
 import (
 	"context"
 	"fmt"
-	"go.etcd.io/bbolt"
+	"github.com/dgraph-io/badger/v4"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	ui "go.wdy.de/nago/presentation/ui"
+	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -19,8 +21,15 @@ import (
 	"syscall"
 )
 
+type backupService interface {
+	Backup(dst io.Writer) error
+	Restore(r io.Reader) error
+}
+
 type Configurator struct {
-	boltStore                *bbolt.DB
+	stores                   map[string]blob.Store
+	backupServices           map[string]backupService
+	globalBadger             *badger.DB
 	ctx                      context.Context
 	done                     context.CancelFunc
 	logger                   *slog.Logger
@@ -66,6 +75,7 @@ func NewConfigurator() *Configurator {
 			core.Dark:  {},
 			core.Light: {},
 		},
+		stores:             map[string]blob.Store{},
 		fps:                10,
 		ctx:                ctx,
 		done:               done,
@@ -156,7 +166,15 @@ func (c *Configurator) DataDir() string {
 			dataDir = cwd
 		}
 
-		dataDir = filepath.Join(dataDir, fmt.Sprintf(".%s", c.ApplicationID()))
+		// do not escalate home-dir pollution on dev-machines
+		legacyDataDir := filepath.Join(dataDir, fmt.Sprintf(".%s", c.ApplicationID()))
+		if _, err := os.Stat(legacyDataDir); os.IsNotExist(err) {
+			dataDir = filepath.Join(dataDir, ".nago", string(c.ApplicationID()))
+		} else {
+			dataDir = legacyDataDir
+			slog.Warn("using legacy data directory")
+		}
+
 		_ = os.MkdirAll(dataDir, 0700) // security: only owner can read,write,exec
 		c.SetDataDir(dataDir)
 	}
@@ -179,10 +197,16 @@ func (c *Configurator) SetFPS(fps int) {
 	c.fps = fps
 }
 
-// Directory returns an allocated local directory underneath the data dir
-func (c *Configurator) Directory(name string) string {
+func (c *Configurator) directory(name string) string {
 	name = filepath.Clean(name) // security: avoid path traversal attacks here
 	path := filepath.Join(c.DataDir(), name)
+
+	return path
+}
+
+// Directory returns an allocated local directory underneath the data dir
+func (c *Configurator) Directory(name string) string {
+	path := c.directory(name)
 	// security: only owner can read,write,exec
 	if err := os.MkdirAll(path, 0700); err != nil {
 		panic(fmt.Errorf("irrecoverable denied directory access: %w", err))

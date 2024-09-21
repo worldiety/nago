@@ -2,13 +2,15 @@ package application
 
 import (
 	"fmt"
+	badger2 "github.com/dgraph-io/badger/v4"
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/pkg/blob"
-	bolt2 "go.wdy.de/nago/pkg/blob/bolt"
+	"go.wdy.de/nago/pkg/blob/badger"
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"reflect"
 )
@@ -20,20 +22,74 @@ import (
 //
 // Use [Configurator.FileStore] for large blobs.
 func (c *Configurator) EntityStore(bucketName string) blob.Store {
-	if c.boltStore == nil {
-		fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
-		db, err := bbolt.Open(fname, 0700, nil) // security: only owner can read,write,exec
-		if err != nil {
-			panic(fmt.Errorf("cannot open bbolt database '%s': %w", fname, err))
-		}
-
-		c.boltStore = db
-		slog.Info("bbolt store opened", slog.String("file", fname))
+	store, ok := c.stores[bucketName]
+	if ok {
+		return store
 	}
 
-	slog.Info("BlobStore bucket opened", slog.String("bucket", bucketName), slog.String("file", c.boltStore.Path()))
+	if c.globalBadger == nil {
+		requiresBolt2BadgerMigration := !c.hasBadger() && c.hasBolt()
 
-	return bolt2.NewBlobStore(c.boltStore, bucketName)
+		db, err := badger.Open(c.Directory("badgerdb"))
+		if err != nil {
+			panic(fmt.Errorf("could not open badger store: %v", err))
+		}
+
+		c.globalBadger = db.Unwrap()
+
+		if requiresBolt2BadgerMigration {
+			if err := c.migrateBBolt2Badger(); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	db := badger.NewBlobStore(c.globalBadger)
+	db.SetPrefix(bucketName)
+	c.stores[bucketName] = db
+
+	return db
+}
+
+func (c *Configurator) hasBadger() bool {
+	dir := c.directory("badgerdb")
+	files, _ := os.ReadDir(dir)
+	return len(files) > 0
+}
+
+func (c *Configurator) hasBolt() bool {
+	fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
+	_, err := os.Stat(fname)
+	return !os.IsNotExist(err)
+}
+
+func (c *Configurator) migrateBBolt2Badger() error {
+	slog.Warn("detected bolt store, migrating to badgerdb")
+	fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
+	db, err := bbolt.Open(fname, 0700, nil) // security: only owner can read,write,exec
+	if err != nil {
+		return fmt.Errorf("cannot open bbolt database '%s': %w", fname, err)
+	}
+
+	err = db.View(func(tx *bbolt.Tx) error {
+		return c.globalBadger.Update(func(txn *badger2.Txn) error {
+			return tx.ForEach(func(bucketName []byte, b *bbolt.Bucket) error {
+				return b.ForEach(func(k, v []byte) error {
+					slog.Info("migrating", "bucket", string(bucketName), "key", string(k))
+					prefixedKey := append(bucketName, k...)
+					return txn.Set(prefixedKey, v)
+				})
+			})
+
+		})
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return db.Sync()
+
 }
 
 // FileStore returns a blob store which directly saves into the filesystem and is recommended for handling large

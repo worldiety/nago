@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	badger "github.com/dgraph-io/badger/v4"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/std"
@@ -257,6 +258,19 @@ func (b *BlobStore) Close() error {
 	return nil
 }
 
-func (b *BlobStore) Backup() {
-	b.db.Backup()
+func (b *BlobStore) Unwrap() *badger.DB {
+	return b.db
+}
+
+func (b *BlobStore) Backup(dst io.Writer) error {
+	_, err := b.db.Backup(dst, 0)
+	return err
+}
+
+func (b *BlobStore) Restore(r io.Reader) error {
+	if err := b.db.DropAll(); err != nil {
+		return fmt.Errorf("cannot clear db: %w", err)
+	}
+
+	return b.db.Load(r, 1)
 }
