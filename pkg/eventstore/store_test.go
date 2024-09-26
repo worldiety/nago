@@ -1,7 +1,7 @@
 package eventstore
 
 import (
-	"go.wdy.de/nago/pkg/blob/badger"
+	"go.wdy.de/nago/pkg/blob/pebble"
 	"math/rand"
 	"path/filepath"
 	"reflect"
@@ -25,7 +25,7 @@ func TestNewID(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	store, err := badger.Open(filepath.Join(t.TempDir(), "badger-test"))
+	store, err := pebble.Open(filepath.Join(t.TempDir(), "badger-test"))
 
 	if err != nil {
 		t.Fatal(err)

@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/bolt"
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
+	"go.wdy.de/nago/pkg/blob/pebble"
 	"go.wdy.de/nago/pkg/data"
 	"os"
 	"path/filepath"
@@ -26,6 +27,26 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
+	t.Run("pebble-prefix", func(t *testing.T) {
+		db, err := pebble.Open(filepath.Join(t.TempDir(), "pebble-test-prefix"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		db.SetPrefix("blub")
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+		db.SetPrefix("blub2")
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+	})
+
+	t.Run("pebble", func(t *testing.T) {
+		db, err := pebble.Open(filepath.Join(t.TempDir(), "pebble-test"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		testSuite(t, NewSloppyJSONRepository[Person, string](db))
+	})
+
 	t.Run("badger-prefix", func(t *testing.T) {
 		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test-prefix"))
 		if err != nil {
