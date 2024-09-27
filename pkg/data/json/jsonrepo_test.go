@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/blob/pebble"
+	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/data"
 	"os"
 	"path/filepath"
@@ -27,6 +28,14 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
+	t.Run("tdb", func(t *testing.T) {
+		db, err := tdb.Open(filepath.Join(t.TempDir()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		testSuite(t, NewSloppyJSONRepository[Person, string](tdb.NewBlobStore(db, "test")))
+	})
+
 	t.Run("pebble-prefix", func(t *testing.T) {
 		db, err := pebble.Open(filepath.Join(t.TempDir(), "pebble-test-prefix"))
 		if err != nil {

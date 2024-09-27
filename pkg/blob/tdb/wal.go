@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 func OpenFile(path string) (*os.File, error) {
@@ -65,6 +66,7 @@ func NewWAL(f *os.File, replay func(entry *Node)) (*WAL, error) {
 	maxSize := 0
 	totalSize := int64(0)
 	var lastTx uint64
+	start := time.Now()
 	for node, err := range w.All() {
 		if err != nil {
 			return nil, err
@@ -89,7 +91,7 @@ func NewWAL(f *os.File, replay func(entry *Node)) (*WAL, error) {
 
 	w.tx.Store(lastTx)
 
-	slog.Info("tdb WAL replay complete", "entries", count, "max-value-size", maxSize, "total-value-size", totalSize, "avg-value-size", float64(totalSize)/float64(count))
+	slog.Info("tdb WAL replay complete", "entries", count, "max-value-size", maxSize, "total-value-size", totalSize, "avg-value-size", float64(totalSize)/float64(count), "duration", time.Since(start))
 
 	return w, nil
 }

@@ -29,7 +29,7 @@ func NewBlobStore() *BlobStore {
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		var keys []string
-		for k, _ := range b.values.All {
+		for k, _ := range b.values.All() {
 			if opts.Prefix != "" {
 				if !strings.HasPrefix(k, opts.Prefix) {
 					continue

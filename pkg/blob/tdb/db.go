@@ -39,6 +39,10 @@ type DB struct {
 }
 
 func Open(dir string) (*DB, error) {
+	if err := os.MkdirAll(dir, 0777); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
 	db := &DB{
 		buckets:       xmaps.NewConcurrentMap[string, *btree.BTreeG[IndexEntry]](),
 		strDedupTable: xmaps.NewConcurrentMap[string, string](),
@@ -184,6 +188,23 @@ func (db *DB) Set(bucket, key string, value []byte) error {
 	return nil
 }
 
+func (db *DB) Exists(bucket, key string) bool {
+	// lock on our trees, but read-only.
+	db.btreeSnapshotLock.RLock()
+	defer db.btreeSnapshotLock.RUnlock()
+
+	tree, ok := db.buckets.Load(bucket)
+	if !ok {
+		return false
+	}
+
+	_, ok = tree.Get(IndexEntry{
+		key: key,
+	})
+
+	return ok
+}
+
 func (db *DB) Get(bucket, key string) std.Option[io.ReadCloser] {
 	// lock on our trees, but read-only.
 	db.btreeSnapshotLock.RLock()
@@ -228,6 +249,26 @@ func (db *DB) All(bucket string) iter.Seq[IndexEntry] {
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.Ascend(yield)
+	}
+}
+
+func (db *DB) Range(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
+	if minKey == "" && maxKey == "" {
+		return db.All(bucket)
+	}
+
+	db.btreeSnapshotLock.RLock()
+	tree, ok := db.buckets.Load(bucket)
+	db.btreeSnapshotLock.RUnlock()
+
+	if !ok {
+		return func(yield func(IndexEntry) bool) {}
+	}
+
+	snapshot := tree.Clone()
+
+	return func(yield func(IndexEntry) bool) {
+		snapshot.AscendRange(IndexEntry{key: minKey}, IndexEntry{key: maxKey}, yield)
 	}
 }
 

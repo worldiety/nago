@@ -135,6 +135,36 @@ func TestDB_Set(t *testing.T) {
 	if !reflect.DeepEqual(entries, expectedSet) {
 		t.Fatalf("mismatched entries")
 	}
+
+	// close and re-read
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err = Open(dbdir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entries = nil
+	for bucket := range db.Buckets() {
+		for entry := range db.All(bucket) {
+			buf, err := io.ReadAll(entry.val.NewReader())
+			if err != nil {
+				t.Fatal(err)
+			}
+			entries = append(entries, TestEntry{
+				Bucket: bucket,
+				Key:    entry.key,
+				Value:  buf,
+			})
+		}
+	}
+
+	sort(entries)
+
+	if !reflect.DeepEqual(entries, expectedSet) {
+		t.Fatalf("mismatched entries")
+	}
 }
 
 func sort(entries []TestEntry) {

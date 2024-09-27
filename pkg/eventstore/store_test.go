@@ -1,7 +1,9 @@
 package eventstore
 
 import (
-	"go.wdy.de/nago/pkg/blob/pebble"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/blob/tdb"
+	"io"
 	"math/rand"
 	"path/filepath"
 	"reflect"
@@ -25,12 +27,30 @@ func TestNewID(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	store, err := pebble.Open(filepath.Join(t.TempDir(), "badger-test"))
+	db, err := tdb.Open(filepath.Join(t.TempDir(), "tdb-test"))
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.Close()
+
+	// required 106.519584ms to insert 10000 entries, 93879.45tps
+	store := blob.Store(tdb.NewBlobStore(db, "test")) // this requires 53MiB after write
+
+	// required 848.175917ms to insert 10000 entries, 11790.01tps
+	// store, _ = pebble.Open(filepath.Join(t.TempDir(), "pebble")) // this requires 69MiB after write
+
+	// required 1m54.263868875s to insert 10000 entries, 87.52tps
+	//boltdb, _ := bbolt.Open(filepath.Join(t.TempDir(), "bbolt-test"), os.ModePerm, nil)
+	//store = bolt.NewBlobStore(boltdb, "test") // this requires 96MiB after write
+
+	//required 119.342917ms to insert 10000 entries, 83792.15tps
+	//store, _ = badger.Open(filepath.Join(t.TempDir(), "badger")) // this requires 2GiB BEFORE !!! any write
+
+	defer func() {
+		if c, ok := store.(io.Closer); ok {
+			c.Close()
+		}
+	}()
 
 	testSet := makeTestSet()
 	events := NewStore(store)
