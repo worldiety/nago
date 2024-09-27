@@ -1,6 +1,7 @@
 package tdb
 
 import (
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -10,7 +11,8 @@ import (
 )
 
 func Test_wal_set(t *testing.T) {
-	f, err := os.OpenFile(filepath.Join(t.TempDir(), "test.WAL"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
+	testfname := filepath.Join(t.TempDir(), "test.WAL")
+	f, err := OpenFile(testfname)
 	if err != nil {
 		t.Error(err)
 	}
@@ -41,6 +43,15 @@ func Test_wal_set(t *testing.T) {
 		}
 	}
 
+	const reOpenTest = true
+
+	if reOpenTest {
+		wal, err = OpenWAL(testfname, nil)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
 	idx := 0
 
 	for entry, err := range wal.All() {
@@ -62,9 +73,10 @@ func Test_wal_set(t *testing.T) {
 		}
 
 		valPtr := entry.Value()
-		tmp := make([]byte, valPtr.Len())
-		if err := wal.Copy(tmp, valPtr); err != nil {
-			t.Fatal(err)
+		r := valPtr.NewReader()
+		tmp, err := io.ReadAll(r)
+		if err != nil {
+			t.Error(err)
 		}
 
 		if !reflect.DeepEqual(expected.v, tmp) {

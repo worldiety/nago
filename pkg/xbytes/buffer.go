@@ -215,7 +215,7 @@ func (b *Buffer) Read(p []byte) (n int, err error) {
 		return 0, b.Err
 	}
 
-	copy(p, b.Buf[b.Pos:b.Pos+len(b.Buf)])
+	copy(p, b.Buf[b.Pos:b.Pos+len(p)])
 	b.Pos += len(p)
 	return len(p), nil
 }

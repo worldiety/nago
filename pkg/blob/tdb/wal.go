@@ -12,14 +12,8 @@ import (
 	"sync/atomic"
 )
 
-type ValPtr struct {
-	f      *os.File
-	offset int64
-	len    uint32
-}
-
-func (v *ValPtr) Len() int {
-	return int(v.len)
+func OpenFile(path string) (*os.File, error) {
+	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm)
 }
 
 // WAL is our write ahead log. it is synchronized (resp. single thread),
@@ -36,6 +30,17 @@ type WAL struct {
 	maxPayloadSize int
 }
 
+func OpenWAL(path string, replay func(entry *Node)) (*WAL, error) {
+	f, err := OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWAL(f, replay)
+}
+
+// NewWAL creates a new WAL instance based on the given file. Note, that you must not issue any read/write calls from
+// the replay func.
 func NewWAL(f *os.File, replay func(entry *Node)) (*WAL, error) {
 	w := &WAL{
 		f:              f,
@@ -48,21 +53,43 @@ func NewWAL(f *os.File, replay func(entry *Node)) (*WAL, error) {
 		return nil, err
 	}
 
+	slog.Info("tdb WAL file opened", "size", info.Size(), "file", f.Name())
+
 	w.size.Store(info.Size())
 
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
+	count := 0
+	maxSize := 0
+	totalSize := int64(0)
+	var lastTx uint64
 	for node, err := range w.All() {
 		if err != nil {
 			return nil, err
 		}
 
+		if lastTx > node.tx {
+			return nil, fmt.Errorf("tx must be monotonic")
+		}
+
+		lastTx = node.tx
+		count++
+		if int(node.valLength) > maxSize {
+			maxSize = int(node.valLength)
+		}
+
+		totalSize += int64(node.valLength)
+
 		if replay != nil {
 			replay(node)
 		}
 	}
+
+	w.tx.Store(lastTx)
+
+	slog.Info("tdb WAL replay complete", "entries", count, "max-value-size", maxSize, "total-value-size", totalSize, "avg-value-size", float64(totalSize)/float64(count))
 
 	return w, nil
 }
@@ -186,38 +213,28 @@ func (w *WAL) All() iter.Seq2[*Node, error] {
 	}
 }
 
-func (w *WAL) Set(bucket, key, value []byte) error {
+func (w *WAL) Set(bucket, key, value []byte) (Value, error) {
+	return w.SetWithTx(bucket, key, value, w.tx.Add(1))
+}
+
+func (w *WAL) SetWithTx(bucket, key, value []byte, tx uint64) (Value, error) {
 	n := Node{
 		kind:   setKeyValue,
-		tx:     w.tx.Add(1),
+		tx:     tx,
 		bucket: bucket,
 		key:    key,
 		val:    value,
 	}
 
 	_, err := w.write(&n)
-	return err
-}
-
-// Copy reads the given value from the WAL into the dst buffer. This always works without any locks, due to pread calls.
-// If the given dst buffer has not enough capacity, only the first few bytes are read.
-func (w *WAL) Copy(dst []byte, src ValPtr) error {
-	if src.f != w.f {
-		return fmt.Errorf("ValPtr does not match WAL instance")
-	}
-
-	size := w.size.Load()
-	if src.offset+int64(src.len) > size {
-		return fmt.Errorf("WAL file is shorter then ValPtr")
-	}
-
-	dst = dst[:min(len(dst), src.Len())]
-
-	_, err := w.f.ReadAt(dst, src.offset)
-	return err
+	return n.Value(), err
 }
 
 func (w *WAL) Delete(bucket, key []byte) error {
+	return w.DeleteWithTx(bucket, key, w.tx.Add(1))
+}
+
+func (w *WAL) DeleteWithTx(bucket, key []byte, tx uint64) error {
 	n := Node{
 		kind:   removeKeyValue,
 		tx:     w.tx.Add(1),

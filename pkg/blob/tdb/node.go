@@ -31,8 +31,8 @@ type Node struct {
 	val       []byte
 }
 
-func (e *Node) Value() ValPtr {
-	return ValPtr{
+func (e *Node) Value() Value {
+	return Value{
 		f:      e.f,
 		offset: int64(e.valOffset),
 		len:    e.valLength,

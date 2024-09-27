@@ -1,6 +1,9 @@
 package xmaps
 
-import "sync"
+import (
+	"iter"
+	"sync"
+)
 
 type ConcurrentMap[K, V any] struct {
 	m *sync.Map
@@ -36,10 +39,13 @@ func (m *ConcurrentMap[K, V]) Delete(key K) {
 }
 
 // All does not block any other calls.
-func (m *ConcurrentMap[K, V]) All(f func(key K, value V) bool) {
-	m.m.Range(func(k, v interface{}) bool {
-		return f(k.(K), v.(V))
-	})
+func (m *ConcurrentMap[K, V]) All() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		m.m.Range(func(k, v interface{}) bool {
+			return yield(k.(K), v.(V))
+		})
+	}
+
 }
 
 func (m *ConcurrentMap[K, V]) Clear() {
