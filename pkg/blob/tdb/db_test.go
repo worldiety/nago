@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -201,4 +202,56 @@ func makeTestSet() []TestEntry {
 	}
 
 	return res
+}
+
+func TestDB_Races(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSet := makeTestSet()
+
+	const threads = 10
+	var wg sync.WaitGroup
+	for range threads {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for _, entry := range expectedSet {
+				if err := db.Set(entry.Bucket, entry.Key, entry.Value); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	var entries []TestEntry
+	for bucket := range db.Buckets() {
+		for entry := range db.All(bucket) {
+			buf, err := io.ReadAll(entry.val.NewReader())
+			if err != nil {
+				t.Fatal(err)
+			}
+			entries = append(entries, TestEntry{
+				Bucket: bucket,
+				Key:    entry.key,
+				Value:  buf,
+			})
+		}
+	}
+
+	if len(entries) != len(expectedSet) {
+		t.Fatalf("mismatched number of entries")
+	}
+
+	sort(entries)
+	sort(expectedSet)
+
+	if !reflect.DeepEqual(entries, expectedSet) {
+		t.Fatalf("mismatched entries")
+	}
 }

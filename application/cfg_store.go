@@ -2,11 +2,10 @@ package application
 
 import (
 	"fmt"
-	badger2 "github.com/dgraph-io/badger/v4"
 	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/blob/badger"
 	"go.wdy.de/nago/pkg/blob/fs"
+	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
 	"log/slog"
@@ -27,32 +26,31 @@ func (c *Configurator) EntityStore(bucketName string) blob.Store {
 		return store
 	}
 
-	if c.globalBadger == nil {
-		requiresBolt2BadgerMigration := !c.hasBadger() && c.hasBolt()
+	if c.globalTDB == nil {
+		requiresBolt2TDBMigration := !c.hasTDB() && c.hasBolt()
 
-		db, err := badger.Open(c.Directory("badgerdb"))
+		db, err := tdb.Open(c.Directory("tdb"))
 		if err != nil {
-			panic(fmt.Errorf("could not open badger store: %v", err))
+			panic(fmt.Errorf("could not open tdb store: %v", err))
 		}
 
-		c.globalBadger = db.Unwrap()
+		c.globalTDB = db
 
-		if requiresBolt2BadgerMigration {
-			if err := c.migrateBBolt2Badger(); err != nil {
+		if requiresBolt2TDBMigration {
+			if err := c.migrateBBolt2TDB(); err != nil {
 				panic(err)
 			}
 		}
 	}
 
-	db := badger.NewBlobStore(c.globalBadger)
-	db.SetPrefix(bucketName)
+	db := tdb.NewBlobStore(c.globalTDB, bucketName)
 	c.stores[bucketName] = db
 
 	return db
 }
 
-func (c *Configurator) hasBadger() bool {
-	dir := c.directory("badgerdb")
+func (c *Configurator) hasTDB() bool {
+	dir := c.directory("tdb")
 	files, _ := os.ReadDir(dir)
 	return len(files) > 0
 }
@@ -63,8 +61,8 @@ func (c *Configurator) hasBolt() bool {
 	return !os.IsNotExist(err)
 }
 
-func (c *Configurator) migrateBBolt2Badger() error {
-	slog.Warn("detected bolt store, migrating to badgerdb")
+func (c *Configurator) migrateBBolt2TDB() error {
+	slog.Warn("detected bolt store, migrating to tdb")
 	fname := filepath.Join(c.Directory("bbolt"), "bolt.db")
 	db, err := bbolt.Open(fname, 0700, nil) // security: only owner can read,write,exec
 	if err != nil {
@@ -72,16 +70,14 @@ func (c *Configurator) migrateBBolt2Badger() error {
 	}
 
 	err = db.View(func(tx *bbolt.Tx) error {
-		return c.globalBadger.Update(func(txn *badger2.Txn) error {
-			return tx.ForEach(func(bucketName []byte, b *bbolt.Bucket) error {
-				return b.ForEach(func(k, v []byte) error {
-					slog.Info("migrating", "bucket", string(bucketName), "key", string(k))
-					prefixedKey := append(bucketName, k...)
-					return txn.Set(prefixedKey, v)
-				})
+		return tx.ForEach(func(bucketName []byte, b *bbolt.Bucket) error {
+			buckName := string(bucketName)
+			return b.ForEach(func(k, v []byte) error {
+				slog.Info("migrating", "bucket", string(bucketName), "key", string(k))
+				return c.globalTDB.Set(buckName, string(k), v)
 			})
-
 		})
+
 	})
 
 	if err != nil {

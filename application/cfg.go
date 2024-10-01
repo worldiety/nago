@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	ui "go.wdy.de/nago/presentation/ui"
@@ -29,7 +29,7 @@ type backupService interface {
 type Configurator struct {
 	stores                   map[string]blob.Store
 	backupServices           map[string]backupService
-	globalBadger             *badger.DB
+	globalTDB                *tdb.DB
 	ctx                      context.Context
 	done                     context.CancelFunc
 	logger                   *slog.Logger
