@@ -28,6 +28,11 @@ func (p Person) Identity() string {
 }
 
 func TestNewSloppyJSONRepository(t *testing.T) {
+
+	t.Run("fs", func(t *testing.T) {
+		testSuite(t, NewSloppyJSONRepository[Person, string](unwrap(fs.NewBlobStore(t.TempDir()))))
+	})
+	
 	t.Run("tdb", func(t *testing.T) {
 		db, err := tdb.Open(filepath.Join(t.TempDir()))
 		if err != nil {
@@ -86,10 +91,6 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 
 	t.Run("mem", func(t *testing.T) {
 		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
-	})
-
-	t.Run("fs", func(t *testing.T) {
-		testSuite(t, NewSloppyJSONRepository[Person, string](unwrap(fs.NewBlobStore(t.TempDir()))))
 	})
 
 }

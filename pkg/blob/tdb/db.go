@@ -20,6 +20,8 @@ import (
 	"unsafe"
 )
 
+var globalDirLocks = xmaps.NewConcurrentMap[string, *sync.Mutex]()
+
 type IndexEntry struct {
 	key string
 	val Value
@@ -41,6 +43,11 @@ type DB struct {
 func Open(dir string) (*DB, error) {
 	if err := os.MkdirAll(dir, 0777); err != nil && !os.IsExist(err) {
 		return nil, err
+	}
+
+	mutex, _ := globalDirLocks.LoadOrStore(dir, &sync.Mutex{})
+	if ok := mutex.TryLock(); !ok {
+		return nil, fmt.Errorf("tdb directory is already opened by another instance: %s", dir)
 	}
 
 	db := &DB{
@@ -411,6 +418,10 @@ func (db *DB) strOf(buf []byte) string {
 func (db *DB) Close() error {
 	db.btreeSnapshotLock.Lock()
 	defer db.btreeSnapshotLock.Unlock()
+
+	if lock, ok := globalDirLocks.Load(db.dir); ok {
+		lock.Unlock()
+	}
 
 	if err := db.Sync(); err != nil {
 		return err

@@ -3,9 +3,9 @@ package fs
 import (
 	"context"
 	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go.etcd.io/bbolt"
 	"io"
 	"os"
 	"path/filepath"
@@ -48,7 +48,7 @@ func (t *txWriter) Close() error {
 
 	hash := hasher.Sum(nil)
 	var ind inode
-	copy(ind.Sha512[:], hash)
+	ind.Sha512 = hex.EncodeToString(hash)
 	targetFname := t.parent.filepath(ind.Sha512)
 
 	// ensure fan-out
@@ -62,66 +62,48 @@ func (t *txWriter) Close() error {
 		return fmt.Errorf("cannot rename tmp file '%s' to '%s': %w", t.tmpFname, targetFname, err)
 	}
 
-	// we may consider a fsync here at directory level, but MacBooks ignore that and fileservers have USV, so
+	// we may consider a fsync here at directory level, but MacBooks are slow and fileservers have USV, so
 	// at worst we will later have a missing physical blob.
 
 	// target file is physically at place, now update our db. If that doesn't work, we have at worst a stale file,
 	// not that bad, just a few wasted bytes but still consistent.
-	err = t.parent.db.Update(func(tx *bbolt.Tx) error {
-		t.parent.dirLock.Lock()
-		defer t.parent.dirLock.Unlock()
+	t.parent.dirLock.Lock()
+	defer t.parent.dirLock.Unlock()
 
-		// write the inode
-		indBuf, err := json.Marshal(ind)
-		if err != nil {
-			return fmt.Errorf("cannot marshal inode: %w", err)
-		}
-
-		bucket := tx.Bucket(t.parent.bucketNamePaths)
-		if bucket == nil {
-			bucket, err = tx.CreateBucketIfNotExists(t.parent.bucketNamePaths)
-			if err != nil {
-				return fmt.Errorf("cannot create inode bucket: %w", err)
-			}
-		}
-
-		if err := bucket.Put([]byte(t.key), indBuf); err != nil {
-			return fmt.Errorf("cannot put inode into bucket: %w", err)
-		}
-
-		// write the rc
-		rcBucket := tx.Bucket(t.parent.bucketNameRC)
-		if rcBucket == nil {
-			rcBucket, err = tx.CreateBucketIfNotExists(t.parent.bucketNameRC)
-			if err != nil {
-				return fmt.Errorf("cannot create rc bucket: %w", err)
-			}
-		}
-
-		var ifo dataInfo
-		dataInfoBuf := rcBucket.Get(ind.Sha512[:])
-		if dataInfoBuf != nil {
-			if err := json.Unmarshal(dataInfoBuf, &ifo); err != nil {
-				return fmt.Errorf("cannot unmarshal dataInfo from bucket: %w", err)
-			}
-		}
-
-		ifo.ReferenceCount++
-
-		dataInfoBuf, err = json.Marshal(&ifo)
-		if err != nil {
-			return fmt.Errorf("cannot marshal dataInfo: %w", err)
-		}
-
-		if err := rcBucket.Put(ind.Sha512[:], dataInfoBuf); err != nil {
-			return fmt.Errorf("cannot put dataInfo to bucket: %w", err)
-		}
-
-		return nil
-	})
-
+	// write the inode
+	indBuf, err := json.Marshal(ind)
 	if err != nil {
-		return fmt.Errorf("cannot update meta data for newly written file '%s': %w", t.tmpFname, err)
+		return fmt.Errorf("cannot marshal inode: %w", err)
+	}
+
+	if err := t.parent.db.Set(t.parent.bucketNamePaths, t.key, indBuf); err != nil {
+		return fmt.Errorf("cannot put inode into bucket: %w", err)
+	}
+
+	// write the rc
+	ifoKey := string(ind.Sha512[:])
+
+	var ifo dataInfo
+	dataInfoBufOpt := t.parent.db.Get(t.parent.bucketNameRC, ifoKey)
+	if dataInfoBufOpt.IsSome() {
+		reader := dataInfoBufOpt.Unwrap()
+		defer reader.Close()
+		dec := json.NewDecoder(reader)
+
+		if err := dec.Decode(&ifo); err != nil {
+			return fmt.Errorf("cannot unmarshal dataInfo from bucket: %w", err)
+		}
+	}
+
+	ifo.ReferenceCount++
+
+	dataInfoBuf, err := json.Marshal(&ifo)
+	if err != nil {
+		return fmt.Errorf("cannot marshal dataInfo: %w", err)
+	}
+
+	if err := t.parent.db.Set(t.parent.bucketNameRC, ifoKey, dataInfoBuf); err != nil {
+		return fmt.Errorf("cannot put dataInfo to bucket: %w", err)
 	}
 
 	t.closed = true

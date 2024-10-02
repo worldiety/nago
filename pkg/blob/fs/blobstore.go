@@ -6,9 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go.etcd.io/bbolt"
 	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/blob/bolt"
+	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
@@ -24,7 +23,7 @@ type dataInfo struct {
 }
 
 type inode struct {
-	Sha512 [32]byte `json:"h"` // sha512-256
+	Sha512 string `json:"h"` // sha512-256 as hex, which is way shorter than the default json int-array encoding
 }
 
 // BlobStore provides a file based implementation using a central metadata index db and blob deduplication with
@@ -34,7 +33,7 @@ type inode struct {
 // The file layout is as follows:
 //
 //		baseDir
-//		 |- index.bbolt
+//		 |- _idx // directory with meta tdb
 //		 +- ab                      // first byte of file hash, thus 255 folders at level 1
 //		     +- 2f                 // second byte of file hash, thus 255 folders at level 2
 //	           +- ax3ad3412123  // the actual data file, rest of sha512-256 hex-hash, 255*255*10.000 = 650mio files
@@ -47,16 +46,16 @@ type inode struct {
 type BlobStore struct {
 	baseDir         string
 	dirLock         sync.RWMutex // today this is redundant, but when changing the bbolt store, this may get important
-	db              *bbolt.DB
-	storePathIndex  *bolt.BlobStore // path -> hash
-	storeRefCounts  *bolt.BlobStore // hash -> reference counter
-	bucketNamePaths []byte
-	bucketNameRC    []byte
+	db              *tdb.DB
+	storePathIndex  *tdb.BlobStore // path -> hash
+	storeRefCounts  *tdb.BlobStore // hash -> reference counter
+	bucketNamePaths string
+	bucketNameRC    string
 }
 
 func NewBlobStore(baseDir string) (*BlobStore, error) {
 	_ = os.MkdirAll(baseDir, os.ModePerm) // convenience to avoid bad file descriptor
-	db, err := bbolt.Open(filepath.Join(baseDir, "index.bbolt"), 0600, nil)
+	db, err := tdb.Open(filepath.Join(baseDir, "_idx"))
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +63,10 @@ func NewBlobStore(baseDir string) (*BlobStore, error) {
 	b := &BlobStore{
 		db:              db,
 		baseDir:         baseDir,
-		storePathIndex:  bolt.NewBlobStore(db, "p"),
-		storeRefCounts:  bolt.NewBlobStore(db, "c"),
-		bucketNameRC:    []byte("c"),
-		bucketNamePaths: []byte("p"),
+		storePathIndex:  tdb.NewBlobStore(db, "p"),
+		storeRefCounts:  tdb.NewBlobStore(db, "c"),
+		bucketNameRC:    "c",
+		bucketNamePaths: "p",
 	}
 
 	return b, nil
@@ -86,82 +85,75 @@ func (b *BlobStore) Close() error {
 }
 
 func (b *BlobStore) Delete(ctx context.Context, key string) error {
-	// this is more complicated, because we can actually only delete the file, if our rc drops to zero
-	return b.db.Update(func(tx *bbolt.Tx) error {
-		// actually, these locks are unimportant, because bbolt will have the same semantic today, but who knows if that
-		// changes e.g. when moving to a mvcc storage or else
-		b.dirLock.Lock()
-		defer b.dirLock.Unlock()
+	b.dirLock.Lock()
+	defer b.dirLock.Unlock()
 
-		pathBucket := tx.Bucket(b.bucketNamePaths)
-		if pathBucket == nil {
-			return nil
-		}
-
-		inodeBuf := pathBucket.Get([]byte(key))
-		if inodeBuf == nil {
-			// no such entry exists, that is fine
-			return nil
-		}
-
-		var ind inode
-		if err := json.Unmarshal(inodeBuf, &ind); err != nil {
-			// oops, some meta data error
-			return fmt.Errorf("cannot parse inode meta data: %w", err)
-		}
-
-		if err := pathBucket.Delete([]byte(key)); err != nil {
-			return err
-		}
-
-		rcBucket := tx.Bucket(b.bucketNameRC)
-		if rcBucket == nil {
-			return nil
-		}
-
-		dataInfoBuf := rcBucket.Get(ind.Sha512[:])
-		if dataInfoBuf == nil {
-			return fmt.Errorf("meta data corrupted: inode exists but no inverse data info entry")
-		}
-
-		var ifo dataInfo
-		if err := json.Unmarshal(dataInfoBuf, &ifo); err != nil {
-			return fmt.Errorf("cannot parse data info meta data: %w", err)
-		}
-
-		ifo.ReferenceCount--
-
-		if ifo.ReferenceCount <= 0 {
-			if err := rcBucket.Delete([]byte(key)); err != nil {
-				return fmt.Errorf("rc dropped to 0, but cannot delete reference count from db: %w", err)
-			}
-
-			// this was the last reference, thus remove it also from the filesystem
-			fname := b.filepath(ind.Sha512)
-			err := os.Remove(fname)
-			if err != nil && !os.IsNotExist(err) {
-				// this may be a permission problem or just running on windows and having a Reader open...
-				return fmt.Errorf("rc dropped to 0, but cannot delete physical data file: %w", err)
-			}
-		} else {
-			// just lost one rc, thus just persist the new count
-			buf, err := json.Marshal(ifo)
-			if err != nil {
-				panic(fmt.Errorf("cannot happen: error on marshalling data info entry: %w", err))
-			}
-
-			if err := rcBucket.Put(ind.Sha512[:], buf); err != nil {
-				return fmt.Errorf("failed to update data info entry: %w", err)
-			}
-		}
-
+	inodeBufOpt := b.db.Get(b.bucketNamePaths, key)
+	if inodeBufOpt.IsNone() {
+		// no such entry exists, that is fine
 		return nil
+	}
 
-	})
+	inodeReader := inodeBufOpt.Unwrap()
+	dec := json.NewDecoder(inodeReader)
+	defer inodeReader.Close()
+
+	var ind inode
+	if err := dec.Decode(&ind); err != nil {
+		// oops, some meta data error
+		return fmt.Errorf("cannot parse inode meta data: %w", err)
+	}
+
+	if err := b.db.Delete(b.bucketNamePaths, key); err != nil {
+		return err
+	}
+
+	ifoKey := string(ind.Sha512[:])
+	dataInfoBufOpt := b.db.Get(b.bucketNameRC, ifoKey)
+	if dataInfoBufOpt.IsNone() {
+		return fmt.Errorf("meta data corrupted: inode exists but no inverse data info entry")
+	}
+
+	dataInfoReader := dataInfoBufOpt.Unwrap()
+	dec = json.NewDecoder(dataInfoReader)
+	defer dataInfoReader.Close()
+
+	var ifo dataInfo
+	if err := dec.Decode(&ifo); err != nil {
+		return fmt.Errorf("cannot parse data info meta data: %w", err)
+	}
+
+	ifo.ReferenceCount--
+
+	if ifo.ReferenceCount <= 0 {
+		if err := b.db.Delete(b.bucketNameRC, ifoKey); err != nil {
+			return fmt.Errorf("rc dropped to 0, but cannot delete reference count from db: %w", err)
+		}
+
+		// this was the last reference, thus remove it also from the filesystem
+		fname := b.filepath(ind.Sha512)
+		err := os.Remove(fname)
+		if err != nil && !os.IsNotExist(err) {
+			// this may be a permission problem or just running on windows and having a Reader open...
+			return fmt.Errorf("rc dropped to 0, but cannot delete physical data file: %w", err)
+		}
+	} else {
+		// just lost one rc, thus just persist the new count
+		buf, err := json.Marshal(ifo)
+		if err != nil {
+			panic(fmt.Errorf("cannot happen: error on marshalling data info entry: %w", err))
+		}
+
+		if err := b.db.Set(b.bucketNameRC, ifoKey, buf); err != nil {
+			return fmt.Errorf("failed to update data info entry: %w", err)
+		}
+	}
+
+	return nil
 }
 
-func (b *BlobStore) filepath(hash [32]byte) string {
-	h := hex.EncodeToString(hash[:])
+func (b *BlobStore) filepath(hash string) string {
+	h := hash
 	fan0 := h[:2]
 	h = h[2:]
 	fan1 := h[:2]
@@ -171,35 +163,28 @@ func (b *BlobStore) filepath(hash [32]byte) string {
 
 func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error) {
 	var fname string
-	err := b.db.View(func(tx *bbolt.Tx) error {
-		b.dirLock.RLock()
-		defer b.dirLock.RUnlock()
 
-		pathBucket := tx.Bucket(b.bucketNamePaths)
-		if pathBucket == nil {
-			return nil
-		}
+	b.dirLock.RLock()
+	defer b.dirLock.RUnlock()
 
-		inodeBuf := pathBucket.Get([]byte(key))
-		if inodeBuf == nil {
-			// no such entry exists, that is fine
-			return nil
-		}
+	inodeBufOpt := b.db.Get(b.bucketNamePaths, key)
+	if inodeBufOpt.IsNone() {
+		return std.None[io.ReadCloser](), nil
+	}
 
-		var ind inode
-		if err := json.Unmarshal(inodeBuf, &ind); err != nil {
-			// oops, some meta data error
-			return fmt.Errorf("cannot parse inode meta data: %w", err)
-		}
+	reader := inodeBufOpt.Unwrap()
+	dec := json.NewDecoder(reader)
+	defer reader.Close()
 
-		fname = b.filepath(ind.Sha512)
-		return nil
-	})
+	var ind inode
+	if err := dec.Decode(&ind); err != nil {
+		// oops, some meta data error
+		return std.None[io.ReadCloser](), fmt.Errorf("cannot parse inode meta data: %w", err)
+	}
+
+	fname = b.filepath(ind.Sha512)
 
 	var res std.Option[io.ReadCloser]
-	if err != nil {
-		return res, err
-	}
 
 	if fname == "" {
 		return res, nil
