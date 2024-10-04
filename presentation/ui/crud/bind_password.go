@@ -1,13 +1,11 @@
 package crud
 
 import (
-	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"strings"
 )
 
-func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
+func Password[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 	return Field[E]{
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
@@ -27,12 +25,11 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 				f := property(&tmp)
 				*f = T(newValue)
 				entity.Set(tmp)
-				fmt.Println("observe state changed", newValue)
 
 				handleValidation(self, entity, errState)
 			})
 
-			return ui.TextField(label, state.String()).
+			return ui.PasswordField(label).
 				InputValue(state).
 				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
@@ -40,28 +37,19 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 				Frame(ui.Frame{}.FullWidth())
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
-			tmp := entity.Get()
-			v := *property(&tmp)
-			return ui.TableCell(ui.Text(string(v)))
+			return ui.TableCell(ui.Text("****"))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
-			var tmp E
-			tmp = entity.Get()
-			v := *property(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				ui.Text(string(v)),
+				ui.Text("****"),
 			).Alignment(ui.Trailing)
 		},
-		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
-			return strings.Compare(string(av), string(bv))
-		},
+		Comparator: nil,
 		Stringer: func(e E) string {
-			return string(*property(&e))
+			return "****"
 		},
 	}
 }

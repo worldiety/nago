@@ -22,6 +22,12 @@ type Email string
 
 var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$`)
 
+type WeakPasswordError string
+
+func (e WeakPasswordError) Error() string {
+	return string(e)
+}
+
 const maxPasswordLength = 1000
 
 // Valid checks if the Mail looks like structural valid mail. It does not mean that the address actually exists
@@ -347,17 +353,17 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls
 	if len(password) < 8 {
-		return "", fmt.Errorf("Das Kennwort muss mindestens 8 Zeichen enthalten.") //fmt.Errorf("password must be at least 8 characters") TODO use language from subject
+		return "", WeakPasswordError("Das Kennwort muss mindestens 8 Zeichen enthalten.") //fmt.Errorf("password must be at least 8 characters") TODO use language from subject
 	}
 	const minEntropyBits = 60
 	if err := passwordvalidator.Validate(password, minEntropyBits); err != nil {
-		return "", fmt.Errorf("Das Kennwort hat nicht genug Entropie.") //fmt.Errorf("password has not enough entropy: %v", err) TODO use language from subject
+		return "", WeakPasswordError("Das Kennwort hat nicht genug Entropie.") //fmt.Errorf("password has not enough entropy: %v", err) TODO use language from subject
 	}
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet
 	// and https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
 	if len(password) > maxPasswordLength {
-		return "", fmt.Errorf("password must be less than 1000 characters") // probably a DOS attack
+		return "", WeakPasswordError("password must be less than 1000 characters") // probably a DOS attack
 	}
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id

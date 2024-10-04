@@ -84,7 +84,7 @@ function toggleRevealed(): void {
 </script>
 
 <template>
-	<div v-if="!ui.iv">
+	<div v-if="!ui.iv" :style="frameStyles">
 		<InputWrapper
 			:simple="props.ui.t && props.ui.t=='r'"
 			:label="props.ui.l"

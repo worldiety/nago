@@ -29,6 +29,18 @@ func PasswordField(label string) TPasswordField {
 	return c
 }
 
+func (c TPasswordField) Padding(padding Padding) DecoredView {
+	return c // TODO
+}
+
+func (c TPasswordField) Border(border Border) DecoredView {
+	return c // TODO
+}
+
+func (c TPasswordField) AccessibilityLabel(label string) DecoredView {
+	return c // TODO
+}
+
 func (c TPasswordField) SupportingText(text string) TPasswordField {
 	c.supportingText = text
 	return c
@@ -72,8 +84,8 @@ func (c TPasswordField) Disabled(disabled bool) TPasswordField {
 	return c
 }
 
-func (c TPasswordField) Frame(frame ora.Frame) TPasswordField {
-	c.frame = frame
+func (c TPasswordField) Frame(frame Frame) DecoredView {
+	c.frame = frame.ora()
 	return c
 }
 
@@ -83,7 +95,7 @@ func (c TPasswordField) Lines(lines int) TPasswordField {
 	return c
 }
 
-func (c TPasswordField) Visible(v bool) TPasswordField {
+func (c TPasswordField) Visible(v bool) DecoredView {
 	c.invisible = !v
 	return c
 }

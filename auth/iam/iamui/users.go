@@ -1,6 +1,7 @@
 package iamui
 
 import (
+	"errors"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
@@ -72,13 +73,13 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			return &e.Lastname
 		}),
 		crud.Text("eMail", func(e *createUser) *string {
-			return &e.Lastname
+			return &e.EMail
 		}),
-		crud.Text("Kennwort", func(e *createUser) *string {
-			return &e.Lastname
+		crud.Password("Kennwort", func(e *createUser) *string {
+			return &e.Password1
 		}),
-		crud.Text("Kennwort wiederholen", func(e *createUser) *string {
-			return &e.Lastname
+		crud.Password("Kennwort wiederholen", func(e *createUser) *string {
+			return &e.Password2
 		}),
 	)
 	opts := crud.Options(bnd).
@@ -92,6 +93,11 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			}
 
 			_, err := service.NewUser(subject, model.EMail, model.Firstname, model.Lastname, model.Password1)
+			var pwdErr iam.WeakPasswordError
+			if errors.As(err, &pwdErr) {
+				return pwdErr.Error(), nil
+			}
+			
 			return "", err
 		})).Title("Nutzerkonten").
 		FindAll(service.AllUsers(subject))
