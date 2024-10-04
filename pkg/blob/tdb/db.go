@@ -88,7 +88,7 @@ func Open(dir string) (*DB, error) {
 	db.compacted = comfdb
 
 	// now work through the actual WAL
-	var actualTx uint64
+	actualTx := lastTx // start with last known compacted tx, otherwise after compaction, we may be 0
 	waldb, err := OpenWAL(db.walFile, func(entry *Node) {
 		if entry.tx <= lastTx {
 			// do not apply values, which are older than the compacted db

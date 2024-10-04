@@ -29,6 +29,7 @@ type WAL struct {
 	size           atomic.Int64
 	readPos        int64
 	maxPayloadSize int
+	debugTx        atomic.Uint64
 }
 
 func OpenWAL(path string, replay func(entry *Node)) (*WAL, error) {
@@ -215,11 +216,12 @@ func (w *WAL) All() iter.Seq2[*Node, error] {
 	}
 }
 
-func (w *WAL) Set(bucket, key, value []byte) (Value, error) {
-	return w.SetWithTx(bucket, key, value, w.tx.Add(1))
-}
-
 func (w *WAL) SetWithTx(bucket, key, value []byte, tx uint64) (Value, error) {
+	if w.debugTx.Load() > tx {
+		panic("debug tx is smaller than tx to write")
+	}
+	w.debugTx.Store(tx)
+
 	n := Node{
 		kind:   setKeyValue,
 		tx:     tx,
@@ -230,10 +232,6 @@ func (w *WAL) SetWithTx(bucket, key, value []byte, tx uint64) (Value, error) {
 
 	_, err := w.write(&n)
 	return n.Value(), err
-}
-
-func (w *WAL) Delete(bucket, key []byte) error {
-	return w.DeleteWithTx(bucket, key, w.tx.Add(1))
 }
 
 func (w *WAL) DeleteWithTx(bucket, key []byte, tx uint64) error {
