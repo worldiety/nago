@@ -87,7 +87,8 @@ func NewConfigurator() *Configurator {
 
 	// init our standard white label theme
 	var main, accent, interactive ui.Color
-	main, accent, interactive = "#1B8C30", "#17428C", "#F7A823"
+	//main, accent, interactive = "#1B8C30", "#17428C", "#F7A823"
+	main, accent, interactive = "#221A3F", "#4fEE62", "#14EBC9"
 	cfg.ColorSet(core.Light, ui.DefaultColors(core.Light, main, accent, interactive))
 	cfg.ColorSet(core.Dark, ui.DefaultColors(core.Dark, main, accent, interactive))
 

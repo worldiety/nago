@@ -34,7 +34,7 @@ type ScaffoldMenuEntry struct {
 
 func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst core.NavigationPath) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
-		Icon:  Image().Embed(icon),
+		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L24, L24)),
 		Title: title,
 		Action: func() {
 			wnd.Navigation().ForwardTo(dst, nil)
@@ -45,7 +45,7 @@ func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst 
 
 func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, children ...ScaffoldMenuEntry) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
-		Icon:  Image().Embed(icon),
+		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L24, L24)),
 		Title: title,
 		Menu:  children,
 	}

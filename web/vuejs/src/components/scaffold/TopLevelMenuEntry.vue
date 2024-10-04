@@ -21,7 +21,7 @@
 				'bg-M7 bg-opacity-35': active,
 			}"
 		>
-			<div class="relative w-4">
+			<div class="relative ">
 				<div class="*:h-full" v-if="ui.x && ui.v">
 					<ui-generic  :ui="props.ui.v"  />
 				</div>

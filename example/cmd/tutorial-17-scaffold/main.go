@@ -58,6 +58,7 @@ func main() {
 						Title:          "Entry 3",
 						MarkAsActiveAt: ".",
 					},
+					ForwardScaffoldMenuEntry(wnd, icons.User, "forward", ""),
 					ScaffoldMenuEntry{
 						Icon:           Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)),
 						IconActive:     Image().Embed(icons2.User).Frame(Frame{}.Size(L20, L20)),

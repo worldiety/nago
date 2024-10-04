@@ -8,16 +8,23 @@
 	@apply focus-visible:outline-none focus-visible:outline-black focus-visible:outline-offset-2 focus-visible:ring-white focus-visible:ring-2;
 }
 
+/* depending on the weired evaluation order, the body * rules come first, thus we need to be more specific*/
+.button-primary * {
+	@apply text-black
+}
+
+
+
 .button-primary {
-	@apply rounded-full h-10 w-fit px-5 text-white bg-I0;
-	@apply hover:bg-opacity-75;
-	@apply active:bg-opacity-65;
+	@apply rounded-full h-10 w-fit px-5 text-black bg-I0;
+	@apply hover:brightness-105;
+	@apply active:brightness-150;
 	@apply disabled:text-ST0 disabled:bg-SI0;
 }
 
 .button-primary * {
-	@apply text-M8;
-	@apply darkmode:text-M8;
+	/*@apply text-M8;
+	@apply darkmode:text-M8;*/
 }
 
 .button-primary:disabled * {
@@ -37,7 +44,7 @@
 .button-secondary *,
 .button-tertiary:hover *,
 .button-tertiary:active * {
-	@apply text-I0;
+	@apply text-M8;
 	@apply darkmode:text-M8;
 }
 

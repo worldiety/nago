@@ -72,7 +72,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 <style>
 .input-field-wrapper .input-field {
-  @apply relative bg-transparent border-0 border-b text-M8 cursor-default w-full px-0 py-2;
+  @apply relative bg-transparent border-M8 border-0 border-b text-M8 cursor-default w-full px-0 py-2;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {

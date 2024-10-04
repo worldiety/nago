@@ -48,7 +48,7 @@ async function applyConfiguration(): Promise<void> {
 	themeManager.setThemes(config.themes);
 	themeManager.applyActiveTheme();
 	updateFavicon(config.appIcon)
-	sendWindowInfo();
+	sendWindowInfo(false);
 }
 
 function updateFavicon(uri: URI) {
@@ -92,6 +92,7 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
+		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo)
 
 		updateUi(invalidation);
 	} catch {
@@ -226,7 +227,7 @@ function setTheme(themes: Themes): void {
 
 const activeBreakpoint = ref('');
 
-function sendWindowInfo() {
+function sendWindowInfo(force:boolean=true) {
 	const breakpoints = {
 		sm: 640,
 		md: 768,
@@ -244,7 +245,7 @@ function sendWindowInfo() {
 	else if (width >= breakpoints.md) activeBreakpoint.value = 'md';
 	else activeBreakpoint.value = 'sm';
 
-	if (lastActiveBreakpoint == activeBreakpoint.value) {
+	if (!force && lastActiveBreakpoint == activeBreakpoint.value) {
 		// avoid spamming the backend with messages from fluid window resizing
 		return
 	}
@@ -283,7 +284,7 @@ function addEventListeners(): void {
 	});
 
 	window.addEventListener('resize', function (event) {
-		sendWindowInfo();
+		sendWindowInfo(false);
 	});
 }
 

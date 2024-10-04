@@ -97,7 +97,7 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			if errors.As(err, &pwdErr) {
 				return pwdErr.Error(), nil
 			}
-			
+
 			return "", err
 		})).Title("Nutzerkonten").
 		FindAll(service.AllUsers(subject))
