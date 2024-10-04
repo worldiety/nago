@@ -405,6 +405,10 @@ func (db *DB) snapshotTrees() (map[string]*btree.BTreeG[IndexEntry], uint64) {
 }
 
 func (db *DB) strOf(buf []byte) string {
+	if len(buf) == 0 {
+		return ""
+	}
+
 	str, ok := db.strDedupTable.Load(unsafe.String(&buf[0], len(buf)))
 	if ok {
 		return str
@@ -439,6 +443,9 @@ func (db *DB) Close() error {
 }
 
 func unsafeStr(str string) []byte {
+	if str == "" {
+		return nil
+	}
 	d := unsafe.StringData(str)
 	return unsafe.Slice(d, len(str))
 }
