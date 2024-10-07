@@ -168,6 +168,63 @@ func TestDB_Set(t *testing.T) {
 	}
 }
 
+func TestDB_5m(t *testing.T) {
+	dbdir := filepath.Join(t.TempDir())
+	db, err := Open(dbdir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const maxEntries = 5_000_000
+	bucket := "nums"
+	for no := range maxEntries {
+		key := strconv.Itoa(no)
+		val := []byte(key)
+
+		if err := db.Set(bucket, key, val); err != nil {
+			t.Fatal(err)
+		}
+
+		optReader := db.Get(bucket, key)
+		if optReader.IsNone() {
+			t.Fatal("missing entry")
+		}
+
+		reader := optReader.Unwrap()
+		buf, err := io.ReadAll(reader)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(buf, val) {
+			t.Fatalf("mismatched value")
+		}
+	}
+
+	// close and re-read
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err = Open(dbdir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for no := range maxEntries {
+		key := strconv.Itoa(no)
+		val := []byte(key)
+		optReader := db.Get(bucket, key)
+		buf, err := io.ReadAll(optReader.Unwrap())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(buf, val) {
+			t.Fatalf("mismatched value")
+		}
+	}
+
+}
+
 func sort(entries []TestEntry) {
 	slices.SortFunc(entries, func(a, b TestEntry) int {
 		if i := strings.Compare(a.Bucket, b.Bucket); i != 0 {

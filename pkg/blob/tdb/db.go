@@ -379,6 +379,9 @@ func (db *DB) Compact() error {
 	// otherwise the old WAL obviously was appended, thus don't touch it. Next time we are started, older tx entries are ignored during replay
 
 	// either compact file or also the wal file changed, thus our index value offsets are now illegal, we need to reload everything again
+	// release write lock
+	mutex, _ := globalDirLocks.Load(db.dir)
+	mutex.Unlock()
 	db2, err := Open(db.dir)
 	if err != nil {
 		return fmt.Errorf("cannot re-open TDB: %w", err)
