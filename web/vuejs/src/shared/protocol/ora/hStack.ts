@@ -77,6 +77,8 @@ export interface HStack {
     fb/*omitempty*/? /*FocusedBorder*/: Border;
     // Wrap
     w/*omitempty*/? /*Wrap*/: boolean;
+    // Disabled
+    d/*omitempty*/? /*Disabled*/: boolean;
     // StylePreset
     s/*omitempty*/? /*StylePreset*/: StylePreset;
 }

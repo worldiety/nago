@@ -32,6 +32,7 @@ type HStack struct {
 	PressedBorder          Border `json:"pb,omitempty"`
 	FocusedBorder          Border `json:"fb,omitempty"`
 	Wrap                   bool   `json:"w,omitempty"`
+	Disabled               bool   `json:"d,omitempty"`
 
 	StylePreset StylePreset `json:"s,omitempty"`
 	component

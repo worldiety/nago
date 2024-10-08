@@ -23,6 +23,7 @@ var NotAvailable = errors.New("not available")
 // way anyway.
 //
 // If you already have a pointer, just use its zero value which is nil and not Option.
+// The zero value is safe to use.
 // TODO see also https://github.com/samber/mo
 type Option[T any] struct {
 	// Deprecated: do not use directly, use Unwrap* methods.
@@ -71,6 +72,7 @@ func (o Option[T]) Get() (T, error) {
 	return o.V, NotAvailable
 }
 
+// deprecated: the zero value is by definition not generally safe to use.
 // UnwrapOrZero returns either the valid contained value or the default zero value of T.
 func (o Option[T]) UnwrapOrZero() T {
 	if o.Valid {

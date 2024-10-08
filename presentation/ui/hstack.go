@@ -29,6 +29,7 @@ type THStack struct {
 	stylePreset            ora.StylePreset
 	originTrace            string
 	wrap                   bool
+	disabled               bool
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -43,6 +44,12 @@ func HStack(children ...core.View) *THStack {
 		c.originTrace = strings.Split(string(debug.Stack()), "\n")[6]
 	}
 
+	return c
+}
+
+// Enabled has only an effect if StylePreset is applied, otherwise it is ignored.
+func (c THStack) Enabled(enabled bool) THStack {
+	c.disabled = !enabled
 	return c
 }
 
@@ -171,6 +178,7 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		PressedBorder:          c.pressedBorder,
 		Action:                 ptr,
 		Wrap:                   c.wrap,
+		Disabled:               c.disabled,
 
 		StylePreset: c.stylePreset,
 	}

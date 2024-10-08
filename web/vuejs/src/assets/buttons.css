@@ -20,6 +20,7 @@
 	@apply hover:brightness-105;
 	@apply active:brightness-150;
 	@apply disabled:text-ST0 disabled:bg-SI0;
+	@apply disabled:pointer-events-none
 }
 
 .button-primary * {
@@ -29,7 +30,6 @@
 
 .button-primary:disabled * {
 	@apply text-ST0;
-	@apply darkmode:text-ST0;
 }
 
 .button-secondary {

@@ -193,7 +193,7 @@ const clazz = computed<string>(() => {
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 
-	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
+	<button :disabled="props.ui.d" v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</button>
 </template>

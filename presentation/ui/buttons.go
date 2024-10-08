@@ -17,6 +17,7 @@ type TButton struct {
 	font               Font
 	action             func()
 	trace              string
+	disabled           bool
 }
 
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
@@ -43,6 +44,12 @@ func initButton(action func(), preset StylePreset) TButton {
 		btn.trace = string(debug.Stack())
 	}
 	return btn
+}
+
+// Enabled has only an effect for StylePreset otherwise it is ignored.
+func (c TButton) Enabled(b bool) TButton {
+	c.disabled = !b
+	return c
 }
 
 func (c TButton) Title(text string) TButton {
@@ -92,6 +99,7 @@ func (c TButton) Render(context core.RenderContext) ora.Component {
 		If(c.title != "", Text(c.title).Font(c.font)),
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
+		Enabled(!c.disabled).
 		Action(c.action).
 		StylePreset(c.preset).
 		Frame(c.frame).

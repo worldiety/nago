@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
+	"go.wdy.de/nago/presentation/ui/tracking"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -32,9 +34,17 @@ func main() {
 		}
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
+			enabled := core.AutoState[bool](wnd)
 			personState := core.AutoState[[]Person](wnd).From(func() []Person {
 				return []Person{persons[5]}
 			})
+			personState.Observe(func(newValue []Person) {
+				enabled.Set(len(newValue) > 0)
+			})
+
+			//err := fmt.Errorf("hello world")
+			err := iam.PermissionDeniedError("not allowed reading")
+
 			return VStack(
 				picker.Picker[Person]("Personen", persons, personState).
 					SupportingText("Wähle jemanden aus").
@@ -44,7 +54,8 @@ func main() {
 					Frame(Frame{Width: L320}),
 				PrimaryButton(func() {
 					fmt.Println(personState)
-				}).Title("print selected"),
+				}).Title("print selected").Enabled(enabled.Get()),
+				tracking.ErrorView(wnd, err),
 			).
 				Frame(Frame{}.MatchScreen())
 		})
