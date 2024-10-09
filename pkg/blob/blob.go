@@ -141,5 +141,5 @@ func Get(store Store, key string) (std.Option[[]byte], error) {
 }
 
 func Keys(store Store) ([]string, error) {
-	return xslices.Collect2[[]string](store.List(context.Background(), ListOptions{}))
+	return xslices.Collect2(store.List(context.Background(), ListOptions{}))
 }
