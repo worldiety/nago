@@ -26,7 +26,7 @@ func (s *Service) AllGroups(subject auth.Subject) iter.Seq2[Group, error] {
 		return xiter.Empty2[Group, error]()
 	}
 
-	return s.groups.Each
+	return s.groups.All()
 }
 
 func (s *Service) CreateGroup(subject auth.Subject, group Group) error {

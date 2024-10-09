@@ -25,7 +25,9 @@ func WithError[T any](err error) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
 		if err != nil {
 			var zero T
-			yield(zero, err)
+			if !yield(zero, err) {
+				return
+			}
 		}
 	}
 }

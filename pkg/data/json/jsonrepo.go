@@ -117,38 +117,40 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Each(yield func(DomainModel, error) bool) {
-	var zeroDomain DomainModel
-	for id, err := range r.store.List(context.Background(), blob.ListOptions{}) {
-		if err != nil {
-			if !yield(zeroDomain, err) {
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) All() iter.Seq2[DomainModel, error] {
+	return func(yield func(DomainModel, error) bool) {
+		var zeroDomain DomainModel
+		for id, err := range r.store.List(context.Background(), blob.ListOptions{}) {
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+			}
+
+			did, err := data.Stoid[DomainID](id)
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+			}
+
+			optModel, err := r.FindByID(did)
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+			}
+
+			if optModel.IsNone() {
+				// was deleted in the meantime
+				continue
+			}
+
+			if !yield(optModel.Unwrap(), nil) {
 				return
 			}
-		}
 
-		did, err := data.Stoid[DomainID](id)
-		if err != nil {
-			if !yield(zeroDomain, err) {
-				return
-			}
 		}
-
-		optModel, err := r.FindByID(did)
-		if err != nil {
-			if !yield(zeroDomain, err) {
-				return
-			}
-		}
-
-		if optModel.IsNone() {
-			// was deleted in the meantime
-			continue
-		}
-
-		if !yield(optModel.Unwrap(), nil) {
-			return
-		}
-
 	}
 }
 
@@ -188,7 +190,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Del
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Delete(predicate func(DomainModel) (bool, error)) error {
 	var firstErr error
-	r.Each(func(d DomainModel, err error) bool {
+	r.All()(func(d DomainModel, err error) bool {
 		doDelete, err := predicate(d)
 		if err != nil {
 			if errors.Is(err, data.SkipAll) {

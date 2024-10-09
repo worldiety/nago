@@ -138,7 +138,7 @@ func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 		return xiter.Empty2[User, error]()
 	}
 
-	return s.users.Each
+	return s.users.All()
 }
 
 func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq2[Permission, error] {

@@ -76,13 +76,12 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// DeleteByEntity is like DeleteByID but provides a congruent API.
 	DeleteByEntity(E) error
 
-	// Each loops over each item without any particular order until the callee returns false or all entries have
+	// All loops over each item without any particular order until the callee returns false or all entries have
 	// been visited.
 	// The order of traversal is undefined and may be even different between subsequent calls.
 	// Implementations with transaction support must find within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
-	// This is a [iter.Seq2].
-	Each(yield func(E, error) bool)
+	All() iter.Seq2[E, error]
 
 	// Count returns the estimated amount of entries. Due to concurrent usage or pending transaction, this
 	// value is only a kind of snapshot view and a subsequent iteration of all values may return

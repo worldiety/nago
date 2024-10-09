@@ -27,7 +27,7 @@ func (s *Service) AllRoles(subject auth.Subject) iter.Seq2[Role, error] {
 		return xiter.Empty2[Role, error]()
 	}
 
-	return s.roles.Each
+	return s.roles.All()
 }
 
 func (s *Service) CreateRole(subject auth.Subject, role Role) error {

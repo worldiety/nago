@@ -121,13 +121,13 @@ func main() {
 					return &model.FavoriteColor
 				}),
 
-				crud.OneToMany("Friendos", persons.Each, func(t Person) core.View {
+				crud.OneToMany("Friendos", persons.All(), func(t Person) core.View {
 					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
 				}, func(model *Person) *[]PID {
 					return &model.Friends
 				}),
 
-				crud.OneToOne("Best Friend", persons.Each, func(t Person) core.View {
+				crud.OneToOne("Best Friend", persons.All(), func(t Person) core.View {
 					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
 				}, func(model *Person) *std.Option[PID] {
 					return &model.BestFriend
@@ -174,7 +174,7 @@ func main() {
 								return "", persons.Save(person)
 							}),
 						).
-						FindAll(persons.Each).
+						FindAll(persons.All()).
 						Title("Personen"),
 				),
 			).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth())

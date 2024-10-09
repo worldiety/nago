@@ -37,7 +37,7 @@ func (p *PubSub) Publish(m any) {
 		return
 	}
 
-	for _, subscriber := range subscribers.All {
+	for _, subscriber := range subscribers.All() {
 		go func() {
 			if r := recover(); r != nil {
 				slog.Error("PubSub panic on publish message", "err", r, "msg", m, "subscriber", subscriber)

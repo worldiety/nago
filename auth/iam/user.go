@@ -101,33 +101,17 @@ func (s *Service) userByMail(email Email) (std.Option[User], error) {
 		return std.None[User](), fmt.Errorf("invalid email: %v", email)
 	}
 
-	found := false
-	var usr User
-	var err error
-	s.users.Each(func(user User, e error) bool {
-		if e != nil {
-			err = e
-			return false
+	for user, err := range s.users.All() {
+		if err != nil {
+			return std.None[User](), err
 		}
 
 		if user.Email == lcMail {
-			found = true
-			usr = user
-			return false
+			return std.Some(user), nil
 		}
-
-		return true
-	})
-
-	if err != nil {
-		return std.None[User](), err
 	}
 
-	if !found {
-		return std.None[User](), nil
-	}
-
-	return std.Some(usr), nil
+	return std.None[User](), nil
 }
 
 // authenticates checks if the given mail and password can be authenticated against the email login identifier.
