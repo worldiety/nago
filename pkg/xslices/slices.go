@@ -32,3 +32,20 @@ func Collect2[E any](s iter.Seq2[E, error]) ([]E, error) {
 
 	return res, nil
 }
+
+// ValuesWithError creates an iter.Seq2 which either yields one err if not nil and otherwise yields all slice elements.
+func ValuesWithError[Slice ~[]Elem, Elem any](s Slice, err error) iter.Seq2[Elem, error] {
+	return func(yield func(Elem, error) bool) {
+		var zero Elem
+		if err != nil {
+			yield(zero, err)
+			return
+		}
+
+		for _, v := range s {
+			if !yield(v, nil) {
+				return
+			}
+		}
+	}
+}
