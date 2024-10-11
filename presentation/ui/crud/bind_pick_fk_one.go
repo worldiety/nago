@@ -70,6 +70,10 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return picker.Picker[T](label, values, state).
 				Title(self.Label).
 				ItemRenderer(func(t T) core.View {

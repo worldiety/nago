@@ -35,6 +35,10 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return timepicker.Picker[T](label, scaleToSeconds, state).
 				Format(format).
 				Days(days).

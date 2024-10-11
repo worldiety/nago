@@ -29,6 +29,10 @@ func Password[E any, T ~string](label string, property func(model *E) *T) Field[
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return ui.PasswordField(label).
 				InputValue(state).
 				Disabled(self.Disabled).

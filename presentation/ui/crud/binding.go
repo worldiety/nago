@@ -53,6 +53,13 @@ type Field[T any] struct {
 	// Stringer is used to create a string representation of the field. This is used for filtering or
 	// other kinds of rendering.
 	Stringer func(e T) string
+
+	// may be nil
+	parent *Binding[T]
+}
+
+func (f Field[T]) requiresValidation() bool {
+	return f.parent != nil && f.parent.forceValidation != nil && f.parent.forceValidation.Get()
 }
 
 func (f Field[T]) ReadOnly(readOnly bool) Field[T] {
@@ -96,25 +103,30 @@ func (f Field[T]) WithStringer(fn func(e T) string) Field[T] {
 }
 
 type Binding[T any] struct {
-	id     string
-	wnd    core.Window
-	fields []Field[T]
+	id                      string
+	wnd                     core.Window
+	fields                  []Field[T]
+	fieldValidationObserver map[int]func(field Field[T], errorText string, infrastructureError error)
+	lastObserverId          int
+	forceValidation         *core.State[bool]
 }
 
 // NewBinding allocates a new binding using the given window.
 // See also [Binding.SetID].
 func NewBinding[T any](wnd core.Window) *Binding[T] {
 	return &Binding[T]{
-		wnd: wnd,
+		wnd:             wnd,
+		forceValidation: core.AutoState[bool](wnd), // TODO this may break to easily in loops etc.
 	}
 }
 
 // Inherit returns a defensive copy with the new id set.
 func (b *Binding[T]) Inherit(id string) *Binding[T] {
 	cpy := &Binding[T]{
-		id:     id,
-		wnd:    b.wnd,
-		fields: make([]Field[T], 0, len(b.fields)),
+		id:              id,
+		wnd:             b.wnd,
+		fields:          make([]Field[T], 0, len(b.fields)),
+		forceValidation: b.forceValidation,
 	}
 
 	for _, field := range b.fields {
@@ -134,6 +146,45 @@ func (b *Binding[T]) SetDisabledByLabel(label string, disabled bool) {
 	}
 }
 
+// AddFieldValidationObserver is called for each validated field event.
+func (b *Binding[T]) AddFieldValidationObserver(onFieldValidated func(field Field[T], errorText string, infrastructureError error)) (remove func()) {
+	b.lastObserverId++
+	hnd := b.lastObserverId
+	if b.fieldValidationObserver == nil {
+		b.fieldValidationObserver = make(map[int]func(field Field[T], errorText string, infrastructureError error))
+	}
+
+	b.fieldValidationObserver[hnd] = onFieldValidated
+
+	return func() {
+		delete(b.fieldValidationObserver, hnd)
+	}
+}
+
+// ResetValidation switches validation behavior back to default. See [Binding.Validates].
+func (b *Binding[T]) ResetValidation() {
+	b.forceValidation.Set(false)
+}
+
+// Validates triggers the validation of all fields. This is required, to trigger form validation before saving stuff.
+// This method triggers from now on immediate field validations. Use [Binding.ResetValidation] to reset to default
+// behavior, in which the user has to make the first entering.
+func (b *Binding[T]) Validates(value T) bool {
+	b.forceValidation.Set(true)
+
+	anyValidationErr := false
+	for _, field := range b.fields {
+		if fn := field.Validate; fn != nil {
+			if msg, err := fn(value); msg != "" || err != nil {
+				anyValidationErr = true
+				break
+			}
+		}
+	}
+
+	return !anyValidationErr
+}
+
 // FieldByLabel returns the first field value which has the given label
 func (b *Binding[T]) FieldByLabel(label string) (Field[T], bool) {
 	for _, field := range b.fields {
@@ -149,6 +200,7 @@ func (b *Binding[T]) FieldByLabel(label string) (Field[T], bool) {
 func (b *Binding[T]) UpdateFieldByLabel(field Field[T]) {
 	for i, f := range b.fields {
 		if f.Label == field.Label {
+			field.parent = b
 			b.fields[i] = field
 			return
 		}
@@ -178,6 +230,7 @@ func (b *Binding[T]) Add(fields ...Field[T]) *Binding[T] {
 			field.ID = fmt.Sprintf("crud.field.%T@%s.%d", zero, b.id, i+off)
 		}
 		field.Window = b.wnd
+		field.parent = b
 		b.fields = append(b.fields, field)
 	}
 
@@ -201,5 +254,12 @@ func handleValidation[E any](self Field[E], entity *core.State[E], errMsg *core.
 		}
 
 		errMsg.Set(errText)
+
+		if self.parent != nil {
+			for _, f := range self.parent.fieldValidationObserver {
+				f(self, errText, err)
+			}
+
+		}
 	}
 }

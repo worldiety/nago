@@ -50,6 +50,8 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 				Form(subBnd, entityState),
 			).Frame(ui.Frame{}.FullWidth())
 		}), formPresented, alert.Cancel(func() {
+			bnd.ResetValidation()
+			stateErrMsg.Set("")
 			entityState.Set(initial)
 		}), alert.Save(func() bool {
 			errMsg, err := createFn(entityState.Get())
@@ -70,6 +72,8 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 			}
 
 			entityState.Set(initial)
+			stateErrMsg.Set("")
+			bnd.ResetValidation()
 			return true
 		})),
 

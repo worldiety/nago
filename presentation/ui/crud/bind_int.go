@@ -31,6 +31,10 @@ func Int[E any, T std.Integer](label string, property func(model *E) *T) Field[E
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return ui.IntField(label, state.Get(), state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).

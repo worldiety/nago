@@ -217,9 +217,9 @@ func (s *State[T]) Ptr() ora.Ptr {
 	return s.ptr
 }
 
-// From executes the given func if the State has been
+// Init executes the given func if the State has been
 // just initialized and is still invalid.
-func (s *State[T]) From(fn func() T) *State[T] {
+func (s *State[T]) Init(fn func() T) *State[T] {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -228,6 +228,11 @@ func (s *State[T]) From(fn func() T) *State[T] {
 		s.value = fn()
 	}
 	return s
+}
+
+// Deprecated: use Init as its name reflects better what happens
+func (s *State[T]) From(fn func() T) *State[T] {
+	return s.Init(fn)
 }
 
 //func DetachedState[T any]() *State[T] {

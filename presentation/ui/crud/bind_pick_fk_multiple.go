@@ -65,6 +65,10 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, 
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			textColor := ui.Color("")
 			if self.Disabled {
 				textColor = "ST0"

@@ -99,6 +99,12 @@ func main() {
 
 				crud.Int("Score", func(model *Person) *Score {
 					return &model.Score
+				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
+					if person.Score != 42 {
+						return "muss 42 sein", nil
+					}
+
+					return "", nil
 				}),
 
 				crud.Float("Grade", func(model *Person) *Grade {
@@ -166,10 +172,16 @@ func main() {
 				crud.View[Person, PID](
 					crud.Options[Person, PID](bnd).
 						Actions(
-							crud.ButtonCreate[Person](bnd, Person{ID: data.RandIdent[PID]()}, func(person Person) (errorText string, infrastructureError error) {
+							crud.ButtonCreate[Person](bnd, Person{ID: "do not randomize here"}, func(person Person) (errorText string, infrastructureError error) {
+								if !bnd.Validates(person) {
+									return "irgendein validation fehler, gugg hin", nil
+								}
+
 								if person.Firstname == "" {
 									return "Vorname darf nicht leer sein", nil
 								}
+
+								person.ID = data.RandIdent[PID]() // create a unique ID here
 
 								return "", persons.Save(person)
 							}),

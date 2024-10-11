@@ -32,6 +32,10 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return ui.TextField(label, state.String()).
 				InputValue(state).
 				Disabled(self.Disabled).

@@ -45,6 +45,10 @@ func PickOne[E any, T any](label string, values []T, property func(model *E) *st
 				handleValidation(self, entity, errState)
 			})
 
+			if self.requiresValidation() {
+				state.Notify()
+			}
+
 			return picker.Picker[T](label, values, state).
 				Title(self.Label).
 				MultiSelect(false).
