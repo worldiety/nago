@@ -16,7 +16,7 @@ body {
 body *,
 body *::after,
 body *::before {
-	@apply text-M8 border-A0 outline-A0;
+	@apply text-M8 border-M8 outline-M8;
 }
 
 @media screen(md) {

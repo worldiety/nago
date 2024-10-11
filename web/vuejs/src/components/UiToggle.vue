@@ -56,9 +56,11 @@ function onClick() {
 	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border bg-transparent transition-transform content-[''];
 }
 
+
 .toggle-switch.toggle-switch-checked {
-	@apply after:translate-x-[105%] after:border-I0 after:bg-I0;
+	@apply after:translate-x-[105%] after:border-M8 after:border-M8;
 }
+
 
 .toggle-switch-container {
 	@apply inline-block rounded-full;

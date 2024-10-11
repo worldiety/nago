@@ -325,7 +325,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
 		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(ui.A0).Width(ui.L1).Radius("0.375rem")).
+		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))
 
 	return ui.VStack(

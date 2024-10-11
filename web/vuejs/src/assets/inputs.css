@@ -13,12 +13,12 @@ input[type="radio"]:checked {
 }
 
 input[type="checkbox"] {
-	@apply grid border border-black appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
+	@apply grid border border-M8 appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
 	font: inherit;
 }
 
 input[type="radio"] {
-	@apply grid border border-black rounded-full appearance-none bg-transparent place-content-center w-4 h-4 m-0;
+	@apply grid border border-M8 rounded-full appearance-none bg-transparent place-content-center w-4 h-4 m-0;
 }
 
 input[type="radio"]:hover {
