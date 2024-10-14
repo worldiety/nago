@@ -91,3 +91,8 @@ const (
 	// ST0 is the source disabled text color variable name.
 	ST0 Color = "ST0"
 )
+
+// additional alias names for base colors
+const (
+	ColorCardBody = M4
+)

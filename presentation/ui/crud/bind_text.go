@@ -1,7 +1,6 @@
 package crud
 
 import (
-	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"strings"
@@ -27,7 +26,6 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 				f := property(&tmp)
 				*f = T(newValue)
 				entity.Set(tmp)
-				fmt.Println("observe state changed", newValue)
 
 				handleValidation(self, entity, errState)
 			})

@@ -56,6 +56,9 @@ type Field[T any] struct {
 
 	// may be nil
 	parent *Binding[T]
+
+	// metaRefID is used by the grouping fields hack, like [Section]
+	metaRefID string
 }
 
 func (f Field[T]) requiresValidation() bool {
