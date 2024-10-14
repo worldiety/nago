@@ -194,7 +194,8 @@ function fileImportRequested(evt: Event): void {
 		input.accept = msg.allowedMimeTypes.join(",")
 	}
 	document.body.appendChild(input);
-	input.click()
+	input.showPicker()
+//	input.click()
 	document.body.removeChild(input);
 }
 
