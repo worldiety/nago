@@ -27,8 +27,8 @@ func Row[E any](cols ...FormCol[E]) []Field[E] {
 	return fakeFormFields("", rowStack(cols...), tmp...)
 }
 
-func rowStack[E any](cols ...FormCol[E]) func(views ...core.View) ui.DecoredView {
-	return func(views ...core.View) ui.DecoredView {
+func rowStack[E any](cols ...FormCol[E]) func(bnd *Binding[E], views ...core.View) ui.DecoredView {
+	return func(bnd *Binding[E], views ...core.View) ui.DecoredView {
 		cells := make([]ui.TGridCell, 0, len(cols))
 		widths := make([]ui.Length, 0, len(cells))
 		for idx, col := range cols {

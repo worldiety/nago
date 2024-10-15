@@ -69,6 +69,7 @@ func main() {
 				}).WithSupportingText("Gib Deinen Namen an"),
 			)
 
+			// assemble complex and nested section with rows
 			var noteSectionFields []crud.Field[Event]
 			noteSectionFields = append(noteSectionFields,
 				crud.Text("Note1", func(entity *Event) *string {
@@ -101,6 +102,21 @@ func main() {
 				crud.FormColumn(crud.Text("Note3", func(entity *Event) *string {
 					return &entity.Note3
 				}), 0.66),
+			)...)
+
+			noteSectionFields = append(noteSectionFields, crud.HLine[Event]())
+
+			noteSectionFields = append(noteSectionFields, crud.Option(
+				"Optionale Felder",
+				false,
+				crud.Row(
+					crud.FormColumn(crud.Text("Note1", func(entity *Event) *string {
+						return &entity.Note1
+					}), 0.33),
+					crud.FormColumn(crud.Text("Note3", func(entity *Event) *string {
+						return &entity.Note3
+					}), 0.66),
+				)...,
 			)...)
 
 			bnd.Add(crud.Section("Notizen",

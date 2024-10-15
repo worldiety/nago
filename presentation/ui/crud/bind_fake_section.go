@@ -29,7 +29,7 @@ func Section[E any](label string, fields ...Field[E]) []Field[E] {
 	return fakeFormFields(label, section, fields...)
 }
 
-func fakeFormFields[E any](label string, render func(views ...core.View) ui.DecoredView, fields ...Field[E]) []Field[E] {
+func fakeFormFields[E any](label string, render func(bnd *Binding[E], views ...core.View) ui.DecoredView, fields ...Field[E]) []Field[E] {
 	modifiedFields := make([]Field[E], 0, len(fields))
 	formRenderers := make([]func(self Field[E], entity *core.State[E]) ui.DecoredView, 0, len(fields))
 	for _, field := range fields {
@@ -50,7 +50,7 @@ func fakeFormFields[E any](label string, render func(views ...core.View) ui.Deco
 			if label != "" {
 				views = append(views, ui.VStack(
 					ui.Text(label).Font(ui.Title),
-					ui.HLine(),
+					ui.HLineAccent(),
 				))
 			}
 
@@ -73,7 +73,7 @@ func fakeFormFields[E any](label string, render func(views ...core.View) ui.Deco
 				}
 			}
 
-			return render(views...)
+			return render(self.parent, views...)
 		},
 	})
 
@@ -81,7 +81,7 @@ func fakeFormFields[E any](label string, render func(views ...core.View) ui.Deco
 	return res
 }
 
-func section(views ...core.View) ui.DecoredView {
+func section[E any](bnd *Binding[E], views ...core.View) ui.DecoredView {
 	return ui.VStack(
 		views...,
 	).Alignment(ui.TopLeading).Gap(ui.L12).BackgroundColor(ui.ColorCardBody).Border(ui.Border{
