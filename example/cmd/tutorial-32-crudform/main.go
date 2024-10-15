@@ -53,7 +53,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		events := application.SloppyRepository[Event, EventID](cfg)
-		//helfers := application.SloppyRepository[Helfer, HelferID](cfg)
+		helfers := application.SloppyRepository[Helfer, HelferID](cfg)
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Event](wnd)
@@ -119,6 +119,8 @@ func main() {
 				)...,
 			)...)
 
+			noteSectionFields = append(noteSectionFields)
+
 			bnd.Add(crud.Section("Notizen",
 				noteSectionFields...,
 			)...)
@@ -132,6 +134,33 @@ func main() {
 					return &entity.Note3
 				}), 0.66),
 			)...)
+
+			// foreign key helper
+			helferBnd := crud.NewBinding[Helfer](wnd).Add(
+				crud.Text("Vorname", func(model *Helfer) *string {
+					return &model.Name
+				}),
+			)
+
+			bnd.Add(
+				crud.Section[Event]("", crud.OneToManyTable[Event, Helfer, HelferID](
+					"Helfer",
+					helfers.All(),
+					helferBnd,
+					Helfer{},
+					func(helfer Helfer) (errorText string, infrastructureError error) {
+						helfer.ID = data.RandIdent[HelferID]()
+						err := helfers.Save(helfer)
+						return "", err
+					},
+					func(helfer Helfer) core.View {
+						return ui.Text(helfer.Name)
+					},
+					func(model *Event) *[]HelferID {
+						return &model.GeplanteHelfer
+					},
+				))...,
+			)
 
 			return ui.VStack(
 				crud.View[Event, EventID](

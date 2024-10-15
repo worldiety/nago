@@ -94,5 +94,13 @@ const (
 
 // additional alias names for base colors
 const (
+	// ColorCardBody represents the variable name which contains the conventional card body color derived from
+	// the main color.
 	ColorCardBody = M4
+
+	// ColorAccent represents the variable name containing the exact accent color.
+	ColorAccent Color = A0
+
+	// ColorLine represents the variable name containing the conventional color for a line derived from the main color.
+	ColorLine = M5
 )

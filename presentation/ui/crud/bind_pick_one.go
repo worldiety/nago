@@ -20,7 +20,7 @@ func PickOne[E any, T any](label string, values []T, property func(model *E) *st
 				var tmp E
 				tmp = entity.Get()
 				optT := *property(&tmp)
-				if optT.Valid {
+				if optT.IsSome() {
 					return []T{optT.Unwrap()}
 				}
 
@@ -85,7 +85,7 @@ func PickOne[E any, T any](label string, values []T, property func(model *E) *st
 }
 
 func fmtOptOne[T any](v std.Option[T]) string {
-	if v.Valid {
+	if v.IsSome() {
 		return fmt.Sprintf("%v", v.Unwrap())
 	}
 

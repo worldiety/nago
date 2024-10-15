@@ -31,6 +31,7 @@ type TPicker[T any] struct {
 	selectAllSupported   bool
 	quickFilterSupported bool
 	disabled             bool
+	detailView           core.View
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -89,12 +90,16 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 	})
 
 	// init the checkbox state exactly once
-	c.selectAllCheckbox.From(func() bool {
+	c.selectAllCheckbox.Init(func() bool {
 		c.syncCheckboxStates(c.targetSelectedState)
 		return false
 	})
 
 	return c
+}
+
+func (c TPicker[T]) DialogPresented() *core.State[bool] {
+	return c.pickerPresented
 }
 
 func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {
@@ -110,6 +115,12 @@ func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {
 		c.checkboxStates[i].Set(found)
 	}
 
+}
+
+// DetailView is optional and placed between the picker section and the button footer.
+func (c TPicker[T]) DetailView(detailView core.View) TPicker[T] {
+	c.detailView = detailView
+	return c
 }
 
 func (c TPicker[T]) Padding(padding ui.Padding) ui.DecoredView {
@@ -215,6 +226,10 @@ func (c TPicker[T]) pickerTable() core.View {
 		quickSearchHelpText = fmt.Sprintf("%d Einträge durchsuchen", len(c.values))
 	}
 
+	var noEntries core.View
+	if len(c.values) == 0 {
+		noEntries = ui.HStack(ui.Text("Es sind noch keine Einträge vorhanden."))
+	}
 	quickFilterVisible := c.quickFilterSupported && len(c.values) > 10
 	selectAllVisible := c.multiselect.Get() && c.selectAllSupported && quickFilterVisible
 	return ui.VStack(
@@ -252,21 +267,14 @@ func (c TPicker[T]) pickerTable() core.View {
 			}
 			return table
 		}),
-	)
+		noEntries,
+		c.detailView,
+	).Frame(ui.Frame{}.FullWidth())
 }
 
-func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
-	colors := core.Colors[ui.Colors](ctx.Window())
-	borderColor := ui.Color("")
-	backgroundColor := ui.Color("")
-	textColor := ui.Color("")
-	if c.disabled {
-		borderColor = ""
-		backgroundColor = colors.Disabled
-		textColor = colors.DisabledText
-	} else {
-		borderColor = colors.I1.WithBrightness(75)
-	}
+// Dialog returns the dialog view as if pressed on the actual button.
+func (c TPicker[T]) Dialog() core.View {
+	textColor := ui.Color(ui.ST0)
 
 	if c.renderPicked == nil {
 		c.renderPicked = func(t []T) core.View {
@@ -301,18 +309,32 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		}
 	}
 
+	return alert.Dialog(c.title, c.pickerTable(), c.pickerPresented, alert.Cancel(func() {
+		c.currentSelectedState.Set(c.targetSelectedState.Get())
+		c.syncCheckboxStates(c.targetSelectedState)
+	}), alert.Custom(func(close func(closeDlg bool)) core.View {
+		// positive case
+		return ui.PrimaryButton(func() {
+			c.targetSelectedState.Set(c.currentSelectedState.Get())
+			c.targetSelectedState.Notify() // invoke observers
+			close(true)
+		}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
+	}))
+}
+
+func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
+	colors := core.Colors[ui.Colors](ctx.Window())
+	borderColor := ui.Color("")
+	backgroundColor := ui.Color("")
+	if c.disabled {
+		borderColor = ""
+		backgroundColor = colors.Disabled
+	} else {
+		borderColor = colors.I1.WithBrightness(75)
+	}
+
 	inner := ui.HStack(
-		alert.Dialog(c.title, c.pickerTable(), c.pickerPresented, alert.Cancel(func() {
-			c.currentSelectedState.Set(c.targetSelectedState.Get())
-			c.syncCheckboxStates(c.targetSelectedState)
-		}), alert.Custom(func(close func(closeDlg bool)) core.View {
-			// positive case
-			return ui.PrimaryButton(func() {
-				c.targetSelectedState.Set(c.currentSelectedState.Get())
-				c.targetSelectedState.Notify() // invoke observers
-				close(true)
-			}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
-		})),
+		c.Dialog(),
 		c.renderPicked(c.targetSelectedState.Get()),
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),

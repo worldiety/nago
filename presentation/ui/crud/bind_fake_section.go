@@ -50,7 +50,7 @@ func fakeFormFields[E any](label string, render func(bnd *Binding[E], views ...c
 			if label != "" {
 				views = append(views, ui.VStack(
 					ui.Text(label).Font(ui.Title),
-					ui.HLineAccent(),
+					ui.HLineWithColor(ui.ColorAccent),
 				))
 			}
 

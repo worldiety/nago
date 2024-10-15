@@ -31,10 +31,20 @@ func Optional[T any](fac ElementViewFactory[T], predicate func(T) bool) ElementV
 }
 
 func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial E, createFn func(E) (errorText string, infrastructureError error)) core.View {
+	dlg, formPresented := CreateDialog(bnd, initial, createFn, nil, nil)
+	return ui.VStack(
+		dlg,
+		ui.PrimaryButton(func() {
+			formPresented.Set(true)
+		},
+		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
+}
+
+func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial E, createFn func(E) (errorText string, infrastructureError error), onCancelled, onSaved func()) (dlg core.View, presented *core.State[bool]) {
 	wnd := bnd.wnd
 	// we have a unique state problem here, at least we can have multiple crud views with distinct types
 	var typ = fmt.Sprintf("%T", initial)
-	entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.create.entity.%s", typ)).From(func() E {
+	entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.create.entity.%s", typ)).Init(func() E {
 		return initial
 	})
 	formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.create.form.%s", typ))
@@ -53,6 +63,9 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 			bnd.ResetValidation()
 			stateErrMsg.Set("")
 			entityState.Set(initial)
+			if onCancelled != nil {
+				onCancelled()
+			}
 		}), alert.Save(func() bool {
 			errMsg, err := createFn(entityState.Get())
 			if err != nil {
@@ -74,13 +87,12 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 			entityState.Set(initial)
 			stateErrMsg.Set("")
 			bnd.ResetValidation()
+			if onSaved != nil {
+				onSaved()
+			}
 			return true
-		})),
+		}))), formPresented
 
-		ui.PrimaryButton(func() {
-			formPresented.Set(true)
-		},
-		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
 }
 
 func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {

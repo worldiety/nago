@@ -11,11 +11,10 @@ type TDivider struct {
 	padding ora.Padding
 }
 
-// HLineAccent configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
-// The color is accent.
-func HLineAccent() TDivider {
+// HLineWithColor configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
+func HLineWithColor(c Color) TDivider {
 	return TDivider{}.
-		Border(Border{TopWidth: "1px", TopColor: "A0"}).
+		Border(Border{TopWidth: "1px", TopColor: c}).
 		Frame(Frame{}.FullWidth()).
 		Padding(Padding{}.Vertical(L16))
 
@@ -31,11 +30,10 @@ func HLine() TDivider {
 
 }
 
-// VLineAccent configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
-// The color is accent.
-func VLineAccent() TDivider {
+// VLineWithColor configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
+func VLineWithColor(c Color) TDivider {
 	return TDivider{}.
-		Border(Border{TopWidth: "1px", TopColor: "A0"}).
+		Border(Border{TopWidth: "1px", TopColor: c}).
 		Frame(Frame{}.FullHeight()).
 		Padding(Padding{}.Horizontal(L16))
 

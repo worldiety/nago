@@ -35,10 +35,10 @@ func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 		If(c.title != nil, HStack(c.title).Alignment(Leading).BackgroundColor(colors.M4).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Top: L12, Bottom: L12})),
 		VStack(
 			c.body,
-			If(c.footer != nil, HLine()),
+			If(c.footer != nil, HLineWithColor(ColorAccent)),
 			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
 		).
-			Frame(Frame{MaxWidth: L400}.FullWidth()).
+			Frame(Frame{MaxWidth: "35rem"}.FullWidth()).
 			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 	).
 		BackgroundColor(colors.M1).

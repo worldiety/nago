@@ -2,7 +2,6 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
 )
 
 type DecoredView interface {
@@ -20,6 +19,15 @@ type DecoredView interface {
 // This can be used, to more efficiently post-pone resource allocations in conditional renderings.
 type Composable func() core.View
 
-func (c Composable) Render(context core.RenderContext) ora.Component {
+func (c Composable) Render(context core.RenderContext) core.RenderNode {
+	if c == nil {
+		return nil
+	}
+
+	v := c()
+	if v == nil {
+		return nil
+	}
+
 	return c().Render(context)
 }
