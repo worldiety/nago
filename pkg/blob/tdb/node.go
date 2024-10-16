@@ -2,10 +2,10 @@ package tdb
 
 import (
 	"errors"
+	"github.com/rogpeppe/go-internal/lockedfile"
 	"go.wdy.de/nago/pkg/xbytes"
 	"hash/crc32"
 	"io"
-	"os"
 )
 
 var InvalidNodeType = errors.New("invalid Node type")
@@ -19,7 +19,7 @@ const (
 )
 
 type Node struct {
-	f         *os.File
+	f         *lockedfile.File
 	kind      nodeKind
 	size      uint32
 	crc       uint32

@@ -55,6 +55,23 @@ func main() {
 		events := application.SloppyRepository[Event, EventID](cfg)
 		helfers := application.SloppyRepository[Helfer, HelferID](cfg)
 
+		/*	go func() {
+				for range 1000 {
+					events.Save(Event{ID: data.RandIdent[EventID]()})
+					time.Sleep(100 * time.Millisecond)
+					helfers.Save(Helfer{ID: data.RandIdent[HelferID]()})
+				}
+			}()
+
+			go func() {
+				for range 500 {
+					events.Save(Event{ID: data.RandIdent[EventID]()})
+					time.Sleep(10 * time.Millisecond)
+					helfers.Save(Helfer{ID: data.RandIdent[HelferID]()})
+				}
+				os.Exit(-1)
+			}()*/
+
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Event](wnd)
 			bnd.Add(

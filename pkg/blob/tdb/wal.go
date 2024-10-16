@@ -3,6 +3,7 @@ package tdb
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/rogpeppe/go-internal/lockedfile"
 	"go.wdy.de/nago/pkg/xbytes"
 	"io"
 	"iter"
@@ -13,15 +14,16 @@ import (
 	"time"
 )
 
-func OpenFile(path string) (*os.File, error) {
-	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm)
+func OpenFile(path string) (*lockedfile.File, error) {
+	//return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	return lockedfile.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm)
 }
 
 // WAL is our write ahead log. it is synchronized (resp. single thread),
 // so that we can re-use our buffer and become defacto gc-less. We also write without any fixed
 // block size, thus we cannot reserve holes for concurrent block allocation strategies.
 type WAL struct {
-	f              *os.File
+	f              *lockedfile.File
 	tx             atomic.Uint64
 	readlock       sync.Mutex
 	writelock      sync.Mutex
@@ -43,7 +45,7 @@ func OpenWAL(path string, replay func(entry *Node)) (*WAL, error) {
 
 // NewWAL creates a new WAL instance based on the given file. Note, that you must not issue any read/write calls from
 // the replay func.
-func NewWAL(f *os.File, replay func(entry *Node)) (*WAL, error) {
+func NewWAL(f *lockedfile.File, replay func(entry *Node)) (*WAL, error) {
 	w := &WAL{
 		f:              f,
 		buf:            &xbytes.Buffer{},

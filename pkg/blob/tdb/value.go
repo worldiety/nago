@@ -2,12 +2,13 @@ package tdb
 
 import (
 	"fmt"
+	"github.com/rogpeppe/go-internal/lockedfile"
 	"io"
 	"os"
 )
 
 type Value struct {
-	f      *os.File
+	f      *lockedfile.File
 	offset int64
 	len    uint32
 }
