@@ -9,6 +9,10 @@ type Builder[T any] struct {
 	tmp []T
 }
 
+func NewBuilder[T any]() *Builder[T] {
+	return &Builder[T]{}
+}
+
 func (b *Builder[T]) Append(v ...T) *Builder[T] {
 	b.tmp = append(b.tmp, v...)
 	return b
