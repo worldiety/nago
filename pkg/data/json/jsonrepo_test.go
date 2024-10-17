@@ -32,7 +32,7 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 	t.Run("fs", func(t *testing.T) {
 		testSuite(t, NewSloppyJSONRepository[Person, string](unwrap(fs.NewBlobStore(t.TempDir()))))
 	})
-	
+
 	t.Run("tdb", func(t *testing.T) {
 		db, err := tdb.Open(filepath.Join(t.TempDir()))
 		if err != nil {
@@ -176,7 +176,7 @@ func testSuite(t interface {
 	}
 
 	var tmp []Person
-	repo.Each(func(person Person, err error) bool {
+	repo.All()(func(person Person, err error) bool {
 		tmp = append(tmp, person)
 		if err != nil {
 			t.Fatal(err)

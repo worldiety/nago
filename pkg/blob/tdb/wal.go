@@ -237,9 +237,14 @@ func (w *WAL) SetWithTx(bucket, key, value []byte, tx uint64) (Value, error) {
 }
 
 func (w *WAL) DeleteWithTx(bucket, key []byte, tx uint64) error {
+	if w.debugTx.Load() > tx {
+		panic("debug tx is smaller than tx to write")
+	}
+	w.debugTx.Store(tx)
+
 	n := Node{
 		kind:   removeKeyValue,
-		tx:     w.tx.Add(1),
+		tx:     tx,
 		bucket: bucket,
 		key:    key,
 	}
