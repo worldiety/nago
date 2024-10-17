@@ -149,9 +149,9 @@ func main() {
 					return &model.Vacation.End
 				}),
 
-				crud.Time("Arbeitszeit", 1, false, true, true, false, timepicker.DecomposedFormat, func(model *Person) *TimeInSec {
+				crud.Time("Arbeitszeit", 1, false, true, true, false, timepicker.DecomposedFormat, crud.Ptr(func(model *Person) *TimeInSec {
 					return &model.WorkDuration
-				}),
+				})),
 
 				crud.AggregateActions("Optionen",
 					crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error {

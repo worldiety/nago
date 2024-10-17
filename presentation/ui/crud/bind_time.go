@@ -7,19 +7,19 @@ import (
 	"go.wdy.de/nago/presentation/ui/timepicker"
 )
 
-func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours, minutes, seconds bool, format timepicker.PickerFormat, property func(model *E) *T) Field[E] {
+func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours, minutes, seconds bool, format timepicker.PickerFormat, property Property[E, T]) Field[E] {
 	formatTime := func(entity E) string {
-		return timepicker.Format[T](scaleToSeconds, days, hours, minutes, seconds, format, *property(&entity))
+		return timepicker.Format[T](scaleToSeconds, days, hours, minutes, seconds, format, property.Get(&entity))
 	}
 
 	return Field[E]{
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[T](self.Window, self.ID+"-form.local").From(func() T {
+			state := core.StateOf[T](self.Window, self.ID+"-form.local").Init(func() T {
 				var tmp E
 				tmp = entity.Get()
-				return T(*property(&tmp))
+				return property.Get(&tmp)
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -28,8 +28,7 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 			state.Observe(func(newValue T) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, newValue)
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -66,8 +65,8 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			return int(av - bv)
 		},
 		Stringer: func(e E) string {

@@ -51,6 +51,28 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
 	}
 
+	textColor := ui.Color(ui.ST0)
+
+	c.renderPicked = func(t []T) core.View {
+		switch len(t) {
+		case 0:
+			return ui.Text("nichts gewählt").Color(textColor)
+		case 1:
+			return ui.Text(fmt.Sprintf("%v", t[0])).Color(textColor)
+		default:
+			return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
+		}
+
+	}
+
+	c.renderToSelect = func(t T) core.View {
+		return ui.HStack(ui.Text(fmt.Sprintf("%v", t))).Padding(ui.Padding{}.Vertical(ui.L16))
+	}
+
+	c.stringer = func(t T) string {
+		return fmt.Sprintf("%v", t)
+	}
+
 	for i := range c.values {
 		c.checkboxStates = append(c.checkboxStates, core.DerivedState[bool](selectedState, fmt.Sprintf(".pck.cb-%d", i)).
 			Observe(func(newValue bool) {
@@ -274,33 +296,6 @@ func (c TPicker[T]) pickerTable() core.View {
 
 // Dialog returns the dialog view as if pressed on the actual button.
 func (c TPicker[T]) Dialog() core.View {
-	textColor := ui.Color(ui.ST0)
-
-	if c.renderPicked == nil {
-		c.renderPicked = func(t []T) core.View {
-			switch len(t) {
-			case 0:
-				return ui.Text("nichts gewählt").Color(textColor)
-			case 1:
-				return ui.Text(fmt.Sprintf("%v", t[0])).Color(textColor)
-			default:
-				return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
-			}
-
-		}
-	}
-
-	if c.renderToSelect == nil {
-		c.renderToSelect = func(t T) core.View {
-			return ui.HStack(ui.Text(fmt.Sprintf("%v", t))).Padding(ui.Padding{}.Vertical(ui.L16))
-		}
-	}
-
-	if c.stringer == nil {
-		c.stringer = func(t T) string {
-			return fmt.Sprintf("%v", t)
-		}
-	}
 
 	selectedCount := 0
 	for _, state := range c.checkboxStates {
