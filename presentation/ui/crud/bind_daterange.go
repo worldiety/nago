@@ -8,27 +8,31 @@ import (
 	"time"
 )
 
+type DateRangeOptions struct {
+	Label string
+}
+
 func DateRange[E any, T ~struct {
 	Day   int        // Year like 2024.
 	Month time.Month // Month in year, offset at 1.
 	Year  int        // Day of month, offset at 1.
-}](label string, propertyStart func(model *E) *T, propertyEnd func(model *E) *T) Field[E] {
+}](opts DateRangeOptions, propertyStart Property[E, T], propertyEnd Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			stateStart := core.StateOf[xtime.Date](self.Window, self.ID+"-form.start.local").From(func() xtime.Date {
+			stateStart := core.StateOf[xtime.Date](self.Window, self.ID+"-form.start.local").Init(func() xtime.Date {
 				var tmp E
 				tmp = entity.Get()
 
-				return xtime.Date(*propertyStart(&tmp))
+				return xtime.Date(propertyStart.Get(&tmp))
 			})
 
-			stateEnd := core.StateOf[xtime.Date](self.Window, self.ID+"-form.end.local").From(func() xtime.Date {
+			stateEnd := core.StateOf[xtime.Date](self.Window, self.ID+"-form.end.local").Init(func() xtime.Date {
 				var tmp E
 				tmp = entity.Get()
 
-				return xtime.Date(*propertyEnd(&tmp))
+				return xtime.Date(propertyEnd.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -37,8 +41,7 @@ func DateRange[E any, T ~struct {
 			stateStart.Observe(func(newValue xtime.Date) {
 				var tmp E
 				tmp = entity.Get()
-				f := propertyStart(&tmp)
-				*f = T(newValue)
+				propertyStart.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -47,14 +50,13 @@ func DateRange[E any, T ~struct {
 			stateEnd.Observe(func(newValue xtime.Date) {
 				var tmp E
 				tmp = entity.Get()
-				f := propertyEnd(&tmp)
-				*f = T(newValue)
+				propertyEnd.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
 			})
 
-			return ui.RangeDatePicker(label,
+			return ui.RangeDatePicker(opts.Label,
 				stateStart.Get(), stateStart,
 				stateEnd.Get(), stateEnd,
 			).
@@ -78,8 +80,8 @@ func DateRange[E any, T ~struct {
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *propertyStart(&a)
-			bv := *propertyStart(&b)
+			av := propertyStart.Get(&a)
+			bv := propertyStart.Get(&b)
 			if av == bv {
 				return 0
 			}
@@ -91,8 +93,8 @@ func DateRange[E any, T ~struct {
 			}
 		},
 		Stringer: func(e E) string {
-			valStart := *propertyStart(&e)
-			valEnd := *propertyEnd(&e)
+			valStart := propertyStart.Get(&e)
+			valEnd := propertyEnd.Get(&e)
 
 			strStart := ""
 			strEnd := ""

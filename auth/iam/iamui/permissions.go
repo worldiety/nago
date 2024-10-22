@@ -11,18 +11,18 @@ func Permissions(wnd core.Window, service *iam.Service) core.View {
 
 	bnd := crud.NewBinding[iam.Permission](wnd)
 	bnd.Add(
-		crud.Text("ID", func(model *iam.Permission) *string {
+		crud.Text(crud.TextOptions{Label: "ID"}, crud.Ptr(func(model *iam.Permission) *string {
 			tmp := (*model).Identity()
 			return &tmp
-		}),
-		crud.Text("Name", func(model *iam.Permission) *string {
+		})),
+		crud.Text(crud.TextOptions{Label: "Name"}, crud.Ptr(func(model *iam.Permission) *string {
 			tmp := (*model).Name()
 			return &tmp
-		}),
-		crud.Text("Beschreibung", func(model *iam.Permission) *string {
+		})),
+		crud.Text(crud.TextOptions{Label: "Beschreibung"}, crud.Ptr(func(model *iam.Permission) *string {
 			tmp := (*model).Desc()
 			return &tmp
-		}),
+		})),
 	)
 
 	opts := crud.Options(bnd).

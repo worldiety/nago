@@ -6,15 +6,21 @@ import (
 	"strings"
 )
 
-func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
+type TextOptions struct {
+	Label           string
+	KeyboardOptions ui.TKeyboardOptions
+	Lines           int
+}
+
+func Text[E any, T ~string](opts TextOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[string](self.Window, self.ID+"-form.local").From(func() string {
+			state := core.StateOf[string](self.Window, self.ID+"-form.local").Init(func() string {
 				var tmp E
 				tmp = entity.Get()
-				return string(*property(&tmp))
+				return string(property.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -23,8 +29,7 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 			state.Observe(func(newValue string) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -34,8 +39,10 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 				state.Notify()
 			}
 
-			return ui.TextField(label, state.String()).
+			return ui.TextField(opts.Label, state.String()).
 				InputValue(state).
+				Lines(opts.Lines).
+				KeyboardOptions(opts.KeyboardOptions).
 				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
@@ -43,13 +50,13 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.TableCell(ui.Text(string(v)))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
@@ -58,12 +65,12 @@ func Text[E any, T ~string](label string, property func(model *E) *T) Field[E] {
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			return strings.Compare(string(av), string(bv))
 		},
 		Stringer: func(e E) string {
-			return string(*property(&e))
+			return string(property.Get(&e))
 		},
 	}
 }

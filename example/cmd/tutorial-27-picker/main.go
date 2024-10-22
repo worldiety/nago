@@ -35,7 +35,7 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			enabled := core.AutoState[bool](wnd)
-			personState := core.AutoState[[]Person](wnd).From(func() []Person {
+			personState := core.AutoState[[]Person](wnd).Init(func() []Person {
 				return []Person{persons[5]}
 			})
 			personState.Observe(func(newValue []Person) {

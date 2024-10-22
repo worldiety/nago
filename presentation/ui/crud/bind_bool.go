@@ -6,15 +6,19 @@ import (
 	"strconv"
 )
 
-func Bool[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
+type BoolOptions struct {
+	Label string
+}
+
+func Bool[E any, T ~bool](opts BoolOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[bool](self.Window, self.ID+"-form.local").From(func() bool {
+			state := core.StateOf[bool](self.Window, self.ID+"-form.local").Init(func() bool {
 				var tmp E
 				tmp = entity.Get()
-				return bool(*property(&tmp))
+				return bool(property.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -23,14 +27,13 @@ func Bool[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
 			state.Observe(func(newValue bool) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
 			})
 
-			return ui.CheckboxField(label, state.Get()).
+			return ui.CheckboxField(opts.Label, state.Get()).
 				InputValue(state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
@@ -38,13 +41,13 @@ func Bool[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.TableCell(ui.Text(strconv.FormatBool(bool(v))))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
@@ -53,8 +56,8 @@ func Bool[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			if av && !bv {
 				return 1
 			}
@@ -66,20 +69,20 @@ func Bool[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
 			return 0
 		},
 		Stringer: func(e E) string {
-			return strconv.FormatBool(bool(*property(&e)))
+			return strconv.FormatBool(bool(property.Get(&e)))
 		},
 	}
 }
 
-func BoolToggle[E any, T ~bool](label string, property func(model *E) *T) Field[E] {
+func BoolToggle[E any, T ~bool](opts BoolOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[bool](self.Window, self.ID+"-form.local").From(func() bool {
+			state := core.StateOf[bool](self.Window, self.ID+"-form.local").Init(func() bool {
 				var tmp E
 				tmp = entity.Get()
-				return bool(*property(&tmp))
+				return bool(property.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -88,14 +91,13 @@ func BoolToggle[E any, T ~bool](label string, property func(model *E) *T) Field[
 			state.Observe(func(newValue bool) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
 			})
 
-			return ui.ToggleField(label, state.Get()).
+			return ui.ToggleField(opts.Label, state.Get()).
 				InputValue(state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
@@ -103,13 +105,13 @@ func BoolToggle[E any, T ~bool](label string, property func(model *E) *T) Field[
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.TableCell(ui.Text(strconv.FormatBool(bool(v))))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
@@ -118,8 +120,8 @@ func BoolToggle[E any, T ~bool](label string, property func(model *E) *T) Field[
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			if av && !bv {
 				return 1
 			}
@@ -131,7 +133,7 @@ func BoolToggle[E any, T ~bool](label string, property func(model *E) *T) Field[
 			return 0
 		},
 		Stringer: func(e E) string {
-			return strconv.FormatBool(bool(*property(&e)))
+			return strconv.FormatBool(bool(property.Get(&e)))
 		},
 	}
 }

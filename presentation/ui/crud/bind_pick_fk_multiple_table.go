@@ -14,10 +14,33 @@ import (
 	"strings"
 )
 
+type OneToManyTableOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
+	// Label of the field
+	Label string
+	// ForeignEntities contains the sequence of all entities which must be referenced through IDOfT.
+	// The current implementation loads the entire set into memory, thus keep that number as small as possible.
+	ForeignEntities iter.Seq2[T, error]
+	// ForeignBinding provides the binding configuration to display the associated table of all types.
+	ForeignBinding *Binding[T]
+	// ForeignZero value is passed before rendering into the entity creation dialog
+	ForeignZero T
+	// ForeignCreate function to be invoked after ForeignBinding validation passed.
+	ForeignCreate func(T) (errorText string, infrastructureError error)
+	// ForeignPickerRenderer converts a T into a View for the picker dialog step. If nil, the value is
+	// transformed using %v into a TextView.
+	ForeignPickerRenderer func(T) core.View
+}
+
 // OneToManyTable binds a field with foreign key characteristics to a picker. See also [PickMultiple] for value semantics and [OneToMany] for a compact selection.
-func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, it iter.Seq2[T, error], fkBinding *Binding[T], initalFk T, createfk func(T) (errorText string, infrastructureError error), fkPickerRenderer func(T) core.View, property func(model *E) *[]IDOfT) Field[E] {
+func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToManyTableOptions[T, IDOfT], property Property[E, []IDOfT]) Field[E] {
+	if opts.ForeignPickerRenderer == nil {
+		opts.ForeignPickerRenderer = func(t T) core.View {
+			return ui.Text(fmt.Sprintf("%v", t))
+		}
+	}
+
 	var values []T
-	for v, err := range it {
+	for v, err := range opts.ForeignEntities {
 		if err != nil {
 			slog.Error("OneToManyTable cannot get entity from Seq2, value is ignored", "err", err)
 			continue
@@ -32,13 +55,13 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 	}
 
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
-				ids := *property(&tmp)
+				ids := property.Get(&tmp)
 
 				resolvedEntities := make([]T, 0, len(ids))
 				for _, id := range ids {
@@ -54,14 +77,13 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
 
 				ids := make([]IDOfT, 0, len(newValue))
 				for _, t := range newValue {
 					ids = append(ids, t.Identity())
 				}
 
-				*f = ids
+				property.Set(&tmp, ids)
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -73,7 +95,7 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 
 			var pcker picker.TPicker[T]
 
-			createTDlg, tDlgPresented := CreateDialog(fkBinding, initalFk, createfk, func() {
+			createTDlg, tDlgPresented := CreateDialog(opts.ForeignBinding, opts.ForeignZero, opts.ForeignCreate, func() {
 				// on cancel
 				pcker.DialogPresented().Set(true)
 			}, func() {
@@ -82,10 +104,10 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 			})
 
 			// this is always rendered and thus does not reset its state properly
-			pcker = picker.Picker[T](label, values, state).
+			pcker = picker.Picker[T](opts.Label, values, state).
 				Title(self.Label).
 				ItemRenderer(func(t T) core.View {
-					return fkPickerRenderer(t)
+					return opts.ForeignPickerRenderer(t)
 				}).
 				DetailView(ui.VStack(
 					ui.HLine(),
@@ -106,16 +128,16 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 				ui.If(pickerVisible.Get(), ui.Composable(pcker.Dialog)),
 				ui.HStack(
 					ui.VStack(
-						ui.Text(label).Font(ui.Title),
+						ui.Text(opts.Label).Font(ui.Title),
 						ui.HLineWithColor(ui.ColorAccent),
 					),
 					ui.Spacer(),
 					ui.SecondaryButton(func() {
 						pickerVisible.Set(true)
 					}).PreIcon(heroSolid.Plus).
-						Title(fmt.Sprintf("%s zuteilen", label)),
+						Title(fmt.Sprintf("%s zuteilen", opts.Label)),
 				).Frame(ui.Frame{}.FullWidth()),
-				Table[T, IDOfT](Options[T, IDOfT](fkBinding).
+				Table[T, IDOfT](Options[T, IDOfT](opts.ForeignBinding).
 					FindAll(selectedTIt)).
 					Frame(ui.Frame{}.FullWidth()),
 			).Frame(ui.Frame{}.FullWidth())
@@ -123,7 +145,7 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			views := make([]core.View, 0, len(v))
 			for _, t := range v {
 				entity, ok := valuesLookupById[t]
@@ -132,14 +154,14 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 					continue
 				}
 
-				views = append(views, fkPickerRenderer(entity))
+				views = append(views, opts.ForeignPickerRenderer(entity))
 			}
 			return ui.TableCell(ui.HStack(views...).Alignment(ui.Leading).Wrap(true).Gap(ui.L8))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
@@ -148,12 +170,12 @@ func OneToManyTable[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label str
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			return strings.Compare(fmtSlice(av), fmtSlice(bv))
 		},
 		Stringer: func(e E) string {
-			return fmtSlice(*property(&e))
+			return fmtSlice(property.Get(&e))
 		},
 	}
 }

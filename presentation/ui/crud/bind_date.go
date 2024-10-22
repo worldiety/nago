@@ -7,20 +7,24 @@ import (
 	"time"
 )
 
+type DateOptions struct {
+	Label string
+}
+
 func Date[E any, T ~struct {
 	Day   int        // Year like 2024.
 	Month time.Month // Month in year, offset at 1.
 	Year  int        // Day of month, offset at 1.
-}](label string, property func(model *E) *T) Field[E] {
+}](opts DateOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[xtime.Date](self.Window, self.ID+"-form.local").From(func() xtime.Date {
+			state := core.StateOf[xtime.Date](self.Window, self.ID+"-form.local").Init(func() xtime.Date {
 				var tmp E
 				tmp = entity.Get()
 
-				return xtime.Date(*property(&tmp))
+				return xtime.Date(property.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -29,14 +33,13 @@ func Date[E any, T ~struct {
 			state.Observe(func(newValue xtime.Date) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
 			})
 
-			return ui.SingleDatePicker(label, state.Get(), state).
+			return ui.SingleDatePicker(opts.Label, state.Get(), state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
 				Disabled(self.Disabled).
@@ -57,8 +60,8 @@ func Date[E any, T ~struct {
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			if av == bv {
 				return 0
 			}
@@ -70,7 +73,7 @@ func Date[E any, T ~struct {
 			}
 		},
 		Stringer: func(e E) string {
-			val := *property(&e)
+			val := property.Get(&e)
 			if xtime.Date(val).Zero() {
 				return ""
 			}

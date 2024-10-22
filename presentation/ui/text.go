@@ -106,7 +106,7 @@ func (c TText) Action(f func()) TText {
 	return c
 }
 
-func (c TText) Render(ctx core.RenderContext) ora.Component {
+func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ora.Text{
 		Type:               ora.TextT,

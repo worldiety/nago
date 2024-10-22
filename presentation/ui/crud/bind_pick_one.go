@@ -16,7 +16,7 @@ func PickOne[E any, T any](label string, values []T, property func(model *E) *st
 		Label: label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").From(func() []T {
+			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
 				optT := *property(&tmp)

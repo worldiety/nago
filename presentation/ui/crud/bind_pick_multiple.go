@@ -8,17 +8,22 @@ import (
 	"strings"
 )
 
+type PickMultipleOptions[T any] struct {
+	Label  string
+	Values []T
+}
+
 // PickMultiple binds a slice of an arbitrary value type to an associate picker. To pick an entity based
 // on a foreign key semantics, use [OneToMany].
-func PickMultiple[E any, T any](label string, values []T, property func(model *E) *[]T) Field[E] {
+func PickMultiple[E any, T any](opts PickMultipleOptions[T], property Property[E, []T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").From(func() []T {
+			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
-				return *property(&tmp)
+				return property.Get(&tmp)
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -27,8 +32,7 @@ func PickMultiple[E any, T any](label string, values []T, property func(model *E
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = newValue
+				property.Set(&tmp, newValue)
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -38,7 +42,7 @@ func PickMultiple[E any, T any](label string, values []T, property func(model *E
 				state.Notify()
 			}
 
-			return picker.Picker[T](label, values, state).
+			return picker.Picker[T](opts.Label, opts.Values, state).
 				Title(self.Label).
 				MultiSelect(true).
 				Disabled(self.Disabled).
@@ -48,13 +52,13 @@ func PickMultiple[E any, T any](label string, values []T, property func(model *E
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.TableCell(ui.Text(fmtSlice(v)))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
@@ -63,12 +67,12 @@ func PickMultiple[E any, T any](label string, values []T, property func(model *E
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := *property(&a)
-			bv := *property(&b)
+			av := property.Get(&a)
+			bv := property.Get(&b)
 			return strings.Compare(fmtSlice(av), fmtSlice(bv))
 		},
 		Stringer: func(e E) string {
-			return fmtSlice(*property(&e))
+			return fmtSlice(property.Get(&e))
 		},
 	}
 }

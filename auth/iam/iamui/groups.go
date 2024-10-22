@@ -12,15 +12,15 @@ func Groups(wnd core.Window, service *iam.Service) core.View {
 
 	bnd := crud.NewBinding[iam.Group](wnd)
 	bnd.Add(
-		crud.Text("ID", func(e *iam.Group) *auth.GID {
+		crud.Text(crud.TextOptions{Label: "ID"}, crud.Ptr(func(e *iam.Group) *auth.GID {
 			return &e.ID
-		}).ReadOnly(true).WithoutTable(),
-		crud.Text("Name", func(e *iam.Group) *string {
+		})).ReadOnly(true).WithoutTable(),
+		crud.Text(crud.TextOptions{Label: "Name"}, crud.Ptr(func(e *iam.Group) *string {
 			return &e.Name
-		}),
-		crud.Text("Beschreibung", func(e *iam.Group) *string {
+		})),
+		crud.Text(crud.TextOptions{Label: "Beschreibung"}, crud.Ptr(func(e *iam.Group) *string {
 			return &e.Description
-		}),
+		})),
 		crud.AggregateActions(
 			"Optionen",
 			crud.ButtonDelete(wnd, func(group iam.Group) error {

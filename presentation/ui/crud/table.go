@@ -16,7 +16,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 
 	return ui.VStack(
 
-		ui.Table(ui.Each(slices.Values(bnd.fields), func(field Field[Entity]) ui.TTableColumn {
+		ui.Table(ui.Each(slices.Values(bnd.tableFields()), func(field Field[Entity]) ui.TTableColumn {
 			var sortIcon core.SVG
 			if field.Comparator != nil {
 				sortIcon = heroSolid.ArrowsUpDown
@@ -40,7 +40,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.NormalFontWeight}))).Padding(ui.Padding{Left: ui.L0, Right: ui.L24, Top: ui.L16, Bottom: ui.L16})
 		})...,
 		).Rows(ui.Each(slices.Values(ds.List()), func(entity Entity) ui.TTableRow {
-			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).From(func() Entity {
+			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).Init(func() Entity {
 				return entity
 			})
 
@@ -49,12 +49,8 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 			}
 
 			var cells []ui.TTableCell
-			for _, field := range bnd.fields {
-				if field.RenderTableCell == nil {
-					cells = append(cells, ui.TableCell(nil))
-				} else {
-					cells = append(cells, field.RenderTableCell(field, entityState))
-				}
+			for _, field := range bnd.tableFields() {
+				cells = append(cells, field.RenderTableCell(field, entityState))
 			}
 
 			return ui.TableRow(cells...)

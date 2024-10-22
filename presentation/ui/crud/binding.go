@@ -123,6 +123,18 @@ func NewBinding[T any](wnd core.Window) *Binding[T] {
 	}
 }
 
+// tableFields only returns those fields, which have a table renderer
+func (b *Binding[T]) tableFields() []Field[T] {
+	res := make([]Field[T], 0, len(b.fields))
+	for _, field := range b.fields {
+		if field.RenderTableCell != nil {
+			res = append(res, field)
+		}
+	}
+
+	return res
+}
+
 // Inherit returns a defensive copy with the new id set.
 func (b *Binding[T]) Inherit(id string) *Binding[T] {
 	cpy := &Binding[T]{

@@ -10,11 +10,11 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/crud"
-	"go.wdy.de/nago/presentation/ui/timepicker"
 	"go.wdy.de/nago/web/vuejs"
 	"log"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 import _ "net/http/pprof"
@@ -28,8 +28,6 @@ type Vacation struct {
 	Start xtime.Date
 	End   xtime.Date
 }
-
-type TimeInSec int64
 
 type Person struct {
 	ID            PID
@@ -45,7 +43,7 @@ type Person struct {
 	Colors        []Color
 	Birthday      Birthday
 	Vacation      Vacation
-	WorkDuration  TimeInSec
+	WorkDuration  time.Duration
 }
 
 func (p Person) Identity() PID {
@@ -84,22 +82,22 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Person](wnd)
 			bnd.Add(
-				crud.Text("Vorname", func(entity *Person) *string {
+				crud.Text(crud.TextOptions{Label: "Vorname"}, crud.Ptr(func(entity *Person) *string {
 					return &entity.Firstname
-				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
+				})).WithValidation(func(person Person) (errorText string, infrastructureError error) {
 					if person.Firstname != "Torben" {
 						return "Du bist nicht Torben", nil
 					}
 
 					return "", nil
 				}).WithSupportingText("Gib Torben ein"),
-				crud.Text("Nachname", func(entity *Person) *string {
+				crud.Text(crud.TextOptions{Label: "Nachname"}, crud.Ptr(func(entity *Person) *string {
 					return &entity.Lastname
-				}),
+				})),
 
-				crud.Int("Score", func(model *Person) *Score {
+				crud.Int(crud.IntOptions{Label: "Score"}, crud.Ptr(func(model *Person) *Score {
 					return &model.Score
-				}).WithValidation(func(person Person) (errorText string, infrastructureError error) {
+				})).WithValidation(func(person Person) (errorText string, infrastructureError error) {
 					if person.Score != 42 {
 						return "muss 42 sein", nil
 					}
@@ -107,49 +105,59 @@ func main() {
 					return "", nil
 				}),
 
-				crud.Float("Grade", func(model *Person) *Grade {
+				crud.Float(crud.FloatOptions{Label: "Grade"}, crud.Ptr(func(model *Person) *Grade {
 					return &model.Grade
-				}),
+				})),
 
-				crud.Bool("Proofed", func(model *Person) *bool {
+				crud.Bool(crud.BoolOptions{Label: "Proofed"}, crud.Ptr(func(model *Person) *bool {
 					return &model.Proofed
-				}).WithSupportingText("Check me if this is ok"),
+				})).WithSupportingText("Check me if this is ok"),
 
-				crud.BoolToggle("Proofed2", func(model *Person) *bool {
+				crud.BoolToggle(crud.BoolOptions{Label: "Proofed2"}, crud.Ptr(func(model *Person) *bool {
 					return &model.Proofed
-				}).WithSupportingText("don't bind same fields into the same form"),
+				})).WithSupportingText("don't bind same fields into the same form"),
 
-				crud.PickMultiple("Colors", []Color{"red", "green", "blue"}, func(model *Person) *[]Color {
+				crud.PickMultiple(crud.PickMultipleOptions[Color]{Label: "Colors", Values: []Color{"red", "green", "blue"}}, crud.Ptr(func(model *Person) *[]Color {
 					return &model.Colors
-				}),
+				})),
 
 				crud.PickOne("Color", []Color{"red", "green", "blue"}, func(model *Person) *std.Option[Color] {
 					return &model.FavoriteColor
 				}),
 
-				crud.OneToMany("Friendos", persons.All(), func(t Person) core.View {
-					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
-				}, func(model *Person) *[]PID {
+				crud.OneToMany(crud.OneToManyOptions[Person, PID]{
+					Label:           "Friendos",
+					ForeignEntities: persons.All(),
+					ForeignPickerRenderer: func(t Person) core.View {
+						return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
+					},
+				}, crud.Ptr(func(model *Person) *[]PID {
 					return &model.Friends
-				}),
+				})),
 
-				crud.OneToOne("Best Friend", persons.All(), func(t Person) core.View {
-					return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
-				}, func(model *Person) *std.Option[PID] {
-					return &model.BestFriend
-				}),
+				crud.OneToOne(crud.OneToOneOptions[Person, PID]{
+					Label:           "Best Friend",
+					ForeignEntities: persons.All(),
+					ForeignPickerRenderer: func(t Person) core.View {
+						return ui.Text(fmt.Sprintf("%s %s", t.Firstname, t.Lastname))
+					},
+				}, crud.PropertyFuncs[Person, std.Option[PID]](func(p *Person) std.Option[PID] {
+					return p.BestFriend
+				}, func(dst *Person, v std.Option[PID]) {
+					dst.BestFriend = v
+				})),
 
-				crud.Date("Geburtstag", func(model *Person) *Birthday {
+				crud.Date(crud.DateOptions{Label: "Geburtstag"}, crud.Ptr(func(model *Person) *Birthday {
 					return &model.Birthday
-				}),
+				})),
 
-				crud.DateRange("Urlaub", func(model *Person) *xtime.Date {
+				crud.DateRange(crud.DateRangeOptions{Label: "Urlaub"}, crud.Ptr(func(model *Person) *xtime.Date {
 					return &model.Vacation.Start
-				}, func(model *Person) *xtime.Date {
+				}), crud.Ptr(func(model *Person) *xtime.Date {
 					return &model.Vacation.End
-				}),
+				})),
 
-				crud.Time("Arbeitszeit", 1, false, true, true, false, timepicker.DecomposedFormat, crud.Ptr(func(model *Person) *TimeInSec {
+				crud.Time(crud.TimeOptions{Label: "Arbeitszeit", ShowHours: true, ShowSeconds: true}, crud.Ptr(func(model *Person) *time.Duration {
 					return &model.WorkDuration
 				})),
 

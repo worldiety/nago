@@ -5,15 +5,19 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func Password[E any, T ~string](label string, property func(model *E) *T) Field[E] {
+type PasswordOptions struct {
+	Label string
+}
+
+func Password[E any, T ~string](opts PasswordOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[string](self.Window, self.ID+"-form.local").From(func() string {
+			state := core.StateOf[string](self.Window, self.ID+"-form.local").Init(func() string {
 				var tmp E
 				tmp = entity.Get()
-				return string(*property(&tmp))
+				return string(property.Get(&tmp))
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -22,8 +26,7 @@ func Password[E any, T ~string](label string, property func(model *E) *T) Field[
 			state.Observe(func(newValue string) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
-				*f = T(newValue)
+				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
 
 				handleValidation(self, entity, errState)
@@ -33,7 +36,7 @@ func Password[E any, T ~string](label string, property func(model *E) *T) Field[
 				state.Notify()
 			}
 
-			return ui.PasswordField(label).
+			return ui.PasswordField(opts.Label).
 				InputValue(state).
 				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).

@@ -98,7 +98,7 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
 	wnd := bnd.wnd
 	return func(e *core.State[E]) core.View {
-		entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.edit.entity.%v", e.Get().Identity())).From(func() E {
+		entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.edit.entity.%v", e.Get().Identity())).Init(func() E {
 			return e.Get()
 		})
 

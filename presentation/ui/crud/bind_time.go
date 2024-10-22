@@ -1,22 +1,38 @@
 package crud
 
 import (
-	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/timepicker"
+	"time"
 )
 
-func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours, minutes, seconds bool, format timepicker.PickerFormat, property Property[E, T]) Field[E] {
+// TimeOptions aggregates all available Options to bind a time picker. In the future, additional options may be added.
+type TimeOptions struct {
+	Label         string
+	ShowDays      bool
+	ShowHours     bool
+	ShowMinutes   bool
+	ShowSeconds   bool
+	DisplayFormat timepicker.PickerFormat
+}
+
+func Time[E any](opts TimeOptions, property Property[E, time.Duration]) Field[E] {
+	if opts.ShowDays == false && opts.ShowHours == false && opts.ShowMinutes == false && opts.ShowSeconds == false {
+		// provide some sane default behavior
+		opts.ShowHours = true
+		opts.ShowMinutes = true
+	}
+
 	formatTime := func(entity E) string {
-		return timepicker.Format[T](scaleToSeconds, days, hours, minutes, seconds, format, property.Get(&entity))
+		return timepicker.Format(opts.ShowDays, opts.ShowHours, opts.ShowMinutes, opts.ShowSeconds, opts.DisplayFormat, property.Get(&entity))
 	}
 
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[T](self.Window, self.ID+"-form.local").Init(func() T {
+			state := core.StateOf[time.Duration](self.Window, self.ID+"-form.local").Init(func() time.Duration {
 				var tmp E
 				tmp = entity.Get()
 				return property.Get(&tmp)
@@ -25,7 +41,7 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 			errState := core.StateOf[string](self.Window, self.ID+".err")
 
 			// if the local field changes, we push our stuff into the given state (whatever that is)
-			state.Observe(func(newValue T) {
+			state.Observe(func(newValue time.Duration) {
 				var tmp E
 				tmp = entity.Get()
 				property.Set(&tmp, newValue)
@@ -38,12 +54,12 @@ func Time[E any, T std.Integer](label string, scaleToSeconds int64, days, hours,
 				state.Notify()
 			}
 
-			return timepicker.Picker[T](label, scaleToSeconds, state).
-				Format(format).
-				Days(days).
-				Hours(hours).
-				Minutes(minutes).
-				Seconds(seconds).
+			return timepicker.Picker(opts.Label, state).
+				Format(opts.DisplayFormat).
+				Days(opts.ShowDays).
+				Hours(opts.ShowHours).
+				Minutes(opts.ShowMinutes).
+				Seconds(opts.ShowSeconds).
 				Disabled(self.Disabled).
 				ErrorText(errState.Get()).
 				SupportingText(self.SupportingText).

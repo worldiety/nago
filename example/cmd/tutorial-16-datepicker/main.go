@@ -16,15 +16,15 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			date := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+			date := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
 				return xtime.Date{1, 6, 2024}
 			})
 
-			start := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+			start := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
 				return xtime.Date{2, 7, 2024}
 			})
 
-			end := core.AutoState[xtime.Date](wnd).From(func() xtime.Date {
+			end := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
 				return xtime.Date{20, 7, 2024}
 			})
 

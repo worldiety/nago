@@ -75,9 +75,9 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			bnd := crud.NewBinding[Event](wnd)
 			bnd.Add(
-				crud.Text("Name", func(entity *Event) *string {
+				crud.Text(crud.TextOptions{Label: "Name"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Name
-				}).WithValidation(func(evt Event) (errorText string, infrastructureError error) {
+				})).WithValidation(func(evt Event) (errorText string, infrastructureError error) {
 					if evt.Name == "" {
 						return "Darf nicht leer sein", nil
 					}
@@ -89,36 +89,36 @@ func main() {
 			// assemble complex and nested section with rows
 			var noteSectionFields []crud.Field[Event]
 			noteSectionFields = append(noteSectionFields,
-				crud.Text("Note1", func(entity *Event) *string {
+				crud.Text(crud.TextOptions{Label: "Note1"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note1
-				}).WithValidation(func(event Event) (errorText string, infrastructureError error) {
+				})).WithValidation(func(event Event) (errorText string, infrastructureError error) {
 					if event.Note1 == "" {
 						return "Notiz 1 muss ausgefüllt sein", nil
 					}
 
 					return "", nil
 				}),
-				crud.Text("Note2", func(entity *Event) *string {
+				crud.Text(crud.TextOptions{Label: "Note2"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note2
-				}).WithValidation(func(event Event) (errorText string, infrastructureError error) {
+				})).WithValidation(func(event Event) (errorText string, infrastructureError error) {
 					if event.Note2 == "" {
 						return "Notiz 2 muss ausgefüllt sein", nil
 					}
 
 					return "", nil
 				}),
-				crud.Text("Note3", func(entity *Event) *string {
+				crud.Text(crud.TextOptions{Label: "Note3"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note3
-				}),
+				})),
 			)
 
 			noteSectionFields = append(noteSectionFields, crud.Row(
-				crud.FormColumn(crud.Text("Note1", func(entity *Event) *string {
+				crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note1"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note1
-				}), 0.33),
-				crud.FormColumn(crud.Text("Note3", func(entity *Event) *string {
+				})), 0.33),
+				crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note3"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note3
-				}), 0.66),
+				})), 0.66),
 			)...)
 
 			noteSectionFields = append(noteSectionFields, crud.HLine[Event]())
@@ -127,12 +127,12 @@ func main() {
 				"Optionale Felder",
 				false,
 				crud.Row(
-					crud.FormColumn(crud.Text("Note1", func(entity *Event) *string {
+					crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note1"}, crud.Ptr(func(entity *Event) *string {
 						return &entity.Note1
-					}), 0.33),
-					crud.FormColumn(crud.Text("Note3", func(entity *Event) *string {
+					})), 0.33),
+					crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note3"}, crud.Ptr(func(entity *Event) *string {
 						return &entity.Note3
-					}), 0.66),
+					})), 0.66),
 				)...,
 			)...)
 
@@ -144,38 +144,42 @@ func main() {
 
 			// without section
 			bnd.Add(crud.Row(
-				crud.FormColumn(crud.Text("Note1", func(entity *Event) *string {
+				crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note1"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note1
-				}), 0.33),
-				crud.FormColumn(crud.Text("Note3", func(entity *Event) *string {
+				})), 0.33),
+				crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note3"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note3
-				}), 0.66),
+				})), 0.66),
 			)...)
 
 			// foreign key helper
 			helferBnd := crud.NewBinding[Helfer](wnd).Add(
-				crud.Text("Vorname", func(model *Helfer) *string {
+				crud.Text(crud.TextOptions{Label: "Vorname"}, crud.Ptr(func(model *Helfer) *string {
 					return &model.Name
-				}),
+				})),
 			)
 
 			bnd.Add(
 				crud.Section[Event]("", crud.OneToManyTable[Event, Helfer, HelferID](
-					"Helfer",
-					helfers.All(),
-					helferBnd,
-					Helfer{},
-					func(helfer Helfer) (errorText string, infrastructureError error) {
-						helfer.ID = data.RandIdent[HelferID]()
-						err := helfers.Save(helfer)
-						return "", err
+					crud.OneToManyTableOptions[Helfer, HelferID]{
+						Label:           "Helfer",
+						ForeignEntities: helfers.All(),
+						ForeignBinding:  helferBnd,
+						ForeignZero:     Helfer{},
+						ForeignCreate: func(helfer Helfer) (errorText string, infrastructureError error) {
+							helfer.ID = data.RandIdent[HelferID]()
+							err := helfers.Save(helfer)
+							return "", err
+						},
+						ForeignPickerRenderer: func(helfer Helfer) core.View {
+							return ui.Text(helfer.Name)
+						},
 					},
-					func(helfer Helfer) core.View {
-						return ui.Text(helfer.Name)
-					},
-					func(model *Event) *[]HelferID {
-						return &model.GeplanteHelfer
-					},
+					crud.Ptr(
+						func(model *Event) *[]HelferID {
+							return &model.GeplanteHelfer
+						},
+					),
 				))...,
 			)
 

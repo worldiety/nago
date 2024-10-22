@@ -12,11 +12,21 @@ import (
 	"strings"
 )
 
+type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
+	Label string
+	// ForeignEntities contains the sequence of all entities which must be referenced through IDOfT.
+	// The current implementation loads the entire set into memory, thus keep that number as small as possible.
+	ForeignEntities iter.Seq2[T, error]
+	// ForeignPickerRenderer converts a T into a View for the picker dialog step. If nil, the value is
+	// transformed using %v into a TextView.
+	ForeignPickerRenderer func(T) core.View
+}
+
 // OneToOne binds a field with foreign key characteristics to a picker. See also [PickOne] for value
 // semantics.
-func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, it iter.Seq2[T, error], fkRenderer func(T) core.View, property func(model *E) *std.Option[IDOfT]) Field[E] {
+func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOptions[T, IDOfT], property Property[E, std.Option[IDOfT]]) Field[E] {
 	var values []T
-	for v, err := range it {
+	for v, err := range opts.ForeignEntities {
 		if err != nil {
 			slog.Error("OneToMany cannot get entity from Seq2, value is ignored", "err", err)
 			continue
@@ -30,16 +40,18 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 		valuesLookupById[fkEntity.Identity()] = fkEntity
 	}
 
+	var zero IDOfT
+
 	return Field[E]{
-		Label: label,
+		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
-			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").From(func() []T {
+			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
-				optId := *property(&tmp)
+				optId := property.Get(&tmp)
 
-				if optId.Valid {
+				if optId.IsSome() {
 					ent, ok := valuesLookupById[optId.Unwrap()]
 					if ok {
 						return []T{ent}
@@ -57,12 +69,11 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
-				f := property(&tmp)
 
 				if len(newValue) > 0 {
-					*f = std.Some[IDOfT](newValue[0].Identity())
+					property.Set(&tmp, std.Some[IDOfT](newValue[0].Identity()))
 				} else {
-					*f = std.None[IDOfT]()
+					property.Set(&tmp, std.None[IDOfT]())
 				}
 
 				entity.Set(tmp)
@@ -74,17 +85,17 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 				state.Notify()
 			}
 
-			return picker.Picker[T](label, values, state).
+			return picker.Picker[T](opts.Label, values, state).
 				Title(self.Label).
 				ItemRenderer(func(t T) core.View {
-					return fkRenderer(t)
+					return opts.ForeignPickerRenderer(t)
 				}).
 				ItemPickedRenderer(func(t []T) core.View {
 					switch len(t) {
 					case 0:
 						return ui.Text("nichts gewählt")
 					case 1:
-						return fkRenderer(t[0])
+						return opts.ForeignPickerRenderer(t[0])
 					default:
 						return ui.Text(fmt.Sprintf("%d gewählt", len(t)))
 					}
@@ -97,14 +108,14 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := *property(&tmp)
-			if v.Valid {
-				ent, ok := valuesLookupById[v.V]
+			v := property.Get(&tmp)
+			if v.IsSome() {
+				ent, ok := valuesLookupById[v.Unwrap()]
 				if !ok {
 					slog.Error("OneToOne cannot reverse lookup id", "id", v.V)
 					return ui.TableCell(ui.Text(""))
 				}
-				return ui.TableCell(fkRenderer(ent))
+				return ui.TableCell(opts.ForeignPickerRenderer(ent))
 			}
 
 			return ui.TableCell(nil)
@@ -112,21 +123,22 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](label string, i
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := *property(&tmp)
+			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				fkRenderer(valuesLookupById[v.V]),
+				opts.ForeignPickerRenderer(valuesLookupById[v.V]),
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
-			av := valuesLookupById[(*property(&a)).UnwrapOrZero()]
-			bv := valuesLookupById[(*property(&b)).UnwrapOrZero()]
+
+			av := valuesLookupById[(property.Get(&a)).UnwrapOr(zero)]
+			bv := valuesLookupById[(property.Get(&b)).UnwrapOr(zero)]
 			return strings.Compare(fmt.Sprintf("%v", av), fmt.Sprintf("%v", bv))
 		},
 		Stringer: func(e E) string {
-			return fmt.Sprintf("%v", (*property(&e)).UnwrapOrZero())
+			return fmt.Sprintf("%v", property.Get(&e).UnwrapOr(zero))
 		},
 	}
 }

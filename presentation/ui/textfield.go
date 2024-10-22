@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	"log/slog"
@@ -73,7 +74,7 @@ func TextField(label string, value string) TTextField {
 // and a user may enter non-integer stuff anyway. However, any
 // incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state.
 func IntField(label string, value int64, state *core.State[int64]) TTextField {
-	strState := core.StateOf[string](state.Window(), state.ID()+".int64").From(func() string {
+	strState := core.StateOf[string](state.Window(), state.ID()+".int64").Init(func() string {
 		return strconv.FormatInt(value, 10)
 	})
 
@@ -99,34 +100,49 @@ func IntField(label string, value int64, state *core.State[int64]) TTextField {
 	return TextField(label, strState.Get()).InputValue(strState).KeyboardType(KeyboardInteger)
 }
 
+// FloatFieldValue just renders a non-stateful float value. See also [FloatField]. Due to the generic instantiation,
+// one can influence the float rendering through the Stringer interface.
+func FloatFieldValue[T ~float64 | ~float32](label string, value T) TTextField {
+	return TextField(label, fmt.Sprintf("%v", value)).KeyboardType(KeyboardFloat)
+}
+
 // FloatField is just a TextField using the according keyboard hints. Remember, that these IME hints are no guarantees
 // and a user may enter non-integer stuff anyway. However, any
 // incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state.
+// See also [FloatFieldValue] if you just want to display a non-stateful float value.
 func FloatField(label string, value float64, state *core.State[float64]) TTextField {
-	strState := core.StateOf[string](state.Window(), state.ID()+".float64").From(func() string {
-		return strconv.FormatFloat(value, 'f', -1, 64)
-	})
+	var strState *core.State[string]
+	var val string
 
-	strState.Observe(func(newValue string) {
-		v, err := strconv.ParseFloat(newValue, 64)
-		if err != nil {
-			slog.Error("cannot parse FloatField value from TextField state", "strState", strState.ID(), "err", err)
-		}
+	if state != nil {
 
-		if v != state.Get() {
-			state.Set(v)
-			state.Notify() // delegate the observable event, because it was caused by the ui
-		}
-	})
+		strState = core.StateOf[string](state.Window(), state.ID()+".float64").Init(func() string {
+			return strconv.FormatFloat(value, 'f', -1, 64)
+		})
 
-	state.Observe(func(newValue float64) {
-		i := strconv.FormatFloat(newValue, 'f', -1, 64)
-		if strState.Get() != i {
-			strState.Set(i)
-		}
-	})
+		strState.Observe(func(newValue string) {
+			v, err := strconv.ParseFloat(newValue, 64)
+			if err != nil {
+				slog.Error("cannot parse FloatField value from TextField state", "strState", strState.ID(), "err", err)
+			}
 
-	return TextField(label, strState.Get()).InputValue(strState).KeyboardType(KeyboardFloat)
+			if v != state.Get() {
+				state.Set(v)
+				state.Notify() // delegate the observable event, because it was caused by the ui
+			}
+		})
+
+		state.Observe(func(newValue float64) {
+			i := strconv.FormatFloat(newValue, 'f', -1, 64)
+			if strState.Get() != i {
+				strState.Set(i)
+			}
+		})
+
+		val = strState.Get()
+	}
+
+	return TextField(label, val).InputValue(strState).KeyboardType(KeyboardFloat)
 }
 
 func (c TTextField) SupportingText(text string) TTextField {

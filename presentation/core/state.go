@@ -230,11 +230,6 @@ func (s *State[T]) Init(fn func() T) *State[T] {
 	return s
 }
 
-// Deprecated: use Init as its name reflects better what happens
-func (s *State[T]) From(fn func() T) *State[T] {
-	return s.Init(fn)
-}
-
 //func DetachedState[T any]() *State[T] {
 //	return &State[T]{
 //		valid: false,
@@ -339,7 +334,7 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 		state = StateOf[bool](wnd, id)
 	}
 
-	state.From(func() bool {
+	state.Init(func() bool {
 		// even though it is not documented clearly, TheMerovius tells us, that cancelling a context is idempotent
 		ctx, cancel := context.WithCancel(wnd.Context())
 
@@ -367,7 +362,7 @@ func OnDisappear(wnd Window, id string, fn func(ctx context.Context)) {
 	} else {
 		state = StateOf[bool](wnd, id)
 	}
-	state.From(func() bool {
+	state.Init(func() bool {
 		ctx, cancel := context.WithCancel(wnd.Context())
 
 		state.addDestroyObserver(func() {

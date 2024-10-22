@@ -14,7 +14,7 @@ func Cards[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 
 	return ui.VStack(
 		ui.Each(slices.Values(ds.List()), func(entity Entity) core.View {
-			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.card.entity.%v", entity.Identity())).From(func() Entity {
+			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.card.entity.%v", entity.Identity())).Init(func() Entity {
 				return entity
 			})
 			return Card[Entity](bnd, entityState).Frame(ui.Frame{}.FullWidth())

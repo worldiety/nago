@@ -15,11 +15,11 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			duration := core.AutoState[time.Duration](wnd).From(func() time.Duration {
+			duration := core.AutoState[time.Duration](wnd).Init(func() time.Duration {
 				return time.Minute * 61
 			})
 			return VStack(
-				timepicker.Picker("Dauer", int64(time.Second), duration).
+				timepicker.Picker("Dauer", duration).
 					SupportingText("Wähle eine tolle Zeit").
 					Format(timepicker.DecomposedFormat).
 					Days(true).
