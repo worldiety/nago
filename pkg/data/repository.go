@@ -28,6 +28,35 @@ type IDType interface {
 	~int | ~int64 | ~int32 | ~string
 }
 
+type ReadRepository[E Aggregate[ID], ID IDType] interface {
+	// FindByID either returns some Aggregate or none.
+	// The effort is implementation dependent, but most reasonable implementations guarantee something better than
+	// O(n) like a tree in O(log(n) or even a hashtable (O(1)).
+	// Returned errors are unspecified infrastructure errors of the implementation.
+	FindByID(id ID) (std.Option[E], error)
+
+	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
+	// It is not an error, if an entity has not been found.
+	// The order is undefined, to allow optimizations.
+	// Returned errors are unspecified infrastructure errors of the implementation.
+	// The yield signature intentionally matches the according [iter.Seq2] part. See also [Repository.Each].
+	FindAllByID(ids iter.Seq[ID]) iter.Seq2[E, error]
+
+	// All loops over each item of a snapshot without any particular order
+	// until the callee returns false or all entries have been visited.
+	// Due to concurrent usage, visited items may be missing or may contain already deleted entries.
+	// The order of traversal is undefined and may be even different between subsequent calls.
+	// Returned errors are unspecified infrastructure errors of the implementation.
+	All() iter.Seq2[E, error]
+
+	// Count returns the estimated amount of entries. Due to concurrent usage, this
+	// value is only a kind of snapshot view and a subsequent call or iteration of all values may return
+	// a different result.
+	// The effort is implementation dependent and may be anything from O(n) to O(1).
+	// Returned errors are unspecified infrastructure errors of the implementation.
+	Count() (int, error)
+}
+
 // Repository defines how to work with entities or more specific with aggregate roots, in the definition of
 // domain driven design. A repository is a design pattern to separate the domain layer from the persistence layer
 // implementation. In general, this pattern improves maintainability and testability of the overall code base.
@@ -38,19 +67,7 @@ type IDType interface {
 // For example, calling functions from a yield on the same instance will likely cause a deadlock or other
 // incorrect or unexpected results.
 type Repository[E Aggregate[ID], ID IDType] interface {
-	// FindByID either returns some Aggregate or none.
-	// The effort is implementation dependent, but most reasonable implementations guarantee something better than
-	// O(n) like a tree O(log(n) or even a hashtable (O(1)).
-	// Returned errors are unspecified infrastructure errors of the implementation.
-	FindByID(id ID) (std.Option[E], error)
-
-	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
-	// It is not an error, if an entity has not been found.
-	// The order is undefined, to allow optimizations.
-	// Implementations with transaction support must find within a single transaction.
-	// Returned errors are unspecified infrastructure errors of the implementation.
-	// The yield signature intentionally matches the according [iter.Seq2] part. See also [Repository.Each].
-	FindAllByID(ids iter.Seq[ID]) iter.Seq2[E, error]
+	ReadRepository[E, ID]
 
 	// DeleteByID removes the specified aggregate. If no such entity exists, no error is returned.
 	// Returned errors are unspecified infrastructure errors of the implementation.
@@ -75,20 +92,6 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 
 	// DeleteByEntity is like DeleteByID but provides a congruent API.
 	DeleteByEntity(E) error
-
-	// All loops over each item without any particular order until the callee returns false or all entries have
-	// been visited.
-	// The order of traversal is undefined and may be even different between subsequent calls.
-	// Implementations with transaction support must find within a single transaction.
-	// Returned errors are unspecified infrastructure errors of the implementation.
-	All() iter.Seq2[E, error]
-
-	// Count returns the estimated amount of entries. Due to concurrent usage or pending transaction, this
-	// value is only a kind of snapshot view and a subsequent iteration of all values may return
-	// a different result.
-	// The effort is implementation dependent and may be anything from O(n) to O(1).
-	// Returned errors are unspecified infrastructure errors of the implementation.
-	Count() (int, error)
 
 	// Save persists a single aggregate.
 	// Implementations with transaction support must save within a single transaction, hopefully Aora.Ptr.

@@ -61,7 +61,7 @@ func (a *Application) Run() {
 
 	logger := a.cfg.defaultLogger()
 	if err != nil {
-		logger.Error("application error", err)
+		logger.Error("application error", "err", err)
 	}
 
 	if app := a.cfg.app; app != nil {

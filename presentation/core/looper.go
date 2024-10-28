@@ -70,7 +70,7 @@ func (l *EventLoop) saveExec(f func()) {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			slog.Error("recovered from panic in EventLoop", slog.String("func", fmt.Sprintf("%#v", f)))
+			slog.Error("recovered from panic in EventLoop", slog.String("func", fmt.Sprintf("%#p", f)))
 
 			if panicHandler := l.onPanic.Value(); panicHandler != nil {
 				panicHandler(r)
@@ -167,7 +167,6 @@ func (l *EventLoop) Destroy() {
 		case l.done <- true:
 		default:
 			panic("eolDone cannot accept destruction twice")
-			return
 		}
 
 		close(l.done)

@@ -1,12 +1,13 @@
 package rquery
 
 import (
-	"iter"
+	"go.wdy.de/nago/pkg/xiter"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
 )
+
 type MyRef string
 type Addr struct {
 	ID     MyRef
@@ -61,13 +62,13 @@ func TestPredicate(t *testing.T) {
 	}
 
 	p := SimplePredicate[Person]("kaktus")
-	values := slices.Collect(iter.Filter(p, slices.Values(items)))
+	values := slices.Collect(xiter.Filter(p, slices.Values(items)))
 
 	if !reflect.DeepEqual(values, []Person{items[1], items[2]}) {
 		t.Fatal(values)
 	}
 
-	values = slices.Collect(iter.Filter(SimplePredicate[Person]("palm grün"), slices.Values(items)))
+	values = slices.Collect(xiter.Filter(SimplePredicate[Person]("palm grün"), slices.Values(items)))
 
 	if !reflect.DeepEqual(values, []Person{items[3]}) {
 		t.Fatal(values)

@@ -170,7 +170,7 @@ func main() {
 					}),
 
 					crud.ButtonEdit[Person](bnd, func(p Person) (string, error) {
-						slog.Info("update person", "id", p.ID, p)
+						slog.Info("update person", "id", p.ID, "person", p)
 						return "", persons.Save(p)
 					}),
 				),

@@ -53,7 +53,7 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 	return ui.VStack(
 		alert.Dialog("Erstellen nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu erstellen."), noSuchPermissionPresented, alert.Ok()),
 		alert.Dialog("Neu erstellen", ui.Composable(func() core.View {
-			subBnd := bnd.Inherit(string(initial.Identity()))
+			subBnd := bnd.Inherit(data.Idtos(initial.Identity()))
 
 			return ui.VStack(
 				ui.If(stateErrMsg.Get() != "", ui.Text(stateErrMsg.Get()).Color(ui.SE0)),
@@ -108,7 +108,7 @@ func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn 
 		return ui.VStack(
 			alert.Dialog("Bearbeiten nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu bearbeiten."), noSuchPermissionPresented, alert.Ok()),
 			alert.Dialog("Bearbeiten", ui.Composable(func() core.View {
-				subBnd := bnd.Inherit(string(e.Get().Identity()))
+				subBnd := bnd.Inherit(data.Idtos(e.Get().Identity()))
 
 				return ui.VStack(
 					ui.If(stateErrMsg.Get() != "", ui.Text(stateErrMsg.Get()).Color(ui.SE0)),

@@ -136,8 +136,6 @@ func main() {
 				)...,
 			)...)
 
-			noteSectionFields = append(noteSectionFields)
-
 			bnd.Add(crud.Section("Notizen",
 				noteSectionFields...,
 			)...)

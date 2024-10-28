@@ -49,7 +49,7 @@ func main() {
 					wnd.Navigation().ForwardTo(iamCfg.Logout.ID, nil)
 				}).Title("Abmelden"),
 
-				ui.Text(fmt.Sprintf("%s:%v", sayHello(wnd.Subject()))),
+				ui.Text(fmt.Sprintf("%s", sayHello(wnd.Subject()))),
 			).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen())
 		})
 
