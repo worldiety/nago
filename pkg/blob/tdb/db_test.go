@@ -278,7 +278,7 @@ func TestDB_Races(t *testing.T) {
 
 			for _, entry := range expectedSet {
 				if err := db.Set(entry.Bucket, entry.Key, entry.Value); err != nil {
-					t.Fatal(err)
+					panic(err)
 				}
 			}
 		}()

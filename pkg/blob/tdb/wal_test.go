@@ -3,7 +3,6 @@ package tdb
 import (
 	"io"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -93,7 +92,7 @@ func Test_wal_set(t *testing.T) {
 }
 
 func Benchmark_wal_set(t *testing.B) {
-	f, err := os.OpenFile(filepath.Join(t.TempDir(), "test.WAL"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
+	f, err := OpenFile(filepath.Join(t.TempDir(), "test.WAL"))
 	if err != nil {
 		t.Error(err)
 	}

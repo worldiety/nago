@@ -75,7 +75,8 @@ type Users struct {
 
 type Permissions struct {
 	// defaults to iam/permissions
-	ID          core.NavigationPath
+	ID core.NavigationPath
+	// If nil [iam.DefaultPermissions] is used.
 	Permissions *iam.Permissions
 }
 
@@ -143,6 +144,10 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 	if settings.Groups.Repository == nil {
 		settings.Groups.Repository = json.NewSloppyJSONRepository[iam.Group](c.EntityStore("iam.groups"))
+	}
+
+	if settings.Permissions.Permissions == nil {
+		settings.Permissions.Permissions = iam.DefaultPermissions()
 	}
 
 	service := settings.Service

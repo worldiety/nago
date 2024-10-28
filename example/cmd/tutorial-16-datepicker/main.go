@@ -17,15 +17,15 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			date := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
-				return xtime.Date{1, 6, 2024}
+				return xtime.Date{Day: 1, Month: 6, Year: 2024}
 			})
 
 			start := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
-				return xtime.Date{2, 7, 2024}
+				return xtime.Date{Day: 2, Month: 7, Year: 2024}
 			})
 
 			end := core.AutoState[xtime.Date](wnd).Init(func() xtime.Date {
-				return xtime.Date{20, 7, 2024}
+				return xtime.Date{Day: 20, Month: 7, Year: 2024}
 			})
 
 			showAlert := core.AutoState[bool](wnd)
