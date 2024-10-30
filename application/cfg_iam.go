@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"go.wdy.de/nago/annotation"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/auth/iam/iamui"
@@ -89,10 +90,6 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 		settings.Permissions.ID = "iam/permissions"
 	}
 
-	if settings.Permissions.Permissions == nil {
-		settings.Permissions.Permissions = iam.PermissionsFrom[iam.Permission](nil)
-	}
-
 	if settings.Users.ID == "" {
 		settings.Users.ID = "iam/users"
 	}
@@ -147,7 +144,7 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 	}
 
 	if settings.Permissions.Permissions == nil {
-		settings.Permissions.Permissions = iam.DefaultPermissions()
+		settings.Permissions.Permissions = iam.PermissionsFrom(annotation.Permissions())
 	}
 
 	service := settings.Service

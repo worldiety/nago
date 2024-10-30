@@ -26,6 +26,7 @@ package main
 import (
 	"go.wdy.de/nago/application"
 	tutorial_31_doc "go.wdy.de/nago/example/cmd/tutorial-31-doc"
+	"go.wdy.de/nago/example/cmd/tutorial-31-doc/domain/terminplanung"
 	"go.wdy.de/nago/glossary"
 	"go.wdy.de/nago/glossary/docm/oraui"
 	"go.wdy.de/nago/pkg/xreflect"
@@ -47,6 +48,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		doc := glossary.Auto()
+		var _ terminplanung.TerminAnlegenRequested
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			return ui.VStack(ui.HStack(oraui.Render(doc)).Frame(ui.Frame{MaxWidth: "900dp"})).FullWidth()

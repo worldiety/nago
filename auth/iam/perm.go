@@ -1,8 +1,6 @@
 package iam
 
 import (
-	"fmt"
-	"go.wdy.de/nago/pkg/xmaps"
 	"maps"
 	"slices"
 )
@@ -134,40 +132,6 @@ type Permission interface {
 
 type Permissions struct {
 	permissions map[string]Permission
-}
-
-var defaultPermissions = xmaps.ConcurrentMap[string, iamPerm]{}
-
-// DefaultPermission registers a global permission in this IAM module, which is automatically used
-// whenever no explicit permissions has been provided to the IAM system.
-// It is a programming error, if you try to define the same id multiple times.
-func DefaultPermission(id, name, description string) Permission {
-	p := iamPerm{
-		id:   id,
-		name: name,
-		desc: description,
-	}
-
-	_, loaded := defaultPermissions.LoadOrStore(id, p)
-	if loaded {
-		// this is a programming error
-		panic(fmt.Errorf("default permission '%s' already defined", id))
-	}
-
-	return p
-}
-
-// DefaultPermissions returns all registered permissions declared by [DefaultPermission].
-func DefaultPermissions() *Permissions {
-	p := &Permissions{
-		permissions: make(map[string]Permission),
-	}
-
-	for _, perm := range defaultPermissions.All() {
-		p.permissions[perm.id] = perm
-	}
-
-	return p
 }
 
 func PermissionsFrom[T Permission](slice []T) *Permissions {

@@ -2,7 +2,10 @@
 // Terminplanung enthält alles was fachlich angesagt ist.
 package terminplanung
 
-import "time"
+import (
+	"go.wdy.de/nago/annotation"
+	"time"
+)
 
 // TerminAnlegenRequested oder Termin anlegen gewünscht.
 // Termin anlegen gewünscht ist die Wurzel allen Übels.
@@ -26,6 +29,19 @@ type C B
 
 // TerminErstellt ist wie [TerminAnlegenRequested] nur als Kurzschreibweise.
 type TerminErstellt TerminAnlegenRequested
+
+var permTerminAnlegen = annotation.Usecase[TerminAnlegen](
+	"Termin anlegen macht den Terminplan voll. Wir haben jetzt die Möglichkeit redundante Kommentare zu verfassen.",
+	"Siehe auch: ", annotation.TypeLink[StartZeitPunkt]("Durchstarter"),
+	`
+Multiline:
+* why
+* not 
+* just markdown anywhere? Problem resolving types? => just use the alias?
+`,
+).
+	Synonyms("Termin anlegen", "Leute verplanen").
+	Permission("de.worldiety.termin.anlegen", "Termin anlegen", "Leuten den Terminkalender voll machen.")
 
 // TerminAnlegen ist der Anwendungsfall mit Ein- und Ausgabe.
 type TerminAnlegen func(TerminAnlegenRequested) (TerminAnlegenRequested, error)
