@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/xmaps"
 	"go.wdy.de/nago/pkg/xstrings"
+	"reflect"
 	"slices"
 	"strings"
 )
 
 var permissions = xmaps.NewConcurrentMap[string, *UsecaseBuilder]()
 
-// Permission is the basic contract for the permissions repository, which is used by higher level implementations.
-type Permission interface {
+// SubjectPermission is the basic contract for the permissions repository, which is used by higher level implementations.
+type SubjectPermission interface {
 	Identity() string
 	Name() string
 	Desc() string
@@ -37,13 +38,13 @@ func (b perm) Desc() string {
 
 // Permissions returns all declared permissions in stable order.
 // See [Usecase] or [UsecaseBuilder.Permission] for details.
-func Permissions() []Permission {
-	var res []Permission
+func Permissions() []SubjectPermission {
+	var res []SubjectPermission
 	for _, p := range permissions.All() {
 		res = append(res, p.permission)
 	}
 
-	slices.SortFunc(res, func(a, b Permission) int {
+	slices.SortFunc(res, func(a, b SubjectPermission) int {
 		return strings.Compare(a.Identity(), b.Identity())
 	})
 
@@ -55,10 +56,10 @@ func (b *UsecaseBuilder) PermissionBuilder(id, name string, docs ...DocElem) any
 	panic("signature proposal only")
 }
 
-// Permission is a terminal action for the builder and returns a Permission. Typically, most use cases have an
+// SubjectPermission is a terminal action for the builder and returns a SubjectPermission. Typically, most use cases have an
 // associated permission, which allows exact authorization management based on the permission identifiers.
 // If the given permission id has already been declared, a panic is thrown. Use the official companies language.
-func (b *UsecaseBuilder) Permission(id, name string, docs ...DocElem) Permission {
+func (b *UsecaseBuilder) Permission(id, name string, docs ...DocElem) SubjectPermission {
 	existing, loaded := permissions.LoadOrStore(id, b)
 
 	if loaded {
@@ -70,6 +71,23 @@ func (b *UsecaseBuilder) Permission(id, name string, docs ...DocElem) Permission
 		id:   id,
 		name: name,
 		desc: string(xstrings.Join(docs, "")),
+	}
+
+	return b.permission
+}
+
+func Permission[Usecase any](id, name, description string) SubjectPermission {
+	t := reflect.TypeFor[Usecase]()
+	if t.Kind() != reflect.Func {
+		panic(fmt.Sprintf("a usecase must be a named func type but found: %s", t.Kind()))
+	}
+
+	b := &UsecaseBuilder{
+		permission: perm{
+			id:   id,
+			name: name,
+			desc: description,
+		},
 	}
 
 	return b.permission

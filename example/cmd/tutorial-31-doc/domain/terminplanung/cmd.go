@@ -51,6 +51,9 @@ type SomeGenericType[T any] struct{}
 
 // ZeitstempelInMinuten oder Zeitstempel in Minuten.
 // Zeitstempel in Minuten ist sehr technisch aber der Kunde kennt das auch so.
+//
+//doc:stereotype value
+//doc:alias Zeitstempel in Minuten
 type ZeitstempelInMinuten int64
 
 type StartZeitPunkt ZeitstempelInMinuten
