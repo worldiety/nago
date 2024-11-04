@@ -3,13 +3,20 @@ package annotation
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/xmaps"
-	"go.wdy.de/nago/pkg/xstrings"
-	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 )
 
-var permissions = xmaps.NewConcurrentMap[string, *UsecaseBuilder]()
+var regexPermissionID = regexp.MustCompile(`^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*[a-z0-9_]*$`)
+
+type PermissionID string
+
+func (id PermissionID) Valid() bool {
+	return regexPermissionID.MatchString(string(id))
+}
+
+var permissions = xmaps.NewConcurrentMap[PermissionID, *UsecaseBuilder]()
 
 // SubjectPermission is the basic contract for the permissions repository, which is used by higher level implementations.
 type SubjectPermission interface {
@@ -56,10 +63,31 @@ func (b *UsecaseBuilder) PermissionBuilder(id, name string, docs ...DocElem) any
 	panic("signature proposal only")
 }
 
-// SubjectPermission is a terminal action for the builder and returns a SubjectPermission. Typically, most use cases have an
+// Permission is a terminal action for the builder and returns a SubjectPermission. Typically, most use cases have an
 // associated permission, which allows exact authorization management based on the permission identifiers.
-// If the given permission id has already been declared, a panic is thrown. Use the official companies language.
-func (b *UsecaseBuilder) Permission(id, name string, docs ...DocElem) SubjectPermission {
+// If the given permission id has already been declared, a panic is thrown. Use the official companies' language.
+// The arguments must have at least single string, representing the stable permission id.
+// A permission id looks like
+//
+//	<tld>.<company>.<product>.(<resource>.<permission>)|<usecase>
+//
+// Valid examples:
+//   - de.worldiety.hako.address.delete
+//   - de.worldiety.hako.bookevent
+//
+// Optionally, the second string represents an alternative Name, which is otherwise derived from the use case.
+// Also optionally, the third string represents any explicit description, which may be otherwise derived from additional
+// embedded source comments, if available.
+func (b *UsecaseBuilder) Permission(args ...string) SubjectPermission {
+	if len(args) == 0 {
+		panic(fmt.Errorf("must at least one argument, first argument is the id"))
+	}
+
+	id := PermissionID(args[0])
+	if !id.Valid() {
+		panic(fmt.Errorf("invalid permission id, must be of the form <tld>.<company>.<product>.(<resource>.<permission>)|<usecase> e.g. de.worldiety.hako.address.delete: %s", id))
+	}
+
 	existing, loaded := permissions.LoadOrStore(id, b)
 
 	if loaded {
@@ -67,28 +95,28 @@ func (b *UsecaseBuilder) Permission(id, name string, docs ...DocElem) SubjectPer
 		panic(fmt.Errorf("default permission '%s' already defined for use case %v", id, existing.typ))
 	}
 
+	var name string
+	if len(args) > 1 {
+		name = args[1]
+	}
+
+	var desc []string
+	if len(args) > 2 {
+		desc = args[2:]
+	}
+
 	b.permission = perm{
-		id:   id,
+		id:   string(id),
 		name: name,
-		desc: string(xstrings.Join(docs, "")),
+		desc: strings.Join(desc, ""),
 	}
 
 	return b.permission
 }
 
-func Permission[Usecase any](id, name, description string) SubjectPermission {
-	t := reflect.TypeFor[Usecase]()
-	if t.Kind() != reflect.Func {
-		panic(fmt.Sprintf("a usecase must be a named func type but found: %s", t.Kind()))
-	}
+// Permission is a shortcut to [UsecaseBuilder.Permission]
+func Permission[UC any](args ...string) SubjectPermission {
+	b := Usecase[UC]("todo")
 
-	b := &UsecaseBuilder{
-		permission: perm{
-			id:   id,
-			name: name,
-			desc: description,
-		},
-	}
-
-	return b.permission
+	return b.Permission(args...)
 }
