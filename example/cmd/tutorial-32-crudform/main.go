@@ -30,6 +30,7 @@ type Event struct {
 	Note1, Note2, Note3 string
 	GeplanteHelfer      []HelferID
 	Abfahrt             std.Option[Abfahrt]
+	RadioVariant        string
 }
 
 type Abfahrt struct {
@@ -110,6 +111,19 @@ func main() {
 				crud.Text(crud.TextOptions{Label: "Note3"}, crud.Ptr(func(entity *Event) *string {
 					return &entity.Note3
 				})),
+
+				crud.PickOne(crud.PickOneOptions[string]{Label: "Radio Gaga", Values: []string{"Gaga", "Gugu"}, Style: crud.PickOneStyleWithRadioButton}, crud.PropertyFuncs(
+					func(e *Event) std.Option[string] {
+						if e.RadioVariant == "" {
+							return std.None[string]()
+						}
+
+						return std.Some(e.RadioVariant)
+					},
+					func(dst *Event, v std.Option[string]) {
+						dst.RadioVariant = v.UnwrapOr("")
+					},
+				)),
 			)
 
 			noteSectionFields = append(noteSectionFields, crud.Row(

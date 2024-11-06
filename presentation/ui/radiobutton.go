@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"iter"
 )
 
 type RadioStateGroup struct {
@@ -25,6 +26,14 @@ func AutoRadioStateGroup(wnd core.Window, id string, states int) RadioStateGroup
 	return RadioStateGroup{states: wndStates}
 }
 
+func (s RadioStateGroup) Observe(f func(newIdx int)) {
+	for _, state := range s.states {
+		state.Observe(func(newValue bool) {
+			f(s.SelectedIndex())
+		})
+	}
+}
+
 func (s RadioStateGroup) SetSelectedIndex(idx int) {
 	for i, state := range s.states {
 		state.Set(idx == i)
@@ -42,10 +51,12 @@ func (s RadioStateGroup) SelectedIndex() int {
 	return -1
 }
 
-func (s RadioStateGroup) States(yield func(idx int, state *core.State[bool]) bool) {
-	for i := range s.states {
-		if !yield(i, s.states[i]) {
-			return
+func (s RadioStateGroup) All() iter.Seq2[int, *core.State[bool]] {
+	return func(yield func(int, *core.State[bool]) bool) {
+		for i := range s.states {
+			if !yield(i, s.states[i]) {
+				return
+			}
 		}
 	}
 }

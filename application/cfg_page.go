@@ -390,12 +390,14 @@ func (c *Configurator) newHandler() http.Handler {
 				slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
 				return
 			}
+		} else {
+			// TODO I can't remember if this sessionID is essential and how it is different from the sid above? Will the looper below fail?
+		}
 
-			if err := channel.Loop(); err != nil {
-				slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
-				scope.Connect(nil) // we cannot use that anymore, so clean it up
-				return
-			}
+		if err := channel.Loop(); err != nil {
+			slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
+			scope.Connect(nil) // we cannot use that anymore, so clean it up
+			return
 		}
 
 	}))

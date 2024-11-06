@@ -53,6 +53,8 @@ func (s *State[T]) Window() Window {
 	return s.wnd
 }
 
+// Observe registers a callback which is either invoked from [State.Notify] programmatically or by the user frontend.
+// The callback is automatically removed, before the next render cycle occurs.
 func (s *State[T]) Observe(f func(newValue T)) *State[T] {
 	s.observerLock.Lock()
 	defer s.observerLock.Unlock()

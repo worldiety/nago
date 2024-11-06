@@ -121,7 +121,7 @@ func main() {
 					return &model.Colors
 				})),
 
-				crud.PickOne("Color", []Color{"red", "green", "blue"}, func(model *Person) *std.Option[Color] {
+				crud.PickOne(crud.PickOneOptions[Color]{Label: "Color", Values: []Color{"red", "green", "blue"}}, func(model *Person) *std.Option[Color] {
 					return &model.FavoriteColor
 				}),
 

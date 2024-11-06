@@ -23,7 +23,7 @@ func main() {
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", stateGroup.SelectedIndex())), showAlert, alert.Ok()),
-				VStack(Each2(stateGroup.States, func(idx int, checked *core.State[bool]) core.View {
+				VStack(Each2(stateGroup.All(), func(idx int, checked *core.State[bool]) core.View {
 					return HStack(
 						RadioButton(checked.Get()).
 							InputChecked(checked),

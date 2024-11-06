@@ -100,6 +100,10 @@ func (b *UsecaseBuilder) Permission(args ...string) SubjectPermission {
 		name = args[1]
 	}
 
+	if name == "" {
+		name = b.typ.Name()
+	}
+
 	var desc []string
 	if len(args) > 2 {
 		desc = args[2:]
