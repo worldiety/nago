@@ -11,8 +11,8 @@ type OptionalFieldsOptions struct {
 	// Enabled indicates, if the fields shall be shown initially.
 	Enabled bool
 
-	// ID overwrites the automatic id creation, which may be wrong if you have the same binding with Optional field
-	// having the same (or empty) label.
+	// ID overwrites the automatic id creation, which may be wrong if you have the same binding with other
+	// Optional fields having the same (or empty) label.
 	ID string
 }
 

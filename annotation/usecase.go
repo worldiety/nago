@@ -40,6 +40,10 @@ func Usecase[T any](doc DocElem, documentation ...DocElem) *UsecaseBuilder {
 		panic(fmt.Sprintf("a usecase must be a named func type but found: %s", t.Kind()))
 	}
 
+	if _, ok := usecases[t]; ok {
+		panic(fmt.Sprintf("a usecase can only be used once: %s", t))
+	}
+
 	b := &UsecaseBuilder{doc: append([]DocElem{doc}, documentation...), typ: t}
 	usecases[t] = b
 	return b

@@ -24,6 +24,13 @@ type IAMSettings struct {
 	Service     *iam.Service
 }
 
+func (settings IAMSettings) DecorateRootView(factory func(wnd core.Window) core.View) func(wnd core.Window) core.View {
+	return func(wnd core.Window) core.View {
+		view := factory(wnd)
+		return settings.Decorator(wnd, view)
+	}
+}
+
 func (settings IAMSettings) LogoutMenuEntry(wnd core.Window) ui.ScaffoldMenuEntry {
 	return ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftStartOnRectangle, "Abmelden", settings.Logout.ID)
 }

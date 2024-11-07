@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-type PickOneColorOptions[T any] struct {
+type PickOneColorOptions struct {
 	Label   string
 	Palette colorpicker.Palette // default is [colorpicker.DefaultPalette]
 }
 
 // PickOneColor binds a single field of a color value type to an associated picker. To pick an entity based
 // on a foreign key semantics, use [OneToOne]. The T type follows the semantics of [ui.Color].
-func PickOneColor[E any, T ~string](opts PickOneColorOptions[T], property Property[E, std.Option[T]]) Field[E] {
+func PickOneColor[E any, T ~string](opts PickOneColorOptions, property Property[E, std.Option[T]]) Field[E] {
 	if opts.Palette == nil {
 		opts.Palette = colorpicker.DefaultPalette
 	}

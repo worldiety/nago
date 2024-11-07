@@ -162,7 +162,7 @@ func main() {
 					return &model.WorkDuration
 				})),
 
-				crud.PickOneColor(crud.PickOneColorOptions[ui.Color]{Label: "Lieblingsfarbe 2"}, crud.Ptr(func(model *Person) *std.Option[ui.Color] {
+				crud.PickOneColor(crud.PickOneColorOptions{Label: "Lieblingsfarbe 2"}, crud.Ptr(func(model *Person) *std.Option[ui.Color] {
 					return &model.FavoriteColor2
 				})),
 
