@@ -137,9 +137,11 @@ func main() {
 
 			noteSectionFields = append(noteSectionFields, crud.HLine[Event]())
 
-			noteSectionFields = append(noteSectionFields, crud.Option(
-				"Optionale Felder",
-				false,
+			noteSectionFields = append(noteSectionFields, crud.OptionalFields(
+				crud.OptionalFieldsOptions{
+					Label:   "Optionale Felder",
+					Enabled: false,
+				},
 				crud.Row(
 					crud.FormColumn(crud.Text(crud.TextOptions{Label: "Note1"}, crud.Ptr(func(entity *Event) *string {
 						return &entity.Note1
