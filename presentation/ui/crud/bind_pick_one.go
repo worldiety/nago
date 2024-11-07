@@ -27,6 +27,12 @@ type PickOneOptions[T any] struct {
 // PickOne binds a single field of an arbitrary value type to an associate picker. To pick an entity based
 // on a foreign key semantics, use [OneToOne].
 func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, std.Option[T]]) Field[E] {
+	if opts.ItemRenderer == nil {
+		opts.ItemRenderer = func(t T) core.View {
+			return ui.Text(fmt.Sprintf("%v", t))
+		}
+	}
+
 	return Field[E]{
 		Label: opts.Label,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
@@ -83,12 +89,6 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 
 				}
 
-				if opts.ItemRenderer == nil {
-					opts.ItemRenderer = func(t T) core.View {
-						return ui.Text(fmt.Sprintf("%v", t))
-					}
-				}
-
 				views := ui.Each2(stateGroup.All(), func(idx int, checked *core.State[bool]) core.View {
 					return ui.HStack(
 						ui.RadioButton(checked.Get()).
@@ -106,7 +106,10 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 					views = append(views, ui.Text(self.SupportingText))
 				}
 
-				return ui.VStack(views...)
+				return ui.VStack(views...).
+					Alignment(ui.Leading).
+					Gap(ui.L8).
+					Frame(ui.Frame{}.FullWidth())
 			}
 
 			// default

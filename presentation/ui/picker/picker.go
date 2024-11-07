@@ -65,9 +65,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 
 	}
 
-	c.renderToSelect = func(t T) core.View {
-		return ui.HStack(ui.Text(fmt.Sprintf("%v", t))).Padding(ui.Padding{}.Vertical(ui.L16))
-	}
+	c = c.ItemRenderer(nil)
 
 	c.stringer = func(t T) string {
 		return fmt.Sprintf("%v", t)
@@ -213,9 +211,15 @@ func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
 }
 
 // ItemRenderer can be customized to return a non-text view for the given T. This is
-// shown within the picker popup
+// shown within the picker popup. If fn is nil, the default fallback rendering will be applied.
 func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 	c.renderToSelect = fn
+	if fn == nil {
+		c.renderToSelect = func(t T) core.View {
+			return ui.HStack(ui.Text(fmt.Sprintf("%v", t))).Padding(ui.Padding{}.Vertical(ui.L16))
+		}
+	}
+
 	return c
 }
 
