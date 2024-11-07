@@ -6,7 +6,10 @@
 // look awkward.
 package xiter
 
-import "iter"
+import (
+	"fmt"
+	"iter"
+)
 
 func Empty[T any]() iter.Seq[T] {
 	return func(yield func(T) bool) {
@@ -183,5 +186,33 @@ func BreakOnError[K any](err *error, s iter.Seq2[K, error]) iter.Seq[K] {
 
 			return yield(k)
 		})
+	}
+}
+
+// Chunks splits and collects the given iter into sub slices. Note that []T slice is owned by the iterator to keep
+// allocation rate constant (only 1 allocation of size * sizeof(T)).
+// To escape the returned slice, you have to use [slices.Clone].
+// Size must not be lower or equal than 0.
+func Chunks[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
+	if size < 1 {
+		panic(fmt.Errorf("invalid chunk size: %d", size))
+	}
+
+	return func(yield func([]T) bool) {
+		tmp := make([]T, 0, size)
+		for t := range seq {
+			tmp = append(tmp, t)
+			if len(tmp) == size {
+				if !yield(tmp) {
+					return
+				}
+				tmp = tmp[:0]
+			}
+		}
+
+		// yield whatever fraction has been collected.
+		if len(tmp) > 0 {
+			yield(tmp)
+		}
 	}
 }

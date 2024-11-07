@@ -96,6 +96,7 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 						ui.VStack(opts.ItemRenderer(opts.Values[idx])).
 							Action(func() {
 								stateGroup.SetSelectedIndex(idx)
+								stateGroup.Notify()
 							}),
 					)
 				})

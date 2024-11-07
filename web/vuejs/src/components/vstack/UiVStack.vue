@@ -22,13 +22,24 @@ const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	if (props.ui.t){
+	if (props.ui.t) {
+
 		serviceAdapter.executeFunctions(props.ui.t);
 	}
 }
 
+function onKeydown(event: KeyboardEvent) {
+	if (props.ui.t) {
+		event.stopPropagation()
+		if (event.code === "Enter" || event.code === 'Space'){
+			serviceAdapter.executeFunctions(props.ui.t);
+		}
+
+	}
+}
+
 // copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
-function commonStyles():string[]{
+function commonStyles(): string[] {
 	let styles = frameCSS(props.ui.f)
 
 	// background handling
@@ -39,15 +50,15 @@ function commonStyles():string[]{
 			if (hover.value) {
 				styles.push(`background-color: ${colorValue(props.ui.hgc)}`)
 			} else {
-					styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
-			}
-		}else{
 				styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
+			}
+		} else {
+			styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
 		}
 	}
 
-	if (props.ui.t){
-		focusable.value= true
+	if (props.ui.t) {
+		focusable.value = true
 	}
 
 	if (props.ui.fbc) {
@@ -58,21 +69,21 @@ function commonStyles():string[]{
 	}
 
 	// border handling
-	if (props.ui.pb && pressed.value){
+	if (props.ui.pb && pressed.value) {
 		styles.push(...borderCSS(props.ui.pb))
-	}else{
-		if (props.ui.hb){
-			if (hover.value){
+	} else {
+		if (props.ui.hb) {
+			if (hover.value) {
 				styles.push(...borderCSS(props.ui.hb))
-			}else{
-					styles.push(...borderCSS(props.ui.b))
+			} else {
+				styles.push(...borderCSS(props.ui.b))
 			}
-		}else{
+		} else {
 			styles.push(...borderCSS(props.ui.b))
 		}
 	}
 
-	if (props.ui.fb){
+	if (props.ui.fb) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
 			styles.push(...borderCSS(props.ui.fb))
@@ -84,7 +95,7 @@ function commonStyles():string[]{
 	styles.push(...paddingCSS(props.ui.p))
 	styles.push(...fontCSS(props.ui.fn))
 
-	if (focusable.value && focused.value){
+	if (focusable.value && focused.value) {
 		styles.push("outline: 2px solid black") // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
 	}
 
@@ -101,51 +112,51 @@ const frameStyles = computed<string>(() => {
 	return styles.join(";")
 });
 
-const StyleButtonPrimary   = "p"
+const StyleButtonPrimary = "p"
 const StyleButtonSecondary = "s"
-const StyleButtonTertiary   = "t"
+const StyleButtonTertiary = "t"
 
 const clazz = computed<string>(() => {
 	let classes = ["overflow-clip", "inline-flex", "flex-col"];
 	switch (props.ui.a) {
 		case Alignment.Leading:
-			classes.push("justify-center","items-start")
+			classes.push("justify-center", "items-start")
 			break
 		case Alignment.Trailing:
 			classes.push("justify-center", "items-end")
 			break
 		case Alignment.Center:
-			classes.push( "justify-center", "items-center")
+			classes.push("justify-center", "items-center")
 			break
 		case Alignment.TopLeading:
-			classes.push( "justify-start", "items-start")
+			classes.push("justify-start", "items-start")
 			break
 		case Alignment.BottomLeading:
-			classes.push( "justify-end", "items-start")
+			classes.push("justify-end", "items-start")
 			break
 		case Alignment.TopTrailing:
-			classes.push( "justify-start", "items-end")
+			classes.push("justify-start", "items-end")
 			break
 		case Alignment.Top:
-			classes.push( "justify-start", "items-center")
+			classes.push("justify-start", "items-center")
 			break
 		case Alignment.BottomTrailing:
-			classes.push( "justify-end","items-end")
+			classes.push("justify-end", "items-end")
 			break
 		case Alignment.Bottom:
-			classes.push( "justify-end", "items-center")
+			classes.push("justify-end", "items-center")
 			break
 		default:
-			classes.push( "justify-center", "items-center")
+			classes.push("justify-center", "items-center")
 			break
 
 	}
 
-	if (props.ui.t){
+	if (props.ui.t) {
 		classes.push("cursor-pointer")
 	}
 
-	switch (props.ui.s){
+	switch (props.ui.s) {
 		case StyleButtonPrimary:
 			classes.push("button-primary")
 			break
@@ -165,13 +176,14 @@ const clazz = computed<string>(() => {
 
 <template>
 	<!-- vstack -->
-	<div v-if="!props.ui.s &&!props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
+	<div v-if="!props.ui.s &&!props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true"
+			 @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
-			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick">
+			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick" @keydown="onKeydown">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 
-	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles"  @click="onClick">
+	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</button>
 </template>

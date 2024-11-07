@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -313,10 +314,28 @@ func (s *Scope) updateTick(now time.Time) {
 // only for event loop
 func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.ComponentInvalidated {
 
+	renderResult := func() (rn RenderNode) {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error(fmt.Sprintf("%v", r))
+				debug.PrintStack()
+				rn = ora.VStack{
+					Type: ora.VStackT,
+					Children: []ora.Component{
+						ora.Text{Type: ora.TextT, Value: "panic during rendering, check server-side logs"},
+					},
+					Frame: ora.Frame{Width: "100%", Height: "100dvh"},
+				}
+
+			}
+		}()
+		return scopeWnd.render()
+	}()
+
 	return ora.ComponentInvalidated{
 		Type:      ora.ComponentInvalidatedT,
 		RequestId: requestId,
-		Component: scopeWnd.render(),
+		Component: renderResult,
 	}
 }
 

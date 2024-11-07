@@ -40,6 +40,12 @@ func (s RadioStateGroup) SetSelectedIndex(idx int) {
 	}
 }
 
+func (s RadioStateGroup) Notify() {
+	for _, state := range s.states {
+		state.Notify()
+	}
+}
+
 // SelectedIndex returns -1 or the selected index.
 func (s RadioStateGroup) SelectedIndex() int {
 	for i, state := range s.states {

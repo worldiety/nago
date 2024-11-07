@@ -5,21 +5,35 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func Option[E any](label string, enabled bool, fields ...Field[E]) []Field[E] {
-	return fakeFormFields("", optionSection(fields, label, enabled), fields...)
+type OptionalFieldsOptions struct {
+	Label string
+
+	// Enabled indicates, if the fields shall be shown initially.
+	Enabled bool
+
+	// ID overwrites the automatic id creation, which may be wrong if you have the same binding with Optional field
+	// having the same (or empty) label.
+	ID string
 }
 
-func optionSection[E any](fields []Field[E], label string, enabled bool) func(bnd *Binding[E], views ...core.View) ui.DecoredView {
+// OptionalFields creates a kind of invisible section for the given fields.
+// A checkbox is shown, to show the given fields.
+// This may be used, to simplify complex forms and make them a bit more lightweight if not all fields are required.
+func OptionalFields[E any](opts OptionalFieldsOptions, fields ...Field[E]) []Field[E] {
+	return fakeFormFields("", optionSection(fields, opts), fields...)
+}
+
+func optionSection[E any](fields []Field[E], opts OptionalFieldsOptions) func(bnd *Binding[E], views ...core.View) ui.DecoredView {
 	return func(bnd *Binding[E], views ...core.View) ui.DecoredView {
-		checkedState := core.StateOf[bool](bnd.wnd, bnd.id+label).Init(func() bool {
-			return enabled
+		checkedState := core.StateOf[bool](bnd.wnd, bnd.id+opts.Label+opts.ID).Init(func() bool {
+			return opts.Enabled
 		})
 		cb := ui.Checkbox(checkedState.Get()).InputChecked(checkedState)
 
 		allViews := make([]core.View, 0, len(fields)+1)
 		allViews = append(allViews, ui.HStack(
 			cb,
-			ui.Text(label),
+			ui.Text(opts.Label),
 		))
 
 		if checkedState.Get() {

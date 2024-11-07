@@ -30,20 +30,21 @@ type Vacation struct {
 }
 
 type Person struct {
-	ID            PID
-	Title         string
-	Firstname     string
-	Lastname      string
-	Friends       []PID           // this is like foreign keys, however they become stale and are not automatically updated
-	BestFriend    std.Option[PID] // this the same as above, but the one-to-one case
-	Score         Score
-	Grade         Grade
-	Proofed       bool
-	FavoriteColor std.Option[Color]
-	Colors        []Color
-	Birthday      Birthday
-	Vacation      Vacation
-	WorkDuration  time.Duration
+	ID             PID
+	Title          string
+	Firstname      string
+	Lastname       string
+	Friends        []PID           // this is like foreign keys, however they become stale and are not automatically updated
+	BestFriend     std.Option[PID] // this the same as above, but the one-to-one case
+	Score          Score
+	Grade          Grade
+	Proofed        bool
+	FavoriteColor  std.Option[Color]
+	FavoriteColor2 std.Option[ui.Color]
+	Colors         []Color
+	Birthday       Birthday
+	Vacation       Vacation
+	WorkDuration   time.Duration
 }
 
 func (p Person) Identity() PID {
@@ -159,6 +160,10 @@ func main() {
 
 				crud.Time(crud.TimeOptions{Label: "Arbeitszeit", ShowHours: true, ShowSeconds: true}, crud.Ptr(func(model *Person) *time.Duration {
 					return &model.WorkDuration
+				})),
+
+				crud.PickOneColor(crud.PickOneColorOptions[ui.Color]{Label: "Lieblingsfarbe 2"}, crud.Ptr(func(model *Person) *std.Option[ui.Color] {
+					return &model.FavoriteColor2
 				})),
 
 				crud.AggregateActions("Optionen",

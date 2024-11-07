@@ -31,3 +31,25 @@ func TestLimit(t *testing.T) {
 		t.Fatal(r)
 	}
 }
+
+func TestChunks(t *testing.T) {
+	var collected [][]int
+	exp := [][]int{{1, 2, 3}, {4, 5, 6}}
+	for chunk := range xiter.Chunks[int](slices.Values([]int{1, 2, 3, 4, 5, 6}), 3) {
+		collected = append(collected, slices.Clone(chunk))
+	}
+
+	if !reflect.DeepEqual(exp, collected) {
+		t.Fatal(collected)
+	}
+
+	collected = nil
+	exp = [][]int{{1, 2, 3}, {4, 5, 6}, {7}}
+	for chunk := range xiter.Chunks[int](slices.Values([]int{1, 2, 3, 4, 5, 6, 7}), 3) {
+		collected = append(collected, slices.Clone(chunk))
+	}
+
+	if !reflect.DeepEqual(exp, collected) {
+		t.Fatal(collected)
+	}
+}

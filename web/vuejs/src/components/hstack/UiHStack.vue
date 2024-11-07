@@ -24,10 +24,20 @@ const serviceAdapter = useServiceAdapter();
 
 function onClick() {
 	if (props.ui.t) {
-
 		serviceAdapter.executeFunctions(props.ui.t);
 	}
 }
+
+function onKeydown(event: KeyboardEvent) {
+	if (props.ui.t) {
+		event.stopPropagation()
+		if (event.code === "Enter" || event.code === 'Space'){
+			serviceAdapter.executeFunctions(props.ui.t);
+		}
+
+	}
+}
+
 
 function checkFocusVisible(event: Event) {
 	const element = event.target as HTMLElement;
@@ -189,7 +199,7 @@ const clazz = computed<string>(() => {
 	<!-- hstack -->
 	<div v-if="!props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
-			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @focus="checkFocusVisible">
+			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @keydown="onKeydown" @focus="checkFocusVisible">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 

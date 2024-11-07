@@ -99,8 +99,15 @@ const (
 	ColorCardBody = M4
 
 	// ColorAccent represents the variable name containing the exact accent color.
-	ColorAccent Color = A0
+	ColorAccent = A0
+
+	// ColorInputBorder represents the variable name which refers to the color of the border for input elements like
+	// a text field.
+	ColorInputBorder = M8
 
 	// ColorLine represents the variable name containing the conventional color for a line derived from the main color.
 	ColorLine = M5
+
+	// ColorError represents the variable name which refers to the error color value.
+	ColorError = SE0
 )
