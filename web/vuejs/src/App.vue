@@ -19,6 +19,7 @@ import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
 import {URI} from "@/shared/protocol/ora/uRI";
 import {FileImportRequested} from "@/shared/protocol/ora/fileImportRequested";
 import {useUploadRepository} from "@/api/upload/uploadRepository";
+import {ThemeRequested} from "@/shared/protocol/ora/themeRequested";
 
 enum State {
 	Loading,
@@ -93,6 +94,7 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
 		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo)
+		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested)
 
 		updateUi(invalidation);
 	} catch {
@@ -127,7 +129,7 @@ async function navigateForward(event: Event): Promise<void> {
 	ui.value = componentInvalidated.value;
 
 	componentKey.value += 1;
-	console.log("componentkey",componentKey.value)
+	console.log("componentkey", componentKey.value)
 
 	let url = `/${navigationForwardToRequested.factory}`
 	if (navigationForwardToRequested.values && Object.entries(navigationForwardToRequested.values).length > 0) {
@@ -156,6 +158,24 @@ function resetHistory(event: Event): void {
 }
 
 const uploadRepository = useUploadRepository();
+
+
+function themeRequested(evt: Event): void {
+	let msg = evt as ThemeRequested
+
+	switch (msg.theme) {
+		case "light":
+			themeManager.applyLightmodeTheme()
+			break;
+		case "dark":
+			themeManager.applyDarkmodeTheme()
+			break;
+		default:
+			console.log("unknown theme", msg.theme)
+	}
+
+	sendWindowInfo(true)
+}
 
 function fileImportRequested(evt: Event): void {
 	let msg = evt as FileImportRequested;
@@ -228,7 +248,7 @@ function setTheme(themes: Themes): void {
 
 const activeBreakpoint = ref('');
 
-function sendWindowInfo(force:boolean=true) {
+function sendWindowInfo(force: boolean = true) {
 	const breakpoints = {
 		sm: 640,
 		md: 768,
@@ -309,6 +329,7 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
+	eventBus.unsubscribe(EventType.THEME_REQUESTED, themeRequested)
 });
 
 
@@ -350,12 +371,12 @@ watch(() => ui.value, (newValue) => {
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
-	<div  id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
+	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
 
 	</div>
 
 
-	<div class="bg-M1 content-container  min-h-screen" >
+	<div class="bg-M1 content-container  min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>

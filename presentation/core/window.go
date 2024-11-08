@@ -102,6 +102,10 @@ type Window interface {
 	// automatically created.
 	ImportFiles(options ImportFilesOptions)
 
+	// SetColorScheme requests that the frontend changes the theme or color scheme, e.g. to dark or light mode.
+	// The frontend may ignore or just not support a specific theme.
+	SetColorScheme(ColorScheme)
+
 	// Application returns the parent application.
 	Application() *Application
 

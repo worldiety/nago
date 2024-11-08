@@ -31,7 +31,7 @@ function onClick() {
 function onKeydown(event: KeyboardEvent) {
 	if (props.ui.t) {
 		event.stopPropagation()
-		if (event.code === "Enter" || event.code === 'Space'){
+		if (event.code === "Enter" || event.code === 'Space') {
 			serviceAdapter.executeFunctions(props.ui.t);
 		}
 
@@ -177,13 +177,14 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- vstack -->
 	<div v-if="!props.ui.s &&!props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true"
+			 :title="props.ui.al"
 			 @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
 			 @focusout="focused = false" :tabindex="focusable?0:-1" @click="onClick" @keydown="onKeydown">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 
-	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
+	<button v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick" :title="props.ui.al">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</button>
 </template>

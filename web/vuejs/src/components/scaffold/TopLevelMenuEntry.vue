@@ -7,8 +7,8 @@
 		@keydown.enter="handleClick"
 		@keydown.down.prevent="focusFirstLinkedSubMenuEntry('down')"
 		@keydown.right.prevent="focusFirstLinkedSubMenuEntry('right')"
-		@mouseenter="emit('expand', ui);"
-		@mouseleave="handleMouseLeave"
+		@mouseenter="emit('expand', ui);hover=true;"
+		@mouseleave="handleMouseLeave;hover=false;"
 		@mouseup="interacted = false"
 		@focus="emit('expand', ui);"
 	>
@@ -16,6 +16,8 @@
 			v-if="ui.i"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{
+				'h-10':!ui.t,
+				'mix-blend-multiply bg-M7':!ui.t && hover,
 				'bg-M7 bg-opacity-25': ui.x,
 				'bg-opacity-35': interacted,
 				'bg-M7 bg-opacity-35': active,
@@ -25,10 +27,12 @@
 				<div class="*:h-full" v-if="ui.x && ui.v">
 					<ui-generic  :ui="props.ui.v"  />
 				</div>
-				<div v-else class="*:h-full">
+				<div v-else-if="ui.t" class="*:h-full">
 					<ui-generic  :ui="props.ui.i"  />
 				</div>
-
+				<div v-else class="h-10">
+					<ui-generic  :ui="props.ui.i"  />
+				</div>
 
 
 
@@ -63,6 +67,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const interacted = ref<boolean>(false);
+const hover = ref<boolean>(false);
 
 const linksToCurrentPage = computed((): boolean => {
 	if (props.ui.f == "." && (window.location.pathname == "" || window.location.pathname == "/")) {

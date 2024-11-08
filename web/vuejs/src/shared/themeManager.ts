@@ -54,7 +54,7 @@ export default class ThemeManager {
 		}
 	}
 
-	private applyLightmodeTheme(): void {
+	applyLightmodeTheme(): void {
 		if (!this.themes) {
 			return;
 		}
@@ -64,7 +64,7 @@ export default class ThemeManager {
 		localStorage.setItem(this.localStorageKey, ThemeKey.LIGHT);
 	}
 
-	private applyDarkmodeTheme(): void {
+	applyDarkmodeTheme(): void {
 		if (!this.themes) {
 			return;
 		}

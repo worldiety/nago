@@ -33,6 +33,35 @@ type TBox struct {
 	invisible          bool
 }
 
+func BoxAlign(alignment Alignment, child core.View) TBox {
+	var bl BoxLayout
+	switch alignment {
+	case Top:
+		bl.Top = child
+	case Center:
+		bl.Center = child
+	case Bottom:
+		bl.Bottom = child
+	case Leading:
+		bl.Leading = child
+	case Trailing:
+		bl.Trailing = child
+	case TopLeading:
+		bl.TopLeading = child
+	case TopTrailing:
+		bl.TopTrailing = child
+	case BottomLeading:
+		bl.BottomLeading = child
+	case BottomTrailing:
+		bl.BottomTrailing = child
+
+	default:
+		bl.Center = child
+	}
+
+	return Box(bl)
+}
+
 // Box is a container, in which the given children will be layout to the according BoxLayout
 // rules. Note, that per definition the container clips its children. Thus, if working with shadows,
 // you need to apply additional padding. Important: this container requires usually absolute height and width

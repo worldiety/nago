@@ -11,9 +11,9 @@ import (
 type PersonID string
 
 type Person struct {
-	ID       PersonID `hidden`
+	ID       PersonID `visible:"false"`
 	Vorname  string
-	Nachname string
+	Nachname string `label:"Zuname"`
 }
 
 func (p Person) Identity() PersonID {
@@ -35,6 +35,7 @@ func main() {
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
 
 		iamCfg := application.IAMSettings{}
+		iamCfg.Decorator = cfg.NewScaffold().Decorator()
 		iamCfg = cfg.IAM(iamCfg)
 
 		cfg.RootView(".", iamCfg.DecorateRootView(crud.AutoRootView(crud.AutoRootViewOptions{

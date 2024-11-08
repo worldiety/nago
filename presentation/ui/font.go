@@ -34,6 +34,11 @@ var (
 		Size:   "1rem",
 		Weight: BoldFontWeight,
 	}
+
+	Small = Font{
+		Size:   "0.75rem",
+		Weight: NormalFontWeight,
+	}
 )
 
 type FontStyle string

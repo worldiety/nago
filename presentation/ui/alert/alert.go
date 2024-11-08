@@ -2,6 +2,7 @@ package alert
 
 import (
 	"go.wdy.de/nago/presentation/core"
+	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	ui "go.wdy.de/nago/presentation/ui"
 )
 
@@ -10,12 +11,15 @@ type Option interface {
 }
 
 type alertOpts struct {
-	state     *core.State[bool]
-	okBtn     core.View
-	delBtn    core.View
-	saveBtn   core.View
-	cancelBtn core.View
-	custom    []core.View
+	state        *core.State[bool]
+	okBtn        core.View
+	delBtn       core.View
+	saveBtn      core.View
+	cancelBtn    core.View
+	custom       []core.View
+	closeable    core.View
+	dlgAlign     ui.Alignment
+	modalPadding ui.Padding
 }
 
 type optFunc func(opts *alertOpts)
@@ -57,6 +61,14 @@ func Save(onSave func() (close bool)) Option {
 	})
 }
 
+func Closeable() Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.closeable = ui.TertiaryButton(func() {
+			opts.state.Set(false)
+		}).PreIcon(heroOutline.XMark)
+	})
+}
+
 // Custom adds a custom footer (button) element.
 func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	return optFunc(func(opts *alertOpts) {
@@ -74,6 +86,18 @@ func Cancel(onCancel func()) Option {
 				onCancel()
 			}
 		}).Title("Abbrechen")
+	})
+}
+
+func Alignment(alignment ui.Alignment) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.dlgAlign = alignment
+	})
+}
+
+func ModalPadding(padding ui.Padding) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.modalPadding = padding
 	})
 }
 
@@ -107,6 +131,11 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 			}
 
 			btns = append(btns, options.custom...)
+
+			dialog = dialog.
+				TitleX(options.closeable).
+				Alignment(options.dlgAlign).
+				ModalPadding(options.modalPadding)
 
 			if len(btns) > 0 {
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))

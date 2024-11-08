@@ -19,7 +19,7 @@
 							@expand="expandMenuEntry"
 						/>
 					</div>
-					<ThemeToggle/>
+<!--					<ThemeToggle/>-->
 				</div>
 			</div>
 		</div>

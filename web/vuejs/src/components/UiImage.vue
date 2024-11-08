@@ -59,7 +59,7 @@ const rewriteSVG = computed<string>(() => {
 </script>
 
 <template>
-	<img v-if="!ui.iv && !ui.s && !props.ui.v" class="h-auto max-w-full" :src="props.ui.u" :alt="props.ui.al"
+	<img v-if="!ui.iv && !ui.s && !props.ui.v" class="h-auto max-w-full" :src="props.ui.u" :alt="props.ui.al" :title="props.ui.al"
 			 :style="styles"/>
 	<div v-if="props.ui.s || props.ui.v" v-html="rewriteSVG"></div>
 </template>

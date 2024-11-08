@@ -98,6 +98,8 @@ const (
 	// the main color.
 	ColorCardBody = M4
 
+	ColorCardFooter = M3
+
 	// ColorAccent represents the variable name containing the exact accent color.
 	ColorAccent = A0
 

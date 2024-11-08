@@ -7,3 +7,7 @@ type SVG []byte
 func (svg SVG) AsBytes() []byte {
 	return svg
 }
+
+func (svg SVG) Empty() bool {
+	return len(svg) == 0
+}

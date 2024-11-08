@@ -27,6 +27,18 @@ type nagoSubject struct {
 	audit       func(session core.SessionID, usr User, permission string, granted bool)
 }
 
+func (n nagoSubject) Firstname() string {
+	return n.user.Firstname
+}
+
+func (n nagoSubject) Lastname() string {
+	return n.user.Lastname
+}
+
+func (n nagoSubject) Email() string {
+	return string(n.user.Email)
+}
+
 func (n nagoSubject) Language() language.Tag {
 	return language.German // TODO
 }

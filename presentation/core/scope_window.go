@@ -130,6 +130,13 @@ func (s *scopeWindow) Window() Window {
 	return s
 }
 
+func (s *scopeWindow) SetColorScheme(scheme ColorScheme) {
+	s.parent.Publish(ora.ThemeRequested{
+		Type:  ora.ThemeRequestedT,
+		Theme: string(scheme),
+	})
+}
+
 func (s *scopeWindow) Path() NavigationPath {
 	return NavigationPath(s.factory)
 }

@@ -12,6 +12,18 @@ type InvalidSubject struct {
 	DeniedLog func(permission string)
 }
 
+func (i InvalidSubject) Firstname() string {
+	return ""
+}
+
+func (i InvalidSubject) Lastname() string {
+	return ""
+}
+
+func (i InvalidSubject) Email() string {
+	return ""
+}
+
 func (i InvalidSubject) HasRole(rid RID) bool {
 	return false
 }

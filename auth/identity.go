@@ -25,6 +25,26 @@ type Subject interface {
 	// Depending on the provider, this may be even empty e.g. due to GDPR requirements.
 	Name() string
 
+	// Firstname contains the first name, if available.
+	// May be something anonymous.
+	// Depending on the provider, this may be even empty e.g. due to GDPR requirements.
+	Firstname() string
+
+	// Lastname contains the last name, if available.
+	// May be something anonymous.
+	// Depending on the provider, this may be even empty e.g. due to GDPR requirements.
+	Lastname() string
+
+	// Email contains the mail address, if available.
+	// May be something anonymous.
+	// Depending on the provider, this may be even empty e.g. due to GDPR requirements.
+	// You probably should NEVER rely on this to verify that two identities or subjects are the same,
+	// especially if the address has never been verified by a second factor (e.g. double opt-in or similar).
+	// This is a string, because it remembers you, that at no time this returned value means that the mail
+	// is valid in any way. Even if it has been verified once, the domain may have been deleted, or the mailbox is
+	// full or locked or even worse, has been captured by a malicious party and compromised.
+	Email() string
+
 	// Roles yields over all associated roles. This is important if the domain needs to model
 	// resource based access using role identifiers.
 	Roles(yield func(RID) bool)

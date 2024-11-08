@@ -59,7 +59,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 	var zero E
 	bnd := NewBinding[E](wnd)
 	for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
-		if _, ok := field.Tag.Lookup("hidden"); ok {
+		if flag, ok := field.Tag.Lookup("visible"); ok && flag == "false" {
 			continue
 		}
 

@@ -6,7 +6,6 @@
 import type { Component } from '@/shared/protocol/ora/component';
 import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
 import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 export interface ScaffoldMenuEntry {
     // Icon

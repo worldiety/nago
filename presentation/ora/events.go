@@ -30,6 +30,7 @@ func init() {
 		reflect.TypeOf(SendMultipleRequested{}),
 		reflect.TypeOf(WindowInfoChanged{}),
 		reflect.TypeOf(FileImportRequested{}),
+		reflect.TypeOf(ThemeRequested{}),
 	}
 }
 

@@ -31,7 +31,7 @@ function onClick() {
 function onKeydown(event: KeyboardEvent) {
 	if (props.ui.t) {
 		event.stopPropagation()
-		if (event.code === "Enter" || event.code === 'Space'){
+		if (event.code === "Enter" || event.code === 'Space') {
 			serviceAdapter.executeFunctions(props.ui.t);
 		}
 
@@ -166,7 +166,7 @@ const clazz = computed<string>(() => {
 		classes.push("cursor-pointer")
 	}
 
-	if (props.ui.w){
+	if (props.ui.w) {
 		classes.push("flex-wrap")
 	}
 
@@ -195,15 +195,19 @@ const clazz = computed<string>(() => {
 
 </script>
 
-<template >
+<template>
 	<!-- hstack -->
-	<div v-if="!props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true" @mouseleave="hover = false"
+	<div v-if="!props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @mouseover="hover = true"
+			 @mouseleave="hover = false"
 			 @mousedown="pressed = true" @mouseup="pressed = false" @mouseout="pressed = false" @focusin="focused = true"
-			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @keydown="onKeydown" @focus="checkFocusVisible">
+			 :title="props.ui.al"
+			 @focusout="focused = false;focusVisible=false" :tabindex="focusable?0:-1" @click="onClick" @keydown="onKeydown"
+			 @focus="checkFocusVisible">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 
-	<button :disabled="props.ui.d" v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
+	<button :disabled="props.ui.d" v-if="props.ui.s && !props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick"
+					:title="props.ui.al">
 		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</button>
 </template>

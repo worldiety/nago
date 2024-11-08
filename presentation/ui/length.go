@@ -67,7 +67,7 @@ func (l Length) Mul(s float64) Length {
 	var sb strings.Builder
 	var ext Length
 	for i, r := range l {
-		if r >= '0' && r <= '9' || r == '-' {
+		if r >= '0' && r <= '9' || r == '-' || r == '.' {
 			sb.WriteRune(r)
 		} else {
 			ext = l[i:]

@@ -20,5 +20,6 @@ export enum EventType {
 	FUNCTION_CALL_REQUESTED = 'F',
 	SESSION_ASSIGNED = 'SessionAssigned',
 	PING = 'Ping',
+	THEME_REQUESTED = 'ThemeRequested',
 	WindowInfoChanged = 'WindowInfoChanged'
 }

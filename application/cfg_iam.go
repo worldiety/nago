@@ -21,6 +21,7 @@ type IAMSettings struct {
 	Groups      Groups
 	Login       Login
 	Logout      Logout
+	Dashboard   Dashboard
 	Service     *iam.Service
 }
 
@@ -75,6 +76,11 @@ type Logout struct {
 	ID core.NavigationPath
 }
 
+type Dashboard struct {
+	// default to iam/dashboard
+	ID core.NavigationPath
+}
+
 type Users struct {
 	// defaults to iam/users
 	ID         core.NavigationPath
@@ -115,6 +121,10 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 	if settings.Groups.ID == "" {
 		settings.Groups.ID = "iam/groups"
+	}
+
+	if settings.Dashboard.ID == "" {
+		settings.Dashboard.ID = "iam/dashboard"
 	}
 
 	if settings.Decorator == nil {
@@ -193,6 +203,15 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 
 	c.RootView(settings.Groups.ID, func(wnd core.Window) core.View {
 		return settings.Decorator(wnd, iamui.Groups(wnd, service))
+	})
+
+	c.RootView(settings.Dashboard.ID, func(wnd core.Window) core.View {
+		return settings.Decorator(wnd, iamui.Dashboard(wnd, iamui.DashboardModel{
+			Accounts:    settings.Users.ID,
+			Permissions: settings.Permissions.ID,
+			Groups:      settings.Groups.ID,
+			Roles:       settings.Roles.ID,
+		}))
 	})
 
 	c.AddOnWindowCreatedObserver(func(wnd core.Window) {

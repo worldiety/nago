@@ -27,6 +27,7 @@ const (
 	SendMultipleRequestedT        EventType = "SendMultipleRequested"
 	WindowInfoChangedT            EventType = "WindowInfoChanged"
 	FileImportRequestedT          EventType = "FileImportRequested"
+	ThemeRequestedT               EventType = "ThemeRequested"
 )
 
 // Event is a sum type of
