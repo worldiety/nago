@@ -1,8 +1,12 @@
 package application
 
 import (
+	_ "embed"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/glossary/docm"
+	"go.wdy.de/nago/glossary/docm/markdown"
+	"go.wdy.de/nago/glossary/docm/oraui"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -10,19 +14,41 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/tracking"
+	"time"
 )
 
+//go:embed content_impress_de.md
+var defaultImpress string
+
+//go:embed content_gdpr_de.md
+var defaultGDPR string
+
+//go:embed content_policies_de.md
+var defaultPolicies string
+
 type ScaffoldBuilder struct {
-	cfg       *Configurator
-	alignment ui.ScaffoldAlignment
-	lightLogo core.SVG
-	darkLogo  core.SVG
+	cfg             *Configurator
+	alignment       ui.ScaffoldAlignment
+	lightLogo       core.SVG
+	darkLogo        core.SVG
+	policiesPath    core.NavigationPath
+	policiesContent string
+	gdprPath        core.NavigationPath
+	gdprContent     string
+	impressPath     core.NavigationPath
+	impressContent  string
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 	return &ScaffoldBuilder{
-		cfg:       c,
-		alignment: ui.ScaffoldAlignmentTop,
+		cfg:             c,
+		alignment:       ui.ScaffoldAlignmentTop,
+		policiesPath:    "legal/policies",
+		policiesContent: defaultPolicies,
+		impressPath:     "legal/impress",
+		impressContent:  defaultImpress,
+		gdprPath:        "legal/gdpr",
+		gdprContent:     defaultGDPR,
 	}
 }
 
@@ -50,8 +76,33 @@ func (b *ScaffoldBuilder) name() string {
 	return b.cfg.applicationName
 }
 
+func (b *ScaffoldBuilder) registerLegalViews() {
+	b.cfg.RootView(b.impressPath, func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return oraui.Render(&docm.Document{Body: markdown.Parse(b.impressContent)})
+		})(wnd)
+	})
+
+	b.cfg.RootView(b.policiesPath, func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return oraui.Render(&docm.Document{Body: markdown.Parse(b.policiesContent)})
+		})(wnd)
+	})
+
+	b.cfg.RootView(b.gdprPath, func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return oraui.Render(&docm.Document{Body: markdown.Parse(b.gdprContent)})
+		})(wnd)
+	})
+}
+
 // Decorator is a builder terminal and returns a decorator-like function.
 func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core.View {
+	b.registerLegalViews()
+
 	return func(wnd core.Window, view core.View) core.View {
 		var logo core.View
 		if wnd.Info().ColorScheme == core.Dark && !b.darkLogo.Empty() {
@@ -77,12 +128,20 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 		}
 
+		menu = append(menu, ui.ScaffoldMenuEntry{
+			Title: "Test snack",
+			Action: func() {
+				alert.ShowMessage(wnd, alert.Message{"snack it", "nom nom" + time.Now().String()})
+			},
+		})
+
 		return ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
 				b.profileDialog(wnd, menuDialogPresented),
 
 				view,
+				alert.MessageList(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
 		).Logo(logo).
@@ -118,11 +177,19 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 		ui.HLineWithColor(ui.ColorAccent),
 		ui.HStack(
 			ui.SecondaryButton(func() {
+
 			}).Title("Konto verwalten"),
 		).FullWidth().Alignment(ui.Trailing),
 		ui.HStack(
-			ui.Text("Datenschutzerklärung").Font(ui.Small),
-			ui.Text("Nutzungsbedingungen").Font(ui.Small),
+			ui.Text("Datenschutzerklärung").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(b.gdprPath, nil)
+			}),
+			ui.Text("Nutzungsbedingungen").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(b.policiesPath, nil)
+			}),
+			ui.Text("Impressum").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(b.impressPath, nil)
+			}),
 		).FullWidth().Gap(ui.L8).Padding(ui.Padding{Top: ui.L16}),
 	).Alignment(ui.Leading).FullWidth()
 }

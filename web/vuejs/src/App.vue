@@ -367,8 +367,15 @@ watch(() => ui.value, (newValue) => {
 </style>
 
 <template>
+
+
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
+	</div>
+
+
+	<div id="ora-overlay" class="modal-container fixed inset-0 pointer-events-none z-40" style="--modal-z-index: 35">
+
 	</div>
 
 	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
@@ -383,5 +390,7 @@ watch(() => ui.value, (newValue) => {
 		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
 	</div>
+
+
 
 </template>

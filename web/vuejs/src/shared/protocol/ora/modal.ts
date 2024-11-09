@@ -24,5 +24,17 @@ export interface Modal {
      */
     // OnDismissRequest
     odr/*omitempty*/? /*OnDismissRequest*/: Ptr;
+
+	// ModalType 0==Dialog 1==overlay
+	t/*omitempty*/? /*ModalType*/: number;
+
+	//Top              Length    `json:"u"`
+	u?:string;
+	//Left             Length    `json:"l"`
+	l?:string;
+	//Right            Length    `json:"r"`
+	r?:string;
+	//Bottom           Length    `json:"bt,omitempty"`
+	bt?:string;
 }
 

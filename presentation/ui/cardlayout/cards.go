@@ -10,7 +10,7 @@ type TCardLayout struct {
 	children []core.View
 }
 
-func CardLayout(children ...core.View) TCardLayout {
+func Layout(children ...core.View) TCardLayout {
 	tmp := make([]core.View, 0, len(children))
 	for _, child := range children {
 		if child == nil {

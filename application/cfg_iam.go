@@ -27,6 +27,9 @@ type IAMSettings struct {
 
 func (settings IAMSettings) DecorateRootView(factory func(wnd core.Window) core.View) func(wnd core.Window) core.View {
 	return func(wnd core.Window) core.View {
+		if settings.Decorator == nil {
+			panic("settings has not been initialized correctly")
+		}
 		view := factory(wnd)
 		return settings.Decorator(wnd, view)
 	}

@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"iter"
 	"log/slog"
 	"reflect"
@@ -211,7 +212,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 				ui.HLine(),
 			).Alignment(ui.Leading).Padding(ui.Padding{Bottom: ui.Length("2rem")}),
 
-			ui.Text("Leider haben Sie nicht die nötigen Rechte, um auf diese Daten zuzugreifen."),
+			alert.IfPermissionDenied(bnd.wnd, "."),
 		).Alignment(ui.Leading).Padding(ui.Padding{Top: ui.L40}).Frame(ui.Frame{}.FullWidth())
 	}
 

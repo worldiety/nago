@@ -58,6 +58,7 @@ type Scope struct {
 	location           *time.Location
 	subject            concurrent.Value[auth.Subject]
 	locale             language.Tag
+	statesById         map[string]TransientProperty
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
@@ -73,6 +74,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 		cancelCtx:   cancel,
 		tempRootDir: tempRootDir,
 		locale:      language.German, // TODO implement me
+		statesById:  make(map[string]TransientProperty),
 	}
 
 	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me

@@ -23,7 +23,9 @@ type TImage struct {
 }
 
 func Image() TImage {
-	return TImage{}
+	return TImage{
+		frame: Frame{}.Size(Auto, L160).ora(),
+	}
 }
 
 // URI can be used for static image resources which are not provided by
@@ -34,7 +36,6 @@ func Image() TImage {
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
 func (c TImage) URI(uri core.URI) TImage {
 	c.uri = ora.URI(uri)
-	c.frame = Frame{}.Size(Auto, L160).ora()
 	return c
 }
 

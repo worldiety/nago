@@ -83,12 +83,12 @@ func (s *Service) Subject(id core.SessionID) auth.Subject {
 	}
 
 	return newNagoSubject(id, usr, tmp, func(session core.SessionID, usr User, permission string, granted bool) {
-		slog.Info("audit-log", "usecase", permission, "granted", granted, "sid", session, "uid", usr.ID, "email", usr.Email)
+		//slog.Info("audit-log", "usecase", permission, "granted", granted, "sid", session, "uid", usr.ID, "email", usr.Email)
 	})
 }
 
 func (s *Service) logInvalidSubject(permission string) {
-	slog.Info("audit-log", "usecase", permission, "granted", false)
+	//	slog.Info("audit-log", "usecase", permission, "granted", false)
 }
 
 // Logout removes the associated user from the given session.
