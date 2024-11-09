@@ -10,7 +10,6 @@
 			<div v-if="ui.l" class="w-full *:w-full mb-4">
 				<ui-generic :ui="ui.l"/>
 			</div>
-
 			<!-- Top level menu entries -->
 			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
 				<div v-for="(menuEntry, index) in ui.m" :key="index" ref="menuEntryElements" class="w-full">

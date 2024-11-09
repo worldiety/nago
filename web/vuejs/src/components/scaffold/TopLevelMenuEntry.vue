@@ -35,7 +35,6 @@
 				</div>
 
 
-
 				<!-- Optional red badge -->
 				<div v-if="ui.b" class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-A0">
 					<p class="text-xs text-white">{{ ui.b }}</p>

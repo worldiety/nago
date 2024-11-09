@@ -12,11 +12,11 @@
 		>
 			<div v-if="props.ui.i" class="relative flex justify-start items-center h-full">
 
-				<div class="menu-entry-icon-active h-6 *:h-full">
+				<div class="menu-entry-icon-active *:h-full">
 					<ui-generic v-if="ui.x && props.ui.v" :ui="props.ui.v"/>
 					<ui-generic v-else :ui="props.ui.i"/>
 				</div>
-				<div class="menu-entry-icon h-6 *:h-full">
+				<div class="menu-entry-icon  *:h-full">
 					<ui-generic :ui="props.ui.i"/>
 				</div>
 
@@ -30,11 +30,10 @@
 				</div>
 			</div>
 			<div class="flex justify-start items-center h-6">
-				<p class="grow leading-tight select-none align-bottom">{{ ui.t }}</p>
+				<p class="grow leading-tight select-none align-bottom">{{ ui.t }}aaa</p>
 			</div>
 			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass"/>
 		</div>
-
 		<template v-if="ui.x">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
