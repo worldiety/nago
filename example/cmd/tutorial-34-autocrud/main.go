@@ -4,8 +4,13 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/presentation/core"
+	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/crud"
 	"go.wdy.de/nago/web/vuejs"
+	"time"
 )
 
 type PersonID string
@@ -35,7 +40,13 @@ func main() {
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
 
 		iamCfg := application.IAMSettings{}
-		iamCfg.Decorator = cfg.NewScaffold().Decorator()
+		iamCfg.Decorator = cfg.NewScaffold().
+			MenuEntry().Icon(heroSolid.BellSnooze).Action(func(wnd core.Window) {
+			alert.ShowMessage(wnd, alert.Message{Title: "snack it", Message: "nom nom" + time.Now().String()})
+		}).JustAuthenticated().
+			MenuEntry().Icon(heroSolid.ArchiveBox).Title("Archiv").Public().
+			MenuEntry().Icon(heroSolid.Battery50).Title("Status").OneOf(iam.ReadGroup).
+			Decorator()
 		iamCfg = cfg.IAM(iamCfg)
 
 		cfg.RootView(".", iamCfg.DecorateRootView(crud.AutoRootView(crud.AutoRootViewOptions{

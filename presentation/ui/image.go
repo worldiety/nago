@@ -20,6 +20,7 @@ type TImage struct {
 	svg                ora.SVG
 	fillColor          ora.Color
 	strokeColor        ora.Color
+	light, dark        []byte
 }
 
 func Image() TImage {
@@ -61,17 +62,16 @@ func (c TImage) StrokeColor(color Color) TImage {
 // the system uses a special caching technique. Important: due to caching, do not submit ever-changing SVGs, because
 // the backend and the frontend may suffer from cache overflow. This will half the typical required bandwidth
 // for icon heavy use cases. The larger the SVG, the better the effect.
+// See also [TImage.EmbedAdaptive].
 func (c TImage) Embed(buf []byte) TImage {
-	isSvg := bytes.Contains(buf[:min(len(buf), 100)], []byte("<svg"))
-	if isSvg {
-		c.svg = buf
-		c.uri = ""
-		return c
-	}
+	c.light = buf
+	return c
+}
 
-	b64 := base64.StdEncoding.EncodeToString(buf)
-	//c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
-	c.uri = ora.URI(`data:application/octet-stream;base64,` + b64)
+// EmbedAdaptive is like [TImage.Embed] but picks whatever fits best.
+func (c TImage) EmbedAdaptive(light, dark []byte) TImage {
+	c.light = light
+	c.dark = dark
 	return c
 }
 
@@ -102,6 +102,35 @@ func (c TImage) Frame(frame Frame) DecoredView {
 }
 
 func (c TImage) Render(ctx core.RenderContext) ora.Component {
+	// start of delayed encoding
+	if c.light != nil || c.dark != nil {
+		var buf []byte
+		if ctx.Window().Info().ColorScheme == core.Dark {
+			buf = c.dark
+		} else {
+			buf = c.light
+		}
+
+		if buf == nil {
+			if c.light != nil {
+				buf = c.light
+			} else {
+				buf = c.dark
+			}
+		}
+
+		isSvg := bytes.Contains(buf[:min(len(buf), 100)], []byte("<svg"))
+		if isSvg {
+			c.svg = buf
+			c.uri = ""
+		}
+
+		b64 := base64.StdEncoding.EncodeToString(buf)
+		//c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
+		c.uri = ora.URI(`data:application/octet-stream;base64,` + b64)
+	}
+	// end of delayed encoding
+
 	svgData := c.svg
 	var cachePointer ora.Ptr
 	if svgFrontendCacheSupport {

@@ -48,6 +48,7 @@ func newNagoSubject(session core.SessionID, user User, permissions map[string]st
 }
 
 func (n nagoSubject) HasPermission(permission string) bool {
+	// TODO this is a security problem, because the service may have revoked the permissions, but we do not update this map!!!
 	_, ok := n.permissions[permission]
 	return ok
 }

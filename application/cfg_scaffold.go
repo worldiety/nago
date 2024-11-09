@@ -14,7 +14,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/tracking"
-	"time"
 )
 
 //go:embed content_impress_de.md
@@ -25,6 +24,50 @@ var defaultGDPR string
 
 //go:embed content_policies_de.md
 var defaultPolicies string
+
+type MenuEntryBuilder struct {
+	parent               *ScaffoldBuilder
+	icon                 core.SVG
+	title                string
+	dst                  core.NavigationPath
+	justAuthenticated    bool
+	action               func(wnd core.Window)
+	oneOfAuthorizedPerms []string
+}
+
+func (b *MenuEntryBuilder) OneOf(perms ...string) *ScaffoldBuilder {
+	b.oneOfAuthorizedPerms = append(b.oneOfAuthorizedPerms, perms...)
+	return b.parent
+}
+
+func (b *MenuEntryBuilder) JustAuthenticated() *ScaffoldBuilder {
+	b.justAuthenticated = true
+	return b.parent
+}
+
+func (b *MenuEntryBuilder) Public() *ScaffoldBuilder {
+	return b.parent
+}
+
+func (b *MenuEntryBuilder) Icon(icon core.SVG) *MenuEntryBuilder {
+	b.icon = icon
+	return b
+}
+
+func (b *MenuEntryBuilder) Title(title string) *MenuEntryBuilder {
+	b.title = title
+	return b
+}
+
+func (b *MenuEntryBuilder) Forward(dst core.NavigationPath) *MenuEntryBuilder {
+	b.dst = dst
+	return b
+}
+
+func (b *MenuEntryBuilder) Action(fn func(wnd core.Window)) *MenuEntryBuilder {
+	b.action = fn
+	return b
+}
 
 type ScaffoldBuilder struct {
 	cfg             *Configurator
@@ -37,6 +80,7 @@ type ScaffoldBuilder struct {
 	gdprContent     string
 	impressPath     core.NavigationPath
 	impressContent  string
+	menu            []MenuEntryBuilder
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -58,14 +102,19 @@ func (b *ScaffoldBuilder) Logo(svg core.SVG) *ScaffoldBuilder {
 	return b
 }
 
-func (b *ScaffoldBuilder) DarkLogo(svg core.SVG) *ScaffoldBuilder {
+func (b *ScaffoldBuilder) LogoDark(svg core.SVG) *ScaffoldBuilder {
 	b.darkLogo = svg
 	return b
 }
 
-func (b *ScaffoldBuilder) LightLogo(svg core.SVG) *ScaffoldBuilder {
+func (b *ScaffoldBuilder) LogoLight(svg core.SVG) *ScaffoldBuilder {
 	b.lightLogo = svg
 	return b
+}
+
+func (b *ScaffoldBuilder) MenuEntry() *MenuEntryBuilder {
+	b.menu = append(b.menu, MenuEntryBuilder{parent: b})
+	return &b.menu[len(b.menu)-1]
 }
 
 func (b *ScaffoldBuilder) hasIAM() bool {
@@ -77,6 +126,17 @@ func (b *ScaffoldBuilder) name() string {
 }
 
 func (b *ScaffoldBuilder) registerLegalViews() {
+	// 404 not found case
+	b.cfg.RootView("_", func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return ui.VStack(
+				ui.WindowTitle("Nicht gefunden"),
+				alert.Banner("Resource nicht gefunden", "Die Seite, Funktion oder Resource ist dauerhaft nicht verfügbar."),
+			)
+		})(wnd)
+	})
+
 	b.cfg.RootView(b.impressPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
@@ -105,15 +165,47 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 
 	return func(wnd core.Window, view core.View) core.View {
 		var logo core.View
-		if wnd.Info().ColorScheme == core.Dark && !b.darkLogo.Empty() {
-			logo = ui.Image().Embed(b.darkLogo).Frame(ui.Frame{}.Size(ui.L160, ui.L160))
-		} else if !b.lightLogo.Empty() {
-			logo = ui.Image().Embed(b.lightLogo).Frame(ui.Frame{}.Size(ui.L160, ui.L160))
+		if b.lightLogo != nil || b.darkLogo != nil {
+			logo = ui.Image().EmbedAdaptive(b.lightLogo, b.darkLogo).Frame(ui.Frame{}.Size(ui.L160, ui.L160))
+		}
+
+		var menu []ui.ScaffoldMenuEntry
+
+		for _, entry := range b.menu {
+			if entry.justAuthenticated && !wnd.Subject().Valid() {
+				continue
+			}
+
+			if len(entry.oneOfAuthorizedPerms) > 0 {
+				if !auth.OneOf(wnd.Subject(), entry.oneOfAuthorizedPerms...) {
+					continue
+				}
+			}
+
+			icoSize := ui.L24
+			if entry.title == "" {
+				icoSize = ui.L40
+			}
+
+			menu = append(menu, ui.ScaffoldMenuEntry{
+				Icon:  ui.If(entry.icon != nil, ui.Image().Embed(entry.icon).Frame(ui.Frame{}.Size(icoSize, icoSize))),
+				Title: entry.title,
+				Action: func() {
+					if entry.action != nil {
+						entry.action(wnd)
+					}
+
+					if entry.dst != "" {
+						wnd.Navigation().ForwardTo(entry.dst, nil)
+					}
+				},
+				MarkAsActiveAt: entry.dst,
+			})
 		}
 
 		menuDialogPresented := core.AutoState[bool](wnd)
 		iamCfg := b.cfg.iamSettings
-		var menu []ui.ScaffoldMenuEntry
+
 		if b.hasIAM() {
 			if !wnd.Subject().Valid() {
 				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", iamCfg.Login.ID))
@@ -127,13 +219,6 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				})
 			}
 		}
-
-		menu = append(menu, ui.ScaffoldMenuEntry{
-			Title: "Test snack",
-			Action: func() {
-				alert.ShowMessage(wnd, alert.Message{"snack it", "nom nom" + time.Now().String()})
-			},
-		})
 
 		return ui.Scaffold(b.alignment).Body(
 			ui.VStack(
