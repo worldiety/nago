@@ -58,3 +58,14 @@ type ThemeRequested struct {
 func (e ThemeRequested) ReqID() RequestId {
 	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
 }
+
+type OpenRequested struct {
+	Type     EventType         `json:"type" value:"OpenRequested"`
+	Resource string            `json:"resource"`
+	Options  map[string]string `json:"options"`
+	event
+}
+
+func (e OpenRequested) ReqID() RequestId {
+	return 0 // TODO the role request-response role is inversed here, should the frontend respond with ack?
+}

@@ -29,6 +29,12 @@ func Test_hsbToRGB(t *testing.T) {
 	fmt.Println(Color("#1B8C30").WithBrightness(90))
 }
 
+func Test_hako(t *testing.T) {
+	c := Color("#221A3F")
+	l := c.Luminosity()
+	fmt.Println(Color("#221A3F").AddBrightness(l))
+}
+
 func nearlyEqual(a, b float64) bool {
 	return math.Abs(a-b) < 1
 }

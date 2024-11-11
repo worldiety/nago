@@ -38,7 +38,7 @@ type scopeWindow struct {
 	exportFilesReceivers  map[string]ExportFilesOptions
 	hnd                   int
 	factory               ora.ComponentFactoryId
-	navController         *NavigationController
+	navController         *navigationController
 	values                Values
 	declaredBuffers       map[declaredBufferKey]ora.Ptr
 	lastDeclaredBufferPtr ora.Ptr
@@ -62,7 +62,7 @@ func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values
 		s.values = values
 	}
 
-	s.navController = NewNavigationController(parent)
+	s.navController = newNavigationController(parent)
 	for _, observer := range s.parent.app.onWindowCreatedObservers {
 		observer(s)
 	}
@@ -310,7 +310,7 @@ func (s *scopeWindow) Info() WindowInfo {
 	return s.parent.windowInfo
 }
 
-func (s *scopeWindow) Navigation() *NavigationController {
+func (s *scopeWindow) Navigation() Navigation {
 	return s.navController
 }
 

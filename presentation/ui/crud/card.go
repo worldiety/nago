@@ -19,7 +19,7 @@ func Card[T any](bnd *Binding[T], value *core.State[T]) ui.DecoredView {
 
 		})...,
 	).Gap(ui.L16).
-		BackgroundColor(ui.M4).
-		Padding(ui.Padding{}.All(ui.L8)).
-		Border(ui.Border{}.Elevate(4))
+		BackgroundColor(ui.ColorCardBody).
+		Padding(ui.Padding{}.All(ui.L20)).
+		Border(ui.Border{}.Radius(ui.L16))
 }

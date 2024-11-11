@@ -28,14 +28,17 @@ func (c hslColor) Brightness(b float64) hslColor {
 }
 
 func mustParseHSL(hex string) hslColor {
-	r, g, b, _ := hexToRGBA(hex)
+	r, g, b, _, err := hexToRGBA(hex)
+	if err != nil {
+		panic(err)
+	}
 	h, s, l := rgbToHSL(r, g, b)
 	return hslColor{H: h, S: s, L: l}
 }
 
-func hexToRGBA(hex string) (r, g, b, a uint8) {
+func hexToRGBA(hex string) (r, g, b, a uint8, err error) {
 	if !strings.HasPrefix(hex, "#") {
-		panic(fmt.Sprintf("unsupported hex color notation: %s", hex))
+		return 0, 0, 0, 0, fmt.Errorf("unsupported hex color notation: %s", hex)
 	}
 
 	hex = hex[1:]
@@ -45,7 +48,7 @@ func hexToRGBA(hex string) (r, g, b, a uint8) {
 	case 6:
 		hex += "FF"
 	default:
-		panic(fmt.Sprintf("unsupported hex color notation: %s", hex))
+		return 0, 0, 0, 0, fmt.Errorf("unsupported hex color notation: %s", hex)
 	}
 
 	rgba, _ := strconv.ParseUint(hex, 16, 32)

@@ -43,7 +43,7 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 		return ui.VStack(
 			ui.WindowTitle(opts.Title),
 			AutoView(AutoViewOptions{Title: opts.Title}, bnd, useCases),
-		)
+		).FullWidth()
 	}
 }
 

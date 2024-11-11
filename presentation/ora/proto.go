@@ -28,6 +28,7 @@ const (
 	WindowInfoChangedT            EventType = "WindowInfoChanged"
 	FileImportRequestedT          EventType = "FileImportRequested"
 	ThemeRequestedT               EventType = "ThemeRequested"
+	OpenRequestedT                EventType = "OpenRequested"
 )
 
 // Event is a sum type of

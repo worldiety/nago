@@ -20,6 +20,7 @@ import {URI} from "@/shared/protocol/ora/uRI";
 import {FileImportRequested} from "@/shared/protocol/ora/fileImportRequested";
 import {useUploadRepository} from "@/api/upload/uploadRepository";
 import {ThemeRequested} from "@/shared/protocol/ora/themeRequested";
+import {OpenRequested} from "@/shared/protocol/ora/openRequested";
 
 enum State {
 	Loading,
@@ -95,6 +96,7 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
 		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo)
 		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested)
+		eventBus.subscribe(EventType.OPEN_REQUESTED, openRequested)
 
 		updateUi(invalidation);
 	} catch {
@@ -158,6 +160,27 @@ function resetHistory(event: Event): void {
 }
 
 const uploadRepository = useUploadRepository();
+
+
+function openRequested(evt: Event): void {
+	let msg = evt as OpenRequested
+
+
+	switch (msg.options["_type"]) {
+		case "http-flow":
+			let redirectTarget = msg.options["redirectTarget"]
+			let redirectNavigation = msg.options["redirectNavigation"]
+
+			console.log("http-flow", redirectTarget, redirectNavigation)
+
+			window.location.href = msg.resource
+			break
+		default:
+			open(msg.resource)
+	}
+
+	sendWindowInfo(true)
+}
 
 
 function themeRequested(evt: Event): void {
@@ -330,6 +353,7 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
 	eventBus.unsubscribe(EventType.THEME_REQUESTED, themeRequested)
+	eventBus.unsubscribe(EventType.OPEN_REQUESTED, openRequested)
 });
 
 
@@ -390,7 +414,6 @@ watch(() => ui.value, (newValue) => {
 		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
 	</div>
-
 
 
 </template>

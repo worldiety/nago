@@ -136,7 +136,7 @@ func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn 
 
 				return true
 			})),
-			ui.PrimaryButton(func() {
+			ui.SecondaryButton(func() {
 				formPresented.Set(true)
 			}).PreIcon(heroSolid.Pencil).AccessibilityLabel("Bearbeiten"),
 		)
@@ -160,7 +160,7 @@ func ButtonDelete[E data.Aggregate[ID], ID data.IDType](wnd core.Window, deleteF
 				}
 			})),
 			tracking.SupportRequestDialog(wnd),
-			ui.PrimaryButton(func() {
+			ui.SecondaryButton(func() {
 				areYouSurePresented.Set(true)
 
 			}).PreIcon(heroSolid.Trash).AccessibilityLabel("Löschen"),

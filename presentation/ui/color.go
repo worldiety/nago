@@ -30,6 +30,22 @@ func (c Color) WithBrightness(b int8) Color {
 	return mustParseHSL(string(c)).Brightness(float64(b)).RGBHex()
 }
 
+// AddBrightness recalculates the hex RGB value into HSL, adds the given brightness (0-100) and returns
+// the new hex RGB value.
+func (c Color) AddBrightness(b int8) Color {
+	hsl := mustParseHSL(string(c))
+	hsl.L += max(min(float64(b)/100, 1), 0)
+	return hsl.RGBHex()
+}
+
+func (c Color) Luminosity() float64 {
+	r, g, b, _, err := hexToRGBA(string(c))
+	if err != nil {
+		panic(err)
+	}
+	return 0.21*float64(r)/255 + 0.72*float64(g)/255 + 0.07*float64(b)/255
+}
+
 const (
 	// M0 is the source main color variable name.
 	M0 Color = "M0"
@@ -99,6 +115,8 @@ const (
 	ColorCardBody = M4
 
 	ColorCardFooter = M3
+
+	ColorBackground = M1
 
 	// ColorAccent represents the variable name containing the exact accent color.
 	ColorAccent = A0

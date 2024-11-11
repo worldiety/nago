@@ -53,7 +53,7 @@ func ExportFile(name string, buf []byte) ExportFilesOptions {
 type Window interface {
 
 	// Navigation allows access to the window navigation.
-	Navigation() *NavigationController
+	Navigation() Navigation
 
 	// Values contains those values, which have been passed from the callers, e.g. intent parameters or url query
 	// parameters. This depends on the actual frontend.
