@@ -106,7 +106,7 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		borderColor = ""
 		backgroundColor = colors.Disabled
 	} else {
-		borderColor = colors.I1.WithBrightness(75)
+		borderColor = colors.I1.WithLuminosity(0.75)
 	}
 
 	inner := ui.HStack(

@@ -59,6 +59,12 @@ func (b Border) TopRadius(radius Length) Border {
 	return b
 }
 
+func (b Border) BottomRadius(radius Length) Border {
+	b.BottomLeftRadius = radius
+	b.BottomRightRadius = radius
+	return b
+}
+
 func (b Border) Circle() Border {
 	return b.Radius("999999dp")
 }

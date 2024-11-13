@@ -366,7 +366,7 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 			return
 		}
 		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithBrightness(75)).Width(ui.L1).Radius("0.375rem")).
+	}).HoveredBorder(ui.Border{}.Color(colors.I1.WithLuminosity(0.75)).Width(ui.L1).Radius("0.375rem")).
 		Gap(ui.L8).
 		Frame(ui.Frame{}.FullWidth()).
 		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).

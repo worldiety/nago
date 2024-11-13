@@ -259,7 +259,7 @@ function onRowMouseLeave(rowIdx: number) {
 
 <template>
 
-	<table class="w-full text-left  rtl:text-right overflow-x-auto" :style="frameStyles">
+	<table class="w-full text-left  rtl:text-right overflow-x-clip" :style="frameStyles">
 		<thead
 			v-if="props.ui.h?.c"
 			class=""

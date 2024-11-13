@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/presentation/core"
+import (
+	"go.wdy.de/nago/pkg/xcolor"
+	"go.wdy.de/nago/presentation/core"
+)
 
 // Colors defines a themes color set. See also https://wiki.worldiety.net/books/design-system-ora/page/farbsystem.
 type Colors struct {
@@ -72,24 +75,24 @@ func DefaultColors(scheme core.ColorScheme, main, accent, interactive Color) Col
 
 func darkColors(main, accent, interactive Color) Colors {
 	var c Colors
-	m := mustParseHSL(string(main))
+	m := xcolor.MustParseHex(string(main)).RGBA().YPbPr()
 	c.M0 = main
-	c.M1 = m.Brightness(10).RGBHex()
-	c.M2 = m.Brightness(12).RGBHex()
-	c.M3 = m.Brightness(22).RGBHex()
-	c.M4 = m.Brightness(17).RGBHex()
-	c.M5 = m.Brightness(30).RGBHex()
-	c.M6 = m.Brightness(22).RGBHex()
-	c.M7 = m.Brightness(60).RGBHex()
-	c.M8 = m.Brightness(90).RGBHex()
-	c.M9 = m.Brightness(14).RGBHex()
+	c.M1 = Color(xcolor.Hex(m.WithLuma(0.1)))
+	c.M2 = Color(xcolor.Hex(m.WithLuma(0.12)))
+	c.M3 = Color(xcolor.Hex(m.WithLuma(0.22)))
+	c.M4 = Color(xcolor.Hex(m.WithLuma(0.17)))
+	c.M5 = Color(xcolor.Hex(m.WithLuma(0.3)))
+	c.M6 = Color(xcolor.Hex(m.WithLuma(0.22)))
+	c.M7 = Color(xcolor.Hex(m.WithLuma(0.60)))
+	c.M8 = Color(xcolor.Hex(m.WithLuma(0.9)))
+	c.M9 = Color(xcolor.Hex(m.WithLuma(0.14)))
 
-	_ = mustParseHSL(string(accent))
+	_ = xcolor.MustParseHex(string(accent))
 	c.A0 = accent
 	c.A1 = accent
-	c.A2 = accent.WithBrightness(80)
+	c.A2 = accent.WithLuminosity(0.80)
 
-	_ = mustParseHSL(string(interactive))
+	_ = xcolor.MustParseHex(string(interactive))
 	c.I0 = interactive
 	c.I1 = interactive
 
@@ -105,24 +108,24 @@ func darkColors(main, accent, interactive Color) Colors {
 
 func lightColors(main, accent, interactive Color) Colors {
 	var c Colors
-	m := mustParseHSL(string(main))
+	m := xcolor.MustParseHex(string(main)).RGBA().YPbPr()
 	c.M0 = main
-	c.M1 = m.Brightness(98).RGBHex()
-	c.M2 = m.Brightness(96).RGBHex()
-	c.M3 = m.Brightness(90).RGBHex()
-	c.M4 = m.Brightness(94).RGBHex()
-	c.M5 = m.Brightness(70).RGBHex()
-	c.M6 = m.Brightness(90).RGBHex()
-	c.M7 = m.Brightness(60).RGBHex()
-	c.M8 = m.Brightness(10).RGBHex()
-	c.M9 = m.Brightness(92).RGBHex()
+	c.M1 = Color(xcolor.Hex(m.WithLuma(0.98)))
+	c.M2 = Color(xcolor.Hex(m.WithLuma(0.96)))
+	c.M3 = Color(xcolor.Hex(m.WithLuma(0.90)))
+	c.M4 = Color(xcolor.Hex(m.WithLuma(0.94)))
+	c.M5 = Color(xcolor.Hex(m.WithLuma(0.70)))
+	c.M6 = Color(xcolor.Hex(m.WithLuma(0.90)))
+	c.M7 = Color(xcolor.Hex(m.WithLuma(0.60)))
+	c.M8 = Color(xcolor.Hex(m.WithLuma(0.10)))
+	c.M9 = Color(xcolor.Hex(m.WithLuma(0.92)))
 
-	_ = mustParseHSL(string(accent))
+	_ = xcolor.MustParseHex(string(accent))
 	c.A0 = accent
 	c.A1 = accent
-	c.A2 = accent.WithBrightness(80)
+	c.A2 = accent.WithLuminosity(0.80)
 
-	_ = mustParseHSL(string(interactive))
+	_ = xcolor.MustParseHex(string(interactive))
 	c.I0 = interactive
 	c.I1 = interactive
 

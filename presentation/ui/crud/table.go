@@ -14,6 +14,27 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 	ds := opts.datasource()
 	bnd := opts.bnd
 
+	rows := ui.Each(slices.Values(ds.List()), func(entity Entity) ui.TTableRow {
+		entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).Init(func() Entity {
+			return entity
+		})
+
+		if !reflect.DeepEqual(entityState.Get(), entity) {
+			entityState.Set(entity)
+		}
+
+		var cells []ui.TTableCell
+		for _, field := range bnd.tableFields() {
+			cells = append(cells, field.RenderTableCell(field, entityState))
+		}
+
+		return ui.TableRow(cells...).BackgroundColor(ui.ColorCardBody).HoveredBackgroundColor(ui.ColorCardFooter)
+	})
+
+	//todo localize
+
+	rows = append(rows, ui.TableRow(ui.TableCell(ui.Text(fmt.Sprintf("%d Einträge", len(rows)))).ColSpan(bnd.CountTableColumns())).BackgroundColor(ui.ColorCardFooter))
+
 	return ui.VStack(
 
 		ui.Table(ui.Each(slices.Values(bnd.tableFields()), func(field Field[Entity]) ui.TTableColumn {
@@ -37,23 +58,12 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 					opts.sortByFieldState.Set(&field)
 				}
 
-			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.NormalFontWeight}))).Padding(ui.Padding{Left: ui.L0, Right: ui.L24, Top: ui.L16, Bottom: ui.L16})
+			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.NormalFontWeight}))).
+				BackgroundColor(ui.ColorCardTop).
+				Padding(ui.Padding{Left: ui.L0, Right: ui.L24, Top: ui.L16, Bottom: ui.L16})
 		})...,
-		).Rows(ui.Each(slices.Values(ds.List()), func(entity Entity) ui.TTableRow {
-			entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).Init(func() Entity {
-				return entity
-			})
-
-			if !reflect.DeepEqual(entityState.Get(), entity) {
-				entityState.Set(entity)
-			}
-
-			var cells []ui.TTableCell
-			for _, field := range bnd.tableFields() {
-				cells = append(cells, field.RenderTableCell(field, entityState))
-			}
-
-			return ui.TableRow(cells...)
-		})...).Frame(ui.Frame{}.FullWidth()),
+		).Rows(rows...).
+			HeaderDividerColor("#00000000").
+			Frame(ui.Frame{}.FullWidth()),
 	)
 }

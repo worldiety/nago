@@ -228,7 +228,7 @@ func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
 	return c
 }
 
-func (c TPicker[T]) pickerTable() core.View {
+func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 	filtered := c.values
 	if c.quickSearch.Get() != "" {
 		filtered = make([]T, 0, len(c.values))
@@ -258,25 +258,28 @@ func (c TPicker[T]) pickerTable() core.View {
 	}
 	quickFilterVisible := c.quickFilterSupported && len(c.values) > 10
 	selectAllVisible := c.multiselect.Get() && c.selectAllSupported && quickFilterVisible
+
+	quickFilter = ui.HStack(
+		ui.Image().
+			Embed(heroSolid.MagnifyingGlass).
+			Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		ui.TextField("", c.quickSearch.Get()).
+			InputValue(c.quickSearch).
+			Style(ui.TextFieldReduced).
+			SupportingText(quickSearchHelpText).
+			Frame(ui.Frame{}.FullWidth()),
+	).Gap(ui.L4).
+		Visible(quickFilterVisible).
+		Frame(ui.Frame{}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16})
+
 	return ui.VStack(
-		ui.HStack(
-			ui.Image().
-				Embed(heroSolid.MagnifyingGlass).
-				Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-			ui.TextField("", c.quickSearch.Get()).
-				InputValue(c.quickSearch).
-				Style(ui.TextFieldReduced).
-				SupportingText(quickSearchHelpText).
-				Frame(ui.Frame{}.FullWidth()),
-		).Gap(ui.L4).
-			Visible(quickFilterVisible).
-			Frame(ui.Frame{}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16}),
 
 		ui.With(ui.Table(
 			ui.TableColumn(ui.Checkbox(c.selectAllCheckbox.Get()).InputChecked(c.selectAllCheckbox).Visible(selectAllVisible)).Width(ui.L20),
 			ui.TableColumn(ui.Text("alles auswählen").Visible(selectAllVisible)).Width(ui.L320),
 		).CellPadding(ui.Padding{}).
-			BackgroundColor(ui.M1).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
+			RowDividerColor(ui.ColorCardBody).
+			BackgroundColor(ui.ColorCardBody).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
 
 			for i, value := range filtered {
 
@@ -290,12 +293,14 @@ func (c TPicker[T]) pickerTable() core.View {
 			if !quickFilterVisible {
 				table = table.HeaderDividerColor("")
 				table = table.RowDividerColor("")
+			} else {
+				table = table.HeaderDividerColor(ui.ColorLine)
 			}
 			return table
 		}),
 		noEntries,
 		c.detailView,
-	).Frame(ui.Frame{}.FullWidth())
+	).Frame(ui.Frame{}.FullWidth()), quickFilter
 }
 
 // Dialog returns the dialog view as if pressed on the actual button.
@@ -308,17 +313,21 @@ func (c TPicker[T]) Dialog() core.View {
 		}
 	}
 
-	return alert.Dialog(c.title, c.pickerTable(), c.pickerPresented, alert.Cancel(func() {
+	table, quickFilter := c.pickerTable()
+
+	return alert.Dialog(c.title, table, c.pickerPresented, alert.Cancel(func() {
 		c.currentSelectedState.Set(c.targetSelectedState.Get())
 		c.syncCheckboxStates(c.targetSelectedState)
-	}), alert.Custom(func(close func(closeDlg bool)) core.View {
-		// positive case
-		return ui.PrimaryButton(func() {
-			c.targetSelectedState.Set(c.currentSelectedState.Get())
-			c.targetSelectedState.Notify() // invoke observers
-			close(true)
-		}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
-	}))
+	}),
+		alert.PreBody(quickFilter),
+		alert.Custom(func(close func(closeDlg bool)) core.View {
+			// positive case
+			return ui.PrimaryButton(func() {
+				c.targetSelectedState.Set(c.currentSelectedState.Get())
+				c.targetSelectedState.Notify() // invoke observers
+				close(true)
+			}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
+		}))
 }
 
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
@@ -329,7 +338,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		borderColor = ""
 		backgroundColor = colors.Disabled
 	} else {
-		borderColor = colors.I1.WithBrightness(75)
+		borderColor = colors.I1.WithLuminosity(0.75)
 	}
 
 	inner := ui.HStack(

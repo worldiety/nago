@@ -135,6 +135,17 @@ func (b *Binding[T]) tableFields() []Field[T] {
 	return res
 }
 
+func (b *Binding[T]) CountTableColumns() int {
+	var i int
+	for _, field := range b.fields {
+		if field.RenderTableCell != nil {
+			i++
+		}
+	}
+
+	return i
+}
+
 // Inherit returns a defensive copy with the new id set.
 func (b *Binding[T]) Inherit(id string) *Binding[T] {
 	cpy := &Binding[T]{

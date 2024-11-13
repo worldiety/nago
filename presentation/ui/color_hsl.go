@@ -3,8 +3,6 @@ package ui
 import (
 	"fmt"
 	"math"
-	"strconv"
-	"strings"
 )
 
 type hslColor struct {
@@ -25,38 +23,6 @@ func (c hslColor) RGBHex() Color {
 func (c hslColor) Brightness(b float64) hslColor {
 	c.L = b / 100.0
 	return c
-}
-
-func mustParseHSL(hex string) hslColor {
-	r, g, b, _, err := hexToRGBA(hex)
-	if err != nil {
-		panic(err)
-	}
-	h, s, l := rgbToHSL(r, g, b)
-	return hslColor{H: h, S: s, L: l}
-}
-
-func hexToRGBA(hex string) (r, g, b, a uint8, err error) {
-	if !strings.HasPrefix(hex, "#") {
-		return 0, 0, 0, 0, fmt.Errorf("unsupported hex color notation: %s", hex)
-	}
-
-	hex = hex[1:]
-	switch len(hex) {
-	case 8:
-		//ok
-	case 6:
-		hex += "FF"
-	default:
-		return 0, 0, 0, 0, fmt.Errorf("unsupported hex color notation: %s", hex)
-	}
-
-	rgba, _ := strconv.ParseUint(hex, 16, 32)
-	r = uint8((rgba >> 24) & 0xFF)
-	g = uint8((rgba >> 16) & 0xFF)
-	b = uint8((rgba >> 8) & 0xFF)
-	a = uint8(rgba & 0xFF)
-	return
 }
 
 func round(x float64) float64 {

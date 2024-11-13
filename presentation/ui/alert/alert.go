@@ -20,6 +20,7 @@ type alertOpts struct {
 	closeable    core.View
 	dlgAlign     ui.Alignment
 	modalPadding ui.Padding
+	preBody      core.View
 }
 
 type optFunc func(opts *alertOpts)
@@ -101,6 +102,13 @@ func ModalPadding(padding ui.Padding) Option {
 	})
 }
 
+// PreBody sets a view between title and body. The body will scroll automatically, however the title and pre body not.
+func PreBody(v core.View) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.preBody = v
+	})
+}
+
 func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) core.View {
 	var options alertOpts
 	options.state = isPresented
@@ -110,7 +118,7 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 
 	return ui.If(isPresented.Get(), ui.Modal(
 		//Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())
-		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{MaxHeight: "calc(100dvh - 12rem)"}.FullWidth())).
+		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{MaxHeight: "calc(100dvh - 16rem)"}.FullWidth())).
 			Title(ui.If(title != "", ui.Text(title))), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			// we do this to keep sensible order
@@ -133,6 +141,7 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 			btns = append(btns, options.custom...)
 
 			dialog = dialog.
+				PreBody(options.preBody).
 				TitleX(options.closeable).
 				Alignment(options.dlgAlign).
 				ModalPadding(options.modalPadding)

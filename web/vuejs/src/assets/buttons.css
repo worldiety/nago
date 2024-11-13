@@ -45,7 +45,7 @@
 .button-tertiary:hover *,
 .button-tertiary:active * {
 	@apply text-M8;
-	@apply darkmode:text-M8;
+
 }
 
 .button-secondary:disabled *,

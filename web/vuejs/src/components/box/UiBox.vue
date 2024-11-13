@@ -89,6 +89,7 @@ function childClass(a?: Alignment): string {
 </script>
 
 <template v-if="props.ui.children">
+	<!-- box -->
 	<div :class="clazz" :style="frameStyles">
 		<div v-for="ui in props.ui.c" :class="childClass(ui.a)" :style="childMargin(ui.a,props.ui.p)">
 			<ui-generic :ui="ui.c"/>

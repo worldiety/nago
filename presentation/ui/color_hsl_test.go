@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"math"
 	"testing"
 )
 
@@ -30,27 +29,9 @@ func Test_hsbToRGB(t *testing.T) {
 }
 
 func Test_hako(t *testing.T) {
-	c := Color("#221A3F")
-	l := c.Luminosity()
-	fmt.Println(Color("#221A3F").AddBrightness(l))
-}
+	_, main := Color("#221A3F").RGBA()
+	_, gray := Color("#999999").RGBA()
+	fmt.Println(Color("#999999").Luminosity())
 
-func nearlyEqual(a, b float64) bool {
-	return math.Abs(a-b) < 1
-}
-
-func nearlyEqualHSL(a, b hslColor) bool {
-	if !nearlyEqual(a.S, b.S) {
-		return false
-	}
-
-	if !nearlyEqual(a.L, b.L) {
-		return false
-	}
-
-	if !nearlyEqual(a.H, b.H) {
-		return false
-	}
-
-	return true
+	fmt.Println(BlendLuminosity(main, gray))
 }

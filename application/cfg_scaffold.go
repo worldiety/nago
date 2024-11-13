@@ -33,6 +33,7 @@ type MenuEntryBuilder struct {
 	justAuthenticated    bool
 	action               func(wnd core.Window)
 	oneOfAuthorizedPerms []string
+	onlyPublic           bool
 }
 
 func (b *MenuEntryBuilder) OneOf(perms ...string) *ScaffoldBuilder {
@@ -40,12 +41,19 @@ func (b *MenuEntryBuilder) OneOf(perms ...string) *ScaffoldBuilder {
 	return b.parent
 }
 
-func (b *MenuEntryBuilder) JustAuthenticated() *ScaffoldBuilder {
+func (b *MenuEntryBuilder) Private() *ScaffoldBuilder {
 	b.justAuthenticated = true
 	return b.parent
 }
 
+// Public shows this entry for authenticated and non-authenticated users. See also [MenuEntryBuilder.OnlyPublic]
+// and [MenuEntryBuilder.Private] and [MenuEntryBuilder.PublicOnly].
 func (b *MenuEntryBuilder) Public() *ScaffoldBuilder {
+	return b.parent
+}
+
+func (b *MenuEntryBuilder) PublicOnly() *ScaffoldBuilder {
+	b.onlyPublic = true
 	return b.parent
 }
 
@@ -173,6 +181,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 
 		for _, entry := range b.menu {
 			if entry.justAuthenticated && !wnd.Subject().Valid() {
+				continue
+			}
+
+			if wnd.Subject().Valid() && entry.onlyPublic {
 				continue
 			}
 

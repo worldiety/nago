@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"go.wdy.de/nago/pkg/xcolor"
 	"go.wdy.de/nago/presentation/ora"
 )
 
@@ -14,36 +15,36 @@ func (c Color) ora() ora.Color {
 
 // WithTransparency updates the alpha value part of the color (0-100), where 25% transparent means 75% opaque.
 func (c Color) WithTransparency(a int8) Color {
-	if len(c) == 8 {
+	if len(c) == 9 {
 		c = c[:len(c)-2]
 	}
 
 	// recalculate into 0-255 and invert
 	ai := 255 - int(min(max((float64(a)/100*255), 0), 255))
-
 	return Color(fmt.Sprintf("%s%02x", string(c), ai))
 }
 
-// WithBrightness recalculates the hex RGB value into HSL, set the given brightness (0-100) and returns
-// the new hex RGB value.
-func (c Color) WithBrightness(b int8) Color {
-	return mustParseHSL(string(c)).Brightness(float64(b)).RGBHex()
+// WithLuminosity recalculates the hex RGB value into some Colorspace, set the given brightness (0-100) and returns
+// the new hex RGB value. Panics, if Color is not a parseable absolute value (like a variable name).
+// There are a lot of ways of calculating this, see also
+//   - https://github.com/penandlim/JL-s-Unity-Blend-Modes/blob/master/John%20Lim%27s%20Blend%20Modes/Luminosity.shader
+//   - https://github.com/penandlim/JL-s-Unity-Blend-Modes/blob/master/John%20Lim's%20Blend%20Modes/CGIncludes/PhotoshopBlendModes.cginc
+//   - https://printtechnologies.org/standards/files/pdf-reference-1.6-addendum-blend-modes.pdf
+func (c Color) WithLuminosity(l float32) Color {
+	return Color(xcolor.Hex(xcolor.MustParseHex(string(c)).RGBA().YPbPr().WithLuma(l)))
 }
 
-// AddBrightness recalculates the hex RGB value into HSL, adds the given brightness (0-100) and returns
-// the new hex RGB value.
-func (c Color) AddBrightness(b int8) Color {
-	hsl := mustParseHSL(string(c))
-	hsl.L += max(min(float64(b)/100, 1), 0)
-	return hsl.RGBHex()
-}
-
-func (c Color) Luminosity() float64 {
-	r, g, b, _, err := hexToRGBA(string(c))
+func (c Color) RGBA() (bool, xcolor.RGBA) {
+	cl, err := xcolor.ParseHex(string(c))
 	if err != nil {
-		panic(err)
+		return false, xcolor.RGBA{}
 	}
-	return 0.21*float64(r)/255 + 0.72*float64(g)/255 + 0.07*float64(b)/255
+
+	return true, cl.RGBA()
+}
+
+func (c Color) Luminosity() float32 {
+	return xcolor.MustParseHex(string(c)).RGBA().YPbPr()[0]
 }
 
 const (
@@ -53,7 +54,7 @@ const (
 	// M1 is a variable name usually used for the background.
 	M1 Color = "M1"
 
-	// M2 is a variable name usually used as the background for first level container.
+	// M2 is a variable name usually used as the background for first level container
 	M2 Color = "M2"
 
 	// M3 is a variable name usually used for a card bottom area.
@@ -113,6 +114,8 @@ const (
 	// ColorCardBody represents the variable name which contains the conventional card body color derived from
 	// the main color.
 	ColorCardBody = M4
+
+	ColorCardTop = M9
 
 	ColorCardFooter = M3
 

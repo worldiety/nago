@@ -43,7 +43,7 @@ func main() {
 		iamCfg.Decorator = cfg.NewScaffold().
 			MenuEntry().Icon(heroSolid.BellSnooze).Action(func(wnd core.Window) {
 			alert.ShowMessage(wnd, alert.Message{Title: "snack it", Message: "nom nom" + time.Now().String()})
-		}).JustAuthenticated().
+		}).Private().
 			MenuEntry().Icon(heroSolid.ArchiveBox).Title("Archiv").Public().
 			MenuEntry().Icon(heroSolid.Battery50).Title("Status").OneOf(iam.ReadGroup).
 			Decorator()
