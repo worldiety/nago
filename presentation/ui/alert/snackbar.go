@@ -16,9 +16,9 @@ type Message struct {
 	Message string
 }
 
-// MessageList may return nil, if no information needs to be displayed. Otherwise, it appends to
+// BannerMessages may return nil, if no information needs to be displayed. Otherwise, it appends to
 // the modal overlay.
-func MessageList(wnd core.Window) core.View {
+func BannerMessages(wnd core.Window) core.View {
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
 	if len(messages.Get()) == 0 {
 		return nil

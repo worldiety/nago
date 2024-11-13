@@ -238,7 +238,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				b.profileDialog(wnd, menuDialogPresented),
 
 				view,
-				alert.MessageList(wnd),
+				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
 		).Logo(logo).
