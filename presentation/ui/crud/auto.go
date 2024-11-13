@@ -239,8 +239,8 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 				Weight: ui.BoldFontWeight,
 			}),
 
-			ui.HLine(),
-		).Alignment(ui.Leading).Padding(ui.Padding{Bottom: ui.Length("2rem").Negate()}),
+			ui.HLineWithColor(ui.ColorAccent),
+		).Alignment(ui.Leading),
 
 		View[E, ID](
 			Options[E](bnd).

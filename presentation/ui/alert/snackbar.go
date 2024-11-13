@@ -1,8 +1,13 @@
 package alert
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"golang.org/x/crypto/sha3"
+	"log/slog"
 	"slices"
 )
 
@@ -41,13 +46,51 @@ func MessageList(wnd core.Window) core.View {
 	).Right(ui.L8).Top(ui.L120)
 }
 
-// ShowMessage puts the given msg into the global messages state list.
+// ShowBannerMessage puts the given msg into the global messages state list.
 // Just include [MessageList] always in your view tree, which will overlay the message as required.
-func ShowMessage(wnd core.Window, msg Message) {
+func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
 	if slices.Contains(messages.Get(), msg) {
 		return
 	}
+
+	messages.Set(append(messages.Get(), msg))
+}
+
+// ShowBannerError is like ShowBannerMessage but specialized on internal unhandled errors and hides
+// the actual error message from the user to avoid leaking secret details. Just a token is communicated,
+// so that the original message can be found from the log.
+func ShowBannerError(wnd core.Window, err error) {
+	if err == nil {
+		return
+	}
+
+	var permissionDenied interface {
+		PermissionDenied() bool
+	}
+
+	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
+		ShowBannerMessage(wnd, Message{
+			Title:   "Zugriff verweigert",
+			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
+		})
+
+		return
+	}
+
+	tmp := sha3.Sum224([]byte(err.Error()))
+	token := hex.EncodeToString(tmp[:16])
+	msg := Message{
+		Title:   "Ein unerwarteter Fehler ist aufgetreten",
+		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
+	}
+
+	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
+	if slices.Contains(messages.Get(), msg) {
+		return
+	}
+
+	slog.Error("banner snackbar handled error", "token", token, "err", err)
 
 	messages.Set(append(messages.Get(), msg))
 }

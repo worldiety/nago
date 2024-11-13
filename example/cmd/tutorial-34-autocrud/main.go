@@ -42,9 +42,11 @@ func main() {
 		iamCfg := application.IAMSettings{}
 		iamCfg.Decorator = cfg.NewScaffold().
 			MenuEntry().Icon(heroSolid.BellSnooze).Action(func(wnd core.Window) {
-			alert.ShowMessage(wnd, alert.Message{Title: "snack it", Message: "nom nom" + time.Now().String()})
+			alert.ShowBannerMessage(wnd, alert.Message{Title: "snack it", Message: "nom nom" + time.Now().String()})
 		}).Private().
-			MenuEntry().Icon(heroSolid.ArchiveBox).Title("Archiv").Public().
+			MenuEntry().Icon(heroSolid.ArchiveBox).Title("Archiv").Action(func(wnd core.Window) {
+			alert.ShowBannerError(wnd, fmt.Errorf("archiv not implemented, db password=1234"))
+		}).Public().
 			MenuEntry().Icon(heroSolid.Battery50).Title("Status").OneOf(iam.ReadGroup).
 			Decorator()
 		iamCfg = cfg.IAM(iamCfg)
