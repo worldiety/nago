@@ -63,7 +63,7 @@ func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 			If(c.footer != nil, HLineWithColor(ColorAccent)),
 			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
 		).
-			Frame(Frame{MaxWidth: "35rem"}.FullWidth()).
+			Frame(Frame{MaxWidth: "35rem", MaxHeight: "calc(100dvh - 8rem)"}.FullWidth()).
 			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 	).
 		BackgroundColor(ColorCardBody).

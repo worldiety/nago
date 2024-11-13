@@ -118,7 +118,7 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 
 	return ui.If(isPresented.Get(), ui.Modal(
 		//Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())
-		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{MaxHeight: "calc(100dvh - 16rem)"}.FullWidth())).
+		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{}.FullWidth())).
 			Title(ui.If(title != "", ui.Text(title))), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			// we do this to keep sensible order
