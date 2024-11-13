@@ -29,6 +29,10 @@ func Image() TImage {
 	}
 }
 
+func ImageIcon(svg core.SVG) TImage {
+	return Image().Embed(svg).Frame(Frame{}.Size(L24, L24)).(TImage)
+}
+
 // URI can be used for static image resources which are not provided by
 // the ui component itself. The source may be a hand written REST endpoint
 // or even any third-party resource from a different domain.
