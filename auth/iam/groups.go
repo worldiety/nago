@@ -23,7 +23,7 @@ type GroupRepository = data.Repository[Group, auth.GID]
 
 func (s *Service) AllGroups(subject auth.Subject) iter.Seq2[Group, error] {
 	if err := subject.Audit(ReadGroup); err != nil {
-		return xiter.Empty2[Group, error]()
+		return xiter.WithError[Group](err)
 	}
 
 	return s.groups.All()
@@ -43,7 +43,7 @@ func (s *Service) CreateGroup(subject auth.Subject, group Group) error {
 		return err
 	}
 
-	if optGroup.Valid {
+	if optGroup.IsSome() {
 		return fmt.Errorf("cannot create group, because ID already exists: %v", group.ID)
 	}
 

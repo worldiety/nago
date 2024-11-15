@@ -57,6 +57,47 @@ func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages.Set(append(messages.Get(), msg))
 }
 
+var permDeniedMsg = Message{
+	Title:   "Zugriff verweigert",
+	Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
+}
+
+var permReqLogin = Message{
+	Title:   "Zugriff verweigert",
+	Message: "Diese Funktion steht nur eingeloggten Nutzern zur Verfügung.",
+}
+
+func BannerError(err error) core.View {
+	if err == nil {
+		return nil
+	}
+
+	var permNotLoggedIn interface {
+		NotLoggedIn() bool
+	}
+
+	if errors.As(err, &permNotLoggedIn) && permNotLoggedIn.NotLoggedIn() {
+		return Banner(permReqLogin.Title, permReqLogin.Message)
+	}
+
+	var permissionDenied interface {
+		PermissionDenied() bool
+	}
+
+	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
+		return Banner(permDeniedMsg.Title, permDeniedMsg.Message)
+	}
+
+	tmp := sha3.Sum224([]byte(err.Error()))
+	token := hex.EncodeToString(tmp[:16])
+	msg := Message{
+		Title:   "Ein unerwarteter Fehler ist aufgetreten",
+		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
+	}
+
+	return Banner(msg.Title, msg.Message)
+}
+
 // ShowBannerError is like ShowBannerMessage but specialized on internal unhandled errors and hides
 // the actual error message from the user to avoid leaking secret details. Just a token is communicated,
 // so that the original message can be found from the log.
@@ -65,15 +106,22 @@ func ShowBannerError(wnd core.Window, err error) {
 		return
 	}
 
+	var permNotLoggedIn interface {
+		NotLoggedIn() bool
+	}
+
+	if errors.As(err, &permNotLoggedIn) && permNotLoggedIn.NotLoggedIn() {
+		ShowBannerMessage(wnd, permReqLogin)
+
+		return
+	}
+
 	var permissionDenied interface {
 		PermissionDenied() bool
 	}
 
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
-		ShowBannerMessage(wnd, Message{
-			Title:   "Zugriff verweigert",
-			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
-		})
+		ShowBannerMessage(wnd, permDeniedMsg)
 
 		return
 	}

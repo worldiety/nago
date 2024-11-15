@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 )
 
@@ -15,6 +16,10 @@ type DashboardModel struct {
 }
 
 func Dashboard(wnd core.Window, model DashboardModel) core.View {
+	if !wnd.Subject().Valid() {
+		return alert.BannerError(iam.InvalidSubjectError("not logged in"))
+	}
+
 	return cardlayout.Layout(
 		ui.WindowTitle("Übersicht Benutzerverwaltung"),
 		ui.If(model.Accounts != "" && wnd.Subject().HasPermission(iam.ReadUser),

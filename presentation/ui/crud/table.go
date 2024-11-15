@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"reflect"
 	"slices"
 )
@@ -30,6 +31,10 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 
 		return ui.TableRow(cells...).BackgroundColor(ui.ColorCardBody).HoveredBackgroundColor(ui.ColorCardFooter)
 	})
+
+	if err := ds.Error(); err != nil {
+		return ui.VStack(alert.BannerError(err)).Frame(ui.Frame{}.FullWidth())
+	}
 
 	//todo localize
 

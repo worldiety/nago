@@ -115,7 +115,9 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			}
 
 			return "", err
-		})).Title("Nutzerkonten").
+		})).
+		ViewStyle(crud.ViewStyleListOnly).
+		Title("Nutzerkonten").
 		FindAll(service.AllUsers(subject))
 
 	return crud.View[iam.User](opts)

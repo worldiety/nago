@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/list"
 	"log/slog"
 )
 
@@ -34,6 +35,9 @@ type Field[T any] struct {
 
 	// RenderCardElement may be nil, if it shall not be shown on a card.
 	RenderCardElement func(self Field[T], entity *core.State[T]) ui.DecoredView // TODO this state does not make any sense, each render scope has its own state anyway
+
+	// RenderListEntry may be nil to indicate that it must not be shown.
+	RenderListEntry func(self Field[T], entity *core.State[T]) list.TEntry // TODO this state does not make any sense, each render scope has its own state anyway
 
 	// Window is needed to hold states while editing, to allow downloads and be responsive.
 	// It must not be nil.
@@ -129,6 +133,18 @@ func (b *Binding[T]) tableFields() []Field[T] {
 	res := make([]Field[T], 0, len(b.fields))
 	for _, field := range b.fields {
 		if field.RenderTableCell != nil {
+			res = append(res, field)
+		}
+	}
+
+	return res
+}
+
+// listViewFields only returns those fields, which have a list entry renderer
+func (b *Binding[T]) listViewFields() []Field[T] {
+	res := make([]Field[T], 0, len(b.fields))
+	for _, field := range b.fields {
+		if field.RenderListEntry != nil {
 			res = append(res, field)
 		}
 	}

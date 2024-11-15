@@ -13,6 +13,13 @@ const (
 	desc sortDir = false
 )
 
+type ViewStyle int
+
+const (
+	ViewStyleDefault ViewStyle = iota
+	ViewStyleListOnly
+)
+
 type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {
 	title            string
 	actions          []core.View // global components to show for the entire crud set, e.g. for custom create action
@@ -22,6 +29,9 @@ type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {
 	queryState       *core.State[string]
 	sortByFieldState *core.State[*Field[Entity]]
 	sortDirState     *core.State[sortDir]
+	sizeClassCards   core.WindowSizeClass
+	sizeClassTable   core.WindowSizeClass
+	viewMode         ViewStyle
 }
 
 // Options creates the global settings for a [crud.View] instance.
@@ -33,7 +43,28 @@ func Options[Entity data.Aggregate[ID], ID data.IDType](bnd *Binding[Entity]) TO
 		queryState:       core.AutoState[string](wnd),
 		sortByFieldState: core.AutoState[*Field[Entity]](wnd),
 		sortDirState:     core.AutoState[sortDir](wnd),
+		sizeClassTable:   core.SizeClassMedium,
+		sizeClassCards:   core.SizeClassSmall,
+		viewMode:         ViewStyleDefault,
 	}
+}
+
+// SizeClassTable sets the minimum size class to show the table. Default is [core.SizeClassMedium].
+func (o TOptions[Entity, ID]) SizeClassTable(class core.WindowSizeClass) TOptions[Entity, ID] {
+	o.sizeClassTable = class
+	return o
+}
+
+// SizeClassCards sets the minimum size class to show the table. Default is [core.SizeClassMedium].
+func (o TOptions[Entity, ID]) SizeClassCards(class core.WindowSizeClass) TOptions[Entity, ID] {
+	o.sizeClassCards = class
+	return o
+}
+
+// ViewStyle influences how [View] appears by default. Default is [ViewModeListOnly].
+func (o TOptions[Entity, ID]) ViewStyle(vm ViewStyle) TOptions[Entity, ID] {
+	o.viewMode = vm
+	return o
 }
 
 func (o TOptions[Entity, ID]) FindAll(it iter.Seq2[Entity, error]) TOptions[Entity, ID] {

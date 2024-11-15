@@ -24,7 +24,7 @@ type RoleRepository = data.Repository[Role, auth.RID]
 
 func (s *Service) AllRoles(subject auth.Subject) iter.Seq2[Role, error] {
 	if err := subject.Audit(ReadRole); err != nil {
-		return xiter.Empty2[Role, error]()
+		return xiter.WithError[Role](err)
 	}
 
 	return s.roles.All()
@@ -44,7 +44,7 @@ func (s *Service) CreateRole(subject auth.Subject, role Role) error {
 		return err
 	}
 
-	if optRole.Valid {
+	if optRole.IsSome() {
 		return fmt.Errorf("cannot create role, because ID already exists: %v", role.ID)
 	}
 

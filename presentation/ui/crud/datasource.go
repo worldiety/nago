@@ -1,6 +1,7 @@
 package crud
 
 import (
+	"errors"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"iter"
@@ -14,6 +15,29 @@ type dataSource[Entity data.Aggregate[ID], ID data.IDType] struct {
 	sortByField *Field[Entity]
 	sortOrder   sortDir
 	query       string
+}
+
+func (ds *dataSource[Entity, ID]) Error() error {
+	if len(ds.errors) > 0 {
+		return ds.errors[0]
+	}
+
+	return nil
+}
+
+func (ds *dataSource[Entity, ID]) PermissionDenied() bool {
+	type permissionDeniedEntity interface {
+		PermissionDenied() bool
+	}
+
+	var perr permissionDeniedEntity
+	for _, err := range ds.errors {
+		if errors.As(err, &perr) && perr.PermissionDenied() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (ds *dataSource[Entity, ID]) List() []Entity {

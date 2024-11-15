@@ -125,8 +125,7 @@ func (s *Service) IsBootstrapAdminAcccount(subject auth.Subject) error {
 
 func (s *Service) AllPermissions(subject auth.Subject) iter.Seq2[Permission, error] {
 	if err := subject.Audit(ReadPermission); err != nil {
-		slog.Error("insufficient permission", "err", err)
-		return xiter.Empty2[Permission, error]()
+		return xiter.WithError[Permission](err)
 	}
 
 	return s.permissions.Each
@@ -134,8 +133,7 @@ func (s *Service) AllPermissions(subject auth.Subject) iter.Seq2[Permission, err
 
 func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 	if err := subject.Audit(ReadUser); err != nil {
-		slog.Error("insufficient permission", "err", err)
-		return xiter.Empty2[User, error]()
+		return xiter.WithError[User](err)
 	}
 
 	return s.users.All()
@@ -143,8 +141,7 @@ func (s *Service) AllUsers(subject auth.Subject) iter.Seq2[User, error] {
 
 func (s *Service) AllPermissionsByIDs(subject auth.Subject, ids ...PID) iter.Seq2[Permission, error] {
 	if err := subject.Audit(ReadPermission); err != nil {
-		slog.Error("insufficient permission", "err", err)
-		return xiter.Empty2[Permission, error]()
+		return xiter.WithError[Permission](err)
 	}
 
 	var tmp []Permission

@@ -8,6 +8,20 @@ import (
 	"strings"
 )
 
+type InvalidSubjectError string
+
+func (e InvalidSubjectError) Error() string {
+	return fmt.Sprintf("invalid subject: %s", string(e))
+}
+
+func (e InvalidSubjectError) PermissionDenied() bool {
+	return true
+}
+
+func (e InvalidSubjectError) NotLoggedIn() bool {
+	return true
+}
+
 type PermissionDeniedError string
 
 func (e PermissionDeniedError) Error() string {
