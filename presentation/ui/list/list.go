@@ -82,7 +82,7 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	for idx, row := range c.rows {
-		rows = append(rows, ui.HStack(row).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))
+		rows = append(rows, ui.HStack(row).HoveredBackgroundColor(ui.ColorCardFooter).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))
 		if idx < len(c.rows)-1 {
 			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
 		}

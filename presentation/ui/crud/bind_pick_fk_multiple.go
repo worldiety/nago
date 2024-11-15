@@ -56,7 +56,11 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToMany
 
 				resolvedEntities := make([]T, 0, len(ids))
 				for _, id := range ids {
-					resolvedEntities = append(resolvedEntities, valuesLookupById[id])
+					// id may be orphaned
+					v, ok := valuesLookupById[id]
+					if ok {
+						resolvedEntities = append(resolvedEntities, v)
+					}
 				}
 
 				return resolvedEntities
