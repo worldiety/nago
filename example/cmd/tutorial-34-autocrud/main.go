@@ -17,8 +17,11 @@ type PersonID string
 
 type Person struct {
 	ID       PersonID `visible:"false"`
-	Vorname  string
-	Nachname string `label:"Zuname"`
+	Vorname  string   `table-visible:"false"`
+	Nachname string   `label:"Zuname"`
+	Nr       string   `section:"Adressdaten"`
+	Strasse  string   `section:"Adressdaten"`
+	Anrede   string   `values:"[\"Herr\",\"Frau\"]"`
 }
 
 func (p Person) Identity() PersonID {

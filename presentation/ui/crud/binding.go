@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
@@ -133,6 +134,18 @@ func (b *Binding[T]) tableFields() []Field[T] {
 	}
 
 	return res
+}
+
+func (b *Binding[T]) lastField() std.Option[Field[T]] {
+	if len(b.fields) == 0 {
+		return std.None[Field[T]]()
+	}
+
+	return std.Some(b.fields[len(b.fields)-1])
+}
+
+func (b *Binding[T]) mutField(idx int) *Field[T] {
+	return &b.fields[idx]
 }
 
 func (b *Binding[T]) CountTableColumns() int {

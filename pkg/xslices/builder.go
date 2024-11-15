@@ -32,3 +32,34 @@ func (b *Builder[T]) Collect() []T {
 func (b *Builder[T]) All() iter.Seq[T] {
 	return slices.Values(b.tmp)
 }
+
+func (b *Builder[T]) Last() (T, bool) {
+	var zero T
+	if len(b.tmp) == 0 {
+		return zero, false
+	}
+
+	return b.tmp[len(b.tmp)-1], true
+}
+
+func (b *Builder[T]) First() (T, bool) {
+	var zero T
+	if len(b.tmp) == 0 {
+		return zero, false
+	}
+
+	return b.tmp[0], true
+}
+
+func (b *Builder[T]) RemoveLast() (T, bool) {
+	var zero T
+	if len(b.tmp) == 0 {
+		return zero, false
+	}
+
+	v := b.tmp[len(b.tmp)-1]
+	b.tmp[len(b.tmp)-1] = zero
+	b.tmp = b.tmp[:len(b.tmp)-1]
+
+	return v, true
+}
