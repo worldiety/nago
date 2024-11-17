@@ -9,12 +9,13 @@ import (
 )
 
 type dataSource[Entity data.Aggregate[ID], ID data.IDType] struct {
-	it          iter.Seq2[Entity, error]
-	errors      []error
-	binding     *Binding[Entity]
-	sortByField *Field[Entity]
-	sortOrder   sortDir
-	query       string
+	it                    iter.Seq2[Entity, error]
+	errors                []error
+	binding               *Binding[Entity]
+	sortByField           *Field[Entity]
+	sortOrder             sortDir
+	query                 string
+	disableDefaultSorting bool
 }
 
 func (ds *dataSource[Entity, ID]) Error() error {
@@ -94,7 +95,7 @@ func (ds *dataSource[Entity, ID]) List() []Entity {
 		if !ds.sortOrder {
 			slices.Reverse(res)
 		}
-	} else {
+	} else if !ds.disableDefaultSorting {
 		// ensure that we have a stable return order for each rendering, e.g. map-based sources have a random order
 		slices.SortFunc(res, func(a, b Entity) int {
 			if a.Identity() > b.Identity() {

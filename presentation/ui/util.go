@@ -69,12 +69,14 @@ func Yield[T any](seq iter.Seq[T]) []T {
 	return res
 }*/
 
-func Each[T any, V any](seq iter.Seq[T], m func(T) V) []V {
+func Each[T any, V any](seq iter.Seq[T], m func(T) V, more ...V) []V {
 	var res []V
 	seq(func(t T) bool {
 		res = append(res, m(t))
 		return true
 	})
+
+	res = append(res, more...)
 
 	return res
 }

@@ -22,7 +22,7 @@ func main() {
 		dbstore := cfg.EntityStore("small-blobs")
 
 		// quickly write some bytes using a transaction with a single write.
-		if err := blob.Write(dbstore, "my key", bytes.NewBufferString("I'm a fine blob")); err != nil {
+		if _, err := blob.Write(dbstore, "my key", bytes.NewBufferString("I'm a fine blob")); err != nil {
 			panic(err)
 		}
 
@@ -41,7 +41,7 @@ func main() {
 		fstore := cfg.FileStore("my-large-blobs")
 
 		// quickly write some bytes
-		if err := blob.Write(fstore, "my key", bytes.NewBufferString("I'm a good blob")); err != nil {
+		if _, err := blob.Write(fstore, "my key", bytes.NewBufferString("I'm a good blob")); err != nil {
 			panic(err)
 		}
 

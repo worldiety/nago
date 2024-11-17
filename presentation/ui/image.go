@@ -29,7 +29,12 @@ func Image() TImage {
 	}
 }
 
+// ImageIcon renders default with L24/L24 size and is invisible if svg is empty.
 func ImageIcon(svg core.SVG) TImage {
+	if svg.Empty() {
+		return TImage{invisible: true}
+	}
+
 	return Image().Embed(svg).Frame(Frame{}.Size(L24, L24)).(TImage)
 }
 

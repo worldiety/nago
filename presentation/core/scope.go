@@ -87,9 +87,22 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 	s.subject.SetValue(auth.InvalidSubject{})
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
-		s.Publish(ora.ErrorOccurred{
+		/*s.Publish(ora.ErrorOccurred{
 			Type:    ora.ErrorOccurredT,
 			Message: fmt.Sprintf("panic in event loop: %v", p),
+		})*/
+		node := ora.VStack{
+			Type: ora.VStackT,
+			Children: []ora.Component{
+				ora.Text{Type: ora.TextT, Value: "panic during event loop, check server-side logs"},
+			},
+			Frame: ora.Frame{Width: "100%", Height: "100dvh"},
+		}
+
+		s.Publish(ora.ComponentInvalidated{
+			Type:      ora.ComponentInvalidatedT,
+			RequestId: 0,
+			Component: node,
 		})
 	})
 	s.channel.SetValue(NopChannel{})

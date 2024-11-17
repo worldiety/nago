@@ -21,17 +21,18 @@ const (
 )
 
 type TOptions[Entity data.Aggregate[ID], ID data.IDType] struct {
-	title            string
-	actions          []core.View // global components to show for the entire crud set, e.g. for custom create action
-	findAll          iter.Seq2[Entity, error]
-	wnd              core.Window
-	bnd              *Binding[Entity]
-	queryState       *core.State[string]
-	sortByFieldState *core.State[*Field[Entity]]
-	sortDirState     *core.State[sortDir]
-	sizeClassCards   core.WindowSizeClass
-	sizeClassTable   core.WindowSizeClass
-	viewMode         ViewStyle
+	title                 string
+	actions               []core.View // global components to show for the entire crud set, e.g. for custom create action
+	findAll               iter.Seq2[Entity, error]
+	wnd                   core.Window
+	bnd                   *Binding[Entity]
+	queryState            *core.State[string]
+	sortByFieldState      *core.State[*Field[Entity]]
+	sortDirState          *core.State[sortDir]
+	sizeClassCards        core.WindowSizeClass
+	sizeClassTable        core.WindowSizeClass
+	viewMode              ViewStyle
+	disableDefaultSorting bool
 }
 
 // Options creates the global settings for a [crud.View] instance.
@@ -77,13 +78,20 @@ func (o TOptions[Entity, ID]) Actions(actions ...core.View) TOptions[Entity, ID]
 	return o
 }
 
+// DisableDefaultSorting disables any sorting within the datasource and respects instead the natural iter order.
+func (o TOptions[Entity, ID]) DisableDefaultSorting() TOptions[Entity, ID] {
+	o.disableDefaultSorting = true
+	return o
+}
+
 func (o TOptions[Entity, ID]) datasource() dataSource[Entity, ID] {
 	return dataSource[Entity, ID]{
-		it:          o.findAll,
-		binding:     o.bnd,
-		sortByField: o.sortByFieldState.Get(),
-		sortOrder:   o.sortDirState.Get(),
-		query:       o.queryState.Get(),
+		it:                    o.findAll,
+		binding:               o.bnd,
+		sortByField:           o.sortByFieldState.Get(),
+		sortOrder:             o.sortDirState.Get(),
+		query:                 o.queryState.Get(),
+		disableDefaultSorting: o.disableDefaultSorting,
 	}
 }
 

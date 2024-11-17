@@ -72,16 +72,15 @@ func Read(store Store, key string, dst io.Writer) (exists bool, err error) {
 }
 
 // Write transfers all bytes from the given source into the store, e.g. from a request body.
-func Write(store Store, key string, src io.Reader) (err error) {
+func Write(store Store, key string, src io.Reader) (written int64, err error) {
 	w, err := store.NewWriter(context.Background(), key)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer std.Try(w.Close, &err)
 
-	_, err = io.Copy(w, src)
-	return
+	return io.Copy(w, src)
 }
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.

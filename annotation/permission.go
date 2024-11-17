@@ -101,7 +101,7 @@ func (b *UsecaseBuilder) Permission(args ...string) SubjectPermission {
 	}
 
 	if name == "" {
-		name = b.typ.Name()
+		name = b.typ.String()
 	}
 
 	var desc []string

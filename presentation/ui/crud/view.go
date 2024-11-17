@@ -8,6 +8,16 @@ import (
 )
 
 func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
+	var dataView core.View
+
+	if opts.viewMode == ViewStyleDefault {
+		dataView = ui.ViewThatMatches(opts.wnd,
+			ui.SizeClass(core.SizeClassSmall, Cards[Entity, ID](opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth())),
+			ui.SizeClass(core.SizeClassMedium, Table[Entity, ID](opts).Frame(ui.Frame{}.FullWidth())),
+		)
+	} else {
+		dataView = List(opts)
+	}
 
 	return ui.VStack(
 		ui.HStack(
@@ -26,9 +36,6 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 			})...,
 			).Padding(ui.Padding{Bottom: ui.L16}),
 		).FullWidth(),
-		ui.ViewThatMatches(opts.wnd,
-			ui.SizeClass(core.SizeClassSmall, Cards[Entity, ID](opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth())),
-			ui.SizeClass(core.SizeClassMedium, Table[Entity, ID](opts).Frame(ui.Frame{}.FullWidth())),
-		),
+		dataView,
 	).Frame(ui.Frame{MinWidth: ui.L400})
 }
