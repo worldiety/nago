@@ -10,6 +10,7 @@ type TEntry struct {
 	supportingText string
 	leading        core.View
 	trailing       core.View
+	action         func()
 }
 
 func Entry() TEntry {
@@ -36,6 +37,11 @@ func (c TEntry) Trailing(v core.View) TEntry {
 	return c
 }
 
+func (c TEntry) Action(fn func()) TEntry {
+	c.action = fn
+	return c
+}
+
 func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ui.HStack(
@@ -46,7 +52,10 @@ func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 		).Alignment(ui.Leading),
 		ui.Spacer(),
 		c.trailing,
-	).Gap(ui.L16).FullWidth().Render(ctx)
+	).Action(c.action).
+		Gap(ui.L16).
+		FullWidth().
+		Render(ctx)
 }
 
 type TList struct {

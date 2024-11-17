@@ -95,6 +95,16 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 
 }
 
+func RenderElementViewFactory[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], entity E, fac ElementViewFactory[E]) core.View {
+	bnd = bnd.Inherit(data.Idtos(entity.Identity()))
+	entityState := core.StateOf[E](bnd.wnd, fmt.Sprintf("crud.renderfactory.entity.%v", entity.Identity())).Init(func() E {
+		return entity
+	})
+
+	return fac(entityState)
+}
+
+// ButtonEdit to be used for conventional delete function. See also [ViewButtonEdit] for other use cases.
 func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
 	wnd := bnd.wnd
 	return func(e *core.State[E]) core.View {

@@ -19,6 +19,8 @@ type DecoredView interface {
 // This can be used, to more efficiently post-pone resource allocations in conditional renderings.
 type Composable func() core.View
 
+type Lazy = Composable
+
 func (c Composable) Render(context core.RenderContext) core.RenderNode {
 	if c == nil {
 		return nil

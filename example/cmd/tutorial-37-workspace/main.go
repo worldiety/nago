@@ -21,6 +21,7 @@ func main() {
 		workspaceRepo := application.SloppyRepository[workspace.Workspace](cfg)
 		wsList := workspace.NewList(workspaceRepo)
 		wsSave := workspace.NewSave(workspaceRepo)
+		wsRemove := workspace.NewRemove(workspaceRepo)
 
 		workspaceTypes := []workspaceui.DashboardType{
 			{Icon: heroSolid.AcademicCap, Type: "kernel", Name: "worldiety Rechenkernel", Description: "Die Metriksuchmaschine wird mit eigenen Rechenkerneln bestückt, die in Go geschrieben werden und aus mehreren Go-Source Code Dateien bestehen kann."},
@@ -38,9 +39,10 @@ func main() {
 
 		cfg.RootView("workspace/list", iamCfg.DecorateRootView(func(wnd core.Window) core.View {
 			return workspaceui.WorkspaceList(wnd, workspaceui.WorkspaceListOptions{
-				ListWorkspaces: wsList,
-				SaveWorkspace:  wsSave,
-				Types:          workspaceTypes,
+				ListWorkspaces:  wsList,
+				SaveWorkspace:   wsSave,
+				RemoveWorkspace: wsRemove,
+				Types:           workspaceTypes,
 			})
 		}))
 

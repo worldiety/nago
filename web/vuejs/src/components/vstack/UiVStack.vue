@@ -21,9 +21,9 @@ const focused = ref(false);
 const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
-function onClick() {
+function onClick(event: Event) {
 	if (props.ui.t) {
-
+		event.stopPropagation()
 		serviceAdapter.executeFunctions(props.ui.t);
 	}
 }

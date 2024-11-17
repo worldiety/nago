@@ -12,9 +12,11 @@ import (
 )
 
 type WorkspaceListOptions struct {
-	ListWorkspaces workspace.List
-	SaveWorkspace  workspace.Save
-	Types          []DashboardType
+	ListWorkspaces  workspace.List
+	SaveWorkspace   workspace.Save
+	RemoveWorkspace workspace.Remove
+	Types           []DashboardType
+	TypeStringer    func(workspace.Type) string
 }
 
 func WorkspaceList(wnd core.Window, opts WorkspaceListOptions) core.View {
@@ -31,21 +33,27 @@ func WorkspaceList(wnd core.Window, opts WorkspaceListOptions) core.View {
 		return alert.Banner("Workspace-Typ nicht gefunden", fmt.Sprintf("Der Typ '%s' ist nicht bekannt", typeId))
 	}
 
-	bnd := newBinding(wnd, selectedType)
+	if opts.TypeStringer == nil {
+		opts.TypeStringer = func(w workspace.Type) string {
+			return fmt.Sprint(w)
+		}
+	}
+
+	bnd := newBinding(wnd, opts, selectedType)
 	return ui.VStack(
 		ui.H1(selectedType.Name),
 		ui.Text(selectedType.Description).Padding(ui.Padding{Bottom: ui.L16}),
 		crud.View(crud.Options(bnd).
 			FindAll(opts.ListWorkspaces(wnd.Subject(), selectedType.Type)).
 			ViewStyle(crud.ViewStyleListOnly).
-			Actions(crud.ButtonCreate(bnd, workspace.Workspace{}, func(w workspace.Workspace) (errorText string, infrastructureError error) {
+			Actions(crud.ButtonCreate(bnd, workspace.Workspace{Type: selectedType.Type}, func(w workspace.Workspace) (errorText string, infrastructureError error) {
 				return "", opts.SaveWorkspace(wnd.Subject(), w)
 			})),
 		).Frame(ui.Frame{}.FullWidth()),
 	).Alignment(ui.Leading).FullWidth()
 }
 
-func newBinding(wnd core.Window, dt DashboardType) *crud.Binding[workspace.Workspace] {
+func newBinding(wnd core.Window, opts WorkspaceListOptions, dt DashboardType) *crud.Binding[workspace.Workspace] {
 	bnd := crud.NewBinding[workspace.Workspace](wnd)
 	bnd.IntoListEntry(func(entity workspace.Workspace) list.TEntry {
 		var sumMib int64
@@ -56,13 +64,33 @@ func newBinding(wnd core.Window, dt DashboardType) *crud.Binding[workspace.Works
 		return list.Entry().
 			Leading(ui.ImageIcon(dt.Icon)).
 			Headline(entity.Name).
+			Action(func() {
+				fmt.Println("jo man")
+			}).
 			SupportingText(fmt.Sprintf("%d Dateien / %.2f MiB", len(entity.Files), float64(sumMib)/1024/1024)).
-			Trailing(ui.ImageIcon(heroSolid.ArrowRight))
+			Trailing(
+				ui.HStack(
+					crud.RenderElementViewFactory(bnd, entity, crud.ButtonEdit(bnd, func(w workspace.Workspace) (errorText string, infrastructureError error) {
+						return "", opts.SaveWorkspace(wnd.Subject(), w)
+					})),
+					crud.RenderElementViewFactory(bnd, entity, crud.ButtonDelete(wnd, func(e workspace.Workspace) error {
+						return opts.RemoveWorkspace(wnd.Subject(), e.ID)
+					})),
+					ui.TertiaryButton(nil).PreIcon(heroSolid.ArrowRight),
+				),
+			)
 	})
 
-	bnd.Add(crud.Text(crud.TextOptions{Label: "Name"}, crud.Ptr(func(model *workspace.Workspace) *string {
-		return &model.Name
-	})))
+	typeEnumeration := make([]workspace.Type, 0, len(opts.Types))
+	for _, dashboardType := range opts.Types {
+		typeEnumeration = append(typeEnumeration, dashboardType.Type)
+	}
+
+	bnd.Add(
+		crud.Text(crud.TextOptions{Label: "Name"}, crud.Ptr(func(model *workspace.Workspace) *string {
+			return &model.Name
+		})),
+	)
 
 	return bnd
 }
