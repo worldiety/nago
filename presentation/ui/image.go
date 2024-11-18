@@ -128,7 +128,7 @@ func (c TImage) Render(ctx core.RenderContext) ora.Component {
 			}
 		}
 
-		isSvg := bytes.Contains(buf[:min(len(buf), 100)], []byte("<svg"))
+		isSvg := bytes.Contains(buf[:min(len(buf), 200)], []byte("<svg"))
 		if isSvg {
 			c.svg = buf
 			c.uri = ""

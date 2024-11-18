@@ -47,7 +47,7 @@ func (r StaticBytes) configureResource(c *Configurator) ora.URI {
 }
 
 func magicMimeType(buf []byte) string {
-	if bytes.Contains(buf[:1024], []byte("<svg")) {
+	if bytes.Contains(buf[:min(len(buf), 1024)], []byte("<svg")) {
 		return "image/svg+xml"
 	}
 
