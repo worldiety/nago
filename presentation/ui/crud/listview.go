@@ -23,7 +23,7 @@ func List[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 
 			return bnd.renderListEntry(entity)
 		})...).Caption(ui.Text("Alle Einträge")).
-			Footer(ui.Text(fmt.Sprintf("%d von %d Einträgen", count, count))).
+			Footer(ui.Text(fmt.Sprintf("%d von %d Einträgen", count, ds.totalCount))).
 			Frame(ui.Frame{}.FullWidth()),
 	).FullWidth()
 

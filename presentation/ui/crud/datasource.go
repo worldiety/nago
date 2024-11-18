@@ -16,6 +16,7 @@ type dataSource[Entity data.Aggregate[ID], ID data.IDType] struct {
 	sortOrder             sortDir
 	query                 string
 	disableDefaultSorting bool
+	totalCount            int
 }
 
 func (ds *dataSource[Entity, ID]) Error() error {
@@ -45,9 +46,11 @@ func (ds *dataSource[Entity, ID]) List() []Entity {
 	predicate := rquery.SimplePredicate[string](ds.query)
 	var res []Entity
 
+	ds.totalCount = 0
 	// collect what is possible, e.g. ignore errors for single entries, which may be caused
 	// by broken json persistence models
 	ds.it(func(e Entity, err error) bool {
+		ds.totalCount++
 		if err != nil {
 			// we could argue that we should collect errors per id, however general IO errors
 			// are not id related, and also Entity is totally undefined in error case.

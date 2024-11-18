@@ -48,8 +48,12 @@ func BannerMessages(wnd core.Window) core.View {
 
 // ShowBannerMessage puts the given msg into the global messages state list.
 // Just include [MessageList] always in your view tree, which will overlay the message as required.
+// This is thread safe.
 func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
+	messages.Mutex().Lock()
+	defer messages.Mutex().Unlock()
+
 	if slices.Contains(messages.Get(), msg) {
 		return
 	}
@@ -101,6 +105,7 @@ func BannerError(err error) core.View {
 // ShowBannerError is like ShowBannerMessage but specialized on internal unhandled errors and hides
 // the actual error message from the user to avoid leaking secret details. Just a token is communicated,
 // so that the original message can be found from the log.
+// This is thread safe.
 func ShowBannerError(wnd core.Window, err error) {
 	if err == nil {
 		return
@@ -134,6 +139,9 @@ func ShowBannerError(wnd core.Window, err error) {
 	}
 
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
+	messages.Mutex().Lock()
+	defer messages.Mutex().Unlock()
+
 	if slices.Contains(messages.Get(), msg) {
 		return
 	}

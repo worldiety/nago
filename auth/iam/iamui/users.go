@@ -2,12 +2,16 @@ package iamui
 
 import (
 	"errors"
+	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
+	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/crud"
-	"log/slog"
+	"go.wdy.de/nago/presentation/ui/list"
 )
 
 func Users(wnd core.Window, service *iam.Service) core.View {
@@ -34,7 +38,7 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			// this is by intention: we show the entire inherited list of all permission, not just the customized ones
 			perms, err := service.FindAllUserPermissions(subject, user.ID)
 			if err != nil {
-				slog.Error("failed to find all user permissions", "err", err, "uid", user.ID)
+				alert.ShowBannerError(wnd, err)
 			}
 
 			return &perms
@@ -70,16 +74,39 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			return &model.Roles
 		})),
 
-		crud.AggregateActions(
-			"Optionen",
-			crud.ButtonDelete(wnd, func(group iam.User) error {
-				return service.DeleteUser(subject, group.ID)
-			}),
-			crud.ButtonEdit(bnd, func(user iam.User) (errorText string, infrastructureError error) {
-				return "", service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
-			}),
-		),
-	)
+		//crud.AggregateActions(
+		//	"Optionen",
+		//	crud.ButtonDelete(wnd, func(group iam.User) error {
+		//		return service.DeleteUser(subject, group.ID)
+		//	}),
+		//	crud.ButtonEdit(bnd, func(user iam.User) (errorText string, infrastructureError error) {
+		//		return "", service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
+		//	}),
+		//),
+	).IntoListEntry(func(entity iam.User) list.TEntry {
+		perms, err := service.FindAllUserPermissions(subject, entity.ID)
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+		}
+		editPresented := core.StateOf[bool](wnd, "crud.user.list.update-"+string(entity.ID))
+
+		return list.Entry().
+			Leading(avatar.Text(entity.Firstname + " " + entity.Lastname)).
+			Trailing(ui.HStack(
+				crud.RenderElementViewFactory(bnd, entity, crud.ButtonDelete(wnd, func(e iam.User) error {
+					return service.DeleteUser(subject, e.ID)
+				})),
+				ui.ImageIcon(heroOutline.ChevronRight),
+				crud.DialogEdit(bnd, editPresented, entity, func(user iam.User) (errorText string, infrastructureError error) {
+					return "", service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
+				}),
+			)).
+			Action(func() {
+				editPresented.Set(true)
+			}).
+			Headline(entity.Firstname + " " + entity.Lastname).
+			SupportingText(fmt.Sprintf("%d Berechtigungen, %d Rollen", len(perms), len(entity.Roles)))
+	})
 
 	bndCrUsr := crud.NewBinding[createUser](wnd).Add(
 		crud.Text(crud.TextOptions{Label: "Vorname"}, crud.Ptr(func(e *createUser) *string {
@@ -120,7 +147,7 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 		Title("Nutzerkonten").
 		FindAll(service.AllUsers(subject))
 
-	return crud.View[iam.User](opts)
+	return crud.View[iam.User](opts).Frame(ui.Frame{}.FullWidth())
 
 }
 

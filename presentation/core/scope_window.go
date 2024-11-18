@@ -9,6 +9,7 @@ import (
 	"golang.org/x/text/language"
 	"io"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -44,6 +45,7 @@ type scopeWindow struct {
 	lastDeclaredBufferPtr ora.Ptr
 	isRendering           bool
 	generation            int64
+	mutex                 sync.Mutex
 }
 
 func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {

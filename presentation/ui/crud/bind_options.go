@@ -40,6 +40,7 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
 }
 
+// CreateDialog returns the dialog for creating. See also [DialogEdit].
 func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial E, createFn func(E) (errorText string, infrastructureError error), onCancelled, onSaved func()) (dlg core.View, presented *core.State[bool]) {
 	wnd := bnd.wnd
 	// we have a unique state problem here, at least we can have multiple crud views with distinct types
@@ -104,15 +105,27 @@ func RenderElementViewFactory[E data.Aggregate[ID], ID data.IDType](bnd *Binding
 	return fac(entityState)
 }
 
+// DialogEdit returns the dialog for editing. See also [CreateDialog].
+func DialogEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], presented *core.State[bool], entity E, updateFn func(E) (errorText string, infrastructureError error)) core.View {
+	return RenderElementViewFactory(bnd, entity, buttonEdit(bnd, false, presented, updateFn))
+}
+
 // ButtonEdit to be used for conventional delete function. See also [ViewButtonEdit] for other use cases.
 func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
+	wnd := bnd.wnd
+	return func(e *core.State[E]) core.View {
+		formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.edit.form.%v", e.Get().Identity()))
+		return buttonEdit(bnd, true, formPresented, updateFn)(e)
+	}
+}
+
+func buttonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], renderBtn bool, formPresented *core.State[bool], updateFn func(E) (errorText string, infrastructureError error)) ElementViewFactory[E] {
 	wnd := bnd.wnd
 	return func(e *core.State[E]) core.View {
 		entityState := core.StateOf[E](wnd, fmt.Sprintf("crud.edit.entity.%v", e.Get().Identity())).Init(func() E {
 			return e.Get()
 		})
 
-		formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.edit.form.%v", e.Get().Identity()))
 		noSuchPermissionPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.edit.npp.%v", e.Get().Identity()))
 		stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.edit.errmsg.%v", e.Get().Identity()))
 		return ui.VStack(
@@ -146,9 +159,9 @@ func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn 
 
 				return true
 			})),
-			ui.TertiaryButton(func() {
+			ui.If(renderBtn, ui.TertiaryButton(func() {
 				formPresented.Set(true)
-			}).PreIcon(heroSolid.Pencil).AccessibilityLabel("Bearbeiten"),
+			}).PreIcon(heroSolid.Pencil).AccessibilityLabel("Bearbeiten")),
 		)
 	}
 }

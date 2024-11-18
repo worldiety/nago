@@ -89,6 +89,7 @@ type ScaffoldBuilder struct {
 	impressPath     core.NavigationPath
 	impressContent  string
 	menu            []MenuEntryBuilder
+	logoClick       func()
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -102,6 +103,11 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 		gdprPath:        "legal/gdpr",
 		gdprContent:     defaultGDPR,
 	}
+}
+
+func (b *ScaffoldBuilder) LogoAction(fn func()) *ScaffoldBuilder {
+	b.logoClick = fn
+	return b
 }
 
 func (b *ScaffoldBuilder) Logo(svg core.SVG) *ScaffoldBuilder {
@@ -241,7 +247,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
-		).Logo(logo).
+		).Logo(ui.HStack(logo).Action(b.logoClick)).
 			Menu(menu...)
 	}
 }

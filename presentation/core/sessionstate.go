@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 )
 
 type TransientProperty interface {
@@ -13,18 +14,33 @@ type TransientState[T any] struct {
 	id    string
 	value T
 	valid bool
+	mutex sync.Mutex
 }
 
 func (s *TransientState[T]) Get() T {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return s.value
 }
 
 func (s *TransientState[T]) Set(value T) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.valid = true
 	s.value = value
 }
 
 func (s *TransientState[T]) Valid() bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return s.valid
+}
+
+func (s *TransientState[T]) Mutex() *sync.Mutex {
+	return &s.mutex
 }
 
 func (s *TransientState[T]) isTransient() {}
@@ -34,6 +50,9 @@ func (s *TransientState[T]) isTransient() {}
 // Only put stuff here, which is lightweight and must survive different root views.
 func TransientStateOf[T any](wnd Window, id string) *TransientState[T] {
 	w := wnd.(*scopeWindow)
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	if id == "" {
 		panic("empty id is not allowed, consider using AutoState instead")
 	}
