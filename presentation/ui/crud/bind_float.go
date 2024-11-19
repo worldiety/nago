@@ -29,10 +29,21 @@ func Float[E any, T std.Float](opts FloatOptions, property Property[E, T]) Field
 			state.Observe(func(newValue float64) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
+				if float64(oldValue) != newValue {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
+			})
+
+			entity.Observe(func(newValue E) {
+				tmp := entity.Get()
+				v := float64(property.Get(&tmp))
+				state.Set(v)
+				state.Notify()
 			})
 
 			return ui.FloatField(opts.Label, state.Get(), state).

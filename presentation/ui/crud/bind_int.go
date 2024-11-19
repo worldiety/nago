@@ -28,10 +28,21 @@ func Int[E any, T std.Integer](opts IntOptions, property Property[E, T]) Field[E
 			state.Observe(func(newValue int64) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
+				if int64(oldValue) != newValue {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
+			})
+
+			entity.Observe(func(newValue E) {
+				tmp := entity.Get()
+				v := int64(property.Get(&tmp))
+				state.Set(v)
+				state.Notify()
 			})
 
 			if self.requiresValidation() {

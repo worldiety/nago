@@ -101,6 +101,7 @@ func RenderElementViewFactory[E data.Aggregate[ID], ID data.IDType](bnd *Binding
 	entityState := core.StateOf[E](bnd.wnd, fmt.Sprintf("crud.renderfactory.entity.%v", entity.Identity())).Init(func() E {
 		return entity
 	})
+	entityState.Set(entity)
 
 	return fac(entityState)
 }

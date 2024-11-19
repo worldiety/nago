@@ -147,6 +147,11 @@ func (s *State[T]) Get() T {
 // and to avoid causing infinite cycles in your UI.
 // TODO it is not clear, if this is really useful. Why should we decide between internal and external event observations?
 func (s *State[T]) Notify() {
+	// TODO not sure about the semantic here
+	//if atomic.LoadInt64(&s.lastChangedGeneration) == s.getGeneration() {
+	//	return
+	//}
+
 	s.observerLock.RLock()
 	defer s.observerLock.RUnlock()
 

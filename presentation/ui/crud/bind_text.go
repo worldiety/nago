@@ -29,10 +29,21 @@ func Text[E any, T ~string](opts TextOptions, property Property[E, T]) Field[E] 
 			state.Observe(func(newValue string) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
+				if string(oldValue) != newValue {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
+			})
+
+			entity.Observe(func(newValue E) {
+				tmp := entity.Get()
+				v := string(property.Get(&tmp))
+				state.Set(v)
+				state.Notify()
 			})
 
 			if self.requiresValidation() {

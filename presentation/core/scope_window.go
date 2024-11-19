@@ -101,7 +101,7 @@ func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
 			delete(s.states, property.ptrId())
 			property.destroy()
 
-			slog.Info("purged unused state", "id", id, "expected", currentGeneration, "has", property.getGeneration())
+			//slog.Info("purged unused state", "id", id, "expected", currentGeneration, "has", property.getGeneration())
 		}
 	}
 }
