@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/pkg/xmaps"
 	"io"
 	"iter"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -63,6 +64,20 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		}
 
 	}
+}
+
+func (b *BlobStore) Has(key string) bool {
+	_, ok := b.values.Load(key)
+	return ok
+}
+
+func (b *BlobStore) Load(key string) ([]byte, bool) {
+	buf, ok := b.values.Load(key)
+	return slices.Clone(buf), ok
+}
+
+func (b *BlobStore) Store(key string, buf []byte) {
+	b.values.Store(key, slices.Clone(buf)) // defensive copy
 }
 
 func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {

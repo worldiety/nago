@@ -3,8 +3,11 @@ package iam
 import (
 	"fmt"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/license"
 	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
+	"iter"
+	"maps"
 	"strings"
 )
 
@@ -38,6 +41,7 @@ type nagoSubject struct {
 	session     core.SessionID
 	user        User
 	permissions map[string]struct{}
+	licenses    map[license.ID]license.License
 	audit       func(session core.SessionID, usr User, permission string, granted bool)
 }
 
@@ -79,14 +83,6 @@ func (n nagoSubject) Name() string {
 	return strings.TrimSpace(fmt.Sprintf("%s %s", n.user.Firstname, n.user.Lastname))
 }
 
-func (n nagoSubject) Roles(yield func(auth.RID) bool) {
-	for _, role := range n.user.Roles {
-		if !yield(role) {
-			return
-		}
-	}
-}
-
 func (n nagoSubject) HasRole(id auth.RID) bool {
 	for _, role := range n.user.Roles {
 		if role == id {
@@ -111,12 +107,33 @@ func (n nagoSubject) EMail() Email {
 	return n.user.Email
 }
 
-func (n nagoSubject) Groups(yield func(auth.GID) bool) {
-	for _, role := range n.user.Groups {
-		if !yield(role) {
-			return
+func (n nagoSubject) Roles() iter.Seq[auth.RID] {
+	return func(yield func(auth.RID) bool) {
+		for _, role := range n.user.Roles {
+			if !yield(role) {
+				return
+			}
 		}
 	}
+}
+
+func (n nagoSubject) Groups() iter.Seq[auth.GID] {
+	return func(yield func(auth.GID) bool) {
+		for _, role := range n.user.Groups {
+			if !yield(role) {
+				return
+			}
+		}
+	}
+}
+
+func (n nagoSubject) HasLicense(id license.ID) bool {
+	_, ok := n.licenses[id]
+	return ok
+}
+
+func (n nagoSubject) Licenses() iter.Seq[license.ID] {
+	return maps.Keys(n.licenses)
 }
 
 func (n nagoSubject) Audit(permission string) error {

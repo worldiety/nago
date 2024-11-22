@@ -1,6 +1,10 @@
 package auth
 
-import "golang.org/x/text/language"
+import (
+	"go.wdy.de/nago/license"
+	"golang.org/x/text/language"
+	"iter"
+)
 
 // UID is the User or Subject ID.
 type UID string
@@ -47,14 +51,14 @@ type Subject interface {
 
 	// Roles yields over all associated roles. This is important if the domain needs to model
 	// resource based access using role identifiers.
-	Roles(yield func(RID) bool)
+	Roles() iter.Seq[RID]
 
 	// HasRole returns true, if the user has the associated role.
 	HasRole(RID) bool
 
 	// Groups yields over all associated groups. This is important if the domain needs to model
 	// resource based access using group identifiers.
-	Groups(yield func(GID) bool)
+	Groups() iter.Seq[GID]
 
 	// HasGroup returns true, if the user is in the associated group.
 	HasGroup(GID) bool
@@ -66,6 +70,15 @@ type Subject interface {
 	// HasPermission checks, if the Subject has the given permission. A regular use case
 	// should use the [Subject.Audit]. However, this may be used e.g. by the UI to show or hide specific aspects.
 	HasPermission(permission string) bool
+
+	// HasLicense checks, if the Subject has the given license. This is usually used by the Domain and UI, to enable
+	// or disable features based on contracts and payments.
+	HasLicense(id license.ID) bool
+
+	// Licenses returns all associated and applicable licenses which are not disabled. If a license is assigned
+	// but [license.License.Enabled] is false, it is not contained. Consequently, [HasLicense] will return false.
+	// Order is undefined.
+	Licenses() iter.Seq[license.ID]
 
 	// Valid tells us, if the subject has been authenticated and potentially contains permissions.
 	Valid() bool

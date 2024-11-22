@@ -25,6 +25,12 @@ type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 // OneToOne binds a field with foreign key characteristics to a picker. See also [PickOne] for value
 // semantics.
 func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOptions[T, IDOfT], property Property[E, std.Option[IDOfT]]) Field[E] {
+	if opts.ForeignPickerRenderer == nil {
+		opts.ForeignPickerRenderer = func(t T) core.View {
+			return ui.Text(fmt.Sprintf("%v", t))
+		}
+	}
+
 	var values []T
 	for v, err := range opts.ForeignEntities {
 		if err != nil {

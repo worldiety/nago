@@ -166,7 +166,7 @@ func (l *EventLoop) Destroy() {
 		select {
 		case l.done <- true:
 		default:
-			panic("eolDone cannot accept destruction twice")
+			slog.Error("eolDone cannot accept destruction twice")
 		}
 
 		close(l.done)

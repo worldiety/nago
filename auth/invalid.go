@@ -2,13 +2,32 @@ package auth
 
 import (
 	"fmt"
+	"go.wdy.de/nago/license"
+	"go.wdy.de/nago/pkg/xiter"
 	"golang.org/x/text/language"
+	"iter"
 )
 
 var _ Subject = InvalidSubject{}
 
 type InvalidSubject struct {
 	DeniedLog func(permission string)
+}
+
+func (i InvalidSubject) Roles() iter.Seq[RID] {
+	return xiter.Empty[RID]()
+}
+
+func (i InvalidSubject) Groups() iter.Seq[GID] {
+	return xiter.Empty[GID]()
+}
+
+func (i InvalidSubject) HasLicense(id license.ID) bool {
+	return false
+}
+
+func (i InvalidSubject) Licenses() iter.Seq[license.ID] {
+	return xiter.Empty[license.ID]()
 }
 
 func (i InvalidSubject) Firstname() string {
@@ -41,12 +60,6 @@ func (i InvalidSubject) HasPermission(permission string) bool {
 
 func (i InvalidSubject) Valid() bool {
 	return false
-}
-
-func (i InvalidSubject) Roles(yield func(RID) bool) {
-}
-
-func (i InvalidSubject) Groups(yield func(GID) bool) {
 }
 
 func (i InvalidSubject) ID() UID {
