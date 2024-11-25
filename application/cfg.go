@@ -51,6 +51,7 @@ type Configurator struct {
 	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri               ora.URI
 	fps                      int
+	images                   *Images
 }
 
 func NewConfigurator() *Configurator {

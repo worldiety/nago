@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"golang.org/x/crypto/sha3"
@@ -92,6 +93,12 @@ func BannerError(err error) core.View {
 		return Banner(permDeniedMsg.Title, permDeniedMsg.Message)
 	}
 
+	var localError std.LocalizedError
+
+	if errors.As(err, &localError) {
+		return Banner(localError.Title(), localError.Description())
+	}
+
 	tmp := sha3.Sum224([]byte(err.Error()))
 	token := hex.EncodeToString(tmp[:16])
 	msg := Message{
@@ -127,6 +134,17 @@ func ShowBannerError(wnd core.Window, err error) {
 
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
 		ShowBannerMessage(wnd, permDeniedMsg)
+
+		return
+	}
+
+	var localError std.LocalizedError
+
+	if errors.As(err, &localError) {
+		ShowBannerMessage(wnd, Message{
+			Title:   localError.Title(),
+			Message: localError.Description(),
+		})
 
 		return
 	}

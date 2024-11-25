@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
+	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
@@ -345,6 +346,9 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 	}))
+
+	images := c.Images()
+	r.Mount(HTTPEndpointImage, http_image.NewHandler(images.LoadBestFit))
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context())
