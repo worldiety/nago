@@ -54,7 +54,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 					case "avatar":
 						styleOpts = PickOneImageStyleAvatar
 					default:
-						styleOpts = PickOneImageStyleTeaser
+						styleOpts = PickOneImageStyleSingle
 					}
 
 					fieldsBuilder.Append(PickOneImage(PickOneImageOptions[E, image.ID]{Label: label, Style: styleOpts}, PropertyFuncs(

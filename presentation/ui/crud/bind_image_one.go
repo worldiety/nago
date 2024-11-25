@@ -16,13 +16,13 @@ import (
 type PickOneImageStyle int
 
 const (
-	PickOneImageStyleTeaser PickOneImageStyle = iota
+	PickOneImageStyleSingle PickOneImageStyle = iota
 	PickOneImageStyleAvatar
 )
 
 type PickOneImageOptions[E, T any] struct {
 	Label        string
-	Style        PickOneImageStyle // Default is PickOneImageStyleTeaser
+	Style        PickOneImageStyle // Default is PickOneImageStyleSingle
 	Paraphe      func(E) string
 	CreateSrcSet image.CreateSrcSet
 	LoadSrcSet   image.LoadSrcSet
