@@ -94,6 +94,8 @@ func (c *Configurator) newHandler() http.Handler {
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps)
+	app2.AddSystemService(c.Images().CreateSrcSet)
+	app2.AddSystemService(c.Images().LoadBestFit)
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {
@@ -348,7 +350,7 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	images := c.Images()
-	r.Mount(HTTPEndpointImage, http_image.NewHandler(images.LoadBestFit))
+	r.Mount(http_image.Endpoint, http_image.NewHandler(images.LoadBestFit))
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context())

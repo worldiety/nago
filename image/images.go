@@ -60,11 +60,11 @@ func (s SrcSet) FitCover(width, height int) (Image, bool) {
 	var requiredWidth, requiredHeight int
 	if srcAspect > targetAspect {
 		// image width is larger than target width
-		requiredWidth = int(float64(s.Images[0].Height) * targetAspect)
+		requiredWidth = int(float64(width) * targetAspect)
 		requiredHeight = int(float64(requiredWidth) * srcAspect)
 	} else {
 		// and vice versa
-		requiredHeight = int(float64(s.Images[0].Width) / targetAspect)
+		requiredHeight = int(float64(height) / targetAspect)
 		requiredWidth = int(float64(requiredHeight) * srcAspect)
 	}
 

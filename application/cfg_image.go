@@ -6,9 +6,6 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 )
 
-// HTTPEndpointImage returns the default image endpoint.
-const HTTPEndpointImage = "/api/nago/v1/image"
-
 type Images struct {
 	SrcSets      image.Repository
 	Blobs        blob.Store

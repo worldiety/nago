@@ -39,6 +39,7 @@ func (a *Application) init(configure func(cfg *Configurator)) (success bool) {
 	configure(a.cfg)
 
 	a.cfg.LoadConfigFromEnv()
+
 	return true
 }
 

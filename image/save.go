@@ -13,6 +13,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"log/slog"
 )
 
 // Options are used in two cases: first as default parameters for all source sets which will be created
@@ -67,8 +68,6 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			return SrcSet{}, fmt.Errorf("cannot open image writer: %w", err)
 		}
 
-		defer w.Close()
-
 		encodedNumSrcBytes, err := img.Transfer(w)
 		if err != nil {
 			cancel()
@@ -76,7 +75,14 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			return SrcSet{}, fmt.Errorf("cannot transfer image: %w", err)
 		}
 
-		cancel() // avoid ctx leak
+		// close first, this actually persists the data
+		if err := w.Close(); err != nil {
+			cancel()
+			return SrcSet{}, fmt.Errorf("cannot commit image writer: %w", err)
+		}
+
+		// avoid ctx leak but do not cancel write, thus this must be after w.Close
+		cancel()
 
 		// let us check, if we got a (zip) bomb, e.g. a single colored pixel blown up
 		// in gigantic dimensions, usually png but potentially jpg as well
@@ -117,11 +123,18 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			ID: srcImgId,
 		}
 
-		thumbWidth, thumbHeight := nextLowerMultipleOfEight(src.Bounds().Max.X), nextLowerMultipleOfEight(src.Bounds().Max.Y)
+		// put the original image for completeness
+		srcSet.Images = append(srcSet.Images, Image{
+			Width:  imgCfg.Width,
+			Height: imgCfg.Height,
+			Data:   srcImgId,
+		})
+
+		thumbWidth, thumbHeight := src.Bounds().Max.X, src.Bounds().Max.Y
 		tmp := bytes.NewBuffer(make([]byte, 0, encodedNumSrcBytes)) // pre-alloc, probably not larger than source (well depends...)
 		for {
-			thumbWidth, thumbHeight = thumbWidth/2, thumbHeight/2
-			if thumbWidth < 64 || thumbHeight < 64 {
+			thumbWidth, thumbHeight = nextLowerMultipleOfEight(thumbWidth/2), nextLowerMultipleOfEight(thumbHeight/2)
+			if thumbWidth < 32 || thumbHeight < 32 {
 				break
 			}
 
@@ -158,6 +171,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 				Height: dst.Bounds().Dy(),
 				Data:   thumbImgId,
 			})
+
+			slog.Info("created image step", "src", srcImgId, "thumb", thumbImgId, "w", dst.Bounds().Dx(), "h", dst.Bounds().Dy())
 		}
 
 		// we are done, persist the entire calculated source set pyramid

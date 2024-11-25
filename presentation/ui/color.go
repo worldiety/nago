@@ -133,4 +133,7 @@ const (
 
 	// ColorError represents the variable name which refers to the error color value.
 	ColorError = SE0
+
+	ColorBlack = "#000000"
+	ColorWhite = "#ffffff"
 )

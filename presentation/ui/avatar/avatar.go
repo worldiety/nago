@@ -38,7 +38,11 @@ func Text(paraphe string) TAvatar {
 			}
 		}
 
-		paraphe = sb.String()
+		if sb.Len() == 0 {
+			paraphe = "?"
+		} else {
+			paraphe = sb.String()
+		}
 	}
 
 	return TAvatar{

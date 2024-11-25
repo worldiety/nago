@@ -2,6 +2,7 @@ package crud
 
 import (
 	"encoding/json"
+	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
@@ -47,6 +48,21 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			switch field.Type.Kind() {
 			case reflect.String:
 				switch field.Type {
+				case reflect.TypeFor[image.ID]():
+					fieldsBuilder.Append(PickOneImage(PickOneImageOptions[E, image.ID]{Label: label}, PropertyFuncs(
+						func(e *E) std.Option[image.ID] {
+							value := reflect.ValueOf(e).Elem().FieldByName(field.Name).String()
+							if value == "" {
+								return std.None[image.ID]()
+							}
+
+							return std.Some(image.ID(value))
+						},
+						func(dst *E, v std.Option[image.ID]) {
+							reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(string(v.UnwrapOr("")))
+						},
+					)))
+
 				case reflect.TypeFor[ui.Color]():
 					fieldsBuilder.Append(PickOneColor(PickOneColorOptions{Label: label}, PropertyFuncs(
 						func(e *E) std.Option[ui.Color] {
@@ -55,7 +71,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								return std.None[ui.Color]()
 							}
 
-							return std.Some[ui.Color](ui.Color(value))
+							return std.Some(ui.Color(value))
 						},
 						func(dst *E, v std.Option[ui.Color]) {
 							reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(string(v.UnwrapOr("")))

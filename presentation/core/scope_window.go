@@ -119,6 +119,12 @@ func (s *scopeWindow) render() ora.Component {
 	}
 	s.reset()
 
+	// update global scope transient states with the latest render generation.
+	// this is used by the ticker to check, if a re-render is required
+	for _, property := range s.parent.statesById {
+		property.setGeneration(s.generation)
+	}
+
 	fac := s.rootFactory.Unwrap()
 	component := fac(s)
 	if component == nil {

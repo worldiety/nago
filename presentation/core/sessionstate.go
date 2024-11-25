@@ -4,17 +4,22 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 )
 
 type TransientProperty interface {
 	isTransient()
+	dirty() bool
+	setGeneration(generation int64)
 }
 
 type TransientState[T any] struct {
-	id    string
-	value T
-	valid bool
-	mutex sync.Mutex
+	id                    string
+	value                 T
+	valid                 bool
+	mutex                 sync.Mutex
+	generation            int64
+	lastChangedGeneration int64
 }
 
 func (s *TransientState[T]) Get() T {
@@ -28,8 +33,18 @@ func (s *TransientState[T]) Set(value T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration())
+
 	s.valid = true
 	s.value = value
+}
+
+func (s *TransientState[T]) getGeneration() int64 {
+	return atomic.LoadInt64(&s.generation)
+}
+
+func (s *TransientState[T]) setGeneration(g int64) {
+	atomic.StoreInt64(&s.generation, g)
 }
 
 func (s *TransientState[T]) Valid() bool {
@@ -37,6 +52,10 @@ func (s *TransientState[T]) Valid() bool {
 	defer s.mutex.Unlock()
 
 	return s.valid
+}
+
+func (s *TransientState[T]) dirty() bool {
+	return atomic.LoadInt64(&s.lastChangedGeneration) >= s.getGeneration()
 }
 
 func (s *TransientState[T]) Mutex() *sync.Mutex {

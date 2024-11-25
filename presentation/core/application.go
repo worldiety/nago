@@ -40,6 +40,12 @@ type Application struct {
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
 	colorSets                map[ColorScheme]map[NamespaceName]ColorSet
+	// this fills a dependency hole just the same way as the android system service call.
+	// sometimes we have just a deeply nested thing and we just want eventually access to
+	// a global instance of something. I actually never wanted this kind of API
+	// but any other API does not make sense for things like crud.Auto where a lot of stuff
+	// is only eventually relevant and available automatically anyway.
+	systemServices []any
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver, fps int) *Application {
@@ -59,6 +65,11 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 			Dark:  {},
 		},
 	}
+}
+
+// Context of the application.
+func (a *Application) Context() context.Context {
+	return a.ctx
 }
 
 func (a *Application) SetID(id ApplicationID) {
@@ -170,4 +181,30 @@ func (a *Application) Destroy() {
 
 	a.scopes.Destroy()
 	a.cancelCtx()
+}
+
+// AddSystemService appends the given service to the internal list. It is kept alive and
+// accessible through [SystemService].
+func (a *Application) AddSystemService(service any) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	a.systemServices = append(a.systemServices, service)
+}
+
+// SystemService returns the first T which is assignable to any of the registered Services via
+// [Application.AddSystemService] or returns false.
+func SystemService[T any](app *Application) (T, bool) {
+	app.mutex.Lock()
+	defer app.mutex.Unlock()
+
+	for _, service := range app.systemServices {
+		if t, ok := service.(T); ok {
+			return t, ok
+		}
+	}
+
+	var zero T
+	
+	return zero, false
 }

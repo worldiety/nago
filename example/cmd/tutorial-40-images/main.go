@@ -24,6 +24,10 @@ type Person struct {
 	Gallery   image.Image `style:"gallery"`
 }
 
+func (p Person) Paraphe() string {
+	return p.Vorname + " " + p.Nachname
+}
+
 func (p Person) Identity() PersonID {
 	return p.ID
 }

@@ -320,6 +320,15 @@ func (s *Scope) updateTick(now time.Time) {
 			}
 		}
 
+		if !requiresRender {
+			for _, property := range s.statesById {
+				if property.dirty() {
+					requiresRender = true
+					break
+				}
+			}
+		}
+
 		if requiresRender {
 			s.forceRender()
 		}

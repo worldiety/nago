@@ -12,7 +12,12 @@ import (
 	"time"
 )
 
-// NewURL assembles a URL with the query url encoded parameters.
+// Endpoint returns the default image endpoint.
+const Endpoint = "/api/nago/v1/image"
+
+// NewURL assembles a URL with the query url encoded parameters. See also [NewHandler] and keep in mind,
+// that [image.ID] may resolve to either a [image.SrcSet] to pick from or a specific image. In either case,
+// an actual image is resolved, but maybe in a different resolution.
 func NewURL(apiPath string, imgOrSrcSet image.ID, fit image.ObjectFit, width, height int) string {
 	values := url.Values{}
 	values.Add("src", string(imgOrSrcSet))

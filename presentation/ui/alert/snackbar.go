@@ -52,8 +52,8 @@ func BannerMessages(wnd core.Window) core.View {
 // This is thread safe.
 func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
-	messages.Mutex().Lock()
-	defer messages.Mutex().Unlock()
+	//messages.Mutex().Lock() deadlock or logical races on message body or mutex for all or mutex on window?
+	//defer messages.Mutex().Unlock()
 
 	if slices.Contains(messages.Get(), msg) {
 		return
