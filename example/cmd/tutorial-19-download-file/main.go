@@ -19,7 +19,7 @@ func main() {
 				tracking.SupportRequestDialog(wnd),
 				PrimaryButton(func() {
 					// CAUTION: this must always be within an action, do not put this into the render tree
-					wnd.ExportFiles(core.ExportFile("test.txt", []byte("hello world")))
+					wnd.ExportFiles(core.ExportFileBytes("test.txt", []byte("hello world")))
 
 					// this is just for illustration
 					var err error

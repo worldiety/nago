@@ -11,6 +11,7 @@ type Images struct {
 	Blobs        blob.Store
 	LoadBestFit  image.LoadBestFit
 	CreateSrcSet image.CreateSrcSet
+	LoadSrcSet   image.LoadSrcSet
 }
 
 // Images returns the default Images backend, including use case implementations, repositories and http endpoints.
@@ -21,12 +22,14 @@ func (c *Configurator) Images() Images {
 		imageBlobs := c.FileStore(".nago.img.blob")
 		imgBestFit := image.NewLoadBestFit(imageSrcSetRepo, imageBlobs)
 		imgCreateSrcSet := image.NewCreateSrcSet(image.Options{}, imageSrcSetRepo, imageBlobs)
+		loadSrcSet := image.NewLoadSrcSet(imageSrcSetRepo)
 
 		c.images = &Images{
 			SrcSets:      imageSrcSetRepo,
 			Blobs:        imageBlobs,
 			LoadBestFit:  imgBestFit,
 			CreateSrcSet: imgCreateSrcSet,
+			LoadSrcSet:   loadSrcSet,
 		}
 	}
 

@@ -106,6 +106,8 @@ func BannerError(err error) core.View {
 		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
 	}
 
+	slog.Error("unexpected banner error", "token", token, "err", err)
+
 	return Banner(msg.Title, msg.Message)
 }
 

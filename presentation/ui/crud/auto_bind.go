@@ -49,7 +49,15 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			case reflect.String:
 				switch field.Type {
 				case reflect.TypeFor[image.ID]():
-					fieldsBuilder.Append(PickOneImage(PickOneImageOptions[E, image.ID]{Label: label}, PropertyFuncs(
+					var styleOpts PickOneImageStyle
+					switch field.Tag.Get("style") {
+					case "avatar":
+						styleOpts = PickOneImageStyleAvatar
+					default:
+						styleOpts = PickOneImageStyleTeaser
+					}
+
+					fieldsBuilder.Append(PickOneImage(PickOneImageOptions[E, image.ID]{Label: label, Style: styleOpts}, PropertyFuncs(
 						func(e *E) std.Option[image.ID] {
 							value := reflect.ValueOf(e).Elem().FieldByName(field.Name).String()
 							if value == "" {

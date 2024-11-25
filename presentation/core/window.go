@@ -34,7 +34,7 @@ type ExportFilesOptions struct {
 	Files []File
 }
 
-func ExportFile(name string, buf []byte) ExportFilesOptions {
+func ExportFileBytes(name string, buf []byte) ExportFilesOptions {
 	return ExportFilesOptions{
 		ID: name,
 		Files: []File{

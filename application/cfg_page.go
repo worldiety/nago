@@ -96,6 +96,7 @@ func (c *Configurator) newHandler() http.Handler {
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps)
 	app2.AddSystemService(c.Images().CreateSrcSet)
 	app2.AddSystemService(c.Images().LoadBestFit)
+	app2.AddSystemService(c.Images().LoadSrcSet)
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {

@@ -19,7 +19,7 @@ type Person struct {
 	Strasse   string   `section:"Adressdaten"`
 	Anrede    string   `values:"[\"Herr\",\"Frau\"]"`
 	Profile   image.ID `style:"avatar"`
-	Teaser    image.Image
+	Teaser    image.ID `json:"teaser2"`
 	Favorites []image.Image
 	Gallery   image.Image `style:"gallery"`
 }

@@ -120,7 +120,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 		// we first round down to a multiple of 8, so that we always optimize DCT matching
 		// for JPEG compression, if not already done.
 		srcSet := SrcSet{
-			ID: srcImgId,
+			ID:   srcImgId,
+			Name: img.Name(),
 		}
 
 		// put the original image for completeness

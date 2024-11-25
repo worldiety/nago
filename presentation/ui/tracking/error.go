@@ -172,6 +172,6 @@ func sendReport(wnd core.Window, code AnonymousErrorCode) {
 	msg += fmt.Sprintf("values: %v\n", wnd.Values())
 	msg += fmt.Sprintf("code: %s\n", code)
 
-	wnd.ExportFiles(core.ExportFile("report.txt", []byte(msg)))
+	wnd.ExportFiles(core.ExportFileBytes("report.txt", []byte(msg)))
 
 }

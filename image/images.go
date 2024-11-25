@@ -30,6 +30,7 @@ const (
 // SrcSet represents a bunch of scaled image variants of the same source.
 type SrcSet struct {
 	ID     ID      `json:"id,omitempty"`
+	Name   string  `json:"n,omitempty"` // the original name, if any
 	Images []Image `json:"set,omitempty"`
 	Format Format  `json:"fmt,omitempty"`
 }

@@ -20,6 +20,47 @@ type File interface {
 	Transfer(dst io.Writer) (int64, error)
 }
 
+type ReaderFile struct {
+	open func() (io.ReadCloser, error)
+	mime string
+	name string
+}
+
+func NewReaderFile(opener func() (io.ReadCloser, error)) *ReaderFile {
+	return &ReaderFile{open: opener}
+}
+
+func (r *ReaderFile) SetMimeType(mime string) {
+	r.mime = mime
+}
+
+func (r *ReaderFile) SetName(name string) {
+	r.name = name
+}
+
+func (r *ReaderFile) Name() string {
+	return r.name
+}
+
+func (r *ReaderFile) MimeType() (string, bool) {
+	return r.mime, r.mime != ""
+}
+
+func (r *ReaderFile) Size() (int64, bool) {
+	return 0, false
+}
+
+func (r *ReaderFile) Transfer(dst io.Writer) (int64, error) {
+	reader, err := r.open()
+	if err != nil {
+		return 0, err
+	}
+
+	defer reader.Close()
+
+	return io.Copy(dst, reader)
+}
+
 type MemFile struct {
 	Filename     string
 	MimeTypeHint string
