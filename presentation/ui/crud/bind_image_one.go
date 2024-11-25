@@ -157,7 +157,7 @@ func singleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	if setCreator == nil {
 		fn, ok := core.SystemService[image.CreateSrcSet](wnd.Application())
 		if !ok {
-			panic("image.CreateSrcSet not available")
+			panic("image.CreateSrcSet not available") // TODO or better an alert.Banner?
 		}
 
 		setCreator = fn
@@ -166,7 +166,7 @@ func singleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	if loadSrcSet == nil {
 		fn, ok := core.SystemService[image.LoadSrcSet](wnd.Application())
 		if !ok {
-			panic("image.LoadSrcSet not available")
+			panic("image.LoadSrcSet not available") // TODO or better an alert.Banner?
 		}
 
 		loadSrcSet = fn
@@ -175,7 +175,7 @@ func singleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	if loadBestFit == nil {
 		fn, ok := core.SystemService[image.LoadBestFit](wnd.Application())
 		if !ok {
-			panic("image.LoadSrcSet not available")
+			panic("image.LoadSrcSet not available") // TODO or better an alert.Banner?
 		}
 
 		loadBestFit = fn
@@ -224,7 +224,7 @@ func singleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 
 					return optReader.Unwrap(), nil
 				})
-				
+
 				rf.SetName(srcSet.Name)
 				rf.SetMimeType("image/*")
 				wnd.ExportFiles(core.ExportFilesOptions{

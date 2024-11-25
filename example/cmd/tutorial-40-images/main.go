@@ -12,16 +12,14 @@ import (
 type PersonID string
 
 type Person struct {
-	ID        PersonID `visible:"false"`
-	Vorname   string   `table-visible:"false"`
-	Nachname  string   `label:"Zuname"`
-	Nr        string   `section:"Adressdaten"`
-	Strasse   string   `section:"Adressdaten"`
-	Anrede    string   `values:"[\"Herr\",\"Frau\"]"`
-	Profile   image.ID `style:"avatar"`
-	Teaser    image.ID `json:"teaser2"`
-	Favorites []image.Image
-	Gallery   image.Image `style:"gallery"`
+	ID       PersonID `visible:"false"`
+	Vorname  string   `table-visible:"false"`
+	Nachname string   `label:"Zuname"`
+	Nr       string   `section:"Adressdaten"`
+	Strasse  string   `section:"Adressdaten"`
+	Anrede   string   `values:"[\"Herr\",\"Frau\"]"`
+	Profile  image.ID `style:"avatar"`
+	Teaser   image.ID `json:"teaser2"`
 }
 
 func (p Person) Paraphe() string {
