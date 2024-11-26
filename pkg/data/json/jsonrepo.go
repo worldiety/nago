@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
+	"log/slog"
 )
 
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
@@ -60,6 +61,15 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 	decoder := json.NewDecoder(reader)
 	if err := decoder.Decode(&domainModel); err != nil {
 		return res, err
+	}
+
+	// TODO this is expensive, thus should be guarded to a debug build, because that normally does not happen
+	if id != domainModel.Identity() {
+		slog.Error("json repo found model identifier mismatch, this may happen due to a broken WithIdentity function", "id", id, "model", domainModel.Identity(), "type", fmt.Sprintf("%T", domainModel))
+		if withId, ok := any(domainModel).(interface{ WidthIdentity(DomainID) DomainModel }); ok {
+			domainModel = withId.WidthIdentity(id)
+			slog.Error("fixed model", "id", id)
+		}
 	}
 
 	return std.Some(domainModel), nil
