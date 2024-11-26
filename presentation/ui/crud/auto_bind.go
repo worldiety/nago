@@ -88,7 +88,15 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 
 				default:
 					if len(values) > 0 {
-						fieldsBuilder.Append(PickOne[E, string](PickOneOptions[string]{Label: label, Values: values}, PropertyFuncs(
+						var styleOpts PickOneStyle
+						switch field.Tag.Get("style") {
+						case "radio":
+							styleOpts = PickOneStyleWithRadioButton
+						default:
+							styleOpts = PickOneStyleWithPicker
+						}
+
+						fieldsBuilder.Append(PickOne[E, string](PickOneOptions[string]{Label: label, Values: values, Style: styleOpts}, PropertyFuncs(
 							func(obj *E) std.Option[string] {
 								return std.Some(reflect.ValueOf(obj).Elem().FieldByName(field.Name).String())
 							}, func(dst *E, v std.Option[string]) {

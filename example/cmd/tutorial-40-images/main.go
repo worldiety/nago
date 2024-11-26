@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/presentation/ui/crud"
@@ -40,7 +39,6 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		// this must happen before IAM init, otherwise the permissions are missing
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
 
@@ -52,8 +50,5 @@ func main() {
 			Title: "Personen",
 		}, useCases)))
 
-		cfg.OnDestroy(func() {
-			fmt.Println("regular shutdown")
-		})
 	}).Run()
 }
