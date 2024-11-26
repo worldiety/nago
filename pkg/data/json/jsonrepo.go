@@ -66,8 +66,8 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 	// TODO this is expensive, thus should be guarded to a debug build, because that normally does not happen
 	if id != domainModel.Identity() {
 		slog.Error("json repo found model identifier mismatch, this may happen due to a broken WithIdentity function", "id", id, "model", domainModel.Identity(), "type", fmt.Sprintf("%T", domainModel))
-		if withId, ok := any(domainModel).(interface{ WidthIdentity(DomainID) DomainModel }); ok {
-			domainModel = withId.WidthIdentity(id)
+		if withId, ok := any(domainModel).(interface{ WithIdentity(DomainID) DomainModel }); ok {
+			domainModel = withId.WithIdentity(id)
 			slog.Error("fixed model", "id", id)
 		}
 	}
