@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"log/slog"
 	"reflect"
+	"strconv"
 )
 
 type AutoBindingOptions struct {
@@ -103,7 +104,12 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v.UnwrapOr(""))
 							})))
 					} else {
-						fieldsBuilder.Append(Text[E, string](TextOptions{Label: label}, PropertyFuncs(
+						var lines int
+						if str, ok := field.Tag.Lookup("lines"); ok {
+							lines, _ = strconv.Atoi(str)
+						}
+
+						fieldsBuilder.Append(Text[E, string](TextOptions{Label: label, Lines: lines}, PropertyFuncs(
 							func(obj *E) string {
 								return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
 							}, func(dst *E, v string) {
