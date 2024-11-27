@@ -53,7 +53,7 @@ func (ds *dataSource[Entity, ID]) List() []Entity {
 		ds.totalCount++
 		if err != nil {
 			// we could argue that we should collect errors per id, however general IO errors
-			// are not id related, and also Entity is totally undefined in error case.
+			// are not id related, and also AnyEntity is totally undefined in error case.
 			ds.errors = append(ds.errors, err)
 		} else {
 			if ds.query != "" {

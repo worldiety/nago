@@ -97,6 +97,11 @@ func (c *Configurator) newHandler() http.Handler {
 	app2.AddSystemService(c.Images().CreateSrcSet)
 	app2.AddSystemService(c.Images().LoadBestFit)
 	app2.AddSystemService(c.Images().LoadSrcSet)
+
+	for _, dep := range c.systemServices {
+		app2.AddSystemServiceWithName(dep.name, dep.service)
+	}
+	
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {

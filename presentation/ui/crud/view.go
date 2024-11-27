@@ -12,8 +12,8 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 
 	if opts.viewMode == ViewStyleDefault {
 		dataView = ui.ViewThatMatches(opts.wnd,
-			ui.SizeClass(core.SizeClassSmall, Cards[Entity, ID](opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth())),
-			ui.SizeClass(core.SizeClassMedium, Table[Entity, ID](opts).Frame(ui.Frame{}.FullWidth())),
+			ui.SizeClass(core.SizeClassSmall, func() core.View { return Cards[Entity, ID](opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth()) }),
+			ui.SizeClass(core.SizeClassMedium, func() core.View { return Table[Entity, ID](opts).Frame(ui.Frame{}.FullWidth()) }),
 		)
 	} else {
 		dataView = List(opts)

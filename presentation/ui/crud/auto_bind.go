@@ -3,16 +3,21 @@ package crud
 import (
 	"encoding/json"
 	"go.wdy.de/nago/image"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/timepicker"
 	"log/slog"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type AutoBindingOptions struct {
+	ButtonEditForwardTo core.NavigationPath
 }
 
 // AutoBinding takes the crud use cases and creates a naive binding for it.
@@ -38,6 +43,11 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 				label = name
 			}
 
+			if field.Name == "_" {
+				fieldsBuilder.Append(Label[E](label))
+				continue
+			}
+
 			var values []string
 			if array, ok := field.Tag.Lookup("values"); ok {
 				err := json.Unmarshal([]byte(array), &values)
@@ -47,6 +57,56 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			}
 
 			switch field.Type.Kind() {
+			case reflect.Slice:
+				switch field.Type.Elem().Kind() {
+				case reflect.String:
+
+					source, ok := field.Tag.Lookup("source")
+					if ok {
+						listAll, ok := core.SystemServiceWithName[UseCaseListAny](wnd.Application(), source)
+						if !ok {
+							slog.Error("can not find list by system service", "source", source)
+							continue
+						}
+
+						fieldsBuilder.Append(OneToMany[E](OneToManyOptions[AnyEntity, string]{Label: label, ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+							func(obj *E) []string {
+								slice := reflect.ValueOf(obj).Elem().FieldByName(field.Name)
+								tmp := make([]string, 0, slice.Len())
+								for i := 0; i < slice.Len(); i++ {
+									tmp = append(tmp, slice.Index(i).String())
+								}
+
+								return tmp
+							},
+							func(dst *E, v []string) {
+								slice := reflect.MakeSlice(field.Type, 0, len(v))
+								for _, strVal := range v {
+									newValue := reflect.New(field.Type.Elem()).Elem()
+									newValue.SetString(strVal)
+									slice = reflect.Append(slice, newValue)
+								}
+
+								reflect.ValueOf(dst).Elem().FieldByName(field.Name).Set(slice)
+							},
+						)))
+					}
+
+				}
+			case reflect.Struct:
+				switch field.Type {
+				case reflect.TypeFor[xtime.Date]():
+					fieldsBuilder.Append(Date(DateOptions{Label: label}, PropertyFuncs(
+						func(e *E) xtime.Date {
+							value := reflect.ValueOf(e).Elem().FieldByName(field.Name).Interface()
+							return value.(xtime.Date)
+						},
+						func(dst *E, v xtime.Date) {
+							value := reflect.ValueOf(v)
+							reflect.ValueOf(dst).Elem().FieldByName(field.Name).Set(value)
+						},
+					)))
+				}
 			case reflect.String:
 				switch field.Type {
 				case reflect.TypeFor[image.ID]():
@@ -104,17 +164,44 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v.UnwrapOr(""))
 							})))
 					} else {
-						var lines int
-						if str, ok := field.Tag.Lookup("lines"); ok {
-							lines, _ = strconv.Atoi(str)
-						}
 
-						fieldsBuilder.Append(Text[E, string](TextOptions{Label: label, Lines: lines}, PropertyFuncs(
-							func(obj *E) string {
-								return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
-							}, func(dst *E, v string) {
-								reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v)
-							})))
+						source, ok := field.Tag.Lookup("source")
+						if ok {
+							listAll, ok := core.SystemServiceWithName[UseCaseListAny](wnd.Application(), source)
+							if !ok {
+								slog.Error("can not find list by system service", "source", source)
+								continue
+							}
+
+							fieldsBuilder.Append(OneToOne[E](OneToOneOptions[AnyEntity, string]{Label: label, ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+								func(obj *E) std.Option[string] {
+									v := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
+									if v == "" {
+										return std.None[string]()
+									}
+
+									return std.Some(v)
+								},
+								func(dst *E, v std.Option[string]) {
+									reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v.UnwrapOr(""))
+								},
+							)))
+
+						} else {
+
+							var lines int
+							if str, ok := field.Tag.Lookup("lines"); ok {
+								lines, _ = strconv.Atoi(str)
+							}
+
+							fieldsBuilder.Append(Text[E, string](TextOptions{Label: label, Lines: lines}, PropertyFuncs(
+								func(obj *E) string {
+									return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
+								}, func(dst *E, v string) {
+									reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v)
+								})))
+
+						}
 					}
 
 				}
@@ -122,12 +209,32 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			case reflect.Int:
 				fallthrough
 			case reflect.Int64:
-				fieldsBuilder.Append(Int[E, int64](IntOptions{Label: label}, PropertyFuncs(
-					func(obj *E) int64 {
-						return reflect.ValueOf(obj).Elem().FieldByName(field.Name).Int()
-					}, func(dst *E, v int64) {
-						reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetInt(v)
-					})))
+				switch field.Type {
+				case reflect.TypeFor[time.Duration]():
+					var displayFormat timepicker.PickerFormat
+					switch field.Tag.Get("style") {
+					case "decomposed":
+						displayFormat = timepicker.DecomposedFormat
+					case "clock":
+						displayFormat = timepicker.ClockFormat
+					}
+
+					fieldsBuilder.Append(Time[E](TimeOptions{Label: label, DisplayFormat: displayFormat}, PropertyFuncs(
+						func(obj *E) time.Duration {
+							return time.Duration(reflect.ValueOf(obj).Elem().FieldByName(field.Name).Int())
+						},
+						func(dst *E, v time.Duration) {
+							reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetInt(int64(v))
+						})))
+				default:
+					fieldsBuilder.Append(Int[E, int64](IntOptions{Label: label}, PropertyFuncs(
+						func(obj *E) int64 {
+							return reflect.ValueOf(obj).Elem().FieldByName(field.Name).Int()
+						}, func(dst *E, v int64) {
+							reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetInt(v)
+						})))
+				}
+
 			case reflect.Float64:
 				fieldsBuilder.Append(Float[E, float64](FloatOptions{Label: label}, PropertyFuncs(
 					func(obj *E) float64 {
@@ -164,16 +271,23 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 
 	var aggregateOpts []ElementViewFactory[E]
 	if canSave(bnd, useCases) {
-		aggregateOpts = append(aggregateOpts, ButtonEdit[E, ID](bnd, func(model E) (errorText string, infrastructureError error) {
+		if opts.ButtonEditForwardTo == "" {
+			aggregateOpts = append(aggregateOpts, ButtonEdit[E, ID](bnd, func(model E) (errorText string, infrastructureError error) {
 
-			_, err := useCases.Save(wnd.Subject(), model)
-			if err != nil {
-				return "", err // The UI will hide the error
-				// from the user and will show a general tracking.SupportRequestDialog
-			}
+				_, err := useCases.Save(wnd.Subject(), model)
+				if err != nil {
+					return "", err // The UI will hide the error
+					// from the user and will show a general tracking.SupportRequestDialog
+				}
 
-			return "", nil
-		}))
+				return "", nil
+			}))
+		} else {
+			aggregateOpts = append(aggregateOpts, ButtonEditForwardTo[E](bnd, func(wnd core.Window, entity E) {
+				wnd.Navigation().ForwardTo(opts.ButtonEditForwardTo, core.Values{"id": data.Idtos(entity.Identity())})
+			}))
+		}
+
 	}
 
 	if canDelete(bnd, useCases) {
@@ -206,8 +320,16 @@ type fieldGroup struct {
 func groupedFields[E any]() []fieldGroup {
 	var zero E
 	var res []fieldGroup
-	for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
+	//for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
+	typ := reflect.TypeOf(zero)
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+
 		if flag, ok := field.Tag.Lookup("visible"); ok && flag == "false" {
+			continue
+		}
+
+		if field.Name != "_" && !field.IsExported() {
 			continue
 		}
 

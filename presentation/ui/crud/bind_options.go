@@ -40,6 +40,14 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
 }
 
+func ButtonCreateForwardTo[E any](bnd *Binding[E], path core.NavigationPath, values core.Values) core.View {
+	return ui.VStack(
+		ui.PrimaryButton(func() {
+			bnd.wnd.Navigation().ForwardTo(path, values)
+		},
+		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
+}
+
 // CreateDialog returns the dialog for creating. See also [DialogEdit].
 func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial E, createFn func(E) (errorText string, infrastructureError error), onCancelled, onSaved func()) (dlg core.View, presented *core.State[bool]) {
 	wnd := bnd.wnd
@@ -117,6 +125,14 @@ func ButtonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], updateFn 
 	return func(e *core.State[E]) core.View {
 		formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.edit.form.%v", e.Get().Identity()))
 		return buttonEdit(bnd, true, formPresented, updateFn)(e)
+	}
+}
+
+func ButtonEditForwardTo[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], navigate func(wnd core.Window, entity E)) ElementViewFactory[E] {
+	return func(e *core.State[E]) core.View {
+		return ui.TertiaryButton(func() {
+			navigate(bnd.wnd, e.Get())
+		}).PreIcon(heroSolid.Pencil).AccessibilityLabel("Bearbeiten")
 	}
 }
 

@@ -7,10 +7,10 @@ import (
 
 type ViewWithSizeClass struct {
 	SizeClass core.WindowSizeClass
-	View      core.View
+	View      func() core.View
 }
 
-func SizeClass(class core.WindowSizeClass, view core.View) ViewWithSizeClass {
+func SizeClass(class core.WindowSizeClass, view func() core.View) ViewWithSizeClass {
 	return ViewWithSizeClass{
 		SizeClass: class,
 		View:      view,
@@ -44,5 +44,5 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 		panic("you must not provide an empty view in match")
 	}
 
-	return best.View
+	return best.View()
 }

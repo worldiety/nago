@@ -26,6 +26,11 @@ type backupService interface {
 	Restore(r io.Reader) error
 }
 
+type dependency struct {
+	name    string
+	service any
+}
+
 type Configurator struct {
 	stores                   map[string]blob.Store
 	backupServices           map[string]backupService
@@ -52,6 +57,7 @@ type Configurator struct {
 	appIconUri               ora.URI
 	fps                      int
 	images                   *Images
+	systemServices           []dependency
 }
 
 func NewConfigurator() *Configurator {
@@ -138,6 +144,15 @@ func (c *Configurator) LoadConfigFromEnv() {
 			panic(fmt.Sprintf("failed to set config from env var %s: %v", envVar.key, err))
 		}
 	}
+}
+
+func (c *Configurator) AddSystemService(name string, service any) *Configurator {
+	c.systemServices = append(c.systemServices, dependency{
+		name:    name,
+		service: service,
+	})
+	
+	return c
 }
 
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {

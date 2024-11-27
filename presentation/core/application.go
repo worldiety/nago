@@ -23,6 +23,11 @@ func (a ApplicationID) Valid() bool {
 
 type OnWindowCreatedObserver func(wnd Window)
 
+type dependency struct {
+	name  string
+	value any
+}
+
 type Application struct {
 	id                       ApplicationID
 	name                     string
@@ -45,7 +50,7 @@ type Application struct {
 	// a global instance of something. I actually never wanted this kind of API
 	// but any other API does not make sense for things like crud.Auto where a lot of stuff
 	// is only eventually relevant and available automatically anyway.
-	systemServices []any
+	systemServices []dependency
 }
 
 func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver, fps int) *Application {
@@ -184,27 +189,61 @@ func (a *Application) Destroy() {
 }
 
 // AddSystemService appends the given service to the internal list. It is kept alive and
-// accessible through [SystemService].
+// accessible through [SystemService]. If another service of the same type has already been added,
+// the newly added service has a higher precedence but the older service is not removed.
 func (a *Application) AddSystemService(service any) {
+	a.AddSystemServiceWithName("", service)
+}
+
+// AddSystemServiceWithName is like [AddSystemService], but adds a name as an additional criteria.
+func (a *Application) AddSystemServiceWithName(name string, service any) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	a.systemServices = append(a.systemServices, service)
+	a.systemServices = append(a.systemServices, dependency{
+		name:  name,
+		value: service,
+	})
 }
 
-// SystemService returns the first T which is assignable to any of the registered Services via
-// [Application.AddSystemService] or returns false.
+// SystemServiceByName returns last added service identified by the given name.
+func (a *Application) SystemServiceByName(name string) (any, bool) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	for i := len(a.systemServices) - 1; i >= 0; i-- {
+		service := a.systemServices[i]
+		if service.name == name {
+			return service.value, true
+		}
+	}
+	return nil, false
+}
+
+// SystemService returns the T which is assignable to any of the registered Services via
+// [Application.AddSystemService] or returns false. The matching is applied reverse, so that the last added type
+// is matched first. The name is ignored. See also [SystemServiceWithName].
 func SystemService[T any](app *Application) (T, bool) {
+	return SystemServiceWithName[T](app, "")
+}
+
+// SystemServiceWithName is like [SystemService] but filters by name. The last added named and matching service
+// has the highest precedence.
+func SystemServiceWithName[T any](app *Application, name string) (T, bool) {
 	app.mutex.Lock()
 	defer app.mutex.Unlock()
 
-	for _, service := range app.systemServices {
-		if t, ok := service.(T); ok {
+	for i := len(app.systemServices) - 1; i >= 0; i-- {
+		service := app.systemServices[i]
+		if service.name != "" && service.name != name {
+			continue
+		}
+
+		if t, ok := service.value.(T); ok {
 			return t, ok
 		}
 	}
 
 	var zero T
-	
+
 	return zero, false
 }

@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/annotation"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -25,6 +26,7 @@ type Aggregate[A any, ID comparable] interface {
 // derive an instance from a [data.Repository]. This is only useful for rapid prototyping the most simple CRUD
 // UIs. See also [AutoBinding].
 type UseCases[E data.Aggregate[ID], ID ~string] interface {
+	FindByID(subject auth.Subject, id ID) (std.Option[E], error)
 	All(subject auth.Subject) iter.Seq2[E, error]
 	DeleteByID(subject auth.Subject, id ID) error
 	Save(subject auth.Subject, entity E) (ID, error)
@@ -45,7 +47,8 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 }
 
 type AutoViewOptions struct {
-	Title string
+	Title                 string
+	CreateButtonForwardTo core.NavigationPath
 }
 
 func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -103,14 +106,18 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 	var zeroE E
 	var actions []core.View
 	if canCreate(bnd, usecases) {
-		actions = append(actions, ButtonCreate(bnd, zeroE, func(d E) (errorText string, infrastructureError error) {
-			if !bnd.Validates(d) {
-				return "Bitte prüfen Sie Ihre Eingaben", nil
-			}
+		if opts.CreateButtonForwardTo == "" {
+			actions = append(actions, ButtonCreate(bnd, zeroE, func(d E) (errorText string, infrastructureError error) {
+				if !bnd.Validates(d) {
+					return "Bitte prüfen Sie Ihre Eingaben", nil
+				}
 
-			_, err := usecases.Save(bnd.wnd.Subject(), d)
-			return "", err
-		}))
+				_, err := usecases.Save(bnd.wnd.Subject(), d)
+				return "", err
+			}))
+		} else {
+			actions = append(actions, ButtonCreateForwardTo(bnd, opts.CreateButtonForwardTo, nil))
+		}
 	}
 
 	return ui.VStack(
@@ -165,6 +172,14 @@ type repositoryUsecases[E Aggregate[E, ID], ID ~string] struct {
 	permCreate  annotation.SubjectPermission
 	permDelete  annotation.SubjectPermission
 	repo        data.Repository[E, ID]
+}
+
+func (r repositoryUsecases[E, ID]) FindByID(subject auth.Subject, id ID) (std.Option[E], error) {
+	if err := subject.Audit(r.permFindAll.Identity()); err != nil {
+		return std.None[E](), err
+	}
+
+	return r.repo.FindByID(id)
 }
 
 func (r repositoryUsecases[E, ID]) All(subject auth.Subject) iter.Seq2[E, error] {
