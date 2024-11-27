@@ -30,7 +30,7 @@
 				</div>
 			</div>
 			<div class="flex justify-start items-center h-6">
-				<p class="grow leading-tight select-none align-bottom">{{ ui.t }}aaa</p>
+				<p class="grow leading-tight select-none align-bottom">{{ ui.t }}</p>
 			</div>
 			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass"/>
 		</div>

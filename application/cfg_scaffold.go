@@ -34,10 +34,16 @@ type MenuEntryBuilder struct {
 	action               func(wnd core.Window)
 	oneOfAuthorizedPerms []string
 	onlyPublic           bool
+	oneOfRoles           []auth.RID
 }
 
 func (b *MenuEntryBuilder) OneOf(perms ...string) *ScaffoldBuilder {
 	b.oneOfAuthorizedPerms = append(b.oneOfAuthorizedPerms, perms...)
+	return b.parent
+}
+
+func (b *MenuEntryBuilder) OneOfRole(roles ...auth.RID) *ScaffoldBuilder {
+	b.oneOfRoles = append(b.oneOfRoles, roles...)
 	return b.parent
 }
 
@@ -198,6 +204,21 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				if !auth.OneOf(wnd.Subject(), entry.oneOfAuthorizedPerms...) {
 					continue
 				}
+			}
+
+			if len(entry.oneOfRoles) > 0 {
+				hasRole := false
+				for _, roleId := range entry.oneOfRoles {
+					if wnd.Subject().HasRole(roleId) {
+						hasRole = true
+						break
+					}
+				}
+
+				if !hasRole {
+					continue
+				}
+
 			}
 
 			icoSize := ui.L24
