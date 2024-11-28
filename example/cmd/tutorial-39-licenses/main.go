@@ -9,9 +9,9 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
-var licensePucBasic = license.UserLicense{ID: "de.worldiety.puc.license.user.chat", Name: "PUC Basic License", MaxUsers: 10}
-var licensePucImage = license.UserLicense{ID: "de.worldiety.puc.license.user.img", Name: "PUC Image License", MaxUsers: 5}
-var licensePucJira = license.AppLicense{ID: "de.worldiety.puc.license.app.jira", Name: "PUC Jira License", Description: "Hiermit erhält PUC Zugriff auf Jira Instanzen."}
+var licensePucBasic = license.UserLicense{ID: "de.worldiety.puc.license.user.chat", Name: "PUC Basic License", MaxUsers: 10, Url: "https://www.worldiety.de/loesungen/puc"}
+var licensePucImage = license.UserLicense{ID: "de.worldiety.puc.license.user.img", Name: "PUC Image License", MaxUsers: 5, Url: "https://www.worldiety.de/loesungen/puc"}
+var licensePucJira = license.AppLicense{ID: "de.worldiety.puc.license.app.jira", Name: "PUC Jira License", Description: "Hiermit erhält PUC grundsätzlich Zugriff auf Jira Instanzen.", Url: "https://www.worldiety.de/loesungen/puc#quellenangabe"}
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {

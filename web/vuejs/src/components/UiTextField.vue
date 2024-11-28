@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.v ? props.ui.v : "");
-const idPrefix = 'text-field-';
+
 
 
 /**
@@ -116,6 +116,10 @@ const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.f).join(";")
 });
 
+const id = computed<string>(() => {
+	return "tf-"+props.ui.p
+});
+
 const inputMode = computed<string>(() => {
 	switch (props.ui.o?.k) {
 		case "i":
@@ -153,7 +157,7 @@ const inputMode = computed<string>(() => {
 			<div class="relative">
 				<input
 					v-if="!props.ui.li"
-					:id="idPrefix"
+					:id="id"
 					v-model="inputValue"
 					class="input-field !pr-10"
 					:disabled="props.ui.d"
@@ -164,7 +168,7 @@ const inputMode = computed<string>(() => {
 				/>
 				<textarea
 					v-if="props.ui.li"
-					:id="idPrefix"
+					:id="id"
 					v-model="inputValue"
 					class="input-field !pr-10"
 					:disabled="props.ui.d"

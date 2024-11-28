@@ -71,3 +71,29 @@ func (l AppLicense) Enabled() bool {
 func (l AppLicense) LicenseName() string {
 	return l.Name
 }
+
+type Status struct {
+	Licenses     []License
+	AppliedUsers map[ID]User
+}
+
+type User interface {
+	ID() string // cannot use auth.UID due to package cycle
+	Firstname() string
+	Lastname() string
+	HasLicense(id ID) bool
+}
+
+/*
+var permCalculateStatus = annotation.Permission[CalculateStatus]("de.worldiety.nago.license.status")
+
+type CalculateStatus func(subject auth.Subject) (Status, error)
+
+func NewCalculateStatus(users iter.Seq2[User, error], licenses iter.Seq2[License, error]) CalculateStatus {
+	return func(subject auth.Subject) (Status, error) {
+		if err := subject.Audit(permCalculateStatus.Identity()); err != nil {
+			return Status{}, err
+		}
+
+	}
+}*/
