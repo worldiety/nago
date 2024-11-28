@@ -11,6 +11,7 @@ html {
 
 body {
 	@apply h-full;
+	word-break: break-word;
 }
 
 body *,
