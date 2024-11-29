@@ -1,7 +1,6 @@
 package iamui
 
 import (
-	"errors"
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
@@ -127,20 +126,7 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 	)
 	opts := crud.Options(bnd).
 		Actions(crud.ButtonCreate[createUser](bndCrUsr, createUser{}, func(model createUser) (errorText string, infrastructureError error) {
-			if !iam.Email(model.EMail).Valid() {
-				return "Die eMail-Adresse ist ungültig.", nil
-			}
-
-			if model.Password1 != model.Password2 {
-				return "Die Kennwörter stimmen nicht überein.", nil
-			}
-
-			_, err := service.NewUser(subject, model.EMail, model.Firstname, model.Lastname, model.Password1)
-			var pwdErr iam.WeakPasswordError
-			if errors.As(err, &pwdErr) {
-				return pwdErr.Error(), nil
-			}
-
+			_, err := service.NewUser(subject, model.EMail, model.Firstname, model.Lastname, iam.Password(model.Password1), iam.Password(model.Password2))
 			return "", err
 		})).
 		ViewStyle(crud.ViewStyleListOnly).

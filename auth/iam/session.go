@@ -114,7 +114,7 @@ func (s *Service) Logout(id core.SessionID) bool {
 }
 
 // Login installs eventually the newly authenticated user into the given session.
-func (s *Service) Login(id core.SessionID, login, password string) bool {
+func (s *Service) Login(id core.SessionID, login string, password Password) bool {
 	// first install the session
 	optSession, err := s.sessions.FindByID(id)
 	if err != nil {
@@ -123,7 +123,7 @@ func (s *Service) Login(id core.SessionID, login, password string) bool {
 	}
 
 	var session Session
-	if !optSession.Valid {
+	if optSession.IsNone() {
 		session.ID = id
 		session.CreatedAt = time.Now()
 	} else {

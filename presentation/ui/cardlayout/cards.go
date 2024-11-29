@@ -64,18 +64,18 @@ func (c TCard) Footer(view core.View) TCard {
 
 func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
-		ui.VStack(
+		ui.If(c.title != "", ui.VStack(
 			ui.Text(c.title).Font(ui.Title),
 			ui.HLineWithColor(ui.ColorAccent),
-		).Padding(ui.Padding{Top: ui.L40, Left: ui.L40, Right: ui.L40}),
+		).Padding(ui.Padding{Top: ui.L40, Left: ui.L40, Right: ui.L40})),
 		ui.VStack(c.body).
 			Padding(ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40}),
 		ui.Spacer(),
-		ui.HStack(c.footer).
+		ui.If(c.footer != nil, ui.HStack(c.footer).
 			FullWidth().
 			Alignment(ui.Trailing).
 			BackgroundColor(ui.ColorCardFooter).
-			Padding(ui.Padding{}.All(ui.L12)),
+			Padding(ui.Padding{}.All(ui.L12))),
 	).Alignment(ui.Leading).
 		BackgroundColor(ui.ColorCardBody).
 		Border(ui.Border{}.Radius(ui.L16)).

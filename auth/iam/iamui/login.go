@@ -22,7 +22,7 @@ func Login(wnd core.Window, service *iam.Service) core.View {
 			noSelfServicePresented.Set(true)
 		}).Title("Kennwort vergessen"),
 		ui.PrimaryButton(func() {
-			ok := service.Login(wnd.SessionID(), login.Get(), password.Get())
+			ok := service.Login(wnd.SessionID(), login.Get(), iam.Password(password.Get()))
 			if !ok {
 				invalidLoginText.Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
 			} else {

@@ -132,6 +132,8 @@ const (
 	L400 Length = "25rem"
 	//L480 relates to about 480dp at default font scale.
 	L480 Length = "30rem"
+	//L560 relates to about 560dp at default font scale.
+	L560 Length = "35rem"
 	//L880 relates to about 880dp at default font scale.
 	L880 Length = "50rem"
 )

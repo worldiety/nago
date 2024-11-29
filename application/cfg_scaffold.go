@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/auth/iam/iamui"
 	"go.wdy.de/nago/glossary/docm"
 	"go.wdy.de/nago/glossary/docm/markdown"
 	"go.wdy.de/nago/glossary/docm/oraui"
@@ -177,6 +178,13 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 			return oraui.Render(&docm.Document{Body: markdown.Parse(b.gdprContent)})
 		})(wnd)
 	})
+
+	b.cfg.RootView(b.cfg.iamSettings.Profile.Path(), func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return iamui.ProfilePage(wnd, iam.NewChangeMyPassword(b.cfg.iamSettings.Service))
+		})(wnd)
+	})
 }
 
 // Decorator is a builder terminal and returns a decorator-like function.
@@ -301,7 +309,7 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 		ui.HLineWithColor(ui.ColorAccent),
 		ui.HStack(
 			ui.SecondaryButton(func() {
-
+				wnd.Navigation().ForwardTo(b.cfg.iamSettings.Profile.Path(), nil)
 			}).Title("Konto verwalten"),
 		).FullWidth().Alignment(ui.Trailing),
 		ui.HStack(

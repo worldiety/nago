@@ -1,16 +1,10 @@
 package iam
 
 import (
-	"bytes"
-	"crypto/rand"
 	"fmt"
-	passwordvalidator "github.com/wagslane/go-password-validator"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"golang.org/x/crypto/argon2"
-	"log/slog"
-	rand2 "math/rand"
 	"regexp"
 	"slices"
 	slices2 "slices"
@@ -21,14 +15,6 @@ import (
 type Email string
 
 var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$`)
-
-type WeakPasswordError string
-
-func (e WeakPasswordError) Error() string {
-	return string(e)
-}
-
-const maxPasswordLength = 1000
 
 // Valid checks if the Mail looks like structural valid mail. It does not mean that the address actually exists
 // or has been verified.
@@ -115,19 +101,10 @@ func (s *Service) userByMail(email Email) (std.Option[User], error) {
 }
 
 // authenticates checks if the given mail and password can be authenticated against the email login identifier.
-func (s *Service) authenticates(email, password string) (User, error) {
-	// see https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
-	// and mitigate time based attacks for non-constant operations.
-	time.Sleep(min(200, time.Duration(rand2.Intn(1000))))
-
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet
-	// and https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
-	if len(password) > maxPasswordLength {
-		return User{}, fmt.Errorf("password must be less than 1000 characters") // probably a DOS attack
-	}
+func (s *Service) authenticates(email string, password Password) (User, error) {
 
 	if !Email(email).Valid() {
-		return User{}, fmt.Errorf("invalid email")
+		return User{}, std.NewLocalizedError("Login nicht möglich", "Dieses EMail-Adressformat ist nicht erlaubt.")
 	}
 
 	optUsr, err := s.userByMail(Email(email))
@@ -136,22 +113,16 @@ func (s *Service) authenticates(email, password string) (User, error) {
 	}
 
 	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
-	const msg = "user does not exist, or account is disabled, or password is wrong"
-	if !optUsr.Valid {
-		return User{}, fmt.Errorf(msg)
+
+	if optUsr.IsNone() {
+		return User{}, noLoginErr
 	}
 
 	usr := optUsr.Unwrap()
-	var hash []byte
-	switch usr.Algorithm {
-	case Argon2IdMin:
-		hash = argon2idMin(password, optUsr.Unwrap().Salt)
-	default:
-		slog.Error("unsupported hash algorithm", "algorithm", usr.Algorithm, "uid", usr.ID)
-		return User{}, fmt.Errorf(msg)
+	if err := password.CompareHashAndPassword(usr.Algorithm, usr.Salt, usr.PasswordHash); err != nil {
+		return User{}, err
 	}
 
-	// again, keep code order to protect against time-based early exit attacks
 	enabled := MatchAccountStatus(usr.Status,
 		func(enabled Enabled) bool {
 			return true
@@ -164,16 +135,10 @@ func (s *Service) authenticates(email, password string) (User, error) {
 		})
 
 	if !enabled {
-		return User{}, fmt.Errorf(msg)
+		return User{}, noLoginErr
 	}
 
-	// finally perform the comparison, which is not time-constant, but we have randomized the entire processing
-	// time, so this should not be a problem anymore.
-	if bytes.Equal(hash, usr.PasswordHash) {
-		return usr, nil
-	}
-
-	return User{}, fmt.Errorf(msg)
+	return User{}, nil
 }
 
 func (s *Service) DeleteUser(subject auth.Subject, id auth.UID) error {
@@ -188,29 +153,6 @@ func (s *Service) DeleteUser(subject auth.Subject, id auth.UID) error {
 	// we do not delete stale foreign keys, which is checked whenever a subject is requested from us, see [Service.Subject]
 
 	// TODO but how to refresh the stored snapshot subject within each window? => create a renew cycle within the event loop
-
-	return nil
-}
-
-// this is used in a massive hosting environment, we cannot afford the RFC settings.
-// Therefore, we use the following minimal OWASP settings, see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html:
-//
-//	Use Argon2id with a minimum configuration of 19 MiB of memory, an iteration count of 2, and 1 degree of parallelism.
-func argon2idMin(password string, salt []byte) []byte {
-	return argon2.IDKey([]byte(password), salt, 2, 19*1024, 1, 32)
-}
-
-func setArgon2idMin(usr *User, password string) error {
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
-	var salt [32]byte
-	if _, err := rand.Read(salt[:]); err != nil {
-		return fmt.Errorf("no secure random entropy: %w", err)
-	}
-	hash := argon2idMin(password, salt[:])
-
-	usr.Salt = salt[:]
-	usr.PasswordHash = hash
-	usr.Algorithm = Argon2IdMin
 
 	return nil
 }
@@ -318,7 +260,60 @@ func (s *Service) UpdateUser(subject auth.Subject, user auth.UID, email, firstna
 	return s.users.Save(usr)
 }
 
-func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, password string) (auth.UID, error) {
+func (s *Service) ChangeMyPassword(subject auth.Subject, oldPassword, newPassword, newRepeated Password) (auth.UID, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock() // this is really harsh and allows intentionally only to change one user per second
+
+	if !subject.Valid() {
+		return "", fmt.Errorf("invalid subject")
+	}
+
+	if oldPassword == newPassword {
+		return "", std.NewLocalizedError("Eingabebeschränkung", "Das alte und das neue Kennwort müssen sich unterscheiden.")
+	}
+
+	if newPassword != newRepeated {
+		return "", std.NewLocalizedError("Eingabefehler", "Das neue Kennwort unterscheidet sich in der wiederholten Eingabe.")
+	}
+
+	if err := newPassword.Validate(); err != nil {
+		return "", err
+	}
+
+	// check if old password authenticates
+	optUsr, err := s.users.FindByID(subject.ID())
+	if err != nil {
+		return "", fmt.Errorf("cannot find existing user: %w", err)
+	}
+
+	if optUsr.IsNone() {
+		return "", fmt.Errorf("user has just disappeared")
+	}
+
+	usr := optUsr.Unwrap()
+
+	if err := oldPassword.CompareHashAndPassword(Argon2IdMin, usr.Salt, usr.PasswordHash); err != nil {
+		return "", err
+	}
+
+	// create new credentials
+	newHash, newSalt, err := newPassword.Hash(Argon2IdMin)
+	if err != nil {
+		return "", err
+	}
+
+	usr.Salt = newSalt
+	usr.PasswordHash = newHash
+	usr.Algorithm = Argon2IdMin
+
+	if err := s.users.Save(usr); err != nil {
+		return "", fmt.Errorf("cannot update user with new password: %w", err)
+	}
+
+	return subject.ID(), nil
+}
+
+func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname string, password, passwordRepeat Password) (auth.UID, error) {
 	if err := subject.Audit(CreateUser); err != nil {
 		return "", err
 	}
@@ -326,36 +321,23 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 	s.mutex.Lock()
 	defer s.mutex.Unlock() // this is really harsh and allows intentionally only to create one user per second
 
-	// see https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
-	// and mitigate time based attacks
-	time.Sleep(min(200, time.Duration(rand2.Intn(1000))))
+	if password != passwordRepeat {
+		return "", std.NewLocalizedError("Eingabebeschränkung", "Die Kennwörter stimmen nicht überein.")
+	}
 
 	mail := Email(strings.ToLower(email))
 	if !mail.Valid() {
 		return "", fmt.Errorf("invalid email: %v", email)
 	}
 
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls
-	if len(password) < 8 {
-		return "", WeakPasswordError("Das Kennwort muss mindestens 8 Zeichen enthalten.") //fmt.Errorf("password must be at least 8 characters") TODO use language from subject
-	}
-	const minEntropyBits = 60
-	if err := passwordvalidator.Validate(password, minEntropyBits); err != nil {
-		return "", WeakPasswordError("Das Kennwort hat nicht genug Entropie.") //fmt.Errorf("password has not enough entropy: %v", err) TODO use language from subject
+	if err := password.Validate(); err != nil {
+		return "", err
 	}
 
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet
-	// and https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
-	if len(password) > maxPasswordLength {
-		return "", WeakPasswordError("password must be less than 1000 characters") // probably a DOS attack
+	salt, hash, err := password.Hash(Argon2IdMin)
+	if err != nil {
+		return "", err
 	}
-
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
-	var salt [32]byte
-	if _, err := rand.Read(salt[:]); err != nil {
-		return "", fmt.Errorf("no secure random entropy: %v", err)
-	}
-	hash := argon2idMin(password, salt[:])
 
 	user := User{
 		// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#user-ids
@@ -364,7 +346,7 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 		Algorithm:    Argon2IdMin,
 		Firstname:    firstname,
 		Lastname:     lastname,
-		Salt:         salt[:],
+		Salt:         salt,
 		PasswordHash: hash,
 		Status:       AccountStatus{}.WithEnabled(Enabled{}),
 	}
@@ -376,8 +358,8 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 		return "", fmt.Errorf("cannot check for existing user: %w", err)
 	}
 
-	if usr.Valid {
-		return "", fmt.Errorf("user email already taken")
+	if usr.IsSome() {
+		return "", std.NewLocalizedError("Nutzerregistrierung", "Die EMail-Adresse wird bereits verwendet.")
 	}
 
 	// unlikely, but better safe than sorry
@@ -386,7 +368,7 @@ func (s *Service) NewUser(subject auth.Subject, email, firstname, lastname, pass
 		return "", fmt.Errorf("cannot find user by id: %w", err)
 	}
 
-	if usr.Valid {
+	if usr.IsSome() {
 		return "", fmt.Errorf("user id already taken")
 	}
 

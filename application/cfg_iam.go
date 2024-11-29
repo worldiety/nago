@@ -22,6 +22,7 @@ type IAMSettings struct {
 	Login       Login
 	Logout      Logout
 	Dashboard   Dashboard
+	Profile     Profile
 	Service     *iam.Service
 }
 
@@ -55,6 +56,19 @@ func (settings IAMSettings) LoginStatusMenu(wnd core.Window) ui.ScaffoldMenuEntr
 	} else {
 		return ui.ForwardScaffoldMenuEntry(wnd, heroSolid.UserPlus, "Anmelden", settings.Login.ID)
 	}
+}
+
+type Profile struct {
+	// default to iam/profile
+	ID core.NavigationPath
+}
+
+func (p Profile) Path() core.NavigationPath {
+	if p.ID == "" {
+		return "iam/profile"
+	}
+
+	return p.ID
 }
 
 type Groups struct {

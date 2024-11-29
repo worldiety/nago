@@ -11,10 +11,11 @@ type TEntry struct {
 	leading        core.View
 	trailing       core.View
 	action         func()
+	frame          ui.Frame
 }
 
 func Entry() TEntry {
-	return TEntry{}
+	return TEntry{}.Frame(ui.Frame{}.FullWidth())
 }
 
 func (c TEntry) Headline(s string) TEntry {
@@ -42,6 +43,11 @@ func (c TEntry) Action(fn func()) TEntry {
 	return c
 }
 
+func (c TEntry) Frame(frame ui.Frame) TEntry {
+	c.frame = frame
+	return c
+}
+
 func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ui.HStack(
@@ -54,7 +60,7 @@ func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 		c.trailing,
 	).Action(c.action).
 		Gap(ui.L16).
-		FullWidth().
+		Frame(c.frame).
 		Render(ctx)
 }
 
