@@ -138,7 +138,7 @@ func (s *Service) authenticates(email string, password Password) (User, error) {
 		return User{}, noLoginErr
 	}
 
-	return User{}, nil
+	return usr, nil
 }
 
 func (s *Service) DeleteUser(subject auth.Subject, id auth.UID) error {
