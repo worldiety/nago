@@ -297,7 +297,7 @@ func (s *Service) ChangeMyPassword(subject auth.Subject, oldPassword, newPasswor
 	}
 
 	// create new credentials
-	newHash, newSalt, err := newPassword.Hash(Argon2IdMin)
+	newSalt, newHash, err := newPassword.Hash(Argon2IdMin)
 	if err != nil {
 		return "", err
 	}
