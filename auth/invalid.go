@@ -78,19 +78,19 @@ func (i InvalidSubject) Audit(id string) error {
 		//i.DeniedLog(id)
 	}
 
-	return notLoggedIn("invalid subject")
+	return NotLoggedIn("invalid subject")
 }
 
-type notLoggedIn string
+type NotLoggedIn string
 
-func (e notLoggedIn) Error() string {
+func (e NotLoggedIn) Error() string {
 	return fmt.Sprintf("permission denied: %s", string(e))
 }
 
-func (e notLoggedIn) PermissionDenied() bool {
+func (e NotLoggedIn) PermissionDenied() bool {
 	return true
 }
 
-func (e notLoggedIn) NotLoggedIn() bool {
+func (e NotLoggedIn) NotLoggedIn() bool {
 	return true
 }

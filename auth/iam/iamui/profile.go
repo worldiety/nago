@@ -12,6 +12,10 @@ import (
 )
 
 func ProfilePage(wnd core.Window, changeMyPassword iam.ChangeMyPassword) core.View {
+	if !wnd.Subject().Valid() {
+		return alert.BannerError(auth.NotLoggedIn(""))
+	}
+
 	presentPasswordChange := core.AutoState[bool](wnd)
 	return ui.VStack(
 		passwordChangeDialog(wnd, changeMyPassword, presentPasswordChange),
@@ -30,13 +34,16 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword iam.ChangeMyPassword
 	errMsg := core.AutoState[error](wnd)
 	body := ui.VStack(
 		ui.If(errMsg.Get() != nil, ui.VStack(alert.BannerError(errMsg.Get())).Padding(ui.Padding{Bottom: ui.L20})),
-		ui.PasswordField("Altes Passwort").InputValue(oldPassword).Frame(ui.Frame{}.FullWidth()),
+		ui.PasswordField("Altes Passwort", oldPassword.Get()).InputValue(oldPassword).Frame(ui.Frame{}.FullWidth()),
 		ui.HLine(),
-		ui.PasswordField("Neues Passwort").InputValue(password0).Frame(ui.Frame{}.FullWidth()),
-		ui.PasswordField("Neues Passwort wiederholen").InputValue(password1).Frame(ui.Frame{}.FullWidth()),
+		ui.PasswordField("Neues Passwort", password0.Get()).InputValue(password0).Frame(ui.Frame{}.FullWidth()),
+		ui.PasswordField("Neues Passwort wiederholen", password1.Get()).InputValue(password1).Frame(ui.Frame{}.FullWidth()),
 	).FullWidth()
 	return alert.Dialog("Passwort ändern", body, presentPasswordChange, alert.Cancel(func() {
 		errMsg.Set(nil)
+		oldPassword.Set("")
+		password0.Set("")
+		password1.Set("")
 	}), alert.Save(func() (close bool) {
 		if err := changeMyPassword(wnd.Subject(), iam.Password(oldPassword.Get()), iam.Password(password0.Get()), iam.Password(password1.Get())); err != nil {
 			errMsg.Set(err)
@@ -44,6 +51,9 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword iam.ChangeMyPassword
 		}
 
 		errMsg.Set(nil)
+		oldPassword.Set("")
+		password0.Set("")
+		password1.Set("")
 
 		return true
 	}))

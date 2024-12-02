@@ -21,9 +21,22 @@ type TPasswordField struct {
 	lines           int
 }
 
-func PasswordField(label string) TPasswordField {
+// PasswordField represents a secret entered by the user.
+// It is very important for the security of your implementation, that you
+// must not expose any secret through the value after the user has finished the secret step.
+// So, consider the following situations:
+//   - a user wants to change his password and fills out 3 password fields. Thus, you don't want, that the user requires
+//     to enter his secret any time, e.g. if the new password does not match the guidelines
+//   - by design, Nago requires to fill in the value whatever that was, so that it will not get lost between render
+//     cycles.
+//   - by security, you should never store any password, neither in plain text and also never encrypted and never using
+//     just a simple cryptographic hash. Use a password derivation function instead, like argonid or others.
+//   - if you need to store a secret in plain text, e.g. like an API token, you must not show that later again to
+//     the user, after the insertion phase of you form flow is over.
+func PasswordField(label string, value string) TPasswordField {
 	c := TPasswordField{
 		label: label,
+		value: value,
 	}
 
 	return c

@@ -15,6 +15,9 @@ import (
 
 func Users(wnd core.Window, service *iam.Service) core.View {
 	subject := wnd.Subject()
+	if !subject.Valid() {
+		return alert.BannerError(auth.NotLoggedIn(""))
+	}
 
 	bnd := crud.NewBinding[iam.User](wnd)
 	bnd.Add(

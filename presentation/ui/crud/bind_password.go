@@ -36,7 +36,7 @@ func Password[E any, T ~string](opts PasswordOptions, property Property[E, T]) F
 				state.Notify()
 			}
 
-			return ui.PasswordField(opts.Label).
+			return ui.PasswordField(opts.Label, state.Get()).
 				InputValue(state).
 				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).

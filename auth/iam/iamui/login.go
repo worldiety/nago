@@ -16,8 +16,8 @@ func Login(wnd core.Window, service *iam.Service) core.View {
 	return ui.VStack(
 		alert.Dialog("Hinweis", ui.Text("Die Self-Service Funktion steht nicht zur Verfügung. Bitte wenden Sie sich an Ihren Administrator."), noSelfServicePresented, alert.Ok()),
 		ui.Text(invalidLoginText.String()).Color(ui.SE0),
-		ui.TextField("E-Mail Adresse", "").InputValue(login),
-		ui.PasswordField("Kennwort").InputValue(password),
+		ui.TextField("E-Mail Adresse", login.Get()).InputValue(login),
+		ui.PasswordField("Kennwort", password.Get()).InputValue(password),
 		ui.TertiaryButton(func() {
 			noSelfServicePresented.Set(true)
 		}).Title("Kennwort vergessen"),
@@ -26,6 +26,7 @@ func Login(wnd core.Window, service *iam.Service) core.View {
 			if !ok {
 				invalidLoginText.Set("Der Benutzer existiert nicht, das Konto wurde deaktiviert oder das Kennwort ist falsch.")
 			} else {
+				password.Set("") // clean the password immediately from memory
 				wnd.Navigation().ForwardTo(".", nil)
 			}
 		}).Title("Anmelden"),

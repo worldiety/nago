@@ -39,7 +39,7 @@ func main() {
 					showAlert.Set(true)
 				}).Title("Check"),
 
-				PasswordField("your secret").InputValue(secret),
+				PasswordField("your secret", secret.Get()).InputValue(secret),
 			).Gap(L16).
 				Frame(Frame{}.MatchScreen())
 		})

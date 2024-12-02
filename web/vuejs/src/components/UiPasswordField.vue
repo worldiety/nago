@@ -20,14 +20,18 @@ const idPrefix = 'password-field-';
 watch(() => props.ui.v, (newValue) => {
 	if (newValue) {
 		inputValue.value = newValue
+	}else{
+		inputValue.value=""
 	}
-	console.log("textfield triggered props.ui.value")
+	//console.log("textfield triggered props.ui.value")
 });
 
 watch(() => props.ui, (newValue) => {
-	console.log("textfield triggered props.ui")
+	//console.log("textfield triggered props.ui")
 	if (newValue.v) {
 		inputValue.value = newValue.v;
+	}else{
+		inputValue.value=""
 	}
 });
 

@@ -13,7 +13,7 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.v ? props.ui.v : "");
 
-
+console.log("uitextfield", props.ui.p, "=" + props.ui.v)
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -48,17 +48,23 @@ watch(inputValue, (newValue, oldValue) => {
 });
 
 watch(() => props.ui.v, (newValue) => {
+	//console.log("textfield triggered props.ui.value",inputValue.value,newValue)
 	if (newValue) {
 		inputValue.value = newValue
+	} else {
+		inputValue.value = ""
 	}
-	console.log("textfield triggered props.ui.value")
+
 });
 
 watch(() => props.ui, (newValue) => {
-	console.log("textfield triggered props.ui")
+	console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
 	if (newValue.v) {
 		inputValue.value = newValue.v;
+	} else {
+		inputValue.value = ""
 	}
+
 });
 
 
@@ -117,7 +123,7 @@ const frameStyles = computed<string>(() => {
 });
 
 const id = computed<string>(() => {
-	return "tf-"+props.ui.p
+	return "tf-" + props.ui.p
 });
 
 const inputMode = computed<string>(() => {
