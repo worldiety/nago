@@ -126,6 +126,9 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
 			v := property.Get(&tmp)
+			if v.IsSome() {
+				return ui.TableCell(opts.ItemRenderer(v.Unwrap()))
+			}
 			return ui.TableCell(ui.Text(fmtOptOne(v)))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {

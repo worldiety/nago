@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/license"
+	"go.wdy.de/nago/application/license"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
@@ -25,8 +26,12 @@ func main() {
 			licensePucJira,
 		)...)
 
+		std.Must(cfg.MailManagement())
+		
+		cfg.SetDecorator(cfg.NewScaffold().Decorator())
+
 		iamCfg := application.IAMSettings{}
-		iamCfg.Decorator = cfg.NewScaffold().Decorator()
+		iamCfg.Decorator = cfg.Decorator()
 		iamCfg = cfg.IAM(iamCfg)
 
 		cfg.RootView(".", iamCfg.DecorateRootView(func(wnd core.Window) core.View {

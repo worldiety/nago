@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -37,7 +38,7 @@ func ButtonCreate[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 		ui.PrimaryButton(func() {
 			formPresented.Set(true)
 		},
-		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
+		).PreIcon(heroSolid.Plus).Title(xstrings.Join2(" ", xstrings.If(bnd.entityAliasName == "", "Eintrag", bnd.entityAliasName), "hinzufügen")))
 }
 
 func ButtonCreateForwardTo[E any](bnd *Binding[E], path core.NavigationPath, values core.Values) core.View {
@@ -45,7 +46,7 @@ func ButtonCreateForwardTo[E any](bnd *Binding[E], path core.NavigationPath, val
 		ui.PrimaryButton(func() {
 			bnd.wnd.Navigation().ForwardTo(path, values)
 		},
-		).PreIcon(heroSolid.Plus).AccessibilityLabel("Hinzufügen"))
+		).PreIcon(heroSolid.Plus).Title(xstrings.Join2(" ", xstrings.If(bnd.entityAliasName == "", "Eintrag", bnd.entityAliasName), "hinzufügen")))
 }
 
 // CreateDialog returns the dialog for creating. See also [DialogEdit].
@@ -61,7 +62,7 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 	stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.create.errmsg.%s", typ))
 	return ui.VStack(
 		alert.Dialog("Erstellen nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu erstellen."), noSuchPermissionPresented, alert.Ok()),
-		alert.Dialog("Neu erstellen", ui.Composable(func() core.View {
+		alert.Dialog(xstrings.Join2(" ", xstrings.If(bnd.entityAliasName == "", "Eintrag", bnd.entityAliasName), "erstellen"), ui.Composable(func() core.View {
 			subBnd := bnd.Inherit(data.Idtos(initial.Identity()))
 
 			return ui.VStack(
@@ -147,11 +148,16 @@ func buttonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], renderBtn
 		stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.edit.errmsg.%v", e.Get().Identity()))
 		return ui.VStack(
 			alert.Dialog("Bearbeiten nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu bearbeiten."), noSuchPermissionPresented, alert.Ok()),
-			alert.Dialog("Bearbeiten", ui.Composable(func() core.View {
+			alert.Dialog(xstrings.Join2(" ", xstrings.If(bnd.entityAliasName == "", "Eintrag", bnd.entityAliasName), "bearbeiten"), ui.Composable(func() core.View {
 				subBnd := bnd.Inherit(data.Idtos(e.Get().Identity()))
 
 				return ui.VStack(
 					ui.If(stateErrMsg.Get() != "", ui.Text(stateErrMsg.Get()).Color(ui.SE0)),
+					ui.If(bnd.deleteFunc != nil,
+						ui.HStack(RenderElementViewFactory[E, ID](bnd, e.Get(), ButtonDeleteWithCaption[E, ID](bnd.wnd, xstrings.Join2(" ", bnd.entityAliasName, "löschen"), bnd.deleteFunc))).
+							FullWidth().
+							Alignment(ui.Trailing),
+					),
 					Form(subBnd, entityState),
 				).Frame(ui.Frame{}.FullWidth())
 			}), formPresented, alert.Cancel(func() {
@@ -182,8 +188,11 @@ func buttonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], renderBtn
 		)
 	}
 }
-
 func ButtonDelete[E data.Aggregate[ID], ID data.IDType](wnd core.Window, deleteFn func(E) error) ElementViewFactory[E] {
+	return ButtonDeleteWithCaption(wnd, "", deleteFn)
+}
+
+func ButtonDeleteWithCaption[E data.Aggregate[ID], ID data.IDType](wnd core.Window, caption string, deleteFn func(E) error) ElementViewFactory[E] {
 	return func(e *core.State[E]) core.View {
 		noSuchPermissionPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.delete.npp.%v", e.Get().Identity()))
 		areYouSurePresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.delete.sure.%v", e.Get().Identity()))
@@ -203,7 +212,7 @@ func ButtonDelete[E data.Aggregate[ID], ID data.IDType](wnd core.Window, deleteF
 			ui.TertiaryButton(func() {
 				areYouSurePresented.Set(true)
 
-			}).PreIcon(heroSolid.Trash).AccessibilityLabel("Löschen"),
+			}).PreIcon(heroSolid.Trash).AccessibilityLabel("Löschen").Title(caption),
 		)
 
 	}

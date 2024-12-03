@@ -21,10 +21,10 @@ type Field[T any] struct {
 	// that the bindings are different and will re-use them causing weired state bugs.
 	ID string
 
-	// Label of the field, which should be unique in the entire set. Otherwise, accessibility is broken.
+	// deprecated: Label of the field, which should be unique in the entire set. Otherwise, accessibility is broken.
 	Label string
 
-	// SupportingText is optional.
+	// deprecated: SupportingText is optional.
 	SupportingText string
 
 	// RenderFormElement may be nil, if it shall not be shown in a form.
@@ -108,7 +108,8 @@ func (f Field[T]) WithStringer(fn func(e T) string) Field[T] {
 }
 
 type Binding[T any] struct {
-	id                      string
+	id string
+
 	wnd                     core.Window
 	fields                  []Field[T]
 	fieldValidationObserver map[int]func(field Field[T], errorText string, infrastructureError error)
@@ -117,6 +118,9 @@ type Binding[T any] struct {
 
 	// renderListEntry may be nil to indicate that it must not be shown.
 	renderListEntry func(entity T) list.TEntry
+
+	deleteFunc      func(T) error
+	entityAliasName string
 }
 
 // NewBinding allocates a new binding using the given window.
@@ -126,6 +130,19 @@ func NewBinding[T any](wnd core.Window) *Binding[T] {
 		wnd:             wnd,
 		forceValidation: core.AutoState[bool](wnd), // TODO this may break to easily in loops etc.
 	}
+}
+
+// DeleteFunc attaches a function to delete a single T which can be used by all Binding consumers.
+func (b *Binding[T]) DeleteFunc(fn func(e T) error) *Binding[T] {
+	b.deleteFunc = fn
+	return b
+}
+
+// EntityName sets the human readable name of the entity type. This may be used by Binding consumers
+// for display purposes.
+func (b *Binding[T]) EntityName(aliasName string) *Binding[T] {
+	b.entityAliasName = aliasName
+	return b
 }
 
 func (b *Binding[T]) IntoListEntry(renderListEntry func(entity T) list.TEntry) *Binding[T] {

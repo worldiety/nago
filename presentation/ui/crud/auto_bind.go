@@ -2,6 +2,7 @@ package crud
 
 import (
 	"encoding/json"
+	"fmt"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -13,6 +14,7 @@ import (
 	"log/slog"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -157,11 +159,30 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 							styleOpts = PickOneStyleWithPicker
 						}
 
-						fieldsBuilder.Append(PickOne[E, string](PickOneOptions[string]{Label: label, Values: values, Style: styleOpts}, PropertyFuncs(
-							func(obj *E) std.Option[string] {
-								return std.Some(reflect.ValueOf(obj).Elem().FieldByName(field.Name).String())
-							}, func(dst *E, v std.Option[string]) {
-								reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v.UnwrapOr(""))
+						var pickedEntryList []taggedValueEntry
+						for _, value := range values {
+							idAndName := strings.Split(value, "=")
+							if len(idAndName) == 1 {
+								pickedEntryList = append(pickedEntryList, taggedValueEntry{id: idAndName[0], text: idAndName[0]})
+							} else {
+								pickedEntryList = append(pickedEntryList, taggedValueEntry{id: idAndName[0], text: idAndName[1]})
+							}
+						}
+
+						fieldsBuilder.Append(PickOne[E, taggedValueEntry](PickOneOptions[taggedValueEntry]{Label: label, Values: pickedEntryList, Style: styleOpts}, PropertyFuncs(
+							func(obj *E) std.Option[taggedValueEntry] {
+								fmt.Println(obj)
+								id := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
+								for _, entry := range pickedEntryList {
+									if entry.id == id {
+										return std.Some(entry)
+									}
+								}
+
+								return std.None[taggedValueEntry]()
+							}, func(dst *E, v std.Option[taggedValueEntry]) {
+								id := v.UnwrapOr(taggedValueEntry{}).id
+								reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(id)
 							})))
 					} else {
 
@@ -194,12 +215,24 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								lines, _ = strconv.Atoi(str)
 							}
 
-							fieldsBuilder.Append(Text[E, string](TextOptions{Label: label, Lines: lines}, PropertyFuncs(
-								func(obj *E) string {
-									return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
-								}, func(dst *E, v string) {
-									reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v)
-								})))
+							switch field.Tag.Get("style") {
+							case "secret":
+								fieldsBuilder.Append(Password[E, string](PasswordOptions{Label: label}, PropertyFuncs(
+									func(obj *E) string {
+										return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
+									}, func(dst *E, v string) {
+										reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v)
+									})))
+
+							default:
+								fieldsBuilder.Append(Text[E, string](TextOptions{Label: label, Lines: lines, SupportingText: field.Tag.Get("supportingText")}, PropertyFuncs(
+									func(obj *E) string {
+										return reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
+									}, func(dst *E, v string) {
+										reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetString(v)
+									})))
+
+							}
 
 						}
 					}
@@ -227,7 +260,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 							reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetInt(int64(v))
 						})))
 				default:
-					fieldsBuilder.Append(Int[E, int64](IntOptions{Label: label}, PropertyFuncs(
+					fieldsBuilder.Append(Int[E, int64](IntOptions{Label: label, SupportingText: field.Tag.Get("supportingText")}, PropertyFuncs(
 						func(obj *E) int64 {
 							return reflect.ValueOf(obj).Elem().FieldByName(field.Name).Int()
 						}, func(dst *E, v int64) {
@@ -355,4 +388,13 @@ func groupedFields[E any]() []fieldGroup {
 	}
 
 	return res
+}
+
+type taggedValueEntry struct {
+	id   string
+	text string
+}
+
+func (e taggedValueEntry) String() string {
+	return e.text
 }

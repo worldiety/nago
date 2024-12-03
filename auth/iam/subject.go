@@ -2,8 +2,8 @@ package iam
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/license"
 	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
 	"iter"

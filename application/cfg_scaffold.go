@@ -2,6 +2,8 @@ package application
 
 import (
 	_ "embed"
+	"go.wdy.de/nago/admin"
+	"go.wdy.de/nago/application/admin/uidashboard"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/auth/iam/iamui"
@@ -96,6 +98,7 @@ type ScaffoldBuilder struct {
 	impressPath     core.NavigationPath
 	impressContent  string
 	menu            []MenuEntryBuilder
+	pages           admin.Pages
 	logoClick       func()
 }
 
@@ -110,6 +113,11 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 		gdprPath:        "legal/gdpr",
 		gdprContent:     defaultGDPR,
 	}
+}
+
+func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBuilder {
+	b.alignment = alignment
+	return b
 }
 
 func (b *ScaffoldBuilder) LogoAction(fn func()) *ScaffoldBuilder {
@@ -183,6 +191,13 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
 			return iamui.ProfilePage(wnd, iam.NewChangeMyPassword(b.cfg.iamSettings.Service))
+		})(wnd)
+	})
+
+	b.cfg.RootView(b.pages.DashboardOrDefault(), func(wnd core.Window) core.View {
+		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
+		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+			return uidashboard.Dashboard(wnd)
 		})(wnd)
 	})
 }

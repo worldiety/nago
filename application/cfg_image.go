@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/std"
 )
 
 type Images struct {
@@ -18,8 +19,8 @@ type Images struct {
 // The default
 func (c *Configurator) Images() Images {
 	if c.images == nil {
-		imageSrcSetRepo := json.NewSloppyJSONRepository[image.SrcSet](c.EntityStore(".nago.img.set"))
-		imageBlobs := c.FileStore(".nago.img.blob")
+		imageSrcSetRepo := json.NewSloppyJSONRepository[image.SrcSet](std.Must(c.EntityStore(".nago.img.set")))
+		imageBlobs := std.Must(c.FileStore(".nago.img.blob"))
 		imgBestFit := image.NewLoadBestFit(imageSrcSetRepo, imageBlobs)
 		imgCreateSrcSet := image.NewCreateSrcSet(image.Options{}, imageSrcSetRepo, imageBlobs)
 		loadSrcSet := image.NewLoadSrcSet(imageSrcSetRepo)

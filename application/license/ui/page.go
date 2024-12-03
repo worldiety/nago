@@ -1,7 +1,7 @@
 package licenseui
 
 import (
-	"go.wdy.de/nago/license"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"

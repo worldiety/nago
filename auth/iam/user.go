@@ -2,6 +2,7 @@ package iam
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -74,6 +75,7 @@ type User struct {
 	Roles         []auth.RID    `json:"roles,omitempty"`       // roles may also contain inherited permissions
 	Groups        []auth.GID    `json:"groups,omitempty"`      // groups may also contain inherited permissions
 	Permissions   []PID         `json:"permissions,omitempty"` // individual custom permissions
+	Licenses      []license.ID  `json:"licenses,omitempty"`
 }
 
 func (u User) Identity() auth.UID {

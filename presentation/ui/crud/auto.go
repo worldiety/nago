@@ -32,8 +32,32 @@ type UseCases[E data.Aggregate[ID], ID ~string] interface {
 	Save(subject auth.Subject, entity E) (ID, error)
 }
 
+func FuncsFromUseCases[E data.Aggregate[ID], ID ~string](uc UseCases[E, ID]) (
+	findByID func(subject auth.Subject, id ID) (std.Option[E], error),
+	all func(subject auth.Subject) iter.Seq2[E, error],
+	deleteID func(subject auth.Subject, id ID) error,
+	save func(subject auth.Subject, entity E) (ID, error),
+) {
+	return uc.FindByID, uc.All, uc.DeleteByID, uc.Save
+}
+
+func UseCasesFromFuncs[E data.Aggregate[ID], ID ~string](
+	findByID func(subject auth.Subject, id ID) (std.Option[E], error),
+	all func(subject auth.Subject) iter.Seq2[E, error],
+	deleteID func(subject auth.Subject, id ID) error,
+	save func(subject auth.Subject, entity E) (ID, error),
+) UseCases[E, ID] {
+	return useCasesFuncs[E, ID]{
+		findByID: findByID,
+		all:      all,
+		deleteID: deleteID,
+		save:     save,
+	}
+}
+
 type AutoRootViewOptions struct {
-	Title string
+	Title     string
+	CanCreate bool
 }
 
 func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useCases UseCases[E, ID]) func(wnd core.Window) core.View {
@@ -41,7 +65,7 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 		bnd := AutoBinding[E](AutoBindingOptions{}, wnd, useCases)
 		return ui.VStack(
 			ui.WindowTitle(opts.Title),
-			AutoView(AutoViewOptions{Title: opts.Title}, bnd, useCases),
+			AutoView(AutoViewOptions{Title: opts.Title, CanCreate: opts.CanCreate}, bnd, useCases),
 		).FullWidth()
 	}
 }
@@ -49,6 +73,7 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 type AutoViewOptions struct {
 	Title                 string
 	CreateButtonForwardTo core.NavigationPath
+	CanCreate             bool
 }
 
 func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -56,7 +81,7 @@ func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCas
 		return bnd.wnd.Subject().HasPermission(repoUC.permFindAll.Identity())
 	}
 
-	return false
+	return true
 }
 
 func canCreate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -64,7 +89,7 @@ func canCreate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCase
 		return bnd.wnd.Subject().HasPermission(repoUC.permCreate.Identity())
 	}
 
-	return false
+	return true
 }
 
 func canDelete[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -72,7 +97,7 @@ func canDelete[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCase
 		return bnd.wnd.Subject().HasPermission(repoUC.permDelete.Identity())
 	}
 
-	return false
+	return true
 }
 
 func canSave[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -80,7 +105,7 @@ func canSave[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[
 		return bnd.wnd.Subject().HasPermission(repoUC.permSave.Identity())
 	}
 
-	return false
+	return true
 }
 
 // AutoView creates a real simple default CRUD view for rapid prototyping.
@@ -105,7 +130,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 
 	var zeroE E
 	var actions []core.View
-	if canCreate(bnd, usecases) {
+	if opts.CanCreate && canCreate(bnd, usecases) {
 		if opts.CreateButtonForwardTo == "" {
 			actions = append(actions, ButtonCreate(bnd, zeroE, func(d E) (errorText string, infrastructureError error) {
 				if !bnd.Validates(d) {
@@ -165,6 +190,29 @@ type findAll[E any] func()
 type deleteOne[E any] func()
 type saveOne[E any] func()
 type createOne[E any] func()
+
+type useCasesFuncs[E data.Aggregate[ID], ID ~string] struct {
+	findByID func(subject auth.Subject, id ID) (std.Option[E], error)
+	all      func(subject auth.Subject) iter.Seq2[E, error]
+	deleteID func(subject auth.Subject, id ID) error
+	save     func(subject auth.Subject, entity E) (ID, error)
+}
+
+func (u useCasesFuncs[E, ID]) FindByID(subject auth.Subject, id ID) (std.Option[E], error) {
+	return u.findByID(subject, id)
+}
+
+func (u useCasesFuncs[E, ID]) All(subject auth.Subject) iter.Seq2[E, error] {
+	return u.all(subject)
+}
+
+func (u useCasesFuncs[E, ID]) DeleteByID(subject auth.Subject, id ID) error {
+	return u.DeleteByID(subject, id)
+}
+
+func (u useCasesFuncs[E, ID]) Save(subject auth.Subject, entity E) (ID, error) {
+	return u.Save(subject, entity)
+}
 
 type repositoryUsecases[E Aggregate[E, ID], ID ~string] struct {
 	permFindAll annotation.SubjectPermission

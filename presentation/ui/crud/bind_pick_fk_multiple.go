@@ -19,6 +19,8 @@ type OneToManyOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 	// ForeignPickerRenderer converts a T into a View for the picker dialog step. If nil, the value is
 	// transformed using %v into a TextView.
 	ForeignPickerRenderer func(T) core.View
+
+	SupportingText string
 }
 
 // OneToMany binds a field with foreign key characteristics to a picker. See also [PickMultiple] for value
@@ -46,7 +48,8 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToMany
 	}
 
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {

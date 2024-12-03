@@ -19,52 +19,36 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 		return alert.BannerError(auth.NotLoggedIn(""))
 	}
 
-	bnd := crud.NewBinding[iam.User](wnd)
+	bnd := crud.NewBinding[iam.User](wnd).
+		DeleteFunc(func(e iam.User) error {
+			return service.DeleteUser(subject, e.ID)
+		}).
+		EntityName("Nutzer")
 	bnd.Add(
-		crud.Text(crud.TextOptions{Label: "ID"}, crud.Ptr(func(e *iam.User) *auth.UID {
-			return &e.ID
-		})).ReadOnly(true).WithoutTable(),
+		//crud.Text(crud.TextOptions{Label: "ID"}, crud.Ptr(func(e *iam.User) *auth.UID {
+		//	return &e.ID
+		//})).ReadOnly(true).WithoutTable(),
 		crud.Text(crud.TextOptions{Label: "Vorname"}, crud.Ptr(func(e *iam.User) *string {
 			return &e.Firstname
 		})),
 		crud.Text(crud.TextOptions{Label: "Nachname"}, crud.Ptr(func(e *iam.User) *string {
 			return &e.Lastname
 		})),
-		crud.OneToMany(crud.OneToManyOptions[iam.Permission, iam.PID]{
-			Label:           "Vererbte Berechtigungen",
-			ForeignEntities: service.AllPermissions(subject),
-			ForeignPickerRenderer: func(t iam.Permission) core.View {
-				return ui.Text(t.Name())
-			},
-		}, crud.Ptr(func(user *iam.User) *[]iam.PID {
-			// this is by intention: we show the entire inherited list of all permission, not just the customized ones
-			perms, err := service.FindAllUserPermissions(subject, user.ID)
-			if err != nil {
-				alert.ShowBannerError(wnd, err)
-			}
-
-			return &perms
-		})).ReadOnly(true),
-
-		crud.OneToMany(crud.OneToManyOptions[iam.Permission, iam.PID]{
-			Label:           "Einzelberechtigungen",
-			ForeignEntities: service.AllPermissions(subject),
-			ForeignPickerRenderer: func(t iam.Permission) core.View {
-				return ui.Text(t.Name())
-			},
-		}, crud.Ptr(func(user *iam.User) *[]iam.PID {
-			return &user.Permissions
-		})),
-
-		crud.OneToMany(crud.OneToManyOptions[iam.Group, auth.GID]{
-			Label:           "Gruppen",
-			ForeignEntities: service.AllGroups(subject),
-			ForeignPickerRenderer: func(t iam.Group) core.View {
-				return ui.Text(t.Name)
-			},
-		}, crud.Ptr(func(model *iam.User) *[]auth.GID {
-			return &model.Groups
-		})),
+		//crud.OneToMany(crud.OneToManyOptions[iam.Permission, iam.PID]{
+		//	Label:           "Vererbte Berechtigungen",
+		//	ForeignEntities: service.AllPermissions(subject),
+		//	ForeignPickerRenderer: func(t iam.Permission) core.View {
+		//		return ui.Text(t.Name())
+		//	},
+		//}, crud.Ptr(func(user *iam.User) *[]iam.PID {
+		//	// this is by intention: we show the entire inherited list of all permission, not just the customized ones
+		//	perms, err := service.FindAllUserPermissions(subject, user.ID)
+		//	if err != nil {
+		//		alert.ShowBannerError(wnd, err)
+		//	}
+		//
+		//	return &perms
+		//})).ReadOnly(true),
 
 		crud.OneToMany(crud.OneToManyOptions[iam.Role, auth.RID]{
 			Label:           "Rollen",
@@ -75,6 +59,38 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 		}, crud.Ptr(func(model *iam.User) *[]auth.RID {
 			return &model.Roles
 		})),
+
+		crud.OneToMany(crud.OneToManyOptions[iam.Permission, iam.PID]{
+			Label:           "Einzelberechtigungen",
+			SupportingText:  "Diese Berechtigungen sollten nur in Ausnahmefällen vergeben werden und ansonsten über Rollen abgebildet werden.",
+			ForeignEntities: service.AllPermissions(subject),
+			ForeignPickerRenderer: func(t iam.Permission) core.View {
+				return ui.Text(t.Name())
+			},
+		}, crud.Ptr(func(user *iam.User) *[]iam.PID {
+			return &user.Permissions
+		})),
+
+		crud.OneToMany(crud.OneToManyOptions[iam.Group, auth.GID]{
+			Label:           "Gruppen",
+			SupportingText:  "Die Gruppenzugehörigkeit gehört zu den ressourcenbasierten Berechtigungen.",
+			ForeignEntities: service.AllGroups(subject),
+			ForeignPickerRenderer: func(t iam.Group) core.View {
+				return ui.Text(t.Name)
+			},
+		}, crud.Ptr(func(model *iam.User) *[]auth.GID {
+			return &model.Groups
+		})),
+
+		//crud.OneToMany(crud.OneToManyOptions[license.License, license.ID]{
+		//	Label:           "Nutzerbasierte Lizenzen",
+		//	ForeignEntities: license.Global.All(),
+		//	ForeignPickerRenderer: func(t license.License) core.View {
+		//		return ui.Text(t.LicenseName())
+		//	},
+		//}, crud.Ptr(func(model *iam.User) *[]license.ID {
+		//	return &model.Licenses
+		//})),
 
 		//crud.AggregateActions(
 		//	"Optionen",
@@ -95,9 +111,6 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 		return list.Entry().
 			Leading(avatar.Text(entity.Firstname + " " + entity.Lastname)).
 			Trailing(ui.HStack(
-				crud.RenderElementViewFactory(bnd, entity, crud.ButtonDelete(wnd, func(e iam.User) error {
-					return service.DeleteUser(subject, e.ID)
-				})),
 				ui.ImageIcon(heroOutline.ChevronRight),
 				crud.DialogEdit(bnd, editPresented, entity, func(user iam.User) (errorText string, infrastructureError error) {
 					return "", service.UpdateUser(subject, user.ID, string(user.Email), user.Firstname, user.Lastname, user.Permissions, user.Roles, user.Groups)
@@ -110,7 +123,7 @@ func Users(wnd core.Window, service *iam.Service) core.View {
 			SupportingText(fmt.Sprintf("%d Berechtigungen, %d Rollen", len(perms), len(entity.Roles)))
 	})
 
-	bndCrUsr := crud.NewBinding[createUser](wnd).Add(
+	bndCrUsr := crud.NewBinding[createUser](wnd).EntityName("Nutzer").Add(
 		crud.Text(crud.TextOptions{Label: "Vorname"}, crud.Ptr(func(e *createUser) *string {
 			return &e.Firstname
 		})),

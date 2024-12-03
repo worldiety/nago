@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"go.wdy.de/nago/license"
+	"go.wdy.de/nago/application/license"
 	"golang.org/x/text/language"
 	"iter"
 )

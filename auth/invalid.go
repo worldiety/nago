@@ -2,7 +2,7 @@ package auth
 
 import (
 	"fmt"
-	"go.wdy.de/nago/license"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/pkg/xiter"
 	"golang.org/x/text/language"
 	"iter"

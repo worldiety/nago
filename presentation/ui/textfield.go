@@ -41,7 +41,7 @@ type TTextField struct {
 	disableDebounce bool
 	debounceTime    time.Duration
 	invisible       bool
-	frame           ora.Frame
+	frame           Frame
 	lines           int
 	keyboardOptions TKeyboardOptions
 }
@@ -199,7 +199,12 @@ func (c TTextField) Disabled(disabled bool) TTextField {
 }
 
 func (c TTextField) Frame(frame Frame) DecoredView {
-	c.frame = frame.ora()
+	c.frame = frame
+	return c
+}
+
+func (c TTextField) FullWidth() TTextField {
+	c.frame = c.frame.FullWidth()
 	return c
 }
 
@@ -240,7 +245,7 @@ func (c TTextField) Render(ctx core.RenderContext) ora.Component {
 		DebounceTime:    c.debounceTime,
 		DisableDebounce: c.disableDebounce,
 		Invisible:       c.invisible,
-		Frame:           c.frame,
+		Frame:           c.frame.ora(),
 		Lines:           c.lines,
 		KeyboardOptions: c.keyboardOptions.ora(),
 	}

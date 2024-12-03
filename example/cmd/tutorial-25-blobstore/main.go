@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
@@ -19,7 +20,7 @@ func main() {
 		// Transactions are supported.
 		//
 		// In this example, the database file is ~/.de.worldiety.tutorial/bbolt/bolt.db
-		dbstore := cfg.EntityStore("small-blobs")
+		dbstore := std.Must(cfg.EntityStore("small-blobs"))
 
 		// quickly write some bytes using a transaction with a single write.
 		if _, err := blob.Write(dbstore, "my key", bytes.NewBufferString("I'm a fine blob")); err != nil {
@@ -38,7 +39,7 @@ func main() {
 		// lower the risk of damaged files.
 		//
 		// In this example, the files land in ~/.de.worldiety.tutorial/files/my-large-blobs
-		fstore := cfg.FileStore("my-large-blobs")
+		fstore := std.Must(cfg.FileStore("my-large-blobs"))
 
 		// quickly write some bytes
 		if _, err := blob.Write(fstore, "my key", bytes.NewBufferString("I'm a good blob")); err != nil {

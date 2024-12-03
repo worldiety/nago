@@ -31,6 +31,14 @@ type dependency struct {
 	service any
 }
 
+type EntityStorageFactory interface {
+	EntityStore(bucketName string) (blob.Store, error)
+}
+
+type BlobStorageFactory interface {
+	BlobStore(bucketName string) (blob.Store, error)
+}
+
 type Configurator struct {
 	stores                   map[string]blob.Store
 	backupServices           map[string]backupService
@@ -58,6 +66,8 @@ type Configurator struct {
 	fps                      int
 	images                   *Images
 	systemServices           []dependency
+	mailManagement           *MailManagement
+	decorator                Decorator
 }
 
 func NewConfigurator() *Configurator {
@@ -151,7 +161,7 @@ func (c *Configurator) AddSystemService(name string, service any) *Configurator 
 		name:    name,
 		service: service,
 	})
-	
+
 	return c
 }
 

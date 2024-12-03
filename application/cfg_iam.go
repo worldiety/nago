@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/auth/iam/iamui"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -162,19 +163,19 @@ func (c *Configurator) IAM(settings IAMSettings) IAMSettings {
 	}
 
 	if settings.Users.Repository == nil {
-		settings.Users.Repository = json.NewSloppyJSONRepository[iam.User](c.EntityStore("iam.users"))
+		settings.Users.Repository = json.NewSloppyJSONRepository[iam.User](std.Must(c.EntityStore("iam.users")))
 	}
 
 	if settings.Sessions.Repository == nil {
-		settings.Sessions.Repository = json.NewSloppyJSONRepository[iam.Session](c.EntityStore("iam.sessions"))
+		settings.Sessions.Repository = json.NewSloppyJSONRepository[iam.Session](std.Must(c.EntityStore("iam.sessions")))
 	}
 
 	if settings.Roles.Repository == nil {
-		settings.Roles.Repository = json.NewSloppyJSONRepository[iam.Role](c.EntityStore("iam.roles"))
+		settings.Roles.Repository = json.NewSloppyJSONRepository[iam.Role](std.Must(c.EntityStore("iam.roles")))
 	}
 
 	if settings.Groups.Repository == nil {
-		settings.Groups.Repository = json.NewSloppyJSONRepository[iam.Group](c.EntityStore("iam.groups"))
+		settings.Groups.Repository = json.NewSloppyJSONRepository[iam.Group](std.Must(c.EntityStore("iam.groups")))
 	}
 
 	if settings.Permissions.Permissions == nil {

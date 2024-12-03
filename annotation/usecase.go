@@ -41,7 +41,7 @@ func Usecase[T any](doc DocElem, documentation ...DocElem) *UsecaseBuilder {
 	}
 
 	if _, ok := usecases[t]; ok {
-		panic(fmt.Sprintf("a usecase can only be used once, already defined: %s", t))
+		panic(fmt.Sprintf("a usecase can only be used once, already referenced: %s.%s", t.PkgPath(), t.Name()))
 	}
 
 	b := &UsecaseBuilder{doc: append([]DocElem{doc}, documentation...), typ: t}

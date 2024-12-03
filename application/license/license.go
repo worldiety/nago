@@ -84,6 +84,9 @@ type User interface {
 	HasLicense(id ID) bool
 }
 
+// TODO we have a cycle problem here
+//type CalculateStatus func(subject auth.Subject) (Status, error)
+
 /*
 var permCalculateStatus = annotation.Permission[CalculateStatus]("de.worldiety.nago.license.status")
 

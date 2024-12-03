@@ -10,11 +10,13 @@ type TextOptions struct {
 	Label           string
 	KeyboardOptions ui.TKeyboardOptions
 	Lines           int
+	SupportingText  string
 }
 
 func Text[E any, T ~string](opts TextOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[string](self.Window, self.ID+"-form.local").Init(func() string {
