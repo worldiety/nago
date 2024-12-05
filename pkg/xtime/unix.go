@@ -11,6 +11,11 @@ func (u UnixMilliseconds) Time(tz *time.Location) time.Time {
 	return time.UnixMilli(int64(u)).In(tz)
 }
 
+func (u UnixMilliseconds) Date(tz *time.Location) Date {
+	year, month, day := u.Time(tz).Date()
+	return Date{day, month, year}
+}
+
 func Now() UnixMilliseconds {
 	return UnixMilliseconds(time.Now().UnixMilli())
 }

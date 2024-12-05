@@ -97,6 +97,18 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 				}
 			case reflect.Struct:
 				switch field.Type {
+				case reflect.TypeFor[xtime.TimeFrame]():
+					fieldsBuilder.Append(TimeFrame(TimeFrameOptions{Label: label, Location: time.Local}, PropertyFuncs(
+						func(e *E) xtime.TimeFrame {
+							value := reflect.ValueOf(e).Elem().FieldByName(field.Name).Interface()
+							return value.(xtime.TimeFrame)
+						},
+						func(dst *E, v xtime.TimeFrame) {
+							value := reflect.ValueOf(v)
+							reflect.ValueOf(dst).Elem().FieldByName(field.Name).Set(value)
+						},
+					)))
+
 				case reflect.TypeFor[xtime.Date]():
 					fieldsBuilder.Append(Date(DateOptions{Label: label}, PropertyFuncs(
 						func(e *E) xtime.Date {

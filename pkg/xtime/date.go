@@ -1,6 +1,10 @@
 package xtime
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 const (
 	// GermanDate is dd.MM.yyyy in classical notation.
@@ -9,9 +13,9 @@ const (
 
 // Date represents a day/month/year tuple without any associated timezone.
 type Date struct {
-	Day   int        // Year like 2024.
+	Day   int        // Day of month, offset at 1.
 	Month time.Month // Month in year, offset at 1.
-	Year  int        // Day of month, offset at 1.
+	Year  int        // Year like 2024.
 }
 
 // Time converts this date into the first time value of the determined day within the given time zone.
@@ -29,4 +33,42 @@ func (d Date) Format(pattern string) string {
 
 func (d Date) After(other Date) bool {
 	return d.Time(time.UTC).After(other.Time(time.UTC))
+}
+
+// TimeFrame represents a Start/End time interval in timezone less unix epoch.
+type TimeFrame struct {
+	StartTime UnixMilliseconds // inclusive
+	EndTime   UnixMilliseconds // inclusive
+}
+
+func (i TimeFrame) Duration() time.Duration {
+	return time.Duration(i.EndTime-i.StartTime) * time.Millisecond
+}
+
+func (i TimeFrame) Zero() bool {
+	return TimeFrame{} == i
+}
+
+func (i TimeFrame) Format(ts *time.Location, formatDate string) string {
+	start := i.StartTime.Date(time.UTC).Time(ts)
+	syear, smonth, sday := start.Date()
+	shour := start.Hour()
+	smin := start.Minute()
+
+	end := i.EndTime.Date(time.UTC).Time(ts)
+	eyear, emonth, eday := end.Date()
+	ehour := end.Hour()
+	emin := end.Minute()
+
+	var sb strings.Builder
+	if syear == eyear && smonth == emonth && sday == eday {
+		// we need the date just once
+		sb.WriteString(start.Format(formatDate))
+		sb.WriteString(fmt.Sprintf(" %02d:%02d - %02d:%02d ", shour, smin, ehour, emin))
+	} else {
+		sb.WriteString(start.Format(formatDate))
+		sb.WriteString(fmt.Sprintf("%s %02d:%02d - %s %02d:%02d", start.Format(formatDate), shour, smin, end.Format(formatDate), ehour, emin))
+	}
+
+	return sb.String()
 }
