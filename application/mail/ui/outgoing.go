@@ -7,5 +7,5 @@ import (
 )
 
 func OutgoingQueuePage(wnd core.Window, useCases crud.UseCases[mail.Outgoing, mail.ID]) core.View {
-	return crud.AutoRootView(crud.AutoRootViewOptions{CanCreate: false}, useCases)(wnd)
+	return crud.AutoRootView(crud.AutoRootViewOptions{CreateDisabled: true}, useCases)(wnd)
 }

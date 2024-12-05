@@ -353,10 +353,12 @@ type fieldGroup struct {
 func groupedFields[E any]() []fieldGroup {
 	var zero E
 	var res []fieldGroup
-	//for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
-	typ := reflect.TypeOf(zero)
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
+	//
+
+	//typ := reflect.TypeOf(zero)
+	//for i := 0; i < typ.NumField(); i++ {
+	for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
+		//field := typ.Field(i)
 
 		if flag, ok := field.Tag.Lookup("visible"); ok && flag == "false" {
 			continue

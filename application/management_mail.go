@@ -2,7 +2,7 @@ package application
 
 import (
 	"go.wdy.de/nago/application/mail"
-	"go.wdy.de/nago/application/mail/uimail"
+	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/crud"
@@ -12,6 +12,20 @@ import (
 // HasMailManagement returns false, as long as [MailManagement] has not been requested to get initialized.
 func (c *Configurator) HasMailManagement() bool {
 	return c.mailManagement != nil
+}
+
+// MailManagementHandler configures a function which is invoked to post-modify the just instantiated
+// [Configurator.MailManagement]. Usually, this should be called before the first call to [Configurator.MailManagement].
+// If MailManagementHandler is called after MailManagement has been initialized, it will be applied immediately.
+func (c *Configurator) MailManagementHandler(fn func(*MailManagement)) {
+	if c.mailManagement == nil {
+		// invoke later, if not yet created
+		c.mailManagementHandler = fn
+		return
+	}
+
+	// invoke immediately
+	fn(c.mailManagement)
 }
 
 // MailManagement initializes and returns the default mailing subsystem.
@@ -25,7 +39,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 		}
 		c.mailManagement = &tmp
 
-		mail.StartScheduler(c.Context(), mail.ScheduleOptions{}, c.mailManagement.Smtp.Repository, c.mailManagement.Outgoing.Repository)
+		mail.StartScheduler(c.Context(), mail.ScheduleOptions{}, c.mailManagement.Smtp.repository, c.mailManagement.Outgoing.repository)
 
 		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uimail.SendTestMailPage(wnd, c.mailManagement.SendMail)
@@ -72,7 +86,7 @@ type MailManagement struct {
 		DeleteByID mail.DeleteMailByID
 		FindAll    mail.FindAllMails
 		Save       mail.SaveMail
-		Repository mail.Repository
+		repository mail.Repository // intentionally not exposed, to avoid that devs can simply destroy invariants
 	}
 
 	Smtp struct {
@@ -80,9 +94,9 @@ type MailManagement struct {
 		DeleteByID mail.DeleteSmtpByID
 		FindAll    mail.FindAllSmtp
 		Save       mail.SaveSmtp
-		Repository mail.SmtpServerRepository
+		repository mail.SmtpServerRepository // intentionally not exposed, to avoid that devs can simply destroy invariants
 	}
-	
+
 	SendMail mail.SendMail
 
 	Pages MailPages
@@ -130,15 +144,15 @@ func NewMailManagement(storage EntityStorageFactory, pages MailPages) (MailManag
 			DeleteByID mail.DeleteMailByID
 			FindAll    mail.FindAllMails
 			Save       mail.SaveMail
-			Repository mail.Repository
-		}{FindByID: outgoingUseCases.FindByID, DeleteByID: outgoingUseCases.DeleteByID, FindAll: outgoingUseCases.All, Save: outgoingUseCases.Save, Repository: outgoingMailRepo},
+			repository mail.Repository
+		}{FindByID: outgoingUseCases.FindByID, DeleteByID: outgoingUseCases.DeleteByID, FindAll: outgoingUseCases.All, Save: outgoingUseCases.Save, repository: outgoingMailRepo},
 		Smtp: struct {
 			FindByID   mail.FindSmtpByID
 			DeleteByID mail.DeleteSmtpByID
 			FindAll    mail.FindAllSmtp
 			Save       mail.SaveSmtp
-			Repository mail.SmtpServerRepository
-		}{FindByID: smtpUseCases.FindByID, DeleteByID: smtpUseCases.DeleteByID, FindAll: smtpUseCases.All, Save: smtpUseCases.Save, Repository: smtpRepo},
+			repository mail.SmtpServerRepository
+		}{FindByID: smtpUseCases.FindByID, DeleteByID: smtpUseCases.DeleteByID, FindAll: smtpUseCases.All, Save: smtpUseCases.Save, repository: smtpRepo},
 
 		Pages: pages,
 	}, nil

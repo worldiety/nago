@@ -67,6 +67,7 @@ type Configurator struct {
 	images                   *Images
 	systemServices           []dependency
 	mailManagement           *MailManagement
+	mailManagementHandler    func(*MailManagement)
 	decorator                Decorator
 }
 

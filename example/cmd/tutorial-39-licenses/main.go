@@ -27,7 +27,7 @@ func main() {
 		)...)
 
 		std.Must(cfg.MailManagement())
-		
+
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
 		iamCfg := application.IAMSettings{}

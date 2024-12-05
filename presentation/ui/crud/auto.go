@@ -56,8 +56,8 @@ func UseCasesFromFuncs[E data.Aggregate[ID], ID ~string](
 }
 
 type AutoRootViewOptions struct {
-	Title     string
-	CanCreate bool
+	Title          string
+	CreateDisabled bool
 }
 
 func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useCases UseCases[E, ID]) func(wnd core.Window) core.View {
@@ -65,7 +65,7 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 		bnd := AutoBinding[E](AutoBindingOptions{}, wnd, useCases)
 		return ui.VStack(
 			ui.WindowTitle(opts.Title),
-			AutoView(AutoViewOptions{Title: opts.Title, CanCreate: opts.CanCreate}, bnd, useCases),
+			AutoView(AutoViewOptions{Title: opts.Title, CreateDisabled: opts.CreateDisabled}, bnd, useCases),
 		).FullWidth()
 	}
 }
@@ -73,7 +73,7 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 type AutoViewOptions struct {
 	Title                 string
 	CreateButtonForwardTo core.NavigationPath
-	CanCreate             bool
+	CreateDisabled        bool
 }
 
 func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
@@ -130,7 +130,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 
 	var zeroE E
 	var actions []core.View
-	if opts.CanCreate && canCreate(bnd, usecases) {
+	if !opts.CreateDisabled && canCreate(bnd, usecases) {
 		if opts.CreateButtonForwardTo == "" {
 			actions = append(actions, ButtonCreate(bnd, zeroE, func(d E) (errorText string, infrastructureError error) {
 				if !bnd.Validates(d) {
@@ -207,11 +207,11 @@ func (u useCasesFuncs[E, ID]) All(subject auth.Subject) iter.Seq2[E, error] {
 }
 
 func (u useCasesFuncs[E, ID]) DeleteByID(subject auth.Subject, id ID) error {
-	return u.DeleteByID(subject, id)
+	return u.deleteID(subject, id)
 }
 
 func (u useCasesFuncs[E, ID]) Save(subject auth.Subject, entity E) (ID, error) {
-	return u.Save(subject, entity)
+	return u.save(subject, entity)
 }
 
 type repositoryUsecases[E Aggregate[E, ID], ID ~string] struct {
