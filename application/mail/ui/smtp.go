@@ -7,5 +7,5 @@ import (
 )
 
 func SmtpPage(wnd core.Window, useCases crud.UseCases[mail.Smtp, mail.SmtpID]) core.View {
-	return crud.AutoRootView(crud.AutoRootViewOptions{}, useCases)(wnd)
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "SMTP Server"}, useCases)(wnd)
 }

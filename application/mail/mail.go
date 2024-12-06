@@ -17,7 +17,7 @@ type Mail struct {
 	CC       []mail.Address
 	BCC      []mail.Address
 	From     mail.Address
-	Subject  string
+	Subject  string `label:"Betreff"`
 	Parts    []Part
 	SmtpHint SmtpID // an alternative Smtp server can be used e.g. for load balancing or different sender signatures
 }
@@ -34,9 +34,11 @@ const (
 type Outgoing struct {
 	ID        ID `visible:"false"`
 	Mail      Mail
+	Subject   string `label:"Betreff" disabled:"true"`
+	Receiver  string `label:"Empfänger" disabled:"true"`
 	Status    Status `values:"[\"undefined=Undefiniert\",\"queued=wartet auf Versand\",\"send_success=erfolgreich versendet\",\"send_error=Versandfehler\"]"`
 	LastError string `label:"Letzter Fehler"`
-	Server    SmtpID `label:"Versendet über"`
+	Server    SmtpID `label:"Versendet über" disabled:"true" table-visible:"false"`
 	QueuedAt  time.Time
 	SendAt    time.Time
 }

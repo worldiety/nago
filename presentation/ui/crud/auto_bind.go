@@ -2,7 +2,6 @@ package crud
 
 import (
 	"encoding/json"
-	"fmt"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -38,6 +37,11 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			fieldTableVisible := true
 			if flag, ok := field.Tag.Lookup("table-visible"); ok && flag == "false" {
 				fieldTableVisible = false
+			}
+
+			disabled := false
+			if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "false" {
+				disabled = true
 			}
 
 			label := field.Name
@@ -183,7 +187,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 
 						fieldsBuilder.Append(PickOne[E, taggedValueEntry](PickOneOptions[taggedValueEntry]{Label: label, Values: pickedEntryList, Style: styleOpts}, PropertyFuncs(
 							func(obj *E) std.Option[taggedValueEntry] {
-								fmt.Println(obj)
+								//fmt.Println(obj)
 								id := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
 								for _, entry := range pickedEntryList {
 									if entry.id == id {
@@ -303,6 +307,10 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 					lastField.RenderTableCell = nil
 					fieldsBuilder.Append(lastField)
 				}
+			}
+
+			if last, ok := fieldsBuilder.Last(); ok {
+				last.Disabled = disabled
 			}
 		}
 

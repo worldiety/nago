@@ -69,7 +69,7 @@ func BuildInPermissions() []Permission {
 		iamPerm{
 			id:   ReadPermission,
 			name: "Berechtigungen anzeigen",
-			desc: "Träger dieser Berechtigung können alle vorhandenen Berechtigungen inkl. der Erläuterungstexte einsehen. Die Menge der Berechtigungen wird vom System vorgegeben und kann nicht dynamisch geändert werden.",
+			desc: "Träger dieser Berechtigung können alle vorhandenen Berechtigungen inkl. der Erläuterungstexte einsehen. Die Menge der Berechtigungen wird vom Sys vorgegeben und kann nicht dynamisch geändert werden.",
 		},
 		// roles
 		iamPerm{

@@ -145,3 +145,66 @@ func (n nagoSubject) Audit(permission string) error {
 
 	return nil
 }
+
+type Sys struct {
+}
+
+func (s Sys) ID() auth.UID {
+	return ""
+}
+
+func (s Sys) Name() string {
+	return "Sys"
+}
+
+func (s Sys) Firstname() string {
+	return ""
+}
+
+func (s Sys) Lastname() string {
+	return ""
+}
+
+func (s Sys) Email() string {
+	return "sys@localhost"
+}
+
+func (s Sys) Roles() iter.Seq[auth.RID] {
+	return func(yield func(auth.RID) bool) {}
+}
+
+func (s Sys) HasRole(rid auth.RID) bool {
+	return true
+}
+
+func (s Sys) Groups() iter.Seq[auth.GID] {
+	return func(yield func(auth.GID) bool) {}
+}
+
+func (s Sys) HasGroup(gid auth.GID) bool {
+	return true
+}
+
+func (s Sys) Audit(permission string) error {
+	return nil
+}
+
+func (s Sys) HasPermission(permission string) bool {
+	return true
+}
+
+func (s Sys) HasLicense(id license.ID) bool {
+	return true
+}
+
+func (s Sys) Licenses() iter.Seq[license.ID] {
+	return func(yield func(license.ID) bool) {}
+}
+
+func (s Sys) Valid() bool {
+	return true
+}
+
+func (s Sys) Language() language.Tag {
+	return language.English
+}

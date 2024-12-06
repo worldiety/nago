@@ -1,10 +1,11 @@
-package uidashboard
+package uiadmin
 
 import (
-	"go.wdy.de/nago/admin"
+	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data/rquery"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -12,14 +13,17 @@ import (
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 )
 
-func Dashboard(wnd core.Window) core.View {
+type Pages struct {
+	Mail std.Option[uimail.MailPages]
+}
+
+func SettingsOverviewPage(wnd core.Window, pages Pages) core.View {
 	if !wnd.Subject().Valid() {
 		return alert.BannerError(iam.InvalidSubjectError("not logged in"))
 	}
 
 	query := core.AutoState[string](wnd)
 
-	pages, _ := core.SystemService[admin.Pages](wnd.Application())
 	adminGroups := filter(wnd.Subject(), groups(pages), query.Get())
 
 	var viewBuilder xslices.Builder[core.View]
@@ -78,34 +82,43 @@ type Group struct {
 	Entries []DashboardModel
 }
 
-func groups(pages admin.Pages) []Group {
-	return []Group{
-		{
+func groups(pages Pages) []Group {
+	var grps []Group
+	if pages.Mail.IsSome() {
+		pages := pages.Mail.Unwrap()
+		grps = append(grps, Group{
 			Title: "eMail und SMTP",
 			Entries: []DashboardModel{
 				{
 					Title:  "SMTP",
 					Text:   "Das System unterstützt verschiedene EMail-Ausgangsserver. Ein Ausgangsserver ist z.B. für die Self-Service Funktionen der Nutzer erforderlich.",
-					Target: pages.SMTPServerOrDefault(),
+					Target: pages.SMTPServer,
 				},
 				{
 					Title:  "Warteschlange",
 					Text:   "E-Mails werden über eine Postausgangs-Warteschlange versendet.",
-					Target: pages.OutgoingMailQueueOrDefault(),
+					Target: pages.OutgoingMailQueue,
+				},
+				{
+					Title:  "Vorlagen",
+					Text:   "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
+					Target: pages.Templates,
 				},
 				{
 					Title:  "Scheduler",
 					Text:   "Der Mail Scheduler bearbeitet die Warteschlange des Postausgangs und bietet ebenfalls ein paar Einstelloptionen.",
-					Target: pages.MailSchedulerOrDefault(),
+					Target: pages.MailScheduler,
 				},
 				{
 					Title:  "Test",
 					Text:   "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
-					Target: pages.SendMailTestOrDefault(),
+					Target: pages.SendMailTest,
 				},
 			},
-		},
+		})
 	}
+
+	return grps
 }
 
 func filter(subject auth.Subject, groups []Group, text string) []Group {

@@ -3,6 +3,7 @@ package application
 import (
 	"go.wdy.de/nago/application/mail"
 	uimail "go.wdy.de/nago/application/mail/ui"
+	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/crud"
@@ -33,7 +34,7 @@ func (c *Configurator) MailManagementHandler(fn func(*MailManagement)) {
 // Note, that neither the required permission will be registered nor any root view.
 func (c *Configurator) MailManagement() (MailManagement, error) {
 	if c.mailManagement == nil {
-		tmp, err := NewMailManagement(c, MailPages{})
+		tmp, err := NewMailManagement(c, uimail.MailPages{})
 		if err != nil {
 			return MailManagement{}, err
 		}
@@ -67,17 +68,20 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			return uimail.OutgoingQueuePage(wnd, outgoingUseCases)
 		}))
 
+		templateUseCases := crud.UseCasesFromFuncs[mail.Template, mail.TemplateID](
+			c.mailManagement.Templates.FindTemplateByID,
+			c.mailManagement.Templates.FindAllTemplates,
+			c.mailManagement.Templates.DeleteTemplateByID,
+			c.mailManagement.Templates.SaveTemplate,
+		)
+		c.RootView(c.mailManagement.Pages.Templates, c.DecorateRootView(func(wnd core.Window) core.View {
+			return uimail.TemplatePage(wnd, templateUseCases)
+		}))
+
 		slog.Info("mail management configured")
 	}
 
 	return *c.mailManagement, nil
-}
-
-type MailPages struct {
-	SMTPServer        core.NavigationPath
-	OutgoingMailQueue core.NavigationPath
-	MailScheduler     core.NavigationPath
-	SendMailTest      core.NavigationPath
 }
 
 type MailManagement struct {
@@ -87,6 +91,16 @@ type MailManagement struct {
 		FindAll    mail.FindAllMails
 		Save       mail.SaveMail
 		repository mail.Repository // intentionally not exposed, to avoid that devs can simply destroy invariants
+	}
+
+	Templates struct {
+		FindTemplateByID              mail.FindTemplateByID
+		DeleteTemplateByID            mail.DeleteTemplateByID
+		FindAllTemplates              mail.FindAllTemplates
+		SaveTemplate                  mail.SaveTemplate
+		InitDefaultTemplates          mail.InitDefaultTemplates
+		FindTemplateByNameAndLanguage mail.FindTemplateByNameAndLanguage
+		repository                    mail.TemplateRepository
 	}
 
 	Smtp struct {
@@ -99,10 +113,10 @@ type MailManagement struct {
 
 	SendMail mail.SendMail
 
-	Pages MailPages
+	Pages uimail.MailPages
 }
 
-func NewMailManagement(storage EntityStorageFactory, pages MailPages) (MailManagement, error) {
+func NewMailManagement(storage EntityStorageFactory, pages uimail.MailPages) (MailManagement, error) {
 	if pages.MailScheduler == "" {
 		pages.MailScheduler = "admin/mail/scheduler"
 	}
@@ -117,6 +131,10 @@ func NewMailManagement(storage EntityStorageFactory, pages MailPages) (MailManag
 
 	if pages.SMTPServer == "" {
 		pages.SMTPServer = "admin/mail/smtp"
+	}
+
+	if pages.Templates == "" {
+		pages.Templates = "admin/mail/templates"
 	}
 
 	outgoingMailsStore, err := storage.EntityStore("nago.mail.outgoing")
@@ -137,13 +155,38 @@ func NewMailManagement(storage EntityStorageFactory, pages MailPages) (MailManag
 	smtpRepo := json.NewSloppyJSONRepository[mail.Smtp, mail.SmtpID](smtpStore)
 	smtpUseCases := crud.NewUseCases[mail.Smtp, mail.SmtpID]("nago.mail.smtp", smtpRepo)
 
+	// templates
+	templateStore, err := storage.EntityStore("nago.mail.template")
+	if err != nil {
+		return MailManagement{}, err
+	}
+
+	templateRepo := json.NewSloppyJSONRepository[mail.Template, mail.TemplateID](templateStore)
+	templateUseCases := crud.NewUseCases[mail.Template, mail.TemplateID]("nago.mail.template", templateRepo)
+	findTemplateByNameAndLanguage := mail.NewFindTemplateByNameAndLanguage(templateRepo)
+	initDefaultTemplates := mail.NewInitDefaultTemplates(findTemplateByNameAndLanguage, templateUseCases.Save)
+
+	if err := initDefaultTemplates(iam.Sys{}); err != nil {
+		return MailManagement{}, err
+	}
+
 	return MailManagement{
 		SendMail: sendMail,
+		Templates: struct {
+			FindTemplateByID              mail.FindTemplateByID
+			DeleteTemplateByID            mail.DeleteTemplateByID
+			FindAllTemplates              mail.FindAllTemplates
+			SaveTemplate                  mail.SaveTemplate
+			InitDefaultTemplates          mail.InitDefaultTemplates
+			FindTemplateByNameAndLanguage mail.FindTemplateByNameAndLanguage
+			repository                    mail.TemplateRepository
+		}{FindTemplateByID: templateUseCases.FindByID, FindTemplateByNameAndLanguage: findTemplateByNameAndLanguage, DeleteTemplateByID: templateUseCases.DeleteByID, FindAllTemplates: templateUseCases.All, SaveTemplate: templateUseCases.Save, InitDefaultTemplates: initDefaultTemplates, repository: templateRepo},
 		Outgoing: struct {
 			FindByID   mail.FindMailByID
 			DeleteByID mail.DeleteMailByID
 			FindAll    mail.FindAllMails
 			Save       mail.SaveMail
+
 			repository mail.Repository
 		}{FindByID: outgoingUseCases.FindByID, DeleteByID: outgoingUseCases.DeleteByID, FindAll: outgoingUseCases.All, Save: outgoingUseCases.Save, repository: outgoingMailRepo},
 		Smtp: struct {

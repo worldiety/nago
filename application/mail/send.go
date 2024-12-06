@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/annotation"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"strings"
 	"time"
 )
 
@@ -19,9 +20,24 @@ func NewSendMail(mails Repository) SendMail {
 			return "", err
 		}
 
+		var tmp []string
+		for _, rec := range mail.To {
+			tmp = append(tmp, rec.String())
+		}
+
+		for _, address := range mail.CC {
+			tmp = append(tmp, address.String())
+		}
+
+		for _, address := range mail.BCC {
+			tmp = append(tmp, address.String())
+		}
+
 		out := Outgoing{
 			ID:       data.RandIdent[ID](),
 			Mail:     mail,
+			Receiver: strings.Join(tmp, ", "),
+			Subject:  mail.Subject,
 			Status:   StatusQueued,
 			QueuedAt: time.Now(),
 		}

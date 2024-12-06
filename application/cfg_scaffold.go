@@ -2,8 +2,7 @@ package application
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/admin"
-	"go.wdy.de/nago/application/admin/uidashboard"
+	uiadmin "go.wdy.de/nago/application/admin/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/auth/iam/iamui"
@@ -98,7 +97,6 @@ type ScaffoldBuilder struct {
 	impressPath     core.NavigationPath
 	impressContent  string
 	menu            []MenuEntryBuilder
-	pages           admin.Pages
 	logoClick       func()
 }
 
@@ -194,10 +192,10 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 		})(wnd)
 	})
 
-	b.cfg.RootView(b.pages.DashboardOrDefault(), func(wnd core.Window) core.View {
+	b.cfg.RootView("admin", func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
-			return uidashboard.Dashboard(wnd)
+			return uiadmin.SettingsOverviewPage(wnd, b.cfg.AdminPages())
 		})(wnd)
 	})
 }
