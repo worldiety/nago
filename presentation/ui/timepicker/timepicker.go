@@ -374,7 +374,7 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.Text(c.label).Font(ui.Font{Size: ui.L16}),
+			ui.Text(c.label).Font(ui.Font{Size: ui.L14}),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),

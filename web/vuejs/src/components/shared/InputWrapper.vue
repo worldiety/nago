@@ -10,7 +10,7 @@
 
 		<!-- Label with optional hint -->
 		<div class="flex justify-between items-end text-sm " :class="{'peer-focus-within:font-semibold': !disabled}">
-			<div v-if="label" class="flex justify-start items-center gap-x-1" :class="labelClass">
+			<div v-if="label" class="flex justify-start items-center gap-x-1 pb-1" :class="labelClass">
 				<LockIcon v-if="disabled" class="h-4" />
 				<ErrorIcon v-else-if="error" class="h-2.5" />
 				<span>{{ label }}</span>
@@ -93,7 +93,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 .input-field-wrapper:hover .input-field,
 .input-field-wrapper .input-field:focus {
-  @apply border-A0 border-opacity-75 text-M8;
+  @apply border-I0 border-opacity-75 text-M8;
 }
 
 .input-field-wrapper .input-field:focus {
@@ -114,7 +114,7 @@ const inputFieldWrapperClasses = computed((): string|null => {
 
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field,
 .input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
-  @apply bg-SI0 border-none;
+  @apply border-ST0;
 }
 
 .input-field-wrapper {

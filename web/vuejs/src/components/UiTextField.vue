@@ -13,7 +13,7 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const inputValue = ref<string>(props.ui.v ? props.ui.v : "");
 
-console.log("uitextfield", props.ui.p, "=" + props.ui.v)
+//console.log("uitextfield", props.ui.p, "=" + props.ui.v)
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -58,7 +58,7 @@ watch(() => props.ui.v, (newValue) => {
 });
 
 watch(() => props.ui, (newValue) => {
-	console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
+	//console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
 	if (newValue.v) {
 		inputValue.value = newValue.v;
 	} else {
@@ -184,7 +184,7 @@ const inputMode = computed<string>(() => {
 					@input="submitInputValue(false)"
 				/>
 
-				<div v-if="inputValue" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+				<div v-if="inputValue && !props.ui.d" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
 				</div>
 

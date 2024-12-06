@@ -39,23 +39,33 @@ func (d Date) After(other Date) bool {
 type TimeFrame struct {
 	StartTime UnixMilliseconds // inclusive
 	EndTime   UnixMilliseconds // inclusive
+	Timezone  Timezone
 }
 
 func (i TimeFrame) Duration() time.Duration {
 	return time.Duration(i.EndTime-i.StartTime) * time.Millisecond
 }
 
-func (i TimeFrame) Zero() bool {
-	return TimeFrame{} == i
+func (i TimeFrame) IsZero() bool {
+	return i.StartTime == 0 && i.EndTime == 0
 }
 
-func (i TimeFrame) Format(ts *time.Location, formatDate string) string {
-	start := i.StartTime.Date(time.UTC).Time(ts)
+func (i TimeFrame) Empty() bool {
+	return i.StartTime == i.EndTime
+}
+
+func (i TimeFrame) String() string {
+	return i.Format(GermanDate)
+}
+
+func (i TimeFrame) Format(formatDate string) string {
+	tz := i.Timezone.Location()
+	start := i.StartTime.Time(tz)
 	syear, smonth, sday := start.Date()
 	shour := start.Hour()
 	smin := start.Minute()
 
-	end := i.EndTime.Date(time.UTC).Time(ts)
+	end := i.EndTime.Time(tz)
 	eyear, emonth, eday := end.Date()
 	ehour := end.Hour()
 	emin := end.Minute()
@@ -64,11 +74,27 @@ func (i TimeFrame) Format(ts *time.Location, formatDate string) string {
 	if syear == eyear && smonth == emonth && sday == eday {
 		// we need the date just once
 		sb.WriteString(start.Format(formatDate))
-		sb.WriteString(fmt.Sprintf(" %02d:%02d - %02d:%02d ", shour, smin, ehour, emin))
+		sb.WriteString(fmt.Sprintf(" %02d:%02d - %02d:%02d", shour, smin, ehour, emin))
 	} else {
-		sb.WriteString(start.Format(formatDate))
 		sb.WriteString(fmt.Sprintf("%s %02d:%02d - %s %02d:%02d", start.Format(formatDate), shour, smin, end.Format(formatDate), ehour, emin))
 	}
 
 	return sb.String()
+}
+
+// A Timezone represents the time zone identifier like Europe/Berlin
+type Timezone string
+
+// Location returns the loadable location. If not loadable, returns UTC.
+func (t Timezone) Location() *time.Location {
+	if t == "" {
+		return time.UTC
+	}
+
+	loc, err := time.LoadLocation(string(t))
+	if err != nil {
+		return time.UTC
+	}
+
+	return loc
 }

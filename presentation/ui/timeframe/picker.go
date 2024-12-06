@@ -32,13 +32,15 @@ type TPicker struct {
 }
 
 // Picker renders a xtime.TimeFrame picker to select at least a day and a start and end time (inclusive).
-func Picker(label string, selectedState *core.State[xtime.TimeFrame], tz *time.Location) TPicker {
-	if selectedState.Get().Zero() {
+func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
+	if selectedState.Get().IsZero() {
 		selectedState.Set(xtime.TimeFrame{
 			StartTime: xtime.Now(),
 			EndTime:   xtime.Now(),
 		})
 	}
+
+	tz := selectedState.Get().Timezone.Location()
 
 	day := selectedState.Get().StartTime.Date(tz)
 	startOffset := selectedState.Get().StartTime.Time(tz).Sub(day.Time(tz))
@@ -65,6 +67,15 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame], tz *time.L
 			p.endTime.Set(p.endTime.Get() + 24*time.Hour)
 			p.endTime.Notify()
 		}
+
+		day := p.day.Get().Time(p.tz)
+
+		tf := p.targetState.Get()
+		tf.StartTime = xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli())
+		tf.EndTime = xtime.UnixMilliseconds(p.endTime.Get().Milliseconds() + day.UnixMilli())
+		tf.Timezone = xtime.Timezone(tz.String())
+		p.targetState.Set(tf)
+		p.targetState.Notify()
 	})
 
 	p.endTime.Observe(func(newValue time.Duration) {
@@ -72,6 +83,15 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame], tz *time.L
 			p.endTime.Set(p.endTime.Get() + 24*time.Hour)
 			p.endTime.Notify()
 		}
+
+		day := p.day.Get().Time(p.tz)
+
+		tf := p.targetState.Get()
+		tf.StartTime = xtime.UnixMilliseconds(p.startTime.Get().Milliseconds() + day.UnixMilli())
+		tf.EndTime = xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli())
+		tf.Timezone = xtime.Timezone(tz.String())
+		p.targetState.Set(tf)
+		p.targetState.Notify()
 	})
 
 	return p
@@ -128,14 +148,19 @@ func (c TPicker) ErrorText(text string) TPicker {
 }
 
 func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
+	var duration string
+	if c.targetState.Get().Empty() {
+		duration = "kein Zeitraum gewählt"
+	} else {
+		duration = (c.endTime.Get() - c.startTime.Get()).String()
+	}
 
-	//colors := core.Colors[ui.Colors](ctx.Window())
 	inner := ui.VStack(
 		ui.SingleDatePicker("", c.day.Get(), c.day).Frame(ui.Frame{}.FullWidth()),
 		ui.Grid(
 			ui.GridCell(timepicker.Picker("Startzeit wählen", c.startTime).Hours(true).Minutes(true)),
 			ui.GridCell(timepicker.Picker("Endzeit wählen", c.endTime).Hours(true).Minutes(true)),
-			ui.GridCell(ui.TextField("Dauer", (c.endTime.Get()-c.startTime.Get()).String()).Disabled(true)),
+			ui.GridCell(ui.TextField("Dauer", duration).Disabled(true)),
 		).Gap(ui.L8).
 			Rows(1).
 			FullWidth(),

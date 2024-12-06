@@ -16,6 +16,7 @@ type TimeFrameOptions struct {
 func TimeFrame[E any, T ~struct {
 	StartTime xtime.UnixMilliseconds // inclusive
 	EndTime   xtime.UnixMilliseconds // inclusive
+	Timezone  xtime.Timezone
 }](opts TimeFrameOptions, property Property[E, T]) Field[E] {
 	if opts.Location == nil {
 		opts.Location = time.UTC
@@ -28,8 +29,12 @@ func TimeFrame[E any, T ~struct {
 			state := core.StateOf[xtime.TimeFrame](self.Window, self.ID+"-form.local").Init(func() xtime.TimeFrame {
 				var tmp E
 				tmp = entity.Get()
+				tf := xtime.TimeFrame(property.Get(&tmp))
+				if tf.Timezone == "" {
+					tf.Timezone = xtime.Timezone(opts.Location.String())
+				}
 
-				return xtime.TimeFrame(property.Get(&tmp))
+				return xtime.TimeFrame(tf)
 			})
 
 			errState := core.StateOf[string](self.Window, self.ID+".err")
@@ -44,7 +49,7 @@ func TimeFrame[E any, T ~struct {
 				handleValidation(self, entity, errState)
 			})
 
-			return timeframe.Picker(opts.Label, state, opts.Location).
+			return timeframe.Picker(opts.Label, state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
 				Disabled(self.Disabled).
@@ -79,10 +84,11 @@ func TimeFrame[E any, T ~struct {
 		},
 		Stringer: func(e E) string {
 			val := property.Get(&e)
-			if xtime.TimeFrame(val).Zero() {
+			if xtime.TimeFrame(val).IsZero() {
 				return ""
 			}
-			return xtime.TimeFrame(val).Format(opts.Location, xtime.GermanDate)
+
+			return xtime.TimeFrame(val).Format(xtime.GermanDate)
 		},
 	}
 }
