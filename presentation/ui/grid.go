@@ -82,7 +82,7 @@ func (c TGridCell) render(ctx core.RenderContext) ora.GridCell {
 	}
 
 	return ora.GridCell{
-		Type:      ora.GridT,
+		Type:      ora.GridCellT,
 		Body:      body,
 		ColStart:  int64(c.colStart),
 		ColEnd:    int64(c.colEnd),
