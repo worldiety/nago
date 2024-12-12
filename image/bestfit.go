@@ -3,7 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
-	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/std"
 	"io"
@@ -12,10 +12,10 @@ import (
 
 // LoadBestFit calculates which available image resolution fits best and returns it.
 // TODO it is unclear how to handle authenticated, authorized and public use cases over the same API and endpoint
-type LoadBestFit func(user auth.Subject, img ID, fit ObjectFit, width, height int) (std.Option[io.ReadCloser], error)
+type LoadBestFit func(user permission.Auditable, img ID, fit ObjectFit, width, height int) (std.Option[io.ReadCloser], error)
 
 func NewLoadBestFit(repo Repository, imageBlobs blob.Store) LoadBestFit {
-	return func(user auth.Subject, imgID ID, fit ObjectFit, width, height int) (std.Option[io.ReadCloser], error) {
+	return func(user permission.Auditable, imgID ID, fit ObjectFit, width, height int) (std.Option[io.ReadCloser], error) {
 		if width == 0 {
 			width = math.MaxInt
 		}

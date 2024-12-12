@@ -1,15 +1,15 @@
 package alert
 
 import (
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
 )
 
 // IfPermissionDenied returns a view if either the user has not been authenticated or if not authorized.
 // Note, that no given oneOf permission just validates for an authenticated user.
 // If everything is fine, a nil interface is returned.
-func IfPermissionDenied(wnd core.Window, oneOf ...iam.PID) core.View {
+func IfPermissionDenied(wnd core.Window, oneOf ...permission.ID) core.View {
 	if !wnd.Subject().Valid() {
 		return Banner("Anmeldung erforderlich", "Um fortzufahren, müssen Sie sich am System anmelden.")
 	}

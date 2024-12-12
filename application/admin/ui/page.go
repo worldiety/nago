@@ -1,9 +1,12 @@
 package uiadmin
 
 import (
+	"go.wdy.de/nago/application/group"
 	uimail "go.wdy.de/nago/application/mail/ui"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
@@ -13,13 +16,22 @@ import (
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 )
 
+type IAMPages struct {
+	Accounts    core.NavigationPath
+	Permissions core.NavigationPath
+	Groups      core.NavigationPath
+	Roles       core.NavigationPath
+}
+
 type Pages struct {
-	Mail std.Option[uimail.MailPages]
+	Mail      std.Option[uimail.Pages]
+	IAM       std.Option[IAMPages]
+	Dashboard core.NavigationPath
 }
 
 func SettingsOverviewPage(wnd core.Window, pages Pages) core.View {
 	if !wnd.Subject().Valid() {
-		return alert.BannerError(iam.InvalidSubjectError("not logged in"))
+		return alert.BannerError(user.InvalidSubjectErr)
 	}
 
 	query := core.AutoState[string](wnd)
@@ -71,10 +83,11 @@ func SettingsOverviewPage(wnd core.Window, pages Pages) core.View {
 }
 
 type DashboardModel struct {
-	Title  string
-	Text   string
-	Target core.NavigationPath
-	Role   auth.RID
+	Title      string
+	Text       string
+	Target     core.NavigationPath
+	Role       role.ID
+	Permission permission.ID
 }
 
 type Group struct {
@@ -113,6 +126,39 @@ func groups(pages Pages) []Group {
 					Title:  "Test",
 					Text:   "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
 					Target: pages.SendMailTest,
+				},
+			},
+		})
+	}
+
+	if pages.IAM.IsSome() {
+		pages := pages.IAM.Unwrap()
+		grps = append(grps, Group{
+			Title: "Nutzerverwaltung",
+			Entries: []DashboardModel{
+				{
+					Title:      "Konten",
+					Text:       "Über die Kontenverwaltung können die einzelnen bekannten Identitäten der Nutzer verwaltet werden. Hierüber können Rollen, Gruppen und Einzelberechtigungen einem Individuum zugeordnet werden.",
+					Target:     pages.Accounts,
+					Permission: group.PermFindAll,
+				},
+				{
+					Title:      "Rollen",
+					Text:       "Über die Rollenverwaltung können einzelne Berechtigungen in einer Rolle zusammengefasst werden. Dies ist die empfohlene Art einem Konto eine Menge an Berechtigungen zuzuteilen. Die konkreten Rollen ergeben sich aus der Domäne.",
+					Target:     pages.Roles,
+					Permission: role.PermFindAll,
+				},
+				{
+					Title:      "Gruppen",
+					Text:       "Mittels der Gruppenverwaltung können Nutzer in Gruppen organisiert werden. Dieses Szenario wird typischerweise genutzt, um Nutzergruppen dynamisch und unabhängig von ihren Rollen zu organisieren. Damit dies Sinn macht, muss die Domäne auch Gruppen unterstützen.",
+					Target:     pages.Groups,
+					Permission: role.PermFindAll,
+				},
+				{
+					Title:      "Berechtigungen",
+					Text:       "Jeder in der Domäne modellierte Anwendungsfall hat eine individuelle Berechtigung, sodass im Zweifel jedes Konto mit feingranularen Berechtigungen ausgestattet werden kann. Die Anwendungsfälle werden zur Entwicklungszeit festgelegt und können daher nicht editiert werden.",
+					Target:     pages.Permissions,
+					Permission: role.PermFindAll,
 				},
 			},
 		})

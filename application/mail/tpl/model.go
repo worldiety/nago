@@ -1,9 +1,11 @@
 package tpl
 
-import "go.wdy.de/nago/auth"
+import (
+	"go.wdy.de/nago/application/user"
+)
 
 type Model struct {
-	Subject      auth.Subject
+	Subject      user.Subject
 	Verification Verification
 }
 

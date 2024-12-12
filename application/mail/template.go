@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/mail/tpl"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	htmlTemplate "html/template"
 	"io"
-	"iter"
 	textTemplate "text/template"
 )
 
@@ -84,14 +82,6 @@ func (t Template) Render(model tpl.Model) (subject string, body []byte, err erro
 	return subject, tmp.Bytes(), nil
 }
 
-type TemplateRepository data.Repository[Template, TemplateID]
-
-type FindTemplateByID func(auth.Subject, TemplateID) (std.Option[Template], error)
-type DeleteTemplateByID func(auth.Subject, TemplateID) error
-type FindAllTemplates func(auth.Subject) iter.Seq2[Template, error]
-type SaveTemplate func(auth.Subject, Template) (TemplateID, error)
-type FindTemplateByNameAndLanguage func(subject auth.Subject, name string, languageTag string) (std.Option[Template], error)
-
 func NewFindTemplateByNameAndLanguage(repo TemplateRepository) FindTemplateByNameAndLanguage {
 	return func(subject auth.Subject, name string, languageTag string) (std.Option[Template], error) {
 		// TODO permission
@@ -122,41 +112,3 @@ type InitDefaultTemplates func(subject auth.Subject) error
 
 //go:embed tpl/registered.gohtml
 var tplRegistered string
-
-func NewInitDefaultTemplates(finder FindTemplateByNameAndLanguage, saveTpl SaveTemplate) InitDefaultTemplates {
-
-	return func(subject auth.Subject) error {
-		// TODO permission
-		if err := upsertTpl(subject, "NAGO Kontoregistrierung", finder, saveTpl, TemplateRegistered, tplRegistered); err != nil {
-			return fmt.Errorf("cannot init register template: %w", err)
-		}
-
-		if err := upsertTpl(subject, "NAGO Sicherheitscode", finder, saveTpl, TemplateSecurityCode, tplRegistered); err != nil {
-			return fmt.Errorf("cannot init register template: %w", err)
-		}
-
-		return nil
-	}
-}
-
-func upsertTpl(subject auth.Subject, subjectTpl string, finder FindTemplateByNameAndLanguage, saveTpl SaveTemplate, name string, tpl string) error {
-	optTpl, err := finder(subject, name, "de_DE")
-	if err != nil {
-		return fmt.Errorf("cannot find template: %w", err)
-	}
-
-	if optTpl.IsNone() || optTpl.Unwrap().Subject == "" {
-		if _, err := saveTpl(subject, Template{
-			ID:          data.RandIdent[TemplateID](),
-			LanguageTag: "de_DE",
-			Name:        name,
-			Type:        PartHTML,
-			Subject:     subjectTpl,
-			Body:        tpl,
-		}); err != nil {
-			return fmt.Errorf("cannot save template: %w", err)
-		}
-	}
-
-	return nil
-}

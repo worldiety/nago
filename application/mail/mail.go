@@ -1,10 +1,6 @@
 package mail
 
 import (
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/std"
-	"iter"
 	"net/mail"
 	"time"
 )
@@ -51,10 +47,3 @@ func (o Outgoing) WithIdentity(id ID) Outgoing {
 func (o Outgoing) Identity() ID {
 	return o.ID
 }
-
-type Repository data.Repository[Outgoing, ID]
-
-type FindMailByID func(auth.Subject, ID) (std.Option[Outgoing], error)
-type DeleteMailByID func(auth.Subject, ID) error
-type FindAllMails func(auth.Subject) iter.Seq2[Outgoing, error]
-type SaveMail func(auth.Subject, Outgoing) (ID, error)

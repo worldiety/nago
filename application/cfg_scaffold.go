@@ -2,10 +2,12 @@ package application
 
 import (
 	_ "embed"
-	uiadmin "go.wdy.de/nago/application/admin/ui"
+	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/auth/iam"
-	"go.wdy.de/nago/auth/iam/iamui"
 	"go.wdy.de/nago/glossary/docm"
 	"go.wdy.de/nago/glossary/docm/markdown"
 	"go.wdy.de/nago/glossary/docm/oraui"
@@ -34,17 +36,17 @@ type MenuEntryBuilder struct {
 	dst                  core.NavigationPath
 	justAuthenticated    bool
 	action               func(wnd core.Window)
-	oneOfAuthorizedPerms []string
+	oneOfAuthorizedPerms []permission.ID
 	onlyPublic           bool
-	oneOfRoles           []auth.RID
+	oneOfRoles           []role.ID
 }
 
-func (b *MenuEntryBuilder) OneOf(perms ...string) *ScaffoldBuilder {
+func (b *MenuEntryBuilder) OneOf(perms ...permission.ID) *ScaffoldBuilder {
 	b.oneOfAuthorizedPerms = append(b.oneOfAuthorizedPerms, perms...)
 	return b.parent
 }
 
-func (b *MenuEntryBuilder) OneOfRole(roles ...auth.RID) *ScaffoldBuilder {
+func (b *MenuEntryBuilder) OneOfRole(roles ...role.ID) *ScaffoldBuilder {
 	b.oneOfRoles = append(b.oneOfRoles, roles...)
 	return b.parent
 }
@@ -144,10 +146,6 @@ func (b *ScaffoldBuilder) MenuEntry() *MenuEntryBuilder {
 	return &b.menu[len(b.menu)-1]
 }
 
-func (b *ScaffoldBuilder) hasIAM() bool {
-	return b.cfg.iamSettings.Service != nil
-}
-
 func (b *ScaffoldBuilder) name() string {
 	return b.cfg.applicationName
 }
@@ -156,48 +154,35 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 	// 404 not found case
 	b.cfg.RootView("_", func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return ui.VStack(
 				ui.WindowTitle("Nicht gefunden"),
-				alert.Banner("Resource nicht gefunden", "Die Seite, Funktion oder Resource ist dauerhaft nicht verfügbar."),
+				alert.Banner("Resource nicht gefunden", "Die Seite, Funktion oder Resource wurde nicht gefunden."),
 			)
 		})(wnd)
 	})
 
 	b.cfg.RootView(b.impressPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return oraui.Render(&docm.Document{Body: markdown.Parse(b.impressContent)})
 		})(wnd)
 	})
 
 	b.cfg.RootView(b.policiesPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return oraui.Render(&docm.Document{Body: markdown.Parse(b.policiesContent)})
 		})(wnd)
 	})
 
 	b.cfg.RootView(b.gdprPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
+		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return oraui.Render(&docm.Document{Body: markdown.Parse(b.gdprContent)})
 		})(wnd)
 	})
 
-	b.cfg.RootView(b.cfg.iamSettings.Profile.Path(), func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
-			return iamui.ProfilePage(wnd, iam.NewChangeMyPassword(b.cfg.iamSettings.Service))
-		})(wnd)
-	})
-
-	b.cfg.RootView("admin", func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.iamSettings.DecorateRootView(func(wnd core.Window) core.View {
-			return uiadmin.SettingsOverviewPage(wnd, b.cfg.AdminPages())
-		})(wnd)
-	})
 }
 
 // Decorator is a builder terminal and returns a decorator-like function.
@@ -264,11 +249,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		}
 
 		menuDialogPresented := core.AutoState[bool](wnd)
-		iamCfg := b.cfg.iamSettings
 
-		if b.hasIAM() {
+		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil {
 			if !wnd.Subject().Valid() {
-				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", iamCfg.Login.ID))
+				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", sessionManagement.Pages.Login))
 			} else {
 				menu = append(menu, ui.ScaffoldMenuEntry{
 					Icon:  avatar.Text(wnd.Subject().Name()),
@@ -283,7 +267,9 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		return ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
-				b.profileDialog(wnd, menuDialogPresented),
+				ui.IfFunc(b.cfg.sessionManagement != nil, func() core.View {
+					return b.profileDialog(wnd, b.cfg.sessionManagement, menuDialogPresented)
+				}),
 
 				view,
 				alert.BannerMessages(wnd),
@@ -295,10 +281,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 }
 
 func (b *ScaffoldBuilder) isAdmin(wnd core.Window) bool {
-	return auth.OneOf(wnd.Subject(), iam.ReadGroup, iam.ReadPermission, iam.ReadRole, iam.ReadUser)
+	return auth.OneOf(wnd.Subject(), role.PermFindAll, user.PermFindAll, group.PermFindAll, user.PermFindAll)
 }
 
-func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
+func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *SessionManagement) core.View {
 	return ui.VStack(
 		ui.HStack(
 			avatar.Text(wnd.Subject().Name()).Size(ui.L120),
@@ -308,13 +294,18 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 				ui.HStack(
 					colorSchemeToggle(wnd),
 					ui.If(b.isAdmin(wnd), ui.SecondaryButton(func() {
-						wnd.Navigation().ForwardTo(b.cfg.iamSettings.Dashboard.ID, nil)
-					}).PreIcon(heroOutline.UserGroup).AccessibilityLabel("Nutzer verwalten")),
+						if admMgmt := b.cfg.adminManagement; admMgmt != nil {
+							wnd.Navigation().ForwardTo(admMgmt.Pages.Dashboard, nil)
+						}
+					}).PreIcon(heroOutline.Cog6Tooth).AccessibilityLabel("Admin Center")),
 					ui.SecondaryButton(func() {
-						service := b.cfg.iamSettings.Service
-						service.Logout(wnd.SessionID())
-						wnd.UpdateSubject(service.Subject(wnd.SessionID()))
-						wnd.Navigation().ForwardTo(b.cfg.iamSettings.Logout.ID, nil)
+						if _, err := sessionManagement.UseCases.Logout(session.ID(wnd.SessionID())); err != nil {
+							alert.ShowBannerError(wnd, err)
+							return
+						}
+
+						wnd.UpdateSubject(auth.InvalidSubject{})
+						wnd.Navigation().ForwardTo(sessionManagement.Pages.Logout, nil)
 					}).PreIcon(heroOutline.ArrowLeftStartOnRectangle).AccessibilityLabel("Abmelden"),
 				).FullWidth().Gap(ui.L8).Alignment(ui.Leading),
 			).Gap(ui.L4).Alignment(ui.Leading),
@@ -322,7 +313,7 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 		ui.HLineWithColor(ui.ColorAccent),
 		ui.HStack(
 			ui.SecondaryButton(func() {
-				wnd.Navigation().ForwardTo(b.cfg.iamSettings.Profile.Path(), nil)
+				wnd.Navigation().ForwardTo(sessionManagement.Pages.Profile, nil)
 			}).Title("Konto verwalten"),
 		).FullWidth().Alignment(ui.Trailing),
 		ui.HStack(
@@ -339,13 +330,13 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 	).Alignment(ui.Leading).FullWidth()
 }
 
-func (b *ScaffoldBuilder) profileDialog(wnd core.Window, state *core.State[bool]) core.View {
+func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *SessionManagement, state *core.State[bool]) core.View {
 	if !state.Get() {
 		return nil
 	}
 
 	subj := wnd.Subject()
-	return alert.Dialog(subj.Name(), b.profileMenu(wnd), state, alert.Closeable(), alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
+	return alert.Dialog(subj.Name(), b.profileMenu(wnd, sessionManagement), state, alert.Closeable(), alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
 }
 
 func colorSchemeToggle(wnd core.Window) core.View {

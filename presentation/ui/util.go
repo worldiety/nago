@@ -20,7 +20,11 @@ func renderComponents(ctx core.RenderContext, c []core.View) []ora.Component {
 		if component == nil {
 			continue
 		}
-		res = append(res, component.Render(ctx))
+		v := component.Render(ctx)
+		if v != nil {
+			res = append(res, v)
+		}
+
 	}
 
 	return res
@@ -36,6 +40,11 @@ func propertyOf[T any](ctx core.RenderContext, s *core.State[T]) ora.Property[T]
 // If conditionally returns the view or nil. This can be used as a kind of inline ternary operator
 func If(b bool, t core.View) core.View {
 	return IfElse(b, t, nil)
+}
+
+// IfFunc conditionally returns the view or nil. This can be used as a kind of inline ternary operator
+func IfFunc(b bool, fn func() core.View) core.View {
+	return IfElse(b, Lazy(fn), nil)
 }
 
 // IfElse conditionally returns one or the other view. This can be used as a kind of inline ternary operator.

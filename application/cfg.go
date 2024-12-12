@@ -55,7 +55,6 @@ type Configurator struct {
 	applicationName          string
 	applicationVersion       string
 	dataDir                  string
-	iamSettings              IAMSettings
 	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.View
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
 	destructors              []func()
@@ -68,6 +67,10 @@ type Configurator struct {
 	systemServices           []dependency
 	mailManagement           *MailManagement
 	mailManagementHandler    func(*MailManagement)
+	userManagement           *UserManagement
+	roleManagement           *RoleManagement
+	adminManagement          *AdminManagement
+	sessionManagement        *SessionManagement
 	decorator                Decorator
 }
 
@@ -194,14 +197,7 @@ func (c *Configurator) DataDir() string {
 			dataDir = cwd
 		}
 
-		// do not escalate home-dir pollution on dev-machines
-		legacyDataDir := filepath.Join(dataDir, fmt.Sprintf(".%s", c.ApplicationID()))
-		if _, err := os.Stat(legacyDataDir); os.IsNotExist(err) {
-			dataDir = filepath.Join(dataDir, ".nago", string(c.ApplicationID()))
-		} else {
-			dataDir = legacyDataDir
-			slog.Warn("using legacy data directory")
-		}
+		dataDir = filepath.Join(dataDir, ".nago", string(c.ApplicationID()))
 
 		_ = os.MkdirAll(dataDir, 0700) // security: only owner can read,write,exec
 		c.SetDataDir(dataDir)

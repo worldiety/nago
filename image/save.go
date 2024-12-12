@@ -4,17 +4,28 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/image/draw"
 	"image"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"log/slog"
 )
+
+type File interface {
+	// Name of the file
+	Name() string
+	// MimeType returns the known mime type, if available.
+	MimeType() (string, bool)
+	// Size returns the known file size, if available.
+	Size() (int64, bool)
+	// Transfer copies the underlying bytes into dst.
+	Transfer(dst io.Writer) (int64, error)
+}
 
 // Options are used in two cases: first as default parameters for all source sets which will be created
 // and second deviating options for a specific case, where the default options shall not apply.
@@ -26,7 +37,7 @@ type Options struct {
 }
 
 // CreateSrcSet accepts the given files and returns at least a src set.
-type CreateSrcSet func(user auth.Subject, customOpts Options, img core.File) (SrcSet, error)
+type CreateSrcSet func(user permission.Auditable, customOpts Options, img File) (SrcSet, error)
 
 func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) CreateSrcSet {
 	if opts.MaxFileSize == 0 {
@@ -37,7 +48,7 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 		opts.MaxWidthOrHeight = 3840
 	}
 
-	return func(user auth.Subject, customOpts Options, img core.File) (SrcSet, error) {
+	return func(user permission.Auditable, customOpts Options, img File) (SrcSet, error) {
 		// inherit and overload default Options
 		if customOpts.MaxWidthOrHeight == 0 {
 			customOpts.MaxWidthOrHeight = opts.MaxWidthOrHeight

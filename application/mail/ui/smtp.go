@@ -6,6 +6,12 @@ import (
 	"go.wdy.de/nago/presentation/ui/crud"
 )
 
-func SmtpPage(wnd core.Window, useCases crud.UseCases[mail.Smtp, mail.SmtpID]) core.View {
-	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "SMTP Server"}, useCases)(wnd)
+func SmtpPage(wnd core.Window, useCases mail.UseCases) core.View {
+	cruds := crud.UseCasesFromFuncs(
+		useCases.Smtp.FindByID,
+		useCases.Smtp.FindAll,
+		useCases.Smtp.DeleteByID,
+		useCases.Smtp.Save,
+	)
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "SMTP Server"}, cruds)(wnd)
 }

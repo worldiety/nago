@@ -2,7 +2,7 @@ package uimail
 
 import "go.wdy.de/nago/presentation/core"
 
-type MailPages struct {
+type Pages struct {
 	SMTPServer        core.NavigationPath
 	OutgoingMailQueue core.NavigationPath
 	MailScheduler     core.NavigationPath

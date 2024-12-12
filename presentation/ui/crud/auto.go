@@ -2,7 +2,7 @@ package crud
 
 import (
 	"fmt"
-	"go.wdy.de/nago/annotation"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -78,7 +78,7 @@ type AutoViewOptions struct {
 
 func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
 	if repoUC, ok := useCases.(repositoryUsecases[E, ID]); ok {
-		return bnd.wnd.Subject().HasPermission(repoUC.permFindAll.Identity())
+		return bnd.wnd.Subject().HasPermission(repoUC.permFindAll)
 	}
 
 	return true
@@ -86,7 +86,7 @@ func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCas
 
 func canCreate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
 	if repoUC, ok := useCases.(repositoryUsecases[E, ID]); ok {
-		return bnd.wnd.Subject().HasPermission(repoUC.permCreate.Identity())
+		return bnd.wnd.Subject().HasPermission(repoUC.permCreate)
 	}
 
 	return true
@@ -94,7 +94,7 @@ func canCreate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCase
 
 func canDelete[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
 	if repoUC, ok := useCases.(repositoryUsecases[E, ID]); ok {
-		return bnd.wnd.Subject().HasPermission(repoUC.permDelete.Identity())
+		return bnd.wnd.Subject().HasPermission(repoUC.permDelete)
 	}
 
 	return true
@@ -102,7 +102,7 @@ func canDelete[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCase
 
 func canSave[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases UseCases[E, ID]) bool {
 	if repoUC, ok := useCases.(repositoryUsecases[E, ID]); ok {
-		return bnd.wnd.Subject().HasPermission(repoUC.permSave.Identity())
+		return bnd.wnd.Subject().HasPermission(repoUC.permSave)
 	}
 
 	return true
@@ -168,7 +168,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 	).Alignment(ui.Leading).Padding(ui.Padding{Top: ui.L40}).Frame(ui.Frame{}.FullWidth())
 }
 
-func NewUseCases[E Aggregate[E, ID], ID ~string](permissionPrefix annotation.PermissionID, repo data.Repository[E, ID]) UseCases[E, ID] {
+func NewUseCases[E Aggregate[E, ID], ID ~string](permissionPrefix permission.ID, repo data.Repository[E, ID]) UseCases[E, ID] {
 	if !permissionPrefix.Valid() {
 		panic(fmt.Sprintf("invalid permission prefix: %v", permissionPrefix))
 	}
@@ -179,10 +179,10 @@ func NewUseCases[E Aggregate[E, ID], ID ~string](permissionPrefix annotation.Per
 
 	return repositoryUsecases[E, ID]{
 		repo:        repo,
-		permFindAll: annotation.Permission[findAll[E]](string(permissionPrefix) + "find"),
-		permSave:    annotation.Permission[saveOne[E]](string(permissionPrefix) + "save"),
-		permCreate:  annotation.Permission[createOne[E]](string(permissionPrefix) + "create"),
-		permDelete:  annotation.Permission[deleteOne[E]](string(permissionPrefix) + "delete"),
+		permFindAll: permission.Make[findAll[E]](permissionPrefix + "find"),
+		permSave:    permission.Make[saveOne[E]](permissionPrefix + "save"),
+		permCreate:  permission.Make[createOne[E]](permissionPrefix + "create"),
+		permDelete:  permission.Make[deleteOne[E]](permissionPrefix + "delete"),
 	}
 }
 
@@ -215,15 +215,15 @@ func (u useCasesFuncs[E, ID]) Save(subject auth.Subject, entity E) (ID, error) {
 }
 
 type repositoryUsecases[E Aggregate[E, ID], ID ~string] struct {
-	permFindAll annotation.SubjectPermission
-	permSave    annotation.SubjectPermission
-	permCreate  annotation.SubjectPermission
-	permDelete  annotation.SubjectPermission
+	permFindAll permission.ID
+	permSave    permission.ID
+	permCreate  permission.ID
+	permDelete  permission.ID
 	repo        data.Repository[E, ID]
 }
 
 func (r repositoryUsecases[E, ID]) FindByID(subject auth.Subject, id ID) (std.Option[E], error) {
-	if err := subject.Audit(r.permFindAll.Identity()); err != nil {
+	if err := subject.Audit(r.permFindAll); err != nil {
 		return std.None[E](), err
 	}
 
@@ -231,7 +231,7 @@ func (r repositoryUsecases[E, ID]) FindByID(subject auth.Subject, id ID) (std.Op
 }
 
 func (r repositoryUsecases[E, ID]) All(subject auth.Subject) iter.Seq2[E, error] {
-	if err := subject.Audit(r.permFindAll.Identity()); err != nil {
+	if err := subject.Audit(r.permFindAll); err != nil {
 		return xslices.ValuesWithError([]E(nil), err)
 	}
 
@@ -239,7 +239,7 @@ func (r repositoryUsecases[E, ID]) All(subject auth.Subject) iter.Seq2[E, error]
 }
 
 func (r repositoryUsecases[E, ID]) DeleteByID(subject auth.Subject, id ID) error {
-	if err := subject.Audit(r.permDelete.Identity()); err != nil {
+	if err := subject.Audit(r.permDelete); err != nil {
 		return err
 	}
 
@@ -248,7 +248,7 @@ func (r repositoryUsecases[E, ID]) DeleteByID(subject auth.Subject, id ID) error
 
 func (r repositoryUsecases[E, ID]) Save(subject auth.Subject, entity E) (ID, error) {
 	var zeroID ID
-	if err := subject.Audit(r.permSave.Identity()); err != nil {
+	if err := subject.Audit(r.permSave); err != nil {
 		return zeroID, err
 	}
 

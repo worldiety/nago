@@ -27,14 +27,11 @@ func main() {
 		)...)
 
 		std.Must(cfg.MailManagement())
+		std.Must(cfg.SessionManagement())
 
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
-		iamCfg := application.IAMSettings{}
-		iamCfg.Decorator = cfg.Decorator()
-		iamCfg = cfg.IAM(iamCfg)
-
-		cfg.RootView(".", iamCfg.DecorateRootView(func(wnd core.Window) core.View {
+		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 
 			return ui.VStack(
 				ui.Text("Global declared licenses:").Font(ui.Title),

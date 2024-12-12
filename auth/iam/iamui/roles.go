@@ -1,14 +1,6 @@
 package iamui
 
-import (
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/auth/iam"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/crud"
-)
-
-func Roles(wnd core.Window, service *iam.Service) core.View {
+/*func Roles(wnd core.Window, service *iam.Service) core.View {
 
 	subject := wnd.Subject()
 
@@ -55,3 +47,4 @@ func Roles(wnd core.Window, service *iam.Service) core.View {
 	return crud.View[iam.Role](opts)
 
 }
+*/

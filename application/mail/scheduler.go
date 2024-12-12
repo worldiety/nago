@@ -15,7 +15,7 @@ type ScheduleOptions struct {
 }
 
 // StartScheduler starts a new scheduler instance to process the [Outgoing] mails.
-func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpServerRepository, mails Repository) {
+func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepository, mails Repository) {
 	if opts.SendInterval == 0 {
 		opts.SendInterval = time.Minute
 	}

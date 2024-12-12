@@ -1,6 +1,6 @@
 package iamui
 
-import (
+/*import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/presentation/core"
@@ -43,3 +43,4 @@ func Groups(wnd core.Window, service *iam.Service) core.View {
 
 	return crud.View[iam.Group](opts)
 }
+*/

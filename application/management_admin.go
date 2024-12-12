@@ -5,6 +5,10 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
+type AdminManagement struct {
+	Pages uiadmin.Pages
+}
+
 func (c *Configurator) AdminPages() uiadmin.Pages {
 	var pages uiadmin.Pages
 	if c.HasMailManagement() {
@@ -12,4 +16,16 @@ func (c *Configurator) AdminPages() uiadmin.Pages {
 	}
 
 	return pages
+}
+
+func (c *Configurator) AdminManagement() (AdminManagement, error) {
+	if c.adminManagement == nil {
+		c.adminManagement = &AdminManagement{
+			Pages: uiadmin.Pages{
+				Dashboard: "admin",
+			},
+		}
+	}
+
+	return *c.adminManagement, nil
 }

@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/std"
-	"iter"
 	"mime"
 	"net"
 	"net/mail"
@@ -17,34 +14,26 @@ import (
 	"time"
 )
 
-// TODO we need a role here
-//var PermissionManage = annotation.Permission[Send]("de.worldiety.nago.mail.manage")
-
-type SmtpServerRepository data.Repository[Smtp, SmtpID]
+type SmtpRepository data.Repository[Smtp, SmtpID]
 
 type SmtpID string
 
-type SmtpCategory string
+type Category string
 
 const (
-	Primary  SmtpCategory = "primary"
-	Normal   SmtpCategory = "normal"
-	Disabled SmtpCategory = "disabled"
+	Primary  Category = "primary"
+	Normal   Category = "normal"
+	Disabled Category = "disabled"
 )
 
-type FindSmtpByID func(auth.Subject, SmtpID) (std.Option[Smtp], error)
-type DeleteSmtpByID func(auth.Subject, SmtpID) error
-type FindAllSmtp func(auth.Subject) iter.Seq2[Smtp, error]
-type SaveSmtp func(auth.Subject, Smtp) (SmtpID, error)
-
 type Smtp struct {
-	ID       SmtpID       `visible:"false"`
-	Name     string       `label:"Name"`
-	Host     string       `label:"Host" supportingText:"beispielsweise mail.your-server.de"`
-	Port     int          `label:"Port" supportingText:"Der Standardport ist üblicherweise 587 mit TLS" table-visible:"false"`
-	User     string       `label:"Login" table-visible:"false"`
-	Password string       `label:"Passwort" style:"secret" table-visible:"false"`
-	Category SmtpCategory `label:"Kategorie" values:"[\"primary=Primär\", \"normal=Normal\",\"disabled=Deaktiviert\"]"`
+	ID       SmtpID   `visible:"false"`
+	Name     string   `label:"Name"`
+	Host     string   `label:"Host" supportingText:"beispielsweise mail.your-server.de"`
+	Port     int      `label:"Port" supportingText:"Der Standardport ist üblicherweise 587 mit TLS" table-visible:"false"`
+	User     string   `label:"Login" table-visible:"false"`
+	Password string   `label:"Passwort" style:"secret" table-visible:"false"`
+	Category Category `label:"Kategorie" values:"[\"primary=Primär\", \"normal=Normal\",\"disabled=Deaktiviert\"]"`
 }
 
 func (s Smtp) WithIdentity(id SmtpID) Smtp {

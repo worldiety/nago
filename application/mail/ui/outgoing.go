@@ -6,6 +6,12 @@ import (
 	"go.wdy.de/nago/presentation/ui/crud"
 )
 
-func OutgoingQueuePage(wnd core.Window, useCases crud.UseCases[mail.Outgoing, mail.ID]) core.View {
-	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Warteschlange Ausgang", CreateDisabled: true}, useCases)(wnd)
+func OutgoingQueuePage(wnd core.Window, useCases mail.UseCases) core.View {
+	cruds := crud.UseCasesFromFuncs(
+		useCases.Outgoing.FindByID,
+		useCases.Outgoing.FindAll,
+		useCases.Outgoing.DeleteByID,
+		useCases.Outgoing.Save,
+	)
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Warteschlange Ausgang", CreateDisabled: true}, cruds)(wnd)
 }

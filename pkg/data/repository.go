@@ -93,8 +93,11 @@ type Repository[E Aggregate[ID], ID IDType] interface {
 	// DeleteByEntity is like DeleteByID but provides a congruent API.
 	DeleteByEntity(E) error
 
-	// Save persists a single aggregate.
-	// Implementations with transaction support must save within a single transaction, hopefully Aora.Ptr.
+	// Save persists a single aggregate. It is not an error, if such entity already exist or not, thus it is
+	// either created or updated automatically (Upsert). This allows explicitly eventual consistent data stores,
+	// where timing and ordering becomes a problem. Thus, you should write reliable business anyway. The world
+	// is never perfect.
+	// Implementations with transaction support must save within a single transaction.
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	Save(E) error
 
