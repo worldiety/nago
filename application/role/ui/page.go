@@ -10,6 +10,7 @@ type Pages struct {
 	Roles core.NavigationPath
 }
 
+// TODO crud useCases do not distinguish between update and create which causes wrong entity creation if ID is modifiable
 func GroupPage(wnd core.Window, useCases crud.UseCases[role.Role, role.ID]) core.View {
 	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Rollen"}, useCases)(wnd)
 }

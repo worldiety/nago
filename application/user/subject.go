@@ -136,7 +136,7 @@ type viewImpl struct {
 }
 
 func newViewImpl(repo Repository, roles data.ReadRepository[role.Role, role.ID], user User) *viewImpl {
-	return &viewImpl{
+	v := &viewImpl{
 		user:              user,
 		lastRefreshedAt:   time.Now(),
 		refreshInterval:   5 * time.Minute,
@@ -145,7 +145,12 @@ func newViewImpl(repo Repository, roles data.ReadRepository[role.Role, role.ID],
 		groupsLookup:      make(map[group.ID]struct{}),
 		permissionsLookup: make(map[permission.ID]struct{}),
 		licencesLookup:    make(map[license.ID]struct{}),
+		rolesLookup:       make(map[role.ID]struct{}),
 	}
+
+	v.load()
+
+	return v
 }
 
 func (v *viewImpl) refresh() User {
@@ -215,29 +220,34 @@ func (v *viewImpl) load() {
 	}
 
 	clear(v.permissions)
+	v.permissions = v.permissions[:0]
 	for _, id := range v.user.Permissions {
-		v.permissions = append(v.permissions, id)
-		for _, roleId := range v.user.Roles {
-			optRole, err := v.roleRepo.FindByID(roleId)
-			if err != nil {
-				slog.Error("referenced role in user not loadable", "id", v.user.ID, "roleID", roleId, "err", err)
-				continue
-			}
+		v.permissionsLookup[id] = struct{}{}
+	}
 
-			if optRole.IsNone() {
-				slog.Error("referenced role in user is orphaned", "id", v.user.ID, "roleID", roleId)
-				continue
-			}
+	for _, roleId := range v.user.Roles {
+		optRole, err := v.roleRepo.FindByID(roleId)
+		if err != nil {
+			slog.Error("referenced role in user not loadable", "id", v.user.ID, "roleID", roleId, "err", err)
+			continue
+		}
 
-			for _, pid := range optRole.Unwrap().Permissions {
-				v.permissions = append(v.permissions, pid)
-			}
+		if optRole.IsNone() {
+			slog.Error("referenced role in user is orphaned", "id", v.user.ID, "roleID", roleId)
+			continue
+		}
+
+		for _, pid := range optRole.Unwrap().Permissions {
+			v.permissionsLookup[pid] = struct{}{}
 		}
 	}
 
-	for _, id := range v.permissions {
-		v.permissionsLookup[id] = struct{}{}
+	for id := range v.permissionsLookup {
+		v.permissions = append(v.permissions, id)
 	}
+
+	slices.Sort(v.permissions)
+
 }
 
 func (v *viewImpl) Permissions() iter.Seq[permission.ID] {

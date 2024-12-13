@@ -44,9 +44,18 @@ type Auditable interface {
 type Permission struct {
 	ID ID `json:"id"`
 	// Name is the unlocalized fallback or default human-readable name of the permission.
-	Name string `json:"n"`
+	Name string `json:"name"`
 	// Description is the unlocalized fallback or default human-readable description of the permission.
-	Description string `json:"d"`
+	Description string `json:"desc"`
+}
+
+func (p Permission) String() string {
+	return p.Name
+}
+
+func (p Permission) WithIdentity(id ID) Permission {
+	p.ID = id
+	return p
 }
 
 func (p Permission) Identity() ID {
@@ -153,7 +162,8 @@ func All() iter.Seq[Permission] {
 	mutex.RUnlock()
 
 	slices.SortFunc(tmp, func(a, b Permission) int {
-		return strings.Compare(a.Name, b.Name)
+		// always sort by natural ID order, they are more stable than translated and non-prefixed natural texts
+		return strings.Compare(string(a.ID), string(b.ID))
 	})
 
 	return slices.Values(tmp)

@@ -67,6 +67,9 @@ func NewUseCases(outgoingRepo Repository, smtpRepo SmtpRepository) UseCases {
 
 	smtpCrud := auth.DecorateRepository(auth.DecoratorOptions{EntityName: "SMTP Server", PermissionPrefix: "nago.mail.smtp"}, smtpRepo)
 
+	PermFindAllSmtp = smtpCrud.PermFindAll
+	PermFindAllOutgoing = outgoingCrud.PermFindAll
+
 	var uc UseCases
 	uc.SendMail = sendMailFn
 

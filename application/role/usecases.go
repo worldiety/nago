@@ -11,10 +11,10 @@ import (
 type ID string
 
 type Role struct {
-	ID          ID              `json:"id,omitempty"`
+	ID          ID              `json:"id,omitempty" table-visible:"false"`
 	Name        string          `json:"name,omitempty"`
-	Description string          `json:"description,omitempty"`
-	Permissions []permission.ID `json:"permissions,omitempty"`
+	Description string          `json:"description,omitempty" label:"Beschreibung"`
+	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.iam.permission.list" label:"Berechtigungen"`
 }
 
 func (r Role) WithIdentity(id ID) Role {

@@ -27,7 +27,7 @@ func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create
 
 		mail := Email(strings.ToLower(string(model.Email)))
 		if !mail.Valid() {
-			return User{}, fmt.Errorf("invalid email: %v", model.Email)
+			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Auch wenn es sich um eine potentiell gültige E-Mail Adresse handeln könnte, wird dieses Format nicht unterstützt.")
 		}
 
 		if err := model.Password.Validate(); err != nil {

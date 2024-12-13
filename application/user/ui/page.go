@@ -21,7 +21,7 @@ type Pages struct {
 	Users core.NavigationPath
 }
 
-func Page(
+func Users(
 	wnd core.Window,
 	deleteUser user.Delete,
 	allUsers user.FindAll,
@@ -33,7 +33,7 @@ func Page(
 	allRoles role.FindAll,
 	allPermissions permission.FindAll,
 	allGroups group.FindAll,
-	viewOf user.ViewOf,
+	viewOf user.SubjectFromUser,
 
 ) core.View {
 	subject := wnd.Subject()

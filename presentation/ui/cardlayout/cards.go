@@ -8,6 +8,8 @@ import (
 
 type TCardLayout struct {
 	children []core.View
+	frame    ui.Frame
+	padding  ui.Padding
 }
 
 func Layout(children ...core.View) TCardLayout {
@@ -21,6 +23,16 @@ func Layout(children ...core.View) TCardLayout {
 	}
 
 	return TCardLayout{children: tmp}
+}
+
+func (c TCardLayout) Frame(frame ui.Frame) TCardLayout {
+	c.frame = frame
+	return c
+}
+
+func (c TCardLayout) Padding(padding ui.Padding) TCardLayout {
+	c.padding = padding
+	return c
 }
 
 func (c TCardLayout) Render(ctx core.RenderContext) core.RenderNode {
@@ -39,7 +51,11 @@ func (c TCardLayout) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Each(slices.Values(c.children), func(t core.View) ui.TGridCell {
 			return ui.GridCell(t)
 		})...,
-	).Gap(ui.L16).Columns(columns).Render(ctx)
+	).Gap(ui.L16).
+		Columns(columns).
+		Frame(c.frame).
+		Padding(c.padding).
+		Render(ctx)
 }
 
 type TCard struct {

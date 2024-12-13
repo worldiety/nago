@@ -39,6 +39,10 @@ func NewEnableBootstrapAdmin(repo Repository, system System, userByMail FindByMa
 			PermChangeOtherPassword,
 			PermFindAll,
 			PermFindByMail,
+			PermUpdateOtherContact,
+			PermChangeOtherPassword,
+			PermUpdateOtherPermissions,
+			PermUpdateOtherRoles,
 			group.PermCreate,
 			group.PermFindAll,
 			group.PermDelete,
@@ -48,6 +52,8 @@ func NewEnableBootstrapAdmin(repo Repository, system System, userByMail FindByMa
 			role.PermFindByID,
 			role.PermFindAll,
 			role.PermDelete,
+			role.PermUpdate,
+			permission.PermFindAll,
 		}
 
 		hType := Argon2IdMin

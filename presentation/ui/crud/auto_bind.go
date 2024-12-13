@@ -40,7 +40,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 			}
 
 			disabled := false
-			if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "false" {
+			if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "true" {
 				disabled = true
 			}
 
@@ -309,8 +309,9 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 				}
 			}
 
-			if last, ok := fieldsBuilder.Last(); ok {
+			if last, ok := fieldsBuilder.RemoveLast(); ok {
 				last.Disabled = disabled
+				fieldsBuilder.Append(last)
 			}
 		}
 

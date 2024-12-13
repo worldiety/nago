@@ -27,25 +27,39 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			return UserManagement{}, fmt.Errorf("cannot get role usecases: %w", err)
 		}
 
-		c.userManagement = &UserManagement{
-			UseCases: user.NewUseCases(userRepo, roleUseCases.roleRepository),
-			Pages:    uiuser.Pages{},
+		permissions, err := c.PermissionManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get permission usecases: %w", err)
 		}
 
-		c.AddOnWindowCreatedObserver(func(wnd core.Window) {
-			/*	optView, err := c.userManagement.UseCases.ViewOf(wnd.Subject(), session.ID(wnd.SessionID()))
-				if err != nil {
-					alert.ShowBannerError(wnd, err)
-					return
-				}
+		groups, err := c.GroupManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get group usecases: %w", err)
+		}
 
-				if optView.IsSome() {
-					wnd.UpdateSubject(optView.Unwrap())
-				} else {
-					wnd.UpdateSubject(auth.InvalidSubject{})
-				}*/
+		c.userManagement = &UserManagement{
+			UseCases: user.NewUseCases(userRepo, roleUseCases.roleRepository),
+			Pages: uiuser.Pages{
+				Users: "admin/accounts",
+			},
+		}
 
-		})
+		c.RootView(c.userManagement.Pages.Users, c.DecorateRootView(func(wnd core.Window) core.View {
+			return uiuser.Users(wnd,
+				c.userManagement.UseCases.Delete,
+				c.userManagement.UseCases.FindAll,
+				c.userManagement.UseCases.Create,
+				c.userManagement.UseCases.UpdateOtherContact,
+				c.userManagement.UseCases.UpdateOtherGroups,
+				c.userManagement.UseCases.UpdateOtherRoles,
+				c.userManagement.UseCases.UpdateOtherPermissions,
+				roleUseCases.UseCases.FindAll,
+				permissions.UseCases.FindAll,
+				groups.UseCases.FindAll,
+				c.userManagement.UseCases.SubjectFromUser,
+			)
+		}))
+
 	}
 
 	return *c.userManagement, nil

@@ -12,18 +12,15 @@ func (c *Configurator) HasMailManagement() bool {
 	return c.mailManagement != nil
 }
 
-// MailManagementHandler configures a function which is invoked to post-modify the just instantiated
-// [Configurator.MailManagement]. Usually, this should be called before the first call to [Configurator.MailManagement].
-// If MailManagementHandler is called after MailManagement has been initialized, it will be applied immediately.
+// MailManagementHandler installs a mutator for a future invocation or immediately mutates the current configuration.
+// Note, that even though most build-in implementations will perform a dynamic lookup, you may still want to install
+// the handler BEFORE any *Management system has been initialized.
 func (c *Configurator) MailManagementHandler(fn func(*MailManagement)) {
-	if c.mailManagement == nil {
-		// invoke later, if not yet created
-		c.mailManagementHandler = fn
-		return
-	}
+	c.mailManagementMutator = fn
 
-	// invoke immediately
-	fn(c.mailManagement)
+	if c.mailManagement != nil {
+		fn(c.mailManagement)
+	}
 }
 
 // MailManagement initializes and returns the default mailing subsystem.
@@ -60,6 +57,8 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			SendMailTest:      "admin/mail/test",
 			Templates:         "admin/mail/templates",
 		}
+
+		c.mailManagement.UseCases = mail.NewUseCases(outgoingMailRepo, smtpRepo)
 
 		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail)

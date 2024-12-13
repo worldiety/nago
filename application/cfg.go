@@ -66,11 +66,14 @@ type Configurator struct {
 	images                   *Images
 	systemServices           []dependency
 	mailManagement           *MailManagement
-	mailManagementHandler    func(*MailManagement)
+	mailManagementMutator    func(*MailManagement)
 	userManagement           *UserManagement
 	roleManagement           *RoleManagement
 	adminManagement          *AdminManagement
+	adminManagementMutator   func(m *AdminManagement)
 	sessionManagement        *SessionManagement
+	permissionManagement     *PermissionManagement
+	groupManagement          *GroupManagement
 	decorator                Decorator
 }
 

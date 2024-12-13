@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
-func NewViewOf(users Repository, roles data.ReadRepository[role.Role, role.ID]) ViewOf {
+func NewViewOf(users Repository, roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
 	return func(subject permission.Auditable, id ID) (std.Option[Subject], error) {
 		// TODO not sure what permissions we need, this is only system anyway
 		optUsr, err := users.FindByID(id)

@@ -21,12 +21,7 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 
 	return ui.VStack(
 		ui.HStack(
-			ui.VStack(
-				ui.VStack(
-					ui.Text(opts.title).Font(ui.Title),
-					ui.HLineWithColor(ui.ColorAccent),
-				).Padding(ui.Padding{Bottom: ui.L16}),
-			),
+			ui.H1(opts.title),
 			ui.Spacer(),
 			ui.HStack(slices.Collect[core.View](func(yield func(core.View) bool) {
 				yield(ui.TextField("", opts.queryState.String()).InputValue(opts.queryState).Style(ui.TextFieldReduced))

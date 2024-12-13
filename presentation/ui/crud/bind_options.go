@@ -60,12 +60,14 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 	formPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.create.form.%s", typ))
 	noSuchPermissionPresented := core.StateOf[bool](wnd, fmt.Sprintf("crud.create.npp.%s", typ))
 	stateErrMsg := core.StateOf[string](wnd, fmt.Sprintf("crud.create.errmsg.%s", typ))
+	errState := core.StateOf[error](wnd, fmt.Sprintf("crud.create.error.%s", typ))
 	return ui.VStack(
 
 		alert.Dialog(xstrings.Join2(" ", xstrings.If(bnd.entityAliasName == "", "Eintrag", bnd.entityAliasName), "erstellen"), ui.Composable(func() core.View {
 			subBnd := bnd.Inherit(data.Idtos(initial.Identity()))
 
 			return ui.VStack(
+				alert.BannerError(errState.Get()),
 				ui.If(stateErrMsg.Get() != "", ui.Text(stateErrMsg.Get()).Color(ui.SE0)),
 				Form(subBnd, entityState),
 			).Frame(ui.Frame{}.FullWidth())
@@ -79,15 +81,12 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 		}), alert.Save(func() bool {
 			errMsg, err := createFn(entityState.Get())
 			if err != nil {
-				var denied PermissionDenied
-				if errors.As(err, &denied) {
-					noSuchPermissionPresented.Set(true)
-				} else {
-					tracking.RequestSupport(wnd, err)
-				}
+				errState.Set(err)
 
 				return false
 			}
+
+			errState.Set(nil)
 
 			stateErrMsg.Set(errMsg)
 			if errMsg != "" {

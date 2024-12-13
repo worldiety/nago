@@ -2,11 +2,9 @@ package application
 
 import (
 	_ "embed"
-	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/session"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/glossary/docm"
 	"go.wdy.de/nago/glossary/docm/markdown"
@@ -280,8 +278,13 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 	}
 }
 
-func (b *ScaffoldBuilder) isAdmin(wnd core.Window) bool {
-	return auth.OneOf(wnd.Subject(), role.PermFindAll, user.PermFindAll, group.PermFindAll, user.PermFindAll)
+func (b *ScaffoldBuilder) hasAdminCenter(wnd core.Window) bool {
+	if b.cfg.adminManagement == nil {
+		return false
+	}
+
+	visibleEntries := b.cfg.adminManagement.QueryGroups(wnd.Subject(), "")
+	return len(visibleEntries) > 0
 }
 
 func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *SessionManagement) core.View {
@@ -293,9 +296,9 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 				ui.Text(wnd.Subject().Email()),
 				ui.HStack(
 					colorSchemeToggle(wnd),
-					ui.If(b.isAdmin(wnd), ui.SecondaryButton(func() {
+					ui.If(b.hasAdminCenter(wnd), ui.SecondaryButton(func() {
 						if admMgmt := b.cfg.adminManagement; admMgmt != nil {
-							wnd.Navigation().ForwardTo(admMgmt.Pages.Dashboard, nil)
+							wnd.Navigation().ForwardTo(admMgmt.Pages.AdminCenter, nil)
 						}
 					}).PreIcon(heroOutline.Cog6Tooth).AccessibilityLabel("Admin Center")),
 					ui.SecondaryButton(func() {
