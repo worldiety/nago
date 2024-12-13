@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
@@ -42,8 +42,7 @@ func main() {
 				enabled.Set(len(newValue) > 0)
 			})
 
-			//err := fmt.Errorf("hello world")
-			err := iam.PermissionDeniedError("not allowed reading")
+			err := std.NewLocalizedError("hello", "hello world")
 
 			return VStack(
 				picker.Picker[Person]("Personen", persons, personState).

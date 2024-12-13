@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"go.wdy.de/nago/annotation"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 )

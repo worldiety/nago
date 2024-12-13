@@ -15,6 +15,10 @@ type SessionManagement struct {
 	Pages    uisession.Pages
 }
 
+func (c *Configurator) Authentication() (any, error) {
+	return c.SessionManagement()
+}
+
 func (c *Configurator) SessionManagement() (SessionManagement, error) {
 	if c.sessionManagement == nil {
 

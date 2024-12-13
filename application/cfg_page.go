@@ -49,6 +49,10 @@ func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd
 	c.factories[id] = factory
 }
 
+func (c *Configurator) RootViewWithDecoration(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
+	c.RootView(viewRootID, c.DecorateRootView(factory))
+}
+
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
 	c.fsys = append(c.fsys, fsys)
 	return c
@@ -101,7 +105,7 @@ func (c *Configurator) newHandler() http.Handler {
 	for _, dep := range c.systemServices {
 		app2.AddSystemServiceWithName(dep.name, dep.service)
 	}
-	
+
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {

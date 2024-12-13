@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"fmt"
-	"go.wdy.de/nago/annotation"
 	"go.wdy.de/nago/auth"
 	"slices"
 	"strings"

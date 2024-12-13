@@ -4,22 +4,27 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
-// sayHello greets everyone who has been authenticated.
-// #[@Usecase]
-// #[go.permission.audit]
-func sayHello(auth auth.Subject) string {
-	if err := auth.Audit("de.worldiety.tutorial.say_hello"); err != nil {
-		return fmt.Sprintf("invalid: %v", err)
-	}
+var myPermission = permission.Declare[SayHello]("de.worldiety.tutorial.say_hello", "Jeden Grüßen", "Diese Erlaubnis muss dem Nutzer zugewiesen werden.")
 
-	return "hello " + auth.Name()
+// SayHello greets everyone who has been authenticated.
+type SayHello func(auth auth.Subject) string
+
+func NewSayHello() SayHello {
+	return func(auth auth.Subject) string {
+		if err := auth.Audit(myPermission); err != nil {
+			return fmt.Sprintf("invalid: %v", err)
+		}
+
+		return "hello " + auth.Name()
+	}
 }
 
 func main() {
@@ -27,34 +32,16 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		iamCfg := application.IAMSettings{}
-		iamCfg.Permissions.Permissions = iam.PermissionsFrom(Permissions())
-		iamCfg = cfg.IAM(iamCfg)
+		std.Must(cfg.Authentication())
+		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
-		cfg.RootView(".", func(wnd core.Window) core.View {
+		sayHello := NewSayHello()
+
+		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
-				ui.PrimaryButton(func() {
-					wnd.Navigation().ForwardTo(iamCfg.Permissions.ID, nil)
-				}).Title("Berechtigungen"),
-
-				ui.PrimaryButton(func() {
-					wnd.Navigation().ForwardTo(iamCfg.Users.ID, nil)
-				}).Title("Benutzer"),
-
-				ui.PrimaryButton(func() {
-					wnd.Navigation().ForwardTo(iamCfg.Login.ID, nil)
-				}).Title("Anmelden"),
-
-				ui.PrimaryButton(func() {
-					wnd.Navigation().ForwardTo(iamCfg.Logout.ID, nil)
-				}).Title("Abmelden"),
-
 				ui.Text(fmt.Sprintf("%s", sayHello(wnd.Subject()))),
 			).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen())
 		})
 
-		cfg.OnDestroy(func() {
-			fmt.Println("regular shutdown")
-		})
 	}).Run()
 }

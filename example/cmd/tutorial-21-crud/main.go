@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xtime"
@@ -169,7 +168,7 @@ func main() {
 				crud.AggregateActions("Optionen",
 					crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error {
 						slog.Info("delete person", "id", p.ID)
-						return iam.PermissionDeniedError("bla")
+						return nil
 					}), func(person Person) bool {
 						return person.ID != "1"
 					}),

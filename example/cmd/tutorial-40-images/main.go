@@ -4,6 +4,7 @@ package main
 import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/image"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ui/crud"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -39,14 +40,13 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
+		std.Must(cfg.Authentication())
+
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
+		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
-		iamCfg := application.IAMSettings{}
-		iamCfg.Decorator = cfg.NewScaffold().Decorator()
-		iamCfg = cfg.IAM(iamCfg)
-
-		cfg.RootView(".", iamCfg.DecorateRootView(crud.AutoRootView(crud.AutoRootViewOptions{
+		cfg.RootView(".", cfg.DecorateRootView(crud.AutoRootView(crud.AutoRootViewOptions{
 			Title: "Personen",
 		}, useCases)))
 
