@@ -16,7 +16,7 @@ func main() {
 	appId := flag.String("app", "", "application id which shall be modified")
 	cmd := flag.String("cmd", "", "command which shall be executed, one of [admin-reset]")
 	pwd := flag.String("pwd", "", "password which shall be used for admin-reset")
-	lifetime := flag.Duration("lifetime", time.Hour, "how long is the lifetime, e.g. for the admin user. 0 means 30 years.")
+	lifetime := flag.Duration("lifetime", time.Hour, "how long is the lifetime, e.g. for the admin user. 0 means disabled lifetime. Default is 1 hour.")
 
 	flag.Parse()
 

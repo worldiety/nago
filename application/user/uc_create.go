@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/pkg/std"
 	"strings"
 	"sync"
@@ -54,7 +53,7 @@ func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create
 			PasswordHash:          hash,
 			CreatedAt:             createdAt,
 			LastPasswordChangedAt: createdAt,
-			Status:                enum.Make[AccountStatus](Enabled{}),
+			Status:                Enabled{},
 		}
 
 		// intentionally validate now, so that an attacker cannot use this method to massively

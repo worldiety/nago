@@ -6,7 +6,6 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/text/language"
 	"iter"
@@ -180,13 +179,13 @@ func (v *viewImpl) load() {
 	optUsr, err := v.repo.FindByID(v.user.ID)
 	if err != nil {
 		slog.Error("cannot refresh user", "id", v.user.ID, "err", err)
-		v.user = User{ID: v.user.ID, Status: enum.Make[AccountStatus](Disabled{})}
+		v.user = User{ID: v.user.ID, Status: Disabled{}}
 		return
 	}
 
 	if optUsr.IsNone() {
 		slog.Error("user is gone", "id", v.user.ID, "err", err)
-		v.user = User{ID: v.user.ID, Status: enum.Make[AccountStatus](Disabled{})}
+		v.user = User{ID: v.user.ID, Status: Disabled{}}
 		return
 	}
 

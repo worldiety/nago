@@ -2,11 +2,11 @@ package json
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/enum/json"
 	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
@@ -95,7 +95,8 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) enc
 		return "", nil, err
 	}
 
-	buf, err := json.Marshal(persistenceModel)
+	// important: use a pointer here, otherwise we will miss the raw-interface type, if the persistence model is polymorphic
+	buf, err := json.Marshal(&persistenceModel)
 	if err != nil {
 		return "", nil, err
 	}

@@ -13,11 +13,7 @@ import (
 	"time"
 )
 
-var _ = enum.Declare[AccountStatus, struct {
-	Enabled      Enabled
-	Disabled     Disabled
-	EnabledUntil EnabledUntil
-}]()
+var AccountStatusEnum = enum.Declare[AccountStatus, func(func(Enabled), func(Disabled), func(EnabledUntil), func(any))]()
 
 type AccountStatus interface {
 	accountStatus()
@@ -103,20 +99,20 @@ func (d Contact) IsZero() bool {
 }
 
 type User struct {
-	ID                    ID                      `json:"id"`
-	Email                 Email                   `json:"email"`
-	Contact               Contact                 `json:"contact,omitzero"`
-	Salt                  []byte                  `json:"salt,omitempty"`
-	Algorithm             HashAlgorithm           `json:"algorithm,omitempty"`
-	PasswordHash          []byte                  `json:"passwordHash,omitempty"`
-	LastPasswordChangedAt time.Time               `json:"lastPasswordChangedAt"`
-	CreatedAt             time.Time               `json:"createdAt"`
-	EMailVerified         bool                    `json:"emailVerified,omitempty"`
-	Status                enum.Box[AccountStatus] `json:"status,omitempty"`
-	Roles                 []role.ID               `json:"roles,omitempty"`       // roles may also contain inherited permissions
-	Groups                []group.ID              `json:"groups,omitempty"`      // groups may also contain inherited permissions
-	Permissions           []permission.ID         `json:"permissions,omitempty"` // individual custom permissions
-	Licenses              []license.ID            `json:"licenses,omitempty"`
+	ID                    ID              `json:"id"`
+	Email                 Email           `json:"email"`
+	Contact               Contact         `json:"contact,omitzero"`
+	Salt                  []byte          `json:"salt,omitempty"`
+	Algorithm             HashAlgorithm   `json:"algorithm,omitempty"`
+	PasswordHash          []byte          `json:"passwordHash,omitempty"`
+	LastPasswordChangedAt time.Time       `json:"lastPasswordChangedAt"`
+	CreatedAt             time.Time       `json:"createdAt"`
+	EMailVerified         bool            `json:"emailVerified,omitempty"`
+	Status                AccountStatus   `json:"status,omitempty"`
+	Roles                 []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
+	Groups                []group.ID      `json:"groups,omitempty"`      // groups may also contain inherited permissions
+	Permissions           []permission.ID `json:"permissions,omitempty"` // individual custom permissions
+	Licenses              []license.ID    `json:"licenses,omitempty"`
 }
 
 func (u User) Identity() ID {
@@ -130,12 +126,20 @@ func (u User) WithIdentity(id ID) User {
 
 func (u User) Enabled() bool {
 	enabled := false
-	switch status := u.Status.Unwrap().(type) {
-	case Enabled:
-		enabled = true
-	case EnabledUntil:
-		enabled = time.Now().Before(status.ValidUntil)
-	}
+	AccountStatusEnum.Switch(u.Status)(
+		func(Enabled) {
+			enabled = true
+		},
+		func(disabled Disabled) {
 
+		},
+		func(until EnabledUntil) {
+			enabled = time.Now().Before(until.ValidUntil)
+		},
+		func(a any) {
+
+		},
+	)
+	
 	return enabled
 }

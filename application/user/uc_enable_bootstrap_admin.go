@@ -6,7 +6,6 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/enum"
 	"time"
 )
 
@@ -28,7 +27,7 @@ func NewEnableBootstrapAdmin(repo Repository, system System, userByMail FindByMa
 			usr.Contact.Lastname = "admin"
 		}
 
-		usr.Status = enum.Make[AccountStatus](EnabledUntil{ValidUntil: aliveUntil})
+		usr.Status = EnabledUntil{ValidUntil: aliveUntil}
 
 		// we are not allowed to have domain specific permissions, only those to bootstrap other users.
 		// even admins must not see customers secret domain stuff.

@@ -1,73 +1,104 @@
 package enum_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/pkg/enum"
+	"go.wdy.de/nago/pkg/enum/json"
 	"testing"
+)
+
+var OfferEnum = enum.Declare[Offer, func(func(AcceptedOffer), func(UncheckOffer), func(any))](
+	//enum.Rename[WdyCoin]("wdy-coin"),
+	//	enum.Adjacently("t2", "c2"),
+	//enum.NoZero(),
+	enum.Sealed(),
+)
+
+type Offer interface {
+	offer()
+}
+type AcceptedOffer struct {
+	Sum Currency
+}
+
+func (AcceptedOffer) offer() {}
+
+type UncheckOffer struct {
+	Sum Currency
+}
+
+func (UncheckOffer) offer() {}
+
+var CurrencyEnum = enum.Declare[Currency, func(func(Dollar), func(EuroCent), func(FakeMoney), func(any))](
+	enum.Adjacently("t3", "c3"),
 )
 
 type Currency interface {
 	currency()
 }
-
 type Dollar int
 
 func (Dollar) currency() {}
 
-type EuroCent int
+type EuroCent int64
 
 func (EuroCent) currency() {}
 
-type WdyCoin struct {
+type FakeMoney interface {
+	fakeMoney()
+	currency()
 }
 
-func (WdyCoin) currency() {}
+type WdyCoin struct{}
 
-var CurrencyEnum = enum.Declare[Currency, struct {
-	Dollar `tagValue:"$"`
-	EuroCent
-	WdyCoin
-	_ any //`encoding:"adjacent"`
-}]()
+func (WdyCoin) fakeMoney() {}
 
-func ExampleDeclare() {
-	enum.Declare[Currency, struct {
-		Dollar `tagValue:"$"`
-		EuroCent
-		WdyCoin
-		_ any //`encoding:"adjacent"`
-	}]()
+type WizCoin [32]byte
 
-	var currency enum.Box[Currency]
-	currency = enum.Make[Currency](EuroCent(3))
-	fmt.Println(currency)
-	// Output: {"EuroCent":3}
-}
+func (WizCoin) fakeMoney() {}
 
-func TestDeclare(t *testing.T) {
+type UnsealedOffer struct{}
 
-	var currency enum.Box[Currency]
+func (UnsealedOffer) offer() {}
 
-	fmt.Println(currency.Ordinal())
-	currency = enum.Make[Currency](EuroCent(3))
-	fmt.Println(currency.Ordinal())
+func TestDeclare2(t *testing.T) {
 
-	buf, err := json.Marshal(currency)
+	var offer Offer
+	//offer = UnsealedOffer{}
+	offer = AcceptedOffer{Sum: EuroCent(2)}
+
+	OfferEnum.Switch(offer)(func(offer AcceptedOffer) {
+		fmt.Printf("acceppted offer: %v\n", offer)
+		CurrencyEnum.Switch(offer.Sum)(func(dollar Dollar) {
+			fmt.Printf("dollar: %v\n", dollar)
+		}, func(cent EuroCent) {
+			fmt.Printf("eurocent: %v\n", cent)
+		}, func(money FakeMoney) {
+			fmt.Printf("fake money: %v\n", money)
+		}, func(a any) {
+
+		})
+	}, func(offer UncheckOffer) {
+		fmt.Printf("unchecked offer: %v\n", offer)
+	}, func(a any) {
+		fmt.Printf("any offer: %v %T\n", offer, offer)
+	})
+
+	buf, err := json.Marshal(&offer)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	fmt.Println(string(buf))
 
-	var other enum.Box[Currency]
-	err = json.Unmarshal(buf, &other)
-	if err != nil {
+	var test Offer
+	if err := json.Unmarshal(buf, &test); err != nil {
 		t.Fatal(err)
 	}
 
-	if other != currency {
-		t.Fatal("should be equal")
+	if test != offer {
+		t.Fatal("not equal")
 	}
-	fmt.Println(other)
+
+	fmt.Printf("%#v\n", test)
 }
