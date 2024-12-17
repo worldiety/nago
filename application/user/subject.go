@@ -398,7 +398,8 @@ func (v *viewImpl) Valid() bool {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	return v.user.EMailVerified && v.user.Enabled()
+	//return v.user.EMailVerified && v.user.Enabled()
+	return v.user.Enabled() // TODO fix me if templating is enabled
 }
 
 func (v *viewImpl) Language() language.Tag {
