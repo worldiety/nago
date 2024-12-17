@@ -2,6 +2,7 @@ package crud
 
 import (
 	"encoding/json"
+	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -27,7 +28,7 @@ type AutoBindingOptions struct {
 //   - hidden to omit it completely
 //
 // To automatically also create a CRUD component e.g. for an entire page, see also [AutoView].
-func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases UseCases[E, ID]) *Binding[E] {
+func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases rcrud.UseCases[E, ID]) *Binding[E] {
 	var zero E
 	bnd := NewBinding[E](wnd)
 	for _, group := range groupedFields[E]() {
@@ -324,11 +325,11 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 	}
 
 	var aggregateOpts []ElementViewFactory[E]
-	if canSave(bnd, useCases) {
+	if canUpdate(bnd, useCases) {
 		if opts.ButtonEditForwardTo == "" {
 			aggregateOpts = append(aggregateOpts, ButtonEdit[E, ID](bnd, func(model E) (errorText string, infrastructureError error) {
 
-				_, err := useCases.Save(wnd.Subject(), model)
+				err := useCases.Update(wnd.Subject(), model)
 				if err != nil {
 					return "", err // The UI will hide the error
 					// from the user and will show a general tracking.SupportRequestDialog

@@ -70,13 +70,6 @@ type permissionContext struct {
 var globalPermissions = map[ID]permissionContext{}
 var mutex sync.RWMutex
 
-// Make is like [Register] but just requires a unique ID as minimum and is a convenience wrapper.
-// This may be fine, if the name and description may be obtained automatically e.g. an AST parser and code generator.
-// See also [Declare] and [Register].
-func Make[UseCase any](id ID) ID {
-	return register[UseCase](Permission{ID: id}, 3)
-}
-
 // Declare is like [Make] but with 3 parameters. See also [Make] and [Register].
 func Declare[UseCase any](id ID, name string, description string) ID {
 	return register[UseCase](Permission{ID: id, Name: name, Description: description}, 3)

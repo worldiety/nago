@@ -351,7 +351,7 @@ func (e *encodeState) reflectValue(v reflect.Value, opts encOpts) {
 		return
 	}
 
-	fmt.Println(v, v.Type(), v.Kind())
+	//fmt.Println(v, v.Type(), v.Kind())
 
 	valueEncoder(v)(e, v, opts)
 }

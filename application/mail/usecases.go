@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -29,7 +30,8 @@ type FindTemplateByNameAndLanguage func(subject auth.Subject, name string, langu
 type FindSmtpByID func(auth.Subject, SmtpID) (std.Option[Smtp], error)
 type DeleteSmtpByID func(auth.Subject, SmtpID) error
 type FindAllSmtp func(auth.Subject) iter.Seq2[Smtp, error]
-type SaveSmtp func(auth.Subject, Smtp) (SmtpID, error)
+type CreateSmtp func(auth.Subject, Smtp) (SmtpID, error)
+type UpdateSmtp func(auth.Subject, Smtp) error
 
 type UseCases struct {
 	Outgoing struct {
@@ -54,7 +56,8 @@ type UseCases struct {
 		FindByID   FindSmtpByID
 		DeleteByID DeleteSmtpByID
 		FindAll    FindAllSmtp
-		Save       SaveSmtp
+		Create     CreateSmtp
+		Update     UpdateSmtp
 		repository Repository // intentionally not exposed, to avoid that devs can simply destroy invariants
 	}
 
@@ -62,13 +65,20 @@ type UseCases struct {
 }
 
 func NewUseCases(outgoingRepo Repository, smtpRepo SmtpRepository) UseCases {
-	outgoingCrud := auth.DecorateRepository(auth.DecoratorOptions{EntityName: "Ausgehende Mails", PermissionPrefix: "nago.mail.outgoing"}, outgoingRepo)
+	outgoingCrud := rcrud.DecorateRepository(rcrud.DecoratorOptions{EntityName: "Ausgehende Mails", PermissionPrefix: "nago.mail.outgoing"}, outgoingRepo)
 	sendMailFn := NewSendMail(outgoingRepo)
 
-	smtpCrud := auth.DecorateRepository(auth.DecoratorOptions{EntityName: "SMTP Server", PermissionPrefix: "nago.mail.smtp"}, smtpRepo)
+	smtpCrud := rcrud.DecorateRepository(rcrud.DecoratorOptions{EntityName: "SMTP Server", PermissionPrefix: "nago.mail.smtp"}, smtpRepo)
 
-	PermFindAllSmtp = smtpCrud.PermFindAll
-	PermFindAllOutgoing = outgoingCrud.PermFindAll
+	PermSmtpFindAll = smtpCrud.PermFindAll
+	PermSmtpFindByID = smtpCrud.PermFindByID
+	PermSmtpDeleteByID = smtpCrud.PermDeleteByID
+	PermSmtpUpdate = smtpCrud.PermUpdate
+	PermSmtpCreate = smtpCrud.PermCreate
+
+	PermOutgoingFindAll = outgoingCrud.PermFindAll
+	PermOutgoingDeleteByID = outgoingCrud.PermDeleteByID
+	PermOutgoingFindByID = outgoingCrud.PermFindByID
 
 	var uc UseCases
 	uc.SendMail = sendMailFn
@@ -81,7 +91,8 @@ func NewUseCases(outgoingRepo Repository, smtpRepo SmtpRepository) UseCases {
 	uc.Smtp.FindByID = smtpCrud.FindByID
 	uc.Smtp.DeleteByID = smtpCrud.DeleteByID
 	uc.Smtp.FindAll = smtpCrud.FindAll
-	uc.Smtp.Save = smtpCrud.Upsert
+	uc.Smtp.Create = smtpCrud.Create
+	uc.Smtp.Update = smtpCrud.Update
 
 	return uc
 }

@@ -2,6 +2,7 @@ package uigroup
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
@@ -14,19 +15,31 @@ type Pages struct {
 }
 
 func Groups(wnd core.Window, useCases group.UseCases) core.View {
-	uc := crud.UseCasesFromFuncs[group.Group, group.ID](
-		func(subject auth.Subject, id group.ID) (std.Option[group.Group], error) {
+	uc := rcrud.UseCasesFrom(&rcrud.Funcs[group.Group, group.ID]{
+		PermFindByID:   group.PermFindByID,
+		PermFindAll:    group.PermFindAll,
+		PermDeleteByID: group.PermDelete,
+		PermCreate:     group.PermCreate,
+		PermUpdate:     group.PermUpdate,
+		FindByID: func(subject auth.Subject, id group.ID) (std.Option[group.Group], error) {
 			return useCases.FindByID(subject, id)
 		},
-		func(subject auth.Subject) iter.Seq2[group.Group, error] {
+		FindAll: func(subject auth.Subject) iter.Seq2[group.Group, error] {
 			return useCases.FindAll(subject)
 		},
-		func(subject auth.Subject, id group.ID) error {
+		DeleteByID: func(subject auth.Subject, id group.ID) error {
 			return useCases.Delete(subject, id)
 		},
-		func(subject auth.Subject, entity group.Group) (group.ID, error) {
-			return useCases.Upsert(subject, entity)
+		Create: func(subject auth.Subject, e group.Group) (group.ID, error) {
+			return useCases.Create(subject, e)
 		},
-	)
+		Update: func(subject auth.Subject, e group.Group) error {
+			return useCases.Update(subject, e)
+		},
+		Upsert: func(subject auth.Subject, e group.Group) (group.ID, error) {
+			return useCases.Upsert(subject, e)
+		},
+	})
+
 	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Gruppen"}, uc)(wnd)
 }

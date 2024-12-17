@@ -47,13 +47,13 @@ func DefaultGroups(pages Pages) []Group {
 				Title:      "SMTP",
 				Text:       "Das System unterstützt verschiedene EMail-Ausgangsserver. Ein Ausgangsserver ist z.B. für die Self-Service Funktionen der Nutzer erforderlich.",
 				Target:     pages.Mail.SMTPServer,
-				Permission: mail.PermFindAllSmtp,
+				Permission: mail.PermSmtpFindAll,
 			},
 			{
 				Title:      "Warteschlange",
 				Text:       "E-Mails werden über eine Postausgangs-Warteschlange versendet.",
 				Target:     pages.Mail.OutgoingMailQueue,
-				Permission: mail.PermFindAllOutgoing,
+				Permission: mail.PermOutgoingFindAll,
 			},
 			{
 				Title:  "Vorlagen",

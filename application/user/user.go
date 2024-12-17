@@ -115,6 +115,10 @@ type User struct {
 	Licenses              []license.ID    `json:"licenses,omitempty"`
 }
 
+func (u User) String() string {
+	return string(u.ID)
+}
+
 func (u User) Identity() ID {
 	return u.ID
 }
@@ -140,6 +144,6 @@ func (u User) Enabled() bool {
 
 		},
 	)
-	
+
 	return enabled
 }
