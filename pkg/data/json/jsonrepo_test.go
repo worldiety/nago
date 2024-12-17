@@ -1,15 +1,10 @@
 package json
 
 import (
-	"go.etcd.io/bbolt"
-	"go.wdy.de/nago/pkg/blob/badger"
-	"go.wdy.de/nago/pkg/blob/bolt"
 	"go.wdy.de/nago/pkg/blob/fs"
 	"go.wdy.de/nago/pkg/blob/mem"
-	"go.wdy.de/nago/pkg/blob/pebble"
 	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/data"
-	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -41,54 +36,6 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 		testSuite(t, NewSloppyJSONRepository[Person, string](tdb.NewBlobStore(db, "test")))
 	})
 
-	t.Run("pebble-prefix", func(t *testing.T) {
-		db, err := pebble.Open(filepath.Join(t.TempDir(), "pebble-test-prefix"))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		db.SetPrefix("blub")
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-		db.SetPrefix("blub2")
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-	})
-
-	t.Run("pebble", func(t *testing.T) {
-		db, err := pebble.Open(filepath.Join(t.TempDir(), "pebble-test"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-	})
-
-	t.Run("badger-prefix", func(t *testing.T) {
-		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test-prefix"))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		db.SetPrefix("blub")
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-		db.SetPrefix("blub2")
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-	})
-
-	t.Run("badger", func(t *testing.T) {
-		db, err := badger.Open(filepath.Join(t.TempDir(), "badger-test"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		testSuite(t, NewSloppyJSONRepository[Person, string](db))
-	})
-
-	t.Run("bbolt", func(t *testing.T) {
-		db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		testSuite(t, NewSloppyJSONRepository[Person, string](bolt.NewBlobStore(db, "test")))
-	})
-
 	t.Run("mem", func(t *testing.T) {
 		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
 	})
@@ -96,18 +43,6 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 }
 
 func BenchmarkNewSloppyJSONRepository(b *testing.B) {
-
-	b.Run("bbolt", func(t *testing.B) {
-		for n := 0; n < b.N; n++ {
-			db, err := bbolt.Open(filepath.Join(t.TempDir(), "test.db"), os.ModePerm, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			testSuite(t, NewSloppyJSONRepository[Person, string](bolt.NewBlobStore(db, "test")))
-			db.Close()
-		}
-
-	})
 
 	b.Run("mem", func(t *testing.B) {
 		for n := 0; n < b.N; n++ {
