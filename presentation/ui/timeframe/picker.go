@@ -6,6 +6,7 @@ import (
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/timepicker"
+	"math"
 	"time"
 )
 
@@ -43,8 +44,8 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 	tz := selectedState.Get().Timezone.Location()
 
 	day := selectedState.Get().StartTime.Date(tz)
-	startOffset := selectedState.Get().StartTime.Time(tz).Sub(day.Time(tz))
-	endOffset := selectedState.Get().EndTime.Time(tz).Sub(day.Time(tz))
+	startOffset := selectedState.Get().StartTime.Time(tz).Sub(day.Time(tz)).Truncate(time.Minute)
+	endOffset := selectedState.Get().EndTime.Time(tz).Sub(day.Time(tz)).Truncate(time.Minute)
 
 	p := TPicker{
 		label:       label,
@@ -62,6 +63,11 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 		}),
 	}
 
+	p.day.Observe(func(newValue xtime.Date) {
+		p.startTime.Notify()
+		p.endTime.Notify()
+	})
+
 	p.startTime.Observe(func(newValue time.Duration) {
 		if p.startTime.Get() > p.endTime.Get() {
 			p.endTime.Set(p.endTime.Get() + 24*time.Hour)
@@ -71,8 +77,8 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 		day := p.day.Get().Time(p.tz)
 
 		tf := p.targetState.Get()
-		tf.StartTime = xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli())
-		tf.EndTime = xtime.UnixMilliseconds(p.endTime.Get().Milliseconds() + day.UnixMilli())
+		tf.StartTime = roundToMinute(xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli()))
+		tf.EndTime = roundToMinute(xtime.UnixMilliseconds(p.endTime.Get().Milliseconds() + day.UnixMilli()))
 		tf.Timezone = xtime.Timezone(tz.String())
 		p.targetState.Set(tf)
 		p.targetState.Notify()
@@ -87,14 +93,18 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 		day := p.day.Get().Time(p.tz)
 
 		tf := p.targetState.Get()
-		tf.StartTime = xtime.UnixMilliseconds(p.startTime.Get().Milliseconds() + day.UnixMilli())
-		tf.EndTime = xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli())
+		tf.StartTime = roundToMinute(xtime.UnixMilliseconds(p.startTime.Get().Milliseconds() + day.UnixMilli()))
+		tf.EndTime = roundToMinute(xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli()))
 		tf.Timezone = xtime.Timezone(tz.String())
 		p.targetState.Set(tf)
 		p.targetState.Notify()
 	})
 
 	return p
+}
+
+func roundToMinute(t xtime.UnixMilliseconds) xtime.UnixMilliseconds {
+	return xtime.UnixMilliseconds(math.Round(float64(t)/1000/60)) * 1000 * 60
 }
 
 func (c TPicker) Padding(padding ui.Padding) ui.DecoredView {

@@ -214,7 +214,7 @@ func (c TPicker) dayDown() {
 	if days < 0 {
 		days = 99
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) dayUp() {
@@ -223,7 +223,7 @@ func (c TPicker) dayUp() {
 	if days > 99 {
 		days = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) hourDown() {
@@ -232,7 +232,7 @@ func (c TPicker) hourDown() {
 	if hours < 0 {
 		hours = 23
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) hourUp() {
@@ -241,7 +241,7 @@ func (c TPicker) hourUp() {
 	if hours >= 24 {
 		hours = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) minDown() {
@@ -250,7 +250,7 @@ func (c TPicker) minDown() {
 	if minutes < 0 {
 		minutes = 59
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) minUp() {
@@ -259,7 +259,7 @@ func (c TPicker) minUp() {
 	if minutes > 59 {
 		minutes = 0
 	}
-	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 func (c TPicker) secDown() {
@@ -278,6 +278,14 @@ func (c TPicker) secUp() {
 		seconds = 0
 	}
 	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+}
+
+func (c TPicker) round(d time.Duration) time.Duration {
+	if !c.showSeconds {
+		return d.Truncate(time.Minute)
+	}
+
+	return d
 }
 
 func (c TPicker) renderPicker() core.View {
