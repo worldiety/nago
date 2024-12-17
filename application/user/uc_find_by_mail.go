@@ -13,16 +13,25 @@ func NewFindByMail(repository Repository) FindByMail {
 		}
 
 		// TODO this is really slow O(n), we either need some cache or an inverse index
+		var consistencyCheck []User
 		for user, err := range repository.All() {
 			if err != nil {
 				return std.None[User](), fmt.Errorf("cannot loop user repo: %w", err)
 			}
 
 			if user.Email == email {
-				return std.Some(user), nil
+				consistencyCheck = append(consistencyCheck, user)
 			}
 		}
 
-		return std.None[User](), nil
+		if len(consistencyCheck) == 0 {
+			return std.None[User](), nil
+		}
+
+		if len(consistencyCheck) == 1 {
+			return std.Some(consistencyCheck[0]), nil
+		}
+
+		return std.None[User](), fmt.Errorf("unique mail violation: multiple users for email %v", email)
 	}
 }

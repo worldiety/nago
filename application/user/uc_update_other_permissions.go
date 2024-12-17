@@ -17,7 +17,7 @@ func NewUpdateOtherPermissions(mutex *sync.Mutex, repo Repository) UpdateOtherPe
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		optUsr, err := repo.FindByID(subject.ID())
+		optUsr, err := repo.FindByID(id)
 		if err != nil {
 			return fmt.Errorf("cannot find user by id: %w", err)
 		}
