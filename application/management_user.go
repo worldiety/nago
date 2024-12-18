@@ -22,6 +22,11 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		userRepo := json.NewSloppyJSONRepository[user.User, user.ID](userStore)
 
+		licenseUseCases, err := c.LicenseManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get license usecases: %w", err)
+		}
+
 		roleUseCases, err := c.RoleManagement()
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get role usecases: %w", err)
@@ -36,6 +41,8 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get group usecases: %w", err)
 		}
+
+		_ = licenseUseCases
 
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(userRepo, roleUseCases.roleRepository),

@@ -2,6 +2,7 @@ package user
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
@@ -35,6 +36,14 @@ type ReadMyContact func(subject AuditableUser) (Contact, error)
 type SubjectFromUser func(subject permission.Auditable, id ID) (std.Option[Subject], error)
 type EnableBootstrapAdmin func(aliveUntil time.Time, password Password) (ID, error)
 
+// CountAssignedUserLicense counts how many licenses of the given id have been assigned.
+type CountAssignedUserLicense func(auditable permission.Auditable, id license.ID) (int, error)
+
+// RevokeAssignedUserLicense can be used to ensure a correctly assigned amount of licenses.
+// If a license is removed or the MaxUser limit is lowered, the given count of licenses can be revoked. It
+// is undefined which users get revoked. A negative amount will remove the license from all users.
+type RevokeAssignedUserLicense func(auditable permission.Auditable, id license.ID, count int) error
+
 // System returns the always mighty build-in system user. This user never authenticates but can always
 // be used from the code side to invoke any auditable use case. Use it with caution and only if necessary.
 // Never use it, if you could instead pass an authenticated user. Typical scenarios are
@@ -45,23 +54,25 @@ type System func() Subject
 type AuthenticateByPassword func(email Email, password Password) (std.Option[User], error)
 
 type UseCases struct {
-	Create                 Create
-	FindByID               FindByID
-	FindByMail             FindByMail
-	FindAll                FindAll
-	ChangeOtherPassword    ChangeOtherPassword
-	ChangeMyPassword       ChangeMyPassword
-	Delete                 Delete
-	UpdateMyContact        UpdateMyContact
-	UpdateOtherContact     UpdateOtherContact
-	UpdateOtherRoles       UpdateOtherRoles
-	UpdateOtherPermissions UpdateOtherPermissions
-	UpdateOtherGroups      UpdateOtherGroups
-	ReadMyContact          ReadMyContact
-	SubjectFromUser        SubjectFromUser
-	EnableBootstrapAdmin   EnableBootstrapAdmin
-	System                 System
-	AuthenticateByPassword AuthenticateByPassword
+	Create                    Create
+	FindByID                  FindByID
+	FindByMail                FindByMail
+	FindAll                   FindAll
+	ChangeOtherPassword       ChangeOtherPassword
+	ChangeMyPassword          ChangeMyPassword
+	Delete                    Delete
+	UpdateMyContact           UpdateMyContact
+	UpdateOtherContact        UpdateOtherContact
+	UpdateOtherRoles          UpdateOtherRoles
+	UpdateOtherPermissions    UpdateOtherPermissions
+	UpdateOtherGroups         UpdateOtherGroups
+	ReadMyContact             ReadMyContact
+	SubjectFromUser           SubjectFromUser
+	EnableBootstrapAdmin      EnableBootstrapAdmin
+	System                    System
+	AuthenticateByPassword    AuthenticateByPassword
+	CountAssignedUserLicense  CountAssignedUserLicense
+	RevokeAssignedUserLicense RevokeAssignedUserLicense
 }
 
 func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -89,23 +100,28 @@ func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]
 	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)
 	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)
 
+	countAssignedUserLicenseFn := NewCountAssignedUserLicense(&globalLock, users)
+	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)
+
 	return UseCases{
-		Create:                 createFn,
-		FindByID:               findByIdFn,
-		FindByMail:             findByMailFn,
-		FindAll:                findAllFn,
-		ChangeOtherPassword:    nil,
-		ChangeMyPassword:       changeMyPasswordFn,
-		Delete:                 deleteFn,
-		UpdateMyContact:        updateMyContactFn,
-		UpdateOtherContact:     updateOtherContactFn,
-		UpdateOtherRoles:       updateOtherRolesFn,
-		UpdateOtherPermissions: updateOtherPermissionsFn,
-		UpdateOtherGroups:      updateOtherGroupsFn,
-		ReadMyContact:          readMyContactFn,
-		SubjectFromUser:        subjectFromUserFn,
-		EnableBootstrapAdmin:   enableBootstrapAdminFn,
-		System:                 systemFn,
-		AuthenticateByPassword: authenticateByPasswordFn,
+		Create:                    createFn,
+		FindByID:                  findByIdFn,
+		FindByMail:                findByMailFn,
+		FindAll:                   findAllFn,
+		ChangeOtherPassword:       nil,
+		ChangeMyPassword:          changeMyPasswordFn,
+		Delete:                    deleteFn,
+		UpdateMyContact:           updateMyContactFn,
+		UpdateOtherContact:        updateOtherContactFn,
+		UpdateOtherRoles:          updateOtherRolesFn,
+		UpdateOtherPermissions:    updateOtherPermissionsFn,
+		UpdateOtherGroups:         updateOtherGroupsFn,
+		ReadMyContact:             readMyContactFn,
+		SubjectFromUser:           subjectFromUserFn,
+		EnableBootstrapAdmin:      enableBootstrapAdminFn,
+		System:                    systemFn,
+		AuthenticateByPassword:    authenticateByPasswordFn,
+		CountAssignedUserLicense:  countAssignedUserLicenseFn,
+		RevokeAssignedUserLicense: revokeAssignedUserLicenseFn,
 	}
 }

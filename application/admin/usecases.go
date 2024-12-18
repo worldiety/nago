@@ -2,6 +2,7 @@ package admin
 
 import (
 	uigroup "go.wdy.de/nago/application/group/ui"
+	uilicense "go.wdy.de/nago/application/license/ui"
 	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/application/permission"
 	uipermission "go.wdy.de/nago/application/permission/ui"
@@ -23,6 +24,7 @@ type Pages struct {
 	Role       uirole.Pages
 	Group      uigroup.Pages
 	Permission uipermission.Pages
+	License    uilicense.Pages
 	Dashboard  core.NavigationPath
 }
 

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/mail"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
@@ -72,6 +73,24 @@ func DefaultGroups(pages Pages) []Group {
 				Text:       "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
 				Target:     pages.Mail.SendMailTest,
 				Permission: mail.PermSendMail,
+			},
+		},
+	})
+
+	grps = append(grps, Group{
+		Title: "Lizenzen",
+		Entries: []Card{
+			{
+				Title:      "Nutzer-Lizenzen",
+				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Nutzer-Lizenz ist eine mengenlimitierte Lizenz und wird einzelnen Konten bis zur Obergrenze zugewiesen.",
+				Target:     pages.License.UserLicenses,
+				Permission: license.PermFindAllUserLicenses,
+			},
+			{
+				Title:      "Anwendungs-Lizenzen",
+				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Anwendungs-Lizenz ist eine statische Lizenz und gilt für die gesamte Anwendungsinstanz, sobald sie aktiv ist.",
+				Target:     pages.License.AppLicenses,
+				Permission: license.PermFindAllAppLicenses,
 			},
 		},
 	})

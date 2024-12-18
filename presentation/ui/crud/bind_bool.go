@@ -41,18 +41,16 @@ func Bool[E any, T ~bool](opts BoolOptions, property Property[E, T]) Field[E] {
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
-			v := property.Get(&tmp)
-			return ui.TableCell(ui.Text(strconv.FormatBool(bool(v))))
+			return ui.TableCell(ui.Text(self.Stringer(tmp)))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
 			tmp = entity.Get()
-			v := property.Get(&tmp)
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				ui.Text(strconv.FormatBool(bool(v))),
+				ui.Text(self.Stringer(tmp)),
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
@@ -69,7 +67,12 @@ func Bool[E any, T ~bool](opts BoolOptions, property Property[E, T]) Field[E] {
 			return 0
 		},
 		Stringer: func(e E) string {
-			return strconv.FormatBool(bool(property.Get(&e)))
+			v := bool(property.Get(&e))
+			if v {
+				return "ja"
+			} else {
+				return "nein"
+			}
 		},
 	}
 }

@@ -20,7 +20,7 @@ func (c *Configurator) WithAdminManagement(fn func(m *AdminManagement)) *Configu
 	if c.adminManagement != nil {
 		fn(c.adminManagement)
 	}
-	
+
 	return c
 }
 
@@ -57,6 +57,10 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 
 				if c.groupManagement != nil {
 					pages.Group = c.groupManagement.Pages
+				}
+
+				if c.licenseManagement != nil {
+					pages.License = c.licenseManagement.Pages
 				}
 
 				return admin.DefaultGroups(pages)

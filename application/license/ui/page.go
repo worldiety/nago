@@ -1,25 +1,21 @@
-package licenseui
+package uilicense
 
 import (
 	"go.wdy.de/nago/application/license"
+	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/crud"
 )
 
-func LicenseOverviewPage(wnd core.Window, statusCalculator license.CalculateStatus) core.View {
-	status, err := statusCalculator(wnd.Subject())
-	if err != nil {
-		return alert.BannerError(err)
-	}
-
-	return ui.VStack(
-		ui.WindowTitle("Lizenzübersicht"),
-		ui.H2(""),
-		staticLicenseTable(status),
-	)
+type Pages struct {
+	AppLicenses  core.NavigationPath
+	UserLicenses core.NavigationPath
 }
 
-func staticLicenseTable(status license.Status) core.View {
-	return nil
+func AppLicensesPage(wnd core.Window, useCases rcrud.UseCases[license.AppLicense, license.ID]) core.View {
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Anwendungs-Lizenzen"}, useCases)(wnd)
+}
+
+func UserLicensesPage(wnd core.Window, useCases rcrud.UseCases[license.UserLicense, license.ID]) core.View {
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Nutzer-Lizenzen"}, useCases)(wnd)
 }

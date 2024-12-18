@@ -55,6 +55,7 @@ type UseCases[E Aggregate[E, ID], ID ~string] interface {
 
 type useCasesImpl[E Aggregate[E, EID], EID data.IDType] struct {
 	decorated *Funcs[E, EID]
+	mutex     *sync.Mutex
 }
 
 func (u useCasesImpl[E, EID]) PermFindByID() permission.ID {
@@ -86,19 +87,54 @@ func (u useCasesImpl[E, EID]) FindAll(subject auth.Subject) iter.Seq2[E, error] 
 }
 
 func (u useCasesImpl[E, EID]) DeleteByID(subject auth.Subject, id EID) error {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	return u.decorated.DeleteByID(subject, id)
 }
 
 func (u useCasesImpl[E, EID]) Upsert(subject auth.Subject, entity E) (EID, error) {
-	return u.decorated.Upsert(subject, entity)
-}
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
 
-func (u useCasesImpl[E, EID]) Create(subject auth.Subject, entity E) (EID, error) {
+	if u.decorated.Upsert != nil {
+		return u.decorated.Upsert(subject, entity)
+	}
+
+	optE, err := u.FindByID(subject, entity.Identity())
+	if err != nil {
+		return entity.Identity(), err
+	}
+
+	if optE.IsSome() {
+		return entity.Identity(), u.decorated.Update(subject, entity)
+	}
+
 	return u.decorated.Create(subject, entity)
 }
 
+func (u useCasesImpl[E, EID]) Create(subject auth.Subject, entity E) (EID, error) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	if u.decorated.Create != nil {
+		return u.decorated.Create(subject, entity)
+
+	}
+
+	return u.decorated.Upsert(subject, entity)
+}
+
 func (u useCasesImpl[E, EID]) Update(subject auth.Subject, entity E) error {
-	return u.decorated.Update(subject, entity)
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	if u.decorated.Update != nil {
+		return u.decorated.Update(subject, entity)
+	}
+
+	_, err := u.decorated.Upsert(subject, entity)
+	return err
 }
 
 type Funcs[E Aggregate[E, EID], EID data.IDType] struct {
@@ -145,8 +181,8 @@ type DecoratorOptions struct {
 	EntityName       string // translated entity name for auto generated permission details.
 }
 
-func UseCasesFrom[E Aggregate[E, EID], EID ~string](repository *Funcs[E, EID]) UseCases[E, EID] {
-	return useCasesImpl[E, EID]{decorated: repository}
+func UseCasesFrom[E Aggregate[E, EID], EID ~string](funcs *Funcs[E, EID]) UseCases[E, EID] {
+	return useCasesImpl[E, EID]{decorated: funcs, mutex: new(sync.Mutex)}
 }
 
 func DecorateRepository[E Aggregate[E, EID], EID ~string](opts DecoratorOptions, repo data.Repository[E, EID]) *Funcs[E, EID] {

@@ -74,6 +74,7 @@ type Configurator struct {
 	sessionManagement        *SessionManagement
 	permissionManagement     *PermissionManagement
 	groupManagement          *GroupManagement
+	licenseManagement        *LicenseManagement
 	decorator                Decorator
 }
 

@@ -9,7 +9,7 @@ import (
 
 func NewUpdateOtherGroups(mutex *sync.Mutex, repo Repository) UpdateOtherGroups {
 	return func(subject AuditableUser, id ID, groups []group.ID) error {
-		if err := subject.Audit(PermUpdateOtherPermissions); err != nil {
+		if err := subject.Audit(PermUpdateOtherGroups); err != nil {
 			return err
 		}
 

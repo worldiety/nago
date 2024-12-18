@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/pkg/std"
@@ -20,11 +19,11 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		// declare our licenses globally, this is also evaluated by IAM by default
-		license.Global.StoreAll(license.FromEnv(
+		/*license.Global.StoreAll(license.FromEnv(
 			licensePucBasic,
 			licensePucImage,
 			licensePucJira,
-		)...)
+		)...)*/
 
 		std.Must(cfg.MailManagement())
 		std.Must(cfg.SessionManagement())
@@ -34,7 +33,7 @@ func main() {
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 
 			return ui.VStack(
-				ui.Text("Global declared licenses:").Font(ui.Title),
+			/*	ui.Text("Global declared licenses:").Font(ui.Title),
 				ui.VStack(
 					ui.Each(license.Global.Values(), func(t license.License) core.View {
 						return ui.Text(fmt.Sprintf("%v: %v", t.LicenseName(), t.Enabled()))
@@ -50,7 +49,7 @@ func main() {
 
 						return ui.Text(fmt.Sprintf("%v: %v", lic.LicenseName(), lic.Enabled()))
 					})...,
-				),
+				),*/
 			)
 		}))
 
