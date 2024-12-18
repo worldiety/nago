@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/mail"
@@ -87,13 +88,24 @@ func DefaultGroups(pages Pages) []Group {
 				Permission: license.PermFindAllUserLicenses,
 			},
 			{
-				Title:      "Anwendungs-Lizenzen",
-				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Anwendungs-Lizenz ist eine statische Lizenz und gilt für die gesamte Anwendungsinstanz, sobald sie aktiv ist.",
+				Title:      "Modul-Lizenzen",
+				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Modul bzw. Anwendungs-Lizenz ist eine statische Lizenz und gilt für die gesamte Anwendungsinstanz, sobald sie aktiv ist.",
 				Target:     pages.License.AppLicenses,
 				Permission: license.PermFindAllAppLicenses,
 			},
 		},
 	})
+
+	grps = append(grps, Group{
+		Title: "Abrechnung",
+		Entries: []Card{
+			{
+				Title:      "Lizensierte Module",
+				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Anwendungs- bzw. Applikationslizenzen.",
+				Target:     pages.Billing.AppLicenses,
+				Permission: billing.PermAppLicenses,
+			},
+		}})
 
 	return grps
 }

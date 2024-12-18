@@ -49,7 +49,7 @@ func Link(wnd core.Window, name string, href string, target string) TText {
 			slog.Error("cannot execute link action: window is nil")
 			return
 		}
-		
+
 		if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") {
 			core.HTTPOpen(wnd.Navigation(), core.URI(href), target)
 		} else {

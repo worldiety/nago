@@ -66,7 +66,9 @@ func (c *Configurator) LicenseManagement() (LicenseManagement, error) {
 				Update: func(subject auth.Subject, e license.AppLicense) error {
 					return c.licenseManagement.UseCases.PerApp.Update(subject, e)
 				},
-				Upsert: nil, // this will be stubbed automatically by rcrud
+				Upsert: func(subject auth.Subject, e license.AppLicense) (license.ID, error) {
+					return c.licenseManagement.UseCases.PerApp.Upsert(subject, e)
+				},
 			}
 			return uilicense.AppLicensesPage(wnd, rcrud.UseCasesFrom(&funcs))
 		})
@@ -93,7 +95,9 @@ func (c *Configurator) LicenseManagement() (LicenseManagement, error) {
 				Update: func(subject auth.Subject, e license.UserLicense) error {
 					return c.licenseManagement.UseCases.PerUser.Update(subject, e)
 				},
-				Upsert: nil, // this will be stubbed automatically by rcrud
+				Upsert: func(subject auth.Subject, e license.UserLicense) (license.ID, error) {
+					return c.licenseManagement.UseCases.PerUser.Upsert(subject, e)
+				},
 			}
 			return uilicense.UserLicensesPage(wnd, rcrud.UseCasesFrom(&funcs))
 		})

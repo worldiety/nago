@@ -44,11 +44,11 @@ type CountAssignedUserLicense func(auditable permission.Auditable, id license.ID
 // is undefined which users get revoked. A negative amount will remove the license from all users.
 type RevokeAssignedUserLicense func(auditable permission.Auditable, id license.ID, count int) error
 
-// System returns the always mighty build-in system user. This user never authenticates but can always
+// SysUser returns the always mighty build-in system user. This user never authenticates but can always
 // be used from the code side to invoke any auditable use case. Use it with caution and only if necessary.
 // Never use it, if you could instead pass an authenticated user. Typical scenarios are
 // automations, cron jobs, scheduled processes or data(base) migrations.
-type System func() Subject
+type SysUser func() Subject
 
 // AuthenticateByPassword checks mail and password and returns the view of the user to the caller.
 type AuthenticateByPassword func(email Email, password Password) (std.Option[User], error)
@@ -69,7 +69,7 @@ type UseCases struct {
 	ReadMyContact             ReadMyContact
 	SubjectFromUser           SubjectFromUser
 	EnableBootstrapAdmin      EnableBootstrapAdmin
-	System                    System
+	SysUser                   SysUser
 	AuthenticateByPassword    AuthenticateByPassword
 	CountAssignedUserLicense  CountAssignedUserLicense
 	RevokeAssignedUserLicense RevokeAssignedUserLicense
@@ -119,7 +119,7 @@ func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]
 		ReadMyContact:             readMyContactFn,
 		SubjectFromUser:           subjectFromUserFn,
 		EnableBootstrapAdmin:      enableBootstrapAdminFn,
-		System:                    systemFn,
+		SysUser:                   systemFn,
 		AuthenticateByPassword:    authenticateByPasswordFn,
 		CountAssignedUserLicense:  countAssignedUserLicenseFn,
 		RevokeAssignedUserLicense: revokeAssignedUserLicenseFn,

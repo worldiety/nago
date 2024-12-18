@@ -164,7 +164,10 @@ const uploadRepository = useUploadRepository();
 
 function openRequested(evt: Event): void {
 	let msg = evt as OpenRequested
-
+	if (!msg.options) {
+		open(msg.resource)
+		return
+	}
 
 	switch (msg.options["_type"]) {
 		case "http-flow":

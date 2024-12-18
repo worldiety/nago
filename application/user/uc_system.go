@@ -9,7 +9,7 @@ import (
 	"iter"
 )
 
-func NewSystem() System {
+func NewSystem() SysUser {
 	return func() Subject {
 		return sysUser{}
 	}

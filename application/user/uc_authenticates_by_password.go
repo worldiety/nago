@@ -4,7 +4,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
-func NewAuthenticatesByPassword(userByMail FindByMail, system System) AuthenticateByPassword {
+func NewAuthenticatesByPassword(userByMail FindByMail, system SysUser) AuthenticateByPassword {
 	return func(email Email, password Password) (std.Option[User], error) {
 
 		if !email.Valid() {

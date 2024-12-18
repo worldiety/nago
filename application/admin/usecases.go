@@ -1,6 +1,7 @@
 package admin
 
 import (
+	uibilling "go.wdy.de/nago/application/billing/ui"
 	uigroup "go.wdy.de/nago/application/group/ui"
 	uilicense "go.wdy.de/nago/application/license/ui"
 	uimail "go.wdy.de/nago/application/mail/ui"
@@ -19,6 +20,7 @@ type QueryGroups func(subject auth.Subject, filterText string) []Group
 
 type Pages struct {
 	Mail       uimail.Pages
+	Billing    uibilling.Pages
 	Session    uisession.Pages
 	User       uiuser.Pages
 	Role       uirole.Pages

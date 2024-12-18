@@ -20,7 +20,8 @@ type AppLicense struct {
 	ID          ID
 	Name        string
 	Description string `label:"Beschreibung"`
-	Url         string `supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt."`
+	Url         string `table-visible:"false" supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt."`
+	Incentive   string `table-visible:"false" label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt."`
 	Enabled     bool   `label:"Lizenz aktiv" supportingText:"nur aktive Lizenzen werden als verfügbar im System dargestellt."`
 }
 
@@ -41,6 +42,7 @@ type UserLicense struct {
 	Name        string
 	Description string `label:"Beschreibung"`
 	Url         string `supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt."`
+	Incentive   string `label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt."`
 	MaxUsers    int    `label:"Maximale Anzahl an Nutzern bzw. zugeordneten Konten"`
 }
 
@@ -59,11 +61,15 @@ type CreateAppLicense func(subject permission.Auditable, license AppLicense) (ID
 type UpdateAppLicense func(subject permission.Auditable, license AppLicense) error
 type DeleteAppLicense func(subject permission.Auditable, id ID) error
 
+// UpsertAppLicense has a surprise comfort feature, because it does not overwrite the [AppLicense.Enabled] field.
+type UpsertAppLicense func(subject permission.Auditable, license AppLicense) (ID, error)
+
 type FindAllUserLicenses func(subject permission.Auditable) iter.Seq2[UserLicense, error]
 type FindUserLicenseByID func(subject permission.Auditable, id ID) (std.Option[UserLicense], error)
 type CreateUserLicense func(subject permission.Auditable, license UserLicense) (ID, error)
 type UpdateUserLicense func(subject permission.Auditable, license UserLicense) error
 type DeleteUserLicense func(subject permission.Auditable, id ID) error
+type UpsertUserLicense func(subject permission.Auditable, license UserLicense) (ID, error)
 
 type AppLicenseRepository data.Repository[AppLicense, ID]
 type UserLicenseRepository data.Repository[UserLicense, ID]
@@ -74,6 +80,7 @@ type UseCases struct {
 		Create   CreateUserLicense
 		Update   UpdateUserLicense
 		Delete   DeleteUserLicense
+		Upsert   UpsertUserLicense
 	}
 
 	PerApp struct {
@@ -82,6 +89,7 @@ type UseCases struct {
 		Create   CreateAppLicense
 		Update   UpdateAppLicense
 		Delete   DeleteAppLicense
+		Upsert   UpsertAppLicense
 	}
 }
 
@@ -94,12 +102,14 @@ func NewUseCases(perAppRepo AppLicenseRepository, perUserRepo UserLicenseReposit
 	createUserLicenseFn := NewCreateUserLicense(mutex, perUserRepo)
 	deleteUserLicenseFn := NewDeleteUserLicense(mutex, perUserRepo)
 	updateUserLicenseFn := NewUpdateUserLicense(mutex, perUserRepo)
+	upsertUserLicenceFn := NewUpsertUserLicense(mutex, perUserRepo)
 
 	findAllAppLicensesFn := NewFindAllAppLicenses(perAppRepo)
 	findAppLicenseByIDFn := NewFindAppLicenseByID(perAppRepo)
 	createAppLicenseFn := NewCreateAppLicense(mutex, perAppRepo)
 	deleteAppLicenseFn := NewDeleteAppLicense(mutex, perAppRepo)
 	updateAppLicenseFn := NewUpdateAppLicense(mutex, perAppRepo)
+	upsertAppLicenceFn := NewUpsertAppLicense(mutex, perAppRepo)
 
 	var uc UseCases
 	uc.PerUser.FindAll = findAllUserLicensesFn
@@ -107,12 +117,14 @@ func NewUseCases(perAppRepo AppLicenseRepository, perUserRepo UserLicenseReposit
 	uc.PerUser.Create = createUserLicenseFn
 	uc.PerUser.Delete = deleteUserLicenseFn
 	uc.PerUser.Update = updateUserLicenseFn
+	uc.PerUser.Upsert = upsertUserLicenceFn
 
 	uc.PerApp.FindAll = findAllAppLicensesFn
 	uc.PerApp.FindByID = findAppLicenseByIDFn
 	uc.PerApp.Create = createAppLicenseFn
 	uc.PerApp.Delete = deleteAppLicenseFn
 	uc.PerApp.Update = updateAppLicenseFn
+	uc.PerApp.Upsert = upsertAppLicenceFn
 
 	return uc
 }

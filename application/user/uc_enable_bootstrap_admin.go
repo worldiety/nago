@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func NewEnableBootstrapAdmin(repo Repository, system System, userByMail FindByMail) EnableBootstrapAdmin {
+func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByMail) EnableBootstrapAdmin {
 	return func(aliveUntil time.Time, password Password) (ID, error) {
 		optUsr, err := userByMail(system(), "admin@localhost")
 		if err != nil {

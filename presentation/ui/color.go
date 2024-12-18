@@ -137,5 +137,6 @@ const (
 	ColorBlack = "#000000"
 	ColorWhite = "#ffffff"
 
-	ColorInteractive = I0
+	ColorInteractive  = I0
+	ColorSemanticGood = SG0
 )
