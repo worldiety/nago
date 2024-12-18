@@ -107,3 +107,10 @@ func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation Navi
 		"redirectNavigation": string(redirectNavigation),
 	})
 }
+
+func HTTPOpen(nav Navigation, url URI, target string) {
+	nav.Open(url, Values{
+		"_type":  "http-link",
+		"target": target,
+	})
+}

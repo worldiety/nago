@@ -9,6 +9,11 @@ Stand: 09.11.2024
 Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können. Ausführliche Informationen zum Thema Datenschutz entnehmen Sie unserer unter diesem Text aufgeführten Datenschutzerklärung.
 Datenerfassung auf dieser Website
 
+[Testlink](http://worldiety.de)
+
+
+Inline [Testlink](http://worldiety.de) inline
+
 #### Wer ist verantwortlich für die Datenerfassung auf dieser Website?
 
 Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Abschnitt „Hinweis zur Verantwortlichen Stelle“ in dieser Datenschutzerklärung entnehmen.

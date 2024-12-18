@@ -71,4 +71,5 @@ const styles = computed<string>(() => {
 	<span v-if="!ui.i" :style="styles" @click="onClick" >{{
 			props.ui.v
 		}}</span>
+	<br v-if="!ui.i && ui.lb">
 </template>

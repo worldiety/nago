@@ -3,6 +3,9 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"log/slog"
+	"net/url"
+	"strings"
 )
 
 type TextAlignment string
@@ -35,6 +38,43 @@ type TText struct {
 	accessibilityLabel     string
 	textAlignment          TextAlignment
 	action                 func()
+	lineBreak              bool
+}
+
+// Link performs a best guess based on the given href. If the href starts with http or https
+// the window will perform an Open call. Otherwise, a local forward navigation is applied.
+func Link(wnd core.Window, name string, href string, target string) TText {
+	return Text(name).Action(func() {
+		if wnd == nil {
+			slog.Error("cannot execute link action: window is nil")
+			return
+		}
+		
+		if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") {
+			core.HTTPOpen(wnd.Navigation(), core.URI(href), target)
+		} else {
+			u, err := url.Parse(href)
+			if err != nil {
+				slog.Error("Failed to parse href link URL", err, href)
+				wnd.Navigation().ForwardTo(core.NavigationPath(href), nil)
+				return
+			}
+
+			q := u.Query()
+			if len(q) > 0 {
+				tmp := core.Values{}
+				for k, v := range q {
+					if len(v) > 0 {
+						tmp[k] = v[0]
+					}
+				}
+				wnd.Navigation().ForwardTo(core.NavigationPath(u.Path), tmp)
+			} else {
+				wnd.Navigation().ForwardTo(core.NavigationPath(u.Path), nil)
+			}
+
+		}
+	}).Color(ColorInteractive)
 }
 
 func Text(content string) TText {
@@ -53,6 +93,11 @@ func (c TText) Frame(frame Frame) DecoredView {
 
 func (c TText) Border(border Border) DecoredView {
 	c.border = border.ora()
+	return c
+}
+
+func (c TText) LineBreak(lb bool) TText {
+	c.lineBreak = lb
 	return c
 }
 
@@ -131,5 +176,6 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		PressedBorder:          c.pressedBorder,
 		TextAlignment:          ora.TextAlignment(c.textAlignment),
 		Action:                 ctx.MountCallback(c.action),
+		LineBreak:              c.lineBreak,
 	}
 }

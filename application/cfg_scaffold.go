@@ -6,26 +6,24 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/glossary/docm"
-	"go.wdy.de/nago/glossary/docm/markdown"
-	"go.wdy.de/nago/glossary/docm/oraui"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
+	"go.wdy.de/nago/presentation/ui/markdown"
 	"go.wdy.de/nago/presentation/ui/tracking"
 )
 
 //go:embed content_impress_de.md
-var defaultImpress string
+var defaultImpress []byte
 
 //go:embed content_gdpr_de.md
-var defaultGDPR string
+var defaultGDPR []byte
 
 //go:embed content_policies_de.md
-var defaultPolicies string
+var defaultPolicies []byte
 
 type MenuEntryBuilder struct {
 	parent               *ScaffoldBuilder
@@ -91,11 +89,11 @@ type ScaffoldBuilder struct {
 	lightLogo       core.SVG
 	darkLogo        core.SVG
 	policiesPath    core.NavigationPath
-	policiesContent string
+	policiesContent []byte
 	gdprPath        core.NavigationPath
-	gdprContent     string
+	gdprContent     []byte
 	impressPath     core.NavigationPath
-	impressContent  string
+	impressContent  []byte
 	menu            []MenuEntryBuilder
 	logoClick       func()
 }
@@ -163,21 +161,21 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 	b.cfg.RootView(b.impressPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return oraui.Render(&docm.Document{Body: markdown.Parse(b.impressContent)})
+			return markdown.Render(markdown.Options{Window: wnd}, b.impressContent)
 		})(wnd)
 	})
 
 	b.cfg.RootView(b.policiesPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return oraui.Render(&docm.Document{Body: markdown.Parse(b.policiesContent)})
+			return markdown.Render(markdown.Options{Window: wnd}, b.policiesContent)
 		})(wnd)
 	})
 
 	b.cfg.RootView(b.gdprPath, func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return oraui.Render(&docm.Document{Body: markdown.Parse(b.gdprContent)})
+			return markdown.Render(markdown.Options{Window: wnd}, b.gdprContent)
 		})(wnd)
 	})
 

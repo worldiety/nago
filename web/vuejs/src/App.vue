@@ -175,6 +175,10 @@ function openRequested(evt: Event): void {
 
 			window.location.href = msg.resource
 			break
+		case "http-link":
+			let target = msg.options["target"]
+			window.open(msg.resource, target)
+			break
 		default:
 			open(msg.resource)
 	}

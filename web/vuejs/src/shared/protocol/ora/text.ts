@@ -67,5 +67,8 @@ export interface Text {
     pb/*omitempty*/? /*PressedBorder*/: Border;
     // FocusedBorder
     fb/*omitempty*/? /*FocusedBorder*/: Border;
+
+		// LineBreak
+		lb?:boolean;
 }
 

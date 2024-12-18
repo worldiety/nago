@@ -1,0 +1,196 @@
+package markdown
+
+import (
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/text"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
+	"strings"
+)
+
+type Options struct {
+	Window core.Window // the Window is required for links to work properly
+}
+
+// Render parses the given source as a markdown dialect and interprets it as views.
+func Render(opts Options, source []byte) core.View {
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
+
+	r := renderer{}
+	node := md.Parser().Parse(text.NewReader(source))
+	err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		switch n := n.(type) {
+		case *ast.Document:
+			if entering {
+				r.Push(&mutDocument{})
+			} // intentionally never pop that, so that at the end, we just have that on stack
+		case *ast.Heading:
+			if entering {
+				r.Push(&mutHeading{level: n.Level})
+			} else {
+				r.Pop()
+			}
+		case *ast.Text:
+			if entering {
+				r.Push(&mutText{value: string(n.Value(source)), linebreak: n.HardLineBreak()})
+			} else {
+				r.Pop()
+			}
+		case *ast.Paragraph:
+			if entering {
+				r.Push(&mutTextLayout{})
+			} else {
+				r.Pop()
+			}
+
+		case *ast.Link:
+			if entering {
+				r.Push(&mutLink{href: string(n.Destination)})
+			} else {
+				r.Pop()
+			}
+		default:
+			//fmt.Printf("not implemented %T\n", n)
+		}
+		return ast.WalkContinue, nil
+	})
+
+	if err != nil {
+		panic(err) // unreachable
+	}
+
+	return r.Top().Render(opts.Window)
+}
+
+type renderer struct {
+	stack []mutView
+}
+
+func (r *renderer) Pop() mutView {
+	t := r.stack[len(r.stack)-1]
+	r.stack[len(r.stack)-1] = nil
+	r.stack = r.stack[:len(r.stack)-1]
+	return t
+}
+
+func (r *renderer) Push(v mutView) {
+	top := r.Top()
+	if top != nil {
+		r.Top().Add(v)
+	}
+	r.stack = append(r.stack, v)
+}
+
+func (r *renderer) Top() mutView {
+	if len(r.stack) == 0 {
+		return nil
+	}
+
+	return r.stack[len(r.stack)-1]
+}
+
+type mutView interface {
+	Add(view mutView)
+	Render(wnd core.Window) core.View
+}
+
+type mutDocument struct {
+	views []mutView
+}
+
+func (c *mutDocument) Add(view mutView) {
+	c.views = append(c.views, view)
+}
+
+func (c *mutDocument) Render(wnd core.Window) core.View {
+	var tmp []core.View
+	for _, view := range c.views {
+		tmp = append(tmp, view.Render(wnd))
+	}
+
+	return ui.VStack(tmp...).Alignment(ui.Leading).Gap(ui.L16).FullWidth()
+}
+
+type mutHeading struct {
+	level int
+	views []mutView
+}
+
+func (c *mutHeading) Add(view mutView) {
+	c.views = append(c.views, view)
+}
+
+func (c *mutHeading) Render(wnd core.Window) core.View {
+	// this is a limitation of nago: the heading type just accepts plain text
+	buf := strings.Builder{}
+	for _, view := range c.views {
+		if t, ok := view.(*mutText); ok {
+			buf.WriteString(t.value)
+		}
+	}
+
+	return ui.Heading(c.level, buf.String())
+}
+
+type mutText struct {
+	value     string
+	linebreak bool
+}
+
+func (c *mutText) Add(view mutView) {
+	panic("leaf type cannot contain others")
+}
+
+func (c *mutText) Render(wnd core.Window) core.View {
+	return ui.Text(c.value).LineBreak(c.linebreak)
+}
+
+type mutTextLayout struct {
+	views []mutView
+}
+
+func (c *mutTextLayout) Add(view mutView) {
+	c.views = append(c.views, view)
+}
+
+func (c *mutTextLayout) Render(wnd core.Window) core.View {
+	var tmp []core.View
+	for _, view := range c.views {
+		tmp = append(tmp, view.Render(wnd))
+	}
+	return ui.TextLayout(tmp...)
+}
+
+type mutLink struct {
+	views []mutView
+	href  string
+}
+
+func (c *mutLink) Add(view mutView) {
+	c.views = append(c.views, view)
+}
+
+func (c *mutLink) Render(wnd core.Window) core.View {
+	// this is a limitation of nago: the link type just accepts plain text
+	buf := strings.Builder{}
+	for _, view := range c.views {
+		if t, ok := view.(*mutText); ok {
+			buf.WriteString(t.value)
+		}
+	}
+
+	return ui.Link(wnd, buf.String(), c.href, "_blank")
+}

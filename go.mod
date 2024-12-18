@@ -21,5 +21,6 @@ require (
 require (
 	github.com/bool64/dev v0.2.37 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )

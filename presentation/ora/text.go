@@ -32,8 +32,9 @@ type Text struct {
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/ but makes probably no sense.
 	AccessibilityLabel string `json:"al,omitempty"`
 
-	Font   Font `json:"o,omitempty"`
-	Action Ptr  `json:"t,omitempty"`
+	Font      Font `json:"o,omitempty"`
+	Action    Ptr  `json:"t,omitempty"`
+	LineBreak bool `json:"lb,omitempty"`
 
 	TextAlignment TextAlignment `json:"a,omitempty"`
 
