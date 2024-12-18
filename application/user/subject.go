@@ -263,8 +263,12 @@ func (v *viewImpl) Audit(permission permission.ID) error {
 		return InvalidSubjectErr
 	}
 
-	if !usr.EMailVerified {
-		return std.NewLocalizedError("Keine Berechtigung", "Die Mail-Adresse zum Konto muss zuerst bestätigt werden.")
+	if !v.Valid() {
+		if !usr.EMailVerified {
+			return std.NewLocalizedError("Keine Berechtigung", "Die Mail-Adresse zum Konto muss zuerst bestätigt werden.")
+		}
+
+		return std.NewLocalizedError("Keine Berechtigung", "Das Nutzerkonto ist nicht gültig.")
 	}
 
 	if !v.HasPermission(permission) {
