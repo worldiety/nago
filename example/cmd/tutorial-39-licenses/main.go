@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/pkg/std"
@@ -27,6 +28,8 @@ func main() {
 		// declare some hardcoded licenses and insert them at startup
 		users := std.Must(cfg.UserManagement())
 		licenses := std.Must(cfg.LicenseManagement())
+
+		// note that user-license MaxUser number is not reset, if upserted
 		std.Must(licenses.UseCases.PerUser.Upsert(users.UseCases.SysUser(), licensePucBasic))
 		std.Must(licenses.UseCases.PerUser.Upsert(users.UseCases.SysUser(), licensePucImage))
 
@@ -41,23 +44,13 @@ func main() {
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 
 			return ui.VStack(
-			/*	ui.Text("Global declared licenses:").Font(ui.Title),
-				ui.VStack(
-					ui.Each(license.Global.Values(), func(t license.License) core.View {
-						return ui.Text(fmt.Sprintf("%v: %v", t.LicenseName(), t.Enabled()))
-					})...,
-				),
+
 				ui.Text("User scoped enabled licenses:").Font(ui.Title),
 				ui.VStack(
 					ui.Each(wnd.Subject().Licenses(), func(t license.ID) core.View {
-						lic, ok := license.Global.Load(t)
-						if !ok {
-							return ui.Text(fmt.Sprintf("missing id: %s", t))
-						}
-
-						return ui.Text(fmt.Sprintf("%v: %v", lic.LicenseName(), lic.Enabled()))
+						return ui.Text(fmt.Sprintf("%v", t))
 					})...,
-				),*/
+				),
 			)
 		}))
 

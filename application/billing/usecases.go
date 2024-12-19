@@ -8,13 +8,42 @@ import (
 )
 
 type AppLicenses func(auth.Subject) iter.Seq2[license.AppLicense, error]
+type UserLicenses func(subject auth.Subject) (UserLicenseStatistics, error)
 
-type UseCases struct {
-	AppLicenses AppLicenses
+type UserLicenseStatistics struct {
+	Stats []PerUserLicenseStats
 }
 
-func NewUseCases(sysUser user.SysUser, findAllAppLicences license.FindAllAppLicenses) UseCases {
+type PerUserLicenseStats struct {
+	License license.UserLicense
+	Used    int
+}
+
+func (p PerUserLicenseStats) Depleted() bool {
+	return p.Used == p.License.MaxUsers
+}
+
+func (p PerUserLicenseStats) Overcommitted() bool {
+	return p.Used > p.License.MaxUsers
+}
+
+func (p PerUserLicenseStats) Avail() int {
+	return p.License.MaxUsers - p.Used
+}
+
+type UseCases struct {
+	AppLicenses  AppLicenses
+	UserLicenses UserLicenses
+}
+
+func NewUseCases(
+	sysUser user.SysUser,
+	findAllAppLicences license.FindAllAppLicenses,
+	findAllUserLicences license.FindAllUserLicenses,
+	countAssignedUserLicense user.CountAssignedUserLicense,
+) UseCases {
 	return UseCases{
-		AppLicenses: NewAppLicenses(sysUser, findAllAppLicences),
+		AppLicenses:  NewAppLicenses(sysUser, findAllAppLicences),
+		UserLicenses: NewUserLicenses(sysUser, findAllUserLicences, countAssignedUserLicense),
 	}
 }

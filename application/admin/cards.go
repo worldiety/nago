@@ -101,9 +101,15 @@ func DefaultGroups(pages Pages) []Group {
 		Entries: []Card{
 			{
 				Title:      "Lizensierte Module",
-				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Anwendungs- bzw. Applikationslizenzen.",
+				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Anwendungs- bzw. Applikationslizenzen zum Zweck der Abrechnung.",
 				Target:     pages.Billing.AppLicenses,
 				Permission: billing.PermAppLicenses,
+			},
+			{
+				Title:      "Kontingente Nutzer-Lizenzen",
+				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Nutzerlizenzen zum Zweck der Abrechnung.",
+				Target:     pages.Billing.UserLicenses,
+				Permission: billing.PermUserLicenses,
 			},
 		}})
 

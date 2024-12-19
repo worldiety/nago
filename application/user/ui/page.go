@@ -2,6 +2,7 @@ package uiuser
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
@@ -30,15 +31,21 @@ func Users(
 	updateGroups user.UpdateOtherGroups,
 	updateRoles user.UpdateOtherRoles,
 	updatePermissions user.UpdateOtherPermissions,
+	updateLicenses user.UpdateOtherLicenses,
 	allRoles role.FindAll,
 	allPermissions permission.FindAll,
 	allGroups group.FindAll,
 	viewOf user.SubjectFromUser,
-
+	userLicenses billing.UserLicenses,
 ) core.View {
 	subject := wnd.Subject()
 	if !subject.Valid() {
 		return alert.BannerError(session.NotLoggedInErr)
+	}
+
+	stats, err := userLicenses(subject)
+	if err != nil {
+		return alert.BannerError(err)
 	}
 
 	bnd := crud.NewBinding[user.User](wnd).
@@ -88,6 +95,10 @@ func Users(
 		}, crud.Ptr(func(model *user.User) *[]group.ID {
 			return &model.Groups
 		})),
+
+		crud.CustomView(func(usr *core.State[user.User]) ui.DecoredView {
+			return licensePicker(wnd, stats, usr)
+		}),
 	).IntoListEntry(func(entity user.User) list.TEntry {
 		optView, err := viewOf(subject, entity.ID)
 		if err != nil {
@@ -128,6 +139,10 @@ func Users(
 						return "", err
 					}
 
+					if err := updateLicenses(wnd.Subject(), user.ID, user.Licenses); err != nil {
+						return "", err
+					}
+
 					return "", nil
 				}),
 			)).
@@ -155,6 +170,7 @@ func Users(
 			return &e.Password2
 		})),
 	)
+
 	opts := crud.Options(bnd).
 		Actions(crud.ButtonCreate[createUserModel](bndCrUsr, createUserModel{}, func(model createUserModel) (errorText string, infrastructureError error) {
 			_, err := createUser(subject, user.ShortRegistrationUser{

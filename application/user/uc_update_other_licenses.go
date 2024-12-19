@@ -2,15 +2,15 @@ package user
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/pkg/std"
 	"slices"
 	"sync"
 )
 
-func NewUpdateOtherPermissions(mutex *sync.Mutex, repo Repository) UpdateOtherPermissions {
-	return func(subject AuditableUser, id ID, permissions []permission.ID) error {
-		if err := subject.Audit(PermUpdateOtherPermissions); err != nil {
+func NewUpdateOtherLicenses(mutex *sync.Mutex, repo Repository) UpdateOtherLicenses {
+	return func(subject AuditableUser, id ID, licenses []license.ID) error {
+		if err := subject.Audit(PermUpdateOtherLicenses); err != nil {
 			return err
 		}
 
@@ -27,11 +27,11 @@ func NewUpdateOtherPermissions(mutex *sync.Mutex, repo Repository) UpdateOtherPe
 			return std.NewLocalizedError("Nutzer nicht aktualisiert", "Der Nutzer ist nicht (mehr) vorhanden.")
 		}
 
-		slices.Sort(permissions)
-		slices.Compact(permissions)
+		slices.Sort(licenses)
+		slices.Compact(licenses)
 
 		usr := optUsr.Unwrap()
-		usr.Permissions = permissions
+		usr.Licenses = licenses
 		return repo.Save(usr)
 	}
 }

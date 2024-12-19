@@ -26,6 +26,8 @@ type UpdateOtherContact func(subject AuditableUser, id ID, contact Contact) erro
 type UpdateOtherRoles func(subject AuditableUser, id ID, roles []role.ID) error
 type UpdateOtherPermissions func(subject AuditableUser, id ID, permissions []permission.ID) error
 type UpdateOtherGroups func(subject AuditableUser, id ID, groups []group.ID) error
+
+type UpdateOtherLicenses func(subject AuditableUser, id ID, licenses []license.ID) error
 type ReadMyContact func(subject AuditableUser) (Contact, error)
 
 // SubjectFromUser returns a subject view for the given user ID. This view can be leaked as long as required and
@@ -65,6 +67,7 @@ type UseCases struct {
 	UpdateOtherContact        UpdateOtherContact
 	UpdateOtherRoles          UpdateOtherRoles
 	UpdateOtherPermissions    UpdateOtherPermissions
+	UpdateOtherLicenses       UpdateOtherLicenses
 	UpdateOtherGroups         UpdateOtherGroups
 	ReadMyContact             ReadMyContact
 	SubjectFromUser           SubjectFromUser
@@ -99,6 +102,7 @@ func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]
 	updateOtherRolesFn := NewUpdateOtherRoles(&globalLock, users)
 	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)
 	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)
+	updateOtherLicenseFn := NewUpdateOtherLicenses(&globalLock, users)
 
 	countAssignedUserLicenseFn := NewCountAssignedUserLicense(&globalLock, users)
 	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)
@@ -123,5 +127,6 @@ func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]
 		AuthenticateByPassword:    authenticateByPasswordFn,
 		CountAssignedUserLicense:  countAssignedUserLicenseFn,
 		RevokeAssignedUserLicense: revokeAssignedUserLicenseFn,
+		UpdateOtherLicenses:       updateOtherLicenseFn,
 	}
 }

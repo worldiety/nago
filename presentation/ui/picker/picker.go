@@ -331,6 +331,7 @@ func (c TPicker[T]) Dialog() core.View {
 }
 
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
+	// TODO refactor me to use the picker.TButton
 	colors := core.Colors[ui.Colors](ctx.Window())
 	borderColor := ui.Color("")
 	backgroundColor := ui.Color("")

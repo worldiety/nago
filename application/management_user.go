@@ -51,6 +51,12 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			},
 		}
 
+		// Oo we got some cycle
+		billing, err := c.BillingManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get billing usecases: %w", err)
+		}
+
 		c.RootView(c.userManagement.Pages.Users, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uiuser.Users(wnd,
 				c.userManagement.UseCases.Delete,
@@ -60,10 +66,12 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.UpdateOtherGroups,
 				c.userManagement.UseCases.UpdateOtherRoles,
 				c.userManagement.UseCases.UpdateOtherPermissions,
+				c.userManagement.UseCases.UpdateOtherLicenses,
 				roleUseCases.UseCases.FindAll,
 				permissions.UseCases.FindAll,
 				groups.UseCases.FindAll,
 				c.userManagement.UseCases.SubjectFromUser,
+				billing.UseCases.UserLicenses,
 			)
 		}))
 

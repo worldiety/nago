@@ -23,6 +23,16 @@ func NewUpsertUserLicense(mutex *sync.Mutex, repo UserLicenseRepository) UpsertU
 			license.ID = data.RandIdent[ID]()
 		}
 
+		// keep the max limit and just update all other properties
+		optLicense, err := repo.FindByID(license.ID)
+		if err != nil {
+			return "", err
+		}
+
+		if optLicense.IsSome() {
+			license.MaxUsers = optLicense.Unwrap().MaxUsers
+		}
+
 		return license.ID, repo.Save(license)
 	}
 }

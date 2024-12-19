@@ -69,6 +69,8 @@ type FindUserLicenseByID func(subject permission.Auditable, id ID) (std.Option[U
 type CreateUserLicense func(subject permission.Auditable, license UserLicense) (ID, error)
 type UpdateUserLicense func(subject permission.Auditable, license UserLicense) error
 type DeleteUserLicense func(subject permission.Auditable, id ID) error
+
+// UpsertUserLicense has a surprise comfort feature, because it does not overwrite the [UserLicense.MaxUsers] field.
 type UpsertUserLicense func(subject permission.Auditable, license UserLicense) (ID, error)
 
 type AppLicenseRepository data.Repository[AppLicense, ID]

@@ -49,6 +49,14 @@ func Delete(onDelete func()) Option {
 }
 
 func Save(onSave func() (close bool)) Option {
+	return save("Speichern", onSave)
+}
+
+func Apply(onSave func() (close bool)) Option {
+	return save("Übernehmen", onSave)
+}
+
+func save(caption string, onSave func() (close bool)) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.saveBtn = ui.PrimaryButton(func() {
 			open := false
@@ -58,7 +66,7 @@ func Save(onSave func() (close bool)) Option {
 
 			opts.state.Set(open)
 
-		}).Title("Speichern")
+		}).Title(caption)
 	})
 }
 

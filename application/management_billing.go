@@ -24,14 +24,24 @@ func (c *Configurator) BillingManagement() (BillingManagement, error) {
 		}
 
 		c.billingManagement = &BillingManagement{
-			UseCases: billing.NewUseCases(usrMgmt.UseCases.SysUser, licMgmt.UseCases.PerApp.FindAll),
+			UseCases: billing.NewUseCases(
+				usrMgmt.UseCases.SysUser,
+				licMgmt.UseCases.PerApp.FindAll,
+				licMgmt.UseCases.PerUser.FindAll,
+				usrMgmt.UseCases.CountAssignedUserLicense,
+			),
 			Pages: uibilling.Pages{
-				AppLicenses: "admin/billing/per-app-licenses",
+				AppLicenses:  "admin/billing/per-app-licenses",
+				UserLicenses: "admin/billing/per-user-licenses",
 			},
 		}
 
 		c.RootViewWithDecoration(c.billingManagement.Pages.AppLicenses, func(wnd core.Window) core.View {
 			return uibilling.AppLicensePage(wnd, c.billingManagement.UseCases.AppLicenses)
+		})
+
+		c.RootViewWithDecoration(c.billingManagement.Pages.UserLicenses, func(wnd core.Window) core.View {
+			return uibilling.UserLicensePage(wnd, c.billingManagement.UseCases.UserLicenses)
 		})
 	}
 
