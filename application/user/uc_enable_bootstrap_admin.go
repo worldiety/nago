@@ -2,7 +2,6 @@ package user
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/backup"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
@@ -68,8 +67,10 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			license.PermCreateUserLicense,
 			license.PermUpdateUserLicense,
 			license.PermDeleteUserLicense,
-			backup.PermBackup,
-			backup.PermRestore,
+			"nago.backup.backup",        // import cycle
+			"nago.backup.restore",       // import cycle
+			"nago.billing.license.app",  // import cycle
+			"nago.billing.license.user", // import cycle
 		}
 
 		hType := Argon2IdMin

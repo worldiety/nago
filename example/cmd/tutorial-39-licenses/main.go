@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"net/http"
+	"time"
 )
 
 var licensePucBasic = license.UserLicense{ID: "de.worldiety.puc.license.user.chat", Name: "PUC Basic License", MaxUsers: 10, Url: "https://www.worldiety.de/loesungen/puc"}
@@ -41,6 +42,8 @@ func main() {
 
 		std.Must(cfg.MailManagement())
 		std.Must(cfg.SessionManagement())
+
+		std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164")
 
 		cfg.HandleFunc("/api/v1/manemann/aed", func(writer http.ResponseWriter, request *http.Request) {
 			writer.Write([]byte("jojo"))
