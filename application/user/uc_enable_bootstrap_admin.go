@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
@@ -34,14 +35,17 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 		usr.Permissions = []permission.ID{
 			PermCreate,
 			PermFindByID,
-			PermDelete,
-			PermChangeOtherPassword,
-			PermFindAll,
 			PermFindByMail,
-			PermUpdateOtherContact,
+			PermFindAll,
 			PermChangeOtherPassword,
-			PermUpdateOtherPermissions,
+			PermDelete,
+			PermUpdateOtherContact,
 			PermUpdateOtherRoles,
+			PermUpdateOtherPermissions,
+			PermUpdateOtherLicenses,
+			PermUpdateOtherGroups,
+			PermCountAssignedUserLicense,
+			PermRevokeAssignedUserLicense,
 			group.PermCreate,
 			group.PermFindAll,
 			group.PermDelete,
@@ -53,6 +57,16 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			role.PermDelete,
 			role.PermUpdate,
 			permission.PermFindAll,
+			license.PermFindAllAppLicenses,
+			license.PermFindAppLicenseByID,
+			license.PermCreateAppLicense,
+			license.PermUpdateAppLicense,
+			license.PermDeleteAppLicense,
+			license.PermFindAllUserLicenses,
+			license.PermFindUserLicenseByID,
+			license.PermCreateUserLicense,
+			license.PermUpdateUserLicense,
+			license.PermDeleteUserLicense,
 		}
 
 		hType := Argon2IdMin
