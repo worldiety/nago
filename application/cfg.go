@@ -40,7 +40,8 @@ type BlobStorageFactory interface {
 }
 
 type Configurator struct {
-	stores                   map[string]blob.Store
+	fileStores               map[string]blob.Store
+	entityStores             map[string]blob.Store
 	backupServices           map[string]backupService
 	globalTDB                *tdb.DB
 	ctx                      context.Context
@@ -76,6 +77,7 @@ type Configurator struct {
 	groupManagement          *GroupManagement
 	licenseManagement        *LicenseManagement
 	billingManagement        *BillingManagement
+	backupManagement         *BackupManagement
 	decorator                Decorator
 }
 
@@ -101,7 +103,8 @@ func NewConfigurator() *Configurator {
 			core.Dark:  {},
 			core.Light: {},
 		},
-		stores:             map[string]blob.Store{},
+		fileStores:         map[string]blob.Store{},
+		entityStores:       map[string]blob.Store{},
 		fps:                10,
 		ctx:                ctx,
 		done:               done,

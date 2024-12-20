@@ -20,7 +20,7 @@ import (
 //
 // Use [Configurator.FileStore] for large blobs.
 func (c *Configurator) EntityStore(bucketName string) (blob.Store, error) {
-	store, ok := c.stores[bucketName]
+	store, ok := c.entityStores[bucketName]
 	if ok {
 		return store, nil
 	}
@@ -37,7 +37,7 @@ func (c *Configurator) EntityStore(bucketName string) (blob.Store, error) {
 	}
 
 	db := tdb.NewBlobStore(c.globalTDB, bucketName)
-	c.stores[bucketName] = db
+	c.entityStores[bucketName] = db
 
 	return db, nil
 }
@@ -45,12 +45,19 @@ func (c *Configurator) EntityStore(bucketName string) (blob.Store, error) {
 // FileStore returns a blob store which directly saves into the filesystem and is recommended for handling large
 // files. See also [blob.Read] and [blob.Write] helper functions.
 func (c *Configurator) FileStore(bucketName string) (blob.Store, error) {
+	store, ok := c.fileStores[bucketName]
+	if ok {
+		return store, nil
+	}
+
 	dir := c.Directory(filepath.Join("files", bucketName))
 	slog.Info(fmt.Sprintf("file store '%s' stores in '%s'", bucketName, dir))
 	store, err := fs.NewBlobStore(dir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open file blob store '%s': %w", dir, err)
 	}
+
+	c.fileStores[bucketName] = store
 
 	return store, nil
 }

@@ -58,9 +58,9 @@ func (s *TransientState[T]) dirty() bool {
 	return atomic.LoadInt64(&s.lastChangedGeneration) >= s.getGeneration()
 }
 
-func (s *TransientState[T]) Mutex() *sync.Mutex {
+/*func (s *TransientState[T]) Mutex() *sync.Mutex {
 	return &s.mutex
-}
+}*/
 
 func (s *TransientState[T]) isTransient() {}
 

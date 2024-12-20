@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"go.wdy.de/nago/application/backup"
 	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
@@ -110,6 +111,17 @@ func DefaultGroups(pages Pages) []Group {
 				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Nutzerlizenzen zum Zweck der Abrechnung.",
 				Target:     pages.Billing.UserLicenses,
 				Permission: billing.PermUserLicenses,
+			},
+		}})
+
+	grps = append(grps, Group{
+		Title: "System",
+		Entries: []Card{
+			{
+				Title:      "Backup und Wiederherstellung",
+				Text:       "Die komplette Anwendung sichern und wiederherstellen.",
+				Target:     pages.Backup.BackupAndRestore,
+				Permission: backup.PermBackup,
 			},
 		}})
 

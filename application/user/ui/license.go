@@ -56,14 +56,19 @@ func licensePickerDialog(wnd core.Window, presented *core.State[bool], statistic
 					return id == t.License.ID
 				})
 
-				if newValue {
+				if newValue && t.Avail() > 0 {
 					usr.Licenses = append(usr.Licenses, t.License.ID)
+				}
+
+				if newValue && t.Avail() <= 0 {
+					checked.Set(false)
 				}
 
 				state.Set(usr)
 				state.Notify()
 			})
-			return ui.CheckboxField(fmt.Sprintf("%s (noch %d von %d verfügbar)", t.License.Name, t.Avail(), t.License.MaxUsers), checked.Get()).InputValue(checked)
+			return ui.CheckboxField(fmt.Sprintf("%s (noch %d von %d verfügbar)", t.License.Name, t.Avail(), t.License.MaxUsers), checked.Get()).
+				InputValue(checked)
 		})...,
 	).Alignment(ui.Leading)
 

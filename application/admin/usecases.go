@@ -1,6 +1,7 @@
 package admin
 
 import (
+	uibackup "go.wdy.de/nago/application/backup/ui"
 	uibilling "go.wdy.de/nago/application/billing/ui"
 	uigroup "go.wdy.de/nago/application/group/ui"
 	uilicense "go.wdy.de/nago/application/license/ui"
@@ -28,6 +29,7 @@ type Pages struct {
 	Permission uipermission.Pages
 	License    uilicense.Pages
 	Dashboard  core.NavigationPath
+	Backup     uibackup.Pages
 }
 
 type Card struct {

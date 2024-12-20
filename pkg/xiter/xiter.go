@@ -216,3 +216,14 @@ func Chunks[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
 		}
 	}
 }
+
+func Zero2[K, V any](values iter.Seq[K]) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		var zero V
+		for k := range values {
+			if !yield(k, zero) {
+				return
+			}
+		}
+	}
+}

@@ -71,6 +71,10 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 					pages.Billing = c.billingManagement.Pages
 				}
 
+				if c.backupManagement != nil {
+					pages.Backup = c.backupManagement.Pages
+				}
+
 				return admin.DefaultGroups(pages)
 			},
 			QueryGroups: admin.NewGroups(func() []admin.Group {

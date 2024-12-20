@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"net/http"
 )
 
 var licensePucBasic = license.UserLicense{ID: "de.worldiety.puc.license.user.chat", Name: "PUC Basic License", MaxUsers: 10, Url: "https://www.worldiety.de/loesungen/puc"}
@@ -36,8 +37,14 @@ func main() {
 		// note that app-license enabled flag is not reset, if upserted
 		std.Must(licenses.UseCases.PerApp.Upsert(users.UseCases.SysUser(), licensePucJira))
 
+		std.Must(cfg.BackupManagement())
+
 		std.Must(cfg.MailManagement())
 		std.Must(cfg.SessionManagement())
+
+		cfg.HandleFunc("/api/v1/manemann/aed", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("jojo"))
+		})
 
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 

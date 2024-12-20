@@ -18,12 +18,18 @@ type File interface {
 	Size() (int64, bool)
 	// Transfer copies the underlying bytes into dst.
 	Transfer(dst io.Writer) (int64, error)
+
+	Open() (io.ReadCloser, error)
 }
 
 type ReaderFile struct {
 	open func() (io.ReadCloser, error)
 	mime string
 	name string
+}
+
+func (r *ReaderFile) Open() (io.ReadCloser, error) {
+	return r.open()
 }
 
 func NewReaderFile(opener func() (io.ReadCloser, error)) *ReaderFile {

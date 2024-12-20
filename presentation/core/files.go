@@ -6,11 +6,25 @@ import (
 	"io"
 	"io/fs"
 	"iter"
+	"os"
 )
 
 type blobIterFile struct {
 	store blob.Store
 	key   string
+}
+
+func (b blobIterFile) Open() (io.ReadCloser, error) {
+	optR, err := b.store.NewReader(context.Background(), b.key)
+	if err != nil {
+		return nil, err
+	}
+
+	if optR.IsNone() {
+		return nil, os.ErrNotExist
+	}
+
+	return optR.Unwrap(), nil
 }
 
 func (b blobIterFile) Transfer(dst io.Writer) (int64, error) {

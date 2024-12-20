@@ -45,6 +45,18 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepos
 
 			time.Sleep(opts.SendInterval)
 
+			if n, err := mails.Count(); err != nil || n == 0 {
+				if err != nil {
+					slog.Error("mail scheduler cannot count mail queue", "err", err)
+					continue
+				}
+
+				if n == 0 {
+					// nothing to do, don't need to check for smtp
+					continue
+				}
+			}
+
 			availableServers := make(map[SmtpID]Smtp)
 			var primaryServer Smtp
 			for smtp, err := range servers.All() {

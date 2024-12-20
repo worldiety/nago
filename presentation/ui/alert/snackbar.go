@@ -159,8 +159,6 @@ func ShowBannerError(wnd core.Window, err error) {
 	}
 
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
-	messages.Mutex().Lock()
-	defer messages.Mutex().Unlock()
 
 	if slices.Contains(messages.Get(), msg) {
 		return
