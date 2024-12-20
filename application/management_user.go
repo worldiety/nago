@@ -2,10 +2,13 @@ package application
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"log/slog"
 )
 
 type UserManagement struct {
@@ -52,12 +55,21 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		}
 
 		// Oo we got some cycle
-		billing, err := c.BillingManagement()
-		if err != nil {
-			return UserManagement{}, fmt.Errorf("cannot get billing usecases: %w", err)
-		}
+		/*	billing, err := c.BillingManagement()
+			if err != nil {
+				return UserManagement{}, fmt.Errorf("cannot get billing usecases: %w", err)
+			}*/
 
 		c.RootView(c.userManagement.Pages.Users, c.DecorateRootView(func(wnd core.Window) core.View {
+			var ucBillingUserLicense billing.UserLicenses
+			if c.billingManagement != nil {
+				ucBillingUserLicense = c.billingManagement.UseCases.UserLicenses
+			} else {
+				ucBillingUserLicense = func(subject auth.Subject) (billing.UserLicenseStatistics, error) {
+					slog.Warn("User license billing not configured")
+					return billing.UserLicenseStatistics{}, nil
+				}
+			}
 			return uiuser.Users(wnd,
 				c.userManagement.UseCases.Delete,
 				c.userManagement.UseCases.FindAll,
@@ -71,7 +83,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				permissions.UseCases.FindAll,
 				groups.UseCases.FindAll,
 				c.userManagement.UseCases.SubjectFromUser,
-				billing.UseCases.UserLicenses,
+				ucBillingUserLicense,
 			)
 		}))
 
