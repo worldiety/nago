@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	dir := flag.String("data-dir", "", "the path to the nago data dir. Only needed when it is not at ~/.nago/.")
 	appId := flag.String("app", "", "application id which shall be modified")
 	cmd := flag.String("cmd", "", "command which shall be executed, one of [admin-reset]")
 	pwd := flag.String("pwd", "", "password which shall be used for admin-reset")
@@ -22,7 +23,7 @@ func main() {
 
 	switch *cmd {
 	case "admin-reset":
-		adminReset(*appId, *pwd, *lifetime)
+		adminReset(*dir, *appId, *pwd, *lifetime)
 	default:
 		fmt.Printf("Unknown command: %s\n", *cmd)
 		os.Exit(1)
@@ -33,8 +34,11 @@ func main() {
 // adminReset is invoked as follows:
 //
 //	nago-adm -app=de.worldiety.tutorial -cmd=admin-reset -lifetime=0m -pwd=<my super secret>
-func adminReset(appId string, pwd string, lifetime time.Duration) {
+func adminReset(dir string, appId string, pwd string, lifetime time.Duration) {
 	application.Configure(func(cfg *application.Configurator) {
+		if dir != "" {
+			cfg.SetDataDir(dir)
+		}
 		cfg.SetApplicationID(core.ApplicationID(appId))
 		users := std.Must(cfg.UserManagement())
 		if lifetime == 0 {
