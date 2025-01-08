@@ -27,6 +27,9 @@ type Persistence interface {
 	// EntityStore creates or opens the named store as an entity storage. This likely has a different implementation
 	// than a FileStore.
 	EntityStore(name string) (blob.Store, error)
+
+	// TODO we need also some local fs restore and backup e.g. for embedded non-abstract things like key stores
+	//AbsolutePathLocations() []string
 }
 
 type Backup func(ctx context.Context, subject auth.Subject, dst io.Writer) error

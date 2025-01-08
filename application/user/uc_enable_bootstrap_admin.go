@@ -71,6 +71,12 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			"nago.backup.restore",       // import cycle
 			"nago.billing.license.app",  // import cycle
 			"nago.billing.license.user", // import cycle
+
+			"nago.secret.find_my_secrets",    // import cycle
+			"nago.secret.create",             // import cycle
+			"nago.secret.groups.update",      // import cycle
+			"nago.secret.credentials.update", // import cycle
+			"nago.secret.delete",             // import cycle
 		}
 
 		hType := Argon2IdMin

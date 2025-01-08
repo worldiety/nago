@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application/mail"
 	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/pkg/data/json"
@@ -36,6 +37,14 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 		}
 
 		outgoingMailRepo := json.NewSloppyJSONRepository[mail.Outgoing, mail.ID](outgoingMailsStore)
+
+		// we need the secret system to lookup the smtp
+		secrets, err := c.SecretManagement()
+		if err != nil {
+			return MailManagement{}, fmt.Errorf("cannot get secret management: %w", err)
+		}
+
+		_ = secrets
 
 		//	if err := initDefaultTemplates(iam.Sys{}); err != nil {
 		//		return MailManagement{}, err

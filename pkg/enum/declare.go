@@ -70,6 +70,10 @@ type declContext struct {
 	decls map[reflect.Type]Declaration
 }
 
+func DeclarationFor[Interface any]() (Declaration, bool) {
+	return DeclarationOf(reflect.TypeFor[Interface]())
+}
+
 func DeclarationOf(t reflect.Type) (Declaration, bool) {
 	globalDeclContext.mutex.RLock()
 	defer globalDeclContext.mutex.RUnlock()

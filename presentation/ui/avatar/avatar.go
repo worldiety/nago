@@ -68,6 +68,11 @@ func Embed(data []byte) TAvatar {
 	}.Size(ui.L40)
 }
 
+func (c TAvatar) Border(border ui.Border) TAvatar {
+	c.border = border
+	return c
+}
+
 func (c TAvatar) Action(fn func()) TAvatar {
 	c.action = fn
 	return c

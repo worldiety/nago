@@ -10,6 +10,7 @@ import (
 	uipermission "go.wdy.de/nago/application/permission/ui"
 	"go.wdy.de/nago/application/role"
 	uirole "go.wdy.de/nago/application/role/ui"
+	uisecret "go.wdy.de/nago/application/secret/ui"
 	uisession "go.wdy.de/nago/application/session/ui"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
@@ -30,6 +31,7 @@ type Pages struct {
 	License    uilicense.Pages
 	Dashboard  core.NavigationPath
 	Backup     uibackup.Pages
+	Secret     uisecret.Pages
 }
 
 type Card struct {

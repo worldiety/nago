@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/application/mail"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
 )
 
@@ -122,6 +123,17 @@ func DefaultGroups(pages Pages) []Group {
 				Text:       "Die komplette Anwendung sichern und wiederherstellen.",
 				Target:     pages.Backup.BackupAndRestore,
 				Permission: backup.PermBackup,
+			},
+		}})
+
+	grps = append(grps, Group{
+		Title: "Tresor & Fremdsysteme",
+		Entries: []Card{
+			{
+				Title:      "Tresor und Geheimnisverwaltung",
+				Text:       "Verwaltung von Secrets, Geheimnissen und Zugangsdaten zu Fremdsystemen.",
+				Target:     pages.Secret.Vault,
+				Permission: secret.PermFindMySecrets,
 			},
 		}})
 

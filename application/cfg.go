@@ -78,6 +78,7 @@ type Configurator struct {
 	licenseManagement        *LicenseManagement
 	billingManagement        *BillingManagement
 	backupManagement         *BackupManagement
+	secretManagement         *SecretManagement
 	decorator                Decorator
 }
 
@@ -191,6 +192,12 @@ func (c *Configurator) AppIcon(ico core.URI) *core.Application {
 	return c.app
 }
 
+// DataDir returns the most private data directory, which is accessible. If not manually set, initialize as follows:
+//   - use user home if available or
+//   - use working dir if available or
+//   - use temp dir if available
+//   - append .nago/<application id>
+//   - ensure directory with 0700 to only allow owner to access
 func (c *Configurator) DataDir() string {
 	if c.dataDir == "" {
 		dataDir, err := os.UserHomeDir()

@@ -2,11 +2,15 @@ package mail
 
 import (
 	"go.wdy.de/nago/application/rcrud"
+	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
 )
+
+var _ = enum.Variant[secret.Credentials, secret.SMTP]()
 
 type Repository data.Repository[Outgoing, ID]
 

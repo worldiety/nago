@@ -58,14 +58,28 @@ func (c TCardLayout) Render(ctx core.RenderContext) core.RenderNode {
 		Render(ctx)
 }
 
+type TitleStyle int
+
+const (
+	TitleLarge TitleStyle = iota
+	TitleCompact
+)
+
 type TCard struct {
 	title  string
 	body   core.View
 	footer core.View
+	frame  ui.Frame
+	style  TitleStyle
 }
 
 func Card(title string) TCard {
 	return TCard{title: title}
+}
+
+func (c TCard) Style(style TitleStyle) TCard {
+	c.style = style
+	return c
 }
 
 func (c TCard) Body(view core.View) TCard {
@@ -78,14 +92,38 @@ func (c TCard) Footer(view core.View) TCard {
 	return c
 }
 
+func (c TCard) Frame(frame ui.Frame) TCard {
+	c.frame = frame
+	return c
+}
+
 func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
+	var bodyTopPadding ui.Length
+	var title core.View
+	if c.title != "" {
+		switch c.style {
+		case TitleCompact:
+			bodyTopPadding = ui.L16
+			title = ui.HStack(
+				ui.Text(c.title),
+			).
+				Alignment(ui.Leading).
+				BackgroundColor(ui.ColorCardTop).
+				Padding(ui.Padding{}.All(ui.L8)).
+				Frame(ui.Frame{Height: ui.L40}.FullWidth())
+		default:
+			title = ui.VStack(
+				ui.Text(c.title).Font(ui.Title),
+				ui.HLineWithColor(ui.ColorAccent),
+			).Padding(ui.Padding{Top: ui.L40, Left: ui.L40, Right: ui.L40})
+		}
+	}
+
 	return ui.VStack(
-		ui.If(c.title != "", ui.VStack(
-			ui.Text(c.title).Font(ui.Title),
-			ui.HLineWithColor(ui.ColorAccent),
-		).Padding(ui.Padding{Top: ui.L40, Left: ui.L40, Right: ui.L40})),
+		title,
 		ui.VStack(c.body).
-			Padding(ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40}),
+			FullWidth().
+			Padding(ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: bodyTopPadding}),
 		ui.Spacer(),
 		ui.If(c.footer != nil, ui.HStack(c.footer).
 			FullWidth().
@@ -95,5 +133,6 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	).Alignment(ui.Leading).
 		BackgroundColor(ui.ColorCardBody).
 		Border(ui.Border{}.Radius(ui.L16)).
+		Frame(c.frame).
 		Render(ctx)
 }

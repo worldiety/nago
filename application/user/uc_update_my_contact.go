@@ -3,14 +3,19 @@ package user
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/std"
+	"sync"
 )
 
-func NewUpdateMyContact(repo Repository) UpdateMyContact {
+func NewUpdateMyContact(mutex *sync.Mutex, repo Repository) UpdateMyContact {
 	return func(subject AuditableUser, contact Contact) error {
 		if !subject.Valid() {
 			// bootstrap error message
 			return std.NewLocalizedError("Nicht eingeloggt", "Diese Funktion steht nur eingeloggten Nutzern zur Verfügung.")
 		}
+
+		// mutex is important, otherwise we may re-create a user accidentally
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		optUsr, err := repo.FindByID(subject.ID())
 		if err != nil {

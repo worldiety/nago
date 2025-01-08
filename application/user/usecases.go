@@ -97,7 +97,7 @@ func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]
 
 	readMyContactFn := NewReadMyContact(users)
 
-	updateMyContactFn := NewUpdateMyContact(users)
+	updateMyContactFn := NewUpdateMyContact(&globalLock, users)
 	updateOtherContactFn := NewUpdateOtherContact(&globalLock, users)
 	updateOtherRolesFn := NewUpdateOtherRoles(&globalLock, users)
 	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)

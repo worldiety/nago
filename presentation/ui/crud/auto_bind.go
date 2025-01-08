@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/timepicker"
 	"log/slog"
 	"reflect"
@@ -31,9 +32,9 @@ type AutoBindingOptions struct {
 func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases rcrud.UseCases[E, ID]) *Binding[E] {
 	var zero E
 	bnd := NewBinding[E](wnd)
-	for _, group := range groupedFields[E]() {
+	for _, group := range form.GroupsFor[E]() {
 		var fieldsBuilder xslices.Builder[Field[E]]
-		for _, field := range group.fields {
+		for _, field := range group.Fields {
 
 			fieldTableVisible := true
 			if flag, ok := field.Tag.Lookup("table-visible"); ok && flag == "false" {
@@ -317,10 +318,10 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 		}
 
 		fields := fieldsBuilder.Collect()
-		if group.name == "" {
+		if group.Name == "" {
 			bnd.Add(fields...)
 		} else {
-			bnd.Add(Section(group.name, fields...)...)
+			bnd.Add(Section(group.Name, fields...)...)
 		}
 	}
 
@@ -365,53 +366,6 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 	}
 
 	return bnd
-}
-
-type fieldGroup struct {
-	name   string
-	fields []reflect.StructField
-}
-
-func groupedFields[E any]() []fieldGroup {
-	var zero E
-	var res []fieldGroup
-	//
-
-	//typ := reflect.TypeOf(zero)
-	//for i := 0; i < typ.NumField(); i++ {
-	for _, field := range reflect.VisibleFields(reflect.TypeOf(zero)) {
-		//field := typ.Field(i)
-
-		if flag, ok := field.Tag.Lookup("visible"); ok && flag == "false" {
-			continue
-		}
-
-		if field.Name != "_" && !field.IsExported() {
-			continue
-		}
-
-		sec := field.Tag.Get("section")
-		var grp *fieldGroup
-		for idx := range res {
-			g := &res[idx]
-			if g.name == sec {
-				grp = g
-				break
-			}
-		}
-
-		if grp == nil {
-			res = append(res, fieldGroup{
-				name: sec,
-			})
-
-			grp = &res[len(res)-1]
-		}
-
-		grp.fields = append(grp.fields, field)
-	}
-
-	return res
 }
 
 type taggedValueEntry struct {

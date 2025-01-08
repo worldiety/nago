@@ -26,6 +26,14 @@ func (r Group) Identity() ID {
 	return r.ID
 }
 
+func (r Group) String() string {
+	if r.Name != "" {
+		return r.Name
+	}
+
+	return string(r.ID)
+}
+
 type Repository = data.Repository[Group, ID]
 
 // note, that we are in a bootstrapping condition here and cannot refer to auth/user.Subject due to dep cycles, therefore we depend on the Auditable contract
@@ -40,13 +48,17 @@ type Upsert func(subject permission.Auditable, group Group) (ID, error)
 type Update func(subject permission.Auditable, group Group) error
 type Delete func(subject permission.Auditable, id ID) error
 
+// FindMyGroups returns only those groups, in which the subject is a member.
+type FindMyGroups func(subject permission.Auditable) iter.Seq2[Group, error]
+
 type UseCases struct {
-	FindByID FindByID
-	FindAll  FindAll
-	Create   Create
-	Upsert   Upsert
-	Update   Update
-	Delete   Delete
+	FindByID     FindByID
+	FindAll      FindAll
+	Create       Create
+	Upsert       Upsert
+	Update       Update
+	Delete       Delete
+	FindMyGroups FindMyGroups
 }
 
 func NewUseCases(repo Repository) UseCases {
@@ -58,13 +70,15 @@ func NewUseCases(repo Repository) UseCases {
 	upsertFn := NewUpsert(&mutex, repo)
 	updateFn := NewUpdate(&mutex, repo)
 	deleteFn := NewDelete(&mutex, repo)
+	findMyGroupsFn := NewFindMyGroups(repo)
 
 	return UseCases{
-		FindByID: findByIdFn,
-		FindAll:  findAllFn,
-		Create:   createFn,
-		Upsert:   upsertFn,
-		Update:   updateFn,
-		Delete:   deleteFn,
+		FindByID:     findByIdFn,
+		FindAll:      findAllFn,
+		Create:       createFn,
+		Upsert:       upsertFn,
+		Update:       updateFn,
+		Delete:       deleteFn,
+		FindMyGroups: findMyGroupsFn,
 	}
 }
