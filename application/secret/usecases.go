@@ -26,18 +26,17 @@ type UpdateMyCredentials func(subject auth.Subject, id ID, credentials Credentia
 
 type DeleteMySecretByID func(subject auth.Subject, id ID) error
 
-// FindGroupSecrets returns all those secrets which are associated with the given group. This does
-// not perform any other security checks, because it is usually relevant for system services or similar (domain) global
-// use cases. So keep in mind, that this may be used to expose all secrets without any security checks, if used
-// directly.
-type FindGroupSecrets func(gid group.ID) iter.Seq2[Secret, error]
+// FindGroupSecrets returns all those secrets which are associated with the given group and only if
+// the given subject also belongs to that group. It returns also those secrets, which are not owned by the subject,
+// thus this may cause a secret exposure issue.
+type FindGroupSecrets func(subject auth.Subject, gid group.ID) iter.Seq2[Secret, error]
 
 // FindGroupCredentialsForType asserts a distinct
 // credentials type for type safe queries. See [FindGroupSecrets] for security notes.
-func FindGroupCredentialsForType[T Credentials](secrets FindGroupSecrets, gid group.ID) iter.Seq2[T, error] {
+func FindGroupCredentialsForType[T Credentials](subject auth.Subject, secrets FindGroupSecrets, gid group.ID) iter.Seq2[T, error] {
 	var zero T
 	return func(yield func(T, error) bool) {
-		for secret, err := range secrets(gid) {
+		for secret, err := range secrets(subject, gid) {
 			if err != nil {
 				if !yield(zero, err) {
 					return
@@ -62,6 +61,7 @@ type UseCases struct {
 	FindMySecretByID     FindMySecretByID
 	DeleteMySecretByID   DeleteMySecretByID
 	UpdateMySecretGroups UpdateMySecretGroups
+	FindGroupSecrets     FindGroupSecrets
 }
 
 func NewUseCases(repository Repository) UseCases {
@@ -72,6 +72,7 @@ func NewUseCases(repository Repository) UseCases {
 	findMySecretByIDFn := NewFindMySecretByID(repository)
 	deleteMySecretByIDFn := NewDeleteMySecretByID(repository)
 	updateMySecretGroupsFn := NewUpdateMySecretGroups(&globalLock, repository)
+	findGroupSecretsFn := NewFindGroupSecrets(repository)
 
 	return UseCases{
 		FindMySecrets:        findMySecretsFn,
@@ -80,5 +81,6 @@ func NewUseCases(repository Repository) UseCases {
 		FindMySecretByID:     findMySecretByIDFn,
 		DeleteMySecretByID:   deleteMySecretByIDFn,
 		UpdateMySecretGroups: updateMySecretGroupsFn,
+		FindGroupSecrets:     findGroupSecretsFn,
 	}
 }

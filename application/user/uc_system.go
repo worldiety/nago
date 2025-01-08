@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/application/role"
 	"golang.org/x/text/language"
 	"iter"
+	"slices"
 )
 
 func NewSystem() SysUser {
@@ -53,7 +54,7 @@ func (s sysUser) HasRole(rid role.ID) bool {
 }
 
 func (s sysUser) Groups() iter.Seq[group.ID] {
-	return func(yield func(group.ID) bool) {}
+	return slices.Values([]group.ID{group.System})
 }
 
 func (s sysUser) HasGroup(gid group.ID) bool {

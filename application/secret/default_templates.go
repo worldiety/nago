@@ -2,10 +2,10 @@ package secret
 
 type SMTP struct {
 	Name     string `value:"Mein SMTP Server"`
+	Host     string
+	Port     int `value:"587"`
 	Username string
 	Password string `style:"secret"`
-	Host     string
-	Port     int    `value:"587"`
 	_        string `credentialName:"SMTP Postausgangsserver" credentialDescription:"Ein Postausgangsserver wird benötigt, um E-Mails zu verschicken." credentialLogo:"https://www.thunderbird.net/media/img/thunderbird/favicon-196.png"`
 }
 

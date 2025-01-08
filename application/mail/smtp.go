@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/application/secret"
 	"mime"
 	"net"
 	"net/mail"
@@ -14,45 +14,13 @@ import (
 	"time"
 )
 
-type SmtpRepository data.Repository[Smtp, SmtpID]
-
-type SmtpID string
-
-type Category string
-
-const (
-	Primary  Category = "primary"
-	Normal   Category = "normal"
-	Disabled Category = "disabled"
-)
-
-type Smtp struct {
-	ID       SmtpID   `visible:"false"`
-	Name     string   `label:"Name"`
-	Host     string   `label:"Host" supportingText:"beispielsweise mail.your-server.de"`
-	Port     int      `label:"Port" supportingText:"Der Standardport ist üblicherweise 587 mit TLS" table-visible:"false"`
-	User     string   `label:"Login" table-visible:"false"`
-	Password string   `label:"Passwort" style:"secret" table-visible:"false"`
-	Category Category `label:"Kategorie" values:"[\"primary=Primär\", \"normal=Normal\",\"disabled=Deaktiviert\"]"`
-}
-
-func (s Smtp) WithIdentity(id SmtpID) Smtp {
-	s.ID = id
-	return s
-}
-
-func (s Smtp) Identity() SmtpID {
-	return s.ID
-}
-
-func (s Smtp) send(m Mail) error {
-
+func send(credentials secret.SMTP, m Mail) error {
 	// Connect to the SMTP Server
-	servername := s.Host + ":" + strconv.Itoa(s.Port)
+	servername := credentials.Host + ":" + strconv.Itoa(credentials.Port)
 
 	host, _, _ := net.SplitHostPort(servername)
 
-	auth := smtp.PlainAuth("", s.User, s.Password, host)
+	auth := smtp.PlainAuth("", credentials.Username, credentials.Password, host)
 
 	// TLS config
 	tlsconfig := &tls.Config{
@@ -80,7 +48,7 @@ func (s Smtp) send(m Mail) error {
 		return err
 	}
 	if len(m.From.Address) == 0 {
-		m.From.Address = s.User
+		m.From.Address = credentials.Username
 	}
 
 	// the from address is usually important for authentication

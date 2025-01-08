@@ -2,6 +2,10 @@ package mail
 
 import (
 	"context"
+	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/std"
 	"log/slog"
 	"slices"
 	"time"
@@ -15,7 +19,7 @@ type ScheduleOptions struct {
 }
 
 // StartScheduler starts a new scheduler instance to process the [Outgoing] mails.
-func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepository, mails Repository) {
+func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository, sysUser user.SysUser, secrets secret.FindGroupSecrets) {
 	if opts.SendInterval == 0 {
 		opts.SendInterval = time.Minute
 	}
@@ -57,33 +61,6 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepos
 				}
 			}
 
-			availableServers := make(map[SmtpID]Smtp)
-			var primaryServer Smtp
-			for smtp, err := range servers.All() {
-				if err != nil {
-					slog.Error("mail scheduler failed to iterate on smtp server repository", "err", err)
-					continue
-				}
-
-				if smtp.Category == Disabled {
-					continue
-				}
-
-				availableServers[smtp.ID] = smtp
-				if primaryServer.Host == "" {
-					primaryServer = smtp // in case of broken smtp data, just pick the first one
-				}
-
-				if smtp.Category == Primary {
-					primaryServer = smtp
-				}
-			}
-
-			if primaryServer.Host == "" {
-				slog.Error("mail scheduler failed to find primary (or any at all) mail server")
-				continue
-			}
-
 			now := time.Now()
 			var toRemove []ID
 			for outgoing, err := range mails.All() {
@@ -111,16 +88,24 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepos
 					continue
 				}
 
-				srv, ok := availableServers[outgoing.Mail.SmtpHint]
-				if !ok {
-					srv = primaryServer
+				optSmtp, err := pickMailServerCandidate(sysUser, secrets, outgoing.Mail.SmtpHint)
+				if err != nil {
+					slog.Error("mail scheduler failed to pick mail server", "err", err)
+					break
 				}
 
-				outgoing.Server = srv.ID
+				if optSmtp.IsNone() {
+					slog.Error("cannot process mail queue, no smtp credentials available in system group")
+					break
+				}
+
+				smtp := optSmtp.Unwrap()
+
+				outgoing.ServerName = smtp.Name
 				outgoing.SendAt = time.Now()
 
-				if err := srv.send(outgoing.Mail); err != nil {
-					slog.Error("mail scheduler failed to send mail", "smtp", srv.ID, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", err)
+				if err := send(smtp, outgoing.Mail); err != nil {
+					slog.Error("mail scheduler failed to send mail", "smtp", smtp.Name, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", err)
 
 					outgoing.Status = StatusError
 					outgoing.LastError = err.Error()
@@ -148,4 +133,30 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, servers SmtpRepos
 
 		}
 	}()
+}
+
+func pickMailServerCandidate(sysUser user.SysUser, secrets secret.FindGroupSecrets, idOrNameHint string) (std.Option[secret.SMTP], error) {
+	var bestMatch secret.SMTP
+	for scr, err := range secrets(sysUser(), group.System) {
+		if err != nil {
+			return std.None[secret.SMTP](), err
+		}
+
+		if smtp, ok := scr.Credentials.(secret.SMTP); ok {
+			if bestMatch.IsZero() {
+				bestMatch = smtp
+			} else {
+				if string(scr.ID) == idOrNameHint || smtp.Name == idOrNameHint {
+					bestMatch = smtp
+				}
+			}
+		}
+
+	}
+
+	if bestMatch.IsZero() {
+		return std.None[secret.SMTP](), nil
+	}
+
+	return std.Some(bestMatch), nil
 }

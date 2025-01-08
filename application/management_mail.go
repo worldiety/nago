@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/mail"
 	uimail "go.wdy.de/nago/application/mail/ui"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -44,38 +45,25 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			return MailManagement{}, fmt.Errorf("cannot get secret management: %w", err)
 		}
 
-		_ = secrets
-
 		//	if err := initDefaultTemplates(iam.Sys{}); err != nil {
 		//		return MailManagement{}, err
 		//	}
 
-		smtpStore, err := c.EntityStore("nago.mail.smtp")
-		if err != nil {
-			return MailManagement{}, err
-		}
-
-		smtpRepo := json.NewSloppyJSONRepository[mail.Smtp, mail.SmtpID](smtpStore)
-
-		mail.StartScheduler(c.Context(), mail.ScheduleOptions{}, smtpRepo, outgoingMailRepo)
+		mail.StartScheduler(c.Context(), mail.ScheduleOptions{}, outgoingMailRepo, user.NewSystem(), secrets.UseCases.FindGroupSecrets)
 
 		c.mailManagement.Pages = uimail.Pages{
-			SMTPServer:        "admin/mail/smtp",
 			OutgoingMailQueue: "admin/mail/outgoing",
 			MailScheduler:     "admin/mail/scheduler",
 			SendMailTest:      "admin/mail/test",
 			Templates:         "admin/mail/templates",
 		}
 
-		c.mailManagement.UseCases = mail.NewUseCases(outgoingMailRepo, smtpRepo)
+		c.mailManagement.UseCases = mail.NewUseCases(outgoingMailRepo)
 
 		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail)
 		}))
 
-		c.RootView(c.mailManagement.Pages.SMTPServer, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uimail.SmtpPage(wnd, c.mailManagement.UseCases)
-		}))
 		c.RootView(c.mailManagement.Pages.OutgoingMailQueue, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uimail.OutgoingQueuePage(wnd, c.mailManagement.UseCases)
 		}))
