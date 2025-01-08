@@ -15,11 +15,13 @@ type TDialog struct {
 	titleX       core.View
 	alignment    Alignment
 	modalPadding Padding
+	frame        Frame
 }
 
 func Dialog(body core.View) TDialog {
 	return TDialog{
-		body: body,
+		frame: Frame{MinWidth: L400, MaxWidth: "35rem", MaxHeight: "calc(100dvh - 8rem)"}.FullWidth(),
+		body:  body,
 	}
 }
 
@@ -53,6 +55,11 @@ func (c TDialog) ModalPadding(padding Padding) TDialog {
 	return c
 }
 
+func (c TDialog) Frame(frame Frame) TDialog {
+	c.frame = frame
+	return c
+}
+
 func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 	colors := core.Colors[Colors](ctx.Window())
 	dlg := BoxAlign(c.alignment, VStack(
@@ -63,12 +70,12 @@ func (c TDialog) Render(ctx core.RenderContext) ora.Component {
 			If(c.footer != nil, HLineWithColor(ColorAccent)),
 			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
 		).
-			Frame(Frame{MaxWidth: "35rem", MaxHeight: "calc(100dvh - 8rem)"}.FullWidth()).
+			Frame(c.frame).
 			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 	).
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).
-		Frame(Frame{MinWidth: L400}),
+		Frame(Frame{MinWidth: c.frame.MinWidth}),
 	).
 		BackgroundColor(colors.M5.WithTransparency(40)).Padding(c.modalPadding)
 
