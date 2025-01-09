@@ -122,6 +122,7 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
 		title,
 		ui.VStack(c.body).
+			Alignment(ui.Leading).
 			FullWidth().
 			Padding(ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: bodyTopPadding}),
 		ui.Spacer(),

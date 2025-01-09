@@ -137,6 +137,11 @@ const (
 	ColorBlack = "#000000"
 	ColorWhite = "#ffffff"
 
+	// ColorIcons or default text.
+	ColorIcons = M8
+
+	ColorIconsMuted = M7
+
 	ColorInteractive   = I0
 	ColorSemanticGood  = SG0
 	ColorSemanticWarn  = SW0

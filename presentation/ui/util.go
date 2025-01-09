@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	"iter"
+	"slices"
 )
 
 func render(ctx core.RenderContext, c core.View) ora.Component {
@@ -77,6 +78,10 @@ func Yield[T any](seq iter.Seq[T]) []T {
 
 	return res
 }*/
+
+func ForEach[T any, V any](seq []T, m func(T) V, more ...V) []V {
+	return Each(slices.Values(seq), m, more...)
+}
 
 func Each[T any, V any](seq iter.Seq[T], m func(T) V, more ...V) []V {
 	var res []V

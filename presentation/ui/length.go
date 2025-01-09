@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,46 @@ type Length string
 
 func (l Length) ora() ora.Length {
 	return ora.Length(l)
+}
+
+// Estimate can only do it wrong, however, it is just an estimation.
+func (l Length) Estimate() core.DP {
+	if l == "" {
+		return 0
+	}
+
+	neg := core.DP(1)
+	if strings.HasPrefix(string(l), "-") {
+		neg = -1
+	}
+
+	var nums strings.Builder
+	unitIdx := 0
+	for idx, r := range l {
+		if r >= '0' && r <= '9' || r == '.' {
+			nums.WriteRune(r)
+		} else {
+			unitIdx = idx
+			break
+		}
+	}
+
+	float, err := strconv.ParseFloat(nums.String(), 64)
+	if err != nil {
+		return 0
+	}
+
+	unit := l[unitIdx:]
+	switch unit {
+	case "dp":
+		return neg * core.DP(math.Round(float))
+	case "%":
+		return neg * core.DP(math.Round((float/100)*1024))
+	case "rem":
+		return neg * core.DP(math.Round(float*16))
+	}
+
+	return 0
 }
 
 func (l Length) Negate() Length {

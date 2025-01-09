@@ -35,7 +35,7 @@ func Permissions(wnd core.Window, all permission.FindAll) core.View {
 
 	bnd.IntoListEntry(func(entity permission.Permission) list.TEntry {
 		return list.Entry().
-			Leading(ui.ImageIcon(heroOutline.ShieldCheck)).
+			Leading(ui.ImageIcon(heroOutline.ShieldCheck).AccessibilityLabel(string(entity.Identity()))).
 			Headline(entity.String()).
 			SupportingText(entity.Description)
 	})
