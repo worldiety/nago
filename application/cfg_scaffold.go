@@ -188,7 +188,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 	return func(wnd core.Window, view core.View) core.View {
 		var logo core.View
 		if b.lightLogo != nil || b.darkLogo != nil {
-			logo = ui.Image().EmbedAdaptive(b.lightLogo, b.darkLogo).Frame(ui.Frame{}.Size(ui.L160, ui.L160))
+			logo = ui.Image().EmbedAdaptive(b.lightLogo, b.darkLogo).Frame(ui.Frame{}.Size("6rem", "6rem"))
 		}
 
 		var menu []ui.ScaffoldMenuEntry
