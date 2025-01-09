@@ -192,16 +192,16 @@ func DecorateRepository[E Aggregate[E, EID], EID ~string](opts DecoratorOptions,
 		panic("permission prefix not set")
 	}
 
-	if strings.HasSuffix(string(opts.PermissionPrefix), ".") {
+	if !opts.PermissionPrefix.Valid() {
+		panic(fmt.Errorf("permission prefix is invalid: %v", opts.PermissionPrefix))
+	}
+
+	if !strings.HasSuffix(string(opts.PermissionPrefix), ".") {
 		opts.PermissionPrefix += "."
 	}
 
 	if opts.EntityName == "" {
 		opts.EntityName = reflect.TypeFor[E]().Name()
-	}
-
-	if !opts.PermissionPrefix.Valid() {
-		panic(fmt.Errorf("permission prefix is invalid: %v", opts.PermissionPrefix))
 	}
 
 	crud := &Funcs[E, EID]{
