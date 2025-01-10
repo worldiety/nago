@@ -1,26 +1,29 @@
 <script setup lang="ts">
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
-import {useErrorHandling} from '@/composables/errorhandling';
-import type {ComponentInvalidated} from "@/shared/protocol/ora/componentInvalidated";
-import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from "vue";
-import type {Component} from "@/shared/protocol/ora/component";
-import GenericUi from "@/components/UiGeneric.vue";
-import type {NavigationForwardToRequested} from "@/shared/protocol/ora/navigationForwardToRequested";
-import type {Event} from '@/shared/protocol/ora/event';
-import {useEventBus} from '@/composables/eventBus';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {EventType} from '@/shared/eventbus/eventType';
-import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
-import type {SendMultipleRequested} from "@/shared/protocol/ora/sendMultipleRequested";
-import type {Themes} from '@/shared/protocol/ora/themes';
-import type {Theme} from '@/shared/protocol/ora/theme';
-import {useThemeManager} from '@/shared/themeManager';
-import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
-import {URI} from "@/shared/protocol/ora/uRI";
-import {FileImportRequested} from "@/shared/protocol/ora/fileImportRequested";
-import {useUploadRepository} from "@/api/upload/uploadRepository";
-import {ThemeRequested} from "@/shared/protocol/ora/themeRequested";
-import {OpenRequested} from "@/shared/protocol/ora/openRequested";
+import GenericUi from '@/components/UiGeneric.vue';
+import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
+import { useErrorHandling } from '@/composables/errorhandling';
+import { useEventBus } from '@/composables/eventBus';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { EventType } from '@/shared/eventbus/eventType';
+import ConnectionHandler from '@/shared/network/connectionHandler';
+import { ConnectionState } from '@/shared/network/connectionState';
+import type { Component } from '@/shared/protocol/ora/component';
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
+import type { Event } from '@/shared/protocol/ora/event';
+import { FileImportRequested } from '@/shared/protocol/ora/fileImportRequested';
+import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
+import { OpenRequested } from '@/shared/protocol/ora/openRequested';
+import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
+import type { Theme } from '@/shared/protocol/ora/theme';
+import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
+import type { Themes } from '@/shared/protocol/ora/themes';
+import { URI } from '@/shared/protocol/ora/uRI';
+import { WindowInfo } from '@/shared/protocol/ora/windowInfo';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -34,6 +37,8 @@ const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
 const componentKey = ref(0);
+
+const connected = ref(true);
 
 const errorHandler = useErrorHandling();
 let configurationPromise: Promise<void> | null = null;
@@ -49,15 +54,14 @@ async function applyConfiguration(): Promise<void> {
 	const config = await serviceAdapter.getConfiguration();
 	themeManager.setThemes(config.themes);
 	themeManager.applyActiveTheme();
-	updateFavicon(config.appIcon)
+	updateFavicon(config.appIcon);
 	sendWindowInfo(false);
 }
 
 function updateFavicon(uri: URI) {
 	if (!uri || uri.length == 0) {
-		return
+		return;
 	}
-
 
 	var link = document.querySelector("link[rel~='icon']");
 	if (!link) {
@@ -66,7 +70,7 @@ function updateFavicon(uri: URI) {
 		document.head.appendChild(link);
 	}
 
-	link.href = uri
+	link.href = uri;
 }
 
 async function initializeUi(): Promise<void> {
@@ -74,17 +78,21 @@ async function initializeUi(): Promise<void> {
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
 		if (factoryId.length === 0) {
-			factoryId = "." // this is by ora definition the root page
+			factoryId = '.'; // this is by ora definition the root page
 		}
 		const params: Record<string, string> = {};
 		new URLSearchParams(window.location.search).forEach((value, key) => {
-			params[key] = value
-		})
-		history.replaceState({
-			factory: factoryId,
-			values: params,
-		}, "", null)
-		const invalidation = await serviceAdapter.createComponent(factoryId, params)
+			params[key] = value;
+		});
+		history.replaceState(
+			{
+				factory: factoryId,
+				values: params,
+			},
+			'',
+			null
+		);
+		const invalidation = await serviceAdapter.createComponent(factoryId, params);
 
 		eventBus.subscribe(EventType.INVALIDATED, updateUi);
 		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
@@ -93,10 +101,10 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
 		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
-		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
-		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo)
-		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested)
-		eventBus.subscribe(EventType.OPEN_REQUESTED, openRequested)
+		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested);
+		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo);
+		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested);
+		eventBus.subscribe(EventType.OPEN_REQUESTED, openRequested);
 
 		updateUi(invalidation);
 	} catch {
@@ -106,7 +114,7 @@ async function initializeUi(): Promise<void> {
 
 function handleError(event: Event): void {
 	//alert((event as ErrorOccurred).message);
-	console.log((event as ErrorOccurred).message)
+	console.log((event as ErrorOccurred).message);
 }
 
 function updateUi(event: Event): void {
@@ -114,26 +122,29 @@ function updateUi(event: Event): void {
 		return;
 	}
 	const componentInvalidated = event as ComponentInvalidated;
-	console.log("setting new view tree", componentInvalidated.value)
+	console.log('setting new view tree', componentInvalidated.value);
 	ui.value = componentInvalidated.value;
 	state.value = State.ShowUI;
 }
 
 async function navigateForward(event: Event): Promise<void> {
-	console.log("navigate forward", ui.value)
+	console.log('navigate forward', ui.value);
 	if (!ui.value) {
 		return;
 	}
 
-	const navigationForwardToRequested = (event as NavigationForwardToRequested);
-	await serviceAdapter.destroyComponent(ui.value?.id)
-	const componentInvalidated = await serviceAdapter.createComponent(navigationForwardToRequested.factory, navigationForwardToRequested.values);
+	const navigationForwardToRequested = event as NavigationForwardToRequested;
+	await serviceAdapter.destroyComponent(ui.value?.id);
+	const componentInvalidated = await serviceAdapter.createComponent(
+		navigationForwardToRequested.factory,
+		navigationForwardToRequested.values
+	);
 	ui.value = componentInvalidated.value;
 
 	componentKey.value += 1;
-	console.log("componentkey", componentKey.value)
+	console.log('componentkey', componentKey.value);
 
-	let url = `/${navigationForwardToRequested.factory}`
+	let url = `/${navigationForwardToRequested.factory}`;
 	if (navigationForwardToRequested.values && Object.entries(navigationForwardToRequested.values).length > 0) {
 		url += '?';
 		Object.entries(navigationForwardToRequested.values).forEach(([key, value], index, array) => {
@@ -143,7 +154,7 @@ async function navigateForward(event: Event): Promise<void> {
 			}
 		});
 	}
-	history.pushState(navigationForwardToRequested, "", url)
+	history.pushState(navigationForwardToRequested, '', url);
 }
 
 function navigateBack(): void {
@@ -151,70 +162,68 @@ function navigateBack(): void {
 }
 
 function navigateReload(): void {
-	location.reload()
+	location.reload();
 }
 
 function resetHistory(event: Event): void {
 	// todo this seems not possible in the web
-	navigateForward(event)
+	navigateForward(event);
 }
 
 const uploadRepository = useUploadRepository();
 
-
 function openRequested(evt: Event): void {
-	let msg = evt as OpenRequested
+	let msg = evt as OpenRequested;
 	if (!msg.options) {
-		open(msg.resource)
-		return
+		open(msg.resource);
+		return;
 	}
 
-	switch (msg.options["_type"]) {
-		case "http-flow":
-			let redirectTarget = msg.options["redirectTarget"]
-			let redirectNavigation = msg.options["redirectNavigation"]
+	switch (msg.options['_type']) {
+		case 'http-flow':
+			let redirectTarget = msg.options['redirectTarget'];
+			let redirectNavigation = msg.options['redirectNavigation'];
 
-			console.log("http-flow", redirectTarget, redirectNavigation)
+			console.log('http-flow', redirectTarget, redirectNavigation);
 
-			window.location.href = msg.resource
-			break
-		case "http-link":
-			let target = msg.options["target"]
-			window.open(msg.resource, target)
-			break
+			window.location.href = msg.resource;
+			break;
+		case 'http-link':
+			let target = msg.options['target'];
+			window.open(msg.resource, target);
+			break;
 		default:
-			open(msg.resource)
+			open(msg.resource);
 	}
 
-	sendWindowInfo(true)
+	sendWindowInfo(true);
 }
 
-
 function themeRequested(evt: Event): void {
-	let msg = evt as ThemeRequested
+	let msg = evt as ThemeRequested;
 
 	switch (msg.theme) {
-		case "light":
-			themeManager.applyLightmodeTheme()
+		case 'light':
+			themeManager.applyLightmodeTheme();
 			break;
-		case "dark":
-			themeManager.applyDarkmodeTheme()
+		case 'dark':
+			themeManager.applyDarkmodeTheme();
 			break;
 		default:
-			console.log("unknown theme", msg.theme)
+			console.log('unknown theme', msg.theme);
 	}
 
-	sendWindowInfo(true)
+	sendWindowInfo(true);
 }
 
 function fileImportRequested(evt: Event): void {
 	let msg = evt as FileImportRequested;
 	let input = document.createElement('input');
-	input.className = "hidden"
-	input.type = "file"
-	input.id = msg.id
-	input.multiple = msg.multiple
-	input.onchange = event => {
+	input.className = 'hidden';
+	input.type = 'file';
+	input.id = msg.id;
+	input.multiple = msg.multiple;
+	input.onchange = (event) => {
 		const item = event.target as HTMLInputElement;
 		if (!item.files) {
 			return;
@@ -226,26 +235,22 @@ function fileImportRequested(evt: Event): void {
 				0,
 				msg.scopeID,
 				(uploauploadId: string, progress: number, total: number) => {
-					console.log("progress", progress)
+					console.log('progress', progress);
 				},
-				uploadId => {
-				},
-				uploadId => {
-				},
-				uploadId => {
-					console.log("upload failed")
-				},
-			)
+				(uploadId) => {},
+				(uploadId) => {},
+				(uploadId) => {
+					console.log('upload failed');
+				}
+			);
 		}
-
-
-	}
+	};
 	if (msg.allowedMimeTypes) {
-		input.accept = msg.allowedMimeTypes.join(",")
+		input.accept = msg.allowedMimeTypes.join(',');
 	}
 	document.body.appendChild(input);
-	input.showPicker()
-//	input.click()
+	input.showPicker();
+	//	input.click()
 	document.body.removeChild(input);
 }
 
@@ -280,10 +285,10 @@ const activeBreakpoint = ref('');
 
 function sendWindowInfo(force: boolean = true) {
 	const breakpoints = {
-		sm: 640,
-		md: 768,
-		lg: 1024,
-		xl: 1280,
+		'sm': 640,
+		'md': 768,
+		'lg': 1024,
+		'xl': 1280,
 		'2xl': 1536,
 	};
 
@@ -298,12 +303,12 @@ function sendWindowInfo(force: boolean = true) {
 
 	if (!force && lastActiveBreakpoint == activeBreakpoint.value) {
 		// avoid spamming the backend with messages from fluid window resizing
-		return
+		return;
 	}
 
-	let currentTheme = localStorage.getItem('color-theme')
+	let currentTheme = localStorage.getItem('color-theme');
 	if (!currentTheme) {
-		currentTheme = ""
+		currentTheme = '';
 	}
 
 	//console.log("active breakpoint", activeBreakpoint.value)
@@ -313,30 +318,37 @@ function sendWindowInfo(force: boolean = true) {
 		density: window.devicePixelRatio,
 		sizeClass: activeBreakpoint.value,
 		colorScheme: currentTheme,
-	}
-
+	};
 
 	serviceAdapter.updateWindowInfo(winfo);
 }
 
 function addEventListeners(): void {
-	addEventListener("popstate", (event) => {
+	addEventListener('popstate', (event) => {
 		if (event.state === null) {
-			return
+			return;
 		}
 
-		const req2 = history.state as NavigationForwardToRequested
+		const req2 = history.state as NavigationForwardToRequested;
 		if (ui.value) {
-			serviceAdapter.destroyComponent(ui.value.id)
+			serviceAdapter.destroyComponent(ui.value.id);
 		}
-		serviceAdapter.createComponent(req2.factory, req2.values).then(invalidation => {
+		serviceAdapter.createComponent(req2.factory, req2.values).then((invalidation) => {
 			ui.value = invalidation.value;
-		})
+		});
 	});
 
 	window.addEventListener('resize', function (event) {
 		sendWindowInfo(false);
 	});
+}
+
+function onConnectionChange(connectionState: ConnectionState): void {
+	connected.value = connectionState.connected;
+}
+
+function addConnectionListeners(): void {
+	ConnectionHandler.addConnectionChangeListener(onConnectionChange);
 }
 
 onBeforeMount(() => {
@@ -347,7 +359,7 @@ onMounted(async () => {
 	await configurationPromise;
 	await initializeUi();
 	addEventListeners();
-
+	addConnectionListeners();
 });
 
 onUnmounted(() => {
@@ -358,11 +370,10 @@ onUnmounted(() => {
 	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
 	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
-	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested)
-	eventBus.unsubscribe(EventType.THEME_REQUESTED, themeRequested)
-	eventBus.unsubscribe(EventType.OPEN_REQUESTED, openRequested)
+	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested);
+	eventBus.unsubscribe(EventType.THEME_REQUESTED, themeRequested);
+	eventBus.unsubscribe(EventType.OPEN_REQUESTED, openRequested);
 });
-
 
 //modal dialog support
 const anyModalVisible = ref<boolean>(false);
@@ -370,20 +381,22 @@ const windowScrollY = ref<number>(0);
 
 // we just watch for changes
 // TODO dont know the render timing and states
-watch(() => ui.value, (newValue) => {
-	if (newValue) {
-		if (!anyModalVisible.value) {
-			windowScrollY.value = window.scrollY * -1;
-			anyModalVisible.value = true;
+watch(
+	() => ui.value,
+	(newValue) => {
+		if (newValue) {
+			if (!anyModalVisible.value) {
+				windowScrollY.value = window.scrollY * -1;
+				anyModalVisible.value = true;
+			}
+		} else {
+			anyModalVisible.value = false;
+			nextTick(() => {
+				window.scrollTo(0, windowScrollY.value * -1);
+			});
 		}
-	} else {
-		anyModalVisible.value = false;
-		nextTick(() => {
-			window.scrollTo(0, windowScrollY.value * -1);
-		})
 	}
-});
-
+);
 </script>
 
 <style scoped>
@@ -398,29 +411,25 @@ watch(() => ui.value, (newValue) => {
 </style>
 
 <template>
-
+	<ConnectionLostOverlay v-if="!connected" />
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
 	</div>
 
+	<div
+		id="ora-overlay"
+		class="modal-container fixed inset-0 pointer-events-none z-40"
+		style="--modal-z-index: 35"
+	></div>
 
-	<div id="ora-overlay" class="modal-container fixed inset-0 pointer-events-none z-40" style="--modal-z-index: 35">
+	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40"></div>
 
-	</div>
-
-	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40">
-
-	</div>
-
-
-	<div class="bg-M1 content-container  min-h-screen">
+	<div class="bg-M1 content-container min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
 	</div>
-
-
 </template>

@@ -70,5 +70,8 @@
 	},
 	"scaffold": {
 		"toMenu": "Hauptmenü"
+	},
+	"connectionLostOverlay": {
+		"content": "Verbindung unterbrochen"
 	}
 }
