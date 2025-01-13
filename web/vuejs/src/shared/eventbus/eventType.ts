@@ -22,5 +22,8 @@ export enum EventType {
 	PING = 'Ping',
 	THEME_REQUESTED = 'ThemeRequested',
 	OPEN_REQUESTED = 'OpenRequested',
-	WindowInfoChanged = 'WindowInfoChanged'
+	WindowInfoChanged = 'WindowInfoChanged',
+
+	// not (yet) part of the ora protocol, but emitted within the frontend for the frontend
+	ServerStateLost = 'ServerStateLost'
 }

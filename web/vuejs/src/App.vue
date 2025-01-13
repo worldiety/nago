@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useUploadRepository } from '@/api/upload/uploadRepository';
+import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useUploadRepository} from '@/api/upload/uploadRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import { useErrorHandling } from '@/composables/errorhandling';
-import { useEventBus } from '@/composables/eventBus';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { EventType } from '@/shared/eventbus/eventType';
+import {useErrorHandling} from '@/composables/errorhandling';
+import {useEventBus} from '@/composables/eventBus';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {EventType} from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import { ConnectionState } from '@/shared/network/connectionState';
-import type { Component } from '@/shared/protocol/ora/component';
-import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
-import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
-import type { Event } from '@/shared/protocol/ora/event';
-import { FileImportRequested } from '@/shared/protocol/ora/fileImportRequested';
-import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
-import { OpenRequested } from '@/shared/protocol/ora/openRequested';
-import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
-import type { Theme } from '@/shared/protocol/ora/theme';
-import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
-import type { Themes } from '@/shared/protocol/ora/themes';
-import { URI } from '@/shared/protocol/ora/uRI';
-import { WindowInfo } from '@/shared/protocol/ora/windowInfo';
-import { useThemeManager } from '@/shared/themeManager';
+import {ConnectionState} from '@/shared/network/connectionState';
+import type {Component} from '@/shared/protocol/ora/component';
+import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
+import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
+import type {Event} from '@/shared/protocol/ora/event';
+import {FileImportRequested} from '@/shared/protocol/ora/fileImportRequested';
+import type {NavigationForwardToRequested} from '@/shared/protocol/ora/navigationForwardToRequested';
+import {OpenRequested} from '@/shared/protocol/ora/openRequested';
+import type {SendMultipleRequested} from '@/shared/protocol/ora/sendMultipleRequested';
+import type {Theme} from '@/shared/protocol/ora/theme';
+import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
+import type {Themes} from '@/shared/protocol/ora/themes';
+import {URI} from '@/shared/protocol/ora/uRI';
+import {WindowInfo} from '@/shared/protocol/ora/windowInfo';
+import {useThemeManager} from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -105,11 +105,18 @@ async function initializeUi(): Promise<void> {
 		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo);
 		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested);
 		eventBus.subscribe(EventType.OPEN_REQUESTED, openRequested);
+		eventBus.subscribe(EventType.ServerStateLost, serverStateLost);
 
 		updateUi(invalidation);
 	} catch {
 		state.value = State.Error;
 	}
+}
+
+function serverStateLost(): void{
+	// the most important point is, that the server got a new version
+	// thus, the correct reaction is to reload everything, because this frontend may have changed.
+	navigateReload();
 }
 
 function handleError(event: Event): void {
@@ -345,6 +352,10 @@ function addEventListeners(): void {
 
 function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
+	if (connected.value){
+		// trigger a re-render, TODO introduce something like an invalidate event
+		serviceAdapter.executeFunctions(-1)
+	}
 }
 
 function addConnectionListeners(): void {

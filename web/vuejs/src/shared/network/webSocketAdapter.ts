@@ -1,28 +1,28 @@
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
-import { EventType } from '@/shared/eventbus/eventType';
+import {EventType} from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import type { Acknowledged } from '@/shared/protocol/ora/acknowledged';
-import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
-import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
-import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
-import type { ConfigurationDefined } from '@/shared/protocol/ora/configurationDefined';
-import type { ConfigurationRequested } from '@/shared/protocol/ora/configurationRequested';
-import type { Event } from '@/shared/protocol/ora/event';
-import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
-import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
-import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
-import type { Ping } from '@/shared/protocol/ora/ping';
-import type { Property } from '@/shared/protocol/ora/property';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { ScopeID } from '@/shared/protocol/ora/scopeID';
-import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
-import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
-import type { WindowInfoChanged } from '@/shared/protocol/ora/windowInfoChanged';
+import type {Acknowledged} from '@/shared/protocol/ora/acknowledged';
+import type {ComponentDestructionRequested} from '@/shared/protocol/ora/componentDestructionRequested';
+import type {ComponentFactoryId} from '@/shared/protocol/ora/componentFactoryId';
+import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
+import type {ConfigurationDefined} from '@/shared/protocol/ora/configurationDefined';
+import type {ConfigurationRequested} from '@/shared/protocol/ora/configurationRequested';
+import type {Event} from '@/shared/protocol/ora/event';
+import type {EventsAggregated} from '@/shared/protocol/ora/eventsAggregated';
+import type {FunctionCallRequested} from '@/shared/protocol/ora/functionCallRequested';
+import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequested';
+import type {Ping} from '@/shared/protocol/ora/ping';
+import type {Property} from '@/shared/protocol/ora/property';
+import type {Ptr} from '@/shared/protocol/ora/ptr';
+import type {ScopeID} from '@/shared/protocol/ora/scopeID';
+import type {SetPropertyValueRequested} from '@/shared/protocol/ora/setPropertyValueRequested';
+import type {WindowInfo} from '@/shared/protocol/ora/windowInfo';
+import type {WindowInfoChanged} from '@/shared/protocol/ora/windowInfoChanged';
 
 export default class WebSocketAdapter implements ServiceAdapter {
-	private eventBus: EventBus;
+	eventBus: EventBus;
 	private pendingFutures: Map<number, Future>;
 	private destroyedComponents: Map<Ptr, object | null>;
 	private readonly webSocketPort: string;
@@ -78,7 +78,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.webSocket.onmessage = (e) => this.receive(e.data);
 
 			this.webSocket.onclose = () => {
-				ConnectionHandler.connectionChanged({ connected: false });
+				ConnectionHandler.connectionChanged({connected: false});
 
 				if (!this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
@@ -92,7 +92,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			};
 
 			this.webSocket.onopen = () => {
-				ConnectionHandler.connectionChanged({ connected: true });
+				ConnectionHandler.connectionChanged({connected: true});
 				this.retries = 0;
 
 				// this keeps our connection at least logically alive
@@ -115,7 +115,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async teardown(): Promise<void> {
 		this.closedGracefully = true;
 		this.webSocket?.close();
-		ConnectionHandler.connectionChanged({ connected: false });
+		ConnectionHandler.connectionChanged({connected: false});
 	}
 
 	private retry() {
@@ -245,7 +245,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		console.log('shall send', properties);
 		return new Promise<Event>((resolve, reject) => {
 			const requestId = this.nextRequestId();
-			const future = new Future(requestId, resolve, reject);
+			const future = new Future(this, requestId, resolve, reject);
 			this.addFuture(future);
 			const callBatch = this.createCallBatch(
 				requestId,
@@ -398,19 +398,28 @@ export default class WebSocketAdapter implements ServiceAdapter {
 }
 
 class Future {
+	private readonly parent: WebSocketAdapter;
 	private readonly resolve: (event: Event) => void;
 	private readonly reject: (event: Event) => void;
 	private readonly monotonicRequestId: number;
 
-	constructor(monotonicRequestId: number, resolve: (event: Event) => void, reject: (event: Event) => void) {
+	constructor(parent: WebSocketAdapter, monotonicRequestId: number, resolve: (event: Event) => void, reject: (event: Event) => void) {
 		this.resolve = resolve;
 		this.reject = reject;
+		this.parent = parent;
 		this.monotonicRequestId = monotonicRequestId;
 	}
 
 	resolveFuture(event: Event): void {
 		if (event.type === 'ErrorOccurred') {
 			window.console.log(`future ${this.monotonicRequestId} is rejected`);
+
+			// this happens, if the server has lost the scope state, either due to a restart or connection timeout
+			// TODO this string comparision is stupid and must be changed to at least a numeric error code
+			if ((event.message as string).indexOf("no view allocated")) {
+				this.parent.eventBus.publish(EventType.ServerStateLost, EventType.PING)
+			}
+
 			this.reject(event);
 			return;
 		}
