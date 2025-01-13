@@ -1,36 +1,37 @@
+import { v4 as uuidv4 } from 'uuid';
+import type EventBus from '@/shared/eventbus/eventBus';
+import { EventType } from '@/shared/eventbus/eventType';
+import ConnectionHandler from '@/shared/network/connectionHandler';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import type {Ping} from '@/shared/protocol/ora/ping';
-import type {Property} from '@/shared/protocol/ora/property';
-import type {Ptr} from '@/shared/protocol/ora/ptr';
-import type {Event} from '@/shared/protocol/ora/event';
-import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
-import type {ConfigurationDefined} from '@/shared/protocol/ora/configurationDefined';
-import type {ConfigurationRequested} from '@/shared/protocol/ora/configurationRequested';
-import type {Acknowledged} from '@/shared/protocol/ora/acknowledged';
-import type {EventsAggregated} from '@/shared/protocol/ora/eventsAggregated';
-import type {SetPropertyValueRequested} from '@/shared/protocol/ora/setPropertyValueRequested';
-import type {FunctionCallRequested} from '@/shared/protocol/ora/functionCallRequested';
-import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequested';
-import type {ComponentDestructionRequested} from '@/shared/protocol/ora/componentDestructionRequested';
-import type {ComponentFactoryId} from '@/shared/protocol/ora/componentFactoryId';
-import {v4 as uuidv4} from 'uuid';
-import EventBus from '@/shared/eventbus/eventBus';
-import {EventType} from '@/shared/eventbus/eventType';
-import type {ScopeID} from "@/shared/protocol/ora/scopeID";
-import {WindowInfo} from "@/shared/protocol/ora/windowInfo";
-import {WindowInfoChanged} from "@/shared/protocol/ora/windowInfoChanged";
+import type { Acknowledged } from '@/shared/protocol/ora/acknowledged';
+import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
+import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ConfigurationDefined } from '@/shared/protocol/ora/configurationDefined';
+import type { ConfigurationRequested } from '@/shared/protocol/ora/configurationRequested';
+import type { Event } from '@/shared/protocol/ora/event';
+import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
+import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
+import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
+import type { Ping } from '@/shared/protocol/ora/ping';
+import type { Property } from '@/shared/protocol/ora/property';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { ScopeID } from '@/shared/protocol/ora/scopeID';
+import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
+import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
+import type { WindowInfoChanged } from '@/shared/protocol/ora/windowInfoChanged';
 
 export default class WebSocketAdapter implements ServiceAdapter {
-
 	private eventBus: EventBus;
 	private pendingFutures: Map<number, Future>;
-	private destroyedComponents: Map<Ptr, any>;
+	private destroyedComponents: Map<Ptr, object | null>;
 	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
 	private readonly scopeId: string;
 	private webSocket: WebSocket | null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number | null = null;
+	private retries: number = 0;
 	private activeLocale: string;
 	private requestId: number;
 	private bufferCache: Map<Ptr, string>; // TODO reset me, if new component (== new scope) is requested
@@ -47,23 +48,23 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		// So, you MUST ensure that each VueJS instance has its own unique scope id,
 		// also when reconnecting to an existing scope.
 		this.scopeId = uuidv4();
-		this.isSecure = location.protocol == "https:";
+		this.isSecure = location.protocol == 'https:';
 		this.activeLocale = '';
 		this.requestId = 0;
 	}
 
 	private initializeWebSocketPort(): string {
 		let port = import.meta.env.VITE_WS_BACKEND_PORT;
-		if (port === "") {
+		if (port === '') {
 			port = window.location.port;
 		}
 		return port;
 	}
 
 	async initialize(): Promise<void> {
-		let proto = "ws";
+		let proto = 'ws';
 		if (this.isSecure) {
-			proto = "wss";
+			proto = 'wss';
 		}
 		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
@@ -77,48 +78,67 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.webSocket.onmessage = (e) => this.receive(e.data);
 
 			this.webSocket.onclose = () => {
+				ConnectionHandler.connectionChanged({ connected: false });
+
 				if (!this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
-					window.console.log("ws was intentionally closed");
+					window.console.log('ws was intentionally closed');
 					this.retry();
 				} else {
 					// Keep the socket closed if it was closed gracefully (i.e. intentional)
-					window.console.log("ws was not closed gracefully");
+					window.console.log('ws was not closed gracefully');
 					this.closedGracefully = false;
 				}
-			}
+			};
 
 			this.webSocket.onopen = () => {
+				ConnectionHandler.connectionChanged({ connected: true });
+				this.retries = 0;
+
 				// this keeps our connection at least logically alive
 				setInterval(() => {
 					if (this.closedGracefully) {
-						return
+						return;
 					}
 					const evt: Ping = {
 						type: 'Ping',
 					};
 
-					this.webSocket?.send(JSON.stringify(evt))
+					this.webSocket?.send(JSON.stringify(evt));
 				}, 30000);
 
 				resolve();
-			}
-		})
+			};
+		});
 	}
 
 	async teardown(): Promise<void> {
 		this.closedGracefully = true;
 		this.webSocket?.close();
+		ConnectionHandler.connectionChanged({ connected: false });
 	}
 
 	private retry() {
 		if (this.retryTimeout !== null) {
 			return;
 		}
+
+		let timeout = 50; // Retry timeout 50ms
+		if (this.retries >= 20) {
+			timeout = 250; // 250ms after 2s
+		}
+		if (this.retries >= 32) {
+			timeout = 1000; // 1s after 5s
+		}
+		if (this.retries >= 37) {
+			timeout = 2000; // 2s after 10s
+		}
+
+		this.retries += 1;
 		this.retryTimeout = window.setTimeout(() => {
 			this.retryTimeout = null;
 			this.initialize();
-		}, 2000);
+		}, timeout);
 	}
 
 	async executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated> {
@@ -129,25 +149,28 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		return this.send(properties).then((event) => event as ComponentInvalidated);
 	}
 
-	async setPropertiesAndCallFunctions(properties: Property<unknown>[], functions: Property<Ptr>[]): Promise<ComponentInvalidated> {
+	async setPropertiesAndCallFunctions(
+		properties: Property<unknown>[],
+		functions: Property<Ptr>[]
+	): Promise<ComponentInvalidated> {
 		return this.send(properties, functions).then((event) => event as ComponentInvalidated);
 	}
 
 	getScopeID(): ScopeID {
-		return this.scopeId
+		return this.scopeId;
 	}
 
 	getBufferFromCache(ptr: Ptr): string | undefined {
-		return this.bufferCache.get(ptr)
+		return this.bufferCache.get(ptr);
 	}
 
 	setBufferToCache(ptr: Ptr, data: string): void {
-		this.bufferCache.set(ptr, data)
+		this.bufferCache.set(ptr, data);
 	}
 
 	async createComponent(fid: ComponentFactoryId, params: Record<string, string>): Promise<ComponentInvalidated> {
-		if (this.activeLocale == "") {
-			window.console.log("there is no configured active locale. Invoke getConfiguration to set it.")
+		if (this.activeLocale == '') {
+			window.console.log('there is no configured active locale. Invoke getConfiguration to set it.');
 		}
 
 		const newComponentRequested: NewComponentRequested = {
@@ -158,12 +181,9 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			values: params,
 		};
 
-		return this.send(
-			undefined,
-			undefined,
-			undefined,
-			newComponentRequested,
-		).then((event) => event as ComponentInvalidated);
+		return this.send(undefined, undefined, undefined, newComponentRequested).then(
+			(event) => event as ComponentInvalidated
+		);
 	}
 
 	async destroyComponent(ptr: Ptr): Promise<Acknowledged> {
@@ -174,23 +194,19 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		};
 
 		//console.log("async destroy component",ptr)
-		this.destroyedComponents.set(ptr, null)
+		this.destroyedComponents.set(ptr, null);
 
-		return this.send(
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			componentDestructionRequested,
-		).then((event) => event as Acknowledged);
+		return this.send(undefined, undefined, undefined, undefined, componentDestructionRequested).then(
+			(event) => event as Acknowledged
+		);
 	}
 
 	async getConfiguration(): Promise<ConfigurationDefined> {
 		const winfo: WindowInfo = {
 			width: window.innerWidth,
 			height: window.innerHeight,
-			density: window.devicePixelRatio
-		}
+			density: window.devicePixelRatio,
+		};
 
 		const configurationRequested: ConfigurationRequested = {
 			type: 'ConfigurationRequested',
@@ -212,26 +228,33 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		functions?: Ptr[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
-		componentDestructionRequested?: ComponentDestructionRequested,
+		componentDestructionRequested?: ComponentDestructionRequested
 	): Promise<Event> {
-		if (properties?.length>0){
-			if (properties?.at(0).p==undefined){
-				throw "fix me"
+		if (properties?.length > 0) {
+			if (properties?.at(0).p == undefined) {
+				throw 'fix me';
 			}
 		}
 
-		if (functions?.length>0){
-			if (functions?.at(0)==0){
-				throw "fix me"
+		if (functions?.length > 0) {
+			if (functions?.at(0) == 0) {
+				throw 'fix me';
 			}
 		}
 
-		console.log("shall send",properties)
+		console.log('shall send', properties);
 		return new Promise<Event>((resolve, reject) => {
 			const requestId = this.nextRequestId();
 			const future = new Future(requestId, resolve, reject);
 			this.addFuture(future);
-			const callBatch = this.createCallBatch(requestId, properties, functions, configurationRequested, newComponentRequested, componentDestructionRequested);
+			const callBatch = this.createCallBatch(
+				requestId,
+				properties,
+				functions,
+				configurationRequested,
+				newComponentRequested,
+				componentDestructionRequested
+			);
 			this.webSocket?.send(JSON.stringify(callBatch));
 		});
 	}
@@ -242,7 +265,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		const event = responseParsed as Event;
 		const eventType = event.type as EventType;
 
-		console.log(responseParsed)
+		console.log(responseParsed);
 
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {
@@ -252,7 +275,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				// it looks like we have a message interleaving problem, where we receive a component tree
 				// which is destroyed. The backend cannot send invalidation events of already destroyed components,
 				// thus it looks like a logical race at message layer.
-				let invalidated = event as ComponentInvalidated;
+				const invalidated = event as ComponentInvalidated;
 				//console.log("component invalidated",invalidated.value.id)
 
 				// TODO not sure if this can still be the case
@@ -278,14 +301,13 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		functions?: Ptr[],
 		configurationRequested?: ConfigurationRequested,
 		newComponentRequested?: NewComponentRequested,
-		componentDestructionRequested?: ComponentDestructionRequested,
+		componentDestructionRequested?: ComponentDestructionRequested
 	): EventsAggregated {
 		const callBatch: EventsAggregated = {
 			type: 'T',
 			events: [],
 			r: requestId,
 		};
-
 
 		properties
 			?.filter((property: Property<unknown>) => property.p !== 0)
@@ -332,7 +354,6 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private addFuture(future: Future): void {
 		// Allow a maximum of 10000 pending futures
 		if (this.pendingFutures.size >= 10000) {
-
 			const sortedPendingRequests = [...this.pendingFutures.entries()].sort(comparePendingFutures);
 			this.pendingFutures.delete(sortedPendingRequests[0][0]);
 		}
@@ -350,10 +371,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	private resolveFuture(requestId: number, response: Event): void {
-
 		const future = this.pendingFutures.get(requestId);
 		if (!future) {
-
 			window.console.log(`error: got network response with unmatched request ID r=${requestId}`);
 
 			const eventType = response.type as EventType;
@@ -372,14 +391,13 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	updateWindowInfo(windowInfo: WindowInfo): void {
 		const infoChanged: WindowInfoChanged = {
 			type: EventType.WindowInfoChanged,
-			info: windowInfo
+			info: windowInfo,
 		};
 		this.webSocket?.send(JSON.stringify(infoChanged));
 	}
 }
 
 class Future {
-
 	private readonly resolve: (event: Event) => void;
 	private readonly reject: (event: Event) => void;
 	private readonly monotonicRequestId: number;
@@ -391,10 +409,10 @@ class Future {
 	}
 
 	resolveFuture(event: Event): void {
-		if (event.type === "ErrorOccurred") {
+		if (event.type === 'ErrorOccurred') {
 			window.console.log(`future ${this.monotonicRequestId} is rejected`);
-			this.reject(event)
-			return
+			this.reject(event);
+			return;
 		}
 
 		this.resolve(event);
