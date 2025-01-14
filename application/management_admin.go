@@ -79,6 +79,10 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 					pages.Secret = c.secretManagement.Pages
 				}
 
+				if c.templateManagement != nil {
+					pages.Template = c.templateManagement.Pages
+				}
+
 				return admin.DefaultGroups(pages)
 			},
 			QueryGroups: admin.NewGroups(func() []admin.Group {

@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
 	"reflect"
 	"strconv"
 )
@@ -29,6 +30,15 @@ type NavigationPath string
 // Values contains string serialized key-value pairs.
 // See also UnmarshalValues.
 type Values map[string]string
+
+func (v Values) URLEncode() string {
+	tmp := url.Values{}
+	for key, value := range v {
+		tmp.Add(key, value)
+	}
+
+	return tmp.Encode()
+}
 
 // UnmarshalValues takes a Values type and tries to deserialize the fields. Supported fields with underlying field types are
 //   - string

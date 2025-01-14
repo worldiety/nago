@@ -45,10 +45,10 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 					Footer(
 						ui.IfElse(i == 0,
 							ui.PrimaryButton(func() {
-								wnd.Navigation().ForwardTo(entry.Target, nil)
+								wnd.Navigation().ForwardTo(entry.Target, entry.TargetParams)
 							}).Title("Auswählen"),
 							ui.SecondaryButton(func() {
-								wnd.Navigation().ForwardTo(entry.Target, nil)
+								wnd.Navigation().ForwardTo(entry.Target, entry.TargetParams)
 							}).Title("Auswählen"),
 						),
 					),

@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
+	"golang.org/x/text/language"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
 )
 
-func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create {
+func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMail, repo Repository) Create {
 	return func(subject permission.Auditable, model ShortRegistrationUser) (User, error) {
 		if err := subject.Audit(PermCreate); err != nil {
 			return User{}, err
@@ -19,6 +22,13 @@ func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create
 		// this is really harsh and allows intentionally only to create one user per second
 		mutex.Lock()
 		defer mutex.Unlock()
+
+		requiredPasswordChange := false
+		if model.Password == "" && model.PasswordRepeated == "" {
+			model.Password = data.RandIdent[Password]()
+			model.PasswordRepeated = data.RandIdent[Password]()
+			requiredPasswordChange = true
+		}
 
 		if model.Password != model.PasswordRepeated {
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Die Kennwörter stimmen nicht überein.")
@@ -54,6 +64,8 @@ func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create
 			CreatedAt:             createdAt,
 			LastPasswordChangedAt: createdAt,
 			Status:                Enabled{},
+			EMailVerified:         model.Verified,
+			RequirePasswordChange: requiredPasswordChange,
 		}
 
 		// intentionally validate now, so that an attacker cannot use this method to massively
@@ -85,6 +97,22 @@ func NewCreate(mutex *sync.Mutex, findByMail FindByMail, repo Repository) Create
 		err = repo.Save(user)
 		if err != nil {
 			return User{}, fmt.Errorf("cannot persist new user: %w", err)
+		}
+
+		if model.NotifyUser {
+			tag, err := language.Parse(user.Contact.PreferredLanguage)
+			if err != nil {
+				slog.Error("user contact has invalid preferred language", "err", err)
+			}
+
+			eventBus.Publish(Created{
+				ID:                user.ID,
+				Firstname:         user.Contact.Firstname,
+				Lastname:          user.Contact.Lastname,
+				Email:             user.Email,
+				PreferredLanguage: tag,
+				NotifyUser:        model.NotifyUser,
+			})
 		}
 
 		return user, nil

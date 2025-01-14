@@ -1,0 +1,21 @@
+{{define "MailRegistered"}}
+    {{template "header"}}
+    {{- /*gotype: go.wdy.de/nago/application/mail/tplmail.Model*/ -}}
+                    <tr>
+                        <td class="wrapper">
+                            <p>Dear {{.Subject.Firstname}},</p>
+
+                            English please
+                            <p>Auf der Seite {{.Application.Name}} wurde ein Konto mit Deiner E-Mail-Adresse
+                                registriert. Falls Du kein Konto registriert hast, kannst Du diese E-Mail
+                                ignorieren.</p>
+
+                            <p>Klicke auf den unten aufgeführten Link, um Deine Registrierung abzuschließen:
+                            </p>
+
+                            <p><a href="{{.Verification.Mail.ConfirmLink}}">Link zur Konto-Verifikation</a></p>
+                        </td>
+                    </tr>
+
+    {{template "footer"}}
+{{end}}

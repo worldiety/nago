@@ -2,8 +2,8 @@ package uisecret
 
 import (
 	"encoding/hex"
+	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/secret"
-	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"

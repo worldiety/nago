@@ -163,11 +163,17 @@ func Users(
 		crud.Text(crud.TextOptions{Label: "eMail"}, crud.Ptr(func(e *createUserModel) *string {
 			return &e.EMail
 		})),
-		crud.Password(crud.PasswordOptions{Label: "Kennwort"}, crud.Ptr(func(e *createUserModel) *string {
+		crud.Password(crud.PasswordOptions{Label: "Kennwort", SupportingText: "Bleibt das Kennwort leer, muss der Nutzer bei der ersten Anmeldung sein Kennwort ändern."}, crud.Ptr(func(e *createUserModel) *string {
 			return &e.Password1
 		})),
 		crud.Password(crud.PasswordOptions{Label: "Kennwort wiederholen"}, crud.Ptr(func(e *createUserModel) *string {
 			return &e.Password2
+		})),
+		crud.Bool(crud.BoolOptions{Label: "Nutzer verifiziert"}, crud.Ptr(func(e *createUserModel) *bool {
+			return &e.Verified
+		})),
+		crud.Bool(crud.BoolOptions{Label: "Nutzer benachrichtigen"}, crud.Ptr(func(e *createUserModel) *bool {
+			return &e.Notify
 		})),
 	)
 
@@ -180,6 +186,7 @@ func Users(
 				Password:          user.Password(model.Password1),
 				PasswordRepeated:  user.Password(model.Password2),
 				PreferredLanguage: language.German,
+				NotifyUser:        model.Notify,
 			})
 			return "", err
 		})).
@@ -197,6 +204,8 @@ type createUserModel struct {
 	EMail     string
 	Password1 string
 	Password2 string
+	Notify    bool
+	Verified  bool
 }
 
 func (createUserModel) Identity() string {

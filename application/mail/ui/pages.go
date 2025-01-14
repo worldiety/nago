@@ -6,5 +6,4 @@ type Pages struct {
 	OutgoingMailQueue core.NavigationPath
 	MailScheduler     core.NavigationPath
 	SendMailTest      core.NavigationPath
-	Templates         core.NavigationPath
 }

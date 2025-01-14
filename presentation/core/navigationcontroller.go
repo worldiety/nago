@@ -4,6 +4,7 @@ import "go.wdy.de/nago/presentation/ora"
 
 type Navigation interface {
 	ForwardTo(id NavigationPath, values Values)
+	BackwardTo(id NavigationPath, values Values)
 	Back()
 	ResetTo(id NavigationPath, values Values)
 	Reload()
@@ -40,6 +41,11 @@ func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
 		Factory: ora.ComponentFactoryId(id),
 		Values:  values,
 	})
+}
+
+func (n *navigationController) BackwardTo(id NavigationPath, values Values) {
+	// TODO implement me in ora protocol
+	n.ForwardTo(id, values)
 }
 
 func (n *navigationController) Back() {

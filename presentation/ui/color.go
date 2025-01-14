@@ -128,6 +128,8 @@ const (
 	// a text field.
 	ColorInputBorder = M8
 
+	ColorText = M8
+
 	// ColorLine represents the variable name containing the conventional color for a line derived from the main color.
 	ColorLine = M5
 

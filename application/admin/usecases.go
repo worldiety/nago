@@ -12,6 +12,7 @@ import (
 	uirole "go.wdy.de/nago/application/role/ui"
 	uisecret "go.wdy.de/nago/application/secret/ui"
 	uisession "go.wdy.de/nago/application/session/ui"
+	uitemplate "go.wdy.de/nago/application/template/ui"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
@@ -32,14 +33,16 @@ type Pages struct {
 	Dashboard  core.NavigationPath
 	Backup     uibackup.Pages
 	Secret     uisecret.Pages
+	Template   uitemplate.Pages
 }
 
 type Card struct {
-	Title      string
-	Text       string
-	Target     core.NavigationPath
-	Role       role.ID
-	Permission permission.ID
+	Title        string
+	Text         string
+	Target       core.NavigationPath
+	TargetParams core.Values
+	Role         role.ID
+	Permission   permission.ID
 }
 
 type Group struct {

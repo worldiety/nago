@@ -1,6 +1,6 @@
 module go.wdy.de/nago
 
-go 1.23.0
+go 1.23.4
 
 require (
 	github.com/clarketm/json v1.17.1
@@ -21,6 +21,7 @@ require (
 require (
 	github.com/bool64/dev v0.2.37 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/worldiety/enum v0.0.0-20250110181534-fca0f7ef5847 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )

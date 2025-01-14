@@ -24,7 +24,8 @@ func NewPubSub() *PubSub {
 // Publish creates a typeid from the given message and sends it to any registered subscriber. Each subscriber
 // will be invoked from a new goroutine to ensure, that no deadlocks or stalls can occur. This is not as efficient,
 // as other solutions, but this behavior will be correct in any case. Nil messages are ignored. Do not use
-// pointer types for messages, due to ownership questions and due to the danger of sending typed nil values around
+// mutable or owned types for messages, due to ownership questions and due to the danger of sending typed
+// nil values around
 // which may be unexpected by subscribers.
 func (p *PubSub) Publish(m any) {
 	id, ok := xreflect.TypeIDFrom(m)

@@ -65,10 +65,11 @@ func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 }
 
 type TList struct {
-	caption core.View
-	rows    []core.View
-	frame   ui.Frame
-	footer  core.View
+	caption        core.View
+	rows           []core.View
+	frame          ui.Frame
+	footer         core.View
+	onClickedEntry func(idx int)
 }
 
 func List(entries ...core.View) TList {
@@ -90,6 +91,11 @@ func (c TList) Footer(s core.View) TList {
 	return c
 }
 
+func (c TList) OnEntryClicked(fn func(idx int)) TList {
+	c.onClickedEntry = fn
+	return c
+}
+
 func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	rows := make([]core.View, 0, len(c.rows)*2+3)
 	if c.caption != nil {
@@ -97,7 +103,14 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	for idx, row := range c.rows {
-		rows = append(rows, ui.HStack(row).HoveredBackgroundColor(ui.ColorCardFooter).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))
+		hstack := ui.HStack(row).HoveredBackgroundColor(ui.ColorCardFooter)
+		if c.onClickedEntry != nil {
+			hstack = hstack.Action(func() {
+				c.onClickedEntry(idx)
+			})
+		}
+		
+		rows = append(rows, hstack.Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))
 		if idx < len(c.rows)-1 {
 			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
 		}

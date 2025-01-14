@@ -1,11 +1,15 @@
 package mail
 
 import (
+	"fmt"
+	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/template"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/application/user/tplmail"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
 )
@@ -23,14 +27,6 @@ type DeleteMailByID func(auth.Subject, ID) error
 type FindAllMails func(auth.Subject) iter.Seq2[Outgoing, error]
 type SaveMail func(auth.Subject, Outgoing) (ID, error)
 
-type TemplateRepository data.Repository[Template, TemplateID]
-
-type FindTemplateByID func(auth.Subject, TemplateID) (std.Option[Template], error)
-type DeleteTemplateByID func(auth.Subject, TemplateID) error
-type FindAllTemplates func(auth.Subject) iter.Seq2[Template, error]
-type SaveTemplate func(auth.Subject, Template) (TemplateID, error)
-type FindTemplateByNameAndLanguage func(subject auth.Subject, name string, languageTag string) (std.Option[Template], error)
-
 type UseCases struct {
 	Outgoing struct {
 		FindByID   FindMailByID
@@ -40,26 +36,29 @@ type UseCases struct {
 		repository Repository // intentionally not exposed, to avoid that devs can simply destroy invariants
 	}
 
-	Templates struct {
-		FindTemplateByID              FindTemplateByID
-		DeleteTemplateByID            DeleteTemplateByID
-		FindAllTemplates              FindAllTemplates
-		SaveTemplate                  SaveTemplate
-		InitDefaultTemplates          InitDefaultTemplates
-		FindTemplateByNameAndLanguage FindTemplateByNameAndLanguage
-		repository                    TemplateRepository
-	}
-
 	SendMail SendMail
 }
 
-func NewUseCases(outgoingRepo Repository) UseCases {
+func NewUseCases(outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) (UseCases, error) {
 	outgoingCrud := rcrud.DecorateRepository(rcrud.DecoratorOptions{EntityName: "Ausgehende Mails", PermissionPrefix: "nago.mail.outgoing"}, outgoingRepo)
 	sendMailFn := NewSendMail(outgoingRepo)
 
 	PermOutgoingFindAll = outgoingCrud.PermFindAll
 	PermOutgoingDeleteByID = outgoingCrud.PermDeleteByID
 	PermOutgoingFindByID = outgoingCrud.PermFindByID
+
+	err := ensureBuildIn(user.NewSystem()(), template.NewProjectData{
+		ID:          tplmail.ID,
+		Name:        "Mailvorlagen Berechtigungssystem",
+		Description: "Standardmailvorlagen für Nutzerregistrierung, Passwort vergessen, MFA Code und anderes.",
+		ExecType:    template.TreeTemplate,
+		Tags:        []template.Tag{template.TagMail, template.TagHTML},
+		Files:       tplmail.Files,
+	}, true)
+
+	if err != nil {
+		return UseCases{}, fmt.Errorf("cannot ensure mail template: %w", err)
+	}
 
 	var uc UseCases
 	uc.SendMail = sendMailFn
@@ -69,5 +68,5 @@ func NewUseCases(outgoingRepo Repository) UseCases {
 	uc.Outgoing.FindAll = outgoingCrud.FindAll
 	uc.Outgoing.Save = outgoingCrud.Upsert
 
-	return uc
+	return uc, nil
 }

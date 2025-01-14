@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
 	"sync"
@@ -78,10 +79,10 @@ type UseCases struct {
 	RevokeAssignedUserLicense RevokeAssignedUserLicense
 }
 
-func NewUseCases(users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
+func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
-	createFn := NewCreate(&globalLock, findByMailFn, users)
+	createFn := NewCreate(&globalLock, eventBus, findByMailFn, users)
 
 	findByIdFn := NewFindByID(users)
 	findAllFn := NewFindAll(users)

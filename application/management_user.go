@@ -48,7 +48,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		_ = licenseUseCases
 
 		c.userManagement = &UserManagement{
-			UseCases: user.NewUseCases(userRepo, roleUseCases.roleRepository),
+			UseCases: user.NewUseCases(c.EventBus(), userRepo, roleUseCases.roleRepository),
 			Pages: uiuser.Pages{
 				Users: "admin/accounts",
 			},
@@ -90,4 +90,12 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 	}
 
 	return *c.userManagement, nil
+}
+
+func (c *Configurator) SysUser() auth.Subject {
+	if c.userManagement == nil || c.userManagement.UseCases.SysUser == nil {
+		return user.NewSystem()()
+	}
+
+	return c.userManagement.UseCases.SysUser()
 }

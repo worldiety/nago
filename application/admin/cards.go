@@ -9,7 +9,9 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/template"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/presentation/core"
 )
 
 func DefaultGroups(pages Pages) []Group {
@@ -54,12 +56,6 @@ func DefaultGroups(pages Pages) []Group {
 				Permission: mail.PermOutgoingFindAll,
 			},
 			{
-				Title:  "Vorlagen",
-				Text:   "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
-				Target: pages.Mail.Templates,
-				// TODO
-			},
-			{
 				Title:  "Scheduler",
 				Text:   "Der Mail Scheduler bearbeitet die Warteschlange des Postausgangs und bietet ebenfalls ein paar Einstelloptionen.",
 				Target: pages.Mail.MailScheduler,
@@ -70,6 +66,32 @@ func DefaultGroups(pages Pages) []Group {
 				Text:       "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
 				Target:     pages.Mail.SendMailTest,
 				Permission: mail.PermSendMail,
+			},
+		},
+	})
+
+	grps = append(grps, Group{
+		Title: "Vorlagen & Templates",
+		Entries: []Card{
+			{
+				Title:        "E-Mail Vorlagen",
+				Text:         "Alle E-Mail Vorlagen sichten und bearbeiten.",
+				Target:       pages.Template.Projects,
+				TargetParams: core.Values{"tag": string(template.TagMail)},
+				Permission:   template.PermFindAll,
+			},
+			{
+				Title:        "PDF Vorlagen",
+				Text:         "Alle PDF Vorlagen sichten und bearbeiten.",
+				Target:       pages.Template.Projects,
+				TargetParams: core.Values{"tag": string(template.TagPDF)},
+				Permission:   template.PermFindAll,
+			},
+			{
+				Title:      "Alle Vorlagen",
+				Text:       "Alle Projekte, Templates und Vorlagen durchsuchen oder bearbeiten.",
+				Target:     pages.Template.Projects,
+				Permission: template.PermFindAll,
 			},
 		},
 	})

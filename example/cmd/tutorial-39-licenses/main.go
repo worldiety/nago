@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/secret"
-	"go.wdy.de/nago/pkg/enum"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
+	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"net/http"
 	"time"
 )
 
@@ -50,13 +50,11 @@ func main() {
 		std.Must(cfg.MailManagement())
 		std.Must(cfg.SessionManagement())
 
-		std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164")
-
-		cfg.HandleFunc("/api/v1/manemann/aed", func(writer http.ResponseWriter, request *http.Request) {
-			writer.Write([]byte("jojo"))
-		})
-
-		cfg.SetDecorator(cfg.NewScaffold().Decorator())
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
+		
+		cfg.SetDecorator(cfg.NewScaffold().
+			Logo(heroSolid.AcademicCap).
+			Decorator())
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 

@@ -17,6 +17,10 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			return "", err
 		}
 
+		if err := password.Validate(); err != nil {
+			return "", err
+		}
+
 		var usr User
 
 		if optUsr.IsSome() {
@@ -67,16 +71,30 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			license.PermCreateUserLicense,
 			license.PermUpdateUserLicense,
 			license.PermDeleteUserLicense,
-			"nago.backup.backup",        // import cycle
-			"nago.backup.restore",       // import cycle
-			"nago.billing.license.app",  // import cycle
-			"nago.billing.license.user", // import cycle
 
-			"nago.secret.find_my_secrets",    // import cycle
-			"nago.secret.create",             // import cycle
-			"nago.secret.groups.update",      // import cycle
-			"nago.secret.credentials.update", // import cycle
-			"nago.secret.delete",             // import cycle
+			// avoid import cycles, thus hard code our bootstrap permissions
+			"nago.backup.backup",
+			"nago.backup.restore",
+			"nago.billing.license.app",
+			"nago.billing.license.user",
+
+			"nago.secret.find_my_secrets",
+			"nago.secret.create",
+			"nago.secret.groups.update",
+			"nago.secret.credentials.update",
+			"nago.secret.delete",
+
+			"nago.mail.send",
+			"nago.mail.outgoing.find_by_id",
+			"nago.mail.outgoing.find_all",
+			"nago.mail.outgoing.create",
+			"nago.mail.outgoing.update",
+			"nago.mail.outgoing.delete_by_id",
+
+			"nago.template.execute",
+			"nago.template.find_all",
+			"nago.template.create",
+			"nago.template.ensure_build_in",
 		}
 
 		hType := Argon2IdMin

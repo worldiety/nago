@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/tdb"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ora"
 	ui "go.wdy.de/nago/presentation/ui"
@@ -18,6 +19,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 )
 
@@ -79,7 +81,10 @@ type Configurator struct {
 	billingManagement        *BillingManagement
 	backupManagement         *BackupManagement
 	secretManagement         *SecretManagement
+	templateManagement       *TemplateManagement
 	decorator                Decorator
+	eventBus                 events.EventBus
+	contextPath              atomic.Pointer[string]
 }
 
 func NewConfigurator() *Configurator {
@@ -236,6 +241,45 @@ func (c *Configurator) SetFPS(fps int) {
 	c.fps = fps
 }
 
+// ContextPath returns something like localhost:3000 or whatever has been set or autodetected.
+// It should contain the primary DNS name and port and eventually a path postfix, whatever is necessary.
+// This path may be validated against any requests and is used when generating links.
+// If undefined, it is taken from the first http wire request and represents the host part.
+func (c *Configurator) ContextPath() string {
+	if s := c.contextPath.Load(); s != nil {
+		return *s
+	}
+
+	return ""
+}
+
+func (c *Configurator) ContextPathURI(path string, query core.Values) string {
+	p := c.ContextPath()
+	if p == "" {
+		p = fmt.Sprintf("http://localhost:%d", c.port)
+	}
+
+	if !strings.HasSuffix(p, "/") {
+		p = p + "/"
+	}
+
+	p += path
+
+	if query != nil {
+		p += "?" + query.URLEncode()
+	}
+
+	if !strings.HasPrefix(p, "http") {
+		p = "http://" + p
+	}
+
+	return p
+}
+
+func (c *Configurator) SetContextPath(path string) {
+	c.contextPath.Store(&path)
+}
+
 func (c *Configurator) directory(name string) string {
 	name = filepath.Clean(name) // security: avoid path traversal attacks here
 	path := filepath.Join(c.DataDir(), name)
@@ -286,6 +330,7 @@ func (c *Configurator) SetVersion(version string) {
 	c.applicationVersion = version
 }
 
+// Host returns the host to which the binding should be made. This is different from [Configurator.ContextPath].
 func (c *Configurator) getHost() string {
 	if c.host != "" {
 		return c.host
@@ -324,4 +369,12 @@ func (c *Configurator) Context() context.Context {
 func (c *Configurator) Debug(isDebug bool) *Configurator {
 	c.debug = isDebug
 	return c
+}
+
+func (c *Configurator) EventBus() events.EventBus {
+	if c.eventBus == nil {
+		c.eventBus = events.NewEventBus()
+	}
+
+	return c.eventBus
 }

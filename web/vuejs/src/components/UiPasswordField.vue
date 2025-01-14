@@ -93,7 +93,7 @@ function toggleRevealed(): void {
 			:simple="props.ui.t && props.ui.t=='r'"
 			:label="props.ui.l"
 			:error="props.ui.e"
-			:hint="props.ui.s"
+			:help="props.ui.s"
 			:disabled="props.ui.d"
 		>
 			<div class="relative hover:text-primary focus-within:text-primary">

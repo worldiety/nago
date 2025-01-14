@@ -1,12 +1,12 @@
 package user
 
 import (
+	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/image"
-	"go.wdy.de/nago/pkg/enum"
 	"golang.org/x/text/language"
 	"regexp"
 	"strings"
@@ -74,8 +74,11 @@ type ShortRegistrationUser struct {
 	Password          Password
 	PasswordRepeated  Password
 	PreferredLanguage language.Tag
+	NotifyUser        bool
+	Verified          bool
 }
 
+// ID of a user entity in the Nago IAM.
 type ID string
 
 type Contact struct {
@@ -113,6 +116,7 @@ type User struct {
 	Groups                []group.ID      `json:"groups,omitempty"`      // groups may also contain inherited permissions
 	Permissions           []permission.ID `json:"permissions,omitempty"` // individual custom permissions
 	Licenses              []license.ID    `json:"licenses,omitempty"`
+	RequirePasswordChange bool            `json:"requirePasswordChange,omitempty"`
 }
 
 func (u User) String() string {

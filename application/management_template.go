@@ -1,0 +1,79 @@
+package application
+
+import (
+	"fmt"
+	"go.wdy.de/nago/application/template"
+	uitemplate "go.wdy.de/nago/application/template/ui"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/presentation/core"
+	"io"
+)
+
+type TemplateManagement struct {
+	UseCases template.UseCases
+	Pages    uitemplate.Pages
+}
+
+func (c *Configurator) TemplateManagement() (TemplateManagement, error) {
+	if c.templateManagement == nil {
+		// note: we intentionally use a file store here, e.g. due to large images or other huge attachments
+		// which may be really arbitrary
+		fileStore, err := c.FileStore("nago.template.file")
+		if err != nil {
+			return TemplateManagement{}, fmt.Errorf("cannot get file store: %w", err)
+		}
+
+		projectStore, err := c.EntityStore("nago.template.project")
+		if err != nil {
+			return TemplateManagement{}, fmt.Errorf("cannot get entity store: %w", err)
+		}
+
+		projectRepo := json.NewSloppyJSONRepository[template.Project, template.ID](projectStore)
+
+		uc := template.NewUseCases(fileStore, projectRepo)
+		c.templateManagement = &TemplateManagement{
+			UseCases: uc,
+			Pages: uitemplate.Pages{
+				Projects:   "admin/template/projects",
+				NewProject: "admin/template/new",
+			},
+		}
+
+		c.RootViewWithDecoration(c.templateManagement.Pages.Projects, func(wnd core.Window) core.View {
+			return uitemplate.ProjectPickerPage(wnd, c.templateManagement.Pages, uc.FindAll)
+		})
+
+		c.RootViewWithDecoration(c.templateManagement.Pages.NewProject, func(wnd core.Window) core.View {
+			return uitemplate.NewProjectPage(wnd, c.templateManagement.Pages, uc.Create)
+		})
+	}
+
+	return *c.templateManagement, nil
+}
+
+// TemplateString renders a tree template.
+func (c *Configurator) TemplateString(subject auth.Subject, id template.ID, name template.DefinedTemplateName, model any) (string, error) {
+	tpls, err := c.TemplateManagement()
+	if err != nil {
+		return "", err
+	}
+
+	r, err := tpls.UseCases.Execute(subject, id, template.ExecOptions{
+		Context:      c.Context(),
+		TemplateName: name,
+		Model:        model,
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("cannot execute mail template: %w", err)
+	}
+
+	defer r.Close()
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return "", fmt.Errorf("cannot read mail template: %w", err)
+	}
+
+	return string(buf), nil
+}

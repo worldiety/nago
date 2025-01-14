@@ -363,6 +363,10 @@ func (c *Configurator) newHandler() http.Handler {
 	r.Mount(http_image.Endpoint, http_image.NewHandler(images.LoadBestFit))
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if c.contextPath.Load() == nil {
+			c.contextPath.Store(&r.Host)
+		}
+
 		logger := logging.FromContext(r.Context())
 		logger.Info("wire is called, before upgrade")
 		queryParams := r.URL.Query()
