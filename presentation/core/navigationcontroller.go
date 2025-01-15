@@ -1,6 +1,9 @@
 package core
 
-import "go.wdy.de/nago/presentation/ora"
+import (
+	"go.wdy.de/nago/presentation/ora"
+	"strings"
+)
 
 type Navigation interface {
 	ForwardTo(id NavigationPath, values Values)
@@ -114,6 +117,17 @@ func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation Navi
 	})
 }
 
+// HTTPify inspects the given string and eventually prefixes it with https://
+func HTTPify(s string) URI {
+	if strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") {
+		return URI(s)
+	}
+
+	return "https://" + URI(s)
+}
+
+// HTTPOpen just triggers a regular (p)open call for the given http URL. A webfrontend will
+// most likely trigger a window.open(url, target). In Javascript, target may be _blank|_self|_parent|_top|_unfencedTop
 func HTTPOpen(nav Navigation, url URI, target string) {
 	nav.Open(url, Values{
 		"_type":  "http-link",

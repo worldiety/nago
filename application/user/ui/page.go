@@ -20,7 +20,8 @@ import (
 
 type Pages struct {
 	Users         core.NavigationPath
-	Profile       core.NavigationPath
+	MyProfile     core.NavigationPath
+	MyContact     core.NavigationPath
 	ConfirmMail   core.NavigationPath
 	ResetPassword core.NavigationPath
 }

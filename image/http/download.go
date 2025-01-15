@@ -3,6 +3,7 @@ package http_image
 import (
 	"go.wdy.de/nago/auth/iam"
 	"go.wdy.de/nago/image"
+	"go.wdy.de/nago/presentation/core"
 	"io"
 	"log/slog"
 	"math"
@@ -26,6 +27,11 @@ func NewURL(apiPath string, imgOrSrcSet image.ID, fit image.ObjectFit, width, he
 	values.Set("h", strconv.Itoa(height))
 
 	return apiPath + "?" + values.Encode()
+}
+
+// URI uses the default Endpoint. See [NewURL].
+func URI(imgOrSrcSet image.ID, fit image.ObjectFit, width, height int) core.URI {
+	return core.URI(NewURL(Endpoint, imgOrSrcSet, fit, width, height))
 }
 
 // NewHandler uses the image src set loader use case and provides a http contract on it.

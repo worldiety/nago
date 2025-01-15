@@ -55,12 +55,12 @@ func DefaultGroups(pages Pages) []Group {
 				Target:     pages.Mail.OutgoingMailQueue,
 				Permission: mail.PermOutgoingFindAll,
 			},
-			{
+			/*	{
 				Title:  "Scheduler",
 				Text:   "Der Mail Scheduler bearbeitet die Warteschlange des Postausgangs und bietet ebenfalls ein paar Einstelloptionen.",
 				Target: pages.Mail.MailScheduler,
-				// TODO
-			},
+				Permission: mail.PermScheduler,
+			},*/
 			{
 				Title:      "Test",
 				Text:       "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",

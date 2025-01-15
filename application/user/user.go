@@ -83,19 +83,28 @@ type ShortRegistrationUser struct {
 type ID string
 
 type Contact struct {
-	Avatar            image.ID `json:"avatar,omitempty"`
-	Firstname         string   `json:"firstname,omitempty"`
-	Lastname          string   `json:"lastname,omitempty"`
-	Phone             string   `json:"phone,omitempty"`
-	MobilePhone       string   `json:"mobilePhone,omitempty"`
-	Country           string   `json:"country,omitempty"`
-	City              string   `json:"city,omitempty"`
-	PostalCode        string   `json:"postalCode,omitempty"`
-	LinkedIn          string   `json:"linkedIn,omitempty"`
-	Website           string   `json:"website,omitempty"`
-	Position          string   `json:"position,omitempty"`
-	CompanyName       string   `json:"company,omitempty"`
-	PreferredLanguage string   `json:"preferredLanguage,omitempty"`
+	Avatar image.ID `json:"avatar,omitempty"`
+	// AcademicDegree is e.g. Diploma, Bachelor, Master or Doctor
+	AcademicDegree string `json:"academicDegree,omitempty"`
+	// OfficialTitle is like Professor, Oberbürgermeister etc.
+	OfficialTitle string `json:"officialTitle,omitempty"`
+	// Saluation is like Mr, Mrs or divers
+	Salutation  string `json:"salutation,omitempty"`
+	Firstname   string `json:"firstname,omitempty"`
+	Lastname    string `json:"lastname,omitempty"`
+	Phone       string `json:"phone,omitempty"`
+	MobilePhone string `json:"mobilePhone,omitempty"`
+	// Country is like Deutschland, not the BCP47 code
+	Country    string `json:"country,omitempty"`
+	City       string `json:"city,omitempty"`
+	PostalCode string `json:"postalCode,omitempty"`
+	LinkedIn   string `json:"linkedIn,omitempty"`
+	Website    string `json:"website,omitempty"`
+	// Position is like CEO
+	Position    string `json:"position,omitempty"`
+	CompanyName string `json:"company,omitempty"`
+	// PreferredLanguage is a BCP47 string like de or en_US
+	PreferredLanguage string `json:"preferredLanguage,omitempty"`
 }
 
 func (d Contact) IsZero() bool {

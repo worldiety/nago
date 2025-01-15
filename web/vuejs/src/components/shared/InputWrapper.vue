@@ -23,7 +23,7 @@
 	</div>
 
 	<!-- Error message -->
-	<div v-if="!disabled && (error || help)" class="mt-1 text-sm">
+	<div v-if=" (error || help)" class="mt-1 text-sm">
 		<p v-if="error" class="text-error">{{ error }}</p>
 		<p v-else-if="help" class="text-disabled-text">{{ help }}</p>
 	</div>

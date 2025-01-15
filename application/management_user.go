@@ -51,19 +51,33 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			UseCases: user.NewUseCases(c.EventBus(), userRepo, roleUseCases.roleRepository),
 			Pages: uiuser.Pages{
 				Users:         "admin/accounts",
-				Profile:       "account/profile",
+				MyProfile:     "account/profile",
+				MyContact:     "account/profile/contact",
 				ConfirmMail:   "account/confirm",
 				ResetPassword: "account/password/reset",
 			},
 		}
 
-		// Oo we got some cycle
-		/*	billing, err := c.BillingManagement()
-			if err != nil {
-				return UserManagement{}, fmt.Errorf("cannot get billing usecases: %w", err)
-			}*/
+		c.RootViewWithDecoration(c.userManagement.Pages.MyProfile, func(wnd core.Window) core.View {
+			return uiuser.ProfilePage(
+				wnd,
+				c.userManagement.Pages,
+				c.userManagement.UseCases.ChangeMyPassword,
+				c.userManagement.UseCases.ReadMyContact,
+				c.roleManagement.UseCases.FindMyRoles,
+			)
+		})
 
-		c.RootView(c.userManagement.Pages.ConfirmMail, c.DecorateRootView(func(wnd core.Window) core.View {
+		c.RootViewWithDecoration(c.userManagement.Pages.MyContact, func(wnd core.Window) core.View {
+			return uiuser.ContactPage(
+				wnd,
+				c.userManagement.Pages,
+				c.userManagement.UseCases.UpdateMyContact,
+				c.userManagement.UseCases.ReadMyContact,
+			)
+		})
+
+		c.RootViewWithDecoration(c.userManagement.Pages.ConfirmMail, func(wnd core.Window) core.View {
 			var path core.NavigationPath
 			if c.sessionManagement != nil {
 				path = c.sessionManagement.Pages.Login
@@ -79,9 +93,9 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.ChangeOtherPassword,
 				c.sessionManagement.UseCases.Logout,
 			)
-		}))
+		})
 
-		c.RootView(c.userManagement.Pages.ResetPassword, c.DecorateRootView(func(wnd core.Window) core.View {
+		c.RootViewWithDecoration(c.userManagement.Pages.ResetPassword, func(wnd core.Window) core.View {
 			var path core.NavigationPath
 			if c.sessionManagement != nil {
 				path = c.sessionManagement.Pages.Login
@@ -93,9 +107,9 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.ChangePasswordWithCode,
 				c.sessionManagement.UseCases.Logout,
 			)
-		}))
+		})
 
-		c.RootView(c.userManagement.Pages.Users, c.DecorateRootView(func(wnd core.Window) core.View {
+		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {
 			var ucBillingUserLicense billing.UserLicenses
 			if c.billingManagement != nil {
 				ucBillingUserLicense = c.billingManagement.UseCases.UserLicenses
@@ -120,7 +134,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.SubjectFromUser,
 				ucBillingUserLicense,
 			)
-		}))
+		})
 
 	}
 

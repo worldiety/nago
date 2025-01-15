@@ -38,13 +38,17 @@ type Upsert func(subject permission.Auditable, role Role) (ID, error)
 type Update func(subject permission.Auditable, role Role) error
 type Delete func(subject permission.Auditable, id ID) error
 
+// FindMyRoles returns only those roles, in which the subject is a member.
+type FindMyRoles func(subject permission.Auditable) iter.Seq2[Role, error]
+
 type UseCases struct {
-	FindByID FindByID
-	FindAll  FindAll
-	Create   Create
-	Upsert   Upsert
-	Update   Update
-	Delete   Delete
+	FindByID    FindByID
+	FindAll     FindAll
+	Create      Create
+	Upsert      Upsert
+	Update      Update
+	Delete      Delete
+	FindMyRoles FindMyRoles
 }
 
 func NewUseCases(repo Repository) UseCases {
@@ -56,13 +60,15 @@ func NewUseCases(repo Repository) UseCases {
 	upsertFn := NewUpsert(&roleMutex, repo)
 	updateFn := NewUpdate(&roleMutex, repo)
 	deleteFn := NewDelete(&roleMutex, repo)
+	findMyRolesFn := NewFindMyRoles(repo)
 
 	return UseCases{
-		FindByID: findByIdFn,
-		FindAll:  findAllFn,
-		Create:   createFn,
-		Upsert:   upsertFn,
-		Update:   updateFn,
-		Delete:   deleteFn,
+		FindByID:    findByIdFn,
+		FindAll:     findAllFn,
+		Create:      createFn,
+		Upsert:      upsertFn,
+		Update:      updateFn,
+		Delete:      deleteFn,
+		FindMyRoles: findMyRolesFn,
 	}
 }

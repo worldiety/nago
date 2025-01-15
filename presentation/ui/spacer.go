@@ -5,6 +5,14 @@ import (
 	"go.wdy.de/nago/presentation/ora"
 )
 
+// FixedSpacer returns an empty view with the given dimensions.
+func FixedSpacer(width, height Length) core.View {
+	return VStack(
+		// double wrap, to trick the CSS flexbox (mis) behavior
+		VStack().Frame(Frame{Width: width, Height: height}),
+	)
+}
+
 type TSpacer struct {
 	backgroundColor ora.Color
 	frame           ora.Frame
