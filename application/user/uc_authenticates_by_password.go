@@ -4,6 +4,8 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
+const EMailNotVerifiedErr std.Error = "email not verified"
+
 func NewAuthenticatesByPassword(userByMail FindByMail, system SysUser) AuthenticateByPassword {
 	return func(email Email, password Password) (std.Option[User], error) {
 
@@ -29,6 +31,13 @@ func NewAuthenticatesByPassword(userByMail FindByMail, system SysUser) Authentic
 
 		if !usr.Enabled() {
 			return std.None[User](), noLoginErr
+		}
+
+		if !usr.EMailVerified {
+			// security note: intentionally it is not safe to let the user login, if his EMail was never
+			// verified. This opens up all kinds of identity stealing by default, even though this may
+			// be common in the world of shopping systems
+			return std.None[User](), std.NewLocalizedError("Login nicht möglich", "Das Konto muss zuerst bestätigt werden").WithError(EMailNotVerifiedErr)
 		}
 
 		return optUsr, nil

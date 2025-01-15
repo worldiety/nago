@@ -12,6 +12,7 @@ type Created struct {
 	Email             Email
 	PreferredLanguage language.Tag
 	NotifyUser        bool
+	VerificationCode  Code
 }
 
 type MFACodeCreated struct {

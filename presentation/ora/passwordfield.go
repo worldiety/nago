@@ -18,6 +18,8 @@ type PasswordField struct {
 	InputValue Ptr  `json:"p"`
 	Disabled   bool `json:"d,omitempty"`
 
+	DisableAutocomplete bool `json:"ac,omitempty"`
+
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you
 	// need to reduce it. By default, the TextFieldOutlined is applied.
 	Style TextFieldStyle `json:"t,omitempty"`

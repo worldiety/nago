@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/image"
+	"go.wdy.de/nago/pkg/data"
 	"golang.org/x/text/language"
 	"regexp"
 	"strings"
@@ -101,6 +102,22 @@ func (d Contact) IsZero() bool {
 	return d == Contact{}
 }
 
+type Code struct {
+	Value      string    `json:"value,omitempty"`
+	ValidUntil time.Time `json:"validUntil,omitempty"`
+}
+
+func NewCode(lifetime time.Duration) Code {
+	return Code{
+		Value:      data.RandIdent[string]()[:8],
+		ValidUntil: time.Now().Add(lifetime),
+	}
+}
+
+func (c Code) IsZero() bool {
+	return c.Value == "" && c.ValidUntil.IsZero()
+}
+
 type User struct {
 	ID                    ID              `json:"id"`
 	Email                 Email           `json:"email"`
@@ -117,6 +134,8 @@ type User struct {
 	Permissions           []permission.ID `json:"permissions,omitempty"` // individual custom permissions
 	Licenses              []license.ID    `json:"licenses,omitempty"`
 	RequirePasswordChange bool            `json:"requirePasswordChange,omitempty"`
+	VerificationCode      Code            `json:"verificationCode,omitzero"`
+	PasswordRequestCode   Code            `json:"passwordRequestCode,omitzero"`
 }
 
 func (u User) String() string {

@@ -7,6 +7,7 @@ type LocalizedError interface {
 	Unwrap() error
 	Title() string
 	Description() string
+	WithError(cause error) LocalizedError
 }
 
 type localizedError struct {
@@ -31,11 +32,22 @@ func (e localizedError) Unwrap() error {
 	return e.cause
 }
 
+func (e localizedError) WithError(cause error) LocalizedError {
+	e.cause = cause
+	return e
+}
+
 func NewLocalizedError(title, desc string) LocalizedError {
 	return localizedError{
 		title: title,
 		desc:  desc,
 	}
+}
+
+type Error string
+
+func (e Error) Error() string {
+	return string(e)
 }
 
 // ExpectZero panics if the given value is not equal to zero. This

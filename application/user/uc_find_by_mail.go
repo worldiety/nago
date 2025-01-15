@@ -12,6 +12,7 @@ func NewFindByMail(repository Repository) FindByMail {
 			return std.None[User](), err
 		}
 
+		// do not introduce the global mutex here, because they are not reentrant you likely get a deadlock
 		// TODO this is really slow O(n), we either need some cache or an inverse index
 		var consistencyCheck []User
 		for user, err := range repository.All() {

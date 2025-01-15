@@ -20,8 +20,8 @@ const idPrefix = 'password-field-';
 watch(() => props.ui.v, (newValue) => {
 	if (newValue) {
 		inputValue.value = newValue
-	}else{
-		inputValue.value=""
+	} else {
+		inputValue.value = ""
 	}
 	//console.log("textfield triggered props.ui.value")
 });
@@ -30,8 +30,8 @@ watch(() => props.ui, (newValue) => {
 	//console.log("textfield triggered props.ui")
 	if (newValue.v) {
 		inputValue.value = newValue.v;
-	}else{
-		inputValue.value=""
+	} else {
+		inputValue.value = ""
 	}
 });
 
@@ -99,6 +99,7 @@ function toggleRevealed(): void {
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="idPrefix"
+					:autocomplete="props.ui.ac?'off':'on'"
 					ref="passwordInput"
 					v-model="inputValue"
 					class="input-field !pr-10"

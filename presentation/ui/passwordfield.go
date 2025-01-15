@@ -7,18 +7,19 @@ import (
 )
 
 type TPasswordField struct {
-	label           string
-	value           string
-	inputValue      *core.State[string]
-	supportingText  string
-	errorText       string
-	disabled        bool
-	style           ora.TextFieldStyle
-	disableDebounce bool
-	debounceTime    time.Duration
-	invisible       bool
-	frame           ora.Frame
-	lines           int
+	label               string
+	value               string
+	inputValue          *core.State[string]
+	supportingText      string
+	errorText           string
+	disabled            bool
+	style               ora.TextFieldStyle
+	disableDebounce     bool
+	disableAutocomplete bool
+	debounceTime        time.Duration
+	invisible           bool
+	frame               ora.Frame
+	lines               int
 }
 
 // PasswordField represents a secret entered by the user.
@@ -39,6 +40,11 @@ func PasswordField(label string, value string) TPasswordField {
 		value: value,
 	}
 
+	return c
+}
+
+func (c TPasswordField) AutoComplete(autoComplete bool) TPasswordField {
+	c.disableAutocomplete = !autoComplete
 	return c
 }
 
@@ -116,18 +122,19 @@ func (c TPasswordField) Visible(v bool) DecoredView {
 func (c TPasswordField) Render(ctx core.RenderContext) ora.Component {
 
 	return ora.PasswordField{
-		Type:            ora.PasswordFieldT,
-		Label:           c.label,
-		SupportingText:  c.supportingText,
-		ErrorText:       c.errorText,
-		Value:           c.value,
-		InputValue:      c.inputValue.Ptr(),
-		Disabled:        c.disabled,
-		Style:           c.style,
-		DebounceTime:    c.debounceTime,
-		DisableDebounce: c.disableDebounce,
-		Invisible:       c.invisible,
-		Frame:           c.frame,
-		Lines:           c.lines,
+		Type:                ora.PasswordFieldT,
+		Label:               c.label,
+		SupportingText:      c.supportingText,
+		ErrorText:           c.errorText,
+		Value:               c.value,
+		InputValue:          c.inputValue.Ptr(),
+		Disabled:            c.disabled,
+		Style:               c.style,
+		DebounceTime:        c.debounceTime,
+		DisableDebounce:     c.disableDebounce,
+		Invisible:           c.invisible,
+		Frame:               c.frame,
+		Lines:               c.lines,
+		DisableAutocomplete: c.disableAutocomplete,
 	}
 }

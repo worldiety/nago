@@ -57,14 +57,20 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 		c.sessionManagement = &SessionManagement{
 			UseCases: useCases,
 			Pages: uisession.Pages{
-				Login:   "account/login",
-				Logout:  "account/logout",
-				Profile: "account/profile",
+				Login:  "account/login",
+				Logout: "account/logout",
 			},
 		}
 
 		c.RootView(c.sessionManagement.Pages.Login, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uisession.Login(wnd, c.sessionManagement.UseCases.Login)
+			return uisession.Login(
+				wnd,
+				c.sessionManagement.UseCases.Login,
+				c.userManagement.UseCases.SysUser,
+				c.userManagement.UseCases.FindByMail,
+				c.SendPasswordResetMail,
+				c.SendVerificationMail,
+			)
 		}))
 
 		c.RootView(c.sessionManagement.Pages.Logout, c.DecorateRootView(func(wnd core.Window) core.View {

@@ -1,4 +1,4 @@
-package uisession
+package uiuser
 
 import (
 	"go.wdy.de/nago/application/role"

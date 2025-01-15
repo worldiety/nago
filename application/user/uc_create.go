@@ -26,7 +26,7 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 		requiredPasswordChange := false
 		if model.Password == "" && model.PasswordRepeated == "" {
 			model.Password = data.RandIdent[Password]()
-			model.PasswordRepeated = data.RandIdent[Password]()
+			model.PasswordRepeated = model.Password
 			requiredPasswordChange = true
 		}
 
@@ -66,6 +66,9 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 			Status:                Enabled{},
 			EMailVerified:         model.Verified,
 			RequirePasswordChange: requiredPasswordChange,
+			// initially, give the user a week to respond. Note, that for self registration we just may
+			// remove users which have never been verified automatically
+			VerificationCode: NewCode(7 * 24 * time.Hour),
 		}
 
 		// intentionally validate now, so that an attacker cannot use this method to massively
@@ -112,6 +115,7 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 				Email:             user.Email,
 				PreferredLanguage: tag,
 				NotifyUser:        model.NotifyUser,
+				VerificationCode:  user.VerificationCode,
 			})
 		}
 

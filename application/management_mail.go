@@ -1,5 +1,6 @@
 package application
 
+import "C"
 import (
 	"fmt"
 	"go.wdy.de/nago/application/mail"
@@ -10,8 +11,10 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
 	"log/slog"
 	mail2 "net/mail"
+	"time"
 )
 
 // HasMailManagement returns false, as long as [MailManagement] has not been requested to get initialized.
@@ -80,25 +83,97 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			if !evt.NotifyUser {
 				return
 			}
-			
-			model := tplmail.MailRegisteredSubjectModel{
-				ID:                evt.ID,
-				Firstname:         evt.Firstname,
-				Lastname:          evt.Lastname,
-				Email:             evt.Email,
-				PreferredLanguage: evt.PreferredLanguage,
-				ConfirmURL:        core.URI(c.ContextPathURI("admin/user/confirm", core.Values{"id": string(evt.ID)})), // here we expose our internal user id, not sure if this is a problem
-				ApplicationName:   c.applicationName,
-			}
 
-			if err := c.SendMailTemplate(evt.Email, tplmail.ID, tplmail.MailRegisteredSubject, tplmail.MailRegistered, model); err != nil {
-				slog.Error("user created but cannot send mail template: %w", err)
+			if err := c.SendVerificationMail(evt.ID); err != nil {
+				slog.Error("user created but cannot send verification mail: %w", err)
 			}
 		})
 
 	}
 
 	return *c.mailManagement, nil
+}
+
+func (c *Configurator) SendPasswordResetMail(mail user.Email) error {
+	usm, err := c.UserManagement()
+	if err != nil {
+		return fmt.Errorf("cannot get user management: %w", err)
+	}
+
+	optUser, err := usm.UseCases.FindByMail(c.SysUser(), mail)
+	if err != nil {
+		// this is a technical error we want to bubble up through user->tech support->admin->dev
+		return fmt.Errorf("cannot find user: %w", err)
+	}
+
+	if optUser.IsNone() {
+		// security note: intentionally do not expose this information to the frontend
+		slog.Error("shall send verification mail but user not found", "mail", mail)
+		return nil
+	}
+
+	// security note: intentionally create a new security code
+	code, err := usm.UseCases.ResetPasswordRequestCode(mail, time.Minute*15)
+	if err != nil {
+		return fmt.Errorf("cannot reset password request code: %w", err)
+	}
+
+	usr := optUser.Unwrap()
+
+	prefLang, _ := language.Parse(usr.Contact.PreferredLanguage)
+
+	model := tplmail.PasswordResetModel{
+		ID:                usr.ID,
+		Firstname:         usr.Contact.Firstname,
+		Lastname:          usr.Contact.Lastname,
+		Email:             usr.Email,
+		PreferredLanguage: prefLang,
+		ConfirmURL:        core.URI(c.ContextPathURI(string(c.userManagement.Pages.ResetPassword), core.Values{"id": string(usr.ID), "code": code})), // here we expose our internal user id, not sure if this is a problem
+		ApplicationName:   c.applicationName,
+	}
+
+	return c.SendMailTemplate(usr.Email, tplmail.ID, tplmail.ResetPasswordSubject, tplmail.ResetPassword, model)
+}
+
+func (c *Configurator) SendVerificationMail(uid user.ID) error {
+	usm, err := c.UserManagement()
+	if err != nil {
+		return fmt.Errorf("cannot get user management: %w", err)
+	}
+
+	optUser, err := usm.UseCases.FindByID(c.SysUser(), uid)
+	if err != nil {
+		// this is a technical error we want to bubble up through user->tech support->admin->dev
+		return fmt.Errorf("cannot find user: %w", err)
+	}
+
+	if optUser.IsNone() {
+		// security note: intentionally do not expose this information to the frontend
+		slog.Error("shall send verification mail but user not found", "id", uid)
+		return nil
+	}
+
+	// security note: intentionally create a new security code
+	code, err := usm.UseCases.ResetVerificationCode(uid, time.Minute*15)
+	if err != nil {
+		return fmt.Errorf("cannot reset confirm code: %w", err)
+	}
+
+	usr := optUser.Unwrap()
+
+	prefLang, _ := language.Parse(usr.Contact.PreferredLanguage)
+
+	model := tplmail.MailVerificationModel{
+		ID:                usr.ID,
+		Firstname:         usr.Contact.Firstname,
+		Lastname:          usr.Contact.Lastname,
+		Email:             usr.Email,
+		PreferredLanguage: prefLang,
+		ConfirmURL:        core.URI(c.ContextPathURI(string(c.userManagement.Pages.ConfirmMail), core.Values{"id": string(usr.ID), "code": code})), // here we expose our internal user id, not sure if this is a problem
+		ApplicationName:   c.applicationName,
+	}
+
+	return c.SendMailTemplate(usr.Email, tplmail.ID, tplmail.MailVerificationSubject, tplmail.MailVerification, model)
 }
 
 func (c *Configurator) SendMailTemplate(to user.Email, tpl template.ID, subjName, bodyName template.DefinedTemplateName, tplModel any) error {

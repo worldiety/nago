@@ -19,7 +19,7 @@ type Create func(subject permission.Auditable, model ShortRegistrationUser) (Use
 type FindByID func(subject permission.Auditable, id ID) (std.Option[User], error)
 type FindByMail func(subject permission.Auditable, email Email) (std.Option[User], error)
 type FindAll func(subject permission.Auditable) iter.Seq2[User, error]
-type ChangeOtherPassword func(subject permission.Auditable, uid ID, pwd Password, pwdRepeated Password) error
+type ChangeOtherPassword func(subject AuditableUser, uid ID, pwd Password, pwdRepeated Password) error
 type ChangeMyPassword func(subject AuditableUser, oldPassword, newPassword, newRepeated Password) error
 type Delete func(subject permission.Auditable, id ID) error
 type UpdateMyContact func(subject AuditableUser, contact Contact) error
@@ -56,6 +56,16 @@ type SysUser func() Subject
 // AuthenticateByPassword checks mail and password and returns the view of the user to the caller.
 type AuthenticateByPassword func(email Email, password Password) (std.Option[User], error)
 
+type ConfirmMail func(userId ID, code string) error
+
+type ResetVerificationCode func(uid ID, lifetime time.Duration) (code string, err error)
+
+type ResetPasswordRequestCode func(mail Email, lifetime time.Duration) (code string, err error)
+
+type RequiresPasswordChange func(uid ID) (bool, error)
+
+type ChangePasswordWithCode func(uid ID, code string, newPassword Password, newRepeated Password) error
+
 type UseCases struct {
 	Create                    Create
 	FindByID                  FindByID
@@ -63,6 +73,7 @@ type UseCases struct {
 	FindAll                   FindAll
 	ChangeOtherPassword       ChangeOtherPassword
 	ChangeMyPassword          ChangeMyPassword
+	ChangePasswordWithCode    ChangePasswordWithCode
 	Delete                    Delete
 	UpdateMyContact           UpdateMyContact
 	UpdateOtherContact        UpdateOtherContact
@@ -77,6 +88,10 @@ type UseCases struct {
 	AuthenticateByPassword    AuthenticateByPassword
 	CountAssignedUserLicense  CountAssignedUserLicense
 	RevokeAssignedUserLicense RevokeAssignedUserLicense
+	ConfirmMail               ConfirmMail
+	ResetVerificationCode     ResetVerificationCode
+	RequiresPasswordChange    RequiresPasswordChange
+	ResetPasswordRequestCode  ResetPasswordRequestCode
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -91,6 +106,8 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 	enableBootstrapAdminFn := NewEnableBootstrapAdmin(users, systemFn, findByMailFn)
 
 	changeMyPasswordFn := NewChangeMyPassword(&globalLock, users)
+	changeOtherPasswordFn := NewChangeOtherPassword(&globalLock, users)
+	changePasswordWithCodeFn := NewChangePasswordWithCode(&globalLock, systemFn, users, changeOtherPasswordFn)
 	deleteFn := NewDelete(users)
 
 	authenticateByPasswordFn := NewAuthenticatesByPassword(findByMailFn, systemFn)
@@ -108,12 +125,17 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 	countAssignedUserLicenseFn := NewCountAssignedUserLicense(&globalLock, users)
 	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)
 
+	confirmMailFn := NewConfirmMail(&globalLock, users)
+	resetVerificationCodeFn := NewResetVerificationCode(&globalLock, users)
+	requiresPasswordChangeFn := NewRequiresPasswordChange(systemFn, findByIdFn)
+	resetPasswordRequestCodeFn := NewResetPasswordRequestCode(&globalLock, systemFn, users, findByMailFn)
+
 	return UseCases{
 		Create:                    createFn,
 		FindByID:                  findByIdFn,
 		FindByMail:                findByMailFn,
 		FindAll:                   findAllFn,
-		ChangeOtherPassword:       nil,
+		ChangeOtherPassword:       changeOtherPasswordFn,
 		ChangeMyPassword:          changeMyPasswordFn,
 		Delete:                    deleteFn,
 		UpdateMyContact:           updateMyContactFn,
@@ -129,5 +151,10 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		CountAssignedUserLicense:  countAssignedUserLicenseFn,
 		RevokeAssignedUserLicense: revokeAssignedUserLicenseFn,
 		UpdateOtherLicenses:       updateOtherLicenseFn,
+		ConfirmMail:               confirmMailFn,
+		ResetVerificationCode:     resetVerificationCodeFn,
+		RequiresPasswordChange:    requiresPasswordChangeFn,
+		ResetPasswordRequestCode:  resetPasswordRequestCodeFn,
+		ChangePasswordWithCode:    changePasswordWithCodeFn,
 	}
 }

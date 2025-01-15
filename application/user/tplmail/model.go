@@ -6,7 +6,17 @@ import (
 	"golang.org/x/text/language"
 )
 
-type MailRegisteredSubjectModel struct {
+type MailVerificationModel struct {
+	ID                user.ID
+	Firstname         string
+	Lastname          string
+	Email             user.Email
+	PreferredLanguage language.Tag
+	ConfirmURL        core.URI
+	ApplicationName   string
+}
+
+type PasswordResetModel struct {
 	ID                user.ID
 	Firstname         string
 	Lastname          string

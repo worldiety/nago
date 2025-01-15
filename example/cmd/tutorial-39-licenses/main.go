@@ -51,7 +51,7 @@ func main() {
 		std.Must(cfg.SessionManagement())
 
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
-		
+
 		cfg.SetDecorator(cfg.NewScaffold().
 			Logo(heroSolid.AcademicCap).
 			Decorator())

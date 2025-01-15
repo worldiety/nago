@@ -223,6 +223,10 @@ func (s *scopeWindow) Application() *Application {
 }
 
 func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
+	if subject == nil {
+		subject = auth.InvalidSubject{}
+	}
+
 	s.parent.subject.SetValue(subject)
 }
 

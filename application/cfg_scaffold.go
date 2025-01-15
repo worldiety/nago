@@ -314,7 +314,7 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 		ui.HLineWithColor(ui.ColorAccent),
 		ui.HStack(
 			ui.SecondaryButton(func() {
-				wnd.Navigation().ForwardTo(sessionManagement.Pages.Profile, nil)
+				wnd.Navigation().ForwardTo(b.cfg.userManagement.Pages.Profile, nil)
 			}).Title("Konto verwalten"),
 		).FullWidth().Alignment(ui.Trailing),
 		ui.HStack(

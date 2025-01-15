@@ -8,6 +8,7 @@ import (
 type PasswordOptions struct {
 	Label          string
 	SupportingText string
+	Autocomplete   bool
 }
 
 func Password[E any, T ~string](opts PasswordOptions, property Property[E, T]) Field[E] {
@@ -40,6 +41,7 @@ func Password[E any, T ~string](opts PasswordOptions, property Property[E, T]) F
 
 			return ui.PasswordField(opts.Label, state.Get()).
 				InputValue(state).
+				AutoComplete(opts.Autocomplete).
 				Disabled(self.Disabled).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).

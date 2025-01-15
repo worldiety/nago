@@ -19,7 +19,10 @@ import (
 )
 
 type Pages struct {
-	Users core.NavigationPath
+	Users         core.NavigationPath
+	Profile       core.NavigationPath
+	ConfirmMail   core.NavigationPath
+	ResetPassword core.NavigationPath
 }
 
 func Users(

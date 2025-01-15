@@ -3,22 +3,19 @@ package user
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/std"
+	"log/slog"
 	"sync"
 	"time"
 )
 
-func NewChangeMyPassword(mutex *sync.Mutex, repo Repository) ChangeMyPassword {
-	return func(subject AuditableUser, oldPassword, newPassword, newRepeated Password) error {
+func NewChangeOtherPassword(mutex *sync.Mutex, repo Repository) ChangeOtherPassword {
+	return func(subject AuditableUser, uid ID, newPassword Password, newRepeated Password) error {
+		if err := subject.Audit(PermChangeOtherPassword); err != nil {
+			return err
+		}
+
 		mutex.Lock()
 		defer mutex.Unlock() // this is really harsh and allows intentionally only to change one user per second
-
-		if !subject.Valid() {
-			return fmt.Errorf("invalid subject")
-		}
-
-		if oldPassword == newPassword {
-			return std.NewLocalizedError("Eingabebeschränkung", "Das alte und das neue Kennwort müssen sich unterscheiden.")
-		}
 
 		if newPassword != newRepeated {
 			return std.NewLocalizedError("Eingabefehler", "Das neue Kennwort unterscheidet sich in der wiederholten Eingabe.")
@@ -28,8 +25,8 @@ func NewChangeMyPassword(mutex *sync.Mutex, repo Repository) ChangeMyPassword {
 			return err
 		}
 
-		// check if old password authenticates
-		optUsr, err := repo.FindByID(subject.ID())
+		// load existing user
+		optUsr, err := repo.FindByID(uid)
 		if err != nil {
 			return fmt.Errorf("cannot find existing user: %w", err)
 		}
@@ -40,8 +37,12 @@ func NewChangeMyPassword(mutex *sync.Mutex, repo Repository) ChangeMyPassword {
 
 		usr := optUsr.Unwrap()
 
-		if err := oldPassword.CompareHashAndPassword(Argon2IdMin, usr.Salt, usr.PasswordHash); err != nil {
-			return err
+		// check if old password is the same as the new one
+		if err := newPassword.CompareHashAndPassword(usr.Algorithm, usr.Salt, usr.PasswordHash); err == nil {
+			return std.NewLocalizedError("Eingabebeschränkung", "Das alte Kennwort darf nicht identisch zum neuen Kennwort sein.")
+		} else {
+			// whatever, continue and write over
+			slog.Error("setting others password failed", "uid", uid, "err", err)
 		}
 
 		// create new credentials

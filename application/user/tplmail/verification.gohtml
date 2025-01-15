@@ -1,15 +1,15 @@
-{{define "MailRegistered"}}
+{{define "MailVerification"}}
     {{template "header"}}
     {{- /*gotype: go.wdy.de/nago/application/user/tplmail.MailRegisteredSubjectModel*/ -}}
                     <tr>
                         <td class="wrapper">
                             <p>Hallo {{.Firstname}},</p>
 
-                            <p>Es wurde ein neues Konto bei {{.ApplicationName}} mit Deiner E-Mail-Adresse
-                                registriert. Falls Du kein Konto registriert hast, kannst Du diese E-Mail
+                            <p>für das Konto bei {{.ApplicationName}} wurde eine Verifikation angefordert.
+                                Falls Du kein Konto registriert hast, kannst Du diese E-Mail
                                 ignorieren.</p>
 
-                            <p>Bestätige dein Konto jetzt:
+                            <p>Verifiziere dein Konto jetzt:
                             </p>
 
                             <p><a href="{{.ConfirmURL}}">Link zur Konto-Verifikation</a></p>
@@ -19,6 +19,6 @@
     {{template "footer"}}
 {{end}}
 
-{{define "MailRegisteredSubject"}}
-    Neues Konto bei {{.ApplicationName}}
+{{define "MailVerificationSubject"}}
+    Kontoverifikation bei {{.ApplicationName}}
 {{end}}

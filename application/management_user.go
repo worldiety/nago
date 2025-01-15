@@ -50,7 +50,10 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(c.EventBus(), userRepo, roleUseCases.roleRepository),
 			Pages: uiuser.Pages{
-				Users: "admin/accounts",
+				Users:         "admin/accounts",
+				Profile:       "account/profile",
+				ConfirmMail:   "account/confirm",
+				ResetPassword: "account/password/reset",
 			},
 		}
 
@@ -59,6 +62,38 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			if err != nil {
 				return UserManagement{}, fmt.Errorf("cannot get billing usecases: %w", err)
 			}*/
+
+		c.RootView(c.userManagement.Pages.ConfirmMail, c.DecorateRootView(func(wnd core.Window) core.View {
+			var path core.NavigationPath
+			if c.sessionManagement != nil {
+				path = c.sessionManagement.Pages.Login
+			}
+
+			return uiuser.ConfirmPage(
+				wnd,
+				path,
+				c.userManagement.UseCases.ConfirmMail,
+				c.SendVerificationMail,
+				c.userManagement.UseCases.RequiresPasswordChange,
+				c.userManagement.UseCases.SysUser,
+				c.userManagement.UseCases.ChangeOtherPassword,
+				c.sessionManagement.UseCases.Logout,
+			)
+		}))
+
+		c.RootView(c.userManagement.Pages.ResetPassword, c.DecorateRootView(func(wnd core.Window) core.View {
+			var path core.NavigationPath
+			if c.sessionManagement != nil {
+				path = c.sessionManagement.Pages.Login
+			}
+
+			return uiuser.ResetPasswordPage(
+				wnd,
+				path,
+				c.userManagement.UseCases.ChangePasswordWithCode,
+				c.sessionManagement.UseCases.Logout,
+			)
+		}))
 
 		c.RootView(c.userManagement.Pages.Users, c.DecorateRootView(func(wnd core.Window) core.View {
 			var ucBillingUserLicense billing.UserLicenses
