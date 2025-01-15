@@ -250,6 +250,8 @@ func (s *Scope) Publish(evt ora.Event) {
 	switch evt := evt.(type) {
 	case ora.ComponentInvalidated:
 		s.lastMessageType = evt.Type
+	case ora.Acknowledged:
+		// ignore
 	default:
 		s.lastMessageType = ""
 	}

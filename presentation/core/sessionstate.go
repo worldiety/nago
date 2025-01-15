@@ -85,8 +85,9 @@ func TransientStateOf[T any](wnd Window, id string) *TransientState[T] {
 	}
 
 	state := &TransientState[T]{
-		id:    id,
-		valid: false,
+		id:         id,
+		valid:      false,
+		generation: 0,
 	}
 
 	w.parent.statesById[id] = state

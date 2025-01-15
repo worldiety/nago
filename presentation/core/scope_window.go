@@ -119,19 +119,21 @@ func (s *scopeWindow) render() ora.Component {
 	}
 	s.reset()
 
-	// update global scope transient states with the latest render generation.
-	// this is used by the ticker to check, if a re-render is required
-	for _, property := range s.parent.statesById {
-		property.setGeneration(s.generation)
-	}
-
 	fac := s.rootFactory.Unwrap()
 	component := fac(s)
 	if component == nil {
 		panic(fmt.Errorf("factory '%s' returned a nil component which is not allowed", s.factory))
 	}
 
-	return component.Render(s)
+	tree := component.Render(s)
+
+	// update global scope transient states with the latest render generation.
+	// this is used by the ticker to check, if a re-render is required
+	for _, property := range s.parent.statesById {
+		property.setGeneration(s.generation)
+	}
+
+	return tree
 }
 
 func (s *scopeWindow) Window() Window {
