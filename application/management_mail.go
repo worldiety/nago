@@ -120,7 +120,7 @@ func (c *Configurator) SendPasswordResetMail(mail user.Email) error {
 
 	usr := optUser.Unwrap()
 
-	prefLang, _ := language.Parse(usr.Contact.PreferredLanguage)
+	prefLang, _ := language.Parse(usr.Contact.DisplayLanguage)
 
 	model := tplmail.PasswordResetModel{
 		ID:                usr.ID,
@@ -161,7 +161,7 @@ func (c *Configurator) SendVerificationMail(uid user.ID) error {
 
 	usr := optUser.Unwrap()
 
-	prefLang, _ := language.Parse(usr.Contact.PreferredLanguage)
+	prefLang, _ := language.Parse(usr.Contact.DisplayLanguage)
 
 	model := tplmail.MailVerificationModel{
 		ID:                usr.ID,

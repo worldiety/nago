@@ -84,10 +84,9 @@ type ID string
 
 type Contact struct {
 	Avatar image.ID `json:"avatar,omitempty"`
-	// AcademicDegree is e.g. Diploma, Bachelor, Master or Doctor
-	AcademicDegree string `json:"academicDegree,omitempty"`
-	// OfficialTitle is like Professor, Oberbürgermeister etc.
-	OfficialTitle string `json:"officialTitle,omitempty"`
+	// Title incorporates the official title like Professor, Oberbürgermeister etc. but also
+	// an academic degree like Diploma, Bachelor, Master or Doctor
+	Title string `json:"title,omitempty"`
 	// Saluation is like Mr, Mrs or divers
 	Salutation  string `json:"salutation,omitempty"`
 	Firstname   string `json:"firstname,omitempty"`
@@ -103,8 +102,8 @@ type Contact struct {
 	// Position is like CEO
 	Position    string `json:"position,omitempty"`
 	CompanyName string `json:"company,omitempty"`
-	// PreferredLanguage is a BCP47 string like de or en_US
-	PreferredLanguage string `json:"preferredLanguage,omitempty"`
+	// DisplayLanguage is a BCP47 string like de or en_US of what the User wants to see its content.
+	DisplayLanguage string `json:"displayLanguage,omitempty"`
 }
 
 func (d Contact) IsZero() bool {

@@ -6,6 +6,8 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/image"
+	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -86,8 +88,6 @@ func (b *MenuEntryBuilder) Action(fn func(wnd core.Window)) *MenuEntryBuilder {
 type ScaffoldBuilder struct {
 	cfg             *Configurator
 	alignment       ui.ScaffoldAlignment
-	lightLogo       core.SVG
-	darkLogo        core.SVG
 	policiesPath    core.NavigationPath
 	policiesContent []byte
 	gdprPath        core.NavigationPath
@@ -95,7 +95,8 @@ type ScaffoldBuilder struct {
 	impressPath     core.NavigationPath
 	impressContent  []byte
 	menu            []MenuEntryBuilder
-	logoClick       func()
+	logoClick       func(wnd core.Window)
+	logoImage       ui.DecoredView
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -108,6 +109,9 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 		impressContent:  defaultImpress,
 		gdprPath:        "legal/gdpr",
 		gdprContent:     defaultGDPR,
+		logoClick: func(wnd core.Window) {
+			wnd.Navigation().ForwardTo(".", nil)
+		},
 	}
 }
 
@@ -116,24 +120,18 @@ func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBui
 	return b
 }
 
-func (b *ScaffoldBuilder) LogoAction(fn func()) *ScaffoldBuilder {
+// Logo sets an already allocated image component as the menubar image. Note, that you should match the height
+// of 6rem or [ui.L96]. Also see [ui.TImage.EmbedAdaptive] to support light and dark switching automatically.
+func (b *ScaffoldBuilder) Logo(image ui.DecoredView) *ScaffoldBuilder {
+	b.logoImage = image
+	return b
+}
+
+// LogoAction allows a forward declaration using a function callback with the current window.
+// By default, the action to navigate forward to the index (which is .) but it can be disabled
+// by setting a nil function here.
+func (b *ScaffoldBuilder) LogoAction(fn func(wnd core.Window)) *ScaffoldBuilder {
 	b.logoClick = fn
-	return b
-}
-
-func (b *ScaffoldBuilder) Logo(svg core.SVG) *ScaffoldBuilder {
-	b.lightLogo = svg
-	b.darkLogo = svg
-	return b
-}
-
-func (b *ScaffoldBuilder) LogoDark(svg core.SVG) *ScaffoldBuilder {
-	b.darkLogo = svg
-	return b
-}
-
-func (b *ScaffoldBuilder) LogoLight(svg core.SVG) *ScaffoldBuilder {
-	b.lightLogo = svg
 	return b
 }
 
@@ -187,8 +185,9 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 
 	return func(wnd core.Window, view core.View) core.View {
 		var logo core.View
-		if b.lightLogo != nil || b.darkLogo != nil {
-			logo = ui.Image().EmbedAdaptive(b.lightLogo, b.darkLogo).Frame(ui.Frame{}.Size("6rem", "6rem"))
+		if b.logoImage != nil {
+			//logo = ui.HStack(b.logoImage).Frame(ui.Frame{}.Size("", "6rem"))
+			logo = b.logoImage
 		}
 
 		var menu []ui.ScaffoldMenuEntry
@@ -250,8 +249,15 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			if !wnd.Subject().Valid() {
 				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", sessionManagement.Pages.Login))
 			} else {
+				var avatarIcon core.View
+				if id := wnd.Subject().Avatar(); id != "" {
+					avatarIcon = avatar.URI(http_image.URI(image.ID(id), image.FitCover, 40, 40))
+				} else {
+					avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L40)
+				}
+
 				menu = append(menu, ui.ScaffoldMenuEntry{
-					Icon:  avatar.Text(wnd.Subject().Name()),
+					Icon:  avatarIcon,
 					Title: "",
 					Action: func() {
 						menuDialogPresented.Set(true)
@@ -271,8 +277,18 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
-		).Logo(ui.HStack(logo).Action(b.logoClick)).
+		).Logo(ui.HStack(logo).Action(b.logoActionClick(wnd))).
 			Menu(menu...)
+	}
+}
+
+func (b *ScaffoldBuilder) logoActionClick(wnd core.Window) func() {
+	if b.logoClick == nil {
+		return nil
+	}
+
+	return func() {
+		b.logoClick(wnd)
 	}
 }
 
@@ -286,9 +302,16 @@ func (b *ScaffoldBuilder) hasAdminCenter(wnd core.Window) bool {
 }
 
 func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *SessionManagement) core.View {
+	var avatarIcon core.View
+	if id := wnd.Subject().Avatar(); id != "" {
+		avatarIcon = avatar.URI(http_image.URI(image.ID(id), image.FitCover, 120, 120)).Size(ui.L120)
+	} else {
+		avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L120)
+	}
+
 	return ui.VStack(
 		ui.HStack(
-			avatar.Text(wnd.Subject().Name()).Size(ui.L120),
+			avatarIcon,
 			ui.VStack(
 				ui.Text(wnd.Subject().Name()).Font(ui.Title),
 				ui.Text(wnd.Subject().Email()),

@@ -53,7 +53,7 @@ func main() {
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 
 		cfg.SetDecorator(cfg.NewScaffold().
-			Logo(heroSolid.AcademicCap).
+			Logo(ui.Image().Embed(heroSolid.AcademicCap).Frame(ui.Frame{}.Size(ui.L96, ui.L96))).
 			Decorator())
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {

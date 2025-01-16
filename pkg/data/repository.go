@@ -41,7 +41,8 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	FindAllByPrefix(prefix ID) iter.Seq2[E, error]
 
 	// Identifiers returns a sequence of all currently known identifiers, without unmarshalling any associated
-	// aggregate (respective value). The ordering is implementation dependent.
+	// aggregates (respective values). The ordering is implementation dependent and stores with a sorted
+	// index may return their IDs in stable order.
 	Identifiers() iter.Seq2[ID, error]
 
 	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.

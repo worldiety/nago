@@ -157,6 +157,8 @@ const (
 	L48 Length = "3rem"
 	//L80 relates to about 80dp at default font scale.
 	L80 Length = "5rem"
+	//L96 relates to about 96dp at default font scale.
+	L96 Length = "6rem"
 	//L120 relates to about 120dp at default font scale.
 	L120 Length = "7.5rem"
 	//L144 relates to about 144dp at default font scale.

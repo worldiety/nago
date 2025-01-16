@@ -85,6 +85,10 @@ type Subject interface {
 	// full or locked or even worse, has been captured by a malicious party and compromised.
 	Email() string
 
+	// Avatar returns optionally a resource representing the avatar image. This may be an url, an uri or
+	// any id. By default, Nago returns an [image.ID].
+	Avatar() string
+
 	// Roles yields over all associated roles. This is important if the domain needs to model
 	// resource based access using role identifiers.
 	Roles() iter.Seq[role.ID]
@@ -189,12 +193,14 @@ func (v *viewImpl) load() {
 		return
 	}
 
-	if v.user.Contact.PreferredLanguage == "und" {
+	if v.user.Contact.DisplayLanguage == "und" {
 		v.locale = language.English
 	} else {
-		tag, err := language.Parse(v.user.Contact.PreferredLanguage)
+		tag, err := language.Parse(v.user.Contact.DisplayLanguage)
 		if err != nil {
-			slog.Error("cannot parse user preferred language", "id", v.user.ID, "err", err)
+			// this is just way to verbose and common not to have such value
+			// let us simply ignore it.
+			//slog.Error("cannot parse user preferred language", "id", v.user.ID, "err", err)
 		}
 
 		v.locale = tag
@@ -303,6 +309,15 @@ func (v *viewImpl) ID() ID {
 	defer v.mutex.Unlock()
 
 	return v.user.ID
+}
+
+func (v *viewImpl) Avatar() string {
+	v.refresh()
+
+	v.mutex.Lock()
+	defer v.mutex.Unlock()
+
+	return string(v.user.Contact.Avatar)
 }
 
 func (v *viewImpl) Name() string {

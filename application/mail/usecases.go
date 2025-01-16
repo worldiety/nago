@@ -54,7 +54,7 @@ func NewUseCases(outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) 
 		ExecType:    template.TreeTemplate,
 		Tags:        []template.Tag{template.TagMail, template.TagHTML},
 		Files:       tplmail.Files,
-	}, true)
+	}, false)
 
 	if err != nil {
 		return UseCases{}, fmt.Errorf("cannot ensure mail template: %w", err)

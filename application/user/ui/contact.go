@@ -11,16 +11,12 @@ import (
 )
 
 type contactViewModel struct {
-	Avatar image.ID `style:"avatar" section:"Profilbild"`
-	// AcademicDegree is e.g. Diploma, Bachelor, Master or Doctor
-	AcademicDegree string `label:"Akademischer Grad" section:"Daten"`
-	// OfficialTitle is like Professor, Oberbürgermeister etc.
-	OfficialTitle     string `label:"Amtsbezeichnung" section:"Daten"`
-	Salutation        string `label:"Anrede" section:"Daten"`
-	Firstname         string `label:"Vorname" section:"Daten"`
-	Lastname          string `label:"Nachname" section:"Daten"`
-	PreferredLanguage string `label:"Sprache" section:"Daten" supportingText:"Präferierte Sprache in BCP47 Kodierung, z.B. de_DE oder en_US oder en_GB."`
-	EMail             string `label:"E-Mail Adresse" section:"Daten" disabled:"true" supportingText:"Die E-Mail Adresse kann hier nicht geändert werden, da sie Bestandteil der Identität ist."`
+	Avatar     image.ID `style:"avatar" section:"Profilbild"`
+	Title      string   `label:"Titel" section:"Daten"`
+	Salutation string   `label:"Anrede" section:"Daten"`
+	Firstname  string   `label:"Vorname" section:"Daten"`
+	Lastname   string   `label:"Nachname" section:"Daten"`
+	EMail      string   `label:"E-Mail Adresse" section:"Daten" disabled:"true" supportingText:"Die E-Mail Adresse kann hier nicht geändert werden, da sie Bestandteil der Identität ist."`
 
 	// job
 	Position    string `label:"Position" section:"Beruf"`
@@ -59,32 +55,22 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 			return contactViewModel{}
 		}
 
-		if c.PreferredLanguage == "" {
-			c.PreferredLanguage = "de_DE"
-		}
-
-		if c.Country == "" {
-			c.Country = "DE"
-		}
-
 		return contactViewModel{
-			Avatar:            c.Avatar,
-			AcademicDegree:    c.AcademicDegree,
-			OfficialTitle:     c.OfficialTitle,
-			Salutation:        c.Salutation,
-			Firstname:         c.Firstname,
-			Lastname:          c.Lastname,
-			PreferredLanguage: c.PreferredLanguage,
-			EMail:             wnd.Subject().Email(),
-			Position:          c.Position,
-			CompanyName:       c.CompanyName,
-			PostalCode:        c.PostalCode,
-			City:              c.City,
-			Country:           c.Country,
-			Phone:             c.Phone,
-			MobilePhone:       c.MobilePhone,
-			LinkedIn:          c.LinkedIn,
-			Website:           c.Website,
+			Avatar:      c.Avatar,
+			Title:       c.Title,
+			Salutation:  c.Salutation,
+			Firstname:   c.Firstname,
+			Lastname:    c.Lastname,
+			EMail:       wnd.Subject().Email(),
+			Position:    c.Position,
+			CompanyName: c.CompanyName,
+			PostalCode:  c.PostalCode,
+			City:        c.City,
+			Country:     c.Country,
+			Phone:       c.Phone,
+			MobilePhone: c.MobilePhone,
+			LinkedIn:    c.LinkedIn,
+			Website:     c.Website,
 		}
 	})
 
@@ -100,22 +86,21 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 				ui.PrimaryButton(func() {
 					c := state.Get()
 					err := changeMyContact(wnd.Subject(), user.Contact{
-						Avatar:            c.Avatar,
-						AcademicDegree:    c.AcademicDegree,
-						OfficialTitle:     c.OfficialTitle,
-						Salutation:        c.Salutation,
-						Firstname:         c.Firstname,
-						Lastname:          c.Lastname,
-						Phone:             c.Phone,
-						MobilePhone:       c.MobilePhone,
-						Country:           c.Country,
-						City:              c.City,
-						PostalCode:        c.PostalCode,
-						LinkedIn:          c.LinkedIn,
-						Website:           c.Website,
-						Position:          c.Position,
-						CompanyName:       c.CompanyName,
-						PreferredLanguage: c.PreferredLanguage,
+						Avatar:          c.Avatar,
+						Title:           c.Title,
+						Salutation:      c.Salutation,
+						Firstname:       c.Firstname,
+						Lastname:        c.Lastname,
+						Phone:           c.Phone,
+						MobilePhone:     c.MobilePhone,
+						Country:         c.Country,
+						City:            c.City,
+						PostalCode:      c.PostalCode,
+						LinkedIn:        c.LinkedIn,
+						Website:         c.Website,
+						Position:        c.Position,
+						CompanyName:     c.CompanyName,
+						DisplayLanguage: wnd.Locale().String(),
 					})
 
 					if err != nil {

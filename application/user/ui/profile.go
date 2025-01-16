@@ -143,7 +143,7 @@ func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles
 				core.HTTPOpen(wnd.Navigation(), core.HTTPify(contact.Website), "_blank")
 			}).AccessibilityLabel("Webseite").
 				PreIcon(heroSolid.GlobeEuropeAfrica)),
-		).Gap(ui.L8))
+		).Gap(ui.L8).Padding(ui.Padding{Top: ui.L4}))
 	}
 
 	contactDetails := ui.VStack(

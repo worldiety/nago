@@ -55,9 +55,9 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 			Email:     mail,
 			Algorithm: Argon2IdMin,
 			Contact: Contact{
-				Firstname:         model.Firstname,
-				Lastname:          model.Lastname,
-				PreferredLanguage: model.PreferredLanguage.String(),
+				Firstname:       model.Firstname,
+				Lastname:        model.Lastname,
+				DisplayLanguage: model.PreferredLanguage.String(),
 			},
 			Salt:                  salt,
 			PasswordHash:          hash,
@@ -103,7 +103,7 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 		}
 
 		if model.NotifyUser {
-			tag, err := language.Parse(user.Contact.PreferredLanguage)
+			tag, err := language.Parse(user.Contact.DisplayLanguage)
 			if err != nil {
 				slog.Error("user contact has invalid preferred language", "err", err)
 			}

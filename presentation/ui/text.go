@@ -44,6 +44,7 @@ type TText struct {
 // Link performs a best guess based on the given href. If the href starts with http or https
 // the window will perform an Open call. Otherwise, a local forward navigation is applied.
 func Link(wnd core.Window, name string, href string, target string) TText {
+	// TODO links should be underlined due to accessibility, however, NAGO cannot express that
 	return Text(name).Action(func() {
 		if wnd == nil {
 			slog.Error("cannot execute link action: window is nil")

@@ -18,6 +18,10 @@ type InvalidSubject struct {
 	DeniedLog func(permission string)
 }
 
+func (i InvalidSubject) Avatar() string {
+	return ""
+}
+
 func (i InvalidSubject) Permissions() iter.Seq[permission.ID] {
 	return func(yield func(permission.ID) bool) {
 

@@ -19,6 +19,10 @@ func NewSystem() SysUser {
 type sysUser struct {
 }
 
+func (s sysUser) Avatar() string {
+	return ""
+}
+
 func (s sysUser) Permissions() iter.Seq[permission.ID] {
 	return func(yield func(permission.ID) bool) {
 
