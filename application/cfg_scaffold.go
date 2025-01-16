@@ -120,16 +120,17 @@ func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBui
 	return b
 }
 
-// Logo sets an already allocated image component as the menubar image. Note, that you should match the height
-// of 6rem or [ui.L96]. Also see [ui.TImage.EmbedAdaptive] to support light and dark switching automatically.
+// Logo sets an already allocated (image) component as the menubar image. Note, that you should match the height
+// of 6rem or [ui.L96]. Also see [ui.TImage.EmbedAdaptive] to support light and dark mode switching automatically.
+// See [ScaffoldBuilder.LogoAction] to declare a listener which receives [core.Window] for navigation.
 func (b *ScaffoldBuilder) Logo(image ui.DecoredView) *ScaffoldBuilder {
 	b.logoImage = image
 	return b
 }
 
 // LogoAction allows a forward declaration using a function callback with the current window.
-// By default, the action to navigate forward to the index (which is .) but it can be disabled
-// by setting a nil function here.
+// By default, the [ScaffoldBuilder] applies an action to navigate forward to
+// the index root view (which is .) but this behavior can be disabled by setting a nil function here.
 func (b *ScaffoldBuilder) LogoAction(fn func(wnd core.Window)) *ScaffoldBuilder {
 	b.logoClick = fn
 	return b
