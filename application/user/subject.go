@@ -250,6 +250,10 @@ func (v *viewImpl) load() {
 }
 
 func (v *viewImpl) Permissions() iter.Seq[permission.ID] {
+	if !v.Valid() {
+		return func(yield func(permission.ID) bool) {}
+	}
+
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
@@ -280,6 +284,10 @@ func (v *viewImpl) Audit(permission permission.ID) error {
 
 func (v *viewImpl) HasPermission(permission permission.ID) bool {
 	v.refresh()
+
+	if !v.Valid() {
+		return false
+	}
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
@@ -344,6 +352,10 @@ func (v *viewImpl) Email() string {
 func (v *viewImpl) Roles() iter.Seq[role.ID] {
 	v.refresh()
 
+	if !v.Valid() {
+		return func(yield func(role.ID) bool) {}
+	}
+
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
@@ -352,6 +364,10 @@ func (v *viewImpl) Roles() iter.Seq[role.ID] {
 
 func (v *viewImpl) HasRole(id role.ID) bool {
 	v.refresh()
+
+	if !v.Valid() {
+		return false
+	}
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
@@ -363,6 +379,10 @@ func (v *viewImpl) HasRole(id role.ID) bool {
 func (v *viewImpl) Groups() iter.Seq[group.ID] {
 	v.refresh()
 
+	if !v.Valid() {
+		return func(yield func(group.ID) bool) {}
+	}
+
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
@@ -371,6 +391,10 @@ func (v *viewImpl) Groups() iter.Seq[group.ID] {
 
 func (v *viewImpl) HasGroup(id group.ID) bool {
 	v.refresh()
+
+	if !v.Valid() {
+		return false
+	}
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
@@ -382,6 +406,10 @@ func (v *viewImpl) HasGroup(id group.ID) bool {
 func (v *viewImpl) HasLicense(id license.ID) bool {
 	v.refresh()
 
+	if !v.Valid() {
+		return false
+	}
+
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
@@ -391,6 +419,10 @@ func (v *viewImpl) HasLicense(id license.ID) bool {
 
 func (v *viewImpl) Licenses() iter.Seq[license.ID] {
 	v.refresh()
+
+	if !v.Valid() {
+		return func(yield func(license.ID) bool) {}
+	}
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
