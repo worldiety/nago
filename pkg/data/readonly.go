@@ -15,6 +15,14 @@ type readOnlyAdapter[E Aggregate[ID], ID IDType] struct {
 	other ReadRepository[E, ID]
 }
 
+func (r readOnlyAdapter[E, ID]) FindAllByPrefix(prefix ID) iter.Seq2[E, error] {
+	return r.other.FindAllByPrefix(prefix)
+}
+
+func (r readOnlyAdapter[E, ID]) Identifiers() iter.Seq2[ID, error] {
+	return r.other.Identifiers()
+}
+
 func (r readOnlyAdapter[E, ID]) FindByID(id ID) (std.Option[E], error) {
 	return r.other.FindByID(id)
 }

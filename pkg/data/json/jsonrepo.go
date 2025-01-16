@@ -104,6 +104,60 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) enc
 	return data.Idtos(domainModel.Identity()), buf, nil
 }
 
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByPrefix(prefix DomainID) iter.Seq2[DomainModel, error] {
+	return func(yield func(DomainModel, error) bool) {
+		var zeroDomain DomainModel
+		for id, err := range r.store.List(context.Background(), blob.ListOptions{
+			Prefix: data.Idtos(prefix),
+		}) {
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+
+				continue
+			}
+
+			did, err := data.Stoid[DomainID](id)
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+			}
+
+			optModel, err := r.FindByID(did)
+			if err != nil {
+				if !yield(zeroDomain, err) {
+					return
+				}
+				continue
+			}
+
+			if !yield(optModel.Unwrap(), nil) {
+				return
+			}
+		}
+	}
+}
+
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Identifiers() iter.Seq2[DomainID, error] {
+	return func(yield func(DomainID, error) bool) {
+		var zeroID DomainID
+		for id, err := range r.store.List(context.Background(), blob.ListOptions{}) {
+			if err != nil {
+				if !yield(zeroID, err) {
+					return
+				}
+			} else {
+				ci, err := data.Stoid[DomainID](id)
+				if !yield(ci, err) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByID(ids iter.Seq[DomainID]) iter.Seq2[DomainModel, error] {
 	return func(yield func(DomainModel, error) bool) {
 		var zeroDomain DomainModel
@@ -113,6 +167,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 				if !yield(zeroDomain, err) {
 					return
 				}
+				continue
 			}
 
 			if optModel.IsNone() {
@@ -136,6 +191,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) All
 				if !yield(zeroDomain, err) {
 					return
 				}
+				continue
 			}
 
 			did, err := data.Stoid[DomainID](id)

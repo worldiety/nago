@@ -35,6 +35,15 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	FindByID(id ID) (std.Option[E], error)
 
+	// FindAllByPrefix returns an iterator over all elements whose IDs start with the given prefix.
+	// The prefix is evaluated alphanumerically, which may be a problem for integer keys, as they do not
+	// provide leading zeros.
+	FindAllByPrefix(prefix ID) iter.Seq2[E, error]
+
+	// Identifiers returns a sequence of all currently known identifiers, without unmarshalling any associated
+	// aggregate (respective value). The ordering is implementation dependent.
+	Identifiers() iter.Seq2[ID, error]
+
 	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
 	// It is not an error, if an entity has not been found.
 	// The order is undefined, to allow optimizations.
