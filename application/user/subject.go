@@ -7,6 +7,7 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/std/tick"
 	"golang.org/x/text/language"
 	"iter"
 	"log/slog"
@@ -14,34 +15,6 @@ import (
 	"sync"
 	"time"
 )
-
-func init() {
-	lastTickTime = time.Now()
-	ticker := time.NewTicker(time.Minute)
-	go func() {
-		select {
-		case t := <-ticker.C:
-			tickMutex.Lock()
-			lastTickTime = t
-			tickMutex.Unlock()
-		}
-	}()
-}
-
-var tickMutex sync.Mutex
-var lastTickTime time.Time
-
-// tickTime returns the current ticker time, which has a very low granularity, because we expect a massive
-// scaled load of calls here, just doing mostly nothing. E.g. checking 100 user properties on 1000 active
-// users, would require alone 2 seconds (if kernel uses its slow fallback code).
-//
-// https://github.com/golang/go/issues/57749
-func tickTime() time.Time {
-	tickMutex.Lock()
-	defer tickMutex.Unlock()
-
-	return lastTickTime
-}
 
 type AuditableUser interface {
 	permission.Auditable
@@ -164,7 +137,7 @@ func (v *viewImpl) refresh() User {
 		v.refreshInterval = 5 * time.Minute
 	}
 
-	now := tickTime()
+	now := tick.Now(tick.Minute)
 	if now.Sub(v.lastRefreshedAt) >= v.refreshInterval {
 		v.load()
 	}
@@ -173,7 +146,7 @@ func (v *viewImpl) refresh() User {
 }
 
 func (v *viewImpl) load() {
-	v.lastRefreshedAt = tickTime()
+	v.lastRefreshedAt = tick.Now(tick.Minute)
 
 	if v.user.ID == "" {
 		slog.Error("user has no id")

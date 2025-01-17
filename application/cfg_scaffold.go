@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/image"
 	http_image "go.wdy.de/nago/image/http"
@@ -324,7 +323,7 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 						}
 					}).PreIcon(heroOutline.Cog6Tooth).AccessibilityLabel("Admin Center")),
 					ui.SecondaryButton(func() {
-						if _, err := sessionManagement.UseCases.Logout(session.ID(wnd.SessionID())); err != nil {
+						if _, err := sessionManagement.UseCases.Logout(wnd.Session().ID()); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return
 						}

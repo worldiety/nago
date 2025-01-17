@@ -92,7 +92,7 @@ func Login(
 			presentMailInfo.Set(true)
 		}).Title("Kennwort vergessen"),
 		ui.PrimaryButton(func() {
-			ok, err := loginFn(session.ID(wnd.SessionID()), user.Email(login.Get()), user.Password(password.Get()))
+			ok, err := loginFn(wnd.Session().ID(), user.Email(login.Get()), user.Password(password.Get()))
 			if err != nil {
 				if errors.Is(err, user.EMailNotVerifiedErr) {
 					verificationDialogPresented.Set(true)

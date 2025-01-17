@@ -75,6 +75,10 @@ func (o Option[T]) UnwrapOrElse(fn func() T) T {
 	return o.V
 }
 
+func (o Option[T]) IsZero() bool {
+	return o.IsNone()
+}
+
 func (o Option[T]) IsSome() bool {
 	return o.Valid
 }

@@ -35,6 +35,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private activeLocale: string;
 	private requestId: number;
 	private bufferCache: Map<Ptr, string>; // TODO reset me, if new component (== new scope) is requested
+	private httpBaseUrl: string;
 
 	constructor(eventBus: EventBus) {
 		this.eventBus = eventBus;
@@ -63,14 +64,18 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	async initialize(): Promise<void> {
 		let proto = 'ws';
+		let httpProto = "http";
 		if (this.isSecure) {
 			proto = 'wss';
+			httpProto = "https";
 		}
 		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
 		}
+
+		this.httpBaseUrl = `${proto}://${window.location.hostname}:${this.webSocketPort}/`;
 
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
@@ -118,6 +123,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		ConnectionHandler.connectionChanged({connected: false});
 	}
 
+
+
 	private retry() {
 		if (this.retryTimeout !== null) {
 			return;
@@ -140,6 +147,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.initialize();
 		}, timeout);
 	}
+
+
 
 	async executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated> {
 		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);

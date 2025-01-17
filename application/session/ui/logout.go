@@ -15,7 +15,7 @@ func Logout(wnd core.Window, logoutFn session.Logout) core.View {
 			ui.VStack(
 				ui.Text(fmt.Sprintf("Sie sind derzeit als %s angemeldet.", wnd.Subject().Name())).TextAlignment(ui.TextAlignCenter),
 				ui.PrimaryButton(func() {
-					_, err := logoutFn(session.ID(wnd.SessionID()))
+					_, err := logoutFn(wnd.Session().ID())
 					if err != nil {
 						alert.ShowBannerError(wnd, err)
 						return

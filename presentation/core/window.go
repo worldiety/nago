@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"golang.org/x/text/language"
 	"log/slog"
@@ -70,13 +71,14 @@ type Window interface {
 	// Context returns the wire-lifetime context. Contains additional injected types like User or Logger.
 	Context() context.Context
 
-	// SessionID is a unique identifier, which is assigned to a client using some sort of cookie mechanism. This is a
-	// pure random string and belongs to a distinct client instance. It is shared across multiple windows on the client,
-	// especially when using multiple tabs or activity windows. You may use this for authentication mechanics,
-	// however be careful not to break external security concerns by never revisiting the actual user authentication
-	// state.
-	// It usually outlives a frontend process and e.g. is restored after a device restart.
-	SessionID() SessionID
+	// Session returns access to the technical client identity. This identity is usually assigned by the server
+	// using a cookie mechanics. It is the same for all browser windows and tabs of the same browser instance.
+	//
+	// Note, that this is different from the allocated scope which is connected over the wire (usually a websocket).
+	// A scope is uniquely assigned either to none or exact one client instance (usually a browser tab).
+	// If you hit the refresh button in a browser, the scope id is lost and the client will (re-)connect using
+	// a new unique random scope id.
+	Session() session.UserSession
 
 	// Authenticate triggers a round trip so that [Window.Subject] may contain a valid user afterward.
 	// For sure, the user can always cancel that.
@@ -115,22 +117,6 @@ type Window interface {
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
 }
-
-// Execute posts the task into the associated Executor. It will be executed in the associated event loop
-// to allow race free processing.
-// Use this to post updates from foreign goroutines into the ui components.
-// Note, that an invalidation is not triggered automatically. Either use [ViewRoot.Invalidate] manually or
-// even better use [Post], [PostDelayed] or [Schedule], because those have optimized lifecycle handling.
-//Execute(task func())
-
-// Invalidate enforces a render cycle sometimes in the future.
-// Usually you should not use
-// this directly, because the request-response cycles triggers this automatically. However, if backend
-// data has changed due to other domain events, you have to notify the view tree to redraw and potentially
-// to load the data again from repositories.
-//Invalidate()
-
-type SessionID string
 
 // Colors returns a type safe value based ColorSet instance.
 func Colors[CS ColorSet](wnd Window) CS {

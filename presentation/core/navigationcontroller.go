@@ -1,6 +1,9 @@
 package core
 
 import (
+	"encoding/hex"
+	"fmt"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/ora"
 	"strings"
 )
@@ -32,6 +35,14 @@ func newNavigationController(scope *Scope) *navigationController {
 	return &navigationController{
 		scope: scope,
 	}
+}
+
+func (n *navigationController) Window() Window {
+	if n.scope != nil {
+		return n.scope.allocatedRootView.UnwrapOr(nil)
+	}
+
+	return nil
 }
 
 func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
@@ -110,10 +121,22 @@ func (n *navigationController) Open(resource URI, options Values) {
 //   - redirectTarget as declared
 //   - redirectNavigation as declared
 func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation NavigationPath) {
+	var encSid string
+	if wnd, ok := nav.(interface{ Window() Window }); ok && wnd != nil {
+		sid := wnd.Window().Session().ID()
+		buf, err := crypto.Encrypt([]byte(sid), wnd.Window().Application().MasterKey())
+		if err != nil {
+			panic(fmt.Errorf("unreachable: %w", err))
+		}
+
+		encSid = hex.EncodeToString(buf)
+	}
+
 	nav.Open(start, Values{
 		"_type":              "http-flow",
 		"redirectTarget":     string(redirectTarget),
 		"redirectNavigation": string(redirectNavigation),
+		"session":            encSid,
 	})
 }
 

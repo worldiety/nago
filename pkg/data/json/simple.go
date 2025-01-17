@@ -20,7 +20,7 @@ func GetOrZero[T any](store blob.Store, key string) T {
 }
 
 // Get reads the value identified by key using the same unmarshalling as JSON [Repository].
-func Get[T any](store blob.Store, key string) (std.Option[T], error) {
+func Get[T any](store blob.Reader, key string) (std.Option[T], error) {
 	var v T
 	optBuf, err := blob.Get(store, key)
 	if err != nil {
@@ -41,7 +41,7 @@ func Get[T any](store blob.Store, key string) (std.Option[T], error) {
 // Put inserts or updates the value identified by key using the same serialization as JSON [Repository].
 // Keep in mind, that you should probably never mix a [Repository] of a single type and using this method to write
 // other types.
-func Put[T any](store blob.Store, key string, value T) error {
+func Put[T any](store blob.Writer, key string, value T) error {
 	buf, err := json.Marshal(value)
 	if err != nil {
 		return err

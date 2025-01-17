@@ -10,10 +10,11 @@ import (
 type ID string
 
 type Session struct {
-	ID              ID
-	User            std.Option[user.ID]
-	CreatedAt       time.Time
-	AuthenticatedAt time.Time
+	ID              ID                  `json:"id"`
+	User            std.Option[user.ID] `json:"user,omitempty,omitzero"`
+	CreatedAt       time.Time           `json:"createdAt,omitempty,omitzero"`
+	AuthenticatedAt time.Time           `json:"authenticatedAt,omitempty,omitzero"`
+	Values          map[string]string   `json:"values,omitempty,omitzero"`
 }
 
 func (s Session) Identity() ID {

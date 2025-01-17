@@ -46,9 +46,19 @@ let configurationPromise: Promise<void> | null = null;
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
 async function applyConfiguration(): Promise<void> {
+	// this is part of the (oauth2) security process, which removes our actual session due to strict cookie rules.
+	// thus we saved the end-to-end encrypted cookie in our local storage and ask the server to restore it.
+	let httpFlowSession = localStorage.getItem("http-flow-session");
+	if (httpFlowSession) {
+		await restoreCookie(httpFlowSession);
+		return
+	}
+
+
 	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 	// restoration).
 	await serviceAdapter.initialize();
+
 
 	// request and apply configuration
 	const config = await serviceAdapter.getConfiguration();
@@ -56,6 +66,24 @@ async function applyConfiguration(): Promise<void> {
 	themeManager.applyActiveTheme();
 	updateFavicon(config.appIcon);
 	sendWindowInfo(false);
+}
+
+function restoreCookie(sessionID: string) {
+	return fetch('/api/nago/v1/session/restore', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'text/plain'
+		},
+		body: sessionID
+	}).then(response => {
+		if (response.ok) {
+			localStorage.removeItem("http-flow-session");
+			console.log("completed cookie restoration process");
+			navigateReload()
+		} else {
+			console.log("restore cookie: unexpected result", response)
+		}
+	});
 }
 
 function updateFavicon(uri: URI) {
@@ -113,7 +141,7 @@ async function initializeUi(): Promise<void> {
 	}
 }
 
-function serverStateLost(): void{
+function serverStateLost(): void {
 	// the most important point is, that the server got a new version
 	// thus, the correct reaction is to reload everything, because this frontend may have changed.
 	navigateReload();
@@ -190,6 +218,8 @@ function openRequested(evt: Event): void {
 		case 'http-flow':
 			let redirectTarget = msg.options['redirectTarget'];
 			let redirectNavigation = msg.options['redirectNavigation'];
+			let session = msg.options['session'];
+			localStorage.setItem("http-flow-session", session);
 
 			console.log('http-flow', redirectTarget, redirectNavigation);
 
@@ -244,8 +274,10 @@ function fileImportRequested(evt: Event): void {
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {},
-				(uploadId) => {},
+				(uploadId) => {
+				},
+				(uploadId) => {
+				},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -352,7 +384,7 @@ function addEventListeners(): void {
 
 function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
-	if (connected.value){
+	if (connected.value) {
 		// trigger a re-render, TODO introduce something like an invalidate event
 		serviceAdapter.executeFunctions(-1)
 	}
@@ -422,7 +454,7 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected" />
+	<ConnectionLostOverlay v-if="!connected"/>
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
@@ -440,7 +472,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Loading UI definition…</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
 	</div>
 </template>

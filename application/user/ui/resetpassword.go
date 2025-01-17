@@ -48,7 +48,7 @@ func ResetPasswordPage(
 					// security note: even though this is not necessary, it looks wrong
 					// from the user perspective, thus be clear and logout to be clear
 
-					if _, err := logoutFn(session.ID(wnd.SessionID())); err != nil {
+					if _, err := logoutFn(wnd.Session().ID()); err != nil {
 						alert.ShowBannerError(wnd, err)
 						return
 					}

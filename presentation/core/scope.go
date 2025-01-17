@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -35,20 +36,20 @@ type ComponentFactory func(Window) View
 // as a cheap alternative, replace all event loops with the same looper instance.
 // However, we must be careful on destruction of the scopes sharing them.
 type Scope struct {
-	app                *Application
-	id                 ora.ScopeID
-	factories          map[ora.ComponentFactoryId]ComponentFactory
-	allocatedRootView  std.Option[*scopeWindow]
-	lifetime           time.Duration
-	endOfLifeAt        atomic.Pointer[time.Time]
-	channel            concurrent.Value[Channel]
-	chanDestructor     concurrent.Value[func()]
-	destroyed          concurrent.Value[bool]
-	eventLoop          *EventLoop
-	lastMessageType    ora.EventType
-	ctx                context.Context
-	cancelCtx          func()
-	sessionID          SessionID
+	app               *Application
+	id                ora.ScopeID
+	factories         map[ora.ComponentFactoryId]ComponentFactory
+	allocatedRootView std.Option[*scopeWindow]
+	lifetime          time.Duration
+	endOfLifeAt       atomic.Pointer[time.Time]
+	channel           concurrent.Value[Channel]
+	chanDestructor    concurrent.Value[func()]
+	destroyed         concurrent.Value[bool]
+	eventLoop         *EventLoop
+	lastMessageType   ora.EventType
+	ctx               context.Context
+	cancelCtx         func()
+
 	tempDirMutex       sync.Mutex
 	tempRootDir        string
 	tempDir            string
@@ -59,9 +60,13 @@ type Scope struct {
 	subject            concurrent.Value[auth.Subject]
 	locale             language.Tag
 	statesById         map[string]TransientProperty
+
+	sessionID      session.ID
+	sessionByID    session.FindUserSessionByID
+	virtualSession atomic.Pointer[session.UserSession]
 }
 
-func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory) *Scope {
+func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
 
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
@@ -75,6 +80,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 		tempRootDir: tempRootDir,
 		locale:      language.German, // TODO implement me
 		statesById:  make(map[string]TransientProperty),
+		sessionByID: sessionByID,
 	}
 
 	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me
@@ -423,5 +429,7 @@ func (s *Scope) destroy() {
 
 // only for event loop
 func (s *Scope) handleSessionAssigned(evt ora.SessionAssigned) {
-	s.sessionID = SessionID(evt.SessionID)
+	s.sessionID = session.ID(evt.SessionID)
+	tmp := s.sessionByID(s.sessionID)
+	s.virtualSession.Store(&tmp)
 }

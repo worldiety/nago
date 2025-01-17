@@ -30,6 +30,14 @@ func newEncryptionKey() *[32]byte {
 	return &key
 }
 
+func Encrypt(plaintext []byte, key EncryptionKey) ([]byte, error) {
+	return encrypt(plaintext, key)
+}
+
+func Decrypt(ciphertext []byte, key EncryptionKey) ([]byte, error) {
+	return decrypt(ciphertext, key)
+}
+
 // encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Output takes the
 // form nonce|ciphertext|tag where '|' indicates concatenation.

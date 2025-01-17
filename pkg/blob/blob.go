@@ -20,6 +20,29 @@ type ListOptions struct {
 	Limit int
 }
 
+type Reader interface {
+	// NewReader opens the blob to be read.
+	NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error)
+}
+
+type Writer interface {
+	// NewWriter open the blob to be created or overwritten. Either of them will only happen
+	// if the writer has been closed and the context has not been cancelled.
+	// A Write is always atomic and implementations must ensure, that
+	// a partial write is never visible.
+	NewWriter(ctx context.Context, key string) (io.WriteCloser, error)
+}
+
+type ReadWriter interface {
+	Reader
+	Writer
+}
+
+type Deleter interface {
+	// Delete removes the denoted entry. It is not an error to remove a non-existent file.
+	Delete(ctx context.Context, key string) error
+}
+
 // Store represents a single bucket store for blobs. Note, that individual methods are thread safe, however
 // it is not possible to represent transactions.
 // This limitation is intentionally, because neither simple implementations (an ordinary filesystem) nor
@@ -41,21 +64,13 @@ type Store interface {
 	// such a statement is not very useful.
 	Exists(ctx context.Context, key string) (bool, error)
 
-	// Delete removes the denoted entry. It is not an error to remove a non-existent file.
-	Delete(ctx context.Context, key string) error
+	Deleter
 
-	// NewReader opens the blob to be read.
-	NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error)
-
-	// NewWriter open the blob to be created or overwritten. Either of them will only happen
-	// if the writer has been closed and the context has not been cancelled.
-	// A Write is always atomic and implementations must ensure, that
-	// a partial write is never visible.
-	NewWriter(ctx context.Context, key string) (io.WriteCloser, error)
+	ReadWriter
 }
 
 // Read transfers from the store all bytes into the given writer, e.g. into a http response.
-func Read(store Store, key string, dst io.Writer) (exists bool, err error) {
+func Read(store Reader, key string, dst io.Writer) (exists bool, err error) {
 	optR, err := store.NewReader(context.Background(), key)
 	if err != nil {
 		return false, err
@@ -72,7 +87,7 @@ func Read(store Store, key string, dst io.Writer) (exists bool, err error) {
 }
 
 // Write transfers all bytes from the given source into the store, e.g. from a request body.
-func Write(store Store, key string, src io.Reader) (written int64, err error) {
+func Write(store Writer, key string, src io.Reader) (written int64, err error) {
 	w, err := store.NewWriter(context.Background(), key)
 	if err != nil {
 		return 0, err
@@ -84,7 +99,7 @@ func Write(store Store, key string, src io.Reader) (written int64, err error) {
 }
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
-func Put(store Store, key string, value []byte) (err error) {
+func Put(store Writer, key string, value []byte) (err error) {
 	w, err := store.NewWriter(context.Background(), key)
 	if err != nil {
 		return err
@@ -118,7 +133,7 @@ func DeleteAll(store Store) error {
 
 // Get is a shortcut function to read small slices from the store. Do not use for large blobs, because it allocates
 // the entire blob size without other limits.
-func Get(store Store, key string) (std.Option[[]byte], error) {
+func Get(store Reader, key string) (std.Option[[]byte], error) {
 	optReader, err := store.NewReader(context.Background(), key)
 	if err != nil {
 		return std.None[[]byte](), err

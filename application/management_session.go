@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	uisession "go.wdy.de/nago/application/session/ui"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -37,12 +38,19 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			return SessionManagement{}, fmt.Errorf("cannot get admin management: %w", err)
 		}
 
-		store, err := c.EntityStore("nago.iam.session")
+		plainStore, err := c.EntityStore("nago.iam.session")
 		if err != nil {
 			return SessionManagement{}, fmt.Errorf("cannot get session store: %w", err)
 		}
 
-		repo := json.NewSloppyJSONRepository[session.Session, session.ID](store)
+		key, err := c.MasterKey()
+		if err != nil {
+			return SessionManagement{}, fmt.Errorf("could not load master key: %w", err)
+		}
+
+		cryptSessionStore := crypto.NewBlobStore(plainStore, key)
+
+		repo := json.NewSloppyJSONRepository[session.Session, session.ID](cryptSessionStore)
 
 		userMgmt, err := c.UserManagement()
 		if err != nil {
@@ -78,7 +86,7 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 		}))
 
 		c.AddOnWindowCreatedObserver(func(wnd core.Window) {
-			optSession, err := useCases.FindSessionByID(session.ID(wnd.SessionID()))
+			optSession, err := useCases.FindSessionByID(wnd.Session().ID())
 			if err != nil {
 				alert.ShowBannerError(wnd, err)
 				return

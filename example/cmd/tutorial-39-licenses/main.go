@@ -59,7 +59,7 @@ func main() {
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 
 			return ui.VStack(
-
+				ui.Text(fmt.Sprintf("%s: %v", wnd.Session().ID(), wnd.Session().AuthenticatedAt())),
 				ui.Text("User scoped enabled licenses:").Font(ui.Title),
 				ui.VStack(
 					ui.Each(wnd.Subject().Licenses(), func(t license.ID) core.View {

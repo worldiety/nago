@@ -84,7 +84,7 @@ func ConfirmPage(
 			// from the user perspective, thus be clear and logout if we are
 			// talking about different users
 
-			if _, err := logoutFn(session.ID(wnd.SessionID())); err != nil {
+			if _, err := logoutFn(wnd.Session().ID()); err != nil {
 				return alert.BannerError(err)
 			}
 

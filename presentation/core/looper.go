@@ -166,7 +166,8 @@ func (l *EventLoop) Destroy() {
 		select {
 		case l.done <- true:
 		default:
-			slog.Error("eolDone cannot accept destruction twice")
+			// TODO this still happens regulary, is this a problem?
+			//slog.Error("eolDone cannot accept destruction twice")
 		}
 
 		close(l.done)

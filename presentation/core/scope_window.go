@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ora"
@@ -70,6 +71,10 @@ func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values
 	}
 
 	return s
+}
+
+func (s *scopeWindow) Session() session.UserSession {
+	return *s.parent.virtualSession.Load()
 }
 
 func (s *scopeWindow) setFactory(view ComponentFactory) {
@@ -338,10 +343,6 @@ func (s *scopeWindow) Subject() auth.Subject {
 
 func (s *scopeWindow) Context() context.Context {
 	return s.parent.ctx
-}
-
-func (s *scopeWindow) SessionID() SessionID {
-	return s.parent.sessionID
 }
 
 func (s *scopeWindow) Authenticate() {

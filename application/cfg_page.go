@@ -2,6 +2,7 @@ package application
 
 import (
 	"archive/zip"
+	"encoding/hex"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -10,6 +11,7 @@ import (
 	"github.com/vearutop/statigz"
 	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/logging"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/ora"
@@ -95,9 +97,19 @@ func (c *Configurator) newHandler() http.Handler {
 	downloadStreams := map[string]func() (io.Reader, error){}
 	var downloadFilesMutex sync.Mutex
 
+	sessionMgmt, err := c.SessionManagement()
+	if err != nil {
+		panic(fmt.Errorf("session management is not optional anymore: %v", err))
+	}
+
 	tmpDir := filepath.Join(c.dataDir, "tmp")
 	slog.Info("tmp directory updated", "dir", tmpDir)
-	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps)
+	key, err := c.MasterKey()
+	if err != nil {
+		panic(fmt.Errorf("could not get master key: %v", err))
+	}
+
+	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key)
 	app2.AddSystemService(c.Images().CreateSrcSet)
 	app2.AddSystemService(c.Images().LoadBestFit)
 	app2.AddSystemService(c.Images().LoadSrcSet)
@@ -215,6 +227,49 @@ func (c *Configurator) newHandler() http.Handler {
 		}))
 
 	}
+
+	masterKey, err := c.MasterKey()
+	if err != nil {
+		slog.Error("error getting master key: %v", "err", err)
+	}
+
+	r.Mount("/api/nago/v1/session/restore", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			writer.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		hexBuf, err := io.ReadAll(request.Body)
+		if err != nil {
+			slog.Error("error reading request body: %v", "err", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		buf, err := hex.DecodeString(string(hexBuf))
+		if err != nil {
+			slog.Error("error decoding request body: %v", "err", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		}
+
+		sidBuf, err := crypto.Decrypt(buf, masterKey)
+		if err != nil {
+			slog.Error("error decrypting request body: %v", "err", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		}
+
+		cookie := &http.Cookie{}
+		cookie.Name = "wdy-ora-access"
+		cookie.Value = string(sidBuf)
+		cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
+		cookie.Secure = false //TODO in release-mode this must be true
+		cookie.HttpOnly = true
+		cookie.SameSite = http.SameSiteStrictMode //TODO CSRF protection however, do we actually suffer for this problem due to random addresses? if not, Lax is probably enough? => discuss with Fred
+		// TODO can we make it more secure to do something like ASLR? how does that work? Is entropy large enough?
+		// TODO alternative: use UUID + tree deltas to mitigate larger ids and avoid CSRF attacks
+		cookie.Path = "/"
+		http.SetCookie(writer, cookie)
+	}))
 
 	r.Mount("/api/ora/v1/share", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")

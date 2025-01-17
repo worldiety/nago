@@ -3,6 +3,8 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/ora"
 	"io"
@@ -51,12 +53,26 @@ type Application struct {
 	// but any other API does not make sense for things like crud.Auto where a lot of stuff
 	// is only eventually relevant and available automatically anyway.
 	systemServices []dependency
+
+	findVirtualSession session.FindUserSessionByID
+
+	masterKey crypto.EncryptionKey
 }
 
-func NewApplication(ctx context.Context, tmpDir string, factories map[ora.ComponentFactoryId]ComponentFactory, onWindowCreatedObservers []OnWindowCreatedObserver, fps int) *Application {
+func NewApplication(
+	ctx context.Context,
+	tmpDir string,
+	factories map[ora.ComponentFactoryId]ComponentFactory,
+	onWindowCreatedObservers []OnWindowCreatedObserver,
+	fps int,
+	findVirtualSession session.FindUserSessionByID,
+	masterKey crypto.EncryptionKey,
+) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	return &Application{
+		masterKey:                masterKey,
+		findVirtualSession:       findVirtualSession,
 		destructors:              concurrent.NewLinkedList[func()](),
 		scopeLifetime:            time.Minute,
 		factories:                factories,
@@ -75,6 +91,10 @@ func NewApplication(ctx context.Context, tmpDir string, factories map[ora.Compon
 // Context of the application.
 func (a *Application) Context() context.Context {
 	return a.ctx
+}
+
+func (a *Application) MasterKey() crypto.EncryptionKey {
+	return a.masterKey
 }
 
 func (a *Application) SetID(id ApplicationID) {
@@ -141,7 +161,7 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 
 	scope, _ := a.scopes.Get(id)
 	if scope == nil {
-		scope = NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories)
+		scope = NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories, a.findVirtualSession)
 	}
 	a.scopes.Put(scope)
 

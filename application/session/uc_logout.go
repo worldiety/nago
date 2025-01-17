@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
+	"time"
 )
 
 func NewLogout(sessions Repository) Logout {
@@ -20,6 +21,7 @@ func NewLogout(sessions Repository) Logout {
 
 		session := optSession.Unwrap()
 		session.User = std.None[user.ID]()
+		session.AuthenticatedAt = time.Time{}
 		if err := sessions.Save(session); err != nil {
 			return false, fmt.Errorf("sessions.Save failed: %v", err)
 		}
