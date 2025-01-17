@@ -191,6 +191,7 @@ func Users(
 				PasswordRepeated:  user.Password(model.Password2),
 				PreferredLanguage: language.German,
 				NotifyUser:        model.Notify,
+				Verified:          model.Verified,
 			})
 			return "", err
 		})).
