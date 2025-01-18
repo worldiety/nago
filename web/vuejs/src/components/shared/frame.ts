@@ -3,6 +3,10 @@ import {cssLengthValue} from "@/components/shared/length";
 
 export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];
+	if (!frame) {
+		return styles;
+	}
+	
 	if (frame?.w) {
 		styles.push("width:" + cssLengthValue(frame.w))
 	}

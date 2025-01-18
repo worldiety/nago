@@ -42,5 +42,6 @@ type VStack struct {
 
 	StylePreset StylePreset `json:"s,omitempty"`
 
+	Position Position `json:"ps,omitempty"`
 	component
 }

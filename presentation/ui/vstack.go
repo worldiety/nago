@@ -26,6 +26,7 @@ type TVStack struct {
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	accessibilityLabel string
 	action             func()
+	position           Position
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -40,6 +41,11 @@ func VStack(children ...core.View) TVStack {
 
 func (c TVStack) Gap(gap Length) TVStack {
 	c.gap = gap.ora()
+	return c
+}
+
+func (c TVStack) Position(position Position) TVStack {
+	c.position = position
 	return c
 }
 
@@ -151,5 +157,6 @@ func (c TVStack) Render(ctx core.RenderContext) ora.Component {
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
 		Action:                 ctx.MountCallback(c.action),
+		Position:               c.position.ora(),
 	}
 }

@@ -10,6 +10,7 @@ import {colorValue} from "@/components/shared/colors";
 import {fontCSS} from "@/components/shared/font";
 import {borderCSS} from "@/components/shared/border";
 import {useServiceAdapter} from "@/composables/serviceAdapter";
+import {positionCSS} from "@/components/shared/position";
 
 const props = defineProps<{
 	ui: VStack;
@@ -41,6 +42,7 @@ function onKeydown(event: KeyboardEvent) {
 // copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
 function commonStyles(): string[] {
 	let styles = frameCSS(props.ui.f)
+	styles.push(...positionCSS(props.ui.ps));
 
 	// background handling
 	if (props.ui.pgc && pressed.value) {

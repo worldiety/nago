@@ -30,6 +30,7 @@ type THStack struct {
 	originTrace            string
 	wrap                   bool
 	disabled               bool
+	position               Position
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -60,6 +61,11 @@ func (c THStack) Padding(padding Padding) DecoredView {
 
 func (c THStack) Gap(gap Length) THStack {
 	c.gap = gap.ora()
+	return c
+}
+
+func (c THStack) Position(position Position) THStack {
+	c.position = position
 	return c
 }
 
@@ -179,6 +185,7 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		Action:                 ptr,
 		Wrap:                   c.wrap,
 		Disabled:               c.disabled,
+		Position:               c.position.ora(),
 
 		StylePreset: c.stylePreset,
 	}
