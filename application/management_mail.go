@@ -1,6 +1,5 @@
 package application
 
-import "C"
 import (
 	"fmt"
 	"go.wdy.de/nago/application/mail"
