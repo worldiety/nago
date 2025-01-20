@@ -50,6 +50,8 @@ func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
 		return
 	}
 
+	n.IgnoreNextInvalidation()
+
 	n.scope.Publish(ora.NavigationForwardToRequested{
 		Type:    ora.NavigationForwardToRequestedT,
 		Factory: ora.ComponentFactoryId(id),
@@ -67,6 +69,8 @@ func (n *navigationController) Back() {
 		return
 	}
 
+	n.IgnoreNextInvalidation()
+
 	n.scope.Publish(ora.NavigationBackRequested{
 		Type: ora.NavigationBackRequestedT,
 	})
@@ -76,6 +80,8 @@ func (n *navigationController) ResetTo(id NavigationPath, values Values) {
 	if n.destroyed {
 		return
 	}
+
+	n.IgnoreNextInvalidation()
 
 	n.scope.Publish(ora.NavigationResetRequested{
 		Type:    ora.NavigationResetRequestedT,
@@ -89,6 +95,8 @@ func (n *navigationController) Reload() {
 		return
 	}
 
+	n.IgnoreNextInvalidation()
+
 	n.scope.Publish(ora.NavigationReloadRequested{
 		Type: ora.NavigationReloadRequestedT,
 	})
@@ -100,6 +108,14 @@ func (n *navigationController) Open(resource URI, options Values) {
 		Resource: string(resource),
 		Options:  options,
 	})
+}
+
+// IgnoreNextInvalidation sets a scope flag, so that if this event loop cycle ends, any invalidation is ignored.
+// This is useful, if you know, that the current render cycle will be without purpose, e.g. due to a navigation
+// request. This also simplifies the client implementation, if the navigation cycle is faster than applying
+// the rendered view, which may result in invalid screens.
+func (n *navigationController) IgnoreNextInvalidation() {
+	n.scope.ignoreNextInvalidation.Store(true)
 }
 
 // HTTPFlow issues either a WebView or a native browser redirect flow, starting at the given start-uri and in case of a
@@ -131,6 +147,8 @@ func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation Navi
 
 		encSid = hex.EncodeToString(buf)
 	}
+
+	nav.(*navigationController).IgnoreNextInvalidation()
 
 	nav.Open(start, Values{
 		"_type":              "http-flow",

@@ -61,9 +61,10 @@ type Scope struct {
 	locale             language.Tag
 	statesById         map[string]TransientProperty
 
-	sessionID      session.ID
-	sessionByID    session.FindUserSessionByID
-	virtualSession atomic.Pointer[session.UserSession]
+	sessionID              session.ID
+	sessionByID            session.FindUserSessionByID
+	virtualSession         atomic.Pointer[session.UserSession]
+	ignoreNextInvalidation atomic.Bool
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
@@ -255,6 +256,11 @@ func isEvent[T ora.Event](e ora.Event) bool {
 func (s *Scope) Publish(evt ora.Event) {
 	switch evt := evt.(type) {
 	case ora.ComponentInvalidated:
+		if s.ignoreNextInvalidation.Load() {
+			s.ignoreNextInvalidation.Store(false)
+			return
+		}
+
 		s.lastMessageType = evt.Type
 	case ora.Acknowledged:
 		// ignore
