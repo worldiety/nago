@@ -173,7 +173,7 @@ func (s *scopeWindow) Invalidate() {
 		if s.destroyed {
 			return
 		}
-		s.parent.forceRender()
+		s.parent.forceRender(0)
 	})
 
 }

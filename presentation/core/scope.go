@@ -65,6 +65,7 @@ type Scope struct {
 	sessionByID            session.FindUserSessionByID
 	virtualSession         atomic.Pointer[session.UserSession]
 	ignoreNextInvalidation atomic.Bool
+	dirty                  bool
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
@@ -229,8 +230,9 @@ func (s *Scope) handleMessage(buf []byte) error {
 		wasDestructed := isEvent[ora.ComponentDestructionRequested](t) || isEvent[ora.ScopeDestructionRequested](t)
 
 		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
-		if !wasDestructed && !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT {
-			s.forceRender()
+		if s.dirty || (!wasDestructed && !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT) {
+			s.forceRender(t.ReqID())
+			s.dirty = false
 		}
 	})
 
@@ -304,10 +306,14 @@ func (s *Scope) sendPing() {
 }
 
 // only for event loop
-func (s *Scope) forceRender() {
+func (s *Scope) forceRender(reqId ora.RequestId) {
 	alloc, err := s.allocatedRootView.Get()
 	if err != nil {
-		slog.Error("no view to render is allocated", "err", err)
+		s.Publish(ora.ErrorOccurred{
+			Type:      ora.ErrorOccurredT,
+			RequestId: reqId,
+			Message:   fmt.Sprintf("cannot call function: no view allocated: %d", reqId),
+		})
 		return
 	}
 
@@ -344,7 +350,7 @@ func (s *Scope) updateTick(now time.Time) {
 		}
 
 		if requiresRender {
-			s.forceRender()
+			s.forceRender(0)
 		}
 	})
 }

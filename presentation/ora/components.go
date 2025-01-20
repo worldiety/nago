@@ -54,7 +54,6 @@ func (e NewComponentRequested) ReqID() RequestId {
 type ComponentInvalidationRequested struct {
 	Type      EventType `json:"type" value:"ComponentInvalidationRequested"`
 	RequestId RequestId `json:"r" description:"Request ID from the NewComponentRequested event."`
-	Component Ptr       `json:"ptr" description:"The pointer of the component, which shall be rendered again. Only Pointer created with NewComponentRequested are valid."`
 	event
 }
 

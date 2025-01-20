@@ -105,6 +105,13 @@ func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequeste
 }
 
 func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
+	if evt.Ptr == -1 {
+		// intentionally ignore -1 function calls, these may be triggered by the client, to just
+		// ask for a re-rendering
+		s.dirty = true
+		return
+	}
+
 	alloc, err := s.allocatedRootView.Get()
 	if err != nil {
 		s.Publish(ora.ErrorOccurred{
@@ -160,11 +167,11 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidationRequested) {
 	alloc, err := s.allocatedRootView.Get()
 	if err != nil {
-		slog.Error("cannot invalidate: no such component in scope", slog.Any("evt", evt))
+		slog.Error("cannot invalidate: no view allocated", slog.Any("evt", evt))
 		s.Publish(ora.ErrorOccurred{
 			Type:      ora.ErrorOccurredT,
 			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot invalidate: no such component in scope: %d", evt.Component),
+			Message:   fmt.Sprintf("cannot invalidate:  no view allocated"),
 		})
 		return
 	}

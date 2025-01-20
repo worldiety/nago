@@ -124,7 +124,6 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 
-
 	private retry() {
 		if (this.retryTimeout !== null) {
 			return;
@@ -147,7 +146,6 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.initialize();
 		}, timeout);
 	}
-
 
 
 	async executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated> {
@@ -275,6 +273,16 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		const eventType = event.type as EventType;
 
 		console.log(responseParsed);
+
+		if (eventType == EventType.ERROR_OCCURRED) {
+			// this happens, if the server has lost the scope state, either due to a restart or connection timeout
+			// TODO this string comparision is stupid and must be changed to at least a numeric error code
+			if ((event.message as string).indexOf("no view allocated")) {
+				this.eventBus.publish(EventType.ServerStateLost, EventType.PING)
+				return
+			}
+
+		}
 
 		// our lowest id is 1, so this must be something without our intention
 		if (requestId === 0 || requestId === undefined) {

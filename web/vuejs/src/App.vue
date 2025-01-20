@@ -385,7 +385,7 @@ function addEventListeners(): void {
 function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
 	if (connected.value) {
-		// trigger a re-render, TODO introduce something like an invalidate event
+		// trigger a re-render, TODO use ComponentInvalidatedRequested
 		serviceAdapter.executeFunctions(-1)
 	}
 }
