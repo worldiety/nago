@@ -103,6 +103,12 @@ function updateFavicon(uri: URI) {
 
 async function initializeUi(): Promise<void> {
 	try {
+		// these must be registered before requested, especially the navigation things.
+		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
+		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
+		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
+		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
+
 		// create a new component (which is likely a page but not necessarily)
 		let factoryId = window.location.pathname.substring(1);
 		if (factoryId.length === 0) {
@@ -124,10 +130,6 @@ async function initializeUi(): Promise<void> {
 
 		eventBus.subscribe(EventType.INVALIDATED, updateUi);
 		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
-		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
-		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
-		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
-		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
 		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
 		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested);
 		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo);
@@ -164,12 +166,12 @@ function updateUi(event: Event): void {
 
 async function navigateForward(event: Event): Promise<void> {
 	console.log('navigate forward', ui.value);
-	if (!ui.value) {
-		return;
-	}
+
 
 	const navigationForwardToRequested = event as NavigationForwardToRequested;
-	await serviceAdapter.destroyComponent(ui.value?.id);
+	if (ui.value) {
+		await serviceAdapter.destroyComponent(ui.value?.id);
+	}
 	const componentInvalidated = await serviceAdapter.createComponent(
 		navigationForwardToRequested.factory,
 		navigationForwardToRequested.values
@@ -386,6 +388,7 @@ function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
 	if (connected.value) {
 		// trigger a re-render, TODO use ComponentInvalidatedRequested
+		console.log("websocket connected, poke server")
 		serviceAdapter.executeFunctions(-1)
 	}
 }
@@ -470,7 +473,7 @@ watch(
 
 	<div class="bg-M1 content-container min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
-		<div v-if="state === State.Loading">Loading UI definition…</div>
+		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
 		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
