@@ -21,7 +21,7 @@ require (
 require (
 	github.com/bool64/dev v0.2.37 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	github.com/worldiety/enum v0.0.0-20250110181534-fca0f7ef5847 // indirect
+	github.com/worldiety/enum v0.0.0-20250122143414-8bb22f61a65c // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )

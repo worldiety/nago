@@ -1,0 +1,5 @@
+{
+  "doc": "Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.",
+  "kind": "String",
+  "id": 6
+}

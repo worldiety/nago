@@ -1,0 +1,6 @@
+{
+  "kind": "Project",
+  "go": {
+    "package": "proto"
+  }
+}

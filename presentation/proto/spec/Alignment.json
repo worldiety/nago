@@ -1,0 +1,33 @@
+{
+  "kind": "Uint",
+  "id": 5,
+  "const": {
+    "0": {
+      "name": "Center"
+    },
+    "1": {
+      "name": "Top"
+    },
+    "2": {
+      "name": "Bottom"
+    },
+    "3": {
+      "name": "Leading"
+    },
+    "4": {
+      "name": "Trailing"
+    },
+    "5": {
+      "name": "TopLeading"
+    },
+    "6": {
+      "name": "TopTrailing"
+    },
+    "7": {
+      "name": "BottomLeading"
+    },
+    "8": {
+      "name": "BottomTrailing"
+    }
+  }
+}

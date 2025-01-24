@@ -1,0 +1,17 @@
+{
+  "doc": "UpdateStateValueRequested is raised from the frontend to update a state value hold by the backend. It can also immediately invoke a function callback in the same cycle.",
+  "kind": "Record",
+  "id": 3,
+  "fields": {
+    "1": {
+      "doc": "The StatePointer must not be zero.",
+      "name": "StatePointer",
+      "type": "Ptr"
+    },
+    "2": {
+      "doc": "A FunctionPointer is invoked, if not zero.",
+      "Name": "FunctionPointer",
+      "type": "Ptr"
+    }
+  }
+}

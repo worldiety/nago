@@ -1,0 +1,12 @@
+{
+  "doc": "FunctionCallRequested tells the backend that the given pointer in the associated scope shall be invoked for a side effect.",
+  "kind": "Record",
+  "id": 4,
+  "fields": {
+    "1": {
+      "doc": "Ptr denotes the remote pointer of the function.",
+      "name": "Ptr",
+      "type": "Ptr"
+    }
+  }
+}

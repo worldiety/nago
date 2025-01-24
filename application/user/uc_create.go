@@ -79,6 +79,9 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 		}
 
 		if optView.IsSome() {
+			// TODO think about that this is just a no-op and we actually do nothing, eventually send verification mail again or a mail that the account already exists
+			// TODO create a heuristic which blocks all user registrations if a threshold was reached
+
 			// actually this allows to find out, that a certain user is available. However, there is simply no
 			// other possibility to not expose that information. We can only nag the attacker using excessive
 			// slow-downs.

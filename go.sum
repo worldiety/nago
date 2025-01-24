@@ -32,6 +32,8 @@ github.com/wagslane/go-password-validator v0.3.0 h1:vfxOPzGHkz5S146HDpavl0cw1DSV
 github.com/wagslane/go-password-validator v0.3.0/go.mod h1:TI1XJ6T5fRdRnHqHt14pvy1tNVnrwe7m3/f1f2fDphQ=
 github.com/worldiety/enum v0.0.0-20250110181534-fca0f7ef5847 h1:LpVe9vrLPHj2ZOqhuAkQjbhPwB9ANKmFf68XeyX5HE8=
 github.com/worldiety/enum v0.0.0-20250110181534-fca0f7ef5847/go.mod h1:0uP0UsAlDy6HB1ZaikFmvMHbrp+ZajhhsOBgzUg0KPY=
+github.com/worldiety/enum v0.0.0-20250122143414-8bb22f61a65c h1:7JHoFGGmN5+xJ0/ytQpy/CpEKvqP56eRay7HRBdN/Xo=
+github.com/worldiety/enum v0.0.0-20250122143414-8bb22f61a65c/go.mod h1:0uP0UsAlDy6HB1ZaikFmvMHbrp+ZajhhsOBgzUg0KPY=
 github.com/yuin/goldmark v1.7.8 h1:iERMLn0/QJeHFhxSt3p6PeN9mGnvIKSpG9YYorDMnic=
 github.com/yuin/goldmark v1.7.8/go.mod h1:uzxRWxtg69N339t3louHJ7+O03ezfj6PlliRlaOzY1E=
 golang.org/x/crypto v0.31.0 h1:ihbySMvVjLAeSH1IbfcRTkD/iNscyz8rGzjF/E5hV6U=

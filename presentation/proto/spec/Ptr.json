@@ -1,0 +1,11 @@
+{
+  "doc": "Ptr represents an allocated instance within the backend which is unique in the associated scope.",
+  "kind": "Uint",
+  "id": 2,
+  "const": {
+    "0": {
+      "name": "Null",
+      "doc": "Null represents the zero value and a nil or null pointer address."
+    }
+  }
+}
