@@ -61,6 +61,10 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 				}
 			}
 
+			// TODO implement per hour/day rate limit, usually 500 mails per day
+			// TODO implement wrong auth detection, otherwise we may try every second with wrong credentials and our IP is likely blocked
+			// TODO implement global settings
+
 			now := time.Now()
 			var toRemove []ID
 			for outgoing, err := range mails.All() {
