@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 var (
@@ -80,6 +81,10 @@ func (c *Compiler) emitGoDecl() error {
 			if err := c.goEmitString(typename, decl); err != nil {
 				return fmt.Errorf("cannot emit string %s: %w", typename, err)
 			}
+		case Array:
+			if err := c.goEmitArray(typename, decl); err != nil {
+				return fmt.Errorf("cannot emit array %s: %w", typename, err)
+			}
 		default:
 		}
 	}
@@ -120,4 +125,21 @@ func (c *Compiler) goZeroLiteral(t reflect.Type) string {
 	default:
 		return fmt.Sprintf("(%s{})", t.Name())
 	}
+}
+
+func goFieldName(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	var buf strings.Builder
+	for i, r := range str {
+		if i == 0 {
+			buf.WriteRune(unicode.ToUpper(r))
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+
+	return buf.String()
 }

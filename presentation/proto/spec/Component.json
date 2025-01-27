@@ -1,0 +1,8 @@
+{
+  "doc": "Component is the building primitive for any widget, behavior or ui element in NAGO.",
+  "kind": "Enum",
+
+  "variants": [
+    "Box"
+  ]
+}

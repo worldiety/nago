@@ -1,0 +1,24 @@
+{
+  "doc": "Padding defines additional room within an element.",
+  "kind": "Record",
+  "id": 11,
+  "fields": {
+    "1": {
+      "name": "Top",
+      "type": "Length"
+    },
+    "2": {
+      "name": "Left",
+      "type": "Length"
+    },
+    "3": {
+      "name": "Right",
+      "type": "Length"
+    },
+    "4": {
+      "name": "Bottom",
+      "type": "Length"
+    }
+  }
+}
+

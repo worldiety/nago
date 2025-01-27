@@ -155,6 +155,8 @@ func (s shape) String() string {
 		return "record"
 	case array:
 		return "array"
+	case xobjectAsArray:
+		return "xobjectAsArray"
 	}
 
 	panic(fmt.Sprintf("unknown shape: %d", s))
@@ -169,6 +171,7 @@ const (
 	f32
 	f64
 	array
+	xobjectAsArray
 )
 
 type fieldId uint
@@ -212,14 +215,99 @@ func parseTypeHeader(value uint8) fieldHeader {
 	}
 }
 
+// Component is the building primitive for any widget, behavior or ui element in NAGO.
+type Component interface {
+	// a marker method to indicate the enum / union type membership
+	isComponent()
+	IsZero() bool
+	reset()
+	Writeable
+	Readable
+}
+
+func (Box) isComponent() {}
+
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
 	// a marker method to indicate the enum / union type membership
 	isNagoEvent()
+	IsZero() bool
+	reset()
+	Writeable
+	Readable
 }
 
 func (UpdateStateValueRequested) isNagoEvent() {}
 func (FunctionCallRequested) isNagoEvent()     {}
+
+// A Box aligns children elements in absolute within its bounds.
+//   - there is no intrinsic component dimension, so you have to set it by hand
+//   - z-order is defined as defined children order, thus later children are put on top of others
+//   - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
+type Box struct {
+	Frame    Frame
+	Children Components
+}
+
+func (v *Box) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Frame.IsZero()
+	fields[2] = !v.Children.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Box) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 // Ptr represents an allocated instance within the backend which is unique in the associated scope.
 type Ptr uint64
@@ -291,8 +379,7 @@ func (v *UpdateStateValueRequested) write(w *BinaryWriter) error {
 }
 
 func (v *UpdateStateValueRequested) read(r *BinaryReader) error {
-	v.StatePointer.reset()
-	v.FunctionPointer.reset()
+	v.reset()
 	fieldCount, err := r.readByte()
 	if err != nil {
 		return err
@@ -316,10 +403,6 @@ func (v *UpdateStateValueRequested) read(r *BinaryReader) error {
 		}
 	}
 	return nil
-}
-
-func (v *UpdateStateValueRequested) IsZero() bool {
-	return *v == (UpdateStateValueRequested{})
 }
 
 // FunctionCallRequested tells the backend that the given pointer in the associated scope shall be invoked for a side effect.
@@ -353,7 +436,7 @@ func (v *FunctionCallRequested) write(w *BinaryWriter) error {
 }
 
 func (v *FunctionCallRequested) read(r *BinaryReader) error {
-	v.Ptr.reset()
+	v.reset()
 	fieldCount, err := r.readByte()
 	if err != nil {
 		return err
@@ -372,10 +455,6 @@ func (v *FunctionCallRequested) read(r *BinaryReader) error {
 		}
 	}
 	return nil
-}
-
-func (v *FunctionCallRequested) IsZero() bool {
-	return *v == (FunctionCallRequested{})
 }
 
 // Alignment is specified as follows:
@@ -433,39 +512,652 @@ func (v *Alignment) IsZero() bool {
 	return *v == 0
 }
 
+// Shadow defines a shadow effect around the border of an element. The x and y coordinates are relative to the element.
+type Shadow struct {
+	// Color of the shadow.
+	Color Color
+	// Radius for spread and blur length of the shadow.
+	Radius Length
+	// X is the horizontal offset of the shadow relative to the element.
+	X Length
+	// Y is the vertical offset of the shadow relative to the element.
+	Y Length
+}
+
+func (v *Shadow) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Color.IsZero()
+	fields[2] = !v.Radius.IsZero()
+	fields[3] = !v.X.IsZero()
+	fields[4] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Radius.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Shadow) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Radius.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
+type Border struct {
+	TopLeftRadius     Length
+	TopRightRadius    Length
+	BottomLeftRadius  Length
+	BottomRightRadius Length
+	LeftWidth         Length
+	TopWidth          Length
+	RightWidth        Length
+	BottomWidth       Length
+	LeftColor         Length
+	TopColor          Length
+	RightColor        Length
+	BottomColor       Length
+	BoxShadow         Shadow
+}
+
+func (v *Border) write(w *BinaryWriter) error {
+	var fields [14]bool
+	fields[1] = !v.TopLeftRadius.IsZero()
+	fields[2] = !v.TopRightRadius.IsZero()
+	fields[3] = !v.BottomLeftRadius.IsZero()
+	fields[4] = !v.BottomRightRadius.IsZero()
+	fields[5] = !v.LeftWidth.IsZero()
+	fields[6] = !v.TopWidth.IsZero()
+	fields[7] = !v.RightWidth.IsZero()
+	fields[8] = !v.BottomWidth.IsZero()
+	fields[9] = !v.LeftColor.IsZero()
+	fields[10] = !v.TopColor.IsZero()
+	fields[11] = !v.RightColor.IsZero()
+	fields[12] = !v.BottomColor.IsZero()
+	fields[13] = !v.BoxShadow.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.TopLeftRadius.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.TopRightRadius.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.BottomLeftRadius.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.BottomRightRadius.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.LeftWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.TopWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.RightWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.BottomWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.LeftColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.TopColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.RightColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.BottomColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(record, 13); err != nil {
+			return err
+		}
+		if err := v.BoxShadow.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Border) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.TopLeftRadius.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.TopRightRadius.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.BottomLeftRadius.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.BottomRightRadius.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.LeftWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.TopWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.RightWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.BottomWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.LeftColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.TopColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.RightColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.BottomColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.BoxShadow.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Frame defines the geometrics bounds of an element.
+type Frame struct {
+	MinWidth  Length
+	MaxWidth  Length
+	MinHeight Length
+	MaxHeight Length
+	Width     Length
+	Height    Length
+}
+
+func (v *Frame) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.MinWidth.IsZero()
+	fields[2] = !v.MaxWidth.IsZero()
+	fields[3] = !v.MinHeight.IsZero()
+	fields[4] = !v.MaxHeight.IsZero()
+	fields[5] = !v.Width.IsZero()
+	fields[6] = !v.Height.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.MinWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.MaxWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.MinHeight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.MaxHeight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Height.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Frame) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.MinWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.MaxWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.MinHeight.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.MaxHeight.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Padding defines additional room within an element.
+type Padding struct {
+	Top    Length
+	Left   Length
+	Right  Length
+	Bottom Length
+}
+
+func (v *Padding) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Top.IsZero()
+	fields[2] = !v.Left.IsZero()
+	fields[3] = !v.Right.IsZero()
+	fields[4] = !v.Bottom.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Top.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Left.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Right.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Bottom.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Padding) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Top.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Left.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Right.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Bottom.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// AlignedComponent defines a tupel of a component and an associated alignment.
+type AlignedComponent struct {
+	Component Component
+	Alignment Alignment
+}
+
+func (v *AlignedComponent) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = v.Component != nil && !v.Component.IsZero()
+	fields[2] = !v.Alignment.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Component.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Component.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *AlignedComponent) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Component = obj.(Component)
+		case 2:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
+	writeTypeHeader(*BinaryWriter) error
 }
 
 func Marshal(dst *BinaryWriter, src Writeable) error {
-	switch src := src.(type) {
-	case *Ptr:
-		if err := dst.writeTypeHeader(uvarint, 2); err != nil {
-			return err
-		}
-		return src.write(dst)
-	case *UpdateStateValueRequested:
-		if err := dst.writeTypeHeader(record, 3); err != nil {
-			return err
-		}
-		return src.write(dst)
-	case *FunctionCallRequested:
-		if err := dst.writeTypeHeader(record, 4); err != nil {
-			return err
-		}
-		return src.write(dst)
-	case *Alignment:
-		if err := dst.writeTypeHeader(uvarint, 5); err != nil {
-			return err
-		}
-		return src.write(dst)
-	case *Color:
-		if err := dst.writeTypeHeader(byteSlice, 6); err != nil {
-			return err
-		}
-		return src.write(dst)
-	default:
-		return fmt.Errorf("unknown type in marshal: %T", src)
+	if err := src.writeTypeHeader(dst); err != nil {
+		return err
+	}
+	if err := src.write(dst); err != nil {
+		return err
 	}
 	return nil
 }
@@ -480,6 +1172,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return nil, err
 	}
 	switch tid {
+	case 1:
+		var v Box
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	case 2:
 		var v Ptr
 		if err := v.read(src); err != nil {
@@ -510,10 +1208,78 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 7:
+		var v Shadow
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 8:
+		var v Length
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 9:
+		var v Border
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 10:
+		var v Frame
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 11:
+		var v Padding
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 12:
+		var v AlignedComponent
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 13:
+		var v Components
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
 
+}
+
+func (v *Box) reset() {
+	v.Frame.reset()
+	v.Children.reset()
+}
+
+func (v *Box) IsZero() bool {
+	return v.Frame.IsZero() && v.Children.IsZero()
+}
+
+func (v *UpdateStateValueRequested) reset() {
+	v.StatePointer.reset()
+	v.FunctionPointer.reset()
+}
+
+func (v *UpdateStateValueRequested) IsZero() bool {
+	return v.StatePointer.IsZero() && v.FunctionPointer.IsZero()
+}
+
+func (v *FunctionCallRequested) reset() {
+	v.Ptr.reset()
+}
+
+func (v *FunctionCallRequested) IsZero() bool {
+	return v.Ptr.IsZero()
 }
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
@@ -540,5 +1306,248 @@ func (v *Color) read(r *BinaryReader) error {
 	}
 
 	*v = *(*Color)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *Color) IsZero() bool {
+	return *v == ""
+}
+
+func (v *Color) reset() {
+	*v = Color("")
+}
+
+func (v *Shadow) reset() {
+	v.Color.reset()
+	v.Radius.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *Shadow) IsZero() bool {
+	return v.Color.IsZero() && v.Radius.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+// Length is actually a complex sum type of varying content. It may contain absolute values like dp, rem or relative like 90%. It may also include css calculations or even variable names. Retrospective, we should represent each type individually, however that was not reasonable, when the requirements and hand written protocol implementations were created and now it is to late.
+type Length string
+
+func (v *Length) write(r *BinaryWriter) error {
+	data := *(*[]byte)(unsafe.Pointer(v))
+	if err := r.writeUvarint(uint64(len(data))); err != nil {
+		return err
+	}
+	return r.write(data)
+}
+
+func (v *Length) read(r *BinaryReader) error {
+	strLen, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, strLen)
+
+	if err := r.read(buf); err != nil {
+		return err
+	}
+
+	*v = *(*Length)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *Length) IsZero() bool {
+	return *v == ""
+}
+
+func (v *Length) reset() {
+	*v = Length("")
+}
+
+func (v *Border) reset() {
+	v.TopLeftRadius.reset()
+	v.TopRightRadius.reset()
+	v.BottomLeftRadius.reset()
+	v.BottomRightRadius.reset()
+	v.LeftWidth.reset()
+	v.TopWidth.reset()
+	v.RightWidth.reset()
+	v.BottomWidth.reset()
+	v.LeftColor.reset()
+	v.TopColor.reset()
+	v.RightColor.reset()
+	v.BottomColor.reset()
+	v.BoxShadow.reset()
+}
+
+func (v *Border) IsZero() bool {
+	return v.TopLeftRadius.IsZero() && v.TopRightRadius.IsZero() && v.BottomLeftRadius.IsZero() && v.BottomRightRadius.IsZero() && v.LeftWidth.IsZero() && v.TopWidth.IsZero() && v.RightWidth.IsZero() && v.BottomWidth.IsZero() && v.LeftColor.IsZero() && v.TopColor.IsZero() && v.RightColor.IsZero() && v.BottomColor.IsZero() && v.BoxShadow.IsZero()
+}
+
+func (v *Frame) reset() {
+	v.MinWidth.reset()
+	v.MaxWidth.reset()
+	v.MinHeight.reset()
+	v.MaxHeight.reset()
+	v.Width.reset()
+	v.Height.reset()
+}
+
+func (v *Frame) IsZero() bool {
+	return v.MinWidth.IsZero() && v.MaxWidth.IsZero() && v.MinHeight.IsZero() && v.MaxHeight.IsZero() && v.Width.IsZero() && v.Height.IsZero()
+}
+
+func (v *Padding) reset() {
+	v.Top.reset()
+	v.Left.reset()
+	v.Right.reset()
+	v.Bottom.reset()
+}
+
+func (v *Padding) IsZero() bool {
+	return v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
+}
+
+func (v *AlignedComponent) reset() {
+	v.Component = nil
+	v.Alignment.reset()
+}
+
+func (v *AlignedComponent) IsZero() bool {
+	return v.Component.IsZero() && v.Alignment.IsZero()
+}
+
+// Components is polymorphic array of various concrete Component instances.
+type Components []Component
+
+func (v *Components) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Components) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]Component, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = obj.(Component)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *Components) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *Components) reset() {
+	*v = nil
+}
+
+func (v *Box) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 1); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Ptr) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 2); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *UpdateStateValueRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 3); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FunctionCallRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 4); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Alignment) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 5); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Color) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 6); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Shadow) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 7); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Length) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 8); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Border) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 9); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Frame) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 10); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Padding) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 11); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *AlignedComponent) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 12); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Components) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 13); err != nil {
+		return err
+	}
 	return nil
 }

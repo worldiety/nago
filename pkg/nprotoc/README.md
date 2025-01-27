@@ -63,7 +63,7 @@ Note, that a zero id indicates a type header instead.
 
 ### type header
 
-At least at the root level, there must be a custom header to declare a type.
+At least at the root level or in polymorphics arrays, there must be a custom header to declare a type.
 Thus, we cannot use the field header.
 Instead, it starts like a field header with the encoded shape but the field id part is zero followed by
 an uvarint to refer to schema type.
@@ -77,7 +77,7 @@ This allows parsers to instantiate a concrete type.
 └─────────────────┘└────────────────────────┘└─────────────────┘
 ```
 
-
+As you can see, a type header requires at least 2 bytes.
 
 ### memory shapes
 
@@ -152,6 +152,17 @@ for time series data with low variance.
                                                                                                               
                  │                                                                                            
 ```
+
+Note, that the header is at least a two byte type header and not a field header.
+
+
+### polymorphic field
+
+There is no special shape for a polymorphic field. 
+Thus, conventional field polymorphism is treated as a single element polymorphic array.
+The overhead is significant: 1 byte for the field and shape, 1 byte for the element count and 2 byte for the type header.
+This sums to 4 byte minimum overhead per dynamic type which grows for larger type identifiers, as the uvarint expands.
+Using the extension mechanism would not improve our situation, because the extension type byte occupies equivalent space.
 
 ### byte-arrays resp. []byte
 

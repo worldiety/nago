@@ -1,0 +1,6 @@
+{
+  "doc": "Components is polymorphic array of various concrete Component instances.",
+  "kind": "Array",
+  "id": 13,
+  "type": "Component"
+}

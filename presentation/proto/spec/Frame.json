@@ -1,0 +1,32 @@
+{
+  "doc": "Frame defines the geometrics bounds of an element.",
+  "kind": "Record",
+  "id": 10,
+  "fields": {
+    "1": {
+      "name": "MinWidth",
+      "type": "Length"
+    },
+    "2": {
+      "name": "MaxWidth",
+      "type": "Length"
+    },
+    "3": {
+      "name": "MinHeight",
+      "type": "Length"
+    },
+    "4": {
+      "name": "MaxHeight",
+      "type": "Length"
+    },
+    "5": {
+      "name": "Width",
+      "type": "Length"
+    },
+    "6": {
+      "name": "Height",
+      "type": "Length"
+    }
+  }
+}
+

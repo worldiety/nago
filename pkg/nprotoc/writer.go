@@ -154,6 +154,8 @@ func (s shape) String() string {
 		return "record"
 	case array:
 		return "array"
+	case xobjectAsArray:
+		return "xobjectAsArray"
 	}
 
 	panic(fmt.Sprintf("unknown shape: %d", s))
@@ -168,6 +170,7 @@ const (
 	f32
 	f64
 	array
+	xobjectAsArray
 )
 
 type fieldId uint

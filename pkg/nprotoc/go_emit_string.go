@@ -25,6 +25,11 @@ func (c *Compiler) goEmitString(t Typename, decl String) error {
 	c.pn("")
 	c.pf("	*v = *(*%s)(unsafe.Pointer(&buf))\n", t)
 	c.pn("	return nil")
-	c.pn("}")
+	c.pn("}\n")
+
+	c.pf("func(v *%s) IsZero()bool{\nreturn *v==\"\"\n}\n\n", t)
+
+	c.pf("func(v *%s) reset(){\n*v=%[1]s(\"\")\n}\n\n", t)
+
 	return nil
 }

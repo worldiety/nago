@@ -1,0 +1,27 @@
+{
+  "doc": "Shadow defines a shadow effect around the border of an element. The x and y coordinates are relative to the element.",
+  "kind": "Record",
+  "id": 7,
+  "fields": {
+    "1": {
+      "doc": "Color of the shadow.",
+      "name": "Color",
+      "type": "Color"
+    },
+    "2":{
+      "doc": "Radius for spread and blur length of the shadow.",
+      "name": "Radius",
+      "type": "Length"
+    },
+    "3":{
+      "doc": "X is the horizontal offset of the shadow relative to the element.",
+      "name": "X",
+      "type": "Length"
+    },
+    "4":{
+      "doc": "Y is the vertical offset of the shadow relative to the element.",
+      "name": "Y",
+      "type": "Length"
+    }
+  }
+}

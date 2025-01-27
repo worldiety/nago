@@ -8,28 +8,24 @@ import (
 func (c *Compiler) emitMarshal() error {
 	var buf bytes.Buffer
 
-	buf.WriteString("type Writeable interface {\nwrite(*BinaryWriter)error\n}\n")
+	buf.WriteString("type Writeable interface {\nwrite(*BinaryWriter)error\nwriteTypeHeader(*BinaryWriter)error}\n")
 	buf.WriteString("func Marshal(dst *BinaryWriter, src Writeable)error{\n")
-	buf.WriteString("switch src := src.(type) {\n")
+	buf.WriteString("if err:=src.writeTypeHeader(dst);err!=nil{\nreturn err\n}\n")
+	buf.WriteString("if err:=src.write(dst);err!=nil{\nreturn err\n}\n")
+	buf.WriteString("return nil\n}\n")
+	c.marshals = append(c.marshals, buf.String())
+
 	for typename, decl := range c.sortedDecl() {
 		idDecl, ok := decl.(IdentityTypeDeclaration)
 		if !ok {
 			continue
 		}
-
-		buf.WriteString(fmt.Sprintf("case *%s:\n", typename))
-		sh, err := c.shapeOf(typename)
-		if err != nil {
+		
+		if err := c.goEmitWriteTypeHeader(typename, idDecl); err != nil {
 			return err
 		}
-		buf.WriteString(fmt.Sprintf("if err:=dst.writeTypeHeader(%s, %d);err!=nil{\nreturn err\n}\n", sh, idDecl.ID()))
-		buf.WriteString("return src.write(dst)\n")
-	}
 
-	buf.WriteString("default:\nreturn fmt.Errorf(\"unknown type in marshal: %T\", src)\n")
-	buf.WriteString("}\n")
-	buf.WriteString("return nil\n}\n")
-	c.marshals = append(c.marshals, buf.String())
+	}
 
 	return nil
 }
@@ -58,6 +54,21 @@ func (c *Compiler) emitUnmarshal() error {
 	buf.WriteString("}\n")
 	buf.WriteString("\n}\n")
 	c.marshals = append(c.marshals, buf.String())
+
+	return nil
+}
+
+func (c *Compiler) goEmitWriteTypeHeader(t Typename, decl IdentityTypeDeclaration) error {
+	c.pf("func(v *%s) writeTypeHeader(w *BinaryWriter)error{\n", t)
+	c.inc()
+	sh, err := c.shapeOf(t)
+	if err != nil {
+		return err
+	}
+	c.pf("if err:=w.writeTypeHeader(%s, %d);err!=nil{\nreturn err\n}\n", sh, decl.ID())
+	c.dec()
+	c.pn("return nil")
+	c.pn("}\n")
 
 	return nil
 }

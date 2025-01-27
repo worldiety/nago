@@ -1,0 +1,61 @@
+{
+  "doc": "Border adds the defined border and dimension to the component. Note, that a border will change the dimension.",
+  "kind": "Record",
+  "id": 9,
+  "fields": {
+    "1": {
+      "name": "TopLeftRadius",
+      "type": "Length"
+    },
+    "2": {
+      "name": "TopRightRadius",
+      "type": "Length"
+    },
+    "3": {
+      "name": "BottomLeftRadius",
+      "type": "Length"
+    },
+    "4": {
+      "name": "BottomRightRadius",
+      "type": "Length"
+    },
+    "5": {
+      "name": "LeftWidth",
+      "type": "Length"
+    },
+    "6": {
+      "name": "TopWidth",
+      "type": "Length"
+    },
+    "7": {
+      "name": "RightWidth",
+      "type": "Length"
+    },
+    "8": {
+      "name": "BottomWidth",
+      "type": "Length"
+    },
+    "9": {
+      "name": "LeftColor",
+      "type": "Length"
+    },
+    "10": {
+      "name": "TopColor",
+      "type": "Length"
+    },
+    "11": {
+      "name": "RightColor",
+      "type": "Length"
+    },
+    "12": {
+      "name": "BottomColor",
+      "type": "Length"
+    },
+    "13": {
+      "name": "BoxShadow",
+      "type": "Shadow"
+    }
+  }
+}
+
+

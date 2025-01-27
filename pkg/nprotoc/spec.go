@@ -18,6 +18,7 @@ var DeclEnum = enum.Declare[Declaration, func(
 	func(Project),
 	func(Map),
 	func(String),
+	func(Array),
 
 )](
 	enum.NoZero(),
@@ -63,6 +64,8 @@ func (d Uint) ID() int {
 
 func (Uint) decl() {}
 
+// String has intentionally no const block, because we do not (yet) optimize that. Thus, you are much more efficient
+// if you use Uint consts instead.
 type String struct {
 	Doc  string `json:"doc"`
 	Kind string `json:"kind"`
@@ -89,6 +92,19 @@ func (d Map) ID() int {
 
 func (Map) decl() {}
 
+type Array struct {
+	Doc  string   `json:"doc"`
+	Kind string   `json:"kind"`
+	Id   int      `json:"id"`
+	Type Typename `json:"type"`
+}
+
+func (d Array) ID() int {
+	return d.Id
+}
+
+func (Array) decl() {}
+
 type FieldID int
 type Record struct {
 	Doc    string            `json:"doc"`
@@ -105,6 +121,10 @@ func (d Record) sortedFields() iter.Seq2[FieldID, Field] {
 			}
 		}
 	}
+}
+
+func (d Record) fieldCount() int {
+	return len(d.Fields)
 }
 
 func (d Record) ID() int {

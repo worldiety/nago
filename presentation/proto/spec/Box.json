@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 1,
+  "fields": {
+    "1": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "2": {
+      "name": "Children",
+      "type": "Components"
+    }
+  }
+}

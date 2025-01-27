@@ -131,13 +131,15 @@ func (c *Compiler) shapeOf(t Typename) (shape, error) {
 
 	switch d.(type) {
 	case Enum:
-		return 0, fmt.Errorf("enum has no shape %s", t)
+		return xobjectAsArray, nil
 	case Uint:
 		return uvarint, nil
 	case Record:
 		return record, nil
 	case String:
 		return byteSlice, nil
+	case Array:
+		return array, nil
 	default:
 		return 0, fmt.Errorf("unknown shape type %s", t)
 	}

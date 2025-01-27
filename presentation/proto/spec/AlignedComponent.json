@@ -1,0 +1,15 @@
+{
+  "doc": "AlignedComponent defines a tupel of a component and an associated alignment.",
+  "kind": "Record",
+  "id": 12,
+  "fields": {
+    "1": {
+      "name": "Component",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Alignment",
+      "type": "Alignment"
+    }
+  }
+}

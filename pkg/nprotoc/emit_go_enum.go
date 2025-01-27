@@ -11,6 +11,10 @@ func (c *Compiler) emitGoEnum(t Typename, decl Enum) {
 	buf.WriteString(fmt.Sprintf("type %s interface {\n", t))
 	buf.WriteString(c.makeGoDoc("a marker method to indicate the enum / union type membership"))
 	buf.WriteString(fmt.Sprintf("\tis%s()\n", t))
+	buf.WriteString("\tIsZero() bool\n")
+	buf.WriteString("\treset()\n")
+	buf.WriteString("\tWriteable\n")
+	buf.WriteString("\tReadable\n")
 	buf.WriteString("}\n")
 
 	buf.WriteString("\n")

@@ -5,12 +5,17 @@ import "strings"
 func (c *Compiler) tsEmitRecord(t Typename, decl Record) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s{\n", t, c.tsImplements(t))
+	c.pf("class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
 
 	for _, field := range decl.sortedFields() {
 		c.pf(c.makeGoDoc(field.Doc))
-		c.pf("%s: %s;\n\n", tsFieldName(field.Name), field.Type)
+		if c.tsCanBeUndefined(field.Type) {
+			c.pf("%s?: %s;\n\n", tsFieldName(field.Name), field.Type)
+		} else {
+			c.pf("%s: %s;\n\n", tsFieldName(field.Name), field.Type)
+		}
+
 	}
 
 	c.tsEmitRecordConstructor(t, decl)
@@ -19,6 +24,18 @@ func (c *Compiler) tsEmitRecord(t Typename, decl Record) error {
 	}
 
 	if err := c.tsEmitRecordWrite(t, decl); err != nil {
+		return err
+	}
+
+	if err := c.tsEmitRecordIsZero(t, decl); err != nil {
+		return err
+	}
+
+	if err := c.tsEmitRecordReset(t, decl); err != nil {
+		return err
+	}
+
+	if err := c.tsEmitWriteTypeHeader(t); err != nil {
 		return err
 	}
 
@@ -35,8 +52,14 @@ func (c *Compiler) tsEmitRecordConstructor(t Typename, decl Record) {
 	c.i()
 	c.p("constructor(")
 	for _, field := range decl.sortedFields() {
-		c.p(tsFieldName(field.Name), ": ", string(field.Type))
-		c.p(" = new ", string(field.Type), "(), ")
+		if c.tsCanBeUndefined(field.Type) {
+			c.p(tsFieldName(field.Name))
+			c.p(" = undefined, ")
+		} else {
+			c.p(tsFieldName(field.Name), ": ", string(field.Type))
+			c.p(" = new ", string(field.Type), "(), ")
+		}
+
 	}
 	c.p(") {\n")
 	c.inc()
@@ -51,9 +74,7 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 	c.pn("read(reader: BinaryReader): void {")
 	c.inc()
 
-	for _, field := range decl.sortedFields() {
-		c.pf("this.%s.reset();\n", tsFieldName(field.Name))
-	}
+	c.pn("this.reset();")
 
 	c.pn("const fieldCount = reader.readByte();")
 	c.pn("for (let i = 0; i < fieldCount; i++) {")
@@ -64,7 +85,21 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 	for fid, field := range decl.sortedFields() {
 		c.pf("case %d:\n", fid)
 		c.inc()
-		c.pf("this.%s.read(reader);\n", tsFieldName(field.Name))
+		sh, err := c.shapeOf(field.Type)
+		if err != nil {
+			return err
+		}
+		if sh == xobjectAsArray {
+			c.pn("// decode polymorphic field as 1 element array")
+			c.pn("const len = reader.readUvarint();")
+			c.pn("if (len != 1) {")
+			c.pn("  throw new Error(`unexpected length: ` + len);")
+			c.pn("}")
+			c.pf("this.%s = unmarshal(reader) as %s;\n", tsFieldName(field.Name), field.Type)
+		} else {
+			c.pf("this.%s.read(reader);\n", tsFieldName(field.Name))
+		}
+
 		c.pn("break")
 		c.dec()
 	}
@@ -92,7 +127,11 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 	c.i()
 	c.p("const fields = [false,")
 	for _, field := range decl.sortedFields() {
-		c.p("!this.", tsFieldName(field.Name), ".isZero(),")
+		if c.tsCanBeUndefined(field.Type) {
+			c.p("this.", tsFieldName(field.Name), "!== undefined && !this.", tsFieldName(field.Name), ".isZero(),")
+		} else {
+			c.p("!this.", tsFieldName(field.Name), ".isZero(),")
+		}
 	}
 	c.p("];\n")
 
@@ -106,10 +145,66 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 		if err != nil {
 			return err
 		}
-		c.pf("writer.writeFieldHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), fid)
-		c.pf("this.%s.write(writer);\n", tsFieldName(field.Name))
+
+		if sh == xobjectAsArray {
+			c.pn("// encode polymorphic enum as 1 element slice")
+			c.pf("writer.writeFieldHeader(Shapes.%s, %d);\n", strings.ToUpper(array.String()), fid)
+			c.pf("writer.writeByte(1);\n")
+		} else {
+			c.pf("writer.writeFieldHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), fid)
+		}
+
+		if c.tsCanBeUndefined(field.Type) {
+			c.pf("this.%s!.write(writer); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+		} else {
+			c.pf("this.%s.write(writer);\n", tsFieldName(field.Name))
+		}
 		c.dec()
 		c.pn("}")
+	}
+
+	c.dec()
+	c.pn("}\n")
+
+	return nil
+}
+
+func (c *Compiler) tsEmitRecordIsZero(t Typename, decl Record) error {
+	c.pn("isZero(): boolean {")
+	c.inc()
+
+	c.i()
+	c.p("return ")
+	idx := 0
+	for _, field := range decl.sortedFields() {
+		if c.tsCanBeUndefined(field.Type) {
+			c.p("(this.", tsFieldName(field.Name), "=== undefined || this.", tsFieldName(field.Name), ".isZero())")
+		} else {
+			c.p("this.", tsFieldName(field.Name), ".isZero()")
+		}
+		if idx < decl.fieldCount()-1 {
+			c.p(" && ")
+		}
+		idx++
+	}
+	c.p("\n")
+
+	c.dec()
+	c.pn("}\n")
+
+	return nil
+}
+
+func (c *Compiler) tsEmitRecordReset(t Typename, decl Record) error {
+	c.pn("reset(): void {")
+	c.inc()
+
+	for _, field := range decl.sortedFields() {
+		if c.tsCanBeUndefined(field.Type) {
+			c.pf("this.%s = undefined\n", tsFieldName(field.Name))
+		} else {
+			c.pf("this.%s.reset()\n", tsFieldName(field.Name))
+		}
 	}
 
 	c.dec()

@@ -1,29 +1,11 @@
 package nprotoc
 
-import "strings"
-
 func (c *Compiler) tsEmitMarshal() error {
 	c.pn("// Function to marshal a Writeable object into a BinaryWriter")
 	c.pn("function marshal(dst: BinaryWriter, src: Writeable): void {")
 	c.inc()
-	for typename, decl := range c.sortedDecl() {
-		id, ok := decl.(IdentityTypeDeclaration)
-		if !ok {
-			continue
-		}
-
-		c.pf("if (src instanceof %s) {\n", typename)
-		c.inc()
-		sh, err := c.shapeOf(typename)
-		if err != nil {
-			return err
-		}
-		c.pf("dst.writeTypeHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), id.ID())
-		c.pn("src.write(dst);")
-		c.pn("return")
-		c.dec()
-		c.pn("}")
-	}
+	c.pn("src.writeTypeHeader(dst);")
+	c.pn("src.write(dst);")
 	c.dec()
 	c.pn("}\n")
 

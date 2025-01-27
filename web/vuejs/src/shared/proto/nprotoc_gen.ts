@@ -84,6 +84,17 @@ class BinaryReader {
         return this.buffer[this.offset++];
     }
 
+    // Reads a specific number of bytes from the buffer
+    readBytes(length: number): Uint8Array {
+        if (this.offset + length > this.buffer.length) {
+            throw new Error("Attempt to read beyond buffer length");
+        }
+
+        const bytes = this.buffer.slice(this.offset, this.offset + length);
+        this.offset += length;
+        return bytes;
+    }
+
     readFieldHeader(): FieldHeader {
         const value = this.readByte();
         return {
@@ -98,7 +109,7 @@ class BinaryReader {
             throw new Error("Expected type header, got field header");
         }
         const typeId = this.readUvarint();
-        return { shape: header.shape, typeId };
+        return {shape: header.shape, typeId};
     }
 
     readUvarint(): number {
@@ -140,44 +151,119 @@ interface FieldHeader {
 // Interface for writable objects
 interface Writeable {
     write(writer: BinaryWriter): void;
+    writeTypeHeader(dst: BinaryWriter): void
 }
 
 
 // Interface for readable objects
 interface Readable {
     read(reader: BinaryReader): void;
+    isZero(): boolean;
 }
+// Component is the building primitive for any widget, behavior or ui element in NAGO.
+interface Component extends Writeable, Readable{
+	// a marker method to indicate the enum / union type membership
+	isComponent(): void;
+}
+
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
-interface NagoEvent {
+interface NagoEvent extends Writeable, Readable{
 	// a marker method to indicate the enum / union type membership
 	isNagoEvent(): void;
 }
 
+// A Box aligns children elements in absolute within its bounds.
+//  - there is no intrinsic component dimension, so you have to set it by hand
+//  - z-order is defined as defined children order, thus later children are put on top of others
+//  - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
+class Box implements Writeable, Readable , Component  {
+		frame: Frame;
+
+		children: Components;
+
+	constructor(frame: Frame = new Frame(), children: Components = new Components(), ) {
+		this.frame = frame;
+		this.children = children;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.frame.read(reader);
+					break
+				case 2:
+					this.children.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.frame.isZero(),!this.children.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.frame.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.children.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.frame.isZero() && this.children.isZero()
+	}
+
+	reset(): void {
+		this.frame.reset()
+		this.children.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 1);
+		return
+	}
+	isComponent(): void{}
+}
+
+
 // Ptr represents an allocated instance within the backend which is unique in the associated scope.
-class Ptr {
+class Ptr implements Writeable, Readable {
  
-  private value: number; // Using number to handle uint64 (precision limits apply)
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
 
-  constructor(value: number = 0) {
-    this.value = value;
-  }
-
-  isZero(): boolean {
-    return this.value === 0;
-  }
-
-  reset(): void {
-    this.value = 0;
-  }
-
-  write(writer: BinaryWriter): void {
-    writer.writeUvarint(this.value);
-  }
-
-  read(reader: BinaryReader): void {
-    this.value = reader.readUvarint();
-  }
-
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 2);
+		return
+	}
 }
 
 // companion enum containing all defined constants for Ptr
@@ -189,7 +275,7 @@ enum PtrValues {
 
 
 // UpdateStateValueRequested is raised from the frontend to update a state value hold by the backend. It can also immediately invoke a function callback in the same cycle.
-class UpdateStateValueRequested implements NagoEvent {
+class UpdateStateValueRequested implements Writeable, Readable , NagoEvent  {
 	// The StatePointer must not be zero.
 	statePointer: Ptr;
 
@@ -202,8 +288,7 @@ class UpdateStateValueRequested implements NagoEvent {
 	}
 
 	read(reader: BinaryReader): void {
-		this.statePointer.reset();
-		this.functionPointer.reset();
+		this.reset();
 		const fieldCount = reader.readByte();
 		for (let i = 0; i < fieldCount; i++) {
 			const fieldHeader = reader.readFieldHeader();
@@ -234,12 +319,25 @@ class UpdateStateValueRequested implements NagoEvent {
 		}
 	}
 
+	isZero(): boolean {
+		return this.statePointer.isZero() && this.functionPointer.isZero()
+	}
+
+	reset(): void {
+		this.statePointer.reset()
+		this.functionPointer.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 3);
+		return
+	}
 	isNagoEvent(): void{}
 }
 
 
 // FunctionCallRequested tells the backend that the given pointer in the associated scope shall be invoked for a side effect.
-class FunctionCallRequested implements NagoEvent {
+class FunctionCallRequested implements Writeable, Readable , NagoEvent  {
 	// Ptr denotes the remote pointer of the function.
 	ptr: Ptr;
 
@@ -248,7 +346,7 @@ class FunctionCallRequested implements NagoEvent {
 	}
 
 	read(reader: BinaryReader): void {
-		this.ptr.reset();
+		this.reset();
 		const fieldCount = reader.readByte();
 		for (let i = 0; i < fieldCount; i++) {
 			const fieldHeader = reader.readFieldHeader();
@@ -272,6 +370,18 @@ class FunctionCallRequested implements NagoEvent {
 		}
 	}
 
+	isZero(): boolean {
+		return this.ptr.isZero()
+	}
+
+	reset(): void {
+		this.ptr.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 4);
+		return
+	}
 	isNagoEvent(): void{}
 }
 
@@ -297,30 +407,34 @@ class FunctionCallRequested implements NagoEvent {
 // 	└BottomLeading───────Bottom──────BottomTrailing┘
 // 
 // An empty Alignment must be interpreted as Center (="c").
-class Alignment {
+class Alignment implements Writeable, Readable {
  
-  private value: number; // Using number to handle uint64 (precision limits apply)
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
 
-  constructor(value: number = 0) {
-    this.value = value;
-  }
-
-  isZero(): boolean {
-    return this.value === 0;
-  }
-
-  reset(): void {
-    this.value = 0;
-  }
-
-  write(writer: BinaryWriter): void {
-    writer.writeUvarint(this.value);
-  }
-
-  read(reader: BinaryReader): void {
-    this.value = reader.readUvarint();
-  }
-
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 5);
+		return
+	}
 }
 
 // companion enum containing all defined constants for Alignment
@@ -337,34 +451,663 @@ enum AlignmentValues {
 }
 
 
+
+// Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
+class Color implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 6);
+		return
+	}
+}
+
+
+// Shadow defines a shadow effect around the border of an element. The x and y coordinates are relative to the element.
+class Shadow implements Writeable, Readable  {
+	// Color of the shadow.
+	color: Color;
+
+	// Radius for spread and blur length of the shadow.
+	radius: Length;
+
+	// X is the horizontal offset of the shadow relative to the element.
+	x: Length;
+
+	// Y is the vertical offset of the shadow relative to the element.
+	y: Length;
+
+	constructor(color: Color = new Color(), radius: Length = new Length(), x: Length = new Length(), y: Length = new Length(), ) {
+		this.color = color;
+		this.radius = radius;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.color.read(reader);
+					break
+				case 2:
+					this.radius.read(reader);
+					break
+				case 3:
+					this.x.read(reader);
+					break
+				case 4:
+					this.y.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.color.isZero(),!this.radius.isZero(),!this.x.isZero(),!this.y.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.color.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.radius.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.x.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.y.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.color.isZero() && this.radius.isZero() && this.x.isZero() && this.y.isZero()
+	}
+
+	reset(): void {
+		this.color.reset()
+		this.radius.reset()
+		this.x.reset()
+		this.y.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 7);
+		return
+	}
+}
+
+
+// Length is actually a complex sum type of varying content. It may contain absolute values like dp, rem or relative like 90%. It may also include css calculations or even variable names. Retrospective, we should represent each type individually, however that was not reasonable, when the requirements and hand written protocol implementations were created and now it is to late.
+class Length implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 8);
+		return
+	}
+}
+
+
+// Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
+class Border implements Writeable, Readable  {
+		topLeftRadius: Length;
+
+		topRightRadius: Length;
+
+		bottomLeftRadius: Length;
+
+		bottomRightRadius: Length;
+
+		leftWidth: Length;
+
+		topWidth: Length;
+
+		rightWidth: Length;
+
+		bottomWidth: Length;
+
+		leftColor: Length;
+
+		topColor: Length;
+
+		rightColor: Length;
+
+		bottomColor: Length;
+
+		boxShadow: Shadow;
+
+	constructor(topLeftRadius: Length = new Length(), topRightRadius: Length = new Length(), bottomLeftRadius: Length = new Length(), bottomRightRadius: Length = new Length(), leftWidth: Length = new Length(), topWidth: Length = new Length(), rightWidth: Length = new Length(), bottomWidth: Length = new Length(), leftColor: Length = new Length(), topColor: Length = new Length(), rightColor: Length = new Length(), bottomColor: Length = new Length(), boxShadow: Shadow = new Shadow(), ) {
+		this.topLeftRadius = topLeftRadius;
+		this.topRightRadius = topRightRadius;
+		this.bottomLeftRadius = bottomLeftRadius;
+		this.bottomRightRadius = bottomRightRadius;
+		this.leftWidth = leftWidth;
+		this.topWidth = topWidth;
+		this.rightWidth = rightWidth;
+		this.bottomWidth = bottomWidth;
+		this.leftColor = leftColor;
+		this.topColor = topColor;
+		this.rightColor = rightColor;
+		this.bottomColor = bottomColor;
+		this.boxShadow = boxShadow;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.topLeftRadius.read(reader);
+					break
+				case 2:
+					this.topRightRadius.read(reader);
+					break
+				case 3:
+					this.bottomLeftRadius.read(reader);
+					break
+				case 4:
+					this.bottomRightRadius.read(reader);
+					break
+				case 5:
+					this.leftWidth.read(reader);
+					break
+				case 6:
+					this.topWidth.read(reader);
+					break
+				case 7:
+					this.rightWidth.read(reader);
+					break
+				case 8:
+					this.bottomWidth.read(reader);
+					break
+				case 9:
+					this.leftColor.read(reader);
+					break
+				case 10:
+					this.topColor.read(reader);
+					break
+				case 11:
+					this.rightColor.read(reader);
+					break
+				case 12:
+					this.bottomColor.read(reader);
+					break
+				case 13:
+					this.boxShadow.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.topLeftRadius.isZero(),!this.topRightRadius.isZero(),!this.bottomLeftRadius.isZero(),!this.bottomRightRadius.isZero(),!this.leftWidth.isZero(),!this.topWidth.isZero(),!this.rightWidth.isZero(),!this.bottomWidth.isZero(),!this.leftColor.isZero(),!this.topColor.isZero(),!this.rightColor.isZero(),!this.bottomColor.isZero(),!this.boxShadow.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.topLeftRadius.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.topRightRadius.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.bottomLeftRadius.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.bottomRightRadius.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.leftWidth.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			this.topWidth.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			this.rightWidth.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
+			this.bottomWidth.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
+			this.leftColor.write(writer);
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
+			this.topColor.write(writer);
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
+			this.rightColor.write(writer);
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			this.bottomColor.write(writer);
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.RECORD, 13);
+			this.boxShadow.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.topLeftRadius.isZero() && this.topRightRadius.isZero() && this.bottomLeftRadius.isZero() && this.bottomRightRadius.isZero() && this.leftWidth.isZero() && this.topWidth.isZero() && this.rightWidth.isZero() && this.bottomWidth.isZero() && this.leftColor.isZero() && this.topColor.isZero() && this.rightColor.isZero() && this.bottomColor.isZero() && this.boxShadow.isZero()
+	}
+
+	reset(): void {
+		this.topLeftRadius.reset()
+		this.topRightRadius.reset()
+		this.bottomLeftRadius.reset()
+		this.bottomRightRadius.reset()
+		this.leftWidth.reset()
+		this.topWidth.reset()
+		this.rightWidth.reset()
+		this.bottomWidth.reset()
+		this.leftColor.reset()
+		this.topColor.reset()
+		this.rightColor.reset()
+		this.bottomColor.reset()
+		this.boxShadow.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 9);
+		return
+	}
+}
+
+
+// Frame defines the geometrics bounds of an element.
+class Frame implements Writeable, Readable  {
+		minWidth: Length;
+
+		maxWidth: Length;
+
+		minHeight: Length;
+
+		maxHeight: Length;
+
+		width: Length;
+
+		height: Length;
+
+	constructor(minWidth: Length = new Length(), maxWidth: Length = new Length(), minHeight: Length = new Length(), maxHeight: Length = new Length(), width: Length = new Length(), height: Length = new Length(), ) {
+		this.minWidth = minWidth;
+		this.maxWidth = maxWidth;
+		this.minHeight = minHeight;
+		this.maxHeight = maxHeight;
+		this.width = width;
+		this.height = height;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.minWidth.read(reader);
+					break
+				case 2:
+					this.maxWidth.read(reader);
+					break
+				case 3:
+					this.minHeight.read(reader);
+					break
+				case 4:
+					this.maxHeight.read(reader);
+					break
+				case 5:
+					this.width.read(reader);
+					break
+				case 6:
+					this.height.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.minWidth.isZero(),!this.maxWidth.isZero(),!this.minHeight.isZero(),!this.maxHeight.isZero(),!this.width.isZero(),!this.height.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.minWidth.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.maxWidth.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.minHeight.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.maxHeight.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.width.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			this.height.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.minWidth.isZero() && this.maxWidth.isZero() && this.minHeight.isZero() && this.maxHeight.isZero() && this.width.isZero() && this.height.isZero()
+	}
+
+	reset(): void {
+		this.minWidth.reset()
+		this.maxWidth.reset()
+		this.minHeight.reset()
+		this.maxHeight.reset()
+		this.width.reset()
+		this.height.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 10);
+		return
+	}
+}
+
+
+// Padding defines additional room within an element.
+class Padding implements Writeable, Readable  {
+		top: Length;
+
+		left: Length;
+
+		right: Length;
+
+		bottom: Length;
+
+	constructor(top: Length = new Length(), left: Length = new Length(), right: Length = new Length(), bottom: Length = new Length(), ) {
+		this.top = top;
+		this.left = left;
+		this.right = right;
+		this.bottom = bottom;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.top.read(reader);
+					break
+				case 2:
+					this.left.read(reader);
+					break
+				case 3:
+					this.right.read(reader);
+					break
+				case 4:
+					this.bottom.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.top.isZero(),!this.left.isZero(),!this.right.isZero(),!this.bottom.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.top.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.left.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.right.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.bottom.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.top.isZero() && this.left.isZero() && this.right.isZero() && this.bottom.isZero()
+	}
+
+	reset(): void {
+		this.top.reset()
+		this.left.reset()
+		this.right.reset()
+		this.bottom.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 11);
+		return
+	}
+}
+
+
+// AlignedComponent defines a tupel of a component and an associated alignment.
+class AlignedComponent implements Writeable, Readable  {
+		component?: Component;
+
+		alignment: Alignment;
+
+	constructor(component = undefined, alignment: Alignment = new Alignment(), ) {
+		this.component = component;
+		this.alignment = alignment;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+					  throw new Error(`unexpected length: ` + len);
+					}
+					this.component = unmarshal(reader) as Component;
+					break
+				case 2:
+					this.alignment.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,this.component!== undefined && !this.component.isZero(),!this.alignment.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.component!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.alignment.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return (this.component=== undefined || this.component.isZero()) && this.alignment.isZero()
+	}
+
+	reset(): void {
+		this.component = undefined
+		this.alignment.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 12);
+		return
+	}
+}
+
+
+// Components is polymorphic array of various concrete Component instances.
+class Components implements Writeable, Readable  {
+	private value: Component[];
+	
+	constructor(value: Component[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const components: Component[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  components.push(obj as Component); // Cast and add to the array
+	}
+
+	this.value = components;
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 13);
+		return
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 function marshal(dst: BinaryWriter, src: Writeable): void {
-	if (src instanceof Ptr) {
-		dst.writeTypeHeader(Shapes.UVARINT, 2);
-		src.write(dst);
-		return
-	}
-	if (src instanceof UpdateStateValueRequested) {
-		dst.writeTypeHeader(Shapes.RECORD, 3);
-		src.write(dst);
-		return
-	}
-	if (src instanceof FunctionCallRequested) {
-		dst.writeTypeHeader(Shapes.RECORD, 4);
-		src.write(dst);
-		return
-	}
-	if (src instanceof Alignment) {
-		dst.writeTypeHeader(Shapes.UVARINT, 5);
-		src.write(dst);
-		return
-	}
+	src.writeTypeHeader(dst);
+	src.write(dst);
 }
 
 // Function to unmarshal data from a BinaryReader into a Readable object
 function unmarshal(src: BinaryReader): Readable {
 	const { typeId } = src.readTypeHeader();
 	switch (typeId) {
+		case 1: {
+			const v = new Box();
+			v.read(src);
+			return v;
+		}
 		case 2: {
 			const v = new Ptr();
 			v.read(src);
@@ -382,6 +1125,46 @@ function unmarshal(src: BinaryReader): Readable {
 		}
 		case 5: {
 			const v = new Alignment();
+			v.read(src);
+			return v;
+		}
+		case 6: {
+			const v = new Color();
+			v.read(src);
+			return v;
+		}
+		case 7: {
+			const v = new Shadow();
+			v.read(src);
+			return v;
+		}
+		case 8: {
+			const v = new Length();
+			v.read(src);
+			return v;
+		}
+		case 9: {
+			const v = new Border();
+			v.read(src);
+			return v;
+		}
+		case 10: {
+			const v = new Frame();
+			v.read(src);
+			return v;
+		}
+		case 11: {
+			const v = new Padding();
+			v.read(src);
+			return v;
+		}
+		case 12: {
+			const v = new AlignedComponent();
+			v.read(src);
+			return v;
+		}
+		case 13: {
+			const v = new Components();
 			v.read(src);
 			return v;
 		}

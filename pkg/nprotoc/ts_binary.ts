@@ -81,6 +81,17 @@ class BinaryReader {
         return this.buffer[this.offset++];
     }
 
+    // Reads a specific number of bytes from the buffer
+    readBytes(length: number): Uint8Array {
+        if (this.offset + length > this.buffer.length) {
+            throw new Error("Attempt to read beyond buffer length");
+        }
+
+        const bytes = this.buffer.slice(this.offset, this.offset + length);
+        this.offset += length;
+        return bytes;
+    }
+
     readFieldHeader(): FieldHeader {
         const value = this.readByte();
         return {
@@ -95,7 +106,7 @@ class BinaryReader {
             throw new Error("Expected type header, got field header");
         }
         const typeId = this.readUvarint();
-        return { shape: header.shape, typeId };
+        return {shape: header.shape, typeId};
     }
 
     readUvarint(): number {
@@ -137,10 +148,12 @@ interface FieldHeader {
 // Interface for writable objects
 interface Writeable {
     write(writer: BinaryWriter): void;
+    writeTypeHeader(dst: BinaryWriter): void
 }
 
 
 // Interface for readable objects
 interface Readable {
     read(reader: BinaryReader): void;
+    isZero(): boolean;
 }

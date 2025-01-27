@@ -16,11 +16,21 @@ func (c *Compiler) GenerateTS() ([]byte, error) {
 	for typename, decl := range c.sortedDecl() {
 		switch decl := decl.(type) {
 		case Uint:
-			c.tsEmitUint(typename, decl)
+			if err := c.tsEmitUint(typename, decl); err != nil {
+				return nil, err
+			}
 		case Enum:
 			c.tsEmitEnum(typename, decl)
+		case String:
+			if err := c.tsEmitString(typename, decl); err != nil {
+				return nil, err
+			}
 		case Record:
 			if err := c.tsEmitRecord(typename, decl); err != nil {
+				return nil, err
+			}
+		case Array:
+			if err := c.tsEmitArray(typename, decl); err != nil {
 				return nil, err
 			}
 		}
@@ -48,11 +58,12 @@ func (c *Compiler) tsImplements(typename Typename) string {
 		}
 	}
 
+	t := "implements Writeable, Readable "
 	if tmp.Len() == 0 {
-		return ""
+		return t
 	}
 
-	return "implements " + tmp.String() + " "
+	return t + ", " + tmp.String() + " "
 }
 
 // returns either empty string or lines like
@@ -81,4 +92,40 @@ func tsFieldName(str string) string {
 	}
 
 	return buf.String()
+}
+
+func (c *Compiler) tsCanBeUndefined(t Typename) bool {
+	sh, err := c.shapeOf(t)
+	if err != nil {
+		return false
+	}
+
+	return sh == xobjectAsArray
+}
+
+func (c *Compiler) tsEmitWriteTypeHeader(t Typename) error {
+	sh, err := c.shapeOf(t)
+	if err != nil {
+		return err
+	}
+
+	decl, ok := c.declr[t]
+	if !ok {
+		return fmt.Errorf("type %s is not declared", t)
+	}
+
+	idDecl, ok := decl.(IdentityTypeDeclaration)
+	if !ok {
+		return fmt.Errorf("type %s is an ID type declaration and cannot be used in this context", t)
+	}
+
+	c.pn("writeTypeHeader(dst: BinaryWriter): void {")
+	c.inc()
+
+	c.pf("dst.writeTypeHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), idDecl.ID())
+	c.pn("return")
+	c.dec()
+	c.pn("}")
+
+	return nil
 }

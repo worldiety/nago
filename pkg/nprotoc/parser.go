@@ -10,7 +10,7 @@ import (
 
 func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 	res := map[Typename]Declaration{}
-	check := map[int]string{}
+	check := map[int][]string{}
 
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.Type().IsRegular() && strings.HasSuffix(path, ".json") {
@@ -26,15 +26,8 @@ func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 
 			if withId, ok := decl.(IdentityTypeDeclaration); ok {
 				id := withId.ID()
-				if id <= 0 {
-					return fmt.Errorf("declaration id '%d' must be > 0: %s", id, path)
-				}
 
-				if p := check[id]; p != "" {
-					return fmt.Errorf("declaration id '%d' must be unique but was declared in %s and %s", id, path, p)
-				}
-
-				check[id] = path
+				check[id] = append(check[id], path)
 			}
 
 			if rec, ok := decl.(Record); ok {
@@ -71,6 +64,25 @@ func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 
 		return nil
 	})
+
+	nextFree := func() int {
+		m := 0
+		for id := range check {
+			m = max(m, id)
+		}
+		return m
+	}
+
+	for id, files := range check {
+		if id <= 0 {
+			return nil, fmt.Errorf("declaration id '%d' must be > 0: %s", id, files[0])
+		}
+
+		if len(files) > 1 {
+			return nil, fmt.Errorf("declaration id '%d' must be unique but was declared in %s and %s (next free id is: %d)", id, files[0], files[1], nextFree()+1)
+		}
+
+	}
 
 	return res, err
 }

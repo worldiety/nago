@@ -1,0 +1,5 @@
+{
+  "doc": "Length is actually a complex sum type of varying content. It may contain absolute values like dp, rem or relative like 90%. It may also include css calculations or even variable names. Retrospective, we should represent each type individually, however that was not reasonable, when the requirements and hand written protocol implementations were created and now it is to late.",
+  "kind": "String",
+  "id": 8
+}
