@@ -13,7 +13,6 @@ import (
 	"golang.org/x/text/language"
 	"log/slog"
 	mail2 "net/mail"
-	"time"
 )
 
 // HasMailManagement returns false, as long as [MailManagement] has not been requested to get initialized.
@@ -112,7 +111,7 @@ func (c *Configurator) SendPasswordResetMail(mail user.Email) error {
 	}
 
 	// security note: intentionally create a new security code
-	code, err := usm.UseCases.ResetPasswordRequestCode(mail, time.Minute*15)
+	code, err := usm.UseCases.ResetPasswordRequestCode(mail, user.DefaultVerificationLifeTime)
 	if err != nil {
 		return fmt.Errorf("cannot reset password request code: %w", err)
 	}
@@ -153,7 +152,7 @@ func (c *Configurator) SendVerificationMail(uid user.ID) error {
 	}
 
 	// security note: intentionally create a new security code
-	code, err := usm.UseCases.ResetVerificationCode(uid, time.Minute*15)
+	code, err := usm.UseCases.ResetVerificationCode(uid, user.DefaultVerificationLifeTime)
 	if err != nil {
 		return fmt.Errorf("cannot reset confirm code: %w", err)
 	}

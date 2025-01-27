@@ -68,7 +68,7 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 			RequirePasswordChange: requiredPasswordChange,
 			// initially, give the user a week to respond. Note, that for self registration we just may
 			// remove users which have never been verified automatically
-			VerificationCode: NewCode(7 * 24 * time.Hour),
+			VerificationCode: NewCode(DefaultVerificationLifeTime),
 		}
 
 		// intentionally validate now, so that an attacker cannot use this method to massively
