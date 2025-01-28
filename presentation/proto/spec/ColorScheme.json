@@ -1,0 +1,15 @@
+{
+  "doc": "ColorScheme represents which kind of theme shall be rendered.",
+  "kind": "Uint",
+  "id": 30,
+  "const": {
+    "0": {
+      "name": "Light",
+      "doc": "Light represents the light theme color mode."
+    },
+    "1":{
+      "name": "Dark",
+      "doc": "Dark represents the dark theme color mode."
+    }
+  }
+}

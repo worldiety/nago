@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 //protonc:embed below
@@ -70,9 +71,11 @@ func (w *BinaryWriter) writeSlice(s []byte) error {
 	if err := w.writeUvarint(uint64(n)); err != nil {
 		return err
 	}
-	w.write(s)
+	return w.write(s)
+}
 
-	return nil
+func (w *BinaryWriter) writeFloat64(v float64) error {
+	return w.writeUvarint(math.Float64bits(v))
 }
 
 type BinaryReader struct {
@@ -134,6 +137,14 @@ func (r *BinaryReader) readUvarint() (uint64, error) {
 	return binary.ReadUvarint(r.reader)
 }
 
+func (r *BinaryReader) readFloat64() (float64, error) {
+	bits, err := r.readUvarint()
+	if err != nil {
+		return 0.0, err
+	}
+	return math.Float64frombits(bits), nil
+}
+
 type shape uint8
 
 func (s shape) String() string {
@@ -156,6 +167,10 @@ func (s shape) String() string {
 		return "array"
 	case xobjectAsArray:
 		return "xobjectAsArray"
+	case xbool:
+		return "xbool"
+	case xmap:
+		return "xmap"
 	}
 
 	panic(fmt.Sprintf("unknown shape: %d", s))
@@ -171,6 +186,8 @@ const (
 	f64
 	array
 	xobjectAsArray
+	xbool
+	xmap
 )
 
 type fieldId uint

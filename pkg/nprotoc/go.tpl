@@ -6,6 +6,7 @@ import(
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"unsafe"
 )
 

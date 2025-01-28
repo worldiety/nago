@@ -1,0 +1,20 @@
+{
+  "doc": "A ScopeConfigurationRequested event can be issued at any time.",
+  "kind": "Record",
+  "id": 29,
+  "fields": {
+    "1": {
+      "doc": "RID is used to generate a new component request and is returned in the according response.",
+      "name": "RID",
+      "type": "RID"
+    },
+    "2": {
+      "name": "AcceptLanguage",
+      "type": "Locale"
+    },
+    "3": {
+      "name": "WindowInfo",
+      "type": "WindowInfo"
+    }
+  }
+}

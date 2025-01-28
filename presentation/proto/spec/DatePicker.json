@@ -1,0 +1,57 @@
+{
+  "kind": "Record",
+  "id": 48,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "ErrorText is shown instead of SupportingText, even if they are (today) independent",
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Style determines if the picker shall use the range or single mode. Default is single selection",
+      "name": "Style",
+      "type": "DatePickerStyle"
+    },
+    "5": {
+      "doc": "Value is the initial single value or start value of the picker.",
+      "name": "Value",
+      "type": "DateData"
+    },
+    "6": {
+      "doc": "InputValue is the picked single value or end value of the picker.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "7": {
+      "doc": "EndValue is the initial end value of the picker.",
+      "name": "EndValue",
+      "type": "DateData"
+    },
+    "8": {
+      "doc": "EndInputValue is the picked end value of the picker.",
+      "name": "EndInputValue",
+      "type": "Ptr"
+    },
+    "9": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "10": {
+      "name": "Invisible",
+      "type": "Bool"
+    },
+    "11": {
+      "name": "Disabled",
+      "type": "Bool"
+    }
+  }
+}
+

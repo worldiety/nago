@@ -1,0 +1,17 @@
+{
+  "doc": "The RootViewInvalidated event is always generated at the backend side, if a new representation of an allocated root view shall be shown.",
+  "kind": "Record",
+  "id": 25,
+  "fields": {
+    "1": {
+      "doc": "RID may be 0, if it is an proactive rendering.",
+      "name": "RID",
+      "type": "RID"
+    },
+    "2": {
+      "doc": "The Root component to display.",
+      "name": "Root",
+      "type": "Component"
+    }
+  }
+}

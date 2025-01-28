@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 50,
+  "const": {
+    "0": {
+      "name": "NormalFontStyle"
+    },
+    "1": {
+      "name": "ItalicFontStyle"
+    }
+  }
+}

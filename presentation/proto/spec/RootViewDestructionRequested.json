@@ -1,0 +1,12 @@
+{
+  "doc": "The RootViewDestructionRequested event destroys the currently allocated root view. If nothing is allocated, this is a no-op.",
+  "kind": "Record",
+  "id": 24,
+  "fields": {
+    "1": {
+      "doc": "RID is used to generate a new component request and is returned in the according response.",
+      "name": "RID",
+      "type": "RID"
+    }
+  }
+}

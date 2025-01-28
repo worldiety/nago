@@ -1,0 +1,11 @@
+{
+  "doc": "RID represents a request id and may be used by the frontend to distinguish different generations of answers.",
+  "kind": "Uint",
+  "id": 19,
+  "const": {
+    "0": {
+      "name": "Unsolicited",
+      "doc": "A 0 represents something which was issued without any user interaction, which means by own-initiative."
+    }
+  }
+}

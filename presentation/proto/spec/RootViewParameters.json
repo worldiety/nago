@@ -1,0 +1,7 @@
+{
+  "doc": "RootViewParameters is a map of string keys and values which is given to a root view which is about to be initialized.",
+  "kind": "Map",
+  "id": 21,
+  "key": "Str",
+  "value": "Str"
+}

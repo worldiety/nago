@@ -1,0 +1,60 @@
+{
+  "doc": "A Grid must support up to 12 Columns and a reasonable \"unlimited\" amount of rows.",
+  "kind": "Record",
+  "id": 53,
+  "fields": {
+    "1": {
+      "name": "Cells",
+      "type": "GridCells"
+    },
+    "2": {
+      "name": "Rows",
+      "type": "Uint"
+    },
+    "3": {
+      "name": "Columns",
+      "type": "Uint"
+    },
+    "4": {
+      "name": "RowGap",
+      "type": "Length"
+    },
+    "5": {
+      "name": "ColGap",
+      "type": "Length"
+    },
+    "6": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "7": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "8": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "9": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "10": {
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "11": {
+      "name": "Font",
+      "type": "Font"
+    },
+    "12": {
+      "name": "ColWidths",
+      "type": "Lengths"
+    },
+    "13": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}
+

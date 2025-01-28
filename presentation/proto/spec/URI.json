@@ -1,0 +1,5 @@
+{
+  "doc": "URI is just a string which looks like an URI or URL",
+  "kind": "String",
+  "id": 36
+}

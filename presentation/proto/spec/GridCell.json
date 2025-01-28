@@ -1,0 +1,43 @@
+{
+  "doc": "GridCell is undefined, if explicit row start/col start etc. is set and span values.",
+  "kind": "Record",
+  "id": 57,
+  "fields": {
+    "1": {
+      "name": "Body",
+      "type": "Component"
+    },
+    "2": {
+      "name": "ColStart",
+      "type": "Uint"
+    },
+    "3": {
+      "name": "ColEnd",
+      "type": "Uint"
+    },
+    "4": {
+      "name": "RowStart",
+      "type": "Uint"
+    },
+    "5": {
+      "name": "RowEnd",
+      "type": "Uint"
+    },
+    "6": {
+      "name": "ColSpan",
+      "type": "Uint"
+    },
+    "7": {
+      "name": "RowSpan",
+      "type": "Uint"
+    },
+    "8": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "9": {
+      "name": "Alignment",
+      "type": "Alignment"
+    }
+  }
+}

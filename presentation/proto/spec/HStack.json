@@ -1,0 +1,92 @@
+{
+  "kind": "Record",
+  "id": 58,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Gap",
+      "type": "Length"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "doc": "Zero value of Alignment is Center (=c) must be applied.",
+      "name": "Alignment",
+      "type": "Alignment"
+    },
+    "5": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "6": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "7": {
+      "doc": "see also https://www.w3.org/WAI/tutorials/images/decision-tree/",
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "8": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "9": {
+      "name": "Font",
+      "type": "Font"
+    },
+    "10": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "11": {
+      "name": "HoveredBackgroundColor",
+      "type": "Color"
+    },
+    "12": {
+      "name": "PressedBackgroundColor",
+      "type": "Color"
+    },
+    "13": {
+      "name": "FocusedBackgroundColor",
+      "type": "Color"
+    },
+    "14": {
+      "name": "HoveredBorder",
+      "type": "Border"
+    },
+    "15": {
+      "name": "PressedBorder",
+      "type": "Border"
+    },
+    "16": {
+      "name": "FocusedBorder",
+      "type": "Border"
+    },
+    "17": {
+      "name": "Wrap",
+      "type": "Bool"
+    },
+    "18": {
+      "name": "StylePreset",
+      "type": "StylePreset"
+    },
+    "19": {
+      "name": "Position",
+      "type": "Position"
+    },
+    "20": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "21": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}

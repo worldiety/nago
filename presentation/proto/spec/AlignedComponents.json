@@ -1,0 +1,6 @@
+{
+  "doc": "AlignedComponents is an array of layouted tupels of components.",
+  "kind": "Array",
+  "id": 14,
+  "type": "AlignedComponent"
+}

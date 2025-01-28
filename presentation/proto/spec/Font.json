@@ -1,0 +1,23 @@
+{
+  "kind": "Record",
+  "id": 52,
+  "fields": {
+    "1": {
+      "doc": "Name of the font or family name as fallback. Extra fallback declarations are unspecified and must be comma separated.",
+      "name": "Name",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Size",
+      "type": "Length"
+    },
+    "3": {
+      "name": "Style",
+      "type": "FontStyle"
+    },
+    "4": {
+      "name": "Weight",
+      "type": "FontWeight"
+    }
+  }
+}

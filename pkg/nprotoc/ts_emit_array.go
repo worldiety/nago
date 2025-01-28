@@ -29,19 +29,21 @@ func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
 	}
   }
 
+`)
+
+	c.pf(`  
   read(reader: BinaryReader): void {
 	const count = reader.readUvarint(); // Read the length of the array
-	const components: Component[] = [];
+	const values: %[1]s[] = [];
 
 	for (let i = 0; i < count; i++) {
 	  const obj = unmarshal(reader); // Read and unmarshal each component
-	  components.push(obj as Component); // Cast and add to the array
+	  values.push(obj as %[1]s); // Cast and add to the array
 	}
 
-	this.value = components;
-  }
-
-`)
+	this.value = values;
+  }`, decl.Type)
+	c.pn("")
 
 	if err := c.tsEmitWriteTypeHeader(t); err != nil {
 		return err

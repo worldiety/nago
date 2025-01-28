@@ -1,0 +1,15 @@
+{
+  "doc": "Themes represents light or dark mode colors.",
+  "kind": "Record",
+  "id": 42,
+  "fields": {
+    "1": {
+      "name": "Light",
+      "type": "Theme"
+    },
+    "2": {
+      "name": "Dark",
+      "type": "Theme"
+    }
+  }
+}

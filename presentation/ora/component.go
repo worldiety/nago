@@ -87,35 +87,25 @@ func Slice(elems ...Component) []Component {
 
 func init() {
 	Components = []reflect.Type{
-		reflect.TypeOf(Button{}),
 		reflect.TypeOf(Page{}),
 		reflect.TypeOf(Scaffold{}),
 		reflect.TypeOf(TextField{}),
 		reflect.TypeOf(PasswordField{}),
 		reflect.TypeOf(Table{}),
 		reflect.TypeOf(Text{}),
-		reflect.TypeOf(Dialog{}),
 		reflect.TypeOf(Toggle{}),
 		reflect.TypeOf(DatePicker{}),
 		reflect.TypeOf(NumberField{}),
 		reflect.TypeOf(Slider{}),
 		reflect.TypeOf(Divider{}),
-		reflect.TypeOf(Dropdown{}),
-		reflect.TypeOf(DropdownItem{}),
-		reflect.TypeOf(Chip{}),
-		reflect.TypeOf(Card{}),
 		reflect.TypeOf(Stepper{}),
 		reflect.TypeOf(StepInfo{}),
 		reflect.TypeOf(WebView{}),
-		reflect.TypeOf(FileField{}),
 		reflect.TypeOf(Image{}),
-		reflect.TypeOf(Breadcrumbs{}),
-		reflect.TypeOf(BreadcrumbItem{}),
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),
 		reflect.TypeOf(Checkbox{}),
 		reflect.TypeOf(Radiobutton{}),
-		reflect.TypeOf(FlexContainer{}),
 		reflect.TypeOf(HStack{}),
 		reflect.TypeOf(VStack{}),
 		reflect.TypeOf(Box{}),
@@ -124,11 +114,6 @@ func init() {
 		reflect.TypeOf(WindowTitle{}),
 		reflect.TypeOf(ScrollView{}),
 	}
-}
-
-// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type _component interface {
-	WindowTitle | Modal | Spacer | Box | VStack | HStack | Button | Page | Scaffold | TextField | PasswordField | Table | Text | Dialog | Toggle | DatePicker | NumberField | Slider | Divider | Dropdown | DropdownItem | Chip | Card | Stepper | StepInfo | WebView | FileField | Image | Breadcrumbs | BreadcrumbItem | Grid | GridCell | FlexContainer
 }
 
 type component struct {

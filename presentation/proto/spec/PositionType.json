@@ -1,0 +1,26 @@
+{
+  "kind": "Uint",
+  "id": 61,
+  "const": {
+    "0": {
+      "name": "PositionDefault",
+      "doc": "PositionDefault is the default and any explicit position value have no effect.\n See also https://developer.mozilla.org/de/docs/Web/CSS/position#static."
+    },
+    "1": {
+      "doc": "PositionOffset is like PositionDefault but moves the element by applying the given position values after\n layouting. See also https://developer.mozilla.org/de/docs/Web/CSS/position#relative.",
+      "name": "PositionOffset"
+    },
+    "2": {
+      "doc": "PositionAbsolute removes the element from the layout and places it using the given values in an absolute way\n within any of its parent layouted as PositionOffset. If no parent with PositionOffset is found, the viewport\n is used. See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.",
+      "name": "PositionAbsolute"
+    },
+    "3": {
+      "doc": "PositionFixed removes the element from the layout and places it at a fixed position according to the viewport\n independent of the scroll position. See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.",
+      "name": "PositionFixed"
+    },
+    "4": {
+      "doc": "PositionSticky is here for completion, and it is unclear which rules to follow on mobile clients.\n See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.",
+      "name": "PositionSticky"
+    }
+  }
+}

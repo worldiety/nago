@@ -1,0 +1,38 @@
+{
+  "kind":"Record",
+  "id": 34,
+  "fields": {
+    "1": {
+      "name": "ApplicationID",
+      "type": "Str"
+    },
+    "2": {
+      "name": "ApplicationName",
+      "type": "Str"
+    },
+    "3": {
+      "name": "ApplicationVersion",
+      "type": "Str"
+    },
+    "4": {
+      "name": "AvailableLocales",
+      "type": "Locales"
+    },
+    "5": {
+      "name": "AppIcon",
+      "type": "URI"
+    },
+    "6": {
+      "name": "ActiveLocale",
+      "type": "Locale"
+    },
+    "7": {
+      "name": "Themes",
+      "type": "Themes"
+    },
+    "8": {
+      "name": "RID",
+      "type": "RID"
+    }
+  }
+}

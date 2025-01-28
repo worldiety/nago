@@ -33,6 +33,18 @@ func (c *Compiler) GenerateTS() ([]byte, error) {
 			if err := c.tsEmitArray(typename, decl); err != nil {
 				return nil, err
 			}
+		case Bool:
+			if err := c.tsEmitBool(typename, decl); err != nil {
+				return nil, err
+			}
+		case Map:
+			if err := c.tsEmitMap(typename, decl); err != nil {
+				return nil, err
+			}
+		case Float64:
+			if err := c.tsEmitFloat64(typename, decl); err != nil {
+				return nil, err
+			}
 		}
 
 	}

@@ -1,0 +1,15 @@
+{
+  "doc": "A Theme aggregates colors (for distinct) namespaces and lengths. Usually, this represents the light or dark mode.",
+  "kind": "Record",
+  "id": 39,
+  "fields": {
+    "1": {
+      "name": "Colors",
+      "type": "NamespacedColors"
+    },
+    "2": {
+      "name": "Lengths",
+      "type": "NamedLengths"
+    }
+  }
+}

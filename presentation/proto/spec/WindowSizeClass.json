@@ -1,0 +1,27 @@
+{
+  "doc": "ColorScheme represents which kind of theme shall be rendered.",
+  "kind": "Uint",
+  "id": 28,
+  "const": {
+    "0": {
+      "name": "SizeClassSmall",
+      "doc": "SizeClassSmall are devices below 640 dp screen width."
+    },
+    "1":{
+      "name": "SizeClassMedium",
+      "doc": "SizeClassMedium are devices below 768dp screen width."
+    },
+    "2":{
+      "name": "SizeClassLarge",
+      "doc": "SizeClassLarge are devices below 1024dp screen width."
+    },
+    "3":{
+      "name": "SizeClassXL",
+      "doc": "SizeClassXL are devices below 1280dp screen width."
+    },
+    "4":{
+      "name": "SizeClass2XL",
+      "doc": "SizeClass2XL are devices below 1536dp screen width."
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "doc": "Str represents just a user defined string value. This is how nprotoc works.",
+  "kind": "String",
+  "id": 22
+}

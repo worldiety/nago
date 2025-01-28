@@ -1,0 +1,7 @@
+{
+  "doc": "NamedColors represents a map of names with associated color values.",
+  "kind": "Map",
+  "id": 38,
+  "key": "Str",
+  "value": "Color"
+}

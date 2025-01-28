@@ -1,0 +1,11 @@
+{
+  "doc": "RootViewRenderingRequested is issued by the frontend to force a rendering at the backend.",
+  "kind":"Record",
+  "id": 23,
+  "fields": {
+    "1": {
+      "name": "RID",
+      "type": "RID"
+    }
+  }
+}

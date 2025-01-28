@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 51,
+  "const": {
+    "400": {
+      "name": "NormalFontWeight"
+    },
+    "700": {
+      "name": "BoldFontWeight"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "doc": "RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.",
+  "kind": "String",
+  "id": 20
+}

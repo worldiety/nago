@@ -1,0 +1,26 @@
+{
+  "kind": "Record",
+  "id": 27,
+  "fields": {
+    "1": {
+      "doc":"Locale of the frontend which is assumed as the users language. This may be the webbrowser primary locale which may be derived from the operating system.",
+      "name": "Locale",
+      "type": "Locale"
+    },
+    "2": {
+      "doc": "Factory denotes the registered root view identifier.",
+      "name": "Factory",
+      "type": "RootViewID"
+    },
+    "3": {
+      "doc": "RID is used to generate a new component request and is returned in the according response.",
+      "name": "RID",
+      "type": "RID"
+    },
+    "4": {
+      "doc": "Values contains string encoded parameters for a component. This is like query parameters in the web world.",
+      "name":"Values",
+      "type": "RootViewParameters"
+    }
+  }
+}

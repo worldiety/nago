@@ -1,0 +1,18 @@
+{
+  "kind": "Record",
+  "id": 49,
+  "fields": {
+    "1": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "2": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "3": {
+      "name": "Padding",
+      "type": "Padding"
+    }
+  }
+}

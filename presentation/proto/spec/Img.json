@@ -1,0 +1,42 @@
+{
+  "kind": "Record",
+  "id": 62,
+  "fields": {
+    "1": {
+      "name": "Uri",
+      "type": "URI"
+    },
+    "2": {
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "4": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "5": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "6": {
+      "name": "SVG",
+      "type": "SVG"
+    },
+    "7": {
+      "name": "FillColor",
+      "type": "Color"
+    },
+    "8": {
+      "name": "StrokeColor",
+      "type": "Color"
+    },
+    "9": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}

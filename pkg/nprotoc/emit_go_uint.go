@@ -17,7 +17,7 @@ func (c *Compiler) emitGoUint(t Typename, decl Uint) {
 		for _, lit := range keys {
 			con := decl.ConstValues[lit]
 			buf.WriteString(c.makeGoDoc(con.Doc))
-			buf.WriteString(fmt.Sprintf("\t%s = %s\n", con.Name, lit))
+			buf.WriteString(fmt.Sprintf("\t%s %s = %s\n", con.Name, t, lit))
 		}
 		buf.WriteString(")\n")
 	}

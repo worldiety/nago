@@ -67,6 +67,13 @@ class BinaryWriter {
     getBuffer(): Uint8Array {
         return this.buffer.slice(0, this.offset);
     }
+
+    writeFloat64(value: number): void {
+        const float64Bits = new DataView(new ArrayBuffer(8));
+        float64Bits.setFloat64(0, value, true);
+        const bits = float64Bits.getBigUint64(0, true);
+        this.writeUvarint(Number(bits));
+    }
 }
 
 class BinaryReader {
@@ -124,6 +131,14 @@ class BinaryReader {
         }
         return result;
     }
+
+    readFloat64(): number {
+        const bits = this.readUvarint();
+        const buffer = new ArrayBuffer(8);
+        const view = new DataView(buffer);
+        view.setBigUint64(0, BigInt(bits), true); // Schreibe die Bits in Little-Endian
+        return view.getFloat64(0, true);
+    }
 }
 
 // Types and Enums
@@ -151,6 +166,7 @@ interface FieldHeader {
 // Interface for writable objects
 interface Writeable {
     write(writer: BinaryWriter): void;
+
     writeTypeHeader(dst: BinaryWriter): void
 }
 
@@ -158,6 +174,7 @@ interface Writeable {
 // Interface for readable objects
 interface Readable {
     read(reader: BinaryReader): void;
+
     isZero(): boolean;
 }
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
@@ -177,13 +194,22 @@ interface NagoEvent extends Writeable, Readable{
 //  - z-order is defined as defined children order, thus later children are put on top of others
 //  - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
 class Box implements Writeable, Readable , Component  {
+		children: AlignedComponents;
+
 		frame: Frame;
 
-		children: Components;
+		backgroundColor: Color;
 
-	constructor(frame: Frame = new Frame(), children: Components = new Components(), ) {
-		this.frame = frame;
+		padding: Padding;
+
+		border: Border;
+
+	constructor(children: AlignedComponents = new AlignedComponents(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), border: Border = new Border(), ) {
 		this.children = children;
+		this.frame = frame;
+		this.backgroundColor = backgroundColor;
+		this.padding = padding;
+		this.border = border;
 	}
 
 	read(reader: BinaryReader): void {
@@ -193,10 +219,19 @@ class Box implements Writeable, Readable , Component  {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1:
-					this.frame.read(reader);
+					this.children.read(reader);
 					break
 				case 2:
-					this.children.read(reader);
+					this.frame.read(reader);
+					break
+				case 3:
+					this.backgroundColor.read(reader);
+					break
+				case 4:
+					this.padding.read(reader);
+					break
+				case 5:
+					this.border.read(reader);
 					break
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
@@ -205,26 +240,41 @@ class Box implements Writeable, Readable , Component  {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false,!this.frame.isZero(),!this.children.isZero(),];
+		const fields = [false,!this.children.isZero(),!this.frame.isZero(),!this.backgroundColor.isZero(),!this.padding.isZero(),!this.border.isZero(),];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.RECORD, 1);
-			this.frame.write(writer);
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.children.write(writer);
 		}
 		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 2);
-			this.children.write(writer);
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.backgroundColor.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.padding.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.border.write(writer);
 		}
 	}
 
 	isZero(): boolean {
-		return this.frame.isZero() && this.children.isZero()
+		return this.children.isZero() && this.frame.isZero() && this.backgroundColor.isZero() && this.padding.isZero() && this.border.isZero()
 	}
 
 	reset(): void {
-		this.frame.reset()
 		this.children.reset()
+		this.frame.reset()
+		this.backgroundColor.reset()
+		this.padding.reset()
+		this.border.reset()
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1075,20 +1125,3440 @@ class Components implements Writeable, Readable  {
 	}
   }
 
+	  
   read(reader: BinaryReader): void {
 	const count = reader.readUvarint(); // Read the length of the array
-	const components: Component[] = [];
+	const values: Component[] = [];
 
 	for (let i = 0; i < count; i++) {
 	  const obj = unmarshal(reader); // Read and unmarshal each component
-	  components.push(obj as Component); // Cast and add to the array
+	  values.push(obj as Component); // Cast and add to the array
 	}
 
-	this.value = components;
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 13);
+		return
+	}
+}
+
+
+// AlignedComponents is an array of layouted tupels of components.
+class AlignedComponents implements Writeable, Readable  {
+	private value: AlignedComponent[];
+	
+	constructor(value: AlignedComponent[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const values: AlignedComponent[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  values.push(obj as AlignedComponent); // Cast and add to the array
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 14);
+		return
+	}
+}
+
+
+// Checkbox represents a user interface element which spans a visible area to click or tap from the user. Use it for controls, which do not cause an immediate effect. See also [Toggle].
+class Checkbox implements Writeable, Readable , Component  {
+	// InputValue is where updated value of the checked states are written.
+	inputValue: Ptr;
+
+		value: Bool;
+
+		disabled: Bool;
+
+		invisible: Bool;
+
+	constructor(inputValue: Ptr = new Ptr(), value: Bool = new Bool(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
+		this.inputValue = inputValue;
+		this.value = value;
+		this.disabled = disabled;
+		this.invisible = invisible;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.inputValue.read(reader);
+					break
+				case 2:
+					this.value.read(reader);
+					break
+				case 3:
+					this.disabled.read(reader);
+					break
+				case 4:
+					this.invisible.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.inputValue.isZero(),!this.value.isZero(),!this.disabled.isZero(),!this.invisible.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.inputValue.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.value.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.disabled.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.invisible.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.inputValue.isZero() && this.value.isZero() && this.disabled.isZero() && this.invisible.isZero()
+	}
+
+	reset(): void {
+		this.inputValue.reset()
+		this.value.reset()
+		this.disabled.reset()
+		this.invisible.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 15);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+// Bool represents just a user defined boolean value. This is how nprotoc works.
+class Bool implements Writeable, Readable {
+ 
+	private value: boolean; 
+	
+	constructor(value: boolean = false) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return !this.value;
+	}
+	
+	reset(): void {
+		this.value = false;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value?1:0);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint() === 1;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 16);
+		return
+	}
+}
+
+
+// ErrorOccurred is used, if some unforeseen error occurred. Usually the frontend did something wrong, e.g. in a life-cycle.
+class ErrorOccurred implements Writeable, Readable , NagoEvent  {
+	// Message of some generic error.
+	message: Str;
+
+	// RID is used to trace a request-response cycle.
+	rID: RID;
+
+	constructor(message: Str = new Str(), rID: RID = new RID(), ) {
+		this.message = message;
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.message.read(reader);
+					break
+				case 2:
+					this.rID.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.message.isZero(),!this.rID.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.message.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.rID.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.message.isZero() && this.rID.isZero()
+	}
+
+	reset(): void {
+		this.message.reset()
+		this.rID.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 17);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// Locale represents a BCP47 tag like de or de_DE.
+class Locale implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
   }
 
 	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.ARRAY, 13);
+		dst.writeTypeHeader(Shapes.BYTESLICE, 18);
+		return
+	}
+}
+
+
+// RID represents a request id and may be used by the frontend to distinguish different generations of answers.
+class FontStyle implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 19);
+		return
+	}
+}
+
+// companion enum containing all defined constants for FontStyle
+enum FontStyleValues {
+	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
+	Unsolicited = 0,
+}
+
+
+
+// RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.
+class RootViewID implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 20);
+		return
+	}
+}
+
+
+// RootViewParameters is a map of string keys and values which is given to a root view which is about to be initialized.
+class RootViewParameters implements Writeable, Readable  {
+	private value: Map<Str,Str>;
+	
+	constructor(value: Map<Str,Str> = new Map<Str,Str>()) {
+	 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.size === 0;
+  }
+
+  reset(): void {
+	this.value = new Map<Str,Str>();
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.size); // Write the length of the map
+	for (const [key, value] of this.value) {
+      // write key
+	  key.writeTypeHeader(writer); 
+	  key.write(writer); 
+
+      // write value
+	  value.writeTypeHeader(writer); 
+	  value.write(writer); 
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); 
+	const values = new Map<Str,Str>();
+
+	for (let i = 0; i < count; i++) {
+	  const key = unmarshal(reader);
+      const val = unmarshal(reader);
+
+	  values.set(key as Str, val as Str); 
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 21);
+		return
+	}
+}
+
+
+// Str represents just a user defined string value. This is how nprotoc works.
+class Str implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 22);
+		return
+	}
+}
+
+
+// RootViewRenderingRequested is issued by the frontend to force a rendering at the backend.
+class RootViewRenderingRequested implements Writeable, Readable , NagoEvent  {
+		rID: RID;
+
+	constructor(rID: RID = new RID(), ) {
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.rID.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.rID.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.rID.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.rID.isZero()
+	}
+
+	reset(): void {
+		this.rID.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 23);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// The RootViewDestructionRequested event destroys the currently allocated root view. If nothing is allocated, this is a no-op.
+class RootViewDestructionRequested implements Writeable, Readable , NagoEvent  {
+	// RID is used to generate a new component request and is returned in the according response.
+	rID: RID;
+
+	constructor(rID: RID = new RID(), ) {
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.rID.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.rID.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.rID.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.rID.isZero()
+	}
+
+	reset(): void {
+		this.rID.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 24);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// The RootViewInvalidated event is always generated at the backend side, if a new representation of an allocated root view shall be shown.
+class RootViewInvalidated implements Writeable, Readable , NagoEvent  {
+	// RID may be 0, if it is an proactive rendering.
+	rID: RID;
+
+	// The Root component to display.
+	root?: Component;
+
+	constructor(rID: RID = new RID(), root = undefined, ) {
+		this.rID = rID;
+		this.root = root;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.rID.read(reader);
+					break
+				case 2:
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+					  throw new Error(`unexpected length: ` + len);
+					}
+					this.root = unmarshal(reader) as Component;
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.rID.isZero(),this.root!== undefined && !this.root.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.rID.write(writer);
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.root!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.rID.isZero() && (this.root=== undefined || this.root.isZero())
+	}
+
+	reset(): void {
+		this.rID.reset()
+		this.root = undefined
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 25);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// ErrorRootViewAllocationRequired indicates, that there is no root view and it must be allocated to continue. This may happen, e.g. if the server was restarted or redeployed or a timeout occurred and the scope or root view was collected.
+class ErrorRootViewAllocationRequired implements Writeable, Readable , NagoEvent  {
+	// RID is used to trace a request-response cycle.
+	rID: RID;
+
+	constructor(rID: RID = new RID(), ) {
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.rID.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.rID.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.rID.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.rID.isZero()
+	}
+
+	reset(): void {
+		this.rID.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 26);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// NewComponentRequested allocates an addressable component explicitely in the backend within its channel scope.
+// Adressable components are like pages in a classic server side rendering or like routing targets in single page apps.
+// We do not call them _page_ anymore, because that has wrong assocations in the web world.
+// Adressable components exist independently from each other and share no lifecycle with each other.
+// However, a frontend can create as many component instances it wants.
+// It does not matter, if these components are of the same type, addresses or entirely different.
+// The backend responds with a component invalidation event.
+// Factories of addressable components are always stateless.
+// However, often it does not make sense without additional parameters, e.g. because a detail view needs to know which entity has to be displayed.
+class RootViewAllocationRequested implements Writeable, Readable , NagoEvent  {
+	// Locale of the frontend which is assumed as the users language. This may be the webbrowser primary locale which may be derived from the operating system.
+	locale: Locale;
+
+	// Factory denotes the registered root view identifier.
+	factory: RootViewID;
+
+	// RID is used to generate a new component request and is returned in the according response.
+	rID: RID;
+
+	// Values contains string encoded parameters for a component. This is like query parameters in the web world.
+	values: RootViewParameters;
+
+	constructor(locale: Locale = new Locale(), factory: RootViewID = new RootViewID(), rID: RID = new RID(), values: RootViewParameters = new RootViewParameters(), ) {
+		this.locale = locale;
+		this.factory = factory;
+		this.rID = rID;
+		this.values = values;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.locale.read(reader);
+					break
+				case 2:
+					this.factory.read(reader);
+					break
+				case 3:
+					this.rID.read(reader);
+					break
+				case 4:
+					this.values.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.locale.isZero(),!this.factory.isZero(),!this.rID.isZero(),!this.values.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.locale.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.factory.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.rID.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			this.values.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.locale.isZero() && this.factory.isZero() && this.rID.isZero() && this.values.isZero()
+	}
+
+	reset(): void {
+		this.locale.reset()
+		this.factory.reset()
+		this.rID.reset()
+		this.values.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 27);
+		return
+	}
+	isNagoEvent(): void{}
+}
+
+
+// ColorScheme represents which kind of theme shall be rendered.WindowSizeClass represents media break points of the screen which an ora application is shown.
+// The definition of a size class is disjunct and for all possible sizes, exact one size class will match.
+// See also https://developer.android.com/develop/ui/views/layout/window-size-classes and
+// https://tailwindcss.com/docs/responsive-design.
+class WindowSizeClass implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 28);
+		return
+	}
+}
+
+// companion enum containing all defined constants for WindowSizeClass
+enum WindowSizeClassValues {
+	// SizeClassSmall are devices below 640 dp screen width.
+	SizeClassSmall = 0,
+	// SizeClassMedium are devices below 768dp screen width.
+	SizeClassMedium = 1,
+	// SizeClassLarge are devices below 1024dp screen width.
+	SizeClassLarge = 2,
+	// SizeClassXL are devices below 1280dp screen width.
+	SizeClassXL = 3,
+	// SizeClass2XL are devices below 1536dp screen width.
+	SizeClass2XL = 4,
+}
+
+
+
+// A ScopeConfigurationRequested event can be issued at any time.ConfigurationRequested is issued by the frontend to get the applications general configuration.
+// A backend developer has potentially defined a lot of configuration details about the application.
+// For example, there may be a color theme, customized icons, image resources, an application name and the available set of navigations, launch intents or other meta information.
+// It is expected, that this only happens once during initialization of the frontend process.
+class ScopeConfigurationChangeRequested implements Writeable, Readable  {
+	// RID is used to generate a new component request and is returned in the according response.
+	rID: RID;
+
+		acceptLanguage: Locale;
+
+		windowInfo: WindowInfo;
+
+	constructor(rID: RID = new RID(), acceptLanguage: Locale = new Locale(), windowInfo: WindowInfo = new WindowInfo(), ) {
+		this.rID = rID;
+		this.acceptLanguage = acceptLanguage;
+		this.windowInfo = windowInfo;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.rID.read(reader);
+					break
+				case 2:
+					this.acceptLanguage.read(reader);
+					break
+				case 3:
+					this.windowInfo.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.rID.isZero(),!this.acceptLanguage.isZero(),!this.windowInfo.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.rID.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.acceptLanguage.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.windowInfo.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.rID.isZero() && this.acceptLanguage.isZero() && this.windowInfo.isZero()
+	}
+
+	reset(): void {
+		this.rID.reset()
+		this.acceptLanguage.reset()
+		this.windowInfo.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 29);
+		return
+	}
+}
+
+
+// ColorScheme represents which kind of theme shall be rendered.
+class ColorScheme implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 30);
+		return
+	}
+}
+
+// companion enum containing all defined constants for ColorScheme
+enum ColorSchemeValues {
+	// Light represents the light theme color mode.
+	Light = 0,
+	// Dark represents the dark theme color mode.
+	Dark = 1,
+}
+
+
+
+// WindowInfo describes the area into which the frontend renders the ora view tree.
+// A user can simply change the layout of the screen, e.g. by rotation the smartphone or
+// changing the size of a browser window.
+class WindowInfo implements Writeable, Readable  {
+		width: DP;
+
+		height: DP;
+
+		density: Density;
+
+		sizeClass: WindowSizeClass;
+
+	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
+	colorScheme: ColorScheme;
+
+	constructor(width: DP = new DP(), height: DP = new DP(), density: Density = new Density(), sizeClass: WindowSizeClass = new WindowSizeClass(), colorScheme: ColorScheme = new ColorScheme(), ) {
+		this.width = width;
+		this.height = height;
+		this.density = density;
+		this.sizeClass = sizeClass;
+		this.colorScheme = colorScheme;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.width.read(reader);
+					break
+				case 2:
+					this.height.read(reader);
+					break
+				case 3:
+					this.density.read(reader);
+					break
+				case 4:
+					this.sizeClass.read(reader);
+					break
+				case 5:
+					this.colorScheme.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.width.isZero(),!this.height.isZero(),!this.density.isZero(),!this.sizeClass.isZero(),!this.colorScheme.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.F64, 1);
+			this.width.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			this.height.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			this.density.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.sizeClass.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			this.colorScheme.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.width.isZero() && this.height.isZero() && this.density.isZero() && this.sizeClass.isZero() && this.colorScheme.isZero()
+	}
+
+	reset(): void {
+		this.width.reset()
+		this.height.reset()
+		this.density.reset()
+		this.sizeClass.reset()
+		this.colorScheme.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 31);
+		return
+	}
+}
+
+
+class DP implements Writeable, Readable {
+ 
+	private value: number; 
+	
+	constructor(value: number = 0.0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0.0;
+	}
+	
+	reset(): void {
+		this.value = 0.0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeFloat64(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readFloat64();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.F64, 32);
+		return
+	}
+}
+
+
+class Density implements Writeable, Readable {
+ 
+	private value: number; 
+	
+	constructor(value: number = 0.0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0.0;
+	}
+	
+	reset(): void {
+		this.value = 0.0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeFloat64(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readFloat64();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.F64, 33);
+		return
+	}
+}
+
+
+// A ConfigurationDefined event is the response to a [ScopeConfigurationChangeRequested] event.
+// According to the locale request, string and svg resources can be localized by the backend.
+// The returned locale is the actually picked locale from the requested locale query string.
+class ScopeConfigurationChanged implements Writeable, Readable  {
+		applicationID: Str;
+
+		applicationName: Str;
+
+		applicationVersion: Str;
+
+		availableLocales: Locales;
+
+		appIcon: URI;
+
+		activeLocale: Locale;
+
+		themes: Themes;
+
+		rID: RID;
+
+	constructor(applicationID: Str = new Str(), applicationName: Str = new Str(), applicationVersion: Str = new Str(), availableLocales: Locales = new Locales(), appIcon: URI = new URI(), activeLocale: Locale = new Locale(), themes: Themes = new Themes(), rID: RID = new RID(), ) {
+		this.applicationID = applicationID;
+		this.applicationName = applicationName;
+		this.applicationVersion = applicationVersion;
+		this.availableLocales = availableLocales;
+		this.appIcon = appIcon;
+		this.activeLocale = activeLocale;
+		this.themes = themes;
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.applicationID.read(reader);
+					break
+				case 2:
+					this.applicationName.read(reader);
+					break
+				case 3:
+					this.applicationVersion.read(reader);
+					break
+				case 4:
+					this.availableLocales.read(reader);
+					break
+				case 5:
+					this.appIcon.read(reader);
+					break
+				case 6:
+					this.activeLocale.read(reader);
+					break
+				case 7:
+					this.themes.read(reader);
+					break
+				case 8:
+					this.rID.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.applicationID.isZero(),!this.applicationName.isZero(),!this.applicationVersion.isZero(),!this.availableLocales.isZero(),!this.appIcon.isZero(),!this.activeLocale.isZero(),!this.themes.isZero(),!this.rID.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.applicationID.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.applicationName.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.applicationVersion.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			this.availableLocales.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.appIcon.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			this.activeLocale.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.themes.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			this.rID.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.applicationID.isZero() && this.applicationName.isZero() && this.applicationVersion.isZero() && this.availableLocales.isZero() && this.appIcon.isZero() && this.activeLocale.isZero() && this.themes.isZero() && this.rID.isZero()
+	}
+
+	reset(): void {
+		this.applicationID.reset()
+		this.applicationName.reset()
+		this.applicationVersion.reset()
+		this.availableLocales.reset()
+		this.appIcon.reset()
+		this.activeLocale.reset()
+		this.themes.reset()
+		this.rID.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 34);
+		return
+	}
+}
+
+
+// Locales is just a bunch of locales.
+class Locales implements Writeable, Readable  {
+	private value: Locale[];
+	
+	constructor(value: Locale[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const values: Locale[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  values.push(obj as Locale); // Cast and add to the array
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 35);
+		return
+	}
+}
+
+
+// URI is just a string which looks like an URI or URL
+class URI implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 36);
+		return
+	}
+}
+
+
+// NamespaceName refers to a component or views namespace declaration. Besides the universe space, this is almost relevant for the backend, however it defines variables at the frontend, thus it may open some optimizations.
+class NamespaceName implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 37);
+		return
+	}
+}
+
+
+// NamedColors represents a map of names with associated color values.
+class NamedColors implements Writeable, Readable  {
+	private value: Map<Str,Color>;
+	
+	constructor(value: Map<Str,Color> = new Map<Str,Color>()) {
+	 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.size === 0;
+  }
+
+  reset(): void {
+	this.value = new Map<Str,Color>();
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.size); // Write the length of the map
+	for (const [key, value] of this.value) {
+      // write key
+	  key.writeTypeHeader(writer); 
+	  key.write(writer); 
+
+      // write value
+	  value.writeTypeHeader(writer); 
+	  value.write(writer); 
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); 
+	const values = new Map<Str,Color>();
+
+	for (let i = 0; i < count; i++) {
+	  const key = unmarshal(reader);
+      const val = unmarshal(reader);
+
+	  values.set(key as Str, val as Color); 
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 38);
+		return
+	}
+}
+
+
+// A Theme aggregates colors (for distinct) namespaces and lengths. Usually, this represents the light or dark mode.
+class Theme implements Writeable, Readable  {
+		colors: NamespacedColors;
+
+		lengths: NamedLengths;
+
+	constructor(colors: NamespacedColors = new NamespacedColors(), lengths: NamedLengths = new NamedLengths(), ) {
+		this.colors = colors;
+		this.lengths = lengths;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.colors.read(reader);
+					break
+				case 2:
+					this.lengths.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.colors.isZero(),!this.lengths.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.colors.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.lengths.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.colors.isZero() && this.lengths.isZero()
+	}
+
+	reset(): void {
+		this.colors.reset()
+		this.lengths.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 39);
+		return
+	}
+}
+
+
+// NamespacedColors represents a map of namespaces with associated color values.
+class NamespacedColors implements Writeable, Readable  {
+	private value: Map<NamespaceName,NamedColors>;
+	
+	constructor(value: Map<NamespaceName,NamedColors> = new Map<NamespaceName,NamedColors>()) {
+	 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.size === 0;
+  }
+
+  reset(): void {
+	this.value = new Map<NamespaceName,NamedColors>();
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.size); // Write the length of the map
+	for (const [key, value] of this.value) {
+      // write key
+	  key.writeTypeHeader(writer); 
+	  key.write(writer); 
+
+      // write value
+	  value.writeTypeHeader(writer); 
+	  value.write(writer); 
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); 
+	const values = new Map<NamespaceName,NamedColors>();
+
+	for (let i = 0; i < count; i++) {
+	  const key = unmarshal(reader);
+      const val = unmarshal(reader);
+
+	  values.set(key as NamespaceName, val as NamedColors); 
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 40);
+		return
+	}
+}
+
+
+// NamedLengths represents a map of names with associated length values.
+class NamedLengths implements Writeable, Readable  {
+	private value: Map<Str,Length>;
+	
+	constructor(value: Map<Str,Length> = new Map<Str,Length>()) {
+	 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.size === 0;
+  }
+
+  reset(): void {
+	this.value = new Map<Str,Length>();
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.size); // Write the length of the map
+	for (const [key, value] of this.value) {
+      // write key
+	  key.writeTypeHeader(writer); 
+	  key.write(writer); 
+
+      // write value
+	  value.writeTypeHeader(writer); 
+	  value.write(writer); 
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); 
+	const values = new Map<Str,Length>();
+
+	for (let i = 0; i < count; i++) {
+	  const key = unmarshal(reader);
+      const val = unmarshal(reader);
+
+	  values.set(key as Str, val as Length); 
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 41);
+		return
+	}
+}
+
+
+// Themes represents light or dark mode colors.
+class Themes implements Writeable, Readable  {
+		light: Theme;
+
+		dark: Theme;
+
+	constructor(light: Theme = new Theme(), dark: Theme = new Theme(), ) {
+		this.light = light;
+		this.dark = dark;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.light.read(reader);
+					break
+				case 2:
+					this.dark.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.light.isZero(),!this.dark.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.light.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.dark.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.light.isZero() && this.dark.isZero()
+	}
+
+	reset(): void {
+		this.light.reset()
+		this.dark.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 42);
+		return
+	}
+}
+
+
+class DatePickerStyle implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 43);
+		return
+	}
+}
+
+// companion enum containing all defined constants for DatePickerStyle
+enum DatePickerStyleValues {
+		DatePickerSingleDate = 0,
+		DatePickerDateRange = 1,
+}
+
+
+
+// Day represents a day in month in the range 1-31.
+class Day implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 44);
+		return
+	}
+}
+
+
+// Date represents a location-free representation of a day/month/year tuple.
+class DateData implements Writeable, Readable  {
+		day: Day;
+
+		month: Month;
+
+		year: Year;
+
+	constructor(day: Day = new Day(), month: Month = new Month(), year: Year = new Year(), ) {
+		this.day = day;
+		this.month = month;
+		this.year = year;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.day.read(reader);
+					break
+				case 2:
+					this.month.read(reader);
+					break
+				case 3:
+					this.year.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.day.isZero(),!this.month.isZero(),!this.year.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.day.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.month.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.year.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.day.isZero() && this.month.isZero() && this.year.isZero()
+	}
+
+	reset(): void {
+		this.day.reset()
+		this.month.reset()
+		this.year.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 45);
+		return
+	}
+}
+
+
+// Month represents a month in the range 1-12.
+class Month implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 46);
+		return
+	}
+}
+
+
+// Year represents a year in the gregorian calendar.
+class Year implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 47);
+		return
+	}
+}
+
+
+class DatePicker implements Writeable, Readable , Component  {
+		label: Str;
+
+		supportingText: Str;
+
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	errorText: Str;
+
+	// Style determines if the picker shall use the range or single mode. Default is single selection
+	style: DatePickerStyle;
+
+	// Value is the initial single value or start value of the picker.
+	value: DateData;
+
+	// InputValue is the picked single value or end value of the picker.
+	inputValue: Ptr;
+
+	// EndValue is the initial end value of the picker.
+	endValue: DateData;
+
+	// EndInputValue is the picked end value of the picker.
+	endInputValue: Ptr;
+
+		frame: Frame;
+
+		invisible: Bool;
+
+		disabled: Bool;
+
+	constructor(label: Str = new Str(), supportingText: Str = new Str(), errorText: Str = new Str(), style: DatePickerStyle = new DatePickerStyle(), value: DateData = new DateData(), inputValue: Ptr = new Ptr(), endValue: DateData = new DateData(), endInputValue: Ptr = new Ptr(), frame: Frame = new Frame(), invisible: Bool = new Bool(), disabled: Bool = new Bool(), ) {
+		this.label = label;
+		this.supportingText = supportingText;
+		this.errorText = errorText;
+		this.style = style;
+		this.value = value;
+		this.inputValue = inputValue;
+		this.endValue = endValue;
+		this.endInputValue = endInputValue;
+		this.frame = frame;
+		this.invisible = invisible;
+		this.disabled = disabled;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.label.read(reader);
+					break
+				case 2:
+					this.supportingText.read(reader);
+					break
+				case 3:
+					this.errorText.read(reader);
+					break
+				case 4:
+					this.style.read(reader);
+					break
+				case 5:
+					this.value.read(reader);
+					break
+				case 6:
+					this.inputValue.read(reader);
+					break
+				case 7:
+					this.endValue.read(reader);
+					break
+				case 8:
+					this.endInputValue.read(reader);
+					break
+				case 9:
+					this.frame.read(reader);
+					break
+				case 10:
+					this.invisible.read(reader);
+					break
+				case 11:
+					this.disabled.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.label.isZero(),!this.supportingText.isZero(),!this.errorText.isZero(),!this.style.isZero(),!this.value.isZero(),!this.inputValue.isZero(),!this.endValue.isZero(),!this.endInputValue.isZero(),!this.frame.isZero(),!this.invisible.isZero(),!this.disabled.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.label.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.supportingText.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.errorText.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.style.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.value.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			this.inputValue.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.endValue.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			this.endInputValue.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.frame.write(writer);
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			this.invisible.write(writer);
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 11);
+			this.disabled.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.label.isZero() && this.supportingText.isZero() && this.errorText.isZero() && this.style.isZero() && this.value.isZero() && this.inputValue.isZero() && this.endValue.isZero() && this.endInputValue.isZero() && this.frame.isZero() && this.invisible.isZero() && this.disabled.isZero()
+	}
+
+	reset(): void {
+		this.label.reset()
+		this.supportingText.reset()
+		this.errorText.reset()
+		this.style.reset()
+		this.value.reset()
+		this.inputValue.reset()
+		this.endValue.reset()
+		this.endInputValue.reset()
+		this.frame.reset()
+		this.invisible.reset()
+		this.disabled.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 48);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+class Divider implements Writeable, Readable , Component  {
+		frame: Frame;
+
+		border: Border;
+
+		padding: Padding;
+
+	constructor(frame: Frame = new Frame(), border: Border = new Border(), padding: Padding = new Padding(), ) {
+		this.frame = frame;
+		this.border = border;
+		this.padding = padding;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.frame.read(reader);
+					break
+				case 2:
+					this.border.read(reader);
+					break
+				case 3:
+					this.padding.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.frame.isZero(),!this.border.isZero(),!this.padding.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.frame.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.border.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.padding.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.frame.isZero() && this.border.isZero() && this.padding.isZero()
+	}
+
+	reset(): void {
+		this.frame.reset()
+		this.border.reset()
+		this.padding.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 49);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+class RID implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 50);
+		return
+	}
+}
+
+// companion enum containing all defined constants for RID
+enum RIDValues {
+		NormalFontStyle = 0,
+		ItalicFontStyle = 1,
+}
+
+
+
+class FontWeight implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 51);
+		return
+	}
+}
+
+// companion enum containing all defined constants for FontWeight
+enum FontWeightValues {
+		NormalFontWeight = 400,
+		BoldFontWeight = 700,
+}
+
+
+
+class Font implements Writeable, Readable  {
+	// Name of the font or family name as fallback. Extra fallback declarations are unspecified and must be comma separated.
+	name: Str;
+
+		size: Length;
+
+		style: FontStyle;
+
+		weight: FontWeight;
+
+	constructor(name: Str = new Str(), size: Length = new Length(), style: FontStyle = new FontStyle(), weight: FontWeight = new FontWeight(), ) {
+		this.name = name;
+		this.size = size;
+		this.style = style;
+		this.weight = weight;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.name.read(reader);
+					break
+				case 2:
+					this.size.read(reader);
+					break
+				case 3:
+					this.style.read(reader);
+					break
+				case 4:
+					this.weight.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.name.isZero(),!this.size.isZero(),!this.style.isZero(),!this.weight.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.name.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.size.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.style.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.weight.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.name.isZero() && this.size.isZero() && this.style.isZero() && this.weight.isZero()
+	}
+
+	reset(): void {
+		this.name.reset()
+		this.size.reset()
+		this.style.reset()
+		this.weight.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 52);
+		return
+	}
+}
+
+
+// A Grid must support up to 12 Columns and a reasonable "unlimited" amount of rows.
+class Grid implements Writeable, Readable , Component  {
+		cells: GridCells;
+
+		rows: Uint;
+
+		columns: Uint;
+
+		rowGap: Length;
+
+		colGap: Length;
+
+		frame: Frame;
+
+		backgroundColor: Color;
+
+		padding: Padding;
+
+		border: Border;
+
+		accessibilityLabel: Str;
+
+		font: Font;
+
+		colWidths: Lengths;
+
+		invisible: Bool;
+
+	constructor(cells: GridCells = new GridCells(), rows: Uint = new Uint(), columns: Uint = new Uint(), rowGap: Length = new Length(), colGap: Length = new Length(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), border: Border = new Border(), accessibilityLabel: Str = new Str(), font: Font = new Font(), colWidths: Lengths = new Lengths(), invisible: Bool = new Bool(), ) {
+		this.cells = cells;
+		this.rows = rows;
+		this.columns = columns;
+		this.rowGap = rowGap;
+		this.colGap = colGap;
+		this.frame = frame;
+		this.backgroundColor = backgroundColor;
+		this.padding = padding;
+		this.border = border;
+		this.accessibilityLabel = accessibilityLabel;
+		this.font = font;
+		this.colWidths = colWidths;
+		this.invisible = invisible;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.cells.read(reader);
+					break
+				case 2:
+					this.rows.read(reader);
+					break
+				case 3:
+					this.columns.read(reader);
+					break
+				case 4:
+					this.rowGap.read(reader);
+					break
+				case 5:
+					this.colGap.read(reader);
+					break
+				case 6:
+					this.frame.read(reader);
+					break
+				case 7:
+					this.backgroundColor.read(reader);
+					break
+				case 8:
+					this.padding.read(reader);
+					break
+				case 9:
+					this.border.read(reader);
+					break
+				case 10:
+					this.accessibilityLabel.read(reader);
+					break
+				case 11:
+					this.font.read(reader);
+					break
+				case 12:
+					this.colWidths.read(reader);
+					break
+				case 13:
+					this.invisible.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.cells.isZero(),!this.rows.isZero(),!this.columns.isZero(),!this.rowGap.isZero(),!this.colGap.isZero(),!this.frame.isZero(),!this.backgroundColor.isZero(),!this.padding.isZero(),!this.border.isZero(),!this.accessibilityLabel.isZero(),!this.font.isZero(),!this.colWidths.isZero(),!this.invisible.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.cells.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.rows.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.columns.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.rowGap.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.colGap.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.RECORD, 6);
+			this.frame.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			this.backgroundColor.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.padding.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.border.write(writer);
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
+			this.accessibilityLabel.write(writer);
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.RECORD, 11);
+			this.font.write(writer);
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 12);
+			this.colWidths.write(writer);
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 13);
+			this.invisible.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.cells.isZero() && this.rows.isZero() && this.columns.isZero() && this.rowGap.isZero() && this.colGap.isZero() && this.frame.isZero() && this.backgroundColor.isZero() && this.padding.isZero() && this.border.isZero() && this.accessibilityLabel.isZero() && this.font.isZero() && this.colWidths.isZero() && this.invisible.isZero()
+	}
+
+	reset(): void {
+		this.cells.reset()
+		this.rows.reset()
+		this.columns.reset()
+		this.rowGap.reset()
+		this.colGap.reset()
+		this.frame.reset()
+		this.backgroundColor.reset()
+		this.padding.reset()
+		this.border.reset()
+		this.accessibilityLabel.reset()
+		this.font.reset()
+		this.colWidths.reset()
+		this.invisible.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 53);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+// Uint represents just a user defined unsigned integer value. This is how nprotoc works.
+class Uint implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 54);
+		return
+	}
+}
+
+
+// GridCells is just a bunch of GridCells.
+class GridCells implements Writeable, Readable  {
+	private value: GridCell[];
+	
+	constructor(value: GridCell[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const values: GridCell[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  values.push(obj as GridCell); // Cast and add to the array
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 55);
+		return
+	}
+}
+
+
+// Lengths is just a bunch of length values.
+class Lengths implements Writeable, Readable  {
+	private value: Length[];
+	
+	constructor(value: Length[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const values: Length[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  values.push(obj as Length); // Cast and add to the array
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 56);
+		return
+	}
+}
+
+
+// GridCell is undefined, if explicit row start/col start etc. is set and span values.
+class GridCell implements Writeable, Readable  {
+		body?: Component;
+
+		colStart: Uint;
+
+		colEnd: Uint;
+
+		rowStart: Uint;
+
+		rowEnd: Uint;
+
+		colSpan: Uint;
+
+		rowSpan: Uint;
+
+		padding: Padding;
+
+		alignment: Alignment;
+
+	constructor(body = undefined, colStart: Uint = new Uint(), colEnd: Uint = new Uint(), rowStart: Uint = new Uint(), rowEnd: Uint = new Uint(), colSpan: Uint = new Uint(), rowSpan: Uint = new Uint(), padding: Padding = new Padding(), alignment: Alignment = new Alignment(), ) {
+		this.body = body;
+		this.colStart = colStart;
+		this.colEnd = colEnd;
+		this.rowStart = rowStart;
+		this.rowEnd = rowEnd;
+		this.colSpan = colSpan;
+		this.rowSpan = rowSpan;
+		this.padding = padding;
+		this.alignment = alignment;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+					  throw new Error(`unexpected length: ` + len);
+					}
+					this.body = unmarshal(reader) as Component;
+					break
+				case 2:
+					this.colStart.read(reader);
+					break
+				case 3:
+					this.colEnd.read(reader);
+					break
+				case 4:
+					this.rowStart.read(reader);
+					break
+				case 5:
+					this.rowEnd.read(reader);
+					break
+				case 6:
+					this.colSpan.read(reader);
+					break
+				case 7:
+					this.rowSpan.read(reader);
+					break
+				case 8:
+					this.padding.read(reader);
+					break
+				case 9:
+					this.alignment.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,this.body!== undefined && !this.body.isZero(),!this.colStart.isZero(),!this.colEnd.isZero(),!this.rowStart.isZero(),!this.rowEnd.isZero(),!this.colSpan.isZero(),!this.rowSpan.isZero(),!this.padding.isZero(),!this.alignment.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.body!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			this.colStart.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.colEnd.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.rowStart.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			this.rowEnd.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			this.colSpan.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			this.rowSpan.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.padding.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			this.alignment.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return (this.body=== undefined || this.body.isZero()) && this.colStart.isZero() && this.colEnd.isZero() && this.rowStart.isZero() && this.rowEnd.isZero() && this.colSpan.isZero() && this.rowSpan.isZero() && this.padding.isZero() && this.alignment.isZero()
+	}
+
+	reset(): void {
+		this.body = undefined
+		this.colStart.reset()
+		this.colEnd.reset()
+		this.rowStart.reset()
+		this.rowEnd.reset()
+		this.colSpan.reset()
+		this.rowSpan.reset()
+		this.padding.reset()
+		this.alignment.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 57);
+		return
+	}
+}
+
+
+// An HStack aligns children elements in a horizontal row.
+//  - the intrinsic component dimensions are the sum of all sizes of the contained children
+//  - the parent can define a custom width and height
+//  - if the container is larger than the contained views, it must center vertical or horizontal
+//  - the inner gap between components should be around 2dp (this decides the backend)
+class HStack implements Writeable, Readable , Component  {
+		children: Components;
+
+		gap: Length;
+
+		frame: Frame;
+
+	// Zero value of Alignment is Center (=c) must be applied.
+	alignment: Alignment;
+
+		backgroundColor: Color;
+
+		padding: Padding;
+
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	accessibilityLabel: Str;
+
+		border: Border;
+
+		font: Font;
+
+		action: Ptr;
+
+		hoveredBackgroundColor: Color;
+
+		pressedBackgroundColor: Color;
+
+		focusedBackgroundColor: Color;
+
+		hoveredBorder: Border;
+
+		pressedBorder: Border;
+
+		focusedBorder: Border;
+
+		wrap: Bool;
+
+		stylePreset: StylePreset;
+
+		position: Position;
+
+		disabled: Bool;
+
+		invisible: Bool;
+
+	constructor(children: Components = new Components(), gap: Length = new Length(), frame: Frame = new Frame(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), border: Border = new Border(), font: Font = new Font(), action: Ptr = new Ptr(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), wrap: Bool = new Bool(), stylePreset: StylePreset = new StylePreset(), position: Position = new Position(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
+		this.children = children;
+		this.gap = gap;
+		this.frame = frame;
+		this.alignment = alignment;
+		this.backgroundColor = backgroundColor;
+		this.padding = padding;
+		this.accessibilityLabel = accessibilityLabel;
+		this.border = border;
+		this.font = font;
+		this.action = action;
+		this.hoveredBackgroundColor = hoveredBackgroundColor;
+		this.pressedBackgroundColor = pressedBackgroundColor;
+		this.focusedBackgroundColor = focusedBackgroundColor;
+		this.hoveredBorder = hoveredBorder;
+		this.pressedBorder = pressedBorder;
+		this.focusedBorder = focusedBorder;
+		this.wrap = wrap;
+		this.stylePreset = stylePreset;
+		this.position = position;
+		this.disabled = disabled;
+		this.invisible = invisible;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.children.read(reader);
+					break
+				case 2:
+					this.gap.read(reader);
+					break
+				case 3:
+					this.frame.read(reader);
+					break
+				case 4:
+					this.alignment.read(reader);
+					break
+				case 5:
+					this.backgroundColor.read(reader);
+					break
+				case 6:
+					this.padding.read(reader);
+					break
+				case 7:
+					this.accessibilityLabel.read(reader);
+					break
+				case 8:
+					this.border.read(reader);
+					break
+				case 9:
+					this.font.read(reader);
+					break
+				case 10:
+					this.action.read(reader);
+					break
+				case 11:
+					this.hoveredBackgroundColor.read(reader);
+					break
+				case 12:
+					this.pressedBackgroundColor.read(reader);
+					break
+				case 13:
+					this.focusedBackgroundColor.read(reader);
+					break
+				case 14:
+					this.hoveredBorder.read(reader);
+					break
+				case 15:
+					this.pressedBorder.read(reader);
+					break
+				case 16:
+					this.focusedBorder.read(reader);
+					break
+				case 17:
+					this.wrap.read(reader);
+					break
+				case 18:
+					this.stylePreset.read(reader);
+					break
+				case 19:
+					this.position.read(reader);
+					break
+				case 20:
+					this.disabled.read(reader);
+					break
+				case 21:
+					this.invisible.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.children.isZero(),!this.gap.isZero(),!this.frame.isZero(),!this.alignment.isZero(),!this.backgroundColor.isZero(),!this.padding.isZero(),!this.accessibilityLabel.isZero(),!this.border.isZero(),!this.font.isZero(),!this.action.isZero(),!this.hoveredBackgroundColor.isZero(),!this.pressedBackgroundColor.isZero(),!this.focusedBackgroundColor.isZero(),!this.hoveredBorder.isZero(),!this.pressedBorder.isZero(),!this.focusedBorder.isZero(),!this.wrap.isZero(),!this.stylePreset.isZero(),!this.position.isZero(),!this.disabled.isZero(),!this.invisible.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.children.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.gap.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.alignment.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.backgroundColor.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.RECORD, 6);
+			this.padding.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			this.accessibilityLabel.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.border.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.font.write(writer);
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			this.action.write(writer);
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
+			this.hoveredBackgroundColor.write(writer);
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			this.pressedBackgroundColor.write(writer);
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
+			this.focusedBackgroundColor.write(writer);
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.RECORD, 14);
+			this.hoveredBorder.write(writer);
+		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.RECORD, 15);
+			this.pressedBorder.write(writer);
+		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.RECORD, 16);
+			this.focusedBorder.write(writer);
+		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 17);
+			this.wrap.write(writer);
+		}
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 18);
+			this.stylePreset.write(writer);
+		}
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.RECORD, 19);
+			this.position.write(writer);
+		}
+		if (fields[20]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 20);
+			this.disabled.write(writer);
+		}
+		if (fields[21]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 21);
+			this.invisible.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.children.isZero() && this.gap.isZero() && this.frame.isZero() && this.alignment.isZero() && this.backgroundColor.isZero() && this.padding.isZero() && this.accessibilityLabel.isZero() && this.border.isZero() && this.font.isZero() && this.action.isZero() && this.hoveredBackgroundColor.isZero() && this.pressedBackgroundColor.isZero() && this.focusedBackgroundColor.isZero() && this.hoveredBorder.isZero() && this.pressedBorder.isZero() && this.focusedBorder.isZero() && this.wrap.isZero() && this.stylePreset.isZero() && this.position.isZero() && this.disabled.isZero() && this.invisible.isZero()
+	}
+
+	reset(): void {
+		this.children.reset()
+		this.gap.reset()
+		this.frame.reset()
+		this.alignment.reset()
+		this.backgroundColor.reset()
+		this.padding.reset()
+		this.accessibilityLabel.reset()
+		this.border.reset()
+		this.font.reset()
+		this.action.reset()
+		this.hoveredBackgroundColor.reset()
+		this.pressedBackgroundColor.reset()
+		this.focusedBackgroundColor.reset()
+		this.hoveredBorder.reset()
+		this.pressedBorder.reset()
+		this.focusedBorder.reset()
+		this.wrap.reset()
+		this.stylePreset.reset()
+		this.position.reset()
+		this.disabled.reset()
+		this.invisible.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 58);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+// StylePreset allows to apply a build-in style to this component. This reduces over-the-wire boilerplate and
+// also defines a stereotype, so that the applied component behavior may be indeed a bit different, because
+// a native component may be used, e.g. for a native button. The order of appliance is first the preset and
+// then customized properties on top.
+// 
+class StylePreset implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 59);
+		return
+	}
+}
+
+// companion enum containing all defined constants for StylePreset
+enum StylePresetValues {
+	// Default is that no style preset is applied.
+	StyleNone = 0,
+		StyleButtonPrimary = 1,
+		StyleButtonSecondary = 2,
+		StyleButtonTertiary = 3,
+}
+
+
+
+class Position implements Writeable, Readable  {
+		kind: PositionType;
+
+		left: Length;
+
+		top: Length;
+
+		right: Length;
+
+		bottom: Length;
+
+	constructor(kind: PositionType = new PositionType(), left: Length = new Length(), top: Length = new Length(), right: Length = new Length(), bottom: Length = new Length(), ) {
+		this.kind = kind;
+		this.left = left;
+		this.top = top;
+		this.right = right;
+		this.bottom = bottom;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.kind.read(reader);
+					break
+				case 2:
+					this.left.read(reader);
+					break
+				case 3:
+					this.top.read(reader);
+					break
+				case 4:
+					this.right.read(reader);
+					break
+				case 5:
+					this.bottom.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.kind.isZero(),!this.left.isZero(),!this.top.isZero(),!this.right.isZero(),!this.bottom.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			this.kind.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.left.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.top.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.right.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			this.bottom.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.kind.isZero() && this.left.isZero() && this.top.isZero() && this.right.isZero() && this.bottom.isZero()
+	}
+
+	reset(): void {
+		this.kind.reset()
+		this.left.reset()
+		this.top.reset()
+		this.right.reset()
+		this.bottom.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 60);
+		return
+	}
+}
+
+
+class PositionType implements Writeable, Readable {
+ 
+	private value: number; // Using number to handle uint64 (precision limits apply)
+	
+	constructor(value: number = 0) {
+		this.value = value;
+	}
+	
+	isZero(): boolean {
+		return this.value === 0;
+	}
+	
+	reset(): void {
+		this.value = 0;
+	}
+	
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value);
+	}
+	
+	read(reader: BinaryReader): void {
+		this.value = reader.readUvarint();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.UVARINT, 61);
+		return
+	}
+}
+
+// companion enum containing all defined constants for PositionType
+enum PositionTypeValues {
+	// PositionDefault is the default and any explicit position value have no effect.
+//  See also https://developer.mozilla.org/de/docs/Web/CSS/position#static.
+	PositionDefault = 0,
+	// PositionOffset is like PositionDefault but moves the element by applying the given position values after
+//  layouting. See also https://developer.mozilla.org/de/docs/Web/CSS/position#relative.
+	PositionOffset = 1,
+	// PositionAbsolute removes the element from the layout and places it using the given values in an absolute way
+//  within any of its parent layouted as PositionOffset. If no parent with PositionOffset is found, the viewport
+//  is used. See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.
+	PositionAbsolute = 2,
+	// PositionFixed removes the element from the layout and places it at a fixed position according to the viewport
+//  independent of the scroll position. See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.
+	PositionFixed = 3,
+	// PositionSticky is here for completion, and it is unclear which rules to follow on mobile clients.
+//  See also https://developer.mozilla.org/de/docs/Web/CSS/position#absolute.
+	PositionSticky = 4,
+}
+
+
+
+class Img implements Writeable, Readable , Component  {
+		uri: URI;
+
+		accessibilityLabel: Str;
+
+		border: Border;
+
+		frame: Frame;
+
+		padding: Padding;
+
+		sVG: SVG;
+
+		fillColor: Color;
+
+		strokeColor: Color;
+
+		invisible: Bool;
+
+	constructor(uri: URI = new URI(), accessibilityLabel: Str = new Str(), border: Border = new Border(), frame: Frame = new Frame(), padding: Padding = new Padding(), sVG: SVG = new SVG(), fillColor: Color = new Color(), strokeColor: Color = new Color(), invisible: Bool = new Bool(), ) {
+		this.uri = uri;
+		this.accessibilityLabel = accessibilityLabel;
+		this.border = border;
+		this.frame = frame;
+		this.padding = padding;
+		this.sVG = sVG;
+		this.fillColor = fillColor;
+		this.strokeColor = strokeColor;
+		this.invisible = invisible;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.uri.read(reader);
+					break
+				case 2:
+					this.accessibilityLabel.read(reader);
+					break
+				case 3:
+					this.border.read(reader);
+					break
+				case 4:
+					this.frame.read(reader);
+					break
+				case 5:
+					this.padding.read(reader);
+					break
+				case 6:
+					this.sVG.read(reader);
+					break
+				case 7:
+					this.fillColor.read(reader);
+					break
+				case 8:
+					this.strokeColor.read(reader);
+					break
+				case 9:
+					this.invisible.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.uri.isZero(),!this.accessibilityLabel.isZero(),!this.border.isZero(),!this.frame.isZero(),!this.padding.isZero(),!this.sVG.isZero(),!this.fillColor.isZero(),!this.strokeColor.isZero(),!this.invisible.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.uri.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.accessibilityLabel.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.border.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.frame.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.padding.write(writer);
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			this.sVG.write(writer);
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			this.fillColor.write(writer);
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
+			this.strokeColor.write(writer);
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			this.invisible.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.uri.isZero() && this.accessibilityLabel.isZero() && this.border.isZero() && this.frame.isZero() && this.padding.isZero() && this.sVG.isZero() && this.fillColor.isZero() && this.strokeColor.isZero() && this.invisible.isZero()
+	}
+
+	reset(): void {
+		this.uri.reset()
+		this.accessibilityLabel.reset()
+		this.border.reset()
+		this.frame.reset()
+		this.padding.reset()
+		this.sVG.reset()
+		this.fillColor.reset()
+		this.strokeColor.reset()
+		this.invisible.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 62);
+		return
+	}
+	isComponent(): void{}
+}
+
+
+// SVG contains the valid embeddable source of Scalable Vector Graphics.
+class SVG implements Writeable, Readable {
+ 
+  private value: string; 
+
+  constructor(value: string = "") {
+    this.value = value;
+  }
+
+  isZero(): boolean {
+    return this.value === "";
+  }
+
+  reset(): void {
+    this.value = "";
+  }
+
+  // Get the string representation of the Color
+  toString(): string {
+    return this.value;
+  }
+
+  write(writer: BinaryWriter): void {
+    const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+  }
+
+  read(reader: BinaryReader): void {
+	const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
+  }
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.BYTESLICE, 63);
+		return
+	}
+}
+
+
+// Strings is just a bunch of string values.
+class Strings implements Writeable, Readable  {
+	private value: Str[];
+	
+	constructor(value: Str[] = []) {
+ 
+      this.value = value;
+    }
+
+  isZero(): boolean {
+	return !this.value || this.value.length === 0;
+  }
+
+  reset(): void {
+	this.value = [];
+  }
+
+
+  write(writer: BinaryWriter): void {
+	writer.writeUvarint(this.value.length); // Write the length of the array
+	for (const c of this.value) {
+	  c.writeTypeHeader(writer); // Write the type header for each component
+	  c.write(writer); // Write the component data
+	}
+  }
+
+	  
+  read(reader: BinaryReader): void {
+	const count = reader.readUvarint(); // Read the length of the array
+	const values: Str[] = [];
+
+	for (let i = 0; i < count; i++) {
+	  const obj = unmarshal(reader); // Read and unmarshal each component
+	  values.push(obj as Str); // Cast and add to the array
+	}
+
+	this.value = values;
+  }	
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 64);
+		return
+	}
+}
+
+
+// FileImportRequested asks the frontend to let the user pick some files.
+// Depending on the actual backend configuration, this may cause
+// a regular http multipart upload or some FFI calls providing data streams
+// or accessor URIs.
+class FileImportRequested implements Writeable, Readable  {
+		iD: Str;
+
+		scopeID: Str;
+
+		multiple: Bool;
+
+		maxBytes: Uint;
+
+		allowedMimeTypes: Strings;
+
+	constructor(iD: Str = new Str(), scopeID: Str = new Str(), multiple: Bool = new Bool(), maxBytes: Uint = new Uint(), allowedMimeTypes: Strings = new Strings(), ) {
+		this.iD = iD;
+		this.scopeID = scopeID;
+		this.multiple = multiple;
+		this.maxBytes = maxBytes;
+		this.allowedMimeTypes = allowedMimeTypes;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1:
+					this.iD.read(reader);
+					break
+				case 2:
+					this.scopeID.read(reader);
+					break
+				case 3:
+					this.multiple.read(reader);
+					break
+				case 4:
+					this.maxBytes.read(reader);
+					break
+				case 5:
+					this.allowedMimeTypes.read(reader);
+					break
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false,!this.iD.isZero(),!this.scopeID.isZero(),!this.multiple.isZero(),!this.maxBytes.isZero(),!this.allowedMimeTypes.isZero(),];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.iD.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.scopeID.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			this.multiple.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			this.maxBytes.write(writer);
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 5);
+			this.allowedMimeTypes.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.iD.isZero() && this.scopeID.isZero() && this.multiple.isZero() && this.maxBytes.isZero() && this.allowedMimeTypes.isZero()
+	}
+
+	reset(): void {
+		this.iD.reset()
+		this.scopeID.reset()
+		this.multiple.reset()
+		this.maxBytes.reset()
+		this.allowedMimeTypes.reset()
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 65);
 		return
 	}
 }
@@ -1165,6 +4635,266 @@ function unmarshal(src: BinaryReader): Readable {
 		}
 		case 13: {
 			const v = new Components();
+			v.read(src);
+			return v;
+		}
+		case 14: {
+			const v = new AlignedComponents();
+			v.read(src);
+			return v;
+		}
+		case 15: {
+			const v = new Checkbox();
+			v.read(src);
+			return v;
+		}
+		case 16: {
+			const v = new Bool();
+			v.read(src);
+			return v;
+		}
+		case 17: {
+			const v = new ErrorOccurred();
+			v.read(src);
+			return v;
+		}
+		case 18: {
+			const v = new Locale();
+			v.read(src);
+			return v;
+		}
+		case 19: {
+			const v = new FontStyle();
+			v.read(src);
+			return v;
+		}
+		case 20: {
+			const v = new RootViewID();
+			v.read(src);
+			return v;
+		}
+		case 21: {
+			const v = new RootViewParameters();
+			v.read(src);
+			return v;
+		}
+		case 22: {
+			const v = new Str();
+			v.read(src);
+			return v;
+		}
+		case 23: {
+			const v = new RootViewRenderingRequested();
+			v.read(src);
+			return v;
+		}
+		case 24: {
+			const v = new RootViewDestructionRequested();
+			v.read(src);
+			return v;
+		}
+		case 25: {
+			const v = new RootViewInvalidated();
+			v.read(src);
+			return v;
+		}
+		case 26: {
+			const v = new ErrorRootViewAllocationRequired();
+			v.read(src);
+			return v;
+		}
+		case 27: {
+			const v = new RootViewAllocationRequested();
+			v.read(src);
+			return v;
+		}
+		case 28: {
+			const v = new WindowSizeClass();
+			v.read(src);
+			return v;
+		}
+		case 29: {
+			const v = new ScopeConfigurationChangeRequested();
+			v.read(src);
+			return v;
+		}
+		case 30: {
+			const v = new ColorScheme();
+			v.read(src);
+			return v;
+		}
+		case 31: {
+			const v = new WindowInfo();
+			v.read(src);
+			return v;
+		}
+		case 32: {
+			const v = new DP();
+			v.read(src);
+			return v;
+		}
+		case 33: {
+			const v = new Density();
+			v.read(src);
+			return v;
+		}
+		case 34: {
+			const v = new ScopeConfigurationChanged();
+			v.read(src);
+			return v;
+		}
+		case 35: {
+			const v = new Locales();
+			v.read(src);
+			return v;
+		}
+		case 36: {
+			const v = new URI();
+			v.read(src);
+			return v;
+		}
+		case 37: {
+			const v = new NamespaceName();
+			v.read(src);
+			return v;
+		}
+		case 38: {
+			const v = new NamedColors();
+			v.read(src);
+			return v;
+		}
+		case 39: {
+			const v = new Theme();
+			v.read(src);
+			return v;
+		}
+		case 40: {
+			const v = new NamespacedColors();
+			v.read(src);
+			return v;
+		}
+		case 41: {
+			const v = new NamedLengths();
+			v.read(src);
+			return v;
+		}
+		case 42: {
+			const v = new Themes();
+			v.read(src);
+			return v;
+		}
+		case 43: {
+			const v = new DatePickerStyle();
+			v.read(src);
+			return v;
+		}
+		case 44: {
+			const v = new Day();
+			v.read(src);
+			return v;
+		}
+		case 45: {
+			const v = new DateData();
+			v.read(src);
+			return v;
+		}
+		case 46: {
+			const v = new Month();
+			v.read(src);
+			return v;
+		}
+		case 47: {
+			const v = new Year();
+			v.read(src);
+			return v;
+		}
+		case 48: {
+			const v = new DatePicker();
+			v.read(src);
+			return v;
+		}
+		case 49: {
+			const v = new Divider();
+			v.read(src);
+			return v;
+		}
+		case 50: {
+			const v = new RID();
+			v.read(src);
+			return v;
+		}
+		case 51: {
+			const v = new FontWeight();
+			v.read(src);
+			return v;
+		}
+		case 52: {
+			const v = new Font();
+			v.read(src);
+			return v;
+		}
+		case 53: {
+			const v = new Grid();
+			v.read(src);
+			return v;
+		}
+		case 54: {
+			const v = new Uint();
+			v.read(src);
+			return v;
+		}
+		case 55: {
+			const v = new GridCells();
+			v.read(src);
+			return v;
+		}
+		case 56: {
+			const v = new Lengths();
+			v.read(src);
+			return v;
+		}
+		case 57: {
+			const v = new GridCell();
+			v.read(src);
+			return v;
+		}
+		case 58: {
+			const v = new HStack();
+			v.read(src);
+			return v;
+		}
+		case 59: {
+			const v = new StylePreset();
+			v.read(src);
+			return v;
+		}
+		case 60: {
+			const v = new Position();
+			v.read(src);
+			return v;
+		}
+		case 61: {
+			const v = new PositionType();
+			v.read(src);
+			return v;
+		}
+		case 62: {
+			const v = new Img();
+			v.read(src);
+			return v;
+		}
+		case 63: {
+			const v = new SVG();
+			v.read(src);
+			return v;
+		}
+		case 64: {
+			const v = new Strings();
+			v.read(src);
+			return v;
+		}
+		case 65: {
+			const v = new FileImportRequested();
 			v.read(src);
 			return v;
 		}

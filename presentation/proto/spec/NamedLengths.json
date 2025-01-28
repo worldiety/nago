@@ -1,0 +1,7 @@
+{
+  "doc": "NamedLengths represents a map of names with associated length values.",
+  "kind": "Map",
+  "id": 41,
+  "key": "Str",
+  "value": "Length"
+}

@@ -4,6 +4,12 @@
 
   "variants": [
      "UpdateStateValueRequested",
-     "FunctionCallRequested"
+     "FunctionCallRequested",
+     "RootViewAllocationRequested",
+     "RootViewDestructionRequested",
+     "RootViewInvalidated",
+     "RootViewRenderingRequested",
+     "ErrorOccurred",
+     "ErrorRootViewAllocationRequired"
   ]
 }

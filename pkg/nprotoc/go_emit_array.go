@@ -1,5 +1,7 @@
 package nprotoc
 
+import "fmt"
+
 func (c *Compiler) goEmitArray(t Typename, decl Array) error {
 	c.p(c.makeGoDoc(decl.Doc))
 	c.pf("type %s []%s\n", t, decl.Type)
@@ -31,7 +33,16 @@ func (c *Compiler) goEmitArray(t Typename, decl Array) error {
 	c.pn("		if err != nil {")
 	c.pn("			return err")
 	c.pn("		}")
-	c.pf("      slice[i]=obj.(%s)\n", decl.Type)
+
+	typeDecl, ok := c.declr[decl.Type]
+	if !ok {
+		return fmt.Errorf("type %s not declared", decl.Type)
+	}
+	if typeDecl.Knd() == EnumKind {
+		c.pf("      slice[i]=obj.(%s)\n", decl.Type)
+	} else {
+		c.pf("      slice[i]=*obj.(*%s)\n", decl.Type)
+	}
 	c.pn("  }")
 	c.pn("")
 	c.pf("	*v = slice\n")

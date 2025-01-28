@@ -1,0 +1,5 @@
+{
+  "doc": "Uint represents just a user defined unsigned integer value. This is how nprotoc works.",
+  "kind": "Uint",
+  "id": 54
+}

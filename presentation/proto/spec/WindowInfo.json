@@ -1,0 +1,29 @@
+{
+  "kind": "Record",
+  "id": 31,
+  "fields": {
+    "1": {
+      "name": "Width",
+      "type": "DP"
+    },
+    "2": {
+      "name": "Height",
+      "type": "DP"
+    },
+    "3": {
+      "name": "Density",
+      "type": "Density"
+    },
+    "4": {
+      "name": "SizeClass",
+      "type": "WindowSizeClass"
+    },
+    "5": {
+      "doc": "ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.",
+      "name": "ColorScheme",
+      "type": "ColorScheme"
+    }
+  }
+}
+
+

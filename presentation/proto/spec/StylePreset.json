@@ -1,0 +1,19 @@
+{
+  "kind": "Uint",
+  "id": 59,
+  "const": {
+    "0": {
+      "name": "StyleNone",
+      "doc": "Default is that no style preset is applied."
+    },
+    "1": {
+      "name": "StyleButtonPrimary"
+    },
+    "2": {
+      "name": "StyleButtonSecondary"
+    },
+    "3": {
+      "name": "StyleButtonTertiary"
+    }
+  }
+}

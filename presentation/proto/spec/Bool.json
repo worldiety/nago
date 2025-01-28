@@ -1,0 +1,5 @@
+{
+  "doc": "Bool represents just a user defined boolean value. This is how nprotoc works.",
+  "kind": "Bool",
+  "id": 16
+}

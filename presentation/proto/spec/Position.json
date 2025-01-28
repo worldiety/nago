@@ -1,0 +1,26 @@
+{
+  "kind": "Record",
+  "id": 60,
+  "fields": {
+    "1": {
+      "name": "Kind",
+      "type": "PositionType"
+    },
+    "2": {
+      "name": "Left",
+      "type": "Length"
+    },
+    "3": {
+      "name": "Top",
+      "type": "Length"
+    },
+    "4": {
+      "name": "Right",
+      "type": "Length"
+    },
+    "5": {
+      "name": "Bottom",
+      "type": "Length"
+    }
+  }
+}

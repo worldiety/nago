@@ -1,0 +1,17 @@
+{
+  "doc": "ErrorOccurred is used, if some unforeseen error occurred. Usually the frontend did something wrong, e.g. in a life-cycle.",
+  "kind": "Record",
+  "id": 17,
+  "fields": {
+    "1": {
+      "doc": "Message of some generic error.",
+      "name": "Message",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "RID is used to trace a request-response cycle.",
+      "name": "RID",
+      "type": "RID"
+    }
+  }
+}

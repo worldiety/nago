@@ -140,6 +140,12 @@ func (c *Compiler) shapeOf(t Typename) (shape, error) {
 		return byteSlice, nil
 	case Array:
 		return array, nil
+	case Bool:
+		return uvarint, nil
+	case Map:
+		return array, nil
+	case Float64:
+		return f64, nil
 	default:
 		return 0, fmt.Errorf("unknown shape type %s", t)
 	}

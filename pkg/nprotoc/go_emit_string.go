@@ -1,8 +1,13 @@
 package nprotoc
 
 func (c *Compiler) goEmitString(t Typename, decl String) error {
+	strShape := "string"
+	if decl.Go.Type != "" {
+		strShape = decl.Go.Type
+	}
+
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("type %s string\n", t)
+	c.pf("type %s %s\n", t, strShape)
 	c.pn("")
 	c.pf("func(v *%s) write(r *BinaryWriter)error{\n", t)
 	c.pn("	data := *(*[]byte)(unsafe.Pointer(v))")
@@ -27,7 +32,7 @@ func (c *Compiler) goEmitString(t Typename, decl String) error {
 	c.pn("	return nil")
 	c.pn("}\n")
 
-	c.pf("func(v *%s) IsZero()bool{\nreturn *v==\"\"\n}\n\n", t)
+	c.pf("func(v *%s) IsZero()bool{\nreturn len(*v)==0\n}\n\n", t)
 
 	c.pf("func(v *%s) reset(){\n*v=%[1]s(\"\")\n}\n\n", t)
 

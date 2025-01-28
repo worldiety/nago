@@ -11,7 +11,6 @@ package core
 // resize properly for different screen densities. It provides consistency for the real-world sizes of
 // your UI elements across different devices.
 // Source: https://developer.android.com/guide/topics/resources/more-resources.html#Dimension
-// #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type DP float64
 
 // Density describes the scale factor of physical pixels to screen pixels normalized to a 160dpi screen.

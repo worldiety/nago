@@ -64,6 +64,13 @@ class BinaryWriter {
     getBuffer(): Uint8Array {
         return this.buffer.slice(0, this.offset);
     }
+
+    writeFloat64(value: number): void {
+        const float64Bits = new DataView(new ArrayBuffer(8));
+        float64Bits.setFloat64(0, value, true);
+        const bits = float64Bits.getBigUint64(0, true);
+        this.writeUvarint(Number(bits));
+    }
 }
 
 class BinaryReader {
@@ -121,6 +128,14 @@ class BinaryReader {
         }
         return result;
     }
+
+    readFloat64(): number {
+        const bits = this.readUvarint();
+        const buffer = new ArrayBuffer(8);
+        const view = new DataView(buffer);
+        view.setBigUint64(0, BigInt(bits), true); // Schreibe die Bits in Little-Endian
+        return view.getFloat64(0, true);
+    }
 }
 
 // Types and Enums
@@ -148,6 +163,7 @@ interface FieldHeader {
 // Interface for writable objects
 interface Writeable {
     write(writer: BinaryWriter): void;
+
     writeTypeHeader(dst: BinaryWriter): void
 }
 
@@ -155,5 +171,6 @@ interface Writeable {
 // Interface for readable objects
 interface Readable {
     read(reader: BinaryReader): void;
+
     isZero(): boolean;
 }

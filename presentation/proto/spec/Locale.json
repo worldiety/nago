@@ -1,0 +1,5 @@
+{
+  "doc": "Locale represents a BCP47 tag like de or de_DE.",
+  "kind": "String",
+  "id": 18
+}

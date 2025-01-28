@@ -164,6 +164,11 @@ The overhead is significant: 1 byte for the field and shape, 1 byte for the elem
 This sums to 4 byte minimum overhead per dynamic type which grows for larger type identifiers, as the uvarint expands.
 Using the extension mechanism would not improve our situation, because the extension type byte occupies equivalent space.
 
+### map
+
+There is no special shape for a map.
+It is treated as a conventional polymorphic array, with interleaved key-value pairs.
+
 ### byte-arrays resp. []byte
 
 Byte arrays and strings share the same memory shape.

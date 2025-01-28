@@ -9,6 +9,7 @@ import (
 
 type Declaration interface {
 	decl()
+	Knd() Kind
 }
 
 var DeclEnum = enum.Declare[Declaration, func(
@@ -19,17 +20,37 @@ var DeclEnum = enum.Declare[Declaration, func(
 	func(Map),
 	func(String),
 	func(Array),
+	func(Bool),
+	func(Float64),
 
 )](
 	enum.NoZero(),
 	enum.Internally("kind"),
 )
 
+type Kind string
+
+const (
+	EnumKind    Kind = "Enum"
+	UintKind    Kind = "Uint"
+	RecordKind  Kind = "Record"
+	ProjectKind Kind = "Project"
+	MapKind     Kind = "Map"
+	StringKind  Kind = "String"
+	ArrayKind   Kind = "Array"
+	BoolKind    Kind = "Bool"
+	Float64Kind Kind = "Float64"
+)
+
 type Typename string
 type Enum struct {
 	Doc      string     `json:"doc"`
-	Kind     string     `json:"kind"`
+	Kind     Kind       `json:"kind"`
 	Variants []Typename `json:"variants"`
+}
+
+func (e Enum) Knd() Kind {
+	return e.Kind
 }
 
 func (Enum) decl() {}
@@ -42,9 +63,13 @@ type Const struct {
 type Value string
 type Uint struct {
 	Doc         string          `json:"doc"`
-	Kind        string          `json:"kind"`
+	Kind        Kind            `json:"kind"`
 	Id          int             `json:"id"`
 	ConstValues map[Value]Const `json:"const"`
+}
+
+func (d Uint) Knd() Kind {
+	return d.Kind
 }
 
 func (d Uint) sortedConst() iter.Seq2[Value, Const] {
@@ -68,8 +93,15 @@ func (Uint) decl() {}
 // if you use Uint consts instead.
 type String struct {
 	Doc  string `json:"doc"`
-	Kind string `json:"kind"`
+	Kind Kind   `json:"kind"`
 	Id   int    `json:"id"`
+	Go   struct {
+		Type string `json:"type"`
+	} `json:"go"`
+}
+
+func (d String) Knd() Kind {
+	return d.Kind
 }
 
 func (d String) ID() int {
@@ -78,12 +110,48 @@ func (d String) ID() int {
 
 func (String) decl() {}
 
+type Float64 struct {
+	Doc  string `json:"doc"`
+	Kind Kind   `json:"kind"`
+	Id   int    `json:"id"`
+}
+
+func (d Float64) Knd() Kind {
+	return d.Kind
+}
+
+func (d Float64) ID() int {
+	return d.Id
+}
+
+func (Float64) decl() {}
+
+type Bool struct {
+	Doc  string `json:"doc"`
+	Kind Kind   `json:"kind"`
+	Id   int    `json:"id"`
+}
+
+func (d Bool) Knd() Kind {
+	return d.Kind
+}
+
+func (d Bool) ID() int {
+	return d.Id
+}
+
+func (Bool) decl() {}
+
 type Map struct {
 	Doc   string   `json:"doc"`
-	Kind  string   `json:"kind"`
+	Kind  Kind     `json:"kind"`
 	Id    int      `json:"id"`
 	Key   Typename `json:"key"`
 	Value Typename `json:"value"`
+}
+
+func (d Map) Knd() Kind {
+	return d.Kind
 }
 
 func (d Map) ID() int {
@@ -94,9 +162,13 @@ func (Map) decl() {}
 
 type Array struct {
 	Doc  string   `json:"doc"`
-	Kind string   `json:"kind"`
+	Kind Kind     `json:"kind"`
 	Id   int      `json:"id"`
 	Type Typename `json:"type"`
+}
+
+func (d Array) Knd() Kind {
+	return d.Kind
 }
 
 func (d Array) ID() int {
@@ -108,9 +180,13 @@ func (Array) decl() {}
 type FieldID int
 type Record struct {
 	Doc    string            `json:"doc"`
-	Kind   string            `json:"kind"`
+	Kind   Kind              `json:"kind"`
 	Id     int               `json:"id"`
 	Fields map[FieldID]Field `json:"fields"`
+}
+
+func (d Record) Knd() Kind {
+	return d.Kind
 }
 
 func (d Record) sortedFields() iter.Seq2[FieldID, Field] {
@@ -140,10 +216,14 @@ type Field struct {
 }
 
 type Project struct {
-	Kind string `json:"kind"`
+	Kind Kind `json:"kind"`
 	Go   struct {
 		Package string `json:"package"`
 	} `json:"go"`
+}
+
+func (d Project) Knd() Kind {
+	return d.Kind
 }
 
 func (Project) decl() {}

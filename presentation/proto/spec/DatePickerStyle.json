@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 43,
+  "const": {
+    "0": {
+      "name": "DatePickerSingleDate"
+    },
+    "1":{
+      "name": "DatePickerDateRange"
+    }
+  }
+}

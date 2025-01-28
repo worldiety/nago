@@ -85,6 +85,18 @@ func (c *Compiler) emitGoDecl() error {
 			if err := c.goEmitArray(typename, decl); err != nil {
 				return fmt.Errorf("cannot emit array %s: %w", typename, err)
 			}
+		case Bool:
+			if err := c.goEmitBool(typename, decl); err != nil {
+				return fmt.Errorf("cannot emit boolean %s: %w", typename, err)
+			}
+		case Map:
+			if err := c.goEmitMap(typename, decl); err != nil {
+				return fmt.Errorf("cannot emit map %s: %w", typename, err)
+			}
+		case Float64:
+			if err := c.goEmitFloat64(typename, decl); err != nil {
+				return fmt.Errorf("cannot emit float64 %s: %w", typename, err)
+			}
 		default:
 		}
 	}

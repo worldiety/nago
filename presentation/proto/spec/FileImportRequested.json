@@ -1,0 +1,26 @@
+{
+  "kind": "Record",
+  "id": 65,
+  "fields": {
+    "1": {
+      "name": "ID",
+      "type": "Str"
+    },
+    "2": {
+      "name": "ScopeID",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Multiple",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "MaxBytes",
+      "type": "Uint"
+    },
+    "5": {
+      "name": "AllowedMimeTypes",
+      "type": "Strings"
+    }
+  }
+}

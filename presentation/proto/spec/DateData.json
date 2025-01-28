@@ -1,0 +1,19 @@
+{
+  "doc": "Date represents a location-free representation of a day/month/year tuple.",
+  "kind": "Record",
+  "id": 45,
+  "fields": {
+    "1": {
+      "name": "Day",
+      "type": "Day"
+    },
+    "2": {
+      "name": "Month",
+      "type": "Month"
+    },
+    "3": {
+      "name": "Year",
+      "type": "Year"
+    }
+  }
+}

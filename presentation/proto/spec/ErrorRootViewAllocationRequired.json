@@ -1,0 +1,12 @@
+{
+  "doc": "ErrorRootViewAllocationRequired indicates, that there is no root view and it must be allocated to continue. This may happen, e.g. if the server was restarted or redeployed or a timeout occurred and the scope or root view was collected.",
+  "kind": "Record",
+  "id": 26,
+  "fields": {
+    "1": {
+      "doc": "RID is used to trace a request-response cycle.",
+      "name": "RID",
+      "type": "RID"
+    }
+  }
+}

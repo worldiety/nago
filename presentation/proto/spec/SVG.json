@@ -1,0 +1,8 @@
+{
+  "doc": "SVG contains the valid embeddable source of Scalable Vector Graphics.",
+  "kind": "String",
+  "id": 63,
+  "go": {
+    "type": "[]byte"
+  }
+}

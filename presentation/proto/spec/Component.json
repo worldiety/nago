@@ -3,6 +3,12 @@
   "kind": "Enum",
 
   "variants": [
-    "Box"
+    "Box",
+    "DatePicker",
+    "Checkbox",
+    "Divider",
+    "Grid",
+    "HStack",
+    "Img"
   ]
 }

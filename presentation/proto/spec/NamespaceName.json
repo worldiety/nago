@@ -1,0 +1,5 @@
+{
+  "doc": "NamespaceName refers to a component or views namespace declaration. Besides the universe space, this is almost relevant for the backend, however it defines variables at the frontend, thus it may open some optimizations.",
+  "kind": "String",
+  "id": 37
+}

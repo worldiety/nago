@@ -1,0 +1,7 @@
+{
+  "doc": "NamespacedColors represents a map of namespaces with associated color values.",
+  "kind": "Map",
+  "id": 40,
+  "key": "NamespaceName",
+  "value": "NamedColors"
+}
