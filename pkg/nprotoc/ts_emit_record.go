@@ -71,6 +71,11 @@ func (c *Compiler) tsEmitRecordConstructor(t Typename, decl Record) {
 }
 
 func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
+	if len(decl.Fields) == 0 {
+		c.pn("read(r: BinaryReader): void {r.readByte();}")
+		return nil
+	}
+
 	c.pn("read(reader: BinaryReader): void {")
 	c.inc()
 
@@ -83,7 +88,7 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 	c.pn("switch (fieldHeader.fieldId) {")
 	c.inc()
 	for fid, field := range decl.sortedFields() {
-		c.pf("case %d:\n", fid)
+		c.pf("case %d: {\n", fid)
 		c.inc()
 		sh, err := c.shapeOf(field.Type)
 		if err != nil {
@@ -102,6 +107,7 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 
 		c.pn("break")
 		c.dec()
+		c.pn("}")
 	}
 
 	c.pn("default:")
@@ -120,6 +126,10 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 }
 
 func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
+	if len(decl.Fields) == 0 {
+		c.pn("write(w: BinaryWriter): void {w.writeByte(0);}")
+		return nil
+	}
 
 	c.pn("write(writer: BinaryWriter): void {")
 	c.inc()
@@ -170,6 +180,11 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 }
 
 func (c *Compiler) tsEmitRecordIsZero(t Typename, decl Record) error {
+	if len(decl.Fields) == 0 {
+		c.pn("isZero(): boolean {return true;}")
+		return nil
+	}
+
 	c.pn("isZero(): boolean {")
 	c.inc()
 
@@ -196,6 +211,11 @@ func (c *Compiler) tsEmitRecordIsZero(t Typename, decl Record) error {
 }
 
 func (c *Compiler) tsEmitRecordReset(t Typename, decl Record) error {
+	if len(decl.Fields) == 0 {
+		c.pn("reset(): void {}")
+		return nil
+	}
+
 	c.pn("reset(): void {")
 	c.inc()
 

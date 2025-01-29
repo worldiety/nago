@@ -1,0 +1,12 @@
+{
+  "doc": "ThemeRequested is usually emitted by the backend, so that the frontend will switch (and remember) the required theme state.",
+  "kind": "Record",
+  "id": 70,
+  "fields": {
+    "1": {
+      "doc": "Theme contains the name of the theme to apply. Usually light or dark, however we may want to provide more or go even arbitrary.",
+      "name": "Theme",
+      "type": "ThemeID"
+    }
+  }
+}

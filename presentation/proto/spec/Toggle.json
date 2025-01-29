@@ -1,0 +1,24 @@
+{
+  "doc": "Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation functions. In contrast to that, use a checkbox for form things without an immediate effect.",
+  "kind": "Record",
+  "id": 107,
+  "fields": {
+    "1": {
+      "doc": "InputValue is where updated value of the checked states are written.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Value",
+      "type": "Bool"
+    },
+    "3": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}

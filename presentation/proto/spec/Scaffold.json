@@ -1,0 +1,23 @@
+{
+  "kind": "Record",
+  "id": 85,
+  "fields": {
+    "1": {
+      "name": "Body",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Logo",
+      "type": "Component"
+    },
+    "3": {
+      "name": "Menu",
+      "type": "ScaffoldMenuEntries"
+    },
+    "4": {
+      "name": "Alignment",
+      "type": "ScaffoldAlignment"
+    }
+  }
+}
+

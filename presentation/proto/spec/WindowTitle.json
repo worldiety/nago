@@ -1,0 +1,11 @@
+{
+  "doc": "WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.",
+  "kind": "Record",
+  "id": 77,
+  "fields": {
+    "1": {
+      "name": "Value",
+      "type": "Str"
+    }
+  }
+}

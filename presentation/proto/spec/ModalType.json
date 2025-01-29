@@ -1,0 +1,13 @@
+{
+  "kind": "Uint",
+  "id": 68,
+  "const": {
+    "0": {
+      "name": "ModalTypeDialog"
+    },
+    "1": {
+      "name": "ModalTypeOverlay"
+    }
+  }
+}
+

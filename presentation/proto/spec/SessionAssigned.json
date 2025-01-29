@@ -1,0 +1,11 @@
+{
+  "doc": "SessionAssigned must not be used by browser clients directly. A http channel implementation must issue this by itself due to security concerns like http-only cookies. Native client (mobile or desktop) should use this event instead.",
+  "kind": "Record",
+  "id": 94,
+  "fields": {
+    "1": {
+      "name": "SessionID",
+      "type": "Str"
+    }
+  }
+}

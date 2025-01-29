@@ -1,0 +1,22 @@
+{
+  "doc": "A Resource represents a blob with a name and a resource accessor URI.",
+  "kind": "Record",
+  "id": 91,
+  "fields": {
+    "1": {
+      "doc": "Name must not be a path, just the human readable (and not unique) file name.",
+      "name": "Name",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "URI is likely an unreadable link to resolve the actual data. It may incorporate additional security tokens and may have a limited lifetime and its scheme is undefined.",
+      "name": "URI",
+      "type": "URI"
+    },
+    "3": {
+      "doc": "MimeType is optional and is a hint about the anticipated content.",
+      "name":"MimeType",
+      "type": "Str"
+    }
+  }
+}

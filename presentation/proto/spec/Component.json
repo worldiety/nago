@@ -1,7 +1,6 @@
 {
   "doc": "Component is the building primitive for any widget, behavior or ui element in NAGO.",
   "kind": "Enum",
-
   "variants": [
     "Box",
     "DatePicker",
@@ -9,6 +8,13 @@
     "Divider",
     "Grid",
     "HStack",
-    "Img"
+    "Img",
+    "Modal",
+    "WindowTitle",
+    "PasswordField",
+    "Radiobutton",
+    "ScrollView",
+    "Scaffold",
+    "Spacer"
   ]
 }

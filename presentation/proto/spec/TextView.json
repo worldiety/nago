@@ -1,0 +1,92 @@
+{
+  "kind": "Record",
+  "id": 104,
+  "fields": {
+    "1": {
+      "name": "Value",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Color denotes the text color. Leave empty, for the context sensitiv default theme color.",
+      "name": "Color",
+      "type": "Color"
+    },
+    "3": {
+      "doc": "BackgroundColor denotes the color of the text background. Leave empty, for the context sensitiv default theme color.",
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "4": {
+      "name": "OnClick",
+      "type": "Ptr"
+    },
+    "5": {
+      "name": "OnHoverStart",
+      "type": "Ptr"
+    },
+    "6": {
+      "name": "OnHoverEnd",
+      "type": "Ptr"
+    },
+    "7": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "8": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "9": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "10": {
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "11": {
+      "name": "Font",
+      "type": "Font"
+    },
+    "12": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "13": {
+      "name": "TextAlignment",
+      "type": "TextAlignment"
+    },
+    "14": {
+      "name": "HoveredBackgroundColor",
+      "type": "Color"
+    },
+    "15": {
+      "name": "PressedBackgroundColor",
+      "type": "Color"
+    },
+    "16": {
+      "name": "FocusedBackgroundColor",
+      "type": "Color"
+    },
+    "17": {
+      "name": "HoveredBorder",
+      "type": "Border"
+    },
+    "18": {
+      "name": "PressedBorder",
+      "type": "Border"
+    },
+    "19": {
+      "name": "FocusedBorder",
+      "type": "Border"
+    },
+    "20": {
+      "name": "LineBreak",
+      "type": "Bool"
+    },
+    "21": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "kind": "Record",
+  "id": 106,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "ErrorText is shown instead of SupportingText, even if they are (today) independent",
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Value contains the text, which shall be shown.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "5": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "6": {
+      "doc": "InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "7": {
+      "doc": "Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.",
+      "name": "Style",
+      "type": "TextFieldStyle"
+    },
+    "8": {
+      "doc": "Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.",
+      "name": "Leading",
+      "type": "Component"
+    },
+    "9": {
+      "doc": "Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button) must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.",
+      "name": "Trailing",
+      "type": "Component"
+    },
+    "10": {
+      "doc": "DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.",
+      "name": "DebounceTime",
+      "type": "Duration"
+    },
+    "11": {
+      "doc": "Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.",
+      "name": "Lines",
+      "type": "Uint"
+    },
+    "12": {
+      "name": "KeyboardOptions",
+      "type": "KeyboardOptions"
+    },
+    "13": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "14": {
+      "name": "DisableAutocomplete",
+      "type": "Bool"
+    },
+    "15": {
+      "doc": "DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.",
+      "name": "DisableDebounce",
+      "type": "Bool"
+    },
+    "16": {
+      "name": "Invisible",
+      "type": "Bool"
+    },
+    "17": {
+      "doc": "If Revealed the password is shown",
+      "name": "Revealed",
+      "type": "Bool"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "Uint",
+  "id": 67,
+  "const": {
+    "0": {
+      "name": "KeyboardDefault"
+    },
+    "1": {
+      "name": "KeyboardAscii"
+    },
+    "2": {
+      "name": "KeyboardInteger"
+    },
+    "3": {
+      "name": "KeyboardFloat"
+    },
+    "4": {
+      "name": "KeyboardEMail"
+    },
+    "5": {
+      "name": "KeyboardPhone"
+    },
+    "6": {
+      "name": "KeyboardSearch"
+    },
+    "7": {
+      "name": "KeyboardURL"
+    }
+  }
+}

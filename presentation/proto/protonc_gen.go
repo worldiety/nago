@@ -242,13 +242,20 @@ type Component interface {
 	Readable
 }
 
-func (Box) isComponent()        {}
-func (DatePicker) isComponent() {}
-func (Checkbox) isComponent()   {}
-func (Divider) isComponent()    {}
-func (Grid) isComponent()       {}
-func (HStack) isComponent()     {}
-func (Img) isComponent()        {}
+func (Box) isComponent()           {}
+func (DatePicker) isComponent()    {}
+func (Checkbox) isComponent()      {}
+func (Divider) isComponent()       {}
+func (Grid) isComponent()          {}
+func (HStack) isComponent()        {}
+func (Img) isComponent()           {}
+func (Modal) isComponent()         {}
+func (WindowTitle) isComponent()   {}
+func (PasswordField) isComponent() {}
+func (Radiobutton) isComponent()   {}
+func (ScrollView) isComponent()    {}
+func (Scaffold) isComponent()      {}
+func (Spacer) isComponent()        {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -268,6 +275,12 @@ func (RootViewInvalidated) isNagoEvent()             {}
 func (RootViewRenderingRequested) isNagoEvent()      {}
 func (ErrorOccurred) isNagoEvent()                   {}
 func (ErrorRootViewAllocationRequired) isNagoEvent() {}
+func (FileImportRequested) isNagoEvent()             {}
+func (NavigationBackRequested) isNagoEvent()         {}
+func (NavigationForwardRequested) isNagoEvent()      {}
+func (NavigationReloadRequested) isNagoEvent()       {}
+func (NavigationResetRequested) isNagoEvent()        {}
+func (OpenRequested) isNagoEvent()                   {}
 
 // A Box aligns children elements in absolute within its bounds.
 //   - there is no intrinsic component dimension, so you have to set it by hand
@@ -4199,6 +4212,4150 @@ func (v *FileImportRequested) read(r *BinaryReader) error {
 	return nil
 }
 
+type KeyboardOptions struct {
+	Capitalization     Bool
+	AutoCorrectEnabled Bool
+	KeyboardType       KeyboardType
+}
+
+func (v *KeyboardOptions) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Capitalization.IsZero()
+	fields[2] = !v.AutoCorrectEnabled.IsZero()
+	fields[3] = !v.KeyboardType.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Capitalization.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.AutoCorrectEnabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.KeyboardType.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *KeyboardOptions) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Capitalization.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.AutoCorrectEnabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.KeyboardType.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type KeyboardType uint64
+
+const (
+	KeyboardDefault KeyboardType = 0
+	KeyboardAscii   KeyboardType = 1
+	KeyboardInteger KeyboardType = 2
+	KeyboardFloat   KeyboardType = 3
+	KeyboardEMail   KeyboardType = 4
+	KeyboardPhone   KeyboardType = 5
+	KeyboardSearch  KeyboardType = 6
+	KeyboardURL     KeyboardType = 7
+)
+
+func (v *KeyboardType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *KeyboardType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = KeyboardType(tmp)
+	return nil
+}
+
+func (v *KeyboardType) reset() {
+	*v = KeyboardType(0)
+}
+func (v *KeyboardType) IsZero() bool {
+	return *v == 0
+}
+
+type ModalType uint64
+
+const (
+	ModalTypeDialog  ModalType = 0
+	ModalTypeOverlay ModalType = 1
+)
+
+func (v *ModalType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ModalType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ModalType(tmp)
+	return nil
+}
+
+func (v *ModalType) reset() {
+	*v = ModalType(0)
+}
+func (v *ModalType) IsZero() bool {
+	return *v == 0
+}
+
+// A Modal can be declared at any place in the composed view tree. However, these dialogs are teleported into
+// the modal space in tree declaration order. A Modal is layouted above all other regular content and if ModalTypeDialog
+// will catch focus and disable controls of the views behind. Its bounds are at most the maximum possible screen size.
+type Modal struct {
+	Content Component
+	// OnDismissRequest is called, if the user wants to dismiss the dialog, e.g. by clicking outside or pressing escape. You can then decide to disable you dialog, or not.
+	OnDismissRequest Ptr
+	ModalType        ModalType
+	Top              Length
+	Left             Length
+	Right            Length
+	Bottom           Length
+}
+
+func (v *Modal) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.OnDismissRequest.IsZero()
+	fields[3] = !v.ModalType.IsZero()
+	fields[4] = !v.Top.IsZero()
+	fields[5] = !v.Left.IsZero()
+	fields[6] = !v.Right.IsZero()
+	fields[7] = !v.Bottom.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.OnDismissRequest.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ModalType.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Top.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Left.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Right.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Bottom.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Modal) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.OnDismissRequest.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ModalType.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Top.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Left.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Right.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Bottom.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// ThemeRequested is usually emitted by the backend, so that the frontend will switch (and remember) the required theme state.
+type ThemeRequested struct {
+	// Theme contains the name of the theme to apply. Usually light or dark, however we may want to provide more or go even arbitrary.
+	Theme ThemeID
+}
+
+func (v *ThemeRequested) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Theme.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Theme.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ThemeRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Theme.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// NavigationForwardToRequested is an Event triggered by the backend which requests a forward navigation action within the frontend.
+// A frontend must put the new component to create by the factory on top of the current component within the scope.
+// The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.
+type NavigationForwardRequested struct {
+	RootView RootViewID
+	Values   RootViewParameters
+}
+
+func (v *NavigationForwardRequested) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.RootView.IsZero()
+	fields[2] = !v.Values.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.RootView.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Values.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *NavigationForwardRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.RootView.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Values.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// NavigationResetRequested removes the entire history in the scope and pushes the target on top.
+type NavigationResetRequested struct {
+	RootView RootViewID
+	Values   RootViewParameters
+}
+
+func (v *NavigationResetRequested) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.RootView.IsZero()
+	fields[2] = !v.Values.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.RootView.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Values.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *NavigationResetRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.RootView.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Values.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// NavigationBackRequested steps back causing a likely destruction of the most top component. The frontend may decide to ignore that, if the stack would be empty/undefined otherwise.
+type NavigationBackRequested struct {
+}
+
+func (v *NavigationBackRequested) write(w *BinaryWriter) error {
+	var fields [1]bool
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationBackRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
+type NavigationReloadRequested struct {
+}
+
+func (v *NavigationReloadRequested) write(w *BinaryWriter) error {
+	var fields [1]bool
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationReloadRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
+// OpenRequested is usually emitted by the backend, so that the frontend will trigger a kind of popen or shellexecute.
+type OpenRequested struct {
+	// Resource may be anything, e.g. a path or uuid or URI.
+	Resource Str
+	// Options are simple string key-value pairs which further specifies the open call.
+	Options RootViewParameters
+}
+
+func (v *OpenRequested) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Resource.IsZero()
+	fields[2] = !v.Options.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Resource.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Options.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *OpenRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Resource.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Options.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.
+type WindowTitle struct {
+	Value Str
+}
+
+func (v *WindowTitle) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Value.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WindowTitle) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Duration represents a duration in nanoseconds
+type Duration uint64
+
+func (v *Duration) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *Duration) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = Duration(tmp)
+	return nil
+}
+
+func (v *Duration) reset() {
+	*v = Duration(0)
+}
+func (v *Duration) IsZero() bool {
+	return *v == 0
+}
+
+type PasswordField struct {
+	Label          Str
+	SupportingText Str
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	ErrorText Str
+	// Value contains the text, which shall be shown.
+	Value Str
+	Frame Frame
+	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
+	InputValue Ptr
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	Style TextFieldStyle
+	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+	DebounceTime Duration
+	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
+	Lines               Uint
+	Disabled            Bool
+	DisableAutocomplete Bool
+	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+	DisableDebounce Bool
+	Invisible       Bool
+	// If Revealed the password is shown
+	Revealed Bool
+}
+
+func (v *PasswordField) write(w *BinaryWriter) error {
+	var fields [15]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.SupportingText.IsZero()
+	fields[3] = !v.ErrorText.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.Frame.IsZero()
+	fields[6] = !v.InputValue.IsZero()
+	fields[7] = !v.Style.IsZero()
+	fields[8] = !v.DebounceTime.IsZero()
+	fields[9] = !v.Lines.IsZero()
+	fields[10] = !v.Disabled.IsZero()
+	fields[11] = !v.DisableAutocomplete.IsZero()
+	fields[12] = !v.DisableDebounce.IsZero()
+	fields[13] = !v.Invisible.IsZero()
+	fields[14] = !v.Revealed.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.DebounceTime.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.Lines.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(uvarint, 11); err != nil {
+			return err
+		}
+		if err := v.DisableAutocomplete.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(uvarint, 12); err != nil {
+			return err
+		}
+		if err := v.DisableDebounce.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
+			return err
+		}
+		if err := v.Revealed.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *PasswordField) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.DebounceTime.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Lines.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.DisableAutocomplete.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.DisableDebounce.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.Revealed.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TextFieldStyle uint64
+
+const (
+	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
+	TextFieldOutlined TextFieldStyle = 0
+	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
+	TextFieldReduced TextFieldStyle = 1
+	// TextFieldBasic removes as much as decorations as possible. There may be limitations based on the platform. Note, that an implementation is allowed to ignore leading, trailing, supporting and errorText for this mode. It may serve as a building-block for custom fields.
+	TextFieldBasic TextFieldStyle = 2
+)
+
+func (v *TextFieldStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *TextFieldStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = TextFieldStyle(tmp)
+	return nil
+}
+
+func (v *TextFieldStyle) reset() {
+	*v = TextFieldStyle(0)
+}
+func (v *TextFieldStyle) IsZero() bool {
+	return *v == 0
+}
+
+// Ping is usually send by the frontend to the backend to keep the websocket alive for all intermediate proxies or other underlying channel implementations.
+type Ping struct {
+}
+
+func (v *Ping) write(w *BinaryWriter) error {
+	var fields [1]bool
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Ping) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
+// Radiobutton represents a user interface element which spans a visible area to click or tap from the user. Usually a radiobutton belongs to a group, where only a single element can be picked. Thus, it is quite similar to a Spinner/Select/Combobox.
+type Radiobutton struct {
+	// InputValue is where updated value of the checked states are written.
+	InputValue Ptr
+	// Value is the initial checked value.
+	Value     Bool
+	Disabled  Bool
+	Invisible Bool
+}
+
+func (v *Radiobutton) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = !v.Disabled.IsZero()
+	fields[4] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Radiobutton) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type ScaffoldAlignment uint64
+
+const (
+	ScaffoldAlignmentTop     ScaffoldAlignment = 0
+	ScaffoldAlignmentLeading ScaffoldAlignment = 1
+)
+
+func (v *ScaffoldAlignment) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ScaffoldAlignment) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ScaffoldAlignment(tmp)
+	return nil
+}
+
+func (v *ScaffoldAlignment) reset() {
+	*v = ScaffoldAlignment(0)
+}
+func (v *ScaffoldAlignment) IsZero() bool {
+	return *v == 0
+}
+
+type Scaffold struct {
+	Body      Component
+	Logo      Component
+	Menu      ScaffoldMenuEntries
+	Alignment ScaffoldAlignment
+}
+
+func (v *Scaffold) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = v.Body != nil && !v.Body.IsZero()
+	fields[2] = v.Logo != nil && !v.Logo.IsZero()
+	fields[3] = !v.Menu.IsZero()
+	fields[4] = !v.Alignment.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Body.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Body.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Logo.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Logo.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Menu.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Scaffold) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Body = obj.(Component)
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Logo = obj.(Component)
+		case 3:
+			err := v.Menu.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type ScaffoldMenuEntry struct {
+	Icon       Component
+	IconActive Component
+	Title      Str
+	Action     Ptr
+	RootView   RootViewID
+	Menu       ScaffoldMenuEntries
+	Badge      Str
+	Expanded   Bool
+}
+
+func (v *ScaffoldMenuEntry) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = v.Icon != nil && !v.Icon.IsZero()
+	fields[2] = v.IconActive != nil && !v.IconActive.IsZero()
+	fields[3] = !v.Title.IsZero()
+	fields[4] = !v.Action.IsZero()
+	fields[5] = !v.RootView.IsZero()
+	fields[6] = !v.Menu.IsZero()
+	fields[7] = !v.Badge.IsZero()
+	fields[8] = !v.Expanded.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Icon.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Icon.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.IconActive.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.IconActive.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.RootView.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(array, 6); err != nil {
+			return err
+		}
+		if err := v.Menu.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Badge.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Expanded.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ScaffoldMenuEntry) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Icon = obj.(Component)
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.IconActive = obj.(Component)
+		case 3:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.RootView.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Menu.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Badge.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Expanded.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// ScopeDestructionRequested can be emitted by a frontend to deallocate a scope, its states and root view at the backend side. This is usually only possible, if you have a kind of destruction event in the frontend.
+type ScopeDestructionRequested struct {
+}
+
+func (v *ScopeDestructionRequested) write(w *BinaryWriter) error {
+	var fields [1]bool
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScopeDestructionRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
+type ScrollViewAxis uint64
+
+const (
+	ScrollViewAxisVertical   ScrollViewAxis = 0
+	ScrollViewAxisHorizontal ScrollViewAxis = 1
+)
+
+func (v *ScrollViewAxis) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ScrollViewAxis) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ScrollViewAxis(tmp)
+	return nil
+}
+
+func (v *ScrollViewAxis) reset() {
+	*v = ScrollViewAxis(0)
+}
+func (v *ScrollViewAxis) IsZero() bool {
+	return *v == 0
+}
+
+// A ScrollView can either be horizontal or vertical.
+type ScrollView struct {
+	Content         Component
+	Border          Border
+	Frame           Frame
+	Padding         Padding
+	BackgroundColor Color
+	Axis            ScrollViewAxis
+	Invisible       Bool
+}
+
+func (v *ScrollView) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.Border.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.Padding.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.Axis.IsZero()
+	fields[7] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Axis.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ScrollView) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Axis.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// A Resource represents a blob with a name and a resource accessor URI.
+type Resource struct {
+	// Name must not be a path, just the human readable (and not unique) file name.
+	Name Str
+	// URI is likely an unreadable link to resolve the actual data. It may incorporate additional security tokens and may have a limited lifetime and its scheme is undefined.
+	URI URI
+	// MimeType is optional and is a hint about the anticipated content.
+	MimeType Str
+}
+
+func (v *Resource) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Name.IsZero()
+	fields[2] = !v.URI.IsZero()
+	fields[3] = !v.MimeType.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Name.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.URI.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.MimeType.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Resource) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Name.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.URI.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.MimeType.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SendMultipleRequested is an event for the frontend from the backend
+// to send the according resources into the system environment.
+// A Webbrowser may issue a regular download. A backend should not issue multiple downloads at once but instead
+// pack multiple files into a zip file because the browser support for something like a multipart download
+// is just broken today. An Android App may trigger the according Intent and opens a picker
+// to select the receiving app.
+type SendMultipleRequested struct {
+	Resources Resources
+}
+
+func (v *SendMultipleRequested) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Resources.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Resources.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SendMultipleRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Resources.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SessionAssigned must not be used by browser clients directly. A http channel implementation must issue this by itself due to security concerns like http-only cookies. Native client (mobile or desktop) should use this event instead.
+type SessionAssigned struct {
+	SessionID Str
+}
+
+func (v *SessionAssigned) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.SessionID.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.SessionID.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SessionAssigned) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.SessionID.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.
+type Spacer struct {
+	Frame           Frame
+	Border          Border
+	BackgroundColor Color
+}
+
+func (v *Spacer) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Frame.IsZero()
+	fields[2] = !v.Border.IsZero()
+	fields[3] = !v.BackgroundColor.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Spacer) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Table represents a pre-styled table with limited styling capabilities. Use Grid for maximum flexibility.
+type Table struct {
+	Header             TableHeader
+	Rows               TableRows
+	Frame              Frame
+	BackgroundColor    Color
+	Border             Border
+	DefaultCellPadding Padding
+	RowDividerColor    Color
+	HeaderDividerColor Color
+}
+
+func (v *Table) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.Header.IsZero()
+	fields[2] = !v.Rows.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.BackgroundColor.IsZero()
+	fields[5] = !v.Border.IsZero()
+	fields[6] = !v.DefaultCellPadding.IsZero()
+	fields[7] = !v.RowDividerColor.IsZero()
+	fields[8] = !v.HeaderDividerColor.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Header.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Rows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(record, 6); err != nil {
+			return err
+		}
+		if err := v.DefaultCellPadding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.RowDividerColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.HeaderDividerColor.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Table) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Header.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Rows.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.DefaultCellPadding.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.RowDividerColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.HeaderDividerColor.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TableCell struct {
+	Content Component
+	// Values higher than 65534 are clipped.
+	RowSpan Uint
+	// Values higher than 1000 are clipped.
+	ColSpan                Uint
+	Alignment              Alignment
+	BackgroundColor        Color
+	HoveredBackgroundColor Color
+	Padding                Padding
+	Border                 Border
+	Action                 Ptr
+	Hovered                Bool
+}
+
+func (v *TableCell) write(w *BinaryWriter) error {
+	var fields [11]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.RowSpan.IsZero()
+	fields[3] = !v.ColSpan.IsZero()
+	fields[4] = !v.Alignment.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.HoveredBackgroundColor.IsZero()
+	fields[7] = !v.Padding.IsZero()
+	fields[8] = !v.Border.IsZero()
+	fields[9] = !v.Action.IsZero()
+	fields[10] = !v.Hovered.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.RowSpan.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ColSpan.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.HoveredBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Hovered.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableCell) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.RowSpan.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ColSpan.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.HoveredBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Hovered.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TableColumn struct {
+	Content Component
+	// Values higher than 1000 are clipped.
+	ColSpan                    Uint
+	Width                      Length
+	Alignment                  Alignment
+	CellBackgroundColor        Color
+	CellAction                 Ptr
+	CellPadding                Padding
+	CellBorder                 Border
+	CellHoveredBackgroundColor Color
+	CellHovered                Bool
+}
+
+func (v *TableColumn) write(w *BinaryWriter) error {
+	var fields [11]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.ColSpan.IsZero()
+	fields[3] = !v.Width.IsZero()
+	fields[4] = !v.Alignment.IsZero()
+	fields[5] = !v.CellBackgroundColor.IsZero()
+	fields[6] = !v.CellAction.IsZero()
+	fields[7] = !v.CellPadding.IsZero()
+	fields[8] = !v.CellBorder.IsZero()
+	fields[9] = !v.CellHoveredBackgroundColor.IsZero()
+	fields[10] = !v.CellHovered.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.ColSpan.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.CellBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.CellAction.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.CellPadding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.CellBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.CellHoveredBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.CellHovered.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableColumn) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.ColSpan.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.CellBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.CellAction.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.CellPadding.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.CellBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.CellHoveredBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.CellHovered.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TableRow struct {
+	Cells                  TableCells
+	Height                 Length
+	BackgroundColor        Color
+	HoveredBackgroundColor Color
+	Action                 Ptr
+	Hovered                Bool
+}
+
+func (v *TableRow) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Cells.IsZero()
+	fields[2] = !v.Height.IsZero()
+	fields[3] = !v.BackgroundColor.IsZero()
+	fields[4] = !v.HoveredBackgroundColor.IsZero()
+	fields[5] = !v.Action.IsZero()
+	fields[6] = !v.Hovered.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Cells.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Height.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.HoveredBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Hovered.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableRow) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Cells.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.HoveredBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Hovered.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// TableHeader aggregates the optional header properties and defines columns from left to right. We are not assigning cells to columns by id, to lower the protocol overhead.
+type TableHeader struct {
+	Columns TableColumns
+}
+
+func (v *TableHeader) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Columns.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Columns.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableHeader) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Columns.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TextView struct {
+	Value Str
+	// Color denotes the text color. Leave empty, for the context sensitiv default theme color.
+	Color Color
+	// BackgroundColor denotes the color of the text background. Leave empty, for the context sensitiv default theme color.
+	BackgroundColor        Color
+	OnClick                Ptr
+	OnHoverStart           Ptr
+	OnHoverEnd             Ptr
+	Border                 Border
+	Padding                Padding
+	Frame                  Frame
+	AccessibilityLabel     Str
+	Font                   Font
+	Action                 Ptr
+	TextAlignment          TextAlignment
+	HoveredBackgroundColor Color
+	PressedBackgroundColor Color
+	FocusedBackgroundColor Color
+	HoveredBorder          Border
+	PressedBorder          Border
+	FocusedBorder          Border
+	LineBreak              Bool
+	Invisible              Bool
+}
+
+func (v *TextView) write(w *BinaryWriter) error {
+	var fields [22]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Color.IsZero()
+	fields[3] = !v.BackgroundColor.IsZero()
+	fields[4] = !v.OnClick.IsZero()
+	fields[5] = !v.OnHoverStart.IsZero()
+	fields[6] = !v.OnHoverEnd.IsZero()
+	fields[7] = !v.Border.IsZero()
+	fields[8] = !v.Padding.IsZero()
+	fields[9] = !v.Frame.IsZero()
+	fields[10] = !v.AccessibilityLabel.IsZero()
+	fields[11] = !v.Font.IsZero()
+	fields[12] = !v.Action.IsZero()
+	fields[13] = !v.TextAlignment.IsZero()
+	fields[14] = !v.HoveredBackgroundColor.IsZero()
+	fields[15] = !v.PressedBackgroundColor.IsZero()
+	fields[16] = !v.FocusedBackgroundColor.IsZero()
+	fields[17] = !v.HoveredBorder.IsZero()
+	fields[18] = !v.PressedBorder.IsZero()
+	fields[19] = !v.FocusedBorder.IsZero()
+	fields[20] = !v.LineBreak.IsZero()
+	fields[21] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.OnClick.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.OnHoverStart.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.OnHoverEnd.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(record, 11); err != nil {
+			return err
+		}
+		if err := v.Font.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(uvarint, 12); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.TextAlignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(byteSlice, 14); err != nil {
+			return err
+		}
+		if err := v.HoveredBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(byteSlice, 15); err != nil {
+			return err
+		}
+		if err := v.PressedBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(byteSlice, 16); err != nil {
+			return err
+		}
+		if err := v.FocusedBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(record, 17); err != nil {
+			return err
+		}
+		if err := v.HoveredBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(record, 18); err != nil {
+			return err
+		}
+		if err := v.PressedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[19] {
+		if err := w.writeFieldHeader(record, 19); err != nil {
+			return err
+		}
+		if err := v.FocusedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[20] {
+		if err := w.writeFieldHeader(uvarint, 20); err != nil {
+			return err
+		}
+		if err := v.LineBreak.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[21] {
+		if err := w.writeFieldHeader(uvarint, 21); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TextView) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.OnClick.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.OnHoverStart.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.OnHoverEnd.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Font.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.TextAlignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.HoveredBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.PressedBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.FocusedBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.HoveredBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.PressedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.FocusedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 20:
+			err := v.LineBreak.read(r)
+			if err != nil {
+				return err
+			}
+		case 21:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type TextAlignment uint64
+
+const (
+	TextAlignInherit TextAlignment = 0
+	TextAlignStart   TextAlignment = 1
+	TextAlignEnd     TextAlignment = 2
+	TextAlignCenter  TextAlignment = 3
+	TextAlignJustify TextAlignment = 4
+)
+
+func (v *TextAlignment) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *TextAlignment) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = TextAlignment(tmp)
+	return nil
+}
+
+func (v *TextAlignment) reset() {
+	*v = TextAlignment(0)
+}
+func (v *TextAlignment) IsZero() bool {
+	return *v == 0
+}
+
+type TextField struct {
+	Label          Str
+	SupportingText Str
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	ErrorText Str
+	// Value contains the text, which shall be shown.
+	Value Str
+	Frame Frame
+	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
+	InputValue Ptr
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	Style TextFieldStyle
+	// Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.
+	Leading Component
+	// Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button) must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.
+	Trailing Component
+	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+	DebounceTime Duration
+	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
+	Lines               Uint
+	KeyboardOptions     KeyboardOptions
+	Disabled            Bool
+	DisableAutocomplete Bool
+	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+	DisableDebounce Bool
+	Invisible       Bool
+	// If Revealed the password is shown
+	Revealed Bool
+}
+
+func (v *TextField) write(w *BinaryWriter) error {
+	var fields [18]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.SupportingText.IsZero()
+	fields[3] = !v.ErrorText.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.Frame.IsZero()
+	fields[6] = !v.InputValue.IsZero()
+	fields[7] = !v.Style.IsZero()
+	fields[8] = v.Leading != nil && !v.Leading.IsZero()
+	fields[9] = v.Trailing != nil && !v.Trailing.IsZero()
+	fields[10] = !v.DebounceTime.IsZero()
+	fields[11] = !v.Lines.IsZero()
+	fields[12] = !v.KeyboardOptions.IsZero()
+	fields[13] = !v.Disabled.IsZero()
+	fields[14] = !v.DisableAutocomplete.IsZero()
+	fields[15] = !v.DisableDebounce.IsZero()
+	fields[16] = !v.Invisible.IsZero()
+	fields[17] = !v.Revealed.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 8); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Leading.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Leading.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 9); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Trailing.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Trailing.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.DebounceTime.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(uvarint, 11); err != nil {
+			return err
+		}
+		if err := v.Lines.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(record, 12); err != nil {
+			return err
+		}
+		if err := v.KeyboardOptions.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
+			return err
+		}
+		if err := v.DisableAutocomplete.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(uvarint, 15); err != nil {
+			return err
+		}
+		if err := v.DisableDebounce.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(uvarint, 17); err != nil {
+			return err
+		}
+		if err := v.Revealed.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TextField) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Leading = obj.(Component)
+		case 9:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Trailing = obj.(Component)
+		case 10:
+			err := v.DebounceTime.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Lines.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.KeyboardOptions.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.DisableAutocomplete.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.DisableDebounce.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.Revealed.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation functions. In contrast to that, use a checkbox for form things without an immediate effect.
+type Toggle struct {
+	// InputValue is where updated value of the checked states are written.
+	InputValue Ptr
+	Value      Bool
+	Disabled   Bool
+	Invisible  Bool
+}
+
+func (v *Toggle) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = !v.Disabled.IsZero()
+	fields[4] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Toggle) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// A TextLayout places its content like a native Text would layout its words, using the same rules for word wrap
+// and alignments. This allows to style inline-components individually. SwiftUI can do this using + on
+// Text and Images. Jetpack has the concept of annotated strings.
+type TextLayout struct {
+	Children           Components
+	Border             Border
+	Frame              Frame
+	BackgroundColor    Color
+	Padding            Padding
+	AccessibilityLabel Str
+	Font               Font
+	Action             Ptr
+	TextAlignment      TextAlignment
+	Invisible          Bool
+}
+
+func (v *TextLayout) write(w *BinaryWriter) error {
+	var fields [11]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Border.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.BackgroundColor.IsZero()
+	fields[5] = !v.Padding.IsZero()
+	fields[6] = !v.AccessibilityLabel.IsZero()
+	fields[7] = !v.Font.IsZero()
+	fields[8] = !v.Action.IsZero()
+	fields[9] = !v.TextAlignment.IsZero()
+	fields[10] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Font.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.TextAlignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TextLayout) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Font.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.TextAlignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// An VStack aligns children elements in a vertical column.
+//   - the intrinsic component dimensions are the sum of all sizes of the contained children
+//   - the parent can define a custom width and height
+//   - if the container is larger than the contained views, it must center vertical or horizontal
+//   - the inner gap between components should be around 2dp
+type VStack struct {
+	Children Components
+	Gap      Length
+	Frame    Frame
+	// Zero value of Alignment is Center (=c) must be applied.
+	Alignment       Alignment
+	BackgroundColor Color
+	Padding         Padding
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	AccessibilityLabel     Str
+	Border                 Border
+	Font                   Font
+	Action                 Ptr
+	HoveredBackgroundColor Color
+	PressedBackgroundColor Color
+	FocusedBackgroundColor Color
+	HoveredBorder          Border
+	PressedBorder          Border
+	FocusedBorder          Border
+	StylePreset            StylePreset
+	Position               Position
+	Disabled               Bool
+	Invisible              Bool
+}
+
+func (v *VStack) write(w *BinaryWriter) error {
+	var fields [21]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Gap.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.Alignment.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.Padding.IsZero()
+	fields[7] = !v.AccessibilityLabel.IsZero()
+	fields[8] = !v.Border.IsZero()
+	fields[9] = !v.Font.IsZero()
+	fields[10] = !v.Action.IsZero()
+	fields[11] = !v.HoveredBackgroundColor.IsZero()
+	fields[12] = !v.PressedBackgroundColor.IsZero()
+	fields[13] = !v.FocusedBackgroundColor.IsZero()
+	fields[14] = !v.HoveredBorder.IsZero()
+	fields[15] = !v.PressedBorder.IsZero()
+	fields[16] = !v.FocusedBorder.IsZero()
+	fields[17] = !v.StylePreset.IsZero()
+	fields[18] = !v.Position.IsZero()
+	fields[19] = !v.Disabled.IsZero()
+	fields[20] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Gap.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(record, 6); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
+			return err
+		}
+		if err := v.Font.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.HoveredBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.PressedBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(byteSlice, 13); err != nil {
+			return err
+		}
+		if err := v.FocusedBackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(record, 14); err != nil {
+			return err
+		}
+		if err := v.HoveredBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(record, 15); err != nil {
+			return err
+		}
+		if err := v.PressedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(record, 16); err != nil {
+			return err
+		}
+		if err := v.FocusedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(uvarint, 17); err != nil {
+			return err
+		}
+		if err := v.StylePreset.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(record, 18); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[19] {
+		if err := w.writeFieldHeader(uvarint, 19); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[20] {
+		if err := w.writeFieldHeader(uvarint, 20); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *VStack) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Gap.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Font.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.HoveredBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.PressedBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.FocusedBackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.HoveredBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.PressedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.FocusedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.StylePreset.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 20:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type WebView struct {
+	URI   URI
+	Frame Frame
+}
+
+func (v *WebView) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.URI.IsZero()
+	fields[2] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.URI.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WebView) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.URI.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way. It is not guaranteed that every pixel change will trigger such an event. However, a frontend must guarantee to send such an event if the WindowSizeClass is changed.
+type WindowInfoChanged struct {
+	WindowInfo WindowInfo
+}
+
+func (v *WindowInfoChanged) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.WindowInfo.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.WindowInfo.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WindowInfoChanged) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.WindowInfo.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -4610,6 +8767,282 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 65:
 		var v FileImportRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 66:
+		var v KeyboardOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 67:
+		var v KeyboardType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 68:
+		var v ModalType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 69:
+		var v Modal
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 70:
+		var v ThemeRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 71:
+		var v NavigationForwardRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 72:
+		var v NavigationResetRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 73:
+		var v NavigationBackRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 74:
+		var v NavigationReloadRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 75:
+		var v ThemeID
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 76:
+		var v OpenRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 77:
+		var v WindowTitle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 78:
+		var v Duration
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 79:
+		var v PasswordField
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 80:
+		var v TextFieldStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 81:
+		var v Ping
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 82:
+		var v Radiobutton
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 83:
+		var v ScaffoldAlignment
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 84:
+		var v ScaffoldMenuEntries
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 85:
+		var v Scaffold
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 86:
+		var v ScaffoldMenuEntry
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 87:
+		var v ScopeID
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 88:
+		var v ScopeDestructionRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 89:
+		var v ScrollViewAxis
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 90:
+		var v ScrollView
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 91:
+		var v Resource
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 92:
+		var v Resources
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 93:
+		var v SendMultipleRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 94:
+		var v SessionAssigned
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 95:
+		var v Spacer
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 96:
+		var v Table
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 97:
+		var v TableCell
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 98:
+		var v TableColumn
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 99:
+		var v TableRow
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 100:
+		var v TableHeader
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 101:
+		var v TableRows
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 102:
+		var v TableCells
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 103:
+		var v TableColumns
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 104:
+		var v TextView
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 105:
+		var v TextAlignment
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 106:
+		var v TextField
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 107:
+		var v Toggle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 108:
+		var v TextLayout
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 109:
+		var v VStack
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 110:
+		var v WebView
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 111:
+		var v WindowInfoChanged
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -5845,6 +10278,692 @@ func (v *FileImportRequested) IsZero() bool {
 	return v.ID.IsZero() && v.ScopeID.IsZero() && v.Multiple.IsZero() && v.MaxBytes.IsZero() && v.AllowedMimeTypes.IsZero()
 }
 
+func (v *KeyboardOptions) reset() {
+	v.Capitalization.reset()
+	v.AutoCorrectEnabled.reset()
+	v.KeyboardType.reset()
+}
+
+func (v *KeyboardOptions) IsZero() bool {
+	return v.Capitalization.IsZero() && v.AutoCorrectEnabled.IsZero() && v.KeyboardType.IsZero()
+}
+
+func (v *Modal) reset() {
+	v.Content = nil
+	v.OnDismissRequest.reset()
+	v.ModalType.reset()
+	v.Top.reset()
+	v.Left.reset()
+	v.Right.reset()
+	v.Bottom.reset()
+}
+
+func (v *Modal) IsZero() bool {
+	return v.Content.IsZero() && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
+}
+
+func (v *ThemeRequested) reset() {
+	v.Theme.reset()
+}
+
+func (v *ThemeRequested) IsZero() bool {
+	return v.Theme.IsZero()
+}
+
+func (v *NavigationForwardRequested) reset() {
+	v.RootView.reset()
+	v.Values.reset()
+}
+
+func (v *NavigationForwardRequested) IsZero() bool {
+	return v.RootView.IsZero() && v.Values.IsZero()
+}
+
+func (v *NavigationResetRequested) reset() {
+	v.RootView.reset()
+	v.Values.reset()
+}
+
+func (v *NavigationResetRequested) IsZero() bool {
+	return v.RootView.IsZero() && v.Values.IsZero()
+}
+
+func (v *NavigationBackRequested) reset() {
+}
+
+func (v *NavigationBackRequested) IsZero() bool {
+	return true
+}
+
+func (v *NavigationReloadRequested) reset() {
+}
+
+func (v *NavigationReloadRequested) IsZero() bool {
+	return true
+}
+
+// ThemeID refers to a specific theme. E.g. dark or light
+type ThemeID string
+
+func (v *ThemeID) write(r *BinaryWriter) error {
+	data := *(*[]byte)(unsafe.Pointer(v))
+	if err := r.writeUvarint(uint64(len(data))); err != nil {
+		return err
+	}
+	return r.write(data)
+}
+
+func (v *ThemeID) read(r *BinaryReader) error {
+	strLen, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, strLen)
+
+	if err := r.read(buf); err != nil {
+		return err
+	}
+
+	*v = *(*ThemeID)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *ThemeID) IsZero() bool {
+	return len(*v) == 0
+}
+
+func (v *ThemeID) reset() {
+	*v = ThemeID("")
+}
+
+func (v *OpenRequested) reset() {
+	v.Resource.reset()
+	v.Options.reset()
+}
+
+func (v *OpenRequested) IsZero() bool {
+	return v.Resource.IsZero() && v.Options.IsZero()
+}
+
+func (v *WindowTitle) reset() {
+	v.Value.reset()
+}
+
+func (v *WindowTitle) IsZero() bool {
+	return v.Value.IsZero()
+}
+
+func (v *PasswordField) reset() {
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Value.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Style.reset()
+	v.DebounceTime.reset()
+	v.Lines.reset()
+	v.Disabled.reset()
+	v.DisableAutocomplete.reset()
+	v.DisableDebounce.reset()
+	v.Invisible.reset()
+	v.Revealed.reset()
+}
+
+func (v *PasswordField) IsZero() bool {
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero()
+}
+
+func (v *Ping) reset() {
+}
+
+func (v *Ping) IsZero() bool {
+	return true
+}
+
+func (v *Radiobutton) reset() {
+	v.InputValue.reset()
+	v.Value.reset()
+	v.Disabled.reset()
+	v.Invisible.reset()
+}
+
+func (v *Radiobutton) IsZero() bool {
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+}
+
+type ScaffoldMenuEntries []ScaffoldMenuEntry
+
+func (v *ScaffoldMenuEntries) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ScaffoldMenuEntries) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]ScaffoldMenuEntry, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*ScaffoldMenuEntry)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *ScaffoldMenuEntries) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *ScaffoldMenuEntries) reset() {
+	*v = nil
+}
+
+func (v *Scaffold) reset() {
+	v.Body = nil
+	v.Logo = nil
+	v.Menu.reset()
+	v.Alignment.reset()
+}
+
+func (v *Scaffold) IsZero() bool {
+	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.Alignment.IsZero()
+}
+
+func (v *ScaffoldMenuEntry) reset() {
+	v.Icon = nil
+	v.IconActive = nil
+	v.Title.reset()
+	v.Action.reset()
+	v.RootView.reset()
+	v.Menu.reset()
+	v.Badge.reset()
+	v.Expanded.reset()
+}
+
+func (v *ScaffoldMenuEntry) IsZero() bool {
+	return v.Icon.IsZero() && v.IconActive.IsZero() && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero()
+}
+
+type ScopeID string
+
+func (v *ScopeID) write(r *BinaryWriter) error {
+	data := *(*[]byte)(unsafe.Pointer(v))
+	if err := r.writeUvarint(uint64(len(data))); err != nil {
+		return err
+	}
+	return r.write(data)
+}
+
+func (v *ScopeID) read(r *BinaryReader) error {
+	strLen, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, strLen)
+
+	if err := r.read(buf); err != nil {
+		return err
+	}
+
+	*v = *(*ScopeID)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *ScopeID) IsZero() bool {
+	return len(*v) == 0
+}
+
+func (v *ScopeID) reset() {
+	*v = ScopeID("")
+}
+
+func (v *ScopeDestructionRequested) reset() {
+}
+
+func (v *ScopeDestructionRequested) IsZero() bool {
+	return true
+}
+
+func (v *ScrollView) reset() {
+	v.Content = nil
+	v.Border.reset()
+	v.Frame.reset()
+	v.Padding.reset()
+	v.BackgroundColor.reset()
+	v.Axis.reset()
+	v.Invisible.reset()
+}
+
+func (v *ScrollView) IsZero() bool {
+	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *Resource) reset() {
+	v.Name.reset()
+	v.URI.reset()
+	v.MimeType.reset()
+}
+
+func (v *Resource) IsZero() bool {
+	return v.Name.IsZero() && v.URI.IsZero() && v.MimeType.IsZero()
+}
+
+type Resources []Resource
+
+func (v *Resources) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Resources) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]Resource, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*Resource)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *Resources) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *Resources) reset() {
+	*v = nil
+}
+
+func (v *SendMultipleRequested) reset() {
+	v.Resources.reset()
+}
+
+func (v *SendMultipleRequested) IsZero() bool {
+	return v.Resources.IsZero()
+}
+
+func (v *SessionAssigned) reset() {
+	v.SessionID.reset()
+}
+
+func (v *SessionAssigned) IsZero() bool {
+	return v.SessionID.IsZero()
+}
+
+func (v *Spacer) reset() {
+	v.Frame.reset()
+	v.Border.reset()
+	v.BackgroundColor.reset()
+}
+
+func (v *Spacer) IsZero() bool {
+	return v.Frame.IsZero() && v.Border.IsZero() && v.BackgroundColor.IsZero()
+}
+
+func (v *Table) reset() {
+	v.Header.reset()
+	v.Rows.reset()
+	v.Frame.reset()
+	v.BackgroundColor.reset()
+	v.Border.reset()
+	v.DefaultCellPadding.reset()
+	v.RowDividerColor.reset()
+	v.HeaderDividerColor.reset()
+}
+
+func (v *Table) IsZero() bool {
+	return v.Header.IsZero() && v.Rows.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Border.IsZero() && v.DefaultCellPadding.IsZero() && v.RowDividerColor.IsZero() && v.HeaderDividerColor.IsZero()
+}
+
+func (v *TableCell) reset() {
+	v.Content = nil
+	v.RowSpan.reset()
+	v.ColSpan.reset()
+	v.Alignment.reset()
+	v.BackgroundColor.reset()
+	v.HoveredBackgroundColor.reset()
+	v.Padding.reset()
+	v.Border.reset()
+	v.Action.reset()
+	v.Hovered.reset()
+}
+
+func (v *TableCell) IsZero() bool {
+	return v.Content.IsZero() && v.RowSpan.IsZero() && v.ColSpan.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
+}
+
+func (v *TableColumn) reset() {
+	v.Content = nil
+	v.ColSpan.reset()
+	v.Width.reset()
+	v.Alignment.reset()
+	v.CellBackgroundColor.reset()
+	v.CellAction.reset()
+	v.CellPadding.reset()
+	v.CellBorder.reset()
+	v.CellHoveredBackgroundColor.reset()
+	v.CellHovered.reset()
+}
+
+func (v *TableColumn) IsZero() bool {
+	return v.Content.IsZero() && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero()
+}
+
+func (v *TableRow) reset() {
+	v.Cells.reset()
+	v.Height.reset()
+	v.BackgroundColor.reset()
+	v.HoveredBackgroundColor.reset()
+	v.Action.reset()
+	v.Hovered.reset()
+}
+
+func (v *TableRow) IsZero() bool {
+	return v.Cells.IsZero() && v.Height.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
+}
+
+func (v *TableHeader) reset() {
+	v.Columns.reset()
+}
+
+func (v *TableHeader) IsZero() bool {
+	return v.Columns.IsZero()
+}
+
+type TableRows []TableRow
+
+func (v *TableRows) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableRows) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]TableRow, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*TableRow)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *TableRows) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *TableRows) reset() {
+	*v = nil
+}
+
+type TableCells []TableCell
+
+func (v *TableCells) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableCells) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]TableCell, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*TableCell)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *TableCells) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *TableCells) reset() {
+	*v = nil
+}
+
+type TableColumns []TableColumn
+
+func (v *TableColumns) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TableColumns) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]TableColumn, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*TableColumn)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *TableColumns) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *TableColumns) reset() {
+	*v = nil
+}
+
+func (v *TextView) reset() {
+	v.Value.reset()
+	v.Color.reset()
+	v.BackgroundColor.reset()
+	v.OnClick.reset()
+	v.OnHoverStart.reset()
+	v.OnHoverEnd.reset()
+	v.Border.reset()
+	v.Padding.reset()
+	v.Frame.reset()
+	v.AccessibilityLabel.reset()
+	v.Font.reset()
+	v.Action.reset()
+	v.TextAlignment.reset()
+	v.HoveredBackgroundColor.reset()
+	v.PressedBackgroundColor.reset()
+	v.FocusedBackgroundColor.reset()
+	v.HoveredBorder.reset()
+	v.PressedBorder.reset()
+	v.FocusedBorder.reset()
+	v.LineBreak.reset()
+	v.Invisible.reset()
+}
+
+func (v *TextView) IsZero() bool {
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *TextField) reset() {
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Value.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Style.reset()
+	v.Leading = nil
+	v.Trailing = nil
+	v.DebounceTime.reset()
+	v.Lines.reset()
+	v.KeyboardOptions.reset()
+	v.Disabled.reset()
+	v.DisableAutocomplete.reset()
+	v.DisableDebounce.reset()
+	v.Invisible.reset()
+	v.Revealed.reset()
+}
+
+func (v *TextField) IsZero() bool {
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero()
+}
+
+func (v *Toggle) reset() {
+	v.InputValue.reset()
+	v.Value.reset()
+	v.Disabled.reset()
+	v.Invisible.reset()
+}
+
+func (v *Toggle) IsZero() bool {
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *TextLayout) reset() {
+	v.Children.reset()
+	v.Border.reset()
+	v.Frame.reset()
+	v.BackgroundColor.reset()
+	v.Padding.reset()
+	v.AccessibilityLabel.reset()
+	v.Font.reset()
+	v.Action.reset()
+	v.TextAlignment.reset()
+	v.Invisible.reset()
+}
+
+func (v *TextLayout) IsZero() bool {
+	return v.Children.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *VStack) reset() {
+	v.Children.reset()
+	v.Gap.reset()
+	v.Frame.reset()
+	v.Alignment.reset()
+	v.BackgroundColor.reset()
+	v.Padding.reset()
+	v.AccessibilityLabel.reset()
+	v.Border.reset()
+	v.Font.reset()
+	v.Action.reset()
+	v.HoveredBackgroundColor.reset()
+	v.PressedBackgroundColor.reset()
+	v.FocusedBackgroundColor.reset()
+	v.HoveredBorder.reset()
+	v.PressedBorder.reset()
+	v.FocusedBorder.reset()
+	v.StylePreset.reset()
+	v.Position.reset()
+	v.Disabled.reset()
+	v.Invisible.reset()
+}
+
+func (v *VStack) IsZero() bool {
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *WebView) reset() {
+	v.URI.reset()
+	v.Frame.reset()
+}
+
+func (v *WebView) IsZero() bool {
+	return v.URI.IsZero() && v.Frame.IsZero()
+}
+
+func (v *WindowInfoChanged) reset() {
+	v.WindowInfo.reset()
+}
+
+func (v *WindowInfoChanged) IsZero() bool {
+	return v.WindowInfo.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -6295,6 +11414,328 @@ func (v *Strings) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FileImportRequested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 65); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *KeyboardOptions) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 66); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *KeyboardType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 67); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ModalType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 68); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Modal) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 69); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ThemeRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 70); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationForwardRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 71); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationResetRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 72); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationBackRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 73); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationReloadRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 74); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ThemeID) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 75); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *OpenRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 76); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WindowTitle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 77); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Duration) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 78); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *PasswordField) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 79); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextFieldStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 80); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Ping) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 81); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Radiobutton) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 82); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScaffoldAlignment) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 83); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScaffoldMenuEntries) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 84); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Scaffold) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 85); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScaffoldMenuEntry) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 86); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScopeID) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 87); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScopeDestructionRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 88); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScrollViewAxis) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 89); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScrollView) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 90); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Resource) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 91); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Resources) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 92); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SendMultipleRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 93); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SessionAssigned) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 94); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Spacer) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 95); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Table) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 96); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableCell) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 97); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableColumn) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 98); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableRow) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 99); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableHeader) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 100); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableRows) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 101); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableCells) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 102); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TableColumns) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 103); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextView) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 104); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextAlignment) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 105); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextField) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 106); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Toggle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 107); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextLayout) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 108); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *VStack) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 109); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WebView) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 110); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WindowInfoChanged) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 111); err != nil {
 		return err
 	}
 	return nil

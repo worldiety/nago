@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 89,
+  "const": {
+    "0": {
+      "name": "ScrollViewAxisVertical"
+    },
+    "1": {
+      "name": "ScrollViewAxisHorizontal"
+    }
+  }
+}

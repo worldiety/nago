@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 71,
+  "fields": {
+    "1": {
+      "name": "RootView",
+      "type": "RootViewID"
+    },
+    "2": {
+      "name": "Values",
+      "type": "RootViewParameters"
+    }
+  }
+}

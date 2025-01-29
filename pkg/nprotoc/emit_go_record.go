@@ -8,6 +8,7 @@ import (
 )
 
 func (c *Compiler) emitGoRecord(t Typename, decl Record) error {
+	// TODO optimize for zero field types
 	var buf bytes.Buffer
 	buf.WriteString(c.makeGoDoc(decl.Doc))
 	buf.WriteString(fmt.Sprintf("type %s struct {\n", t))
@@ -164,6 +165,10 @@ func (c *Compiler) goEmitRecordIsZero(t Typename, decl Record) error {
 			c.p(" && ")
 		}
 		idx++
+	}
+
+	if len(decl.Fields) == 0 {
+		c.p(" true")
 	}
 	c.p("\n")
 

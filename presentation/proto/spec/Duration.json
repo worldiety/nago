@@ -1,0 +1,5 @@
+{
+  "doc": "Duration represents a duration in nanoseconds",
+  "kind": "Uint",
+  "id": 78
+}

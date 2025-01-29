@@ -1,0 +1,10 @@
+{
+  "kind": "Record",
+  "id": 93,
+  "fields": {
+    "1": {
+      "name": "Resources",
+      "type": "Resources"
+    }
+  }
+}

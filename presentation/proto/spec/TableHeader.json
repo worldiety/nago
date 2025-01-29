@@ -1,0 +1,11 @@
+{
+  "doc": "TableHeader aggregates the optional header properties and defines columns from left to right. We are not assigning cells to columns by id, to lower the protocol overhead.",
+  "kind": "Record",
+  "id": 100,
+  "fields": {
+    "1": {
+      "name": "Columns",
+      "type": "TableColumns"
+    }
+  }
+}

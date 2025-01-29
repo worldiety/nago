@@ -1,0 +1,5 @@
+{
+  "doc": "ScopeDestructionRequested can be emitted by a frontend to deallocate a scope, its states and root view at the backend side. This is usually only possible, if you have a kind of destruction event in the frontend.",
+  "kind": "Record",
+  "id": 88
+}

@@ -1,0 +1,39 @@
+{
+  "kind": "Record",
+  "id": 86,
+  "fields": {
+    "1": {
+      "name": "Icon",
+      "type": "Component"
+    },
+    "2": {
+      "name": "IconActive",
+      "type": "Component"
+    },
+    "3": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "5": {
+      "name": "RootView",
+      "type": "RootViewID"
+    },
+    "6": {
+      "name": "Menu",
+      "type": "ScaffoldMenuEntries"
+    },
+    "7": {
+      "name": "Badge",
+      "type": "Str"
+    },
+    "8": {
+      "name": "Expanded",
+      "type": "Bool"
+    }
+  }
+}
+

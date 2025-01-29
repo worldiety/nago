@@ -1,0 +1,11 @@
+{
+  "doc": "WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way. It is not guaranteed that every pixel change will trigger such an event. However, a frontend must guarantee to send such an event if the WindowSizeClass is changed.",
+  "kind":"Record",
+  "id": 111,
+  "fields": {
+    "1": {
+      "name": "WindowInfo",
+      "type": "WindowInfo"
+    }
+  }
+}

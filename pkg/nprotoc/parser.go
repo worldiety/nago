@@ -1,10 +1,13 @@
 package nprotoc
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/worldiety/enum/json"
 	"io/fs"
+	"maps"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -20,7 +23,10 @@ func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 			}
 
 			var decl Declaration
-			if err := json.Unmarshal(buf, &decl); err != nil {
+			dec := json.NewDecoder(bytes.NewBuffer(buf))
+			dec.DisallowUnknownFields()
+			if err := dec.Decode(&decl); err != nil {
+				//if err := json.Unmarshal(buf, &decl); err != nil {
 				return fmt.Errorf("cannot parse '%s': %w", path, err)
 			}
 
@@ -31,13 +37,23 @@ func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 			}
 
 			if rec, ok := decl.(Record); ok {
-				for id, _ := range rec.Fields {
+				last := -1
+				for _, id := range slices.Sorted(maps.Keys(rec.Fields)) {
 					if id < 1 || id > 30 {
 						if id > 30 {
 							return fmt.Errorf("record id '%d' overflows field id which is not yet implemented: workaround: map fields together into another record to introduce another level of indirection", id)
 						}
 
 						return fmt.Errorf("record declaration %s has an invalid field id: %d", path, id)
+					}
+
+					if last == -1 {
+						last = int(id)
+					} else {
+						if last != int(id)-1 {
+							return fmt.Errorf("record declaration %s has an invalid sequence field id: %d expected %d", path, id, last+1)
+						}
+						last = int(id)
 					}
 
 				}

@@ -87,7 +87,6 @@ func Slice(elems ...Component) []Component {
 
 func init() {
 	Components = []reflect.Type{
-		reflect.TypeOf(Page{}),
 		reflect.TypeOf(Scaffold{}),
 		reflect.TypeOf(TextField{}),
 		reflect.TypeOf(PasswordField{}),
@@ -95,12 +94,7 @@ func init() {
 		reflect.TypeOf(Text{}),
 		reflect.TypeOf(Toggle{}),
 		reflect.TypeOf(DatePicker{}),
-		reflect.TypeOf(NumberField{}),
-		reflect.TypeOf(Slider{}),
 		reflect.TypeOf(Divider{}),
-		reflect.TypeOf(Stepper{}),
-		reflect.TypeOf(StepInfo{}),
-		reflect.TypeOf(WebView{}),
 		reflect.TypeOf(Image{}),
 		reflect.TypeOf(Grid{}),
 		reflect.TypeOf(GridCell{}),

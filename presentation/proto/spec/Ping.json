@@ -1,0 +1,5 @@
+{
+  "doc": "Ping is usually send by the frontend to the backend to keep the websocket alive for all intermediate proxies or other underlying channel implementations.",
+  "kind": "Record",
+  "id": 81
+}

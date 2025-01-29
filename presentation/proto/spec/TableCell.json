@@ -1,0 +1,48 @@
+{
+  "kind": "Record",
+  "id": 97,
+  "fields": {
+    "1": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "2": {
+      "doc": "Values higher than 65534 are clipped.",
+      "name": "RowSpan",
+      "type": "Uint"
+    },
+    "3": {
+      "doc": "Values higher than 1000 are clipped.",
+      "name": "ColSpan",
+      "type": "Uint"
+    },
+    "4": {
+      "name": "Alignment",
+      "type": "Alignment"
+    },
+    "5": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "6": {
+      "name": "HoveredBackgroundColor",
+      "type": "Color"
+    },
+    "7": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "8": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "9": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "10": {
+      "name": "Hovered",
+      "type": "Bool"
+    }
+  }
+}

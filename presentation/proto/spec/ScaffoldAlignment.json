@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 83,
+  "const": {
+    "0": {
+      "name": "ScaffoldAlignmentTop"
+    },
+    "1": {
+      "name": "ScaffoldAlignmentLeading"
+    }
+  }
+}

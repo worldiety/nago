@@ -1,0 +1,5 @@
+{
+  "doc": "NavigationBackRequested steps back causing a likely destruction of the most top component. The frontend may decide to ignore that, if the stack would be empty/undefined otherwise.",
+  "kind": "Record",
+  "id": 73
+}

@@ -1,0 +1,47 @@
+{
+  "kind": "Record",
+  "id": 108,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "5": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "6": {
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "7": {
+      "name": "Font",
+      "type": "Font"
+    },
+    "8": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "9": {
+      "name": "TextAlignment",
+      "type": "TextAlignment"
+    },
+    "10": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}
+

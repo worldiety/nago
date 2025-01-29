@@ -1,0 +1,21 @@
+{
+  "kind": "Uint",
+  "id": 105,
+  "const": {
+    "0": {
+      "name": "TextAlignInherit"
+    },
+    "1": {
+      "name": "TextAlignStart"
+    },
+    "2": {
+      "name": "TextAlignEnd"
+    },
+    "3": {
+      "name": "TextAlignCenter"
+    },
+    "4": {
+      "name": "TextAlignJustify"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "Record",
+  "id": 66,
+  "fields": {
+    "1": {
+      "name": "Capitalization",
+      "type": "Bool"
+    },
+    "2": {
+      "name": "AutoCorrectEnabled",
+      "type": "Bool"
+    },
+    "3": {
+      "name": "KeyboardType",
+      "type": "KeyboardType"
+    }
+  }
+}
+

@@ -1,0 +1,39 @@
+{
+  "doc": "Table represents a pre-styled table with limited styling capabilities. Use Grid for maximum flexibility.",
+  "kind": "Record",
+  "id": 96,
+  "fields": {
+    "1": {
+      "name": "Header",
+      "type": "TableHeader"
+    },
+    "2": {
+      "name": "Rows",
+      "type": "TableRows"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "5": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "6": {
+      "name": "DefaultCellPadding",
+      "type": "Padding"
+    },
+    "7": {
+      "name": "RowDividerColor",
+      "type": "Color"
+    },
+    "8": {
+      "name": "HeaderDividerColor",
+      "type": "Color"
+    }
+  }
+}

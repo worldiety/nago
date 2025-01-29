@@ -1,0 +1,35 @@
+{
+  "kind": "Record",
+  "id": 69,
+  "fields": {
+    "1": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "2": {
+      "doc": "OnDismissRequest is called, if the user wants to dismiss the dialog, e.g. by clicking outside or pressing escape. You can then decide to disable you dialog, or not.",
+      "name": "OnDismissRequest",
+      "type": "Ptr"
+    },
+    "3": {
+      "name": "ModalType",
+      "type": "ModalType"
+    },
+    "4": {
+      "name": "Top",
+      "type": "Length"
+    },
+    "5": {
+      "name": "Left",
+      "type": "Length"
+    },
+    "6": {
+      "name": "Right",
+      "type": "Length"
+    },
+    "7": {
+      "name": "Bottom",
+      "type": "Length"
+    }
+  }
+}

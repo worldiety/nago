@@ -1,15 +1,20 @@
 {
   "doc": "NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.",
   "kind": "Enum",
-
   "variants": [
-     "UpdateStateValueRequested",
-     "FunctionCallRequested",
-     "RootViewAllocationRequested",
-     "RootViewDestructionRequested",
-     "RootViewInvalidated",
-     "RootViewRenderingRequested",
-     "ErrorOccurred",
-     "ErrorRootViewAllocationRequired"
+    "UpdateStateValueRequested",
+    "FunctionCallRequested",
+    "RootViewAllocationRequested",
+    "RootViewDestructionRequested",
+    "RootViewInvalidated",
+    "RootViewRenderingRequested",
+    "ErrorOccurred",
+    "ErrorRootViewAllocationRequired",
+    "FileImportRequested",
+    "NavigationBackRequested",
+    "NavigationForwardRequested",
+    "NavigationReloadRequested",
+    "NavigationResetRequested",
+    "OpenRequested"
   ]
 }

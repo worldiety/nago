@@ -1,0 +1,19 @@
+{
+  "doc": "Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.",
+  "kind": "Record",
+  "id": 95,
+  "fields": {
+    "1": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "2": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "3": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    }
+  }
+}

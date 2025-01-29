@@ -1,0 +1,35 @@
+{
+  "doc": "A ScrollView can either be horizontal or vertical.",
+  "kind": "Record",
+  "id": 90,
+  "fields": {
+    "1": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "5": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "6": {
+      "name": "Axis",
+      "type": "ScrollViewAxis"
+    },
+    "7": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}
