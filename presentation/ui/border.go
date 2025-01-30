@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
@@ -27,20 +27,20 @@ type Border struct {
 	BoxShadow Shadow `json:"s,omitempty"`
 }
 
-func (b Border) ora() ora.Border {
-	return ora.Border{
-		TopLeftRadius:     ora.Length(b.TopLeftRadius),
-		TopRightRadius:    ora.Length(b.TopRightRadius),
-		BottomLeftRadius:  ora.Length(b.BottomLeftRadius),
-		BottomRightRadius: ora.Length(b.BottomRightRadius),
-		LeftWidth:         ora.Length(b.LeftWidth),
-		TopWidth:          ora.Length(b.TopWidth),
-		RightWidth:        ora.Length(b.RightWidth),
-		BottomWidth:       ora.Length(b.BottomWidth),
-		LeftColor:         ora.Color(b.LeftColor),
-		TopColor:          ora.Color(b.TopColor),
-		RightColor:        ora.Color(b.RightColor),
-		BottomColor:       ora.Color(b.BottomColor),
+func (b Border) ora() proto.Border {
+	return proto.Border{
+		TopLeftRadius:     proto.Length(b.TopLeftRadius),
+		TopRightRadius:    proto.Length(b.TopRightRadius),
+		BottomLeftRadius:  proto.Length(b.BottomLeftRadius),
+		BottomRightRadius: proto.Length(b.BottomRightRadius),
+		LeftWidth:         proto.Length(b.LeftWidth),
+		TopWidth:          proto.Length(b.TopWidth),
+		RightWidth:        proto.Length(b.RightWidth),
+		BottomWidth:       proto.Length(b.BottomWidth),
+		LeftColor:         proto.Color(b.LeftColor),
+		TopColor:          proto.Color(b.TopColor),
+		RightColor:        proto.Color(b.RightColor),
+		BottomColor:       proto.Color(b.BottomColor),
 		BoxShadow:         b.BoxShadow.ora(),
 	}
 }

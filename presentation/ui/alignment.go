@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 // Alignment is specified as follows:
 //
@@ -25,10 +25,10 @@ import "go.wdy.de/nago/presentation/ora"
 // An empty Alignment must be interpreted as Center (="c"), if not otherwise specified.
 //
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
-type Alignment string
+type Alignment uint
 
-func (a Alignment) ora() ora.Alignment {
-	return ora.Alignment(a)
+func (a Alignment) ora() proto.Alignment {
+	return proto.Alignment(a)
 }
 
 func Alignments() []Alignment {
@@ -71,13 +71,13 @@ func (a Alignment) String() string {
 }
 
 const (
-	Top            Alignment = "u"
-	Center         Alignment = "c"
-	Bottom         Alignment = "b"
-	Leading        Alignment = "l"
-	Trailing       Alignment = "t"
-	TopLeading     Alignment = "ul"
-	TopTrailing    Alignment = "ut"
-	BottomLeading  Alignment = "bl"
-	BottomTrailing Alignment = "bt"
+	Center         Alignment = Alignment(proto.Center)
+	Top            Alignment = Alignment(proto.Top)
+	Bottom         Alignment = Alignment(proto.Bottom)
+	Leading        Alignment = Alignment(proto.Leading)
+	Trailing       Alignment = Alignment(proto.Trailing)
+	TopLeading     Alignment = Alignment(proto.TopLeading)
+	TopTrailing    Alignment = Alignment(proto.TopTrailing)
+	BottomLeading  Alignment = Alignment(proto.BottomLeading)
+	BottomTrailing Alignment = Alignment(proto.BottomTrailing)
 )

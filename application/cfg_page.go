@@ -2,6 +2,7 @@ package application
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"github.com/go-chi/chi/v5"
@@ -14,7 +15,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"io"
 	"io/fs"
 	"log"
@@ -39,7 +40,7 @@ import (
 // You cannot use path variables. Instead, use [core.Values] to transport a state from one ViewRoot
 // (or window) to another.
 func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
-	id := ora.ComponentFactoryId(viewRootID)
+	id := proto.RootViewID(viewRootID)
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid component factory id: %v", id))
 	}
@@ -87,7 +88,7 @@ func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
 
 func (c *Configurator) newHandler() http.Handler {
 
-	factories := map[ora.ComponentFactoryId]core.ComponentFactory{}
+	factories := map[proto.RootViewID]core.ComponentFactory{}
 	for id, f := range c.factories {
 		factories[id] = func(scope core.Window) core.View {
 			return f(scope)
@@ -128,7 +129,7 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	app2.SetVersion(c.applicationVersion)
-	app2.SetAppIcon(c.appIconUri)
+	app2.SetAppIcon(core.URI(c.appIconUri))
 
 	// TODO we are in a weired order here
 	for _, destructor := range c.destructors {
@@ -142,13 +143,12 @@ func (c *Configurator) newHandler() http.Handler {
 
 		name, mimetype := nameAndMime(options)
 
-		scope.Publish(ora.SendMultipleRequested{
-			Type: ora.SendMultipleRequestedT,
-			Resources: []ora.Resource{
+		scope.Publish(&proto.SendMultipleRequested{
+			Resources: []proto.Resource{
 				{
-					Name:     name,
-					URI:      ora.URI(fmt.Sprintf("/api/ora/v1/download?scope=%v&id=%v", scope.ID(), options.ID)),
-					MimeType: mimetype,
+					Name:     proto.Str(name),
+					URI:      proto.URI(fmt.Sprintf("/api/ora/v1/download?scope=%v&id=%v", scope.ID(), options.ID)),
+					MimeType: proto.Str(mimetype),
 				},
 			},
 		})
@@ -160,7 +160,7 @@ func (c *Configurator) newHandler() http.Handler {
 		downloadFilesMutex.Lock()
 		defer downloadFilesMutex.Unlock()
 
-		token := string(ora.NewScopeID())
+		token := string(proto.NewScopeID())
 
 		scope.AddOnDestroyObserver(func() {
 			downloadFilesMutex.Lock()
@@ -200,7 +200,7 @@ func (c *Configurator) newHandler() http.Handler {
 				// TODO move me to the wire, which is called from the JS
 				cookie = &http.Cookie{}
 				cookie.Name = "wdy-ora-access"
-				cookie.Value = string(ora.NewScopeID())
+				cookie.Value = string(proto.NewScopeID())
 				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
 				cookie.Secure = false //TODO in release-mode this must be true
 				cookie.HttpOnly = true
@@ -309,7 +309,7 @@ func (c *Configurator) newHandler() http.Handler {
 		scopeID := r.URL.Query().Get("scope")
 		downloadID := r.URL.Query().Get("id")
 
-		options, ok := app2.ExportFilesOptions(ora.ScopeID(scopeID), downloadID)
+		options, ok := app2.ExportFilesOptions(proto.ScopeID(scopeID), downloadID)
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
@@ -366,7 +366,7 @@ func (c *Configurator) newHandler() http.Handler {
 	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("received upload request")
 		// we support currently only multipart upload forms
-		scopeID := ora.ScopeID(r.Header.Get("x-scope"))
+		scopeID := proto.ScopeID(r.Header.Get("x-scope"))
 		if len(scopeID) < 32 {
 			slog.Error("upload request has a weired x-scope id", "id", scopeID)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -452,16 +452,23 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
-		scope := app2.Connect(channel, ora.ScopeID(scopeID))
+		scope := app2.Connect(channel, proto.ScopeID(scopeID))
 		_ = scope
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		cookie, _ := r.Cookie("wdy-ora-access")
 		if cookie != nil {
-			if err := channel.PublishLocal(ora.Marshal(ora.SessionAssigned{
-				Type:      ora.SessionAssignedT,
-				SessionID: cookie.Value,
-			})); err != nil {
+			buf := bytes.NewBuffer(make([]byte, 0, 512))
+			dst := proto.NewBinaryWriter(buf)
+			err := proto.Marshal(dst, &proto.SessionAssigned{
+				SessionID: proto.Str(cookie.Value),
+			})
+
+			if err != nil {
+				panic(fmt.Errorf("unreachable: %w", err))
+			}
+
+			if err := channel.PublishLocal(buf.Bytes()); err != nil {
 				slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
 				return
 			}

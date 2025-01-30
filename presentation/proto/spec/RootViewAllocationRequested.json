@@ -15,7 +15,8 @@
     "3": {
       "doc": "RID is used to generate a new component request and is returned in the according response.",
       "name": "RID",
-      "type": "RID"
+      "type": "RID",
+      "getter": true
     },
     "4": {
       "doc": "Values contains string encoded parameters for a component. This is like query parameters in the web world.",

@@ -4,22 +4,19 @@ import (
 	"bytes"
 	"encoding/base64"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
-// we have observed several malfunctions during development, so it is not clear if this is due to the dev server.
-const svgFrontendCacheSupport = false
-
 type TImage struct {
-	uri                ora.URI
+	uri                proto.URI
 	accessibilityLabel string
 	invisible          bool
-	border             ora.Border
-	frame              ora.Frame
-	padding            ora.Padding
-	svg                ora.SVG
-	fillColor          ora.Color
-	strokeColor        ora.Color
+	border             proto.Border
+	frame              proto.Frame
+	padding            proto.Padding
+	svg                proto.SVG
+	fillColor          proto.Color
+	strokeColor        proto.Color
 	light, dark        []byte
 }
 
@@ -45,7 +42,7 @@ func ImageIcon(svg core.SVG) TImage {
 // way.
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
 func (c TImage) URI(uri core.URI) TImage {
-	c.uri = ora.URI(uri)
+	c.uri = proto.URI(uri)
 	return c
 }
 
@@ -110,7 +107,7 @@ func (c TImage) Frame(frame Frame) DecoredView {
 	return c
 }
 
-func (c TImage) Render(ctx core.RenderContext) ora.Component {
+func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 	// start of delayed encoding
 	if c.light != nil || c.dark != nil {
 		var buf []byte
@@ -135,33 +132,21 @@ func (c TImage) Render(ctx core.RenderContext) ora.Component {
 		}
 
 		b64 := base64.StdEncoding.EncodeToString(buf)
-		//c.uri = ora.URI(`data:image/svg+xml;base64,` + b64)
-		c.uri = ora.URI(`data:application/octet-stream;base64,` + b64)
+		//c.uri = proto.URI(`data:image/svg+xml;base64,` + b64)
+		c.uri = proto.URI(`data:application/octet-stream;base64,` + b64)
 	}
 	// end of delayed encoding
 
 	svgData := c.svg
-	var cachePointer ora.Ptr
-	if svgFrontendCacheSupport {
-		ptr, created := ctx.Handle(c.svg)
-		if ptr != 0 && !created {
-			// if ptr is not nil and it has already been created, we can omit the data
-			// because the client already knows how the data looks for the handle pointer.
-			svgData = nil
-			cachePointer = ptr
-		}
-	}
 
-	return ora.Image{
-		Type:               ora.ImageT,
-		URI:                c.uri,
-		AccessibilityLabel: c.accessibilityLabel,
-		Invisible:          c.invisible,
+	return &proto.Img{
+		Uri:                c.uri,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
+		Invisible:          proto.Bool(c.invisible),
 		Border:             c.border,
 		Frame:              c.frame,
 		Padding:            c.padding,
 		SVG:                svgData,
-		CachedSVG:          cachePointer,
 		FillColor:          c.fillColor,
 		StrokeColor:        c.strokeColor,
 	}

@@ -1,6 +1,10 @@
 package core
 
-import "regexp"
+import (
+	"fmt"
+	"go.wdy.de/nago/presentation/proto"
+	"regexp"
+)
 
 // A ColorSet marks a simple struct with public color fields (like [Colors]) to be a set of colors.
 // It returns its unique namespace and has a Default behavior, as a fallback.
@@ -23,9 +27,20 @@ func (c NamespaceName) Valid() bool {
 	return validColorNamespaceNameRegex.MatchString(string(c))
 }
 
-type ColorScheme string
+type ColorScheme uint
+
+func (c ColorScheme) String() string {
+	switch c {
+	case Light:
+		return "light"
+	case Dark:
+		return "dark"
+	default:
+		return fmt.Sprintf("%d", c)
+	}
+}
 
 const (
-	Light ColorScheme = "light"
-	Dark  ColorScheme = "dark"
+	Light ColorScheme = ColorScheme(proto.Light)
+	Dark  ColorScheme = ColorScheme(proto.Dark)
 )

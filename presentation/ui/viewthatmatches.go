@@ -35,11 +35,7 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 			best = match
 		}
 	}
-
-	if best.SizeClass == "" && best.View == nil {
-		panic("unreachable")
-	}
-
+	
 	if best.View == nil {
 		panic("you must not provide an empty view in match")
 	}

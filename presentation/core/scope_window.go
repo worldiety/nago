@@ -6,7 +6,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
 	"io"
 	"log/slog"
@@ -26,37 +26,37 @@ type declaredBufferKey struct {
 type scopeWindow struct {
 	parent        *Scope
 	rootFactory   std.Option[ComponentFactory]
-	lastRendering std.Option[ora.Component]
+	lastRendering std.Option[proto.Component]
 	destroyed     bool
-	callbackPtr   ora.Ptr
-	callbacks     map[ora.Ptr]func()
-	//lastAutoStatePtr      ora.Ptr
-	lastStatePtrById      ora.Ptr
-	states                map[ora.Ptr]Property
+	callbackPtr   proto.Ptr
+	callbacks     map[proto.Ptr]func()
+	//lastAutoStatePtr      proto.Ptr
+	lastStatePtrById      proto.Ptr
+	states                map[proto.Ptr]Property
 	statesById            map[string]Property
-	filesReceiver         map[ora.Ptr]FilesReceiver
+	filesReceiver         map[proto.Ptr]FilesReceiver
 	destroyObservers      map[int]func()
 	importFilesReceivers  map[string]ImportFilesOptions
 	exportFilesReceivers  map[string]ExportFilesOptions
 	hnd                   int
-	factory               ora.ComponentFactoryId
+	factory               proto.RootViewID
 	navController         *navigationController
 	values                Values
-	declaredBuffers       map[declaredBufferKey]ora.Ptr
-	lastDeclaredBufferPtr ora.Ptr
+	declaredBuffers       map[declaredBufferKey]proto.Ptr
+	lastDeclaredBufferPtr proto.Ptr
 	isRendering           bool
 	generation            int64
 	mutex                 sync.Mutex
 }
 
-func newScopeWindow(parent *Scope, factory ora.ComponentFactoryId, values Values) *scopeWindow {
+func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *scopeWindow {
 	s := &scopeWindow{parent: parent}
-	s.callbacks = map[ora.Ptr]func(){}
+	s.callbacks = map[proto.Ptr]func(){}
 	s.factory = factory
-	s.states = map[ora.Ptr]Property{}
+	s.states = map[proto.Ptr]Property{}
 	s.statesById = map[string]Property{}
 	s.lastStatePtrById = maxAutoPtr
-	s.declaredBuffers = map[declaredBufferKey]ora.Ptr{}
+	s.declaredBuffers = map[declaredBufferKey]proto.Ptr{}
 	s.generation = 0
 
 	if values == nil {
@@ -111,7 +111,7 @@ func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
 	}
 }
 
-func (s *scopeWindow) render() ora.Component {
+func (s *scopeWindow) render() proto.Component {
 	s.isRendering = true
 	s.generation++
 	defer func() {
@@ -146,9 +146,8 @@ func (s *scopeWindow) Window() Window {
 }
 
 func (s *scopeWindow) SetColorScheme(scheme ColorScheme) {
-	s.parent.Publish(ora.ThemeRequested{
-		Type:  ora.ThemeRequestedT,
-		Theme: string(scheme),
+	s.parent.Publish(&proto.ThemeRequested{
+		Theme: proto.ThemeID(scheme.String()),
 	})
 }
 
@@ -193,7 +192,7 @@ func (s *scopeWindow) destroy() {
 
 }
 
-func (s *scopeWindow) Handle(buf []byte) (ora.Ptr, bool) {
+func (s *scopeWindow) Handle(buf []byte) (proto.Ptr, bool) {
 	if len(buf) == 0 {
 		return 0, false
 	}
@@ -213,7 +212,7 @@ func (s *scopeWindow) Handle(buf []byte) (ora.Ptr, bool) {
 	return s.lastDeclaredBufferPtr, true
 }
 
-func (s *scopeWindow) MountCallback(f func()) ora.Ptr {
+func (s *scopeWindow) MountCallback(f func()) proto.Ptr {
 	if f == nil {
 		return 0
 	}
@@ -275,13 +274,12 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 
 	s.importFilesReceivers[options.ID] = options
 
-	s.parent.Publish(ora.FileImportRequested{
-		Type:             ora.FileImportRequestedT,
-		ID:               options.ID,
-		ScopeID:          string(s.parent.id),
-		Multiple:         options.Multiple,
-		MaxBytes:         options.MaxBytes,
-		AllowedMimeTypes: options.AllowedMimeTypes,
+	s.parent.Publish(&proto.FileImportRequested{
+		ID:               proto.Str(options.ID),
+		ScopeID:          proto.Str(s.parent.id),
+		Multiple:         proto.Bool(options.Multiple),
+		MaxBytes:         proto.Uint(options.MaxBytes),
+		AllowedMimeTypes: intoStrSlice[string, proto.Str](options.AllowedMimeTypes),
 	})
 }
 

@@ -37,19 +37,19 @@
     },
     "9": {
       "name": "LeftColor",
-      "type": "Length"
+      "type": "Color"
     },
     "10": {
       "name": "TopColor",
-      "type": "Length"
+      "type": "Color"
     },
     "11": {
       "name": "RightColor",
-      "type": "Length"
+      "type": "Color"
     },
     "12": {
       "name": "BottomColor",
-      "type": "Length"
+      "type": "Color"
     },
     "13": {
       "name": "BoxShadow",

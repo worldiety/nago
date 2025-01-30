@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"iter"
 )
 
@@ -100,13 +100,12 @@ func (c TRadioButton) Visible(v bool) TRadioButton {
 	return c
 }
 
-func (c TRadioButton) Render(ctx core.RenderContext) ora.Component {
+func (c TRadioButton) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.Radiobutton{
-		Type:       ora.RadiobuttonT,
-		Value:      c.value,
+	return &proto.Radiobutton{
+		Value:      proto.Bool(c.value),
 		InputValue: c.inputValue.Ptr(),
-		Disabled:   c.disabled,
-		Invisible:  c.invisible,
+		Disabled:   proto.Bool(c.disabled),
+		Invisible:  proto.Bool(c.invisible),
 	}
 }

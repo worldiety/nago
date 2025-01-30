@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type Font struct {
 	// Name of the font or family name as fallback. Extra fallback declarations are unspecified and must be comma
@@ -15,12 +15,12 @@ type Font struct {
 	Weight FontWeight
 }
 
-func (f Font) ora() ora.Font {
-	return ora.Font{
-		Name:   f.Name,
-		Size:   ora.Length(f.Size),
-		Style:  ora.FontStyle(f.Style),
-		Weight: ora.FontWeight(f.Weight),
+func (f Font) ora() proto.Font {
+	return proto.Font{
+		Name:   proto.Str(f.Name),
+		Size:   proto.Length(f.Size),
+		Style:  proto.FontStyle(f.Style),
+		Weight: proto.FontWeight(f.Weight),
 	}
 }
 
@@ -41,11 +41,11 @@ var (
 	}
 )
 
-type FontStyle string
+type FontStyle uint
 
 const (
-	ItalicFontStyle FontStyle = "i"
-	NormalFontStyle           = "n"
+	ItalicFontStyle FontStyle = FontStyle(proto.ItalicFontStyle)
+	NormalFontStyle           = FontStyle(proto.NormalFontStyle)
 )
 
 type FontWeight int

@@ -6,6 +6,11 @@
     "1": {
       "name": "WindowInfo",
       "type": "WindowInfo"
+    },
+    "2": {
+      "name": "RID",
+      "type": "RID",
+      "getter": true
     }
   }
 }

@@ -2,12 +2,12 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"iter"
 	"slices"
 )
 
-func render(ctx core.RenderContext, c core.View) ora.Component {
+func render(ctx core.RenderContext, c core.View) proto.Component {
 	if c == nil {
 		return nil
 	}
@@ -15,8 +15,8 @@ func render(ctx core.RenderContext, c core.View) ora.Component {
 	return c.Render(ctx)
 }
 
-func renderComponents(ctx core.RenderContext, c []core.View) []ora.Component {
-	res := make([]ora.Component, 0, len(c))
+func renderComponents(ctx core.RenderContext, c []core.View) []proto.Component {
+	res := make([]proto.Component, 0, len(c))
 	for _, component := range c {
 		if component == nil {
 			continue
@@ -29,13 +29,6 @@ func renderComponents(ctx core.RenderContext, c []core.View) []ora.Component {
 	}
 
 	return res
-}
-
-func propertyOf[T any](ctx core.RenderContext, s *core.State[T]) ora.Property[T] {
-	return ora.Property[T]{
-		Ptr:   s.Ptr(),
-		Value: s.Get(),
-	}
 }
 
 // If conditionally returns the view or nil. This can be used as a kind of inline ternary operator

@@ -2,22 +2,18 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type ScrollViewAxis int
 
-func (a ScrollViewAxis) ora() ora.ScrollViewAxis {
-	if a == ScrollViewAxisHorizontal {
-		return "h"
-	}
-
-	return "v"
+func (a ScrollViewAxis) ora() proto.ScrollViewAxis {
+	return proto.ScrollViewAxis(a)
 }
 
 const (
-	ScrollViewAxisVertical ScrollViewAxis = iota
-	ScrollViewAxisHorizontal
+	ScrollViewAxisVertical   ScrollViewAxis = ScrollViewAxis(proto.ScrollViewAxisVertical)
+	ScrollViewAxisHorizontal                = ScrollViewAxis(proto.ScrollViewAxisHorizontal)
 )
 
 type TScrollView struct {
@@ -45,8 +41,7 @@ func (c TScrollView) Frame(frame Frame) TScrollView {
 }
 
 func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
-	return ora.ScrollView{
-		Type:    ora.ScrollViewT,
+	return &proto.ScrollView{
 		Content: render(ctx, c.content),
 		Axis:    c.axis.ora(),
 		Frame:   c.frame.ora(),

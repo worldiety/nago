@@ -1,13 +1,14 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
 	"log/slog"
 	"os"
@@ -37,8 +38,8 @@ type ComponentFactory func(Window) View
 // However, we must be careful on destruction of the scopes sharing them.
 type Scope struct {
 	app               *Application
-	id                ora.ScopeID
-	factories         map[ora.ComponentFactoryId]ComponentFactory
+	id                proto.ScopeID
+	factories         map[proto.RootViewID]ComponentFactory
 	allocatedRootView std.Option[*scopeWindow]
 	lifetime          time.Duration
 	endOfLifeAt       atomic.Pointer[time.Time]
@@ -46,7 +47,6 @@ type Scope struct {
 	chanDestructor    concurrent.Value[func()]
 	destroyed         concurrent.Value[bool]
 	eventLoop         *EventLoop
-	lastMessageType   ora.EventType
 	ctx               context.Context
 	cancelCtx         func()
 
@@ -68,7 +68,7 @@ type Scope struct {
 	dirty                  bool
 }
 
-func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.ScopeID, lifetime time.Duration, factories map[ora.ComponentFactoryId]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
+func NewScope(ctx context.Context, app *Application, tempRootDir string, id proto.ScopeID, lifetime time.Duration, factories map[proto.RootViewID]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
 
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
@@ -95,22 +95,20 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 	s.subject.SetValue(auth.InvalidSubject{})
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
-		/*s.Publish(ora.ErrorOccurred{
-			Type:    ora.ErrorOccurredT,
+		/*s.Publish(proto.ErrorOccurred{
+			Type:    proto.ErrorOccurredT,
 			Message: fmt.Sprintf("panic in event loop: %v", p),
 		})*/
-		node := ora.VStack{
-			Type: ora.VStackT,
-			Children: []ora.Component{
-				ora.Text{Type: ora.TextT, Value: "panic during event loop, check server-side logs"},
+		node := &proto.VStack{
+			Children: []proto.Component{
+				&proto.TextView{Value: "panic during event loop, check server-side logs"},
 			},
-			Frame: ora.Frame{Width: "100%", Height: "100dvh"},
+			Frame: proto.Frame{Width: "100%", Height: "100dvh"},
 		}
 
-		s.Publish(ora.ComponentInvalidated{
-			Type:      ora.ComponentInvalidatedT,
-			RequestId: 0,
-			Component: node,
+		s.Publish(&proto.RootViewInvalidated{
+			RID:  0,
+			Root: node,
 		})
 	})
 	s.channel.SetValue(NopChannel{})
@@ -119,7 +117,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id ora.
 	return s
 }
 
-func (s *Scope) ID() ora.ScopeID {
+func (s *Scope) ID() proto.ScopeID {
 	return s.id
 }
 
@@ -213,25 +211,26 @@ func (s *Scope) Connect(c Channel) {
 func (s *Scope) handleMessage(buf []byte) error {
 	s.Tick()
 
-	t, err := ora.Unmarshal(buf)
+	t, err := proto.Unmarshal(proto.NewBinaryReader(bytes.NewBuffer(buf)))
 	if err != nil {
 		return err
 	}
 
-	s.eventLoop.Post(func() {
-		s.handleEvent(t, true)
+	nagoEvt, ok := t.(proto.NagoEvent)
+	if !ok {
+		return fmt.Errorf("protocol error while handle message: %T is not a proto.NagoEvent", t)
+	}
 
-		// todo the vue frontend sends a lot of empty transactions on mouse movements and vuejs makes garbage out of the viewtree
-		wasEmptyTx := false
-		if tx, ok := t.(ora.EventsAggregated); ok {
-			wasEmptyTx = len(tx.Events) == 0
+	s.eventLoop.Post(func() {
+		s.handleEvent(nagoEvt)
+
+		var rid proto.RID
+		if ridSrc, ok := nagoEvt.(interface{ GetRID() proto.RID }); ok {
+			rid = ridSrc.GetRID()
 		}
 
-		wasDestructed := isEvent[ora.ComponentDestructionRequested](t) || isEvent[ora.ScopeDestructionRequested](t)
-
-		// todo handleEvent may have caused already a rendering. Should we omit to avoid sending multiple times?
-		if s.dirty || (!wasDestructed && !wasEmptyTx && s.lastMessageType != ora.ComponentInvalidatedT) {
-			s.forceRender(t.ReqID())
+		if s.dirty {
+			s.forceRender(rid)
 			s.dirty = false
 		}
 	})
@@ -239,38 +238,31 @@ func (s *Scope) handleMessage(buf []byte) error {
 	return nil
 }
 
-func isEvent[T ora.Event](e ora.Event) bool {
-	if _, ok := e.(T); ok {
-		return ok
-	}
+func (s *Scope) Publish(evt proto.NagoEvent) {
+	//switch evt := evt.(type) {
 
-	if tx, ok := e.(ora.EventsAggregated); ok {
-		for _, event := range tx.Events {
-			if _, ok := event.(T); ok {
-				return ok
-			}
-		}
-	}
-
-	return false
-}
-
-func (s *Scope) Publish(evt ora.Event) {
-	switch evt := evt.(type) {
-	case ora.ComponentInvalidated:
+	// TODO fix me and think again
+	/*case proto.ComponentInvalidated:
 		if s.ignoreNextInvalidation.Load() {
 			s.ignoreNextInvalidation.Store(false)
 			return
 		}
 
 		s.lastMessageType = evt.Type
-	case ora.Acknowledged:
+	case proto.Acknowledged:
 		// ignore
 	default:
-		s.lastMessageType = ""
+		s.lastMessageType = ""*/
+	//}
+
+	buf := bytes.NewBuffer(make([]byte, 0, 4096))
+	tmp := proto.NewBinaryWriter(buf)
+	if err := proto.Marshal(tmp, evt); err != nil {
+		slog.Error("cannot marshal nago event", slog.Any("evt", evt))
+		return
 	}
 
-	if err := s.channel.Value().Publish(ora.Marshal(evt)); err != nil {
+	if err := s.channel.Value().Publish(buf.Bytes()); err != nil {
 		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Value())
 	}
 }
@@ -286,36 +278,13 @@ func (s *Scope) EOL() time.Time {
 	return *s.endOfLifeAt.Load()
 }
 
-// sendAck eventually sends an acknowledged message, if id is not 0. This is intentional, so a sender
-// can optimize for performance.
-func (s *Scope) sendAck(id ora.RequestId) {
-	if id == 0 {
-		return
-	}
-
-	s.Publish(ora.Acknowledged{
-		Type:      ora.AcknowledgedT,
-		RequestId: id,
-	})
-}
-
-func (s *Scope) sendPing() {
-	s.Publish(ora.Ping{
-		Type: ora.PingT,
-	})
-}
-
 // only for event loop
-func (s *Scope) forceRender(reqId ora.RequestId) {
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: reqId,
-			Message:   fmt.Sprintf("cannot call function: no view allocated: %d", reqId),
-		})
-		return
+func (s *Scope) forceRender(reqId proto.RID) {
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: reqId})
 	}
+
+	alloc := s.allocatedRootView.Unwrap()
 
 	s.Publish(s.render(0, alloc))
 }
@@ -356,19 +325,18 @@ func (s *Scope) updateTick(now time.Time) {
 }
 
 // only for event loop
-func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.ComponentInvalidated {
+func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootViewInvalidated {
 
 	renderResult := func() (rn RenderNode) {
 		defer func() {
 			if r := recover(); r != nil {
 				slog.Error(fmt.Sprintf("%v", r))
 				debug.PrintStack()
-				rn = ora.VStack{
-					Type: ora.VStackT,
-					Children: []ora.Component{
-						ora.Text{Type: ora.TextT, Value: "panic during rendering, check server-side logs"},
+				rn = &proto.VStack{
+					Children: []proto.Component{
+						&proto.TextView{Value: "panic during rendering, check server-side logs"},
 					},
-					Frame: ora.Frame{Width: "100%", Height: "100dvh"},
+					Frame: proto.Frame{Width: "100%", Height: "100dvh"},
 				}
 
 			}
@@ -376,10 +344,9 @@ func (s *Scope) render(requestId ora.RequestId, scopeWnd *scopeWindow) ora.Compo
 		return scopeWnd.render()
 	}()
 
-	return ora.ComponentInvalidated{
-		Type:      ora.ComponentInvalidatedT,
-		RequestId: requestId,
-		Component: renderResult,
+	return &proto.RootViewInvalidated{
+		RID:  requestId,
+		Root: renderResult,
 	}
 }
 
@@ -440,7 +407,7 @@ func (s *Scope) destroy() {
 }
 
 // only for event loop
-func (s *Scope) handleSessionAssigned(evt ora.SessionAssigned) {
+func (s *Scope) handleSessionAssigned(evt *proto.SessionAssigned) {
 	s.sessionID = session.ID(evt.SessionID)
 	tmp := s.sessionByID(s.sessionID)
 	s.virtualSession.Store(&tmp)

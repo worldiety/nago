@@ -2,18 +2,18 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TTableColumn struct {
 	content                core.View
 	colSpan                int
-	width                  ora.Length
-	alignment              ora.Alignment
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
-	padding                ora.Padding
-	border                 ora.Border
+	width                  proto.Length
+	alignment              proto.Alignment
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
+	padding                proto.Padding
+	border                 proto.Border
 	action                 func()
 }
 
@@ -68,11 +68,11 @@ type TTableCell struct {
 	content                core.View
 	colSpan                int
 	rowSpan                int
-	alignment              ora.Alignment
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
-	padding                ora.Padding
-	border                 ora.Border
+	alignment              proto.Alignment
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
+	padding                proto.Padding
+	border                 proto.Border
 	action                 func()
 }
 
@@ -124,9 +124,9 @@ func (c TTableCell) Border(border Border) TTableCell {
 
 type TTableRow struct {
 	cells                  []TTableCell
-	height                 ora.Length
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
+	height                 proto.Length
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
 	action                 func()
 }
 
@@ -157,12 +157,12 @@ func (c TTableRow) HoveredBackgroundColor(backgroundColor Color) TTableRow {
 type TTable struct {
 	columns             []TTableColumn
 	rows                []TTableRow
-	frame               ora.Frame
-	border              ora.Border
-	backgroundColor     ora.Color
-	defaultCellPaddings ora.Padding
-	rowDividerColor     ora.Color
-	headerDividerColor  ora.Color
+	frame               proto.Frame
+	border              proto.Border
+	backgroundColor     proto.Color
+	defaultCellPaddings proto.Padding
+	rowDividerColor     proto.Color
+	headerDividerColor  proto.Color
 }
 
 func Table(columns ...TTableColumn) TTable {
@@ -212,12 +212,12 @@ func (c TTable) CellPadding(padding Padding) TTable {
 	return c
 }
 
-func (c TTable) Render(ctx core.RenderContext) ora.Component {
-	var header ora.TableHeader
+func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
+	var header proto.TableHeader
 	for _, column := range c.columns {
-		header.Columns = append(header.Columns, ora.TableColumn{
+		header.Columns = append(header.Columns, proto.TableColumn{
 			Content:                    render(ctx, column.content),
-			ColSpan:                    column.colSpan,
+			ColSpan:                    proto.Uint(column.colSpan),
 			Width:                      column.width,
 			Alignment:                  column.alignment,
 			CellBackgroundColor:        column.backgroundColor,
@@ -228,14 +228,14 @@ func (c TTable) Render(ctx core.RenderContext) ora.Component {
 		})
 	}
 
-	rows := make([]ora.TableRow, 0, len(c.rows))
+	rows := make([]proto.TableRow, 0, len(c.rows))
 	for _, row := range c.rows {
-		cells := make([]ora.TableCell, 0, len(row.cells))
+		cells := make([]proto.TableCell, 0, len(row.cells))
 		for _, cell := range row.cells {
-			cells = append(cells, ora.TableCell{
+			cells = append(cells, proto.TableCell{
 				Content:                render(ctx, cell.content),
-				RowSpan:                cell.rowSpan,
-				ColSpan:                cell.colSpan,
+				RowSpan:                proto.Uint(cell.rowSpan),
+				ColSpan:                proto.Uint(cell.colSpan),
 				Alignment:              cell.alignment,
 				BackgroundColor:        cell.backgroundColor,
 				Border:                 cell.border,
@@ -244,7 +244,7 @@ func (c TTable) Render(ctx core.RenderContext) ora.Component {
 			})
 		}
 
-		rows = append(rows, ora.TableRow{
+		rows = append(rows, proto.TableRow{
 			Cells:                  cells,
 			Height:                 row.height,
 			BackgroundColor:        row.backgroundColor,
@@ -253,8 +253,7 @@ func (c TTable) Render(ctx core.RenderContext) ora.Component {
 		})
 	}
 
-	return ora.Table{
-		Type:               ora.TableT,
+	return &proto.Table{
 		Header:             header,
 		Rows:               rows,
 		Frame:              c.frame,

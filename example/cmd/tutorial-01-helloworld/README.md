@@ -31,7 +31,7 @@ package main
 import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui2"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -45,7 +45,7 @@ func main() {
 
 		cfg.Component(".", func(wnd core.Window) core.View {
 			return ui.VStack(ui.Text("hello world")).
-				Frame(ora.Frame{}.MatchScreen())
+				Frame(proto.Frame{}.MatchScreen())
 		})
 	}).
 		// don't forget to call the run method, which starts the entire thing and blocks until finished

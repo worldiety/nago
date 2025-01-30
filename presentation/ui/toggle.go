@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TToggle struct {
@@ -37,13 +37,12 @@ func (c TToggle) Visible(v bool) TToggle {
 	return c
 }
 
-func (c TToggle) Render(ctx core.RenderContext) ora.Component {
+func (c TToggle) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO toggle has a screwed intrinsic padding/offset into top
-	return ora.Toggle{
-		Type:       ora.ToggleT,
-		Value:      c.value,
+	return &proto.Toggle{
+		Value:      proto.Bool(c.value),
 		InputValue: c.inputValue.Ptr(),
-		Disabled:   c.disabled,
-		Invisible:  c.invisible,
+		Disabled:   proto.Bool(c.disabled),
+		Invisible:  proto.Bool(c.invisible),
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	ui "go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"net/http"
 	"time"
@@ -18,12 +18,12 @@ type rawEndpoint struct {
 }
 
 type Resource interface {
-	configureResource(c *Configurator) ora.URI
+	configureResource(c *Configurator) proto.URI
 }
 
 type StaticBytes []byte
 
-func (r StaticBytes) configureResource(c *Configurator) ora.URI {
+func (r StaticBytes) configureResource(c *Configurator) proto.URI {
 	sum := sha256.Sum256(r)
 	token := hex.EncodeToString(sum[:])
 	pattern := fmt.Sprintf("/api/ora/v1/static/%s", token)
@@ -43,7 +43,7 @@ func (r StaticBytes) configureResource(c *Configurator) ora.URI {
 		},
 	})
 
-	return ora.URI(pattern)
+	return proto.URI(pattern)
 }
 
 func magicMimeType(buf []byte) string {

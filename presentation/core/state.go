@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/pkg/xtime"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"reflect"
 	"runtime"
@@ -30,7 +31,7 @@ import (
 // but if the domain generates a new state, you have to observe that and issue an invalidation manually.
 type State[T any] struct {
 	id                    string
-	ptr                   ora.Ptr
+	ptr                   proto.Ptr
 	value                 T
 	valid                 bool
 	observer              []func(newValue T)
@@ -43,7 +44,7 @@ type State[T any] struct {
 	wnd                   Window
 }
 
-// ID returns the window unique state identifier which is internally mapped into an ora.Ptr.
+// ID returns the window unique state identifier which is internally mapped into an proto.Ptr.
 func (s *State[T]) ID() string {
 	return s.id
 }
@@ -75,7 +76,7 @@ func (s *State[T]) String() string {
 	return fmt.Sprintf("%v", s.value)
 }
 
-func (s *State[T]) ptrId() ora.Ptr {
+func (s *State[T]) ptrId() proto.Ptr {
 	return s.ptr
 }
 
@@ -87,31 +88,35 @@ func (s *State[T]) getGeneration() int64 {
 	return atomic.LoadInt64(&s.generation)
 }
 
-func (s *State[T]) parse(v any) error {
+func (s *State[T]) parse(v string) error {
 	switch any(s.value).(type) {
 	case bool:
-		b, err := strconv.ParseBool(fmt.Sprintf("%v", v))
+		b, err := strconv.ParseBool(v)
 		if err != nil {
 			return err
 		}
 
 		s.Set(any(b).(T))
 	case float64:
-		f, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
+		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return err
 		}
 
 		s.Set(any(f).(T))
 	case int64:
-		i, err := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
+		i, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
 		}
 
 		s.Set(any(i).(T))
 	case xtime.Date:
-		obj := v.(map[string]interface{})
+		var obj map[string]interface{}
+		err := json.Unmarshal([]byte(v), &obj)
+		if err != nil {
+			return err
+		}
 		var d xtime.Date
 		d.Day = int(obj["d"].(float64))
 		d.Month = time.Month(obj["m"].(float64))
@@ -120,14 +125,10 @@ func (s *State[T]) parse(v any) error {
 		s.Set(any(d).(T))
 
 	case string:
-		s.Set(any(fmt.Sprintf("%v", v)).(T))
+		s.Set(any(v).(T))
 
 	default:
-		if t, ok := any(v).(T); ok {
-			s.Set(t)
-		} else {
-			return fmt.Errorf("invalid type %T", v)
-		}
+		return fmt.Errorf("cannot parse string value '%s' into %T", v, s.value)
 	}
 
 	s.Notify()
@@ -216,7 +217,7 @@ func (s *State[T]) dirty() bool {
 	return atomic.LoadInt64(&s.lastChangedGeneration) >= s.getGeneration()
 }
 
-func (s *State[T]) Ptr() ora.Ptr {
+func (s *State[T]) Ptr() proto.Ptr {
 	if s == nil {
 		return 0
 	}

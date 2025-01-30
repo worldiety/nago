@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"math"
 	"strconv"
 	"strings"
@@ -40,8 +40,8 @@ func Relative(v core.Weight) Length {
 // implementation dependent e.g. because passed through directly into CSS.
 type Length string
 
-func (l Length) ora() ora.Length {
-	return ora.Length(l)
+func (l Length) ora() proto.Length {
+	return proto.Length(l)
 }
 
 // Estimate can only do it wrong, however, it is just an estimation.

@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"time"
 )
 
@@ -13,12 +13,12 @@ type TPasswordField struct {
 	supportingText      string
 	errorText           string
 	disabled            bool
-	style               ora.TextFieldStyle
+	style               proto.TextFieldStyle
 	disableDebounce     bool
 	disableAutocomplete bool
 	debounceTime        time.Duration
 	invisible           bool
-	frame               ora.Frame
+	frame               proto.Frame
 	lines               int
 }
 
@@ -70,7 +70,7 @@ func (c TPasswordField) ErrorText(text string) TPasswordField {
 	return c
 }
 
-// Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
+// Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied.
 func (c TPasswordField) Style(s TextFieldStyle) TPasswordField {
 	c.style = s.ora()
 	return c
@@ -109,6 +109,8 @@ func (c TPasswordField) Frame(frame Frame) DecoredView {
 }
 
 // Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
+// This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single
+// line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand.
 func (c TPasswordField) Lines(lines int) TPasswordField {
 	c.lines = lines
 	return c
@@ -119,22 +121,21 @@ func (c TPasswordField) Visible(v bool) DecoredView {
 	return c
 }
 
-func (c TPasswordField) Render(ctx core.RenderContext) ora.Component {
+func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.PasswordField{
-		Type:                ora.PasswordFieldT,
-		Label:               c.label,
-		SupportingText:      c.supportingText,
-		ErrorText:           c.errorText,
-		Value:               c.value,
+	return &proto.PasswordField{
+		Label:               proto.Str(c.label),
+		SupportingText:      proto.Str(c.supportingText),
+		ErrorText:           proto.Str(c.errorText),
+		Value:               proto.Str(c.value),
 		InputValue:          c.inputValue.Ptr(),
-		Disabled:            c.disabled,
+		Disabled:            proto.Bool(c.disabled),
 		Style:               c.style,
-		DebounceTime:        c.debounceTime,
-		DisableDebounce:     c.disableDebounce,
-		Invisible:           c.invisible,
+		DebounceTime:        proto.Duration(c.debounceTime),
+		DisableDebounce:     proto.Bool(c.disableDebounce),
+		Invisible:           proto.Bool(c.invisible),
 		Frame:               c.frame,
-		Lines:               c.lines,
-		DisableAutocomplete: c.disableAutocomplete,
+		Lines:               proto.Uint(c.lines),
+		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
 	}
 }

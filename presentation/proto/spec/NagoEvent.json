@@ -12,9 +12,17 @@
     "ErrorRootViewAllocationRequired",
     "FileImportRequested",
     "NavigationBackRequested",
-    "NavigationForwardRequested",
+    "NavigationForwardToRequested",
     "NavigationReloadRequested",
     "NavigationResetRequested",
-    "OpenRequested"
+    "OpenRequested",
+    "ScopeConfigurationChangeRequested",
+    "ScopeDestructionRequested",
+    "SessionAssigned",
+    "Ping",
+    "WindowInfoChanged",
+    "ScopeConfigurationChanged",
+    "ThemeRequested",
+    "SendMultipleRequested"
   ]
 }

@@ -14,21 +14,21 @@ func (c *Configurator) ColorSet(scheme core.ColorScheme, cs core.ColorSet) {
 // * primary is used for the overall color impression. Most areas colors are derived from different brightness values.
 // * secondary is used for some accent colors and derived mostly by different transparency levels.
 // * tertiary is the color for interactive elements like buttons.
-func CreateThemes(primary, secondary, tertiary ui.Color) ora.Themes {
-	themes := ora.Themes{
-		Dark: ora.Theme{
-			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+func CreateThemes(primary, secondary, tertiary ui.Color) proto.Themes {
+	themes := proto.Themes{
+		Dark: proto.Theme{
+			Colors: map[proto.NamespaceName]map[string]proto.Color{},
 		},
-		Light: ora.Theme{
-			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+		Light: proto.Theme{
+			Colors: map[proto.NamespaceName]map[string]proto.Color{},
 		},
 	}
 
 	light := ui.DefaultColors(core.Light, primary, secondary, tertiary)
 	dark := ui.DefaultColors(core.Dark, primary, secondary, tertiary)
 
-	themes.Light.Colors[ora.NamespaceName(light.Namespace())] = ConvertColorSetToMap(light)
-	themes.Dark.Colors[ora.NamespaceName(dark.Namespace())] = ConvertColorSetToMap(dark)
+	themes.Light.Colors[proto.NamespaceName(light.Namespace())] = ConvertColorSetToMap(light)
+	themes.Dark.Colors[proto.NamespaceName(dark.Namespace())] = ConvertColorSetToMap(dark)
 
 	return themes
 }

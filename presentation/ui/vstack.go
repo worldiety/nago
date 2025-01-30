@@ -2,27 +2,27 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TVStack struct {
 	children               []core.View
-	alignment              ora.Alignment
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
-	pressedBackgroundColor ora.Color
-	focusedBackgroundColor ora.Color
-	frame                  ora.Frame
-	gap                    ora.Length
-	padding                ora.Padding
-	border                 ora.Border
-	hoveredBorder          ora.Border
-	focusedBorder          ora.Border
-	pressedBorder          ora.Border
-	stylePreset            ora.StylePreset
+	alignment              proto.Alignment
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
+	pressedBackgroundColor proto.Color
+	focusedBackgroundColor proto.Color
+	frame                  proto.Frame
+	gap                    proto.Length
+	padding                proto.Padding
+	border                 proto.Border
+	hoveredBorder          proto.Border
+	focusedBorder          proto.Border
+	pressedBorder          proto.Border
+	stylePreset            proto.StylePreset
 
 	invisible bool
-	font      ora.Font
+	font      proto.Font
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	accessibilityLabel string
 	action             func()
@@ -69,7 +69,7 @@ func (c TVStack) PressedBackgroundColor(backgroundColor Color) TVStack {
 	return c
 }
 
-func (c TVStack) FocusedBackgroundColor(backgroundColor ora.Color) TVStack {
+func (c TVStack) FocusedBackgroundColor(backgroundColor proto.Color) TVStack {
 	c.focusedBackgroundColor = backgroundColor
 	return c
 }
@@ -134,10 +134,9 @@ func (c TVStack) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
-func (c TVStack) Render(ctx core.RenderContext) ora.Component {
+func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.VStack{
-		Type:               ora.VStackT,
+	return &proto.VStack{
 		Children:           renderComponents(ctx, c.children),
 		Frame:              c.frame,
 		Alignment:          c.alignment,
@@ -145,8 +144,8 @@ func (c TVStack) Render(ctx core.RenderContext) ora.Component {
 		Gap:                c.gap,
 		Padding:            c.padding,
 		Border:             c.border,
-		AccessibilityLabel: c.accessibilityLabel,
-		Invisible:          c.invisible,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
+		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		StylePreset:        c.stylePreset,
 

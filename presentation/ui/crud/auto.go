@@ -61,9 +61,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 
 			ui.VStack(
 				ui.Text(opts.Title).TextAlignment(ui.TextAlignCenter).Font(ui.Font{
-					Name:   "",
 					Size:   "2rem",
-					Style:  "",
 					Weight: ui.BoldFontWeight,
 				}),
 
@@ -95,9 +93,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 
 		ui.VStack(
 			ui.Text(opts.Title).TextAlignment(ui.TextAlignCenter).Font(ui.Font{
-				Name:   "",
 				Size:   "2rem",
-				Style:  "",
 				Weight: ui.BoldFontWeight,
 			}),
 

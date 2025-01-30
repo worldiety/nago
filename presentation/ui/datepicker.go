@@ -3,14 +3,14 @@ package ui
 import (
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TDatePicker struct {
 	label                   string
 	disabled                bool
 	invisible               bool
-	style                   ora.DatePickerStyle
+	style                   proto.DatePickerStyle
 	supportingText          string
 	errorText               string
 	startOrSingleValue      xtime.Date
@@ -23,7 +23,7 @@ type TDatePicker struct {
 func SingleDatePicker(label string, value xtime.Date, inputValue *core.State[xtime.Date]) TDatePicker {
 	return TDatePicker{
 		label:                   label,
-		style:                   ora.DatePickerSingleDate,
+		style:                   proto.DatePickerSingleDate,
 		inputStartOrSingleValue: inputValue,
 		startOrSingleValue:      value,
 	}
@@ -32,7 +32,7 @@ func SingleDatePicker(label string, value xtime.Date, inputValue *core.State[xti
 func RangeDatePicker(label string, startValue xtime.Date, startInputValue *core.State[xtime.Date], endValue xtime.Date, endInputValue *core.State[xtime.Date]) TDatePicker {
 	return TDatePicker{
 		label:                   label,
-		style:                   ora.DatePickerDateRange,
+		style:                   proto.DatePickerDateRange,
 		inputStartOrSingleValue: startInputValue,
 		startOrSingleValue:      startValue,
 		endValue:                endValue,
@@ -80,27 +80,26 @@ func (c TDatePicker) ErrorText(text string) TDatePicker {
 	return c
 }
 
-func (c TDatePicker) Render(ctx core.RenderContext) ora.Component {
-	return ora.DatePicker{
-		Type:           ora.DatePickerT,
-		Disabled:       c.disabled,
-		Label:          c.label,
-		SupportingText: c.supportingText,
-		ErrorText:      c.errorText,
+func (c TDatePicker) Render(ctx core.RenderContext) core.RenderNode {
+	return &proto.DatePicker{
+		Disabled:       proto.Bool(c.disabled),
+		Label:          proto.Str(c.label),
+		SupportingText: proto.Str(c.supportingText),
+		ErrorText:      proto.Str(c.errorText),
 		Style:          c.style,
-		Value: ora.Date{
-			Day:   c.startOrSingleValue.Day,
-			Month: int(c.startOrSingleValue.Month),
-			Year:  c.startOrSingleValue.Year,
+		Value: proto.DateData{
+			Day:   proto.Day(c.startOrSingleValue.Day),
+			Month: proto.Month(c.startOrSingleValue.Month),
+			Year:  proto.Year(c.startOrSingleValue.Year),
 		},
 		InputValue: c.inputStartOrSingleValue.Ptr(),
-		EndValue: ora.Date{
-			Day:   c.endValue.Day,
-			Month: int(c.endValue.Month),
-			Year:  c.endValue.Year,
+		EndValue: proto.DateData{
+			Day:   proto.Day(c.endValue.Day),
+			Month: proto.Month(c.endValue.Month),
+			Year:  proto.Year(c.endValue.Year),
 		},
 		Frame:         c.frame.ora(),
 		EndInputValue: c.inputEndValue.Ptr(),
-		Invisible:     c.invisible,
+		Invisible:     proto.Bool(c.invisible),
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	ui "go.wdy.de/nago/presentation/ui"
 	"io"
 	"io/fs"
@@ -58,13 +58,13 @@ type Configurator struct {
 	applicationName          string
 	applicationVersion       string
 	dataDir                  string
-	factories                map[ora.ComponentFactoryId]func(wnd core.Window) core.View
+	factories                map[proto.RootViewID]func(wnd core.Window) core.View
 	onWindowCreatedObservers []core.OnWindowCreatedObserver
 	destructors              []func()
 	app                      *core.Application // may be nil
 	rawEndpoint              []rawEndpoint
 	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
-	appIconUri               ora.URI
+	appIconUri               proto.URI
 	fps                      int
 	images                   *Images
 	systemServices           []dependency
@@ -114,7 +114,7 @@ func NewConfigurator() *Configurator {
 		fps:                10,
 		ctx:                ctx,
 		done:               done,
-		factories:          map[ora.ComponentFactoryId]func(wnd core.Window) core.View{},
+		factories:          map[proto.RootViewID]func(wnd core.Window) core.View{},
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
 		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
@@ -193,7 +193,7 @@ func (c *Configurator) OnDestroy(f func()) {
 }
 
 func (c *Configurator) AppIcon(ico core.URI) *core.Application {
-	c.appIconUri = ora.URI(ico)
+	c.appIconUri = proto.URI(ico)
 	return c.app
 }
 

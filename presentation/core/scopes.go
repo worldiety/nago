@@ -2,7 +2,7 @@ package core
 
 import (
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"time"
 )
@@ -13,7 +13,7 @@ type Scopes struct {
 	eolDone      chan bool
 	updateTicker *time.Ticker
 	updateDone   chan bool
-	scopes       concurrent.CoWMap[ora.ScopeID, *Scope]
+	scopes       concurrent.CoWMap[proto.ScopeID, *Scope]
 	destroyed    concurrent.Value[bool]
 }
 
@@ -49,7 +49,7 @@ func NewScopes(fps int) *Scopes {
 	return s
 }
 
-func (s *Scopes) Get(id ora.ScopeID) (*Scope, bool) {
+func (s *Scopes) Get(id proto.ScopeID) (*Scope, bool) {
 	scope, ok := s.scopes.Get(id)
 	return scope, ok
 }
@@ -60,7 +60,7 @@ func (s *Scopes) Put(scope *Scope) {
 
 // tick checks all scopes and destroys all scopes which reached EOL.
 func (s *Scopes) tick(now time.Time) {
-	s.scopes.Each(func(key ora.ScopeID, scope *Scope) bool {
+	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
 		if now.After(scope.EOL()) {
 			slog.Info("scope is end of life and now destroyed", slog.String("id", string(scope.id)))
 			s.scopes.Delete(scope.id)
@@ -73,7 +73,7 @@ func (s *Scopes) tick(now time.Time) {
 }
 
 func (s *Scopes) updateTick(now time.Time) {
-	s.scopes.Each(func(key ora.ScopeID, scope *Scope) bool {
+	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
 		scope.updateTick(now)
 		return true
 	})
@@ -89,7 +89,7 @@ func (s *Scopes) Destroy() {
 	s.eolTicker.Stop()
 	s.updateTicker.Stop()
 
-	s.scopes.Each(func(key ora.ScopeID, scope *Scope) bool {
+	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
 		scope.Destroy()
 		return true
 	})

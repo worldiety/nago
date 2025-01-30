@@ -7,6 +7,11 @@
       "doc": "Ptr denotes the remote pointer of the function.",
       "name": "Ptr",
       "type": "Ptr"
+    },
+    "2": {
+      "doc": "RID is used to trace a request-response cycle.",
+      "name": "RID",
+      "type": "RID"
     }
   }
 }

@@ -3,29 +3,29 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"strconv"
 	"time"
 )
 
-type TextFieldStyle string
+type TextFieldStyle uint
 
-func (t TextFieldStyle) ora() ora.TextFieldStyle {
-	return ora.TextFieldStyle(t)
+func (t TextFieldStyle) ora() proto.TextFieldStyle {
+	return proto.TextFieldStyle(t)
 }
 
 const (
 	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
-	TextFieldReduced TextFieldStyle = "r"
+	TextFieldReduced TextFieldStyle = TextFieldStyle(proto.TextFieldReduced)
 
 	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
-	TextFieldOutlined TextFieldStyle = "o"
+	TextFieldOutlined TextFieldStyle = TextFieldStyle(proto.TextFieldOutlined)
 
 	// TextFieldBasic removes as much as decorations as possible. There may be limitations based on the platform.
 	// Note, that an implementation is allowed to ignore leading, trailing, supporting and errorText for this mode.
 	// It may serve as a building-block for custom fields.
-	TextFieldBasic TextFieldStyle = "b" // TODO this is not consistent with checkbox and toggle api
+	TextFieldBasic TextFieldStyle = TextFieldStyle(proto.TextFieldBasic)
 )
 
 type TTextField struct {
@@ -37,7 +37,7 @@ type TTextField struct {
 	disabled        bool
 	leading         core.View
 	trailing        core.View
-	style           ora.TextFieldStyle
+	style           proto.TextFieldStyle
 	disableDebounce bool
 	debounceTime    time.Duration
 	invisible       bool
@@ -165,7 +165,7 @@ func (c TTextField) Trailing(v core.View) TTextField {
 	return c
 }
 
-// Style sets the wanted style. If empty, [ora.TextFieldOutlined] is applied.
+// Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied.
 func (c TTextField) Style(s TextFieldStyle) TTextField {
 	c.style = s.ora()
 	return c
@@ -209,6 +209,8 @@ func (c TTextField) FullWidth() TTextField {
 }
 
 // Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
+// This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single
+// line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand.
 func (c TTextField) Lines(lines int) TTextField {
 	c.lines = lines
 	return c
@@ -229,24 +231,23 @@ func (c TTextField) KeyboardType(keyboardType KeyboardType) TTextField {
 	return c
 }
 
-func (c TTextField) Render(ctx core.RenderContext) ora.Component {
+func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.TextField{
-		Type:            ora.TextFieldT,
-		Label:           c.label,
-		SupportingText:  c.supportingText,
-		ErrorText:       c.errorText,
-		Value:           c.value,
+	return &proto.TextField{
+		Label:           proto.Str(c.label),
+		SupportingText:  proto.Str(c.supportingText),
+		ErrorText:       proto.Str(c.errorText),
+		Value:           proto.Str(c.value),
 		InputValue:      c.inputValue.Ptr(),
-		Disabled:        c.disabled,
+		Disabled:        proto.Bool(c.disabled),
 		Leading:         render(ctx, c.leading),
 		Trailing:        render(ctx, c.trailing),
 		Style:           c.style,
-		DebounceTime:    c.debounceTime,
-		DisableDebounce: c.disableDebounce,
-		Invisible:       c.invisible,
+		DebounceTime:    proto.Duration(c.debounceTime),
+		DisableDebounce: proto.Bool(c.disableDebounce),
+		Invisible:       proto.Bool(c.invisible),
 		Frame:           c.frame.ora(),
-		Lines:           c.lines,
+		Lines:           proto.Uint(c.lines),
 		KeyboardOptions: c.keyboardOptions.ora(),
 	}
 }

@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // FixedSpacer returns an empty view with the given dimensions.
@@ -14,9 +14,9 @@ func FixedSpacer(width, height Length) core.View {
 }
 
 type TSpacer struct {
-	backgroundColor ora.Color
-	frame           ora.Frame
-	border          ora.Border
+	backgroundColor proto.Color
+	frame           proto.Frame
+	border          proto.Border
 }
 
 // Spacer is used in VStack or HStack to grow and shrink as required.
@@ -38,10 +38,9 @@ func (c TSpacer) Border(border Border) {
 	c.border = border.ora()
 }
 
-func (c TSpacer) Render(ctx core.RenderContext) ora.Component {
+func (c TSpacer) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.Spacer{
-		Type:            ora.SpacerT,
+	return &proto.Spacer{
 		Frame:           c.frame,
 		BackgroundColor: c.backgroundColor,
 		Border:          c.border,

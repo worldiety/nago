@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TCheckbox struct {
@@ -37,13 +37,12 @@ func (c TCheckbox) Visible(v bool) TCheckbox {
 	return c
 }
 
-func (c TCheckbox) Render(ctx core.RenderContext) ora.Component {
+func (c TCheckbox) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO this component has an intrinsic padding which must be removed
-	return ora.Checkbox{
-		Type:       ora.CheckboxT,
-		Value:      c.value,
+	return &proto.Checkbox{
+		Value:      proto.Bool(c.value),
 		InputValue: c.inputValue.Ptr(),
-		Disabled:   c.disabled,
-		Invisible:  c.invisible,
+		Disabled:   proto.Bool(c.disabled),
+		Invisible:  proto.Bool(c.invisible),
 	}
 }

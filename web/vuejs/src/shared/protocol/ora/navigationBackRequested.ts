@@ -7,7 +7,7 @@ import type { EventType } from '@/shared/protocol/ora/eventType';
 
 /**
  * NavigationBackRequested steps back causing a likely destruction of the most top component.
- * The frontend may deora.Ptre to ignore that, if the stack would be empty/undefined otherwise.
+ * The frontend may deproto.Ptre to ignore that, if the stack would be empty/undefined otherwise.
  */
 export interface NavigationBackRequested {
     // Type

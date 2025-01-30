@@ -2,19 +2,19 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TTextLayout struct {
 	children        []core.View
-	alignment       ora.TextAlignment
-	backgroundColor ora.Color
-	frame           ora.Frame
-	gap             ora.Length
-	padding         ora.Padding
-	border          ora.Border
+	alignment       proto.TextAlignment
+	backgroundColor proto.Color
+	frame           proto.Frame
+	gap             proto.Length
+	padding         proto.Padding
+	border          proto.Border
 	invisible       bool
-	font            ora.Font
+	font            proto.Font
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	accessibilityLabel string
 	action             func()
@@ -51,7 +51,7 @@ func (c TTextLayout) Action(f func()) TTextLayout {
 }
 
 func (c TTextLayout) Alignment(alignment TextAlignment) TTextLayout {
-	c.alignment = ora.TextAlignment(alignment)
+	c.alignment = proto.TextAlignment(alignment)
 	return c
 }
 
@@ -80,17 +80,16 @@ func (c TTextLayout) BackgroundColor(backgroundColor Color) DecoredView {
 	return c
 }
 
-func (c TTextLayout) Render(ctx core.RenderContext) ora.Component {
+func (c TTextLayout) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.TextLayout{
-		Type:               ora.TextLayoutT,
+	return &proto.TextLayout{
 		Children:           renderComponents(ctx, c.children),
 		Frame:              c.frame,
 		TextAlignment:      c.alignment,
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,
-		AccessibilityLabel: c.accessibilityLabel,
-		Invisible:          c.invisible,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
+		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		Border:             c.border,
 

@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"net/url"
 	"reflect"
@@ -27,9 +28,40 @@ import (
 //	- \a b \c
 type NavigationPath string
 
+func intoStrSlice[A, B ~string](in []A) []B {
+	tmp := make([]B, len(in))
+	for i, v := range in {
+		tmp[i] = B(v)
+	}
+
+	return tmp
+}
+
 // Values contains string serialized key-value pairs.
 // See also UnmarshalValues.
 type Values map[string]string
+
+func newValuesFromProto(v proto.RootViewParameters) Values {
+	tmp := make(Values, len(v))
+	for k, v := range v {
+		tmp[string(k)] = string(v)
+	}
+
+	return tmp
+}
+
+func (v Values) proto() proto.RootViewParameters {
+	if v == nil {
+		return nil
+	}
+
+	tmp := make(proto.RootViewParameters, len(v))
+	for k, v := range v {
+		tmp[proto.Str(k)] = proto.Str(v)
+	}
+
+	return tmp
+}
 
 func (v Values) URLEncode() string {
 	tmp := url.Values{}

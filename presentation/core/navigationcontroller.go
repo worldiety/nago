@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"go.wdy.de/nago/pkg/blob/crypto"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"strings"
 )
 
@@ -52,10 +52,9 @@ func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
 
 	n.IgnoreNextInvalidation()
 
-	n.scope.Publish(ora.NavigationForwardToRequested{
-		Type:    ora.NavigationForwardToRequestedT,
-		Factory: ora.ComponentFactoryId(id),
-		Values:  values,
+	n.scope.Publish(&proto.NavigationForwardToRequested{
+		RootView: proto.RootViewID(id),
+		Values:   values.proto(),
 	})
 }
 
@@ -71,9 +70,7 @@ func (n *navigationController) Back() {
 
 	n.IgnoreNextInvalidation()
 
-	n.scope.Publish(ora.NavigationBackRequested{
-		Type: ora.NavigationBackRequestedT,
-	})
+	n.scope.Publish(&proto.NavigationBackRequested{})
 }
 
 func (n *navigationController) ResetTo(id NavigationPath, values Values) {
@@ -83,10 +80,9 @@ func (n *navigationController) ResetTo(id NavigationPath, values Values) {
 
 	n.IgnoreNextInvalidation()
 
-	n.scope.Publish(ora.NavigationResetRequested{
-		Type:    ora.NavigationResetRequestedT,
-		Factory: ora.ComponentFactoryId(id),
-		Values:  values,
+	n.scope.Publish(&proto.NavigationResetRequested{
+		RootView: proto.RootViewID(id),
+		Values:   values.proto(),
 	})
 }
 
@@ -97,16 +93,13 @@ func (n *navigationController) Reload() {
 
 	n.IgnoreNextInvalidation()
 
-	n.scope.Publish(ora.NavigationReloadRequested{
-		Type: ora.NavigationReloadRequestedT,
-	})
+	n.scope.Publish(&proto.NavigationReloadRequested{})
 }
 
 func (n *navigationController) Open(resource URI, options Values) {
-	n.scope.Publish(ora.OpenRequested{
-		Type:     ora.OpenRequestedT,
-		Resource: string(resource),
-		Options:  options,
+	n.scope.Publish(&proto.OpenRequested{
+		Resource: proto.Str(resource),
+		Options:  options.proto(),
 	})
 }
 

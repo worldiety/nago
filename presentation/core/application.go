@@ -6,7 +6,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -34,10 +34,10 @@ type Application struct {
 	id                       ApplicationID
 	name                     string
 	version                  string
-	appIcon                  ora.URI
+	appIcon                  URI
 	mutex                    sync.Mutex
 	scopes                   *Scopes
-	factories                map[ora.ComponentFactoryId]ComponentFactory
+	factories                map[proto.RootViewID]ComponentFactory
 	scopeLifetime            time.Duration
 	ctx                      context.Context
 	cancelCtx                func()
@@ -62,7 +62,7 @@ type Application struct {
 func NewApplication(
 	ctx context.Context,
 	tmpDir string,
-	factories map[ora.ComponentFactoryId]ComponentFactory,
+	factories map[proto.RootViewID]ComponentFactory,
 	onWindowCreatedObservers []OnWindowCreatedObserver,
 	fps int,
 	findVirtualSession session.FindUserSessionByID,
@@ -124,7 +124,7 @@ func (a *Application) SetVersion(version string) {
 	a.version = version
 }
 
-func (a *Application) SetAppIcon(appIcon ora.URI) {
+func (a *Application) SetAppIcon(appIcon URI) {
 	a.appIcon = appIcon
 }
 
@@ -145,18 +145,18 @@ func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Rea
 	a.onShareStream = onShareStream
 }
 
-func (a *Application) Scope(id ora.ScopeID) (*Scope, bool) {
+func (a *Application) Scope(id proto.ScopeID) (*Scope, bool) {
 	return a.scopes.Get(id)
 }
 
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
-func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
+func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 	a.mutex.Lock()
 	// protect only the moment of connecting against races. perhaps it may be even ok, to remove the entire lock
 	// add say that concurrent calls to the same scope id is invalid (and normally cannot happen)
 
 	if len(id) < 32 {
-		id = ora.NewScopeID()
+		id = proto.NewScopeID()
 	}
 
 	scope, _ := a.scopes.Get(id)
@@ -171,7 +171,7 @@ func (a *Application) Connect(channel Channel, id ora.ScopeID) *Scope {
 	return scope
 }
 
-func (a *Application) ImportFilesOptions(scopeId ora.ScopeID, uploadId string) (ImportFilesOptions, bool) {
+func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
 		slog.Error("no such scope to import files", "scope", scope.id)
@@ -181,7 +181,7 @@ func (a *Application) ImportFilesOptions(scopeId ora.ScopeID, uploadId string) (
 	return scope.ImportFilesOptions(uploadId)
 }
 
-func (a *Application) ExportFilesOptions(scopeId ora.ScopeID, downloadId string) (ExportFilesOptions, bool) {
+func (a *Application) ExportFilesOptions(scopeId proto.ScopeID, downloadId string) (ExportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
 		slog.Error("no such scope to export files", "scope", scope.id)

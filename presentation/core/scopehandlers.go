@@ -4,51 +4,41 @@ import (
 	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 )
 
 // only for event loop
-func (s *Scope) handleEvent(t ora.Event, ackRequired bool) {
-	if ackRequired {
-		defer s.sendAck(t.ReqID())
-	}
-	/*
-		defer func() {
-			if ackRequired {
-				slog.Info(fmt.Sprintf("handleEvent eolDone: %d %T", t.ReqID(), t))
-			}
-		}*/
+func (s *Scope) handleEvent(t proto.NagoEvent) {
+
 	switch evt := t.(type) {
-	case ora.EventsAggregated:
-		s.handleEventsAggregated(evt)
-	case ora.SetPropertyValueRequested:
+	case *proto.UpdateStateValueRequested:
 		s.handleSetPropertyValueRequested(evt)
-	case ora.FunctionCallRequested:
+	case *proto.FunctionCallRequested:
 		s.handleFunctionCallRequested(evt)
-	case ora.NewComponentRequested:
+	case *proto.RootViewAllocationRequested:
 		s.handleNewComponentRequested(evt)
-	case ora.ComponentInvalidationRequested:
+	case *proto.RootViewRenderingRequested:
 		s.handleComponentInvalidationRequested(evt)
-	case ora.ConfigurationRequested:
+	case *proto.ScopeConfigurationChangeRequested:
 		s.handleConfigurationRequested(evt)
-	case ora.ComponentDestructionRequested:
+	case *proto.RootViewDestructionRequested:
 		s.handleComponentDestructionRequested(evt)
-	case ora.ScopeDestructionRequested:
+	case *proto.ScopeDestructionRequested:
 		s.handleScopeDestructionRequested(evt)
-	case ora.SessionAssigned:
+	case *proto.SessionAssigned:
 		s.handleSessionAssigned(evt)
-	case ora.Ping:
+	case *proto.Ping:
 	// do nothing, we already applied our keep-alive-tick
-	case ora.WindowInfoChanged:
+	case *proto.WindowInfoChanged:
 		s.handleWindowInfoChanged(evt)
 	default:
 		slog.Error("unexpected event type in scope processing", slog.String("type", fmt.Sprintf("%T", evt)))
 	}
 }
 
-func (s *Scope) handleWindowInfoChanged(evt ora.WindowInfoChanged) {
-	winfo := evt.Info
+func (s *Scope) handleWindowInfoChanged(evt *proto.WindowInfoChanged) {
+	winfo := evt.WindowInfo
 	s.updateWindowInfo(WindowInfo{
 		Width:       DP(winfo.Width),
 		Height:      DP(winfo.Height),
@@ -58,76 +48,66 @@ func (s *Scope) handleWindowInfoChanged(evt ora.WindowInfoChanged) {
 	})
 }
 
-func (s *Scope) handleEventsAggregated(evt ora.EventsAggregated) {
-	for _, event := range evt.Events {
-		s.handleEvent(event, false)
-	}
-}
-
-func (s *Scope) handleScopeDestructionRequested(evt ora.ScopeDestructionRequested) {
+func (s *Scope) handleScopeDestructionRequested(evt *proto.ScopeDestructionRequested) {
 	//s.destroy()
 	//s.eventLoop.Destroy() // discards everything else queued
 	s.Destroy()
 }
 
-func (s *Scope) handleSetPropertyValueRequested(evt ora.SetPropertyValueRequested) {
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
-		slog.Error("no component has been allocated in scope")
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("no component has been allocated in scope: %d", evt.Ptr),
-		})
+func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueRequested) {
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: evt.GetRID()})
 		return
 	}
 
-	state, ok := alloc.states[evt.Ptr]
+	alloc := s.allocatedRootView.Unwrap()
+
+	if evt.StatePointer.IsZero() {
+		return
+	}
+
+	state, ok := alloc.states[evt.StatePointer]
 	if !ok {
 		slog.Error("property not found", slog.Any("evt", evt))
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot set property: no such pointer found: %d", evt.Ptr),
+		s.Publish(&proto.ErrorOccurred{
+			Message: proto.Str(fmt.Sprintf("cannot set property: no such pointer found: %d", evt.StatePointer)),
 		})
 		return
 	}
 
-	if err := state.parse(evt.Value); err != nil {
+	if err := state.parse(string(evt.Value)); err != nil {
 		slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot set property: invalid property value: %d", evt.Ptr),
+		s.Publish(&proto.ErrorOccurred{
+			RID:     evt.RID,
+			Message: proto.Str(fmt.Sprintf("cannot set property: invalid property value: %d", evt.StatePointer)),
 		})
 	}
 
+	if evt.FunctionPointer.IsZero() {
+		return
+	}
+
+	s.handleFunctionCallRequested(&proto.FunctionCallRequested{
+		RID: evt.RID,
+		Ptr: evt.FunctionPointer,
+	})
 }
 
-func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
-	if evt.Ptr == -1 {
-		// intentionally ignore -1 function calls, these may be triggered by the client, to just
-		// ask for a re-rendering
-		s.dirty = true
-		return
-	}
-
+func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	alloc, err := s.allocatedRootView.Get()
 	if err != nil {
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot call function: no view allocated: %d", evt.Ptr),
+		s.Publish(&proto.ErrorOccurred{
+			RID:     evt.RID,
+			Message: proto.Str(fmt.Sprintf("cannot call function: no view allocated: %d", evt.Ptr)),
 		})
 		return
 	}
 
 	fn := alloc.callbacks[evt.Ptr]
 	if fn == nil {
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot call function: no associated function found: %d", evt.Ptr),
+		s.Publish(&proto.ErrorOccurred{
+			RID:     evt.RID,
+			Message: proto.Str(fmt.Sprintf("cannot call function: no associated function found: %d", evt.Ptr)),
 		})
 		return
 	}
@@ -136,20 +116,19 @@ func (s *Scope) handleFunctionCallRequested(evt ora.FunctionCallRequested) {
 
 }
 
-func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
+func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequested) {
 	s.destroyView()
 	s.updateWindowInfo(s.windowInfo)
 
-	window := newScopeWindow(s, evt.Factory, evt.Values)
+	window := newScopeWindow(s, evt.Factory, newValuesFromProto(evt.Values))
 	fac := s.factories[evt.Factory]
 	if fac == nil {
-		slog.Error("frontend requested unknown factory", slog.String("path", string(evt.Factory)), slog.Int("requestId", int(evt.RequestId)))
+		slog.Error("frontend requested unknown factory", slog.String("path", string(evt.Factory)), slog.Int("requestId", int(evt.RID)))
 		fac = s.factories["_"]
 		if fac == nil {
-			s.Publish(ora.ErrorOccurred{
-				Type:      ora.ErrorOccurredT,
-				RequestId: evt.RequestId,
-				Message:   fmt.Sprintf("factory %s not found", evt.Factory),
+			s.Publish(&proto.ErrorOccurred{
+				RID:     evt.RID,
+				Message: proto.Str(fmt.Sprintf("factory %s not found", evt.Factory)),
 			})
 			return
 		}
@@ -159,34 +138,30 @@ func (s *Scope) handleNewComponentRequested(evt ora.NewComponentRequested) {
 	s.allocatedRootView = std.Some(window)
 
 	// an allocation without rendering does not make sense, just perform in the same cycle
-	renderTree := s.render(evt.RequestId, window)
+	renderTree := s.render(evt.RID, window)
 	s.Publish(renderTree)
 
 }
 
-func (s *Scope) handleComponentInvalidationRequested(evt ora.ComponentInvalidationRequested) {
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
-		slog.Error("cannot invalidate: no view allocated", slog.Any("evt", evt))
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("cannot invalidate:  no view allocated"),
-		})
+func (s *Scope) handleComponentInvalidationRequested(evt *proto.RootViewRenderingRequested) {
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: evt.GetRID()})
 		return
 	}
+
+	alloc := s.allocatedRootView.Unwrap()
 
 	if alloc.destroyed {
 		return
 	}
 
-	renderTree := s.render(evt.RequestId, alloc)
+	renderTree := s.render(evt.RID, alloc)
 	s.Publish(renderTree)
 }
 
-func convertColorSetToMap(colorSet ColorSet) map[string]ora.Color {
-	// expensive but simple variant of going typesafe to arbitrary
-	var res map[string]ora.Color
+func convertColorSetToMap(colorSet ColorSet) proto.NamedColors {
+	// expensive but simple variant of going typesafe to arbitrary, but this only happens once per frontend instantiation
+	var res proto.NamedColors
 	buf, err := json.Marshal(colorSet)
 	if err != nil {
 		panic(fmt.Errorf("unreachable: %w", err))
@@ -200,7 +175,7 @@ func convertColorSetToMap(colorSet ColorSet) map[string]ora.Color {
 	return res
 }
 
-func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
+func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChangeRequested) {
 	winfo := evt.WindowInfo
 	s.windowInfo = WindowInfo{
 		Width:       DP(winfo.Width),
@@ -211,12 +186,12 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 	}
 	s.updateWindowInfo(s.windowInfo)
 
-	themes := ora.Themes{
-		Dark: ora.Theme{
-			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+	themes := proto.Themes{
+		Dark: proto.Theme{
+			Colors: proto.NamespacedColors{},
 		},
-		Light: ora.Theme{
-			Colors: map[ora.NamespaceName]map[string]ora.Color{},
+		Light: proto.Theme{
+			Colors: proto.NamespacedColors{},
 		},
 	}
 
@@ -224,39 +199,30 @@ func (s *Scope) handleConfigurationRequested(evt ora.ConfigurationRequested) {
 		for name, set := range m {
 			switch scheme {
 			case Dark:
-				themes.Dark.Colors[ora.NamespaceName(name)] = convertColorSetToMap(set)
+				themes.Dark.Colors[proto.NamespaceName(name)] = convertColorSetToMap(set)
 			case Light:
-				themes.Light.Colors[ora.NamespaceName(name)] = convertColorSetToMap(set)
+				themes.Light.Colors[proto.NamespaceName(name)] = convertColorSetToMap(set)
 			default:
 				panic("implement me")
 			}
 		}
 	}
 
-	s.Publish(ora.ConfigurationDefined{
-		Type:               ora.ConfigurationDefinedT,
-		ApplicationID:      string(s.app.id),
-		ApplicationName:    s.app.name,
-		ApplicationVersion: s.app.version,
-		AppIcon:            s.app.appIcon,
-		AvailableLocales:   []string{"de", "en"}, //TODO
-		ActiveLocale:       s.locale.String(),
+	s.Publish(&proto.ScopeConfigurationChanged{
+		ApplicationID:      proto.Str(s.app.id),
+		ApplicationName:    proto.Str(s.app.name),
+		ApplicationVersion: proto.Str(s.app.version),
+		AppIcon:            proto.URI(s.app.appIcon),
+		AvailableLocales:   proto.Locales{"de", "en"}, //TODO
+		ActiveLocale:       proto.Locale(s.locale.String()),
 		Themes:             themes,
-		RequestId:          evt.RequestId,
+		RID:                evt.RID,
 	})
 }
 
-func (s *Scope) handleComponentDestructionRequested(evt ora.ComponentDestructionRequested) {
-	_, err := s.allocatedRootView.Get()
-	if err != nil {
-		//slog.Info("e1")
-		s.Publish(ora.ErrorOccurred{
-			Type:      ora.ErrorOccurredT,
-			RequestId: evt.RequestId,
-			Message:   fmt.Sprintf("no such component: %d", evt.Component),
-		})
-		//slog.Info("e2")
-
+func (s *Scope) handleComponentDestructionRequested(evt *proto.RootViewDestructionRequested) {
+	if s.allocatedRootView.IsNone() {
+		// already destroyed, just ignore that
 		return
 	}
 

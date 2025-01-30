@@ -6,7 +6,8 @@
     "1": {
       "doc": "RID is used to generate a new component request and is returned in the according response.",
       "name": "RID",
-      "type": "RID"
+      "type": "RID",
+      "getter": true
     },
     "2": {
       "name": "AcceptLanguage",

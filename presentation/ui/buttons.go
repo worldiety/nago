@@ -3,15 +3,15 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"runtime/debug"
 )
 
 type TButton struct {
 	title              string
 	accessibilityLabel string
-	preIcon            ora.SVG
-	postIcon           ora.SVG
+	preIcon            proto.SVG
+	postIcon           proto.SVG
 	frame              Frame
 	preset             StylePreset
 	font               Font
@@ -68,12 +68,12 @@ func (c TButton) AccessibilityLabel(label string) TButton {
 }
 
 func (c TButton) PreIcon(svg core.SVG) TButton {
-	c.preIcon = ora.SVG(svg)
+	c.preIcon = proto.SVG(svg)
 	return c
 }
 
 func (c TButton) PostIcon(svg core.SVG) TButton {
-	c.postIcon = ora.SVG(svg)
+	c.postIcon = proto.SVG(svg)
 	return c
 }
 
@@ -82,7 +82,7 @@ func (c TButton) Frame(frame Frame) TButton {
 	return c
 }
 
-func (c TButton) Render(context core.RenderContext) ora.Component {
+func (c TButton) Render(context core.RenderContext) proto.Component {
 	alabel := c.title
 	if alabel == "" {
 		alabel = c.accessibilityLabel

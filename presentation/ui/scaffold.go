@@ -2,18 +2,18 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
-type ScaffoldAlignment string
+type ScaffoldAlignment uint
 
-func (s ScaffoldAlignment) ora() ora.ScaffoldAlignment {
-	return ora.ScaffoldAlignment(s)
+func (s ScaffoldAlignment) ora() proto.ScaffoldAlignment {
+	return proto.ScaffoldAlignment(s)
 }
 
 const (
-	ScaffoldAlignmentTop     ScaffoldAlignment = "u"
-	ScaffoldAlignmentLeading ScaffoldAlignment = "l"
+	ScaffoldAlignmentTop     ScaffoldAlignment = ScaffoldAlignment(proto.ScaffoldAlignmentTop)
+	ScaffoldAlignmentLeading ScaffoldAlignment = ScaffoldAlignment(proto.ScaffoldAlignmentLeading)
 )
 
 // ScaffoldMenuEntry represents either a menu node or leaf. See also helper functions [ForwardScaffoldMenuEntry] and
@@ -54,7 +54,7 @@ func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, child
 type TScaffold struct {
 	logo      core.View
 	body      core.View
-	alignment ora.ScaffoldAlignment
+	alignment proto.ScaffoldAlignment
 	menu      []ScaffoldMenuEntry
 }
 
@@ -77,10 +77,9 @@ func (c TScaffold) Menu(items ...ScaffoldMenuEntry) TScaffold {
 	return c
 }
 
-func (c TScaffold) Render(ctx core.RenderContext) ora.Component {
+func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.Scaffold{
-		Type:      ora.ScaffoldT,
+	return &proto.Scaffold{
 		Body:      render(ctx, c.body),
 		Logo:      render(ctx, c.logo),
 		Menu:      makeMenu(ctx, c.menu),
@@ -88,19 +87,19 @@ func (c TScaffold) Render(ctx core.RenderContext) ora.Component {
 	}
 }
 
-func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []ora.ScaffoldMenuEntry {
+func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []proto.ScaffoldMenuEntry {
 	if len(menu) == 0 {
 		return nil
 	}
 
-	menuEntries := make([]ora.ScaffoldMenuEntry, 0, len(menu))
+	menuEntries := make([]proto.ScaffoldMenuEntry, 0, len(menu))
 	for _, entry := range menu {
-		menuEntries = append(menuEntries, ora.ScaffoldMenuEntry{
+		menuEntries = append(menuEntries, proto.ScaffoldMenuEntry{
 			Icon:       render(ctx, entry.Icon),
 			IconActive: render(ctx, entry.IconActive),
-			Title:      entry.Title,
+			Title:      proto.Str(entry.Title),
 			Action:     ctx.MountCallback(entry.Action),
-			Factory:    ora.ComponentFactoryId(entry.MarkAsActiveAt),
+			RootView:   proto.RootViewID(entry.MarkAsActiveAt),
 			Menu:       makeMenu(ctx, entry.Menu),
 		})
 	}

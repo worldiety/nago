@@ -125,6 +125,10 @@ for _,present:= range fields {
 		return err
 	}
 
+	if err := c.goEmitRecordGetter(t, decl); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -174,6 +178,18 @@ func (c *Compiler) goEmitRecordIsZero(t Typename, decl Record) error {
 
 	c.dec()
 	c.pn("}\n")
+
+	return nil
+}
+
+func (c *Compiler) goEmitRecordGetter(t Typename, decl Record) error {
+
+	for _, field := range decl.sortedFields() {
+		if !field.Getter {
+			continue
+		}
+		c.pf("func(v *%s) Get%s() %[3]s { return v.%[2]s\n}\n", t, field.Name, field.Type)
+	}
 
 	return nil
 }

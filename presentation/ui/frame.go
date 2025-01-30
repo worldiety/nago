@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type Frame struct {
 	MinWidth  Length
@@ -11,14 +11,14 @@ type Frame struct {
 	Height    Length
 }
 
-func (f Frame) ora() ora.Frame {
-	return ora.Frame{
-		MinWidth:  ora.Length(f.MinWidth),
-		MaxWidth:  ora.Length(f.MaxWidth),
-		MinHeight: ora.Length(f.MinHeight),
-		MaxHeight: ora.Length(f.MaxHeight),
-		Width:     ora.Length(f.Width),
-		Height:    ora.Length(f.Height),
+func (f Frame) ora() proto.Frame {
+	return proto.Frame{
+		MinWidth:  proto.Length(f.MinWidth),
+		MaxWidth:  proto.Length(f.MaxWidth),
+		MinHeight: proto.Length(f.MinHeight),
+		MaxHeight: proto.Length(f.MaxHeight),
+		Width:     proto.Length(f.Width),
+		Height:    proto.Length(f.Height),
 	}
 }
 

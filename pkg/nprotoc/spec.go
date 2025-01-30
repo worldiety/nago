@@ -210,9 +210,10 @@ func (d Record) ID() int {
 func (Record) decl() {}
 
 type Field struct {
-	Doc  string   `json:"doc"`
-	Name string   `json:"name"`
-	Type Typename `json:"type"`
+	Doc    string   `json:"doc"`
+	Name   string   `json:"name"`
+	Type   Typename `json:"type"`
+	Getter bool     `json:"getter"`
 }
 
 type Project struct {

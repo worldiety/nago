@@ -1,5 +1,7 @@
 package core
 
+import "go.wdy.de/nago/presentation/proto"
+
 // DP is Density-independent pixels: an abstract unit that is based on the physical density of the screen.
 // These units are relative to a 160 dpi (dots per inch) screen, on which 1 dp is roughly equal to 1 px.
 // When running on a higher density screen, the number of pixels used to draw 1 dp is scaled up by a factor
@@ -35,7 +37,7 @@ type WindowInfo struct {
 // The definition of a size class is disjunct and for all possible sizes, exact one size class will match.
 // See also https://developer.android.com/develop/ui/views/layout/window-size-classes and
 // https://tailwindcss.com/docs/responsive-design.
-type WindowSizeClass string
+type WindowSizeClass uint
 
 func (w WindowSizeClass) Ordinal() int {
 	switch w {
@@ -60,13 +62,13 @@ func (w WindowSizeClass) Valid() bool {
 
 const (
 	// SizeClassSmall are devices below 640 dp screen width.
-	SizeClassSmall WindowSizeClass = "sm"
+	SizeClassSmall WindowSizeClass = WindowSizeClass(proto.SizeClassSmall)
 	// SizeClassMedium are devices below 768dp screen width.
-	SizeClassMedium WindowSizeClass = "md"
+	SizeClassMedium WindowSizeClass = WindowSizeClass(proto.SizeClassMedium)
 	// SizeClassLarge are devices below 1024dp screen width.
-	SizeClassLarge WindowSizeClass = "lg"
+	SizeClassLarge WindowSizeClass = WindowSizeClass(proto.SizeClassLarge)
 	// SizeClassXL are devices below 1280dp screen width.
-	SizeClassXL WindowSizeClass = "xl"
+	SizeClassXL WindowSizeClass = WindowSizeClass(proto.SizeClassXL)
 	// SizeClass2XL are devices below 1536dp screen width.
-	SizeClass2XL WindowSizeClass = "2xl"
+	SizeClass2XL WindowSizeClass = WindowSizeClass(proto.SizeClass2XL)
 )

@@ -2,12 +2,12 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type alignedComponent struct {
 	Component core.View
-	Alignment ora.Alignment
+	Alignment proto.Alignment
 }
 
 type BoxLayout struct {
@@ -24,11 +24,11 @@ type BoxLayout struct {
 
 type TBox struct {
 	children           []alignedComponent
-	backgroundColor    ora.Color
-	frame              ora.Frame
-	padding            ora.Padding
-	font               ora.Font
-	border             ora.Border
+	backgroundColor    proto.Color
+	frame              proto.Frame
+	padding            proto.Padding
+	font               proto.Font
+	border             proto.Border
 	accessibilityLabel string
 	invisible          bool
 }
@@ -177,17 +177,16 @@ func (c TBox) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
-func (c TBox) Render(ctx core.RenderContext) ora.Component {
-	var tmp []ora.AlignedComponent
+func (c TBox) Render(ctx core.RenderContext) core.RenderNode {
+	var tmp []proto.AlignedComponent
 	for _, child := range c.children {
-		tmp = append(tmp, ora.AlignedComponent{
+		tmp = append(tmp, proto.AlignedComponent{
 			Component: child.Component.Render(ctx),
 			Alignment: child.Alignment,
 		})
 	}
 
-	return ora.Box{
-		Type:            ora.BoxT,
+	return &proto.Box{
 		Children:        tmp,
 		Frame:           c.frame,
 		BackgroundColor: c.backgroundColor,

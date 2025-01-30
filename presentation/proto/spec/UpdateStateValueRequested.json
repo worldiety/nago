@@ -12,6 +12,15 @@
       "doc": "A FunctionPointer is invoked, if not zero.",
       "Name": "FunctionPointer",
       "type": "Ptr"
+    },
+    "3": {
+      "name": "RID",
+      "type": "RID",
+      "getter": true
+    },
+    "4": {
+      "name": "Value",
+      "type": "Str"
     }
   }
 }

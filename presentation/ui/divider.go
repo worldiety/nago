@@ -2,13 +2,13 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TDivider struct {
-	frame   ora.Frame
-	border  ora.Border
-	padding ora.Padding
+	frame   proto.Frame
+	border  proto.Border
+	padding proto.Padding
 }
 
 // HLineWithColor configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
@@ -63,10 +63,9 @@ func (c TDivider) Border(border Border) TDivider {
 	return c
 }
 
-func (c TDivider) Render(ctx core.RenderContext) ora.Component {
+func (c TDivider) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.Divider{
-		Type:    ora.DividerT,
+	return &proto.Divider{
 		Frame:   c.frame,
 		Border:  c.border,
 		Padding: c.padding,

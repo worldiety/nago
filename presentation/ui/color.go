@@ -3,14 +3,14 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/xcolor"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
 type Color string
 
-func (c Color) ora() ora.Color {
-	return ora.Color(c)
+func (c Color) ora() proto.Color {
+	return proto.Color(c)
 }
 
 // WithTransparency updates the alpha value part of the color (0-100), where 25% transparent means 75% opaque.

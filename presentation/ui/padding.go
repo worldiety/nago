@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type Padding struct {
 	Top    Length
@@ -9,12 +9,12 @@ type Padding struct {
 	Bottom Length
 }
 
-func (p Padding) ora() ora.Padding {
-	return ora.Padding{
-		Top:    ora.Length(p.Top),
-		Left:   ora.Length(p.Left),
-		Right:  ora.Length(p.Right),
-		Bottom: ora.Length(p.Bottom),
+func (p Padding) ora() proto.Padding {
+	return proto.Padding{
+		Top:    proto.Length(p.Top),
+		Left:   proto.Length(p.Left),
+		Right:  proto.Length(p.Right),
+		Bottom: proto.Length(p.Bottom),
 	}
 }
 

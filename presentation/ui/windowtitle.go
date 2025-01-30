@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TWindowTitle struct {
@@ -14,9 +14,8 @@ func WindowTitle(title string) TWindowTitle {
 }
 
 func (c TWindowTitle) Render(ctx core.RenderContext) core.RenderNode {
-	return ora.WindowTitle{
-		Type:  ora.WindowTitleT,
-		Value: c.title,
+	return &proto.WindowTitle{
+		Value: proto.Str(c.title),
 	}
 }
 
@@ -36,9 +35,7 @@ func Heading(level int, title string) core.View {
 		return VStack(
 			WindowTitle(title),
 			Text(title).Font(Font{
-				Name:   "",
 				Size:   "2rem",
-				Style:  "",
 				Weight: BoldFontWeight,
 			}),
 			HLineWithColor(ColorAccent),
@@ -46,9 +43,7 @@ func Heading(level int, title string) core.View {
 	case 2:
 		return VStack(
 			Text(title).Font(Font{
-				Name:   "",
 				Size:   "1.2rem",
-				Style:  "",
 				Weight: BoldFontWeight,
 			}),
 			HLine(),

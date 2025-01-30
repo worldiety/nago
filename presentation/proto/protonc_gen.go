@@ -256,6 +256,12 @@ func (Radiobutton) isComponent()   {}
 func (ScrollView) isComponent()    {}
 func (Scaffold) isComponent()      {}
 func (Spacer) isComponent()        {}
+func (TextView) isComponent()      {}
+func (TextField) isComponent()     {}
+func (TextLayout) isComponent()    {}
+func (Table) isComponent()         {}
+func (Toggle) isComponent()        {}
+func (VStack) isComponent()        {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -267,20 +273,28 @@ type NagoEvent interface {
 	Readable
 }
 
-func (UpdateStateValueRequested) isNagoEvent()       {}
-func (FunctionCallRequested) isNagoEvent()           {}
-func (RootViewAllocationRequested) isNagoEvent()     {}
-func (RootViewDestructionRequested) isNagoEvent()    {}
-func (RootViewInvalidated) isNagoEvent()             {}
-func (RootViewRenderingRequested) isNagoEvent()      {}
-func (ErrorOccurred) isNagoEvent()                   {}
-func (ErrorRootViewAllocationRequired) isNagoEvent() {}
-func (FileImportRequested) isNagoEvent()             {}
-func (NavigationBackRequested) isNagoEvent()         {}
-func (NavigationForwardRequested) isNagoEvent()      {}
-func (NavigationReloadRequested) isNagoEvent()       {}
-func (NavigationResetRequested) isNagoEvent()        {}
-func (OpenRequested) isNagoEvent()                   {}
+func (UpdateStateValueRequested) isNagoEvent()         {}
+func (FunctionCallRequested) isNagoEvent()             {}
+func (RootViewAllocationRequested) isNagoEvent()       {}
+func (RootViewDestructionRequested) isNagoEvent()      {}
+func (RootViewInvalidated) isNagoEvent()               {}
+func (RootViewRenderingRequested) isNagoEvent()        {}
+func (ErrorOccurred) isNagoEvent()                     {}
+func (ErrorRootViewAllocationRequired) isNagoEvent()   {}
+func (FileImportRequested) isNagoEvent()               {}
+func (NavigationBackRequested) isNagoEvent()           {}
+func (NavigationForwardToRequested) isNagoEvent()      {}
+func (NavigationReloadRequested) isNagoEvent()         {}
+func (NavigationResetRequested) isNagoEvent()          {}
+func (OpenRequested) isNagoEvent()                     {}
+func (ScopeConfigurationChangeRequested) isNagoEvent() {}
+func (ScopeDestructionRequested) isNagoEvent()         {}
+func (SessionAssigned) isNagoEvent()                   {}
+func (Ping) isNagoEvent()                              {}
+func (WindowInfoChanged) isNagoEvent()                 {}
+func (ScopeConfigurationChanged) isNagoEvent()         {}
+func (ThemeRequested) isNagoEvent()                    {}
+func (SendMultipleRequested) isNagoEvent()             {}
 
 // A Box aligns children elements in absolute within its bounds.
 //   - there is no intrinsic component dimension, so you have to set it by hand
@@ -430,12 +444,16 @@ type UpdateStateValueRequested struct {
 	StatePointer Ptr
 	// A FunctionPointer is invoked, if not zero.
 	FunctionPointer Ptr
+	RID             RID
+	Value           Str
 }
 
 func (v *UpdateStateValueRequested) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [5]bool
 	fields[1] = !v.StatePointer.IsZero()
 	fields[2] = !v.FunctionPointer.IsZero()
+	fields[3] = !v.RID.IsZero()
+	fields[4] = !v.Value.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -459,6 +477,22 @@ func (v *UpdateStateValueRequested) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.FunctionPointer.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
 			return err
 		}
 	}
@@ -487,6 +521,16 @@ func (v *UpdateStateValueRequested) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 3:
+			err := v.RID.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -496,11 +540,14 @@ func (v *UpdateStateValueRequested) read(r *BinaryReader) error {
 type FunctionCallRequested struct {
 	// Ptr denotes the remote pointer of the function.
 	Ptr Ptr
+	// RID is used to trace a request-response cycle.
+	RID RID
 }
 
 func (v *FunctionCallRequested) write(w *BinaryWriter) error {
-	var fields [2]bool
+	var fields [3]bool
 	fields[1] = !v.Ptr.IsZero()
+	fields[2] = !v.RID.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -516,6 +563,14 @@ func (v *FunctionCallRequested) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Ptr.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
 			return err
 		}
 	}
@@ -536,6 +591,11 @@ func (v *FunctionCallRequested) read(r *BinaryReader) error {
 		switch fh.fieldId {
 		case 1:
 			err := v.Ptr.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.RID.read(r)
 			if err != nil {
 				return err
 			}
@@ -709,10 +769,10 @@ type Border struct {
 	TopWidth          Length
 	RightWidth        Length
 	BottomWidth       Length
-	LeftColor         Length
-	TopColor          Length
-	RightColor        Length
-	BottomColor       Length
+	LeftColor         Color
+	TopColor          Color
+	RightColor        Color
+	BottomColor       Color
 	BoxShadow         Shadow
 }
 
@@ -4567,12 +4627,12 @@ func (v *ThemeRequested) read(r *BinaryReader) error {
 // NavigationForwardToRequested is an Event triggered by the backend which requests a forward navigation action within the frontend.
 // A frontend must put the new component to create by the factory on top of the current component within the scope.
 // The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.
-type NavigationForwardRequested struct {
+type NavigationForwardToRequested struct {
 	RootView RootViewID
 	Values   RootViewParameters
 }
 
-func (v *NavigationForwardRequested) write(w *BinaryWriter) error {
+func (v *NavigationForwardToRequested) write(w *BinaryWriter) error {
 	var fields [3]bool
 	fields[1] = !v.RootView.IsZero()
 	fields[2] = !v.Values.IsZero()
@@ -4605,7 +4665,7 @@ func (v *NavigationForwardRequested) write(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *NavigationForwardRequested) read(r *BinaryReader) error {
+func (v *NavigationForwardToRequested) read(r *BinaryReader) error {
 	v.reset()
 	fieldCount, err := r.readByte()
 	if err != nil {
@@ -5672,10 +5732,12 @@ func (v *ScaffoldMenuEntry) read(r *BinaryReader) error {
 
 // ScopeDestructionRequested can be emitted by a frontend to deallocate a scope, its states and root view at the backend side. This is usually only possible, if you have a kind of destruction event in the frontend.
 type ScopeDestructionRequested struct {
+	RID RID
 }
 
 func (v *ScopeDestructionRequested) write(w *BinaryWriter) error {
-	var fields [1]bool
+	var fields [2]bool
+	fields[1] = !v.RID.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5685,6 +5747,14 @@ func (v *ScopeDestructionRequested) write(w *BinaryWriter) error {
 	}
 	if err := w.writeByte(fieldCount); err != nil {
 		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -5701,6 +5771,11 @@ func (v *ScopeDestructionRequested) read(r *BinaryReader) error {
 			return err
 		}
 		switch fh.fieldId {
+		case 1:
+			err := v.RID.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -8308,11 +8383,13 @@ func (v *WebView) read(r *BinaryReader) error {
 // WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way. It is not guaranteed that every pixel change will trigger such an event. However, a frontend must guarantee to send such an event if the WindowSizeClass is changed.
 type WindowInfoChanged struct {
 	WindowInfo WindowInfo
+	RID        RID
 }
 
 func (v *WindowInfoChanged) write(w *BinaryWriter) error {
-	var fields [2]bool
+	var fields [3]bool
 	fields[1] = !v.WindowInfo.IsZero()
+	fields[2] = !v.RID.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8328,6 +8405,14 @@ func (v *WindowInfoChanged) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.WindowInfo.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
 			return err
 		}
 	}
@@ -8348,6 +8433,11 @@ func (v *WindowInfoChanged) read(r *BinaryReader) error {
 		switch fh.fieldId {
 		case 1:
 			err := v.WindowInfo.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.RID.read(r)
 			if err != nil {
 				return err
 			}
@@ -8802,7 +8892,7 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		}
 		return &v, nil
 	case 71:
-		var v NavigationForwardRequested
+		var v NavigationForwardToRequested
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -9068,18 +9158,24 @@ func (v *Box) IsZero() bool {
 func (v *UpdateStateValueRequested) reset() {
 	v.StatePointer.reset()
 	v.FunctionPointer.reset()
+	v.RID.reset()
+	v.Value.reset()
 }
 
 func (v *UpdateStateValueRequested) IsZero() bool {
-	return v.StatePointer.IsZero() && v.FunctionPointer.IsZero()
+	return v.StatePointer.IsZero() && v.FunctionPointer.IsZero() && v.RID.IsZero() && v.Value.IsZero()
 }
 
+func (v *UpdateStateValueRequested) GetRID() RID {
+	return v.RID
+}
 func (v *FunctionCallRequested) reset() {
 	v.Ptr.reset()
+	v.RID.reset()
 }
 
 func (v *FunctionCallRequested) IsZero() bool {
-	return v.Ptr.IsZero()
+	return v.Ptr.IsZero() && v.RID.IsZero()
 }
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
@@ -9530,6 +9626,9 @@ func (v *RootViewRenderingRequested) IsZero() bool {
 	return v.RID.IsZero()
 }
 
+func (v *RootViewRenderingRequested) GetRID() RID {
+	return v.RID
+}
 func (v *RootViewDestructionRequested) reset() {
 	v.RID.reset()
 }
@@ -9538,6 +9637,9 @@ func (v *RootViewDestructionRequested) IsZero() bool {
 	return v.RID.IsZero()
 }
 
+func (v *RootViewDestructionRequested) GetRID() RID {
+	return v.RID
+}
 func (v *RootViewInvalidated) reset() {
 	v.RID.reset()
 	v.Root = nil
@@ -9566,6 +9668,9 @@ func (v *RootViewAllocationRequested) IsZero() bool {
 	return v.Locale.IsZero() && v.Factory.IsZero() && v.RID.IsZero() && v.Values.IsZero()
 }
 
+func (v *RootViewAllocationRequested) GetRID() RID {
+	return v.RID
+}
 func (v *ScopeConfigurationChangeRequested) reset() {
 	v.RID.reset()
 	v.AcceptLanguage.reset()
@@ -9576,6 +9681,9 @@ func (v *ScopeConfigurationChangeRequested) IsZero() bool {
 	return v.RID.IsZero() && v.AcceptLanguage.IsZero() && v.WindowInfo.IsZero()
 }
 
+func (v *ScopeConfigurationChangeRequested) GetRID() RID {
+	return v.RID
+}
 func (v *WindowInfo) reset() {
 	v.Width.reset()
 	v.Height.reset()
@@ -10310,12 +10418,12 @@ func (v *ThemeRequested) IsZero() bool {
 	return v.Theme.IsZero()
 }
 
-func (v *NavigationForwardRequested) reset() {
+func (v *NavigationForwardToRequested) reset() {
 	v.RootView.reset()
 	v.Values.reset()
 }
 
-func (v *NavigationForwardRequested) IsZero() bool {
+func (v *NavigationForwardToRequested) IsZero() bool {
 	return v.RootView.IsZero() && v.Values.IsZero()
 }
 
@@ -10538,12 +10646,16 @@ func (v *ScopeID) reset() {
 }
 
 func (v *ScopeDestructionRequested) reset() {
+	v.RID.reset()
 }
 
 func (v *ScopeDestructionRequested) IsZero() bool {
-	return true
+	return v.RID.IsZero()
 }
 
+func (v *ScopeDestructionRequested) GetRID() RID {
+	return v.RID
+}
 func (v *ScrollView) reset() {
 	v.Content = nil
 	v.Border.reset()
@@ -10958,12 +11070,16 @@ func (v *WebView) IsZero() bool {
 
 func (v *WindowInfoChanged) reset() {
 	v.WindowInfo.reset()
+	v.RID.reset()
 }
 
 func (v *WindowInfoChanged) IsZero() bool {
-	return v.WindowInfo.IsZero()
+	return v.WindowInfo.IsZero() && v.RID.IsZero()
 }
 
+func (v *WindowInfoChanged) GetRID() RID {
+	return v.RID
+}
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -11454,7 +11570,7 @@ func (v *ThemeRequested) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *NavigationForwardRequested) writeTypeHeader(w *BinaryWriter) error {
+func (v *NavigationForwardToRequested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 71); err != nil {
 		return err
 	}

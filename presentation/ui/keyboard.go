@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type TKeyboardOptions struct {
 	capitalization     bool
@@ -12,10 +12,10 @@ func KeyboardOptions() TKeyboardOptions {
 	return TKeyboardOptions{}
 }
 
-func (opts TKeyboardOptions) ora() ora.KeyboardOptions {
-	return ora.KeyboardOptions{
-		Capitalization:     opts.capitalization,
-		AutoCorrectEnabled: opts.autoCorrectEnabled,
+func (opts TKeyboardOptions) ora() proto.KeyboardOptions {
+	return proto.KeyboardOptions{
+		Capitalization:     proto.Bool(opts.capitalization),
+		AutoCorrectEnabled: proto.Bool(opts.autoCorrectEnabled),
 		KeyboardType:       opts.keyboardType.ora(),
 	}
 }
@@ -42,24 +42,24 @@ func (opts TKeyboardOptions) KeyboardType(keyboardType KeyboardType) TKeyboardOp
 
 type KeyboardType int
 
-func (k KeyboardType) ora() ora.KeyboardType {
+func (k KeyboardType) ora() proto.KeyboardType {
 	switch k {
 	case KeyboardAscii:
-		return ora.KeyboardAscii
+		return proto.KeyboardAscii
 	case KeyboardInteger:
-		return ora.KeyboardInteger
+		return proto.KeyboardInteger
 	case KeyboardFloat:
-		return ora.KeyboardFloat
+		return proto.KeyboardFloat
 	case KeyboardEMail:
-		return ora.KeyboardEMail
+		return proto.KeyboardEMail
 	case KeyboardPhone:
-		return ora.KeyboardPhone
+		return proto.KeyboardPhone
 	case KeyboardSearch:
-		return ora.KeyboardSearch
+		return proto.KeyboardSearch
 	case KeyboardURL:
-		return ora.KeyboardURL
+		return proto.KeyboardURL
 	default:
-		return ora.KeyboardDefault
+		return proto.KeyboardDefault
 	}
 }
 

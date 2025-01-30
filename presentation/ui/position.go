@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type PositionType int
 
@@ -39,12 +39,12 @@ type Position struct {
 	Bottom Length
 }
 
-func (p Position) ora() ora.Position {
-	return ora.Position{
+func (p Position) ora() proto.Position {
+	return proto.Position{
 		Left:   p.Left.ora(),
 		Top:    p.Top.ora(),
 		Right:  p.Right.ora(),
 		Bottom: p.Bottom.ora(),
-		Kind:   ora.PositionType(p.Type),
+		Kind:   proto.PositionType(p.Type),
 	}
 }

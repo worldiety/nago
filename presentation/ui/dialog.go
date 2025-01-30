@@ -2,12 +2,12 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TDialog struct {
 	uri          core.URI
-	dlg          ora.VStack
+	dlg          proto.VStack
 	preBody      core.View
 	body         core.View
 	footer       core.View
@@ -60,7 +60,7 @@ func (c TDialog) Frame(frame Frame) TDialog {
 	return c
 }
 
-func (c TDialog) Render(ctx core.RenderContext) ora.Component {
+func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	colors := core.Colors[Colors](ctx.Window())
 	dlg := BoxAlign(c.alignment, VStack(
 		If(c.title != nil, HStack(c.title, Spacer(), c.titleX).Alignment(Leading).BackgroundColor(ColorCardTop).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Right: L20, Top: L12, Bottom: L12})),

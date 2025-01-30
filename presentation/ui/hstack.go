@@ -3,30 +3,30 @@ package ui
 import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"runtime/debug"
 	"strings"
 )
 
 type THStack struct {
 	children               []core.View
-	alignment              ora.Alignment
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
-	pressedBackgroundColor ora.Color
-	focusedBackgroundColor ora.Color
-	frame                  ora.Frame
-	gap                    ora.Length
-	padding                ora.Padding
-	font                   ora.Font
-	border                 ora.Border
-	hoveredBorder          ora.Border
-	focusedBorder          ora.Border
-	pressedBorder          ora.Border
+	alignment              proto.Alignment
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
+	pressedBackgroundColor proto.Color
+	focusedBackgroundColor proto.Color
+	frame                  proto.Frame
+	gap                    proto.Length
+	padding                proto.Padding
+	font                   proto.Font
+	border                 proto.Border
+	hoveredBorder          proto.Border
+	focusedBorder          proto.Border
+	pressedBorder          proto.Border
 	accessibilityLabel     string
 	invisible              bool
 	action                 func()
-	stylePreset            ora.StylePreset
+	stylePreset            proto.StylePreset
 	originTrace            string
 	wrap                   bool
 	disabled               bool
@@ -94,7 +94,7 @@ func (c THStack) PressedBackgroundColor(backgroundColor Color) THStack {
 }
 
 func (c THStack) FocusedBackgroundColor(backgroundColor Color) THStack {
-	c.focusedBackgroundColor = ora.Color(backgroundColor)
+	c.focusedBackgroundColor = proto.Color(backgroundColor)
 	return c
 }
 
@@ -158,13 +158,12 @@ func (c THStack) Action(f func()) THStack {
 	return c
 }
 
-func (c THStack) Render(ctx core.RenderContext) ora.Component {
+func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 	ptr := ctx.MountCallback(c.action)
 	if core.Debug {
 		fmt.Printf("hstack got %d @%s\n", ptr, c.originTrace)
 	}
-	return ora.HStack{
-		Type:               ora.HStackT,
+	return &proto.HStack{
 		Children:           renderComponents(ctx, c.children),
 		Gap:                c.gap,
 		Frame:              c.frame,
@@ -172,8 +171,8 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,
 		Border:             c.border,
-		AccessibilityLabel: c.accessibilityLabel,
-		Invisible:          c.invisible,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
+		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,
@@ -183,8 +182,8 @@ func (c THStack) Render(ctx core.RenderContext) ora.Component {
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
 		Action:                 ptr,
-		Wrap:                   c.wrap,
-		Disabled:               c.disabled,
+		Wrap:                   proto.Bool(c.wrap),
+		Disabled:               proto.Bool(c.disabled),
 		Position:               c.position.ora(),
 
 		StylePreset: c.stylePreset,

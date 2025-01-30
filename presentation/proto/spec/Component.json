@@ -15,6 +15,12 @@
     "Radiobutton",
     "ScrollView",
     "Scaffold",
-    "Spacer"
+    "Spacer",
+    "TextView",
+    "TextField",
+    "TextLayout",
+    "Table",
+    "Toggle",
+    "VStack"
   ]
 }

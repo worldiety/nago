@@ -1,6 +1,6 @@
 package ui
 
-import "go.wdy.de/nago/presentation/ora"
+import "go.wdy.de/nago/presentation/proto"
 
 type Shadow struct {
 	Color  Color
@@ -9,11 +9,11 @@ type Shadow struct {
 	Y      Length
 }
 
-func (s Shadow) ora() ora.Shadow {
-	return ora.Shadow{
-		Color:  ora.Color(s.Color),
-		Radius: ora.Length(s.Radius),
-		X:      ora.Length(s.X),
-		Y:      ora.Length(s.Y),
+func (s Shadow) ora() proto.Shadow {
+	return proto.Shadow{
+		Color:  proto.Color(s.Color),
+		Radius: proto.Length(s.Radius),
+		X:      proto.Length(s.X),
+		Y:      proto.Length(s.Y),
 	}
 }

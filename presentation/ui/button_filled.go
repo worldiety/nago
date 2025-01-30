@@ -2,15 +2,15 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TFilledButton struct {
 	fillColor Color
 	textColor Color
 	title     string
-	preIcon   ora.SVG
-	postIcon  ora.SVG
+	preIcon   proto.SVG
+	postIcon  proto.SVG
 	frame     Frame
 	action    func()
 }
@@ -25,12 +25,12 @@ func (c TFilledButton) Title(text string) TFilledButton {
 }
 
 func (c TFilledButton) PreIcon(svg core.SVG) TFilledButton {
-	c.preIcon = ora.SVG(svg)
+	c.preIcon = proto.SVG(svg)
 	return c
 }
 
 func (c TFilledButton) PostIcon(svg core.SVG) TFilledButton {
-	c.postIcon = ora.SVG(svg)
+	c.postIcon = proto.SVG(svg)
 	return c
 }
 
@@ -44,7 +44,7 @@ func (c TFilledButton) Frame(frame Frame) TFilledButton {
 	return c
 }
 
-func (c TFilledButton) Render(context core.RenderContext) ora.Component {
+func (c TFilledButton) Render(context core.RenderContext) proto.Component {
 	decView := customButton(c.fillColor, HStack(
 		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
 		If(c.title != "", btnTitle(c.title, c.textColor)),

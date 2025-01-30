@@ -2,39 +2,40 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"net/url"
 	"strings"
 )
 
-type TextAlignment string
+type TextAlignment uint
 
 const (
-	TextAlignStart   TextAlignment = "s"
-	TextAlignEnd     TextAlignment = "e"
-	TextAlignCenter  TextAlignment = "c"
-	TextAlignJustify TextAlignment = "j"
+	TextAlignInherit TextAlignment = TextAlignment(proto.TextAlignInherit)
+	TextAlignStart   TextAlignment = TextAlignment(proto.TextAlignStart)
+	TextAlignEnd     TextAlignment = TextAlignment(proto.TextAlignEnd)
+	TextAlignCenter  TextAlignment = TextAlignment(proto.TextAlignCenter)
+	TextAlignJustify TextAlignment = TextAlignment(proto.TextAlignJustify)
 )
 
 type TText struct {
 	content                string
-	color                  ora.Color
-	backgroundColor        ora.Color
-	hoveredBackgroundColor ora.Color
-	pressedBackgroundColor ora.Color
-	focusedBackgroundColor ora.Color
-	font                   ora.Font
+	color                  proto.Color
+	backgroundColor        proto.Color
+	hoveredBackgroundColor proto.Color
+	pressedBackgroundColor proto.Color
+	focusedBackgroundColor proto.Color
+	font                   proto.Font
 	invisible              bool
 	onClick                func()
 	onHoverStart           func()
 	onHoverEnd             func()
-	padding                ora.Padding
-	frame                  ora.Frame
-	border                 ora.Border
-	hoveredBorder          ora.Border
-	focusedBorder          ora.Border
-	pressedBorder          ora.Border
+	padding                proto.Padding
+	frame                  proto.Frame
+	border                 proto.Border
+	hoveredBorder          proto.Border
+	focusedBorder          proto.Border
+	pressedBorder          proto.Border
 	accessibilityLabel     string
 	textAlignment          TextAlignment
 	action                 func()
@@ -154,20 +155,19 @@ func (c TText) Action(f func()) TText {
 
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
-	return ora.Text{
-		Type:               ora.TextT,
-		Value:              c.content,
+	return &proto.TextView{
+		Value:              proto.Str(c.content),
 		Color:              c.color,
 		BackgroundColor:    c.backgroundColor,
 		Font:               c.font,
 		OnClick:            ctx.MountCallback(c.onClick),
 		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
 		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),
-		Invisible:          c.invisible,
+		Invisible:          proto.Bool(c.invisible),
 		Border:             c.border,
 		Padding:            c.padding,
 		Frame:              c.frame,
-		AccessibilityLabel: c.accessibilityLabel,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,
 		PressedBackgroundColor: c.pressedBackgroundColor,
@@ -175,8 +175,8 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,
-		TextAlignment:          ora.TextAlignment(c.textAlignment),
+		TextAlignment:          proto.TextAlignment(c.textAlignment),
 		Action:                 ctx.MountCallback(c.action),
-		LineBreak:              c.lineBreak,
+		LineBreak:              proto.Bool(c.lineBreak),
 	}
 }

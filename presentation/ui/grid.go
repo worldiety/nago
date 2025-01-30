@@ -2,7 +2,7 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 	"math"
 )
 
@@ -14,7 +14,7 @@ type TGridCell struct {
 	rowEnd    int
 	colSpan   int
 	rowSpan   int
-	padding   ora.Padding
+	padding   proto.Padding
 	alignment Alignment
 }
 
@@ -75,21 +75,20 @@ func (c TGridCell) RowSpan(rowSpan int) TGridCell {
 	return c
 }
 
-func (c TGridCell) render(ctx core.RenderContext) ora.GridCell {
-	var body ora.Component
+func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
+	var body proto.Component
 	if c.body != nil {
 		body = c.body.Render(ctx)
 	}
 
-	return ora.GridCell{
-		Type:      ora.GridCellT,
+	return proto.GridCell{
 		Body:      body,
-		ColStart:  int64(c.colStart),
-		ColEnd:    int64(c.colEnd),
-		RowStart:  int64(c.rowStart),
-		RowEnd:    int64(c.rowEnd),
-		ColSpan:   int64(c.colSpan),
-		RowSpan:   int64(c.rowSpan),
+		ColStart:  proto.Uint(c.colStart),
+		ColEnd:    proto.Uint(c.colEnd),
+		RowStart:  proto.Uint(c.rowStart),
+		RowEnd:    proto.Uint(c.rowEnd),
+		ColSpan:   proto.Uint(c.colSpan),
+		RowSpan:   proto.Uint(c.rowSpan),
 		Padding:   c.padding,
 		Alignment: c.alignment.ora(),
 	}
@@ -97,16 +96,16 @@ func (c TGridCell) render(ctx core.RenderContext) ora.GridCell {
 
 type TGrid struct {
 	cells              []TGridCell
-	backgroundColor    ora.Color
-	frame              ora.Frame
+	backgroundColor    proto.Color
+	frame              proto.Frame
 	rows               int
 	cols               int
-	colWidths          []ora.Length
-	rowGap             ora.Length
-	colGap             ora.Length
-	padding            ora.Padding
-	font               ora.Font
-	border             ora.Border
+	colWidths          []proto.Length
+	rowGap             proto.Length
+	colGap             proto.Length
+	padding            proto.Padding
+	font               proto.Font
+	border             proto.Border
 	accessibilityLabel string
 	invisible          bool
 }
@@ -152,7 +151,7 @@ func (c TGrid) Columns(cols int) TGrid {
 // Widths are optional column width from left to right. If not all width are defined, the rest
 // of widths are equally distributed based on the remaining amount of space.
 func (c TGrid) Widths(colWidths ...Length) TGrid {
-	c.colWidths = make([]ora.Length, 0, len(colWidths))
+	c.colWidths = make([]proto.Length, 0, len(colWidths))
 	for _, width := range colWidths {
 		c.colWidths = append(c.colWidths, width.ora())
 	}
@@ -218,8 +217,8 @@ func (c TGrid) cellCount() int {
 	return count
 }
 
-func (c TGrid) Render(ctx core.RenderContext) ora.Component {
-	cells := make([]ora.GridCell, 0, len(c.cells))
+func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
+	cells := make([]proto.GridCell, 0, len(c.cells))
 	for _, cell := range c.cells {
 		cells = append(cells, cell.render(ctx))
 	}
@@ -233,19 +232,18 @@ func (c TGrid) Render(ctx core.RenderContext) ora.Component {
 		c.rows = int(math.Round(float64(virtualCellCount) / float64(c.cols)))
 	}
 
-	return ora.Grid{
-		Type:               ora.GridT,
+	return &proto.Grid{
 		Cells:              cells,
-		Rows:               int64(c.rows),
-		Columns:            int64(c.cols),
+		Rows:               proto.Uint(c.rows),
+		Columns:            proto.Uint(c.cols),
 		RowGap:             c.rowGap,
 		ColGap:             c.colGap,
 		Frame:              c.frame,
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,
 		Border:             c.border,
-		AccessibilityLabel: c.accessibilityLabel,
-		Invisible:          c.invisible,
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
+		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		ColWidths:          c.colWidths,
 	}

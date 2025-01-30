@@ -2,13 +2,13 @@ package ui
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ora"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TModal struct {
 	content                  core.View
 	onDismissRequest         func()
-	mtype                    ora.ModalType
+	mtype                    proto.ModalType
 	top, left, right, bottom Length
 }
 
@@ -21,7 +21,7 @@ func Modal(content core.View) TModal {
 // view. The html frontend renderer has a problem to distinguish between capturing events for conventional modals
 // and not capturing them as in [Modal] mode.
 func Overlay(content core.View) TModal {
-	return TModal{content: content, mtype: ora.ModalTypeOverlay}
+	return TModal{content: content, mtype: proto.ModalTypeOverlay}
 }
 
 func (c TModal) Top(top Length) TModal {
@@ -44,9 +44,8 @@ func (c TModal) Bottom(bottom Length) TModal {
 	return c
 }
 
-func (c TModal) Render(context core.RenderContext) ora.Component {
-	return ora.Modal{
-		Type:             ora.ModalT,
+func (c TModal) Render(context core.RenderContext) core.RenderNode {
+	return &proto.Modal{
 		Content:          render(context, c.content),
 		ModalType:        c.mtype,
 		OnDismissRequest: context.MountCallback(c.onDismissRequest),
