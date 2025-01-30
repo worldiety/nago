@@ -13,13 +13,13 @@ import type {Event} from '@/shared/protocol/ora/event';
 import type {EventsAggregated} from '@/shared/protocol/ora/eventsAggregated';
 import type {FunctionCallRequested} from '@/shared/protocol/ora/functionCallRequested';
 import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequested';
-import type {Ping} from '@/shared/protocol/ora/ping';
 import type {Property} from '@/shared/protocol/ora/property';
 import type {Ptr} from '@/shared/protocol/ora/ptr';
 import type {ScopeID} from '@/shared/protocol/ora/scopeID';
 import type {SetPropertyValueRequested} from '@/shared/protocol/ora/setPropertyValueRequested';
 import type {WindowInfo} from '@/shared/protocol/ora/windowInfo';
 import type {WindowInfoChanged} from '@/shared/protocol/ora/windowInfoChanged';
+import {BinaryReader, BinaryWriter, marshal, NagoEvent, Ping, unmarshal} from "@/shared/proto/nprotoc_gen";
 
 export default class WebSocketAdapter implements ServiceAdapter {
 	eventBus: EventBus;
@@ -79,22 +79,32 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
+			this.webSocket.binaryType = 'arraybuffer';
 
-			this.webSocket.onmessage = (e) => this.receive(e.data);
+			this.webSocket.onmessage = (e) => this.receiveBinary(e.data);
 
-			this.webSocket.onclose = () => {
+			this.webSocket.onclose = (evt) => {
 				ConnectionHandler.connectionChanged({connected: false});
 
-				if (!this.closedGracefully) {
+				if (this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
 					window.console.log('ws was intentionally closed');
 					this.retry();
 				} else {
 					// Keep the socket closed if it was closed gracefully (i.e. intentional)
 					window.console.log('ws was not closed gracefully');
+					console.log('WebSocket closed:', evt);
+					console.log('Code:', evt.code);
+					console.log('Reason:', evt.reason);
+					console.log('Was clean:', evt.wasClean);
+
 					this.closedGracefully = false;
 				}
 			};
+
+			this.webSocket.onerror = ev => {
+				window.console.log("websocket failed", ev);
+			}
 
 			this.webSocket.onopen = () => {
 				ConnectionHandler.connectionChanged({connected: true});
@@ -105,11 +115,9 @@ export default class WebSocketAdapter implements ServiceAdapter {
 					if (this.closedGracefully) {
 						return;
 					}
-					const evt: Ping = {
-						type: 'Ping',
-					};
 
-					this.webSocket?.send(JSON.stringify(evt));
+
+					this.sendEvent(new Ping())
 				}, 30000);
 
 				resolve();
@@ -117,7 +125,17 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		});
 	}
 
+	sendEvent(evt: NagoEvent): void {
+		console.log("SEND EVENT", evt)
+		let writer = new BinaryWriter();
+		marshal(writer, evt)
+		let buffer = writer.getBuffer();
+		console.log("nprotoc buffer", buffer)
+		this.webSocket?.send(buffer);
+	}
+
 	async teardown(): Promise<void> {
+		window.console.log("websocket teardown");
 		this.closedGracefully = true;
 		this.webSocket?.close();
 		ConnectionHandler.connectionChanged({connected: false});
@@ -179,6 +197,8 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		if (this.activeLocale == '') {
 			window.console.log('there is no configured active locale. Invoke getConfiguration to set it.');
 		}
+
+		throw "wer ist das hier?"
 
 		const newComponentRequested: NewComponentRequested = {
 			type: 'NewComponentRequested',
@@ -264,6 +284,12 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			);
 			this.webSocket?.send(JSON.stringify(callBatch));
 		});
+	}
+
+	private receiveBinary(responseRaw: ArrayBuffer): void {
+		console.log("WS received", responseRaw)
+		let msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
+		ConnectionHandler.publishEvent(msg as NagoEvent);
 	}
 
 	private receive(responseRaw: string): void {

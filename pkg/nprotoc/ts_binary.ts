@@ -1,10 +1,12 @@
-class BinaryWriter {
+export class BinaryWriter {
     private buffer: Uint8Array;
     private view: DataView;
     private offset: number = 0;
+    private tmp: Uint8Array;
 
     constructor(size: number = 1024) {
         this.buffer = new Uint8Array(size);
+        this.tmp = new Uint8Array(8);
         this.view = new DataView(this.buffer.buffer);
     }
 
@@ -66,14 +68,15 @@ class BinaryWriter {
     }
 
     writeFloat64(value: number): void {
-        const float64Bits = new DataView(new ArrayBuffer(8));
+        const buffer = new ArrayBuffer(8);
+        const float64Bits = new DataView(buffer);
         float64Bits.setFloat64(0, value, true);
-        const bits = float64Bits.getBigUint64(0, true);
-        this.writeUvarint(Number(bits));
+        this.tmp.set(new Uint8Array(buffer));
+        this.write(this.tmp);
     }
 }
 
-class BinaryReader {
+export class BinaryReader {
     private buffer: Uint8Array;
     private view: DataView;
     private offset: number = 0;
@@ -130,21 +133,20 @@ class BinaryReader {
     }
 
     readFloat64(): number {
-        const bits = this.readUvarint();
-        const buffer = new ArrayBuffer(8);
+        let tmp = this.readBytes(8);
+        const buffer = tmp.buffer;
         const view = new DataView(buffer);
-        view.setBigUint64(0, BigInt(bits), true); // Schreibe die Bits in Little-Endian
         return view.getFloat64(0, true);
     }
 }
 
 // Types and Enums
 
-type Shape = number;
-type FieldId = number;
-type TypeId = number;
+export type Shape = number;
+export type FieldId = number;
+export type TypeId = number;
 
-enum Shapes {
+export enum Shapes {
     ENVELOPE = 0,
     UVARINT,
     VARINT,
@@ -155,13 +157,13 @@ enum Shapes {
     ARRAY,
 }
 
-interface FieldHeader {
+export interface FieldHeader {
     shape: Shape;
     fieldId: FieldId;
 }
 
 // Interface for writable objects
-interface Writeable {
+export interface Writeable {
     write(writer: BinaryWriter): void;
 
     writeTypeHeader(dst: BinaryWriter): void
@@ -169,7 +171,7 @@ interface Writeable {
 
 
 // Interface for readable objects
-interface Readable {
+export interface Readable {
     read(reader: BinaryReader): void;
 
     isZero(): boolean;

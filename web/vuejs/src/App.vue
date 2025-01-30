@@ -22,8 +22,14 @@ import type {Theme} from '@/shared/protocol/ora/theme';
 import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
 import type {Themes} from '@/shared/protocol/ora/themes';
 import {URI} from '@/shared/protocol/ora/uRI';
-import {WindowInfo} from '@/shared/protocol/ora/windowInfo';
 import {useThemeManager} from '@/shared/themeManager';
+import {
+	Density,
+	DP,
+	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
+	WindowInfo
+} from "@/shared/proto/nprotoc_gen";
 
 enum State {
 	Loading,
@@ -57,15 +63,30 @@ async function applyConfiguration(): Promise<void> {
 
 	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 	// restoration).
+
+
+
 	await serviceAdapter.initialize();
+	let scopeConfigurationChangeRequested = new ScopeConfigurationChangeRequested();
+	scopeConfigurationChangeRequested.windowInfo.density = new Density(window.devicePixelRatio);
+	scopeConfigurationChangeRequested.windowInfo.width = new DP(window.innerWidth);
+	scopeConfigurationChangeRequested.windowInfo.height = new DP(window.innerHeight);
+	serviceAdapter.sendEvent(scopeConfigurationChangeRequested)
 
+	ConnectionHandler.addEventListener((evt)=>{
+		console.log("app received nago event",evt)
+		if (evt instanceof ScopeConfigurationChanged){
+			console.log("got ScopeConfigurationChanged")
+		}
+	})
 
-	// request and apply configuration
-	const config = await serviceAdapter.getConfiguration();
-	themeManager.setThemes(config.themes);
-	themeManager.applyActiveTheme();
-	updateFavicon(config.appIcon);
-	sendWindowInfo(false);
+	/*
+		// request and apply configuration
+		const config = await serviceAdapter.getConfiguration();
+		themeManager.setThemes(config.themes);
+		themeManager.applyActiveTheme();
+		updateFavicon(config.appIcon);
+		sendWindowInfo(false);*/
 }
 
 function restoreCookie(sessionID: string) {
@@ -388,8 +409,8 @@ function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
 	if (connected.value) {
 		// trigger a re-render, TODO use ComponentInvalidatedRequested
-		console.log("websocket connected, poke server")
-		serviceAdapter.executeFunctions(-1)
+		console.log("TODO websocket connected, poke server")
+		//serviceAdapter.executeFunctions(-1)
 	}
 }
 
@@ -402,10 +423,10 @@ onBeforeMount(() => {
 });
 
 onMounted(async () => {
-	await configurationPromise;
-	await initializeUi();
-	addEventListeners();
-	addConnectionListeners();
+	//await configurationPromise;
+	//await initializeUi();
+	//addEventListeners();
+	//addConnectionListeners();
 });
 
 onUnmounted(() => {

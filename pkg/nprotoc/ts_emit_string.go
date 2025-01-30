@@ -3,7 +3,7 @@ package nprotoc
 func (c *Compiler) tsEmitString(t Typename, decl String) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s{\n", t, c.tsImplements(t))
+	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
   private value: string; 

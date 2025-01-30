@@ -76,7 +76,8 @@ func (w *BinaryWriter) writeSlice(s []byte) error {
 }
 
 func (w *BinaryWriter) writeFloat64(v float64) error {
-	return w.writeUvarint(math.Float64bits(v))
+	binary.LittleEndian.PutUint64(w.tmp[:8], math.Float64bits(v))
+	return w.write(w.tmp[:8])
 }
 
 type BinaryReader struct {
@@ -139,11 +140,13 @@ func (r *BinaryReader) readUvarint() (uint64, error) {
 }
 
 func (r *BinaryReader) readFloat64() (float64, error) {
-	bits, err := r.readUvarint()
-	if err != nil {
+	if err := r.read(r.tmp[:8]); err != nil {
 		return 0.0, err
 	}
-	return math.Float64frombits(bits), nil
+
+	value := binary.LittleEndian.Uint64(r.tmp[:8])
+
+	return math.Float64frombits(value), nil
 }
 
 type shape uint8

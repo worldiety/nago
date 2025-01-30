@@ -2,7 +2,7 @@ package nprotoc
 
 func (c *Compiler) tsEmitMarshal() error {
 	c.pn("// Function to marshal a Writeable object into a BinaryWriter")
-	c.pn("function marshal(dst: BinaryWriter, src: Writeable): void {")
+	c.pn("export function marshal(dst: BinaryWriter, src: Writeable): void {")
 	c.inc()
 	c.pn("src.writeTypeHeader(dst);")
 	c.pn("src.write(dst);")
@@ -14,7 +14,7 @@ func (c *Compiler) tsEmitMarshal() error {
 
 func (c *Compiler) tsEmitUnmarshal() error {
 	c.pn("// Function to unmarshal data from a BinaryReader into a Readable object")
-	c.pn("function unmarshal(src: BinaryReader): Readable {")
+	c.pn("export function unmarshal(src: BinaryReader): Readable {")
 	c.inc()
 	c.pn("const { typeId } = src.readTypeHeader();")
 	c.pn("switch (typeId) {")

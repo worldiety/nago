@@ -3,7 +3,7 @@ package nprotoc
 func (c *Compiler) tsEmitFloat64(t Typename, decl Float64) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s{\n", t, c.tsImplements(t))
+	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
 	private value: number; 
@@ -37,6 +37,6 @@ func (c *Compiler) tsEmitFloat64(t Typename, decl Float64) error {
 	c.dec()
 
 	c.pf("}\n\n")
-	
+
 	return nil
 }

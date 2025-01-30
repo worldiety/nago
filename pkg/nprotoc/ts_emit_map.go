@@ -3,7 +3,7 @@ package nprotoc
 func (c *Compiler) tsEmitMap(t Typename, decl Map) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s {\n", t, c.tsImplements(t))
+	c.pf("export class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
 	c.pf("private value: Map<%s,%s>;\n", decl.Key, decl.Value)
 	c.pn("")

@@ -3,7 +3,7 @@ package nprotoc
 func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s {\n", t, c.tsImplements(t))
+	c.pf("export class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
 	c.pf("private value: %s[];\n", decl.Type)
 	c.pn("")

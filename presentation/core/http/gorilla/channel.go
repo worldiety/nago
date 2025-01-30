@@ -64,7 +64,7 @@ func (w *WebsocketChannel) Publish(msg []byte) error {
 	w.gorillaMutex.Lock()
 	defer w.gorillaMutex.Unlock()
 
-	return w.conn.WriteMessage(websocket.TextMessage, msg)
+	return w.conn.WriteMessage(websocket.BinaryMessage, msg)
 }
 
 // PublishLocal dispatches the buffer directly to currently all registered subscribers.

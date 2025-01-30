@@ -5,7 +5,7 @@ import "strings"
 func (c *Compiler) tsEmitRecord(t Typename, decl Record) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s {\n", t, c.tsImplements(t))
+	c.pf("export class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
 
 	for _, field := range decl.sortedFields() {

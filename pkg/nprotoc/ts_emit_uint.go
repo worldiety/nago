@@ -3,7 +3,7 @@ package nprotoc
 func (c *Compiler) tsEmitUint(t Typename, decl Uint) error {
 	c.pn("")
 	c.p(c.makeGoDoc(decl.Doc))
-	c.pf("class %s %s{\n", t, c.tsImplements(t))
+	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
 	private value: number; // Using number to handle uint64 (precision limits apply)
