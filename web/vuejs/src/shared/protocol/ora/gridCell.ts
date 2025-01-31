@@ -31,3 +31,12 @@ export interface GridCell {
 	// Alignment
 	a /*omitempty*/? /*Alignment*/ : Alignment;
 }
+/*Top            Alignment = "u"
+Center         Alignment = "c"
+Bottom         Alignment = "b"
+Leading        Alignment = "l"
+Trailing       Alignment = "t"
+TopLeading     Alignment = "ul"
+TopTrailing    Alignment = "ut"
+BottomLeading  Alignment = "bl"
+BottomTrailing Alignment = "bt"*/

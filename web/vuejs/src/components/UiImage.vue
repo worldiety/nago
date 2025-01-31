@@ -5,54 +5,42 @@ import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Image } from '@/shared/protocol/ora/image';
+import {Img} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
-	ui: Image;
+	ui: Img;
 }>();
 
 const serviceAdapter = useServiceAdapter();
 
 const styles = computed<string>(() => {
-	let styles = borderCSS(props.ui.b);
-	styles.push(...frameCSS(props.ui.f));
-	styles.push(...paddingCSS(props.ui.p));
+	let styles = borderCSS(props.ui.border);
+	styles.push(...frameCSS(props.ui.frame));
+	styles.push(...paddingCSS(props.ui.padding));
 
-	if (!props.ui.s) {
+	if (props.ui.sVG.isZero()) {
+		// special case for normal images, not for svg
 		styles.push('object-fit: cover');
 	}
 
-	if (props.ui.c) {
-		styles.push(`fill: ${colorValue(props.ui.c)}`);
+	if (!props.ui.fillColor.isZero()) {
+		styles.push(`fill: ${colorValue(props.ui.fillColor.value)}`);
 	}
 
-	if (props.ui.k) {
-		styles.push(`stroke: ${colorValue(props.ui.k)}`);
+	if (!props.ui.strokeColor.isZero()) {
+		styles.push(`stroke: ${colorValue(props.ui.strokeColor.value)}`);
 	}
 
 	return styles.join(';');
 });
 
 const rewriteSVG = computed<string>(() => {
-	if (!props.ui.s && !props.ui.v) {
+	if (!props.ui.sVG.isZero() ) {
 		return '';
 	}
 
-	let data = 'svg cache error';
-	if (props.ui.s) {
-		data = props.ui.s;
-	} else {
-		if (props.ui.v) {
-			let tmp = serviceAdapter.getBufferFromCache(props.ui.v);
-			if (tmp) {
-				data = tmp;
-			}
-		}
-	}
-
-	if (props.ui.s && props.ui.v) {
-		serviceAdapter.setBufferToCache(props.ui.v, props.ui.s);
-	}
+	// todo how to optimize this svg handling which is probably very expensive
+	let data = props.ui.sVG.value;
 
 	return data.replace('<svg ', `<svg style="${styles.value}" `);
 });
@@ -60,12 +48,12 @@ const rewriteSVG = computed<string>(() => {
 
 <template>
 	<img
-		v-if="!ui.iv && !ui.s && !props.ui.v"
+		v-if="!ui.invisible.value && ui.sVG.isZero()"
 		class="h-auto max-w-full"
-		:src="props.ui.u"
-		:alt="props.ui.al"
-		:title="props.ui.al"
+		:src="props.ui.uri.value"
+		:alt="props.ui.accessibilityLabel.value"
+		:title="props.ui.accessibilityLabel.value"
 		:style="styles"
 	/>
-	<div :title="props.ui.al" v-if="props.ui.s || props.ui.v" v-html="rewriteSVG"></div>
+	<div :title="props.ui.accessibilityLabel.value" v-if="!props.ui.sVG.isZero()" v-html="rewriteSVG"></div>
 </template>

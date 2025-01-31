@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { Alignment } from '@/components/shared/alignments';
-import { borderCSS } from '@/components/shared/border';
-import { colorValue } from '@/components/shared/colors';
-import { fontCSS } from '@/components/shared/font';
-import { frameCSS } from '@/components/shared/frame';
-import { cssLengthValue } from '@/components/shared/length';
-import { paddingCSS } from '@/components/shared/padding';
-import { positionCSS } from '@/components/shared/position';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { HStack } from '@/shared/protocol/ora/hStack';
+import {borderCSS} from '@/components/shared/border';
+import {colorValue} from '@/components/shared/colors';
+import {fontCSS} from '@/components/shared/font';
+import {frameCSS} from '@/components/shared/frame';
+import {cssLengthValue} from '@/components/shared/length';
+import {paddingCSS} from '@/components/shared/padding';
+import {positionCSS} from '@/components/shared/position';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {AlignmentValues, FunctionCallRequested, HStack, Img, StylePresetValues} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: HStack;
@@ -24,17 +24,17 @@ const focusVisible = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick(event: Event) {
-	if (props.ui.t) {
+	if (!props.ui.action.isZero()) {
 		event.stopPropagation();
-		serviceAdapter.executeFunctions(props.ui.t);
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
 }
 
 function onKeydown(event: KeyboardEvent) {
-	if (props.ui.t) {
+	if (!props.ui.action.isZero()) {
 		event.stopPropagation();
 		if (event.code === 'Enter' || event.code === 'Space') {
-			serviceAdapter.executeFunctions(props.ui.t);
+			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 		}
 	}
 }
@@ -46,60 +46,60 @@ function checkFocusVisible(event: Event) {
 
 // copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
 function commonStyles(): string[] {
-	let styles = frameCSS(props.ui.f);
-	styles.push(...positionCSS(props.ui.ps));
+	let styles = frameCSS(props.ui.frame);
+	styles.push(...positionCSS(props.ui.position));
 
 	// background handling
-	if (props.ui.pgc && pressed.value) {
-		styles.push(`background-color: ${colorValue(props.ui.pgc)}`);
+	if (!props.ui.pressedBackgroundColor.isZero() && pressed.value) {
+		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor.value)}`);
 	} else {
-		if (props.ui.hgc) {
+		if (!props.ui.hoveredBackgroundColor.isZero()) {
 			if (hover.value) {
-				styles.push(`background-color: ${colorValue(props.ui.hgc)}`);
+				styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor.value)}`);
 			} else {
-				styles.push(`background-color: ${colorValue(props.ui.bgc)}`);
+				styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
 			}
 		} else {
-			styles.push(`background-color: ${colorValue(props.ui.bgc)}`);
+			styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
 		}
 	}
 
-	if (props.ui.t) {
+	if (!props.ui.action.isZero()) {
 		focusable.value = true;
 	}
 
-	if (props.ui.fbc) {
+	if (!props.ui.focusedBackgroundColor.isZero()) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
-			styles.push(`background-color: ${colorValue(props.ui.fbc)}`);
+			styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor.value)}`);
 		}
 	}
 
 	// border handling
-	if (props.ui.pb && pressed.value) {
-		styles.push(...borderCSS(props.ui.pb));
+	if (!props.ui.pressedBorder.isZero() && pressed.value) {
+		styles.push(...borderCSS(props.ui.pressedBorder));
 	} else {
-		if (props.ui.hb) {
+		if (!props.ui.hoveredBorder.isZero()) {
 			if (hover.value) {
-				styles.push(...borderCSS(props.ui.hb));
+				styles.push(...borderCSS(props.ui.hoveredBorder));
 			} else {
-				styles.push(...borderCSS(props.ui.b));
+				styles.push(...borderCSS(props.ui.border));
 			}
 		} else {
-			styles.push(...borderCSS(props.ui.b));
+			styles.push(...borderCSS(props.ui.border));
 		}
 	}
 
-	if (props.ui.fb) {
+	if (!props.ui.focusedBorder.isZero()) {
 		focusable.value = true;
-		if (focusVisible.value) {
-			styles.push(...borderCSS(props.ui.fb));
+		if (focused.value && !pressed.value) {
+			styles.push(...borderCSS(props.ui.focusedBorder));
 		}
 	}
 
 	// other stuff
-	styles.push(...paddingCSS(props.ui.p));
-	styles.push(...fontCSS(props.ui.fn));
+	styles.push(...paddingCSS(props.ui.padding));
+	styles.push(...fontCSS(props.ui.font));
 
 	if (focusVisible.value) {
 		styles.push('outline: 2px solid black'); // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
@@ -111,45 +111,42 @@ function commonStyles(): string[] {
 const frameStyles = computed<string>(() => {
 	let styles = commonStyles();
 
-	if (props.ui.g) {
-		styles.push(`column-gap:${cssLengthValue(props.ui.g)}`);
+	if (!props.ui.gap.isZero()) {
+		styles.push(`column-gap:${cssLengthValue(props.ui.gap.value)}`);
 	}
 
 	return styles.join(';');
 });
 
-const StyleButtonPrimary = 'p';
-const StyleButtonSecondary = 's';
-const StyleButtonTertiary = 't';
 
 const clazz = computed<string>(() => {
 	let classes = ['inline-flex'];
-	switch (props.ui.a) {
-		case Alignment.Leading:
+	switch (props.ui.alignment.value) {
+		case AlignmentValues.Leading:
 			classes.push('justify-start', 'items-center');
 			break;
-		case Alignment.Trailing:
+		case AlignmentValues.Trailing:
 			classes.push('justify-end', 'items-center');
 			break;
-		case Alignment.Center:
+		case AlignmentValues.Center:
 			classes.push('justify-center', 'items-center');
 			break;
-		case Alignment.TopLeading:
+		case AlignmentValues.TopLeading:
 			classes.push('justify-start', 'items-start');
 			break;
-		case Alignment.BottomLeading:
+		case AlignmentValues.BottomLeading:
 			classes.push('justify-start', 'items-end');
 			break;
-		case Alignment.TopTrailing:
+		case AlignmentValues.TopTrailing:
 			classes.push('justify-end', 'items-start');
 			break;
-		case Alignment.Top:
+		case AlignmentValues.Top:
 			classes.push('justify-center', 'items-start');
 			break;
-		case Alignment.BottomTrailing:
+		case AlignmentValues.BottomTrailing:
 			classes.push('justify-end', 'items-end');
 			break;
-		case Alignment.Bottom:
+		case AlignmentValues.Bottom:
 			classes.push('justify-center', 'items-end');
 			break;
 		default:
@@ -157,29 +154,29 @@ const clazz = computed<string>(() => {
 			break;
 	}
 
-	if (props.ui.t) {
+	if (!props.ui.action.isZero()) {
 		classes.push('cursor-pointer');
 	}
 
-	if (props.ui.w) {
+	if (props.ui.wrap.value) {
 		classes.push('flex-wrap');
 	}
 
-	switch (props.ui.s) {
-		case StyleButtonPrimary:
+	switch (props.ui.stylePreset.value) {
+		case StylePresetValues.StyleButtonPrimary:
 			classes.push('button-primary');
 			break;
-		case StyleButtonSecondary:
+		case StylePresetValues.StyleButtonSecondary:
 			classes.push('button-secondary');
 			break;
-		case StyleButtonTertiary:
+		case StylePresetValues.StyleButtonTertiary:
 			classes.push('button-tertiary');
 			break;
 	}
 
 	// preset special round icon mode in buttons
-	if (props.ui.s) {
-		if (props.ui.c && props.ui.c.length == 1 && props.ui.c[0].type == 'I') {
+	if (!props.ui.stylePreset.isZero()) {
+		if (props.ui.children.value.length == 1 && props.ui.children.value[0] instanceof Img) {
 			classes.push('!p-0', '!w-10');
 		}
 	}
@@ -191,7 +188,7 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- hstack -->
 	<div
-		v-if="!props.ui.s && !props.ui.iv"
+		v-if="props.ui.stylePreset.value===StylePresetValues.StyleNone && !props.ui.invisible.value"
 		:class="clazz"
 		:style="frameStyles"
 		@mouseover="hover = true"
@@ -200,7 +197,7 @@ const clazz = computed<string>(() => {
 		@mouseup="pressed = false"
 		@mouseout="pressed = false"
 		@focusin="focused = true"
-		:title="props.ui.al"
+		:title="props.ui.accessibilityLabel.value"
 		@focusout="
 			focused = false;
 			focusVisible = false;
@@ -210,17 +207,17 @@ const clazz = computed<string>(() => {
 		@keydown="onKeydown"
 		@focus="checkFocusVisible"
 	>
-		<ui-generic v-for="ui in props.ui.c" :ui="ui" />
+		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
 	</div>
 
 	<button
-		:disabled="props.ui.d"
-		v-if="props.ui.s && !props.ui.iv"
+		:disabled="props.ui.disabled.value"
+		v-else-if="props.ui.stylePreset.value!==StylePresetValues.StyleNone && !props.ui.invisible.value"
 		:class="clazz"
 		:style="frameStyles"
 		@click="onClick"
-		:title="props.ui.al"
+		:title="props.ui.accessibilityLabel.value"
 	>
-		<ui-generic v-for="ui in props.ui.c" :ui="ui" />
+		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
 	</button>
 </template>

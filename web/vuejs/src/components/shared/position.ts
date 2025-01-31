@@ -1,12 +1,6 @@
-import { cssLengthValue } from '@/components/shared/length';
-import {
-	Position,
-	PositionAbsolute,
-	PositionDefault,
-	PositionFixed,
-	PositionOffset,
-	PositionSticky,
-} from '@/shared/protocol/ora/position';
+import {cssLengthValue} from '@/components/shared/length';
+import {Position, PositionTypeValues} from "@/shared/proto/nprotoc_gen";
+
 
 export function positionCSS(position?: Position): string[] {
 	const styles: string[] = [];
@@ -15,41 +9,39 @@ export function positionCSS(position?: Position): string[] {
 		return styles;
 	}
 
-	switch (position.k) {
-		case PositionDefault:
-			styles.push('position:static');
+	switch (position.kind.value) {
+		case PositionTypeValues.PositionDefault:
+			//styles.push('position:static'); // TODO not sure if we should switch that to change inherit behavior
 			break;
-		case PositionAbsolute:
+		case PositionTypeValues.PositionAbsolute:
 			styles.push('position:absolute');
 			break;
-		case PositionOffset:
+		case PositionTypeValues.PositionOffset:
 			styles.push('position:relative');
 			break;
-		case PositionSticky:
+		case PositionTypeValues.PositionSticky:
 			styles.push('position:sticky');
 			break;
-		case PositionFixed:
+		case PositionTypeValues.PositionFixed:
 			styles.push('position:fixed');
 			break;
 	}
 
-	if (position.l) {
-		styles.push('left:' + cssLengthValue(position.l));
+	if (!position.left.isZero()) {
+		styles.push('left:' + cssLengthValue(position.left.value));
 	}
 
-	if (position.t) {
-		styles.push('top:' + cssLengthValue(position.t));
+	if (!position.top.isZero()) {
+		styles.push('top:' + cssLengthValue(position.top.value));
 	}
 
-	if (position.r) {
-		styles.push('right:' + cssLengthValue(position.r));
+	if (!position.right.isZero()) {
+		styles.push('right:' + cssLengthValue(position.right.value));
 	}
 
-	if (position.b) {
-		styles.push('bottom:' + cssLengthValue(position.b));
+	if (!position.bottom.isZero()) {
+		styles.push('bottom:' + cssLengthValue(position.bottom.value));
 	}
-
-	console.log('fuck', styles, position);
-
+	
 	return styles;
 }

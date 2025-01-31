@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { marginCSS } from '@/components/shared/padding';
-import { GridCell } from '@/shared/protocol/ora/gridCell';
+import {AlignmentValues, GridCell} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
 	ui: GridCell;
@@ -11,61 +11,62 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (props.ui.rs) {
-		styles.push(`grid-row-start: ${props.ui.rs}`);
+	if (!props.ui.rowStart.isZero()) {
+		styles.push(`grid-row-start: ${props.ui.rowStart.value}`);
 	}
 
-	if (props.ui.re) {
-		styles.push(`grid-row-end: ${props.ui.re}`);
+	if (!props.ui.rowEnd.isZero()) {
+		styles.push(`grid-row-end: ${props.ui.rowEnd.value}`);
 	}
 
-	if (props.ui.cp) {
-		styles.push(`grid-column: span ${props.ui.cp} / span ${props.ui.cp}`);
+	if (!props.ui.colSpan.isZero()) {
+		styles.push(`grid-column: span ${props.ui.colSpan.value} / span ${props.ui.colSpan.value}`);
 	}
 
-	if (props.ui.rp) {
-		styles.push(`grid-row: span ${props.ui.cp} / span ${props.ui.cp}`);
+	if (!props.ui.rowSpan.isZero()) {
+		styles.push(`grid-row: span ${props.ui.rowSpan.value} / span ${props.ui.rowSpan.value}`);
 	}
 
-	if (props.ui.cs) {
-		styles.push(`grid-column-start: ${props.ui.cs}`);
+	if (!props.ui.colStart.isZero()) {
+		styles.push(`grid-column-start: ${props.ui.colStart.value}`);
 	}
 
-	if (props.ui.ce) {
-		styles.push(`grid-column-end: ${props.ui.ce}`);
+	if (!props.ui.colEnd.isZero()) {
+		styles.push(`grid-column-end: ${props.ui.colEnd.value}`);
 	}
 
-	switch (props.ui.a) {
-		case 'c':
-			styles.push('place-self: center');
+	switch (props.ui.alignment.value) {
+		case AlignmentValues.Center:
+			// TODO we have inherited a strange behavior here: in the ora protocol version we were undefined and did not apply the default behavior which breaks the grid area
+			//styles.push('place-self: center');
 			break;
-		case 'l':
+		case AlignmentValues.Leading:
 			styles.push('place-self: center start');
 			break;
-		case 't':
+		case AlignmentValues.Trailing:
 			styles.push('place-self: center end');
 			break;
-		case 'u':
+		case AlignmentValues.Top:
 			styles.push('place-self: start center');
 			break;
-		case 'b':
+		case AlignmentValues.Bottom:
 			styles.push('place-self: end center');
 			break;
-		case 'ul':
+		case AlignmentValues.TopLeading:
 			styles.push('place-self: start');
 			break;
-		case 'ut':
+		case AlignmentValues.TopTrailing:
 			styles.push('place-self: start end');
 			break;
-		case 'bl':
+		case AlignmentValues.BottomLeading:
 			styles.push('place-self: end start');
 			break;
-		case 'bt':
+		case AlignmentValues.BottomTrailing:
 			styles.push('place-self: end end');
 			break;
 	}
 
-	styles.push(...marginCSS(props.ui.p));
+	styles.push(...marginCSS(props.ui.padding));
 
 	return styles.join(';');
 });
@@ -73,5 +74,5 @@ const style = computed<string>(() => {
 
 <template>
 	<!-- gridcell -->
-	<ui-generic v-if="props.ui.b" :ui="props.ui.b" :style="style" />
+	<ui-generic v-if="props.ui.body" :ui="props.ui.body" :style="style" />
 </template>

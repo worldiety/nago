@@ -1,4 +1,4 @@
-import type { Component } from 'vue';
+import type {Component} from 'vue';
 import UiCheckbox from '@/components/UiCheckbox.vue';
 import UiDivider from '@/components/UiDivider.vue';
 import UiGrid from '@/components/UiGrid.vue';
@@ -21,54 +21,123 @@ import UiTextLayout from '@/components/textlayout/UiTextLayout.vue';
 import UiVStack from '@/components/vstack/UiVStack.vue';
 
 
-import {Component as NagoComponent, TextView} from '@/shared/proto/nprotoc_gen';
+import {
+	Box,
+	Checkbox,
+	Component as NagoComponent,
+	DatePicker,
+	Divider,
+	Grid,
+	HStack,
+	Img,
+	Modal,
+	PasswordField,
+	Radiobutton,
+	Scaffold,
+	ScrollView,
+	Spacer,
+	Table,
+	TextField,
+	TextLayout,
+	TextView,
+	Toggle,
+	VStack,
+	WebView,
+	WindowTitle
+} from '@/shared/proto/nprotoc_gen';
 import UiUnknownType from "@/components/UiUnknownType.vue";
+import UiWebView from "@/components/UiWebView.vue";
 
-export function vueComponentFor(ngc: NagoComponent):Component{
-	if (ngc instanceof TextView){
-		return UiText
+/**
+ * vueComponentFor returns an associated vue component for the given nago protocol component.
+ * If new components are introduced, this method must be updated by hand, to type-switch and associate
+ * the template component properly.
+ */
+export function vueComponentFor(ngc: NagoComponent): Component {
+	if (ngc instanceof TextView) {
+		return UiText;
 	}
 
+	if (ngc instanceof VStack) {
+		return UiVStack;
+	}
 
-	return UiUnknownType
+	if (ngc instanceof HStack) {
+		return UiHStack;
+	}
+
+	if (ngc instanceof Img) {
+		return UiImage;
+	}
+
+	if (ngc instanceof TextField) {
+		return UiTextField;
+	}
+
+	if (ngc instanceof Toggle) {
+		return UiToggle;
+	}
+
+	if (ngc instanceof Grid) {
+		return UiGrid;
+	}
+
+	if (ngc instanceof Table) {
+		return UiTable;
+	}
+
+	if (ngc instanceof DatePicker) {
+		return UiDatepicker;
+	}
+
+	if (ngc instanceof PasswordField) {
+		return UiPasswordField;
+	}
+
+	if (ngc instanceof Checkbox) {
+		return UiCheckbox;
+	}
+
+	if (ngc instanceof Radiobutton) {
+		return UiRadioButton;
+	}
+
+	if (ngc instanceof Box) {
+		return UiBox;
+	}
+
+	if (ngc instanceof Spacer) {
+		return UiSpacer;
+	}
+
+	if (ngc instanceof Modal) {
+		return UiModal;
+	}
+
+	if (ngc instanceof WindowTitle) {
+		return UiWindowTitle;
+	}
+
+	if (ngc instanceof ScrollView) {
+		return UiScrollView;
+	}
+
+	if (ngc instanceof TextLayout) {
+		return UiTextLayout;
+	}
+
+	if (ngc instanceof Scaffold) {
+		return UiScaffold;
+	}
+
+	if (ngc instanceof Divider) {
+		return UiDivider
+	}
+
+	if (ngc instanceof WebView) {
+		return UiWebView;
+	}
+
+	// keep this as the default fallback
+	return UiUnknownType;
 }
-
-// Add new UI components to the following map
-const uiComponentsMap: Map<string, Component> = new Map<string, Component>();
-uiComponentsMap.set('A', UiScaffold);
-// uiComponentsMap.set('Chip', UiChip);
-// uiComponentsMap.set('Dialog', UiDialog);
-uiComponentsMap.set('d', UiDivider);
-// uiComponentsMap.set('Stepper', UiStepper);
-// uiComponentsMap.set('FileField', UiUploadField);
-uiComponentsMap.set('I', UiImage);
-uiComponentsMap.set('F', UiTextField);
-// uiComponentsMap.set('TextArea', UiTextArea);
-uiComponentsMap.set('t', UiToggle);
-uiComponentsMap.set('T', UiText);
-// uiComponentsMap.set('Button', UiButton);
-uiComponentsMap.set('G', UiGrid);
-uiComponentsMap.set('B', UiTable);
-// uiComponentsMap.set('Card', UiCard);
-// uiComponentsMap.set('Dropdown', UiDropdown);
-uiComponentsMap.set('P', UiDatepicker);
-// uiComponentsMap.set('Slider', UiSlider);
-// uiComponentsMap.set('NumberField', UiNumberField);
-// uiComponentsMap.set('WebView', UiWebView);
-// uiComponentsMap.set('Page', UiPage);
-uiComponentsMap.set('p', UiPasswordField);
-// uiComponentsMap.set('Breadcrumbs', UiBreadcrumbs);
-uiComponentsMap.set('c', UiCheckbox);
-uiComponentsMap.set('R', UiRadioButton);
-// uiComponentsMap.set('FlexContainer', UiFlexContainer);
-// uiComponentsMap.set('ProgressBar', UiProgressBar);
-uiComponentsMap.set('hs', UiHStack);
-uiComponentsMap.set('vs', UiVStack);
-uiComponentsMap.set('bx', UiBox);
-uiComponentsMap.set('s', UiSpacer);
-uiComponentsMap.set('M', UiModal);
-uiComponentsMap.set('W', UiWindowTitle);
-uiComponentsMap.set('V', UiScrollView);
-uiComponentsMap.set('ts', UiTextLayout);
-
-export default uiComponentsMap;

@@ -8569,7 +8569,7 @@ export class VStack implements Writeable, Readable , Component  {
 }
 
 
-export class WebView implements Writeable, Readable  {
+export class WebView implements Writeable, Readable , Component  {
 		public uRI: URI;
 
 		public frame: Frame;
@@ -8626,6 +8626,7 @@ export class WebView implements Writeable, Readable  {
 		dst.writeTypeHeader(Shapes.RECORD, 110);
 		return
 	}
+	isComponent(): void{}
 }
 
 

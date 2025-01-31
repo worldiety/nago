@@ -6,9 +6,8 @@ import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue0Px } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
-import { Alignment } from '@/shared/protocol/ora/alignment';
-import { Box } from '@/shared/protocol/ora/box';
-import { Padding } from '@/shared/protocol/ora/padding';
+import {Alignment, AlignmentValues, Box, Padding} from "@/shared/proto/nprotoc_gen";
+
 
 const props = defineProps<{
 	ui: Box;
@@ -16,40 +15,39 @@ const props = defineProps<{
 
 const frameStyles = computed<string>(() => {
 	let styles = frameCSS(props.ui.frame);
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${props.ui.bgc}`);
+	if (!props.ui.backgroundColor.isZero()) {
+		styles.push(`background-color: ${props.ui.backgroundColor.value}`);
 	}
 
-	styles.push(...borderCSS(props.ui.b));
-	styles.push(...paddingCSS(props.ui.p));
+	styles.push(...borderCSS(props.ui.border));
+	styles.push(...paddingCSS(props.ui.padding));
 
 	return styles.join(';');
 });
 
 const clazz = computed<string>(() => {
 	let classes = 'relative flex';
-
 	return classes;
 });
 
 function childMargin(a?: Alignment, p?: Padding): string {
-	switch (a) {
-		case Al.BottomLeading:
-			return `margin-left: ${cssLengthValue0Px(p?.l)};margin-bottom: ${cssLengthValue0Px(p?.b)}`;
-		case Al.TopLeading:
-			return `margin-top: ${cssLengthValue0Px(p?.t)};margin-left: ${cssLengthValue0Px(p?.l)}`;
-		case Al.Leading:
-			return `margin-left: ${cssLengthValue0Px(p?.l)}`;
-		case Al.Top:
-			return `margin-top: ${cssLengthValue0Px(p?.t)}`;
-		case Al.Bottom:
-			return `margin-bottom: ${cssLengthValue0Px(p?.b)}`;
-		case Al.Trailing:
-			return `margin-right: ${cssLengthValue0Px(p?.r)}`;
-		case Al.BottomTrailing:
-			return `margin-right: ${cssLengthValue0Px(p?.r)};margin-bottom: ${cssLengthValue0Px(p?.b)}`;
-		case Al.TopTrailing:
-			return `margin-right: ${cssLengthValue0Px(p?.r)};margin-top: ${cssLengthValue0Px(p?.t)}`;
+	switch (a?.value) {
+		case AlignmentValues.BottomLeading:
+			return `margin-left: ${cssLengthValue0Px(p?.left.value)};margin-bottom: ${cssLengthValue0Px(p?.bottom.value)}`;
+		case AlignmentValues.TopLeading:
+			return `margin-top: ${cssLengthValue0Px(p?.top.value)};margin-left: ${cssLengthValue0Px(p?.left.value)}`;
+		case AlignmentValues.Leading:
+			return `margin-left: ${cssLengthValue0Px(p?.left.value)}`;
+		case AlignmentValues.Top:
+			return `margin-top: ${cssLengthValue0Px(p?.top.value)}`;
+		case AlignmentValues.Bottom:
+			return `margin-bottom: ${cssLengthValue0Px(p?.bottom.value)}`;
+		case AlignmentValues.Trailing:
+			return `margin-right: ${cssLengthValue0Px(p?.right.value)}`;
+		case AlignmentValues.BottomTrailing:
+			return `margin-right: ${cssLengthValue0Px(p?.right.value)};margin-bottom: ${cssLengthValue0Px(p?.bottom.value)}`;
+		case AlignmentValues.TopTrailing:
+			return `margin-right: ${cssLengthValue0Px(p?.right.value)};margin-top: ${cssLengthValue0Px(p?.top.value)}`;
 	}
 
 	return '';
@@ -59,22 +57,22 @@ function childClass(a?: Alignment): string {
 	// we also use flex for the simple cases, because otherwise we have a gap and even more weired rendering if not enough room
 	// note, that flex never calculates the width properly, even with border-box etc.
 	// we will use margin instead
-	switch (a) {
-		case Al.BottomLeading:
+	switch (a?.value) {
+		case AlignmentValues.BottomLeading:
 			return 'absolute flex bottom-0 left-0';
-		case Al.TopLeading:
+		case AlignmentValues.TopLeading:
 			return 'absolute flex top-0 left-0';
-		case Al.TopTrailing:
+		case AlignmentValues.TopTrailing:
 			return 'absolute flex top-0 right-0';
-		case Al.BottomTrailing:
+		case AlignmentValues.BottomTrailing:
 			return 'absolute flex right-0 bottom-0';
-		case Al.Top:
+		case AlignmentValues.Top:
 			return 'absolute w-full flex justify-center top-0';
-		case Al.Bottom:
+		case AlignmentValues.Bottom:
 			return 'absolute w-full flex justify-center bottom-0';
-		case Al.Leading:
+		case AlignmentValues.Leading:
 			return 'absolute h-full flex items-center left-0';
-		case Al.Trailing:
+		case AlignmentValues.Trailing:
 			return 'absolute h-full flex items-center right-0';
 		default:
 			return 'absolute w-full h-full flex justify-center items-center';
@@ -85,8 +83,8 @@ function childClass(a?: Alignment): string {
 <template v-if="props.ui.children">
 	<!-- box -->
 	<div :class="clazz" :style="frameStyles">
-		<div v-for="ui in props.ui.c" :class="childClass(ui.a)" :style="childMargin(ui.a, props.ui.p)">
-			<ui-generic :ui="ui.c" />
+		<div v-for="ui in props.ui.children.value" :class="childClass(ui.alignment)" :style="childMargin(ui.alignment, props.ui.padding)">
+			<ui-generic v-if="ui.component" :ui="ui.component" />
 		</div>
 	</div>
 </template>

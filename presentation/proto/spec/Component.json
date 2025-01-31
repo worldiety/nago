@@ -21,6 +21,7 @@
     "TextLayout",
     "Table",
     "Toggle",
-    "VStack"
+    "VStack",
+    "WebView"
   ]
 }

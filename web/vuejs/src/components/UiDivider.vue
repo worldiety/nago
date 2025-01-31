@@ -3,16 +3,16 @@ import { computed } from 'vue';
 import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { marginCSS } from '@/components/shared/padding';
-import type { Divider } from '@/shared/protocol/ora/divider';
+import {Divider} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
 	ui: Divider;
 }>();
 
 const styles = computed<string>(() => {
-	let styles = borderCSS(props.ui.b);
-	styles.push(...frameCSS(props.ui.f));
-	styles.push(...marginCSS(props.ui.p));
+	let styles = borderCSS(props.ui.border);
+	styles.push(...frameCSS(props.ui.frame));
+	styles.push(...marginCSS(props.ui.padding));
 
 	return styles.join(';');
 });

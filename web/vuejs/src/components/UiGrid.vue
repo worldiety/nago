@@ -7,7 +7,7 @@ import { fontCSS } from '@/components/shared/font';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
-import { Grid } from '@/shared/protocol/ora/grid';
+import {Grid} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
 	ui: Grid;
@@ -16,19 +16,19 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (!props.ui.c || props.ui.c === 0) {
+	if (props.ui.columns.isZero() ) {
 		styles.push('grid-auto-columns: auto');
 	} else {
-		if (!props.ui.cw) {
-			styles.push(`grid-template-columns: repeat(${props.ui.c}, minmax(0, 1fr))`);
+		if (!props.ui.colWidths.isZero()) {
+			styles.push(`grid-template-columns: repeat(${props.ui.columns.value}, minmax(0, 1fr))`);
 		} else {
 			let tmp = 'grid-template-columns: ';
-			for (let len of props.ui.cw) {
-				tmp += cssLengthValue(len);
+			for (let len of props.ui.colWidths.value) {
+				tmp += cssLengthValue(len.value);
 				tmp += ' ';
 			}
 
-			let restColCount = props.ui.c - props.ui.cw.length;
+			let restColCount = props.ui.columns.value - props.ui.colWidths.value.length;
 			if (restColCount > 0) {
 				tmp += `repeat(${restColCount}, 1fr)`;
 			}
@@ -37,28 +37,28 @@ const style = computed<string>(() => {
 		}
 	}
 
-	if (!props.ui.r || props.ui.r === 0) {
+	if (props.ui.rows.isZero()) {
 		styles.push('grid-auto-rows: auto');
 	} else {
-		styles.push(`grid-template-rows: repeat(${props.ui.r}, minmax(0, 1fr))`);
+		styles.push(`grid-template-rows: repeat(${props.ui.rows.value}, minmax(0, 1fr))`);
 	}
 
-	if (props.ui.rg) {
-		styles.push(`row-gap: ${props.ui.rg}`);
+	if (!props.ui.rowGap.isZero()) {
+		styles.push(`row-gap: ${props.ui.rowGap.value}`);
 	}
 
-	if (props.ui.cg) {
-		styles.push(`column-gap: ${props.ui.cg}`);
+	if (!props.ui.colGap.isZero()) {
+		styles.push(`column-gap: ${props.ui.colGap.value}`);
 	}
 
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${colorValue(props.ui.bgc)}`);
+	if (!props.ui.backgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
 	}
 
-	styles.push(...frameCSS(props.ui.f));
-	styles.push(...borderCSS(props.ui.bd));
-	styles.push(...paddingCSS(props.ui.p));
-	styles.push(...fontCSS(props.ui.fn));
+	styles.push(...frameCSS(props.ui.frame));
+	styles.push(...borderCSS(props.ui.border));
+	styles.push(...paddingCSS(props.ui.padding));
+	styles.push(...fontCSS(props.ui.font));
 
 	return styles.join(';');
 });
@@ -74,6 +74,6 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- grid -->
 	<div :class="clazz" :style="style">
-		<ui-grid-cell v-for="cell in props.ui.b" :ui="cell" />
+		<ui-grid-cell v-for="cell in props.ui.cells.value" :ui="cell" />
 	</div>
 </template>
