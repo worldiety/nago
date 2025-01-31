@@ -16,8 +16,9 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			return VStack(Text("hello world")).
-				Frame(Frame{}.MatchScreen())
+			//return VStack(Text("hello world")).
+			//	Frame(Frame{}.MatchScreen())
+			return Text("hello world")
 		})
 	}).
 		// don't forget to call the run method, which starts the entire thing and blocks until finished

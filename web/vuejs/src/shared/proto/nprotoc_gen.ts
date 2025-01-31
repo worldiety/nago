@@ -196,15 +196,15 @@ export interface NagoEvent extends Writeable, Readable{
 //  - z-order is defined as defined children order, thus later children are put on top of others
 //  - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
 export class Box implements Writeable, Readable , Component  {
-		children: AlignedComponents;
+		public children: AlignedComponents;
 
-		frame: Frame;
+		public frame: Frame;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
-		border: Border;
+		public border: Border;
 
 	constructor(children: AlignedComponents = new AlignedComponents(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), border: Border = new Border(), ) {
 		this.children = children;
@@ -295,7 +295,7 @@ export class Box implements Writeable, Readable , Component  {
 // Ptr represents an allocated instance within the backend which is unique in the associated scope.
 export class Ptr implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -324,7 +324,7 @@ export class Ptr implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for Ptr
-enum PtrValues {
+export enum PtrValues {
 	// Null represents the zero value and a nil or null pointer address.
 	Null = 0,
 }
@@ -334,14 +334,14 @@ enum PtrValues {
 // UpdateStateValueRequested is raised from the frontend to update a state value hold by the backend. It can also immediately invoke a function callback in the same cycle.
 export class UpdateStateValueRequested implements Writeable, Readable , NagoEvent  {
 	// The StatePointer must not be zero.
-	statePointer: Ptr;
+	public statePointer: Ptr;
 
 	// A FunctionPointer is invoked, if not zero.
-	functionPointer: Ptr;
+	public functionPointer: Ptr;
 
-		rID: RID;
+		public rID: RID;
 
-		value: Str;
+		public value: Str;
 
 	constructor(statePointer: Ptr = new Ptr(), functionPointer: Ptr = new Ptr(), rID: RID = new RID(), value: Str = new Str(), ) {
 		this.statePointer = statePointer;
@@ -422,10 +422,10 @@ export class UpdateStateValueRequested implements Writeable, Readable , NagoEven
 // FunctionCallRequested tells the backend that the given pointer in the associated scope shall be invoked for a side effect.
 export class FunctionCallRequested implements Writeable, Readable , NagoEvent  {
 	// Ptr denotes the remote pointer of the function.
-	ptr: Ptr;
+	public ptr: Ptr;
 
 	// RID is used to trace a request-response cycle.
-	rID: RID;
+	public rID: RID;
 
 	constructor(ptr: Ptr = new Ptr(), rID: RID = new RID(), ) {
 		this.ptr = ptr;
@@ -506,7 +506,7 @@ export class FunctionCallRequested implements Writeable, Readable , NagoEvent  {
 // An empty Alignment must be interpreted as Center (="c").
 export class Alignment implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -535,7 +535,7 @@ export class Alignment implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for Alignment
-enum AlignmentValues {
+export enum AlignmentValues {
 		Center = 0,
 		Top = 1,
 		Bottom = 2,
@@ -552,7 +552,7 @@ enum AlignmentValues {
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
 export class Color implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -593,16 +593,16 @@ export class Color implements Writeable, Readable {
 // Shadow defines a shadow effect around the border of an element. The x and y coordinates are relative to the element.
 export class Shadow implements Writeable, Readable  {
 	// Color of the shadow.
-	color: Color;
+	public color: Color;
 
 	// Radius for spread and blur length of the shadow.
-	radius: Length;
+	public radius: Length;
 
 	// X is the horizontal offset of the shadow relative to the element.
-	x: Length;
+	public x: Length;
 
 	// Y is the vertical offset of the shadow relative to the element.
-	y: Length;
+	public y: Length;
 
 	constructor(color: Color = new Color(), radius: Length = new Length(), x: Length = new Length(), y: Length = new Length(), ) {
 		this.color = color;
@@ -682,7 +682,7 @@ export class Shadow implements Writeable, Readable  {
 // Length is actually a complex sum type of varying content. It may contain absolute values like dp, rem or relative like 90%. It may also include css calculations or even variable names. Retrospective, we should represent each type individually, however that was not reasonable, when the requirements and hand written protocol implementations were created and now it is to late.
 export class Length implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -722,31 +722,31 @@ export class Length implements Writeable, Readable {
 
 // Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
 export class Border implements Writeable, Readable  {
-		topLeftRadius: Length;
+		public topLeftRadius: Length;
 
-		topRightRadius: Length;
+		public topRightRadius: Length;
 
-		bottomLeftRadius: Length;
+		public bottomLeftRadius: Length;
 
-		bottomRightRadius: Length;
+		public bottomRightRadius: Length;
 
-		leftWidth: Length;
+		public leftWidth: Length;
 
-		topWidth: Length;
+		public topWidth: Length;
 
-		rightWidth: Length;
+		public rightWidth: Length;
 
-		bottomWidth: Length;
+		public bottomWidth: Length;
 
-		leftColor: Color;
+		public leftColor: Color;
 
-		topColor: Color;
+		public topColor: Color;
 
-		rightColor: Color;
+		public rightColor: Color;
 
-		bottomColor: Color;
+		public bottomColor: Color;
 
-		boxShadow: Shadow;
+		public boxShadow: Shadow;
 
 	constructor(topLeftRadius: Length = new Length(), topRightRadius: Length = new Length(), bottomLeftRadius: Length = new Length(), bottomRightRadius: Length = new Length(), leftWidth: Length = new Length(), topWidth: Length = new Length(), rightWidth: Length = new Length(), bottomWidth: Length = new Length(), leftColor: Color = new Color(), topColor: Color = new Color(), rightColor: Color = new Color(), bottomColor: Color = new Color(), boxShadow: Shadow = new Shadow(), ) {
 		this.topLeftRadius = topLeftRadius;
@@ -915,17 +915,17 @@ export class Border implements Writeable, Readable  {
 
 // Frame defines the geometrics bounds of an element.
 export class Frame implements Writeable, Readable  {
-		minWidth: Length;
+		public minWidth: Length;
 
-		maxWidth: Length;
+		public maxWidth: Length;
 
-		minHeight: Length;
+		public minHeight: Length;
 
-		maxHeight: Length;
+		public maxHeight: Length;
 
-		width: Length;
+		public width: Length;
 
-		height: Length;
+		public height: Length;
 
 	constructor(minWidth: Length = new Length(), maxWidth: Length = new Length(), minHeight: Length = new Length(), maxHeight: Length = new Length(), width: Length = new Length(), height: Length = new Length(), ) {
 		this.minWidth = minWidth;
@@ -1024,13 +1024,13 @@ export class Frame implements Writeable, Readable  {
 
 // Padding defines additional room within an element.
 export class Padding implements Writeable, Readable  {
-		top: Length;
+		public top: Length;
 
-		left: Length;
+		public left: Length;
 
-		right: Length;
+		public right: Length;
 
-		bottom: Length;
+		public bottom: Length;
 
 	constructor(top: Length = new Length(), left: Length = new Length(), right: Length = new Length(), bottom: Length = new Length(), ) {
 		this.top = top;
@@ -1109,9 +1109,9 @@ export class Padding implements Writeable, Readable  {
 
 // AlignedComponent defines a tupel of a component and an associated alignment.
 export class AlignedComponent implements Writeable, Readable  {
-		component?: Component;
+		public component?: Component;
 
-		alignment: Alignment;
+		public alignment: Alignment;
 
 	constructor(component = undefined, alignment: Alignment = new Alignment(), ) {
 		this.component = component;
@@ -1177,7 +1177,7 @@ export class AlignedComponent implements Writeable, Readable  {
 
 // Components is polymorphic array of various concrete Component instances.
 export class Components implements Writeable, Readable  {
-	private value: Component[];
+	public value: Component[];
 	
 	constructor(value: Component[] = []) {
  
@@ -1222,7 +1222,7 @@ export class Components implements Writeable, Readable  {
 
 // AlignedComponents is an array of layouted tupels of components.
 export class AlignedComponents implements Writeable, Readable  {
-	private value: AlignedComponent[];
+	public value: AlignedComponent[];
 	
 	constructor(value: AlignedComponent[] = []) {
  
@@ -1268,13 +1268,13 @@ export class AlignedComponents implements Writeable, Readable  {
 // Checkbox represents a user interface element which spans a visible area to click or tap from the user. Use it for controls, which do not cause an immediate effect. See also [Toggle].
 export class Checkbox implements Writeable, Readable , Component  {
 	// InputValue is where updated value of the checked states are written.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
-		value: Bool;
+		public value: Bool;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(inputValue: Ptr = new Ptr(), value: Bool = new Bool(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.inputValue = inputValue;
@@ -1355,7 +1355,7 @@ export class Checkbox implements Writeable, Readable , Component  {
 // Bool represents just a user defined boolean value. This is how nprotoc works.
 export class Bool implements Writeable, Readable {
  
-	private value: boolean; 
+	public value: boolean; 
 	
 	constructor(value: boolean = false) {
 		this.value = value;
@@ -1387,10 +1387,10 @@ export class Bool implements Writeable, Readable {
 // ErrorOccurred is used, if some unforeseen error occurred. Usually the frontend did something wrong, e.g. in a life-cycle.
 export class ErrorOccurred implements Writeable, Readable , NagoEvent  {
 	// Message of some generic error.
-	message: Str;
+	public message: Str;
 
 	// RID is used to trace a request-response cycle.
-	rID: RID;
+	public rID: RID;
 
 	constructor(message: Str = new Str(), rID: RID = new RID(), ) {
 		this.message = message;
@@ -1451,7 +1451,7 @@ export class ErrorOccurred implements Writeable, Readable , NagoEvent  {
 // Locale represents a BCP47 tag like de or de_DE.
 export class Locale implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -1492,7 +1492,7 @@ export class Locale implements Writeable, Readable {
 // RID represents a request id and may be used by the frontend to distinguish different generations of answers.
 export class FontStyle implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -1521,9 +1521,11 @@ export class FontStyle implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for FontStyle
-enum FontStyleValues {
+export enum FontStyleValues {
 	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
 	Unsolicited = 0,
+		Normal = 1,
+		Italic = 2,
 }
 
 
@@ -1531,7 +1533,7 @@ enum FontStyleValues {
 // RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.
 export class RootViewID implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -1571,7 +1573,7 @@ export class RootViewID implements Writeable, Readable {
 
 // RootViewParameters is a map of string keys and values which is given to a root view which is about to be initialized.
 export class RootViewParameters implements Writeable, Readable  {
-	private value: Map<Str,Str>;
+	public value: Map<Str,Str>;
 	
 	constructor(value: Map<Str,Str> = new Map<Str,Str>()) {
 	 
@@ -1624,7 +1626,7 @@ export class RootViewParameters implements Writeable, Readable  {
 // Str represents just a user defined string value. This is how nprotoc works.
 export class Str implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -1664,7 +1666,7 @@ export class Str implements Writeable, Readable {
 
 // RootViewRenderingRequested is issued by the frontend to force a rendering at the backend.
 export class RootViewRenderingRequested implements Writeable, Readable , NagoEvent  {
-		rID: RID;
+		public rID: RID;
 
 	constructor(rID: RID = new RID(), ) {
 		this.rID = rID;
@@ -1715,7 +1717,7 @@ export class RootViewRenderingRequested implements Writeable, Readable , NagoEve
 // The RootViewDestructionRequested event destroys the currently allocated root view. If nothing is allocated, this is a no-op.
 export class RootViewDestructionRequested implements Writeable, Readable , NagoEvent  {
 	// RID is used to generate a new component request and is returned in the according response.
-	rID: RID;
+	public rID: RID;
 
 	constructor(rID: RID = new RID(), ) {
 		this.rID = rID;
@@ -1766,10 +1768,10 @@ export class RootViewDestructionRequested implements Writeable, Readable , NagoE
 // The RootViewInvalidated event is always generated at the backend side, if a new representation of an allocated root view shall be shown.
 export class RootViewInvalidated implements Writeable, Readable , NagoEvent  {
 	// RID may be 0, if it is an proactive rendering.
-	rID: RID;
+	public rID: RID;
 
 	// The Root component to display.
-	root?: Component;
+	public root?: Component;
 
 	constructor(rID: RID = new RID(), root = undefined, ) {
 		this.rID = rID;
@@ -1837,7 +1839,7 @@ export class RootViewInvalidated implements Writeable, Readable , NagoEvent  {
 // ErrorRootViewAllocationRequired indicates, that there is no root view and it must be allocated to continue. This may happen, e.g. if the server was restarted or redeployed or a timeout occurred and the scope or root view was collected.
 export class ErrorRootViewAllocationRequired implements Writeable, Readable , NagoEvent  {
 	// RID is used to trace a request-response cycle.
-	rID: RID;
+	public rID: RID;
 
 	constructor(rID: RID = new RID(), ) {
 		this.rID = rID;
@@ -1896,16 +1898,16 @@ export class ErrorRootViewAllocationRequired implements Writeable, Readable , Na
 // However, often it does not make sense without additional parameters, e.g. because a detail view needs to know which entity has to be displayed.
 export class RootViewAllocationRequested implements Writeable, Readable , NagoEvent  {
 	// Locale of the frontend which is assumed as the users language. This may be the webbrowser primary locale which may be derived from the operating system.
-	locale: Locale;
+	public locale: Locale;
 
 	// Factory denotes the registered root view identifier.
-	factory: RootViewID;
+	public factory: RootViewID;
 
 	// RID is used to generate a new component request and is returned in the according response.
-	rID: RID;
+	public rID: RID;
 
 	// Values contains string encoded parameters for a component. This is like query parameters in the web world.
-	values: RootViewParameters;
+	public values: RootViewParameters;
 
 	constructor(locale: Locale = new Locale(), factory: RootViewID = new RootViewID(), rID: RID = new RID(), values: RootViewParameters = new RootViewParameters(), ) {
 		this.locale = locale;
@@ -1989,7 +1991,7 @@ export class RootViewAllocationRequested implements Writeable, Readable , NagoEv
 // https://tailwindcss.com/docs/responsive-design.
 export class WindowSizeClass implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -2018,7 +2020,7 @@ export class WindowSizeClass implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for WindowSizeClass
-enum WindowSizeClassValues {
+export enum WindowSizeClassValues {
 	// SizeClassSmall are devices below 640 dp screen width.
 	SizeClassSmall = 0,
 	// SizeClassMedium are devices below 768dp screen width.
@@ -2039,11 +2041,11 @@ enum WindowSizeClassValues {
 // It is expected, that this only happens once during initialization of the frontend process.
 export class ScopeConfigurationChangeRequested implements Writeable, Readable , NagoEvent  {
 	// RID is used to generate a new component request and is returned in the according response.
-	rID: RID;
+	public rID: RID;
 
-		acceptLanguage: Locale;
+		public acceptLanguage: Locale;
 
-		windowInfo: WindowInfo;
+		public windowInfo: WindowInfo;
 
 	constructor(rID: RID = new RID(), acceptLanguage: Locale = new Locale(), windowInfo: WindowInfo = new WindowInfo(), ) {
 		this.rID = rID;
@@ -2114,7 +2116,7 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable , 
 // ColorScheme represents which kind of theme shall be rendered.
 export class ColorScheme implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -2143,7 +2145,7 @@ export class ColorScheme implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for ColorScheme
-enum ColorSchemeValues {
+export enum ColorSchemeValues {
 	// Light represents the light theme color mode.
 	Light = 0,
 	// Dark represents the dark theme color mode.
@@ -2156,16 +2158,16 @@ enum ColorSchemeValues {
 // A user can simply change the layout of the screen, e.g. by rotation the smartphone or
 // changing the size of a browser window.
 export class WindowInfo implements Writeable, Readable  {
-		width: DP;
+		public width: DP;
 
-		height: DP;
+		public height: DP;
 
-		density: Density;
+		public density: Density;
 
-		sizeClass: WindowSizeClass;
+		public sizeClass: WindowSizeClass;
 
 	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
-	colorScheme: ColorScheme;
+	public colorScheme: ColorScheme;
 
 	constructor(width: DP = new DP(), height: DP = new DP(), density: Density = new Density(), sizeClass: WindowSizeClass = new WindowSizeClass(), colorScheme: ColorScheme = new ColorScheme(), ) {
 		this.width = width;
@@ -2254,7 +2256,7 @@ export class WindowInfo implements Writeable, Readable  {
 
 export class DP implements Writeable, Readable {
  
-	private value: number; 
+	public value: number; 
 	
 	constructor(value: number = 0.0) {
 		this.value = value;
@@ -2285,7 +2287,7 @@ export class DP implements Writeable, Readable {
 
 export class Density implements Writeable, Readable {
  
-	private value: number; 
+	public value: number; 
 	
 	constructor(value: number = 0.0) {
 		this.value = value;
@@ -2318,21 +2320,21 @@ export class Density implements Writeable, Readable {
 // According to the locale request, string and svg resources can be localized by the backend.
 // The returned locale is the actually picked locale from the requested locale query string.
 export class ScopeConfigurationChanged implements Writeable, Readable , NagoEvent  {
-		applicationID: Str;
+		public applicationID: Str;
 
-		applicationName: Str;
+		public applicationName: Str;
 
-		applicationVersion: Str;
+		public applicationVersion: Str;
 
-		availableLocales: Locales;
+		public availableLocales: Locales;
 
-		appIcon: URI;
+		public appIcon: URI;
 
-		activeLocale: Locale;
+		public activeLocale: Locale;
 
-		themes: Themes;
+		public themes: Themes;
 
-		rID: RID;
+		public rID: RID;
 
 	constructor(applicationID: Str = new Str(), applicationName: Str = new Str(), applicationVersion: Str = new Str(), availableLocales: Locales = new Locales(), appIcon: URI = new URI(), activeLocale: Locale = new Locale(), themes: Themes = new Themes(), rID: RID = new RID(), ) {
 		this.applicationID = applicationID;
@@ -2452,7 +2454,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable , NagoEven
 
 // Locales is just a bunch of locales.
 export class Locales implements Writeable, Readable  {
-	private value: Locale[];
+	public value: Locale[];
 	
 	constructor(value: Locale[] = []) {
  
@@ -2498,7 +2500,7 @@ export class Locales implements Writeable, Readable  {
 // URI is just a string which looks like an URI or URL
 export class URI implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -2539,7 +2541,7 @@ export class URI implements Writeable, Readable {
 // NamespaceName refers to a component or views namespace declaration. Besides the universe space, this is almost relevant for the backend, however it defines variables at the frontend, thus it may open some optimizations.
 export class NamespaceName implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -2579,7 +2581,7 @@ export class NamespaceName implements Writeable, Readable {
 
 // NamedColors represents a map of names with associated color values.
 export class NamedColors implements Writeable, Readable  {
-	private value: Map<Str,Color>;
+	public value: Map<Str,Color>;
 	
 	constructor(value: Map<Str,Color> = new Map<Str,Color>()) {
 	 
@@ -2631,9 +2633,9 @@ export class NamedColors implements Writeable, Readable  {
 
 // A Theme aggregates colors (for distinct) namespaces and lengths. Usually, this represents the light or dark mode.
 export class Theme implements Writeable, Readable  {
-		colors: NamespacedColors;
+		public colors: NamespacedColors;
 
-		lengths: NamedLengths;
+		public lengths: NamedLengths;
 
 	constructor(colors: NamespacedColors = new NamespacedColors(), lengths: NamedLengths = new NamedLengths(), ) {
 		this.colors = colors;
@@ -2692,7 +2694,7 @@ export class Theme implements Writeable, Readable  {
 
 // NamespacedColors represents a map of namespaces with associated color values.
 export class NamespacedColors implements Writeable, Readable  {
-	private value: Map<NamespaceName,NamedColors>;
+	public value: Map<NamespaceName,NamedColors>;
 	
 	constructor(value: Map<NamespaceName,NamedColors> = new Map<NamespaceName,NamedColors>()) {
 	 
@@ -2744,7 +2746,7 @@ export class NamespacedColors implements Writeable, Readable  {
 
 // NamedLengths represents a map of names with associated length values.
 export class NamedLengths implements Writeable, Readable  {
-	private value: Map<Str,Length>;
+	public value: Map<Str,Length>;
 	
 	constructor(value: Map<Str,Length> = new Map<Str,Length>()) {
 	 
@@ -2796,9 +2798,9 @@ export class NamedLengths implements Writeable, Readable  {
 
 // Themes represents light or dark mode colors.
 export class Themes implements Writeable, Readable  {
-		light: Theme;
+		public light: Theme;
 
-		dark: Theme;
+		public dark: Theme;
 
 	constructor(light: Theme = new Theme(), dark: Theme = new Theme(), ) {
 		this.light = light;
@@ -2857,7 +2859,7 @@ export class Themes implements Writeable, Readable  {
 
 export class DatePickerStyle implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -2886,7 +2888,7 @@ export class DatePickerStyle implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for DatePickerStyle
-enum DatePickerStyleValues {
+export enum DatePickerStyleValues {
 		DatePickerSingleDate = 0,
 		DatePickerDateRange = 1,
 }
@@ -2896,7 +2898,7 @@ enum DatePickerStyleValues {
 // Day represents a day in month in the range 1-31.
 export class Day implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -2927,11 +2929,11 @@ export class Day implements Writeable, Readable {
 
 // Date represents a location-free representation of a day/month/year tuple.
 export class DateData implements Writeable, Readable  {
-		day: Day;
+		public day: Day;
 
-		month: Month;
+		public month: Month;
 
-		year: Year;
+		public year: Year;
 
 	constructor(day: Day = new Day(), month: Month = new Month(), year: Year = new Year(), ) {
 		this.day = day;
@@ -3001,7 +3003,7 @@ export class DateData implements Writeable, Readable  {
 // Month represents a month in the range 1-12.
 export class Month implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -3033,7 +3035,7 @@ export class Month implements Writeable, Readable {
 // Year represents a year in the gregorian calendar.
 export class Year implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -3063,33 +3065,33 @@ export class Year implements Writeable, Readable {
 
 
 export class DatePicker implements Writeable, Readable , Component  {
-		label: Str;
+		public label: Str;
 
-		supportingText: Str;
+		public supportingText: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	errorText: Str;
+	public errorText: Str;
 
 	// Style determines if the picker shall use the range or single mode. Default is single selection
-	style: DatePickerStyle;
+	public style: DatePickerStyle;
 
 	// Value is the initial single value or start value of the picker.
-	value: DateData;
+	public value: DateData;
 
 	// InputValue is the picked single value or end value of the picker.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
 	// EndValue is the initial end value of the picker.
-	endValue: DateData;
+	public endValue: DateData;
 
 	// EndInputValue is the picked end value of the picker.
-	endInputValue: Ptr;
+	public endInputValue: Ptr;
 
-		frame: Frame;
+		public frame: Frame;
 
-		invisible: Bool;
+		public invisible: Bool;
 
-		disabled: Bool;
+		public disabled: Bool;
 
 	constructor(label: Str = new Str(), supportingText: Str = new Str(), errorText: Str = new Str(), style: DatePickerStyle = new DatePickerStyle(), value: DateData = new DateData(), inputValue: Ptr = new Ptr(), endValue: DateData = new DateData(), endInputValue: Ptr = new Ptr(), frame: Frame = new Frame(), invisible: Bool = new Bool(), disabled: Bool = new Bool(), ) {
 		this.label = label;
@@ -3238,11 +3240,11 @@ export class DatePicker implements Writeable, Readable , Component  {
 
 
 export class Divider implements Writeable, Readable , Component  {
-		frame: Frame;
+		public frame: Frame;
 
-		border: Border;
+		public border: Border;
 
-		padding: Padding;
+		public padding: Padding;
 
 	constructor(frame: Frame = new Frame(), border: Border = new Border(), padding: Padding = new Padding(), ) {
 		this.frame = frame;
@@ -3312,7 +3314,7 @@ export class Divider implements Writeable, Readable , Component  {
 
 export class RID implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -3341,7 +3343,7 @@ export class RID implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for RID
-enum RIDValues {
+export enum RIDValues {
 		NormalFontStyle = 0,
 		ItalicFontStyle = 1,
 }
@@ -3350,7 +3352,7 @@ enum RIDValues {
 
 export class FontWeight implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -3379,7 +3381,7 @@ export class FontWeight implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for FontWeight
-enum FontWeightValues {
+export enum FontWeightValues {
 		NormalFontWeight = 400,
 		BoldFontWeight = 700,
 }
@@ -3388,13 +3390,13 @@ enum FontWeightValues {
 
 export class Font implements Writeable, Readable  {
 	// Name of the font or family name as fallback. Extra fallback declarations are unspecified and must be comma separated.
-	name: Str;
+	public name: Str;
 
-		size: Length;
+		public size: Length;
 
-		style: FontStyle;
+		public style: FontStyle;
 
-		weight: FontWeight;
+		public weight: FontWeight;
 
 	constructor(name: Str = new Str(), size: Length = new Length(), style: FontStyle = new FontStyle(), weight: FontWeight = new FontWeight(), ) {
 		this.name = name;
@@ -3473,31 +3475,31 @@ export class Font implements Writeable, Readable  {
 
 // A Grid must support up to 12 Columns and a reasonable "unlimited" amount of rows.
 export class Grid implements Writeable, Readable , Component  {
-		cells: GridCells;
+		public cells: GridCells;
 
-		rows: Uint;
+		public rows: Uint;
 
-		columns: Uint;
+		public columns: Uint;
 
-		rowGap: Length;
+		public rowGap: Length;
 
-		colGap: Length;
+		public colGap: Length;
 
-		frame: Frame;
+		public frame: Frame;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
-		border: Border;
+		public border: Border;
 
-		accessibilityLabel: Str;
+		public accessibilityLabel: Str;
 
-		font: Font;
+		public font: Font;
 
-		colWidths: Lengths;
+		public colWidths: Lengths;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(cells: GridCells = new GridCells(), rows: Uint = new Uint(), columns: Uint = new Uint(), rowGap: Length = new Length(), colGap: Length = new Length(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), border: Border = new Border(), accessibilityLabel: Str = new Str(), font: Font = new Font(), colWidths: Lengths = new Lengths(), invisible: Bool = new Bool(), ) {
 		this.cells = cells;
@@ -3668,7 +3670,7 @@ export class Grid implements Writeable, Readable , Component  {
 // Uint represents just a user defined unsigned integer value. This is how nprotoc works.
 export class Uint implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -3699,7 +3701,7 @@ export class Uint implements Writeable, Readable {
 
 // GridCells is just a bunch of GridCells.
 export class GridCells implements Writeable, Readable  {
-	private value: GridCell[];
+	public value: GridCell[];
 	
 	constructor(value: GridCell[] = []) {
  
@@ -3744,7 +3746,7 @@ export class GridCells implements Writeable, Readable  {
 
 // Lengths is just a bunch of length values.
 export class Lengths implements Writeable, Readable  {
-	private value: Length[];
+	public value: Length[];
 	
 	constructor(value: Length[] = []) {
  
@@ -3789,23 +3791,23 @@ export class Lengths implements Writeable, Readable  {
 
 // GridCell is undefined, if explicit row start/col start etc. is set and span values.
 export class GridCell implements Writeable, Readable  {
-		body?: Component;
+		public body?: Component;
 
-		colStart: Uint;
+		public colStart: Uint;
 
-		colEnd: Uint;
+		public colEnd: Uint;
 
-		rowStart: Uint;
+		public rowStart: Uint;
 
-		rowEnd: Uint;
+		public rowEnd: Uint;
 
-		colSpan: Uint;
+		public colSpan: Uint;
 
-		rowSpan: Uint;
+		public rowSpan: Uint;
 
-		padding: Padding;
+		public padding: Padding;
 
-		alignment: Alignment;
+		public alignment: Alignment;
 
 	constructor(body = undefined, colStart: Uint = new Uint(), colEnd: Uint = new Uint(), rowStart: Uint = new Uint(), rowEnd: Uint = new Uint(), colSpan: Uint = new Uint(), rowSpan: Uint = new Uint(), padding: Padding = new Padding(), alignment: Alignment = new Alignment(), ) {
 		this.body = body;
@@ -3945,49 +3947,49 @@ export class GridCell implements Writeable, Readable  {
 //  - if the container is larger than the contained views, it must center vertical or horizontal
 //  - the inner gap between components should be around 2dp (this decides the backend)
 export class HStack implements Writeable, Readable , Component  {
-		children: Components;
+		public children: Components;
 
-		gap: Length;
+		public gap: Length;
 
-		frame: Frame;
+		public frame: Frame;
 
 	// Zero value of Alignment is Center (=c) must be applied.
-	alignment: Alignment;
+	public alignment: Alignment;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	accessibilityLabel: Str;
+	public accessibilityLabel: Str;
 
-		border: Border;
+		public border: Border;
 
-		font: Font;
+		public font: Font;
 
-		action: Ptr;
+		public action: Ptr;
 
-		hoveredBackgroundColor: Color;
+		public hoveredBackgroundColor: Color;
 
-		pressedBackgroundColor: Color;
+		public pressedBackgroundColor: Color;
 
-		focusedBackgroundColor: Color;
+		public focusedBackgroundColor: Color;
 
-		hoveredBorder: Border;
+		public hoveredBorder: Border;
 
-		pressedBorder: Border;
+		public pressedBorder: Border;
 
-		focusedBorder: Border;
+		public focusedBorder: Border;
 
-		wrap: Bool;
+		public wrap: Bool;
 
-		stylePreset: StylePreset;
+		public stylePreset: StylePreset;
 
-		position: Position;
+		public position: Position;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(children: Components = new Components(), gap: Length = new Length(), frame: Frame = new Frame(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), border: Border = new Border(), font: Font = new Font(), action: Ptr = new Ptr(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), wrap: Bool = new Bool(), stylePreset: StylePreset = new StylePreset(), position: Position = new Position(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.children = children;
@@ -4242,7 +4244,7 @@ export class HStack implements Writeable, Readable , Component  {
 // 
 export class StylePreset implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -4271,7 +4273,7 @@ export class StylePreset implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for StylePreset
-enum StylePresetValues {
+export enum StylePresetValues {
 	// Default is that no style preset is applied.
 	StyleNone = 0,
 		StyleButtonPrimary = 1,
@@ -4282,15 +4284,15 @@ enum StylePresetValues {
 
 
 export class Position implements Writeable, Readable  {
-		kind: PositionType;
+		public kind: PositionType;
 
-		left: Length;
+		public left: Length;
 
-		top: Length;
+		public top: Length;
 
-		right: Length;
+		public right: Length;
 
-		bottom: Length;
+		public bottom: Length;
 
 	constructor(kind: PositionType = new PositionType(), left: Length = new Length(), top: Length = new Length(), right: Length = new Length(), bottom: Length = new Length(), ) {
 		this.kind = kind;
@@ -4379,7 +4381,7 @@ export class Position implements Writeable, Readable  {
 
 export class PositionType implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -4408,7 +4410,7 @@ export class PositionType implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for PositionType
-enum PositionTypeValues {
+export enum PositionTypeValues {
 	// PositionDefault is the default and any explicit position value have no effect.
 //  See also https://developer.mozilla.org/de/docs/Web/CSS/position#static.
 	PositionDefault = 0,
@@ -4430,23 +4432,23 @@ enum PositionTypeValues {
 
 
 export class Img implements Writeable, Readable , Component  {
-		uri: URI;
+		public uri: URI;
 
-		accessibilityLabel: Str;
+		public accessibilityLabel: Str;
 
-		border: Border;
+		public border: Border;
 
-		frame: Frame;
+		public frame: Frame;
 
-		padding: Padding;
+		public padding: Padding;
 
-		sVG: SVG;
+		public sVG: SVG;
 
-		fillColor: Color;
+		public fillColor: Color;
 
-		strokeColor: Color;
+		public strokeColor: Color;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(uri: URI = new URI(), accessibilityLabel: Str = new Str(), border: Border = new Border(), frame: Frame = new Frame(), padding: Padding = new Padding(), sVG: SVG = new SVG(), fillColor: Color = new Color(), strokeColor: Color = new Color(), invisible: Bool = new Bool(), ) {
 		this.uri = uri;
@@ -4577,7 +4579,7 @@ export class Img implements Writeable, Readable , Component  {
 // SVG contains the valid embeddable source of Scalable Vector Graphics.
 export class SVG implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -4617,7 +4619,7 @@ export class SVG implements Writeable, Readable {
 
 // Strings is just a bunch of string values.
 export class Strings implements Writeable, Readable  {
-	private value: Str[];
+	public value: Str[];
 	
 	constructor(value: Str[] = []) {
  
@@ -4665,15 +4667,15 @@ export class Strings implements Writeable, Readable  {
 // a regular http multipart upload or some FFI calls providing data streams
 // or accessor URIs.
 export class FileImportRequested implements Writeable, Readable , NagoEvent  {
-		iD: Str;
+		public iD: Str;
 
-		scopeID: Str;
+		public scopeID: Str;
 
-		multiple: Bool;
+		public multiple: Bool;
 
-		maxBytes: Uint;
+		public maxBytes: Uint;
 
-		allowedMimeTypes: Strings;
+		public allowedMimeTypes: Strings;
 
 	constructor(iD: Str = new Str(), scopeID: Str = new Str(), multiple: Bool = new Bool(), maxBytes: Uint = new Uint(), allowedMimeTypes: Strings = new Strings(), ) {
 		this.iD = iD;
@@ -4762,11 +4764,11 @@ export class FileImportRequested implements Writeable, Readable , NagoEvent  {
 
 
 export class KeyboardOptions implements Writeable, Readable  {
-		capitalization: Bool;
+		public capitalization: Bool;
 
-		autoCorrectEnabled: Bool;
+		public autoCorrectEnabled: Bool;
 
-		keyboardType: KeyboardType;
+		public keyboardType: KeyboardType;
 
 	constructor(capitalization: Bool = new Bool(), autoCorrectEnabled: Bool = new Bool(), keyboardType: KeyboardType = new KeyboardType(), ) {
 		this.capitalization = capitalization;
@@ -4835,7 +4837,7 @@ export class KeyboardOptions implements Writeable, Readable  {
 
 export class KeyboardType implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -4864,7 +4866,7 @@ export class KeyboardType implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for KeyboardType
-enum KeyboardTypeValues {
+export enum KeyboardTypeValues {
 		KeyboardDefault = 0,
 		KeyboardAscii = 1,
 		KeyboardInteger = 2,
@@ -4879,7 +4881,7 @@ enum KeyboardTypeValues {
 
 export class ModalType implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -4908,7 +4910,7 @@ export class ModalType implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for ModalType
-enum ModalTypeValues {
+export enum ModalTypeValues {
 		ModalTypeDialog = 0,
 		ModalTypeOverlay = 1,
 }
@@ -4919,20 +4921,20 @@ enum ModalTypeValues {
 // the modal space in tree declaration order. A Modal is layouted above all other regular content and if ModalTypeDialog
 // will catch focus and disable controls of the views behind. Its bounds are at most the maximum possible screen size.
 export class Modal implements Writeable, Readable , Component  {
-		content?: Component;
+		public content?: Component;
 
 	// OnDismissRequest is called, if the user wants to dismiss the dialog, e.g. by clicking outside or pressing escape. You can then decide to disable you dialog, or not.
-	onDismissRequest: Ptr;
+	public onDismissRequest: Ptr;
 
-		modalType: ModalType;
+		public modalType: ModalType;
 
-		top: Length;
+		public top: Length;
 
-		left: Length;
+		public left: Length;
 
-		right: Length;
+		public right: Length;
 
-		bottom: Length;
+		public bottom: Length;
 
 	constructor(content = undefined, onDismissRequest: Ptr = new Ptr(), modalType: ModalType = new ModalType(), top: Length = new Length(), left: Length = new Length(), right: Length = new Length(), bottom: Length = new Length(), ) {
 		this.content = content;
@@ -5050,7 +5052,7 @@ export class Modal implements Writeable, Readable , Component  {
 // ThemeRequested is usually emitted by the backend, so that the frontend will switch (and remember) the required theme state.
 export class ThemeRequested implements Writeable, Readable , NagoEvent  {
 	// Theme contains the name of the theme to apply. Usually light or dark, however we may want to provide more or go even arbitrary.
-	theme: ThemeID;
+	public theme: ThemeID;
 
 	constructor(theme: ThemeID = new ThemeID(), ) {
 		this.theme = theme;
@@ -5102,9 +5104,9 @@ export class ThemeRequested implements Writeable, Readable , NagoEvent  {
 // A frontend must put the new component to create by the factory on top of the current component within the scope.
 // The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.
 export class NavigationForwardToRequested implements Writeable, Readable , NagoEvent  {
-		rootView: RootViewID;
+		public rootView: RootViewID;
 
-		values: RootViewParameters;
+		public values: RootViewParameters;
 
 	constructor(rootView: RootViewID = new RootViewID(), values: RootViewParameters = new RootViewParameters(), ) {
 		this.rootView = rootView;
@@ -5164,9 +5166,9 @@ export class NavigationForwardToRequested implements Writeable, Readable , NagoE
 
 // NavigationResetRequested removes the entire history in the scope and pushes the target on top.
 export class NavigationResetRequested implements Writeable, Readable , NagoEvent  {
-		rootView: RootViewID;
+		public rootView: RootViewID;
 
-		values: RootViewParameters;
+		public values: RootViewParameters;
 
 	constructor(rootView: RootViewID = new RootViewID(), values: RootViewParameters = new RootViewParameters(), ) {
 		this.rootView = rootView;
@@ -5260,7 +5262,7 @@ export class NavigationReloadRequested implements Writeable, Readable , NagoEven
 // ThemeID refers to a specific theme. E.g. dark or light
 export class ThemeID implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -5301,10 +5303,10 @@ export class ThemeID implements Writeable, Readable {
 // OpenRequested is usually emitted by the backend, so that the frontend will trigger a kind of popen or shellexecute.
 export class OpenRequested implements Writeable, Readable , NagoEvent  {
 	// Resource may be anything, e.g. a path or uuid or URI.
-	resource: Str;
+	public resource: Str;
 
 	// Options are simple string key-value pairs which further specifies the open call.
-	options: RootViewParameters;
+	public options: RootViewParameters;
 
 	constructor(resource: Str = new Str(), options: RootViewParameters = new RootViewParameters(), ) {
 		this.resource = resource;
@@ -5364,7 +5366,7 @@ export class OpenRequested implements Writeable, Readable , NagoEvent  {
 
 // WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.
 export class WindowTitle implements Writeable, Readable , Component  {
-		value: Str;
+		public value: Str;
 
 	constructor(value: Str = new Str(), ) {
 		this.value = value;
@@ -5415,7 +5417,7 @@ export class WindowTitle implements Writeable, Readable , Component  {
 // Duration represents a duration in nanoseconds
 export class Duration implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -5445,41 +5447,41 @@ export class Duration implements Writeable, Readable {
 
 
 export class PasswordField implements Writeable, Readable , Component  {
-		label: Str;
+		public label: Str;
 
-		supportingText: Str;
+		public supportingText: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	errorText: Str;
+	public errorText: Str;
 
 	// Value contains the text, which shall be shown.
-	value: Str;
+	public value: Str;
 
-		frame: Frame;
+		public frame: Frame;
 
 	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
-	style: TextFieldStyle;
+	public style: TextFieldStyle;
 
 	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	debounceTime: Duration;
+	public debounceTime: Duration;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
-	lines: Uint;
+	public lines: Uint;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		disableAutocomplete: Bool;
+		public disableAutocomplete: Bool;
 
 	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	disableDebounce: Bool;
+	public disableDebounce: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	// If Revealed the password is shown
-	revealed: Bool;
+	public revealed: Bool;
 
 	constructor(label: Str = new Str(), supportingText: Str = new Str(), errorText: Str = new Str(), value: Str = new Str(), frame: Frame = new Frame(), inputValue: Ptr = new Ptr(), style: TextFieldStyle = new TextFieldStyle(), debounceTime: Duration = new Duration(), lines: Uint = new Uint(), disabled: Bool = new Bool(), disableAutocomplete: Bool = new Bool(), disableDebounce: Bool = new Bool(), invisible: Bool = new Bool(), revealed: Bool = new Bool(), ) {
 		this.label = label;
@@ -5659,7 +5661,7 @@ export class PasswordField implements Writeable, Readable , Component  {
 
 export class TextFieldStyle implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -5688,7 +5690,7 @@ export class TextFieldStyle implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for TextFieldStyle
-enum TextFieldStyleValues {
+export enum TextFieldStyleValues {
 	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
 	TextFieldOutlined = 0,
 	// TextFieldReduced has no outlines and thus less visual disruption in larger forms.
@@ -5719,14 +5721,14 @@ export class Ping implements Writeable, Readable , NagoEvent  {
 // Radiobutton represents a user interface element which spans a visible area to click or tap from the user. Usually a radiobutton belongs to a group, where only a single element can be picked. Thus, it is quite similar to a Spinner/Select/Combobox.
 export class Radiobutton implements Writeable, Readable , Component  {
 	// InputValue is where updated value of the checked states are written.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
 	// Value is the initial checked value.
-	value: Bool;
+	public value: Bool;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(inputValue: Ptr = new Ptr(), value: Bool = new Bool(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.inputValue = inputValue;
@@ -5806,7 +5808,7 @@ export class Radiobutton implements Writeable, Readable , Component  {
 
 export class ScaffoldAlignment implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -5835,7 +5837,7 @@ export class ScaffoldAlignment implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for ScaffoldAlignment
-enum ScaffoldAlignmentValues {
+export enum ScaffoldAlignmentValues {
 		ScaffoldAlignmentTop = 0,
 		ScaffoldAlignmentLeading = 1,
 }
@@ -5843,7 +5845,7 @@ enum ScaffoldAlignmentValues {
 
 
 export class ScaffoldMenuEntries implements Writeable, Readable  {
-	private value: ScaffoldMenuEntry[];
+	public value: ScaffoldMenuEntry[];
 	
 	constructor(value: ScaffoldMenuEntry[] = []) {
  
@@ -5887,13 +5889,13 @@ export class ScaffoldMenuEntries implements Writeable, Readable  {
 
 
 export class Scaffold implements Writeable, Readable , Component  {
-		body?: Component;
+		public body?: Component;
 
-		logo?: Component;
+		public logo?: Component;
 
-		menu: ScaffoldMenuEntries;
+		public menu: ScaffoldMenuEntries;
 
-		alignment: ScaffoldAlignment;
+		public alignment: ScaffoldAlignment;
 
 	constructor(body = undefined, logo = undefined, menu: ScaffoldMenuEntries = new ScaffoldMenuEntries(), alignment: ScaffoldAlignment = new ScaffoldAlignment(), ) {
 		this.body = body;
@@ -5986,21 +5988,21 @@ export class Scaffold implements Writeable, Readable , Component  {
 
 
 export class ScaffoldMenuEntry implements Writeable, Readable  {
-		icon?: Component;
+		public icon?: Component;
 
-		iconActive?: Component;
+		public iconActive?: Component;
 
-		title: Str;
+		public title: Str;
 
-		action: Ptr;
+		public action: Ptr;
 
-		rootView: RootViewID;
+		public rootView: RootViewID;
 
-		menu: ScaffoldMenuEntries;
+		public menu: ScaffoldMenuEntries;
 
-		badge: Str;
+		public badge: Str;
 
-		expanded: Bool;
+		public expanded: Bool;
 
 	constructor(icon = undefined, iconActive = undefined, title: Str = new Str(), action: Ptr = new Ptr(), rootView: RootViewID = new RootViewID(), menu: ScaffoldMenuEntries = new ScaffoldMenuEntries(), badge: Str = new Str(), expanded: Bool = new Bool(), ) {
 		this.icon = icon;
@@ -6133,7 +6135,7 @@ export class ScaffoldMenuEntry implements Writeable, Readable  {
 
 export class ScopeID implements Writeable, Readable {
  
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;
@@ -6173,7 +6175,7 @@ export class ScopeID implements Writeable, Readable {
 
 // ScopeDestructionRequested can be emitted by a frontend to deallocate a scope, its states and root view at the backend side. This is usually only possible, if you have a kind of destruction event in the frontend.
 export class ScopeDestructionRequested implements Writeable, Readable , NagoEvent  {
-		rID: RID;
+		public rID: RID;
 
 	constructor(rID: RID = new RID(), ) {
 		this.rID = rID;
@@ -6223,7 +6225,7 @@ export class ScopeDestructionRequested implements Writeable, Readable , NagoEven
 
 export class ScrollViewAxis implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -6252,7 +6254,7 @@ export class ScrollViewAxis implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for ScrollViewAxis
-enum ScrollViewAxisValues {
+export enum ScrollViewAxisValues {
 		ScrollViewAxisVertical = 0,
 		ScrollViewAxisHorizontal = 1,
 }
@@ -6261,19 +6263,19 @@ enum ScrollViewAxisValues {
 
 // A ScrollView can either be horizontal or vertical.
 export class ScrollView implements Writeable, Readable , Component  {
-		content?: Component;
+		public content?: Component;
 
-		border: Border;
+		public border: Border;
 
-		frame: Frame;
+		public frame: Frame;
 
-		padding: Padding;
+		public padding: Padding;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		axis: ScrollViewAxis;
+		public axis: ScrollViewAxis;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(content = undefined, border: Border = new Border(), frame: Frame = new Frame(), padding: Padding = new Padding(), backgroundColor: Color = new Color(), axis: ScrollViewAxis = new ScrollViewAxis(), invisible: Bool = new Bool(), ) {
 		this.content = content;
@@ -6391,13 +6393,13 @@ export class ScrollView implements Writeable, Readable , Component  {
 // A Resource represents a blob with a name and a resource accessor URI.
 export class Resource implements Writeable, Readable  {
 	// Name must not be a path, just the human readable (and not unique) file name.
-	name: Str;
+	public name: Str;
 
 	// URI is likely an unreadable link to resolve the actual data. It may incorporate additional security tokens and may have a limited lifetime and its scheme is undefined.
-	uRI: URI;
+	public uRI: URI;
 
 	// MimeType is optional and is a hint about the anticipated content.
-	mimeType: Str;
+	public mimeType: Str;
 
 	constructor(name: Str = new Str(), uRI: URI = new URI(), mimeType: Str = new Str(), ) {
 		this.name = name;
@@ -6465,7 +6467,7 @@ export class Resource implements Writeable, Readable  {
 
 
 export class Resources implements Writeable, Readable  {
-	private value: Resource[];
+	public value: Resource[];
 	
 	constructor(value: Resource[] = []) {
  
@@ -6515,7 +6517,7 @@ export class Resources implements Writeable, Readable  {
 // is just broken today. An Android App may trigger the according Intent and opens a picker
 // to select the receiving app.
 export class SendMultipleRequested implements Writeable, Readable , NagoEvent  {
-		resources: Resources;
+		public resources: Resources;
 
 	constructor(resources: Resources = new Resources(), ) {
 		this.resources = resources;
@@ -6565,7 +6567,7 @@ export class SendMultipleRequested implements Writeable, Readable , NagoEvent  {
 
 // SessionAssigned must not be used by browser clients directly. A http channel implementation must issue this by itself due to security concerns like http-only cookies. Native client (mobile or desktop) should use this event instead.
 export class SessionAssigned implements Writeable, Readable , NagoEvent  {
-		sessionID: Str;
+		public sessionID: Str;
 
 	constructor(sessionID: Str = new Str(), ) {
 		this.sessionID = sessionID;
@@ -6615,11 +6617,11 @@ export class SessionAssigned implements Writeable, Readable , NagoEvent  {
 
 // Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.
 export class Spacer implements Writeable, Readable , Component  {
-		frame: Frame;
+		public frame: Frame;
 
-		border: Border;
+		public border: Border;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
 	constructor(frame: Frame = new Frame(), border: Border = new Border(), backgroundColor: Color = new Color(), ) {
 		this.frame = frame;
@@ -6689,21 +6691,21 @@ export class Spacer implements Writeable, Readable , Component  {
 
 // Table represents a pre-styled table with limited styling capabilities. Use Grid for maximum flexibility.
 export class Table implements Writeable, Readable , Component  {
-		header: TableHeader;
+		public header: TableHeader;
 
-		rows: TableRows;
+		public rows: TableRows;
 
-		frame: Frame;
+		public frame: Frame;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		border: Border;
+		public border: Border;
 
-		defaultCellPadding: Padding;
+		public defaultCellPadding: Padding;
 
-		rowDividerColor: Color;
+		public rowDividerColor: Color;
 
-		headerDividerColor: Color;
+		public headerDividerColor: Color;
 
 	constructor(header: TableHeader = new TableHeader(), rows: TableRows = new TableRows(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), border: Border = new Border(), defaultCellPadding: Padding = new Padding(), rowDividerColor: Color = new Color(), headerDividerColor: Color = new Color(), ) {
 		this.header = header;
@@ -6822,27 +6824,27 @@ export class Table implements Writeable, Readable , Component  {
 
 
 export class TableCell implements Writeable, Readable  {
-		content?: Component;
+		public content?: Component;
 
 	// Values higher than 65534 are clipped.
-	rowSpan: Uint;
+	public rowSpan: Uint;
 
 	// Values higher than 1000 are clipped.
-	colSpan: Uint;
+	public colSpan: Uint;
 
-		alignment: Alignment;
+		public alignment: Alignment;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		hoveredBackgroundColor: Color;
+		public hoveredBackgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
-		border: Border;
+		public border: Border;
 
-		action: Ptr;
+		public action: Ptr;
 
-		hovered: Bool;
+		public hovered: Bool;
 
 	constructor(content = undefined, rowSpan: Uint = new Uint(), colSpan: Uint = new Uint(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), hoveredBackgroundColor: Color = new Color(), padding: Padding = new Padding(), border: Border = new Border(), action: Ptr = new Ptr(), hovered: Bool = new Bool(), ) {
 		this.content = content;
@@ -6987,26 +6989,26 @@ export class TableCell implements Writeable, Readable  {
 
 
 export class TableColumn implements Writeable, Readable  {
-		content?: Component;
+		public content?: Component;
 
 	// Values higher than 1000 are clipped.
-	colSpan: Uint;
+	public colSpan: Uint;
 
-		width: Length;
+		public width: Length;
 
-		alignment: Alignment;
+		public alignment: Alignment;
 
-		cellBackgroundColor: Color;
+		public cellBackgroundColor: Color;
 
-		cellAction: Ptr;
+		public cellAction: Ptr;
 
-		cellPadding: Padding;
+		public cellPadding: Padding;
 
-		cellBorder: Border;
+		public cellBorder: Border;
 
-		cellHoveredBackgroundColor: Color;
+		public cellHoveredBackgroundColor: Color;
 
-		cellHovered: Bool;
+		public cellHovered: Bool;
 
 	constructor(content = undefined, colSpan: Uint = new Uint(), width: Length = new Length(), alignment: Alignment = new Alignment(), cellBackgroundColor: Color = new Color(), cellAction: Ptr = new Ptr(), cellPadding: Padding = new Padding(), cellBorder: Border = new Border(), cellHoveredBackgroundColor: Color = new Color(), cellHovered: Bool = new Bool(), ) {
 		this.content = content;
@@ -7151,17 +7153,17 @@ export class TableColumn implements Writeable, Readable  {
 
 
 export class TableRow implements Writeable, Readable  {
-		cells: TableCells;
+		public cells: TableCells;
 
-		height: Length;
+		public height: Length;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		hoveredBackgroundColor: Color;
+		public hoveredBackgroundColor: Color;
 
-		action: Ptr;
+		public action: Ptr;
 
-		hovered: Bool;
+		public hovered: Bool;
 
 	constructor(cells: TableCells = new TableCells(), height: Length = new Length(), backgroundColor: Color = new Color(), hoveredBackgroundColor: Color = new Color(), action: Ptr = new Ptr(), hovered: Bool = new Bool(), ) {
 		this.cells = cells;
@@ -7260,7 +7262,7 @@ export class TableRow implements Writeable, Readable  {
 
 // TableHeader aggregates the optional header properties and defines columns from left to right. We are not assigning cells to columns by id, to lower the protocol overhead.
 export class TableHeader implements Writeable, Readable  {
-		columns: TableColumns;
+		public columns: TableColumns;
 
 	constructor(columns: TableColumns = new TableColumns(), ) {
 		this.columns = columns;
@@ -7308,7 +7310,7 @@ export class TableHeader implements Writeable, Readable  {
 
 
 export class TableRows implements Writeable, Readable  {
-	private value: TableRow[];
+	public value: TableRow[];
 	
 	constructor(value: TableRow[] = []) {
  
@@ -7352,7 +7354,7 @@ export class TableRows implements Writeable, Readable  {
 
 
 export class TableCells implements Writeable, Readable  {
-	private value: TableCell[];
+	public value: TableCell[];
 	
 	constructor(value: TableCell[] = []) {
  
@@ -7396,7 +7398,7 @@ export class TableCells implements Writeable, Readable  {
 
 
 export class TableColumns implements Writeable, Readable  {
-	private value: TableColumn[];
+	public value: TableColumn[];
 	
 	constructor(value: TableColumn[] = []) {
  
@@ -7440,49 +7442,49 @@ export class TableColumns implements Writeable, Readable  {
 
 
 export class TextView implements Writeable, Readable , Component  {
-		value: Str;
+		public value: Str;
 
 	// Color denotes the text color. Leave empty, for the context sensitiv default theme color.
-	color: Color;
+	public color: Color;
 
 	// BackgroundColor denotes the color of the text background. Leave empty, for the context sensitiv default theme color.
-	backgroundColor: Color;
+	public backgroundColor: Color;
 
-		onClick: Ptr;
+		public onClick: Ptr;
 
-		onHoverStart: Ptr;
+		public onHoverStart: Ptr;
 
-		onHoverEnd: Ptr;
+		public onHoverEnd: Ptr;
 
-		border: Border;
+		public border: Border;
 
-		padding: Padding;
+		public padding: Padding;
 
-		frame: Frame;
+		public frame: Frame;
 
-		accessibilityLabel: Str;
+		public accessibilityLabel: Str;
 
-		font: Font;
+		public font: Font;
 
-		action: Ptr;
+		public action: Ptr;
 
-		textAlignment: TextAlignment;
+		public textAlignment: TextAlignment;
 
-		hoveredBackgroundColor: Color;
+		public hoveredBackgroundColor: Color;
 
-		pressedBackgroundColor: Color;
+		public pressedBackgroundColor: Color;
 
-		focusedBackgroundColor: Color;
+		public focusedBackgroundColor: Color;
 
-		hoveredBorder: Border;
+		public hoveredBorder: Border;
 
-		pressedBorder: Border;
+		public pressedBorder: Border;
 
-		focusedBorder: Border;
+		public focusedBorder: Border;
 
-		lineBreak: Bool;
+		public lineBreak: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(value: Str = new Str(), color: Color = new Color(), backgroundColor: Color = new Color(), onClick: Ptr = new Ptr(), onHoverStart: Ptr = new Ptr(), onHoverEnd: Ptr = new Ptr(), border: Border = new Border(), padding: Padding = new Padding(), frame: Frame = new Frame(), accessibilityLabel: Str = new Str(), font: Font = new Font(), action: Ptr = new Ptr(), textAlignment: TextAlignment = new TextAlignment(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), lineBreak: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.value = value;
@@ -7732,7 +7734,7 @@ export class TextView implements Writeable, Readable , Component  {
 
 export class TextAlignment implements Writeable, Readable {
  
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -7761,7 +7763,7 @@ export class TextAlignment implements Writeable, Readable {
 }
 
 // companion enum containing all defined constants for TextAlignment
-enum TextAlignmentValues {
+export enum TextAlignmentValues {
 		TextAlignInherit = 0,
 		TextAlignStart = 1,
 		TextAlignEnd = 2,
@@ -7772,49 +7774,49 @@ enum TextAlignmentValues {
 
 
 export class TextField implements Writeable, Readable , Component  {
-		label: Str;
+		public label: Str;
 
-		supportingText: Str;
+		public supportingText: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	errorText: Str;
+	public errorText: Str;
 
 	// Value contains the text, which shall be shown.
-	value: Str;
+	public value: Str;
 
-		frame: Frame;
+		public frame: Frame;
 
 	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
-	style: TextFieldStyle;
+	public style: TextFieldStyle;
 
 	// Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.
-	leading?: Component;
+	public leading?: Component;
 
 	// Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button) must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.
-	trailing?: Component;
+	public trailing?: Component;
 
 	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	debounceTime: Duration;
+	public debounceTime: Duration;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
-	lines: Uint;
+	public lines: Uint;
 
-		keyboardOptions: KeyboardOptions;
+		public keyboardOptions: KeyboardOptions;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		disableAutocomplete: Bool;
+		public disableAutocomplete: Bool;
 
 	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	disableDebounce: Bool;
+	public disableDebounce: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	// If Revealed the password is shown
-	revealed: Bool;
+	public revealed: Bool;
 
 	constructor(label: Str = new Str(), supportingText: Str = new Str(), errorText: Str = new Str(), value: Str = new Str(), frame: Frame = new Frame(), inputValue: Ptr = new Ptr(), style: TextFieldStyle = new TextFieldStyle(), leading = undefined, trailing = undefined, debounceTime: Duration = new Duration(), lines: Uint = new Uint(), keyboardOptions: KeyboardOptions = new KeyboardOptions(), disabled: Bool = new Bool(), disableAutocomplete: Bool = new Bool(), disableDebounce: Bool = new Bool(), invisible: Bool = new Bool(), revealed: Bool = new Bool(), ) {
 		this.label = label;
@@ -8039,13 +8041,13 @@ export class TextField implements Writeable, Readable , Component  {
 // Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation functions. In contrast to that, use a checkbox for form things without an immediate effect.
 export class Toggle implements Writeable, Readable , Component  {
 	// InputValue is where updated value of the checked states are written.
-	inputValue: Ptr;
+	public inputValue: Ptr;
 
-		value: Bool;
+		public value: Bool;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(inputValue: Ptr = new Ptr(), value: Bool = new Bool(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.inputValue = inputValue;
@@ -8127,25 +8129,25 @@ export class Toggle implements Writeable, Readable , Component  {
 // and alignments. This allows to style inline-components individually. SwiftUI can do this using + on
 // Text and Images. Jetpack has the concept of annotated strings.
 export class TextLayout implements Writeable, Readable , Component  {
-		children: Components;
+		public children: Components;
 
-		border: Border;
+		public border: Border;
 
-		frame: Frame;
+		public frame: Frame;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
-		accessibilityLabel: Str;
+		public accessibilityLabel: Str;
 
-		font: Font;
+		public font: Font;
 
-		action: Ptr;
+		public action: Ptr;
 
-		textAlignment: TextAlignment;
+		public textAlignment: TextAlignment;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(children: Components = new Components(), border: Border = new Border(), frame: Frame = new Frame(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), font: Font = new Font(), action: Ptr = new Ptr(), textAlignment: TextAlignment = new TextAlignment(), invisible: Bool = new Bool(), ) {
 		this.children = children;
@@ -8289,47 +8291,47 @@ export class TextLayout implements Writeable, Readable , Component  {
 //  - if the container is larger than the contained views, it must center vertical or horizontal
 //  - the inner gap between components should be around 2dp
 export class VStack implements Writeable, Readable , Component  {
-		children: Components;
+		public children: Components;
 
-		gap: Length;
+		public gap: Length;
 
-		frame: Frame;
+		public frame: Frame;
 
 	// Zero value of Alignment is Center (=c) must be applied.
-	alignment: Alignment;
+	public alignment: Alignment;
 
-		backgroundColor: Color;
+		public backgroundColor: Color;
 
-		padding: Padding;
+		public padding: Padding;
 
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	accessibilityLabel: Str;
+	public accessibilityLabel: Str;
 
-		border: Border;
+		public border: Border;
 
-		font: Font;
+		public font: Font;
 
-		action: Ptr;
+		public action: Ptr;
 
-		hoveredBackgroundColor: Color;
+		public hoveredBackgroundColor: Color;
 
-		pressedBackgroundColor: Color;
+		public pressedBackgroundColor: Color;
 
-		focusedBackgroundColor: Color;
+		public focusedBackgroundColor: Color;
 
-		hoveredBorder: Border;
+		public hoveredBorder: Border;
 
-		pressedBorder: Border;
+		public pressedBorder: Border;
 
-		focusedBorder: Border;
+		public focusedBorder: Border;
 
-		stylePreset: StylePreset;
+		public stylePreset: StylePreset;
 
-		position: Position;
+		public position: Position;
 
-		disabled: Bool;
+		public disabled: Bool;
 
-		invisible: Bool;
+		public invisible: Bool;
 
 	constructor(children: Components = new Components(), gap: Length = new Length(), frame: Frame = new Frame(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), border: Border = new Border(), font: Font = new Font(), action: Ptr = new Ptr(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), stylePreset: StylePreset = new StylePreset(), position: Position = new Position(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
 		this.children = children;
@@ -8568,9 +8570,9 @@ export class VStack implements Writeable, Readable , Component  {
 
 
 export class WebView implements Writeable, Readable  {
-		uRI: URI;
+		public uRI: URI;
 
-		frame: Frame;
+		public frame: Frame;
 
 	constructor(uRI: URI = new URI(), frame: Frame = new Frame(), ) {
 		this.uRI = uRI;
@@ -8629,9 +8631,9 @@ export class WebView implements Writeable, Readable  {
 
 // WindowInfoChanged is raised by the frontend whenever the window metrics changed in a significant way. It is not guaranteed that every pixel change will trigger such an event. However, a frontend must guarantee to send such an event if the WindowSizeClass is changed.
 export class WindowInfoChanged implements Writeable, Readable , NagoEvent  {
-		windowInfo: WindowInfo;
+		public windowInfo: WindowInfo;
 
-		rID: RID;
+		public rID: RID;
 
 	constructor(windowInfo: WindowInfo = new WindowInfo(), rID: RID = new RID(), ) {
 		this.windowInfo = windowInfo;

@@ -5,7 +5,7 @@ func (c *Compiler) tsEmitMap(t Typename, decl Map) error {
 	c.p(c.makeGoDoc(decl.Doc))
 	c.pf("export class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
-	c.pf("private value: Map<%s,%s>;\n", decl.Key, decl.Value)
+	c.pf("public value: Map<%s,%s>;\n", decl.Key, decl.Value)
 	c.pn("")
 	c.pf("constructor(value: Map<%[1]s,%[2]s> = new Map<%[1]s,%[2]s>()) {\n", decl.Key, decl.Value)
 	c.pf(` 

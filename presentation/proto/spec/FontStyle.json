@@ -6,6 +6,12 @@
     "0": {
       "name": "Unsolicited",
       "doc": "A 0 represents something which was issued without any user interaction, which means by own-initiative."
+    },
+    "1": {
+      "name": "Normal"
+    },
+    "2": {
+      "name": "Italic"
     }
   }
 }

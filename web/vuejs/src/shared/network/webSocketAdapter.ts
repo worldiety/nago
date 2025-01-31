@@ -1,25 +1,25 @@
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import type EventBus from '@/shared/eventbus/eventBus';
-import {EventType} from '@/shared/eventbus/eventType';
+import { EventType } from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import type {Acknowledged} from '@/shared/protocol/ora/acknowledged';
-import type {ComponentDestructionRequested} from '@/shared/protocol/ora/componentDestructionRequested';
-import type {ComponentFactoryId} from '@/shared/protocol/ora/componentFactoryId';
-import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
-import type {ConfigurationDefined} from '@/shared/protocol/ora/configurationDefined';
-import type {ConfigurationRequested} from '@/shared/protocol/ora/configurationRequested';
-import type {Event} from '@/shared/protocol/ora/event';
-import type {EventsAggregated} from '@/shared/protocol/ora/eventsAggregated';
-import type {FunctionCallRequested} from '@/shared/protocol/ora/functionCallRequested';
-import type {NewComponentRequested} from '@/shared/protocol/ora/newComponentRequested';
-import type {Property} from '@/shared/protocol/ora/property';
-import type {Ptr} from '@/shared/protocol/ora/ptr';
-import type {ScopeID} from '@/shared/protocol/ora/scopeID';
-import type {SetPropertyValueRequested} from '@/shared/protocol/ora/setPropertyValueRequested';
-import type {WindowInfo} from '@/shared/protocol/ora/windowInfo';
-import type {WindowInfoChanged} from '@/shared/protocol/ora/windowInfoChanged';
-import {BinaryReader, BinaryWriter, marshal, NagoEvent, Ping, unmarshal} from "@/shared/proto/nprotoc_gen";
+import { BinaryReader, BinaryWriter, NagoEvent, Ping, marshal, unmarshal } from '@/shared/proto/nprotoc_gen';
+import type { Acknowledged } from '@/shared/protocol/ora/acknowledged';
+import type { ComponentDestructionRequested } from '@/shared/protocol/ora/componentDestructionRequested';
+import type { ComponentFactoryId } from '@/shared/protocol/ora/componentFactoryId';
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ConfigurationDefined } from '@/shared/protocol/ora/configurationDefined';
+import type { ConfigurationRequested } from '@/shared/protocol/ora/configurationRequested';
+import type { Event } from '@/shared/protocol/ora/event';
+import type { EventsAggregated } from '@/shared/protocol/ora/eventsAggregated';
+import type { FunctionCallRequested } from '@/shared/protocol/ora/functionCallRequested';
+import type { NewComponentRequested } from '@/shared/protocol/ora/newComponentRequested';
+import type { Property } from '@/shared/protocol/ora/property';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { ScopeID } from '@/shared/protocol/ora/scopeID';
+import type { SetPropertyValueRequested } from '@/shared/protocol/ora/setPropertyValueRequested';
+import type { WindowInfo } from '@/shared/protocol/ora/windowInfo';
+import type { WindowInfoChanged } from '@/shared/protocol/ora/windowInfoChanged';
 
 export default class WebSocketAdapter implements ServiceAdapter {
 	eventBus: EventBus;
@@ -64,10 +64,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	async initialize(): Promise<void> {
 		let proto = 'ws';
-		let httpProto = "http";
+		let httpProto = 'http';
 		if (this.isSecure) {
 			proto = 'wss';
-			httpProto = "https";
+			httpProto = 'https';
 		}
 		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
@@ -84,7 +84,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.webSocket.onmessage = (e) => this.receiveBinary(e.data);
 
 			this.webSocket.onclose = (evt) => {
-				ConnectionHandler.connectionChanged({connected: false});
+				ConnectionHandler.connectionChanged({ connected: false });
 
 				if (this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
@@ -102,12 +102,12 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				}
 			};
 
-			this.webSocket.onerror = ev => {
-				window.console.log("websocket failed", ev);
-			}
+			this.webSocket.onerror = (ev) => {
+				window.console.log('websocket failed', ev);
+			};
 
 			this.webSocket.onopen = () => {
-				ConnectionHandler.connectionChanged({connected: true});
+				ConnectionHandler.connectionChanged({ connected: true });
 				this.retries = 0;
 
 				// this keeps our connection at least logically alive
@@ -116,8 +116,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 						return;
 					}
 
-
-					this.sendEvent(new Ping())
+					this.sendEvent(new Ping());
 				}, 30000);
 
 				resolve();
@@ -126,21 +125,20 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	sendEvent(evt: NagoEvent): void {
-		console.log("SEND EVENT", evt)
+		console.log('SEND EVENT', evt);
 		let writer = new BinaryWriter();
-		marshal(writer, evt)
+		marshal(writer, evt);
 		let buffer = writer.getBuffer();
-		console.log("nprotoc buffer", buffer)
+		console.log('nprotoc buffer', buffer);
 		this.webSocket?.send(buffer);
 	}
 
 	async teardown(): Promise<void> {
-		window.console.log("websocket teardown");
+		window.console.log('websocket teardown');
 		this.closedGracefully = true;
 		this.webSocket?.close();
-		ConnectionHandler.connectionChanged({connected: false});
+		ConnectionHandler.connectionChanged({ connected: false });
 	}
-
 
 	private retry() {
 		if (this.retryTimeout !== null) {
@@ -164,7 +162,6 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.initialize();
 		}, timeout);
 	}
-
 
 	async executeFunctions(...functions: Ptr[]): Promise<ComponentInvalidated> {
 		return this.send(undefined, functions).then((event) => event as ComponentInvalidated);
@@ -198,7 +195,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			window.console.log('there is no configured active locale. Invoke getConfiguration to set it.');
 		}
 
-		throw "wer ist das hier?"
+		throw 'wer ist das hier?';
 
 		const newComponentRequested: NewComponentRequested = {
 			type: 'NewComponentRequested',
@@ -287,7 +284,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	private receiveBinary(responseRaw: ArrayBuffer): void {
-		console.log("WS received", responseRaw)
+		console.log('WS received', responseRaw);
 		let msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
 		ConnectionHandler.publishEvent(msg as NagoEvent);
 	}
@@ -303,11 +300,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		if (eventType == EventType.ERROR_OCCURRED) {
 			// this happens, if the server has lost the scope state, either due to a restart or connection timeout
 			// TODO this string comparision is stupid and must be changed to at least a numeric error code
-			if ((event.message as string).indexOf("no view allocated")) {
-				this.eventBus.publish(EventType.ServerStateLost, EventType.PING)
-				return
+			if ((event.message as string).indexOf('no view allocated')) {
+				this.eventBus.publish(EventType.ServerStateLost, EventType.PING);
+				return;
 			}
-
 		}
 
 		// our lowest id is 1, so this must be something without our intention
@@ -446,7 +442,12 @@ class Future {
 	private readonly reject: (event: Event) => void;
 	private readonly monotonicRequestId: number;
 
-	constructor(parent: WebSocketAdapter, monotonicRequestId: number, resolve: (event: Event) => void, reject: (event: Event) => void) {
+	constructor(
+		parent: WebSocketAdapter,
+		monotonicRequestId: number,
+		resolve: (event: Event) => void,
+		reject: (event: Event) => void
+	) {
 		this.resolve = resolve;
 		this.reject = reject;
 		this.parent = parent;
@@ -459,8 +460,8 @@ class Future {
 
 			// this happens, if the server has lost the scope state, either due to a restart or connection timeout
 			// TODO this string comparision is stupid and must be changed to at least a numeric error code
-			if ((event.message as string).indexOf("no view allocated")) {
-				this.parent.eventBus.publish(EventType.ServerStateLost, EventType.PING)
+			if ((event.message as string).indexOf('no view allocated')) {
+				this.parent.eventBus.publish(EventType.ServerStateLost, EventType.PING);
 			}
 
 			this.reject(event);

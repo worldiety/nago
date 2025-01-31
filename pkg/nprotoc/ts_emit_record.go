@@ -11,9 +11,9 @@ func (c *Compiler) tsEmitRecord(t Typename, decl Record) error {
 	for _, field := range decl.sortedFields() {
 		c.pf(c.makeGoDoc(field.Doc))
 		if c.tsCanBeUndefined(field.Type) {
-			c.pf("%s?: %s;\n\n", tsFieldName(field.Name), field.Type)
+			c.pf("public %s?: %s;\n\n", tsFieldName(field.Name), field.Type)
 		} else {
-			c.pf("%s: %s;\n\n", tsFieldName(field.Name), field.Type)
+			c.pf("public %s: %s;\n\n", tsFieldName(field.Name), field.Type)
 		}
 
 	}

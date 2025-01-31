@@ -1,7 +1,5 @@
-import type {CustomError} from "@/composables/errorhandling";
-import type {URL} from "node:url";
-
-
+import type { CustomError } from '@/composables/errorhandling';
+import type { URL } from 'node:url';
 
 export class HttpRequest<T> {
 	private readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -56,7 +54,7 @@ export class HttpRequest<T> {
 			// https://muffinman.io/blog/uploading-files-using-fetch-multipart-form-data/
 			delete this.headers['content-type'];
 		} else if (body instanceof FormData) {
-			this.payload = body
+			this.payload = body;
 		} else if (typeof body === 'string') {
 			this.payload = body;
 			this.headers['content-type'] = contentType || 'text/plain';
@@ -71,8 +69,8 @@ export class HttpRequest<T> {
 
 	public async fetch(): Promise<T> {
 		if (this.auth) {
-			const token = await this.auth()
-			this.headers['Authorization'] = `Bearer ${token}`
+			const token = await this.auth();
+			this.headers['Authorization'] = `Bearer ${token}`;
 		}
 
 		let response: Response;
@@ -85,7 +83,7 @@ export class HttpRequest<T> {
 			});
 		} catch (e) {
 			const customError: CustomError = {
-				errorCode: "001"
+				errorCode: '001',
 			};
 			throw customError;
 		}
@@ -97,19 +95,19 @@ export class HttpRequest<T> {
 		try {
 			switch (response.headers.get('content-type')?.toLowerCase()) {
 				case 'application/json':
-					return await response.clone().json() as T;
+					return (await response.clone().json()) as T;
 				case 'text/plain':
 				case 'text/csv':
-					return await response.clone().text() as T;
+					return (await response.clone().text()) as T;
 				default:
 					//	return await response.clone().json() as T;
 					return undefined as T;
 			}
 		} catch (e) {
 			const customError: CustomError = {
-				errorCode: "002"
-			}
-			throw customError
+				errorCode: '002',
+			};
+			throw customError;
 		}
 	}
 }

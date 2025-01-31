@@ -11,15 +11,13 @@
 			@keydown.enter="menuEntryClicked"
 		>
 			<div v-if="props.ui.i" class="relative flex justify-start items-center h-full">
-
 				<div class="menu-entry-icon-active *:h-full">
-					<ui-generic v-if="ui.x && props.ui.v" :ui="props.ui.v"/>
-					<ui-generic v-else :ui="props.ui.i"/>
+					<ui-generic v-if="ui.x && props.ui.v" :ui="props.ui.v" />
+					<ui-generic v-else :ui="props.ui.i" />
 				</div>
-				<div class="menu-entry-icon  *:h-full">
-					<ui-generic :ui="props.ui.i"/>
+				<div class="menu-entry-icon *:h-full">
+					<ui-generic :ui="props.ui.i" />
 				</div>
-
 
 				<!-- Optional red badge -->
 				<div
@@ -32,13 +30,14 @@
 			<div class="flex justify-start items-center h-6">
 				<p class="grow leading-tight select-none align-bottom">{{ ui.t }}</p>
 			</div>
-			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass"/>
+			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass" />
 		</div>
 		<template v-if="ui.x">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
 					v-for="(menuEntry, index) in ui.m"
-					:key="index" :ui="menuEntry"
+					:key="index"
+					:ui="menuEntry"
 					:top-level="false"
 					@clicked="$emit('clicked')"
 				/>
@@ -48,11 +47,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
-import {computed} from 'vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
-import UiGeneric from "@/components/UiGeneric.vue";
+import UiGeneric from '@/components/UiGeneric.vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 const props = defineProps<{
 	ui: ScaffoldMenuEntry;
@@ -73,8 +72,8 @@ const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || !!
 
 const menuEntryActive = computed((): boolean => {
 	//return true
-	if (props.ui.f == "." && (window.location.pathname == "" || window.location.pathname == "/")) {
-		return true
+	if (props.ui.f == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+		return true;
 	}
 
 	return `/${props.ui.f}` === window.location.pathname;
@@ -88,8 +87,7 @@ const triangleClass = computed((): string | null => {
 		return 'rotate-180';
 	}
 	return null;
-})
-
+});
 
 function menuEntryClicked(): void {
 	if (hasSubMenuEntries.value) {
@@ -112,7 +110,7 @@ function expandMenuEntry(): void {
 	// 	], [props.ui.onFocus]);
 	// }
 
-	props.ui.x = true
+	props.ui.x = true;
 }
 </script>
 

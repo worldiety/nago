@@ -73,5 +73,8 @@
 	},
 	"connectionLostOverlay": {
 		"content": "Verbindung unterbrochen"
+	},
+	"connectingChannelOverlay": {
+		"content": "Verbindung wird hergestellt"
 	}
 }

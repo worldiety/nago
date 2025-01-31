@@ -1,68 +1,66 @@
 /* Custom styled checkboxes: https://moderncss.dev/pure-css-custom-checkbox-style/ */
-input[type="checkbox"]:checked::before,
-input[type="radio"]:checked::before {
+input[type='checkbox']:checked::before,
+input[type='radio']:checked::before {
 	@apply opacity-100;
 }
 
-input[type="checkbox"]:checked {
+input[type='checkbox']:checked {
 	@apply bg-I0 border-I0;
 }
 
-input[type="radio"]:checked {
+input[type='radio']:checked {
 	@apply bg-transparent border-black;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
 	@apply grid border border-M8 appearance-none bg-transparent rounded-sm place-content-center w-4 h-4 m-0;
 	font: inherit;
 }
 
-input[type="radio"] {
+input[type='radio'] {
 	@apply grid border border-M8 rounded-full appearance-none bg-transparent place-content-center w-4 h-4 m-0;
 }
 
-input[type="radio"]:hover {
+input[type='radio']:hover {
 	@apply border-I0;
 }
 
-input[type="checkbox"]::before,
-input[type="radio"]::before {
+input[type='checkbox']::before,
+input[type='radio']::before {
 	@apply block opacity-0 h-2.5 w-2.5;
-	content: "";
+	content: '';
 	border-radius: 50%;
 	transform-origin: bottom left;
 }
 
-input[type="checkbox"]::before {
+input[type='checkbox']::before {
 	box-shadow: inset 1em 1em theme('colors.black');
 	clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
-input[type="radio"]::before {
+input[type='radio']::before {
 	box-shadow: inset 1em 1em theme('colors.I0');
 	clip-path: circle(100%);
 }
 
-input[type="checkbox"]:checked:disabled {
+input[type='checkbox']:checked:disabled {
 	@apply bg-SI0;
 }
 
-input[type="radio"]:checked:disabled {
+input[type='radio']:checked:disabled {
 	@apply bg-transparent border-ST0;
 }
 
-input[type="checkbox"]:disabled:not(:checked),
-input[type="radio"]:disabled:not(:checked) {
+input[type='checkbox']:disabled:not(:checked),
+input[type='radio']:disabled:not(:checked) {
 	@apply border-ST0;
 }
 
-input[type="checkbox"]:disabled::before,
-input[type="radio"]:disabled::before {
+input[type='checkbox']:disabled::before,
+input[type='radio']:disabled::before {
 	box-shadow: inset 1em 1em theme('colors.SI0');
 }
 
 select {
 	@apply appearance-none;
 }
-
-

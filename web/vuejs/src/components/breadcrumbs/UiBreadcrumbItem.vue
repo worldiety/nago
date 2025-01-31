@@ -11,12 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import type { BreadcrumbItem } from '@/shared/protocol/gen/breadcrumbItem';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { BreadcrumbItem } from '@/shared/protocol/gen/breadcrumbItem';
 
 const props = defineProps<{
 	breadcrumbItem: BreadcrumbItem;
-	icon: string|null;
+	icon: string | null;
 }>();
 
 const serviceAdapter = useServiceAdapter();

@@ -1,14 +1,9 @@
 <template>
-	<nav
-		ref="sidebar"
-		class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4"
-		aria-label="Sidebar"
-	>
+	<nav ref="sidebar" class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4" aria-label="Sidebar">
 		<!-- Sidebar -->
-		<div
-			class="relative flex flex-col items-center justify-start gap-y-4 h-full w-full pt-6 px-4 pb-7 z-10 bg-M4">
+		<div class="relative flex flex-col items-center justify-start gap-y-4 h-full w-full pt-6 px-4 pb-7 z-10 bg-M4">
 			<div v-if="ui.l" class="w-full *:w-full mb-4">
-				<ui-generic :ui="ui.l"/>
+				<ui-generic :ui="ui.l" />
 			</div>
 			<!-- Top level menu entries -->
 			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
@@ -22,7 +17,7 @@
 					/>
 				</div>
 			</div>
-			<ThemeToggle/>
+			<ThemeToggle />
 		</div>
 
 		<!-- Sub menu -->
@@ -42,7 +37,8 @@
 						ref="subMenuEntryElements"
 						class="flex justify-between items-center rounded-full py-2 px-4"
 						:class="{
-							'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': isClickableMenuEntry(subMenuEntry),
+							'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35':
+								isClickableMenuEntry(subMenuEntry),
 							'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 						}"
 						:tabindex="isClickableMenuEntry(subMenuEntry) ? '0' : '-1'"
@@ -53,7 +49,7 @@
 						<TriangleDown
 							v-if="subMenuEntry.m?.length > 0"
 							class="duration-150 w-2 -mr-1"
-							:class="{'rotate-180': subMenuEntry.x}"
+							:class="{ 'rotate-180': subMenuEntry.x }"
 						/>
 					</div>
 					<div
@@ -67,7 +63,8 @@
 							ref="subSubMenuEntryElements"
 							class="rounded-full py-2 px-4"
 							:class="{
-								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': subSubMenuEntry.a,
+								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35':
+									subSubMenuEntry.a,
 								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
 							:tabindex="subSubMenuEntry.a ? '0' : '-1'"
@@ -84,14 +81,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import TriangleDown from '@/assets/svg/triangleDown.svg';
+import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
-import {computed, onMounted, onUnmounted, ref} from 'vue';
-import TriangleDown from '@/assets/svg/triangleDown.svg';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {Scaffold} from "@/shared/protocol/ora/scaffold";
-import UiGeneric from "@/components/UiGeneric.vue";
-import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { Scaffold } from '@/shared/protocol/ora/scaffold';
+import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -126,7 +123,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 			m: {
 				...expandedMenuEntry.value.m,
 				//v: [],
-			}
+			},
 		});
 	}
 	return entries ?? [];
@@ -144,9 +141,7 @@ function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 }
 
 function handleMouseMove(event: MouseEvent): void {
-	const threshold = subMenu.value?.getBoundingClientRect().right
-		?? sidebar.value?.getBoundingClientRect().right
-		?? 0;
+	const threshold = subMenu.value?.getBoundingClientRect().right ?? sidebar.value?.getBoundingClientRect().right ?? 0;
 	if (event.x > threshold) {
 		// Collapse the sub menu when threshold is passed
 		// const updatedExpandedProperties = props.ui.m
@@ -159,17 +154,16 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.m?.forEach(value => {
-			value.x=false
-		})
-
+		props.ui.m?.forEach((value) => {
+			value.x = false;
+		});
 	}
 }
 
 function focusFirstLinkedSubMenuEntry(): void {
 	const elementToFocus =
-		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)
-		?? subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
+		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0) ??
+		subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
 	elementToFocus?.focus();
 }
 
@@ -195,7 +189,7 @@ function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntr
 			m: {
 				...subMenuEntry.m,
 				v: [],
-			}
+			},
 		});
 	}
 	return entries;
@@ -209,16 +203,15 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 		};
 	});*/
 	if (!props.ui.m) {
-		return
+		return;
 	}
 
 	for (let i = 0; i < props.ui.m.length; i++) {
-		let m = props.ui.m.at(i)
-		m.x = false
-
+		let m = props.ui.m.at(i);
+		m.x = false;
 	}
 
-	menuEntry.x = true
+	menuEntry.x = true;
 
 	//serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]); //TODO?
 }

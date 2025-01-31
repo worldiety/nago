@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { Component as OraComponent } from '@/shared/proto/nprotoc_gen';
-import uiComponentsMap, {vueComponentFor} from '@/shared/uiComponents';
+import uiComponentsMap from '@/shared/uiComponents';
 
 const props = defineProps<{
 	ui: OraComponent; // if we don't rename the import, Vue confuses everything up
@@ -8,8 +8,5 @@ const props = defineProps<{
 </script>
 
 <template>
-	<component
-		:is="vueComponentFor(props.ui)"
-		:ui="props.ui"
-	/>
+	<div>[Protocol type has not been implemented: '{{ props.ui.constructor.name }}']</div>
 </template>

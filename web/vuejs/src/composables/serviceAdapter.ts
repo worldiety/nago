@@ -1,6 +1,6 @@
-import type ServiceAdapter from '@/shared/network/serviceAdapter';
 import { inject } from 'vue';
 import { serviceAdapterKey } from '@/shared/injectionKeys';
+import type ServiceAdapter from '@/shared/network/serviceAdapter';
 
 export function useServiceAdapter(): ServiceAdapter {
 	const serviceAdapter = inject(serviceAdapterKey);

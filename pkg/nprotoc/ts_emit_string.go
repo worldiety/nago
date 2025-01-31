@@ -6,7 +6,7 @@ func (c *Compiler) tsEmitString(t Typename, decl String) error {
 	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
-  private value: string; 
+  public value: string; 
 
   constructor(value: string = "") {
     this.value = value;

@@ -1,8 +1,8 @@
 export interface FileUpload {
 	uploadId: string;
 	file: File;
-	bytesUploaded: number|null;
-	bytesTotal: number|null;
+	bytesUploaded: number | null;
+	bytesTotal: number | null;
 	status: FileUploadStatus;
 	statusCode?: number;
 }

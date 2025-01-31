@@ -6,7 +6,7 @@ func (c *Compiler) tsEmitBool(t Typename, decl Bool) error {
 	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
-	private value: boolean; 
+	public value: boolean; 
 	
 	constructor(value: boolean = false) {
 		this.value = value;

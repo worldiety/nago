@@ -15,7 +15,6 @@
 	width: 8px;
 }
 
-
 .overflow-x-auto {
 	scrollbar-color: theme('colors.I0') transparent;
 }

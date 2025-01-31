@@ -8,9 +8,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Breadcrumbs } from '@/shared/protocol/gen/breadcrumbs';
 import ArrowRightBold from '@/assets/svg/arrowRightBold.svg';
 import UiBreadcrumbItem from '@/components/breadcrumbs/UiBreadcrumbItem.vue';
+import type { Breadcrumbs } from '@/shared/protocol/gen/breadcrumbs';
 
 defineProps<{
 	ui: Breadcrumbs;

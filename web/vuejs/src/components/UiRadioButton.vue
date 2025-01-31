@@ -1,30 +1,33 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
-import type {Radiobutton} from "@/shared/protocol/ora/radiobutton";
-import {useServiceAdapter} from "@/composables/serviceAdapter";
+import { ref, watch } from 'vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Radiobutton } from '@/shared/protocol/ora/radiobutton';
 
 const props = defineProps<{
-	ui: Radiobutton
+	ui: Radiobutton;
 }>();
 
-const serviceAdapter = useServiceAdapter()
+const serviceAdapter = useServiceAdapter();
 
 const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
 
-watch(() => props.ui.v, (newValue) => {
-	if (newValue) {
-		checked.value = newValue;
-	} else {
-		checked.value = false;
+watch(
+	() => props.ui.v,
+	(newValue) => {
+		if (newValue) {
+			checked.value = newValue;
+		} else {
+			checked.value = false;
+		}
 	}
-})
-
+);
 
 function radioButtonClicked(): void {
 	if (!props.ui.d) {
 		serviceAdapter.setProperties({
-			p:props.ui.i, v: true,
-		})
+			p: props.ui.i,
+			v: true,
+		});
 	}
 }
 </script>
@@ -33,13 +36,13 @@ function radioButtonClicked(): void {
 	<div
 		v-if="!ui.iv"
 		class="input-radio rounded-full w-fit"
-		:class="{'input-radio-disabled': ui.d}"
+		:class="{ 'input-radio-disabled': ui.d }"
 		:tabindex="ui.d ? '-1' : '0'"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="radio" class="pointer-events-none"  :disabled="ui.d">
+			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.d" />
 		</div>
 	</div>
 </template>

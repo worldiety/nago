@@ -1,35 +1,35 @@
-import {Frame} from "@/shared/protocol/ora/frame";
-import {cssLengthValue} from "@/components/shared/length";
+import { cssLengthValue } from '@/components/shared/length';
+import {Frame} from "@/shared/proto/nprotoc_gen";
 
 export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];
 	if (!frame) {
 		return styles;
 	}
-	
-	if (frame?.w) {
-		styles.push("width:" + cssLengthValue(frame.w))
+
+	if (!frame.width.isZero()) {
+		styles.push('width:' + cssLengthValue(frame.width.value));
 	}
 
-	if (frame?.wi) {
-		styles.push("min-width:" + cssLengthValue(frame.wi))
+	if (!frame.minWidth.isZero()) {
+		styles.push('min-width:' + cssLengthValue(frame.minWidth.value));
 	}
 
-	if (frame?.wx) {
-		styles.push("max-width:" + cssLengthValue(frame.wx))
+	if (!frame.maxWidth.isZero()) {
+		styles.push('max-width:' + cssLengthValue(frame.maxWidth.value));
 	}
 
-	if (frame?.h) {
-		styles.push("height:" + cssLengthValue(frame.h))
+	if (!frame.height.isZero()) {
+		styles.push('height:' + cssLengthValue(frame.height.value));
 	}
 
-	if (frame?.hi) {
-		styles.push("min-height:" + cssLengthValue(frame.hi))
+	if (!frame.minHeight.isZero()) {
+		styles.push('min-height:' + cssLengthValue(frame.minHeight.value));
 	}
 
-	if (frame?.hx) {
-		styles.push("max-height:" + cssLengthValue(frame.hx))
+	if (!frame.maxHeight) {
+		styles.push('max-height:' + cssLengthValue(frame.maxHeight));
 	}
 
-	return styles
+	return styles;
 }

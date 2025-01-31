@@ -6,7 +6,7 @@
 		<p v-if="isErr()" class="text-sm text-error text-end w-full">{{ props.ui.error.v || errorMessage }}</p>
 		<div
 			class="upload-field flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-disabled-text hover:border-primary bg-disabled-background bg-opacity-15 hover:bg-primary hover:bg-opacity-15"
-			:class="{'upload-field-highlighted': dragAndDropActive}"
+			:class="{ 'upload-field-highlighted': dragAndDropActive }"
 			tabindex="0"
 			@dragover.prevent
 			@dragenter="dragAndDropActive = true"
@@ -35,27 +35,23 @@
 		</div>
 
 		<!-- File statuses -->
-		<FileStatus
-			v-for="(fileUpload, index) in fileUploads"
-			:key="index"
-			:file-upload="fileUpload"
-		/>
+		<FileStatus v-for="(fileUpload, index) in fileUploads" :key="index" :file-upload="fileUpload" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { useErrorHandling } from "@/composables/errorhandling";
-import UiErrorMessage from "@/components/UiErrorMessage.vue";
-import type { FileField } from "@/shared/protocol/ora/fileField";
-import UploadIcon from '@/assets/svg/upload.svg';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
+import UploadIcon from '@/assets/svg/upload.svg';
+import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import FileStatus from '@/components/uploadfield/FileStatus.vue';
 import type { FileUpload } from '@/components/uploadfield/fileUpload';
 import { FileUploadStatus } from '@/components/uploadfield/fileUpload';
+import { useErrorHandling } from '@/composables/errorhandling';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { v4 as uuidv4 } from 'uuid';
-import { useServiceAdapter } from "@/composables/serviceAdapter";
-import { useUploadRepository } from '@/api/upload/uploadRepository';
+import type { FileField } from '@/shared/protocol/ora/fileField';
 
 const props = defineProps<{
 	ui: FileField;
@@ -64,8 +60,8 @@ const props = defineProps<{
 const errorHandler = useErrorHandling();
 const uploadRepository = useUploadRepository();
 const { t } = useI18n();
-const fileInput = ref<HTMLElement|undefined>();
-const errorMessage = ref<string|null>(null);
+const fileInput = ref<HTMLElement | undefined>();
+const errorMessage = ref<string | null>(null);
 const fileUploads = ref<FileUpload[]>([]);
 const dragAndDropActive = ref<boolean>(false);
 
@@ -79,14 +75,14 @@ function isErr(): boolean {
 	return props.ui.error.v != '' || errorMessage.value !== null;
 }
 
-async function uploadSelectedFiles(event: Event):Promise<void> {
+async function uploadSelectedFiles(event: Event): Promise<void> {
 	const item = event.target as HTMLInputElement;
 	if (!item.files) {
 		return;
 	}
-	const filesToUpload: File[] = []
+	const filesToUpload: File[] = [];
 	for (let i = 0; i < item.files.length; i++) {
-		filesToUpload.push(item.files[i])
+		filesToUpload.push(item.files[i]);
 	}
 	if (!filesValid(filesToUpload)) {
 		errorHandler.handleError({
@@ -134,7 +130,7 @@ async function uploadFiles(files: File[]): Promise<void> {
 			uploadProgressCallback,
 			uploadFinishedCallback,
 			uploadAbortedCallback,
-			uploadFailedCallback,
+			uploadFailedCallback
 		);
 	});
 	try {

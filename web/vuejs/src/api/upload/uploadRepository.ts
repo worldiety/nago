@@ -1,11 +1,10 @@
-import type {Ptr} from '@/shared/protocol/ora/ptr';
-import type {ScopeID} from '@/shared/protocol/ora/scopeID';
-import {inject} from 'vue';
-import {uploadRepositoryKey} from '@/shared/injectionKeys';
+import { inject } from 'vue';
+import { uploadRepositoryKey } from '@/shared/injectionKeys';
+import type { Ptr } from '@/shared/protocol/ora/ptr';
+import type { ScopeID } from '@/shared/protocol/ora/scopeID';
 
 export class UploadRepository {
-
-	private readonly uploads = new Map<string, XMLHttpRequest>;
+	private readonly uploads = new Map<string, XMLHttpRequest>();
 
 	fetchUpload(
 		file: File,
@@ -15,7 +14,7 @@ export class UploadRepository {
 		uploadProgressCallback: UploadProgressCallback,
 		uploadFinishedCallback: UploadFinishedCallback,
 		uploadAbortedCallback: UploadAbortedCallback,
-		uploadFailedCallback: UploadFailedCallback,
+		uploadFailedCallback: UploadFailedCallback
 	): Promise<void> {
 		const formData = new FormData();
 		formData.append(file.name, file, file.name);
@@ -41,11 +40,11 @@ export class UploadRepository {
 			request.addEventListener('abort', () => {
 				uploadAbortedCallback(uploadId);
 				resolve();
-			})
+			});
 
 			request.open('POST', '/api/ora/v1/upload');
-			request.setRequestHeader("x-scope", scope)
-			request.setRequestHeader("x-receiver", uploadId)
+			request.setRequestHeader('x-scope', scope);
+			request.setRequestHeader('x-receiver', uploadId);
 			request.send(formData);
 			this.uploads.set(uploadId, request);
 		});

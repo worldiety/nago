@@ -1,30 +1,33 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
-import type {Checkbox} from "@/shared/protocol/ora/checkbox";
-import {useServiceAdapter} from "@/composables/serviceAdapter";
+import { ref, watch } from 'vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Checkbox } from '@/shared/protocol/ora/checkbox';
 
 const props = defineProps<{
-	ui: Checkbox
-}>()
+	ui: Checkbox;
+}>();
 
-const serviceAdapter = useServiceAdapter()
+const serviceAdapter = useServiceAdapter();
 
 const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
 
-watch(() => props.ui.v, (newValue) => {
-	if (newValue) {
-		checked.value = newValue;
-	} else {
-		checked.value = false;
+watch(
+	() => props.ui.v,
+	(newValue) => {
+		if (newValue) {
+			checked.value = newValue;
+		} else {
+			checked.value = false;
+		}
 	}
-})
-
+);
 
 function checkboxSelected(): void {
 	if (!props.ui.d) {
 		serviceAdapter.setProperties({
-			p:props.ui.i, v: !checked.value,
-		})
+			p: props.ui.i,
+			v: !checked.value,
+		});
 	}
 }
 </script>
@@ -33,17 +36,16 @@ function checkboxSelected(): void {
 	<div
 		v-if="!ui.iv"
 		class="input-checkbox rounded-full w-fit"
-		:class="{'input-checkbox-disabled': ui.d}"
+		:class="{ 'input-checkbox-disabled': ui.d }"
 		:tabindex="ui.d ? '-1' : '0'"
 		@click="checkboxSelected"
 		@keydown.enter="checkboxSelected"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="checkbox" class="pointer-events-none" tabindex="-1" :disabled="ui.d">
+			<input :checked="checked" type="checkbox" class="pointer-events-none" tabindex="-1" :disabled="ui.d" />
 		</div>
 	</div>
 </template>
-
 
 <style scoped>
 .input-checkbox:hover {
@@ -74,4 +76,3 @@ function checkboxSelected(): void {
 	@apply border-ST0;
 }
 </style>
-

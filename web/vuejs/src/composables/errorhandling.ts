@@ -2,9 +2,9 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 export interface CustomError {
-	errorCode?: string
-	message?: string
-	additionalInformation?: string
+	errorCode?: string;
+	message?: string;
+	additionalInformation?: string;
 }
 
 export type ApplicationError = Error | unknown | Response | CustomError;
@@ -15,7 +15,7 @@ export function useErrorHandling() {
 
 	// a composable can update its managed state over time.
 	function handleError(rawError: ApplicationError) {
-		console.log('RAWERROR:',rawError)
+		console.log('RAWERROR:', rawError);
 		if (rawError instanceof Error) {
 			console.log('rawError ist Error:');
 			error.value = {
@@ -32,8 +32,12 @@ export function useErrorHandling() {
 			const customError = rawError as CustomError;
 			console.log('rawError ist CustomError');
 			error.value = {
-				message: customError.message ?? String(i18n.t('customErrorcodes.' + customError.errorCode + '.errorMessage')),
-				additionalInformation: customError.additionalInformation ?? String(i18n.t('customErrorcodes.' + customError.errorCode + '.additionalInformation')),
+				message:
+					customError.message ??
+					String(i18n.t('customErrorcodes.' + customError.errorCode + '.errorMessage')),
+				additionalInformation:
+					customError.additionalInformation ??
+					String(i18n.t('customErrorcodes.' + customError.errorCode + '.additionalInformation')),
 			};
 		} else {
 			console.log('rawError ist unknown');

@@ -1,5 +1,3 @@
-
-
 export function gapSize2Tailwind(s: string): string {
 	if (s == null || s == '') {
 		return '';

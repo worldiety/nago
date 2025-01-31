@@ -1,17 +1,16 @@
 <script lang="ts" setup>
 import {computed, ref} from 'vue';
-import type {Text} from "@/shared/protocol/ora/text";
+import {borderCSS} from '@/components/shared/border';
+import {colorValue} from '@/components/shared/colors';
+import {fontCSS} from '@/components/shared/font';
+import {frameCSS} from '@/components/shared/frame';
+import {paddingCSS} from '@/components/shared/padding';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {isNil} from "@/shared/protocol/util";
-import {frameCSS} from "@/components/shared/frame";
-import {paddingCSS} from "@/components/shared/padding";
-import {cssLengthValue} from "@/components/shared/length";
-import {colorValue} from "@/components/shared/colors";
-import {fontCSS} from "@/components/shared/font";
-import {borderCSS} from "@/components/shared/border";
+import {FunctionCallRequested, TextAlignmentValues, TextView} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
-	ui: Text;
+	ui: TextView;
 }>();
 
 const hover = ref(false);
@@ -21,55 +20,50 @@ const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	if (props.ui.t){
-		serviceAdapter.executeFunctions(props.ui.t);
+	if (!props.ui.action.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
 }
 
-
 const styles = computed<string>(() => {
-	let styles = frameCSS(props.ui.f)
-	if (props.ui.c) {
-		styles.push(`color: ${colorValue(props.ui.c)}`)
+	let styles = frameCSS(props.ui.frame);
+	if (!props.ui.color.isZero()) {
+		styles.push(`color: ${colorValue(props.ui.color.value)}`);
 	}
 
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${colorValue(props.ui.bgc)}`)
+	if (!props.ui.backgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
 	}
 
-	styles.push(...borderCSS(props.ui.b))
-	styles.push(...paddingCSS(props.ui.p))
-	styles.push(...fontCSS(props.ui.o))
-	styles.push("white-space:pre-wrap") // TODO not sure if this is the intentional effect for all platforms
+	styles.push(...borderCSS(props.ui.border));
+	styles.push(...paddingCSS(props.ui.padding));
+	styles.push(...fontCSS(props.ui.font));
+	styles.push('white-space:pre-wrap'); // TODO not sure if this is the intentional effect for all platforms
 
-	switch (props.ui.a){
-		case "s":
-			styles.push("text-align: start")
-			break
-		case "e":
-			styles.push("text-align: end")
-			break
-		case "c":
-			styles.push("text-align: center")
-			break
-		case "j":
-			styles.push("text-align: justify","text-justify: inter-character") // inter-character just looks so much better
-			break
+	switch (props.ui.textAlignment.value) {
+		case TextAlignmentValues.TextAlignStart:
+			styles.push('text-align: start');
+			break;
+		case TextAlignmentValues.TextAlignEnd:
+			styles.push('text-align: end');
+			break;
+		case TextAlignmentValues.TextAlignCenter:
+			styles.push('text-align: center');
+			break;
+		case TextAlignmentValues.TextAlignJustify:
+			styles.push('text-align: justify', 'text-justify: inter-character'); // inter-character just looks so much better
+			break;
 	}
 
-	if (props.ui.t){
-		styles.push("cursor: pointer")
+	if (!props.ui.action.isZero()) {
+		styles.push('cursor: pointer');
 	}
 
-	return styles.join(";")
+	return styles.join(';');
 });
-
-
 </script>
 
 <template>
-	<span v-if="!ui.i" :style="styles" @click="onClick" >{{
-			props.ui.v
-		}}</span>
-	<br v-if="!ui.i && ui.lb">
+	<span v-if="!ui.invisible.value" :style="styles" @click="onClick">{{ props.ui.value.value }}</span>
+	<br v-if="!ui.invisible.value && ui.lineBreak.value"/>
 </template>

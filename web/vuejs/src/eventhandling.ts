@@ -1,0 +1,175 @@
+import {
+	ColorScheme,
+	ColorSchemeValues,
+	Density,
+	DP,
+	Locale,
+	RID,
+	RootViewAllocationRequested,
+	RootViewID,
+	RootViewParameters,
+	RootViewRenderingRequested,
+	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
+	Str,
+	WindowSizeClass,
+	WindowSizeClassValues,
+} from '@/shared/proto/nprotoc_gen';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import {URI} from "@/shared/protocol/ora/uRI";
+import {Channel} from "@/shared/network/serviceAdapter";
+
+
+let nextRequestTracingID: number = 1;
+
+/**
+ * nextRID increments the global request tracing number and returns it.
+ * This is not functionally relevant, but it may help for debugging event order related questions.
+ */
+export function nextRID(): RID {
+	nextRequestTracingID++;
+	return new RID(nextRequestTracingID)
+}
+
+/**
+ * requestRootViewRendering emits the according request blindly to the backend. This may either result
+ * in various error variants or the actual rendering.
+ * Note that, depending on the way how a scope is re-connected, there may be still a view allocated which just waits
+ * to be displayed. We can never know that.
+ */
+export function requestRootViewRendering(chan: Channel) {
+	chan.sendEvent(new RootViewRenderingRequested())
+}
+
+/**
+ * requestRootViewAllocation emits the according event based on the current window location.
+ * It also replaces the current history state, so that going back and forth will result in correct navigation behavior.
+ * The backend will trigger a rendering by specification automatically.
+ */
+export function requestRootViewAllocation(chan: Channel, locale: Locale) {
+	let rootViewID = requiredRootViewID();
+	let rootViewParams = requiredRootViewParameter();
+
+	history.replaceState(
+		{
+			factory: rootViewID,
+			values: rootViewParams,
+		},
+		'',
+		null
+	);
+
+	chan.sendEvent(new RootViewAllocationRequested(
+		locale,
+		rootViewID,
+		nextRID(),
+		rootViewParams,
+	))
+}
+
+/**
+ * requestConfigurationChange sends an initiative event to the backend. Usually, this should only happen
+ * once after initialization. Note, that there is a special event just for [WindowInfoChanged].
+ */
+export function requestScopeConfigurationChange(chan: Channel, themeManager: ThemeManager,) {
+	let evt = new ScopeConfigurationChangeRequested();
+	evt.windowInfo.density = new Density(window.devicePixelRatio);
+	evt.windowInfo.width = new DP(window.innerWidth);
+	evt.windowInfo.height = new DP(window.innerHeight);
+	evt.windowInfo.sizeClass = currentSizeClass();
+
+	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
+		evt.windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Dark);
+	} else {
+		evt.windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Light);
+	}
+
+	evt.acceptLanguage = new Locale(navigator.language || navigator.languages[0]);
+	chan.sendEvent(evt);
+}
+
+/**
+ * onScopeConfigurationChanged is called if the backend has changed its configuration. This will at least happen
+ * after the backend has processed a [ScopeConfigurationChangeRequested] event.
+ */
+export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: ScopeConfigurationChanged) {
+	themeManager.setThemes(evt.themes);
+	themeManager.applyActiveTheme();
+	themeManager.activeLocale = evt.activeLocale;
+	updateFavicon(evt.appIcon.toString());
+	console.log("onScopeConfigurationChanged", evt)
+}
+
+/**
+ * currentSizeClass determines (in a partially hardcoded way) which tailwind break point matches the Nago size class.
+ * This is error-prone, because we cannot read out the tailwind config here (as far as I know), so if the tailwind
+ * break points change, this must be updated by hand to be consistent.
+ */
+function currentSizeClass(): WindowSizeClass {
+	const breakpoints = {
+		'sm': 640,
+		'md': 768,
+		'lg': 1024,
+		'xl': 1280,
+		'2xl': 1536,
+	};
+
+	let wsc: WindowSizeClass;
+	const width = window.innerWidth;
+
+	if (width >= breakpoints['2xl']) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClass2XL);
+	else if (width >= breakpoints.xl) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassXL);
+	else if (width >= breakpoints.lg) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassLarge);
+	else if (width >= breakpoints.md) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassMedium);
+	else wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassSmall);
+
+	return wsc;
+}
+
+/**
+ * updateFavicon installs the given uri (if not empty) into the document, replacing any other favicon.
+ */
+function updateFavicon(uri: URI) {
+	if (!uri || uri.length == 0) {
+		return;
+	}
+
+	let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+	if (!link) {
+		link = document.createElement('link');
+		link.rel = 'icon';
+		document.head.appendChild(link);
+	}
+
+	link.href = uri;
+}
+
+
+/**
+ * requiredRootViewID returns the current root view based on the current window location path.
+ * If pathname is empty, the Nago defined index identifier "." is returned.
+ */
+function requiredRootViewID(): RootViewID {
+	let factoryId = window.location.pathname.substring(1);
+	if (factoryId.length === 0) {
+		factoryId = '.'; // this is by ora definition the root page
+	}
+
+	return new RootViewID(factoryId);
+}
+
+/**
+ * requiredRootViewParameter return the current expected root view parameters based on the current window location
+ * query parameters. This is how Nago root view parameters are defined to work in the web. These params must
+ * be stateless and safe for bookmarking and must not expose secrets. But that is the responsibility of the backend.
+ */
+function requiredRootViewParameter(): RootViewParameters {
+	let params = new RootViewParameters();
+	new URLSearchParams(window.location.search).forEach((value, key) => {
+		params.value.set(new Str(key), new Str(value));
+	});
+
+	return params;
+}
+
+

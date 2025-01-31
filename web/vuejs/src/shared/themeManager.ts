@@ -1,14 +1,14 @@
-import type {Theme} from '@/shared/protocol/ora/theme';
 import {inject} from 'vue';
 import {themeManagerKey} from '@/shared/injectionKeys';
-import type {Themes} from '@/shared/protocol/ora/themes';
+import {Locale, Theme, Themes} from "@/shared/proto/nprotoc_gen";
 
 export default class ThemeManager {
-
 	private readonly localStorageKey = 'color-theme';
 	private themes: Themes | null = null;
+	public activeLocale: Locale;
 
 	constructor() {
+		this.activeLocale = new Locale();
 		if (!localStorage.getItem(this.localStorageKey)) {
 			const userPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			localStorage.setItem(this.localStorageKey, userPrefersDarkTheme ? ThemeKey.DARK : ThemeKey.LIGHT);
@@ -17,14 +17,12 @@ export default class ThemeManager {
 
 	setThemes(themes: Themes): void {
 		this.themes = themes;
-	console.log(this.themes)
 	}
 
 	applyActiveTheme(): void {
 		if (!this.themes) {
 			return;
 		}
-
 
 		switch (localStorage.getItem(this.localStorageKey)) {
 			case ThemeKey.LIGHT:
@@ -38,7 +36,7 @@ export default class ThemeManager {
 
 	getActiveThemeKey(): ThemeKey | null {
 		const activeThemeKey = localStorage.getItem(this.localStorageKey);
-		return activeThemeKey ? activeThemeKey as ThemeKey : null;
+		return activeThemeKey ? (activeThemeKey as ThemeKey) : null;
 	}
 
 	toggleDarkMode(): void {
@@ -47,7 +45,7 @@ export default class ThemeManager {
 		}
 
 		if (localStorage.getItem(this.localStorageKey) === ThemeKey.LIGHT) {
-			this.applyDarkmodeTheme()
+			this.applyDarkmodeTheme();
 			return;
 		} else if (localStorage.getItem(this.localStorageKey) === ThemeKey.DARK) {
 			this.applyLightmodeTheme();
@@ -77,23 +75,16 @@ export default class ThemeManager {
 	private applyTheme(theme: Theme): void {
 		let elem = document.getElementsByTagName('html')[0];
 
-		// document.getElementsByTagName('html')[0].style.setProperty('--primary', `${theme.colors.primary.h}deg ${theme.colors.primary.s}% ${theme.colors.primary.l}%`);
-		if (theme.colors) {
-			for (const [ns, nameValuePairs] of Object.entries(theme.colors)) {
-				for (const [colorName, colorValue] of Object.entries(nameValuePairs)) {
-					elem.style.setProperty(`--${colorName}`, colorValue)//"150deg 30% 60%")//
-					//console.log(colorName,"=",colorValue)
-				}
+		// TODO this is underspecified, because the namespace is not involved in the colorname which break the logic namespacing
+		theme.colors.value.forEach((val, key) => {
+			val.value.forEach((colorVal, colorName) => {
+				elem.style.setProperty(`--${colorName.value}`, colorVal.value);
+			})
+		});
 
-			}
-		}
-
-		if (theme.lengths.customLengths) {
-			for (const [key, value] of Object.entries(theme.lengths.customLengths)) {
-				elem.style.setProperty(`--${key}`, value)
-			}
-		}
-
+		theme.lengths.value.forEach((lengthVal, lengthName) => {
+			elem.style.setProperty(`--${lengthName.value}`, lengthVal.value);
+		})
 	}
 }
 

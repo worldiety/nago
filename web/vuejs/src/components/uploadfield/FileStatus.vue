@@ -6,20 +6,33 @@
 		<div class="flex justify-between items-center gap-x-4 h-full min-h-10">
 			<div class="relative">
 				<FileIcon class="h-4 text-disabled-text" />
-				<div v-if="fileUpload.status === FileUploadStatus.SUCCESS" class="absolute -bottom-1 -right-1 rounded-full bg-success h-3 p-0.5">
+				<div
+					v-if="fileUpload.status === FileUploadStatus.SUCCESS"
+					class="absolute -bottom-1 -right-1 rounded-full bg-success h-3 p-0.5"
+				>
 					<CheckIcon class="text-white h-full" />
 				</div>
-				<div v-else-if="aborted || errorOccurred" class="absolute -bottom-1 -right-1 rounded-full bg-error h-3 p-[0.2rem]">
+				<div
+					v-else-if="aborted || errorOccurred"
+					class="absolute -bottom-1 -right-1 rounded-full bg-error h-3 p-[0.2rem]"
+				>
 					<CloseIcon class="text-white h-full" />
 				</div>
 			</div>
 			<div class="flex flex-col justify-between items-start gap-y-1 grow overflow-hidden">
 				<div class="flex flex-wrap justify-between items-center gap-x-2 whitespace-nowrap w-full">
 					<p class="truncate">{{ fileUpload.file.name }}</p>
-					<p class="grow text-sm text-disabled-text leading-none border-l border-l-disabled-text pl-2">{{ fileSizeFormatted }}</p>
+					<p class="grow text-sm text-disabled-text leading-none border-l border-l-disabled-text pl-2">
+						{{ fileSizeFormatted }}
+					</p>
 					<p class="text-sm text-disabled-text">{{ informationText }}</p>
 				</div>
-				<progress v-if="inProgress" :max="fileUpload.bytesTotal ?? 0" :value="fileUpload.bytesUploaded ?? 0" class="duration-200 w-full"></progress>
+				<progress
+					v-if="inProgress"
+					:max="fileUpload.bytesTotal ?? 0"
+					:value="fileUpload.bytesUploaded ?? 0"
+					class="duration-200 w-full"
+				></progress>
 			</div>
 			<div
 				v-if="inProgress"
@@ -38,17 +51,17 @@
 </template>
 
 <script setup lang="ts">
-import FileIcon from '@/assets/svg/file.svg';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 import CheckIcon from '@/assets/svg/check.svg';
 import CloseIcon from '@/assets/svg/closeBold.svg';
-import { useI18n } from 'vue-i18n';
-import { computed } from 'vue';
-import { localizeNumber } from '@/shared/localization';
-import type { FileUpload} from '@/components/uploadfield/fileUpload';
+import FileIcon from '@/assets/svg/file.svg';
+import LoadingAnimation from '@/components/shared/LoadingAnimation.vue';
+import type { FileUpload } from '@/components/uploadfield/fileUpload';
 import { FileUploadStatus } from '@/components/uploadfield/fileUpload';
 import { activeLocale } from '@/i18n';
-import { useUploadRepository } from '@/api/upload/uploadRepository';
-import LoadingAnimation from '@/components/shared/LoadingAnimation.vue';
+import { localizeNumber } from '@/shared/localization';
 
 const props = defineProps<{
 	fileUpload: FileUpload;
@@ -58,9 +71,11 @@ const uploadRepository = useUploadRepository();
 const { t } = useI18n();
 
 const inProgress = computed((): boolean => {
-	return props.fileUpload.status === FileUploadStatus.IN_PROGRESS
-		&& props.fileUpload.bytesUploaded !== null
-		&& props.fileUpload.bytesTotal !== null;
+	return (
+		props.fileUpload.status === FileUploadStatus.IN_PROGRESS &&
+		props.fileUpload.bytesUploaded !== null &&
+		props.fileUpload.bytesTotal !== null
+	);
 });
 
 const pending = computed((): boolean => {
@@ -102,13 +117,13 @@ const progressFormatted = computed((): string => {
 	if (props.fileUpload.bytesUploaded === null || props.fileUpload.bytesTotal === null) {
 		return '';
 	}
-	const progressPercentage = props.fileUpload.bytesUploaded / props.fileUpload.bytesTotal * 100;
+	const progressPercentage = (props.fileUpload.bytesUploaded / props.fileUpload.bytesTotal) * 100;
 	return `${localizeNumber(progressPercentage, { maximumFractionDigits: 0 })}%`;
 });
 
 const informationText = computed((): string => {
 	if (pending.value) {
-		return t('uploadField.pending')
+		return t('uploadField.pending');
 	}
 	if (inProgress.value) {
 		return progressFormatted.value;

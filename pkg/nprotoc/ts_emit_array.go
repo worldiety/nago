@@ -5,7 +5,7 @@ func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
 	c.p(c.makeGoDoc(decl.Doc))
 	c.pf("export class %s %s {\n", t, c.tsImplements(t))
 	c.inc()
-	c.pf("private value: %s[];\n", decl.Type)
+	c.pf("public value: %s[];\n", decl.Type)
 	c.pn("")
 	c.pf("constructor(value: %s[] = []) {\n", decl.Type)
 	c.p(` 

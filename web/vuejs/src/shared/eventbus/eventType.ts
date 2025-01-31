@@ -25,5 +25,5 @@ export enum EventType {
 	WindowInfoChanged = 'WindowInfoChanged',
 
 	// not (yet) part of the ora protocol, but emitted within the frontend for the frontend
-	ServerStateLost = 'ServerStateLost'
+	ServerStateLost = 'ServerStateLost',
 }

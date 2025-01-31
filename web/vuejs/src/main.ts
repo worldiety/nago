@@ -1,14 +1,14 @@
-import '@/assets/tailwind.css';
-import '@/assets/style.css';
+import { createApp } from 'vue';
 import App from '@/App.vue';
+import { UploadRepository } from '@/api/upload/uploadRepository';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
-import { createApp } from 'vue';
+import EventBus from '@/shared/eventbus/eventBus';
 import { eventBusKey, serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
-import EventBus from '@/shared/eventbus/eventBus';
-import { UploadRepository } from '@/api/upload/uploadRepository';
 import ThemeManager from '@/shared/themeManager';
+import '@/assets/style.css';
+import '@/assets/tailwind.css';
 
 const pinia = createPinia();
 

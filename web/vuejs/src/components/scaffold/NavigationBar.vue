@@ -2,15 +2,20 @@
 	<nav class="fixed top-0 left-0 right-0 text-black h-24 z-30 bg-M1">
 		<!-- Top bar -->
 		<div class="relative bg-M1 h-full py-5 z-20 flex items-center">
-			<div class="website-content  w-full flex justify-between items-center">
+			<div class="website-content w-full flex justify-between items-center">
 				<div class="h-full *:h-full">
 					<!-- nav bar icon -->
-					<ui-generic v-if="props.ui.l" :ui="props.ui.l"/>
+					<ui-generic v-if="props.ui.l" :ui="props.ui.l" />
 				</div>
 				<div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
-					<div v-for="(menuEntry, index) in ui.m" :key="index" ref="menuEntryElements" class="h-full"
-							 :data-index="index">
+					<div
+						v-for="(menuEntry, index) in ui.m"
+						:key="index"
+						ref="menuEntryElements"
+						class="h-full"
+						:data-index="index"
+					>
 						<TopLevelMenuEntry
 							:ui="menuEntry"
 							:menu-entry-index="index"
@@ -19,15 +24,14 @@
 							@expand="expandMenuEntry"
 						/>
 					</div>
-<!--					<ThemeToggle/>-->
+					<!--					<ThemeToggle/>-->
 				</div>
 			</div>
 		</div>
 
 		<div class="relative z-10">
 			<!-- Navigation bar border -->
-			<div ref="navigationBarBorder"
-					 class="absolute top-0 left-0 right-0 border-b border-b-M5 z-0"></div>
+			<div ref="navigationBarBorder" class="absolute top-0 left-0 right-0 border-b border-b-M5 z-0"></div>
 			<!-- Sub menu triangle -->
 			<div
 				v-show="subMenuEntries.length > 0"
@@ -51,10 +55,10 @@
 							ref="subMenuEntryElements"
 							class="font-medium rounded-full px-2"
 							:class="{
-							'mb-4': subMenuEntry.m?.length > 0,
-							'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.a,
-							'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
-						}"
+								'mb-4': subMenuEntry.m?.length > 0,
+								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.a,
+								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
+							}"
 							:tabindex="subMenuEntry.a ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
@@ -85,13 +89,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
 import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
-import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
-import {Scaffold} from "@/shared/protocol/ora/scaffold";
-import UiGeneric from "@/components/UiGeneric.vue";
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { Scaffold } from '@/shared/protocol/ora/scaffold';
+import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -108,7 +112,7 @@ const subMenuTriangleLeftOffset = ref<number>(0);
 
 onMounted(() => {
 	document.addEventListener('mousemove', handleMouseMove);
-	window.addEventListener('resize', updateSubMenuTriangleLeftOffset, {passive: true});
+	window.addEventListener('resize', updateSubMenuTriangleLeftOffset, { passive: true });
 });
 
 onUnmounted(() => {
@@ -116,9 +120,12 @@ onUnmounted(() => {
 	window.removeEventListener('resize', updateSubMenuTriangleLeftOffset);
 });
 
-watch(() => props.ui, () => {
-	nextTick(updateSubMenuTriangleLeftOffset);
-});
+watch(
+	() => props.ui,
+	() => {
+		nextTick(updateSubMenuTriangleLeftOffset);
+	}
+);
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
 	return props.ui.m?.find((menuEntry) => menuEntry.x);
@@ -135,7 +142,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 			m: {
 				...expandedMenuEntry.value.m,
 				v: [],
-			}
+			},
 		});
 	}
 	return entries;
@@ -143,17 +150,16 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	if (menuEntry.f == "." && (window.location.pathname == "" || window.location.pathname == "/")) {
-		return true
+	if (menuEntry.f == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+		return true;
 	}
 
 	return `/${menuEntry.f}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
-	const threshold = subMenu.value?.getBoundingClientRect().bottom
-		?? navigationBarBorder.value?.getBoundingClientRect().bottom
-		?? 0;
+	const threshold =
+		subMenu.value?.getBoundingClientRect().bottom ?? navigationBarBorder.value?.getBoundingClientRect().bottom ?? 0;
 	if (event.y > threshold) {
 		// Collapse the sub menu when threshold is passed
 		// const updatedExpandedProperties = props.ui.m
@@ -166,7 +172,7 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.m?.forEach(value => value.x = false)
+		props.ui.m?.forEach((value) => (value.x = false));
 	}
 }
 
@@ -181,7 +187,10 @@ function updateSubMenuTriangleLeftOffset(): void {
 	if (!activeMenuEntryElement) {
 		return;
 	}
-	subMenuTriangleLeftOffset.value = activeMenuEntryElement.getBoundingClientRect().x + activeMenuEntryElement.offsetWidth / 2 - subMenuTriangle.value.offsetWidth / 2;
+	subMenuTriangleLeftOffset.value =
+		activeMenuEntryElement.getBoundingClientRect().x +
+		activeMenuEntryElement.offsetWidth / 2 -
+		subMenuTriangle.value.offsetWidth / 2;
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
@@ -192,8 +201,8 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 
 function focusFirstLinkedSubMenuEntry(): void {
 	const elementToFocus =
-		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0)
-		?? subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
+		subMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0) ??
+		subSubMenuEntryElements.value.find((subMenuEntryElement) => subMenuEntryElement.tabIndex === 0);
 	elementToFocus?.focus();
 }
 
@@ -208,19 +217,17 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 	// serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 
 	if (!props.ui.m) {
-		return
+		return;
 	}
-
 
 	for (let i = 0; i < props.ui.m.length; i++) {
-		let m = props.ui.m.at(i)!
-		m.x = false
-
+		let m = props.ui.m.at(i)!;
+		m.x = false;
 	}
 
-	menuEntry.x = true
+	menuEntry.x = true;
 
-	updateSubMenuTriangleLeftOffset()
+	updateSubMenuTriangleLeftOffset();
 }
 </script>
 

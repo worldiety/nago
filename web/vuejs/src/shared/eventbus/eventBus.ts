@@ -1,10 +1,9 @@
-import type { Event } from '@/shared/protocol/ora/event';
 import type { EventType } from '@/shared/eventbus/eventType';
+import type { Event } from '@/shared/protocol/ora/event';
 
 type EventCallback = (event: Event) => void;
 
 export default class EventBus {
-
 	private readonly callbacksMap: Map<EventType, EventCallback[]> = new Map();
 
 	subscribe(eventType: EventType, callback: EventCallback): void {
@@ -24,6 +23,6 @@ export default class EventBus {
 
 	publish(eventType: EventType, event: Event): void {
 		const callbacks = this.callbacksMap.get(eventType) ?? [];
-		callbacks.forEach(callback => callback(event));
+		callbacks.forEach((callback) => callback(event));
 	}
 }

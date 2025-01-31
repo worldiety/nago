@@ -1,5 +1,5 @@
-import type {ConnectionState} from '@/shared/network/connectionState';
-import {NagoEvent} from "@/shared/proto/nprotoc_gen";
+import type { ConnectionState } from '@/shared/network/connectionState';
+import { NagoEvent } from '@/shared/proto/nprotoc_gen';
 
 export default class ConnectionHandler {
 	private static readonly changeListeners: ((connectionState: ConnectionState) => void)[] = [];

@@ -1,54 +1,49 @@
 <template>
-
-		<div v-if="!ui.iv" class="relative" :style="frameStyles">
-			<!-- Input field -->
-			<InputWrapper
-				:label="props.ui.l"
-				:error="props.ui.e"
-				:hint="props.ui.s"
-				:disabled="props.ui.d"
+	<div v-if="!ui.iv" class="relative" :style="frameStyles">
+		<!-- Input field -->
+		<InputWrapper :label="props.ui.l" :error="props.ui.e" :hint="props.ui.s" :disabled="props.ui.d">
+			<div
+				class="input-field relative z-0 !pr-10"
+				tabindex="0"
+				@click="showDatepicker"
+				@keydown.enter="showDatepicker"
 			>
-				<div
-					class="input-field relative z-0 !pr-10"
-					tabindex="0"
-					@click="showDatepicker"
-					@keydown.enter="showDatepicker">
-					<p :class="{'text-placeholder-text': !dateFormatted}">{{ dateFormatted ?? $t('datepicker.select') }}</p>
-					<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black h-full">
-						<Calendar class="w-4"/>
-					</div>
+				<p :class="{ 'text-placeholder-text': !dateFormatted }">
+					{{ dateFormatted ?? $t('datepicker.select') }}
+				</p>
+				<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black h-full">
+					<Calendar class="w-4" />
 				</div>
-			</InputWrapper>
+			</div>
+		</InputWrapper>
 
-			<DatepickerOverlay
-				:expanded="expanded"
-				:range-mode="props.ui.y=='r'"
-				:label="props.ui.l"
-				:start-date-selected="startDateSelected"
-				:selected-start-day="selectedStartDay"
-				:selected-start-month="selectedStartMonth"
-				:selected-start-year="selectedStartYear"
-				:end-date-selected="endDateSelected"
-				:selected-end-day="selectedEndDay"
-				:selected-end-month="selectedEndMonth"
-				:selected-end-year="selectedEndYear"
-				@close="closeDatepicker"
-				@select="selectDate"
-				@submit-selection="submitSelection"
-			/>
-		</div>
-
+		<DatepickerOverlay
+			:expanded="expanded"
+			:range-mode="props.ui.y == 'r'"
+			:label="props.ui.l"
+			:start-date-selected="startDateSelected"
+			:selected-start-day="selectedStartDay"
+			:selected-start-month="selectedStartMonth"
+			:selected-start-year="selectedStartYear"
+			:end-date-selected="endDateSelected"
+			:selected-end-day="selectedEndDay"
+			:selected-end-month="selectedEndMonth"
+			:selected-end-year="selectedEndYear"
+			@close="closeDatepicker"
+			@select="selectDate"
+			@submit-selection="submitSelection"
+		/>
+	</div>
 </template>
 
-
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
-import InputWrapper from '@/components/shared/InputWrapper.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
-import type {DatePicker} from "@/shared/protocol/ora/datePicker";
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {frameCSS} from "@/components/shared/frame";
+import InputWrapper from '@/components/shared/InputWrapper.vue';
+import { frameCSS } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { DatePicker } from '@/shared/protocol/ora/datePicker';
 
 const props = defineProps<{
 	ui: DatePicker;
@@ -68,26 +63,29 @@ const endDateSelected = ref<boolean>(false);
 
 onMounted(initialize);
 
-watch(() => props.ui, (newValue) => {
-	initialize();
-});
+watch(
+	() => props.ui,
+	(newValue) => {
+		initialize();
+	}
+);
 
 function initialize(): void {
 	selectedStartDay.value = props.ui.v.d ? props.ui.v.d : 0;
 	selectedStartMonth.value = props.ui.v.m ? props.ui.v.m : 0;
 	selectedStartYear.value = props.ui.v.y ? props.ui.v.y : 0;
 
-	startDateSelected.value = props.ui.y == "r" && selectedStartYear.value != 0;
+	startDateSelected.value = props.ui.y == 'r' && selectedStartYear.value != 0;
 
 	selectedEndDay.value = props.ui.ev.d ? props.ui.ev.d : 0;
 	selectedEndMonth.value = props.ui.ev.m ? props.ui.ev.m : 0;
 	selectedEndYear.value = props.ui.ev.y ? props.ui.ev.y : 0;
 
-	endDateSelected.value = props.ui.y == "r" && selectedEndYear.value != 0;
+	endDateSelected.value = props.ui.y == 'r' && selectedEndYear.value != 0;
 
-	if (props.ui.y == "s") {
-		startDateSelected.value = true
-		endDateSelected.value = true
+	if (props.ui.y == 's') {
+		startDateSelected.value = true;
+		endDateSelected.value = true;
 	}
 
 	//console.log("start", selectedStartDay.value, selectedStartMonth.value, selectedStartYear.value)
@@ -95,14 +93,13 @@ function initialize(): void {
 }
 
 const dateFormatted = computed((): string | null => {
-	if (!props.ui.v.y || props.ui.v.y==0) {
+	if (!props.ui.v.y || props.ui.v.y == 0) {
 		return null;
 	}
 
-
 	const startDate = new Date();
 	startDate.setFullYear(selectedStartYear.value, selectedStartMonth.value - 1, selectedStartDay.value);
-	if (props.ui.y !== "r" ) {
+	if (props.ui.y !== 'r') {
 		//console.log("bugs!!",startDate.toLocaleDateString())
 		return startDate.toLocaleDateString();
 	}
@@ -113,17 +110,17 @@ const dateFormatted = computed((): string | null => {
 
 function showDatepicker(): void {
 	if (!props.ui.d && !expanded.value) {
-		expanded.value = true
+		expanded.value = true;
 	}
 }
 
 function closeDatepicker(): void {
-	expanded.value = false
+	expanded.value = false;
 }
 
 function selectDate(day: number, monthIndex: number, year: number): void {
 	const selectedDate = new Date(year, monthIndex, day, 0, 0, 0, 0);
-	if (props.ui.y != "r" || !startDateSelected.value) {
+	if (props.ui.y != 'r' || !startDateSelected.value) {
 		selectStartDate(selectedDate);
 		return;
 	}
@@ -134,7 +131,7 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 		0,
 		0,
 		0,
-		0,
+		0
 	);
 	if (selectedDate.getTime() > currentStartDate.getTime()) {
 		// If the selected date is after the current start date, set it as the end date
@@ -162,24 +159,20 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 				0,
 				0,
 				0,
-				0,
+				0
 			);
 			selectStartDate(currentEndDate);
 		}
 	}
 }
 
-
 interface MyDate {
 	// Day
-	d/*omitempty*/? /*Day*/: number /*int*/
-	;
+	d /*omitempty*/? /*Day*/ : number /*int*/;
 	// Month
-	m/*omitempty*/? /*Month*/: number /*int*/
-	;
+	m /*omitempty*/? /*Month*/ : number /*int*/;
 	// Year
-	y/*omitempty*/? /*Year*/: number /*int*/
-	;
+	y /*omitempty*/? /*Year*/ : number /*int*/;
 }
 
 function selectStartDate(selectedDate: Date): void {
@@ -187,18 +180,15 @@ function selectStartDate(selectedDate: Date): void {
 	selectedStartMonth.value = selectedDate.getMonth() + 1;
 	selectedStartYear.value = selectedDate.getFullYear();
 	startDateSelected.value = true;
-	if (props.ui.y !== "r") {
-
-		serviceAdapter.setProperties(
-			{
-				p: props.ui.p,
-				v: {
-					d: selectedStartDay.value,
-					m: selectedStartMonth.value,
-					y: selectedStartYear.value,
-				},
-			}
-		);
+	if (props.ui.y !== 'r') {
+		serviceAdapter.setProperties({
+			p: props.ui.p,
+			v: {
+				d: selectedStartDay.value,
+				m: selectedStartMonth.value,
+				y: selectedStartYear.value,
+			},
+		});
 	}
 }
 
@@ -230,11 +220,10 @@ function submitSelection(): void {
 		}
 	);
 
-	expanded.value = false
-
+	expanded.value = false;
 }
 
 const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.f).join(";")
+	return frameCSS(props.ui.f).join(';');
 });
 </script>

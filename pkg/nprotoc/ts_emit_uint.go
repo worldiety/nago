@@ -6,7 +6,7 @@ func (c *Compiler) tsEmitUint(t Typename, decl Uint) error {
 	c.pf("export class %s %s{\n", t, c.tsImplements(t))
 	c.inc()
 	c.p(` 
-	private value: number; // Using number to handle uint64 (precision limits apply)
+	public value: number; // Using number to handle uint64 (precision limits apply)
 	
 	constructor(value: number = 0) {
 		this.value = value;
@@ -40,7 +40,7 @@ func (c *Compiler) tsEmitUint(t Typename, decl Uint) error {
 
 	if len(decl.ConstValues) > 0 {
 		c.pf("// companion enum containing all defined constants for %s\n", t)
-		c.pf("enum %sValues {\n", t)
+		c.pf("export enum %sValues {\n", t)
 		c.inc()
 		for value, con := range decl.sortedConst() {
 			c.i()

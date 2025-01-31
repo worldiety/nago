@@ -19,7 +19,7 @@
 							v-for="(sliderTickMark, index) in sliderTickMarks"
 							:key="index"
 							class="slider-tick-mark"
-							:class="{'slider-tick-mark-in-range': sliderTickMark.withinRange}"
+							:class="{ 'slider-tick-mark-in-range': sliderTickMark.withinRange }"
 							:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
 						></div>
 					</template>
@@ -64,7 +64,11 @@
 					@keydown.left="decreaseEndSliderValue"
 					@keydown.right="increaseEndSliderValue"
 				>
-					<div v-if="props.ui.showLabel.v && props.ui.endInitialized.v" class="slider-thumb-label" :class="endDragging ? 'z-10' : 'z-0'">
+					<div
+						v-if="props.ui.showLabel.v && props.ui.endInitialized.v"
+						class="slider-thumb-label"
+						:class="endDragging ? 'z-10' : 'z-0'"
+					>
 						<span>{{ getSliderLabel(sliderEndValue + scaleOffset) }}</span>
 					</div>
 				</div>
@@ -79,8 +83,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { Slider } from "@/shared/protocol/ora/slider";
 import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Slider } from '@/shared/protocol/ora/slider';
 
 interface SliderTickMark {
 	offset: number;
@@ -92,7 +96,7 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const sliderTrack = ref<HTMLElement|undefined>();
+const sliderTrack = ref<HTMLElement | undefined>();
 const startDragging = ref<boolean>(false);
 const endDragging = ref<boolean>(false);
 const scaleOffset = ref<number>(roundValue(props.ui.min.v));
@@ -107,7 +111,7 @@ const sliderTickMarks = ref<SliderTickMark[]>([]);
 
 onBeforeMount(() => {
 	initializeBoundaries();
-})
+});
 
 onMounted(() => {
 	initializeSliderThumbOffsets();
@@ -117,26 +121,35 @@ onMounted(() => {
 
 onUnmounted(removeEventListeners);
 
-watch(() => props.ui.min.v, (newValue) => {
-	scaleOffset.value = roundValue(newValue);
-	initializeBoundaries();
-	initializeSliderThumbOffsets();
-	submitSliderValues();
-});
+watch(
+	() => props.ui.min.v,
+	(newValue) => {
+		scaleOffset.value = roundValue(newValue);
+		initializeBoundaries();
+		initializeSliderThumbOffsets();
+		submitSliderValues();
+	}
+);
 
-watch(() => props.ui.max.v, (newValue) => {
-	maxRounded.value = roundValue(newValue - scaleOffset.value)
-	initializeBoundaries();
-	initializeSliderThumbOffsets();
-	submitSliderValues();
-});
+watch(
+	() => props.ui.max.v,
+	(newValue) => {
+		maxRounded.value = roundValue(newValue - scaleOffset.value);
+		initializeBoundaries();
+		initializeSliderThumbOffsets();
+		submitSliderValues();
+	}
+);
 
-watch(() => props.ui.stepsize.v, (newValue) => {
-	stepsizeRounded.value = roundValue(newValue);
-	initializeBoundaries();
-	initializeSliderThumbOffsets();
-	submitSliderValues();
-});
+watch(
+	() => props.ui.stepsize.v,
+	(newValue) => {
+		stepsizeRounded.value = roundValue(newValue);
+		initializeBoundaries();
+		initializeSliderThumbOffsets();
+		submitSliderValues();
+	}
+);
 
 watch(sliderThumbStartOffset, initializeSliderTickMarks);
 
@@ -147,17 +160,25 @@ watch(() => props.ui.endInitialized.v, initializeSliderTickMarks);
 watch(() => props.ui.startInitialized.v, initializeSliderTickMarks);
 
 const sliderThumbConnectorVisible = computed((): boolean => {
-	return props.ui.showLabel.v && (props.ui.startInitialized.v && props.ui.endInitialized.v || !props.ui.rangeMode.v && props.ui.endInitialized.v);
+	return (
+		props.ui.showLabel.v &&
+		((props.ui.startInitialized.v && props.ui.endInitialized.v) ||
+			(!props.ui.rangeMode.v && props.ui.endInitialized.v))
+	);
 });
 
 function getSliderLabel(sliderValue: number): string {
-	return sliderValue.toLocaleString(undefined, {
-		minimumFractionDigits: 2,
-	}) + props.ui.labelSuffix.v;
+	return (
+		sliderValue.toLocaleString(undefined, {
+			minimumFractionDigits: 2,
+		}) + props.ui.labelSuffix.v
+	);
 }
 
 function initializeBoundaries(): void {
-	const startValue = props.ui.rangeMode.v ? roundValue(props.ui.startValue.v - scaleOffset.value) : roundValue(minRounded.value);
+	const startValue = props.ui.rangeMode.v
+		? roundValue(props.ui.startValue.v - scaleOffset.value)
+		: roundValue(minRounded.value);
 	sliderStartValue.value = getDiscreteValue(startValue);
 	const endValue = roundValue(props.ui.endValue.v - scaleOffset.value);
 	sliderEndValue.value = getDiscreteValue(endValue);
@@ -170,10 +191,15 @@ function initializeSliderThumbOffsets(): void {
 
 function initializeSliderTickMarks(): void {
 	const updatedSliderTickMarks: SliderTickMark[] = [];
-	const totalSteps = Math.floor(((maxRounded.value - minRounded.value) / stepsizeRounded.value) + 1);
+	const totalSteps = Math.floor((maxRounded.value - minRounded.value) / stepsizeRounded.value + 1);
 	for (let i = 0; i < totalSteps; i++) {
 		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
-		const withinRange = props.ui.showLabel.v && props.ui.startInitialized.v && props.ui.endInitialized.v && sliderThumbStartOffset.value <= tickMarkOffset && tickMarkOffset <= sliderThumbEndOffset.value;
+		const withinRange =
+			props.ui.showLabel.v &&
+			props.ui.startInitialized.v &&
+			props.ui.endInitialized.v &&
+			sliderThumbStartOffset.value <= tickMarkOffset &&
+			tickMarkOffset <= sliderThumbEndOffset.value;
 		updatedSliderTickMarks.push({
 			offset: tickMarkOffset,
 			withinRange: withinRange,
@@ -209,7 +235,7 @@ function onMouseUp(): void {
 }
 
 function onMouseMove(event: MouseEvent): void {
-	if (!sliderTrack.value || !startDragging.value && !endDragging.value) {
+	if (!sliderTrack.value || (!startDragging.value && !endDragging.value)) {
 		return;
 	}
 	handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
@@ -217,10 +243,14 @@ function onMouseMove(event: MouseEvent): void {
 
 function onTouchMove(event: TouchEvent): void {
 	const touchLocation = event.touches.item(0);
-	if (!touchLocation || !sliderTrack.value || !startDragging.value && !endDragging.value) {
+	if (!touchLocation || !sliderTrack.value || (!startDragging.value && !endDragging.value)) {
 		return;
 	}
-	handleSliderThumbDrag(touchLocation.clientX, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
+	handleSliderThumbDrag(
+		touchLocation.clientX,
+		sliderTrack.value.getBoundingClientRect().x,
+		sliderTrack.value.offsetWidth
+	);
 }
 
 /**
@@ -256,7 +286,10 @@ function getDiscreteValue(continuousValue: number): number {
 		validValueBelow = roundValue(validValue);
 	}
 	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
-	if (validValueAbove > roundValue(props.ui.max.v - scaleOffset.value) || continuousValue - validValueBelow < validValueAbove - continuousValue) {
+	if (
+		validValueAbove > roundValue(props.ui.max.v - scaleOffset.value) ||
+		continuousValue - validValueBelow < validValueAbove - continuousValue
+	) {
 		return validValueBelow;
 	}
 	return validValueAbove;
@@ -286,7 +319,10 @@ function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, slide
 		sliderStartValue.value = offsetToSliderValue(continuousOffset);
 		sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	} else if (endDragging.value) {
-		const continuousOffset = Math.max(sliderThumbStartOffset.value, Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth));
+		const continuousOffset = Math.max(
+			sliderThumbStartOffset.value,
+			Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth)
+		);
 		sliderEndValue.value = offsetToSliderValue(continuousOffset);
 		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	}
@@ -297,16 +333,19 @@ function roundValue(value: number): number {
 }
 
 function submitSliderValues(): void {
-	serviceAdapter.setPropertiesAndCallFunctions([
-		{
-			...props.ui.startValue,
-			v: roundValue(sliderStartValue.value + scaleOffset.value),
-		},
-		{
-			...props.ui.endValue,
-			v: roundValue(sliderEndValue.value + scaleOffset.value),
-		}
-	], [props.ui.onChanged]);
+	serviceAdapter.setPropertiesAndCallFunctions(
+		[
+			{
+				...props.ui.startValue,
+				v: roundValue(sliderStartValue.value + scaleOffset.value),
+			},
+			{
+				...props.ui.endValue,
+				v: roundValue(sliderEndValue.value + scaleOffset.value),
+			},
+		],
+		[props.ui.onChanged]
+	);
 }
 
 function decreaseStartSliderValue(): void {
@@ -318,7 +357,7 @@ function decreaseStartSliderValue(): void {
 function increaseStartSliderValue(): void {
 	sliderStartValue.value = Math.min(
 		getDiscreteValue(sliderStartValue.value + stepsizeRounded.value),
-		sliderEndValue.value,
+		sliderEndValue.value
 	);
 	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
 	submitSliderValues();
@@ -327,7 +366,7 @@ function increaseStartSliderValue(): void {
 function decreaseEndSliderValue(): void {
 	sliderEndValue.value = Math.max(
 		getDiscreteValue(sliderEndValue.value - stepsizeRounded.value),
-		sliderStartValue.value,
+		sliderStartValue.value
 	);
 	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
 	submitSliderValues();

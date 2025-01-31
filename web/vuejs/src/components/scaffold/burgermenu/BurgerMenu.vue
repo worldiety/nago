@@ -2,13 +2,16 @@
 	<div class="fixed top-0 left-0 right-0 text-black bg-M1 border-b border-b-M5 h-24 py-4 px-8 z-30">
 		<!-- Top bar -->
 		<div class="relative flex justify-start items-center h-full">
-			<MenuIcon class="relative cursor-pointer h-6 z-10" tabindex="0" @click="menuOpen = true"
-								@keydown.enter="menuOpen = true"/>
+			<MenuIcon
+				class="relative cursor-pointer h-6 z-10"
+				tabindex="0"
+				@click="menuOpen = true"
+				@keydown.enter="menuOpen = true"
+			/>
 			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0">
 				<div class="">
-					<ui-generic v-if="props.ui.l" :ui="props.ui.l"/>
+					<ui-generic v-if="props.ui.l" :ui="props.ui.l" />
 				</div>
-
 			</div>
 		</div>
 
@@ -19,8 +22,12 @@
 				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-M4 shadow-md z-20"
 			>
 				<div class="flex justify-start items-center h-24 p-8">
-					<CloseIcon tabindex="0" class="cursor-pointer h-6" @click="menuOpen = false"
-										 @keydown.enter="menuOpen = false"/>
+					<CloseIcon
+						tabindex="0"
+						class="cursor-pointer h-6"
+						@click="menuOpen = false"
+						@keydown.enter="menuOpen = false"
+					/>
 				</div>
 				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
 					<template v-if="!subMenuVisible">
@@ -42,7 +49,7 @@
 							@keydown.enter="returnToTopLevelMenu"
 						>
 							<div class="h-6">
-								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto"/>
+								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto" />
 							</div>
 							<p class="leading-tight font-semibold">{{ $t('scaffold.toMenu') }}</p>
 						</div>
@@ -52,7 +59,8 @@
 							:tabindex="expandedTopLevelMenuEntryLinked ? '0' : '-1'"
 							class="flex justify-start items-center gap-x-2 rounded-full w-full p-4"
 							:class="{
-								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35': expandedTopLevelMenuEntryLinked,
+								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35':
+									expandedTopLevelMenuEntryLinked,
 								'bg-disabled-background bg-opacity-35': expandedTopLevelMenuEntryActive,
 							}"
 							@click="navigateToExpandedTopLevelMenuEntry"
@@ -73,7 +81,7 @@
 					</div>
 				</div>
 				<div class="flex justify-center items-center w-full p-4">
-					<ThemeToggle/>
+					<ThemeToggle />
 				</div>
 			</div>
 		</Transition>
@@ -81,17 +89,17 @@
 </template>
 
 <script setup lang="ts">
-import MenuIcon from '@/assets/svg/menu.svg';
+import { computed, ref } from 'vue';
 import CloseIcon from '@/assets/svg/closeBold.svg';
+import MenuIcon from '@/assets/svg/menu.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
-import {computed, ref} from 'vue';
-import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
+import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import type {MenuEntry} from '@/shared/protocol/ora/menuEntry';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {Scaffold} from "@/shared/protocol/ora/scaffold";
-import {ScaffoldMenuEntry} from "@/shared/protocol/ora/scaffoldMenuEntry";
-import UiGeneric from "@/components/UiGeneric.vue";
+import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
+import { Scaffold } from '@/shared/protocol/ora/scaffold';
+import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -114,7 +122,7 @@ const expandedTopLevelMenuEntryActive = computed((): boolean => {
 
 const subMenuVisible = computed((): boolean => {
 	const expandedTopLevelMenuEntry = props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x);
-	console.log("!!!!",!!expandedTopLevelMenuEntry?.m)
+	console.log('!!!!', !!expandedTopLevelMenuEntry?.m);
 	return !!expandedTopLevelMenuEntry?.m;
 });
 
@@ -137,11 +145,9 @@ function navigateToExpandedTopLevelMenuEntry(): void {
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
-
 	if (!menuEntry.a) {
 		return;
 	}
-
 
 	serviceAdapter.executeFunctions(menuEntry.a);
 }
@@ -155,7 +161,7 @@ function returnToTopLevelMenu(): void {
 	// 	v: false,
 	// }], [expandedTopLevelMenuEntry.value.onFocus])
 
-	expandedTopLevelMenuEntry.value.x=false
+	expandedTopLevelMenuEntry.value.x = false;
 }
 </script>
 

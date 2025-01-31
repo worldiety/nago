@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import {ref, watch} from 'vue';
-import type {Toggle} from "@/shared/protocol/ora/toggle";
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { ref, watch } from 'vue';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import type { Toggle } from '@/shared/protocol/ora/toggle';
 
 const props = defineProps<{
 	ui: Toggle;
@@ -10,13 +10,16 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
 
-watch(() => props.ui.v, (newValue) => {
-	if (newValue) {
-		checked.value = newValue;
-	} else {
-		checked.value = false;
+watch(
+	() => props.ui.v,
+	(newValue) => {
+		if (newValue) {
+			checked.value = newValue;
+		} else {
+			checked.value = false;
+		}
 	}
-})
+);
 
 function onClick() {
 	if (props.ui.d) {
@@ -34,15 +37,12 @@ function onClick() {
 	<div v-if="!ui.iv">
 		<div
 			class="toggle-switch-container"
-			:class="{'toggle-switch-container-disabled': props.ui.d}"
+			:class="{ 'toggle-switch-container-disabled': props.ui.d }"
 			:tabindex="props.ui.d ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>
-			<div
-				class="toggle-switch"
-				:class="{'toggle-switch-checked': checked}"
-			></div>
+			<div class="toggle-switch" :class="{ 'toggle-switch-checked': checked }"></div>
 		</div>
 	</div>
 </template>
@@ -56,11 +56,9 @@ function onClick() {
 	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border bg-transparent transition-transform content-[''];
 }
 
-
 .toggle-switch.toggle-switch-checked {
 	@apply after:translate-x-[105%] after:border-M8 after:border-M8;
 }
-
 
 .toggle-switch-container {
 	@apply inline-block rounded-full;

@@ -1,7 +1,7 @@
 export function isNil(v: any): boolean {
 	if (v == undefined) {
-		return true
+		return true;
 	}
 
-	return v === 0
+	return v === 0;
 }

@@ -1,6 +1,6 @@
 import { inject } from 'vue';
-import { eventBusKey } from '@/shared/injectionKeys';
 import type EventBus from '@/shared/eventbus/eventBus';
+import { eventBusKey } from '@/shared/injectionKeys';
 
 export function useEventBus(): EventBus {
 	const eventBus = inject(eventBusKey);

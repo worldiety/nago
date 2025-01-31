@@ -5,13 +5,13 @@
 </template>
 
 <script setup lang="ts">
-import type { FlexContainer } from '@/shared/protocol/ora/flexContainer';
 import { computed } from 'vue';
-import { Orientation } from '@/shared/protocol/ora/orientation';
-import { ContentAlignment } from '@/shared/protocol/ora/contentAlignment';
 import UiGeneric from '@/components/UiGeneric.vue';
+import { ContentAlignment } from '@/shared/protocol/ora/contentAlignment';
 import { ElementSize } from '@/shared/protocol/ora/elementSize';
+import type { FlexContainer } from '@/shared/protocol/ora/flexContainer';
 import { ItemsAlignment } from '@/shared/protocol/ora/itemsAlignment';
+import { Orientation } from '@/shared/protocol/ora/orientation';
 
 const props = defineProps<{
 	ui: FlexContainer;
@@ -67,21 +67,21 @@ const containerClasses = computed((): string => {
 			break;
 	}
 
-	switch(props.ui.maxWidth.v){
+	switch (props.ui.maxWidth.v) {
 		case ElementSize.SIZE_TINY:
-			containerClasses.push('max-w-32')
+			containerClasses.push('max-w-32');
 			break;
 		case ElementSize.SIZE_SMALLER:
-			containerClasses.push('max-w-xs')
+			containerClasses.push('max-w-xs');
 			break;
 		case ElementSize.SIZE_SMALL:
-			containerClasses.push('max-w-sm')
+			containerClasses.push('max-w-sm');
 			break;
 		case ElementSize.SIZE_MEDIUM:
-			containerClasses.push('max-w-4xl')
+			containerClasses.push('max-w-4xl');
 			break;
 		case ElementSize.SIZE_LARGE:
-			containerClasses.push('max-w-6xl')
+			containerClasses.push('max-w-6xl');
 			break;
 		case ElementSize.SIZE_AUTO:
 			// intentionally no limit

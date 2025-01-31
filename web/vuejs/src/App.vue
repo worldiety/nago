@@ -7,10 +7,22 @@ import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.v
 import {useErrorHandling} from '@/composables/errorhandling';
 import {useEventBus} from '@/composables/eventBus';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {
+	onScopeConfigurationChanged,
+	requestRootViewAllocation,
+	requestRootViewRendering,
+	requestScopeConfigurationChange
+} from '@/eventhandling';
 import {EventType} from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import {ConnectionState} from '@/shared/network/connectionState';
-import type {Component} from '@/shared/protocol/ora/component';
+import {
+	Component,
+	ErrorRootViewAllocationRequired,
+	RootViewInvalidated,
+	ScopeConfigurationChanged,
+	WindowInfo,
+} from '@/shared/proto/nprotoc_gen';
 import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
 import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
 import type {Event} from '@/shared/protocol/ora/event';
@@ -21,15 +33,8 @@ import type {SendMultipleRequested} from '@/shared/protocol/ora/sendMultipleRequ
 import type {Theme} from '@/shared/protocol/ora/theme';
 import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
 import type {Themes} from '@/shared/protocol/ora/themes';
-import {URI} from '@/shared/protocol/ora/uRI';
 import {useThemeManager} from '@/shared/themeManager';
-import {
-	Density,
-	DP,
-	ScopeConfigurationChanged,
-	ScopeConfigurationChangeRequested,
-	WindowInfo
-} from "@/shared/proto/nprotoc_gen";
+import ConnectingChannelOverlay from "@/components/overlays/ConnectingChannelOverlay.vue";
 
 enum State {
 	Loading,
@@ -54,32 +59,38 @@ let configurationPromise: Promise<void> | null = null;
 async function applyConfiguration(): Promise<void> {
 	// this is part of the (oauth2) security process, which removes our actual session due to strict cookie rules.
 	// thus we saved the end-to-end encrypted cookie in our local storage and ask the server to restore it.
-	let httpFlowSession = localStorage.getItem("http-flow-session");
+	let httpFlowSession = localStorage.getItem('http-flow-session');
 	if (httpFlowSession) {
 		await restoreCookie(httpFlowSession);
-		return
+		return;
 	}
-
 
 	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 	// restoration).
 
-
-
 	await serviceAdapter.initialize();
-	let scopeConfigurationChangeRequested = new ScopeConfigurationChangeRequested();
-	scopeConfigurationChangeRequested.windowInfo.density = new Density(window.devicePixelRatio);
-	scopeConfigurationChangeRequested.windowInfo.width = new DP(window.innerWidth);
-	scopeConfigurationChangeRequested.windowInfo.height = new DP(window.innerHeight);
-	serviceAdapter.sendEvent(scopeConfigurationChangeRequested)
 
-	ConnectionHandler.addEventListener((evt)=>{
-		console.log("app received nago event",evt)
-		if (evt instanceof ScopeConfigurationChanged){
-			console.log("got ScopeConfigurationChanged")
+	requestScopeConfigurationChange(serviceAdapter, themeManager);
+
+	ConnectionHandler.addEventListener((evt) => {
+		console.log('app received nago event', evt);
+		if (evt instanceof ScopeConfigurationChanged) {
+			onScopeConfigurationChanged(themeManager, evt);
+			return
 		}
-	})
 
+		if (evt instanceof RootViewInvalidated) {
+			ui.value = evt.root;
+			state.value = State.ShowUI;
+			return
+		}
+
+		if (evt instanceof ErrorRootViewAllocationRequired) {
+			requestRootViewAllocation(serviceAdapter, themeManager.activeLocale);
+		}
+	});
+
+	requestRootViewRendering(serviceAdapter)
 	/*
 		// request and apply configuration
 		const config = await serviceAdapter.getConfiguration();
@@ -93,34 +104,20 @@ function restoreCookie(sessionID: string) {
 	return fetch('/api/nago/v1/session/restore', {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'text/plain'
+			'Content-Type': 'text/plain',
 		},
-		body: sessionID
-	}).then(response => {
+		body: sessionID,
+	}).then((response) => {
 		if (response.ok) {
-			localStorage.removeItem("http-flow-session");
-			console.log("completed cookie restoration process");
-			navigateReload()
+			localStorage.removeItem('http-flow-session');
+			console.log('completed cookie restoration process');
+			navigateReload();
 		} else {
-			console.log("restore cookie: unexpected result", response)
+			console.log('restore cookie: unexpected result', response);
 		}
 	});
 }
 
-function updateFavicon(uri: URI) {
-	if (!uri || uri.length == 0) {
-		return;
-	}
-
-	var link = document.querySelector("link[rel~='icon']");
-	if (!link) {
-		link = document.createElement('link');
-		link.rel = 'icon';
-		document.head.appendChild(link);
-	}
-
-	link.href = uri;
-}
 
 async function initializeUi(): Promise<void> {
 	try {
@@ -188,7 +185,6 @@ function updateUi(event: Event): void {
 async function navigateForward(event: Event): Promise<void> {
 	console.log('navigate forward', ui.value);
 
-
 	const navigationForwardToRequested = event as NavigationForwardToRequested;
 	if (ui.value) {
 		await serviceAdapter.destroyComponent(ui.value?.id);
@@ -242,7 +238,7 @@ function openRequested(evt: Event): void {
 			let redirectTarget = msg.options['redirectTarget'];
 			let redirectNavigation = msg.options['redirectNavigation'];
 			let session = msg.options['session'];
-			localStorage.setItem("http-flow-session", session);
+			localStorage.setItem('http-flow-session', session);
 
 			console.log('http-flow', redirectTarget, redirectNavigation);
 
@@ -409,7 +405,7 @@ function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
 	if (connected.value) {
 		// trigger a re-render, TODO use ComponentInvalidatedRequested
-		console.log("TODO websocket connected, poke server")
+		console.log('TODO websocket connected, poke server');
 		//serviceAdapter.executeFunctions(-1)
 	}
 }
@@ -479,6 +475,7 @@ watch(
 
 <template>
 	<ConnectionLostOverlay v-if="!connected"/>
+	<ConnectingChannelOverlay v-if="state === State.Loading"/>
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>

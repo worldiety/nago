@@ -1,5 +1,9 @@
 <template>
-	<div v-if="expanded" ref="datepicker" class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black z-30">
+	<div
+		v-if="expanded"
+		ref="datepicker"
+		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black z-30"
+	>
 		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
 				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
@@ -16,14 +20,25 @@
 					</div>
 					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<select v-model="currentMonthIndex" class="effect-hover border-0 bg-M1  text-right cursor-pointer rounded-l-md w-full h-full px-2">
-								<option v-for="(monthEntry, index) of monthNames.entries()" :key="index" :value="monthEntry[0]">
+							<select
+								v-model="currentMonthIndex"
+								class="effect-hover border-0 bg-M1 text-right cursor-pointer rounded-l-md w-full h-full px-2"
+							>
+								<option
+									v-for="(monthEntry, index) of monthNames.entries()"
+									:key="index"
+									:value="monthEntry[0]"
+								>
 									{{ monthEntry[1] }}
 								</option>
 							</select>
 						</div>
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<input v-model="yearInput" type="text" class="effect-hover border-0 bg-M1 rounded-r-md text-left w-full h-full px-2">
+							<input
+								v-model="yearInput"
+								type="text"
+								class="effect-hover border-0 bg-M1 rounded-r-md text-left w-full h-full px-2"
+							/>
 						</div>
 					</div>
 					<div
@@ -58,9 +73,10 @@
 						<div
 							class="day effect-hover flex justify-center items-center cursor-pointer"
 							:class="{
-							'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
-							'text-disabled-text': !datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
-						}"
+								'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
+								'text-disabled-text':
+									!datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndex,
+							}"
 							tabindex="0"
 							@click="selectDate(datepickerDay)"
 							@keydown.enter="selectDate(datepickerDay)"
@@ -90,12 +106,12 @@
 </template>
 
 <script setup lang="ts">
-import monthNames from '@/shared/monthNames'
-import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
-import { useI18n } from 'vue-i18n';
+import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
 	expanded: boolean;
@@ -118,7 +134,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const datepicker = ref<HTMLElement|undefined>();
+const datepicker = ref<HTMLElement | undefined>();
 const currentDate = new Date(Date.now());
 const currentYear = ref<number>(currentDate.getFullYear());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
@@ -137,27 +153,11 @@ watch(yearInput, (newValue, oldValue) => {
 });
 
 const selectedStartDate = computed((): Date => {
-	return new Date(
-		props.selectedStartYear,
-		props.selectedStartMonth - 1,
-		props.selectedStartDay,
-		0,
-		0,
-		0,
-		0,
-	);
+	return new Date(props.selectedStartYear, props.selectedStartMonth - 1, props.selectedStartDay, 0, 0, 0, 0);
 });
 
 const selectedEndDate = computed((): Date => {
-	return new Date(
-		props.selectedEndYear,
-		props.selectedEndMonth - 1,
-		props.selectedEndDay,
-		0,
-		0,
-		0,
-		0,
-	);
+	return new Date(props.selectedEndYear, props.selectedEndMonth - 1, props.selectedEndDay, 0, 0, 0, 0);
 });
 
 const datepickerDays = computed((): DatepickerDay[] => {
@@ -183,26 +183,10 @@ const datepickerDays = computed((): DatepickerDay[] => {
 function getDaysOfCurrentMonth(): DatepickerDay[] {
 	const daysOfCurrentMonth: DatepickerDay[] = [];
 
-	const dayOfCurrentMonthDate = new Date(
-		currentYear.value,
-		currentMonthIndex.value + 1,
-		0,
-		0,
-		0,
-		0,
-		0,
-	);
+	const dayOfCurrentMonthDate = new Date(currentYear.value, currentMonthIndex.value + 1, 0, 0, 0, 0, 0);
 	const lastDayOfCurrentMonth = dayOfCurrentMonthDate.getDate();
 	for (let i = 1; i <= lastDayOfCurrentMonth; i++) {
-		const dayOfWeekDate = new Date(
-			currentYear.value,
-			currentMonthIndex.value,
-			i,
-			0,
-			0,
-			0,
-			0,
-		);
+		const dayOfWeekDate = new Date(currentYear.value, currentMonthIndex.value, i, 0, 0, 0, 0);
 		const datepickerDay: DatepickerDay = {
 			dayOfWeek: dayOfWeekDate.getDay() === 0 ? 7 : dayOfWeekDate.getDay(),
 			dayOfMonth: i,
@@ -212,9 +196,21 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 			selectedEnd: false,
 			withinRange: false,
 		};
-		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedStart = isSelectedStartDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.selectedEnd = isSelectedEndDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.withinRange = isWithinRange(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
 		daysOfCurrentMonth.push(datepickerDay);
 	}
 
@@ -224,15 +220,7 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 	const fillingDaysOfPreviousMonth: DatepickerDay[] = [];
 
-	const dayOfPreviousMonthDate = new Date(
-		currentYear.value,
-		currentMonthIndex.value,
-		0,
-		0,
-		0,
-		0,
-		0,
-	);
+	const dayOfPreviousMonthDate = new Date(currentYear.value, currentMonthIndex.value, 0, 0, 0, 0, 0);
 	const lastDayOfWeekPreviousMonth = dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay();
 	const lastDayOfPreviousMonth = dayOfPreviousMonthDate.getDate();
 	for (let i = 0; i < lastDayOfWeekPreviousMonth; i++) {
@@ -245,10 +233,22 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 			selectedStart: false,
 			selectedEnd: false,
 			withinRange: false,
-		}
-		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		};
+		datepickerDay.selectedStart = isSelectedStartDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.selectedEnd = isSelectedEndDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.withinRange = isWithinRange(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
 		fillingDaysOfPreviousMonth.unshift(datepickerDay);
 	}
 
@@ -260,25 +260,9 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 
 	let dayOfNextMonthDate: Date;
 	if (currentMonthIndex.value + 1 === 12) {
-		dayOfNextMonthDate = new Date(
-			currentYear.value + 1,
-			0,
-			1,
-			0,
-			0,
-			0,
-			0,
-		);
+		dayOfNextMonthDate = new Date(currentYear.value + 1, 0, 1, 0, 0, 0, 0);
 	} else {
-		dayOfNextMonthDate = new Date(
-			currentYear.value,
-			currentMonthIndex.value + 1,
-			1,
-			0,
-			0,
-			0,
-			0,
-		);
+		dayOfNextMonthDate = new Date(currentYear.value, currentMonthIndex.value + 1, 1, 0, 0, 0, 0);
 	}
 	for (let i = 1; i <= 7 - lastDayOfWeekCurrentMonth; i++) {
 		dayOfNextMonthDate.setDate(i);
@@ -291,9 +275,21 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 			selectedEnd: false,
 			withinRange: false,
 		};
-		datepickerDay.selectedStart = isSelectedStartDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.selectedEnd = isSelectedEndDay(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
-		datepickerDay.withinRange = isWithinRange(datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
+		datepickerDay.selectedStart = isSelectedStartDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.selectedEnd = isSelectedEndDay(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
+		datepickerDay.withinRange = isWithinRange(
+			datepickerDay.dayOfMonth,
+			datepickerDay.monthIndex,
+			datepickerDay.year
+		);
 		fillingDaysOfNextMonth.push(datepickerDay);
 	}
 
@@ -301,17 +297,21 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 }
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
-	return props.startDateSelected
-		&& day === props.selectedStartDay
-		&& monthIndex === props.selectedStartMonth - 1
-		&& year === props.selectedStartYear;
+	return (
+		props.startDateSelected &&
+		day === props.selectedStartDay &&
+		monthIndex === props.selectedStartMonth - 1 &&
+		year === props.selectedStartYear
+	);
 }
 
 function isSelectedEndDay(day: number, monthIndex: number, year: number): boolean {
-	return props.endDateSelected
-	&& day === props.selectedEndDay
-	&& monthIndex === props.selectedEndMonth - 1
-	&& year === props.selectedEndYear;
+	return (
+		props.endDateSelected &&
+		day === props.selectedEndDay &&
+		monthIndex === props.selectedEndMonth - 1 &&
+		year === props.selectedEndYear
+	);
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
@@ -367,7 +367,8 @@ function selectDate(datepickerDay: DatepickerDay): void {
 }
 
 /* Each day in the first column within the selection range except the selected days (after element) */
-.datepicker-grid > .within-range-day:nth-of-type(7n - 6):not(.selected-start-day-container, .selected-start-day-container)::after {
+.datepicker-grid
+	> .within-range-day:nth-of-type(7n - 6):not(.selected-start-day-container, .selected-start-day-container)::after {
 	content: '';
 	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-M1;
 }
@@ -379,7 +380,8 @@ function selectDate(datepickerDay: DatepickerDay): void {
 }
 
 /* Each day in the last column within the selected range except the selected days (before element) */
-.datepicker-grid > .within-range-day:nth-of-type(7n):not(.selected-start-day-container, .selected-end-day-container)::before {
+.datepicker-grid
+	> .within-range-day:nth-of-type(7n):not(.selected-start-day-container, .selected-end-day-container)::before {
 	content: '';
 	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-M1;
 }
