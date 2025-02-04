@@ -12,6 +12,8 @@ import {
 	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
 	Str,
+	WindowInfo,
+	WindowInfoChanged,
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
@@ -29,6 +31,35 @@ let nextRequestTracingID: number = 1;
 export function nextRID(): RID {
 	nextRequestTracingID++;
 	return new RID(nextRequestTracingID)
+}
+
+
+/**
+ * windowInfoChanged emits the according event into the channel. There is logic behind it to avoid
+ * sending redundant or spamming changed events.
+ */
+export function windowInfoChanged(chan: Channel, themeManager: ThemeManager) {
+	const windowInfo = getWindowInfo(themeManager);
+	chan.sendEvent(new WindowInfoChanged(windowInfo, nextRID()));
+}
+
+/**
+ * getWindowInfo calculates the current WindowInfo and returns it.
+ */
+export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
+	let windowInfo = new WindowInfo()
+	windowInfo.density = new Density(window.devicePixelRatio);
+	windowInfo.width = new DP(window.innerWidth);
+	windowInfo.height = new DP(window.innerHeight);
+	windowInfo.sizeClass = currentSizeClass();
+
+	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
+		windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Dark);
+	} else {
+		windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Light);
+	}
+
+	return windowInfo;
 }
 
 /**
@@ -73,16 +104,8 @@ export function requestRootViewAllocation(chan: Channel, locale: Locale) {
  */
 export function requestScopeConfigurationChange(chan: Channel, themeManager: ThemeManager,) {
 	let evt = new ScopeConfigurationChangeRequested();
-	evt.windowInfo.density = new Density(window.devicePixelRatio);
-	evt.windowInfo.width = new DP(window.innerWidth);
-	evt.windowInfo.height = new DP(window.innerHeight);
-	evt.windowInfo.sizeClass = currentSizeClass();
+	evt.windowInfo = getWindowInfo(themeManager);
 
-	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
-		evt.windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Dark);
-	} else {
-		evt.windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Light);
-	}
 
 	evt.acceptLanguage = new Locale(navigator.language || navigator.languages[0]);
 	chan.sendEvent(evt);

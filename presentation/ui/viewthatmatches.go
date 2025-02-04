@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
+	"math"
 )
 
 type ViewWithSizeClass struct {
@@ -31,13 +33,28 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 
 	var best ViewWithSizeClass
 	for _, match := range matches {
+		if match.View == nil {
+			panic(fmt.Errorf("match branch %v contains nil view, which is not allowed", match.SizeClass))
+		}
+
 		if match.SizeClass.Ordinal() > best.SizeClass.Ordinal() && match.SizeClass.Ordinal() <= class.Ordinal() {
 			best = match
 		}
 	}
-	
+
+	if best.SizeClass == 0 {
+		// obviously, we have an undefined size class which has no real match
+		// pick either the largest or smallest, whatever is nearer
+		best = matches[0]
+		for _, match := range matches {
+			if math.Abs(float64(class.Ordinal()-match.SizeClass.Ordinal())) < math.Abs(float64(match.SizeClass.Ordinal()-best.SizeClass.Ordinal())) {
+				best = match
+			}
+		}
+	}
+
 	if best.View == nil {
-		panic("you must not provide an empty view in match")
+		panic("unreachable")
 	}
 
 	return best.View()

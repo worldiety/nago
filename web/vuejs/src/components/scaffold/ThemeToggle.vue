@@ -12,10 +12,14 @@ import SunIcon from '@/assets/svg/sun.svg';
 import { useEventBus } from '@/composables/eventBus';
 import { EventType } from '@/shared/eventbus/eventType';
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
+import {windowInfoChanged} from "@/eventhandling";
+import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const themeManager = useThemeManager();
 const darkModeActive = ref<boolean>(false);
 const eventBus = useEventBus();
+const service = useServiceAdapter();
+
 onMounted(() => {
 	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 });
@@ -24,6 +28,7 @@ function toggleDarkMode() {
 	themeManager.toggleDarkMode();
 	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 
-	eventBus.publish(EventType.WindowInfoChanged, {});
+	//eventBus.publish(EventType.WindowInfoChanged, {});
+	windowInfoChanged(service);
 }
 </script>

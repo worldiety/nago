@@ -22,7 +22,7 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return VStack(
-				Text(fmt.Sprintf("size class %s", wnd.Info().SizeClass)),
+				Text(fmt.Sprintf("size class %v", wnd.Info().SizeClass)),
 				ViewThatMatches(wnd,
 					SizeClass(core.SizeClass2XL, func() core.View { return largeLayout(oraImgUri) }),
 					SizeClass(core.SizeClassSmall, func() core.View { return smallLayout() }),

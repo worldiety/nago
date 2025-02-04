@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
@@ -24,7 +23,6 @@ func main() {
 		grasUri := cfg.Resource(grasData)
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			fmt.Println("hello")
 			return VStack(
 				Image().
 					URI(grasUri).

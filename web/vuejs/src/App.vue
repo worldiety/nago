@@ -8,10 +8,12 @@ import {useErrorHandling} from '@/composables/errorhandling';
 import {useEventBus} from '@/composables/eventBus';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {
+	getWindowInfo,
 	onScopeConfigurationChanged,
 	requestRootViewAllocation,
 	requestRootViewRendering,
-	requestScopeConfigurationChange
+	requestScopeConfigurationChange,
+	windowInfoChanged
 } from '@/eventhandling';
 import {EventType} from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
@@ -69,6 +71,7 @@ async function applyConfiguration(): Promise<void> {
 	// restoration).
 
 	await serviceAdapter.initialize();
+	addEventListeners();
 
 	requestScopeConfigurationChange(serviceAdapter, themeManager);
 
@@ -252,7 +255,8 @@ function openRequested(evt: Event): void {
 			open(msg.resource);
 	}
 
-	sendWindowInfo(true);
+	windowInfoChanged(serviceAdapter);
+	//sendWindowInfo(true);
 }
 
 function themeRequested(evt: Event): void {
@@ -269,7 +273,7 @@ function themeRequested(evt: Event): void {
 			console.log('unknown theme', msg.theme);
 	}
 
-	sendWindowInfo(true);
+	windowInfoChanged(serviceAdapter);
 }
 
 function fileImportRequested(evt: Event): void {
@@ -339,50 +343,11 @@ function setTheme(themes: Themes): void {
 	}
 }
 
-const activeBreakpoint = ref('');
 
-function sendWindowInfo(force: boolean = true) {
-	const breakpoints = {
-		'sm': 640,
-		'md': 768,
-		'lg': 1024,
-		'xl': 1280,
-		'2xl': 1536,
-	};
-
-	const lastActiveBreakpoint = activeBreakpoint.value;
-
-	const width = window.innerWidth;
-	if (width >= breakpoints['2xl']) activeBreakpoint.value = '2xl';
-	else if (width >= breakpoints.xl) activeBreakpoint.value = 'xl';
-	else if (width >= breakpoints.lg) activeBreakpoint.value = 'lg';
-	else if (width >= breakpoints.md) activeBreakpoint.value = 'md';
-	else activeBreakpoint.value = 'sm';
-
-	if (!force && lastActiveBreakpoint == activeBreakpoint.value) {
-		// avoid spamming the backend with messages from fluid window resizing
-		return;
-	}
-
-	let currentTheme = localStorage.getItem('color-theme');
-	if (!currentTheme) {
-		currentTheme = '';
-	}
-
-	//console.log("active breakpoint", activeBreakpoint.value)
-	const winfo: WindowInfo = {
-		width: window.innerWidth,
-		height: window.innerHeight,
-		density: window.devicePixelRatio,
-		sizeClass: activeBreakpoint.value,
-		colorScheme: currentTheme,
-	};
-
-	serviceAdapter.updateWindowInfo(winfo);
-}
+const activeBreakpoint = ref(-1);
 
 function addEventListeners(): void {
-	addEventListener('popstate', (event) => {
+	/*addEventListener('popstate', (event) => {
 		if (event.state === null) {
 			return;
 		}
@@ -394,10 +359,17 @@ function addEventListeners(): void {
 		serviceAdapter.createComponent(req2.factory, req2.values).then((invalidation) => {
 			ui.value = invalidation.value;
 		});
-	});
+	});*/
 
 	window.addEventListener('resize', function (event) {
-		sendWindowInfo(false);
+		const info = getWindowInfo(themeManager);
+		if (info.sizeClass.value === activeBreakpoint.value) {
+			// avoid spamming the backend with messages from fluid window resizing
+			return;
+		}
+
+		activeBreakpoint.value = info.sizeClass.value;
+		windowInfoChanged(serviceAdapter, themeManager);
 	});
 }
 
