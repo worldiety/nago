@@ -4,20 +4,20 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
-import { ScrollView } from '@/shared/protocol/ora/scrollView';
+import {ScrollView, ScrollViewAxisValues} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
 	ui: ScrollView;
 }>();
 
 const styles = computed<string>(() => {
-	let styles = borderCSS(props.ui.b);
-	styles.push(...frameCSS(props.ui.f));
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${props.ui.bgc}`);
+	let styles = borderCSS(props.ui.border);
+	styles.push(...frameCSS(props.ui.frame));
+	if (!props.ui.backgroundColor.isZero()) {
+		styles.push(`background-color: ${props.ui.backgroundColor.value}`);
 	}
 
-	styles.push(...paddingCSS(props.ui.p));
+	styles.push(...paddingCSS(props.ui.padding));
 
 	return styles.join(';');
 });
@@ -26,8 +26,8 @@ const classes = computed<string>(() => {
 	const css: string[] = [];
 
 	// note, that we defined its style in scrollbars.css
-	switch (props.ui.a) {
-		case 'h':
+	switch (props.ui.axis.value) {
+		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
 			css.push('overflow-x-auto', 'overflow-y-hidden');
 			break;
 		default:
@@ -39,10 +39,10 @@ const classes = computed<string>(() => {
 });
 
 const innerStyles = computed<string>(() => {
-	let css = borderCSS(props.ui.b);
+	let css = borderCSS(props.ui.border);
 
-	switch (props.ui.a) {
-		case 'h':
+	switch (props.ui.axis.value) {
+		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
 			css.push('width: max-content');
 			break;
 		default:
@@ -60,7 +60,7 @@ const innerStyles = computed<string>(() => {
 	<!-- UiScrollView -->
 	<div :class="classes" :style="styles">
 		<div :style="innerStyles">
-			<UiGeneric v-if="ui.c" :ui="ui.c" />
+			<UiGeneric v-if="ui.content" :ui="ui.content" />
 		</div>
 	</div>
 </template>

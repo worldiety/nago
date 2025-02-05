@@ -94,15 +94,15 @@ func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueReque
 }
 
 func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
-		s.Publish(&proto.ErrorOccurred{
-			RID:     evt.RID,
-			Message: proto.Str(fmt.Sprintf("cannot call function: no view allocated: %d", evt.Ptr)),
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{
+			RID: evt.RID,
 		})
+
 		return
 	}
 
+	alloc := s.allocatedRootView.Unwrap()
 	fn := alloc.callbacks[evt.Ptr]
 	if fn == nil {
 		s.Publish(&proto.ErrorOccurred{
@@ -113,7 +113,6 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	}
 
 	fn()
-
 }
 
 func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequested) {

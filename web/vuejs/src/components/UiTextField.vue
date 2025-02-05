@@ -1,19 +1,27 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import { frameCSS } from '@/components/shared/frame';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { TextField } from '@/shared/protocol/ora/textField';
+import {frameCSS} from '@/components/shared/frame';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {
+	KeyboardTypeValues,
+	Ptr,
+	Str,
+	TextField,
+	TextFieldStyleValues,
+	UpdateStateValueRequested
+} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: TextField;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const inputValue = ref<string>(props.ui.v ? props.ui.v : '');
+const inputValue = ref<string>(props.ui.value.value);
 
-//console.log("uitextfield", props.ui.p, "=" + props.ui.v)
+//console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -25,7 +33,7 @@ watch(inputValue, (newValue, oldValue) => {
 		return;
 	}
 
-	if (props.ui.o?.k == 'i') {
+	if (props.ui.keyboardOptions.keyboardType.value == KeyboardTypeValues.KeyboardInteger) {
 		if (newValue === '' || newValue === '-') {
 			inputValue.value = '0';
 		} else if (!newValue.match(/^-?[0-9]+$/)) {
@@ -35,7 +43,7 @@ watch(inputValue, (newValue, oldValue) => {
 		return;
 	}
 
-	if (props.ui.o?.k == 'f') {
+	if (props.ui.keyboardOptions.keyboardType.value == KeyboardTypeValues.KeyboardFloat) {
 		if (newValue === '' || newValue === '-') {
 			inputValue.value = '0';
 		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
@@ -47,7 +55,7 @@ watch(inputValue, (newValue, oldValue) => {
 });
 
 watch(
-	() => props.ui.v,
+	() => props.ui.value.value,
 	(newValue) => {
 		//console.log("textfield triggered props.ui.value",inputValue.value,newValue)
 		if (newValue) {
@@ -62,8 +70,8 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		//console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
-		if (newValue.v) {
-			inputValue.value = newValue.v;
+		if (newValue.value.value) {
+			inputValue.value = newValue.value.value;
 		} else {
 			inputValue.value = '';
 		}
@@ -71,15 +79,18 @@ watch(
 );
 
 function submitInputValue(force: boolean): void {
-	if (props.ui.v && inputValue.value == props.ui.v) {
+	if (inputValue.value == props.ui.value.value) {
 		return;
 	}
 
-	if (force || (props.ui.i && props.ui.p)) {
-		serviceAdapter.setProperties({
-			p: props.ui.p,
-			v: inputValue.value,
-		});
+	if (force || (props.ui.disableDebounce.value && !props.ui.inputValue.isZero())) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(
+			props.ui.inputValue,
+			new Ptr(),
+			nextRID(),
+			new Str(inputValue.value),
+		))
+
 		return;
 	}
 
@@ -99,44 +110,46 @@ let timer: number = 0;
 
 function debouncedInput() {
 	let debounceTime = 500; // ms
-	if (props.ui.dt && props.ui.dt > 0) {
-		debounceTime = deserializeGoDuration(props.ui.dt);
+	if (props.ui.debounceTime.value > 0) {
+		debounceTime = deserializeGoDuration(props.ui.debounceTime.value);
 	}
 
 	clearTimeout(timer);
 	timer = window.setTimeout(() => {
-		if (props.ui.v && inputValue.value == props.ui.v) {
+		if (inputValue.value == props.ui.value.value) {
 			return;
 		}
 
-		serviceAdapter.setProperties({
-			p: props.ui.p,
-			v: inputValue.value,
-		});
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(
+			props.ui.inputValue,
+			new Ptr(),
+			nextRID(),
+			new Str(inputValue.value),
+		))
 	}, debounceTime);
 }
 
 const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.f).join(';');
+	return frameCSS(props.ui.frame).join(';');
 });
 
 const id = computed<string>(() => {
-	return 'tf-' + props.ui.p;
+	return 'tf-' + props.ui.inputValue.value;
 });
 
 const inputMode = computed<string>(() => {
-	switch (props.ui.o?.k) {
-		case 'i':
+	switch (props.ui.keyboardOptions.keyboardType.value) {
+		case KeyboardTypeValues.KeyboardInteger:
 			return 'numeric';
-		case 'f':
+		case KeyboardTypeValues.KeyboardFloat:
 			return 'decimal';
-		case 'm':
+		case KeyboardTypeValues.KeyboardEMail:
 			return 'email';
-		case 'p':
+		case KeyboardTypeValues.KeyboardPhone:
 			return 'tel';
-		case 'u':
+		case KeyboardTypeValues.KeyboardURL:
 			return 'url';
-		case 's':
+		case KeyboardTypeValues.KeyboardSearch:
 			return 'search';
 	}
 
@@ -150,40 +163,41 @@ const inputMode = computed<string>(() => {
 </script>
 
 <template>
-	<div v-if="!ui.iv" :style="frameStyles">
+	<div v-if="!ui.invisible.value" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.t && props.ui.t == 'r'"
-			:label="props.ui.l"
-			:error="props.ui.e"
-			:help="props.ui.s"
-			:disabled="props.ui.d"
+			:simple="props.ui.style.value==TextFieldStyleValues.TextFieldReduced"
+			:label="props.ui.label.value"
+			:error="props.ui.errorText.value"
+			:help="props.ui.supportingText.value"
+			:disabled="props.ui.disabled.value"
 		>
 			<div class="relative">
 				<input
-					v-if="!props.ui.li"
+					v-if="!props.ui.lines.value"
 					:id="id"
 					v-model="inputValue"
 					class="input-field !pr-10"
-					:disabled="props.ui.d"
+					:disabled="props.ui.disabled.value"
 					type="text"
 					:inputmode="inputMode"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
 				<textarea
-					v-if="props.ui.li"
+					v-if="props.ui.lines.value"
 					:id="id"
 					v-model="inputValue"
 					class="input-field !pr-10"
-					:disabled="props.ui.d"
+					:disabled="props.ui.disabled.value"
 					type="text"
-					:rows="props.ui.li"
+					:rows="props.ui.lines.value"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
 
-				<div v-if="inputValue && !props.ui.d" class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
+				<div v-if="inputValue && !props.ui.disabled.value"
+						 class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
 				</div>
 			</div>
 		</InputWrapper>

@@ -1,9 +1,9 @@
 <template>
-	<div v-if="!ui.b"></div>
-	<Teleport v-else-if="ui.t == 1" to="#ora-overlay">
+	<div v-if="!ui.content"></div>
+	<Teleport v-else-if="ui.modalType.value == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
 		<Transition>
-			<div v-show="ui.b" class="pointer-events-auto fixed" :style="styles">
-				<UiGeneric :ui="ui.b" class="" />
+			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles">
+				<UiGeneric :ui="ui.content" class=""/>
 			</div>
 		</Transition>
 	</Teleport>
@@ -15,16 +15,16 @@
 			@keydown.tab.exact="moveFocusForward"
 			@keydown.shift.tab="moveFocusBackwards"
 		>
-			<UiGeneric v-if="ui.b" :ui="ui.b" class="h-screen w-screen" @click.stop />
+			<UiGeneric v-if="ui.content" :ui="ui.content" class="h-screen w-screen" @click.stop/>
 		</div>
 	</Teleport>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { cssLengthValue } from '@/components/shared/length';
-import { Modal } from '@/shared/protocol/ora/modal';
+import {cssLengthValue} from '@/components/shared/length';
+import {Modal, ModalTypeValues} from "@/shared/proto/nprotoc_gen";
 
 const props = defineProps<{
 	ui: Modal;
@@ -37,7 +37,7 @@ let lastFocusableElement: HTMLElement | undefined;
 
 onMounted(() => {
 	//if (props.isActiveDialog) {
-	if (props.ui.t !== 1) {
+	if (props.ui.modalType.value !== ModalTypeValues.ModalTypeOverlay) {
 		captureFocusInDialog();
 	}
 
@@ -53,20 +53,20 @@ onMounted(() => {
 
 const styles = computed<string>(() => {
 	const styles: string[] = [];
-	if (props.ui.r) {
-		styles.push(`right: ${cssLengthValue(props.ui.r)}`);
+	if (!props.ui.right.isZero()) {
+		styles.push(`right: ${cssLengthValue(props.ui.right.value)}`);
 	}
 
-	if (props.ui.u) {
-		styles.push(`top: ${cssLengthValue(props.ui.u)}`);
+	if (!props.ui.top.isZero()) {
+		styles.push(`top: ${cssLengthValue(props.ui.top.value)}`);
 	}
 
-	if (props.ui.l) {
-		styles.push(`left: ${cssLengthValue(props.ui.l)}`);
+	if (!props.ui.left.isZero()) {
+		styles.push(`left: ${cssLengthValue(props.ui.left.value)}`);
 	}
 
-	if (props.ui.bt) {
-		styles.push(`bottom: ${cssLengthValue(props.ui.bt)}`);
+	if (!props.ui.bottom.isZero()) {
+		styles.push(`bottom: ${cssLengthValue(props.ui.bottom.value)}`);
 	}
 
 	return styles.join(';');

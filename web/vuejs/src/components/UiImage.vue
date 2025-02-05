@@ -35,7 +35,7 @@ const styles = computed<string>(() => {
 });
 
 const rewriteSVG = computed<string>(() => {
-	if (!props.ui.sVG.isZero() ) {
+	if (props.ui.sVG.isZero() ) {
 		return '';
 	}
 

@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Radiobutton } from '@/shared/protocol/ora/radiobutton';
+import {ref, watch} from 'vue';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {Ptr, Radiobutton, Str, UpdateStateValueRequested} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
+import {bool2Str} from "@/components/shared/util";
 
 const props = defineProps<{
 	ui: Radiobutton;
@@ -9,10 +11,10 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
+const checked = ref<boolean>(props.ui.value.value);
 
 watch(
-	() => props.ui.v,
+	() => props.ui.value.value,
 	(newValue) => {
 		if (newValue) {
 			checked.value = newValue;
@@ -23,26 +25,28 @@ watch(
 );
 
 function radioButtonClicked(): void {
-	if (!props.ui.d) {
-		serviceAdapter.setProperties({
-			p: props.ui.i,
-			v: true,
-		});
+	if (!props.ui.disabled.value) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(
+			props.ui.inputValue,
+			new Ptr(),
+			nextRID(),
+			new Str(bool2Str(!checked.value)),
+		))
 	}
 }
 </script>
 
 <template>
 	<div
-		v-if="!ui.iv"
+		v-if="!ui.invisible.value"
 		class="input-radio rounded-full w-fit"
-		:class="{ 'input-radio-disabled': ui.d }"
-		:tabindex="ui.d ? '-1' : '0'"
+		:class="{ 'input-radio-disabled': ui.disabled.value }"
+		:tabindex="ui.disabled.value ? '-1' : '0'"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.d" />
+			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled.value"/>
 		</div>
 	</div>
 </template>

@@ -1,17 +1,19 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Toggle } from '@/shared/protocol/ora/toggle';
+import {ref, watch} from 'vue';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {Ptr, Str, Toggle, UpdateStateValueRequested} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
+import {bool2Str} from "@/components/shared/util";
 
 const props = defineProps<{
 	ui: Toggle;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const checked = ref<boolean>(props.ui.v ? props.ui.v : false);
+const checked = ref<boolean>(props.ui.value.value);
 
 watch(
-	() => props.ui.v,
+	() => props.ui.value.value,
 	(newValue) => {
 		if (newValue) {
 			checked.value = newValue;
@@ -22,23 +24,29 @@ watch(
 );
 
 function onClick() {
-	if (props.ui.d) {
+	if (props.ui.disabled.value) {
 		return;
 	}
 
-	serviceAdapter.setProperties({
-		p: props.ui.i,
-		v: !checked.value,
-	});
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(
+		props.ui.inputValue,
+		new Ptr(),
+		nextRID(),
+		new Str(bool2Str(!checked.value)),
+	))
+
 }
+
+
+
 </script>
 
 <template>
-	<div v-if="!ui.iv">
+	<div v-if="!ui.invisible.value">
 		<div
 			class="toggle-switch-container"
-			:class="{ 'toggle-switch-container-disabled': props.ui.d }"
-			:tabindex="props.ui.d ? '-1' : '0'"
+			:class="{ 'toggle-switch-container-disabled': props.ui.disabled.value }"
+			:tabindex="props.ui.disabled.value ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>

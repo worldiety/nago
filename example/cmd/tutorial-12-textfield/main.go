@@ -31,6 +31,8 @@ func main() {
 					KeyboardType(KeyboardInteger).
 					Style(TextFieldReduced),
 
+				// learn task: take your time to understand what
+				// the difference between value and input value is
 				IntField("int-field", 42, myIntState),
 				FloatField("float-field", 42.5, myFloatState),
 

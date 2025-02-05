@@ -1,11 +1,19 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import { frameCSS } from '@/components/shared/frame';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { PasswordField } from '@/shared/protocol/ora/passwordField';
+import {frameCSS} from '@/components/shared/frame';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {
+	PasswordField,
+	Ptr,
+	Str,
+	StylePresetValues,
+	TextFieldStyle, TextFieldStyleValues,
+	UpdateStateValueRequested
+} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -13,11 +21,11 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const passwordInput = ref<HTMLElement | undefined>();
-const inputValue = ref<string>(props.ui.v ? props.ui.v : '');
+const inputValue = ref<string>(props.ui.value.value);
 const idPrefix = 'password-field-';
 
 watch(
-	() => props.ui.v,
+	() => props.ui.value.value,
 	(newValue) => {
 		if (newValue) {
 			inputValue.value = newValue;
@@ -32,24 +40,23 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		//console.log("textfield triggered props.ui")
-		if (newValue.v) {
-			inputValue.value = newValue.v;
-		} else {
-			inputValue.value = '';
-		}
+		inputValue.value = newValue.value.value;
 	}
 );
 
 function submitInputValue(force: boolean): void {
-	if (props.ui.v && inputValue.value == props.ui.v) {
+	if (inputValue.value == props.ui.value.value) {
 		return;
 	}
 
-	if (force || (props.ui.i && props.ui.p)) {
-		serviceAdapter.setProperties({
-			p: props.ui.p,
-			v: inputValue.value,
-		});
+	if (force || (props.ui.disableDebounce.value && !props.ui.inputValue.isZero())) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(
+			props.ui.inputValue,
+			new Ptr(),
+			nextRID(),
+			new Str(inputValue.value),
+		))
+
 		return;
 	}
 
@@ -64,58 +71,60 @@ let timer: number = 0;
 
 function debouncedInput() {
 	let debounceTime = 500; // ms
-	if (props.ui.dt && props.ui.dt > 0) {
-		debounceTime = deserializeGoDuration(props.ui.dt);
+	if (props.ui.debounceTime.value > 0) {
+		debounceTime = deserializeGoDuration(props.ui.debounceTime.value);
 	}
 
 	clearTimeout(timer);
 	timer = window.setTimeout(() => {
-		if (props.ui.v && inputValue.value == props.ui.v) {
+		if ( inputValue.value == props.ui.value.value) {
 			return;
 		}
 
-		serviceAdapter.setProperties({
-			p: props.ui.p,
-			v: inputValue.value,
-		});
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(
+			props.ui.inputValue,
+			new Ptr(),
+			nextRID(),
+			new Str(inputValue.value),
+		))
 	}, debounceTime);
 }
 
 const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.f).join(';');
+	return frameCSS(props.ui.frame).join(';');
 });
 
 function toggleRevealed(): void {
-	props.ui.rv = !props.ui.rv;
+	props.ui.revealed.value = !props.ui.revealed.value;
 	passwordInput.value?.focus();
 }
 </script>
 
 <template>
-	<div v-if="!ui.iv" :style="frameStyles">
+	<div v-if="!ui.invisible.value" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.t && props.ui.t == 'r'"
-			:label="props.ui.l"
-			:error="props.ui.e"
-			:help="props.ui.s"
-			:disabled="props.ui.d"
+			:simple="props.ui.style.value==TextFieldStyleValues.TextFieldReduced"
+			:label="props.ui.label.value"
+			:error="props.ui.errorText.value"
+			:help="props.ui.supportingText.value"
+			:disabled="props.ui.disabled.value"
 		>
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="idPrefix"
-					:autocomplete="props.ui.ac ? 'off' : 'on'"
+					:autocomplete="props.ui.disableAutocomplete.value ? 'off' : 'on'"
 					ref="passwordInput"
 					v-model="inputValue"
 					class="input-field !pr-10"
-					:disabled="props.ui.d"
-					:type="props.ui.rv ? 'text' : 'password'"
+					:disabled="props.ui.disabled.value"
+					:type="props.ui.revealed.value ? 'text' : 'password'"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
 				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black h-full">
-					<div :tabindex="props.ui.d ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">
-						<RevealIcon v-if="!props.ui.d" class="w-6" />
-						<HideIcon v-else class="w-6" />
+					<div :tabindex="props.ui.disabled.value ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">
+						<RevealIcon v-if="!props.ui.disabled.value" class="w-6"/>
+						<HideIcon v-else class="w-6"/>
 					</div>
 				</div>
 			</div>
