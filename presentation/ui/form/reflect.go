@@ -103,6 +103,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
 					Disabled(disabled).
+					InputValue(boolState).
 					SupportingText(field.Tag.Get("supportingText")).
 					Frame(ui.Frame{}.FullWidth()),
 				)

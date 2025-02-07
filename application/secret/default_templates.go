@@ -45,6 +45,7 @@ type BookStack struct {
 	URL           string
 	TokenID       string
 	TokenPassword string
+	Check         bool
 	_             string `credentialName:"BookStack" credentialDescription:"URL, Token-ID und Token-Passwort zur API Anbindung einer Bookstack Instanz definieren." credentialLogo:"https://www.bookstackapp.com/images/favicon-196x196.png"`
 }
 
