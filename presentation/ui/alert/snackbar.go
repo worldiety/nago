@@ -12,9 +12,17 @@ import (
 	"slices"
 )
 
+type Intent int
+
+const (
+	IntentError Intent = iota
+	IntentOk
+)
+
 type Message struct {
 	Title   string
 	Message string
+	Intent  Intent
 }
 
 // BannerMessages may return nil, if no information needs to be displayed. Otherwise, it appends to
@@ -34,6 +42,7 @@ func BannerMessages(wnd core.Window) core.View {
 					})
 
 					return Banner(t.Title, t.Message).
+						Intent(t.Intent).
 						Closeable(presented).
 						OnClosed(func() {
 							messages.Set(slices.DeleteFunc(messages.Get(), func(message Message) bool {
