@@ -74,6 +74,38 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			}
 
 			switch field.Type.Kind() {
+			case reflect.Bool:
+				requiresInit := false
+				boolState := core.DerivedState[bool](state, field.Name).Init(func() bool {
+					src := state.Get()
+					v := reflect.ValueOf(src).FieldByName(field.Name).Bool()
+					if val := field.Tag.Get("value"); val != "" && v == false {
+						p, err := strconv.ParseBool(val)
+						if err == nil {
+							requiresInit = true
+							return p
+						}
+					}
+
+					return v
+				})
+
+				boolState.Observe(func(newValue bool) {
+					dst := state.Get()
+					dst = setFieldValue(dst, field.Name, newValue).(T)
+					state.Set(dst)
+					state.Notify()
+				})
+
+				if requiresInit {
+					boolState.Notify()
+				}
+
+				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
+					Disabled(disabled).
+					SupportingText(field.Tag.Get("supportingText")).
+					Frame(ui.Frame{}.FullWidth()),
+				)
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				switch field.Type {
 				default:
@@ -105,6 +137,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 					fieldsBuilder.Append(ui.IntField(label, intState.Get(), intState).
 						Disabled(disabled).
+						SupportingText(field.Tag.Get("supportingText")).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
@@ -143,6 +176,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.PasswordField(label, secretState.Get()).
 							InputValue(secretState).
+							SupportingText(field.Tag.Get("supportingText")).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
 						)
@@ -173,6 +207,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
 							InputValue(strState).
+							SupportingText(field.Tag.Get("supportingText")).
 							Lines(lines).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
