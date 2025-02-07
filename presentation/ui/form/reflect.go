@@ -246,6 +246,8 @@ func setFieldValue(dst any, fieldName string, val any) any {
 		cpy.FieldByName(fieldName).SetInt(int64(t))
 	case int64:
 		cpy.FieldByName(fieldName).SetInt(t)
+	case bool:
+		cpy.FieldByName(fieldName).SetBool(t)
 	default:
 		slog.Error("cannot set field value for [form.Auto]", "type", reflect.TypeOf(t))
 	}
