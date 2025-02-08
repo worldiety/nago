@@ -41,6 +41,10 @@ type TText struct {
 	lineBreak              bool
 }
 
+func MailTo(wnd core.Window, name string, email string) TText {
+	return Link(wnd, name, "mailto:"+email, "_parent")
+}
+
 // Link performs a best guess based on the given href. If the href starts with http or https
 // the window will perform an Open call. Otherwise, a local forward navigation is applied.
 func Link(wnd core.Window, name string, href string, target string) TText {
@@ -51,7 +55,7 @@ func Link(wnd core.Window, name string, href string, target string) TText {
 			return
 		}
 
-		if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") {
+		if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") || strings.HasPrefix(href, "mailto:") || strings.HasPrefix(href, "tel:") {
 			core.HTTPOpen(wnd.Navigation(), core.URI(href), target)
 		} else {
 			u, err := url.Parse(href)

@@ -5,7 +5,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -19,7 +18,7 @@ func main() {
 			return ui.VStack(
 				list.List(
 					list.Entry().
-						Leading(avatar.Text("Bilbo")).
+						Leading(ui.MailTo(wnd, "test@test.de", "test@test.de")).
 						Headline("Bilbo").
 						SupportingText("Ein Beutlin.").
 						Trailing(ui.ImageIcon(heroSolid.ArrowRight)),
