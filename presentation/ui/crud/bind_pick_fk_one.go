@@ -20,6 +20,7 @@ type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 	// ForeignPickerRenderer converts a T into a View for the picker dialog step. If nil, the value is
 	// transformed using %v into a TextView.
 	ForeignPickerRenderer func(T) core.View
+	SupportingText        string
 }
 
 // OneToOne binds a field with foreign key characteristics to a picker. See also [PickOne] for value
@@ -49,7 +50,8 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 	var zero IDOfT
 
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {

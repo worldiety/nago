@@ -77,7 +77,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 							continue
 						}
 
-						fieldsBuilder.Append(OneToMany[E](OneToManyOptions[AnyEntity, string]{Label: label, ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+						fieldsBuilder.Append(OneToMany[E](OneToManyOptions[AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
 							func(obj *E) []string {
 								slice := reflect.ValueOf(obj).Elem().FieldByName(field.Name)
 								tmp := make([]string, 0, slice.Len())
@@ -187,7 +187,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 							}
 						}
 
-						fieldsBuilder.Append(PickOne[E, taggedValueEntry](PickOneOptions[taggedValueEntry]{Label: label, Values: pickedEntryList, Style: styleOpts}, PropertyFuncs(
+						fieldsBuilder.Append(PickOne[E, taggedValueEntry](PickOneOptions[taggedValueEntry]{Label: label, SupportingText: field.Tag.Get("supportingText"), Values: pickedEntryList, Style: styleOpts}, PropertyFuncs(
 							func(obj *E) std.Option[taggedValueEntry] {
 								//fmt.Println(obj)
 								id := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
@@ -212,7 +212,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								continue
 							}
 
-							fieldsBuilder.Append(OneToOne[E](OneToOneOptions[AnyEntity, string]{Label: label, ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+							fieldsBuilder.Append(OneToOne[E](OneToOneOptions[AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
 								func(obj *E) std.Option[string] {
 									v := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
 									if v == "" {

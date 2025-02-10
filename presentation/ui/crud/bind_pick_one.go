@@ -18,10 +18,11 @@ const (
 )
 
 type PickOneOptions[T any] struct {
-	Label        string
-	Values       []T
-	Style        PickOneStyle // Default is PickOneStyleWithPicker
-	ItemRenderer func(T) core.View
+	Label          string
+	Values         []T
+	Style          PickOneStyle // Default is PickOneStyleWithPicker
+	ItemRenderer   func(T) core.View
+	SupportingText string
 }
 
 // PickOne binds a single field of an arbitrary value type to an associate picker. To pick an entity based
@@ -34,7 +35,8 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 	}
 
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {

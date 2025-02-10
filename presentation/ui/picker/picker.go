@@ -229,25 +229,25 @@ func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
 }
 
 func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
-	filtered := c.values
+	filtered := make([]bool, len(c.values))
+	hiddenEntries := 0
 	if c.quickSearch.Get() != "" {
-		filtered = make([]T, 0, len(c.values))
 
 		// do not allocate strings, if we don't need the filter at all
 		predicate := rquery.SimplePredicate[string](c.quickSearch.Get())
 
-		for _, value := range c.values {
+		for idx, value := range c.values {
 			if !predicate(c.stringer(value)) {
-				continue
+				hiddenEntries++
+				filtered[idx] = true
 			}
-			filtered = append(filtered, value)
 		}
 
 	}
 
 	var quickSearchHelpText string
-	if len(filtered) != len(c.values) {
-		quickSearchHelpText = fmt.Sprintf("%d/%d angezeigt", len(filtered), len(c.values))
+	if hiddenEntries > 0 {
+		quickSearchHelpText = fmt.Sprintf("%d/%d angezeigt", len(filtered)-hiddenEntries, len(c.values))
 	} else {
 		quickSearchHelpText = fmt.Sprintf("%d Einträge durchsuchen", len(c.values))
 	}
@@ -282,11 +282,13 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 			BackgroundColor(ui.ColorCardBody).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
 
 			for i, value := range filtered {
-
+				if value {
+					continue
+				}
 				state := c.checkboxStates[i]
 				yield(ui.TableRow(
 					ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
-					ui.TableCell(c.renderToSelect(value))),
+					ui.TableCell(c.renderToSelect(c.values[i]))),
 				)
 			}
 		})...), func(table ui.TTable) ui.TTable {
