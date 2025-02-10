@@ -223,7 +223,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 		if group.Name == "" {
 			rootViews.Append(fields...)
 		} else {
-			rootViews.Append(cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16)))
+			rootViews.Append(cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16)).Frame(ui.Frame{}.FullWidth()))
 		}
 	}
 
