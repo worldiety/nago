@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
@@ -66,6 +67,16 @@ type RequiresPasswordChange func(uid ID) (bool, error)
 
 type ChangePasswordWithCode func(uid ID, code string, newPassword Password, newRepeated Password) error
 
+// DisplayName leaks information details about the given user, if you already know that the ID is there.
+// The returned information may be stale, to improve performance.
+type DisplayName func(uid ID) Compact
+
+type Compact struct {
+	Avatar      image.ID
+	Displayname string
+	Mail        Email
+	Valid       bool
+}
 type UseCases struct {
 	Create                    Create
 	FindByID                  FindByID
@@ -92,6 +103,7 @@ type UseCases struct {
 	ResetVerificationCode     ResetVerificationCode
 	RequiresPasswordChange    RequiresPasswordChange
 	ResetPasswordRequestCode  ResetPasswordRequestCode
+	DisplayName               DisplayName
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -156,5 +168,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		RequiresPasswordChange:    requiresPasswordChangeFn,
 		ResetPasswordRequestCode:  resetPasswordRequestCodeFn,
 		ChangePasswordWithCode:    changePasswordWithCodeFn,
+		DisplayName:               NewDisplayName(users, time.Minute*5),
 	}
 }
