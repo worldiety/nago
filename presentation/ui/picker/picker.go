@@ -106,8 +106,12 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		return false
 	})
 
-	count := c.syncCurrentSelectedState()
-	c.selectAllCheckbox.Set(count == len(c.values))
+	if c.currentSelectedState.Get() == nil {
+		// try to optimize state init to lower roundtrip times. we cannot use init, because
+		// of logic ordering
+		count := c.syncCurrentSelectedState()
+		c.selectAllCheckbox.Set(count == len(c.values))
+	}
 
 	return c
 }
