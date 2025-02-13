@@ -82,16 +82,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 					}
 				}
 
-				// better re-allocate, we don't know what the owner does with it and it may break value-semantics otherwise
-				selected := make([]T, 0, len(c.values))
-				count := 0
-				for i2, state := range c.checkboxStates {
-					if state.Get() {
-						selected = append(selected, c.values[i2])
-						count++
-					}
-				}
-				c.currentSelectedState.Set(selected)
+				count := c.syncCurrentSelectedState()
 
 				c.selectAllCheckbox.Set(count == len(c.values))
 			}))
@@ -115,7 +106,25 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		return false
 	})
 
+	count := c.syncCurrentSelectedState()
+	c.selectAllCheckbox.Set(count == len(c.values))
+
 	return c
+}
+
+func (c TPicker[T]) syncCurrentSelectedState() (selectedCount int) {
+	// better re-allocate, we don't know what the owner does with it and it may break value-semantics otherwise
+	selected := make([]T, 0, len(c.values))
+	count := 0
+	for i2, state := range c.checkboxStates {
+		if state.Get() {
+			selected = append(selected, c.values[i2])
+			count++
+		}
+	}
+	c.currentSelectedState.Set(selected)
+
+	return count
 }
 
 func (c TPicker[T]) DialogPresented() *core.State[bool] {
@@ -285,11 +294,21 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 				if value {
 					continue
 				}
+
 				state := c.checkboxStates[i]
-				yield(ui.TableRow(
-					ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
-					ui.TableCell(c.renderToSelect(c.values[i]))),
-				)
+
+				if c.multiselect.Get() {
+					yield(ui.TableRow(
+						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
+						ui.TableCell(c.renderToSelect(c.values[i]))),
+					)
+				} else {
+					yield(ui.TableRow(
+						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state)),
+						ui.TableCell(c.renderToSelect(c.values[i]))),
+					)
+				}
+
 			}
 		})...), func(table ui.TTable) ui.TTable {
 			if !quickFilterVisible {
