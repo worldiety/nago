@@ -86,7 +86,7 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToMany
 				property.Set(&tmp, ids)
 				entity.Set(tmp)
 
-				if reflect.DeepEqual(oldValue, newValue) {
+				if !reflect.DeepEqual(oldValue, newValue) {
 					entity.Notify()
 				}
 

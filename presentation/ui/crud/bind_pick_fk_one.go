@@ -88,7 +88,7 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 				}
 
 				entity.Set(tmp)
-				if reflect.DeepEqual(oldValue, newValue) {
+				if !reflect.DeepEqual(oldValue, newValue) {
 					entity.Notify()
 				}
 

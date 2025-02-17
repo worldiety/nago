@@ -37,7 +37,7 @@ func PickMultiple[E any, T any](opts PickMultipleOptions[T], property Property[E
 				property.Set(&tmp, newValue)
 				entity.Set(tmp)
 
-				if reflect.DeepEqual(oldValue, newValue) {
+				if !reflect.DeepEqual(oldValue, newValue) {
 					entity.Notify()
 				}
 
