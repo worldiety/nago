@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/picker"
 	"iter"
 	"log/slog"
+	"reflect"
 	"strings"
 )
 
@@ -75,6 +76,7 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToMany
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 
 				ids := make([]IDOfT, 0, len(newValue))
 				for _, t := range newValue {
@@ -83,6 +85,10 @@ func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToMany
 
 				property.Set(&tmp, ids)
 				entity.Set(tmp)
+
+				if reflect.DeepEqual(oldValue, newValue) {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
 			})

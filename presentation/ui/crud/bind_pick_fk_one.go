@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/picker"
 	"iter"
 	"log/slog"
+	"reflect"
 	"strings"
 )
 
@@ -57,6 +58,7 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
+
 				optId := property.Get(&tmp)
 
 				if optId.IsSome() {
@@ -77,6 +79,7 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 
 				if len(newValue) > 0 {
 					property.Set(&tmp, std.Some[IDOfT](newValue[0].Identity()))
@@ -85,6 +88,9 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 				}
 
 				entity.Set(tmp)
+				if reflect.DeepEqual(oldValue, newValue) {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
 			})
