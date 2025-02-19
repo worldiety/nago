@@ -12,6 +12,11 @@ type AdminManagement struct {
 	Pages       uiadmin.Pages
 }
 
+func (c *Configurator) AddAdminCenterGroup(group func() admin.Group) *Configurator {
+	c.adminManagementGroups = append(c.adminManagementGroups, group)
+	return c
+}
+
 // WithAdminManagement installs a mutator for a future invocation or immediately mutates the current configuration.
 // Note, that even though most build-in implementations will perform a dynamic lookup, you may still want to install
 // the handler BEFORE any *Management system has been initialized.
@@ -83,7 +88,13 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 					pages.Template = c.templateManagement.Pages
 				}
 
-				return admin.DefaultGroups(pages)
+				var groups []admin.Group
+				for _, groupFn := range c.adminManagementGroups {
+					groups = append(groups, groupFn())
+				}
+
+				groups = append(groups, admin.DefaultGroups(pages)...)
+				return groups
 			},
 			QueryGroups: admin.NewGroups(func() []admin.Group {
 				// be invariant on replacements for FindAll, so that developer can inject custom admin groups

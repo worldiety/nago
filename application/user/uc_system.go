@@ -16,6 +16,12 @@ func NewSystem() SysUser {
 	}
 }
 
+// SU returns a static super user or system user. Note, that this is not necessarily the
+// same as the use case instantiated SysUser.
+func SU() Subject {
+	return sysUser{}
+}
+
 type sysUser struct {
 }
 

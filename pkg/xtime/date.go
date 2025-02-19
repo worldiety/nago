@@ -8,7 +8,8 @@ import (
 
 const (
 	// GermanDate is dd.MM.yyyy in classical notation.
-	GermanDate = "02.01.2006"
+	GermanDate     = "02.01.2006"
+	GermanDateTime = "02.01.2006 um 15:04"
 )
 
 // Date represents a day/month/year tuple without any associated timezone.
