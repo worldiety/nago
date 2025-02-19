@@ -2,6 +2,7 @@ package secret
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
@@ -20,6 +21,8 @@ type FindMySecretByID func(subject auth.Subject, id ID) (std.Option[Secret], err
 // UpdateMySecretGroups updates the secret with the given group set. It is only allowed, to add
 // groups, in which the subject is also a member. For sure, the subject must be also the owner.
 type UpdateMySecretGroups func(subject auth.Subject, id ID, groups []group.ID) error
+
+type UpdateMySecretOwners func(subject auth.Subject, id ID, owners []user.ID) error
 
 // UpdateMyCredentials updates the secret with the given credentials, if the subject is the owner.
 type UpdateMyCredentials func(subject auth.Subject, id ID, credentials Credentials) error
@@ -62,6 +65,7 @@ type UseCases struct {
 	DeleteMySecretByID   DeleteMySecretByID
 	UpdateMySecretGroups UpdateMySecretGroups
 	FindGroupSecrets     FindGroupSecrets
+	UpdateMySecretOwners UpdateMySecretOwners
 }
 
 func NewUseCases(repository Repository) UseCases {
@@ -73,6 +77,7 @@ func NewUseCases(repository Repository) UseCases {
 	deleteMySecretByIDFn := NewDeleteMySecretByID(repository)
 	updateMySecretGroupsFn := NewUpdateMySecretGroups(&globalLock, repository)
 	findGroupSecretsFn := NewFindGroupSecrets(repository)
+	updateMySecretOwnersFn := NewUpdateMySecretOwners(&globalLock, repository)
 
 	return UseCases{
 		FindMySecrets:        findMySecretsFn,
@@ -82,5 +87,6 @@ func NewUseCases(repository Repository) UseCases {
 		DeleteMySecretByID:   deleteMySecretByIDFn,
 		UpdateMySecretGroups: updateMySecretGroupsFn,
 		FindGroupSecrets:     findGroupSecretsFn,
+		UpdateMySecretOwners: updateMySecretOwnersFn,
 	}
 }

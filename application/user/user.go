@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xstrings"
 	"golang.org/x/text/language"
 	"regexp"
 	"strings"
@@ -158,7 +159,7 @@ type User struct {
 }
 
 func (u User) String() string {
-	return string(u.ID)
+	return xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname) + " (" + string(u.Email) + ")"
 }
 
 func (u User) Identity() ID {

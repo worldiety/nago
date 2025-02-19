@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -23,7 +24,9 @@ func EditSecretPage(
 	findSecret secret.FindMySecretByID,
 	updateSecret secret.UpdateMyCredentials,
 	updateSecretGroups secret.UpdateMySecretGroups,
+	updateMySecretOwners secret.UpdateMySecretOwners,
 	findMyGroups group.FindMyGroups,
+	findAllUsers user.FindAll,
 ) core.View {
 	id := secret.ID(wnd.Values()["id"])
 	optScr, err := findSecret(wnd.Subject(), id)
@@ -42,6 +45,7 @@ func EditSecretPage(
 		return scr.Credentials
 	})
 
+	// shared groups
 	var availGroups []group.Group
 	var initalSelected []group.Group
 	for grp, err := range findMyGroups(wnd.Subject()) {
@@ -57,6 +61,23 @@ func EditSecretPage(
 
 	selectedGroups := core.AutoState[[]group.Group](wnd).Init(func() []group.Group {
 		return initalSelected
+	})
+
+	// shared users
+	var availUsers []user.User
+	var initalSelectedUsers []user.User
+	for usr, err := range findAllUsers(user.SU()) {
+		if err != nil {
+			return alert.BannerError(err)
+		}
+		availUsers = append(availUsers, usr)
+		if slices.Contains(scr.Owners, usr.ID) {
+			initalSelectedUsers = append(initalSelectedUsers, usr)
+		}
+	}
+
+	selectedUsers := core.AutoState[[]user.User](wnd).Init(func() []user.User {
+		return initalSelectedUsers
 	})
 
 	spec := newCredentialTypeSpec(reflect.TypeOf(scr.Credentials))
@@ -99,7 +120,13 @@ func EditSecretPage(
 			Body(form.Auto[secret.Credentials](form.AutoOptions{}, state)).
 			Frame(ui.Frame{}.FullWidth()),
 
-		groupEditor(wnd, availGroups, selectedGroups),
+		groupEditor(
+			wnd,
+			availGroups,
+			selectedGroups,
+			availUsers,
+			selectedUsers,
+		),
 		ui.HLineWithColor(ui.ColorAccent),
 		ui.HStack(
 			ui.SecondaryButton(func() {
@@ -128,6 +155,16 @@ func EditSecretPage(
 					return
 				}
 
+				var uids []user.ID
+				for _, usr := range selectedUsers.Get() {
+					uids = append(uids, usr.ID)
+				}
+
+				if err := updateMySecretOwners(wnd.Subject(), id, uids); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+
 				fmt.Println(state.Get())
 				wnd.Navigation().ForwardTo(pages.Vault, nil)
 			}).Title("Speichern"),
@@ -138,10 +175,20 @@ func EditSecretPage(
 	).Gap(ui.L16).Alignment(ui.Leading).Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L560})
 }
 
-func groupEditor(wnd core.Window, availGroups []group.Group, selectedGroups *core.State[[]group.Group]) core.View {
+func groupEditor(
+	wnd core.Window,
+	availGroups []group.Group,
+	selectedGroups *core.State[[]group.Group],
+	availUsers []user.User,
+	selectedUsers *core.State[[]user.User],
+) core.View {
 	return cardlayout.Card("Veröffentlichungen").
 		Body(ui.VStack(
 			picker.Picker[group.Group]("Gruppen", availGroups, selectedGroups).
+				MultiSelect(true).
+				Frame(ui.Frame{}.FullWidth()),
+
+			picker.Picker[user.User]("geteilt mit", availUsers, selectedUsers).
 				MultiSelect(true).
 				Frame(ui.Frame{}.FullWidth()),
 		).FullWidth()).
