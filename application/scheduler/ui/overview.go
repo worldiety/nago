@@ -78,8 +78,18 @@ func PageOverview(wnd core.Window, scheduleUseCases scheduler.UseCases) core.Vie
 			).Alignment(ui.Leading).FullWidth()).Footer(ui.SecondaryButton(func() {
 			editSettingsPresented.Set(true)
 		}).Title("Einstellungen bearbeiten")).Frame(ui.Frame{}.FullWidth()),
-
 		ui.FixedSpacer(ui.L48, ui.L48),
+
+		ui.IfFunc(len(status.Options.Actions) > 0, func() core.View {
+			return ui.HStack(
+				ui.ForEach(status.Options.Actions, func(t scheduler.CustomAction) core.View {
+					return ui.SecondaryButton(func() {
+						t.Action(wnd.Context())
+					}).Title(t.Title)
+				})...,
+			).FullWidth().Gap(ui.L8).Alignment(ui.Trailing)
+		}),
+
 		ui.H2("Log-Einträge"),
 		logView(wnd, sid, scheduleUseCases),
 	).FullWidth().Alignment(ui.Leading)

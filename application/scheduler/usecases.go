@@ -27,6 +27,10 @@ const (
 	Manual
 )
 
+type CustomAction struct {
+	Title  string
+	Action func(ctx context.Context)
+}
 type Options struct {
 	ID          ID
 	Name        string
@@ -34,6 +38,7 @@ type Options struct {
 	Kind        Kind
 	Defaults    Settings
 	Runner      func(context.Context) error
+	Actions     []CustomAction
 }
 
 type StatusResult struct {

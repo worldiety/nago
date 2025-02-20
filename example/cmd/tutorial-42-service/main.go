@@ -41,8 +41,22 @@ func main() {
 			Kind:        scheduler.OneShot,
 			Runner: func(ctx context.Context) error {
 				log := scheduler.LoggerFrom(ctx)
-				log.Info("hello world")
+				log.Info("hello world", "a", "b")
 				return nil
+			},
+			Actions: []scheduler.CustomAction{
+				{
+					Title: "hello world",
+					Action: func(ctx context.Context) {
+						fmt.Println("hello world")
+					},
+				},
+				{
+					Title: "hello world",
+					Action: func(ctx context.Context) {
+						fmt.Println("hello world")
+					},
+				},
 			},
 		}))
 

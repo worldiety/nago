@@ -264,8 +264,8 @@ func (s *Scheduler) logLevel(level slog.Level, msg string, args ...any) {
 		args = nil
 	}
 	var tmp map[string]any
-	if len(s.logs) > 0 {
-		tmp = make(map[string]any, len(s.logs))
+	if len(args) > 0 {
+		tmp = make(map[string]any, len(args))
 		for i := 0; i < len(args); i += 2 {
 			k := args[i]
 			if v, ok := k.(string); ok && v != "" {
