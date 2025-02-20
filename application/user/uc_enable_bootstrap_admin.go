@@ -50,6 +50,7 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			PermUpdateOtherGroups,
 			PermCountAssignedUserLicense,
 			PermRevokeAssignedUserLicense,
+			PermUpdateaccountStatus,
 			group.PermCreate,
 			group.PermFindAll,
 			group.PermDelete,

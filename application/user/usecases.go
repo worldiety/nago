@@ -29,6 +29,8 @@ type UpdateOtherRoles func(subject AuditableUser, id ID, roles []role.ID) error
 type UpdateOtherPermissions func(subject AuditableUser, id ID, permissions []permission.ID) error
 type UpdateOtherGroups func(subject AuditableUser, id ID, groups []group.ID) error
 
+type AddUserToGroup func(subject AuditableUser, id ID, group group.ID) error
+
 type UpdateOtherLicenses func(subject AuditableUser, id ID, licenses []license.ID) error
 type ReadMyContact func(subject AuditableUser) (Contact, error)
 
@@ -107,6 +109,7 @@ type UseCases struct {
 	ResetPasswordRequestCode  ResetPasswordRequestCode
 	DisplayName               DisplayName
 	UpdateAccountStatus       UpdateAccountStatus
+	AddUserToGroup            AddUserToGroup
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -173,5 +176,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		ChangePasswordWithCode:    changePasswordWithCodeFn,
 		DisplayName:               NewDisplayName(users, time.Minute*5),
 		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
+		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
 	}
 }
