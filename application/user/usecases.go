@@ -71,6 +71,8 @@ type ChangePasswordWithCode func(uid ID, code string, newPassword Password, newR
 // The returned information may be stale, to improve performance.
 type DisplayName func(uid ID) Compact
 
+type UpdateAccountStatus func(subject permission.Auditable, id ID, status AccountStatus) error
+
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -104,6 +106,7 @@ type UseCases struct {
 	RequiresPasswordChange    RequiresPasswordChange
 	ResetPasswordRequestCode  ResetPasswordRequestCode
 	DisplayName               DisplayName
+	UpdateAccountStatus       UpdateAccountStatus
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -169,5 +172,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		ResetPasswordRequestCode:  resetPasswordRequestCodeFn,
 		ChangePasswordWithCode:    changePasswordWithCodeFn,
 		DisplayName:               NewDisplayName(users, time.Minute*5),
+		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
 	}
 }
