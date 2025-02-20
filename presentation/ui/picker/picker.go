@@ -138,11 +138,21 @@ func (c TPicker[T]) DialogPresented() *core.State[bool] {
 func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {
 	for i, value := range c.values {
 		found := false
+		equalable, ok := any(value).(interface{ Equals(other any) bool })
 		for _, t := range state.Get() {
-			if reflect.DeepEqual(value, t) {
-				found = true
-				break
+			if ok {
+				if equalable.Equals(t) {
+					found = true
+					break
+				}
+
+			} else {
+				if reflect.DeepEqual(value, t) {
+					found = true
+					break
+				}
 			}
+
 		}
 
 		c.checkboxStates[i].Set(found)

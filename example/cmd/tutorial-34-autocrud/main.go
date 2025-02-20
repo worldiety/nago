@@ -17,12 +17,13 @@ import (
 type PersonID string
 
 type Person struct {
-	ID       PersonID `visible:"false"`
-	Vorname  string   `table-visible:"false"`
-	Nachname string   `label:"Zuname"`
-	Nr       string   `section:"Adressdaten"`
-	Strasse  string   `section:"Adressdaten"`
-	Anrede   string   `values:"[\"Herr\",\"Frau\"]"`
+	ID       PersonID   `visible:"false"`
+	Vorname  string     `table-visible:"false"`
+	Nachname string     `label:"Zuname"`
+	Nr       string     `section:"Adressdaten"`
+	Strasse  string     `section:"Adressdaten"`
+	Anrede   string     `values:"[\"Herr\",\"Frau\"]"`
+	Friends  []PersonID `source:"persons"`
 }
 
 func (p Person) Identity() PersonID {
@@ -42,6 +43,9 @@ func main() {
 		// this must happen before IAM init, otherwise the permissions are missing
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
+		cfg.AddSystemService("persons", crud.AnyUseCaseList(useCases.FindAll))
+
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().
