@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/std"
+	"strings"
 )
 
 func NewFindByMail(repository Repository) FindByMail {
@@ -11,6 +12,9 @@ func NewFindByMail(repository Repository) FindByMail {
 		if err := subject.Audit(PermFindByMail); err != nil {
 			return std.None[User](), err
 		}
+
+		// normalize given mail
+		email = Email(strings.TrimSpace(strings.ToLower(string(email))))
 
 		// do not introduce the global mutex here, because they are not reentrant you likely get a deadlock
 		// TODO this is really slow O(n), we either need some cache or an inverse index

@@ -34,7 +34,7 @@ func NewCreate(mutex *sync.Mutex, eventBus events.EventBus, findByMail FindByMai
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Die Kennwörter stimmen nicht überein.")
 		}
 
-		mail := Email(strings.ToLower(string(model.Email)))
+		mail := Email(strings.TrimSpace(strings.ToLower(string(model.Email))))
 		if !mail.Valid() {
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Auch wenn es sich um eine potentiell gültige E-Mail Adresse handeln könnte, wird dieses Format nicht unterstützt.")
 		}
