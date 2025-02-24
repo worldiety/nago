@@ -3,7 +3,7 @@ import { Frame } from '@/shared/proto/nprotoc_gen';
 
 export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];
-	if (!frame) {
+	if (!frame || frame.isZero()) {
 		return styles;
 	}
 
@@ -27,8 +27,8 @@ export function frameCSS(frame?: Frame): string[] {
 		styles.push('min-height:' + cssLengthValue(frame.minHeight.value));
 	}
 
-	if (!frame.maxHeight) {
-		styles.push('max-height:' + cssLengthValue(frame.maxHeight));
+	if (!frame.maxHeight.isZero()) {
+		styles.push('max-height:' + cssLengthValue(frame.maxHeight.value));
 	}
 
 	return styles;

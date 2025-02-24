@@ -5,7 +5,7 @@ import { Border } from '@/shared/proto/nprotoc_gen';
 export function borderCSS(border?: Border): string[] {
 	const css: string[] = [];
 
-	if (!border) {
+	if (!border || border.isZero()) {
 		return css;
 	}
 

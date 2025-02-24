@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"time"
 )
 
 var myPermission = permission.Declare[SayHello]("de.worldiety.tutorial.say_hello", "Jeden Grüßen", "Diese Erlaubnis muss dem Nutzer zugewiesen werden.")
@@ -34,6 +35,8 @@ func main() {
 
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
+
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 
 		sayHello := NewSayHello()
 

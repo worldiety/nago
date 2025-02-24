@@ -66,6 +66,7 @@ const style = computed<string>(() => {
 			break;
 	}
 
+
 	styles.push(...marginCSS(props.ui.padding));
 
 	return styles.join(';');

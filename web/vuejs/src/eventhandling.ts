@@ -1,26 +1,29 @@
-import { Channel } from '@/shared/network/serviceAdapter';
+import {Channel} from '@/shared/network/serviceAdapter';
 import {
 	ColorScheme,
 	ColorSchemeValues,
-	DP,
 	Density,
+	DP,
+	FileImportRequested,
 	Locale,
+	NavigationForwardToRequested,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
+	SendMultipleRequested,
 	Str,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
-	WindowSizeClassValues, SendMultipleRequested,
+	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import { URI } from '@/shared/protocol/ora/uRI';
-import ThemeManager, { ThemeKey } from '@/shared/themeManager';
-import type {Event} from "@/shared/protocol/ora/event";
+import {URI} from '@/shared/protocol/ora/uRI';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import {UploadRepository} from "@/api/upload/uploadRepository";
 
 let nextRequestTracingID: number = 1;
 
@@ -100,8 +103,15 @@ export function requestScopeConfigurationChange(chan: Channel, themeManager: The
 	let evt = new ScopeConfigurationChangeRequested();
 	evt.windowInfo = getWindowInfo(themeManager);
 
-	evt.acceptLanguage = new Locale(navigator.language || navigator.languages[0]);
+	evt.acceptLanguage = getLocale();
 	chan.sendEvent(evt);
+}
+
+/**
+ * getLocale returns whatever the browser thinks, the locale/language the user wants.
+ */
+export function getLocale(): Locale {
+	return new Locale(navigator.language || navigator.languages[0]);
 }
 
 /**
@@ -201,5 +211,106 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
 	document.body.appendChild(a);
 	a.click();
 	document.body.removeChild(a);
+}
 
+/**
+ * triggerFileUpload applies some hack to simulate a user-requested file upload by inserting fake
+ * nodes and showing the native browser file picker.
+ * @param uploadRepository
+ * @param evt
+ */
+export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): void {
+	let input = document.createElement('input');
+	input.className = 'hidden';
+	input.type = 'file';
+	input.id = evt.iD.value;
+	input.multiple = evt.multiple.value;
+	input.onchange = (event) => {
+		const item = event.target as HTMLInputElement;
+		if (!item.files) {
+			return;
+		}
+		for (let i = 0; i < item.files.length; i++) {
+			uploadRepository.fetchUpload(
+				item.files[i],
+				evt.iD.value,
+				0,
+				evt.scopeID.value,
+				(uploauploadId: string, progress: number, total: number) => {
+					console.log('progress', progress);
+				},
+				(uploadId) => {
+				},
+				(uploadId) => {
+				},
+				(uploadId) => {
+					console.log('upload failed');
+				}
+			);
+		}
+	};
+	if (evt.allowedMimeTypes.value) {
+		input.accept = evt.allowedMimeTypes.value.join(',');
+	}
+	document.body.appendChild(input);
+	input.showPicker();
+	//	input.click() // this does not work properly on safari
+	document.body.removeChild(input);
+}
+
+
+/**
+ * navigateForward issues a RootViewAllocationRequested to the backend and updates the browser history stack.
+ * @param chan
+ * @param evt
+ */
+export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
+
+	chan.sendEvent(new RootViewAllocationRequested(
+		getLocale(),
+		evt.rootView,
+		nextRID(),
+		evt.values,
+	));
+
+
+	let url = `/${evt.rootView.value}`;
+	if (evt.values.value && Object.entries(evt.values.value).length > 0) {
+		url += '?';
+		Object.entries(evt.values.value).forEach(([key, value], index, array) => {
+			url += `${key}=${value}`;
+			if (index < array.length - 1) {
+				url += '&';
+			}
+		});
+	}
+	history.pushState(evt, '', url);
+}
+
+/**
+ * applyRootViewState applies a new root view based on the given state.
+ * @param chan
+ * @param state
+ */
+export function applyRootViewState(chan: Channel, state: any) {
+	const evt = state as NavigationForwardToRequested;
+	let req = new RootViewAllocationRequested();
+	// important: evt/history.state may be in broken state, due to the way how javascript deserializes the state
+	// it is NOT of NavigationForwardToRequested anymore
+	if (evt.rootView && evt.rootView.value) {
+		req.factory.value = evt.rootView.value;
+	}
+
+	if (req.factory.value === "") {
+		req.factory.value = "."
+	}
+
+	if (evt.values && evt.values.value) {
+		req.values = new RootViewParameters(evt.values.value);
+	}
+
+	req.locale = getLocale();
+	req.rID = nextRID();
+
+	chan.sendEvent(req);
 }

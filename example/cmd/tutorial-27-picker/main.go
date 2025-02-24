@@ -6,8 +6,8 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"go.wdy.de/nago/presentation/ui/tracking"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -54,7 +54,7 @@ func main() {
 				PrimaryButton(func() {
 					fmt.Println(personState)
 				}).Title("print selected").Enabled(enabled.Get()),
-				tracking.ErrorView(wnd, err),
+				alert.BannerError(err),
 			).
 				Frame(Frame{}.MatchScreen())
 		})

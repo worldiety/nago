@@ -1,42 +1,49 @@
 <script setup lang="ts">
-import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useUploadRepository } from '@/api/upload/uploadRepository';
+import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useUploadRepository} from '@/api/upload/uploadRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import { useErrorHandling } from '@/composables/errorhandling';
-import { useEventBus } from '@/composables/eventBus';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {useErrorHandling} from '@/composables/errorhandling';
+import {useEventBus} from '@/composables/eventBus';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {
+	applyRootViewState,
+	getLocale,
 	getWindowInfo,
+	navigateForward,
+	nextRID,
 	onScopeConfigurationChanged,
 	requestRootViewAllocation,
 	requestRootViewRendering,
-	requestScopeConfigurationChange, triggerFileDownload,
+	requestScopeConfigurationChange,
+	triggerFileDownload,
+	triggerFileUpload,
 	windowInfoChanged,
 } from '@/eventhandling';
-import { EventType } from '@/shared/eventbus/eventType';
+import {EventType} from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import { ConnectionState } from '@/shared/network/connectionState';
+import {ConnectionState} from '@/shared/network/connectionState';
 import {
 	Component,
 	ErrorRootViewAllocationRequired,
+	FileImportRequested,
+	NavigationForwardToRequested,
+	RootViewAllocationRequested,
 	RootViewInvalidated,
+	RootViewParameters,
 	ScopeConfigurationChanged,
-	WindowInfo,
 	SendMultipleRequested,
 } from '@/shared/proto/nprotoc_gen';
-import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
-import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
-import type { Event } from '@/shared/protocol/ora/event';
-import { FileImportRequested } from '@/shared/protocol/ora/fileImportRequested';
-import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
-import { OpenRequested } from '@/shared/protocol/ora/openRequested';
-import type { Theme } from '@/shared/protocol/ora/theme';
-import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
-import type { Themes } from '@/shared/protocol/ora/themes';
-import { useThemeManager } from '@/shared/themeManager';
+import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
+import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
+import type {Event} from '@/shared/protocol/ora/event';
+import {OpenRequested} from '@/shared/protocol/ora/openRequested';
+import type {Theme} from '@/shared/protocol/ora/theme';
+import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
+import type {Themes} from '@/shared/protocol/ora/themes';
+import {useThemeManager} from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -93,9 +100,19 @@ async function applyConfiguration(): Promise<void> {
 			return;
 		}
 
-		if (evt instanceof SendMultipleRequested){
+		if (evt instanceof SendMultipleRequested) {
 			triggerFileDownload(evt);
 			return;
+		}
+
+		if (evt instanceof FileImportRequested) {
+			triggerFileUpload(uploadRepository, evt)
+			return
+		}
+
+		if (evt instanceof NavigationForwardToRequested) {
+			navigateForward(serviceAdapter, evt)
+			return
 		}
 
 	});
@@ -191,34 +208,6 @@ function updateUi(event: Event): void {
 	state.value = State.ShowUI;
 }
 
-async function navigateForward(event: Event): Promise<void> {
-	console.log('navigate forward', ui.value);
-
-	const navigationForwardToRequested = event as NavigationForwardToRequested;
-	if (ui.value) {
-		await serviceAdapter.destroyComponent(ui.value?.id);
-	}
-	const componentInvalidated = await serviceAdapter.createComponent(
-		navigationForwardToRequested.factory,
-		navigationForwardToRequested.values
-	);
-	ui.value = componentInvalidated.value;
-
-	componentKey.value += 1;
-	console.log('componentkey', componentKey.value);
-
-	let url = `/${navigationForwardToRequested.factory}`;
-	if (navigationForwardToRequested.values && Object.entries(navigationForwardToRequested.values).length > 0) {
-		url += '?';
-		Object.entries(navigationForwardToRequested.values).forEach(([key, value], index, array) => {
-			url += `${key}=${value}`;
-			if (index < array.length - 1) {
-				url += '&';
-			}
-		});
-	}
-	history.pushState(navigationForwardToRequested, '', url);
-}
 
 function navigateBack(): void {
 	history.back();
@@ -230,7 +219,7 @@ function navigateReload(): void {
 
 function resetHistory(event: Event): void {
 	// todo this seems not possible in the web
-	navigateForward(event);
+	navigateForward(serviceAdapter, event);
 }
 
 const uploadRepository = useUploadRepository();
@@ -282,45 +271,6 @@ function themeRequested(evt: Event): void {
 	windowInfoChanged(serviceAdapter);
 }
 
-function fileImportRequested(evt: Event): void {
-	let msg = evt as FileImportRequested;
-	let input = document.createElement('input');
-	input.className = 'hidden';
-	input.type = 'file';
-	input.id = msg.id;
-	input.multiple = msg.multiple;
-	input.onchange = (event) => {
-		const item = event.target as HTMLInputElement;
-		if (!item.files) {
-			return;
-		}
-		for (let i = 0; i < item.files.length; i++) {
-			uploadRepository.fetchUpload(
-				item.files[i],
-				msg.id,
-				0,
-				msg.scopeID,
-				(uploauploadId: string, progress: number, total: number) => {
-					console.log('progress', progress);
-				},
-				(uploadId) => {},
-				(uploadId) => {},
-				(uploadId) => {
-					console.log('upload failed');
-				}
-			);
-		}
-	};
-	if (msg.allowedMimeTypes) {
-		input.accept = msg.allowedMimeTypes.join(',');
-	}
-	document.body.appendChild(input);
-	input.showPicker();
-	//	input.click()
-	document.body.removeChild(input);
-}
-
-
 
 function setTheme(themes: Themes): void {
 	let activeTheme: Theme;
@@ -340,19 +290,14 @@ function setTheme(themes: Themes): void {
 const activeBreakpoint = ref(-1);
 
 function addEventListeners(): void {
-	/*addEventListener('popstate', (event) => {
+	addEventListener('popstate', (event) => {
 		if (event.state === null) {
 			return;
 		}
 
-		const req2 = history.state as NavigationForwardToRequested;
-		if (ui.value) {
-			serviceAdapter.destroyComponent(ui.value.id);
-		}
-		serviceAdapter.createComponent(req2.factory, req2.values).then((invalidation) => {
-			ui.value = invalidation.value;
-		});
-	});*/
+		console.log("pop state",event)
+		applyRootViewState(serviceAdapter,history.state)
+	});
 
 	window.addEventListener('resize', function (event) {
 		const info = getWindowInfo(themeManager);
@@ -439,8 +384,8 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected" />
-	<ConnectingChannelOverlay v-if="state === State.Loading" />
+	<ConnectionLostOverlay v-if="!connected"/>
+	<ConnectingChannelOverlay v-if="state === State.Loading"/>
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
@@ -458,7 +403,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
 	</div>
 </template>

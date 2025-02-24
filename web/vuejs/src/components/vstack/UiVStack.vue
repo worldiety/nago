@@ -168,6 +168,7 @@ const clazz = computed<string>(() => {
 </script>
 
 <template>
+	<!-- vstack-->
 	<div
 		v-if="props.ui.stylePreset.value === StylePresetValues.StyleNone && !props.ui.invisible.value"
 		:class="clazz"

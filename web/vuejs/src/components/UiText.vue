@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
-import { borderCSS } from '@/components/shared/border';
-import { colorValue } from '@/components/shared/colors';
-import { fontCSS } from '@/components/shared/font';
-import { frameCSS } from '@/components/shared/frame';
-import { paddingCSS } from '@/components/shared/padding';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, TextAlignmentValues, TextView } from '@/shared/proto/nprotoc_gen';
+import {computed, ref} from 'vue';
+import {borderCSS} from '@/components/shared/border';
+import {colorValue} from '@/components/shared/colors';
+import {fontCSS} from '@/components/shared/font';
+import {frameCSS} from '@/components/shared/frame';
+import {paddingCSS} from '@/components/shared/padding';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {FunctionCallRequested, TextAlignmentValues, TextView} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: TextView;
@@ -64,6 +64,7 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible.value" :style="styles" @click="onClick">{{ props.ui.value.value }}</span>
-	<br v-if="!ui.invisible.value && ui.lineBreak.value" />
+	<span v-if="!ui.invisible.value" :style="styles" @click="onClick">{{ props.ui.value.value }}	<br
+		v-if="!ui.invisible.value && ui.lineBreak.value"/> </span>
+
 </template>
