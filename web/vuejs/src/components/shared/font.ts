@@ -1,5 +1,5 @@
 // see also https://developer.mozilla.org/en-US/docs/Web/CSS/font
-import {Font, FontStyleValues} from "@/shared/proto/nprotoc_gen";
+import { Font, FontStyleValues } from '@/shared/proto/nprotoc_gen';
 
 export function fontCSS(font?: Font): string[] {
 	const styles: string[] = [];

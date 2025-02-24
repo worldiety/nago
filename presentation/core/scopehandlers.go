@@ -14,6 +14,8 @@ func (s *Scope) handleEvent(t proto.NagoEvent) {
 	switch evt := t.(type) {
 	case *proto.UpdateStateValueRequested:
 		s.handleSetPropertyValueRequested(evt)
+	case *proto.UpdateStateValues2Requested:
+		s.handleSetPropertyValues2Requested(evt)
 	case *proto.FunctionCallRequested:
 		s.handleFunctionCallRequested(evt)
 	case *proto.RootViewAllocationRequested:
@@ -81,6 +83,70 @@ func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueReque
 			RID:     evt.RID,
 			Message: proto.Str(fmt.Sprintf("cannot set property: invalid property value: %d", evt.StatePointer)),
 		})
+	}
+
+	if evt.FunctionPointer.IsZero() {
+		return
+	}
+
+	s.handleFunctionCallRequested(&proto.FunctionCallRequested{
+		RID: evt.RID,
+		Ptr: evt.FunctionPointer,
+	})
+}
+
+func (s *Scope) handleSetPropertyValues2Requested(evt *proto.UpdateStateValues2Requested) {
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: evt.GetRID()})
+		return
+	}
+
+	// think about refactoring into a common code branch, however, the casual branch above is much
+	// leaner and faster and requires less allocations
+
+	alloc := s.allocatedRootView.Unwrap()
+
+	type stateToSet struct {
+		ptr proto.Ptr
+		val proto.Str
+	}
+
+	var states []stateToSet
+	if !evt.StatePtr0.IsZero() {
+		states = append(states, stateToSet{
+			ptr: evt.StatePtr0,
+			val: evt.Value0,
+		})
+	}
+
+	if !evt.StatePtr1.IsZero() {
+		states = append(states, stateToSet{
+			ptr: evt.StatePtr1,
+			val: evt.Value1,
+		})
+	}
+
+	if len(states) == 0 {
+		return
+	}
+
+	for idx, stateHolder := range states {
+		state, ok := alloc.states[stateHolder.ptr]
+		if !ok {
+			slog.Error("property 0 not found", slog.Any("evt", evt))
+			s.Publish(&proto.ErrorOccurred{
+				Message: proto.Str(fmt.Sprintf("cannot set property %d: no such pointer found: %d", idx, &stateHolder.ptr)),
+			})
+			return
+		}
+
+		if err := state.parse(string(stateHolder.val)); err != nil {
+			slog.Error("invalid property0 value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
+			s.Publish(&proto.ErrorOccurred{
+				RID:     evt.RID,
+				Message: proto.Str(fmt.Sprintf("cannot set property %d: invalid property value: %v", idx, stateHolder.val)),
+			})
+		}
 	}
 
 	if evt.FunctionPointer.IsZero() {

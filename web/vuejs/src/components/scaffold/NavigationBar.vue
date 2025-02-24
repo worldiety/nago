@@ -5,12 +5,12 @@
 			<div class="website-content w-full flex justify-between items-center">
 				<div class="h-full *:h-full">
 					<!-- nav bar icon -->
-					<ui-generic v-if="props.ui.l" :ui="props.ui.l" />
+					<ui-generic v-if="props.ui.logo" :ui="props.ui.logo" />
 				</div>
 				<div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
 					<div
-						v-for="(menuEntry, index) in ui.m"
+						v-for="(menuEntry, index) in ui.menu.value"
 						:key="index"
 						ref="menuEntryElements"
 						class="h-full"
@@ -55,31 +55,31 @@
 							ref="subMenuEntryElements"
 							class="font-medium rounded-full px-2"
 							:class="{
-								'mb-4': subMenuEntry.m?.length > 0,
-								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.a,
+								'mb-4': subMenuEntry.menu.value?.length > 0,
+								'cursor-pointer hover:underline focus-visible:underline': !subMenuEntry.action.isZero(),
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 							}"
-							:tabindex="subMenuEntry.a ? '0' : '-1'"
+							:tabindex="!subMenuEntry.action.isZero() ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
-							{{ subMenuEntry.t }}
+							{{ subMenuEntry.title.value }}
 						</p>
 						<!-- Sub sub menu entries -->
 						<p
-							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.m"
+							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.value"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
 							class="sub-sub-menu-entry rounded-full px-2"
 							:class="{
-								'cursor-pointer hover:underline focus-visible:underline': subSubMenuEntry.a,
+								'cursor-pointer hover:underline focus-visible:underline': !subSubMenuEntry.action.isZero(),
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="subSubMenuEntry.a ? '0' : '-1'"
+							:tabindex="!subSubMenuEntry.action.isZero() ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.t }}
+							{{ subSubMenuEntry.title.value }}
 						</p>
 					</div>
 				</div>
@@ -91,11 +91,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { Scaffold } from '@/shared/protocol/ora/scaffold';
-import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
+import {FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -128,33 +127,38 @@ watch(
 );
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
-	return props.ui.m?.find((menuEntry) => menuEntry.x);
+	return props.ui.menu.value?.find((menuEntry) => menuEntry.expanded.value);
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
-	const entries: ScaffoldMenuEntry[] = props.ui.m
-		?.filter((menuEntry) => menuEntry.x)
-		.flatMap((menuEntry) => menuEntry.m ?? []);
+	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
+		?.filter((menuEntry) => menuEntry.expanded.value)
+		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && expandedMenuEntry.value?.a) {
-		entries.unshift({
-			...expandedMenuEntry.value,
-			m: {
-				...expandedMenuEntry.value.m,
-				v: [],
-			},
-		});
+	if (entries.length > 0 && !expandedMenuEntry.value?.action.isZero()) {
+		entries.unshift(
+			new ScaffoldMenuEntry(
+				expandedMenuEntry.value?.icon,
+				expandedMenuEntry.value?.iconActive,
+				expandedMenuEntry.value?.title,
+				expandedMenuEntry.value?.action,
+				expandedMenuEntry.value?.rootView,
+				new ScaffoldMenuEntries(),//xpandedEntry.value?.menu,
+				expandedMenuEntry.value?.badge,
+				expandedMenuEntry.value?.expanded
+			)
+		);
 	}
 	return entries;
 });
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	if (menuEntry.f == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+	if (menuEntry.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
 
-	return `/${menuEntry.f}` === window.location.pathname;
+	return `/${menuEntry.rootView.value}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -172,12 +176,12 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.m?.forEach((value) => (value.x = false));
+		props.ui.menu.value?.forEach((value) => (value.expanded.value = false));
 	}
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	const activeMenuEntryIndex: number | undefined = props.ui.m?.findIndex((menuEntry) => menuEntry.x);
+	const activeMenuEntryIndex: number | undefined = props.ui.menu.value?.findIndex((menuEntry) => menuEntry.expanded.value);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
 	}
@@ -194,8 +198,11 @@ function updateSubMenuTriangleLeftOffset(): void {
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
-	if (menuEntry.a) {
-		serviceAdapter.executeFunctions(menuEntry.a);
+	if (!menuEntry.action.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			menuEntry.action,
+			nextRID(),
+		))
 	}
 }
 
@@ -216,16 +223,16 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 	//
 	// serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 
-	if (!props.ui.m) {
+	if (props.ui.menu.isZero()) {
 		return;
 	}
 
-	for (let i = 0; i < props.ui.m.length; i++) {
-		let m = props.ui.m.at(i)!;
-		m.x = false;
+	for (let i = 0; i < props.ui.menu.value.length; i++) {
+		let m = props.ui.menu.value.at(i)!;
+		m.expanded.value = false;
 	}
 
-	menuEntry.x = true;
+	menuEntry.expanded.value = true;
 
 	updateSubMenuTriangleLeftOffset();
 }

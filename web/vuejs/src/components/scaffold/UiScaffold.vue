@@ -5,7 +5,7 @@
 
 	<div class="min-h-full" :class="bodyWrapperClass">
 		<div class="website-content min-h-full">
-			<ui-generic :ui="props.ui.b" />
+			<ui-generic v-if="props.ui.body" :ui="props.ui.body" />
 		</div>
 	</div>
 </template>
@@ -16,8 +16,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
 import Sidebar from '@/components/scaffold/Sidebar.vue';
 import BurgerMenu from '@/components/scaffold/burgermenu/BurgerMenu.vue';
-import { Alignment } from '@/components/shared/alignments';
-import type { Scaffold } from '@/shared/protocol/ora/scaffold';
+import { Scaffold, ScaffoldAlignmentValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -34,11 +33,11 @@ onUnmounted(() => {
 });
 
 const navigationBarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.a === Alignment.Top;
+	return windowWidth.value >= 768 && props.ui.alignment.value === ScaffoldAlignmentValues.ScaffoldAlignmentTop;
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.a === Alignment.Leading;
+	return windowWidth.value >= 768 && props.ui.alignment.value === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
 });
 
 const burgerMenuVisible = computed((): boolean => {

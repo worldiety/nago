@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useUploadRepository} from '@/api/upload/uploadRepository';
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import GenericUi from '@/components/UiGeneric.vue';
+import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import {useErrorHandling} from '@/composables/errorhandling';
-import {useEventBus} from '@/composables/eventBus';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { useErrorHandling } from '@/composables/errorhandling';
+import { useEventBus } from '@/composables/eventBus';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	getWindowInfo,
 	onScopeConfigurationChanged,
 	requestRootViewAllocation,
 	requestRootViewRendering,
 	requestScopeConfigurationChange,
-	windowInfoChanged
+	windowInfoChanged,
 } from '@/eventhandling';
-import {EventType} from '@/shared/eventbus/eventType';
+import { EventType } from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import {ConnectionState} from '@/shared/network/connectionState';
+import { ConnectionState } from '@/shared/network/connectionState';
 import {
 	Component,
 	ErrorRootViewAllocationRequired,
@@ -25,18 +26,17 @@ import {
 	ScopeConfigurationChanged,
 	WindowInfo,
 } from '@/shared/proto/nprotoc_gen';
-import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
-import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
-import type {Event} from '@/shared/protocol/ora/event';
-import {FileImportRequested} from '@/shared/protocol/ora/fileImportRequested';
-import type {NavigationForwardToRequested} from '@/shared/protocol/ora/navigationForwardToRequested';
-import {OpenRequested} from '@/shared/protocol/ora/openRequested';
-import type {SendMultipleRequested} from '@/shared/protocol/ora/sendMultipleRequested';
-import type {Theme} from '@/shared/protocol/ora/theme';
-import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
-import type {Themes} from '@/shared/protocol/ora/themes';
-import {useThemeManager} from '@/shared/themeManager';
-import ConnectingChannelOverlay from "@/components/overlays/ConnectingChannelOverlay.vue";
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
+import type { Event } from '@/shared/protocol/ora/event';
+import { FileImportRequested } from '@/shared/protocol/ora/fileImportRequested';
+import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
+import { OpenRequested } from '@/shared/protocol/ora/openRequested';
+import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
+import type { Theme } from '@/shared/protocol/ora/theme';
+import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
+import type { Themes } from '@/shared/protocol/ora/themes';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -79,13 +79,13 @@ async function applyConfiguration(): Promise<void> {
 		console.log('app received nago event', evt);
 		if (evt instanceof ScopeConfigurationChanged) {
 			onScopeConfigurationChanged(themeManager, evt);
-			return
+			return;
 		}
 
 		if (evt instanceof RootViewInvalidated) {
 			ui.value = evt.root;
 			state.value = State.ShowUI;
-			return
+			return;
 		}
 
 		if (evt instanceof ErrorRootViewAllocationRequired) {
@@ -93,7 +93,7 @@ async function applyConfiguration(): Promise<void> {
 		}
 	});
 
-	requestRootViewRendering(serviceAdapter)
+	requestRootViewRendering(serviceAdapter);
 	/*
 		// request and apply configuration
 		const config = await serviceAdapter.getConfiguration();
@@ -120,7 +120,6 @@ function restoreCookie(sessionID: string) {
 		}
 	});
 }
-
 
 async function initializeUi(): Promise<void> {
 	try {
@@ -297,10 +296,8 @@ function fileImportRequested(evt: Event): void {
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {
-				},
-				(uploadId) => {
-				},
+				(uploadId) => {},
+				(uploadId) => {},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -342,7 +339,6 @@ function setTheme(themes: Themes): void {
 			break;
 	}
 }
-
 
 const activeBreakpoint = ref(-1);
 
@@ -446,8 +442,8 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected"/>
-	<ConnectingChannelOverlay v-if="state === State.Loading"/>
+	<ConnectionLostOverlay v-if="!connected" />
+	<ConnectingChannelOverlay v-if="state === State.Loading" />
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
@@ -465,7 +461,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
 	</div>
 </template>

@@ -1,26 +1,25 @@
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	ColorScheme,
 	ColorSchemeValues,
-	Density,
 	DP,
+	Density,
 	Locale,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	Str,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
-import {URI} from "@/shared/protocol/ora/uRI";
-import {Channel} from "@/shared/network/serviceAdapter";
-
+import { URI } from '@/shared/protocol/ora/uRI';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -30,9 +29,8 @@ let nextRequestTracingID: number = 1;
  */
 export function nextRID(): RID {
 	nextRequestTracingID++;
-	return new RID(nextRequestTracingID)
+	return new RID(nextRequestTracingID);
 }
-
 
 /**
  * windowInfoChanged emits the according event into the channel. There is logic behind it to avoid
@@ -47,7 +45,7 @@ export function windowInfoChanged(chan: Channel, themeManager: ThemeManager) {
  * getWindowInfo calculates the current WindowInfo and returns it.
  */
 export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
-	let windowInfo = new WindowInfo()
+	let windowInfo = new WindowInfo();
 	windowInfo.density = new Density(window.devicePixelRatio);
 	windowInfo.width = new DP(window.innerWidth);
 	windowInfo.height = new DP(window.innerHeight);
@@ -69,7 +67,7 @@ export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
  * to be displayed. We can never know that.
  */
 export function requestRootViewRendering(chan: Channel) {
-	chan.sendEvent(new RootViewRenderingRequested())
+	chan.sendEvent(new RootViewRenderingRequested());
 }
 
 /**
@@ -90,22 +88,16 @@ export function requestRootViewAllocation(chan: Channel, locale: Locale) {
 		null
 	);
 
-	chan.sendEvent(new RootViewAllocationRequested(
-		locale,
-		rootViewID,
-		nextRID(),
-		rootViewParams,
-	))
+	chan.sendEvent(new RootViewAllocationRequested(locale, rootViewID, nextRID(), rootViewParams));
 }
 
 /**
  * requestConfigurationChange sends an initiative event to the backend. Usually, this should only happen
  * once after initialization. Note, that there is a special event just for [WindowInfoChanged].
  */
-export function requestScopeConfigurationChange(chan: Channel, themeManager: ThemeManager,) {
+export function requestScopeConfigurationChange(chan: Channel, themeManager: ThemeManager) {
 	let evt = new ScopeConfigurationChangeRequested();
 	evt.windowInfo = getWindowInfo(themeManager);
-
 
 	evt.acceptLanguage = new Locale(navigator.language || navigator.languages[0]);
 	chan.sendEvent(evt);
@@ -120,7 +112,7 @@ export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: Sco
 	themeManager.applyActiveTheme();
 	themeManager.activeLocale = evt.activeLocale;
 	updateFavicon(evt.appIcon.toString());
-	console.log("onScopeConfigurationChanged", evt)
+	console.log('onScopeConfigurationChanged', evt);
 }
 
 /**
@@ -167,7 +159,6 @@ function updateFavicon(uri: URI) {
 	link.href = uri;
 }
 
-
 /**
  * requiredRootViewID returns the current root view based on the current window location path.
  * If pathname is empty, the Nago defined index identifier "." is returned.
@@ -194,5 +185,3 @@ function requiredRootViewParameter(): RootViewParameters {
 
 	return params;
 }
-
-

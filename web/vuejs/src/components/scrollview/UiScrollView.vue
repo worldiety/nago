@@ -4,7 +4,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
-import {ScrollView, ScrollViewAxisValues} from "@/shared/proto/nprotoc_gen";
+import { ScrollView, ScrollViewAxisValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ScrollView;

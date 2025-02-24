@@ -10,7 +10,7 @@
 			/>
 			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0">
 				<div class="">
-					<ui-generic v-if="props.ui.l" :ui="props.ui.l" />
+					<ui-generic v-if="props.ui.logo" :ui="props.ui.logo" />
 				</div>
 			</div>
 		</div>
@@ -33,7 +33,7 @@
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry
-							v-for="(menuEntry, index) in ui.m"
+							v-for="(menuEntry, index) in ui.menu.value"
 							:key="index"
 							:ui="menuEntry"
 							:top-level="true"
@@ -67,7 +67,7 @@
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>
 							<div class="flex justify-start items-center h-6">
-								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.t }}</p>
+								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title.value }}</p>
 							</div>
 						</div>
 						<!-- Sub menu entries -->
@@ -97,9 +97,9 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
-import { Scaffold } from '@/shared/protocol/ora/scaffold';
-import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
+import {FunctionCallRequested, Scaffold, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
+
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -109,47 +109,53 @@ const serviceAdapter = useServiceAdapter();
 const menuOpen = ref<boolean>(false);
 
 const expandedTopLevelMenuEntry = computed((): ScaffoldMenuEntry | null => {
-	return props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x) ?? null;
+	return props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value) ?? null;
 });
 
 const expandedTopLevelMenuEntryLinked = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && !!expandedTopLevelMenuEntry.value.a;
+	return !!expandedTopLevelMenuEntry.value && !expandedTopLevelMenuEntry.value.action.isZero();
 });
 
 const expandedTopLevelMenuEntryActive = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.f}` === window.location.pathname;
+	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.rootView.value}` === window.location.pathname;
 });
 
 const subMenuVisible = computed((): boolean => {
-	const expandedTopLevelMenuEntry = props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x);
-	console.log('!!!!', !!expandedTopLevelMenuEntry?.m);
-	return !!expandedTopLevelMenuEntry?.m;
+	const expandedTopLevelMenuEntry = props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value);
+	console.log('!!!!', !!expandedTopLevelMenuEntry?.menu.value);
+	return !!expandedTopLevelMenuEntry?.menu.value;
 });
 
-const subMenuEntries = computed((): MenuEntry[] => {
-	if (!props.ui.m) {
+const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
+	if (props.ui.menu.isZero()) {
 		return [];
 	}
-	const expandedTopLevelMenuEntry = props.ui.m?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.x);
+	const expandedTopLevelMenuEntry = props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value);
 	if (!expandedTopLevelMenuEntry) {
-		return props.ui.m;
+		return props.ui.menu.value;
 	}
-	return expandedTopLevelMenuEntry.m ?? props.ui.m;
+	return expandedTopLevelMenuEntry.menu.value ?? props.ui.menu.value;
 });
 
 function navigateToExpandedTopLevelMenuEntry(): void {
-	if (!expandedTopLevelMenuEntry.value?.a) {
+	if (expandedTopLevelMenuEntry.value?.action.isZero()) {
 		return;
 	}
-	menuEntryClicked(expandedTopLevelMenuEntry.value);
+
+	if (expandedTopLevelMenuEntry.value){
+		menuEntryClicked(expandedTopLevelMenuEntry.value);
+	}
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
-	if (!menuEntry.a) {
+	if (menuEntry.action.isZero()) {
 		return;
 	}
 
-	serviceAdapter.executeFunctions(menuEntry.a);
+	serviceAdapter.sendEvent(new FunctionCallRequested(
+		menuEntry.action,
+		nextRID(),
+	));
 }
 
 function returnToTopLevelMenu(): void {
@@ -161,7 +167,7 @@ function returnToTopLevelMenu(): void {
 	// 	v: false,
 	// }], [expandedTopLevelMenuEntry.value.onFocus])
 
-	expandedTopLevelMenuEntry.value.x = false;
+	expandedTopLevelMenuEntry.value.expanded.value = false;
 }
 </script>
 

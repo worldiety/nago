@@ -1,0 +1,33 @@
+{
+  "doc": "UpdateStateValue2Requested is raised from the frontend to update at most 2 state values hold by the backend. It can also immediately invoke a function callback in the same cycle.",
+  "kind": "Record",
+  "id": 112,
+  "fields": {
+    "1": {
+      "name": "StatePtr0",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Value0",
+      "type": "Str"
+    },
+    "3": {
+      "name": "StatePtr1",
+      "type": "Ptr"
+    },
+    "4": {
+      "name": "Value1",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "A FunctionPointer is invoked, if not zero.",
+      "Name": "FunctionPointer",
+      "type": "Ptr"
+    },
+    "6": {
+      "name": "RID",
+      "type": "RID",
+      "getter": true
+    }
+  }
+}

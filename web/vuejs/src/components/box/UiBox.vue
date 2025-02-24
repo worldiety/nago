@@ -6,8 +6,7 @@ import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue0Px } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
-import {Alignment, AlignmentValues, Box, Padding} from "@/shared/proto/nprotoc_gen";
-
+import { Alignment, AlignmentValues, Box, Padding } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Box;
@@ -83,7 +82,11 @@ function childClass(a?: Alignment): string {
 <template v-if="props.ui.children">
 	<!-- box -->
 	<div :class="clazz" :style="frameStyles">
-		<div v-for="ui in props.ui.children.value" :class="childClass(ui.alignment)" :style="childMargin(ui.alignment, props.ui.padding)">
+		<div
+			v-for="ui in props.ui.children.value"
+			:class="childClass(ui.alignment)"
+			:style="childMargin(ui.alignment, props.ui.padding)"
+		>
 			<ui-generic v-if="ui.component" :ui="ui.component" />
 		</div>
 	</div>

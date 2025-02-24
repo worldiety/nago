@@ -278,6 +278,7 @@ type NagoEvent interface {
 }
 
 func (UpdateStateValueRequested) isNagoEvent()         {}
+func (UpdateStateValues2Requested) isNagoEvent()       {}
 func (FunctionCallRequested) isNagoEvent()             {}
 func (RootViewAllocationRequested) isNagoEvent()       {}
 func (RootViewDestructionRequested) isNagoEvent()      {}
@@ -8467,6 +8468,133 @@ func (v *WindowInfoChanged) read(r *BinaryReader) error {
 	return nil
 }
 
+// UpdateStateValue2Requested is raised from the frontend to update at most 2 state values hold by the backend. It can also immediately invoke a function callback in the same cycle.
+type UpdateStateValues2Requested struct {
+	StatePtr0 Ptr
+	Value0    Str
+	StatePtr1 Ptr
+	Value1    Str
+	// A FunctionPointer is invoked, if not zero.
+	FunctionPointer Ptr
+	RID             RID
+}
+
+func (v *UpdateStateValues2Requested) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.StatePtr0.IsZero()
+	fields[2] = !v.Value0.IsZero()
+	fields[3] = !v.StatePtr1.IsZero()
+	fields[4] = !v.Value1.IsZero()
+	fields[5] = !v.FunctionPointer.IsZero()
+	fields[6] = !v.RID.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.StatePtr0.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Value0.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.StatePtr1.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value1.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.FunctionPointer.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *UpdateStateValues2Requested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.StatePtr0.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value0.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.StatePtr1.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value1.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.FunctionPointer.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.RID.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -9154,6 +9282,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 111:
 		var v WindowInfoChanged
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 112:
+		var v UpdateStateValues2Requested
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -11102,6 +11236,22 @@ func (v *WindowInfoChanged) IsZero() bool {
 func (v *WindowInfoChanged) GetRID() RID {
 	return v.RID
 }
+func (v *UpdateStateValues2Requested) reset() {
+	v.StatePtr0.reset()
+	v.Value0.reset()
+	v.StatePtr1.reset()
+	v.Value1.reset()
+	v.FunctionPointer.reset()
+	v.RID.reset()
+}
+
+func (v *UpdateStateValues2Requested) IsZero() bool {
+	return v.StatePtr0.IsZero() && v.Value0.IsZero() && v.StatePtr1.IsZero() && v.Value1.IsZero() && v.FunctionPointer.IsZero() && v.RID.IsZero()
+}
+
+func (v *UpdateStateValues2Requested) GetRID() RID {
+	return v.RID
+}
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -11874,6 +12024,13 @@ func (v *WebView) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *WindowInfoChanged) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 111); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *UpdateStateValues2Requested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 112); err != nil {
 		return err
 	}
 	return nil

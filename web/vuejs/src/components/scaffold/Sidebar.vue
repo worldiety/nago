@@ -2,12 +2,12 @@
 	<nav ref="sidebar" class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4" aria-label="Sidebar">
 		<!-- Sidebar -->
 		<div class="relative flex flex-col items-center justify-start gap-y-4 h-full w-full pt-6 px-4 pb-7 z-10 bg-M4">
-			<div v-if="ui.l" class="w-full *:w-full mb-4">
-				<ui-generic :ui="ui.l" />
+			<div v-if="ui.logo" class="w-full *:w-full mb-4">
+				<ui-generic :ui="ui.logo" />
 			</div>
 			<!-- Top level menu entries -->
 			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
-				<div v-for="(menuEntry, index) in ui.m" :key="index" ref="menuEntryElements" class="w-full">
+				<div v-for="(menuEntry, index) in ui.menu.value" :key="index" ref="menuEntryElements" class="w-full">
 					<MenuEntryComponent
 						:ui="menuEntry"
 						:menu-entry-index="index"
@@ -45,15 +45,15 @@
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
 					>
-						<p class="font-medium">{{ subMenuEntry.t }}</p>
+						<p class="font-medium">{{ subMenuEntry.title.value }}</p>
 						<TriangleDown
-							v-if="subMenuEntry.m?.length > 0"
+							v-if="subMenuEntry.menu.value?.length > 0"
 							class="duration-150 w-2 -mr-1"
-							:class="{ 'rotate-180': subMenuEntry.x }"
+							:class="{ 'rotate-180': subMenuEntry.expanded.value }"
 						/>
 					</div>
 					<div
-						v-if="subMenuEntry.x && subMenuEntry.m?.length > 0"
+						v-if="subMenuEntry.expanded.value && subMenuEntry.menu.value?.length > 0"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
 						<!-- Sub sub menu entries -->
@@ -64,14 +64,14 @@
 							class="rounded-full py-2 px-4"
 							:class="{
 								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35':
-									subSubMenuEntry.a,
+									subSubMenuEntry.action.value,
 								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="subSubMenuEntry.a ? '0' : '-1'"
+							:tabindex="subSubMenuEntry.action.value ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.t }}
+							{{ subSubMenuEntry.title.value }}
 						</p>
 					</div>
 				</div>
@@ -81,14 +81,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { Scaffold } from '@/shared/protocol/ora/scaffold';
-import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {
+	FunctionCallRequested,
+	Scaffold,
+	ScaffoldMenuEntries,
+	ScaffoldMenuEntry,
+	UpdateStateValueRequested
+} from '@/shared/proto/nprotoc_gen';
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -109,35 +115,45 @@ onUnmounted(() => {
 });
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
-	return props.ui.m?.find((menuEntry) => menuEntry.x);
+	return props.ui.menu?.value.find((menuEntry) => menuEntry.expanded.value);
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
-	const entries: ScaffoldMenuEntry[] = props.ui.m
-		?.filter((menuEntry) => menuEntry.x)
-		.flatMap((menuEntry) => menuEntry.m ?? []);
+	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
+		?.filter((menuEntry) => menuEntry.expanded.value)
+		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries?.length > 0 && expandedMenuEntry.value?.a) {
-		entries.unshift({
-			...expandedMenuEntry.value,
-			m: {
-				...expandedMenuEntry.value.m,
-				//v: [],
-			},
-		});
+	// TODO I don't understand this code and the logic behind it? Who owns what entry and are we talking about copies?
+	const xpandedEntry = expandedMenuEntry;
+	if (xpandedEntry == undefined) {
+		return [];
+	}
+
+	if (entries?.length > 0 && !expandedMenuEntry.value?.action.isZero()) {
+		entries.unshift(
+			new ScaffoldMenuEntry(
+				xpandedEntry.value?.icon,
+				xpandedEntry.value?.iconActive,
+				xpandedEntry.value?.title,
+				xpandedEntry.value?.action,
+				xpandedEntry.value?.rootView,
+				new ScaffoldMenuEntries(),//xpandedEntry.value?.menu,
+				xpandedEntry.value?.badge,
+				xpandedEntry.value?.expanded
+			)
+		);
 	}
 	return entries ?? [];
 });
 
 function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	let clickable = menuEntry.a != undefined || (menuEntry.m && menuEntry.m.length > 0);
-	return !!clickable;
+	return !menuEntry.action.isZero() || (menuEntry.menu.isZero());
 }
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	return `/${menuEntry.f}` === window.location.pathname;
+	return `/${menuEntry.rootView.value}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -154,8 +170,8 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.m?.forEach((value) => {
-			value.x = false;
+		props.ui.menu.value?.forEach((value) => {
+			value.expanded.value = false;
 		});
 	}
 }
@@ -169,28 +185,38 @@ function focusFirstLinkedSubMenuEntry(): void {
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 	if (isClickableMenuEntry(menuEntry)) {
-		if (menuEntry.m && menuEntry.m.length > 0) {
-			serviceAdapter.setProperties({
+		if (!menuEntry.menu.isZero() && menuEntry.menu.value.length > 0) {
+			// TODO I screwed this code up and do not know any more what the idea was. I broke it obviously a long time ago
+
+			/*serviceAdapter.setProperties({
 				...menuEntry.x,
 				v: !menuEntry.x,
-			});
-		} else if (menuEntry.a) {
-			serviceAdapter.executeFunctions(menuEntry.a);
+			});*/
+		} else if (!menuEntry.action.isZero()) {
+			serviceAdapter.sendEvent(new FunctionCallRequested(
+				menuEntry.action,
+				nextRID(),
+			));
 		}
 	}
 }
 
 function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntry[] {
-	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.m];
+	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.menu.value];
 	// Add the sub menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && subMenuEntry.a) {
-		entries.unshift({
-			...subMenuEntry,
-			m: {
-				...subMenuEntry.m,
-				v: [],
-			},
-		});
+	if (entries.length > 0 && !subMenuEntry.action.isZero()) {
+		entries.unshift(
+			new ScaffoldMenuEntry(
+				subMenuEntry?.icon,
+				subMenuEntry?.iconActive,
+				subMenuEntry?.title,
+				subMenuEntry?.action,
+				subMenuEntry?.rootView,
+				new ScaffoldMenuEntries(),
+				subMenuEntry?.badge,
+				subMenuEntry?.expanded
+			)
+		);
 	}
 	return entries;
 }
@@ -202,16 +228,16 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 			v: entry.id === menuEntry.id,
 		};
 	});*/
-	if (!props.ui.m) {
+	if (!props.ui.menu.isZero()) {
 		return;
 	}
 
-	for (let i = 0; i < props.ui.m.length; i++) {
-		let m = props.ui.m.at(i);
-		m.x = false;
+	for (let i = 0; i < props.ui.menu.value.length; i++) {
+		let m = props.ui.menu.value.at(i)!;
+		m.expanded.value = false;
 	}
 
-	menuEntry.x = true;
+	menuEntry.expanded.value = true;
 
 	//serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]); //TODO?
 }

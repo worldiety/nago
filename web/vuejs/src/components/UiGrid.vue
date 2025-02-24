@@ -7,7 +7,7 @@ import { fontCSS } from '@/components/shared/font';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
-import {Grid} from "@/shared/proto/nprotoc_gen";
+import { Grid } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Grid;
@@ -16,7 +16,7 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (props.ui.columns.isZero() ) {
+	if (props.ui.columns.isZero()) {
 		styles.push('grid-auto-columns: auto');
 	} else {
 		if (!props.ui.colWidths.isZero()) {

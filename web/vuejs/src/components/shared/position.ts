@@ -1,6 +1,5 @@
-import {cssLengthValue} from '@/components/shared/length';
-import {Position, PositionTypeValues} from "@/shared/proto/nprotoc_gen";
-
+import { cssLengthValue } from '@/components/shared/length';
+import { Position, PositionTypeValues } from '@/shared/proto/nprotoc_gen';
 
 export function positionCSS(position?: Position): string[] {
 	const styles: string[] = [];
@@ -42,6 +41,6 @@ export function positionCSS(position?: Position): string[] {
 	if (!position.bottom.isZero()) {
 		styles.push('bottom:' + cssLengthValue(position.bottom.value));
 	}
-	
+
 	return styles;
 }

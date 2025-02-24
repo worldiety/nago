@@ -53,7 +53,8 @@ func (c *Compiler) tsEmitRecordConstructor(t Typename, decl Record) {
 	c.p("constructor(")
 	for _, field := range decl.sortedFields() {
 		if c.tsCanBeUndefined(field.Type) {
-			c.p(tsFieldName(field.Name))
+			c.p(tsFieldName(field.Name), ": ")
+			c.p(string(field.Type), "|undefined")
 			c.p(" = undefined, ")
 		} else {
 			c.p(tsFieldName(field.Name), ": ", string(field.Type))

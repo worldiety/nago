@@ -1,5 +1,5 @@
 import { cssLengthValue } from '@/components/shared/length';
-import {Frame} from "@/shared/proto/nprotoc_gen";
+import { Frame } from '@/shared/proto/nprotoc_gen';
 
 export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];

@@ -10,10 +10,10 @@ import { onMounted, ref } from 'vue';
 import MoonIcon from '@/assets/svg/moon.svg';
 import SunIcon from '@/assets/svg/sun.svg';
 import { useEventBus } from '@/composables/eventBus';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { windowInfoChanged } from '@/eventhandling';
 import { EventType } from '@/shared/eventbus/eventType';
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
-import {windowInfoChanged} from "@/eventhandling";
-import {useServiceAdapter} from "@/composables/serviceAdapter";
 
 const themeManager = useThemeManager();
 const darkModeActive = ref<boolean>(false);
@@ -29,6 +29,6 @@ function toggleDarkMode() {
 	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 
 	//eventBus.publish(EventType.WindowInfoChanged, {});
-	windowInfoChanged(service);
+	windowInfoChanged(service,themeManager);
 }
 </script>

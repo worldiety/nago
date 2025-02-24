@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import {computed, ref, watch} from 'vue';
+import { computed, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {frameCSS} from '@/components/shared/frame';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { frameCSS } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
 import {
 	KeyboardTypeValues,
 	Ptr,
 	Str,
 	TextField,
 	TextFieldStyleValues,
-	UpdateStateValueRequested
-} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
+	UpdateStateValueRequested,
+} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: TextField;
@@ -84,12 +84,9 @@ function submitInputValue(force: boolean): void {
 	}
 
 	if (force || (props.ui.disableDebounce.value && !props.ui.inputValue.isZero())) {
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(
-			props.ui.inputValue,
-			new Ptr(),
-			nextRID(),
-			new Str(inputValue.value),
-		))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(inputValue.value))
+		);
 
 		return;
 	}
@@ -120,12 +117,9 @@ function debouncedInput() {
 			return;
 		}
 
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(
-			props.ui.inputValue,
-			new Ptr(),
-			nextRID(),
-			new Str(inputValue.value),
-		))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(inputValue.value))
+		);
 	}, debounceTime);
 }
 
@@ -165,7 +159,7 @@ const inputMode = computed<string>(() => {
 <template>
 	<div v-if="!ui.invisible.value" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style.value==TextFieldStyleValues.TextFieldReduced"
+			:simple="props.ui.style.value == TextFieldStyleValues.TextFieldReduced"
 			:label="props.ui.label.value"
 			:error="props.ui.errorText.value"
 			:help="props.ui.supportingText.value"
@@ -195,9 +189,11 @@ const inputMode = computed<string>(() => {
 					@input="submitInputValue(false)"
 				/>
 
-				<div v-if="inputValue && !props.ui.disabled.value"
-						 class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
+				<div
+					v-if="inputValue && !props.ui.disabled.value"
+					class="absolute top-0 bottom-0 right-4 flex items-center h-full"
+				>
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 		</InputWrapper>

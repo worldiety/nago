@@ -1,19 +1,20 @@
 <script lang="ts" setup>
-import {computed, ref, watch} from 'vue';
+import { computed, ref, watch } from 'vue';
 import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {frameCSS} from '@/components/shared/frame';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { frameCSS } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
 import {
 	PasswordField,
 	Ptr,
 	Str,
 	StylePresetValues,
-	TextFieldStyle, TextFieldStyleValues,
-	UpdateStateValueRequested
-} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
+	TextFieldStyle,
+	TextFieldStyleValues,
+	UpdateStateValueRequested,
+} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -50,12 +51,9 @@ function submitInputValue(force: boolean): void {
 	}
 
 	if (force || (props.ui.disableDebounce.value && !props.ui.inputValue.isZero())) {
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(
-			props.ui.inputValue,
-			new Ptr(),
-			nextRID(),
-			new Str(inputValue.value),
-		))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(inputValue.value))
+		);
 
 		return;
 	}
@@ -77,16 +75,13 @@ function debouncedInput() {
 
 	clearTimeout(timer);
 	timer = window.setTimeout(() => {
-		if ( inputValue.value == props.ui.value.value) {
+		if (inputValue.value == props.ui.value.value) {
 			return;
 		}
 
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(
-			props.ui.inputValue,
-			new Ptr(),
-			nextRID(),
-			new Str(inputValue.value),
-		))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(inputValue.value))
+		);
 	}, debounceTime);
 }
 
@@ -103,7 +98,7 @@ function toggleRevealed(): void {
 <template>
 	<div v-if="!ui.invisible.value" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style.value==TextFieldStyleValues.TextFieldReduced"
+			:simple="props.ui.style.value == TextFieldStyleValues.TextFieldReduced"
 			:label="props.ui.label.value"
 			:error="props.ui.errorText.value"
 			:help="props.ui.supportingText.value"
@@ -122,9 +117,13 @@ function toggleRevealed(): void {
 					@input="submitInputValue(false)"
 				/>
 				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black h-full">
-					<div :tabindex="props.ui.disabled.value ? '-1' : '0'" @click="toggleRevealed" @keydown.enter="toggleRevealed">
-						<RevealIcon v-if="!props.ui.disabled.value" class="w-6"/>
-						<HideIcon v-else class="w-6"/>
+					<div
+						:tabindex="props.ui.disabled.value ? '-1' : '0'"
+						@click="toggleRevealed"
+						@keydown.enter="toggleRevealed"
+					>
+						<RevealIcon v-if="!props.ui.disabled.value" class="w-6" />
+						<HideIcon v-else class="w-6" />
 					</div>
 				</div>
 			</div>

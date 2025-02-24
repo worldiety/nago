@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { borderCSS } from '@/components/shared/border';
 import { frameCSS } from '@/components/shared/frame';
 import { marginCSS } from '@/components/shared/padding';
-import {Divider} from "@/shared/proto/nprotoc_gen";
+import { Divider } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Divider;

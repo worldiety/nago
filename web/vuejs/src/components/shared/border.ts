@@ -1,6 +1,6 @@
-import {colorValue} from '@/components/shared/colors';
-import {cssLengthValue} from '@/components/shared/length';
-import {Border} from "@/shared/proto/nprotoc_gen";
+import { colorValue } from '@/components/shared/colors';
+import { cssLengthValue } from '@/components/shared/length';
+import { Border } from '@/shared/proto/nprotoc_gen';
 
 export function borderCSS(border?: Border): string[] {
 	const css: string[] = [];

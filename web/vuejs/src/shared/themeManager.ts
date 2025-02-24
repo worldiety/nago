@@ -1,6 +1,6 @@
-import {inject} from 'vue';
-import {themeManagerKey} from '@/shared/injectionKeys';
-import {Locale, Theme, Themes} from "@/shared/proto/nprotoc_gen";
+import { inject } from 'vue';
+import { themeManagerKey } from '@/shared/injectionKeys';
+import { Locale, Theme, Themes } from '@/shared/proto/nprotoc_gen';
 
 export default class ThemeManager {
 	private readonly localStorageKey = 'color-theme';
@@ -79,12 +79,12 @@ export default class ThemeManager {
 		theme.colors.value.forEach((val, key) => {
 			val.value.forEach((colorVal, colorName) => {
 				elem.style.setProperty(`--${colorName.value}`, colorVal.value);
-			})
+			});
 		});
 
 		theme.lengths.value.forEach((lengthVal, lengthName) => {
 			elem.style.setProperty(`--${lengthName.value}`, lengthVal.value);
-		})
+		});
 	}
 }
 

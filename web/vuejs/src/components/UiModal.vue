@@ -3,7 +3,7 @@
 	<Teleport v-else-if="ui.modalType.value == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
 		<Transition>
 			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles">
-				<UiGeneric :ui="ui.content" class=""/>
+				<UiGeneric :ui="ui.content" class="" />
 			</div>
 		</Transition>
 	</Teleport>
@@ -15,16 +15,16 @@
 			@keydown.tab.exact="moveFocusForward"
 			@keydown.shift.tab="moveFocusBackwards"
 		>
-			<UiGeneric v-if="ui.content" :ui="ui.content" class="h-screen w-screen" @click.stop/>
+			<UiGeneric v-if="ui.content" :ui="ui.content" class="h-screen w-screen" @click.stop />
 		</div>
 	</Teleport>
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, ref} from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {cssLengthValue} from '@/components/shared/length';
-import {Modal, ModalTypeValues} from "@/shared/proto/nprotoc_gen";
+import { cssLengthValue } from '@/components/shared/length';
+import { Modal, ModalTypeValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Modal;

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { marginCSS } from '@/components/shared/padding';
-import {AlignmentValues, GridCell} from "@/shared/proto/nprotoc_gen";
+import { AlignmentValues, GridCell } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: GridCell;

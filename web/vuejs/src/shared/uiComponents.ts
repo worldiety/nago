@@ -1,4 +1,4 @@
-import type {Component} from 'vue';
+import type { Component } from 'vue';
 import UiCheckbox from '@/components/UiCheckbox.vue';
 import UiDivider from '@/components/UiDivider.vue';
 import UiGrid from '@/components/UiGrid.vue';
@@ -9,6 +9,8 @@ import UiRadioButton from '@/components/UiRadioButton.vue';
 import UiText from '@/components/UiText.vue';
 import UiTextField from '@/components/UiTextField.vue';
 import UiToggle from '@/components/UiToggle.vue';
+import UiUnknownType from '@/components/UiUnknownType.vue';
+import UiWebView from '@/components/UiWebView.vue';
 import UiWindowTitle from '@/components/UiWindowTitle.vue';
 import UiBox from '@/components/box/UiBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
@@ -19,18 +21,16 @@ import UiSpacer from '@/components/spacer/UiSpacer.vue';
 import UiTable from '@/components/table/UiTable.vue';
 import UiTextLayout from '@/components/textlayout/UiTextLayout.vue';
 import UiVStack from '@/components/vstack/UiVStack.vue';
-
-
 import {
 	Box,
 	Checkbox,
-	Component as NagoComponent,
 	DatePicker,
 	Divider,
 	Grid,
 	HStack,
 	Img,
 	Modal,
+	Component as NagoComponent,
 	PasswordField,
 	Radiobutton,
 	Scaffold,
@@ -43,10 +43,8 @@ import {
 	Toggle,
 	VStack,
 	WebView,
-	WindowTitle
+	WindowTitle,
 } from '@/shared/proto/nprotoc_gen';
-import UiUnknownType from "@/components/UiUnknownType.vue";
-import UiWebView from "@/components/UiWebView.vue";
 
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -131,7 +129,7 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 	}
 
 	if (ngc instanceof Divider) {
-		return UiDivider
+		return UiDivider;
 	}
 
 	if (ngc instanceof WebView) {

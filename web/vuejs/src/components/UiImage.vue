@@ -5,7 +5,7 @@ import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {Img} from "@/shared/proto/nprotoc_gen";
+import { Img } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Img;
@@ -35,7 +35,7 @@ const styles = computed<string>(() => {
 });
 
 const rewriteSVG = computed<string>(() => {
-	if (props.ui.sVG.isZero() ) {
+	if (props.ui.sVG.isZero()) {
 		return '';
 	}
 

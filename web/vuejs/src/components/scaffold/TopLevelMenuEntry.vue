@@ -19,33 +19,33 @@
 		@focus="emit('expand', ui)"
 	>
 		<div
-			v-if="ui.i"
+			v-if="ui.icon"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{
-				'h-10': !ui.t,
-				'mix-blend-multiply bg-M7': !ui.t && hover,
-				'bg-M7 bg-opacity-25': ui.x,
+				'h-10': ui.title.isZero(),
+				'mix-blend-multiply bg-M7': ui.isZero() && hover,
+				'bg-M7 bg-opacity-25': ui.expanded.value,
 				'bg-opacity-35': interacted,
 				'bg-M7 bg-opacity-35': active,
 			}"
 		>
 			<div class="relative">
-				<div class="*:h-full" v-if="ui.x && ui.v">
-					<ui-generic :ui="props.ui.v" />
+				<div class="*:h-full" v-if="ui.expanded.value && ui.iconActive">
+					<ui-generic :ui="props.ui.iconActive!" />
 				</div>
-				<div v-else-if="ui.t" class="*:h-full">
-					<ui-generic :ui="props.ui.i" />
+				<div v-else-if="!ui.title.isZero() && props.ui.icon" class="*:h-full">
+					<ui-generic :ui="props.ui.icon" />
 				</div>
-				<div v-else class="h-10">
-					<ui-generic :ui="props.ui.i" />
+				<div v-else-if="props.ui.icon" class="h-10">
+					<ui-generic :ui="props.ui.icon" />
 				</div>
 
 				<!-- Optional red badge -->
 				<div
-					v-if="ui.b"
+					v-if="!ui.badge.isZero()"
 					class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-A0"
 				>
-					<p class="text-xs text-white">{{ ui.b }}</p>
+					<p class="text-xs text-white">{{ ui.badge.value }}</p>
 				</div>
 			</div>
 		</div>
@@ -53,7 +53,7 @@
 			class="text-sm text-center font-medium select-none hyphens-auto w-full"
 			:class="{ 'font-semibold': linksToCurrentPage }"
 		>
-			{{ ui.t }}
+			{{ ui.title.value }}
 		</p>
 	</div>
 </template>
@@ -62,9 +62,8 @@
 import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { MenuEntry } from '@/shared/protocol/ora/menuEntry';
-import type { SVG } from '@/shared/protocol/ora/sVG';
-import { ScaffoldMenuEntry } from '@/shared/protocol/ora/scaffoldMenuEntry';
+import {FunctionCallRequested, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
@@ -82,11 +81,11 @@ const interacted = ref<boolean>(false);
 const hover = ref<boolean>(false);
 
 const linksToCurrentPage = computed((): boolean => {
-	if (props.ui.f == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+	if (props.ui.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
 
-	return `/${props.ui.f}` === window.location.pathname;
+	return `/${props.ui.rootView.value}` === window.location.pathname;
 });
 
 const active = computed((): boolean => {
@@ -94,13 +93,16 @@ const active = computed((): boolean => {
 });
 
 const hasSubMenuEntries = computed((): boolean => {
-	return !!(props.ui.m && props.ui.m.length > 0);
+	return (props.ui.menu.value && props.ui.menu.value.length > 0);
 });
 
 function handleClick(): void {
-	if (props.ui.a && !hasSubMenuEntries.value) {
+	if (!props.ui.action.isZero() && !hasSubMenuEntries.value) {
 		// If the menu entry has an action and no sub menu entries, execute the action
-		serviceAdapter.executeFunctions(props.ui.a);
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			props.ui.action,
+			nextRID()
+		));
 	} else {
 		// Else expand the menu entry
 		emit('expand', props.ui);
@@ -115,12 +117,12 @@ function handleMouseLeave(): void {
 			...props.ui.x,
 			v: false,
 		});*/
-		props.ui.x = false;
+		props.ui.expanded.value = false;
 	}
 }
 
 function focusFirstLinkedSubMenuEntry(keyPressed: 'down' | 'right'): void {
-	if (!props.ui.m || props.ui.m.length === 0) {
+	if (!props.ui.menu.value || props.ui.menu.value.length === 0) {
 		return;
 	}
 	if (

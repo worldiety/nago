@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {Checkbox, Ptr, Str, UpdateStateValueRequested} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
-import {bool2Str} from "@/components/shared/util";
+import { ref, watch } from 'vue';
+import { bool2Str } from '@/components/shared/util';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { Checkbox, Ptr, Str, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Checkbox;
@@ -26,12 +26,9 @@ watch(
 
 function checkboxSelected(): void {
 	if (!props.ui.disabled.value) {
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(
-			props.ui.inputValue,
-			new Ptr(),
-			nextRID(),
-			new Str(bool2Str(!checked.value)),
-		))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(bool2Str(!checked.value)))
+		);
 	}
 }
 </script>
@@ -46,8 +43,13 @@ function checkboxSelected(): void {
 		@keydown.enter="checkboxSelected"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="checkbox" class="pointer-events-none" tabindex="-1"
-						 :disabled="ui.disabled.value"/>
+			<input
+				:checked="checked"
+				type="checkbox"
+				class="pointer-events-none"
+				tabindex="-1"
+				:disabled="ui.disabled.value"
+			/>
 		</div>
 	</div>
 </template>

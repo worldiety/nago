@@ -3,6 +3,7 @@
   "kind": "Enum",
   "variants": [
     "UpdateStateValueRequested",
+    "UpdateStateValues2Requested",
     "FunctionCallRequested",
     "RootViewAllocationRequested",
     "RootViewDestructionRequested",
