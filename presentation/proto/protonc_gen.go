@@ -265,6 +265,7 @@ func (TextLayout) isComponent()    {}
 func (Table) isComponent()         {}
 func (Toggle) isComponent()        {}
 func (VStack) isComponent()        {}
+func (WebView) isComponent()       {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -1468,6 +1469,8 @@ type FontStyle uint64
 const (
 	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
 	Unsolicited FontStyle = 0
+	Normal      FontStyle = 1
+	Italic      FontStyle = 2
 )
 
 func (v *FontStyle) write(r *BinaryWriter) error {
@@ -3478,10 +3481,11 @@ type HStack struct {
 	Position               Position
 	Disabled               Bool
 	Invisible              Bool
+	ID                     Str
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
-	var fields [22]bool
+	var fields [23]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -3503,6 +3507,7 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[19] = !v.Position.IsZero()
 	fields[20] = !v.Disabled.IsZero()
 	fields[21] = !v.Invisible.IsZero()
+	fields[22] = !v.ID.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3681,6 +3686,14 @@ func (v *HStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[22] {
+		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
+			return err
+		}
+		if err := v.ID.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3798,6 +3811,11 @@ func (v *HStack) read(r *BinaryReader) error {
 			}
 		case 21:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 22:
+			err := v.ID.read(r)
 			if err != nil {
 				return err
 			}
@@ -10263,10 +10281,11 @@ func (v *HStack) reset() {
 	v.Position.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.ID.reset()
 }
 
 func (v *HStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.ID.IsZero()
 }
 
 func (v *Position) reset() {

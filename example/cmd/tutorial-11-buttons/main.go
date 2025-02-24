@@ -47,6 +47,9 @@ func defaultButtons() core.View {
 
 		SecondaryButton(nil).Title("secondary button"),
 		TertiaryButton(nil).Title("tertiary button"),
+		PasswordField("Test", "Test"),
+		PasswordField("Test", "Test"),
+		Toggle(false),
 	).Gap(L16).
 		Padding(Padding{}.All(L16))
 }

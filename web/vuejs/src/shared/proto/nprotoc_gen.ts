@@ -3991,7 +3991,9 @@ export class HStack implements Writeable, Readable , Component  {
 
 		public invisible: Bool;
 
-	constructor(children: Components = new Components(), gap: Length = new Length(), frame: Frame = new Frame(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), border: Border = new Border(), font: Font = new Font(), action: Ptr = new Ptr(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), wrap: Bool = new Bool(), stylePreset: StylePreset = new StylePreset(), position: Position = new Position(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), ) {
+		public iD: Str;
+
+	constructor(children: Components = new Components(), gap: Length = new Length(), frame: Frame = new Frame(), alignment: Alignment = new Alignment(), backgroundColor: Color = new Color(), padding: Padding = new Padding(), accessibilityLabel: Str = new Str(), border: Border = new Border(), font: Font = new Font(), action: Ptr = new Ptr(), hoveredBackgroundColor: Color = new Color(), pressedBackgroundColor: Color = new Color(), focusedBackgroundColor: Color = new Color(), hoveredBorder: Border = new Border(), pressedBorder: Border = new Border(), focusedBorder: Border = new Border(), wrap: Bool = new Bool(), stylePreset: StylePreset = new StylePreset(), position: Position = new Position(), disabled: Bool = new Bool(), invisible: Bool = new Bool(), iD: Str = new Str(), ) {
 		this.children = children;
 		this.gap = gap;
 		this.frame = frame;
@@ -4013,6 +4015,7 @@ export class HStack implements Writeable, Readable , Component  {
 		this.position = position;
 		this.disabled = disabled;
 		this.invisible = invisible;
+		this.iD = iD;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4105,6 +4108,10 @@ export class HStack implements Writeable, Readable , Component  {
 					this.invisible.read(reader);
 					break
 				}
+				case 22: {
+					this.iD.read(reader);
+					break
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4112,7 +4119,7 @@ export class HStack implements Writeable, Readable , Component  {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false,!this.children.isZero(),!this.gap.isZero(),!this.frame.isZero(),!this.alignment.isZero(),!this.backgroundColor.isZero(),!this.padding.isZero(),!this.accessibilityLabel.isZero(),!this.border.isZero(),!this.font.isZero(),!this.action.isZero(),!this.hoveredBackgroundColor.isZero(),!this.pressedBackgroundColor.isZero(),!this.focusedBackgroundColor.isZero(),!this.hoveredBorder.isZero(),!this.pressedBorder.isZero(),!this.focusedBorder.isZero(),!this.wrap.isZero(),!this.stylePreset.isZero(),!this.position.isZero(),!this.disabled.isZero(),!this.invisible.isZero(),];
+		const fields = [false,!this.children.isZero(),!this.gap.isZero(),!this.frame.isZero(),!this.alignment.isZero(),!this.backgroundColor.isZero(),!this.padding.isZero(),!this.accessibilityLabel.isZero(),!this.border.isZero(),!this.font.isZero(),!this.action.isZero(),!this.hoveredBackgroundColor.isZero(),!this.pressedBackgroundColor.isZero(),!this.focusedBackgroundColor.isZero(),!this.hoveredBorder.isZero(),!this.pressedBorder.isZero(),!this.focusedBorder.isZero(),!this.wrap.isZero(),!this.stylePreset.isZero(),!this.position.isZero(),!this.disabled.isZero(),!this.invisible.isZero(),!this.iD.isZero(),];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -4199,10 +4206,14 @@ export class HStack implements Writeable, Readable , Component  {
 			writer.writeFieldHeader(Shapes.UVARINT, 21);
 			this.invisible.write(writer);
 		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
+			this.iD.write(writer);
+		}
 	}
 
 	isZero(): boolean {
-		return this.children.isZero() && this.gap.isZero() && this.frame.isZero() && this.alignment.isZero() && this.backgroundColor.isZero() && this.padding.isZero() && this.accessibilityLabel.isZero() && this.border.isZero() && this.font.isZero() && this.action.isZero() && this.hoveredBackgroundColor.isZero() && this.pressedBackgroundColor.isZero() && this.focusedBackgroundColor.isZero() && this.hoveredBorder.isZero() && this.pressedBorder.isZero() && this.focusedBorder.isZero() && this.wrap.isZero() && this.stylePreset.isZero() && this.position.isZero() && this.disabled.isZero() && this.invisible.isZero()
+		return this.children.isZero() && this.gap.isZero() && this.frame.isZero() && this.alignment.isZero() && this.backgroundColor.isZero() && this.padding.isZero() && this.accessibilityLabel.isZero() && this.border.isZero() && this.font.isZero() && this.action.isZero() && this.hoveredBackgroundColor.isZero() && this.pressedBackgroundColor.isZero() && this.focusedBackgroundColor.isZero() && this.hoveredBorder.isZero() && this.pressedBorder.isZero() && this.focusedBorder.isZero() && this.wrap.isZero() && this.stylePreset.isZero() && this.position.isZero() && this.disabled.isZero() && this.invisible.isZero() && this.iD.isZero()
 	}
 
 	reset(): void {
@@ -4227,6 +4238,7 @@ export class HStack implements Writeable, Readable , Component  {
 		this.position.reset()
 		this.disabled.reset()
 		this.invisible.reset()
+		this.iD.reset()
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

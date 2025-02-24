@@ -16,6 +16,9 @@ func Parse(fsys fs.FS) (map[Typename]Declaration, error) {
 	check := map[int][]string{}
 
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 		if d.Type().IsRegular() && strings.HasSuffix(path, ".json") {
 			buf, err := fs.ReadFile(fsys, path)
 			if err != nil {

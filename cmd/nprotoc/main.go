@@ -1,4 +1,5 @@
-//go:generate go run go.wdy.de/nago/cmd/protonc -target=../../presentation/proto
+//go:generate go run go.wdy.de/nago/cmd/nprotoc -target=../../presentation/proto -source=../../presentation/proto/spec
+//go:generate go run go.wdy.de/nago/cmd/nprotoc -lang=ts -target=../../web/vuejs/src/shared/proto -source=../../presentation/proto/spec
 
 package main
 
