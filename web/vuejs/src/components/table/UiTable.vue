@@ -8,7 +8,8 @@ import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { Table } from '@/shared/protocol/ora/table';
+import {AlignmentValues, FunctionCallRequested, Table} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: Table;
@@ -17,15 +18,15 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 
 function commonStyles(): string[] {
-	let styles = frameCSS(props.ui.f);
+	let styles = frameCSS(props.ui.frame);
 
 	// background handling
-	if (props.ui.bgc) {
-		styles.push(`background-color: ${colorValue(props.ui.bgc)}`);
+	if (!props.ui.backgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
 	}
 
 	// border handling
-	styles.push(...borderCSS(props.ui.b));
+	styles.push(...borderCSS(props.ui.border));
 
 	return styles;
 }
@@ -38,24 +39,24 @@ const frameStyles = computed<string>(() => {
 
 function rowStyles(idx: number): string {
 	const styles: string[] = [];
-	let row = props.ui.r?.at(idx)!;
-	if (row.b) {
-		styles.push(`background-color: ${colorValue(row.b)}`);
+	let row = props.ui.rows.value?.at(idx)!;
+	if (!row.backgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(row.backgroundColor.value)}`);
 	}
 
-	if (row.hovered && row.k) {
-		styles.push(`background-color: ${colorValue(row.k)}`);
+	if (row.hovered.value && !row.hoveredBackgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(row.hoveredBackgroundColor.value)}`);
 	}
 
-	if (row.h) {
-		styles.push(`height: ${cssLengthValue(row.h)}`);
+	if (!row.height.isZero()) {
+		styles.push(`height: ${cssLengthValue(row.height.value)}`);
 	}
 
-	if (idx > 0 && props.ui.rdc) {
-		styles.push('border-collapse: collapse', 'border-top-width: 1px', `border-color: ${colorValue(props.ui.rdc)}`);
+	if (idx > 0 && !props.ui.rowDividerColor.isZero()) {
+		styles.push('border-collapse: collapse', 'border-top-width: 1px', `border-color: ${colorValue(props.ui.rowDividerColor.value)}`);
 	}
 
-	if (row.a) {
+	if (!row.action.isZero()) {
 		styles.push('cursor: pointer');
 	}
 
@@ -64,17 +65,17 @@ function rowStyles(idx: number): string {
 
 function headStyles() {
 	const styles: string[] = [];
-	if (props.ui.hdc) {
+	if (!props.ui.headerDividerColor.isZero()) {
 		styles.push(
 			'border-collapse: collapse',
 			'border-bottom-width: 2px',
-			`border-color: ${colorValue(props.ui.hdc)}`
+			`border-color: ${colorValue(props.ui.headerDividerColor.value)}`
 		);
-	} else if (props.ui.rdc) {
+	} else if (!props.ui.rowDividerColor.isZero()) {
 		styles.push(
 			'border-collapse: collapse',
 			'border-bottom-width: 2px',
-			`border-color: ${colorValue(props.ui.rdc)}`
+			`border-color: ${colorValue(props.ui.rowDividerColor.value)}`
 		);
 	}
 
@@ -83,41 +84,41 @@ function headStyles() {
 
 function cellStyles(rowIdx: number, colIdx: number): string {
 	const styles: string[] = [];
-	let cell = props.ui.r.at(rowIdx).c.at(colIdx)!;
-	if (cell.b) {
-		styles.push(`background-color: ${colorValue(cell.b)}`);
+	let cell = props.ui.rows.value.at(rowIdx)?.cells.value.at(colIdx)!;
+	if (!cell.backgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(cell.backgroundColor.value)}`);
 	}
 
-	if (cell.hovered && cell.k) {
-		styles.push(`background-color: ${colorValue(cell.k)}`);
+	if (cell.hovered.value && !cell.hoveredBackgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(cell.hoveredBackgroundColor.value)}`);
 	}
 
-	switch (cell.a) {
-		case Alignment.Leading:
+	switch (cell.alignment.value) {
+		case AlignmentValues.Leading:
 			styles.push('vertical-align: middle', 'text-align: start');
 			break;
-		case Alignment.Trailing:
+		case AlignmentValues.Trailing:
 			styles.push('vertical-align: middle', 'text-align: end');
 			break;
-		case Alignment.Center:
+		case AlignmentValues.Center:
 			styles.push('vertical-align: middle', 'text-align: center');
 			break;
-		case Alignment.TopLeading:
+		case AlignmentValues.TopLeading:
 			styles.push('vertical-align: top', 'text-align: start');
 			break;
-		case Alignment.BottomLeading:
+		case AlignmentValues.BottomLeading:
 			styles.push('vertical-align: bottom', 'text-align: start');
 			break;
-		case Alignment.TopTrailing:
+		case AlignmentValues.TopTrailing:
 			styles.push('vertical-align: top', 'text-align: end');
 			break;
-		case Alignment.Top:
+		case AlignmentValues.Top:
 			styles.push('vertical-align: top', 'text-align: center');
 			break;
-		case Alignment.BottomTrailing:
+		case AlignmentValues.BottomTrailing:
 			styles.push('vertical-align: bottom', 'text-align: end');
 			break;
-		case Alignment.Bottom:
+		case AlignmentValues.Bottom:
 			styles.push('vertical-align: bottom', 'text-align: center');
 			break;
 		default:
@@ -125,17 +126,17 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 			break;
 	}
 
-	if (!cell.p && props.ui.p) {
+	if (cell.padding.isZero()) {
 		// default cell padding from the entire table
-		styles.push(...paddingCSS(props.ui.p));
-	} else if (cell.p) {
+		styles.push(...paddingCSS(props.ui.defaultCellPadding));
+	} else  {
 		// specific cell padding takes precedence
-		styles.push(...paddingCSS(cell.p));
+		styles.push(...paddingCSS(cell.padding));
 	}
 
-	styles.push(...borderCSS(cell.o));
+	styles.push(...borderCSS(cell.border));
 
-	if (cell.t) {
+	if (!cell.action.isZero()) {
 		styles.push('cursor: pointer');
 	}
 
@@ -144,45 +145,45 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 
 function headCellStyles(colIdx: number): string {
 	const styles: string[] = [];
-	let cell = props.ui.h?.c.at(colIdx)!;
-	if (cell.b) {
-		styles.push(`background-color: ${colorValue(cell.b)}`);
+	let cell = props.ui.header?.columns.value.at(colIdx)!;
+	if (!cell.cellBackgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(cell.cellBackgroundColor.value)}`);
 	}
 
-	if (cell.cellHovered && cell.k) {
-		styles.push(`background-color: ${colorValue(cell.k)}`);
+	if (cell.cellHovered.value && !cell.cellHoveredBackgroundColor.isZero()) {
+		styles.push(`background-color: ${colorValue(cell.cellHoveredBackgroundColor.value)}`);
 	}
 
-	if (cell.w) {
-		styles.push(`width: ${cell.w}`);
+	if (!cell.width.isZero()) {
+		styles.push(`width: ${cssLengthValue(cell.width.value)}`);
 	}
 
-	switch (cell.a) {
-		case Alignment.Leading:
+	switch (cell.alignment.value) {
+		case AlignmentValues.Leading:
 			styles.push('vertical-align: middle', 'text-align: start');
 			break;
-		case Alignment.Trailing:
+		case AlignmentValues.Trailing:
 			styles.push('vertical-align: middle', 'text-align: end');
 			break;
-		case Alignment.Center:
+		case AlignmentValues.Center:
 			styles.push('vertical-align: middle', 'text-align: center');
 			break;
-		case Alignment.TopLeading:
+		case AlignmentValues.TopLeading:
 			styles.push('vertical-align: top', 'text-align: start');
 			break;
-		case Alignment.BottomLeading:
+		case AlignmentValues.BottomLeading:
 			styles.push('vertical-align: bottom', 'text-align: start');
 			break;
-		case Alignment.TopTrailing:
+		case AlignmentValues.TopTrailing:
 			styles.push('vertical-align: top', 'text-align: end');
 			break;
-		case Alignment.Top:
+		case AlignmentValues.Top:
 			styles.push('vertical-align: top', 'text-align: center');
 			break;
-		case Alignment.BottomTrailing:
+		case AlignmentValues.BottomTrailing:
 			styles.push('vertical-align: bottom', 'text-align: end');
 			break;
-		case Alignment.Bottom:
+		case AlignmentValues.Bottom:
 			styles.push('vertical-align: bottom', 'text-align: center');
 			break;
 		default:
@@ -190,17 +191,17 @@ function headCellStyles(colIdx: number): string {
 			break;
 	}
 
-	if (!cell.p && props.ui.p) {
+	if (cell.cellPadding.isZero() && !props.ui.defaultCellPadding.isZero()) {
 		// default cell padding from the entire table
-		styles.push(...paddingCSS(props.ui.p));
-	} else if (cell.p) {
+		styles.push(...paddingCSS(props.ui.defaultCellPadding));
+	} else if (!cell.cellPadding.isZero()) {
 		// specific cell padding takes precedence
-		styles.push(...paddingCSS(cell.p));
+		styles.push(...paddingCSS(cell.cellPadding));
 	}
 
-	styles.push(...borderCSS(cell.o));
+	styles.push(...borderCSS(cell.cellBorder));
 
-	if (cell.t) {
+	if (!cell.cellAction.isZero()) {
 		styles.push('cursor: pointer');
 	}
 
@@ -208,96 +209,108 @@ function headCellStyles(colIdx: number): string {
 }
 
 function onClickRow(rowIdx: number) {
-	let row = props.ui.r?.at(rowIdx)!;
-	if (row.a) {
-		serviceAdapter.executeFunctions(row.a);
+	let row = props.ui.rows.value?.at(rowIdx)!;
+	if (!row.action.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			row.action,
+			nextRID(),
+		));
 	}
 }
 
 function onClickCell(rowIdx: number, colIdx: number) {
-	let row = props.ui.r?.at(rowIdx)!;
-	let cell = row.c.at(colIdx)!;
-	if (cell.t) {
-		serviceAdapter.executeFunctions(cell.t);
-	} else if (row.a) {
-		serviceAdapter.executeFunctions(row.a);
+	let row = props.ui.rows.value?.at(rowIdx)!;
+	let cell = row.cells.value.at(colIdx)!;
+	if (!cell.action.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			cell.action,
+			nextRID(),
+		));
+	} else if (!row.action.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			row.action,
+			nextRID(),
+		));
 	}
 }
 
 function onClickHeaderCell(colIdx: number) {
-	let cell = props.ui.h?.c?.at(colIdx)!;
-	if (cell.t) {
-		serviceAdapter.executeFunctions(cell.t);
+	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	if (!cell.cellAction.isZero()) {
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			cell.cellAction,
+			nextRID(),
+		));
 	}
 }
 
 function onCellMouseEnter(rowIdx: number, colIdx: number) {
-	let cell = props.ui.r?.at(rowIdx)?.c.at(colIdx)!;
-	cell.hovered = true;
+	let cell = props.ui.rows.value?.at(rowIdx)?.cells.value.at(colIdx)!;
+	cell.hovered.value = true;
 }
 
 function onCellMouseLeave(rowIdx: number, colIdx: number) {
-	let cell = props.ui.r?.at(rowIdx)?.c.at(colIdx)!;
-	cell.hovered = false;
+	let cell = props.ui.rows.value?.at(rowIdx)?.cells.value.at(colIdx)!;
+	cell.hovered.value = false;
 }
 
 function onHeadCellMouseEnter(colIdx: number) {
-	let cell = props.ui.h?.c?.at(colIdx);
-	cell.cellHovered = true;
+	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	cell.cellHovered.value = true;
 }
 
 function onHeadCellMouseLeave(colIdx: number) {
-	let cell = props.ui.h?.c?.at(colIdx);
-	cell.cellHovered = false;
+	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	cell.cellHovered.value = false;
 }
 
 function onRowMouseEnter(rowIdx: number) {
-	let row = props.ui.r?.at(rowIdx)!;
-	row.hovered = true;
+	let row = props.ui.rows.value?.at(rowIdx)!;
+	row.hovered.value = true;
 }
 
 function onRowMouseLeave(rowIdx: number) {
-	let row = props.ui.r?.at(rowIdx)!;
-	row.hovered = false;
+	let row = props.ui.rows.value?.at(rowIdx)!;
+	row.hovered.value = false;
 }
 </script>
 
 <template>
 	<table class="w-full text-left rtl:text-right overflow-clip" :style="frameStyles">
-		<thead v-if="props.ui.h?.c" class="" :style="headStyles()">
+		<thead v-if="props.ui.header?.columns.value?.length>0" class="" :style="headStyles()">
 			<tr>
 				<th
 					class="font-normal"
-					v-for="(head, headIdx) in props.ui.h.c"
+					v-for="(head, headIdx) in props.ui.header.columns.value"
 					scope="col"
 					:style="headCellStyles(headIdx)"
 					@click.stop="onClickHeaderCell(headIdx)"
 					@mouseenter="onHeadCellMouseEnter(headIdx)"
 					@mouseleave="onHeadCellMouseLeave(headIdx)"
 				>
-					<ui-generic v-if="head.c" :ui="head.c" />
+					<ui-generic v-if="head.content" :ui="head.content" />
 				</th>
 			</tr>
 		</thead>
 
 		<tbody class="">
 			<tr
-				v-for="(row, rowIdx) in props.ui.r"
+				v-for="(row, rowIdx) in props.ui.rows.value"
 				:style="rowStyles(rowIdx)"
 				@click="onClickRow(rowIdx)"
 				@mouseenter="onRowMouseEnter(rowIdx)"
 				@mouseleave="onRowMouseLeave(rowIdx)"
 			>
 				<td
-					:rowspan="cell.rs"
-					:colspan="cell.cs"
-					v-for="(cell, colIdx) in row.c"
+					:rowspan="cell.rowSpan.value==0?undefined:cell.rowSpan.value"
+					:colspan="cell.colSpan.value==0?undefined:cell.colSpan.value"
+					v-for="(cell, colIdx) in row.cells.value"
 					:style="cellStyles(rowIdx, colIdx)"
 					@click.stop="onClickCell(rowIdx, colIdx)"
 					@mouseenter="onCellMouseEnter(rowIdx, colIdx)"
 					@mouseleave="onCellMouseLeave(rowIdx, colIdx)"
 				>
-					<ui-generic v-if="cell.c" :ui="cell.c" />
+					<ui-generic v-if="cell.content" :ui="cell.content" />
 				</td>
 			</tr>
 		</tbody>
