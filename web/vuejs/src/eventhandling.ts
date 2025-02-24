@@ -16,10 +16,11 @@ import {
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
-	WindowSizeClassValues,
+	WindowSizeClassValues, SendMultipleRequested,
 } from '@/shared/proto/nprotoc_gen';
 import { URI } from '@/shared/protocol/ora/uRI';
 import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import type {Event} from "@/shared/protocol/ora/event";
 
 let nextRequestTracingID: number = 1;
 
@@ -184,4 +185,21 @@ function requiredRootViewParameter(): RootViewParameters {
 	});
 
 	return params;
+}
+
+
+/**
+ * triggerFileDownload applies some hacks to simulate a user-requested file download by inserting fake
+ * nodes and clicking on them. After some tries, this seems to be the most stable behavior across all browsers.
+ * @param evt
+ */
+export function triggerFileDownload(evt: SendMultipleRequested): void {
+	let res = evt.resources.value[0];
+	let a = document.createElement('a');
+	a.href = res.uRI.value;
+	a.download = res.name.value;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+
 }

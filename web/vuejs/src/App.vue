@@ -13,7 +13,7 @@ import {
 	onScopeConfigurationChanged,
 	requestRootViewAllocation,
 	requestRootViewRendering,
-	requestScopeConfigurationChange,
+	requestScopeConfigurationChange, triggerFileDownload,
 	windowInfoChanged,
 } from '@/eventhandling';
 import { EventType } from '@/shared/eventbus/eventType';
@@ -25,6 +25,7 @@ import {
 	RootViewInvalidated,
 	ScopeConfigurationChanged,
 	WindowInfo,
+	SendMultipleRequested,
 } from '@/shared/proto/nprotoc_gen';
 import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
 import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
@@ -32,7 +33,6 @@ import type { Event } from '@/shared/protocol/ora/event';
 import { FileImportRequested } from '@/shared/protocol/ora/fileImportRequested';
 import type { NavigationForwardToRequested } from '@/shared/protocol/ora/navigationForwardToRequested';
 import { OpenRequested } from '@/shared/protocol/ora/openRequested';
-import type { SendMultipleRequested } from '@/shared/protocol/ora/sendMultipleRequested';
 import type { Theme } from '@/shared/protocol/ora/theme';
 import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
 import type { Themes } from '@/shared/protocol/ora/themes';
@@ -90,7 +90,14 @@ async function applyConfiguration(): Promise<void> {
 
 		if (evt instanceof ErrorRootViewAllocationRequired) {
 			requestRootViewAllocation(serviceAdapter, themeManager.activeLocale);
+			return;
 		}
+
+		if (evt instanceof SendMultipleRequested){
+			triggerFileDownload(evt);
+			return;
+		}
+
 	});
 
 	requestRootViewRendering(serviceAdapter);
@@ -313,17 +320,7 @@ function fileImportRequested(evt: Event): void {
 	document.body.removeChild(input);
 }
 
-function sendMultipleRequested(evt: Event): void {
-	let msg = evt as SendMultipleRequested;
-	let res = msg.resources[0];
 
-	let a = document.createElement('a');
-	a.href = res.uri;
-	a.download = res.name;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-}
 
 function setTheme(themes: Themes): void {
 	let activeTheme: Theme;
