@@ -9681,6 +9681,54 @@ export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
 	isNagoEvent(): void {}
 }
 
+export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEvent {
+	public text: Str;
+
+	constructor(text: Str = new Str()) {
+		this.text = text;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.text.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, !this.text.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.text.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.text.isZero();
+	}
+
+	reset(): void {
+		this.text.reset();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 115);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -10253,6 +10301,11 @@ export function unmarshal(src: BinaryReader): Readable {
 		}
 		case 114: {
 			const v = new OpenHttpFlow();
+			v.read(src);
+			return v;
+		}
+		case 115: {
+			const v = new ClipboardWriteTextRequested();
 			v.read(src);
 			return v;
 		}

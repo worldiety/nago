@@ -1,6 +1,7 @@
 import { UploadRepository } from '@/api/upload/uploadRepository';
 import { Channel } from '@/shared/network/serviceAdapter';
 import {
+	ClipboardWriteTextRequested,
 	ColorScheme,
 	ColorSchemeValues,
 	DP,
@@ -344,4 +345,15 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 	}
 
 	windowInfoChanged(chan, themeManager);
+}
+
+export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
+	navigator.clipboard
+		.writeText(evt.text.value)
+		.then((value) => {
+			console.log('text written to clipboard');
+		})
+		.catch((reason) => {
+			console.log('failed to copy text into clipboard', reason);
+		});
 }

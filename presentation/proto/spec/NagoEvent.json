@@ -25,6 +25,7 @@
     "ThemeRequested",
     "SendMultipleRequested",
     "OpenHttpFlow",
-    "OpenHttpLink"
+    "OpenHttpLink",
+    "ClipboardWriteTextRequested"
   ]
 }

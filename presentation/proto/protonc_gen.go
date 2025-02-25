@@ -301,6 +301,7 @@ func (ThemeRequested) isNagoEvent()                    {}
 func (SendMultipleRequested) isNagoEvent()             {}
 func (OpenHttpFlow) isNagoEvent()                      {}
 func (OpenHttpLink) isNagoEvent()                      {}
+func (ClipboardWriteTextRequested) isNagoEvent()       {}
 
 // A Box aligns children elements in absolute within its bounds.
 //   - there is no intrinsic component dimension, so you have to set it by hand
@@ -8691,6 +8692,56 @@ func (v *OpenHttpFlow) read(r *BinaryReader) error {
 	return nil
 }
 
+type ClipboardWriteTextRequested struct {
+	Text Str
+}
+
+func (v *ClipboardWriteTextRequested) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Text.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ClipboardWriteTextRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -9390,6 +9441,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 114:
 		var v OpenHttpFlow
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 115:
+		var v ClipboardWriteTextRequested
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -11365,6 +11422,14 @@ func (v *OpenHttpFlow) IsZero() bool {
 	return v.Url.IsZero() && v.RedirectTarget.IsZero() && v.RedirectNavigation.IsZero() && v.Session.IsZero()
 }
 
+func (v *ClipboardWriteTextRequested) reset() {
+	v.Text.reset()
+}
+
+func (v *ClipboardWriteTextRequested) IsZero() bool {
+	return v.Text.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -12151,6 +12216,13 @@ func (v *OpenHttpLink) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *OpenHttpFlow) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 114); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ClipboardWriteTextRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 115); err != nil {
 		return err
 	}
 	return nil

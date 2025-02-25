@@ -1,0 +1,11 @@
+{
+  "kind": "Record",
+  "name": "ClipboardWriteTextRequested is issued by the backend to the frontend to copy data into the systems clipboard.",
+  "id": 115,
+  "fields": {
+    "1": {
+      "name": "Text",
+      "type": "Str"
+    }
+  }
+}

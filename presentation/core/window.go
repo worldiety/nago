@@ -116,6 +116,9 @@ type Window interface {
 
 	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
 	AddDestroyObserver(fn func()) (removeObserver func())
+
+	// Clipboard gives access to the frontend clipboard.
+	Clipboard() Clipboard
 }
 
 // Colors returns a type safe value based ColorSet instance.

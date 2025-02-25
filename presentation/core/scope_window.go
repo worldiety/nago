@@ -47,6 +47,11 @@ type scopeWindow struct {
 	isRendering           bool
 	generation            int64
 	mutex                 sync.Mutex
+	clipboard             *clipboardController
+}
+
+func (s *scopeWindow) Clipboard() Clipboard {
+	return s.clipboard
 }
 
 func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *scopeWindow {
@@ -70,6 +75,7 @@ func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *sco
 		observer(s)
 	}
 
+	s.clipboard = newClipboardController(s)
 	return s
 }
 

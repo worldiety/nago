@@ -7,6 +7,7 @@ import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.v
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
+	clipboardWriteText,
 	getWindowInfo,
 	navigateForward,
 	nextRID,
@@ -24,6 +25,7 @@ import {
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { ConnectionState } from '@/shared/network/connectionState';
 import {
+	ClipboardWriteTextRequested,
 	Component,
 	ErrorRootViewAllocationRequired,
 	FileImportRequested,
@@ -139,6 +141,11 @@ async function applyConfiguration(): Promise<void> {
 		if (evt instanceof NavigationResetRequested) {
 			// todo this seems not possible in the web
 			navigateForward(serviceAdapter, new NavigationForwardToRequested(evt.rootView, evt.values));
+			return;
+		}
+
+		if (evt instanceof ClipboardWriteTextRequested) {
+			clipboardWriteText(evt);
 			return;
 		}
 
