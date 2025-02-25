@@ -75,6 +75,8 @@ type DisplayName func(uid ID) Compact
 
 type UpdateAccountStatus func(subject permission.Auditable, id ID, status AccountStatus) error
 
+type UpdateVerification func(subject permission.Auditable, id ID, verified bool) error
+
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -110,6 +112,7 @@ type UseCases struct {
 	DisplayName               DisplayName
 	UpdateAccountStatus       UpdateAccountStatus
 	AddUserToGroup            AddUserToGroup
+	UpdateVerification        UpdateVerification
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -177,5 +180,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		DisplayName:               NewDisplayName(users, time.Minute*5),
 		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
 		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
+		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 	}
 }
