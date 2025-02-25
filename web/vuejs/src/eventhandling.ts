@@ -21,12 +21,12 @@ import {
 	SendMultipleRequested,
 	Str,
 	ThemeRequested,
+	URI,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import {URI} from '@/shared/protocol/ora/uRI';
 import ThemeManager, {ThemeKey} from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
@@ -131,7 +131,7 @@ export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: Sco
 	themeManager.setThemes(evt.themes);
 	themeManager.applyActiveTheme();
 	themeManager.activeLocale = evt.activeLocale;
-	updateFavicon(evt.appIcon.toString());
+	updateFavicon(evt.appIcon);
 	console.log('onScopeConfigurationChanged', evt);
 }
 
@@ -165,7 +165,7 @@ function currentSizeClass(): WindowSizeClass {
  * updateFavicon installs the given uri (if not empty) into the document, replacing any other favicon.
  */
 function updateFavicon(uri: URI) {
-	if (!uri || uri.length == 0) {
+	if (!uri || uri.isZero()) {
 		return;
 	}
 
@@ -176,7 +176,7 @@ function updateFavicon(uri: URI) {
 		document.head.appendChild(link);
 	}
 
-	link.href = uri;
+	link.href = uri.value;
 }
 
 /**
@@ -273,17 +273,20 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
-
+	console.log("!!!!", evt)
 	let url = `/${evt.rootView.value}`;
-	if (evt.values.value && Object.entries(evt.values.value).length > 0) {
+	if (!evt.values.isZero()) {
 		url += '?';
-		Object.entries(evt.values.value).forEach(([key, value], index, array) => {
+		let idx = 0
+		evt.values.value.forEach((value, key) => {
 			url += `${key}=${value}`;
-			if (index < array.length - 1) {
+			if (idx < evt.values.value.size - 1) {
 				url += '&';
 			}
-		});
+			idx++;
+		})
 	}
+
 	history.pushState(evt, '', url);
 }
 
