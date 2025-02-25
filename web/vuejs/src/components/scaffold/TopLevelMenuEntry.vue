@@ -84,7 +84,7 @@ const linksToCurrentPage = computed((): boolean => {
 	if (props.ui.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
-
+	
 	return `/${props.ui.rootView.value}` === window.location.pathname;
 });
 

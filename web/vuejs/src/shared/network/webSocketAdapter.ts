@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
-import { BinaryReader, BinaryWriter, NagoEvent, Ping, marshal, unmarshal } from '@/shared/proto/nprotoc_gen';
+import {BinaryReader, BinaryWriter, marshal, NagoEvent, Ping, unmarshal} from '@/shared/proto/nprotoc_gen';
 
 export default class WebSocketAdapter implements ServiceAdapter {
 	private readonly webSocketPort: string;
@@ -12,8 +12,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private retryTimeout: number | null = null;
 	private retries: number = 0;
 	private httpBaseUrl: string;
+	private lastEventSendAt: number;
 
 	constructor() {
+		this.lastEventSendAt = new Date().getTime();
 		this.httpBaseUrl = '';
 		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
@@ -55,7 +57,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			this.webSocket.onmessage = (e) => this.receiveBinary(e.data);
 
 			this.webSocket.onclose = (evt) => {
-				ConnectionHandler.connectionChanged({ connected: false });
+				ConnectionHandler.connectionChanged({connected: false});
 
 				if (this.closedGracefully) {
 					// Try to reopen the socket if it was not closed gracefully
@@ -78,7 +80,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			};
 
 			this.webSocket.onopen = () => {
-				ConnectionHandler.connectionChanged({ connected: true });
+				ConnectionHandler.connectionChanged({connected: true});
 				this.retries = 0;
 
 				// this keeps our connection at least logically alive
@@ -96,19 +98,24 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	sendEvent(evt: NagoEvent): void {
+
+		const startTime = new Date().getTime();
 		//console.log('SEND EVENT', evt);
 		let writer = new BinaryWriter();
 		marshal(writer, evt);
 		let buffer = writer.getBuffer();
 		//console.log('nprotoc buffer', buffer);
+		const endTime = new Date().getTime();
+		console.log(`nprotoc marshal time ${endTime - startTime} ms. type =`, evt.constructor.name);
 		this.webSocket?.send(buffer);
+		this.lastEventSendAt = new Date().getTime();
 	}
 
 	async teardown(): Promise<void> {
 		window.console.log('websocket teardown');
 		this.closedGracefully = true;
 		this.webSocket?.close();
-		ConnectionHandler.connectionChanged({ connected: false });
+		ConnectionHandler.connectionChanged({connected: false});
 	}
 
 	private retry() {
@@ -136,8 +143,14 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	private receiveBinary(responseRaw: ArrayBuffer): void {
+		let endTime = new Date().getTime();
+		let responseTime = endTime - this.lastEventSendAt;
+
+		const startTime = new Date().getTime();
 		//console.log('WS received', responseRaw);
 		let msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
+		endTime = new Date().getTime();
+		console.log(`nprotoc response after ${responseTime}ms, unmarshal time ${endTime - startTime}ms, total ${responseTime + endTime - startTime}ms, type =`, msg.constructor.name);
 		ConnectionHandler.publishEvent(msg as NagoEvent);
 	}
 }
