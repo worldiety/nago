@@ -121,6 +121,9 @@ const frameStyles = computed<string>(() => {
 const clazz = computed<string>(() => {
 	let classes = ['inline-flex'];
 	switch (props.ui.alignment.value) {
+		case AlignmentValues.Stretch:
+			classes.push('items-stretch');
+			break;
 		case AlignmentValues.Leading:
 			classes.push('justify-start', 'items-center');
 			break;

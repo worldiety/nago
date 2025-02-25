@@ -115,6 +115,9 @@ const frameStyles = computed<string>(() => {
 const clazz = computed<string>(() => {
 	let classes = ['overflow-clip', 'inline-flex', 'flex-col'];
 	switch (props.ui.alignment.value) {
+		case AlignmentValues.Stretch:
+			classes.push('items-stretch');
+			break;
 		case AlignmentValues.Leading:
 			classes.push('justify-center', 'items-start');
 			break;

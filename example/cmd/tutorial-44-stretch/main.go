@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 func main() {
@@ -23,12 +20,23 @@ func main() {
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 
 			return ui.VStack(
-				ui.PrimaryButton(func() {
-					if err := wnd.Clipboard().SetText(fmt.Sprintf("hello world: %v", time.Now())); err != nil {
-						alert.ShowBannerError(wnd, err)
-						return
-					}
-				}).Title("copy to clipboard"),
+				ui.HStack(
+					ui.VStack().
+						BackgroundColor(ui.ColorError).
+						Border(ui.Border{TopLeftRadius: ui.L8, BottomLeftRadius: ui.L8}).Frame(ui.Frame{}.Size(ui.L16, ui.Auto)),
+					ui.VStack(
+						ui.Text("hello"),
+						ui.Text("world"),
+					).
+						BackgroundColor(ui.ColorCardFooter),
+					ui.VStack(
+						ui.Text("hello"),
+						ui.Text("world"),
+						ui.Text("world"),
+						ui.Text("world"),
+						ui.Text("world"),
+					).BackgroundColor(ui.ColorIconsMuted),
+				).Alignment(ui.Stretch),
 			).Frame(ui.Frame{}.MatchScreen())
 
 		}))
