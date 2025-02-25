@@ -17,6 +17,11 @@ type SecretManagement struct {
 func (c *Configurator) SecretManagement() (SecretManagement, error) {
 	if c.secretManagement == nil {
 
+		users, err := c.UserManagement()
+		if err != nil {
+			return SecretManagement{}, err
+		}
+
 		groups, err := c.GroupManagement()
 		if err != nil {
 			return SecretManagement{}, err
@@ -61,7 +66,9 @@ func (c *Configurator) SecretManagement() (SecretManagement, error) {
 				uc.FindMySecretByID,
 				uc.UpdateMyCredentials,
 				uc.UpdateMySecretGroups,
+				uc.UpdateMySecretOwners,
 				groups.UseCases.FindMyGroups,
+				users.UseCases.FindAll,
 			)
 		})
 	}

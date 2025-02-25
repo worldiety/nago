@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
+	"reflect"
 	"strings"
 )
 
@@ -32,8 +33,13 @@ func PickMultiple[E any, T any](opts PickMultipleOptions[T], property Property[E
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 				property.Set(&tmp, newValue)
 				entity.Set(tmp)
+
+				if !reflect.DeepEqual(oldValue, newValue) {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
 			})

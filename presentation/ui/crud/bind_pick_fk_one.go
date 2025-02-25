@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/picker"
 	"iter"
 	"log/slog"
+	"reflect"
 	"strings"
 )
 
@@ -20,6 +21,7 @@ type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 	// ForeignPickerRenderer converts a T into a View for the picker dialog step. If nil, the value is
 	// transformed using %v into a TextView.
 	ForeignPickerRenderer func(T) core.View
+	SupportingText        string
 }
 
 // OneToOne binds a field with foreign key characteristics to a picker. See also [PickOne] for value
@@ -49,12 +51,14 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 	var zero IDOfT
 
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[[]T](self.Window, self.ID+"-form.local").Init(func() []T {
 				var tmp E
 				tmp = entity.Get()
+
 				optId := property.Get(&tmp)
 
 				if optId.IsSome() {
@@ -75,6 +79,7 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 			state.Observe(func(newValue []T) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 
 				if len(newValue) > 0 {
 					property.Set(&tmp, std.Some[IDOfT](newValue[0].Identity()))
@@ -83,6 +88,9 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 				}
 
 				entity.Set(tmp)
+				if !reflect.DeepEqual(oldValue, newValue) {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
 			})

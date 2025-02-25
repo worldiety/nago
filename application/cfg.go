@@ -3,13 +3,13 @@ package application
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	ui "go.wdy.de/nago/presentation/ui"
-	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -22,11 +22,6 @@ import (
 	"sync/atomic"
 	"syscall"
 )
-
-type backupService interface {
-	Backup(dst io.Writer) error
-	Restore(r io.Reader) error
-}
 
 type dependency struct {
 	name    string
@@ -44,7 +39,6 @@ type BlobStorageFactory interface {
 type Configurator struct {
 	fileStores               map[string]blob.Store
 	entityStores             map[string]blob.Store
-	backupServices           map[string]backupService
 	globalTDB                *tdb.DB
 	ctx                      context.Context
 	done                     context.CancelFunc
@@ -73,6 +67,7 @@ type Configurator struct {
 	userManagement           *UserManagement
 	roleManagement           *RoleManagement
 	adminManagement          *AdminManagement
+	adminManagementGroups    []func() admin.Group
 	adminManagementMutator   func(m *AdminManagement)
 	sessionManagement        *SessionManagement
 	permissionManagement     *PermissionManagement
@@ -181,6 +176,20 @@ func (c *Configurator) AddSystemService(name string, service any) *Configurator 
 	})
 
 	return c
+}
+
+func SystemServiceFor[T any](cfg *Configurator, name string) (T, bool) {
+	for _, service := range cfg.systemServices {
+		if v, ok := service.service.(T); ok {
+			if name == "" || service.name == name {
+				return v, ok
+			}
+		}
+	}
+
+	var zero T
+
+	return zero, false
 }
 
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {
@@ -377,4 +386,42 @@ func (c *Configurator) EventBus() events.EventBus {
 	}
 
 	return c.eventBus
+}
+
+// StandardSystems enables the admin center all stuff like user, session, mail, self service etc. systems.
+// If you want to customize that, just don't call this and instead configure use each individual system for itself.
+func (c *Configurator) StandardSystems() error {
+	if _, err := c.AdminManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.UserManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.BackupManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.LicenseManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.MailManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.SecretManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.TemplateManagement(); err != nil {
+		return err
+	}
+
+	if _, err := c.SessionManagement(); err != nil {
+		return err
+	}
+
+	return nil
 }

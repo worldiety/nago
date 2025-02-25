@@ -239,7 +239,7 @@ func (a *Application) SystemServiceByName(name string) (any, bool) {
 	return nil, false
 }
 
-// SystemService returns the T which is assignable to any of the registered Services via
+// SystemService returns the T which is assignable to any of the registered Scheduler via
 // [Application.AddSystemService] or returns false. The matching is applied reverse, so that the last added type
 // is matched first. The name is ignored. See also [SystemServiceWithName].
 func SystemService[T any](app *Application) (T, bool) {

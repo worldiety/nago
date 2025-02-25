@@ -19,6 +19,7 @@ import {
 	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	Str,
+	ThemeRequested,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
@@ -322,4 +323,25 @@ export function openHttpLink(evt: OpenHttpLink) {
 export function openHttpFlow(evt: OpenHttpFlow) {
 	localStorage.setItem('http-flow-session', evt.session.value);
 	window.location.href = evt.url.value;
+}
+
+/**
+ * setTheme updates the theme from the event and triggers the theme manager.
+ * @param chan
+ * @param themeManager
+ * @param evt
+ */
+export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRequested): void {
+	switch (evt.theme.value) {
+		case 'light':
+			themeManager.applyLightmodeTheme();
+			break;
+		case 'dark':
+			themeManager.applyDarkmodeTheme();
+			break;
+		default:
+			console.log('unknown theme', evt.theme.value);
+	}
+
+	windowInfoChanged(chan, themeManager);
 }

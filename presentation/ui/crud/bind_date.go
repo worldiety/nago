@@ -33,8 +33,13 @@ func Date[E any, T ~struct {
 			state.Observe(func(newValue xtime.Date) {
 				var tmp E
 				tmp = entity.Get()
+				oldValue := property.Get(&tmp)
 				property.Set(&tmp, T(newValue))
 				entity.Set(tmp)
+
+				if xtime.Date(oldValue) != newValue {
+					entity.Notify()
+				}
 
 				handleValidation(self, entity, errState)
 			})

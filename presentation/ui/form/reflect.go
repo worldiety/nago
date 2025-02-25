@@ -7,9 +7,11 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
+	"go.wdy.de/nago/presentation/ui/timepicker"
 	"log/slog"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type AutoOptions struct {
@@ -74,8 +76,86 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			}
 
 			switch field.Type.Kind() {
+			case reflect.Bool:
+				requiresInit := false
+				boolState := core.DerivedState[bool](state, field.Name).Init(func() bool {
+					src := state.Get()
+					v := reflect.ValueOf(src).FieldByName(field.Name).Bool()
+					if val := field.Tag.Get("value"); val != "" && v == false {
+						p, err := strconv.ParseBool(val)
+						if err == nil {
+							requiresInit = true
+							return p
+						}
+					}
+
+					return v
+				})
+
+				boolState.Observe(func(newValue bool) {
+					dst := state.Get()
+					dst = setFieldValue(dst, field.Name, newValue).(T)
+					state.Set(dst)
+					state.Notify()
+				})
+
+				if requiresInit {
+					boolState.Notify()
+				}
+
+				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
+					Disabled(disabled).
+					InputValue(boolState).
+					SupportingText(field.Tag.Get("supportingText")).
+					Frame(ui.Frame{}.FullWidth()),
+				)
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				switch field.Type {
+				case reflect.TypeFor[time.Duration]():
+					var displayFormat timepicker.PickerFormat
+					switch field.Tag.Get("style") {
+					case "decomposed":
+						displayFormat = timepicker.DecomposedFormat
+					case "clock":
+						displayFormat = timepicker.ClockFormat
+					}
+
+					requiresInit := false
+					intState := core.DerivedState[time.Duration](state, field.Name).Init(func() time.Duration {
+						src := state.Get()
+						v := reflect.ValueOf(src).FieldByName(field.Name).Int()
+						if val := field.Tag.Get("value"); val != "" && v == 0 {
+							p, err := strconv.ParseInt(val, 10, 64)
+							if err == nil {
+								requiresInit = true
+								return time.Duration(p)
+							}
+						}
+
+						return time.Duration(v)
+					})
+
+					intState.Observe(func(newValue time.Duration) {
+						dst := state.Get()
+						dst = setFieldValue(dst, field.Name, newValue).(T)
+						state.Set(dst)
+						state.Notify()
+					})
+
+					if requiresInit {
+						intState.Notify()
+					}
+
+					fieldsBuilder.Append(timepicker.Picker(label, intState).
+						Format(displayFormat).
+						Days(true).
+						Hours(true).
+						Minutes(true).
+						Seconds(true).
+						Disabled(disabled).
+						SupportingText(field.Tag.Get("supportingText")).
+						Frame(ui.Frame{}.FullWidth()),
+					)
 				default:
 					requiresInit := false
 					intState := core.DerivedState[int64](state, field.Name).Init(func() int64 {
@@ -105,6 +185,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 					fieldsBuilder.Append(ui.IntField(label, intState.Get(), intState).
 						Disabled(disabled).
+						SupportingText(field.Tag.Get("supportingText")).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
@@ -143,6 +224,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.PasswordField(label, secretState.Get()).
 							InputValue(secretState).
+							SupportingText(field.Tag.Get("supportingText")).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
 						)
@@ -173,6 +255,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
 							InputValue(strState).
+							SupportingText(field.Tag.Get("supportingText")).
 							Lines(lines).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
@@ -187,7 +270,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 		if group.Name == "" {
 			rootViews.Append(fields...)
 		} else {
-			rootViews.Append(cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16)))
+			rootViews.Append(cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16)).Frame(ui.Frame{}.FullWidth()))
 		}
 	}
 
@@ -211,6 +294,10 @@ func setFieldValue(dst any, fieldName string, val any) any {
 		cpy.FieldByName(fieldName).SetInt(int64(t))
 	case int64:
 		cpy.FieldByName(fieldName).SetInt(t)
+	case time.Duration:
+		cpy.FieldByName(fieldName).SetInt(int64(t))
+	case bool:
+		cpy.FieldByName(fieldName).SetBool(t)
 	default:
 		slog.Error("cannot set field value for [form.Auto]", "type", reflect.TypeOf(t))
 	}

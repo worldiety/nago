@@ -6,10 +6,17 @@ import (
 	"slices"
 )
 
+type sizeClassColumns struct {
+	SizeClass core.WindowSizeClass
+	Columns   int
+}
+
 type TCardLayout struct {
-	children []core.View
-	frame    ui.Frame
-	padding  ui.Padding
+	children       []core.View
+	frame          ui.Frame
+	padding        ui.Padding
+	customColumns  []sizeClassColumns
+	defaultColumns int
 }
 
 func Layout(children ...core.View) TCardLayout {
@@ -22,7 +29,16 @@ func Layout(children ...core.View) TCardLayout {
 		tmp = append(tmp, child)
 	}
 
-	return TCardLayout{children: tmp}
+	return TCardLayout{children: tmp, defaultColumns: 3}
+}
+
+func (c TCardLayout) Columns(class core.WindowSizeClass, columns int) TCardLayout {
+	c.customColumns = append(c.customColumns, sizeClassColumns{
+		SizeClass: class,
+		Columns:   columns,
+	})
+
+	return c
 }
 
 func (c TCardLayout) Frame(frame ui.Frame) TCardLayout {
@@ -36,15 +52,24 @@ func (c TCardLayout) Padding(padding ui.Padding) TCardLayout {
 }
 
 func (c TCardLayout) Render(ctx core.RenderContext) core.RenderNode {
-	columns := 3
+	columns := c.defaultColumns
 	wnd := ctx.Window()
-	switch wnd.Info().SizeClass {
-	case core.SizeClassSmall:
-		columns = 1
-	case core.SizeClassMedium:
-		columns = 1
-	case core.SizeClassLarge:
-		columns = 2
+	if len(c.customColumns) > 0 {
+		for _, column := range c.customColumns {
+			if column.SizeClass == wnd.Info().SizeClass {
+				columns = column.Columns
+				break
+			}
+		}
+	} else {
+		switch wnd.Info().SizeClass {
+		case core.SizeClassSmall:
+			columns = 1
+		case core.SizeClassMedium:
+			columns = 1
+		case core.SizeClassLarge:
+			columns = 2
+		}
 	}
 
 	return ui.Grid(

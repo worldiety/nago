@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import { WindowTitle } from '@/shared/protocol/ora/windowTitle';
+import { WindowTitle } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: WindowTitle;
 }>();
 
-if (props.ui.v) {
-	document.title = props.ui.v;
+if (props.ui.value.value) {
+	document.title = props.ui.value.value;
 }
 </script>
 

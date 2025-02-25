@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useUploadRepository } from '@/api/upload/uploadRepository';
-import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import { useErrorHandling } from '@/composables/errorhandling';
-import { useEventBus } from '@/composables/eventBus';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
-	getLocale,
 	getWindowInfo,
-	handleOpenRequested,
 	navigateForward,
 	nextRID,
 	onScopeConfigurationChanged,
@@ -21,32 +16,29 @@ import {
 	requestRootViewAllocation,
 	requestRootViewRendering,
 	requestScopeConfigurationChange,
+	setTheme,
 	triggerFileDownload,
 	triggerFileUpload,
 	windowInfoChanged,
 } from '@/eventhandling';
-import { EventType } from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { ConnectionState } from '@/shared/network/connectionState';
 import {
 	Component,
 	ErrorRootViewAllocationRequired,
 	FileImportRequested,
+	NavigationBackRequested,
 	NavigationForwardToRequested,
+	NavigationReloadRequested,
+	NavigationResetRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
-	RootViewAllocationRequested,
 	RootViewInvalidated,
-	RootViewParameters,
+	RootViewRenderingRequested,
 	ScopeConfigurationChanged,
 	SendMultipleRequested,
+	ThemeRequested,
 } from '@/shared/proto/nprotoc_gen';
-import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
-import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
-import type { Event } from '@/shared/protocol/ora/event';
-import type { Theme } from '@/shared/protocol/ora/theme';
-import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
-import type { Themes } from '@/shared/protocol/ora/themes';
 import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
@@ -55,7 +47,6 @@ enum State {
 	Error,
 }
 
-const eventBus = useEventBus();
 const serviceAdapter = useServiceAdapter();
 const themeManager = useThemeManager();
 const state = ref(State.Loading);
@@ -64,7 +55,6 @@ const componentKey = ref(0);
 
 const connected = ref(true);
 
-const errorHandler = useErrorHandling();
 let configurationPromise: Promise<void> | null = null;
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
@@ -83,11 +73,13 @@ async function applyConfiguration(): Promise<void> {
 
 	await serviceAdapter.initialize();
 	addEventListeners();
+	addConnectionListeners();
 
 	requestScopeConfigurationChange(serviceAdapter, themeManager);
+	fixHistoryInit();
 
 	ConnectionHandler.addEventListener((evt) => {
-		console.log('app received nago event', evt);
+		//console.log('app received nago event', evt);
 		if (evt instanceof ScopeConfigurationChanged) {
 			onScopeConfigurationChanged(themeManager, evt);
 			return;
@@ -128,6 +120,29 @@ async function applyConfiguration(): Promise<void> {
 			openHttpFlow(evt);
 			return;
 		}
+
+		if (evt instanceof ThemeRequested) {
+			setTheme(serviceAdapter, themeManager, evt);
+			return;
+		}
+
+		if (evt instanceof NavigationBackRequested) {
+			history.back();
+			return;
+		}
+
+		if (evt instanceof NavigationReloadRequested) {
+			location.reload();
+			return;
+		}
+
+		if (evt instanceof NavigationResetRequested) {
+			// todo this seems not possible in the web
+			navigateForward(serviceAdapter, new NavigationForwardToRequested(evt.rootView, evt.values));
+			return;
+		}
+
+		console.log('unhandled event from backend', evt);
 	});
 
 	requestRootViewRendering(serviceAdapter);
@@ -151,152 +166,34 @@ function restoreCookie(sessionID: string) {
 		if (response.ok) {
 			localStorage.removeItem('http-flow-session');
 			console.log('completed cookie restoration process');
-			navigateReload();
+			location.reload();
 		} else {
 			console.log('restore cookie: unexpected result', response);
 		}
 	});
 }
 
-async function initializeUi(): Promise<void> {
-	try {
-		// these must be registered before requested, especially the navigation things.
-		eventBus.subscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
-		eventBus.subscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
-		eventBus.subscribe(EventType.NAVIGATE_RELOAD_REQUESTED, navigateReload);
-		eventBus.subscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
-
-		// create a new component (which is likely a page but not necessarily)
-		let factoryId = window.location.pathname.substring(1);
-		if (factoryId.length === 0) {
-			factoryId = '.'; // this is by ora definition the root page
-		}
-		const params: Record<string, string> = {};
-		new URLSearchParams(window.location.search).forEach((value, key) => {
-			params[key] = value;
-		});
-		history.replaceState(
-			{
-				factory: factoryId,
-				values: params,
-			},
-			'',
-			null
-		);
-		const invalidation = await serviceAdapter.createComponent(factoryId, params);
-
-		eventBus.subscribe(EventType.INVALIDATED, updateUi);
-		eventBus.subscribe(EventType.ERROR_OCCURRED, handleError);
-		eventBus.subscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
-		eventBus.subscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested);
-		eventBus.subscribe(EventType.WindowInfoChanged, sendWindowInfo);
-		eventBus.subscribe(EventType.THEME_REQUESTED, themeRequested);
-		eventBus.subscribe(EventType.OPEN_REQUESTED, openRequested);
-		eventBus.subscribe(EventType.ServerStateLost, serverStateLost);
-
-		updateUi(invalidation);
-	} catch {
-		state.value = State.Error;
+function fixHistoryInit() {
+	// create a new component (which is likely a page but not necessarily)
+	let factoryId = window.location.pathname.substring(1);
+	if (factoryId.length === 0) {
+		factoryId = '.'; // this is by ora definition the root page
 	}
-}
-
-function serverStateLost(): void {
-	// the most important point is, that the server got a new version
-	// thus, the correct reaction is to reload everything, because this frontend may have changed.
-	navigateReload();
-}
-
-function handleError(event: Event): void {
-	//alert((event as ErrorOccurred).message);
-	console.log((event as ErrorOccurred).message);
-}
-
-function updateUi(event: Event): void {
-	if (event.type !== EventType.INVALIDATED) {
-		return;
-	}
-	const componentInvalidated = event as ComponentInvalidated;
-	console.log('setting new view tree', componentInvalidated.value);
-	ui.value = componentInvalidated.value;
-	state.value = State.ShowUI;
-}
-
-function navigateBack(): void {
-	history.back();
-}
-
-function navigateReload(): void {
-	location.reload();
-}
-
-function resetHistory(event: Event): void {
-	// todo this seems not possible in the web
-	navigateForward(serviceAdapter, event);
+	const params: Record<string, string> = {};
+	new URLSearchParams(window.location.search).forEach((value, key) => {
+		params[key] = value;
+	});
+	history.replaceState(
+		{
+			factory: factoryId,
+			values: params,
+		},
+		'',
+		null
+	);
 }
 
 const uploadRepository = useUploadRepository();
-
-function openRequested(evt: Event): void {
-	let msg = evt as OpenRequested;
-	if (!msg.options) {
-		open(msg.resource);
-		return;
-	}
-
-	switch (msg.options['_type']) {
-		case 'http-flow':
-			let redirectTarget = msg.options['redirectTarget'];
-			let redirectNavigation = msg.options['redirectNavigation'];
-			let session = msg.options['session'];
-			localStorage.setItem('http-flow-session', session);
-
-			console.log('http-flow', redirectTarget, redirectNavigation);
-
-			window.location.href = msg.resource;
-			break;
-		case 'http-link':
-			let target = msg.options['target'];
-			window.open(msg.resource, target);
-			break;
-		default:
-			open(msg.resource);
-	}
-
-	windowInfoChanged(serviceAdapter);
-	//sendWindowInfo(true);
-}
-
-function themeRequested(evt: Event): void {
-	let msg = evt as ThemeRequested;
-
-	switch (msg.theme) {
-		case 'light':
-			themeManager.applyLightmodeTheme();
-			break;
-		case 'dark':
-			themeManager.applyDarkmodeTheme();
-			break;
-		default:
-			console.log('unknown theme', msg.theme);
-	}
-
-	windowInfoChanged(serviceAdapter);
-}
-
-function setTheme(themes: Themes): void {
-	let activeTheme: Theme;
-	switch (localStorage.getItem('color-theme')) {
-		case 'light':
-			activeTheme = themes.light;
-			break;
-		case 'dark':
-			activeTheme = themes.dark;
-			break;
-		default:
-			activeTheme = themes.light;
-			break;
-	}
-}
 
 const activeBreakpoint = ref(-1);
 
@@ -324,10 +221,10 @@ function addEventListeners(): void {
 
 function onConnectionChange(connectionState: ConnectionState): void {
 	connected.value = connectionState.connected;
+	console.log('connection changed', connected.value);
 	if (connected.value) {
-		// trigger a re-render, TODO use ComponentInvalidatedRequested
-		console.log('TODO websocket connected, poke server');
-		//serviceAdapter.executeFunctions(-1)
+		console.log('websocket connected, poke server');
+		serviceAdapter.sendEvent(new RootViewRenderingRequested(nextRID()));
 	}
 }
 
@@ -339,24 +236,10 @@ onBeforeMount(() => {
 	configurationPromise = applyConfiguration();
 });
 
-onMounted(async () => {
-	//await configurationPromise;
-	//await initializeUi();
-	//addEventListeners();
-	//addConnectionListeners();
-});
+onMounted(async () => {});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
-	eventBus.unsubscribe(EventType.INVALIDATED, updateUi);
-	eventBus.unsubscribe(EventType.ERROR_OCCURRED, handleError);
-	eventBus.unsubscribe(EventType.NAVIGATE_FORWARD_REQUESTED, navigateForward);
-	eventBus.unsubscribe(EventType.NAVIGATE_BACK_REQUESTED, navigateBack);
-	eventBus.unsubscribe(EventType.NAVIGATION_RESET_REQUESTED, resetHistory);
-	eventBus.unsubscribe(EventType.SEND_MULTIPLE_REQUESTED, sendMultipleRequested);
-	eventBus.unsubscribe(EventType.FILE_IMPORT_REQUESTED, fileImportRequested);
-	eventBus.unsubscribe(EventType.THEME_REQUESTED, themeRequested);
-	eventBus.unsubscribe(EventType.OPEN_REQUESTED, openRequested);
 });
 
 //modal dialog support
@@ -397,10 +280,6 @@ watch(
 <template>
 	<ConnectionLostOverlay v-if="!connected" />
 	<ConnectingChannelOverlay v-if="state === State.Loading" />
-
-	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
-		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
-	</div>
 
 	<div
 		id="ora-overlay"

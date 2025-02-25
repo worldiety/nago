@@ -33,7 +33,7 @@ func HLine() TDivider {
 // VLineWithColor configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
 func VLineWithColor(c Color) TDivider {
 	return TDivider{}.
-		Border(Border{TopWidth: "1px", TopColor: c}).
+		Border(Border{LeftWidth: "1px", TopColor: c}).
 		Frame(Frame{}.FullHeight()).
 		Padding(Padding{}.Horizontal(L16))
 
@@ -43,7 +43,7 @@ func VLineWithColor(c Color) TDivider {
 // The color is derived from main.
 func VLine() TDivider {
 	return TDivider{}.
-		Border(Border{TopWidth: "1px", TopColor: M5}).
+		Border(Border{LeftWidth: "1px", TopColor: M5}).
 		Frame(Frame{}.FullHeight()).
 		Padding(Padding{}.Horizontal(L16))
 }

@@ -5,12 +5,26 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
 	"iter"
+	"reflect"
 )
 
 type AnyEntity struct {
 	id        string
 	aggregate any
 	setId     *func(id string) any // we need a pointer to a func (which is usually already a pointer?) so that deep equal works transparently
+}
+
+func (a AnyEntity) Equals(other any) bool {
+	otherAe, ok := other.(AnyEntity)
+	if !ok {
+		return false
+	}
+
+	if a.id != otherAe.id {
+		return false
+	}
+
+	return reflect.DeepEqual(a.aggregate, otherAe.aggregate)
 }
 
 func (a AnyEntity) UnwrapEntity() any {

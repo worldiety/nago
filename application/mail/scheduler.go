@@ -12,16 +12,16 @@ import (
 )
 
 type ScheduleOptions struct {
-	SendInterval         time.Duration // default is 1 minute, within this interval new mails are checked and old mails are removed from queue
+	SendInterval         time.Duration // default is 30 seconds, within this interval new mails are checked and old mails are removed from queue
 	KeepMailAfterSuccess time.Duration // default is 24 hours, if negative unlimited
 	KeepMailAfterError   time.Duration // default is 1 year, if negative unlimited
-	WaitBetweenSends     time.Duration // default is 2 Seconds
+	WaitBetweenSends     time.Duration // default is 1 Seconds
 }
 
 // StartScheduler starts a new scheduler instance to process the [Outgoing] mails.
 func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository, sysUser user.SysUser, secrets secret.FindGroupSecrets) {
 	if opts.SendInterval == 0 {
-		opts.SendInterval = time.Minute
+		opts.SendInterval = time.Second * 30
 	}
 
 	if opts.KeepMailAfterSuccess == 0 {
@@ -33,7 +33,7 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 	}
 
 	if opts.WaitBetweenSends == 0 {
-		opts.WaitBetweenSends = time.Second * 2
+		opts.WaitBetweenSends = time.Second * 1
 	}
 
 	go func() {
@@ -60,6 +60,10 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 					continue
 				}
 			}
+
+			// TODO implement per hour/day rate limit, usually 500 mails per day
+			// TODO implement wrong auth detection, otherwise we may try every second with wrong credentials and our IP is likely blocked
+			// TODO implement global settings
 
 			now := time.Now()
 			var toRemove []ID

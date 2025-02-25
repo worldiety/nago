@@ -82,16 +82,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 					}
 				}
 
-				// better re-allocate, we don't know what the owner does with it and it may break value-semantics otherwise
-				selected := make([]T, 0, len(c.values))
-				count := 0
-				for i2, state := range c.checkboxStates {
-					if state.Get() {
-						selected = append(selected, c.values[i2])
-						count++
-					}
-				}
-				c.currentSelectedState.Set(selected)
+				count := c.syncCurrentSelectedState()
 
 				c.selectAllCheckbox.Set(count == len(c.values))
 			}))
@@ -115,7 +106,29 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		return false
 	})
 
+	if c.currentSelectedState.Get() == nil {
+		// try to optimize state init to lower roundtrip times. we cannot use init, because
+		// of logic ordering
+		count := c.syncCurrentSelectedState()
+		c.selectAllCheckbox.Set(count == len(c.values))
+	}
+
 	return c
+}
+
+func (c TPicker[T]) syncCurrentSelectedState() (selectedCount int) {
+	// better re-allocate, we don't know what the owner does with it and it may break value-semantics otherwise
+	selected := make([]T, 0, len(c.values))
+	count := 0
+	for i2, state := range c.checkboxStates {
+		if state.Get() {
+			selected = append(selected, c.values[i2])
+			count++
+		}
+	}
+	c.currentSelectedState.Set(selected)
+
+	return count
 }
 
 func (c TPicker[T]) DialogPresented() *core.State[bool] {
@@ -125,11 +138,21 @@ func (c TPicker[T]) DialogPresented() *core.State[bool] {
 func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {
 	for i, value := range c.values {
 		found := false
+		equalable, ok := any(value).(interface{ Equals(other any) bool })
 		for _, t := range state.Get() {
-			if reflect.DeepEqual(value, t) {
-				found = true
-				break
+			if ok {
+				if equalable.Equals(t) {
+					found = true
+					break
+				}
+
+			} else {
+				if reflect.DeepEqual(value, t) {
+					found = true
+					break
+				}
 			}
+
 		}
 
 		c.checkboxStates[i].Set(found)
@@ -229,25 +252,25 @@ func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
 }
 
 func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
-	filtered := c.values
+	filtered := make([]bool, len(c.values))
+	hiddenEntries := 0
 	if c.quickSearch.Get() != "" {
-		filtered = make([]T, 0, len(c.values))
 
 		// do not allocate strings, if we don't need the filter at all
 		predicate := rquery.SimplePredicate[string](c.quickSearch.Get())
 
-		for _, value := range c.values {
+		for idx, value := range c.values {
 			if !predicate(c.stringer(value)) {
-				continue
+				hiddenEntries++
+				filtered[idx] = true
 			}
-			filtered = append(filtered, value)
 		}
 
 	}
 
 	var quickSearchHelpText string
-	if len(filtered) != len(c.values) {
-		quickSearchHelpText = fmt.Sprintf("%d/%d angezeigt", len(filtered), len(c.values))
+	if hiddenEntries > 0 {
+		quickSearchHelpText = fmt.Sprintf("%d/%d angezeigt", len(filtered)-hiddenEntries, len(c.values))
 	} else {
 		quickSearchHelpText = fmt.Sprintf("%d Einträge durchsuchen", len(c.values))
 	}
@@ -282,12 +305,26 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 			BackgroundColor(ui.ColorCardBody).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
 
 			for i, value := range filtered {
+				if value {
+					continue
+				}
 
 				state := c.checkboxStates[i]
-				yield(ui.TableRow(
-					ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
-					ui.TableCell(c.renderToSelect(value)).Alignment(ui.Leading)),
-				)
+
+				if c.multiselect.Get() {
+					yield(ui.TableRow(
+						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
+						ui.TableCell(c.renderToSelect(c.values[i])).Alignment(ui.Leading),
+					),
+					)
+				} else {
+					yield(ui.TableRow(
+						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state)),
+						ui.TableCell(c.renderToSelect(c.values[i])).Alignment(ui.Leading),
+					),
+					)
+				}
+
 			}
 		})...), func(table ui.TTable) ui.TTable {
 			if !quickFilterVisible {

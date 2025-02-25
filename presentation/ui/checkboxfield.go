@@ -31,6 +31,11 @@ func (c TCheckboxField) Enabled(b bool) TCheckboxField {
 	return c
 }
 
+func (c TCheckboxField) Disabled(b bool) TCheckboxField {
+	c.disabled = b
+	return c
+}
+
 func (c TCheckboxField) Padding(padding Padding) DecoredView {
 	c.padding = padding
 	return c

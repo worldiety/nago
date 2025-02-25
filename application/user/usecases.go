@@ -5,6 +5,7 @@ import (
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
@@ -27,6 +28,8 @@ type UpdateOtherContact func(subject AuditableUser, id ID, contact Contact) erro
 type UpdateOtherRoles func(subject AuditableUser, id ID, roles []role.ID) error
 type UpdateOtherPermissions func(subject AuditableUser, id ID, permissions []permission.ID) error
 type UpdateOtherGroups func(subject AuditableUser, id ID, groups []group.ID) error
+
+type AddUserToGroup func(subject AuditableUser, id ID, group group.ID) error
 
 type UpdateOtherLicenses func(subject AuditableUser, id ID, licenses []license.ID) error
 type ReadMyContact func(subject AuditableUser) (Contact, error)
@@ -66,6 +69,18 @@ type RequiresPasswordChange func(uid ID) (bool, error)
 
 type ChangePasswordWithCode func(uid ID, code string, newPassword Password, newRepeated Password) error
 
+// DisplayName leaks information details about the given user, if you already know that the ID is there.
+// The returned information may be stale, to improve performance.
+type DisplayName func(uid ID) Compact
+
+type UpdateAccountStatus func(subject permission.Auditable, id ID, status AccountStatus) error
+
+type Compact struct {
+	Avatar      image.ID
+	Displayname string
+	Mail        Email
+	Valid       bool
+}
 type UseCases struct {
 	Create                    Create
 	FindByID                  FindByID
@@ -92,6 +107,9 @@ type UseCases struct {
 	ResetVerificationCode     ResetVerificationCode
 	RequiresPasswordChange    RequiresPasswordChange
 	ResetPasswordRequestCode  ResetPasswordRequestCode
+	DisplayName               DisplayName
+	UpdateAccountStatus       UpdateAccountStatus
+	AddUserToGroup            AddUserToGroup
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -156,5 +174,8 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		RequiresPasswordChange:    requiresPasswordChangeFn,
 		ResetPasswordRequestCode:  resetPasswordRequestCodeFn,
 		ChangePasswordWithCode:    changePasswordWithCodeFn,
+		DisplayName:               NewDisplayName(users, time.Minute*5),
+		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
+		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
 	}
 }

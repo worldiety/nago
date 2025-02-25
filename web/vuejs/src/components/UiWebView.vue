@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { WebView } from '@/shared/protocol/ora/webView';
+import { WebView } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: WebView;
@@ -8,5 +8,5 @@ const props = defineProps<{
 
 <template>
 	<!--	<div v-html='props.ui.value.value'></div> TODO not sure about the semantics we want-->
-	<iframe style="width: 100%; height: 100vh" :srcdoc="props.ui.value.v"></iframe>
+	<iframe style="width: 100%; height: 100vh" :srcdoc="props.ui.uRI.value"></iframe>
 </template>

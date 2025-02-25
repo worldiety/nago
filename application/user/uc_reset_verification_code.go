@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+// DefaultVerificationLifeTime is currently 48 hours. We got so many usage reports, that mails do not arrive in time.
+// Sometimes multiple hours to late, probably due to grey listing or similar anti-spam techniques.
+const DefaultVerificationLifeTime = time.Hour * 48
+
 func NewResetVerificationCode(mutex *sync.Mutex, repository Repository) ResetVerificationCode {
 	return func(id ID, lifetime time.Duration) (code string, err error) {
 		mutex.Lock()

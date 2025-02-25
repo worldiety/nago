@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xstrings"
 	"golang.org/x/text/language"
 	"regexp"
 	"strings"
@@ -115,9 +116,20 @@ type Code struct {
 	ValidUntil time.Time `json:"validUntil,omitempty"`
 }
 
+// NewCode returns a code with varying complexity based on the given lifetime.
 func NewCode(lifetime time.Duration) Code {
+	var code string
+	switch {
+	case lifetime < time.Minute*5:
+		code = data.RandIdent[string]()[:6]
+	case lifetime < time.Hour*24:
+		code = data.RandIdent[string]()[:8]
+	default:
+		code = data.RandIdent[string]()
+	}
+
 	return Code{
-		Value:      data.RandIdent[string]()[:8],
+		Value:      code,
 		ValidUntil: time.Now().Add(lifetime),
 	}
 }
@@ -147,7 +159,7 @@ type User struct {
 }
 
 func (u User) String() string {
-	return string(u.ID)
+	return xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname) + " (" + string(u.Email) + ")"
 }
 
 func (u User) Identity() ID {

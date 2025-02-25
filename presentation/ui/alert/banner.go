@@ -11,6 +11,7 @@ type TBanner struct {
 	message   string
 	presented *core.State[bool]
 	onClosed  func()
+	intent    Intent
 }
 
 func Banner(title, message string) TBanner {
@@ -30,26 +31,45 @@ func (t TBanner) OnClosed(fn func()) TBanner {
 	return t
 }
 
+func (t TBanner) Intent(intent Intent) TBanner {
+	t.intent = intent
+	return t
+}
+
 func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 	if t.presented != nil && !t.presented.Get() {
 		return ui.HStack().Render(ctx)
 	}
 
-	const textColor = "#FF543E"
-
-	// actually the color is "#FF543E" however, we don't want transparency
+	var textColor ui.Color
 	var bgColor ui.Color
-	if ctx.Window().Info().ColorScheme == core.Dark {
-		bgColor = "#3b1812"
-	} else {
-		bgColor = "#F6d2de"
+	var ico core.SVG
+	isDarkMode := ctx.Window().Info().ColorScheme == core.Dark
+
+	switch t.intent {
+	case IntentOk:
+		textColor = "#55ff3e" // actually the color is "#FF543E" however, we don't want transparency
+		ico = heroSolid.Check
+		if isDarkMode {
+			bgColor = "#1c3b12"
+		} else {
+			bgColor = "#1c3b12"
+		}
+	default:
+		ico = heroSolid.ExclamationTriangle
+		textColor = "#FF543E"
+		if isDarkMode {
+			bgColor = "#3b1812"
+		} else {
+			bgColor = "#F6d2de"
+		}
 	}
 
 	return ui.VStack(
 		ui.HStack(
 			ui.Image().
 				FillColor(textColor).
-				Embed(heroSolid.ExclamationTriangle).
+				Embed(ico).
 				Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 			ui.Text(t.title).
 				Font(ui.SubTitle).

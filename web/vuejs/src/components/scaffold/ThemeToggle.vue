@@ -9,15 +9,12 @@
 import { onMounted, ref } from 'vue';
 import MoonIcon from '@/assets/svg/moon.svg';
 import SunIcon from '@/assets/svg/sun.svg';
-import { useEventBus } from '@/composables/eventBus';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { windowInfoChanged } from '@/eventhandling';
-import { EventType } from '@/shared/eventbus/eventType';
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 
 const themeManager = useThemeManager();
 const darkModeActive = ref<boolean>(false);
-const eventBus = useEventBus();
 const service = useServiceAdapter();
 
 onMounted(() => {
