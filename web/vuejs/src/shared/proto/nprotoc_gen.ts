@@ -566,6 +566,7 @@ export enum AlignmentValues {
 	TopTrailing = 6,
 	BottomLeading = 7,
 	BottomTrailing = 8,
+	Stretch = 9,
 }
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
@@ -5638,69 +5639,6 @@ export class ThemeID implements Writeable, Readable {
 	}
 }
 
-// OpenRequested is usually emitted by the backend, so that the frontend will trigger a kind of popen or shellexecute.
-export class OpenRequested implements Writeable, Readable, NagoEvent {
-	// Resource may be anything, e.g. a path or uuid or URI.
-	public resource: Str;
-
-	// Options are simple string key-value pairs which further specifies the open call.
-	public options: RootViewParameters;
-
-	constructor(resource: Str = new Str(), options: RootViewParameters = new RootViewParameters()) {
-		this.resource = resource;
-		this.options = options;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.resource.read(reader);
-					break;
-				}
-				case 2: {
-					this.options.read(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, !this.resource.isZero(), !this.options.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.resource.write(writer);
-		}
-		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 2);
-			this.options.write(writer);
-		}
-	}
-
-	isZero(): boolean {
-		return this.resource.isZero() && this.options.isZero();
-	}
-
-	reset(): void {
-		this.resource.reset();
-		this.options.reset();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 76);
-		return;
-	}
-	isNagoEvent(): void {}
-}
-
 // WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.
 export class WindowTitle implements Writeable, Readable, Component {
 	public value: Str;
@@ -9581,6 +9519,168 @@ export class UpdateStateValues2Requested implements Writeable, Readable, NagoEve
 	isNagoEvent(): void {}
 }
 
+// OpenHttpLink triggers the system open link call.
+export class OpenHttpLink implements Writeable, Readable, NagoEvent {
+	public url: URI;
+
+	public target: Str;
+
+	constructor(url: URI = new URI(), target: Str = new Str()) {
+		this.url = url;
+		this.target = target;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.url.read(reader);
+					break;
+				}
+				case 2: {
+					this.target.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, !this.url.isZero(), !this.target.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.url.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.target.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return this.url.isZero() && this.target.isZero();
+	}
+
+	reset(): void {
+		this.url.reset();
+		this.target.reset();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 113);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
+// OpenHttpFlow starts a http redirect flow process using the specified fields.
+export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
+	public url: URI;
+
+	public redirectTarget: Str;
+
+	public redirectNavigation: Str;
+
+	public session: Str;
+
+	constructor(
+		url: URI = new URI(),
+		redirectTarget: Str = new Str(),
+		redirectNavigation: Str = new Str(),
+		session: Str = new Str()
+	) {
+		this.url = url;
+		this.redirectTarget = redirectTarget;
+		this.redirectNavigation = redirectNavigation;
+		this.session = session;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.url.read(reader);
+					break;
+				}
+				case 2: {
+					this.redirectTarget.read(reader);
+					break;
+				}
+				case 3: {
+					this.redirectNavigation.read(reader);
+					break;
+				}
+				case 4: {
+					this.session.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			!this.url.isZero(),
+			!this.redirectTarget.isZero(),
+			!this.redirectNavigation.isZero(),
+			!this.session.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			this.url.write(writer);
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			this.redirectTarget.write(writer);
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			this.redirectNavigation.write(writer);
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			this.session.write(writer);
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.url.isZero() &&
+			this.redirectTarget.isZero() &&
+			this.redirectNavigation.isZero() &&
+			this.session.isZero()
+		);
+	}
+
+	reset(): void {
+		this.url.reset();
+		this.redirectTarget.reset();
+		this.redirectNavigation.reset();
+		this.session.reset();
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 114);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -9966,11 +10066,6 @@ export function unmarshal(src: BinaryReader): Readable {
 			v.read(src);
 			return v;
 		}
-		case 76: {
-			const v = new OpenRequested();
-			v.read(src);
-			return v;
-		}
 		case 77: {
 			const v = new WindowTitle();
 			v.read(src);
@@ -10148,6 +10243,16 @@ export function unmarshal(src: BinaryReader): Readable {
 		}
 		case 112: {
 			const v = new UpdateStateValues2Requested();
+			v.read(src);
+			return v;
+		}
+		case 113: {
+			const v = new OpenHttpLink();
+			v.read(src);
+			return v;
+		}
+		case 114: {
+			const v = new OpenHttpFlow();
 			v.read(src);
 			return v;
 		}

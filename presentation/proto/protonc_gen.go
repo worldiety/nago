@@ -291,7 +291,6 @@ func (NavigationBackRequested) isNagoEvent()           {}
 func (NavigationForwardToRequested) isNagoEvent()      {}
 func (NavigationReloadRequested) isNagoEvent()         {}
 func (NavigationResetRequested) isNagoEvent()          {}
-func (OpenRequested) isNagoEvent()                     {}
 func (ScopeConfigurationChangeRequested) isNagoEvent() {}
 func (ScopeDestructionRequested) isNagoEvent()         {}
 func (SessionAssigned) isNagoEvent()                   {}
@@ -300,6 +299,8 @@ func (WindowInfoChanged) isNagoEvent()                 {}
 func (ScopeConfigurationChanged) isNagoEvent()         {}
 func (ThemeRequested) isNagoEvent()                    {}
 func (SendMultipleRequested) isNagoEvent()             {}
+func (OpenHttpFlow) isNagoEvent()                      {}
+func (OpenHttpLink) isNagoEvent()                      {}
 
 // A Box aligns children elements in absolute within its bounds.
 //   - there is no intrinsic component dimension, so you have to set it by hand
@@ -642,6 +643,7 @@ const (
 	TopTrailing    Alignment = 6
 	BottomLeading  Alignment = 7
 	BottomTrailing Alignment = 8
+	Stretch        Alignment = 9
 )
 
 func (v *Alignment) write(r *BinaryWriter) error {
@@ -4851,74 +4853,6 @@ func (v *NavigationReloadRequested) read(r *BinaryReader) error {
 	return nil
 }
 
-// OpenRequested is usually emitted by the backend, so that the frontend will trigger a kind of popen or shellexecute.
-type OpenRequested struct {
-	// Resource may be anything, e.g. a path or uuid or URI.
-	Resource Str
-	// Options are simple string key-value pairs which further specifies the open call.
-	Options RootViewParameters
-}
-
-func (v *OpenRequested) write(w *BinaryWriter) error {
-	var fields [3]bool
-	fields[1] = !v.Resource.IsZero()
-	fields[2] = !v.Options.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
-			return err
-		}
-		if err := v.Resource.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[2] {
-		if err := w.writeFieldHeader(array, 2); err != nil {
-			return err
-		}
-		if err := v.Options.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *OpenRequested) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.Resource.read(r)
-			if err != nil {
-				return err
-			}
-		case 2:
-			err := v.Options.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.
 type WindowTitle struct {
 	Value Str
@@ -8595,6 +8529,168 @@ func (v *UpdateStateValues2Requested) read(r *BinaryReader) error {
 	return nil
 }
 
+// OpenHttpLink triggers the system open link call.
+type OpenHttpLink struct {
+	Url    URI
+	Target Str
+}
+
+func (v *OpenHttpLink) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Url.IsZero()
+	fields[2] = !v.Target.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Target.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *OpenHttpLink) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Target.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// OpenHttpFlow starts a http redirect flow process using the specified fields.
+type OpenHttpFlow struct {
+	Url                URI
+	RedirectTarget     Str
+	RedirectNavigation Str
+	Session            Str
+}
+
+func (v *OpenHttpFlow) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Url.IsZero()
+	fields[2] = !v.RedirectTarget.IsZero()
+	fields[3] = !v.RedirectNavigation.IsZero()
+	fields[4] = !v.Session.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.RedirectTarget.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.RedirectNavigation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Session.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *OpenHttpFlow) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.RedirectTarget.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.RedirectNavigation.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Session.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -9070,12 +9166,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
-	case 76:
-		var v OpenRequested
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
 	case 77:
 		var v WindowTitle
 		if err := v.read(src); err != nil {
@@ -9288,6 +9378,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 112:
 		var v UpdateStateValues2Requested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 113:
+		var v OpenHttpLink
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 114:
+		var v OpenHttpFlow
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -10641,15 +10743,6 @@ func (v *ThemeID) reset() {
 	*v = ThemeID("")
 }
 
-func (v *OpenRequested) reset() {
-	v.Resource.reset()
-	v.Options.reset()
-}
-
-func (v *OpenRequested) IsZero() bool {
-	return v.Resource.IsZero() && v.Options.IsZero()
-}
-
 func (v *WindowTitle) reset() {
 	v.Value.reset()
 }
@@ -11252,6 +11345,26 @@ func (v *UpdateStateValues2Requested) IsZero() bool {
 func (v *UpdateStateValues2Requested) GetRID() RID {
 	return v.RID
 }
+func (v *OpenHttpLink) reset() {
+	v.Url.reset()
+	v.Target.reset()
+}
+
+func (v *OpenHttpLink) IsZero() bool {
+	return v.Url.IsZero() && v.Target.IsZero()
+}
+
+func (v *OpenHttpFlow) reset() {
+	v.Url.reset()
+	v.RedirectTarget.reset()
+	v.RedirectNavigation.reset()
+	v.Session.reset()
+}
+
+func (v *OpenHttpFlow) IsZero() bool {
+	return v.Url.IsZero() && v.RedirectTarget.IsZero() && v.RedirectNavigation.IsZero() && v.Session.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -11777,13 +11890,6 @@ func (v *ThemeID) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *OpenRequested) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 76); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (v *WindowTitle) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 77); err != nil {
 		return err
@@ -12031,6 +12137,20 @@ func (v *WindowInfoChanged) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *UpdateStateValues2Requested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 112); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *OpenHttpLink) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 113); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *OpenHttpFlow) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 114); err != nil {
 		return err
 	}
 	return nil

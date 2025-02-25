@@ -1,19 +1,22 @@
-import {Channel} from '@/shared/network/serviceAdapter';
+import { UploadRepository } from '@/api/upload/uploadRepository';
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	ColorScheme,
 	ColorSchemeValues,
-	Density,
 	DP,
+	Density,
 	FileImportRequested,
 	Locale,
 	NavigationForwardToRequested,
+	OpenHttpFlow,
+	OpenHttpLink,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	Str,
 	WindowInfo,
@@ -21,9 +24,8 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import {URI} from '@/shared/protocol/ora/uRI';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
-import {UploadRepository} from "@/api/upload/uploadRepository";
+import { URI } from '@/shared/protocol/ora/uRI';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -197,7 +199,6 @@ function requiredRootViewParameter(): RootViewParameters {
 	return params;
 }
 
-
 /**
  * triggerFileDownload applies some hacks to simulate a user-requested file download by inserting fake
  * nodes and clicking on them. After some tries, this seems to be the most stable behavior across all browsers.
@@ -239,10 +240,8 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {
-				},
-				(uploadId) => {
-				},
+				(uploadId) => {},
+				(uploadId) => {},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -258,21 +257,13 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 	document.body.removeChild(input);
 }
 
-
 /**
  * navigateForward issues a RootViewAllocationRequested to the backend and updates the browser history stack.
  * @param chan
  * @param evt
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
-
-	chan.sendEvent(new RootViewAllocationRequested(
-		getLocale(),
-		evt.rootView,
-		nextRID(),
-		evt.values,
-	));
-
+	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
 
 	let url = `/${evt.rootView.value}`;
 	if (evt.values.value && Object.entries(evt.values.value).length > 0) {
@@ -301,8 +292,8 @@ export function applyRootViewState(chan: Channel, state: any) {
 		req.factory.value = evt.rootView.value;
 	}
 
-	if (req.factory.value === "") {
-		req.factory.value = "."
+	if (req.factory.value === '') {
+		req.factory.value = '.';
 	}
 
 	if (evt.values && evt.values.value) {
@@ -313,4 +304,22 @@ export function applyRootViewState(chan: Channel, state: any) {
 	req.rID = nextRID();
 
 	chan.sendEvent(req);
+}
+
+/**
+ * openHttpLink trivially calls the browsers window open function.
+ * @param evt
+ */
+export function openHttpLink(evt: OpenHttpLink) {
+	window.open(evt.url.value, evt.target.value);
+}
+
+/**
+ * openHttpFlow replaces the current location and saves any http flow session to peek through
+ * the CSRF protection for later redirects back.
+ * @param evt
+ */
+export function openHttpFlow(evt: OpenHttpFlow) {
+	localStorage.setItem('http-flow-session', evt.session.value);
+	window.location.href = evt.url.value;
 }

@@ -81,20 +81,20 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref} from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
 import {
 	FunctionCallRequested,
 	Scaffold,
 	ScaffoldMenuEntries,
 	ScaffoldMenuEntry,
-	UpdateStateValueRequested
+	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
-import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -137,7 +137,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 				xpandedEntry.value?.title,
 				xpandedEntry.value?.action,
 				xpandedEntry.value?.rootView,
-				new ScaffoldMenuEntries(),//xpandedEntry.value?.menu,
+				new ScaffoldMenuEntries(), //xpandedEntry.value?.menu,
 				xpandedEntry.value?.badge,
 				xpandedEntry.value?.expanded
 			)
@@ -148,7 +148,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	return !menuEntry.action.isZero() || (menuEntry.menu.isZero());
+	return !menuEntry.action.isZero() || menuEntry.menu.isZero();
 }
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
@@ -187,16 +187,12 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 	if (isClickableMenuEntry(menuEntry)) {
 		if (!menuEntry.menu.isZero() && menuEntry.menu.value.length > 0) {
 			// TODO I screwed this code up and do not know any more what the idea was. I broke it obviously a long time ago
-
 			/*serviceAdapter.setProperties({
 				...menuEntry.x,
 				v: !menuEntry.x,
 			});*/
 		} else if (!menuEntry.action.isZero()) {
-			serviceAdapter.sendEvent(new FunctionCallRequested(
-				menuEntry.action,
-				nextRID(),
-			));
+			serviceAdapter.sendEvent(new FunctionCallRequested(menuEntry.action, nextRID()));
 		}
 	}
 }

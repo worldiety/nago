@@ -72,7 +72,8 @@
 							ref="subSubMenuEntryElements"
 							class="sub-sub-menu-entry rounded-full px-2"
 							:class="{
-								'cursor-pointer hover:underline focus-visible:underline': !subSubMenuEntry.action.isZero(),
+								'cursor-pointer hover:underline focus-visible:underline':
+									!subSubMenuEntry.action.isZero(),
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
 							:tabindex="!subSubMenuEntry.action.isZero() ? '0' : '-1'"
@@ -93,8 +94,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -143,7 +144,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 				expandedMenuEntry.value?.title,
 				expandedMenuEntry.value?.action,
 				expandedMenuEntry.value?.rootView,
-				new ScaffoldMenuEntries(),//xpandedEntry.value?.menu,
+				new ScaffoldMenuEntries(), //xpandedEntry.value?.menu,
 				expandedMenuEntry.value?.badge,
 				expandedMenuEntry.value?.expanded
 			)
@@ -181,7 +182,9 @@ function handleMouseMove(event: MouseEvent): void {
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	const activeMenuEntryIndex: number | undefined = props.ui.menu.value?.findIndex((menuEntry) => menuEntry.expanded.value);
+	const activeMenuEntryIndex: number | undefined = props.ui.menu.value?.findIndex(
+		(menuEntry) => menuEntry.expanded.value
+	);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
 	}
@@ -199,10 +202,7 @@ function updateSubMenuTriangleLeftOffset(): void {
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 	if (!menuEntry.action.isZero()) {
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			menuEntry.action,
-			nextRID(),
-		))
+		serviceAdapter.sendEvent(new FunctionCallRequested(menuEntry.action, nextRID()));
 	}
 }
 

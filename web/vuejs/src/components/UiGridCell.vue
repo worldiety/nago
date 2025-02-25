@@ -36,9 +36,11 @@ const style = computed<string>(() => {
 	}
 
 	switch (props.ui.alignment.value) {
+		case AlignmentValues.Stretch:
+			// do nothing, which stretches
+			break;
 		case AlignmentValues.Center:
-			// TODO we have inherited a strange behavior here: in the ora protocol version we were undefined and did not apply the default behavior which breaks the grid area
-			//styles.push('place-self: center');
+			styles.push('place-self: center');
 			break;
 		case AlignmentValues.Leading:
 			styles.push('place-self: center start');
@@ -65,7 +67,6 @@ const style = computed<string>(() => {
 			styles.push('place-self: end end');
 			break;
 	}
-
 
 	styles.push(...marginCSS(props.ui.padding));
 

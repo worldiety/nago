@@ -16,7 +16,6 @@
     "NavigationForwardToRequested",
     "NavigationReloadRequested",
     "NavigationResetRequested",
-    "OpenRequested",
     "ScopeConfigurationChangeRequested",
     "ScopeDestructionRequested",
     "SessionAssigned",
@@ -24,6 +23,8 @@
     "WindowInfoChanged",
     "ScopeConfigurationChanged",
     "ThemeRequested",
-    "SendMultipleRequested"
+    "SendMultipleRequested",
+    "OpenHttpFlow",
+    "OpenHttpLink"
   ]
 }

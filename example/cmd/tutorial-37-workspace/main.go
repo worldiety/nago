@@ -14,10 +14,6 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
 
-		iamCfg := application.IAMSettings{}
-		iamCfg.Decorator = cfg.NewScaffold().Decorator()
-		iamCfg = cfg.IAM(iamCfg)
-
 		workspaceRepo := application.SloppyRepository[workspace.Workspace](cfg)
 		wsList := workspace.NewList(workspaceRepo)
 		wsSave := workspace.NewSave(workspaceRepo)
@@ -29,7 +25,7 @@ func main() {
 			{Icon: heroSolid.Trash, Type: "offer", Name: "Angebotsvorlagen", Description: "Wir machen jetzt die Vorlagen in Typst, weil man damit viel schneller Templates schreiben kann und das Kompilieren auch viel schneller ist als in Latex."},
 		}
 
-		cfg.RootView(".", iamCfg.DecorateRootView(func(wnd core.Window) core.View {
+		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return workspaceui.Dashboard(wnd, workspaceui.DashboardOptions{
 				Title:            "Übersicht Vorlagen",
 				Types:            workspaceTypes,
@@ -37,7 +33,7 @@ func main() {
 			})
 		}))
 
-		cfg.RootView("workspace/list", iamCfg.DecorateRootView(func(wnd core.Window) core.View {
+		cfg.RootView("workspace/list", cfg.DecorateRootView(func(wnd core.Window) core.View {
 			return workspaceui.WorkspaceList(wnd, workspaceui.WorkspaceListOptions{
 				ListWorkspaces:  wsList,
 				SaveWorkspace:   wsSave,

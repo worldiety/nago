@@ -21,9 +21,7 @@ type Navigation interface {
 	//  - the win32 ShellExecute call or
 	//  - the MacOS open command or
 	//  - xdg-open or gnome-open on linux
-	//
-	// This can be also used for other frontend primitives like handling oauth flows. See also [HTTPFlow].
-	Open(resource URI, options Values)
+	Open(resource URI)
 }
 
 type navigationController struct {
@@ -96,10 +94,9 @@ func (n *navigationController) Reload() {
 	n.scope.Publish(&proto.NavigationReloadRequested{})
 }
 
-func (n *navigationController) Open(resource URI, options Values) {
-	n.scope.Publish(&proto.OpenRequested{
-		Resource: proto.Str(resource),
-		Options:  options.proto(),
+func (n *navigationController) Open(resource URI) {
+	n.scope.Publish(&proto.OpenHttpLink{
+		Url: proto.URI(resource),
 	})
 }
 
@@ -143,11 +140,11 @@ func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation Navi
 
 	nav.(*navigationController).IgnoreNextInvalidation()
 
-	nav.Open(start, Values{
-		"_type":              "http-flow",
-		"redirectTarget":     string(redirectTarget),
-		"redirectNavigation": string(redirectNavigation),
-		"session":            encSid,
+	nav.(*navigationController).scope.Publish(&proto.OpenHttpFlow{
+		Url:                proto.URI(start),
+		Session:            proto.Str(encSid),
+		RedirectNavigation: proto.Str(redirectNavigation),
+		RedirectTarget:     proto.Str(redirectTarget),
 	})
 }
 
@@ -163,8 +160,8 @@ func HTTPify(s string) URI {
 // HTTPOpen just triggers a regular (p)open call for the given http URL. A webfrontend will
 // most likely trigger a window.open(url, target). In Javascript, target may be _blank|_self|_parent|_top|_unfencedTop
 func HTTPOpen(nav Navigation, url URI, target string) {
-	nav.Open(url, Values{
-		"_type":  "http-link",
-		"target": target,
+	nav.(*navigationController).scope.Publish(&proto.OpenHttpLink{
+		Url:    proto.URI(url),
+		Target: proto.Str(target),
 	})
 }

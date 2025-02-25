@@ -8,8 +8,8 @@ import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {AlignmentValues, FunctionCallRequested, Table} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
+import { nextRID } from '@/eventhandling';
+import { AlignmentValues, FunctionCallRequested, Table } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Table;
@@ -53,7 +53,11 @@ function rowStyles(idx: number): string {
 	}
 
 	if (idx > 0 && !props.ui.rowDividerColor.isZero()) {
-		styles.push('border-collapse: collapse', 'border-top-width: 1px', `border-color: ${colorValue(props.ui.rowDividerColor.value)}`);
+		styles.push(
+			'border-collapse: collapse',
+			'border-top-width: 1px',
+			`border-color: ${colorValue(props.ui.rowDividerColor.value)}`
+		);
 	}
 
 	if (!row.action.isZero()) {
@@ -129,7 +133,7 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 	if (cell.padding.isZero()) {
 		// default cell padding from the entire table
 		styles.push(...paddingCSS(props.ui.defaultCellPadding));
-	} else  {
+	} else {
 		// specific cell padding takes precedence
 		styles.push(...paddingCSS(cell.padding));
 	}
@@ -211,10 +215,7 @@ function headCellStyles(colIdx: number): string {
 function onClickRow(rowIdx: number) {
 	let row = props.ui.rows.value?.at(rowIdx)!;
 	if (!row.action.isZero()) {
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			row.action,
-			nextRID(),
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(row.action, nextRID()));
 	}
 }
 
@@ -222,25 +223,16 @@ function onClickCell(rowIdx: number, colIdx: number) {
 	let row = props.ui.rows.value?.at(rowIdx)!;
 	let cell = row.cells.value.at(colIdx)!;
 	if (!cell.action.isZero()) {
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			cell.action,
-			nextRID(),
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(cell.action, nextRID()));
 	} else if (!row.action.isZero()) {
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			row.action,
-			nextRID(),
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(row.action, nextRID()));
 	}
 }
 
 function onClickHeaderCell(colIdx: number) {
 	let cell = props.ui.header?.columns.value?.at(colIdx)!;
 	if (!cell.cellAction.isZero()) {
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			cell.cellAction,
-			nextRID(),
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(cell.cellAction, nextRID()));
 	}
 }
 
@@ -277,7 +269,7 @@ function onRowMouseLeave(rowIdx: number) {
 
 <template>
 	<table class="w-full text-left rtl:text-right overflow-clip" :style="frameStyles">
-		<thead v-if="props.ui.header?.columns.value?.length>0" class="" :style="headStyles()">
+		<thead v-if="props.ui.header?.columns.value?.length > 0" class="" :style="headStyles()">
 			<tr>
 				<th
 					class="font-normal"
@@ -302,8 +294,8 @@ function onRowMouseLeave(rowIdx: number) {
 				@mouseleave="onRowMouseLeave(rowIdx)"
 			>
 				<td
-					:rowspan="cell.rowSpan.value==0?undefined:cell.rowSpan.value"
-					:colspan="cell.colSpan.value==0?undefined:cell.colSpan.value"
+					:rowspan="cell.rowSpan.value == 0 ? undefined : cell.rowSpan.value"
+					:colspan="cell.colSpan.value == 0 ? undefined : cell.colSpan.value"
 					v-for="(cell, colIdx) in row.cells.value"
 					:style="cellStyles(rowIdx, colIdx)"
 					@click.stop="onClickCell(rowIdx, colIdx)"

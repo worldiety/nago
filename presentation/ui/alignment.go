@@ -1,6 +1,9 @@
 package ui
 
-import "go.wdy.de/nago/presentation/proto"
+import (
+	"fmt"
+	"go.wdy.de/nago/presentation/proto"
+)
 
 // Alignment is specified as follows:
 //
@@ -65,8 +68,10 @@ func (a Alignment) String() string {
 		return "top-trailing"
 	case BottomTrailing:
 		return "bottom-trailing"
+	case Stretch:
+		return "stretch"
 	default:
-		return string(a)
+		return fmt.Sprintf("%d", a)
 	}
 }
 
@@ -80,4 +85,5 @@ const (
 	TopTrailing    Alignment = Alignment(proto.TopTrailing)
 	BottomLeading  Alignment = Alignment(proto.BottomLeading)
 	BottomTrailing Alignment = Alignment(proto.BottomTrailing)
+	Stretch        Alignment = Alignment(proto.Stretch)
 )

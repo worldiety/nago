@@ -97,9 +97,8 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {FunctionCallRequested, Scaffold, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
-
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, Scaffold, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -117,11 +116,16 @@ const expandedTopLevelMenuEntryLinked = computed((): boolean => {
 });
 
 const expandedTopLevelMenuEntryActive = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && `/${expandedTopLevelMenuEntry.value.rootView.value}` === window.location.pathname;
+	return (
+		!!expandedTopLevelMenuEntry.value &&
+		`/${expandedTopLevelMenuEntry.value.rootView.value}` === window.location.pathname
+	);
 });
 
 const subMenuVisible = computed((): boolean => {
-	const expandedTopLevelMenuEntry = props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value);
+	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
+		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value
+	);
 	console.log('!!!!', !!expandedTopLevelMenuEntry?.menu.value);
 	return !!expandedTopLevelMenuEntry?.menu.value;
 });
@@ -130,7 +134,9 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 	if (props.ui.menu.isZero()) {
 		return [];
 	}
-	const expandedTopLevelMenuEntry = props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value);
+	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
+		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value
+	);
 	if (!expandedTopLevelMenuEntry) {
 		return props.ui.menu.value;
 	}
@@ -142,7 +148,7 @@ function navigateToExpandedTopLevelMenuEntry(): void {
 		return;
 	}
 
-	if (expandedTopLevelMenuEntry.value){
+	if (expandedTopLevelMenuEntry.value) {
 		menuEntryClicked(expandedTopLevelMenuEntry.value);
 	}
 }
@@ -152,10 +158,7 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 		return;
 	}
 
-	serviceAdapter.sendEvent(new FunctionCallRequested(
-		menuEntry.action,
-		nextRID(),
-	));
+	serviceAdapter.sendEvent(new FunctionCallRequested(menuEntry.action, nextRID()));
 }
 
 function returnToTopLevelMenu(): void {

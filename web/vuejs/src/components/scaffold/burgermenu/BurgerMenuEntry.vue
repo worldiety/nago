@@ -51,9 +51,8 @@ import { computed } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {FunctionCallRequested, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
-
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ScaffoldMenuEntry;
@@ -67,7 +66,7 @@ const emit = defineEmits<{
 const serviceAdapter = useServiceAdapter();
 
 const hasSubMenuEntries = computed((): boolean => {
-	return (props.ui.menu.value && props.ui.menu.value.length > 0);
+	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 
 const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || !props.ui.action.isZero());
@@ -98,10 +97,7 @@ function menuEntryClicked(): void {
 	}
 	if (!props.ui.action.isZero()) {
 		emit('clicked');
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			props.ui.action,
-			nextRID(),
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
 }
 

@@ -286,7 +286,7 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 				state := c.checkboxStates[i]
 				yield(ui.TableRow(
 					ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
-					ui.TableCell(c.renderToSelect(value))),
+					ui.TableCell(c.renderToSelect(value)).Alignment(ui.Leading)),
 				)
 			}
 		})...), func(table ui.TTable) ui.TTable {

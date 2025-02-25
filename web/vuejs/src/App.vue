@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useUploadRepository} from '@/api/upload/uploadRepository';
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 import UiErrorMessage from '@/components/UiErrorMessage.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import {useErrorHandling} from '@/composables/errorhandling';
-import {useEventBus} from '@/composables/eventBus';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { useErrorHandling } from '@/composables/errorhandling';
+import { useEventBus } from '@/composables/eventBus';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
 	getLocale,
 	getWindowInfo,
+	handleOpenRequested,
 	navigateForward,
 	nextRID,
 	onScopeConfigurationChanged,
+	openHttpFlow,
+	openHttpLink,
 	requestRootViewAllocation,
 	requestRootViewRendering,
 	requestScopeConfigurationChange,
@@ -22,28 +25,29 @@ import {
 	triggerFileUpload,
 	windowInfoChanged,
 } from '@/eventhandling';
-import {EventType} from '@/shared/eventbus/eventType';
+import { EventType } from '@/shared/eventbus/eventType';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import {ConnectionState} from '@/shared/network/connectionState';
+import { ConnectionState } from '@/shared/network/connectionState';
 import {
 	Component,
 	ErrorRootViewAllocationRequired,
 	FileImportRequested,
 	NavigationForwardToRequested,
+	OpenHttpFlow,
+	OpenHttpLink,
 	RootViewAllocationRequested,
 	RootViewInvalidated,
 	RootViewParameters,
 	ScopeConfigurationChanged,
 	SendMultipleRequested,
 } from '@/shared/proto/nprotoc_gen';
-import type {ComponentInvalidated} from '@/shared/protocol/ora/componentInvalidated';
-import type {ErrorOccurred} from '@/shared/protocol/ora/errorOccurred';
-import type {Event} from '@/shared/protocol/ora/event';
-import {OpenRequested} from '@/shared/protocol/ora/openRequested';
-import type {Theme} from '@/shared/protocol/ora/theme';
-import {ThemeRequested} from '@/shared/protocol/ora/themeRequested';
-import type {Themes} from '@/shared/protocol/ora/themes';
-import {useThemeManager} from '@/shared/themeManager';
+import type { ComponentInvalidated } from '@/shared/protocol/ora/componentInvalidated';
+import type { ErrorOccurred } from '@/shared/protocol/ora/errorOccurred';
+import type { Event } from '@/shared/protocol/ora/event';
+import type { Theme } from '@/shared/protocol/ora/theme';
+import { ThemeRequested } from '@/shared/protocol/ora/themeRequested';
+import type { Themes } from '@/shared/protocol/ora/themes';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -106,15 +110,24 @@ async function applyConfiguration(): Promise<void> {
 		}
 
 		if (evt instanceof FileImportRequested) {
-			triggerFileUpload(uploadRepository, evt)
-			return
+			triggerFileUpload(uploadRepository, evt);
+			return;
 		}
 
 		if (evt instanceof NavigationForwardToRequested) {
-			navigateForward(serviceAdapter, evt)
-			return
+			navigateForward(serviceAdapter, evt);
+			return;
 		}
 
+		if (evt instanceof OpenHttpLink) {
+			openHttpLink(evt);
+			return;
+		}
+
+		if (evt instanceof OpenHttpFlow) {
+			openHttpFlow(evt);
+			return;
+		}
 	});
 
 	requestRootViewRendering(serviceAdapter);
@@ -208,7 +221,6 @@ function updateUi(event: Event): void {
 	state.value = State.ShowUI;
 }
 
-
 function navigateBack(): void {
 	history.back();
 }
@@ -271,7 +283,6 @@ function themeRequested(evt: Event): void {
 	windowInfoChanged(serviceAdapter);
 }
 
-
 function setTheme(themes: Themes): void {
 	let activeTheme: Theme;
 	switch (localStorage.getItem('color-theme')) {
@@ -295,8 +306,8 @@ function addEventListeners(): void {
 			return;
 		}
 
-		console.log("pop state",event)
-		applyRootViewState(serviceAdapter,history.state)
+		console.log('pop state', event);
+		applyRootViewState(serviceAdapter, history.state);
 	});
 
 	window.addEventListener('resize', function (event) {
@@ -384,8 +395,8 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected"/>
-	<ConnectingChannelOverlay v-if="state === State.Loading"/>
+	<ConnectionLostOverlay v-if="!connected" />
+	<ConnectingChannelOverlay v-if="state === State.Loading" />
 
 	<div v-if="errorHandler.error.value" class="flex h-screen items-center justify-center">
 		<UiErrorMessage :error="errorHandler.error.value"></UiErrorMessage>
@@ -403,7 +414,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
 	</div>
 </template>

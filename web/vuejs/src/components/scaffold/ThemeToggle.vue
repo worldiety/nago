@@ -29,6 +29,6 @@ function toggleDarkMode() {
 	darkModeActive.value = themeManager.getActiveThemeKey() === ThemeKey.DARK;
 
 	//eventBus.publish(EventType.WindowInfoChanged, {});
-	windowInfoChanged(service,themeManager);
+	windowInfoChanged(service, themeManager);
 }
 </script>

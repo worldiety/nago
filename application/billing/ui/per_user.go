@@ -29,7 +29,7 @@ func UserLicensePage(wnd core.Window, licenses billing.UserLicenses) core.View {
 				case t.Depleted():
 					if t.License.Incentive != "" {
 						tmp = append(tmp, ui.PrimaryButton(func() {
-							wnd.Navigation().Open(core.URI(t.License.Incentive), nil)
+							wnd.Navigation().Open(core.URI(t.License.Incentive))
 						}).Title("jetzt anfragen"))
 					} else {
 						tmp = append(tmp, tags.ColoredTextPill(ui.ColorSemanticWarn, "alle Lizenzen zugewiesen"))

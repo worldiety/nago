@@ -43,6 +43,8 @@ func main() {
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
 
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
+
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().
 			MenuEntry().Icon(heroSolid.BellSnooze).Action(func(wnd core.Window) {

@@ -30,7 +30,7 @@ func AppLicensePage(wnd core.Window, licenses billing.AppLicenses) core.View {
 				} else {
 					if t.Incentive != "" {
 						tmp = append(tmp, ui.PrimaryButton(func() {
-							wnd.Navigation().Open(core.URI(t.Incentive), nil)
+							wnd.Navigation().Open(core.URI(t.Incentive))
 						}).Title("jetzt anfragen"))
 					}
 

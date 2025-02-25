@@ -24,7 +24,7 @@ type TGridCell struct {
 // and the background of the grid will be visible. Thus, the default specification of no-alignment
 // is different here.
 func GridCell(body core.View) TGridCell {
-	return TGridCell{body: body}
+	return TGridCell{body: body, alignment: Stretch}
 }
 
 func (c TGridCell) Padding(p Padding) TGridCell {

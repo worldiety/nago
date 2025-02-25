@@ -1,0 +1,23 @@
+{
+  "kind": "Record",
+  "doc": "OpenHttpFlow starts a http redirect flow process using the specified fields.",
+  "id": 114,
+  "fields": {
+    "1": {
+      "name": "Url",
+      "type": "URI"
+    },
+    "2": {
+      "name": "RedirectTarget",
+      "type": "Str"
+    },
+    "3": {
+      "name": "RedirectNavigation",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Session",
+      "type": "Str"
+    }
+  }
+}

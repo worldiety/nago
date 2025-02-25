@@ -62,8 +62,8 @@
 import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import {FunctionCallRequested, ScaffoldMenuEntry} from "@/shared/proto/nprotoc_gen";
-import {nextRID} from "@/eventhandling";
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
@@ -93,16 +93,13 @@ const active = computed((): boolean => {
 });
 
 const hasSubMenuEntries = computed((): boolean => {
-	return (props.ui.menu.value && props.ui.menu.value.length > 0);
+	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 
 function handleClick(): void {
 	if (!props.ui.action.isZero() && !hasSubMenuEntries.value) {
 		// If the menu entry has an action and no sub menu entries, execute the action
-		serviceAdapter.sendEvent(new FunctionCallRequested(
-			props.ui.action,
-			nextRID()
-		));
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	} else {
 		// Else expand the menu entry
 		emit('expand', props.ui);

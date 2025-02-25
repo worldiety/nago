@@ -1,0 +1,15 @@
+{
+  "kind": "Record",
+  "doc": "OpenHttpLink triggers the system open link call.",
+  "id": 113,
+  "fields": {
+    "1": {
+      "name": "Url",
+      "type": "URI"
+    },
+    "2": {
+      "name": "Target",
+      "type": "Str"
+    }
+  }
+}

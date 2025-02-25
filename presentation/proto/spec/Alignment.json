@@ -28,6 +28,9 @@
     },
     "8": {
       "name": "BottomTrailing"
+    },
+    "9": {
+      "name": "Stretch"
     }
   }
 }
