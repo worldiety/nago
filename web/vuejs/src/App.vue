@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useUploadRepository } from '@/api/upload/uploadRepository';
+import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useUploadRepository} from '@/api/upload/uploadRepository';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
 	clipboardWriteText,
 	getWindowInfo,
+	lastRID,
 	navigateForward,
 	nextRID,
 	onScopeConfigurationChanged,
@@ -23,7 +24,7 @@ import {
 	windowInfoChanged,
 } from '@/eventhandling';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import { ConnectionState } from '@/shared/network/connectionState';
+import {ConnectionState} from '@/shared/network/connectionState';
 import {
 	ClipboardWriteTextRequested,
 	Component,
@@ -41,7 +42,7 @@ import {
 	SendMultipleRequested,
 	ThemeRequested,
 } from '@/shared/proto/nprotoc_gen';
-import { useThemeManager } from '@/shared/themeManager';
+import {useThemeManager} from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -88,6 +89,11 @@ async function applyConfiguration(): Promise<void> {
 		}
 
 		if (evt instanceof RootViewInvalidated) {
+			if (evt.rID.value != 0 && evt.rID.value < lastRID().value) {
+				console.log("received outdated root view rendering, discarding", "expected", lastRID().value, "received", evt.rID.value);
+				return
+			}
+			
 			ui.value = evt.root;
 			state.value = State.ShowUI;
 			return;
@@ -153,13 +159,6 @@ async function applyConfiguration(): Promise<void> {
 	});
 
 	requestRootViewRendering(serviceAdapter);
-	/*
-		// request and apply configuration
-		const config = await serviceAdapter.getConfiguration();
-		themeManager.setThemes(config.themes);
-		themeManager.applyActiveTheme();
-		updateFavicon(config.appIcon);
-		sendWindowInfo(false);*/
 }
 
 function restoreCookie(sessionID: string) {
@@ -243,7 +242,8 @@ onBeforeMount(() => {
 	configurationPromise = applyConfiguration();
 });
 
-onMounted(async () => {});
+onMounted(async () => {
+});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
@@ -285,8 +285,8 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected" />
-	<ConnectingChannelOverlay v-if="state === State.Loading" />
+	<ConnectionLostOverlay v-if="!connected"/>
+	<ConnectingChannelOverlay v-if="state === State.Loading"/>
 
 	<div
 		id="ora-overlay"
@@ -300,7 +300,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
 		<div v-else>Empty UI</div>
 	</div>
 </template>

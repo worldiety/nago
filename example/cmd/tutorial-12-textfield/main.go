@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -21,6 +22,9 @@ func main() {
 			showAlert := core.AutoState[bool](wnd)
 			myIntState := core.AutoState[int64](wnd)
 			myFloatState := core.AutoState[float64](wnd)
+
+			// add artificial latency
+			time.Sleep(time.Millisecond * 500)
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v", firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()),

@@ -1,11 +1,11 @@
-import { UploadRepository } from '@/api/upload/uploadRepository';
-import { Channel } from '@/shared/network/serviceAdapter';
+import {UploadRepository} from '@/api/upload/uploadRepository';
+import {Channel} from '@/shared/network/serviceAdapter';
 import {
 	ClipboardWriteTextRequested,
 	ColorScheme,
 	ColorSchemeValues,
-	DP,
 	Density,
+	DP,
 	FileImportRequested,
 	Locale,
 	NavigationForwardToRequested,
@@ -16,8 +16,8 @@ import {
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
 	SendMultipleRequested,
 	Str,
 	ThemeRequested,
@@ -26,8 +26,8 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import { URI } from '@/shared/protocol/ora/uRI';
-import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import {URI} from '@/shared/protocol/ora/uRI';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -37,6 +37,11 @@ let nextRequestTracingID: number = 1;
  */
 export function nextRID(): RID {
 	nextRequestTracingID++;
+	return new RID(nextRequestTracingID);
+}
+
+// lastRID returns that last returned request/response tracing number.
+export function lastRID(): RID {
 	return new RID(nextRequestTracingID);
 }
 
@@ -242,8 +247,10 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {},
-				(uploadId) => {},
+				(uploadId) => {
+				},
+				(uploadId) => {
+				},
 				(uploadId) => {
 					console.log('upload failed');
 				}

@@ -229,7 +229,7 @@ func (s *Scope) handleMessage(buf []byte) error {
 			rid = ridSrc.GetRID()
 		}
 
-		if s.dirty {
+		if s.dirty || s.hasDirtyStates() {
 			s.forceRender(rid)
 			s.dirty = false
 		}
@@ -286,7 +286,7 @@ func (s *Scope) forceRender(reqId proto.RID) {
 
 	alloc := s.allocatedRootView.Unwrap()
 
-	s.Publish(s.render(0, alloc))
+	s.Publish(s.render(reqId, alloc))
 }
 
 // updateTick is called with a fixed rate. There is one application wide update ticker, thus this must not block at
@@ -295,33 +295,38 @@ func (s *Scope) updateTick(now time.Time) {
 	s.eventLoop.Post(func() {
 		// I can't estimate how expensive this becomes, to post for thousands of scopes at once. However, the updater
 		// will throttle automatically, if it becomes to slow.
-		alloc, err := s.allocatedRootView.Get()
-		if err != nil {
-			return
+		if s.hasDirtyStates() {
+			s.forceRender(0)
 		}
+	})
+}
 
-		// TODO replace individual flags with a single flag per scope_window
-		requiresRender := false
-		for _, property := range alloc.states {
+func (s *Scope) hasDirtyStates() bool {
+	if s.allocatedRootView.IsNone() {
+		return false
+	}
+
+	// TODO replace individual flags with a single flag per scope_window
+	alloc := s.allocatedRootView.Unwrap()
+
+	requiresRender := false
+	for _, property := range alloc.states {
+		if property.dirty() {
+			requiresRender = true
+			break
+		}
+	}
+
+	if !requiresRender {
+		for _, property := range s.statesById {
 			if property.dirty() {
 				requiresRender = true
 				break
 			}
 		}
+	}
 
-		if !requiresRender {
-			for _, property := range s.statesById {
-				if property.dirty() {
-					requiresRender = true
-					break
-				}
-			}
-		}
-
-		if requiresRender {
-			s.forceRender(0)
-		}
-	})
+	return requiresRender
 }
 
 // only for event loop

@@ -83,6 +83,10 @@ function submitInputValue(force: boolean): void {
 		return;
 	}
 
+	// Note, that the sendEvent may have a huge latency, causing ghost updates for the user input.
+	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
+	nextRID();
+
 	if (force || (props.ui.disableDebounce.value && !props.ui.inputValue.isZero())) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(inputValue.value))
