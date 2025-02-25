@@ -36,7 +36,7 @@ func NewRestore(dst Persistence) Restore {
 		defer func() {
 			_ = tmpFile.Close()
 			if err := os.Remove(tempFilename); err != nil {
-				slog.Error("cannot remove temp zip file: %w", err)
+				slog.Error("cannot remove temp zip file", "err", err)
 			}
 		}()
 

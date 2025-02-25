@@ -28,7 +28,7 @@ func NewUpdateOtherPermissions(mutex *sync.Mutex, repo Repository) UpdateOtherPe
 		}
 
 		slices.Sort(permissions)
-		slices.Compact(permissions)
+		permissions = slices.Compact(permissions)
 
 		usr := optUsr.Unwrap()
 		usr.Permissions = permissions

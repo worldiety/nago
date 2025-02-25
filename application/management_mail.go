@@ -83,7 +83,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			}
 
 			if err := c.SendVerificationMail(evt.ID); err != nil {
-				slog.Error("user created but cannot send verification mail: %w", err)
+				slog.Error("user created but cannot send verification mail", "err", err)
 			}
 		})
 

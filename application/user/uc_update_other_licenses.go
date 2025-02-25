@@ -28,7 +28,7 @@ func NewUpdateOtherLicenses(mutex *sync.Mutex, repo Repository) UpdateOtherLicen
 		}
 
 		slices.Sort(licenses)
-		slices.Compact(licenses)
+		licenses = slices.Compact(licenses)
 
 		usr := optUsr.Unwrap()
 		usr.Licenses = licenses

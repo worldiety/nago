@@ -159,7 +159,7 @@ func (p Project) Localize(tag language.Tag) []File {
 		}
 
 		targetPath := strings.TrimPrefix(file.Filename, loc.Prefix)
-		slices.DeleteFunc(files, func(file File) bool {
+		files = slices.DeleteFunc(files, func(file File) bool {
 			return file.Filename == targetPath
 		})
 

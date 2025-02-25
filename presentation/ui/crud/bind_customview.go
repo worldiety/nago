@@ -23,7 +23,7 @@ func CustomView[E any](makeView func(entity *core.State[E]) ui.DecoredView) Fiel
 		},
 		Comparator: nil,
 		Stringer: func(e E) string {
-			return fmt.Sprintf("%v", makeView) // makeView must not get executed here, may invoke stringer
+			return fmt.Sprintf("%v", makeView) //nolint // makeView must not get executed here, may invoke stringer, this is a false positive
 		},
 	}
 }
