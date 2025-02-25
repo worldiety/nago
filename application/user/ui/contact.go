@@ -18,6 +18,8 @@ type contactViewModel struct {
 	Lastname   string   `label:"Nachname" section:"Daten"`
 	EMail      string   `label:"E-Mail Adresse" section:"Daten" disabled:"true" supportingText:"Die E-Mail Adresse kann hier nicht geändert werden, da sie Bestandteil der Identität ist."`
 
+	AboutMe string `label:"" section:"Über mich" lines:"5"`
+
 	// job
 	Position    string `label:"Position" section:"Beruf"`
 	CompanyName string `label:"Firma" section:"Beruf"`
@@ -71,6 +73,7 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 			MobilePhone: c.MobilePhone,
 			LinkedIn:    c.LinkedIn,
 			Website:     c.Website,
+			AboutMe:     c.AboutMe,
 		}
 	})
 
@@ -101,6 +104,7 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 						Position:        c.Position,
 						CompanyName:     c.CompanyName,
 						DisplayLanguage: wnd.Locale().String(),
+						AboutMe:         c.AboutMe,
 					})
 
 					if err != nil {

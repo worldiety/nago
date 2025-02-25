@@ -105,6 +105,7 @@ type Contact struct {
 	CompanyName string `json:"company,omitempty"`
 	// DisplayLanguage is a BCP47 string like de or en_US of what the User wants to see its content.
 	DisplayLanguage string `json:"displayLanguage,omitempty"`
+	AboutMe         string `json:"aboutMe,omitempty"`
 }
 
 func (d Contact) IsZero() bool {
