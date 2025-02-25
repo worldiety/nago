@@ -77,6 +77,7 @@ type UpdateAccountStatus func(subject permission.Auditable, id ID, status Accoun
 
 type UpdateVerification func(subject permission.Auditable, id ID, verified bool) error
 
+type UpdateVerificationByMail func(subject permission.Auditable, mail Email, verified bool) error
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -113,6 +114,7 @@ type UseCases struct {
 	UpdateAccountStatus       UpdateAccountStatus
 	AddUserToGroup            AddUserToGroup
 	UpdateVerification        UpdateVerification
+	UpdateVerificationByMail  UpdateVerificationByMail
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -181,5 +183,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
 		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
+		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 	}
 }
