@@ -98,6 +98,31 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 								reflect.ValueOf(dst).Elem().FieldByName(field.Name).Set(slice)
 							},
 						)))
+					} else {
+						// just show a multi line textfield
+						fieldsBuilder.Append(Text(TextOptions{Label: label, SupportingText: field.Tag.Get("supportingText"), Lines: 5}, PropertyFuncs(
+							func(obj *E) string {
+								slice := reflect.ValueOf(obj).Elem().FieldByName(field.Name)
+								tmp := make([]string, 0, slice.Len())
+								for i := 0; i < slice.Len(); i++ {
+									tmp = append(tmp, slice.Index(i).String())
+								}
+
+								return strings.Join(tmp, "\n")
+							},
+
+							func(dst *E, x string) {
+								v := strings.Split(x, "\n")
+								slice := reflect.MakeSlice(field.Type, 0, len(v))
+								for _, strVal := range v {
+									newValue := reflect.New(field.Type.Elem()).Elem()
+									newValue.SetString(strVal)
+									slice = reflect.Append(slice, newValue)
+								}
+
+								reflect.ValueOf(dst).Elem().FieldByName(field.Name).Set(slice)
+							},
+						)))
 					}
 
 				}

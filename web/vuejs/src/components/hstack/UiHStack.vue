@@ -108,6 +108,7 @@ function commonStyles(): string[] {
 	return styles;
 }
 
+
 const frameStyles = computed<string>(() => {
 	let styles = commonStyles();
 

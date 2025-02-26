@@ -236,8 +236,6 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 
 	updateSubMenuTriangleLeftOffset();
 }
-
-
 </script>
 
 <style scoped>

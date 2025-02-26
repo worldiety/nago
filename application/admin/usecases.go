@@ -13,12 +13,13 @@ import (
 	uisecret "go.wdy.de/nago/application/secret/ui"
 	uisession "go.wdy.de/nago/application/session/ui"
 	uitemplate "go.wdy.de/nago/application/template/ui"
+	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 )
 
-type FindAllGroups func() []Group
+type FindAllGroups func(uid user.ID) []Group
 type QueryGroups func(subject auth.Subject, filterText string) []Group
 
 type Pages struct {

@@ -20,6 +20,8 @@ type Create func(subject permission.Auditable, model ShortRegistrationUser) (Use
 type FindByID func(subject permission.Auditable, id ID) (std.Option[User], error)
 type FindByMail func(subject permission.Auditable, email Email) (std.Option[User], error)
 type FindAll func(subject permission.Auditable) iter.Seq2[User, error]
+
+type FindAllIdentifiers func(subject permission.Auditable) iter.Seq2[ID, error]
 type ChangeOtherPassword func(subject AuditableUser, uid ID, pwd Password, pwdRepeated Password) error
 type ChangeMyPassword func(subject AuditableUser, oldPassword, newPassword, newRepeated Password) error
 type Delete func(subject permission.Auditable, id ID) error
@@ -115,6 +117,7 @@ type UseCases struct {
 	AddUserToGroup            AddUserToGroup
 	UpdateVerification        UpdateVerification
 	UpdateVerificationByMail  UpdateVerificationByMail
+	FindAllIdentifiers        FindAllIdentifiers
 }
 
 func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
@@ -184,5 +187,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
+		FindAllIdentifiers:        NewFindAllIdentifiers(users),
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/crud"
+	"iter"
 	"log/slog"
 )
 
@@ -135,6 +137,10 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				ucBillingUserLicense,
 			)
 		})
+
+		c.AddSystemService("nago.users", crud.AnyUseCaseList[user.User, user.ID](func(subject auth.Subject) iter.Seq2[user.User, error] {
+			return c.userManagement.UseCases.FindAll(subject)
+		}))
 
 	}
 

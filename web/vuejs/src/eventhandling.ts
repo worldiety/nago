@@ -1,11 +1,11 @@
-import {UploadRepository} from '@/api/upload/uploadRepository';
-import {Channel} from '@/shared/network/serviceAdapter';
+import { UploadRepository } from '@/api/upload/uploadRepository';
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	ClipboardWriteTextRequested,
 	ColorScheme,
 	ColorSchemeValues,
-	Density,
 	DP,
+	Density,
 	FileImportRequested,
 	Locale,
 	NavigationForwardToRequested,
@@ -16,8 +16,8 @@ import {
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	Str,
 	ThemeRequested,
@@ -27,7 +27,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -247,10 +247,8 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {
-				},
-				(uploadId) => {
-				},
+				(uploadId) => {},
+				(uploadId) => {},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -273,18 +271,18 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
-	console.log("!!!!", evt)
+	console.log('!!!!', evt);
 	let url = `/${evt.rootView.value}`;
 	if (!evt.values.isZero()) {
 		url += '?';
-		let idx = 0
+		let idx = 0;
 		evt.values.value.forEach((value, key) => {
 			url += `${key}=${value}`;
 			if (idx < evt.values.value.size - 1) {
 				url += '&';
 			}
 			idx++;
-		})
+		});
 	}
 
 	history.pushState(evt, '', url);

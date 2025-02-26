@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/events"
@@ -67,7 +68,7 @@ type Configurator struct {
 	userManagement           *UserManagement
 	roleManagement           *RoleManagement
 	adminManagement          *AdminManagement
-	adminManagementGroups    []func() admin.Group
+	adminManagementGroups    []func(uid user.ID) admin.Group
 	adminManagementMutator   func(m *AdminManagement)
 	sessionManagement        *SessionManagement
 	permissionManagement     *PermissionManagement

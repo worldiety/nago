@@ -1,6 +1,8 @@
 package avatar
 
 import (
+	"go.wdy.de/nago/image"
+	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"strings"
@@ -16,6 +18,14 @@ type TAvatar struct {
 	textSize ui.Length
 	border   ui.Border
 	color    ui.Color
+}
+
+func TextOrImage(text string, img image.ID) TAvatar {
+	if img != "" {
+		return URI(http_image.URI(img, image.FitCover, 64, 64))
+	}
+
+	return Text(text)
 }
 
 func Text(paraphe string) TAvatar {

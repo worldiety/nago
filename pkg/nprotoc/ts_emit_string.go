@@ -13,7 +13,7 @@ func (c *Compiler) tsEmitString(t Typename, decl String) error {
   }
 
   isZero(): boolean {
-    return this.value === "";
+    return this.value.length === 0;
   }
 
   reset(): void {

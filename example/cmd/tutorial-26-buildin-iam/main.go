@@ -3,8 +3,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/permission"
+	cfgusercircle "go.wdy.de/nago/application/usercircle/cfg"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
@@ -35,6 +37,8 @@ func main() {
 
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
+		option.MustZero(cfg.StandardSystems())
+		option.Must(cfgusercircle.Enable(cfg))
 
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 

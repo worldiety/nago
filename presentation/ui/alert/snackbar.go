@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"golang.org/x/crypto/sha3"
 	"log/slog"
+	"os"
 	"slices"
 )
 
@@ -71,19 +72,9 @@ func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages.Set(append(messages.Get(), msg))
 }
 
-var permDeniedMsg = Message{
-	Title:   "Zugriff verweigert",
-	Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
-}
-
-var permReqLogin = Message{
-	Title:   "Zugriff verweigert",
-	Message: "Diese Funktion steht nur eingeloggten Nutzern zur Verfügung.",
-}
-
-func BannerError(err error) core.View {
+func makeMessageFromError(err error) (Message, bool) {
 	if err == nil {
-		return nil
+		return Message{}, false
 	}
 
 	var permNotLoggedIn interface {
@@ -91,7 +82,11 @@ func BannerError(err error) core.View {
 	}
 
 	if errors.As(err, &permNotLoggedIn) && permNotLoggedIn.NotLoggedIn() {
-		return Banner(permReqLogin.Title, permReqLogin.Message)
+
+		return Message{
+			Title:   "Zugriff verweigert",
+			Message: "Diese Funktion steht nur eingeloggten Nutzern zur Verfügung.",
+		}, true
 	}
 
 	var permissionDenied interface {
@@ -99,13 +94,46 @@ func BannerError(err error) core.View {
 	}
 
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
-		return Banner(permDeniedMsg.Title, permDeniedMsg.Message)
+
+		return Message{
+			Title:   "Zugriff verweigert",
+			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
+		}, true
 	}
 
 	var localError std.LocalizedError
 
 	if errors.As(err, &localError) {
-		return Banner(localError.Title(), localError.Description())
+		return Message{
+			Title:   localError.Title(),
+			Message: localError.Description(),
+		}, true
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		return Message{
+			Title:   "Element nicht gefunden",
+			Message: "Die Anwendungsfall konnte nicht ausgeführt werden, da ein Element erwartet aber nicht gefunden wurde.",
+		}, true
+	}
+
+	if errors.Is(err, os.ErrExist) {
+		return Message{
+			Title:   "Element bereits vorhanden",
+			Message: "Die Anwendungsfall konnte nicht ausgeführt werden, da ein Element nicht bereits vorhanden sein darf, aber gefunden wurde.",
+		}, true
+	}
+
+	return Message{}, false
+}
+
+func BannerError(err error) core.View {
+	if err == nil {
+		return nil
+	}
+
+	if msg, ok := makeMessageFromError(err); ok {
+		return Banner(msg.Title, msg.Message)
 	}
 
 	tmp := sha3.Sum224([]byte(err.Error()))
@@ -129,34 +157,8 @@ func ShowBannerError(wnd core.Window, err error) {
 		return
 	}
 
-	var permNotLoggedIn interface {
-		NotLoggedIn() bool
-	}
-
-	if errors.As(err, &permNotLoggedIn) && permNotLoggedIn.NotLoggedIn() {
-		ShowBannerMessage(wnd, permReqLogin)
-
-		return
-	}
-
-	var permissionDenied interface {
-		PermissionDenied() bool
-	}
-
-	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
-		ShowBannerMessage(wnd, permDeniedMsg)
-
-		return
-	}
-
-	var localError std.LocalizedError
-
-	if errors.As(err, &localError) {
-		ShowBannerMessage(wnd, Message{
-			Title:   localError.Title(),
-			Message: localError.Description(),
-		})
-
+	if msg, ok := makeMessageFromError(err); ok {
+		ShowBannerMessage(wnd, msg)
 		return
 	}
 

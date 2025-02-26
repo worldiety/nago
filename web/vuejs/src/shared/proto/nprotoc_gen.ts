@@ -578,7 +578,7 @@ export class Color implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -710,7 +710,7 @@ export class Length implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -1542,7 +1542,7 @@ export class Locale implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -1619,7 +1619,7 @@ export class RootViewID implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -1706,7 +1706,7 @@ export class Str implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -2618,7 +2618,7 @@ export class URI implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -2657,7 +2657,7 @@ export class NamespaceName implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -4883,7 +4883,7 @@ export class SVG implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -5609,7 +5609,7 @@ export class ThemeID implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {
@@ -6504,7 +6504,7 @@ export class ScopeID implements Writeable, Readable {
 	}
 
 	isZero(): boolean {
-		return this.value === '';
+		return this.value.length === 0;
 	}
 
 	reset(): void {

@@ -3,11 +3,12 @@ package admin
 import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/rquery"
+	"log/slog"
 )
 
 func NewGroups(groups FindAllGroups) QueryGroups {
 	return func(subject auth.Subject, filterText string) []Group {
-		return filter(subject, groups(), filterText)
+		return filter(subject, groups(subject.ID()), filterText)
 	}
 }
 
@@ -22,6 +23,7 @@ func filter(subject auth.Subject, groups []Group, text string) []Group {
 		}
 		for _, entry := range group.Entries {
 			if entry.Target == "" {
+				slog.Error("admin center group entry target path is empty, card ignored", "title", entry.Title)
 				// obviously not configured correctly or has never been setup, like disabled session or mail management etc.
 				continue
 			}

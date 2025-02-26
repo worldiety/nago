@@ -5,8 +5,11 @@ import (
 	"go.wdy.de/nago/application/group"
 	uigroup "go.wdy.de/nago/application/group/ui"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/crud"
+	"iter"
 )
 
 type GroupManagement struct {
@@ -40,6 +43,10 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 
 		c.RootView(c.groupManagement.Pages.Groups, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uigroup.Groups(wnd, c.groupManagement.UseCases)
+		}))
+
+		c.AddSystemService("nago.groups", crud.AnyUseCaseList[group.Group, group.ID](func(subject auth.Subject) iter.Seq2[group.Group, error] {
+			return c.groupManagement.UseCases.FindAll(subject)
 		}))
 	}
 

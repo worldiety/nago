@@ -90,10 +90,16 @@ async function applyConfiguration(): Promise<void> {
 
 		if (evt instanceof RootViewInvalidated) {
 			if (evt.rID.value != 0 && evt.rID.value < lastRID().value) {
-				console.log("received outdated root view rendering, discarding", "expected", lastRID().value, "received", evt.rID.value);
-				return
+				console.log(
+					'received outdated root view rendering, discarding',
+					'expected',
+					lastRID().value,
+					'received',
+					evt.rID.value
+				);
+				return;
 			}
-			
+
 			ui.value = evt.root;
 			state.value = State.ShowUI;
 			return;
@@ -230,6 +236,9 @@ function onConnectionChange(connectionState: ConnectionState): void {
 	console.log('connection changed', connected.value);
 	if (connected.value) {
 		console.log('websocket connected, poke server');
+		// always send the window info changed, otherwise if the server lost its state, the rendering
+		// has the wrong dimensions and breakspoints apply wrong
+		windowInfoChanged(serviceAdapter, themeManager);
 		serviceAdapter.sendEvent(new RootViewRenderingRequested(nextRID()));
 	}
 }

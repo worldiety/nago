@@ -17,6 +17,10 @@ type Role struct {
 	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.iam.permission.list" label:"Berechtigungen"`
 }
 
+func (r Role) String() string {
+	return r.Name
+}
+
 func (r Role) WithIdentity(id ID) Role {
 	r.ID = id
 	return r

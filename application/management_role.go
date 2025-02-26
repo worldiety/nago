@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/crud"
 	"iter"
 )
 
@@ -61,6 +62,10 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 					return c.roleManagement.UseCases.Upsert(subject, entity)
 				},
 			}))
+		}))
+
+		c.AddSystemService("nago.roles", crud.AnyUseCaseList[role.Role, role.ID](func(subject auth.Subject) iter.Seq2[role.Role, error] {
+			return c.roleManagement.UseCases.FindAll(subject)
 		}))
 	}
 
