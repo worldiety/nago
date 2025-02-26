@@ -92,11 +92,12 @@ export function requestRootViewAllocation(chan: Channel, locale: Locale) {
 	let rootViewID = requiredRootViewID();
 	let rootViewParams = requiredRootViewParameter();
 
+
 	history.replaceState(
-		{
-			factory: rootViewID,
-			values: rootViewParams,
-		},
+		new NavigationForwardToRequested(
+			rootViewID,
+			rootViewParams
+		),
 		'',
 		null
 	);
@@ -298,6 +299,7 @@ export function applyRootViewState(chan: Channel, state: any) {
 	let req = new RootViewAllocationRequested();
 	// important: evt/history.state may be in broken state, due to the way how javascript deserializes the state
 	// it is NOT of NavigationForwardToRequested anymore
+	console.log("applyRootViewState from history",state)
 	if (evt.rootView && evt.rootView.value) {
 		req.factory.value = evt.rootView.value;
 	}

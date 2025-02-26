@@ -35,11 +35,11 @@ import {
 	NavigationReloadRequested,
 	NavigationResetRequested,
 	OpenHttpFlow,
-	OpenHttpLink,
-	RootViewInvalidated,
+	OpenHttpLink, RootViewID,
+	RootViewInvalidated, RootViewParameters,
 	RootViewRenderingRequested,
 	ScopeConfigurationChanged,
-	SendMultipleRequested,
+	SendMultipleRequested, Str,
 	ThemeRequested,
 } from '@/shared/proto/nprotoc_gen';
 import {useThemeManager} from '@/shared/themeManager';
@@ -191,15 +191,15 @@ function fixHistoryInit() {
 	if (factoryId.length === 0) {
 		factoryId = '.'; // this is by ora definition the root page
 	}
-	const params: Record<string, string> = {};
+	let params = new Map<Str,Str>();
 	new URLSearchParams(window.location.search).forEach((value, key) => {
-		params[key] = value;
+		params.set(new Str(key),new Str(value));
 	});
 	history.replaceState(
-		{
-			factory: factoryId,
-			values: params,
-		},
+		new NavigationForwardToRequested(
+			new RootViewID(factoryId),
+			new RootViewParameters(params)
+		),
 		'',
 		null
 	);
