@@ -42,7 +42,7 @@ func Enable(cfg *application.Configurator) (SchedulerManagement, error) {
 		return uischeduler.PageOverview(wnd, management.UseCases)
 	})
 
-	cfg.AddAdminCenterGroup(func() admin.Group {
+	cfg.AddAdminCenterGroup(func(uid user.ID) admin.Group {
 		group := admin.Group{
 			Title: "Hintergrundprozesse",
 		}
