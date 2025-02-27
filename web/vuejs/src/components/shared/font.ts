@@ -8,7 +8,7 @@ export function fontCSS(font?: Font): string[] {
 	}
 
 	// style and weight must precede size
-	switch (font.style.value) {
+	switch (font.style) {
 		case FontStyleValues.Normal:
 			styles.push('font-style: normal');
 			break;
@@ -17,16 +17,16 @@ export function fontCSS(font?: Font): string[] {
 			break;
 	}
 
-	if (!font.weight.isZero()) {
-		styles.push(`font-weight: ${font.weight.value}`);
+	if (font.weight) {
+		styles.push(`font-weight: ${font.weight}`);
 	}
 
-	if (!font.name.isZero()) {
-		styles.push(`font-family: ${font.name.value}`);
+	if (font.name) {
+		styles.push(`font-family: ${font.name}`);
 	}
 
-	if (!font.size.isZero()) {
-		styles.push(`font-size: ${font.size.value}`);
+	if (font.size) {
+		styles.push(`font-size: ${font.size}`);
 	}
 
 	return styles;

@@ -1,6 +1,6 @@
 <template>
 	<div v-if="!ui.content"></div>
-	<Teleport v-else-if="ui.modalType.value == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
+	<Teleport v-else-if="ui.modalType == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
 		<Transition>
 			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles">
 				<UiGeneric :ui="ui.content" class="" />
@@ -37,7 +37,7 @@ let lastFocusableElement: HTMLElement | undefined;
 
 onMounted(() => {
 	//if (props.isActiveDialog) {
-	if (props.ui.modalType.value !== ModalTypeValues.ModalTypeOverlay) {
+	if (props.ui.modalType !== ModalTypeValues.ModalTypeOverlay) {
 		captureFocusInDialog();
 	}
 
@@ -53,20 +53,20 @@ onMounted(() => {
 
 const styles = computed<string>(() => {
 	const styles: string[] = [];
-	if (!props.ui.right.isZero()) {
-		styles.push(`right: ${cssLengthValue(props.ui.right.value)}`);
+	if (props.ui.right) {
+		styles.push(`right: ${cssLengthValue(props.ui.right)}`);
 	}
 
-	if (!props.ui.top.isZero()) {
-		styles.push(`top: ${cssLengthValue(props.ui.top.value)}`);
+	if (props.ui.top) {
+		styles.push(`top: ${cssLengthValue(props.ui.top)}`);
 	}
 
-	if (!props.ui.left.isZero()) {
-		styles.push(`left: ${cssLengthValue(props.ui.left.value)}`);
+	if (props.ui.left) {
+		styles.push(`left: ${cssLengthValue(props.ui.left)}`);
 	}
 
-	if (!props.ui.bottom.isZero()) {
-		styles.push(`bottom: ${cssLengthValue(props.ui.bottom.value)}`);
+	if (props.ui.bottom) {
+		styles.push(`bottom: ${cssLengthValue(props.ui.bottom)}`);
 	}
 
 	return styles.join(';');

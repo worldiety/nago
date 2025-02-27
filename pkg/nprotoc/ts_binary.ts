@@ -176,3 +176,42 @@ export interface Readable {
 
     isZero(): boolean;
 }
+
+
+function writeString(writer: BinaryWriter, value: string): void {
+    const data = new TextEncoder().encode(value); // Convert string to Uint8Array
+    writer.writeUvarint(data.length); // Write the length of the string
+    writer.write(data); // Write the string data
+}
+
+function readString(reader: BinaryReader): string {
+    const strLen = reader.readUvarint(); // Read the length of the string
+    const buf = reader.readBytes(strLen); // Read the string data
+    return new TextDecoder().decode(buf); // Convert Uint8Array to string
+}
+
+
+function writeInt(writer: BinaryWriter, value: number): void {
+    writer.writeUvarint(value);
+}
+
+function readInt(reader: BinaryReader): number {
+    return reader.readUvarint();
+}
+
+
+function writeBool(writer: BinaryWriter, value: boolean): void {
+    writer.writeUvarint(value ? 1 : 0);
+}
+
+function readBool(reader: BinaryReader): boolean {
+    return reader.readUvarint() === 1;
+}
+
+function writeFloat(writer: BinaryWriter, value: number): void {
+    writer.writeFloat64(value);
+}
+
+function readFloat(reader: BinaryReader): number {
+    return reader.readFloat64();
+}

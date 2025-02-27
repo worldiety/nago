@@ -33,11 +33,11 @@ onUnmounted(() => {
 });
 
 const navigationBarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.alignment.value === ScaffoldAlignmentValues.ScaffoldAlignmentTop;
+	return windowWidth.value >= 768 && props.ui.alignment === undefined || props.ui.alignment=== ScaffoldAlignmentValues.ScaffoldAlignmentTop;
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.alignment.value === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
+	return windowWidth.value >= 768 && props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
 });
 
 const burgerMenuVisible = computed((): boolean => {

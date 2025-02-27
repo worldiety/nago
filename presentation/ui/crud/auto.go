@@ -26,7 +26,6 @@ func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useC
 	return func(wnd core.Window) core.View {
 		bnd := AutoBinding[E](AutoBindingOptions{}, wnd, useCases)
 		return ui.VStack(
-			ui.WindowTitle(opts.Title),
 			AutoView(AutoViewOptions{Title: opts.Title, CreateDisabled: opts.CreateDisabled}, bnd, useCases),
 		).FullWidth()
 	}
@@ -59,14 +58,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 	if !canFindAll(bnd, usecases) {
 		return ui.VStack(
 
-			ui.VStack(
-				ui.Text(opts.Title).TextAlignment(ui.TextAlignCenter).Font(ui.Font{
-					Size:   "2rem",
-					Weight: ui.BoldFontWeight,
-				}),
-
-				ui.HLine(),
-			).Alignment(ui.Leading).Padding(ui.Padding{Bottom: ui.Length("2rem")}),
+			ui.H1(opts.Title),
 
 			alert.IfPermissionDenied(bnd.wnd, "."),
 		).Alignment(ui.Leading).Padding(ui.Padding{Top: ui.L40}).Frame(ui.Frame{}.FullWidth())
@@ -91,14 +83,7 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 
 	return ui.VStack(
 
-		ui.VStack(
-			ui.Text(opts.Title).TextAlignment(ui.TextAlignCenter).Font(ui.Font{
-				Size:   "2rem",
-				Weight: ui.BoldFontWeight,
-			}),
-
-			ui.HLineWithColor(ui.ColorAccent),
-		).Alignment(ui.Leading),
+		ui.H1(opts.Title),
 
 		View[E, ID](
 			Options[E](bnd).

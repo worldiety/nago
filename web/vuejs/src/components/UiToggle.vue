@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { bool2Str } from '@/components/shared/util';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { Ptr, Str, Toggle, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import {ref, watch} from 'vue';
+import {bool2Str} from '@/components/shared/util';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {Toggle, UpdateStateValueRequested} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Toggle;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const checked = ref<boolean>(props.ui.value.value);
+const checked = ref<boolean>(props.ui.value ? props.ui.value : false);
 
 watch(
-	() => props.ui.value.value,
+	() => props.ui.value,
 	(newValue) => {
 		if (newValue) {
 			checked.value = newValue;
@@ -24,22 +24,22 @@ watch(
 );
 
 function onClick() {
-	if (props.ui.disabled.value) {
+	if (props.ui.disabled) {
 		return;
 	}
 
 	serviceAdapter.sendEvent(
-		new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(bool2Str(!checked.value)))
+		new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (bool2Str(!checked.value)))
 	);
 }
 </script>
 
 <template>
-	<div v-if="!ui.invisible.value">
+	<div v-if="!ui.invisible">
 		<div
 			class="toggle-switch-container"
-			:class="{ 'toggle-switch-container-disabled': props.ui.disabled.value }"
-			:tabindex="props.ui.disabled.value ? '-1' : '0'"
+			:class="{ 'toggle-switch-container-disabled': props.ui.disabled }"
+			:tabindex="props.ui.disabled ? '-1' : '0'"
 			@click="onClick"
 			@keydown.enter="onClick"
 		>

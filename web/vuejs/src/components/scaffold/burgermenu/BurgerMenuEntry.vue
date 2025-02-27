@@ -12,27 +12,27 @@
 		>
 			<div v-if="props.ui.icon" class="relative flex justify-start items-center h-full">
 				<div class="menu-entry-icon-active *:h-full">
-					<ui-generic v-if="ui.expanded.value && props.ui.iconActive" :ui="props.ui.iconActive" />
-					<ui-generic v-else :ui="props.ui.icon" />
+					<ui-generic v-if="ui.expanded && props.ui.iconActive" :ui="props.ui.iconActive"/>
+					<ui-generic v-else :ui="props.ui.icon"/>
 				</div>
 				<div class="menu-entry-icon *:h-full">
-					<ui-generic :ui="props.ui.icon" />
+					<ui-generic :ui="props.ui.icon"/>
 				</div>
 
 				<!-- Optional red badge -->
 				<div
-					v-if="!ui.badge.isZero()"
+					v-if="ui.badge!==undefined"
 					class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-5 px-1 rounded-full bg-A1"
 				>
-					<p class="text-sm text-white">{{ ui.badge.value }}</p>
+					<p class="text-sm text-white">{{ ui.badge }}</p>
 				</div>
 			</div>
 			<div class="flex justify-start items-center h-6">
-				<p class="grow leading-tight select-none align-bottom">{{ ui.title.value }}</p>
+				<p class="grow leading-tight select-none align-bottom">{{ ui.title }}</p>
 			</div>
-			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass" />
+			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass"/>
 		</div>
-		<template v-if="ui.expanded.value">
+		<template v-if="ui.expanded">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
 					v-for="(menuEntry, index) in ui.menu.value"
@@ -47,12 +47,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import {computed} from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {FunctionCallRequested, ScaffoldMenuEntry} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ScaffoldMenuEntry;
@@ -69,22 +69,22 @@ const hasSubMenuEntries = computed((): boolean => {
 	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 
-const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || !props.ui.action.isZero());
+const menuEntryClickable = computed((): boolean => hasSubMenuEntries.value || props.ui.action !== undefined);
 
 const menuEntryActive = computed((): boolean => {
 	//return true
-	if (props.ui.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+	if (props.ui.rootView == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
 
-	return `/${props.ui.rootView.value}` === window.location.pathname;
+	return `/${props.ui.rootView}` === window.location.pathname;
 });
 
 const triangleClass = computed((): string | null => {
 	if (props.topLevel) {
 		return '-rotate-90';
 	}
-	if (props.ui.expanded.value) {
+	if (props.ui.expanded) {
 		return 'rotate-180';
 	}
 	return null;
@@ -95,7 +95,7 @@ function menuEntryClicked(): void {
 		expandMenuEntry();
 		return;
 	}
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action !== undefined) {
 		emit('clicked');
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
@@ -111,7 +111,7 @@ function expandMenuEntry(): void {
 	// 	], [props.ui.onFocus]);
 	// }
 
-	props.ui.expanded.value = true;
+	props.ui.expanded = true;
 }
 </script>
 

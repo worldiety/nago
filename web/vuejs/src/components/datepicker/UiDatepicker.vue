@@ -1,11 +1,11 @@
 <template>
-	<div v-if="!ui.invisible.value" class="relative" :style="frameStyles">
+	<div v-if="!ui.invisible" class="relative" :style="frameStyles">
 		<!-- Input field -->
 		<InputWrapper
-			:label="props.ui.label.value"
-			:error="props.ui.errorText.value"
-			:hint="props.ui.supportingText.value"
-			:disabled="props.ui.disabled.value"
+			:label="props.ui.label"
+			:error="props.ui.errorText"
+			:hint="props.ui.supportingText"
+			:disabled="props.ui.disabled"
 		>
 			<div
 				class="input-field relative z-0 !pr-10"
@@ -17,15 +17,15 @@
 					{{ dateFormatted ?? $t('datepicker.select') }}
 				</p>
 				<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none text-black h-full">
-					<Calendar class="w-4" />
+					<Calendar class="w-4"/>
 				</div>
 			</div>
 		</InputWrapper>
 
 		<DatepickerOverlay
 			:expanded="expanded"
-			:range-mode="props.ui.style.value == DatePickerStyleValues.DatePickerDateRange"
-			:label="props.ui.label.value"
+			:range-mode="props.ui.style == DatePickerStyleValues.DatePickerDateRange"
+			:label="props.ui.label"
 			:start-date-selected="startDateSelected"
 			:selected-start-day="selectedStartDay"
 			:selected-start-month="selectedStartMonth"
@@ -42,18 +42,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import { frameCSS } from '@/components/shared/frame';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
+import {frameCSS} from '@/components/shared/frame';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
 import {
 	DatePicker,
 	DatePickerStyleValues,
-	Ptr,
-	Str,
 	UpdateStateValueRequested,
 	UpdateStateValues2Requested,
 } from '@/shared/proto/nprotoc_gen';
@@ -84,21 +82,21 @@ watch(
 );
 
 function initialize(): void {
-	selectedStartDay.value = props.ui.value.day.value;
-	selectedStartMonth.value = props.ui.value.month.value;
-	selectedStartYear.value = props.ui.value.year.value;
+	selectedStartDay.value = props.ui.value.day?props.ui.value.day:0;
+	selectedStartMonth.value = props.ui.value.month?props.ui.value.month:0;
+	selectedStartYear.value = props.ui.value.year?props.ui.value.year:0;
 
 	startDateSelected.value =
-		props.ui.style.value == DatePickerStyleValues.DatePickerDateRange && selectedStartYear.value != 0;
+		props.ui.style == DatePickerStyleValues.DatePickerDateRange && selectedStartYear.value != 0;
 
-	selectedEndDay.value = props.ui.endValue.day.value;
-	selectedEndMonth.value = props.ui.endValue.month.value;
-	selectedEndYear.value = props.ui.endValue.year.value;
+	selectedEndDay.value = props.ui.endValue.day?props.ui.endValue.day:0;
+	selectedEndMonth.value = props.ui.endValue.month?props.ui.endValue.month:0;
+	selectedEndYear.value = props.ui.endValue.year?props.ui.endValue.year:0;
 
 	endDateSelected.value =
-		props.ui.style.value == DatePickerStyleValues.DatePickerDateRange && selectedEndYear.value != 0;
+		props.ui.style == DatePickerStyleValues.DatePickerDateRange && selectedEndYear.value != 0;
 
-	if (props.ui.style.value == DatePickerStyleValues.DatePickerSingleDate) {
+	if (props.ui.style == DatePickerStyleValues.DatePickerSingleDate) {
 		startDateSelected.value = true;
 		endDateSelected.value = true;
 	}
@@ -108,13 +106,13 @@ function initialize(): void {
 }
 
 const dateFormatted = computed((): string | null => {
-	if (props.ui.value.year.isZero()) {
+	if (!props.ui.value.year) {
 		return null;
 	}
 
 	const startDate = new Date();
 	startDate.setFullYear(selectedStartYear.value, selectedStartMonth.value - 1, selectedStartDay.value);
-	if (props.ui.style.value !== DatePickerStyleValues.DatePickerDateRange) {
+	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
 		//console.log("bugs!!",startDate.toLocaleDateString())
 		return startDate.toLocaleDateString();
 	}
@@ -124,7 +122,7 @@ const dateFormatted = computed((): string | null => {
 });
 
 function showDatepicker(): void {
-	if (!props.ui.disabled.value && !expanded.value) {
+	if (!props.ui.disabled && !expanded.value) {
 		expanded.value = true;
 	}
 }
@@ -136,7 +134,7 @@ function closeDatepicker(): void {
 
 function selectDate(day: number, monthIndex: number, year: number): void {
 	const selectedDate = new Date(year, monthIndex, day, 0, 0, 0, 0);
-	if (props.ui.style.value != DatePickerStyleValues.DatePickerDateRange || !startDateSelected.value) {
+	if (props.ui.style != DatePickerStyleValues.DatePickerDateRange || !startDateSelected.value) {
 		selectStartDate(selectedDate);
 		return;
 	}
@@ -184,11 +182,14 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 
 interface MyDate {
 	// Day
-	d /*omitempty*/? /*Day*/ : number /*int*/;
+	d /*omitempty*/? /*Day*/: number /*int*/
+	;
 	// Month
-	m /*omitempty*/? /*Month*/ : number /*int*/;
+	m /*omitempty*/? /*Month*/: number /*int*/
+	;
 	// Year
-	y /*omitempty*/? /*Year*/ : number /*int*/;
+	y /*omitempty*/? /*Year*/: number /*int*/
+	;
 }
 
 function selectStartDate(selectedDate: Date): void {
@@ -196,13 +197,13 @@ function selectStartDate(selectedDate: Date): void {
 	selectedStartMonth.value = selectedDate.getMonth() + 1;
 	selectedStartYear.value = selectedDate.getFullYear();
 	startDateSelected.value = true;
-	if (props.ui.style.value !== DatePickerStyleValues.DatePickerDateRange) {
+	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(
 				props.ui.inputValue,
-				new Ptr(),
+				0,
 				nextRID(),
-				new Str(
+				(
 					JSON.stringify({
 						d: selectedStartDay.value,
 						m: selectedStartMonth.value,
@@ -224,14 +225,14 @@ function selectEndDate(selectedDate: Date): void {
 function submitSelection(): void {
 	expanded.value = false;
 
-	switch (props.ui.style.value) {
+	switch (props.ui.style) {
 		case DatePickerStyleValues.DatePickerSingleDate: {
 			serviceAdapter.sendEvent(
 				new UpdateStateValueRequested(
 					props.ui.inputValue,
-					new Ptr(),
+					0,
 					nextRID(),
-					new Str(
+					(
 						JSON.stringify({
 							d: selectedStartDay.value,
 							m: selectedStartMonth.value,
@@ -247,7 +248,7 @@ function submitSelection(): void {
 			serviceAdapter.sendEvent(
 				new UpdateStateValues2Requested(
 					props.ui.inputValue,
-					new Str(
+					(
 						JSON.stringify({
 							d: selectedStartDay.value,
 							m: selectedStartMonth.value,
@@ -256,14 +257,14 @@ function submitSelection(): void {
 					),
 
 					props.ui.endInputValue,
-					new Str(
+					(
 						JSON.stringify({
 							d: selectedEndDay.value,
 							m: selectedEndMonth.value,
 							y: selectedEndYear.value,
 						})
 					),
-					new Ptr(),
+					0,
 					nextRID()
 				)
 			);

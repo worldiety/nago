@@ -35,7 +35,7 @@ func (c *Compiler) tsEmitRecord(t Typename, decl Record) error {
 		return err
 	}
 
-	if err := c.tsEmitWriteTypeHeader(t); err != nil {
+	if err := c.tsEmitWriteTypeHeaderMethod(t); err != nil {
 		return err
 	}
 
@@ -103,7 +103,17 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 			c.pn("}")
 			c.pf("this.%s = unmarshal(reader) as %s;\n", tsFieldName(field.Name), field.Type)
 		} else {
-			c.pf("this.%s.read(reader);\n", tsFieldName(field.Name))
+			if c.isString(field.Type) {
+				c.pf("this.%s = readString(reader);\n", tsFieldName(field.Name))
+			} else if c.isFloat(field.Type) {
+				c.pf("this.%s = readFloat(reader);\n", tsFieldName(field.Name))
+			} else if c.isBool(field.Type) {
+				c.pf("this.%s = readBool(reader);\n", tsFieldName(field.Name))
+			} else if c.isInt(field.Type) {
+				c.pf("this.%s = readInt(reader);\n", tsFieldName(field.Name))
+			} else {
+				c.pf("this.%s.read(reader);\n", tsFieldName(field.Name))
+			}
 		}
 
 		c.pn("break")
@@ -139,7 +149,12 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 	c.p("const fields = [false,")
 	for _, field := range decl.sortedFields() {
 		if c.tsCanBeUndefined(field.Type) {
-			c.p("this.", tsFieldName(field.Name), "!== undefined && !this.", tsFieldName(field.Name), ".isZero(),")
+			c.p("this.", tsFieldName(field.Name), "!== undefined")
+			if !c.isPrimitive(field.Type) {
+				c.p(" && !this.", tsFieldName(field.Name), ".isZero(),")
+			} else {
+				c.p(",")
+			}
 		} else {
 			c.p("!this.", tsFieldName(field.Name), ".isZero(),")
 		}
@@ -166,7 +181,17 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 		}
 
 		if c.tsCanBeUndefined(field.Type) {
-			c.pf("this.%s!.write(writer); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			if c.isString(field.Type) {
+				c.pf("writeString(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			} else if c.isFloat(field.Type) {
+				c.pf("writeFloat(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			} else if c.isBool(field.Type) {
+				c.pf("writeBool(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			} else if c.isInt(field.Type) {
+				c.pf("writeInt(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			} else {
+				c.pf("this.%s!.write(writer); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			}
 		} else {
 			c.pf("this.%s.write(writer);\n", tsFieldName(field.Name))
 		}
@@ -194,7 +219,12 @@ func (c *Compiler) tsEmitRecordIsZero(t Typename, decl Record) error {
 	idx := 0
 	for _, field := range decl.sortedFields() {
 		if c.tsCanBeUndefined(field.Type) {
-			c.p("(this.", tsFieldName(field.Name), "=== undefined || this.", tsFieldName(field.Name), ".isZero())")
+			c.p("(this.", tsFieldName(field.Name), " === undefined ")
+			if c.isPrimitive(field.Type) {
+				c.p(")")
+			} else {
+				c.p("|| this.", tsFieldName(field.Name), ".isZero())")
+			}
 		} else {
 			c.p("this.", tsFieldName(field.Name), ".isZero()")
 		}

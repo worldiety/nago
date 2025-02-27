@@ -22,18 +22,18 @@
 			v-if="ui.icon"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{
-				'h-10': ui.title.isZero(),
+				'h-10': ui.title===undefined,
 				'mix-blend-multiply bg-M7': ui.isZero() && hover,
-				'bg-M7 bg-opacity-25': ui.expanded.value,
+				'bg-M7 bg-opacity-25': ui.expanded===true,
 				'bg-opacity-35': interacted,
 				'bg-M7 bg-opacity-35': active,
 			}"
 		>
 			<div class="relative">
-				<div class="*:h-full" v-if="ui.expanded.value && ui.iconActive">
+				<div class="*:h-full" v-if="ui.expanded && ui.iconActive">
 					<ui-generic :ui="props.ui.iconActive!" />
 				</div>
-				<div v-else-if="!ui.title.isZero() && props.ui.icon" class="*:h-full">
+				<div v-else-if="ui.title && props.ui.icon" class="*:h-full">
 					<ui-generic :ui="props.ui.icon" />
 				</div>
 				<div v-else-if="props.ui.icon" class="h-10">
@@ -42,10 +42,10 @@
 
 				<!-- Optional red badge -->
 				<div
-					v-if="!ui.badge.isZero()"
+					v-if="ui.badge"
 					class="absolute -top-1.5 -right-1.5 flex justify-center items-center h-3.5 px-1 rounded-full bg-A0"
 				>
-					<p class="text-xs text-white">{{ ui.badge.value }}</p>
+					<p class="text-xs text-white">{{ ui.badge }}</p>
 				</div>
 			</div>
 		</div>
@@ -53,7 +53,7 @@
 			class="text-sm text-center font-medium select-none hyphens-auto w-full"
 			:class="{ 'font-semibold': linksToCurrentPage }"
 		>
-			{{ ui.title.value }}
+			{{ ui.title }}
 		</p>
 	</div>
 </template>
@@ -81,11 +81,11 @@ const interacted = ref<boolean>(false);
 const hover = ref<boolean>(false);
 
 const linksToCurrentPage = computed((): boolean => {
-	if (props.ui.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+	if (props.ui.rootView == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
 
-	return `/${props.ui.rootView.value}` === window.location.pathname;
+	return `/${props.ui.rootView}` === window.location.pathname;
 });
 
 const active = computed((): boolean => {
@@ -97,7 +97,7 @@ const hasSubMenuEntries = computed((): boolean => {
 });
 
 function handleClick(): void {
-	if (!props.ui.action.isZero() && !hasSubMenuEntries.value) {
+	if (props.ui.action && !hasSubMenuEntries.value) {
 		// If the menu entry has an action and no sub menu entries, execute the action
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	} else {
@@ -114,7 +114,7 @@ function handleMouseLeave(): void {
 			...props.ui.x,
 			v: false,
 		});*/
-		props.ui.expanded.value = false;
+		props.ui.expanded = false;
 	}
 }
 

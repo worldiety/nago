@@ -20,19 +20,19 @@ const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
 }
 
 const styles = computed<string>(() => {
 	let styles = frameCSS(props.ui.frame);
-	if (!props.ui.color.isZero()) {
-		styles.push(`color: ${colorValue(props.ui.color.value)}`);
+	if (props.ui.color) {
+		styles.push(`color: ${colorValue(props.ui.color)}`);
 	}
 
-	if (!props.ui.backgroundColor.isZero()) {
-		styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
+	if (props.ui.backgroundColor) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
 	}
 
 	styles.push(...borderCSS(props.ui.border));
@@ -40,7 +40,7 @@ const styles = computed<string>(() => {
 	styles.push(...fontCSS(props.ui.font));
 	styles.push('white-space:pre-wrap'); // TODO not sure if this is the intentional effect for all platforms
 
-	switch (props.ui.textAlignment.value) {
+	switch (props.ui.textAlignment) {
 		case TextAlignmentValues.TextAlignStart:
 			styles.push('text-align: start');
 			break;
@@ -55,7 +55,8 @@ const styles = computed<string>(() => {
 			break;
 	}
 
-	if (!props.ui.action.isZero()) {
+
+	if (props.ui.action) {
 		styles.push('cursor: pointer');
 	}
 
@@ -64,7 +65,7 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible.value" :style="styles" @click="onClick"
-		>{{ props.ui.value.value }} <br v-if="!ui.invisible.value && ui.lineBreak.value" />
+	<span v-if="!ui.invisible" :style="styles" @click="onClick"
+		>{{ props.ui.value }} <br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
 </template>

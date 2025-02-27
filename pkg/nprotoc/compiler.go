@@ -150,3 +150,47 @@ func (c *Compiler) shapeOf(t Typename) (shape, error) {
 		return 0, fmt.Errorf("unknown shape type %s", t)
 	}
 }
+
+func (c *Compiler) isPrimitive(t Typename) bool {
+	return c.isString(t) || c.isFloat(t) || c.isBool(t) || c.isInt(t)
+}
+
+func (c *Compiler) isString(t Typename) bool {
+	d, ok := c.declr[t]
+	if !ok {
+		return false
+	}
+
+	_, ok = d.(String)
+	return ok
+}
+
+func (c *Compiler) isFloat(t Typename) bool {
+	d, ok := c.declr[t]
+	if !ok {
+		return false
+	}
+
+	_, ok = d.(Float64)
+	return ok
+}
+
+func (c *Compiler) isInt(t Typename) bool {
+	d, ok := c.declr[t]
+	if !ok {
+		return false
+	}
+
+	_, ok = d.(Uint)
+	return ok
+}
+
+func (c *Compiler) isBool(t Typename) bool {
+	d, ok := c.declr[t]
+	if !ok {
+		return false
+	}
+
+	_, ok = d.(Bool)
+	return ok
+}

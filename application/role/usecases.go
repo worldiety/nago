@@ -14,7 +14,7 @@ type Role struct {
 	ID          ID              `json:"id,omitempty" table-visible:"false"`
 	Name        string          `json:"name,omitempty"`
 	Description string          `json:"description,omitempty" label:"Beschreibung"`
-	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.iam.permission.list" label:"Berechtigungen"`
+	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.iam.permission.list" label:"Berechtigungen" table-visible:"false"`
 }
 
 func (r Role) String() string {

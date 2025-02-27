@@ -1,16 +1,14 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import {computed} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { Alignment } from '@/components/shared/alignments';
-import { borderCSS } from '@/components/shared/border';
-import { colorValue } from '@/components/shared/colors';
-import { fontCSS } from '@/components/shared/font';
-import { frameCSS } from '@/components/shared/frame';
-import { cssLengthValue } from '@/components/shared/length';
-import { paddingCSS } from '@/components/shared/padding';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { TextLayout } from '@/shared/protocol/ora/textLayout';
-import { VStack } from '@/shared/protocol/ora/vStack';
+import {borderCSS} from '@/components/shared/border';
+import {fontCSS} from '@/components/shared/font';
+import {frameCSS} from '@/components/shared/frame';
+import {paddingCSS} from '@/components/shared/padding';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {TextLayout} from '@/shared/protocol/ora/textLayout';
+import {FunctionCallRequested} from "@/shared/proto/nprotoc_gen";
+import {nextRID} from "@/eventhandling";
 
 const props = defineProps<{
 	ui: TextLayout;
@@ -20,7 +18,10 @@ const serviceAdapter = useServiceAdapter();
 
 function onClick() {
 	if (props.ui.t) {
-		serviceAdapter.executeFunctions(props.ui.t);
+		serviceAdapter.sendEvent(new FunctionCallRequested(
+			props.ui.t,
+			nextRID(),
+		));
 	}
 }
 
@@ -57,6 +58,6 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- textlayout -->
 	<div v-if="!props.ui.iv" :class="clazz" :style="frameStyles" @click="onClick">
-		<ui-generic v-for="ui in props.ui.c" :ui="ui" />
+		<ui-generic v-for="ui in props.ui.c" :ui="ui"/>
 	</div>
 </template>

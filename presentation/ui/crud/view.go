@@ -22,7 +22,7 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 
 	return ui.VStack(
 		ui.HStack(
-			ui.H1(opts.title),
+			ui.If(opts.title != "", ui.H1(opts.title)),
 			ui.Spacer(),
 			ui.HStack(slices.Collect[core.View](func(yield func(core.View) bool) {
 				yield(ui.ImageIcon(heroSolid.MagnifyingGlass))

@@ -14,7 +14,7 @@ func (c *Compiler) tsEmitMarshal() error {
 
 func (c *Compiler) tsEmitUnmarshal() error {
 	c.pn("// Function to unmarshal data from a BinaryReader into a Readable object")
-	c.pn("export function unmarshal(src: BinaryReader): Readable {")
+	c.pn("export function unmarshal(src: BinaryReader): any {")
 	c.inc()
 	c.pn("const { typeId } = src.readTypeHeader();")
 	c.pn("switch (typeId) {")
@@ -27,8 +27,19 @@ func (c *Compiler) tsEmitUnmarshal() error {
 
 		c.pf("case %d: {\n", id.ID())
 		c.inc()
-		c.pf("const v = new %s();\n", typename)
-		c.pn("v.read(src);")
+		if c.isString(typename) {
+			c.pf("const v = readString(src) as %s;\n", typename)
+		} else if c.isBool(typename) {
+			c.pf("const v = readBool(src) as %s;\n", typename)
+		} else if c.isInt(typename) {
+			c.pf("const v = readInt(src) as %s;\n", typename)
+		} else if c.isFloat(typename) {
+			c.pf("const v = readFloat(src) as %s;\n", typename)
+		} else {
+			c.pf("const v = new %s();\n", typename)
+			c.pn("v.read(src);")
+		}
+
 		c.pn("return v;")
 		c.dec()
 		c.pn("}")

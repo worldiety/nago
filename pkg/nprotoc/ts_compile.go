@@ -112,6 +112,10 @@ func (c *Compiler) tsCanBeUndefined(t Typename) bool {
 		return false
 	}
 
+	if c.isPrimitive(t) {
+		return true
+	}
+
 	return sh == xobjectAsArray
 }
 
@@ -131,7 +135,34 @@ func (c *Compiler) tsEmitWriteTypeHeader(t Typename) error {
 		return fmt.Errorf("type %s is an ID type declaration and cannot be used in this context", t)
 	}
 
-	c.pn("writeTypeHeader(dst: BinaryWriter): void {")
+	c.pf("function writeTypeHeader%s(dst: BinaryWriter): void {\n", t)
+	c.inc()
+
+	c.pf("dst.writeTypeHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), idDecl.ID())
+	c.pn("return")
+	c.dec()
+	c.pn("}")
+
+	return nil
+}
+
+func (c *Compiler) tsEmitWriteTypeHeaderMethod(t Typename) error {
+	sh, err := c.shapeOf(t)
+	if err != nil {
+		return err
+	}
+
+	decl, ok := c.declr[t]
+	if !ok {
+		return fmt.Errorf("type %s is not declared", t)
+	}
+
+	idDecl, ok := decl.(IdentityTypeDeclaration)
+	if !ok {
+		return fmt.Errorf("type %s is an ID type declaration and cannot be used in this context", t)
+	}
+
+	c.pf("writeTypeHeader(dst: BinaryWriter): void {\n")
 	c.inc()
 
 	c.pf("dst.writeTypeHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), idDecl.ID())

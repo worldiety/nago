@@ -5,81 +5,81 @@ import { Border } from '@/shared/proto/nprotoc_gen';
 export function borderCSS(border?: Border): string[] {
 	const css: string[] = [];
 
-	if (!border || border.isZero()) {
+	if (!border) {
 		return css;
 	}
 
 	// border radius
-	if (!border.topLeftRadius.isZero()) {
-		css.push(`border-top-left-radius: ${cssLengthValue(border.topLeftRadius.value)}`);
+	if (border.topLeftRadius) {
+		css.push(`border-top-left-radius: ${cssLengthValue(border.topLeftRadius)}`);
 	}
 
-	if (!border.topRightRadius.isZero()) {
-		css.push(`border-top-right-radius: ${cssLengthValue(border.topRightRadius.value)}`);
+	if (border.topRightRadius) {
+		css.push(`border-top-right-radius: ${cssLengthValue(border.topRightRadius)}`);
 	}
 
-	if (!border.bottomLeftRadius.isZero()) {
-		css.push(`border-bottom-left-radius: ${cssLengthValue(border.bottomLeftRadius.value)}`);
+	if (border.bottomLeftRadius) {
+		css.push(`border-bottom-left-radius: ${cssLengthValue(border.bottomLeftRadius)}`);
 	}
 
-	if (!border.bottomRightRadius.isZero()) {
-		css.push(`border-bottom-right-radius: ${cssLengthValue(border.bottomRightRadius.value)}`);
+	if (border.bottomRightRadius) {
+		css.push(`border-bottom-right-radius: ${cssLengthValue(border.bottomRightRadius)}`);
 	}
 
 	// border color
-	if (!border.topColor.isZero()) {
-		css.push(`border-top-color: ${colorValue(border.topColor.value)}`);
+	if (border.topColor) {
+		css.push(`border-top-color: ${colorValue(border.topColor)}`);
 	}
 
-	if (!border.bottomColor.isZero()) {
-		css.push(`border-bottom-color: ${colorValue(border.bottomColor.value)}`);
+	if (border.bottomColor) {
+		css.push(`border-bottom-color: ${colorValue(border.bottomColor)}`);
 	}
 
-	if (!border.leftColor.isZero()) {
-		css.push(`border-left-color: ${colorValue(border.leftColor.value)}`);
+	if (border.leftColor) {
+		css.push(`border-left-color: ${colorValue(border.leftColor)}`);
 	}
 
-	if (!border.rightColor.isZero()) {
-		css.push(`border-right-color: ${colorValue(border.rightColor.value)}`);
+	if (border.rightColor) {
+		css.push(`border-right-color: ${colorValue(border.rightColor)}`);
 	}
 
 	// border width
-	if (!border.topWidth.isZero()) {
-		css.push(`border-top-width: ${cssLengthValue(border.topWidth.value)}`);
+	if (border.topWidth) {
+		css.push(`border-top-width: ${cssLengthValue(border.topWidth)}`);
 	}
 
-	if (!border.bottomWidth.isZero()) {
-		css.push(`border-bottom-width: ${cssLengthValue(border.bottomWidth.value)}`);
+	if (border.bottomWidth) {
+		css.push(`border-bottom-width: ${cssLengthValue(border.bottomWidth)}`);
 	}
 
-	if (!border.leftWidth.isZero()) {
-		css.push(`border-left-width: ${cssLengthValue(border.leftWidth.value)}`);
+	if (border.leftWidth) {
+		css.push(`border-left-width: ${cssLengthValue(border.leftWidth)}`);
 	}
 
-	if (!border.rightWidth.isZero()) {
-		css.push(`border-right-width: ${cssLengthValue(border.rightWidth.value)}`);
+	if (border.rightWidth) {
+		css.push(`border-right-width: ${cssLengthValue(border.rightWidth)}`);
 	}
 
 	// shadow
 	if (!border.boxShadow.isZero()) {
-		if (border.boxShadow.radius.isZero()) {
-			border.boxShadow.radius.value = '10px';
+		if (!border.boxShadow.radius) {
+			border.boxShadow.radius = '10px';
 		}
 
-		if (border.boxShadow.color.isZero()) {
-			border.boxShadow.color.value = '#00000020';
+		if (!border.boxShadow.color) {
+			border.boxShadow.color = '#00000020';
 		}
 
-		if (border.boxShadow.x.isZero()) {
-			border.boxShadow.x.value = '0dp';
+		if (!border.boxShadow.x) {
+			border.boxShadow.x = '0dp';
 		}
 
-		if (border.boxShadow.y.isZero()) {
-			border.boxShadow.y.value = '0dp';
+		if (!border.boxShadow.y) {
+			border.boxShadow.y = '0dp';
 		}
 
 		css.push(
-			`box-shadow: ${cssLengthValue(border.boxShadow.x.value)} ${cssLengthValue(border.boxShadow.y.value)} ${cssLengthValue(border.boxShadow.radius.value)} 0 ${border.boxShadow.color.value}`
+			`box-shadow: ${cssLengthValue(border.boxShadow.x)} ${cssLengthValue(border.boxShadow.y)} ${cssLengthValue(border.boxShadow.radius)} 0 ${border.boxShadow.color}`
 		);
 	}
 

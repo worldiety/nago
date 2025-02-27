@@ -7,28 +7,28 @@ export function frameCSS(frame?: Frame): string[] {
 		return styles;
 	}
 
-	if (!frame.width.isZero()) {
-		styles.push('width:' + cssLengthValue(frame.width.value));
+	if (frame.width) {
+		styles.push('width:' + cssLengthValue(frame.width));
 	}
 
-	if (!frame.minWidth.isZero()) {
-		styles.push('min-width:' + cssLengthValue(frame.minWidth.value));
+	if (frame.minWidth) {
+		styles.push('min-width:' + cssLengthValue(frame.minWidth));
 	}
 
-	if (!frame.maxWidth.isZero()) {
-		styles.push('max-width:' + cssLengthValue(frame.maxWidth.value));
+	if (frame.maxWidth) {
+		styles.push('max-width:' + cssLengthValue(frame.maxWidth));
 	}
 
-	if (!frame.height.isZero()) {
-		styles.push('height:' + cssLengthValue(frame.height.value));
+	if (frame.height) {
+		styles.push('height:' + cssLengthValue(frame.height));
 	}
 
-	if (!frame.minHeight.isZero()) {
-		styles.push('min-height:' + cssLengthValue(frame.minHeight.value));
+	if (frame.minHeight) {
+		styles.push('min-height:' + cssLengthValue(frame.minHeight));
 	}
 
-	if (!frame.maxHeight.isZero()) {
-		styles.push('max-height:' + cssLengthValue(frame.maxHeight.value));
+	if (frame.maxHeight) {
+		styles.push('max-height:' + cssLengthValue(frame.maxHeight));
 	}
 
 	return styles;

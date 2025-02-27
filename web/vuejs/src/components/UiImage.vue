@@ -18,29 +18,29 @@ const styles = computed<string>(() => {
 	styles.push(...frameCSS(props.ui.frame));
 	styles.push(...paddingCSS(props.ui.padding));
 
-	if (props.ui.sVG.isZero()) {
+	if (!props.ui.sVG) {
 		// special case for normal images, not for svg
 		styles.push('object-fit: cover');
 	}
 
-	if (!props.ui.fillColor.isZero()) {
-		styles.push(`fill: ${colorValue(props.ui.fillColor.value)}`);
+	if (props.ui.fillColor) {
+		styles.push(`fill: ${colorValue(props.ui.fillColor)}`);
 	}
 
-	if (!props.ui.strokeColor.isZero()) {
-		styles.push(`stroke: ${colorValue(props.ui.strokeColor.value)}`);
+	if (props.ui.strokeColor) {
+		styles.push(`stroke: ${colorValue(props.ui.strokeColor)}`);
 	}
 
 	return styles.join(';');
 });
 
 const rewriteSVG = computed<string>(() => {
-	if (props.ui.sVG.isZero()) {
+	if (!props.ui.sVG) {
 		return '';
 	}
 
 	// todo how to optimize this svg handling which is probably very expensive
-	let data = props.ui.sVG.value;
+	let data = props.ui.sVG;
 
 	return data.replace('<svg ', `<svg style="${styles.value}" `);
 });
@@ -48,12 +48,12 @@ const rewriteSVG = computed<string>(() => {
 
 <template>
 	<img
-		v-if="!ui.invisible.value && ui.sVG.isZero()"
+		v-if="!ui.invisible && !ui.sVG"
 		class="h-auto max-w-full"
-		:src="props.ui.uri.value"
-		:alt="props.ui.accessibilityLabel.value"
-		:title="props.ui.accessibilityLabel.value"
+		:src="props.ui.uri"
+		:alt="props.ui.accessibilityLabel"
+		:title="props.ui.accessibilityLabel"
 		:style="styles"
 	/>
-	<div :title="props.ui.accessibilityLabel.value" v-if="!props.ui.sVG.isZero()" v-html="rewriteSVG"></div>
+	<div :title="props.ui.accessibilityLabel" v-if="props.ui.sVG" v-html="rewriteSVG"></div>
 </template>

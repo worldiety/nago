@@ -10,7 +10,7 @@
 			/>
 			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0">
 				<div class="">
-					<ui-generic v-if="props.ui.logo" :ui="props.ui.logo" />
+					<ui-generic v-if="props.ui.logo" :ui="props.ui.logo"/>
 				</div>
 			</div>
 		</div>
@@ -49,7 +49,7 @@
 							@keydown.enter="returnToTopLevelMenu"
 						>
 							<div class="h-6">
-								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto" />
+								<TriangleDown class="absolute top-0 left-4 bottom-0 rotate-90 h-2 my-auto"/>
 							</div>
 							<p class="leading-tight font-semibold">{{ $t('scaffold.toMenu') }}</p>
 						</div>
@@ -67,7 +67,7 @@
 							@keydown.enter="navigateToExpandedTopLevelMenuEntry"
 						>
 							<div class="flex justify-start items-center h-6">
-								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title.value }}</p>
+								<p class="leading-tight font-semibold">{{ expandedTopLevelMenuEntry?.title }}</p>
 							</div>
 						</div>
 						<!-- Sub menu entries -->
@@ -81,7 +81,7 @@
 					</div>
 				</div>
 				<div class="flex justify-center items-center w-full p-4">
-					<ThemeToggle />
+					<ThemeToggle/>
 				</div>
 			</div>
 		</Transition>
@@ -89,16 +89,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import CloseIcon from '@/assets/svg/closeBold.svg';
 import MenuIcon from '@/assets/svg/menu.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, Scaffold, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {FunctionCallRequested, Scaffold, ScaffoldMenuEntry} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;
@@ -108,23 +108,23 @@ const serviceAdapter = useServiceAdapter();
 const menuOpen = ref<boolean>(false);
 
 const expandedTopLevelMenuEntry = computed((): ScaffoldMenuEntry | null => {
-	return props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value) ?? null;
+	return props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded) ?? null;
 });
 
 const expandedTopLevelMenuEntryLinked = computed((): boolean => {
-	return !!expandedTopLevelMenuEntry.value && !expandedTopLevelMenuEntry.value.action.isZero();
+	return !!expandedTopLevelMenuEntry.value && expandedTopLevelMenuEntry.value.action == undefined;
 });
 
 const expandedTopLevelMenuEntryActive = computed((): boolean => {
 	return (
 		!!expandedTopLevelMenuEntry.value &&
-		`/${expandedTopLevelMenuEntry.value.rootView.value}` === window.location.pathname
+		`/${expandedTopLevelMenuEntry.value.rootView}` === window.location.pathname
 	);
 });
 
 const subMenuVisible = computed((): boolean => {
 	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
-		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value
+		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded
 	);
 	console.log('!!!!', !!expandedTopLevelMenuEntry?.menu.value);
 	return !!expandedTopLevelMenuEntry?.menu.value;
@@ -135,7 +135,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 		return [];
 	}
 	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
-		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded.value
+		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded
 	);
 	if (!expandedTopLevelMenuEntry) {
 		return props.ui.menu.value;
@@ -144,7 +144,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 });
 
 function navigateToExpandedTopLevelMenuEntry(): void {
-	if (expandedTopLevelMenuEntry.value?.action.isZero()) {
+	if (!expandedTopLevelMenuEntry.value?.action == undefined) {
 		return;
 	}
 
@@ -154,7 +154,7 @@ function navigateToExpandedTopLevelMenuEntry(): void {
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
-	if (menuEntry.action.isZero()) {
+	if (!menuEntry.action) {
 		return;
 	}
 
@@ -170,7 +170,7 @@ function returnToTopLevelMenu(): void {
 	// 	v: false,
 	// }], [expandedTopLevelMenuEntry.value.onFocus])
 
-	expandedTopLevelMenuEntry.value.expanded.value = false;
+	expandedTopLevelMenuEntry.value.expanded = false;
 }
 </script>
 

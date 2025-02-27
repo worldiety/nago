@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { bool2Str } from '@/components/shared/util';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { Ptr, Radiobutton, Str, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import {ref, watch} from 'vue';
+import {bool2Str} from '@/components/shared/util';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {Radiobutton, UpdateStateValueRequested} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Radiobutton;
@@ -11,10 +11,10 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const checked = ref<boolean>(props.ui.value.value);
+const checked = ref<boolean>(props.ui.value ? props.ui.value : false);
 
 watch(
-	() => props.ui.value.value,
+	() => props.ui.value,
 	(newValue) => {
 		if (newValue) {
 			checked.value = newValue;
@@ -25,9 +25,9 @@ watch(
 );
 
 function radioButtonClicked(): void {
-	if (!props.ui.disabled.value) {
+	if (!props.ui.disabled) {
 		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, new Ptr(), nextRID(), new Str(bool2Str(!checked.value)))
+			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (bool2Str(!checked.value)))
 		);
 	}
 }
@@ -35,15 +35,15 @@ function radioButtonClicked(): void {
 
 <template>
 	<div
-		v-if="!ui.invisible.value"
+		v-if="!ui.invisible"
 		class="input-radio rounded-full w-fit"
-		:class="{ 'input-radio-disabled': ui.disabled.value }"
-		:tabindex="ui.disabled.value ? '-1' : '0'"
+		:class="{ 'input-radio-disabled': ui.disabled }"
+		:tabindex="ui.disabled ? '-1' : '0'"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled.value" />
+			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled"/>
 		</div>
 	</div>
 </template>

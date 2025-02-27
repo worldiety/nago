@@ -1,4 +1,4 @@
-import { Color } from '@/shared/protocol/ora/color';
+import {Color} from "@/shared/proto/nprotoc_gen";
 
 export enum NamedColor {
 	// Primary call-to-action intention.

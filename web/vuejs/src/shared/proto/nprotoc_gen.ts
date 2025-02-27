@@ -177,6 +177,43 @@ export interface Readable {
 
 	isZero(): boolean;
 }
+
+function writeString(writer: BinaryWriter, value: string): void {
+	const data = new TextEncoder().encode(value); // Convert string to Uint8Array
+	writer.writeUvarint(data.length); // Write the length of the string
+	writer.write(data); // Write the string data
+}
+
+function readString(reader: BinaryReader): string {
+	const strLen = reader.readUvarint(); // Read the length of the string
+	const buf = reader.readBytes(strLen); // Read the string data
+	return new TextDecoder().decode(buf); // Convert Uint8Array to string
+}
+
+function writeInt(writer: BinaryWriter, value: number): void {
+	writer.writeUvarint(value);
+}
+
+function readInt(reader: BinaryReader): number {
+	return reader.readUvarint();
+}
+
+function writeBool(writer: BinaryWriter, value: boolean): void {
+	writer.writeUvarint(value ? 1 : 0);
+}
+
+function readBool(reader: BinaryReader): boolean {
+	return reader.readUvarint() === 1;
+}
+
+function writeFloat(writer: BinaryWriter, value: number): void {
+	writer.writeFloat64(value);
+}
+
+function readFloat(reader: BinaryReader): number {
+	return reader.readFloat64();
+}
+
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 export interface Component extends Writeable, Readable {
 	// a marker method to indicate the enum / union type membership
@@ -198,7 +235,7 @@ export class Box implements Writeable, Readable, Component {
 
 	public frame: Frame;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public padding: Padding;
 
@@ -207,7 +244,7 @@ export class Box implements Writeable, Readable, Component {
 	constructor(
 		children: AlignedComponents = new AlignedComponents(),
 		frame: Frame = new Frame(),
-		backgroundColor: Color = new Color(),
+		backgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
 		border: Border = new Border()
 	) {
@@ -233,7 +270,7 @@ export class Box implements Writeable, Readable, Component {
 					break;
 				}
 				case 3: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 4: {
@@ -255,7 +292,7 @@ export class Box implements Writeable, Readable, Component {
 			false,
 			!this.children.isZero(),
 			!this.frame.isZero(),
-			!this.backgroundColor.isZero(),
+			this.backgroundColor !== undefined,
 			!this.padding.isZero(),
 			!this.border.isZero(),
 		];
@@ -271,7 +308,7 @@ export class Box implements Writeable, Readable, Component {
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.RECORD, 4);
@@ -287,7 +324,7 @@ export class Box implements Writeable, Readable, Component {
 		return (
 			this.children.isZero() &&
 			this.frame.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.backgroundColor === undefined &&
 			this.padding.isZero() &&
 			this.border.isZero()
 		);
@@ -296,7 +333,7 @@ export class Box implements Writeable, Readable, Component {
 	reset(): void {
 		this.children.reset();
 		this.frame.reset();
-		this.backgroundColor.reset();
+		this.backgroundColor = undefined;
 		this.padding.reset();
 		this.border.reset();
 	}
@@ -309,35 +346,11 @@ export class Box implements Writeable, Readable, Component {
 }
 
 // Ptr represents an allocated instance within the backend which is unique in the associated scope.
-export class Ptr implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 2);
-		return;
-	}
+export type Ptr = number;
+function writeTypeHeaderPtr(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 2);
+	return;
 }
-
 // companion enum containing all defined constants for Ptr
 export enum PtrValues {
 	// Null represents the zero value and a nil or null pointer address.
@@ -347,20 +360,20 @@ export enum PtrValues {
 // UpdateStateValueRequested is raised from the frontend to update a state value hold by the backend. It can also immediately invoke a function callback in the same cycle.
 export class UpdateStateValueRequested implements Writeable, Readable, NagoEvent {
 	// The StatePointer must not be zero.
-	public statePointer: Ptr;
+	public statePointer?: Ptr;
 
 	// A FunctionPointer is invoked, if not zero.
-	public functionPointer: Ptr;
+	public functionPointer?: Ptr;
 
-	public rID: RID;
+	public rID?: RID;
 
-	public value: Str;
+	public value?: Str;
 
 	constructor(
-		statePointer: Ptr = new Ptr(),
-		functionPointer: Ptr = new Ptr(),
-		rID: RID = new RID(),
-		value: Str = new Str()
+		statePointer: Ptr | undefined = undefined,
+		functionPointer: Ptr | undefined = undefined,
+		rID: RID | undefined = undefined,
+		value: Str | undefined = undefined
 	) {
 		this.statePointer = statePointer;
 		this.functionPointer = functionPointer;
@@ -375,19 +388,19 @@ export class UpdateStateValueRequested implements Writeable, Readable, NagoEvent
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.statePointer.read(reader);
+					this.statePointer = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.functionPointer.read(reader);
+					this.functionPointer = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.value.read(reader);
+					this.value = readString(reader);
 					break;
 				}
 				default:
@@ -399,40 +412,45 @@ export class UpdateStateValueRequested implements Writeable, Readable, NagoEvent
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.statePointer.isZero(),
-			!this.functionPointer.isZero(),
-			!this.rID.isZero(),
-			!this.value.isZero(),
+			this.statePointer !== undefined,
+			this.functionPointer !== undefined,
+			this.rID !== undefined,
+			this.value !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.statePointer.write(writer);
+			writeInt(writer, this.statePointer!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.functionPointer.write(writer);
+			writeInt(writer, this.functionPointer!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.value.write(writer);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.statePointer.isZero() && this.functionPointer.isZero() && this.rID.isZero() && this.value.isZero();
+		return (
+			this.statePointer === undefined &&
+			this.functionPointer === undefined &&
+			this.rID === undefined &&
+			this.value === undefined
+		);
 	}
 
 	reset(): void {
-		this.statePointer.reset();
-		this.functionPointer.reset();
-		this.rID.reset();
-		this.value.reset();
+		this.statePointer = undefined;
+		this.functionPointer = undefined;
+		this.rID = undefined;
+		this.value = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -445,12 +463,12 @@ export class UpdateStateValueRequested implements Writeable, Readable, NagoEvent
 // FunctionCallRequested tells the backend that the given pointer in the associated scope shall be invoked for a side effect.
 export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 	// Ptr denotes the remote pointer of the function.
-	public ptr: Ptr;
+	public ptr?: Ptr;
 
 	// RID is used to trace a request-response cycle.
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(ptr: Ptr = new Ptr(), rID: RID = new RID()) {
+	constructor(ptr: Ptr | undefined = undefined, rID: RID | undefined = undefined) {
 		this.ptr = ptr;
 		this.rID = rID;
 	}
@@ -462,11 +480,11 @@ export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.ptr.read(reader);
+					this.ptr = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -476,26 +494,26 @@ export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.ptr.isZero(), !this.rID.isZero()];
+		const fields = [false, this.ptr !== undefined, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.ptr.write(writer);
+			writeInt(writer, this.ptr!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.ptr.isZero() && this.rID.isZero();
+		return this.ptr === undefined && this.rID === undefined;
 	}
 
 	reset(): void {
-		this.ptr.reset();
-		this.rID.reset();
+		this.ptr = undefined;
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -526,35 +544,11 @@ export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 // 	└BottomLeading───────Bottom──────BottomTrailing┘
 //
 // An empty Alignment must be interpreted as Center (="c").
-export class Alignment implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 5);
-		return;
-	}
+export type Alignment = number;
+function writeTypeHeaderAlignment(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 5);
+	return;
 }
-
 // companion enum containing all defined constants for Alignment
 export enum AlignmentValues {
 	Center = 0,
@@ -570,63 +564,31 @@ export enum AlignmentValues {
 }
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
-export class Color implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 6);
-		return;
-	}
+export type Color = string;
+function writeTypeHeaderColor(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 6);
+	return;
 }
 
 // Shadow defines a shadow effect around the border of an element. The x and y coordinates are relative to the element.
 export class Shadow implements Writeable, Readable {
 	// Color of the shadow.
-	public color: Color;
+	public color?: Color;
 
 	// Radius for spread and blur length of the shadow.
-	public radius: Length;
+	public radius?: Length;
 
 	// X is the horizontal offset of the shadow relative to the element.
-	public x: Length;
+	public x?: Length;
 
 	// Y is the vertical offset of the shadow relative to the element.
-	public y: Length;
+	public y?: Length;
 
 	constructor(
-		color: Color = new Color(),
-		radius: Length = new Length(),
-		x: Length = new Length(),
-		y: Length = new Length()
+		color: Color | undefined = undefined,
+		radius: Length | undefined = undefined,
+		x: Length | undefined = undefined,
+		y: Length | undefined = undefined
 	) {
 		this.color = color;
 		this.radius = radius;
@@ -641,19 +603,19 @@ export class Shadow implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.color.read(reader);
+					this.color = readString(reader);
 					break;
 				}
 				case 2: {
-					this.radius.read(reader);
+					this.radius = readString(reader);
 					break;
 				}
 				case 3: {
-					this.x.read(reader);
+					this.x = readString(reader);
 					break;
 				}
 				case 4: {
-					this.y.read(reader);
+					this.y = readString(reader);
 					break;
 				}
 				default:
@@ -663,36 +625,42 @@ export class Shadow implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.color.isZero(), !this.radius.isZero(), !this.x.isZero(), !this.y.isZero()];
+		const fields = [
+			false,
+			this.color !== undefined,
+			this.radius !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.color.write(writer);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.radius.write(writer);
+			writeString(writer, this.radius!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.x.write(writer);
+			writeString(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.y.write(writer);
+			writeString(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.color.isZero() && this.radius.isZero() && this.x.isZero() && this.y.isZero();
+		return this.color === undefined && this.radius === undefined && this.x === undefined && this.y === undefined;
 	}
 
 	reset(): void {
-		this.color.reset();
-		this.radius.reset();
-		this.x.reset();
-		this.y.reset();
+		this.color = undefined;
+		this.radius = undefined;
+		this.x = undefined;
+		this.y = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -702,85 +670,53 @@ export class Shadow implements Writeable, Readable {
 }
 
 // Length is actually a complex sum type of varying content. It may contain absolute values like dp, rem or relative like 90%. It may also include css calculations or even variable names. Retrospective, we should represent each type individually, however that was not reasonable, when the requirements and hand written protocol implementations were created and now it is to late.
-export class Length implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 8);
-		return;
-	}
+export type Length = string;
+function writeTypeHeaderLength(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 8);
+	return;
 }
 
 // Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
 export class Border implements Writeable, Readable {
-	public topLeftRadius: Length;
+	public topLeftRadius?: Length;
 
-	public topRightRadius: Length;
+	public topRightRadius?: Length;
 
-	public bottomLeftRadius: Length;
+	public bottomLeftRadius?: Length;
 
-	public bottomRightRadius: Length;
+	public bottomRightRadius?: Length;
 
-	public leftWidth: Length;
+	public leftWidth?: Length;
 
-	public topWidth: Length;
+	public topWidth?: Length;
 
-	public rightWidth: Length;
+	public rightWidth?: Length;
 
-	public bottomWidth: Length;
+	public bottomWidth?: Length;
 
-	public leftColor: Color;
+	public leftColor?: Color;
 
-	public topColor: Color;
+	public topColor?: Color;
 
-	public rightColor: Color;
+	public rightColor?: Color;
 
-	public bottomColor: Color;
+	public bottomColor?: Color;
 
 	public boxShadow: Shadow;
 
 	constructor(
-		topLeftRadius: Length = new Length(),
-		topRightRadius: Length = new Length(),
-		bottomLeftRadius: Length = new Length(),
-		bottomRightRadius: Length = new Length(),
-		leftWidth: Length = new Length(),
-		topWidth: Length = new Length(),
-		rightWidth: Length = new Length(),
-		bottomWidth: Length = new Length(),
-		leftColor: Color = new Color(),
-		topColor: Color = new Color(),
-		rightColor: Color = new Color(),
-		bottomColor: Color = new Color(),
+		topLeftRadius: Length | undefined = undefined,
+		topRightRadius: Length | undefined = undefined,
+		bottomLeftRadius: Length | undefined = undefined,
+		bottomRightRadius: Length | undefined = undefined,
+		leftWidth: Length | undefined = undefined,
+		topWidth: Length | undefined = undefined,
+		rightWidth: Length | undefined = undefined,
+		bottomWidth: Length | undefined = undefined,
+		leftColor: Color | undefined = undefined,
+		topColor: Color | undefined = undefined,
+		rightColor: Color | undefined = undefined,
+		bottomColor: Color | undefined = undefined,
 		boxShadow: Shadow = new Shadow()
 	) {
 		this.topLeftRadius = topLeftRadius;
@@ -805,51 +741,51 @@ export class Border implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.topLeftRadius.read(reader);
+					this.topLeftRadius = readString(reader);
 					break;
 				}
 				case 2: {
-					this.topRightRadius.read(reader);
+					this.topRightRadius = readString(reader);
 					break;
 				}
 				case 3: {
-					this.bottomLeftRadius.read(reader);
+					this.bottomLeftRadius = readString(reader);
 					break;
 				}
 				case 4: {
-					this.bottomRightRadius.read(reader);
+					this.bottomRightRadius = readString(reader);
 					break;
 				}
 				case 5: {
-					this.leftWidth.read(reader);
+					this.leftWidth = readString(reader);
 					break;
 				}
 				case 6: {
-					this.topWidth.read(reader);
+					this.topWidth = readString(reader);
 					break;
 				}
 				case 7: {
-					this.rightWidth.read(reader);
+					this.rightWidth = readString(reader);
 					break;
 				}
 				case 8: {
-					this.bottomWidth.read(reader);
+					this.bottomWidth = readString(reader);
 					break;
 				}
 				case 9: {
-					this.leftColor.read(reader);
+					this.leftColor = readString(reader);
 					break;
 				}
 				case 10: {
-					this.topColor.read(reader);
+					this.topColor = readString(reader);
 					break;
 				}
 				case 11: {
-					this.rightColor.read(reader);
+					this.rightColor = readString(reader);
 					break;
 				}
 				case 12: {
-					this.bottomColor.read(reader);
+					this.bottomColor = readString(reader);
 					break;
 				}
 				case 13: {
@@ -865,69 +801,69 @@ export class Border implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.topLeftRadius.isZero(),
-			!this.topRightRadius.isZero(),
-			!this.bottomLeftRadius.isZero(),
-			!this.bottomRightRadius.isZero(),
-			!this.leftWidth.isZero(),
-			!this.topWidth.isZero(),
-			!this.rightWidth.isZero(),
-			!this.bottomWidth.isZero(),
-			!this.leftColor.isZero(),
-			!this.topColor.isZero(),
-			!this.rightColor.isZero(),
-			!this.bottomColor.isZero(),
+			this.topLeftRadius !== undefined,
+			this.topRightRadius !== undefined,
+			this.bottomLeftRadius !== undefined,
+			this.bottomRightRadius !== undefined,
+			this.leftWidth !== undefined,
+			this.topWidth !== undefined,
+			this.rightWidth !== undefined,
+			this.bottomWidth !== undefined,
+			this.leftColor !== undefined,
+			this.topColor !== undefined,
+			this.rightColor !== undefined,
+			this.bottomColor !== undefined,
 			!this.boxShadow.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.topLeftRadius.write(writer);
+			writeString(writer, this.topLeftRadius!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.topRightRadius.write(writer);
+			writeString(writer, this.topRightRadius!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.bottomLeftRadius.write(writer);
+			writeString(writer, this.bottomLeftRadius!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.bottomRightRadius.write(writer);
+			writeString(writer, this.bottomRightRadius!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.leftWidth.write(writer);
+			writeString(writer, this.leftWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.topWidth.write(writer);
+			writeString(writer, this.topWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.rightWidth.write(writer);
+			writeString(writer, this.rightWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
-			this.bottomWidth.write(writer);
+			writeString(writer, this.bottomWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
-			this.leftColor.write(writer);
+			writeString(writer, this.leftColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
-			this.topColor.write(writer);
+			writeString(writer, this.topColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
-			this.rightColor.write(writer);
+			writeString(writer, this.rightColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
-			this.bottomColor.write(writer);
+			writeString(writer, this.bottomColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.RECORD, 13);
@@ -937,35 +873,35 @@ export class Border implements Writeable, Readable {
 
 	isZero(): boolean {
 		return (
-			this.topLeftRadius.isZero() &&
-			this.topRightRadius.isZero() &&
-			this.bottomLeftRadius.isZero() &&
-			this.bottomRightRadius.isZero() &&
-			this.leftWidth.isZero() &&
-			this.topWidth.isZero() &&
-			this.rightWidth.isZero() &&
-			this.bottomWidth.isZero() &&
-			this.leftColor.isZero() &&
-			this.topColor.isZero() &&
-			this.rightColor.isZero() &&
-			this.bottomColor.isZero() &&
+			this.topLeftRadius === undefined &&
+			this.topRightRadius === undefined &&
+			this.bottomLeftRadius === undefined &&
+			this.bottomRightRadius === undefined &&
+			this.leftWidth === undefined &&
+			this.topWidth === undefined &&
+			this.rightWidth === undefined &&
+			this.bottomWidth === undefined &&
+			this.leftColor === undefined &&
+			this.topColor === undefined &&
+			this.rightColor === undefined &&
+			this.bottomColor === undefined &&
 			this.boxShadow.isZero()
 		);
 	}
 
 	reset(): void {
-		this.topLeftRadius.reset();
-		this.topRightRadius.reset();
-		this.bottomLeftRadius.reset();
-		this.bottomRightRadius.reset();
-		this.leftWidth.reset();
-		this.topWidth.reset();
-		this.rightWidth.reset();
-		this.bottomWidth.reset();
-		this.leftColor.reset();
-		this.topColor.reset();
-		this.rightColor.reset();
-		this.bottomColor.reset();
+		this.topLeftRadius = undefined;
+		this.topRightRadius = undefined;
+		this.bottomLeftRadius = undefined;
+		this.bottomRightRadius = undefined;
+		this.leftWidth = undefined;
+		this.topWidth = undefined;
+		this.rightWidth = undefined;
+		this.bottomWidth = undefined;
+		this.leftColor = undefined;
+		this.topColor = undefined;
+		this.rightColor = undefined;
+		this.bottomColor = undefined;
 		this.boxShadow.reset();
 	}
 
@@ -977,25 +913,25 @@ export class Border implements Writeable, Readable {
 
 // Frame defines the geometrics bounds of an element.
 export class Frame implements Writeable, Readable {
-	public minWidth: Length;
+	public minWidth?: Length;
 
-	public maxWidth: Length;
+	public maxWidth?: Length;
 
-	public minHeight: Length;
+	public minHeight?: Length;
 
-	public maxHeight: Length;
+	public maxHeight?: Length;
 
-	public width: Length;
+	public width?: Length;
 
-	public height: Length;
+	public height?: Length;
 
 	constructor(
-		minWidth: Length = new Length(),
-		maxWidth: Length = new Length(),
-		minHeight: Length = new Length(),
-		maxHeight: Length = new Length(),
-		width: Length = new Length(),
-		height: Length = new Length()
+		minWidth: Length | undefined = undefined,
+		maxWidth: Length | undefined = undefined,
+		minHeight: Length | undefined = undefined,
+		maxHeight: Length | undefined = undefined,
+		width: Length | undefined = undefined,
+		height: Length | undefined = undefined
 	) {
 		this.minWidth = minWidth;
 		this.maxWidth = maxWidth;
@@ -1012,27 +948,27 @@ export class Frame implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.minWidth.read(reader);
+					this.minWidth = readString(reader);
 					break;
 				}
 				case 2: {
-					this.maxWidth.read(reader);
+					this.maxWidth = readString(reader);
 					break;
 				}
 				case 3: {
-					this.minHeight.read(reader);
+					this.minHeight = readString(reader);
 					break;
 				}
 				case 4: {
-					this.maxHeight.read(reader);
+					this.maxHeight = readString(reader);
 					break;
 				}
 				case 5: {
-					this.width.read(reader);
+					this.width = readString(reader);
 					break;
 				}
 				case 6: {
-					this.height.read(reader);
+					this.height = readString(reader);
 					break;
 				}
 				default:
@@ -1044,59 +980,59 @@ export class Frame implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.minWidth.isZero(),
-			!this.maxWidth.isZero(),
-			!this.minHeight.isZero(),
-			!this.maxHeight.isZero(),
-			!this.width.isZero(),
-			!this.height.isZero(),
+			this.minWidth !== undefined,
+			this.maxWidth !== undefined,
+			this.minHeight !== undefined,
+			this.maxHeight !== undefined,
+			this.width !== undefined,
+			this.height !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.minWidth.write(writer);
+			writeString(writer, this.minWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.maxWidth.write(writer);
+			writeString(writer, this.maxWidth!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.minHeight.write(writer);
+			writeString(writer, this.minHeight!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.maxHeight.write(writer);
+			writeString(writer, this.maxHeight!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.width.write(writer);
+			writeString(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.height.write(writer);
+			writeString(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.minWidth.isZero() &&
-			this.maxWidth.isZero() &&
-			this.minHeight.isZero() &&
-			this.maxHeight.isZero() &&
-			this.width.isZero() &&
-			this.height.isZero()
+			this.minWidth === undefined &&
+			this.maxWidth === undefined &&
+			this.minHeight === undefined &&
+			this.maxHeight === undefined &&
+			this.width === undefined &&
+			this.height === undefined
 		);
 	}
 
 	reset(): void {
-		this.minWidth.reset();
-		this.maxWidth.reset();
-		this.minHeight.reset();
-		this.maxHeight.reset();
-		this.width.reset();
-		this.height.reset();
+		this.minWidth = undefined;
+		this.maxWidth = undefined;
+		this.minHeight = undefined;
+		this.maxHeight = undefined;
+		this.width = undefined;
+		this.height = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1107,19 +1043,19 @@ export class Frame implements Writeable, Readable {
 
 // Padding defines additional room within an element.
 export class Padding implements Writeable, Readable {
-	public top: Length;
+	public top?: Length;
 
-	public left: Length;
+	public left?: Length;
 
-	public right: Length;
+	public right?: Length;
 
-	public bottom: Length;
+	public bottom?: Length;
 
 	constructor(
-		top: Length = new Length(),
-		left: Length = new Length(),
-		right: Length = new Length(),
-		bottom: Length = new Length()
+		top: Length | undefined = undefined,
+		left: Length | undefined = undefined,
+		right: Length | undefined = undefined,
+		bottom: Length | undefined = undefined
 	) {
 		this.top = top;
 		this.left = left;
@@ -1134,19 +1070,19 @@ export class Padding implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.top.read(reader);
+					this.top = readString(reader);
 					break;
 				}
 				case 2: {
-					this.left.read(reader);
+					this.left = readString(reader);
 					break;
 				}
 				case 3: {
-					this.right.read(reader);
+					this.right = readString(reader);
 					break;
 				}
 				case 4: {
-					this.bottom.read(reader);
+					this.bottom = readString(reader);
 					break;
 				}
 				default:
@@ -1156,36 +1092,44 @@ export class Padding implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.top.isZero(), !this.left.isZero(), !this.right.isZero(), !this.bottom.isZero()];
+		const fields = [
+			false,
+			this.top !== undefined,
+			this.left !== undefined,
+			this.right !== undefined,
+			this.bottom !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.top.write(writer);
+			writeString(writer, this.top!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.left.write(writer);
+			writeString(writer, this.left!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.right.write(writer);
+			writeString(writer, this.right!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.bottom.write(writer);
+			writeString(writer, this.bottom!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.top.isZero() && this.left.isZero() && this.right.isZero() && this.bottom.isZero();
+		return (
+			this.top === undefined && this.left === undefined && this.right === undefined && this.bottom === undefined
+		);
 	}
 
 	reset(): void {
-		this.top.reset();
-		this.left.reset();
-		this.right.reset();
-		this.bottom.reset();
+		this.top = undefined;
+		this.left = undefined;
+		this.right = undefined;
+		this.bottom = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1198,9 +1142,9 @@ export class Padding implements Writeable, Readable {
 export class AlignedComponent implements Writeable, Readable {
 	public component?: Component;
 
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
-	constructor(component: Component | undefined = undefined, alignment: Alignment = new Alignment()) {
+	constructor(component: Component | undefined = undefined, alignment: Alignment | undefined = undefined) {
 		this.component = component;
 		this.alignment = alignment;
 	}
@@ -1221,7 +1165,7 @@ export class AlignedComponent implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				default:
@@ -1231,7 +1175,7 @@ export class AlignedComponent implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.component !== undefined && !this.component.isZero(), !this.alignment.isZero()];
+		const fields = [false, this.component !== undefined && !this.component.isZero(), this.alignment !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -1242,17 +1186,17 @@ export class AlignedComponent implements Writeable, Readable {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return (this.component === undefined || this.component.isZero()) && this.alignment.isZero();
+		return (this.component === undefined || this.component.isZero()) && this.alignment === undefined;
 	}
 
 	reset(): void {
 		this.component = undefined;
-		this.alignment.reset();
+		this.alignment = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1280,8 +1224,11 @@ export class Components implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -1291,7 +1238,7 @@ export class Components implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as Component); // Cast and add to the array
+			values.push(obj as any as Component); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -1321,8 +1268,11 @@ export class AlignedComponents implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -1332,7 +1282,7 @@ export class AlignedComponents implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as AlignedComponent); // Cast and add to the array
+			values.push(obj as any as AlignedComponent); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -1346,19 +1296,19 @@ export class AlignedComponents implements Writeable, Readable {
 // Checkbox represents a user interface element which spans a visible area to click or tap from the user. Use it for controls, which do not cause an immediate effect. See also [Toggle].
 export class Checkbox implements Writeable, Readable, Component {
 	// InputValue is where updated value of the checked states are written.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
-	public value: Bool;
+	public value?: Bool;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
-		inputValue: Ptr = new Ptr(),
-		value: Bool = new Bool(),
-		disabled: Bool = new Bool(),
-		invisible: Bool = new Bool()
+		inputValue: Ptr | undefined = undefined,
+		value: Bool | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -1373,19 +1323,19 @@ export class Checkbox implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.value.read(reader);
+					this.value = readBool(reader);
 					break;
 				}
 				case 3: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 4: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -1397,40 +1347,45 @@ export class Checkbox implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.inputValue.isZero(),
-			!this.value.isZero(),
-			!this.disabled.isZero(),
-			!this.invisible.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.disabled !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.value.write(writer);
+			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.inputValue.isZero() && this.value.isZero() && this.disabled.isZero() && this.invisible.isZero();
+		return (
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			this.disabled === undefined &&
+			this.invisible === undefined
+		);
 	}
 
 	reset(): void {
-		this.inputValue.reset();
-		this.value.reset();
-		this.disabled.reset();
-		this.invisible.reset();
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.disabled = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1441,44 +1396,21 @@ export class Checkbox implements Writeable, Readable, Component {
 }
 
 // Bool represents just a user defined boolean value. This is how nprotoc works.
-export class Bool implements Writeable, Readable {
-	public value: boolean;
-
-	constructor(value: boolean = false) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return !this.value;
-	}
-
-	reset(): void {
-		this.value = false;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value ? 1 : 0);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint() === 1;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 16);
-		return;
-	}
+export type Bool = boolean;
+function writeTypeHeaderBool(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 16);
+	return;
 }
 
 // ErrorOccurred is used, if some unforeseen error occurred. Usually the frontend did something wrong, e.g. in a life-cycle.
 export class ErrorOccurred implements Writeable, Readable, NagoEvent {
 	// Message of some generic error.
-	public message: Str;
+	public message?: Str;
 
 	// RID is used to trace a request-response cycle.
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(message: Str = new Str(), rID: RID = new RID()) {
+	constructor(message: Str | undefined = undefined, rID: RID | undefined = undefined) {
 		this.message = message;
 		this.rID = rID;
 	}
@@ -1490,11 +1422,11 @@ export class ErrorOccurred implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.message.read(reader);
+					this.message = readString(reader);
 					break;
 				}
 				case 2: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -1504,26 +1436,26 @@ export class ErrorOccurred implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.message.isZero(), !this.rID.isZero()];
+		const fields = [false, this.message !== undefined, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.message.write(writer);
+			writeString(writer, this.message!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.message.isZero() && this.rID.isZero();
+		return this.message === undefined && this.rID === undefined;
 	}
 
 	reset(): void {
-		this.message.reset();
-		this.rID.reset();
+		this.message = undefined;
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1534,74 +1466,18 @@ export class ErrorOccurred implements Writeable, Readable, NagoEvent {
 }
 
 // Locale represents a BCP47 tag like de or de_DE.
-export class Locale implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 18);
-		return;
-	}
+export type Locale = string;
+function writeTypeHeaderLocale(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 18);
+	return;
 }
 
 // RID represents a request id and may be used by the frontend to distinguish different generations of answers.
-export class FontStyle implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 19);
-		return;
-	}
+export type FontStyle = number;
+function writeTypeHeaderFontStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 19);
+	return;
 }
-
 // companion enum containing all defined constants for FontStyle
 export enum FontStyleValues {
 	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
@@ -1611,42 +1487,10 @@ export enum FontStyleValues {
 }
 
 // RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.
-export class RootViewID implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 20);
-		return;
-	}
+export type RootViewID = string;
+function writeTypeHeaderRootViewID(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 20);
+	return;
 }
 
 // RootViewParameters is a map of string keys and values which is given to a root view which is about to be initialized.
@@ -1669,12 +1513,14 @@ export class RootViewParameters implements Writeable, Readable {
 		writer.writeUvarint(this.value.size); // Write the length of the map
 		for (const [key, value] of this.value) {
 			// write key
-			key.writeTypeHeader(writer);
-			key.write(writer);
+			//key.writeTypeHeader(writer);
+			//key.write(writer);
 
+			writeTypeHeaderStr(writer);
+			writeString(writer, key);
 			// write value
-			value.writeTypeHeader(writer);
-			value.write(writer);
+			writeTypeHeaderStr(writer);
+			writeString(writer, value);
 		}
 	}
 
@@ -1686,7 +1532,7 @@ export class RootViewParameters implements Writeable, Readable {
 			const key = unmarshal(reader);
 			const val = unmarshal(reader);
 
-			values.set(key as Str, val as Str);
+			values.set(key as any as Str, val as any as Str);
 		}
 
 		this.value = values;
@@ -1698,49 +1544,17 @@ export class RootViewParameters implements Writeable, Readable {
 }
 
 // Str represents just a user defined string value. This is how nprotoc works.
-export class Str implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 22);
-		return;
-	}
+export type Str = string;
+function writeTypeHeaderStr(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 22);
+	return;
 }
 
 // RootViewRenderingRequested is issued by the frontend to force a rendering at the backend.
 export class RootViewRenderingRequested implements Writeable, Readable, NagoEvent {
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(rID: RID = new RID()) {
+	constructor(rID: RID | undefined = undefined) {
 		this.rID = rID;
 	}
 
@@ -1751,7 +1565,7 @@ export class RootViewRenderingRequested implements Writeable, Readable, NagoEven
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -1761,21 +1575,21 @@ export class RootViewRenderingRequested implements Writeable, Readable, NagoEven
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero()];
+		const fields = [false, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero();
+		return this.rID === undefined;
 	}
 
 	reset(): void {
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1788,9 +1602,9 @@ export class RootViewRenderingRequested implements Writeable, Readable, NagoEven
 // The RootViewDestructionRequested event destroys the currently allocated root view. If nothing is allocated, this is a no-op.
 export class RootViewDestructionRequested implements Writeable, Readable, NagoEvent {
 	// RID is used to generate a new component request and is returned in the according response.
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(rID: RID = new RID()) {
+	constructor(rID: RID | undefined = undefined) {
 		this.rID = rID;
 	}
 
@@ -1801,7 +1615,7 @@ export class RootViewDestructionRequested implements Writeable, Readable, NagoEv
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -1811,21 +1625,21 @@ export class RootViewDestructionRequested implements Writeable, Readable, NagoEv
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero()];
+		const fields = [false, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero();
+		return this.rID === undefined;
 	}
 
 	reset(): void {
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1838,12 +1652,12 @@ export class RootViewDestructionRequested implements Writeable, Readable, NagoEv
 // The RootViewInvalidated event is always generated at the backend side, if a new representation of an allocated root view shall be shown.
 export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 	// RID may be 0, if it is an proactive rendering.
-	public rID: RID;
+	public rID?: RID;
 
 	// The Root component to display.
 	public root?: Component;
 
-	constructor(rID: RID = new RID(), root: Component | undefined = undefined) {
+	constructor(rID: RID | undefined = undefined, root: Component | undefined = undefined) {
 		this.rID = rID;
 		this.root = root;
 	}
@@ -1855,7 +1669,7 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				case 2: {
@@ -1874,12 +1688,12 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero(), this.root !== undefined && !this.root.isZero()];
+		const fields = [false, this.rID !== undefined, this.root !== undefined && !this.root.isZero()];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			// encode polymorphic enum as 1 element slice
@@ -1890,11 +1704,11 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero() && (this.root === undefined || this.root.isZero());
+		return this.rID === undefined && (this.root === undefined || this.root.isZero());
 	}
 
 	reset(): void {
-		this.rID.reset();
+		this.rID = undefined;
 		this.root = undefined;
 	}
 
@@ -1908,9 +1722,9 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 // ErrorRootViewAllocationRequired indicates, that there is no root view and it must be allocated to continue. This may happen, e.g. if the server was restarted or redeployed or a timeout occurred and the scope or root view was collected.
 export class ErrorRootViewAllocationRequired implements Writeable, Readable, NagoEvent {
 	// RID is used to trace a request-response cycle.
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(rID: RID = new RID()) {
+	constructor(rID: RID | undefined = undefined) {
 		this.rID = rID;
 	}
 
@@ -1921,7 +1735,7 @@ export class ErrorRootViewAllocationRequired implements Writeable, Readable, Nag
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -1931,21 +1745,21 @@ export class ErrorRootViewAllocationRequired implements Writeable, Readable, Nag
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero()];
+		const fields = [false, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero();
+		return this.rID === undefined;
 	}
 
 	reset(): void {
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -1966,21 +1780,21 @@ export class ErrorRootViewAllocationRequired implements Writeable, Readable, Nag
 // However, often it does not make sense without additional parameters, e.g. because a detail view needs to know which entity has to be displayed.
 export class RootViewAllocationRequested implements Writeable, Readable, NagoEvent {
 	// Locale of the frontend which is assumed as the users language. This may be the webbrowser primary locale which may be derived from the operating system.
-	public locale: Locale;
+	public locale?: Locale;
 
 	// Factory denotes the registered root view identifier.
-	public factory: RootViewID;
+	public factory?: RootViewID;
 
 	// RID is used to generate a new component request and is returned in the according response.
-	public rID: RID;
+	public rID?: RID;
 
 	// Values contains string encoded parameters for a component. This is like query parameters in the web world.
 	public values: RootViewParameters;
 
 	constructor(
-		locale: Locale = new Locale(),
-		factory: RootViewID = new RootViewID(),
-		rID: RID = new RID(),
+		locale: Locale | undefined = undefined,
+		factory: RootViewID | undefined = undefined,
+		rID: RID | undefined = undefined,
 		values: RootViewParameters = new RootViewParameters()
 	) {
 		this.locale = locale;
@@ -1996,15 +1810,15 @@ export class RootViewAllocationRequested implements Writeable, Readable, NagoEve
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.locale.read(reader);
+					this.locale = readString(reader);
 					break;
 				}
 				case 2: {
-					this.factory.read(reader);
+					this.factory = readString(reader);
 					break;
 				}
 				case 3: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				case 4: {
@@ -2020,24 +1834,24 @@ export class RootViewAllocationRequested implements Writeable, Readable, NagoEve
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.locale.isZero(),
-			!this.factory.isZero(),
-			!this.rID.isZero(),
+			this.locale !== undefined,
+			this.factory !== undefined,
+			this.rID !== undefined,
 			!this.values.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.locale.write(writer);
+			writeString(writer, this.locale!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.factory.write(writer);
+			writeString(writer, this.factory!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 4);
@@ -2046,13 +1860,15 @@ export class RootViewAllocationRequested implements Writeable, Readable, NagoEve
 	}
 
 	isZero(): boolean {
-		return this.locale.isZero() && this.factory.isZero() && this.rID.isZero() && this.values.isZero();
+		return (
+			this.locale === undefined && this.factory === undefined && this.rID === undefined && this.values.isZero()
+		);
 	}
 
 	reset(): void {
-		this.locale.reset();
-		this.factory.reset();
-		this.rID.reset();
+		this.locale = undefined;
+		this.factory = undefined;
+		this.rID = undefined;
 		this.values.reset();
 	}
 
@@ -2067,35 +1883,11 @@ export class RootViewAllocationRequested implements Writeable, Readable, NagoEve
 // The definition of a size class is disjunct and for all possible sizes, exact one size class will match.
 // See also https://developer.android.com/develop/ui/views/layout/window-size-classes and
 // https://tailwindcss.com/docs/responsive-design.
-export class WindowSizeClass implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 28);
-		return;
-	}
+export type WindowSizeClass = number;
+function writeTypeHeaderWindowSizeClass(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 28);
+	return;
 }
-
 // companion enum containing all defined constants for WindowSizeClass
 export enum WindowSizeClassValues {
 	// SizeClassSmall are devices below 640 dp screen width.
@@ -2116,15 +1908,15 @@ export enum WindowSizeClassValues {
 // It is expected, that this only happens once during initialization of the frontend process.
 export class ScopeConfigurationChangeRequested implements Writeable, Readable, NagoEvent {
 	// RID is used to generate a new component request and is returned in the according response.
-	public rID: RID;
+	public rID?: RID;
 
-	public acceptLanguage: Locale;
+	public acceptLanguage?: Locale;
 
 	public windowInfo: WindowInfo;
 
 	constructor(
-		rID: RID = new RID(),
-		acceptLanguage: Locale = new Locale(),
+		rID: RID | undefined = undefined,
+		acceptLanguage: Locale | undefined = undefined,
 		windowInfo: WindowInfo = new WindowInfo()
 	) {
 		this.rID = rID;
@@ -2139,11 +1931,11 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable, N
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.acceptLanguage.read(reader);
+					this.acceptLanguage = readString(reader);
 					break;
 				}
 				case 3: {
@@ -2157,16 +1949,16 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable, N
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero(), !this.acceptLanguage.isZero(), !this.windowInfo.isZero()];
+		const fields = [false, this.rID !== undefined, this.acceptLanguage !== undefined, !this.windowInfo.isZero()];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.acceptLanguage.write(writer);
+			writeString(writer, this.acceptLanguage!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.RECORD, 3);
@@ -2175,12 +1967,12 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable, N
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero() && this.acceptLanguage.isZero() && this.windowInfo.isZero();
+		return this.rID === undefined && this.acceptLanguage === undefined && this.windowInfo.isZero();
 	}
 
 	reset(): void {
-		this.rID.reset();
-		this.acceptLanguage.reset();
+		this.rID = undefined;
+		this.acceptLanguage = undefined;
 		this.windowInfo.reset();
 	}
 
@@ -2192,35 +1984,11 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable, N
 }
 
 // ColorScheme represents which kind of theme shall be rendered.
-export class ColorScheme implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 30);
-		return;
-	}
+export type ColorScheme = number;
+function writeTypeHeaderColorScheme(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 30);
+	return;
 }
-
 // companion enum containing all defined constants for ColorScheme
 export enum ColorSchemeValues {
 	// Light represents the light theme color mode.
@@ -2233,23 +2001,23 @@ export enum ColorSchemeValues {
 // A user can simply change the layout of the screen, e.g. by rotation the smartphone or
 // changing the size of a browser window.
 export class WindowInfo implements Writeable, Readable {
-	public width: DP;
+	public width?: DP;
 
-	public height: DP;
+	public height?: DP;
 
-	public density: Density;
+	public density?: Density;
 
-	public sizeClass: WindowSizeClass;
+	public sizeClass?: WindowSizeClass;
 
 	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
-	public colorScheme: ColorScheme;
+	public colorScheme?: ColorScheme;
 
 	constructor(
-		width: DP = new DP(),
-		height: DP = new DP(),
-		density: Density = new Density(),
-		sizeClass: WindowSizeClass = new WindowSizeClass(),
-		colorScheme: ColorScheme = new ColorScheme()
+		width: DP | undefined = undefined,
+		height: DP | undefined = undefined,
+		density: Density | undefined = undefined,
+		sizeClass: WindowSizeClass | undefined = undefined,
+		colorScheme: ColorScheme | undefined = undefined
 	) {
 		this.width = width;
 		this.height = height;
@@ -2265,23 +2033,23 @@ export class WindowInfo implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.width.read(reader);
+					this.width = readFloat(reader);
 					break;
 				}
 				case 2: {
-					this.height.read(reader);
+					this.height = readFloat(reader);
 					break;
 				}
 				case 3: {
-					this.density.read(reader);
+					this.density = readFloat(reader);
 					break;
 				}
 				case 4: {
-					this.sizeClass.read(reader);
+					this.sizeClass = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.colorScheme.read(reader);
+					this.colorScheme = readInt(reader);
 					break;
 				}
 				default:
@@ -2293,52 +2061,52 @@ export class WindowInfo implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.width.isZero(),
-			!this.height.isZero(),
-			!this.density.isZero(),
-			!this.sizeClass.isZero(),
-			!this.colorScheme.isZero(),
+			this.width !== undefined,
+			this.height !== undefined,
+			this.density !== undefined,
+			this.sizeClass !== undefined,
+			this.colorScheme !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.F64, 1);
-			this.width.write(writer);
+			writeFloat(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.F64, 2);
-			this.height.write(writer);
+			writeFloat(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.F64, 3);
-			this.density.write(writer);
+			writeFloat(writer, this.density!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.sizeClass.write(writer);
+			writeInt(writer, this.sizeClass!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			this.colorScheme.write(writer);
+			writeInt(writer, this.colorScheme!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.width.isZero() &&
-			this.height.isZero() &&
-			this.density.isZero() &&
-			this.sizeClass.isZero() &&
-			this.colorScheme.isZero()
+			this.width === undefined &&
+			this.height === undefined &&
+			this.density === undefined &&
+			this.sizeClass === undefined &&
+			this.colorScheme === undefined
 		);
 	}
 
 	reset(): void {
-		this.width.reset();
-		this.height.reset();
-		this.density.reset();
-		this.sizeClass.reset();
-		this.colorScheme.reset();
+		this.width = undefined;
+		this.height = undefined;
+		this.density = undefined;
+		this.sizeClass = undefined;
+		this.colorScheme = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -2347,93 +2115,47 @@ export class WindowInfo implements Writeable, Readable {
 	}
 }
 
-export class DP implements Writeable, Readable {
-	public value: number;
-
-	constructor(value: number = 0.0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0.0;
-	}
-
-	reset(): void {
-		this.value = 0.0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeFloat64(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readFloat64();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.F64, 32);
-		return;
-	}
+export type DP = number;
+function writeTypeHeaderDP(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.F64, 32);
+	return;
 }
 
-export class Density implements Writeable, Readable {
-	public value: number;
-
-	constructor(value: number = 0.0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0.0;
-	}
-
-	reset(): void {
-		this.value = 0.0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeFloat64(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readFloat64();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.F64, 33);
-		return;
-	}
+export type Density = number;
+function writeTypeHeaderDensity(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.F64, 33);
+	return;
 }
 
 // A ConfigurationDefined event is the response to a [ScopeConfigurationChangeRequested] event.
 // According to the locale request, string and svg resources can be localized by the backend.
 // The returned locale is the actually picked locale from the requested locale query string.
 export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent {
-	public applicationID: Str;
+	public applicationID?: Str;
 
-	public applicationName: Str;
+	public applicationName?: Str;
 
-	public applicationVersion: Str;
+	public applicationVersion?: Str;
 
 	public availableLocales: Locales;
 
-	public appIcon: URI;
+	public appIcon?: URI;
 
-	public activeLocale: Locale;
+	public activeLocale?: Locale;
 
 	public themes: Themes;
 
-	public rID: RID;
+	public rID?: RID;
 
 	constructor(
-		applicationID: Str = new Str(),
-		applicationName: Str = new Str(),
-		applicationVersion: Str = new Str(),
+		applicationID: Str | undefined = undefined,
+		applicationName: Str | undefined = undefined,
+		applicationVersion: Str | undefined = undefined,
 		availableLocales: Locales = new Locales(),
-		appIcon: URI = new URI(),
-		activeLocale: Locale = new Locale(),
+		appIcon: URI | undefined = undefined,
+		activeLocale: Locale | undefined = undefined,
 		themes: Themes = new Themes(),
-		rID: RID = new RID()
+		rID: RID | undefined = undefined
 	) {
 		this.applicationID = applicationID;
 		this.applicationName = applicationName;
@@ -2452,15 +2174,15 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.applicationID.read(reader);
+					this.applicationID = readString(reader);
 					break;
 				}
 				case 2: {
-					this.applicationName.read(reader);
+					this.applicationName = readString(reader);
 					break;
 				}
 				case 3: {
-					this.applicationVersion.read(reader);
+					this.applicationVersion = readString(reader);
 					break;
 				}
 				case 4: {
@@ -2468,11 +2190,11 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 					break;
 				}
 				case 5: {
-					this.appIcon.read(reader);
+					this.appIcon = readString(reader);
 					break;
 				}
 				case 6: {
-					this.activeLocale.read(reader);
+					this.activeLocale = readString(reader);
 					break;
 				}
 				case 7: {
@@ -2480,7 +2202,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 					break;
 				}
 				case 8: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -2492,28 +2214,28 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.applicationID.isZero(),
-			!this.applicationName.isZero(),
-			!this.applicationVersion.isZero(),
+			this.applicationID !== undefined,
+			this.applicationName !== undefined,
+			this.applicationVersion !== undefined,
 			!this.availableLocales.isZero(),
-			!this.appIcon.isZero(),
-			!this.activeLocale.isZero(),
+			this.appIcon !== undefined,
+			this.activeLocale !== undefined,
 			!this.themes.isZero(),
-			!this.rID.isZero(),
+			this.rID !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.applicationID.write(writer);
+			writeString(writer, this.applicationID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.applicationName.write(writer);
+			writeString(writer, this.applicationName!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.applicationVersion.write(writer);
+			writeString(writer, this.applicationVersion!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 4);
@@ -2521,11 +2243,11 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.appIcon.write(writer);
+			writeString(writer, this.appIcon!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.activeLocale.write(writer);
+			writeString(writer, this.activeLocale!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -2533,32 +2255,32 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.applicationID.isZero() &&
-			this.applicationName.isZero() &&
-			this.applicationVersion.isZero() &&
+			this.applicationID === undefined &&
+			this.applicationName === undefined &&
+			this.applicationVersion === undefined &&
 			this.availableLocales.isZero() &&
-			this.appIcon.isZero() &&
-			this.activeLocale.isZero() &&
+			this.appIcon === undefined &&
+			this.activeLocale === undefined &&
 			this.themes.isZero() &&
-			this.rID.isZero()
+			this.rID === undefined
 		);
 	}
 
 	reset(): void {
-		this.applicationID.reset();
-		this.applicationName.reset();
-		this.applicationVersion.reset();
+		this.applicationID = undefined;
+		this.applicationName = undefined;
+		this.applicationVersion = undefined;
 		this.availableLocales.reset();
-		this.appIcon.reset();
-		this.activeLocale.reset();
+		this.appIcon = undefined;
+		this.activeLocale = undefined;
 		this.themes.reset();
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -2587,8 +2309,11 @@ export class Locales implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
-			c.write(writer); // Write the component data
+			writeTypeHeaderLocale(writer);
+			writeString(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -2598,7 +2323,7 @@ export class Locales implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as Locale); // Cast and add to the array
+			values.push(obj as any as Locale); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -2610,81 +2335,17 @@ export class Locales implements Writeable, Readable {
 }
 
 // URI is just a string which looks like an URI or URL
-export class URI implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 36);
-		return;
-	}
+export type URI = string;
+function writeTypeHeaderURI(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 36);
+	return;
 }
 
 // NamespaceName refers to a component or views namespace declaration. Besides the universe space, this is almost relevant for the backend, however it defines variables at the frontend, thus it may open some optimizations.
-export class NamespaceName implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 37);
-		return;
-	}
+export type NamespaceName = string;
+function writeTypeHeaderNamespaceName(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 37);
+	return;
 }
 
 // NamedColors represents a map of names with associated color values.
@@ -2707,12 +2368,14 @@ export class NamedColors implements Writeable, Readable {
 		writer.writeUvarint(this.value.size); // Write the length of the map
 		for (const [key, value] of this.value) {
 			// write key
-			key.writeTypeHeader(writer);
-			key.write(writer);
+			//key.writeTypeHeader(writer);
+			//key.write(writer);
 
+			writeTypeHeaderStr(writer);
+			writeString(writer, key);
 			// write value
-			value.writeTypeHeader(writer);
-			value.write(writer);
+			writeTypeHeaderColor(writer);
+			writeString(writer, value);
 		}
 	}
 
@@ -2724,7 +2387,7 @@ export class NamedColors implements Writeable, Readable {
 			const key = unmarshal(reader);
 			const val = unmarshal(reader);
 
-			values.set(key as Str, val as Color);
+			values.set(key as any as Str, val as any as Color);
 		}
 
 		this.value = values;
@@ -2815,10 +2478,13 @@ export class NamespacedColors implements Writeable, Readable {
 		writer.writeUvarint(this.value.size); // Write the length of the map
 		for (const [key, value] of this.value) {
 			// write key
-			key.writeTypeHeader(writer);
-			key.write(writer);
+			//key.writeTypeHeader(writer);
+			//key.write(writer);
 
+			writeTypeHeaderNamespaceName(writer);
+			writeString(writer, key);
 			// write value
+
 			value.writeTypeHeader(writer);
 			value.write(writer);
 		}
@@ -2832,7 +2498,7 @@ export class NamespacedColors implements Writeable, Readable {
 			const key = unmarshal(reader);
 			const val = unmarshal(reader);
 
-			values.set(key as NamespaceName, val as NamedColors);
+			values.set(key as any as NamespaceName, val as any as NamedColors);
 		}
 
 		this.value = values;
@@ -2863,12 +2529,14 @@ export class NamedLengths implements Writeable, Readable {
 		writer.writeUvarint(this.value.size); // Write the length of the map
 		for (const [key, value] of this.value) {
 			// write key
-			key.writeTypeHeader(writer);
-			key.write(writer);
+			//key.writeTypeHeader(writer);
+			//key.write(writer);
 
+			writeTypeHeaderStr(writer);
+			writeString(writer, key);
 			// write value
-			value.writeTypeHeader(writer);
-			value.write(writer);
+			writeTypeHeaderLength(writer);
+			writeString(writer, value);
 		}
 	}
 
@@ -2880,7 +2548,7 @@ export class NamedLengths implements Writeable, Readable {
 			const key = unmarshal(reader);
 			const val = unmarshal(reader);
 
-			values.set(key as Str, val as Length);
+			values.set(key as any as Str, val as any as Length);
 		}
 
 		this.value = values;
@@ -2951,35 +2619,11 @@ export class Themes implements Writeable, Readable {
 	}
 }
 
-export class DatePickerStyle implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 43);
-		return;
-	}
+export type DatePickerStyle = number;
+function writeTypeHeaderDatePickerStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 43);
+	return;
 }
-
 // companion enum containing all defined constants for DatePickerStyle
 export enum DatePickerStyleValues {
 	DatePickerSingleDate = 0,
@@ -2987,44 +2631,25 @@ export enum DatePickerStyleValues {
 }
 
 // Day represents a day in month in the range 1-31.
-export class Day implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 44);
-		return;
-	}
+export type Day = number;
+function writeTypeHeaderDay(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 44);
+	return;
 }
 
 // Date represents a location-free representation of a day/month/year tuple.
 export class DateData implements Writeable, Readable {
-	public day: Day;
+	public day?: Day;
 
-	public month: Month;
+	public month?: Month;
 
-	public year: Year;
+	public year?: Year;
 
-	constructor(day: Day = new Day(), month: Month = new Month(), year: Year = new Year()) {
+	constructor(
+		day: Day | undefined = undefined,
+		month: Month | undefined = undefined,
+		year: Year | undefined = undefined
+	) {
 		this.day = day;
 		this.month = month;
 		this.year = year;
@@ -3037,15 +2662,15 @@ export class DateData implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.day.read(reader);
+					this.day = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.month.read(reader);
+					this.month = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.year.read(reader);
+					this.year = readInt(reader);
 					break;
 				}
 				default:
@@ -3055,31 +2680,31 @@ export class DateData implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.day.isZero(), !this.month.isZero(), !this.year.isZero()];
+		const fields = [false, this.day !== undefined, this.month !== undefined, this.year !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.day.write(writer);
+			writeInt(writer, this.day!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.month.write(writer);
+			writeInt(writer, this.month!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.year.write(writer);
+			writeInt(writer, this.year!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.day.isZero() && this.month.isZero() && this.year.isZero();
+		return this.day === undefined && this.month === undefined && this.year === undefined;
 	}
 
 	reset(): void {
-		this.day.reset();
-		this.month.reset();
-		this.year.reset();
+		this.day = undefined;
+		this.month = undefined;
+		this.year = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -3089,106 +2714,60 @@ export class DateData implements Writeable, Readable {
 }
 
 // Month represents a month in the range 1-12.
-export class Month implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 46);
-		return;
-	}
+export type Month = number;
+function writeTypeHeaderMonth(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 46);
+	return;
 }
 
 // Year represents a year in the gregorian calendar.
-export class Year implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 47);
-		return;
-	}
+export type Year = number;
+function writeTypeHeaderYear(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 47);
+	return;
 }
 
 export class DatePicker implements Writeable, Readable, Component {
-	public label: Str;
+	public label?: Str;
 
-	public supportingText: Str;
+	public supportingText?: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	public errorText: Str;
+	public errorText?: Str;
 
 	// Style determines if the picker shall use the range or single mode. Default is single selection
-	public style: DatePickerStyle;
+	public style?: DatePickerStyle;
 
 	// Value is the initial single value or start value of the picker.
 	public value: DateData;
 
 	// InputValue is the picked single value or end value of the picker.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
 	// EndValue is the initial end value of the picker.
 	public endValue: DateData;
 
 	// EndInputValue is the picked end value of the picker.
-	public endInputValue: Ptr;
+	public endInputValue?: Ptr;
 
 	public frame: Frame;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
 	constructor(
-		label: Str = new Str(),
-		supportingText: Str = new Str(),
-		errorText: Str = new Str(),
-		style: DatePickerStyle = new DatePickerStyle(),
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		style: DatePickerStyle | undefined = undefined,
 		value: DateData = new DateData(),
-		inputValue: Ptr = new Ptr(),
+		inputValue: Ptr | undefined = undefined,
 		endValue: DateData = new DateData(),
-		endInputValue: Ptr = new Ptr(),
+		endInputValue: Ptr | undefined = undefined,
 		frame: Frame = new Frame(),
-		invisible: Bool = new Bool(),
-		disabled: Bool = new Bool()
+		invisible: Bool | undefined = undefined,
+		disabled: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -3210,19 +2789,19 @@ export class DatePicker implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.label.read(reader);
+					this.label = readString(reader);
 					break;
 				}
 				case 2: {
-					this.supportingText.read(reader);
+					this.supportingText = readString(reader);
 					break;
 				}
 				case 3: {
-					this.errorText.read(reader);
+					this.errorText = readString(reader);
 					break;
 				}
 				case 4: {
-					this.style.read(reader);
+					this.style = readInt(reader);
 					break;
 				}
 				case 5: {
@@ -3230,7 +2809,7 @@ export class DatePicker implements Writeable, Readable, Component {
 					break;
 				}
 				case 6: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 7: {
@@ -3238,7 +2817,7 @@ export class DatePicker implements Writeable, Readable, Component {
 					break;
 				}
 				case 8: {
-					this.endInputValue.read(reader);
+					this.endInputValue = readInt(reader);
 					break;
 				}
 				case 9: {
@@ -3246,11 +2825,11 @@ export class DatePicker implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				case 11: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				default:
@@ -3262,35 +2841,35 @@ export class DatePicker implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.label.isZero(),
-			!this.supportingText.isZero(),
-			!this.errorText.isZero(),
-			!this.style.isZero(),
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.style !== undefined,
 			!this.value.isZero(),
-			!this.inputValue.isZero(),
+			this.inputValue !== undefined,
 			!this.endValue.isZero(),
-			!this.endInputValue.isZero(),
+			this.endInputValue !== undefined,
 			!this.frame.isZero(),
-			!this.invisible.isZero(),
-			!this.disabled.isZero(),
+			this.invisible !== undefined,
+			this.disabled !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.label.write(writer);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.supportingText.write(writer);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.errorText.write(writer);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.style.write(writer);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -3298,7 +2877,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -3306,7 +2885,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			this.endInputValue.write(writer);
+			writeInt(writer, this.endInputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.RECORD, 9);
@@ -3314,42 +2893,42 @@ export class DatePicker implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 11);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.label.isZero() &&
-			this.supportingText.isZero() &&
-			this.errorText.isZero() &&
-			this.style.isZero() &&
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.style === undefined &&
 			this.value.isZero() &&
-			this.inputValue.isZero() &&
+			this.inputValue === undefined &&
 			this.endValue.isZero() &&
-			this.endInputValue.isZero() &&
+			this.endInputValue === undefined &&
 			this.frame.isZero() &&
-			this.invisible.isZero() &&
-			this.disabled.isZero()
+			this.invisible === undefined &&
+			this.disabled === undefined
 		);
 	}
 
 	reset(): void {
-		this.label.reset();
-		this.supportingText.reset();
-		this.errorText.reset();
-		this.style.reset();
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.style = undefined;
 		this.value.reset();
-		this.inputValue.reset();
+		this.inputValue = undefined;
 		this.endValue.reset();
-		this.endInputValue.reset();
+		this.endInputValue = undefined;
 		this.frame.reset();
-		this.invisible.reset();
-		this.disabled.reset();
+		this.invisible = undefined;
+		this.disabled = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -3431,70 +3010,22 @@ export class Divider implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-export class RID implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 50);
-		return;
-	}
+export type RID = number;
+function writeTypeHeaderRID(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 50);
+	return;
 }
-
 // companion enum containing all defined constants for RID
 export enum RIDValues {
 	NormalFontStyle = 0,
 	ItalicFontStyle = 1,
 }
 
-export class FontWeight implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 51);
-		return;
-	}
+export type FontWeight = number;
+function writeTypeHeaderFontWeight(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 51);
+	return;
 }
-
 // companion enum containing all defined constants for FontWeight
 export enum FontWeightValues {
 	NormalFontWeight = 400,
@@ -3503,19 +3034,19 @@ export enum FontWeightValues {
 
 export class Font implements Writeable, Readable {
 	// Name of the font or family name as fallback. Extra fallback declarations are unspecified and must be comma separated.
-	public name: Str;
+	public name?: Str;
 
-	public size: Length;
+	public size?: Length;
 
-	public style: FontStyle;
+	public style?: FontStyle;
 
-	public weight: FontWeight;
+	public weight?: FontWeight;
 
 	constructor(
-		name: Str = new Str(),
-		size: Length = new Length(),
-		style: FontStyle = new FontStyle(),
-		weight: FontWeight = new FontWeight()
+		name: Str | undefined = undefined,
+		size: Length | undefined = undefined,
+		style: FontStyle | undefined = undefined,
+		weight: FontWeight | undefined = undefined
 	) {
 		this.name = name;
 		this.size = size;
@@ -3530,19 +3061,19 @@ export class Font implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.name.read(reader);
+					this.name = readString(reader);
 					break;
 				}
 				case 2: {
-					this.size.read(reader);
+					this.size = readString(reader);
 					break;
 				}
 				case 3: {
-					this.style.read(reader);
+					this.style = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.weight.read(reader);
+					this.weight = readInt(reader);
 					break;
 				}
 				default:
@@ -3552,36 +3083,44 @@ export class Font implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.name.isZero(), !this.size.isZero(), !this.style.isZero(), !this.weight.isZero()];
+		const fields = [
+			false,
+			this.name !== undefined,
+			this.size !== undefined,
+			this.style !== undefined,
+			this.weight !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.name.write(writer);
+			writeString(writer, this.name!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.size.write(writer);
+			writeString(writer, this.size!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.style.write(writer);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.weight.write(writer);
+			writeInt(writer, this.weight!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.name.isZero() && this.size.isZero() && this.style.isZero() && this.weight.isZero();
+		return (
+			this.name === undefined && this.size === undefined && this.style === undefined && this.weight === undefined
+		);
 	}
 
 	reset(): void {
-		this.name.reset();
-		this.size.reset();
-		this.style.reset();
-		this.weight.reset();
+		this.name = undefined;
+		this.size = undefined;
+		this.style = undefined;
+		this.weight = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -3594,44 +3133,44 @@ export class Font implements Writeable, Readable {
 export class Grid implements Writeable, Readable, Component {
 	public cells: GridCells;
 
-	public rows: Uint;
+	public rows?: Uint;
 
-	public columns: Uint;
+	public columns?: Uint;
 
-	public rowGap: Length;
+	public rowGap?: Length;
 
-	public colGap: Length;
+	public colGap?: Length;
 
 	public frame: Frame;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public padding: Padding;
 
 	public border: Border;
 
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public font: Font;
 
 	public colWidths: Lengths;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
 		cells: GridCells = new GridCells(),
-		rows: Uint = new Uint(),
-		columns: Uint = new Uint(),
-		rowGap: Length = new Length(),
-		colGap: Length = new Length(),
+		rows: Uint | undefined = undefined,
+		columns: Uint | undefined = undefined,
+		rowGap: Length | undefined = undefined,
+		colGap: Length | undefined = undefined,
 		frame: Frame = new Frame(),
-		backgroundColor: Color = new Color(),
+		backgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
 		border: Border = new Border(),
-		accessibilityLabel: Str = new Str(),
+		accessibilityLabel: Str | undefined = undefined,
 		font: Font = new Font(),
 		colWidths: Lengths = new Lengths(),
-		invisible: Bool = new Bool()
+		invisible: Bool | undefined = undefined
 	) {
 		this.cells = cells;
 		this.rows = rows;
@@ -3659,19 +3198,19 @@ export class Grid implements Writeable, Readable, Component {
 					break;
 				}
 				case 2: {
-					this.rows.read(reader);
+					this.rows = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.columns.read(reader);
+					this.columns = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.rowGap.read(reader);
+					this.rowGap = readString(reader);
 					break;
 				}
 				case 5: {
-					this.colGap.read(reader);
+					this.colGap = readString(reader);
 					break;
 				}
 				case 6: {
@@ -3679,7 +3218,7 @@ export class Grid implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 8: {
@@ -3691,7 +3230,7 @@ export class Grid implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 11: {
@@ -3703,7 +3242,7 @@ export class Grid implements Writeable, Readable, Component {
 					break;
 				}
 				case 13: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -3716,18 +3255,18 @@ export class Grid implements Writeable, Readable, Component {
 		const fields = [
 			false,
 			!this.cells.isZero(),
-			!this.rows.isZero(),
-			!this.columns.isZero(),
-			!this.rowGap.isZero(),
-			!this.colGap.isZero(),
+			this.rows !== undefined,
+			this.columns !== undefined,
+			this.rowGap !== undefined,
+			this.colGap !== undefined,
 			!this.frame.isZero(),
-			!this.backgroundColor.isZero(),
+			this.backgroundColor !== undefined,
 			!this.padding.isZero(),
 			!this.border.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.accessibilityLabel !== undefined,
 			!this.font.isZero(),
 			!this.colWidths.isZero(),
-			!this.invisible.isZero(),
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3737,19 +3276,19 @@ export class Grid implements Writeable, Readable, Component {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.rows.write(writer);
+			writeInt(writer, this.rows!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.columns.write(writer);
+			writeInt(writer, this.columns!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.rowGap.write(writer);
+			writeString(writer, this.rowGap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.colGap.write(writer);
+			writeString(writer, this.colGap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.RECORD, 6);
@@ -3757,7 +3296,7 @@ export class Grid implements Writeable, Readable, Component {
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.RECORD, 8);
@@ -3769,7 +3308,7 @@ export class Grid implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.RECORD, 11);
@@ -3781,42 +3320,42 @@ export class Grid implements Writeable, Readable, Component {
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			this.cells.isZero() &&
-			this.rows.isZero() &&
-			this.columns.isZero() &&
-			this.rowGap.isZero() &&
-			this.colGap.isZero() &&
+			this.rows === undefined &&
+			this.columns === undefined &&
+			this.rowGap === undefined &&
+			this.colGap === undefined &&
 			this.frame.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.backgroundColor === undefined &&
 			this.padding.isZero() &&
 			this.border.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.accessibilityLabel === undefined &&
 			this.font.isZero() &&
 			this.colWidths.isZero() &&
-			this.invisible.isZero()
+			this.invisible === undefined
 		);
 	}
 
 	reset(): void {
 		this.cells.reset();
-		this.rows.reset();
-		this.columns.reset();
-		this.rowGap.reset();
-		this.colGap.reset();
+		this.rows = undefined;
+		this.columns = undefined;
+		this.rowGap = undefined;
+		this.colGap = undefined;
 		this.frame.reset();
-		this.backgroundColor.reset();
+		this.backgroundColor = undefined;
 		this.padding.reset();
 		this.border.reset();
-		this.accessibilityLabel.reset();
+		this.accessibilityLabel = undefined;
 		this.font.reset();
 		this.colWidths.reset();
-		this.invisible.reset();
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -3827,33 +3366,10 @@ export class Grid implements Writeable, Readable, Component {
 }
 
 // Uint represents just a user defined unsigned integer value. This is how nprotoc works.
-export class Uint implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 54);
-		return;
-	}
+export type Uint = number;
+function writeTypeHeaderUint(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 54);
+	return;
 }
 
 // GridCells is just a bunch of GridCells.
@@ -3875,8 +3391,11 @@ export class GridCells implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -3886,7 +3405,7 @@ export class GridCells implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as GridCell); // Cast and add to the array
+			values.push(obj as any as GridCell); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -3916,8 +3435,11 @@ export class Lengths implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
-			c.write(writer); // Write the component data
+			writeTypeHeaderLength(writer);
+			writeString(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -3927,7 +3449,7 @@ export class Lengths implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as Length); // Cast and add to the array
+			values.push(obj as any as Length); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -3942,32 +3464,32 @@ export class Lengths implements Writeable, Readable {
 export class GridCell implements Writeable, Readable {
 	public body?: Component;
 
-	public colStart: Uint;
+	public colStart?: Uint;
 
-	public colEnd: Uint;
+	public colEnd?: Uint;
 
-	public rowStart: Uint;
+	public rowStart?: Uint;
 
-	public rowEnd: Uint;
+	public rowEnd?: Uint;
 
-	public colSpan: Uint;
+	public colSpan?: Uint;
 
-	public rowSpan: Uint;
+	public rowSpan?: Uint;
 
 	public padding: Padding;
 
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
 	constructor(
 		body: Component | undefined = undefined,
-		colStart: Uint = new Uint(),
-		colEnd: Uint = new Uint(),
-		rowStart: Uint = new Uint(),
-		rowEnd: Uint = new Uint(),
-		colSpan: Uint = new Uint(),
-		rowSpan: Uint = new Uint(),
+		colStart: Uint | undefined = undefined,
+		colEnd: Uint | undefined = undefined,
+		rowStart: Uint | undefined = undefined,
+		rowEnd: Uint | undefined = undefined,
+		colSpan: Uint | undefined = undefined,
+		rowSpan: Uint | undefined = undefined,
 		padding: Padding = new Padding(),
-		alignment: Alignment = new Alignment()
+		alignment: Alignment | undefined = undefined
 	) {
 		this.body = body;
 		this.colStart = colStart;
@@ -3996,27 +3518,27 @@ export class GridCell implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.colStart.read(reader);
+					this.colStart = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.colEnd.read(reader);
+					this.colEnd = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.rowStart.read(reader);
+					this.rowStart = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.rowEnd.read(reader);
+					this.rowEnd = readInt(reader);
 					break;
 				}
 				case 6: {
-					this.colSpan.read(reader);
+					this.colSpan = readInt(reader);
 					break;
 				}
 				case 7: {
-					this.rowSpan.read(reader);
+					this.rowSpan = readInt(reader);
 					break;
 				}
 				case 8: {
@@ -4024,7 +3546,7 @@ export class GridCell implements Writeable, Readable {
 					break;
 				}
 				case 9: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				default:
@@ -4037,14 +3559,14 @@ export class GridCell implements Writeable, Readable {
 		const fields = [
 			false,
 			this.body !== undefined && !this.body.isZero(),
-			!this.colStart.isZero(),
-			!this.colEnd.isZero(),
-			!this.rowStart.isZero(),
-			!this.rowEnd.isZero(),
-			!this.colSpan.isZero(),
-			!this.rowSpan.isZero(),
+			this.colStart !== undefined,
+			this.colEnd !== undefined,
+			this.rowStart !== undefined,
+			this.rowEnd !== undefined,
+			this.colSpan !== undefined,
+			this.rowSpan !== undefined,
 			!this.padding.isZero(),
-			!this.alignment.isZero(),
+			this.alignment !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4056,27 +3578,27 @@ export class GridCell implements Writeable, Readable {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.colStart.write(writer);
+			writeInt(writer, this.colStart!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.colEnd.write(writer);
+			writeInt(writer, this.colEnd!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.rowStart.write(writer);
+			writeInt(writer, this.rowStart!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			this.rowEnd.write(writer);
+			writeInt(writer, this.rowEnd!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.colSpan.write(writer);
+			writeInt(writer, this.colSpan!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			this.rowSpan.write(writer);
+			writeInt(writer, this.rowSpan!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.RECORD, 8);
@@ -4084,34 +3606,34 @@ export class GridCell implements Writeable, Readable {
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.body === undefined || this.body.isZero()) &&
-			this.colStart.isZero() &&
-			this.colEnd.isZero() &&
-			this.rowStart.isZero() &&
-			this.rowEnd.isZero() &&
-			this.colSpan.isZero() &&
-			this.rowSpan.isZero() &&
+			this.colStart === undefined &&
+			this.colEnd === undefined &&
+			this.rowStart === undefined &&
+			this.rowEnd === undefined &&
+			this.colSpan === undefined &&
+			this.rowSpan === undefined &&
 			this.padding.isZero() &&
-			this.alignment.isZero()
+			this.alignment === undefined
 		);
 	}
 
 	reset(): void {
 		this.body = undefined;
-		this.colStart.reset();
-		this.colEnd.reset();
-		this.rowStart.reset();
-		this.rowEnd.reset();
-		this.colSpan.reset();
-		this.rowSpan.reset();
+		this.colStart = undefined;
+		this.colEnd = undefined;
+		this.rowStart = undefined;
+		this.rowEnd = undefined;
+		this.colSpan = undefined;
+		this.rowSpan = undefined;
 		this.padding.reset();
-		this.alignment.reset();
+		this.alignment = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -4128,31 +3650,31 @@ export class GridCell implements Writeable, Readable {
 export class HStack implements Writeable, Readable, Component {
 	public children: Components;
 
-	public gap: Length;
+	public gap?: Length;
 
 	public frame: Frame;
 
 	// Zero value of Alignment is Center (=c) must be applied.
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public padding: Padding;
 
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public border: Border;
 
 	public font: Font;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public hoveredBackgroundColor: Color;
+	public hoveredBackgroundColor?: Color;
 
-	public pressedBackgroundColor: Color;
+	public pressedBackgroundColor?: Color;
 
-	public focusedBackgroundColor: Color;
+	public focusedBackgroundColor?: Color;
 
 	public hoveredBorder: Border;
 
@@ -4160,41 +3682,41 @@ export class HStack implements Writeable, Readable, Component {
 
 	public focusedBorder: Border;
 
-	public wrap: Bool;
+	public wrap?: Bool;
 
-	public stylePreset: StylePreset;
+	public stylePreset?: StylePreset;
 
 	public position: Position;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
-	public iD: Str;
+	public iD?: Str;
 
 	constructor(
 		children: Components = new Components(),
-		gap: Length = new Length(),
+		gap: Length | undefined = undefined,
 		frame: Frame = new Frame(),
-		alignment: Alignment = new Alignment(),
-		backgroundColor: Color = new Color(),
+		alignment: Alignment | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
-		accessibilityLabel: Str = new Str(),
+		accessibilityLabel: Str | undefined = undefined,
 		border: Border = new Border(),
 		font: Font = new Font(),
-		action: Ptr = new Ptr(),
-		hoveredBackgroundColor: Color = new Color(),
-		pressedBackgroundColor: Color = new Color(),
-		focusedBackgroundColor: Color = new Color(),
+		action: Ptr | undefined = undefined,
+		hoveredBackgroundColor: Color | undefined = undefined,
+		pressedBackgroundColor: Color | undefined = undefined,
+		focusedBackgroundColor: Color | undefined = undefined,
 		hoveredBorder: Border = new Border(),
 		pressedBorder: Border = new Border(),
 		focusedBorder: Border = new Border(),
-		wrap: Bool = new Bool(),
-		stylePreset: StylePreset = new StylePreset(),
+		wrap: Bool | undefined = undefined,
+		stylePreset: StylePreset | undefined = undefined,
 		position: Position = new Position(),
-		disabled: Bool = new Bool(),
-		invisible: Bool = new Bool(),
-		iD: Str = new Str()
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		iD: Str | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -4231,7 +3753,7 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 2: {
-					this.gap.read(reader);
+					this.gap = readString(reader);
 					break;
 				}
 				case 3: {
@@ -4239,11 +3761,11 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 6: {
@@ -4251,7 +3773,7 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 8: {
@@ -4263,19 +3785,19 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 11: {
-					this.hoveredBackgroundColor.read(reader);
+					this.hoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 12: {
-					this.pressedBackgroundColor.read(reader);
+					this.pressedBackgroundColor = readString(reader);
 					break;
 				}
 				case 13: {
-					this.focusedBackgroundColor.read(reader);
+					this.focusedBackgroundColor = readString(reader);
 					break;
 				}
 				case 14: {
@@ -4291,11 +3813,11 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 17: {
-					this.wrap.read(reader);
+					this.wrap = readBool(reader);
 					break;
 				}
 				case 18: {
-					this.stylePreset.read(reader);
+					this.stylePreset = readInt(reader);
 					break;
 				}
 				case 19: {
@@ -4303,15 +3825,15 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 20: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 21: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				case 22: {
-					this.iD.read(reader);
+					this.iD = readString(reader);
 					break;
 				}
 				default:
@@ -4324,27 +3846,27 @@ export class HStack implements Writeable, Readable, Component {
 		const fields = [
 			false,
 			!this.children.isZero(),
-			!this.gap.isZero(),
+			this.gap !== undefined,
 			!this.frame.isZero(),
-			!this.alignment.isZero(),
-			!this.backgroundColor.isZero(),
+			this.alignment !== undefined,
+			this.backgroundColor !== undefined,
 			!this.padding.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.accessibilityLabel !== undefined,
 			!this.border.isZero(),
 			!this.font.isZero(),
-			!this.action.isZero(),
-			!this.hoveredBackgroundColor.isZero(),
-			!this.pressedBackgroundColor.isZero(),
-			!this.focusedBackgroundColor.isZero(),
+			this.action !== undefined,
+			this.hoveredBackgroundColor !== undefined,
+			this.pressedBackgroundColor !== undefined,
+			this.focusedBackgroundColor !== undefined,
 			!this.hoveredBorder.isZero(),
 			!this.pressedBorder.isZero(),
 			!this.focusedBorder.isZero(),
-			!this.wrap.isZero(),
-			!this.stylePreset.isZero(),
+			this.wrap !== undefined,
+			this.stylePreset !== undefined,
 			!this.position.isZero(),
-			!this.disabled.isZero(),
-			!this.invisible.isZero(),
-			!this.iD.isZero(),
+			this.disabled !== undefined,
+			this.invisible !== undefined,
+			this.iD !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4354,7 +3876,7 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.gap.write(writer);
+			writeString(writer, this.gap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.RECORD, 3);
@@ -4362,11 +3884,11 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.RECORD, 6);
@@ -4374,7 +3896,7 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.RECORD, 8);
@@ -4386,19 +3908,19 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
-			this.hoveredBackgroundColor.write(writer);
+			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
-			this.pressedBackgroundColor.write(writer);
+			writeString(writer, this.pressedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
-			this.focusedBackgroundColor.write(writer);
+			writeString(writer, this.focusedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
 			writer.writeFieldHeader(Shapes.RECORD, 14);
@@ -4414,11 +3936,11 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[17]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 17);
-			this.wrap.write(writer);
+			writeBool(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[18]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 18);
-			this.stylePreset.write(writer);
+			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[19]) {
 			writer.writeFieldHeader(Shapes.RECORD, 19);
@@ -4426,68 +3948,68 @@ export class HStack implements Writeable, Readable, Component {
 		}
 		if (fields[20]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[21]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 21);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[22]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
-			this.iD.write(writer);
+			writeString(writer, this.iD!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			this.children.isZero() &&
-			this.gap.isZero() &&
+			this.gap === undefined &&
 			this.frame.isZero() &&
-			this.alignment.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.alignment === undefined &&
+			this.backgroundColor === undefined &&
 			this.padding.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.accessibilityLabel === undefined &&
 			this.border.isZero() &&
 			this.font.isZero() &&
-			this.action.isZero() &&
-			this.hoveredBackgroundColor.isZero() &&
-			this.pressedBackgroundColor.isZero() &&
-			this.focusedBackgroundColor.isZero() &&
+			this.action === undefined &&
+			this.hoveredBackgroundColor === undefined &&
+			this.pressedBackgroundColor === undefined &&
+			this.focusedBackgroundColor === undefined &&
 			this.hoveredBorder.isZero() &&
 			this.pressedBorder.isZero() &&
 			this.focusedBorder.isZero() &&
-			this.wrap.isZero() &&
-			this.stylePreset.isZero() &&
+			this.wrap === undefined &&
+			this.stylePreset === undefined &&
 			this.position.isZero() &&
-			this.disabled.isZero() &&
-			this.invisible.isZero() &&
-			this.iD.isZero()
+			this.disabled === undefined &&
+			this.invisible === undefined &&
+			this.iD === undefined
 		);
 	}
 
 	reset(): void {
 		this.children.reset();
-		this.gap.reset();
+		this.gap = undefined;
 		this.frame.reset();
-		this.alignment.reset();
-		this.backgroundColor.reset();
+		this.alignment = undefined;
+		this.backgroundColor = undefined;
 		this.padding.reset();
-		this.accessibilityLabel.reset();
+		this.accessibilityLabel = undefined;
 		this.border.reset();
 		this.font.reset();
-		this.action.reset();
-		this.hoveredBackgroundColor.reset();
-		this.pressedBackgroundColor.reset();
-		this.focusedBackgroundColor.reset();
+		this.action = undefined;
+		this.hoveredBackgroundColor = undefined;
+		this.pressedBackgroundColor = undefined;
+		this.focusedBackgroundColor = undefined;
 		this.hoveredBorder.reset();
 		this.pressedBorder.reset();
 		this.focusedBorder.reset();
-		this.wrap.reset();
-		this.stylePreset.reset();
+		this.wrap = undefined;
+		this.stylePreset = undefined;
 		this.position.reset();
-		this.disabled.reset();
-		this.invisible.reset();
-		this.iD.reset();
+		this.disabled = undefined;
+		this.invisible = undefined;
+		this.iD = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -4502,35 +4024,11 @@ export class HStack implements Writeable, Readable, Component {
 // a native component may be used, e.g. for a native button. The order of appliance is first the preset and
 // then customized properties on top.
 //
-export class StylePreset implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 59);
-		return;
-	}
+export type StylePreset = number;
+function writeTypeHeaderStylePreset(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 59);
+	return;
 }
-
 // companion enum containing all defined constants for StylePreset
 export enum StylePresetValues {
 	// Default is that no style preset is applied.
@@ -4541,22 +4039,22 @@ export enum StylePresetValues {
 }
 
 export class Position implements Writeable, Readable {
-	public kind: PositionType;
+	public kind?: PositionType;
 
-	public left: Length;
+	public left?: Length;
 
-	public top: Length;
+	public top?: Length;
 
-	public right: Length;
+	public right?: Length;
 
-	public bottom: Length;
+	public bottom?: Length;
 
 	constructor(
-		kind: PositionType = new PositionType(),
-		left: Length = new Length(),
-		top: Length = new Length(),
-		right: Length = new Length(),
-		bottom: Length = new Length()
+		kind: PositionType | undefined = undefined,
+		left: Length | undefined = undefined,
+		top: Length | undefined = undefined,
+		right: Length | undefined = undefined,
+		bottom: Length | undefined = undefined
 	) {
 		this.kind = kind;
 		this.left = left;
@@ -4572,23 +4070,23 @@ export class Position implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.kind.read(reader);
+					this.kind = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.left.read(reader);
+					this.left = readString(reader);
 					break;
 				}
 				case 3: {
-					this.top.read(reader);
+					this.top = readString(reader);
 					break;
 				}
 				case 4: {
-					this.right.read(reader);
+					this.right = readString(reader);
 					break;
 				}
 				case 5: {
-					this.bottom.read(reader);
+					this.bottom = readString(reader);
 					break;
 				}
 				default:
@@ -4600,48 +4098,52 @@ export class Position implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.kind.isZero(),
-			!this.left.isZero(),
-			!this.top.isZero(),
-			!this.right.isZero(),
-			!this.bottom.isZero(),
+			this.kind !== undefined,
+			this.left !== undefined,
+			this.top !== undefined,
+			this.right !== undefined,
+			this.bottom !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.kind.write(writer);
+			writeInt(writer, this.kind!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.left.write(writer);
+			writeString(writer, this.left!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.top.write(writer);
+			writeString(writer, this.top!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.right.write(writer);
+			writeString(writer, this.right!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.bottom.write(writer);
+			writeString(writer, this.bottom!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.kind.isZero() && this.left.isZero() && this.top.isZero() && this.right.isZero() && this.bottom.isZero()
+			this.kind === undefined &&
+			this.left === undefined &&
+			this.top === undefined &&
+			this.right === undefined &&
+			this.bottom === undefined
 		);
 	}
 
 	reset(): void {
-		this.kind.reset();
-		this.left.reset();
-		this.top.reset();
-		this.right.reset();
-		this.bottom.reset();
+		this.kind = undefined;
+		this.left = undefined;
+		this.top = undefined;
+		this.right = undefined;
+		this.bottom = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -4650,35 +4152,11 @@ export class Position implements Writeable, Readable {
 	}
 }
 
-export class PositionType implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 61);
-		return;
-	}
+export type PositionType = number;
+function writeTypeHeaderPositionType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 61);
+	return;
 }
-
 // companion enum containing all defined constants for PositionType
 export enum PositionTypeValues {
 	// PositionDefault is the default and any explicit position value have no effect.
@@ -4700,9 +4178,9 @@ export enum PositionTypeValues {
 }
 
 export class Img implements Writeable, Readable, Component {
-	public uri: URI;
+	public uri?: URI;
 
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public border: Border;
 
@@ -4710,24 +4188,24 @@ export class Img implements Writeable, Readable, Component {
 
 	public padding: Padding;
 
-	public sVG: SVG;
+	public sVG?: SVG;
 
-	public fillColor: Color;
+	public fillColor?: Color;
 
-	public strokeColor: Color;
+	public strokeColor?: Color;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
-		uri: URI = new URI(),
-		accessibilityLabel: Str = new Str(),
+		uri: URI | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined,
 		border: Border = new Border(),
 		frame: Frame = new Frame(),
 		padding: Padding = new Padding(),
-		sVG: SVG = new SVG(),
-		fillColor: Color = new Color(),
-		strokeColor: Color = new Color(),
-		invisible: Bool = new Bool()
+		sVG: SVG | undefined = undefined,
+		fillColor: Color | undefined = undefined,
+		strokeColor: Color | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.uri = uri;
 		this.accessibilityLabel = accessibilityLabel;
@@ -4747,11 +4225,11 @@ export class Img implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.uri.read(reader);
+					this.uri = readString(reader);
 					break;
 				}
 				case 2: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 3: {
@@ -4767,19 +4245,19 @@ export class Img implements Writeable, Readable, Component {
 					break;
 				}
 				case 6: {
-					this.sVG.read(reader);
+					this.sVG = readString(reader);
 					break;
 				}
 				case 7: {
-					this.fillColor.read(reader);
+					this.fillColor = readString(reader);
 					break;
 				}
 				case 8: {
-					this.strokeColor.read(reader);
+					this.strokeColor = readString(reader);
 					break;
 				}
 				case 9: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -4791,25 +4269,25 @@ export class Img implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.uri.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.uri !== undefined,
+			this.accessibilityLabel !== undefined,
 			!this.border.isZero(),
 			!this.frame.isZero(),
 			!this.padding.isZero(),
-			!this.sVG.isZero(),
-			!this.fillColor.isZero(),
-			!this.strokeColor.isZero(),
-			!this.invisible.isZero(),
+			this.sVG !== undefined,
+			this.fillColor !== undefined,
+			this.strokeColor !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.uri.write(writer);
+			writeString(writer, this.uri!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.RECORD, 3);
@@ -4825,46 +4303,46 @@ export class Img implements Writeable, Readable, Component {
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.sVG.write(writer);
+			writeString(writer, this.sVG!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.fillColor.write(writer);
+			writeString(writer, this.fillColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
-			this.strokeColor.write(writer);
+			writeString(writer, this.strokeColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.uri.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.uri === undefined &&
+			this.accessibilityLabel === undefined &&
 			this.border.isZero() &&
 			this.frame.isZero() &&
 			this.padding.isZero() &&
-			this.sVG.isZero() &&
-			this.fillColor.isZero() &&
-			this.strokeColor.isZero() &&
-			this.invisible.isZero()
+			this.sVG === undefined &&
+			this.fillColor === undefined &&
+			this.strokeColor === undefined &&
+			this.invisible === undefined
 		);
 	}
 
 	reset(): void {
-		this.uri.reset();
-		this.accessibilityLabel.reset();
+		this.uri = undefined;
+		this.accessibilityLabel = undefined;
 		this.border.reset();
 		this.frame.reset();
 		this.padding.reset();
-		this.sVG.reset();
-		this.fillColor.reset();
-		this.strokeColor.reset();
-		this.invisible.reset();
+		this.sVG = undefined;
+		this.fillColor = undefined;
+		this.strokeColor = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -4875,42 +4353,10 @@ export class Img implements Writeable, Readable, Component {
 }
 
 // SVG contains the valid embeddable source of Scalable Vector Graphics.
-export class SVG implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 63);
-		return;
-	}
+export type SVG = string;
+function writeTypeHeaderSVG(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 63);
+	return;
 }
 
 // Strings is just a bunch of string values.
@@ -4932,8 +4378,11 @@ export class Strings implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
-			c.write(writer); // Write the component data
+			writeTypeHeaderStr(writer);
+			writeString(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -4943,7 +4392,7 @@ export class Strings implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as Str); // Cast and add to the array
+			values.push(obj as any as Str); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -4959,21 +4408,21 @@ export class Strings implements Writeable, Readable {
 // a regular http multipart upload or some FFI calls providing data streams
 // or accessor URIs.
 export class FileImportRequested implements Writeable, Readable, NagoEvent {
-	public iD: Str;
+	public iD?: Str;
 
-	public scopeID: Str;
+	public scopeID?: Str;
 
-	public multiple: Bool;
+	public multiple?: Bool;
 
-	public maxBytes: Uint;
+	public maxBytes?: Uint;
 
 	public allowedMimeTypes: Strings;
 
 	constructor(
-		iD: Str = new Str(),
-		scopeID: Str = new Str(),
-		multiple: Bool = new Bool(),
-		maxBytes: Uint = new Uint(),
+		iD: Str | undefined = undefined,
+		scopeID: Str | undefined = undefined,
+		multiple: Bool | undefined = undefined,
+		maxBytes: Uint | undefined = undefined,
 		allowedMimeTypes: Strings = new Strings()
 	) {
 		this.iD = iD;
@@ -4990,19 +4439,19 @@ export class FileImportRequested implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.iD.read(reader);
+					this.iD = readString(reader);
 					break;
 				}
 				case 2: {
-					this.scopeID.read(reader);
+					this.scopeID = readString(reader);
 					break;
 				}
 				case 3: {
-					this.multiple.read(reader);
+					this.multiple = readBool(reader);
 					break;
 				}
 				case 4: {
-					this.maxBytes.read(reader);
+					this.maxBytes = readInt(reader);
 					break;
 				}
 				case 5: {
@@ -5018,29 +4467,29 @@ export class FileImportRequested implements Writeable, Readable, NagoEvent {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.iD.isZero(),
-			!this.scopeID.isZero(),
-			!this.multiple.isZero(),
-			!this.maxBytes.isZero(),
+			this.iD !== undefined,
+			this.scopeID !== undefined,
+			this.multiple !== undefined,
+			this.maxBytes !== undefined,
 			!this.allowedMimeTypes.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.iD.write(writer);
+			writeString(writer, this.iD!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.scopeID.write(writer);
+			writeString(writer, this.scopeID!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.multiple.write(writer);
+			writeBool(writer, this.multiple!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.maxBytes.write(writer);
+			writeInt(writer, this.maxBytes!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 5);
@@ -5050,19 +4499,19 @@ export class FileImportRequested implements Writeable, Readable, NagoEvent {
 
 	isZero(): boolean {
 		return (
-			this.iD.isZero() &&
-			this.scopeID.isZero() &&
-			this.multiple.isZero() &&
-			this.maxBytes.isZero() &&
+			this.iD === undefined &&
+			this.scopeID === undefined &&
+			this.multiple === undefined &&
+			this.maxBytes === undefined &&
 			this.allowedMimeTypes.isZero()
 		);
 	}
 
 	reset(): void {
-		this.iD.reset();
-		this.scopeID.reset();
-		this.multiple.reset();
-		this.maxBytes.reset();
+		this.iD = undefined;
+		this.scopeID = undefined;
+		this.multiple = undefined;
+		this.maxBytes = undefined;
 		this.allowedMimeTypes.reset();
 	}
 
@@ -5074,16 +4523,16 @@ export class FileImportRequested implements Writeable, Readable, NagoEvent {
 }
 
 export class KeyboardOptions implements Writeable, Readable {
-	public capitalization: Bool;
+	public capitalization?: Bool;
 
-	public autoCorrectEnabled: Bool;
+	public autoCorrectEnabled?: Bool;
 
-	public keyboardType: KeyboardType;
+	public keyboardType?: KeyboardType;
 
 	constructor(
-		capitalization: Bool = new Bool(),
-		autoCorrectEnabled: Bool = new Bool(),
-		keyboardType: KeyboardType = new KeyboardType()
+		capitalization: Bool | undefined = undefined,
+		autoCorrectEnabled: Bool | undefined = undefined,
+		keyboardType: KeyboardType | undefined = undefined
 	) {
 		this.capitalization = capitalization;
 		this.autoCorrectEnabled = autoCorrectEnabled;
@@ -5097,15 +4546,15 @@ export class KeyboardOptions implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.capitalization.read(reader);
+					this.capitalization = readBool(reader);
 					break;
 				}
 				case 2: {
-					this.autoCorrectEnabled.read(reader);
+					this.autoCorrectEnabled = readBool(reader);
 					break;
 				}
 				case 3: {
-					this.keyboardType.read(reader);
+					this.keyboardType = readInt(reader);
 					break;
 				}
 				default:
@@ -5117,34 +4566,38 @@ export class KeyboardOptions implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.capitalization.isZero(),
-			!this.autoCorrectEnabled.isZero(),
-			!this.keyboardType.isZero(),
+			this.capitalization !== undefined,
+			this.autoCorrectEnabled !== undefined,
+			this.keyboardType !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.capitalization.write(writer);
+			writeBool(writer, this.capitalization!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.autoCorrectEnabled.write(writer);
+			writeBool(writer, this.autoCorrectEnabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.keyboardType.write(writer);
+			writeInt(writer, this.keyboardType!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.capitalization.isZero() && this.autoCorrectEnabled.isZero() && this.keyboardType.isZero();
+		return (
+			this.capitalization === undefined &&
+			this.autoCorrectEnabled === undefined &&
+			this.keyboardType === undefined
+		);
 	}
 
 	reset(): void {
-		this.capitalization.reset();
-		this.autoCorrectEnabled.reset();
-		this.keyboardType.reset();
+		this.capitalization = undefined;
+		this.autoCorrectEnabled = undefined;
+		this.keyboardType = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5153,35 +4606,11 @@ export class KeyboardOptions implements Writeable, Readable {
 	}
 }
 
-export class KeyboardType implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 67);
-		return;
-	}
+export type KeyboardType = number;
+function writeTypeHeaderKeyboardType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 67);
+	return;
 }
-
 // companion enum containing all defined constants for KeyboardType
 export enum KeyboardTypeValues {
 	KeyboardDefault = 0,
@@ -5194,35 +4623,11 @@ export enum KeyboardTypeValues {
 	KeyboardURL = 7,
 }
 
-export class ModalType implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 68);
-		return;
-	}
+export type ModalType = number;
+function writeTypeHeaderModalType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 68);
+	return;
 }
-
 // companion enum containing all defined constants for ModalType
 export enum ModalTypeValues {
 	ModalTypeDialog = 0,
@@ -5236,26 +4641,26 @@ export class Modal implements Writeable, Readable, Component {
 	public content?: Component;
 
 	// OnDismissRequest is called, if the user wants to dismiss the dialog, e.g. by clicking outside or pressing escape. You can then decide to disable you dialog, or not.
-	public onDismissRequest: Ptr;
+	public onDismissRequest?: Ptr;
 
-	public modalType: ModalType;
+	public modalType?: ModalType;
 
-	public top: Length;
+	public top?: Length;
 
-	public left: Length;
+	public left?: Length;
 
-	public right: Length;
+	public right?: Length;
 
-	public bottom: Length;
+	public bottom?: Length;
 
 	constructor(
 		content: Component | undefined = undefined,
-		onDismissRequest: Ptr = new Ptr(),
-		modalType: ModalType = new ModalType(),
-		top: Length = new Length(),
-		left: Length = new Length(),
-		right: Length = new Length(),
-		bottom: Length = new Length()
+		onDismissRequest: Ptr | undefined = undefined,
+		modalType: ModalType | undefined = undefined,
+		top: Length | undefined = undefined,
+		left: Length | undefined = undefined,
+		right: Length | undefined = undefined,
+		bottom: Length | undefined = undefined
 	) {
 		this.content = content;
 		this.onDismissRequest = onDismissRequest;
@@ -5282,27 +4687,27 @@ export class Modal implements Writeable, Readable, Component {
 					break;
 				}
 				case 2: {
-					this.onDismissRequest.read(reader);
+					this.onDismissRequest = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.modalType.read(reader);
+					this.modalType = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.top.read(reader);
+					this.top = readString(reader);
 					break;
 				}
 				case 5: {
-					this.left.read(reader);
+					this.left = readString(reader);
 					break;
 				}
 				case 6: {
-					this.right.read(reader);
+					this.right = readString(reader);
 					break;
 				}
 				case 7: {
-					this.bottom.read(reader);
+					this.bottom = readString(reader);
 					break;
 				}
 				default:
@@ -5315,12 +4720,12 @@ export class Modal implements Writeable, Readable, Component {
 		const fields = [
 			false,
 			this.content !== undefined && !this.content.isZero(),
-			!this.onDismissRequest.isZero(),
-			!this.modalType.isZero(),
-			!this.top.isZero(),
-			!this.left.isZero(),
-			!this.right.isZero(),
-			!this.bottom.isZero(),
+			this.onDismissRequest !== undefined,
+			this.modalType !== undefined,
+			this.top !== undefined,
+			this.left !== undefined,
+			this.right !== undefined,
+			this.bottom !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5332,50 +4737,50 @@ export class Modal implements Writeable, Readable, Component {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.onDismissRequest.write(writer);
+			writeInt(writer, this.onDismissRequest!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.modalType.write(writer);
+			writeInt(writer, this.modalType!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.top.write(writer);
+			writeString(writer, this.top!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.left.write(writer);
+			writeString(writer, this.left!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.right.write(writer);
+			writeString(writer, this.right!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.bottom.write(writer);
+			writeString(writer, this.bottom!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.content === undefined || this.content.isZero()) &&
-			this.onDismissRequest.isZero() &&
-			this.modalType.isZero() &&
-			this.top.isZero() &&
-			this.left.isZero() &&
-			this.right.isZero() &&
-			this.bottom.isZero()
+			this.onDismissRequest === undefined &&
+			this.modalType === undefined &&
+			this.top === undefined &&
+			this.left === undefined &&
+			this.right === undefined &&
+			this.bottom === undefined
 		);
 	}
 
 	reset(): void {
 		this.content = undefined;
-		this.onDismissRequest.reset();
-		this.modalType.reset();
-		this.top.reset();
-		this.left.reset();
-		this.right.reset();
-		this.bottom.reset();
+		this.onDismissRequest = undefined;
+		this.modalType = undefined;
+		this.top = undefined;
+		this.left = undefined;
+		this.right = undefined;
+		this.bottom = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5388,9 +4793,9 @@ export class Modal implements Writeable, Readable, Component {
 // ThemeRequested is usually emitted by the backend, so that the frontend will switch (and remember) the required theme state.
 export class ThemeRequested implements Writeable, Readable, NagoEvent {
 	// Theme contains the name of the theme to apply. Usually light or dark, however we may want to provide more or go even arbitrary.
-	public theme: ThemeID;
+	public theme?: ThemeID;
 
-	constructor(theme: ThemeID = new ThemeID()) {
+	constructor(theme: ThemeID | undefined = undefined) {
 		this.theme = theme;
 	}
 
@@ -5401,7 +4806,7 @@ export class ThemeRequested implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.theme.read(reader);
+					this.theme = readString(reader);
 					break;
 				}
 				default:
@@ -5411,21 +4816,21 @@ export class ThemeRequested implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.theme.isZero()];
+		const fields = [false, this.theme !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.theme.write(writer);
+			writeString(writer, this.theme!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.theme.isZero();
+		return this.theme === undefined;
 	}
 
 	reset(): void {
-		this.theme.reset();
+		this.theme = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5439,11 +4844,11 @@ export class ThemeRequested implements Writeable, Readable, NagoEvent {
 // A frontend must put the new component to create by the factory on top of the current component within the scope.
 // The frontend is free keep multiple components alive at the same time, however it must ensure that the UX is sane.
 export class NavigationForwardToRequested implements Writeable, Readable, NagoEvent {
-	public rootView: RootViewID;
+	public rootView?: RootViewID;
 
 	public values: RootViewParameters;
 
-	constructor(rootView: RootViewID = new RootViewID(), values: RootViewParameters = new RootViewParameters()) {
+	constructor(rootView: RootViewID | undefined = undefined, values: RootViewParameters = new RootViewParameters()) {
 		this.rootView = rootView;
 		this.values = values;
 	}
@@ -5455,7 +4860,7 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rootView.read(reader);
+					this.rootView = readString(reader);
 					break;
 				}
 				case 2: {
@@ -5469,12 +4874,12 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rootView.isZero(), !this.values.isZero()];
+		const fields = [false, this.rootView !== undefined, !this.values.isZero()];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.rootView.write(writer);
+			writeString(writer, this.rootView!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
@@ -5483,11 +4888,11 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 	}
 
 	isZero(): boolean {
-		return this.rootView.isZero() && this.values.isZero();
+		return this.rootView === undefined && this.values.isZero();
 	}
 
 	reset(): void {
-		this.rootView.reset();
+		this.rootView = undefined;
 		this.values.reset();
 	}
 
@@ -5500,11 +4905,11 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 
 // NavigationResetRequested removes the entire history in the scope and pushes the target on top.
 export class NavigationResetRequested implements Writeable, Readable, NagoEvent {
-	public rootView: RootViewID;
+	public rootView?: RootViewID;
 
 	public values: RootViewParameters;
 
-	constructor(rootView: RootViewID = new RootViewID(), values: RootViewParameters = new RootViewParameters()) {
+	constructor(rootView: RootViewID | undefined = undefined, values: RootViewParameters = new RootViewParameters()) {
 		this.rootView = rootView;
 		this.values = values;
 	}
@@ -5516,7 +4921,7 @@ export class NavigationResetRequested implements Writeable, Readable, NagoEvent 
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rootView.read(reader);
+					this.rootView = readString(reader);
 					break;
 				}
 				case 2: {
@@ -5530,12 +4935,12 @@ export class NavigationResetRequested implements Writeable, Readable, NagoEvent 
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rootView.isZero(), !this.values.isZero()];
+		const fields = [false, this.rootView !== undefined, !this.values.isZero()];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.rootView.write(writer);
+			writeString(writer, this.rootView!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
@@ -5544,11 +4949,11 @@ export class NavigationResetRequested implements Writeable, Readable, NagoEvent 
 	}
 
 	isZero(): boolean {
-		return this.rootView.isZero() && this.values.isZero();
+		return this.rootView === undefined && this.values.isZero();
 	}
 
 	reset(): void {
-		this.rootView.reset();
+		this.rootView = undefined;
 		this.values.reset();
 	}
 
@@ -5601,49 +5006,17 @@ export class NavigationReloadRequested implements Writeable, Readable, NagoEvent
 }
 
 // ThemeID refers to a specific theme. E.g. dark or light
-export class ThemeID implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 75);
-		return;
-	}
+export type ThemeID = string;
+function writeTypeHeaderThemeID(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 75);
+	return;
 }
 
 // WindowTitle is an invisible component which teleports its Value into the current active window navigation title. The last evaluated title in the hierarchy wins.
 export class WindowTitle implements Writeable, Readable, Component {
-	public value: Str;
+	public value?: Str;
 
-	constructor(value: Str = new Str()) {
+	constructor(value: Str | undefined = undefined) {
 		this.value = value;
 	}
 
@@ -5654,7 +5027,7 @@ export class WindowTitle implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.value.read(reader);
+					this.value = readString(reader);
 					break;
 				}
 				default:
@@ -5664,21 +5037,21 @@ export class WindowTitle implements Writeable, Readable, Component {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.value.isZero()];
+		const fields = [false, this.value !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.value.write(writer);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.value.isZero();
+		return this.value === undefined;
 	}
 
 	reset(): void {
-		this.value.reset();
+		this.value = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5689,87 +5062,64 @@ export class WindowTitle implements Writeable, Readable, Component {
 }
 
 // Duration represents a duration in nanoseconds
-export class Duration implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 78);
-		return;
-	}
+export type Duration = number;
+function writeTypeHeaderDuration(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 78);
+	return;
 }
 
 export class PasswordField implements Writeable, Readable, Component {
-	public label: Str;
+	public label?: Str;
 
-	public supportingText: Str;
+	public supportingText?: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	public errorText: Str;
+	public errorText?: Str;
 
 	// Value contains the text, which shall be shown.
-	public value: Str;
+	public value?: Str;
 
 	public frame: Frame;
 
 	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
-	public style: TextFieldStyle;
+	public style?: TextFieldStyle;
 
 	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	public debounceTime: Duration;
+	public debounceTime?: Duration;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
-	public lines: Uint;
+	public lines?: Uint;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public disableAutocomplete: Bool;
+	public disableAutocomplete?: Bool;
 
 	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	public disableDebounce: Bool;
+	public disableDebounce?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	// If Revealed the password is shown
-	public revealed: Bool;
+	public revealed?: Bool;
 
 	constructor(
-		label: Str = new Str(),
-		supportingText: Str = new Str(),
-		errorText: Str = new Str(),
-		value: Str = new Str(),
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		value: Str | undefined = undefined,
 		frame: Frame = new Frame(),
-		inputValue: Ptr = new Ptr(),
-		style: TextFieldStyle = new TextFieldStyle(),
-		debounceTime: Duration = new Duration(),
-		lines: Uint = new Uint(),
-		disabled: Bool = new Bool(),
-		disableAutocomplete: Bool = new Bool(),
-		disableDebounce: Bool = new Bool(),
-		invisible: Bool = new Bool(),
-		revealed: Bool = new Bool()
+		inputValue: Ptr | undefined = undefined,
+		style: TextFieldStyle | undefined = undefined,
+		debounceTime: Duration | undefined = undefined,
+		lines: Uint | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		disableAutocomplete: Bool | undefined = undefined,
+		disableDebounce: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		revealed: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -5794,19 +5144,19 @@ export class PasswordField implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.label.read(reader);
+					this.label = readString(reader);
 					break;
 				}
 				case 2: {
-					this.supportingText.read(reader);
+					this.supportingText = readString(reader);
 					break;
 				}
 				case 3: {
-					this.errorText.read(reader);
+					this.errorText = readString(reader);
 					break;
 				}
 				case 4: {
-					this.value.read(reader);
+					this.value = readString(reader);
 					break;
 				}
 				case 5: {
@@ -5814,39 +5164,39 @@ export class PasswordField implements Writeable, Readable, Component {
 					break;
 				}
 				case 6: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 7: {
-					this.style.read(reader);
+					this.style = readInt(reader);
 					break;
 				}
 				case 8: {
-					this.debounceTime.read(reader);
+					this.debounceTime = readInt(reader);
 					break;
 				}
 				case 9: {
-					this.lines.read(reader);
+					this.lines = readInt(reader);
 					break;
 				}
 				case 10: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 11: {
-					this.disableAutocomplete.read(reader);
+					this.disableAutocomplete = readBool(reader);
 					break;
 				}
 				case 12: {
-					this.disableDebounce.read(reader);
+					this.disableDebounce = readBool(reader);
 					break;
 				}
 				case 13: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				case 14: {
-					this.revealed.read(reader);
+					this.revealed = readBool(reader);
 					break;
 				}
 				default:
@@ -5858,38 +5208,38 @@ export class PasswordField implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.label.isZero(),
-			!this.supportingText.isZero(),
-			!this.errorText.isZero(),
-			!this.value.isZero(),
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.value !== undefined,
 			!this.frame.isZero(),
-			!this.inputValue.isZero(),
-			!this.style.isZero(),
-			!this.debounceTime.isZero(),
-			!this.lines.isZero(),
-			!this.disabled.isZero(),
-			!this.disableAutocomplete.isZero(),
-			!this.disableDebounce.isZero(),
-			!this.invisible.isZero(),
-			!this.revealed.isZero(),
+			this.inputValue !== undefined,
+			this.style !== undefined,
+			this.debounceTime !== undefined,
+			this.lines !== undefined,
+			this.disabled !== undefined,
+			this.disableAutocomplete !== undefined,
+			this.disableDebounce !== undefined,
+			this.invisible !== undefined,
+			this.revealed !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.label.write(writer);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.supportingText.write(writer);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.errorText.write(writer);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.value.write(writer);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -5897,76 +5247,76 @@ export class PasswordField implements Writeable, Readable, Component {
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			this.style.write(writer);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			this.debounceTime.write(writer);
+			writeInt(writer, this.debounceTime!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
-			this.lines.write(writer);
+			writeInt(writer, this.lines!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 11);
-			this.disableAutocomplete.write(writer);
+			writeBool(writer, this.disableAutocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 12);
-			this.disableDebounce.write(writer);
+			writeBool(writer, this.disableDebounce!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 14);
-			this.revealed.write(writer);
+			writeBool(writer, this.revealed!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.label.isZero() &&
-			this.supportingText.isZero() &&
-			this.errorText.isZero() &&
-			this.value.isZero() &&
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.value === undefined &&
 			this.frame.isZero() &&
-			this.inputValue.isZero() &&
-			this.style.isZero() &&
-			this.debounceTime.isZero() &&
-			this.lines.isZero() &&
-			this.disabled.isZero() &&
-			this.disableAutocomplete.isZero() &&
-			this.disableDebounce.isZero() &&
-			this.invisible.isZero() &&
-			this.revealed.isZero()
+			this.inputValue === undefined &&
+			this.style === undefined &&
+			this.debounceTime === undefined &&
+			this.lines === undefined &&
+			this.disabled === undefined &&
+			this.disableAutocomplete === undefined &&
+			this.disableDebounce === undefined &&
+			this.invisible === undefined &&
+			this.revealed === undefined
 		);
 	}
 
 	reset(): void {
-		this.label.reset();
-		this.supportingText.reset();
-		this.errorText.reset();
-		this.value.reset();
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.value = undefined;
 		this.frame.reset();
-		this.inputValue.reset();
-		this.style.reset();
-		this.debounceTime.reset();
-		this.lines.reset();
-		this.disabled.reset();
-		this.disableAutocomplete.reset();
-		this.disableDebounce.reset();
-		this.invisible.reset();
-		this.revealed.reset();
+		this.inputValue = undefined;
+		this.style = undefined;
+		this.debounceTime = undefined;
+		this.lines = undefined;
+		this.disabled = undefined;
+		this.disableAutocomplete = undefined;
+		this.disableDebounce = undefined;
+		this.invisible = undefined;
+		this.revealed = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5976,35 +5326,11 @@ export class PasswordField implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-export class TextFieldStyle implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 80);
-		return;
-	}
+export type TextFieldStyle = number;
+function writeTypeHeaderTextFieldStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 80);
+	return;
 }
-
 // companion enum containing all defined constants for TextFieldStyle
 export enum TextFieldStyleValues {
 	// TextFieldOutlined is fine for smaller forms and helps to identify where to put text in the form.
@@ -6039,20 +5365,20 @@ export class Ping implements Writeable, Readable, NagoEvent {
 // Radiobutton represents a user interface element which spans a visible area to click or tap from the user. Usually a radiobutton belongs to a group, where only a single element can be picked. Thus, it is quite similar to a Spinner/Select/Combobox.
 export class Radiobutton implements Writeable, Readable, Component {
 	// InputValue is where updated value of the checked states are written.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
 	// Value is the initial checked value.
-	public value: Bool;
+	public value?: Bool;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
-		inputValue: Ptr = new Ptr(),
-		value: Bool = new Bool(),
-		disabled: Bool = new Bool(),
-		invisible: Bool = new Bool()
+		inputValue: Ptr | undefined = undefined,
+		value: Bool | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -6067,19 +5393,19 @@ export class Radiobutton implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.value.read(reader);
+					this.value = readBool(reader);
 					break;
 				}
 				case 3: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 4: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -6091,40 +5417,45 @@ export class Radiobutton implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.inputValue.isZero(),
-			!this.value.isZero(),
-			!this.disabled.isZero(),
-			!this.invisible.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.disabled !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.value.write(writer);
+			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.inputValue.isZero() && this.value.isZero() && this.disabled.isZero() && this.invisible.isZero();
+		return (
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			this.disabled === undefined &&
+			this.invisible === undefined
+		);
 	}
 
 	reset(): void {
-		this.inputValue.reset();
-		this.value.reset();
-		this.disabled.reset();
-		this.invisible.reset();
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.disabled = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6134,35 +5465,11 @@ export class Radiobutton implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-export class ScaffoldAlignment implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 83);
-		return;
-	}
+export type ScaffoldAlignment = number;
+function writeTypeHeaderScaffoldAlignment(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 83);
+	return;
 }
-
 // companion enum containing all defined constants for ScaffoldAlignment
 export enum ScaffoldAlignmentValues {
 	ScaffoldAlignmentTop = 0,
@@ -6187,8 +5494,11 @@ export class ScaffoldMenuEntries implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -6198,7 +5508,7 @@ export class ScaffoldMenuEntries implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as ScaffoldMenuEntry); // Cast and add to the array
+			values.push(obj as any as ScaffoldMenuEntry); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -6216,13 +5526,13 @@ export class Scaffold implements Writeable, Readable, Component {
 
 	public menu: ScaffoldMenuEntries;
 
-	public alignment: ScaffoldAlignment;
+	public alignment?: ScaffoldAlignment;
 
 	constructor(
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
 		menu: ScaffoldMenuEntries = new ScaffoldMenuEntries(),
-		alignment: ScaffoldAlignment = new ScaffoldAlignment()
+		alignment: ScaffoldAlignment | undefined = undefined
 	) {
 		this.body = body;
 		this.logo = logo;
@@ -6259,7 +5569,7 @@ export class Scaffold implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				default:
@@ -6274,7 +5584,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.body !== undefined && !this.body.isZero(),
 			this.logo !== undefined && !this.logo.isZero(),
 			!this.menu.isZero(),
-			!this.alignment.isZero(),
+			this.alignment !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6296,7 +5606,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -6305,7 +5615,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			(this.body === undefined || this.body.isZero()) &&
 			(this.logo === undefined || this.logo.isZero()) &&
 			this.menu.isZero() &&
-			this.alignment.isZero()
+			this.alignment === undefined
 		);
 	}
 
@@ -6313,7 +5623,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.body = undefined;
 		this.logo = undefined;
 		this.menu.reset();
-		this.alignment.reset();
+		this.alignment = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6328,27 +5638,27 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 
 	public iconActive?: Component;
 
-	public title: Str;
+	public title?: Str;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public rootView: RootViewID;
+	public rootView?: RootViewID;
 
 	public menu: ScaffoldMenuEntries;
 
-	public badge: Str;
+	public badge?: Str;
 
-	public expanded: Bool;
+	public expanded?: Bool;
 
 	constructor(
 		icon: Component | undefined = undefined,
 		iconActive: Component | undefined = undefined,
-		title: Str = new Str(),
-		action: Ptr = new Ptr(),
-		rootView: RootViewID = new RootViewID(),
+		title: Str | undefined = undefined,
+		action: Ptr | undefined = undefined,
+		rootView: RootViewID | undefined = undefined,
 		menu: ScaffoldMenuEntries = new ScaffoldMenuEntries(),
-		badge: Str = new Str(),
-		expanded: Bool = new Bool()
+		badge: Str | undefined = undefined,
+		expanded: Bool | undefined = undefined
 	) {
 		this.icon = icon;
 		this.iconActive = iconActive;
@@ -6385,15 +5695,15 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 					break;
 				}
 				case 3: {
-					this.title.read(reader);
+					this.title = readString(reader);
 					break;
 				}
 				case 4: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.rootView.read(reader);
+					this.rootView = readString(reader);
 					break;
 				}
 				case 6: {
@@ -6401,11 +5711,11 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 					break;
 				}
 				case 7: {
-					this.badge.read(reader);
+					this.badge = readString(reader);
 					break;
 				}
 				case 8: {
-					this.expanded.read(reader);
+					this.expanded = readBool(reader);
 					break;
 				}
 				default:
@@ -6419,12 +5729,12 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			false,
 			this.icon !== undefined && !this.icon.isZero(),
 			this.iconActive !== undefined && !this.iconActive.isZero(),
-			!this.title.isZero(),
-			!this.action.isZero(),
-			!this.rootView.isZero(),
+			this.title !== undefined,
+			this.action !== undefined,
+			this.rootView !== undefined,
 			!this.menu.isZero(),
-			!this.badge.isZero(),
-			!this.expanded.isZero(),
+			this.badge !== undefined,
+			this.expanded !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6442,15 +5752,15 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.title.write(writer);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.rootView.write(writer);
+			writeString(writer, this.rootView!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 6);
@@ -6458,11 +5768,11 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.badge.write(writer);
+			writeString(writer, this.badge!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			this.expanded.write(writer);
+			writeBool(writer, this.expanded!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -6470,24 +5780,24 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		return (
 			(this.icon === undefined || this.icon.isZero()) &&
 			(this.iconActive === undefined || this.iconActive.isZero()) &&
-			this.title.isZero() &&
-			this.action.isZero() &&
-			this.rootView.isZero() &&
+			this.title === undefined &&
+			this.action === undefined &&
+			this.rootView === undefined &&
 			this.menu.isZero() &&
-			this.badge.isZero() &&
-			this.expanded.isZero()
+			this.badge === undefined &&
+			this.expanded === undefined
 		);
 	}
 
 	reset(): void {
 		this.icon = undefined;
 		this.iconActive = undefined;
-		this.title.reset();
-		this.action.reset();
-		this.rootView.reset();
+		this.title = undefined;
+		this.action = undefined;
+		this.rootView = undefined;
 		this.menu.reset();
-		this.badge.reset();
-		this.expanded.reset();
+		this.badge = undefined;
+		this.expanded = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6496,49 +5806,17 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 	}
 }
 
-export class ScopeID implements Writeable, Readable {
-	public value: string;
-
-	constructor(value: string = '') {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = '';
-	}
-
-	// Get the string representation of the Color
-	toString(): string {
-		return this.value;
-	}
-
-	write(writer: BinaryWriter): void {
-		const data = new TextEncoder().encode(this.value); // Convert string to Uint8Array
-		writer.writeUvarint(data.length); // Write the length of the string
-		writer.write(data); // Write the string data
-	}
-
-	read(reader: BinaryReader): void {
-		const strLen = reader.readUvarint(); // Read the length of the string
-		const buf = reader.readBytes(strLen); // Read the string data
-		this.value = new TextDecoder().decode(buf); // Convert Uint8Array to string
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.BYTESLICE, 87);
-		return;
-	}
+export type ScopeID = string;
+function writeTypeHeaderScopeID(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 87);
+	return;
 }
 
 // ScopeDestructionRequested can be emitted by a frontend to deallocate a scope, its states and root view at the backend side. This is usually only possible, if you have a kind of destruction event in the frontend.
 export class ScopeDestructionRequested implements Writeable, Readable, NagoEvent {
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(rID: RID = new RID()) {
+	constructor(rID: RID | undefined = undefined) {
 		this.rID = rID;
 	}
 
@@ -6549,7 +5827,7 @@ export class ScopeDestructionRequested implements Writeable, Readable, NagoEvent
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -6559,21 +5837,21 @@ export class ScopeDestructionRequested implements Writeable, Readable, NagoEvent
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.rID.isZero()];
+		const fields = [false, this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.rID.isZero();
+		return this.rID === undefined;
 	}
 
 	reset(): void {
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6583,35 +5861,11 @@ export class ScopeDestructionRequested implements Writeable, Readable, NagoEvent
 	isNagoEvent(): void {}
 }
 
-export class ScrollViewAxis implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 89);
-		return;
-	}
+export type ScrollViewAxis = number;
+function writeTypeHeaderScrollViewAxis(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 89);
+	return;
 }
-
 // companion enum containing all defined constants for ScrollViewAxis
 export enum ScrollViewAxisValues {
 	ScrollViewAxisVertical = 0,
@@ -6628,20 +5882,20 @@ export class ScrollView implements Writeable, Readable, Component {
 
 	public padding: Padding;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
-	public axis: ScrollViewAxis;
+	public axis?: ScrollViewAxis;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
 		content: Component | undefined = undefined,
 		border: Border = new Border(),
 		frame: Frame = new Frame(),
 		padding: Padding = new Padding(),
-		backgroundColor: Color = new Color(),
-		axis: ScrollViewAxis = new ScrollViewAxis(),
-		invisible: Bool = new Bool()
+		backgroundColor: Color | undefined = undefined,
+		axis: ScrollViewAxis | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.content = content;
 		this.border = border;
@@ -6680,15 +5934,15 @@ export class ScrollView implements Writeable, Readable, Component {
 					break;
 				}
 				case 5: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 6: {
-					this.axis.read(reader);
+					this.axis = readInt(reader);
 					break;
 				}
 				case 7: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -6704,9 +5958,9 @@ export class ScrollView implements Writeable, Readable, Component {
 			!this.border.isZero(),
 			!this.frame.isZero(),
 			!this.padding.isZero(),
-			!this.backgroundColor.isZero(),
-			!this.axis.isZero(),
-			!this.invisible.isZero(),
+			this.backgroundColor !== undefined,
+			this.axis !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6730,15 +5984,15 @@ export class ScrollView implements Writeable, Readable, Component {
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.axis.write(writer);
+			writeInt(writer, this.axis!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -6748,9 +6002,9 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.border.isZero() &&
 			this.frame.isZero() &&
 			this.padding.isZero() &&
-			this.backgroundColor.isZero() &&
-			this.axis.isZero() &&
-			this.invisible.isZero()
+			this.backgroundColor === undefined &&
+			this.axis === undefined &&
+			this.invisible === undefined
 		);
 	}
 
@@ -6759,9 +6013,9 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.border.reset();
 		this.frame.reset();
 		this.padding.reset();
-		this.backgroundColor.reset();
-		this.axis.reset();
-		this.invisible.reset();
+		this.backgroundColor = undefined;
+		this.axis = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6774,15 +6028,19 @@ export class ScrollView implements Writeable, Readable, Component {
 // A Resource represents a blob with a name and a resource accessor URI.
 export class Resource implements Writeable, Readable {
 	// Name must not be a path, just the human readable (and not unique) file name.
-	public name: Str;
+	public name?: Str;
 
 	// URI is likely an unreadable link to resolve the actual data. It may incorporate additional security tokens and may have a limited lifetime and its scheme is undefined.
-	public uRI: URI;
+	public uRI?: URI;
 
 	// MimeType is optional and is a hint about the anticipated content.
-	public mimeType: Str;
+	public mimeType?: Str;
 
-	constructor(name: Str = new Str(), uRI: URI = new URI(), mimeType: Str = new Str()) {
+	constructor(
+		name: Str | undefined = undefined,
+		uRI: URI | undefined = undefined,
+		mimeType: Str | undefined = undefined
+	) {
 		this.name = name;
 		this.uRI = uRI;
 		this.mimeType = mimeType;
@@ -6795,15 +6053,15 @@ export class Resource implements Writeable, Readable {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.name.read(reader);
+					this.name = readString(reader);
 					break;
 				}
 				case 2: {
-					this.uRI.read(reader);
+					this.uRI = readString(reader);
 					break;
 				}
 				case 3: {
-					this.mimeType.read(reader);
+					this.mimeType = readString(reader);
 					break;
 				}
 				default:
@@ -6813,31 +6071,31 @@ export class Resource implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.name.isZero(), !this.uRI.isZero(), !this.mimeType.isZero()];
+		const fields = [false, this.name !== undefined, this.uRI !== undefined, this.mimeType !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.name.write(writer);
+			writeString(writer, this.name!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.uRI.write(writer);
+			writeString(writer, this.uRI!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.mimeType.write(writer);
+			writeString(writer, this.mimeType!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.name.isZero() && this.uRI.isZero() && this.mimeType.isZero();
+		return this.name === undefined && this.uRI === undefined && this.mimeType === undefined;
 	}
 
 	reset(): void {
-		this.name.reset();
-		this.uRI.reset();
-		this.mimeType.reset();
+		this.name = undefined;
+		this.uRI = undefined;
+		this.mimeType = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6864,8 +6122,11 @@ export class Resources implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -6875,7 +6136,7 @@ export class Resources implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as Resource); // Cast and add to the array
+			values.push(obj as any as Resource); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -6942,9 +6203,9 @@ export class SendMultipleRequested implements Writeable, Readable, NagoEvent {
 
 // SessionAssigned must not be used by browser clients directly. A http channel implementation must issue this by itself due to security concerns like http-only cookies. Native client (mobile or desktop) should use this event instead.
 export class SessionAssigned implements Writeable, Readable, NagoEvent {
-	public sessionID: Str;
+	public sessionID?: Str;
 
-	constructor(sessionID: Str = new Str()) {
+	constructor(sessionID: Str | undefined = undefined) {
 		this.sessionID = sessionID;
 	}
 
@@ -6955,7 +6216,7 @@ export class SessionAssigned implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.sessionID.read(reader);
+					this.sessionID = readString(reader);
 					break;
 				}
 				default:
@@ -6965,21 +6226,21 @@ export class SessionAssigned implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.sessionID.isZero()];
+		const fields = [false, this.sessionID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.sessionID.write(writer);
+			writeString(writer, this.sessionID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.sessionID.isZero();
+		return this.sessionID === undefined;
 	}
 
 	reset(): void {
-		this.sessionID.reset();
+		this.sessionID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -6995,9 +6256,13 @@ export class Spacer implements Writeable, Readable, Component {
 
 	public border: Border;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
-	constructor(frame: Frame = new Frame(), border: Border = new Border(), backgroundColor: Color = new Color()) {
+	constructor(
+		frame: Frame = new Frame(),
+		border: Border = new Border(),
+		backgroundColor: Color | undefined = undefined
+	) {
 		this.frame = frame;
 		this.border = border;
 		this.backgroundColor = backgroundColor;
@@ -7018,7 +6283,7 @@ export class Spacer implements Writeable, Readable, Component {
 					break;
 				}
 				case 3: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				default:
@@ -7028,7 +6293,7 @@ export class Spacer implements Writeable, Readable, Component {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.frame.isZero(), !this.border.isZero(), !this.backgroundColor.isZero()];
+		const fields = [false, !this.frame.isZero(), !this.border.isZero(), this.backgroundColor !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -7041,18 +6306,18 @@ export class Spacer implements Writeable, Readable, Component {
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.frame.isZero() && this.border.isZero() && this.backgroundColor.isZero();
+		return this.frame.isZero() && this.border.isZero() && this.backgroundColor === undefined;
 	}
 
 	reset(): void {
 		this.frame.reset();
 		this.border.reset();
-		this.backgroundColor.reset();
+		this.backgroundColor = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7070,25 +6335,25 @@ export class Table implements Writeable, Readable, Component {
 
 	public frame: Frame;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public border: Border;
 
 	public defaultCellPadding: Padding;
 
-	public rowDividerColor: Color;
+	public rowDividerColor?: Color;
 
-	public headerDividerColor: Color;
+	public headerDividerColor?: Color;
 
 	constructor(
 		header: TableHeader = new TableHeader(),
 		rows: TableRows = new TableRows(),
 		frame: Frame = new Frame(),
-		backgroundColor: Color = new Color(),
+		backgroundColor: Color | undefined = undefined,
 		border: Border = new Border(),
 		defaultCellPadding: Padding = new Padding(),
-		rowDividerColor: Color = new Color(),
-		headerDividerColor: Color = new Color()
+		rowDividerColor: Color | undefined = undefined,
+		headerDividerColor: Color | undefined = undefined
 	) {
 		this.header = header;
 		this.rows = rows;
@@ -7119,7 +6384,7 @@ export class Table implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 5: {
@@ -7131,11 +6396,11 @@ export class Table implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.rowDividerColor.read(reader);
+					this.rowDividerColor = readString(reader);
 					break;
 				}
 				case 8: {
-					this.headerDividerColor.read(reader);
+					this.headerDividerColor = readString(reader);
 					break;
 				}
 				default:
@@ -7150,11 +6415,11 @@ export class Table implements Writeable, Readable, Component {
 			!this.header.isZero(),
 			!this.rows.isZero(),
 			!this.frame.isZero(),
-			!this.backgroundColor.isZero(),
+			this.backgroundColor !== undefined,
 			!this.border.isZero(),
 			!this.defaultCellPadding.isZero(),
-			!this.rowDividerColor.isZero(),
-			!this.headerDividerColor.isZero(),
+			this.rowDividerColor !== undefined,
+			this.headerDividerColor !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7172,7 +6437,7 @@ export class Table implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -7184,11 +6449,11 @@ export class Table implements Writeable, Readable, Component {
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.rowDividerColor.write(writer);
+			writeString(writer, this.rowDividerColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
-			this.headerDividerColor.write(writer);
+			writeString(writer, this.headerDividerColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -7197,11 +6462,11 @@ export class Table implements Writeable, Readable, Component {
 			this.header.isZero() &&
 			this.rows.isZero() &&
 			this.frame.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.backgroundColor === undefined &&
 			this.border.isZero() &&
 			this.defaultCellPadding.isZero() &&
-			this.rowDividerColor.isZero() &&
-			this.headerDividerColor.isZero()
+			this.rowDividerColor === undefined &&
+			this.headerDividerColor === undefined
 		);
 	}
 
@@ -7209,11 +6474,11 @@ export class Table implements Writeable, Readable, Component {
 		this.header.reset();
 		this.rows.reset();
 		this.frame.reset();
-		this.backgroundColor.reset();
+		this.backgroundColor = undefined;
 		this.border.reset();
 		this.defaultCellPadding.reset();
-		this.rowDividerColor.reset();
-		this.headerDividerColor.reset();
+		this.rowDividerColor = undefined;
+		this.headerDividerColor = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7227,36 +6492,36 @@ export class TableCell implements Writeable, Readable {
 	public content?: Component;
 
 	// Values higher than 65534 are clipped.
-	public rowSpan: Uint;
+	public rowSpan?: Uint;
 
 	// Values higher than 1000 are clipped.
-	public colSpan: Uint;
+	public colSpan?: Uint;
 
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
-	public hoveredBackgroundColor: Color;
+	public hoveredBackgroundColor?: Color;
 
 	public padding: Padding;
 
 	public border: Border;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public hovered: Bool;
+	public hovered?: Bool;
 
 	constructor(
 		content: Component | undefined = undefined,
-		rowSpan: Uint = new Uint(),
-		colSpan: Uint = new Uint(),
-		alignment: Alignment = new Alignment(),
-		backgroundColor: Color = new Color(),
-		hoveredBackgroundColor: Color = new Color(),
+		rowSpan: Uint | undefined = undefined,
+		colSpan: Uint | undefined = undefined,
+		alignment: Alignment | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		hoveredBackgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
 		border: Border = new Border(),
-		action: Ptr = new Ptr(),
-		hovered: Bool = new Bool()
+		action: Ptr | undefined = undefined,
+		hovered: Bool | undefined = undefined
 	) {
 		this.content = content;
 		this.rowSpan = rowSpan;
@@ -7286,23 +6551,23 @@ export class TableCell implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.rowSpan.read(reader);
+					this.rowSpan = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.colSpan.read(reader);
+					this.colSpan = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 6: {
-					this.hoveredBackgroundColor.read(reader);
+					this.hoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 7: {
@@ -7314,11 +6579,11 @@ export class TableCell implements Writeable, Readable {
 					break;
 				}
 				case 9: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 10: {
-					this.hovered.read(reader);
+					this.hovered = readBool(reader);
 					break;
 				}
 				default:
@@ -7331,15 +6596,15 @@ export class TableCell implements Writeable, Readable {
 		const fields = [
 			false,
 			this.content !== undefined && !this.content.isZero(),
-			!this.rowSpan.isZero(),
-			!this.colSpan.isZero(),
-			!this.alignment.isZero(),
-			!this.backgroundColor.isZero(),
-			!this.hoveredBackgroundColor.isZero(),
+			this.rowSpan !== undefined,
+			this.colSpan !== undefined,
+			this.alignment !== undefined,
+			this.backgroundColor !== undefined,
+			this.hoveredBackgroundColor !== undefined,
 			!this.padding.isZero(),
 			!this.border.isZero(),
-			!this.action.isZero(),
-			!this.hovered.isZero(),
+			this.action !== undefined,
+			this.hovered !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7351,23 +6616,23 @@ export class TableCell implements Writeable, Readable {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.rowSpan.write(writer);
+			writeInt(writer, this.rowSpan!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.colSpan.write(writer);
+			writeInt(writer, this.colSpan!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.hoveredBackgroundColor.write(writer);
+			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -7379,40 +6644,40 @@ export class TableCell implements Writeable, Readable {
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.hovered.write(writer);
+			writeBool(writer, this.hovered!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.content === undefined || this.content.isZero()) &&
-			this.rowSpan.isZero() &&
-			this.colSpan.isZero() &&
-			this.alignment.isZero() &&
-			this.backgroundColor.isZero() &&
-			this.hoveredBackgroundColor.isZero() &&
+			this.rowSpan === undefined &&
+			this.colSpan === undefined &&
+			this.alignment === undefined &&
+			this.backgroundColor === undefined &&
+			this.hoveredBackgroundColor === undefined &&
 			this.padding.isZero() &&
 			this.border.isZero() &&
-			this.action.isZero() &&
-			this.hovered.isZero()
+			this.action === undefined &&
+			this.hovered === undefined
 		);
 	}
 
 	reset(): void {
 		this.content = undefined;
-		this.rowSpan.reset();
-		this.colSpan.reset();
-		this.alignment.reset();
-		this.backgroundColor.reset();
-		this.hoveredBackgroundColor.reset();
+		this.rowSpan = undefined;
+		this.colSpan = undefined;
+		this.alignment = undefined;
+		this.backgroundColor = undefined;
+		this.hoveredBackgroundColor = undefined;
 		this.padding.reset();
 		this.border.reset();
-		this.action.reset();
-		this.hovered.reset();
+		this.action = undefined;
+		this.hovered = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7425,35 +6690,35 @@ export class TableColumn implements Writeable, Readable {
 	public content?: Component;
 
 	// Values higher than 1000 are clipped.
-	public colSpan: Uint;
+	public colSpan?: Uint;
 
-	public width: Length;
+	public width?: Length;
 
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
-	public cellBackgroundColor: Color;
+	public cellBackgroundColor?: Color;
 
-	public cellAction: Ptr;
+	public cellAction?: Ptr;
 
 	public cellPadding: Padding;
 
 	public cellBorder: Border;
 
-	public cellHoveredBackgroundColor: Color;
+	public cellHoveredBackgroundColor?: Color;
 
-	public cellHovered: Bool;
+	public cellHovered?: Bool;
 
 	constructor(
 		content: Component | undefined = undefined,
-		colSpan: Uint = new Uint(),
-		width: Length = new Length(),
-		alignment: Alignment = new Alignment(),
-		cellBackgroundColor: Color = new Color(),
-		cellAction: Ptr = new Ptr(),
+		colSpan: Uint | undefined = undefined,
+		width: Length | undefined = undefined,
+		alignment: Alignment | undefined = undefined,
+		cellBackgroundColor: Color | undefined = undefined,
+		cellAction: Ptr | undefined = undefined,
 		cellPadding: Padding = new Padding(),
 		cellBorder: Border = new Border(),
-		cellHoveredBackgroundColor: Color = new Color(),
-		cellHovered: Bool = new Bool()
+		cellHoveredBackgroundColor: Color | undefined = undefined,
+		cellHovered: Bool | undefined = undefined
 	) {
 		this.content = content;
 		this.colSpan = colSpan;
@@ -7483,23 +6748,23 @@ export class TableColumn implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.colSpan.read(reader);
+					this.colSpan = readInt(reader);
 					break;
 				}
 				case 3: {
-					this.width.read(reader);
+					this.width = readString(reader);
 					break;
 				}
 				case 4: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.cellBackgroundColor.read(reader);
+					this.cellBackgroundColor = readString(reader);
 					break;
 				}
 				case 6: {
-					this.cellAction.read(reader);
+					this.cellAction = readInt(reader);
 					break;
 				}
 				case 7: {
@@ -7511,11 +6776,11 @@ export class TableColumn implements Writeable, Readable {
 					break;
 				}
 				case 9: {
-					this.cellHoveredBackgroundColor.read(reader);
+					this.cellHoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 10: {
-					this.cellHovered.read(reader);
+					this.cellHovered = readBool(reader);
 					break;
 				}
 				default:
@@ -7528,15 +6793,15 @@ export class TableColumn implements Writeable, Readable {
 		const fields = [
 			false,
 			this.content !== undefined && !this.content.isZero(),
-			!this.colSpan.isZero(),
-			!this.width.isZero(),
-			!this.alignment.isZero(),
-			!this.cellBackgroundColor.isZero(),
-			!this.cellAction.isZero(),
+			this.colSpan !== undefined,
+			this.width !== undefined,
+			this.alignment !== undefined,
+			this.cellBackgroundColor !== undefined,
+			this.cellAction !== undefined,
 			!this.cellPadding.isZero(),
 			!this.cellBorder.isZero(),
-			!this.cellHoveredBackgroundColor.isZero(),
-			!this.cellHovered.isZero(),
+			this.cellHoveredBackgroundColor !== undefined,
+			this.cellHovered !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7548,23 +6813,23 @@ export class TableColumn implements Writeable, Readable {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.colSpan.write(writer);
+			writeInt(writer, this.colSpan!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.width.write(writer);
+			writeString(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.cellBackgroundColor.write(writer);
+			writeString(writer, this.cellBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.cellAction.write(writer);
+			writeInt(writer, this.cellAction!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -7576,40 +6841,40 @@ export class TableColumn implements Writeable, Readable {
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
-			this.cellHoveredBackgroundColor.write(writer);
+			writeString(writer, this.cellHoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.cellHovered.write(writer);
+			writeBool(writer, this.cellHovered!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.content === undefined || this.content.isZero()) &&
-			this.colSpan.isZero() &&
-			this.width.isZero() &&
-			this.alignment.isZero() &&
-			this.cellBackgroundColor.isZero() &&
-			this.cellAction.isZero() &&
+			this.colSpan === undefined &&
+			this.width === undefined &&
+			this.alignment === undefined &&
+			this.cellBackgroundColor === undefined &&
+			this.cellAction === undefined &&
 			this.cellPadding.isZero() &&
 			this.cellBorder.isZero() &&
-			this.cellHoveredBackgroundColor.isZero() &&
-			this.cellHovered.isZero()
+			this.cellHoveredBackgroundColor === undefined &&
+			this.cellHovered === undefined
 		);
 	}
 
 	reset(): void {
 		this.content = undefined;
-		this.colSpan.reset();
-		this.width.reset();
-		this.alignment.reset();
-		this.cellBackgroundColor.reset();
-		this.cellAction.reset();
+		this.colSpan = undefined;
+		this.width = undefined;
+		this.alignment = undefined;
+		this.cellBackgroundColor = undefined;
+		this.cellAction = undefined;
 		this.cellPadding.reset();
 		this.cellBorder.reset();
-		this.cellHoveredBackgroundColor.reset();
-		this.cellHovered.reset();
+		this.cellHoveredBackgroundColor = undefined;
+		this.cellHovered = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7621,23 +6886,23 @@ export class TableColumn implements Writeable, Readable {
 export class TableRow implements Writeable, Readable {
 	public cells: TableCells;
 
-	public height: Length;
+	public height?: Length;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
-	public hoveredBackgroundColor: Color;
+	public hoveredBackgroundColor?: Color;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public hovered: Bool;
+	public hovered?: Bool;
 
 	constructor(
 		cells: TableCells = new TableCells(),
-		height: Length = new Length(),
-		backgroundColor: Color = new Color(),
-		hoveredBackgroundColor: Color = new Color(),
-		action: Ptr = new Ptr(),
-		hovered: Bool = new Bool()
+		height: Length | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		hoveredBackgroundColor: Color | undefined = undefined,
+		action: Ptr | undefined = undefined,
+		hovered: Bool | undefined = undefined
 	) {
 		this.cells = cells;
 		this.height = height;
@@ -7658,23 +6923,23 @@ export class TableRow implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.height.read(reader);
+					this.height = readString(reader);
 					break;
 				}
 				case 3: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 4: {
-					this.hoveredBackgroundColor.read(reader);
+					this.hoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 5: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 6: {
-					this.hovered.read(reader);
+					this.hovered = readBool(reader);
 					break;
 				}
 				default:
@@ -7687,11 +6952,11 @@ export class TableRow implements Writeable, Readable {
 		const fields = [
 			false,
 			!this.cells.isZero(),
-			!this.height.isZero(),
-			!this.backgroundColor.isZero(),
-			!this.hoveredBackgroundColor.isZero(),
-			!this.action.isZero(),
-			!this.hovered.isZero(),
+			this.height !== undefined,
+			this.backgroundColor !== undefined,
+			this.hoveredBackgroundColor !== undefined,
+			this.action !== undefined,
+			this.hovered !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7701,44 +6966,44 @@ export class TableRow implements Writeable, Readable {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.height.write(writer);
+			writeString(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.hoveredBackgroundColor.write(writer);
+			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.hovered.write(writer);
+			writeBool(writer, this.hovered!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			this.cells.isZero() &&
-			this.height.isZero() &&
-			this.backgroundColor.isZero() &&
-			this.hoveredBackgroundColor.isZero() &&
-			this.action.isZero() &&
-			this.hovered.isZero()
+			this.height === undefined &&
+			this.backgroundColor === undefined &&
+			this.hoveredBackgroundColor === undefined &&
+			this.action === undefined &&
+			this.hovered === undefined
 		);
 	}
 
 	reset(): void {
 		this.cells.reset();
-		this.height.reset();
-		this.backgroundColor.reset();
-		this.hoveredBackgroundColor.reset();
-		this.action.reset();
-		this.hovered.reset();
+		this.height = undefined;
+		this.backgroundColor = undefined;
+		this.hoveredBackgroundColor = undefined;
+		this.action = undefined;
+		this.hovered = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7813,8 +7078,11 @@ export class TableRows implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -7824,7 +7092,7 @@ export class TableRows implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as TableRow); // Cast and add to the array
+			values.push(obj as any as TableRow); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -7853,8 +7121,11 @@ export class TableCells implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -7864,7 +7135,7 @@ export class TableCells implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as TableCell); // Cast and add to the array
+			values.push(obj as any as TableCell); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -7893,8 +7164,11 @@ export class TableColumns implements Writeable, Readable {
 	write(writer: BinaryWriter): void {
 		writer.writeUvarint(this.value.length); // Write the length of the array
 		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component
+			c.writeTypeHeader(writer); // Write the type header for each component)
 			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
 		}
 	}
 
@@ -7904,7 +7178,7 @@ export class TableColumns implements Writeable, Readable {
 
 		for (let i = 0; i < count; i++) {
 			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as TableColumn); // Cast and add to the array
+			values.push(obj as any as TableColumn); // Cast and add to the array
 		}
 
 		this.value = values;
@@ -7916,19 +7190,19 @@ export class TableColumns implements Writeable, Readable {
 }
 
 export class TextView implements Writeable, Readable, Component {
-	public value: Str;
+	public value?: Str;
 
 	// Color denotes the text color. Leave empty, for the context sensitiv default theme color.
-	public color: Color;
+	public color?: Color;
 
 	// BackgroundColor denotes the color of the text background. Leave empty, for the context sensitiv default theme color.
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
-	public onClick: Ptr;
+	public onClick?: Ptr;
 
-	public onHoverStart: Ptr;
+	public onHoverStart?: Ptr;
 
-	public onHoverEnd: Ptr;
+	public onHoverEnd?: Ptr;
 
 	public border: Border;
 
@@ -7936,19 +7210,19 @@ export class TextView implements Writeable, Readable, Component {
 
 	public frame: Frame;
 
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public font: Font;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public textAlignment: TextAlignment;
+	public textAlignment?: TextAlignment;
 
-	public hoveredBackgroundColor: Color;
+	public hoveredBackgroundColor?: Color;
 
-	public pressedBackgroundColor: Color;
+	public pressedBackgroundColor?: Color;
 
-	public focusedBackgroundColor: Color;
+	public focusedBackgroundColor?: Color;
 
 	public hoveredBorder: Border;
 
@@ -7956,32 +7230,32 @@ export class TextView implements Writeable, Readable, Component {
 
 	public focusedBorder: Border;
 
-	public lineBreak: Bool;
+	public lineBreak?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
-		value: Str = new Str(),
-		color: Color = new Color(),
-		backgroundColor: Color = new Color(),
-		onClick: Ptr = new Ptr(),
-		onHoverStart: Ptr = new Ptr(),
-		onHoverEnd: Ptr = new Ptr(),
+		value: Str | undefined = undefined,
+		color: Color | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		onClick: Ptr | undefined = undefined,
+		onHoverStart: Ptr | undefined = undefined,
+		onHoverEnd: Ptr | undefined = undefined,
 		border: Border = new Border(),
 		padding: Padding = new Padding(),
 		frame: Frame = new Frame(),
-		accessibilityLabel: Str = new Str(),
+		accessibilityLabel: Str | undefined = undefined,
 		font: Font = new Font(),
-		action: Ptr = new Ptr(),
-		textAlignment: TextAlignment = new TextAlignment(),
-		hoveredBackgroundColor: Color = new Color(),
-		pressedBackgroundColor: Color = new Color(),
-		focusedBackgroundColor: Color = new Color(),
+		action: Ptr | undefined = undefined,
+		textAlignment: TextAlignment | undefined = undefined,
+		hoveredBackgroundColor: Color | undefined = undefined,
+		pressedBackgroundColor: Color | undefined = undefined,
+		focusedBackgroundColor: Color | undefined = undefined,
 		hoveredBorder: Border = new Border(),
 		pressedBorder: Border = new Border(),
 		focusedBorder: Border = new Border(),
-		lineBreak: Bool = new Bool(),
-		invisible: Bool = new Bool()
+		lineBreak: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -8013,27 +7287,27 @@ export class TextView implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.value.read(reader);
+					this.value = readString(reader);
 					break;
 				}
 				case 2: {
-					this.color.read(reader);
+					this.color = readString(reader);
 					break;
 				}
 				case 3: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 4: {
-					this.onClick.read(reader);
+					this.onClick = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.onHoverStart.read(reader);
+					this.onHoverStart = readInt(reader);
 					break;
 				}
 				case 6: {
-					this.onHoverEnd.read(reader);
+					this.onHoverEnd = readInt(reader);
 					break;
 				}
 				case 7: {
@@ -8049,7 +7323,7 @@ export class TextView implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 11: {
@@ -8057,23 +7331,23 @@ export class TextView implements Writeable, Readable, Component {
 					break;
 				}
 				case 12: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 13: {
-					this.textAlignment.read(reader);
+					this.textAlignment = readInt(reader);
 					break;
 				}
 				case 14: {
-					this.hoveredBackgroundColor.read(reader);
+					this.hoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 15: {
-					this.pressedBackgroundColor.read(reader);
+					this.pressedBackgroundColor = readString(reader);
 					break;
 				}
 				case 16: {
-					this.focusedBackgroundColor.read(reader);
+					this.focusedBackgroundColor = readString(reader);
 					break;
 				}
 				case 17: {
@@ -8089,11 +7363,11 @@ export class TextView implements Writeable, Readable, Component {
 					break;
 				}
 				case 20: {
-					this.lineBreak.read(reader);
+					this.lineBreak = readBool(reader);
 					break;
 				}
 				case 21: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -8105,53 +7379,53 @@ export class TextView implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.value.isZero(),
-			!this.color.isZero(),
-			!this.backgroundColor.isZero(),
-			!this.onClick.isZero(),
-			!this.onHoverStart.isZero(),
-			!this.onHoverEnd.isZero(),
+			this.value !== undefined,
+			this.color !== undefined,
+			this.backgroundColor !== undefined,
+			this.onClick !== undefined,
+			this.onHoverStart !== undefined,
+			this.onHoverEnd !== undefined,
 			!this.border.isZero(),
 			!this.padding.isZero(),
 			!this.frame.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.accessibilityLabel !== undefined,
 			!this.font.isZero(),
-			!this.action.isZero(),
-			!this.textAlignment.isZero(),
-			!this.hoveredBackgroundColor.isZero(),
-			!this.pressedBackgroundColor.isZero(),
-			!this.focusedBackgroundColor.isZero(),
+			this.action !== undefined,
+			this.textAlignment !== undefined,
+			this.hoveredBackgroundColor !== undefined,
+			this.pressedBackgroundColor !== undefined,
+			this.focusedBackgroundColor !== undefined,
 			!this.hoveredBorder.isZero(),
 			!this.pressedBorder.isZero(),
 			!this.focusedBorder.isZero(),
-			!this.lineBreak.isZero(),
-			!this.invisible.isZero(),
+			this.lineBreak !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.value.write(writer);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.color.write(writer);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.onClick.write(writer);
+			writeInt(writer, this.onClick!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			this.onHoverStart.write(writer);
+			writeInt(writer, this.onHoverStart!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.onHoverEnd.write(writer);
+			writeInt(writer, this.onHoverEnd!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -8167,7 +7441,7 @@ export class TextView implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.RECORD, 11);
@@ -8175,23 +7449,23 @@ export class TextView implements Writeable, Readable, Component {
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 12);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
-			this.textAlignment.write(writer);
+			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 14);
-			this.hoveredBackgroundColor.write(writer);
+			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[15]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 15);
-			this.pressedBackgroundColor.write(writer);
+			writeString(writer, this.pressedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[16]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 16);
-			this.focusedBackgroundColor.write(writer);
+			writeString(writer, this.focusedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[17]) {
 			writer.writeFieldHeader(Shapes.RECORD, 17);
@@ -8207,62 +7481,62 @@ export class TextView implements Writeable, Readable, Component {
 		}
 		if (fields[20]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			this.lineBreak.write(writer);
+			writeBool(writer, this.lineBreak!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[21]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 21);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.value.isZero() &&
-			this.color.isZero() &&
-			this.backgroundColor.isZero() &&
-			this.onClick.isZero() &&
-			this.onHoverStart.isZero() &&
-			this.onHoverEnd.isZero() &&
+			this.value === undefined &&
+			this.color === undefined &&
+			this.backgroundColor === undefined &&
+			this.onClick === undefined &&
+			this.onHoverStart === undefined &&
+			this.onHoverEnd === undefined &&
 			this.border.isZero() &&
 			this.padding.isZero() &&
 			this.frame.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.accessibilityLabel === undefined &&
 			this.font.isZero() &&
-			this.action.isZero() &&
-			this.textAlignment.isZero() &&
-			this.hoveredBackgroundColor.isZero() &&
-			this.pressedBackgroundColor.isZero() &&
-			this.focusedBackgroundColor.isZero() &&
+			this.action === undefined &&
+			this.textAlignment === undefined &&
+			this.hoveredBackgroundColor === undefined &&
+			this.pressedBackgroundColor === undefined &&
+			this.focusedBackgroundColor === undefined &&
 			this.hoveredBorder.isZero() &&
 			this.pressedBorder.isZero() &&
 			this.focusedBorder.isZero() &&
-			this.lineBreak.isZero() &&
-			this.invisible.isZero()
+			this.lineBreak === undefined &&
+			this.invisible === undefined
 		);
 	}
 
 	reset(): void {
-		this.value.reset();
-		this.color.reset();
-		this.backgroundColor.reset();
-		this.onClick.reset();
-		this.onHoverStart.reset();
-		this.onHoverEnd.reset();
+		this.value = undefined;
+		this.color = undefined;
+		this.backgroundColor = undefined;
+		this.onClick = undefined;
+		this.onHoverStart = undefined;
+		this.onHoverEnd = undefined;
 		this.border.reset();
 		this.padding.reset();
 		this.frame.reset();
-		this.accessibilityLabel.reset();
+		this.accessibilityLabel = undefined;
 		this.font.reset();
-		this.action.reset();
-		this.textAlignment.reset();
-		this.hoveredBackgroundColor.reset();
-		this.pressedBackgroundColor.reset();
-		this.focusedBackgroundColor.reset();
+		this.action = undefined;
+		this.textAlignment = undefined;
+		this.hoveredBackgroundColor = undefined;
+		this.pressedBackgroundColor = undefined;
+		this.focusedBackgroundColor = undefined;
 		this.hoveredBorder.reset();
 		this.pressedBorder.reset();
 		this.focusedBorder.reset();
-		this.lineBreak.reset();
-		this.invisible.reset();
+		this.lineBreak = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8272,35 +7546,11 @@ export class TextView implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-export class TextAlignment implements Writeable, Readable {
-	public value: number; // Using number to handle uint64 (precision limits apply)
-
-	constructor(value: number = 0) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return this.value === 0;
-	}
-
-	reset(): void {
-		this.value = 0;
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value);
-	}
-
-	read(reader: BinaryReader): void {
-		this.value = reader.readUvarint();
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.UVARINT, 105);
-		return;
-	}
+export type TextAlignment = number;
+function writeTypeHeaderTextAlignment(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 105);
+	return;
 }
-
 // companion enum containing all defined constants for TextAlignment
 export enum TextAlignmentValues {
 	TextAlignInherit = 0,
@@ -8311,23 +7561,23 @@ export enum TextAlignmentValues {
 }
 
 export class TextField implements Writeable, Readable, Component {
-	public label: Str;
+	public label?: Str;
 
-	public supportingText: Str;
+	public supportingText?: Str;
 
 	// ErrorText is shown instead of SupportingText, even if they are (today) independent
-	public errorText: Str;
+	public errorText?: Str;
 
 	// Value contains the text, which shall be shown.
-	public value: Str;
+	public value?: Str;
 
 	public frame: Frame;
 
 	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
-	public style: TextFieldStyle;
+	public style?: TextFieldStyle;
 
 	// Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.
 	public leading?: Component;
@@ -8336,43 +7586,43 @@ export class TextField implements Writeable, Readable, Component {
 	public trailing?: Component;
 
 	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	public debounceTime: Duration;
+	public debounceTime?: Duration;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
-	public lines: Uint;
+	public lines?: Uint;
 
 	public keyboardOptions: KeyboardOptions;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public disableAutocomplete: Bool;
+	public disableAutocomplete?: Bool;
 
 	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	public disableDebounce: Bool;
+	public disableDebounce?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	// If Revealed the password is shown
-	public revealed: Bool;
+	public revealed?: Bool;
 
 	constructor(
-		label: Str = new Str(),
-		supportingText: Str = new Str(),
-		errorText: Str = new Str(),
-		value: Str = new Str(),
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		value: Str | undefined = undefined,
 		frame: Frame = new Frame(),
-		inputValue: Ptr = new Ptr(),
-		style: TextFieldStyle = new TextFieldStyle(),
+		inputValue: Ptr | undefined = undefined,
+		style: TextFieldStyle | undefined = undefined,
 		leading: Component | undefined = undefined,
 		trailing: Component | undefined = undefined,
-		debounceTime: Duration = new Duration(),
-		lines: Uint = new Uint(),
+		debounceTime: Duration | undefined = undefined,
+		lines: Uint | undefined = undefined,
 		keyboardOptions: KeyboardOptions = new KeyboardOptions(),
-		disabled: Bool = new Bool(),
-		disableAutocomplete: Bool = new Bool(),
-		disableDebounce: Bool = new Bool(),
-		invisible: Bool = new Bool(),
-		revealed: Bool = new Bool()
+		disabled: Bool | undefined = undefined,
+		disableAutocomplete: Bool | undefined = undefined,
+		disableDebounce: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		revealed: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8400,19 +7650,19 @@ export class TextField implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.label.read(reader);
+					this.label = readString(reader);
 					break;
 				}
 				case 2: {
-					this.supportingText.read(reader);
+					this.supportingText = readString(reader);
 					break;
 				}
 				case 3: {
-					this.errorText.read(reader);
+					this.errorText = readString(reader);
 					break;
 				}
 				case 4: {
-					this.value.read(reader);
+					this.value = readString(reader);
 					break;
 				}
 				case 5: {
@@ -8420,11 +7670,11 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 6: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 7: {
-					this.style.read(reader);
+					this.style = readInt(reader);
 					break;
 				}
 				case 8: {
@@ -8446,11 +7696,11 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.debounceTime.read(reader);
+					this.debounceTime = readInt(reader);
 					break;
 				}
 				case 11: {
-					this.lines.read(reader);
+					this.lines = readInt(reader);
 					break;
 				}
 				case 12: {
@@ -8458,23 +7708,23 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 13: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 14: {
-					this.disableAutocomplete.read(reader);
+					this.disableAutocomplete = readBool(reader);
 					break;
 				}
 				case 15: {
-					this.disableDebounce.read(reader);
+					this.disableDebounce = readBool(reader);
 					break;
 				}
 				case 16: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				case 17: {
-					this.revealed.read(reader);
+					this.revealed = readBool(reader);
 					break;
 				}
 				default:
@@ -8486,41 +7736,41 @@ export class TextField implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.label.isZero(),
-			!this.supportingText.isZero(),
-			!this.errorText.isZero(),
-			!this.value.isZero(),
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.value !== undefined,
 			!this.frame.isZero(),
-			!this.inputValue.isZero(),
-			!this.style.isZero(),
+			this.inputValue !== undefined,
+			this.style !== undefined,
 			this.leading !== undefined && !this.leading.isZero(),
 			this.trailing !== undefined && !this.trailing.isZero(),
-			!this.debounceTime.isZero(),
-			!this.lines.isZero(),
+			this.debounceTime !== undefined,
+			this.lines !== undefined,
 			!this.keyboardOptions.isZero(),
-			!this.disabled.isZero(),
-			!this.disableAutocomplete.isZero(),
-			!this.disableDebounce.isZero(),
-			!this.invisible.isZero(),
-			!this.revealed.isZero(),
+			this.disabled !== undefined,
+			this.disableAutocomplete !== undefined,
+			this.disableDebounce !== undefined,
+			this.invisible !== undefined,
+			this.revealed !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.label.write(writer);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.supportingText.write(writer);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.errorText.write(writer);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.value.write(writer);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -8528,11 +7778,11 @@ export class TextField implements Writeable, Readable, Component {
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			this.style.write(writer);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			// encode polymorphic enum as 1 element slice
@@ -8548,11 +7798,11 @@ export class TextField implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.debounceTime.write(writer);
+			writeInt(writer, this.debounceTime!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 11);
-			this.lines.write(writer);
+			writeInt(writer, this.lines!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.RECORD, 12);
@@ -8560,66 +7810,66 @@ export class TextField implements Writeable, Readable, Component {
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 14);
-			this.disableAutocomplete.write(writer);
+			writeBool(writer, this.disableAutocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[15]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 15);
-			this.disableDebounce.write(writer);
+			writeBool(writer, this.disableDebounce!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[16]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 16);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[17]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 17);
-			this.revealed.write(writer);
+			writeBool(writer, this.revealed!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.label.isZero() &&
-			this.supportingText.isZero() &&
-			this.errorText.isZero() &&
-			this.value.isZero() &&
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.value === undefined &&
 			this.frame.isZero() &&
-			this.inputValue.isZero() &&
-			this.style.isZero() &&
+			this.inputValue === undefined &&
+			this.style === undefined &&
 			(this.leading === undefined || this.leading.isZero()) &&
 			(this.trailing === undefined || this.trailing.isZero()) &&
-			this.debounceTime.isZero() &&
-			this.lines.isZero() &&
+			this.debounceTime === undefined &&
+			this.lines === undefined &&
 			this.keyboardOptions.isZero() &&
-			this.disabled.isZero() &&
-			this.disableAutocomplete.isZero() &&
-			this.disableDebounce.isZero() &&
-			this.invisible.isZero() &&
-			this.revealed.isZero()
+			this.disabled === undefined &&
+			this.disableAutocomplete === undefined &&
+			this.disableDebounce === undefined &&
+			this.invisible === undefined &&
+			this.revealed === undefined
 		);
 	}
 
 	reset(): void {
-		this.label.reset();
-		this.supportingText.reset();
-		this.errorText.reset();
-		this.value.reset();
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.value = undefined;
 		this.frame.reset();
-		this.inputValue.reset();
-		this.style.reset();
+		this.inputValue = undefined;
+		this.style = undefined;
 		this.leading = undefined;
 		this.trailing = undefined;
-		this.debounceTime.reset();
-		this.lines.reset();
+		this.debounceTime = undefined;
+		this.lines = undefined;
 		this.keyboardOptions.reset();
-		this.disabled.reset();
-		this.disableAutocomplete.reset();
-		this.disableDebounce.reset();
-		this.invisible.reset();
-		this.revealed.reset();
+		this.disabled = undefined;
+		this.disableAutocomplete = undefined;
+		this.disableDebounce = undefined;
+		this.invisible = undefined;
+		this.revealed = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8632,19 +7882,19 @@ export class TextField implements Writeable, Readable, Component {
 // Toggle is just a kind of checkbox without a label. However, a toggle shall be used for immediate activation functions. In contrast to that, use a checkbox for form things without an immediate effect.
 export class Toggle implements Writeable, Readable, Component {
 	// InputValue is where updated value of the checked states are written.
-	public inputValue: Ptr;
+	public inputValue?: Ptr;
 
-	public value: Bool;
+	public value?: Bool;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
-		inputValue: Ptr = new Ptr(),
-		value: Bool = new Bool(),
-		disabled: Bool = new Bool(),
-		invisible: Bool = new Bool()
+		inputValue: Ptr | undefined = undefined,
+		value: Bool | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -8659,19 +7909,19 @@ export class Toggle implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.inputValue.read(reader);
+					this.inputValue = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.value.read(reader);
+					this.value = readBool(reader);
 					break;
 				}
 				case 3: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 4: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -8683,40 +7933,45 @@ export class Toggle implements Writeable, Readable, Component {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.inputValue.isZero(),
-			!this.value.isZero(),
-			!this.disabled.isZero(),
-			!this.invisible.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.disabled !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.inputValue.write(writer);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.value.write(writer);
+			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.inputValue.isZero() && this.value.isZero() && this.disabled.isZero() && this.invisible.isZero();
+		return (
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			this.disabled === undefined &&
+			this.invisible === undefined
+		);
 	}
 
 	reset(): void {
-		this.inputValue.reset();
-		this.value.reset();
-		this.disabled.reset();
-		this.invisible.reset();
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.disabled = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8736,31 +7991,31 @@ export class TextLayout implements Writeable, Readable, Component {
 
 	public frame: Frame;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public padding: Padding;
 
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public font: Font;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public textAlignment: TextAlignment;
+	public textAlignment?: TextAlignment;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
 		children: Components = new Components(),
 		border: Border = new Border(),
 		frame: Frame = new Frame(),
-		backgroundColor: Color = new Color(),
+		backgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
-		accessibilityLabel: Str = new Str(),
+		accessibilityLabel: Str | undefined = undefined,
 		font: Font = new Font(),
-		action: Ptr = new Ptr(),
-		textAlignment: TextAlignment = new TextAlignment(),
-		invisible: Bool = new Bool()
+		action: Ptr | undefined = undefined,
+		textAlignment: TextAlignment | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.children = children;
 		this.border = border;
@@ -8793,7 +8048,7 @@ export class TextLayout implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 5: {
@@ -8801,7 +8056,7 @@ export class TextLayout implements Writeable, Readable, Component {
 					break;
 				}
 				case 6: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 7: {
@@ -8809,15 +8064,15 @@ export class TextLayout implements Writeable, Readable, Component {
 					break;
 				}
 				case 8: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 9: {
-					this.textAlignment.read(reader);
+					this.textAlignment = readInt(reader);
 					break;
 				}
 				case 10: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -8832,13 +8087,13 @@ export class TextLayout implements Writeable, Readable, Component {
 			!this.children.isZero(),
 			!this.border.isZero(),
 			!this.frame.isZero(),
-			!this.backgroundColor.isZero(),
+			this.backgroundColor !== undefined,
 			!this.padding.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.accessibilityLabel !== undefined,
 			!this.font.isZero(),
-			!this.action.isZero(),
-			!this.textAlignment.isZero(),
-			!this.invisible.isZero(),
+			this.action !== undefined,
+			this.textAlignment !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8856,7 +8111,7 @@ export class TextLayout implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -8864,7 +8119,7 @@ export class TextLayout implements Writeable, Readable, Component {
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.RECORD, 7);
@@ -8872,15 +8127,15 @@ export class TextLayout implements Writeable, Readable, Component {
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
-			this.textAlignment.write(writer);
+			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -8889,13 +8144,13 @@ export class TextLayout implements Writeable, Readable, Component {
 			this.children.isZero() &&
 			this.border.isZero() &&
 			this.frame.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.backgroundColor === undefined &&
 			this.padding.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.accessibilityLabel === undefined &&
 			this.font.isZero() &&
-			this.action.isZero() &&
-			this.textAlignment.isZero() &&
-			this.invisible.isZero()
+			this.action === undefined &&
+			this.textAlignment === undefined &&
+			this.invisible === undefined
 		);
 	}
 
@@ -8903,13 +8158,13 @@ export class TextLayout implements Writeable, Readable, Component {
 		this.children.reset();
 		this.border.reset();
 		this.frame.reset();
-		this.backgroundColor.reset();
+		this.backgroundColor = undefined;
 		this.padding.reset();
-		this.accessibilityLabel.reset();
+		this.accessibilityLabel = undefined;
 		this.font.reset();
-		this.action.reset();
-		this.textAlignment.reset();
-		this.invisible.reset();
+		this.action = undefined;
+		this.textAlignment = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8927,31 +8182,31 @@ export class TextLayout implements Writeable, Readable, Component {
 export class VStack implements Writeable, Readable, Component {
 	public children: Components;
 
-	public gap: Length;
+	public gap?: Length;
 
 	public frame: Frame;
 
 	// Zero value of Alignment is Center (=c) must be applied.
-	public alignment: Alignment;
+	public alignment?: Alignment;
 
-	public backgroundColor: Color;
+	public backgroundColor?: Color;
 
 	public padding: Padding;
 
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	public accessibilityLabel: Str;
+	public accessibilityLabel?: Str;
 
 	public border: Border;
 
 	public font: Font;
 
-	public action: Ptr;
+	public action?: Ptr;
 
-	public hoveredBackgroundColor: Color;
+	public hoveredBackgroundColor?: Color;
 
-	public pressedBackgroundColor: Color;
+	public pressedBackgroundColor?: Color;
 
-	public focusedBackgroundColor: Color;
+	public focusedBackgroundColor?: Color;
 
 	public hoveredBorder: Border;
 
@@ -8959,35 +8214,35 @@ export class VStack implements Writeable, Readable, Component {
 
 	public focusedBorder: Border;
 
-	public stylePreset: StylePreset;
+	public stylePreset?: StylePreset;
 
 	public position: Position;
 
-	public disabled: Bool;
+	public disabled?: Bool;
 
-	public invisible: Bool;
+	public invisible?: Bool;
 
 	constructor(
 		children: Components = new Components(),
-		gap: Length = new Length(),
+		gap: Length | undefined = undefined,
 		frame: Frame = new Frame(),
-		alignment: Alignment = new Alignment(),
-		backgroundColor: Color = new Color(),
+		alignment: Alignment | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
 		padding: Padding = new Padding(),
-		accessibilityLabel: Str = new Str(),
+		accessibilityLabel: Str | undefined = undefined,
 		border: Border = new Border(),
 		font: Font = new Font(),
-		action: Ptr = new Ptr(),
-		hoveredBackgroundColor: Color = new Color(),
-		pressedBackgroundColor: Color = new Color(),
-		focusedBackgroundColor: Color = new Color(),
+		action: Ptr | undefined = undefined,
+		hoveredBackgroundColor: Color | undefined = undefined,
+		pressedBackgroundColor: Color | undefined = undefined,
+		focusedBackgroundColor: Color | undefined = undefined,
 		hoveredBorder: Border = new Border(),
 		pressedBorder: Border = new Border(),
 		focusedBorder: Border = new Border(),
-		stylePreset: StylePreset = new StylePreset(),
+		stylePreset: StylePreset | undefined = undefined,
 		position: Position = new Position(),
-		disabled: Bool = new Bool(),
-		invisible: Bool = new Bool()
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -9022,7 +8277,7 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 2: {
-					this.gap.read(reader);
+					this.gap = readString(reader);
 					break;
 				}
 				case 3: {
@@ -9030,11 +8285,11 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.alignment.read(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 5: {
-					this.backgroundColor.read(reader);
+					this.backgroundColor = readString(reader);
 					break;
 				}
 				case 6: {
@@ -9042,7 +8297,7 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.accessibilityLabel.read(reader);
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				case 8: {
@@ -9054,19 +8309,19 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.action.read(reader);
+					this.action = readInt(reader);
 					break;
 				}
 				case 11: {
-					this.hoveredBackgroundColor.read(reader);
+					this.hoveredBackgroundColor = readString(reader);
 					break;
 				}
 				case 12: {
-					this.pressedBackgroundColor.read(reader);
+					this.pressedBackgroundColor = readString(reader);
 					break;
 				}
 				case 13: {
-					this.focusedBackgroundColor.read(reader);
+					this.focusedBackgroundColor = readString(reader);
 					break;
 				}
 				case 14: {
@@ -9082,7 +8337,7 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 17: {
-					this.stylePreset.read(reader);
+					this.stylePreset = readInt(reader);
 					break;
 				}
 				case 18: {
@@ -9090,11 +8345,11 @@ export class VStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 19: {
-					this.disabled.read(reader);
+					this.disabled = readBool(reader);
 					break;
 				}
 				case 20: {
-					this.invisible.read(reader);
+					this.invisible = readBool(reader);
 					break;
 				}
 				default:
@@ -9107,25 +8362,25 @@ export class VStack implements Writeable, Readable, Component {
 		const fields = [
 			false,
 			!this.children.isZero(),
-			!this.gap.isZero(),
+			this.gap !== undefined,
 			!this.frame.isZero(),
-			!this.alignment.isZero(),
-			!this.backgroundColor.isZero(),
+			this.alignment !== undefined,
+			this.backgroundColor !== undefined,
 			!this.padding.isZero(),
-			!this.accessibilityLabel.isZero(),
+			this.accessibilityLabel !== undefined,
 			!this.border.isZero(),
 			!this.font.isZero(),
-			!this.action.isZero(),
-			!this.hoveredBackgroundColor.isZero(),
-			!this.pressedBackgroundColor.isZero(),
-			!this.focusedBackgroundColor.isZero(),
+			this.action !== undefined,
+			this.hoveredBackgroundColor !== undefined,
+			this.pressedBackgroundColor !== undefined,
+			this.focusedBackgroundColor !== undefined,
 			!this.hoveredBorder.isZero(),
 			!this.pressedBorder.isZero(),
 			!this.focusedBorder.isZero(),
-			!this.stylePreset.isZero(),
+			this.stylePreset !== undefined,
 			!this.position.isZero(),
-			!this.disabled.isZero(),
-			!this.invisible.isZero(),
+			this.disabled !== undefined,
+			this.invisible !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9135,7 +8390,7 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.gap.write(writer);
+			writeString(writer, this.gap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.RECORD, 3);
@@ -9143,11 +8398,11 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			this.alignment.write(writer);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			this.backgroundColor.write(writer);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.RECORD, 6);
@@ -9155,7 +8410,7 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[7]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			this.accessibilityLabel.write(writer);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
 			writer.writeFieldHeader(Shapes.RECORD, 8);
@@ -9167,19 +8422,19 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[10]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			this.action.write(writer);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
-			this.hoveredBackgroundColor.write(writer);
+			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
-			this.pressedBackgroundColor.write(writer);
+			writeString(writer, this.pressedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
-			this.focusedBackgroundColor.write(writer);
+			writeString(writer, this.focusedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
 			writer.writeFieldHeader(Shapes.RECORD, 14);
@@ -9195,7 +8450,7 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[17]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 17);
-			this.stylePreset.write(writer);
+			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[18]) {
 			writer.writeFieldHeader(Shapes.RECORD, 18);
@@ -9203,60 +8458,60 @@ export class VStack implements Writeable, Readable, Component {
 		}
 		if (fields[19]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 19);
-			this.disabled.write(writer);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[20]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			this.invisible.write(writer);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
 			this.children.isZero() &&
-			this.gap.isZero() &&
+			this.gap === undefined &&
 			this.frame.isZero() &&
-			this.alignment.isZero() &&
-			this.backgroundColor.isZero() &&
+			this.alignment === undefined &&
+			this.backgroundColor === undefined &&
 			this.padding.isZero() &&
-			this.accessibilityLabel.isZero() &&
+			this.accessibilityLabel === undefined &&
 			this.border.isZero() &&
 			this.font.isZero() &&
-			this.action.isZero() &&
-			this.hoveredBackgroundColor.isZero() &&
-			this.pressedBackgroundColor.isZero() &&
-			this.focusedBackgroundColor.isZero() &&
+			this.action === undefined &&
+			this.hoveredBackgroundColor === undefined &&
+			this.pressedBackgroundColor === undefined &&
+			this.focusedBackgroundColor === undefined &&
 			this.hoveredBorder.isZero() &&
 			this.pressedBorder.isZero() &&
 			this.focusedBorder.isZero() &&
-			this.stylePreset.isZero() &&
+			this.stylePreset === undefined &&
 			this.position.isZero() &&
-			this.disabled.isZero() &&
-			this.invisible.isZero()
+			this.disabled === undefined &&
+			this.invisible === undefined
 		);
 	}
 
 	reset(): void {
 		this.children.reset();
-		this.gap.reset();
+		this.gap = undefined;
 		this.frame.reset();
-		this.alignment.reset();
-		this.backgroundColor.reset();
+		this.alignment = undefined;
+		this.backgroundColor = undefined;
 		this.padding.reset();
-		this.accessibilityLabel.reset();
+		this.accessibilityLabel = undefined;
 		this.border.reset();
 		this.font.reset();
-		this.action.reset();
-		this.hoveredBackgroundColor.reset();
-		this.pressedBackgroundColor.reset();
-		this.focusedBackgroundColor.reset();
+		this.action = undefined;
+		this.hoveredBackgroundColor = undefined;
+		this.pressedBackgroundColor = undefined;
+		this.focusedBackgroundColor = undefined;
 		this.hoveredBorder.reset();
 		this.pressedBorder.reset();
 		this.focusedBorder.reset();
-		this.stylePreset.reset();
+		this.stylePreset = undefined;
 		this.position.reset();
-		this.disabled.reset();
-		this.invisible.reset();
+		this.disabled = undefined;
+		this.invisible = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9267,11 +8522,11 @@ export class VStack implements Writeable, Readable, Component {
 }
 
 export class WebView implements Writeable, Readable, Component {
-	public uRI: URI;
+	public uRI?: URI;
 
 	public frame: Frame;
 
-	constructor(uRI: URI = new URI(), frame: Frame = new Frame()) {
+	constructor(uRI: URI | undefined = undefined, frame: Frame = new Frame()) {
 		this.uRI = uRI;
 		this.frame = frame;
 	}
@@ -9283,7 +8538,7 @@ export class WebView implements Writeable, Readable, Component {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.uRI.read(reader);
+					this.uRI = readString(reader);
 					break;
 				}
 				case 2: {
@@ -9297,12 +8552,12 @@ export class WebView implements Writeable, Readable, Component {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.uRI.isZero(), !this.frame.isZero()];
+		const fields = [false, this.uRI !== undefined, !this.frame.isZero()];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.uRI.write(writer);
+			writeString(writer, this.uRI!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.RECORD, 2);
@@ -9311,11 +8566,11 @@ export class WebView implements Writeable, Readable, Component {
 	}
 
 	isZero(): boolean {
-		return this.uRI.isZero() && this.frame.isZero();
+		return this.uRI === undefined && this.frame.isZero();
 	}
 
 	reset(): void {
-		this.uRI.reset();
+		this.uRI = undefined;
 		this.frame.reset();
 	}
 
@@ -9330,9 +8585,9 @@ export class WebView implements Writeable, Readable, Component {
 export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 	public windowInfo: WindowInfo;
 
-	public rID: RID;
+	public rID?: RID;
 
-	constructor(windowInfo: WindowInfo = new WindowInfo(), rID: RID = new RID()) {
+	constructor(windowInfo: WindowInfo = new WindowInfo(), rID: RID | undefined = undefined) {
 		this.windowInfo = windowInfo;
 		this.rID = rID;
 	}
@@ -9348,7 +8603,7 @@ export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 					break;
 				}
 				case 2: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -9358,7 +8613,7 @@ export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.windowInfo.isZero(), !this.rID.isZero()];
+		const fields = [false, !this.windowInfo.isZero(), this.rID !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -9367,17 +8622,17 @@ export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.windowInfo.isZero() && this.rID.isZero();
+		return this.windowInfo.isZero() && this.rID === undefined;
 	}
 
 	reset(): void {
 		this.windowInfo.reset();
-		this.rID.reset();
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9389,26 +8644,26 @@ export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 
 // UpdateStateValue2Requested is raised from the frontend to update at most 2 state values hold by the backend. It can also immediately invoke a function callback in the same cycle.
 export class UpdateStateValues2Requested implements Writeable, Readable, NagoEvent {
-	public statePtr0: Ptr;
+	public statePtr0?: Ptr;
 
-	public value0: Str;
+	public value0?: Str;
 
-	public statePtr1: Ptr;
+	public statePtr1?: Ptr;
 
-	public value1: Str;
+	public value1?: Str;
 
 	// A FunctionPointer is invoked, if not zero.
-	public functionPointer: Ptr;
+	public functionPointer?: Ptr;
 
-	public rID: RID;
+	public rID?: RID;
 
 	constructor(
-		statePtr0: Ptr = new Ptr(),
-		value0: Str = new Str(),
-		statePtr1: Ptr = new Ptr(),
-		value1: Str = new Str(),
-		functionPointer: Ptr = new Ptr(),
-		rID: RID = new RID()
+		statePtr0: Ptr | undefined = undefined,
+		value0: Str | undefined = undefined,
+		statePtr1: Ptr | undefined = undefined,
+		value1: Str | undefined = undefined,
+		functionPointer: Ptr | undefined = undefined,
+		rID: RID | undefined = undefined
 	) {
 		this.statePtr0 = statePtr0;
 		this.value0 = value0;
@@ -9425,27 +8680,27 @@ export class UpdateStateValues2Requested implements Writeable, Readable, NagoEve
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.statePtr0.read(reader);
+					this.statePtr0 = readInt(reader);
 					break;
 				}
 				case 2: {
-					this.value0.read(reader);
+					this.value0 = readString(reader);
 					break;
 				}
 				case 3: {
-					this.statePtr1.read(reader);
+					this.statePtr1 = readInt(reader);
 					break;
 				}
 				case 4: {
-					this.value1.read(reader);
+					this.value1 = readString(reader);
 					break;
 				}
 				case 5: {
-					this.functionPointer.read(reader);
+					this.functionPointer = readInt(reader);
 					break;
 				}
 				case 6: {
-					this.rID.read(reader);
+					this.rID = readInt(reader);
 					break;
 				}
 				default:
@@ -9457,59 +8712,59 @@ export class UpdateStateValues2Requested implements Writeable, Readable, NagoEve
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.statePtr0.isZero(),
-			!this.value0.isZero(),
-			!this.statePtr1.isZero(),
-			!this.value1.isZero(),
-			!this.functionPointer.isZero(),
-			!this.rID.isZero(),
+			this.statePtr0 !== undefined,
+			this.value0 !== undefined,
+			this.statePtr1 !== undefined,
+			this.value1 !== undefined,
+			this.functionPointer !== undefined,
+			this.rID !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			this.statePtr0.write(writer);
+			writeInt(writer, this.statePtr0!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.value0.write(writer);
+			writeString(writer, this.value0!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			this.statePtr1.write(writer);
+			writeInt(writer, this.statePtr1!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.value1.write(writer);
+			writeString(writer, this.value1!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			this.functionPointer.write(writer);
+			writeInt(writer, this.functionPointer!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
-			this.rID.write(writer);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.statePtr0.isZero() &&
-			this.value0.isZero() &&
-			this.statePtr1.isZero() &&
-			this.value1.isZero() &&
-			this.functionPointer.isZero() &&
-			this.rID.isZero()
+			this.statePtr0 === undefined &&
+			this.value0 === undefined &&
+			this.statePtr1 === undefined &&
+			this.value1 === undefined &&
+			this.functionPointer === undefined &&
+			this.rID === undefined
 		);
 	}
 
 	reset(): void {
-		this.statePtr0.reset();
-		this.value0.reset();
-		this.statePtr1.reset();
-		this.value1.reset();
-		this.functionPointer.reset();
-		this.rID.reset();
+		this.statePtr0 = undefined;
+		this.value0 = undefined;
+		this.statePtr1 = undefined;
+		this.value1 = undefined;
+		this.functionPointer = undefined;
+		this.rID = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9521,11 +8776,11 @@ export class UpdateStateValues2Requested implements Writeable, Readable, NagoEve
 
 // OpenHttpLink triggers the system open link call.
 export class OpenHttpLink implements Writeable, Readable, NagoEvent {
-	public url: URI;
+	public url?: URI;
 
-	public target: Str;
+	public target?: Str;
 
-	constructor(url: URI = new URI(), target: Str = new Str()) {
+	constructor(url: URI | undefined = undefined, target: Str | undefined = undefined) {
 		this.url = url;
 		this.target = target;
 	}
@@ -9537,11 +8792,11 @@ export class OpenHttpLink implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.url.read(reader);
+					this.url = readString(reader);
 					break;
 				}
 				case 2: {
-					this.target.read(reader);
+					this.target = readString(reader);
 					break;
 				}
 				default:
@@ -9551,26 +8806,26 @@ export class OpenHttpLink implements Writeable, Readable, NagoEvent {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.url.isZero(), !this.target.isZero()];
+		const fields = [false, this.url !== undefined, this.target !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.url.write(writer);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.target.write(writer);
+			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.url.isZero() && this.target.isZero();
+		return this.url === undefined && this.target === undefined;
 	}
 
 	reset(): void {
-		this.url.reset();
-		this.target.reset();
+		this.url = undefined;
+		this.target = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9582,19 +8837,19 @@ export class OpenHttpLink implements Writeable, Readable, NagoEvent {
 
 // OpenHttpFlow starts a http redirect flow process using the specified fields.
 export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
-	public url: URI;
+	public url?: URI;
 
-	public redirectTarget: Str;
+	public redirectTarget?: Str;
 
-	public redirectNavigation: Str;
+	public redirectNavigation?: Str;
 
-	public session: Str;
+	public session?: Str;
 
 	constructor(
-		url: URI = new URI(),
-		redirectTarget: Str = new Str(),
-		redirectNavigation: Str = new Str(),
-		session: Str = new Str()
+		url: URI | undefined = undefined,
+		redirectTarget: Str | undefined = undefined,
+		redirectNavigation: Str | undefined = undefined,
+		session: Str | undefined = undefined
 	) {
 		this.url = url;
 		this.redirectTarget = redirectTarget;
@@ -9609,19 +8864,19 @@ export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.url.read(reader);
+					this.url = readString(reader);
 					break;
 				}
 				case 2: {
-					this.redirectTarget.read(reader);
+					this.redirectTarget = readString(reader);
 					break;
 				}
 				case 3: {
-					this.redirectNavigation.read(reader);
+					this.redirectNavigation = readString(reader);
 					break;
 				}
 				case 4: {
-					this.session.read(reader);
+					this.session = readString(reader);
 					break;
 				}
 				default:
@@ -9633,45 +8888,45 @@ export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
 	write(writer: BinaryWriter): void {
 		const fields = [
 			false,
-			!this.url.isZero(),
-			!this.redirectTarget.isZero(),
-			!this.redirectNavigation.isZero(),
-			!this.session.isZero(),
+			this.url !== undefined,
+			this.redirectTarget !== undefined,
+			this.redirectNavigation !== undefined,
+			this.session !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.url.write(writer);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			this.redirectTarget.write(writer);
+			writeString(writer, this.redirectTarget!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
-			this.redirectNavigation.write(writer);
+			writeString(writer, this.redirectNavigation!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			this.session.write(writer);
+			writeString(writer, this.session!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.url.isZero() &&
-			this.redirectTarget.isZero() &&
-			this.redirectNavigation.isZero() &&
-			this.session.isZero()
+			this.url === undefined &&
+			this.redirectTarget === undefined &&
+			this.redirectNavigation === undefined &&
+			this.session === undefined
 		);
 	}
 
 	reset(): void {
-		this.url.reset();
-		this.redirectTarget.reset();
-		this.redirectNavigation.reset();
-		this.session.reset();
+		this.url = undefined;
+		this.redirectTarget = undefined;
+		this.redirectNavigation = undefined;
+		this.session = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9682,9 +8937,9 @@ export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
 }
 
 export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEvent {
-	public text: Str;
+	public text?: Str;
 
-	constructor(text: Str = new Str()) {
+	constructor(text: Str | undefined = undefined) {
 		this.text = text;
 	}
 
@@ -9695,7 +8950,7 @@ export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEve
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.text.read(reader);
+					this.text = readString(reader);
 					break;
 				}
 				default:
@@ -9705,21 +8960,21 @@ export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEve
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, !this.text.isZero()];
+		const fields = [false, this.text !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			this.text.write(writer);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.text.isZero();
+		return this.text === undefined;
 	}
 
 	reset(): void {
-		this.text.reset();
+		this.text = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9736,7 +8991,7 @@ export function marshal(dst: BinaryWriter, src: Writeable): void {
 }
 
 // Function to unmarshal data from a BinaryReader into a Readable object
-export function unmarshal(src: BinaryReader): Readable {
+export function unmarshal(src: BinaryReader): any {
 	const { typeId } = src.readTypeHeader();
 	switch (typeId) {
 		case 1: {
@@ -9745,8 +9000,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 2: {
-			const v = new Ptr();
-			v.read(src);
+			const v = readInt(src) as Ptr;
 			return v;
 		}
 		case 3: {
@@ -9760,13 +9014,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 5: {
-			const v = new Alignment();
-			v.read(src);
+			const v = readInt(src) as Alignment;
 			return v;
 		}
 		case 6: {
-			const v = new Color();
-			v.read(src);
+			const v = readString(src) as Color;
 			return v;
 		}
 		case 7: {
@@ -9775,8 +9027,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 8: {
-			const v = new Length();
-			v.read(src);
+			const v = readString(src) as Length;
 			return v;
 		}
 		case 9: {
@@ -9815,8 +9066,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 16: {
-			const v = new Bool();
-			v.read(src);
+			const v = readBool(src) as Bool;
 			return v;
 		}
 		case 17: {
@@ -9825,18 +9075,15 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 18: {
-			const v = new Locale();
-			v.read(src);
+			const v = readString(src) as Locale;
 			return v;
 		}
 		case 19: {
-			const v = new FontStyle();
-			v.read(src);
+			const v = readInt(src) as FontStyle;
 			return v;
 		}
 		case 20: {
-			const v = new RootViewID();
-			v.read(src);
+			const v = readString(src) as RootViewID;
 			return v;
 		}
 		case 21: {
@@ -9845,8 +9092,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 22: {
-			const v = new Str();
-			v.read(src);
+			const v = readString(src) as Str;
 			return v;
 		}
 		case 23: {
@@ -9875,8 +9121,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 28: {
-			const v = new WindowSizeClass();
-			v.read(src);
+			const v = readInt(src) as WindowSizeClass;
 			return v;
 		}
 		case 29: {
@@ -9885,8 +9130,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 30: {
-			const v = new ColorScheme();
-			v.read(src);
+			const v = readInt(src) as ColorScheme;
 			return v;
 		}
 		case 31: {
@@ -9895,13 +9139,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 32: {
-			const v = new DP();
-			v.read(src);
+			const v = readFloat(src) as DP;
 			return v;
 		}
 		case 33: {
-			const v = new Density();
-			v.read(src);
+			const v = readFloat(src) as Density;
 			return v;
 		}
 		case 34: {
@@ -9915,13 +9157,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 36: {
-			const v = new URI();
-			v.read(src);
+			const v = readString(src) as URI;
 			return v;
 		}
 		case 37: {
-			const v = new NamespaceName();
-			v.read(src);
+			const v = readString(src) as NamespaceName;
 			return v;
 		}
 		case 38: {
@@ -9950,13 +9190,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 43: {
-			const v = new DatePickerStyle();
-			v.read(src);
+			const v = readInt(src) as DatePickerStyle;
 			return v;
 		}
 		case 44: {
-			const v = new Day();
-			v.read(src);
+			const v = readInt(src) as Day;
 			return v;
 		}
 		case 45: {
@@ -9965,13 +9203,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 46: {
-			const v = new Month();
-			v.read(src);
+			const v = readInt(src) as Month;
 			return v;
 		}
 		case 47: {
-			const v = new Year();
-			v.read(src);
+			const v = readInt(src) as Year;
 			return v;
 		}
 		case 48: {
@@ -9985,13 +9221,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 50: {
-			const v = new RID();
-			v.read(src);
+			const v = readInt(src) as RID;
 			return v;
 		}
 		case 51: {
-			const v = new FontWeight();
-			v.read(src);
+			const v = readInt(src) as FontWeight;
 			return v;
 		}
 		case 52: {
@@ -10005,8 +9239,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 54: {
-			const v = new Uint();
-			v.read(src);
+			const v = readInt(src) as Uint;
 			return v;
 		}
 		case 55: {
@@ -10030,8 +9263,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 59: {
-			const v = new StylePreset();
-			v.read(src);
+			const v = readInt(src) as StylePreset;
 			return v;
 		}
 		case 60: {
@@ -10040,8 +9272,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 61: {
-			const v = new PositionType();
-			v.read(src);
+			const v = readInt(src) as PositionType;
 			return v;
 		}
 		case 62: {
@@ -10050,8 +9281,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 63: {
-			const v = new SVG();
-			v.read(src);
+			const v = readString(src) as SVG;
 			return v;
 		}
 		case 64: {
@@ -10070,13 +9300,11 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 67: {
-			const v = new KeyboardType();
-			v.read(src);
+			const v = readInt(src) as KeyboardType;
 			return v;
 		}
 		case 68: {
-			const v = new ModalType();
-			v.read(src);
+			const v = readInt(src) as ModalType;
 			return v;
 		}
 		case 69: {
@@ -10110,8 +9338,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 75: {
-			const v = new ThemeID();
-			v.read(src);
+			const v = readString(src) as ThemeID;
 			return v;
 		}
 		case 77: {
@@ -10120,8 +9347,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 78: {
-			const v = new Duration();
-			v.read(src);
+			const v = readInt(src) as Duration;
 			return v;
 		}
 		case 79: {
@@ -10130,8 +9356,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 80: {
-			const v = new TextFieldStyle();
-			v.read(src);
+			const v = readInt(src) as TextFieldStyle;
 			return v;
 		}
 		case 81: {
@@ -10145,8 +9370,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 83: {
-			const v = new ScaffoldAlignment();
-			v.read(src);
+			const v = readInt(src) as ScaffoldAlignment;
 			return v;
 		}
 		case 84: {
@@ -10165,8 +9389,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 87: {
-			const v = new ScopeID();
-			v.read(src);
+			const v = readString(src) as ScopeID;
 			return v;
 		}
 		case 88: {
@@ -10175,8 +9398,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 89: {
-			const v = new ScrollViewAxis();
-			v.read(src);
+			const v = readInt(src) as ScrollViewAxis;
 			return v;
 		}
 		case 90: {
@@ -10255,8 +9477,7 @@ export function unmarshal(src: BinaryReader): Readable {
 			return v;
 		}
 		case 105: {
-			const v = new TextAlignment();
-			v.read(src);
+			const v = readInt(src) as TextAlignment;
 			return v;
 		}
 		case 106: {

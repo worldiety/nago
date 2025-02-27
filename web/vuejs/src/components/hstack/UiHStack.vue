@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { borderCSS } from '@/components/shared/border';
-import { colorValue } from '@/components/shared/colors';
-import { fontCSS } from '@/components/shared/font';
-import { frameCSS } from '@/components/shared/frame';
-import { cssLengthValue } from '@/components/shared/length';
-import { paddingCSS } from '@/components/shared/padding';
-import { positionCSS } from '@/components/shared/position';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { AlignmentValues, FunctionCallRequested, HStack, Img, StylePresetValues } from '@/shared/proto/nprotoc_gen';
+import {borderCSS} from '@/components/shared/border';
+import {colorValue} from '@/components/shared/colors';
+import {fontCSS} from '@/components/shared/font';
+import {frameCSS} from '@/components/shared/frame';
+import {cssLengthValue} from '@/components/shared/length';
+import {paddingCSS} from '@/components/shared/padding';
+import {positionCSS} from '@/components/shared/position';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {AlignmentValues, FunctionCallRequested, HStack, Img, StylePresetValues} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: HStack;
@@ -24,14 +24,14 @@ const focusVisible = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick(event: Event) {
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action) {
 		event.stopPropagation();
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
 }
 
 function onKeydown(event: KeyboardEvent) {
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action) {
 		event.stopPropagation();
 		if (event.code === 'Enter' || event.code === 'Space') {
 			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
@@ -50,28 +50,28 @@ function commonStyles(): string[] {
 	styles.push(...positionCSS(props.ui.position));
 
 	// background handling
-	if (!props.ui.pressedBackgroundColor.isZero() && pressed.value) {
-		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor.value)}`);
+	if (props.ui.pressedBackgroundColor && pressed.value) {
+		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor)}`);
 	} else {
-		if (!props.ui.hoveredBackgroundColor.isZero()) {
+		if (props.ui.hoveredBackgroundColor) {
 			if (hover.value) {
-				styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor.value)}`);
+				styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
 			} else {
-				styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
+				styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
 			}
 		} else {
-			styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
+			styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
 		}
 	}
 
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action) {
 		focusable.value = true;
 	}
 
-	if (!props.ui.focusedBackgroundColor.isZero()) {
+	if (props.ui.focusedBackgroundColor) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
-			styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor.value)}`);
+			styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor)}`);
 		}
 	}
 
@@ -108,12 +108,11 @@ function commonStyles(): string[] {
 	return styles;
 }
 
-
 const frameStyles = computed<string>(() => {
 	let styles = commonStyles();
 
-	if (!props.ui.gap.isZero()) {
-		styles.push(`column-gap:${cssLengthValue(props.ui.gap.value)}`);
+	if (props.ui.gap) {
+		styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
 	}
 
 	return styles.join(';');
@@ -121,7 +120,7 @@ const frameStyles = computed<string>(() => {
 
 const clazz = computed<string>(() => {
 	let classes = ['inline-flex'];
-	switch (props.ui.alignment.value) {
+	switch (props.ui.alignment) {
 		case AlignmentValues.Stretch:
 			classes.push('items-stretch');
 			break;
@@ -157,15 +156,15 @@ const clazz = computed<string>(() => {
 			break;
 	}
 
-	if (!props.ui.action.isZero()) {
+	if (props.ui.action) {
 		classes.push('cursor-pointer');
 	}
 
-	if (props.ui.wrap.value) {
+	if (props.ui.wrap) {
 		classes.push('flex-wrap');
 	}
 
-	switch (props.ui.stylePreset.value) {
+	switch (props.ui.stylePreset) {
 		case StylePresetValues.StyleButtonPrimary:
 			classes.push('button-primary');
 			break;
@@ -178,7 +177,7 @@ const clazz = computed<string>(() => {
 	}
 
 	// preset special round icon mode in buttons
-	if (!props.ui.stylePreset.isZero()) {
+	if (props.ui.stylePreset) {
 		if (props.ui.children.value.length == 1 && props.ui.children.value[0] instanceof Img) {
 			classes.push('!p-0', '!w-10');
 		}
@@ -191,7 +190,7 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- hstack -->
 	<div
-		v-if="props.ui.stylePreset.value === StylePresetValues.StyleNone && !props.ui.invisible.value"
+		v-if="(props.ui.stylePreset === StylePresetValues.StyleNone ||props.ui.stylePreset === undefined) && !props.ui.invisible"
 		:class="clazz"
 		:style="frameStyles"
 		@mouseover="hover = true"
@@ -200,7 +199,7 @@ const clazz = computed<string>(() => {
 		@mouseup="pressed = false"
 		@mouseout="pressed = false"
 		@focusin="focused = true"
-		:title="props.ui.accessibilityLabel.value"
+		:title="props.ui.accessibilityLabel"
 		@focusout="
 			focused = false;
 			focusVisible = false;
@@ -210,17 +209,17 @@ const clazz = computed<string>(() => {
 		@keydown="onKeydown"
 		@focus="checkFocusVisible"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui" />
+		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
 	</div>
 
 	<button
-		:disabled="props.ui.disabled.value"
-		v-else-if="props.ui.stylePreset.value !== StylePresetValues.StyleNone && !props.ui.invisible.value"
+		:disabled="props.ui.disabled"
+		v-else-if="(props.ui.stylePreset !== StylePresetValues.StyleNone && props.ui.stylePreset !== undefined) && (props.ui.invisible===undefined || !props.ui.invisible)"
 		:class="clazz"
 		:style="frameStyles"
 		@click="onClick"
-		:title="props.ui.accessibilityLabel.value"
+		:title="props.ui.accessibilityLabel"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui" />
+		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
 	</button>
 </template>

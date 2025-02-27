@@ -24,10 +24,31 @@ func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
   write(writer: BinaryWriter): void {
 	writer.writeUvarint(this.value.length); // Write the length of the array
 	for (const c of this.value) {
-	  c.writeTypeHeader(writer); // Write the type header for each component
-	  c.write(writer); // Write the component data
+`)
+	if c.isPrimitive(decl.Type) {
+		c.pf("		writeTypeHeader%s(writer)\n", decl.Type)
+	} else {
+		c.pf("c.writeTypeHeader(writer); // Write the type header for each component)\n")
+	}
+
+	if c.isString(decl.Type) {
+		c.pf("		writeString(writer, c)\n")
+	} else if c.isBool(decl.Type) {
+		c.pf("		writeBool(writer, c)\n")
+	} else if c.isInt(decl.Type) {
+		c.pf("		writeInt(writer, c)\n")
+	} else if c.isFloat(decl.Type) {
+		c.pf("		writeFloat(writer, c)\n")
+	} else {
+		c.pf("		c.write(writer); // Write the component data\n")
+	}
+
+	c.p(`
+	  //c.writeTypeHeader(writer); // Write the type header for each component
+	  //c.write(writer); // Write the component data
 	}
   }
+
 
 `)
 
@@ -38,14 +59,14 @@ func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
 
 	for (let i = 0; i < count; i++) {
 	  const obj = unmarshal(reader); // Read and unmarshal each component
-	  values.push(obj as %[1]s); // Cast and add to the array
+	  values.push((obj as any) as %[1]s); // Cast and add to the array
 	}
 
 	this.value = values;
   }`, decl.Type)
 	c.pn("")
 
-	if err := c.tsEmitWriteTypeHeader(t); err != nil {
+	if err := c.tsEmitWriteTypeHeaderMethod(t); err != nil {
 		return err
 	}
 

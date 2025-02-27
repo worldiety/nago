@@ -16,19 +16,19 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (props.ui.columns.isZero()) {
+	if (!props.ui.columns) {
 		styles.push('grid-auto-columns: auto');
 	} else {
 		if (!props.ui.colWidths.isZero()) {
-			styles.push(`grid-template-columns: repeat(${props.ui.columns.value}, minmax(0, 1fr))`);
+			styles.push(`grid-template-columns: repeat(${props.ui.columns}, minmax(0, 1fr))`);
 		} else {
 			let tmp = 'grid-template-columns: ';
 			for (let len of props.ui.colWidths.value) {
-				tmp += cssLengthValue(len.value);
+				tmp += cssLengthValue(len);
 				tmp += ' ';
 			}
 
-			let restColCount = props.ui.columns.value - props.ui.colWidths.value.length;
+			let restColCount = props.ui.columns - props.ui.colWidths.value.length;
 			if (restColCount > 0) {
 				tmp += `repeat(${restColCount}, 1fr)`;
 			}
@@ -37,22 +37,22 @@ const style = computed<string>(() => {
 		}
 	}
 
-	if (props.ui.rows.isZero()) {
+	if (!props.ui.rows) {
 		styles.push('grid-auto-rows: auto');
 	} else {
-		styles.push(`grid-template-rows: repeat(${props.ui.rows.value}, minmax(0, 1fr))`);
+		styles.push(`grid-template-rows: repeat(${props.ui.rows}, minmax(0, 1fr))`);
 	}
 
-	if (!props.ui.rowGap.isZero()) {
-		styles.push(`row-gap: ${props.ui.rowGap.value}`);
+	if (props.ui.rowGap) {
+		styles.push(`row-gap: ${props.ui.rowGap}`);
 	}
 
-	if (!props.ui.colGap.isZero()) {
-		styles.push(`column-gap: ${props.ui.colGap.value}`);
+	if (props.ui.colGap) {
+		styles.push(`column-gap: ${props.ui.colGap}`);
 	}
 
-	if (!props.ui.backgroundColor.isZero()) {
-		styles.push(`background-color: ${colorValue(props.ui.backgroundColor.value)}`);
+	if (props.ui.backgroundColor) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
 	}
 
 	styles.push(...frameCSS(props.ui.frame));

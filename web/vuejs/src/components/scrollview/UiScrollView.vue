@@ -13,8 +13,8 @@ const props = defineProps<{
 const styles = computed<string>(() => {
 	let styles = borderCSS(props.ui.border);
 	styles.push(...frameCSS(props.ui.frame));
-	if (!props.ui.backgroundColor.isZero()) {
-		styles.push(`background-color: ${props.ui.backgroundColor.value}`);
+	if (props.ui.backgroundColor) {
+		styles.push(`background-color: ${props.ui.backgroundColor}`);
 	}
 
 	styles.push(...paddingCSS(props.ui.padding));
@@ -26,7 +26,7 @@ const classes = computed<string>(() => {
 	const css: string[] = [];
 
 	// note, that we defined its style in scrollbars.css
-	switch (props.ui.axis.value) {
+	switch (props.ui.axis) {
 		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
 			css.push('overflow-x-auto', 'overflow-y-hidden');
 			break;
@@ -41,7 +41,7 @@ const classes = computed<string>(() => {
 const innerStyles = computed<string>(() => {
 	let css = borderCSS(props.ui.border);
 
-	switch (props.ui.axis.value) {
+	switch (props.ui.axis) {
 		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
 			css.push('width: max-content');
 			break;

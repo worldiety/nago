@@ -45,15 +45,15 @@
 						@click="menuEntryClicked(subMenuEntry)"
 						@keydown.enter="menuEntryClicked(subMenuEntry)"
 					>
-						<p class="font-medium">{{ subMenuEntry.title.value }}</p>
+						<p class="font-medium">{{ subMenuEntry.title }}</p>
 						<TriangleDown
 							v-if="subMenuEntry.menu.value?.length > 0"
 							class="duration-150 w-2 -mr-1"
-							:class="{ 'rotate-180': subMenuEntry.expanded.value }"
+							:class="{ 'rotate-180': subMenuEntry.expanded }"
 						/>
 					</div>
 					<div
-						v-if="subMenuEntry.expanded.value && subMenuEntry.menu.value?.length > 0"
+						v-if="subMenuEntry.expanded && subMenuEntry.menu.value?.length > 0"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
 						<!-- Sub sub menu entries -->
@@ -64,14 +64,14 @@
 							class="rounded-full py-2 px-4"
 							:class="{
 								'cursor-pointer hover:bg-disabled-background hover:bg-opacity-25 active:bg-opacity-35':
-									subSubMenuEntry.action.value,
+									subSubMenuEntry.action,
 								'bg-disabled-background bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="subSubMenuEntry.action.value ? '0' : '-1'"
+							:tabindex="subSubMenuEntry.action ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.title.value }}
+							{{ subSubMenuEntry.title }}
 						</p>
 					</div>
 				</div>
@@ -115,12 +115,12 @@ onUnmounted(() => {
 });
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
-	return props.ui.menu?.value.find((menuEntry) => menuEntry.expanded.value);
+	return props.ui.menu?.value.find((menuEntry) => menuEntry.expanded);
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
-		?.filter((menuEntry) => menuEntry.expanded.value)
+		?.filter((menuEntry) => menuEntry.expanded)
 		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
 	// TODO I don't understand this code and the logic behind it? Who owns what entry and are we talking about copies?
@@ -129,7 +129,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 		return [];
 	}
 
-	if (entries?.length > 0 && !expandedMenuEntry.value?.action.isZero()) {
+	if (entries?.length > 0 && !expandedMenuEntry.value?.action) {
 		entries.unshift(
 			new ScaffoldMenuEntry(
 				xpandedEntry.value?.icon,
@@ -148,12 +148,12 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	return !menuEntry.action.isZero() || menuEntry.menu.isZero();
+	return menuEntry.action!=undefined || !menuEntry.menu.isZero();
 }
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	return `/${menuEntry.rootView.value}` === window.location.pathname;
+	return `/${menuEntry.rootView}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -171,7 +171,7 @@ function handleMouseMove(event: MouseEvent): void {
 		// }
 
 		props.ui.menu.value?.forEach((value) => {
-			value.expanded.value = false;
+			value.expanded = false;
 		});
 	}
 }
@@ -185,13 +185,13 @@ function focusFirstLinkedSubMenuEntry(): void {
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 	if (isClickableMenuEntry(menuEntry)) {
-		if (!menuEntry.menu.isZero() && menuEntry.menu.value.length > 0) {
+		if (menuEntry.menu && menuEntry.menu.value.length > 0) {
 			// TODO I screwed this code up and do not know any more what the idea was. I broke it obviously a long time ago
 			/*serviceAdapter.setProperties({
 				...menuEntry.x,
 				v: !menuEntry.x,
 			});*/
-		} else if (!menuEntry.action.isZero()) {
+		} else if (menuEntry.action) {
 			serviceAdapter.sendEvent(new FunctionCallRequested(menuEntry.action, nextRID()));
 		}
 	}
@@ -200,7 +200,7 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntry[] {
 	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.menu.value];
 	// Add the sub menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && !subMenuEntry.action.isZero()) {
+	if (entries.length > 0 && subMenuEntry.action) {
 		entries.unshift(
 			new ScaffoldMenuEntry(
 				subMenuEntry?.icon,
@@ -230,10 +230,10 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 
 	for (let i = 0; i < props.ui.menu.value.length; i++) {
 		let m = props.ui.menu.value.at(i)!;
-		m.expanded.value = false;
+		m.expanded = false;
 	}
 
-	menuEntry.expanded.value = true;
+	menuEntry.expanded = true;
 
 	//serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]); //TODO?
 }

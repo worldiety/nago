@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useUploadRepository} from '@/api/upload/uploadRepository';
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useUploadRepository } from '@/api/upload/uploadRepository';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
 	clipboardWriteText,
@@ -24,7 +24,7 @@ import {
 	windowInfoChanged,
 } from '@/eventhandling';
 import ConnectionHandler from '@/shared/network/connectionHandler';
-import {ConnectionState} from '@/shared/network/connectionState';
+import { ConnectionState } from '@/shared/network/connectionState';
 import {
 	ClipboardWriteTextRequested,
 	Component,
@@ -35,14 +35,17 @@ import {
 	NavigationReloadRequested,
 	NavigationResetRequested,
 	OpenHttpFlow,
-	OpenHttpLink, RootViewID,
-	RootViewInvalidated, RootViewParameters,
+	OpenHttpLink,
+	RootViewID,
+	RootViewInvalidated,
+	RootViewParameters,
 	RootViewRenderingRequested,
 	ScopeConfigurationChanged,
-	SendMultipleRequested, Str,
+	SendMultipleRequested,
+	Str,
 	ThemeRequested,
 } from '@/shared/proto/nprotoc_gen';
-import {useThemeManager} from '@/shared/themeManager';
+import { useThemeManager } from '@/shared/themeManager';
 
 enum State {
 	Loading,
@@ -89,13 +92,13 @@ async function applyConfiguration(): Promise<void> {
 		}
 
 		if (evt instanceof RootViewInvalidated) {
-			if (evt.rID.value != 0 && evt.rID.value < lastRID().value) {
+			if (evt.rID && evt.rID != 0 && evt.rID < lastRID()) {
 				console.log(
 					'received outdated root view rendering, discarding',
 					'expected',
-					lastRID().value,
+					lastRID(),
 					'received',
-					evt.rID.value
+					evt.rID
 				);
 				return;
 			}
@@ -191,15 +194,12 @@ function fixHistoryInit() {
 	if (factoryId.length === 0) {
 		factoryId = '.'; // this is by ora definition the root page
 	}
-	let params = new Map<Str,Str>();
+	let params = new Map<Str, Str>();
 	new URLSearchParams(window.location.search).forEach((value, key) => {
-		params.set(new Str(key),new Str(value));
+		params.set((key), (value));
 	});
 	history.replaceState(
-		new NavigationForwardToRequested(
-			new RootViewID(factoryId),
-			new RootViewParameters(params)
-		),
+		new NavigationForwardToRequested((factoryId), new RootViewParameters(params)),
 		'',
 		null
 	);
@@ -221,12 +221,12 @@ function addEventListeners(): void {
 
 	window.addEventListener('resize', function (event) {
 		const info = getWindowInfo(themeManager);
-		if (info.sizeClass.value === activeBreakpoint.value) {
+		if (info.sizeClass === activeBreakpoint.value) {
 			// avoid spamming the backend with messages from fluid window resizing
 			return;
 		}
 
-		activeBreakpoint.value = info.sizeClass.value;
+		activeBreakpoint.value = info.sizeClass!;
 		windowInfoChanged(serviceAdapter, themeManager);
 	});
 }
@@ -251,8 +251,7 @@ onBeforeMount(() => {
 	configurationPromise = applyConfiguration();
 });
 
-onMounted(async () => {
-});
+onMounted(async () => {});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
@@ -294,8 +293,8 @@ watch(
 </style>
 
 <template>
-	<ConnectionLostOverlay v-if="!connected"/>
-	<ConnectingChannelOverlay v-if="state === State.Loading"/>
+	<ConnectionLostOverlay v-if="!connected" />
+	<ConnectingChannelOverlay v-if="state === State.Loading" />
 
 	<div
 		id="ora-overlay"
@@ -309,7 +308,7 @@ watch(
 		<!--  <div>Dynamic page information: {{ page }}</div> -->
 		<div v-if="state === State.Loading">Warte auf Websocket-Verbindung...</div>
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
-		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui"/>
+		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
 	</div>
 </template>

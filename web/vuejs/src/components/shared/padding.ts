@@ -10,35 +10,35 @@ export function paddingCSS(padding: Padding): string[] {
 		return styles;
 	}
 
-	if (!padding.bottom.isZero()) {
-		if (padding.bottom.value.startsWith('-')) {
-			styles.push(`margin-bottom:${cssLengthValue(padding.bottom.value)}`);
+	if (padding.bottom) {
+		if (padding.bottom.startsWith('-')) {
+			styles.push(`margin-bottom:${cssLengthValue(padding.bottom)}`);
 		} else {
-			styles.push(`padding-bottom:${cssLengthValue(padding.bottom.value)}`);
+			styles.push(`padding-bottom:${cssLengthValue(padding.bottom)}`);
 		}
 	}
 
-	if (!padding.top.isZero()) {
-		if (padding.top.value.startsWith('-')) {
-			styles.push(`margin-top: ${cssLengthValue(padding.top.value)}`);
+	if (padding.top) {
+		if (padding.top.startsWith('-')) {
+			styles.push(`margin-top: ${cssLengthValue(padding.top)}`);
 		} else {
-			styles.push(`padding-top:${cssLengthValue(padding.top.value)}`);
+			styles.push(`padding-top:${cssLengthValue(padding.top)}`);
 		}
 	}
 
-	if (!padding.right.isZero()) {
-		if (padding.right.value.startsWith('-')) {
-			styles.push(`margin-right:${cssLengthValue(padding.right.value)}`);
+	if (padding.right) {
+		if (padding.right.startsWith('-')) {
+			styles.push(`margin-right:${cssLengthValue(padding.right)}`);
 		} else {
-			styles.push(`padding-right:${cssLengthValue(padding.right.value)}`);
+			styles.push(`padding-right:${cssLengthValue(padding.right)}`);
 		}
 	}
 
-	if (!padding.left.isZero()) {
-		if (padding.left.value.startsWith('-')) {
-			styles.push(`margin-left:${cssLengthValue(padding.left.value)}`);
+	if (padding.left) {
+		if (padding.left.startsWith('-')) {
+			styles.push(`margin-left:${cssLengthValue(padding.left)}`);
 		} else {
-			styles.push(`padding-left:${cssLengthValue(padding.left.value)}`);
+			styles.push(`padding-left:${cssLengthValue(padding.left)}`);
 		}
 	}
 
@@ -53,20 +53,20 @@ export function marginCSS(padding?: Padding): string[] {
 		return styles;
 	}
 
-	if (!padding.bottom.isZero()) {
-		styles.push(`margin-bottom:${cssLengthValue(padding.bottom.value)}`);
+	if (padding.bottom) {
+		styles.push(`margin-bottom:${cssLengthValue(padding.bottom)}`);
 	}
 
-	if (!padding.top.isZero()) {
-		styles.push(`margin-top: ${cssLengthValue(padding.top.value)}`);
+	if (padding.top) {
+		styles.push(`margin-top: ${cssLengthValue(padding.top)}`);
 	}
 
-	if (!padding.right.isZero()) {
-		styles.push(`margin-right:${cssLengthValue(padding.right.value)}`);
+	if (padding.right) {
+		styles.push(`margin-right:${cssLengthValue(padding.right)}`);
 	}
 
-	if (!padding.left.isZero()) {
-		styles.push(`margin-left:${cssLengthValue(padding.left.value)}`);
+	if (padding.left) {
+		styles.push(`margin-left:${cssLengthValue(padding.left)}`);
 	}
 
 	return styles;

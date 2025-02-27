@@ -40,7 +40,6 @@
 				:style="`--sub-menu-triangle-left-offset: ${subMenuTriangleLeftOffset}px`"
 			></div>
 		</div>
-
 		<!-- Sub menu -->
 		<Transition name="slide">
 			<div
@@ -56,14 +55,14 @@
 							class="font-medium rounded-full px-2"
 							:class="{
 								'mb-4': subMenuEntry.menu.value?.length > 0,
-								'cursor-pointer hover:underline focus-visible:underline': !subMenuEntry.action.isZero(),
+								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action!==undefined,
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 							}"
-							:tabindex="!subMenuEntry.action.isZero() ? '0' : '-1'"
+							:tabindex="subMenuEntry.action!==undefined ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
-							{{ subMenuEntry.title.value }}
+							{{ subMenuEntry.title }}
 						</p>
 						<!-- Sub sub menu entries -->
 						<p
@@ -73,14 +72,14 @@
 							class="sub-sub-menu-entry rounded-full px-2"
 							:class="{
 								'cursor-pointer hover:underline focus-visible:underline':
-									!subSubMenuEntry.action.isZero(),
+									subSubMenuEntry.action!==undefined,
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
-							:tabindex="!subSubMenuEntry.action.isZero() ? '0' : '-1'"
+							:tabindex="subSubMenuEntry.action !== undefined ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
 							@keydown.enter="menuEntryClicked(subSubMenuEntry)"
 						>
-							{{ subSubMenuEntry.title.value }}
+							{{ subSubMenuEntry.title }}
 						</p>
 					</div>
 				</div>
@@ -128,15 +127,15 @@ watch(
 );
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
-	return props.ui.menu.value?.find((menuEntry) => menuEntry.expanded.value);
+	return props.ui.menu.value?.find((menuEntry) => menuEntry.expanded);
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
-		?.filter((menuEntry) => menuEntry.expanded.value)
+		?.filter((menuEntry) => menuEntry.expanded)
 		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && !expandedMenuEntry.value?.action.isZero()) {
+	if (entries.length > 0 && expandedMenuEntry.value?.action!==undefined) {
 		entries.unshift(
 			new ScaffoldMenuEntry(
 				expandedMenuEntry.value?.icon,
@@ -155,11 +154,11 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Active, if its component factory ID matches the current page's path name
-	if (menuEntry.rootView.value == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
+	if (menuEntry.rootView == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
 		return true;
 	}
 
-	return `/${menuEntry.rootView.value}` === window.location.pathname;
+	return `/${menuEntry.rootView}` === window.location.pathname;
 }
 
 function handleMouseMove(event: MouseEvent): void {
@@ -177,13 +176,13 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.menu.value?.forEach((value) => (value.expanded.value = false));
+		props.ui.menu.value?.forEach((value) => (value.expanded = false));
 	}
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
 	const activeMenuEntryIndex: number | undefined = props.ui.menu.value?.findIndex(
-		(menuEntry) => menuEntry.expanded.value
+		(menuEntry) => menuEntry.expanded
 	);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
@@ -201,7 +200,7 @@ function updateSubMenuTriangleLeftOffset(): void {
 }
 
 function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
-	if (!menuEntry.action.isZero()) {
+	if (menuEntry.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(menuEntry.action, nextRID()));
 	}
 }
@@ -229,10 +228,10 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 
 	for (let i = 0; i < props.ui.menu.value.length; i++) {
 		let m = props.ui.menu.value.at(i)!;
-		m.expanded.value = false;
+		m.expanded = false;
 	}
 
-	menuEntry.expanded.value = true;
+	menuEntry.expanded = true;
 
 	updateSubMenuTriangleLeftOffset();
 }

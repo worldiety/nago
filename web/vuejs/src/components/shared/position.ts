@@ -8,7 +8,7 @@ export function positionCSS(position?: Position): string[] {
 		return styles;
 	}
 
-	switch (position.kind.value) {
+	switch (position.kind) {
 		case PositionTypeValues.PositionDefault:
 			//styles.push('position:static'); // TODO not sure if we should switch that to change inherit behavior
 			break;
@@ -26,20 +26,20 @@ export function positionCSS(position?: Position): string[] {
 			break;
 	}
 
-	if (!position.left.isZero()) {
-		styles.push('left:' + cssLengthValue(position.left.value));
+	if (position.left) {
+		styles.push('left:' + cssLengthValue(position.left));
 	}
 
-	if (!position.top.isZero()) {
-		styles.push('top:' + cssLengthValue(position.top.value));
+	if (position.top) {
+		styles.push('top:' + cssLengthValue(position.top));
 	}
 
-	if (!position.right.isZero()) {
-		styles.push('right:' + cssLengthValue(position.right.value));
+	if (position.right) {
+		styles.push('right:' + cssLengthValue(position.right));
 	}
 
-	if (!position.bottom.isZero()) {
-		styles.push('bottom:' + cssLengthValue(position.bottom.value));
+	if (position.bottom) {
+		styles.push('bottom:' + cssLengthValue(position.bottom));
 	}
 
 	return styles;

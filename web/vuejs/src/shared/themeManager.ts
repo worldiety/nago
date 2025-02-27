@@ -8,7 +8,7 @@ export default class ThemeManager {
 	public activeLocale: Locale;
 
 	constructor() {
-		this.activeLocale = new Locale();
+		this.activeLocale ="";
 		if (!localStorage.getItem(this.localStorageKey)) {
 			const userPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			localStorage.setItem(this.localStorageKey, userPrefersDarkTheme ? ThemeKey.DARK : ThemeKey.LIGHT);
@@ -78,12 +78,12 @@ export default class ThemeManager {
 		// TODO this is underspecified, because the namespace is not involved in the colorname which break the logic namespacing
 		theme.colors.value.forEach((val, key) => {
 			val.value.forEach((colorVal, colorName) => {
-				elem.style.setProperty(`--${colorName.value}`, colorVal.value);
+				elem.style.setProperty(`--${colorName}`, colorVal);
 			});
 		});
 
 		theme.lengths.value.forEach((lengthVal, lengthName) => {
-			elem.style.setProperty(`--${lengthName.value}`, lengthVal.value);
+			elem.style.setProperty(`--${lengthName}`, lengthVal);
 		});
 	}
 }

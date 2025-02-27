@@ -5,8 +5,8 @@ const props = defineProps<{
 	ui: WindowTitle;
 }>();
 
-if (props.ui.value.value) {
-	document.title = props.ui.value.value;
+if (props.ui.value) {
+	document.title = props.ui.value;
 }
 </script>
 

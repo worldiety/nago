@@ -1,4 +1,5 @@
-import { Length } from '@/shared/protocol/ora/length';
+import {Length} from "@/shared/proto/nprotoc_gen";
+
 
 export function cssLengthValue(l?: Length): string {
 	if (!l || l === '') {

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import {computed} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { marginCSS } from '@/components/shared/padding';
-import { AlignmentValues, GridCell } from '@/shared/proto/nprotoc_gen';
+import {marginCSS} from '@/components/shared/padding';
+import {AlignmentValues, GridCell} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: GridCell;
@@ -11,31 +11,35 @@ const props = defineProps<{
 const style = computed<string>(() => {
 	const styles: string[] = [];
 
-	if (!props.ui.rowStart.isZero()) {
-		styles.push(`grid-row-start: ${props.ui.rowStart.value}`);
+	if (props.ui.rowStart) {
+		styles.push(`grid-row-start: ${props.ui.rowStart}`);
 	}
 
-	if (!props.ui.rowEnd.isZero()) {
-		styles.push(`grid-row-end: ${props.ui.rowEnd.value}`);
+	if (props.ui.rowEnd) {
+		styles.push(`grid-row-end: ${props.ui.rowEnd}`);
 	}
 
-	if (!props.ui.colSpan.isZero()) {
-		styles.push(`grid-column: span ${props.ui.colSpan.value} / span ${props.ui.colSpan.value}`);
+	if (props.ui.colSpan) {
+		styles.push(`grid-column: span ${props.ui.colSpan} / span ${props.ui.colSpan}`);
 	}
 
-	if (!props.ui.rowSpan.isZero()) {
-		styles.push(`grid-row: span ${props.ui.rowSpan.value} / span ${props.ui.rowSpan.value}`);
+	if (props.ui.rowSpan) {
+		styles.push(`grid-row: span ${props.ui.rowSpan} / span ${props.ui.rowSpan}`);
 	}
 
-	if (!props.ui.colStart.isZero()) {
-		styles.push(`grid-column-start: ${props.ui.colStart.value}`);
+	if (props.ui.colStart) {
+		styles.push(`grid-column-start: ${props.ui.colStart}`);
 	}
 
-	if (!props.ui.colEnd.isZero()) {
-		styles.push(`grid-column-end: ${props.ui.colEnd.value}`);
+	if (props.ui.colEnd) {
+		styles.push(`grid-column-end: ${props.ui.colEnd}`);
 	}
 
-	switch (props.ui.alignment.value) {
+	if (props.ui.alignment === undefined) {
+		props.ui.alignment = AlignmentValues.Center;
+	}
+
+	switch (props.ui.alignment) {
 		case AlignmentValues.Stretch:
 			// do nothing, which stretches
 			break;
@@ -76,5 +80,5 @@ const style = computed<string>(() => {
 
 <template>
 	<!-- gridcell -->
-	<ui-generic v-if="props.ui.body" :ui="props.ui.body" :style="style" />
+	<ui-generic v-if="props.ui.body" :ui="props.ui.body" :style="style"/>
 </template>

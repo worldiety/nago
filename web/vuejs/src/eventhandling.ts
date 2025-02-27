@@ -1,11 +1,8 @@
-import { UploadRepository } from '@/api/upload/uploadRepository';
-import { Channel } from '@/shared/network/serviceAdapter';
+import {UploadRepository} from '@/api/upload/uploadRepository';
+import {Channel} from '@/shared/network/serviceAdapter';
 import {
 	ClipboardWriteTextRequested,
-	ColorScheme,
 	ColorSchemeValues,
-	DP,
-	Density,
 	FileImportRequested,
 	Locale,
 	NavigationForwardToRequested,
@@ -16,8 +13,8 @@ import {
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
 	SendMultipleRequested,
 	Str,
 	ThemeRequested,
@@ -27,7 +24,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -37,12 +34,12 @@ let nextRequestTracingID: number = 1;
  */
 export function nextRID(): RID {
 	nextRequestTracingID++;
-	return new RID(nextRequestTracingID);
+	return nextRequestTracingID;
 }
 
 // lastRID returns that last returned request/response tracing number.
 export function lastRID(): RID {
-	return new RID(nextRequestTracingID);
+	return nextRequestTracingID;
 }
 
 /**
@@ -59,15 +56,15 @@ export function windowInfoChanged(chan: Channel, themeManager: ThemeManager) {
  */
 export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
 	let windowInfo = new WindowInfo();
-	windowInfo.density = new Density(window.devicePixelRatio);
-	windowInfo.width = new DP(window.innerWidth);
-	windowInfo.height = new DP(window.innerHeight);
+	windowInfo.density = window.devicePixelRatio;
+	windowInfo.width = window.innerWidth;
+	windowInfo.height = window.innerHeight;
 	windowInfo.sizeClass = currentSizeClass();
 
 	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
-		windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Dark);
+		windowInfo.colorScheme = ColorSchemeValues.Dark;
 	} else {
-		windowInfo.colorScheme = new ColorScheme(ColorSchemeValues.Light);
+		windowInfo.colorScheme = ColorSchemeValues.Light;
 	}
 
 	return windowInfo;
@@ -92,15 +89,7 @@ export function requestRootViewAllocation(chan: Channel, locale: Locale) {
 	let rootViewID = requiredRootViewID();
 	let rootViewParams = requiredRootViewParameter();
 
-
-	history.replaceState(
-		new NavigationForwardToRequested(
-			rootViewID,
-			rootViewParams
-		),
-		'',
-		null
-	);
+	history.replaceState(new NavigationForwardToRequested(rootViewID, rootViewParams), '', null);
 
 	chan.sendEvent(new RootViewAllocationRequested(locale, rootViewID, nextRID(), rootViewParams));
 }
@@ -121,7 +110,7 @@ export function requestScopeConfigurationChange(chan: Channel, themeManager: The
  * getLocale returns whatever the browser thinks, the locale/language the user wants.
  */
 export function getLocale(): Locale {
-	return new Locale(navigator.language || navigator.languages[0]);
+	return (navigator.language || navigator.languages[0]);
 }
 
 /**
@@ -131,8 +120,13 @@ export function getLocale(): Locale {
 export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: ScopeConfigurationChanged) {
 	themeManager.setThemes(evt.themes);
 	themeManager.applyActiveTheme();
-	themeManager.activeLocale = evt.activeLocale;
+	if (evt.activeLocale) {
+		themeManager.activeLocale = evt.activeLocale;
+	}
+
+
 	updateFavicon(evt.appIcon);
+
 	console.log('onScopeConfigurationChanged', evt);
 }
 
@@ -153,11 +147,11 @@ function currentSizeClass(): WindowSizeClass {
 	let wsc: WindowSizeClass;
 	const width = window.innerWidth;
 
-	if (width >= breakpoints['2xl']) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClass2XL);
-	else if (width >= breakpoints.xl) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassXL);
-	else if (width >= breakpoints.lg) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassLarge);
-	else if (width >= breakpoints.md) wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassMedium);
-	else wsc = new WindowSizeClass(WindowSizeClassValues.SizeClassSmall);
+	if (width >= breakpoints['2xl']) wsc = (WindowSizeClassValues.SizeClass2XL);
+	else if (width >= breakpoints.xl) wsc = (WindowSizeClassValues.SizeClassXL);
+	else if (width >= breakpoints.lg) wsc = (WindowSizeClassValues.SizeClassLarge);
+	else if (width >= breakpoints.md) wsc = (WindowSizeClassValues.SizeClassMedium);
+	else wsc = (WindowSizeClassValues.SizeClassSmall);
 
 	return wsc;
 }
@@ -165,8 +159,8 @@ function currentSizeClass(): WindowSizeClass {
 /**
  * updateFavicon installs the given uri (if not empty) into the document, replacing any other favicon.
  */
-function updateFavicon(uri: URI) {
-	if (!uri || uri.isZero()) {
+function updateFavicon(uri?: URI) {
+	if (!uri) {
 		return;
 	}
 
@@ -177,7 +171,7 @@ function updateFavicon(uri: URI) {
 		document.head.appendChild(link);
 	}
 
-	link.href = uri.value;
+	link.href = uri;
 }
 
 /**
@@ -190,7 +184,7 @@ function requiredRootViewID(): RootViewID {
 		factoryId = '.'; // this is by ora definition the root page
 	}
 
-	return new RootViewID(factoryId);
+	return factoryId;
 }
 
 /**
@@ -201,7 +195,7 @@ function requiredRootViewID(): RootViewID {
 function requiredRootViewParameter(): RootViewParameters {
 	let params = new RootViewParameters();
 	new URLSearchParams(window.location.search).forEach((value, key) => {
-		params.value.set(new Str(key), new Str(value));
+		params.value.set(key, value);
 	});
 
 	return params;
@@ -215,8 +209,8 @@ function requiredRootViewParameter(): RootViewParameters {
 export function triggerFileDownload(evt: SendMultipleRequested): void {
 	let res = evt.resources.value[0];
 	let a = document.createElement('a');
-	a.href = res.uRI.value;
-	a.download = res.name.value;
+	a.href = res.uRI!;
+	a.download = res.name!;
 	document.body.appendChild(a);
 	a.click();
 	document.body.removeChild(a);
@@ -232,8 +226,8 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 	let input = document.createElement('input');
 	input.className = 'hidden';
 	input.type = 'file';
-	input.id = evt.iD.value;
-	input.multiple = evt.multiple.value;
+	input.id = evt.iD!;
+	input.multiple = evt.multiple!;
 	input.onchange = (event) => {
 		const item = event.target as HTMLInputElement;
 		if (!item.files) {
@@ -242,14 +236,16 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 		for (let i = 0; i < item.files.length; i++) {
 			uploadRepository.fetchUpload(
 				item.files[i],
-				evt.iD.value,
+				evt.iD!,
 				0,
-				evt.scopeID.value,
+				evt.scopeID!,
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {},
-				(uploadId) => {},
+				(uploadId) => {
+				},
+				(uploadId) => {
+				},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -273,7 +269,7 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
 	console.log('!!!!', evt);
-	let url = `/${evt.rootView.value}`;
+	let url = `/${evt.rootView!}`;
 	if (!evt.values.isZero()) {
 		url += '?';
 		let idx = 0;
@@ -299,13 +295,13 @@ export function applyRootViewState(chan: Channel, state: any) {
 	let req = new RootViewAllocationRequested();
 	// important: evt/history.state may be in broken state, due to the way how javascript deserializes the state
 	// it is NOT of NavigationForwardToRequested anymore
-	console.log("applyRootViewState from history",state)
-	if (evt.rootView && evt.rootView.value) {
-		req.factory.value = evt.rootView.value;
+	console.log('applyRootViewState from history', state);
+	if (evt.rootView) {
+		req.factory = evt.rootView;
 	}
 
-	if (req.factory.value === '') {
-		req.factory.value = '.';
+	if (req.factory === '') {
+		req.factory = '.';
 	}
 
 	if (evt.values && evt.values.value) {
@@ -323,7 +319,7 @@ export function applyRootViewState(chan: Channel, state: any) {
  * @param evt
  */
 export function openHttpLink(evt: OpenHttpLink) {
-	window.open(evt.url.value, evt.target.value);
+	window.open(evt.url, evt.target);
 }
 
 /**
@@ -332,8 +328,8 @@ export function openHttpLink(evt: OpenHttpLink) {
  * @param evt
  */
 export function openHttpFlow(evt: OpenHttpFlow) {
-	localStorage.setItem('http-flow-session', evt.session.value);
-	window.location.href = evt.url.value;
+	localStorage.setItem('http-flow-session', evt.session!);
+	window.location.href = evt.url!;
 }
 
 /**
@@ -343,7 +339,7 @@ export function openHttpFlow(evt: OpenHttpFlow) {
  * @param evt
  */
 export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRequested): void {
-	switch (evt.theme.value) {
+	switch (evt.theme) {
 		case 'light':
 			themeManager.applyLightmodeTheme();
 			break;
@@ -351,7 +347,7 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 			themeManager.applyDarkmodeTheme();
 			break;
 		default:
-			console.log('unknown theme', evt.theme.value);
+			console.log('unknown theme', evt.theme);
 	}
 
 	windowInfoChanged(chan, themeManager);
@@ -359,7 +355,7 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 
 export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
 	navigator.clipboard
-		.writeText(evt.text.value)
+		.writeText(evt.text!)
 		.then((value) => {
 			console.log('text written to clipboard');
 		})
