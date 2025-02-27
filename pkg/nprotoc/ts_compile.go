@@ -116,6 +116,14 @@ func (c *Compiler) tsCanBeUndefined(t Typename) bool {
 		return true
 	}
 
+	if sh == record {
+		return true
+	}
+
+	if sh == array {
+		return true
+	}
+
 	return sh == xobjectAsArray
 }
 

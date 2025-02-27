@@ -112,6 +112,7 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 			} else if c.isInt(field.Type) {
 				c.pf("this.%s = readInt(reader);\n", tsFieldName(field.Name))
 			} else {
+				c.pf("this.%s=new %s()\n", tsFieldName(field.Name), field.Type)
 				c.pf("this.%s.read(reader);\n", tsFieldName(field.Name))
 			}
 		}

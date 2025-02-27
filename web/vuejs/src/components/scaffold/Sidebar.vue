@@ -47,13 +47,13 @@
 					>
 						<p class="font-medium">{{ subMenuEntry.title }}</p>
 						<TriangleDown
-							v-if="subMenuEntry.menu.value?.length > 0"
+							v-if="subMenuEntry.menu?.value?.length > 0"
 							class="duration-150 w-2 -mr-1"
 							:class="{ 'rotate-180': subMenuEntry.expanded }"
 						/>
 					</div>
 					<div
-						v-if="subMenuEntry.expanded && subMenuEntry.menu.value?.length > 0"
+						v-if="subMenuEntry.expanded && subMenuEntry.menu?.value?.length > 0"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
 						<!-- Sub sub menu entries -->
@@ -119,9 +119,12 @@ const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
+	if (!props.ui.menu){
+		return [];
+	}
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
 		?.filter((menuEntry) => menuEntry.expanded)
-		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
+		.flatMap((menuEntry) => menuEntry.menu?.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
 	// TODO I don't understand this code and the logic behind it? Who owns what entry and are we talking about copies?
 	const xpandedEntry = expandedMenuEntry;
@@ -148,7 +151,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	return menuEntry.action!=undefined || !menuEntry.menu.isZero();
+	return menuEntry.action!=undefined || menuEntry.menu!==undefined;
 }
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
@@ -170,7 +173,7 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.menu.value?.forEach((value) => {
+		props.ui.menu?.value?.forEach((value) => {
 			value.expanded = false;
 		});
 	}
@@ -198,6 +201,9 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 }
 
 function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntry[] {
+	if (!subMenuEntry.menu){
+		return [];
+	}
 	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.menu.value];
 	// Add the sub menu entry without its sub menu entries, if it has an action
 	if (entries.length > 0 && subMenuEntry.action) {
@@ -224,7 +230,7 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 			v: entry.id === menuEntry.id,
 		};
 	});*/
-	if (!props.ui.menu.isZero()) {
+	if (!props.ui.menu) {
 		return;
 	}
 

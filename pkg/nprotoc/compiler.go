@@ -194,3 +194,13 @@ func (c *Compiler) isBool(t Typename) bool {
 	_, ok = d.(Bool)
 	return ok
 }
+
+func (c *Compiler) isRecord(t Typename) bool {
+	d, ok := c.declr[t]
+	if !ok {
+		return false
+	}
+
+	_, ok = d.(Record)
+	return ok
+}

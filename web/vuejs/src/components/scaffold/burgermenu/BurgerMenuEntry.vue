@@ -35,7 +35,7 @@
 		<template v-if="ui.expanded">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
-					v-for="(menuEntry, index) in ui.menu.value"
+					v-for="(menuEntry, index) in ui.menu?.value"
 					:key="index"
 					:ui="menuEntry"
 					:top-level="false"
@@ -66,6 +66,10 @@ const emit = defineEmits<{
 const serviceAdapter = useServiceAdapter();
 
 const hasSubMenuEntries = computed((): boolean => {
+	if (!props.ui.menu){
+		return false
+	}
+
 	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 

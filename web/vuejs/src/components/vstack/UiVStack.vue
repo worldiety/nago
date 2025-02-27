@@ -70,10 +70,10 @@ function commonStyles(): string[] {
 	}
 
 	// border handling
-	if (!props.ui.pressedBorder.isZero() && pressed.value) {
+	if (props.ui.pressedBorder && pressed.value) {
 		styles.push(...borderCSS(props.ui.pressedBorder));
 	} else {
-		if (!props.ui.hoveredBorder.isZero()) {
+		if (props.ui.hoveredBorder) {
 			if (hover.value) {
 				styles.push(...borderCSS(props.ui.hoveredBorder));
 			} else {
@@ -84,7 +84,7 @@ function commonStyles(): string[] {
 		}
 	}
 
-	if (!props.ui.focusedBorder.isZero()) {
+	if (props.ui.focusedBorder) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
 			styles.push(...borderCSS(props.ui.focusedBorder));
@@ -188,7 +188,7 @@ const clazz = computed<string>(() => {
 		@click="onClick"
 		@keydown="onKeydown"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
 	</div>
 
 	<button
@@ -199,6 +199,6 @@ const clazz = computed<string>(() => {
 		:title="props.ui.accessibilityLabel"
 		:disabled="props.ui.disabled"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
 	</button>
 </template>

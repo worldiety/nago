@@ -76,10 +76,10 @@ function commonStyles(): string[] {
 	}
 
 	// border handling
-	if (!props.ui.pressedBorder.isZero() && pressed.value) {
+	if (props.ui.pressedBorder && pressed.value) {
 		styles.push(...borderCSS(props.ui.pressedBorder));
 	} else {
-		if (!props.ui.hoveredBorder.isZero()) {
+		if (props.ui.hoveredBorder) {
 			if (hover.value) {
 				styles.push(...borderCSS(props.ui.hoveredBorder));
 			} else {
@@ -90,7 +90,7 @@ function commonStyles(): string[] {
 		}
 	}
 
-	if (!props.ui.focusedBorder.isZero()) {
+	if (props.ui.focusedBorder) {
 		focusable.value = true;
 		if (focused.value && !pressed.value) {
 			styles.push(...borderCSS(props.ui.focusedBorder));
@@ -178,7 +178,7 @@ const clazz = computed<string>(() => {
 
 	// preset special round icon mode in buttons
 	if (props.ui.stylePreset) {
-		if (props.ui.children.value.length == 1 && props.ui.children.value[0] instanceof Img) {
+		if (props.ui.children?.value.length == 1 && props.ui.children.value[0] instanceof Img) {
 			classes.push('!p-0', '!w-10');
 		}
 	}
@@ -209,7 +209,7 @@ const clazz = computed<string>(() => {
 		@keydown="onKeydown"
 		@focus="checkFocusVisible"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
 	</div>
 
 	<button
@@ -220,6 +220,6 @@ const clazz = computed<string>(() => {
 		@click="onClick"
 		:title="props.ui.accessibilityLabel"
 	>
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
 	</button>
 </template>

@@ -57,6 +57,6 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- textlayout -->
 	<div v-if="!props.ui.invisible" :class="clazz" :style="frameStyles" @click="onClick">
-		<ui-generic v-for="ui in props.ui.children.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
 	</div>
 </template>

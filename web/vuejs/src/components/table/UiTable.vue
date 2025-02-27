@@ -38,7 +38,7 @@ const frameStyles = computed<string>(() => {
 
 function rowStyles(idx: number): string {
 	const styles: string[] = [];
-	let row = props.ui.rows.value?.at(idx)!;
+	let row = props.ui.rows?.value?.at(idx)!;
 	if (row.backgroundColor) {
 		styles.push(`background-color: ${colorValue(row.backgroundColor)}`);
 	}
@@ -87,7 +87,7 @@ function headStyles() {
 
 function cellStyles(rowIdx: number, colIdx: number): string {
 	const styles: string[] = [];
-	let cell = props.ui.rows.value.at(rowIdx)?.cells.value.at(colIdx)!;
+	let cell = props.ui.rows?.value.at(rowIdx)?.cells?.value.at(colIdx)!;
 	if (cell.backgroundColor) {
 		styles.push(`background-color: ${colorValue(cell.backgroundColor)}`);
 	}
@@ -133,7 +133,7 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 			break;
 	}
 
-	if (cell.padding.isZero()) {
+	if (!cell.padding) {
 		// default cell padding from the entire table
 		styles.push(...paddingCSS(props.ui.defaultCellPadding));
 	} else {
@@ -152,7 +152,7 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 
 function headCellStyles(colIdx: number): string {
 	const styles: string[] = [];
-	let cell = props.ui.header?.columns.value.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value.at(colIdx)!;
 	if (cell.cellBackgroundColor) {
 		styles.push(`background-color: ${colorValue(cell.cellBackgroundColor)}`);
 	}
@@ -202,10 +202,10 @@ function headCellStyles(colIdx: number): string {
 			break;
 	}
 
-	if (cell.cellPadding.isZero() && !props.ui.defaultCellPadding.isZero()) {
+	if (!cell.cellPadding && props.ui.defaultCellPadding) {
 		// default cell padding from the entire table
 		styles.push(...paddingCSS(props.ui.defaultCellPadding));
-	} else if (!cell.cellPadding.isZero()) {
+	} else if (cell.cellPadding) {
 		// specific cell padding takes precedence
 		styles.push(...paddingCSS(cell.cellPadding));
 	}
@@ -220,15 +220,15 @@ function headCellStyles(colIdx: number): string {
 }
 
 function onClickRow(rowIdx: number) {
-	let row = props.ui.rows.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx)!;
 	if (row.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(row.action, nextRID()));
 	}
 }
 
 function onClickCell(rowIdx: number, colIdx: number) {
-	let row = props.ui.rows.value?.at(rowIdx)!;
-	let cell = row.cells.value.at(colIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx)!;
+	let cell = row.cells?.value.at(colIdx)!;
 	if (cell.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(cell.action, nextRID()));
 	} else if (row.action) {
@@ -237,50 +237,50 @@ function onClickCell(rowIdx: number, colIdx: number) {
 }
 
 function onClickHeaderCell(colIdx: number) {
-	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
 	if (cell.cellAction) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(cell.cellAction, nextRID()));
 	}
 }
 
 function onCellMouseEnter(rowIdx: number, colIdx: number) {
-	let cell = props.ui.rows.value?.at(rowIdx)?.cells.value.at(colIdx)!;
+	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx)!;
 	cell.hovered = true;
 }
 
 function onCellMouseLeave(rowIdx: number, colIdx: number) {
-	let cell = props.ui.rows.value?.at(rowIdx)?.cells.value.at(colIdx)!;
+	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx)!;
 	cell.hovered = false;
 }
 
 function onHeadCellMouseEnter(colIdx: number) {
-	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
 	cell.cellHovered = true;
 }
 
 function onHeadCellMouseLeave(colIdx: number) {
-	let cell = props.ui.header?.columns.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
 	cell.cellHovered = false;
 }
 
 function onRowMouseEnter(rowIdx: number) {
-	let row = props.ui.rows.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx)!;
 	row.hovered = true;
 }
 
 function onRowMouseLeave(rowIdx: number) {
-	let row = props.ui.rows.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx)!;
 	row.hovered = false;
 }
 </script>
 
 <template>
 	<table class="w-full text-left rtl:text-right overflow-clip" :style="frameStyles">
-		<thead v-if="props.ui.header?.columns.value?.length > 0" class="" :style="headStyles()">
+		<thead v-if="props.ui.header?.columns?.value?.length > 0" class="" :style="headStyles()">
 		<tr>
 			<th
 				class="font-normal"
-				v-for="(head, headIdx) in props.ui.header.columns.value"
+				v-for="(head, headIdx) in props.ui.header?.columns?.value"
 				scope="col"
 				:style="headCellStyles(headIdx)"
 				@click.stop="onClickHeaderCell(headIdx)"
@@ -294,7 +294,7 @@ function onRowMouseLeave(rowIdx: number) {
 
 		<tbody class="">
 		<tr
-			v-for="(row, rowIdx) in props.ui.rows.value"
+			v-for="(row, rowIdx) in props.ui.rows?.value"
 			:style="rowStyles(rowIdx)"
 			@click="onClickRow(rowIdx)"
 			@mouseenter="onRowMouseEnter(rowIdx)"
@@ -303,7 +303,7 @@ function onRowMouseLeave(rowIdx: number) {
 			<td
 				:rowspan="cell.rowSpan == 0 ? undefined : cell.rowSpan"
 				:colspan="cell.colSpan == 0 ? undefined : cell.colSpan"
-				v-for="(cell, colIdx) in row.cells.value"
+				v-for="(cell, colIdx) in row.cells?.value"
 				:style="cellStyles(rowIdx, colIdx)"
 				@click.stop="onClickCell(rowIdx, colIdx)"
 				@mouseenter="onCellMouseEnter(rowIdx, colIdx)"

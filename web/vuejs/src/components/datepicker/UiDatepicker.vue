@@ -50,6 +50,7 @@ import {frameCSS} from '@/components/shared/frame';
 import {useServiceAdapter} from '@/composables/serviceAdapter';
 import {nextRID} from '@/eventhandling';
 import {
+	DateData,
 	DatePicker,
 	DatePickerStyleValues,
 	UpdateStateValueRequested,
@@ -82,6 +83,9 @@ watch(
 );
 
 function initialize(): void {
+	if (props.ui.value===undefined){
+		props.ui.value=new DateData();
+	}
 	selectedStartDay.value = props.ui.value.day?props.ui.value.day:0;
 	selectedStartMonth.value = props.ui.value.month?props.ui.value.month:0;
 	selectedStartYear.value = props.ui.value.year?props.ui.value.year:0;
@@ -89,6 +93,10 @@ function initialize(): void {
 	startDateSelected.value =
 		props.ui.style == DatePickerStyleValues.DatePickerDateRange && selectedStartYear.value != 0;
 
+
+	if (props.ui.endValue===undefined){
+		props.ui.endValue=new DateData();
+	}
 	selectedEndDay.value = props.ui.endValue.day?props.ui.endValue.day:0;
 	selectedEndMonth.value = props.ui.endValue.month?props.ui.endValue.month:0;
 	selectedEndYear.value = props.ui.endValue.year?props.ui.endValue.year:0;
@@ -106,6 +114,10 @@ function initialize(): void {
 }
 
 const dateFormatted = computed((): string | null => {
+	if (!props.ui.value){
+		return null
+	}
+
 	if (!props.ui.value.year) {
 		return null;
 	}

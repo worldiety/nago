@@ -19,7 +19,7 @@ const style = computed<string>(() => {
 	if (!props.ui.columns) {
 		styles.push('grid-auto-columns: auto');
 	} else {
-		if (!props.ui.colWidths.isZero()) {
+		if (!props.ui.colWidths) {
 			styles.push(`grid-template-columns: repeat(${props.ui.columns}, minmax(0, 1fr))`);
 		} else {
 			let tmp = 'grid-template-columns: ';
@@ -74,6 +74,6 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- grid -->
 	<div :class="clazz" :style="style">
-		<ui-grid-cell v-for="cell in props.ui.cells.value" :ui="cell" />
+		<ui-grid-cell v-for="cell in props.ui.cells?.value" :ui="cell" />
 	</div>
 </template>

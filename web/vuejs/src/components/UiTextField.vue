@@ -31,7 +31,7 @@ watch(inputValue, (newValue, oldValue) => {
 		return;
 	}
 
-	if (props.ui.keyboardOptions.keyboardType == KeyboardTypeValues.KeyboardInteger) {
+	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger) {
 		if (newValue === '' || newValue === '-') {
 			inputValue.value = '0';
 		} else if (!newValue.match(/^-?[0-9]+$/)) {
@@ -41,7 +41,7 @@ watch(inputValue, (newValue, oldValue) => {
 		return;
 	}
 
-	if (props.ui.keyboardOptions.keyboardType == KeyboardTypeValues.KeyboardFloat) {
+	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardFloat) {
 		if (newValue === '' || newValue === '-') {
 			inputValue.value = '0';
 		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
@@ -134,7 +134,7 @@ const id = computed<string>(() => {
 });
 
 const inputMode = computed<string>(() => {
-	switch (props.ui.keyboardOptions.keyboardType) {
+	switch (props.ui.keyboardOptions?.keyboardType) {
 		case KeyboardTypeValues.KeyboardInteger:
 			return 'numeric';
 		case KeyboardTypeValues.KeyboardFloat:

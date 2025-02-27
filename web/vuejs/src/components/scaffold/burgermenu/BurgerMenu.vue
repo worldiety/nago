@@ -33,7 +33,7 @@
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry
-							v-for="(menuEntry, index) in ui.menu.value"
+							v-for="(menuEntry, index) in ui.menu?.value"
 							:key="index"
 							:ui="menuEntry"
 							:top-level="true"
@@ -108,6 +108,9 @@ const serviceAdapter = useServiceAdapter();
 const menuOpen = ref<boolean>(false);
 
 const expandedTopLevelMenuEntry = computed((): ScaffoldMenuEntry | null => {
+	if (!props.ui.menu){
+		return null;
+	}
 	return props.ui.menu.value?.find((menuEntry: ScaffoldMenuEntry) => menuEntry.expanded) ?? null;
 });
 
@@ -123,24 +126,33 @@ const expandedTopLevelMenuEntryActive = computed((): boolean => {
 });
 
 const subMenuVisible = computed((): boolean => {
+	if (!props.ui.menu){
+		return false;
+	}
+
 	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
 		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded
 	);
-	console.log('!!!!', !!expandedTopLevelMenuEntry?.menu.value);
+
+	if (!expandedTopLevelMenuEntry?.menu){
+		return false
+	}
+
 	return !!expandedTopLevelMenuEntry?.menu.value;
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
-	if (props.ui.menu.isZero()) {
+	if (!props.ui.menu) {
 		return [];
 	}
 	const expandedTopLevelMenuEntry = props.ui.menu.value?.find(
 		(menuEntry: ScaffoldMenuEntry) => menuEntry.expanded
 	);
+
 	if (!expandedTopLevelMenuEntry) {
 		return props.ui.menu.value;
 	}
-	return expandedTopLevelMenuEntry.menu.value ?? props.ui.menu.value;
+	return expandedTopLevelMenuEntry.menu?.value ?? props.ui.menu.value;
 });
 
 function navigateToExpandedTopLevelMenuEntry(): void {

@@ -3,7 +3,7 @@ import { Padding } from '@/shared/proto/nprotoc_gen';
 
 // paddingCSS applies the padding length values. Note, that negative paddings are interpreted as negative margins,
 // because negative padding values are not allowed and it seems practical to move views around for some nice effects.
-export function paddingCSS(padding: Padding): string[] {
+export function paddingCSS(padding?: Padding): string[] {
 	const styles: string[] = [];
 
 	if (!padding) {

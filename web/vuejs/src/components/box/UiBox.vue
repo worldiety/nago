@@ -82,7 +82,7 @@ function childClass(a?: Alignment): string {
 	<!-- box -->
 	<div :class="clazz" :style="frameStyles">
 		<div
-			v-for="ui in props.ui.children.value"
+			v-for="ui in props.ui.children?.value"
 			:class="childClass(ui.alignment)"
 			:style="childMargin(ui.alignment, props.ui.padding)"
 		>

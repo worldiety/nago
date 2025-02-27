@@ -31,13 +31,13 @@
 		>
 			<div class="relative">
 				<div class="*:h-full" v-if="ui.expanded && ui.iconActive">
-					<ui-generic :ui="props.ui.iconActive!" />
+					<ui-generic :ui="props.ui.iconActive!"/>
 				</div>
 				<div v-else-if="ui.title && props.ui.icon" class="*:h-full">
-					<ui-generic :ui="props.ui.icon" />
+					<ui-generic :ui="props.ui.icon"/>
 				</div>
 				<div v-else-if="props.ui.icon" class="h-10">
-					<ui-generic :ui="props.ui.icon" />
+					<ui-generic :ui="props.ui.icon"/>
 				</div>
 
 				<!-- Optional red badge -->
@@ -59,11 +59,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {FunctionCallRequested, ScaffoldMenuEntry} from '@/shared/proto/nprotoc_gen';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
@@ -93,6 +93,10 @@ const active = computed((): boolean => {
 });
 
 const hasSubMenuEntries = computed((): boolean => {
+	if (!props.ui.menu) {
+		return false;
+	}
+
 	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 
@@ -119,7 +123,7 @@ function handleMouseLeave(): void {
 }
 
 function focusFirstLinkedSubMenuEntry(keyPressed: 'down' | 'right'): void {
-	if (!props.ui.menu.value || props.ui.menu.value.length === 0) {
+	if (!props.ui.menu?.value || props.ui.menu.value.length === 0) {
 		return;
 	}
 	if (

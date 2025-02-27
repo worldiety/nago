@@ -3,7 +3,7 @@ import { Frame } from '@/shared/proto/nprotoc_gen';
 
 export function frameCSS(frame?: Frame): string[] {
 	const styles: string[] = [];
-	if (!frame || frame.isZero()) {
+	if (!frame) {
 		return styles;
 	}
 

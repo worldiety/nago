@@ -61,7 +61,7 @@ export function borderCSS(border?: Border): string[] {
 	}
 
 	// shadow
-	if (!border.boxShadow.isZero()) {
+	if (border.boxShadow) {
 		if (!border.boxShadow.radius) {
 			border.boxShadow.radius = '10px';
 		}

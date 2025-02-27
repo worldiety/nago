@@ -10,7 +10,7 @@
 				<div class="flex justify-end items-center gap-x-6 h-full">
 					<!-- Top level menu entries -->
 					<div
-						v-for="(menuEntry, index) in ui.menu.value"
+						v-for="(menuEntry, index) in ui.menu?.value"
 						:key="index"
 						ref="menuEntryElements"
 						class="h-full"
@@ -54,7 +54,7 @@
 							ref="subMenuEntryElements"
 							class="font-medium rounded-full px-2"
 							:class="{
-								'mb-4': subMenuEntry.menu.value?.length > 0,
+								'mb-4': subMenuEntry.menu?.value?.length > 0,
 								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action!==undefined,
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 							}"
@@ -127,13 +127,16 @@ watch(
 );
 
 const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
-	return props.ui.menu.value?.find((menuEntry) => menuEntry.expanded);
+	return props.ui.menu?.value?.find((menuEntry) => menuEntry.expanded);
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
+	if (!props.ui.menu){
+		return [];
+	}
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
 		?.filter((menuEntry) => menuEntry.expanded)
-		.flatMap((menuEntry) => menuEntry.menu.value ?? []);
+		.flatMap((menuEntry) => menuEntry.menu?.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
 	if (entries.length > 0 && expandedMenuEntry.value?.action!==undefined) {
 		entries.unshift(
@@ -176,12 +179,12 @@ function handleMouseMove(event: MouseEvent): void {
 		// 	serviceAdapter.setProperties(...updatedExpandedProperties);
 		// }
 
-		props.ui.menu.value?.forEach((value) => (value.expanded = false));
+		props.ui.menu?.value?.forEach((value) => (value.expanded = false));
 	}
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	const activeMenuEntryIndex: number | undefined = props.ui.menu.value?.findIndex(
+	const activeMenuEntryIndex: number | undefined = props.ui.menu?.value?.findIndex(
 		(menuEntry) => menuEntry.expanded
 	);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
@@ -222,7 +225,7 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 	//
 	// serviceAdapter.setPropertiesAndCallFunctions(propertiesToSet, [menuEntry.onFocus]);
 
-	if (props.ui.menu.isZero()) {
+	if (!props.ui.menu) {
 		return;
 	}
 

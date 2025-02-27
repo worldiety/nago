@@ -118,6 +118,9 @@ export function getLocale(): Locale {
  * after the backend has processed a [ScopeConfigurationChangeRequested] event.
  */
 export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: ScopeConfigurationChanged) {
+	if (!evt.themes){
+		return
+	}
 	themeManager.setThemes(evt.themes);
 	themeManager.applyActiveTheme();
 	if (evt.activeLocale) {
@@ -207,6 +210,10 @@ function requiredRootViewParameter(): RootViewParameters {
  * @param evt
  */
 export function triggerFileDownload(evt: SendMultipleRequested): void {
+	if (!evt.resources){
+		return
+	}
+
 	let res = evt.resources.value[0];
 	let a = document.createElement('a');
 	a.href = res.uRI!;
@@ -252,7 +259,7 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 			);
 		}
 	};
-	if (evt.allowedMimeTypes.value) {
+	if (evt.allowedMimeTypes?.value) {
 		input.accept = evt.allowedMimeTypes.value.join(',');
 	}
 	document.body.appendChild(input);
@@ -270,10 +277,13 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
 	console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
-	if (!evt.values.isZero()) {
+	if (evt.values) {
 		url += '?';
 		let idx = 0;
 		evt.values.value.forEach((value, key) => {
+			if (!evt.values?.value.size){
+				return
+			}
 			url += `${key}=${value}`;
 			if (idx < evt.values.value.size - 1) {
 				url += '&';
