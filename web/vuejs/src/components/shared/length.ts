@@ -1,5 +1,4 @@
-import {Length} from "@/shared/proto/nprotoc_gen";
-
+import { Length } from '@/shared/proto/nprotoc_gen';
 
 export function cssLengthValue(l?: Length): string {
 	if (!l || l === '') {

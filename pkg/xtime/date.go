@@ -19,6 +19,10 @@ type Date struct {
 	Year  int        // Year like 2024.
 }
 
+func (d Date) String() string {
+	return fmt.Sprintf("%d.%d.%d", d.Year, d.Month, d.Day)
+}
+
 // Time converts this date into the first time value of the determined day within the given time zone.
 func (d Date) Time(loc *time.Location) time.Time {
 	return time.Date(d.Year, d.Month, d.Day, 0, 0, 0, 0, loc)

@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { borderCSS } from '@/components/shared/border';
+import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
-import {Spacer} from "@/shared/proto/nprotoc_gen";
-import {colorValue} from "@/components/shared/colors";
+import { Spacer } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Spacer;

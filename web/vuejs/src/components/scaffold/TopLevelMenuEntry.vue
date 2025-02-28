@@ -22,22 +22,22 @@
 			v-if="ui.icon"
 			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
 			:class="{
-				'h-10': ui.title===undefined,
+				'h-10': ui.title === undefined,
 				'mix-blend-multiply bg-M7': ui.isZero() && hover,
-				'bg-M7 bg-opacity-25': ui.expanded===true,
+				'bg-M7 bg-opacity-25': ui.expanded === true,
 				'bg-opacity-35': interacted,
 				'bg-M7 bg-opacity-35': active,
 			}"
 		>
 			<div class="relative">
 				<div class="*:h-full" v-if="ui.expanded && ui.iconActive">
-					<ui-generic :ui="props.ui.iconActive!"/>
+					<ui-generic :ui="props.ui.iconActive!" />
 				</div>
 				<div v-else-if="ui.title && props.ui.icon" class="*:h-full">
-					<ui-generic :ui="props.ui.icon"/>
+					<ui-generic :ui="props.ui.icon" />
 				</div>
 				<div v-else-if="props.ui.icon" class="h-10">
-					<ui-generic :ui="props.ui.icon"/>
+					<ui-generic :ui="props.ui.icon" />
 				</div>
 
 				<!-- Optional red badge -->
@@ -59,11 +59,11 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {FunctionCallRequested, ScaffoldMenuEntry} from '@/shared/proto/nprotoc_gen';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;

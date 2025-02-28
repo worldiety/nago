@@ -16,6 +16,7 @@ type TCheckboxField struct {
 	frame           Frame
 	border          Border
 	keyboardOptions TKeyboardOptions
+	id              string
 }
 
 // A CheckboxField aggregates a checkbox together with form field typical labels, hints and error texts.
@@ -76,10 +77,16 @@ func (c TCheckboxField) ErrorText(text string) TCheckboxField {
 	return c
 }
 
+func (c TCheckboxField) ID(id string) TCheckboxField {
+	c.id = id
+	return c
+}
+
 func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 	return VStack(
 		HStack(
 			Checkbox(c.value).
+				ID(c.id).
 				Disabled(c.disabled).
 				InputChecked(c.inputValue),
 			Text(c.label),

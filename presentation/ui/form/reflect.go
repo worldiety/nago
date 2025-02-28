@@ -3,6 +3,7 @@ package form
 import (
 	"encoding/json"
 	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -67,6 +68,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				continue
 			}
 
+			id := field.Tag.Get("id")
+
 			var values []string
 			if array, ok := field.Tag.Lookup("values"); ok {
 				err := json.Unmarshal([]byte(array), &values)
@@ -105,6 +108,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
 					Disabled(disabled).
+					ID(id).
 					InputValue(boolState).
 					SupportingText(field.Tag.Get("supportingText")).
 					Frame(ui.Frame{}.FullWidth()),
@@ -189,6 +193,31 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
+			case reflect.Struct:
+				switch field.Type {
+				case reflect.TypeFor[xtime.Date]():
+
+					dateState := core.DerivedState[xtime.Date](state, field.Name).Init(func() xtime.Date {
+						src := state.Get()
+						v := reflect.ValueOf(src).FieldByName(field.Name).Interface()
+
+						return v.(xtime.Date)
+					})
+
+					dateState.Observe(func(newValue xtime.Date) {
+						dst := state.Get()
+						dst = setFieldValue(dst, field.Name, newValue).(T)
+						state.Set(dst)
+						state.Notify()
+					})
+
+					fieldsBuilder.Append(ui.SingleDatePicker(label, dateState.Get(), dateState).
+						Disabled(disabled).
+						SupportingText(field.Tag.Get("supportingText")).
+						Frame(ui.Frame{}.FullWidth()),
+					)
+
+				}
 			case reflect.String:
 				switch field.Type {
 				default:
@@ -224,6 +253,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.PasswordField(label, secretState.Get()).
 							InputValue(secretState).
+							ID(id).
 							SupportingText(field.Tag.Get("supportingText")).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
@@ -255,6 +285,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
 							InputValue(strState).
+							ID(id).
 							SupportingText(field.Tag.Get("supportingText")).
 							Lines(lines).
 							Disabled(disabled).
@@ -299,7 +330,8 @@ func setFieldValue(dst any, fieldName string, val any) any {
 	case bool:
 		cpy.FieldByName(fieldName).SetBool(t)
 	default:
-		slog.Error("cannot set field value for [form.Auto]", "type", reflect.TypeOf(t))
+		//slog.Error("cannot set field value for [form.Auto]", "type", reflect.TypeOf(t))
+		cpy.FieldByName(fieldName).Set(reflect.ValueOf(t))
 	}
 
 	return cpy.Interface()

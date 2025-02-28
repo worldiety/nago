@@ -1,6 +1,6 @@
-import {inject} from 'vue';
-import {themeManagerKey} from '@/shared/injectionKeys';
-import {Locale, Theme, Themes} from '@/shared/proto/nprotoc_gen';
+import { inject } from 'vue';
+import { themeManagerKey } from '@/shared/injectionKeys';
+import { Locale, Theme, Themes } from '@/shared/proto/nprotoc_gen';
 
 export default class ThemeManager {
 	private readonly localStorageKey = 'color-theme';
@@ -8,7 +8,7 @@ export default class ThemeManager {
 	public activeLocale: Locale;
 
 	constructor() {
-		this.activeLocale = "";
+		this.activeLocale = '';
 		if (!localStorage.getItem(this.localStorageKey)) {
 			const userPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			localStorage.setItem(this.localStorageKey, userPrefersDarkTheme ? ThemeKey.DARK : ThemeKey.LIGHT);
@@ -74,7 +74,7 @@ export default class ThemeManager {
 
 	private applyTheme(theme?: Theme): void {
 		if (!theme) {
-			return
+			return;
 		}
 
 		let elem = document.getElementsByTagName('html')[0];

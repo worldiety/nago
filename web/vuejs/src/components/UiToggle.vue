@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import {ref, watch} from 'vue';
-import {bool2Str} from '@/components/shared/util';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {Toggle, UpdateStateValueRequested} from '@/shared/proto/nprotoc_gen';
+import { ref, watch } from 'vue';
+import { bool2Str } from '@/components/shared/util';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { Toggle, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Toggle;
@@ -29,7 +29,7 @@ function onClick() {
 	}
 
 	serviceAdapter.sendEvent(
-		new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (bool2Str(!checked.value)))
+		new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(!checked.value))
 	);
 }
 </script>

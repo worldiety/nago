@@ -33,7 +33,10 @@ onUnmounted(() => {
 });
 
 const navigationBarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.alignment === undefined || props.ui.alignment=== ScaffoldAlignmentValues.ScaffoldAlignmentTop;
+	return (
+		(windowWidth.value >= 768 && props.ui.alignment === undefined) ||
+		props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentTop
+	);
 });
 
 const sidebarVisible = computed((): boolean => {

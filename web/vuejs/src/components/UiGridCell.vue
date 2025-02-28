@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {computed} from 'vue';
+import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {marginCSS} from '@/components/shared/padding';
-import {AlignmentValues, GridCell} from '@/shared/proto/nprotoc_gen';
+import { marginCSS } from '@/components/shared/padding';
+import { AlignmentValues, GridCell } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: GridCell;
@@ -80,5 +80,5 @@ const style = computed<string>(() => {
 
 <template>
 	<!-- gridcell -->
-	<ui-generic v-if="props.ui.body" :ui="props.ui.body" :style="style"/>
+	<ui-generic v-if="props.ui.body" :ui="props.ui.body" :style="style" />
 </template>

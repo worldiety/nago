@@ -1,5 +1,5 @@
-import {UploadRepository} from '@/api/upload/uploadRepository';
-import {Channel} from '@/shared/network/serviceAdapter';
+import { UploadRepository } from '@/api/upload/uploadRepository';
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
@@ -13,8 +13,8 @@ import {
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	Str,
 	ThemeRequested,
@@ -24,7 +24,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -110,7 +110,7 @@ export function requestScopeConfigurationChange(chan: Channel, themeManager: The
  * getLocale returns whatever the browser thinks, the locale/language the user wants.
  */
 export function getLocale(): Locale {
-	return (navigator.language || navigator.languages[0]);
+	return navigator.language || navigator.languages[0];
 }
 
 /**
@@ -118,15 +118,14 @@ export function getLocale(): Locale {
  * after the backend has processed a [ScopeConfigurationChangeRequested] event.
  */
 export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: ScopeConfigurationChanged) {
-	if (!evt.themes){
-		return
+	if (!evt.themes) {
+		return;
 	}
 	themeManager.setThemes(evt.themes);
 	themeManager.applyActiveTheme();
 	if (evt.activeLocale) {
 		themeManager.activeLocale = evt.activeLocale;
 	}
-
 
 	updateFavicon(evt.appIcon);
 
@@ -150,11 +149,11 @@ function currentSizeClass(): WindowSizeClass {
 	let wsc: WindowSizeClass;
 	const width = window.innerWidth;
 
-	if (width >= breakpoints['2xl']) wsc = (WindowSizeClassValues.SizeClass2XL);
-	else if (width >= breakpoints.xl) wsc = (WindowSizeClassValues.SizeClassXL);
-	else if (width >= breakpoints.lg) wsc = (WindowSizeClassValues.SizeClassLarge);
-	else if (width >= breakpoints.md) wsc = (WindowSizeClassValues.SizeClassMedium);
-	else wsc = (WindowSizeClassValues.SizeClassSmall);
+	if (width >= breakpoints['2xl']) wsc = WindowSizeClassValues.SizeClass2XL;
+	else if (width >= breakpoints.xl) wsc = WindowSizeClassValues.SizeClassXL;
+	else if (width >= breakpoints.lg) wsc = WindowSizeClassValues.SizeClassLarge;
+	else if (width >= breakpoints.md) wsc = WindowSizeClassValues.SizeClassMedium;
+	else wsc = WindowSizeClassValues.SizeClassSmall;
 
 	return wsc;
 }
@@ -210,8 +209,8 @@ function requiredRootViewParameter(): RootViewParameters {
  * @param evt
  */
 export function triggerFileDownload(evt: SendMultipleRequested): void {
-	if (!evt.resources){
-		return
+	if (!evt.resources) {
+		return;
 	}
 
 	let res = evt.resources.value[0];
@@ -249,10 +248,8 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {
-				},
-				(uploadId) => {
-				},
+				(uploadId) => {},
+				(uploadId) => {},
 				(uploadId) => {
 					console.log('upload failed');
 				}
@@ -281,8 +278,8 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 		url += '?';
 		let idx = 0;
 		evt.values.value.forEach((value, key) => {
-			if (!evt.values?.value.size){
-				return
+			if (!evt.values?.value.size) {
+				return;
 			}
 			url += `${key}=${value}`;
 			if (idx < evt.values.value.size - 1) {

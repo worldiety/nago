@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import {computed, ref, watch} from 'vue';
+import { computed, ref, watch } from 'vue';
 import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {frameCSS} from '@/components/shared/frame';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {PasswordField, TextFieldStyleValues, UpdateStateValueRequested,} from '@/shared/proto/nprotoc_gen';
+import { frameCSS } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { PasswordField, TextFieldStyleValues, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -14,8 +14,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const passwordInput = ref<HTMLElement | undefined>();
-const inputValue = ref<string>(props.ui.value ? props.ui.value : "");
-const idPrefix = 'password-field-';
+const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
 
 watch(
 	() => props.ui.value,
@@ -33,7 +32,7 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		//console.log("textfield triggered props.ui")
-		inputValue.value = newValue.value ? newValue.value : "";
+		inputValue.value = newValue.value ? newValue.value : '';
 	}
 );
 
@@ -46,10 +45,8 @@ function submitInputValue(force: boolean): void {
 	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
 	nextRID();
 
-	if (force || (props.ui.disableDebounce)) {
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (inputValue.value))
-		);
+	if (force || props.ui.disableDebounce) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
 
 		return;
 	}
@@ -75,9 +72,7 @@ function debouncedInput() {
 			return;
 		}
 
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (inputValue.value))
-		);
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
 	}, debounceTime);
 }
 
@@ -102,7 +97,7 @@ function toggleRevealed(): void {
 		>
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
-					:id="idPrefix"
+					:id="ui.id"
 					:autocomplete="props.ui.disableAutocomplete ? 'off' : 'on'"
 					ref="passwordInput"
 					v-model="inputValue"
@@ -118,8 +113,8 @@ function toggleRevealed(): void {
 						@click="toggleRevealed"
 						@keydown.enter="toggleRevealed"
 					>
-						<RevealIcon v-if="!props.ui.disabled" class="w-6"/>
-						<HideIcon v-else class="w-6"/>
+						<RevealIcon v-if="!props.ui.disabled" class="w-6" />
+						<HideIcon v-else class="w-6" />
 					</div>
 				</div>
 			</div>

@@ -27,6 +27,7 @@ type TVStack struct {
 	accessibilityLabel string
 	action             func()
 	position           Position
+	id                 string
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -134,6 +135,11 @@ func (c TVStack) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
+func (c TVStack) ID(id string) TVStack {
+	c.id = id
+	return c
+}
+
 func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.VStack{
@@ -157,5 +163,6 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		PressedBorder:          c.pressedBorder,
 		Action:                 ctx.MountCallback(c.action),
 		Position:               c.position.ora(),
+		Id:                     proto.Str(c.id),
 	}
 }

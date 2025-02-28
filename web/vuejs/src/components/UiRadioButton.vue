@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
-import {bool2Str} from '@/components/shared/util';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {Radiobutton, UpdateStateValueRequested} from '@/shared/proto/nprotoc_gen';
+import { ref, watch } from 'vue';
+import { bool2Str } from '@/components/shared/util';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { Radiobutton, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Radiobutton;
@@ -27,7 +27,7 @@ watch(
 function radioButtonClicked(): void {
 	if (!props.ui.disabled) {
 		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (bool2Str(!checked.value)))
+			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(!checked.value))
 		);
 	}
 }
@@ -43,7 +43,7 @@ function radioButtonClicked(): void {
 		@keydown.enter="radioButtonClicked"
 	>
 		<div class="p-2.5">
-			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled"/>
+			<input :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled" />
 		</div>
 	</div>
 </template>

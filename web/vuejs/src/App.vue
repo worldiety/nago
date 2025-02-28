@@ -196,13 +196,9 @@ function fixHistoryInit() {
 	}
 	let params = new Map<Str, Str>();
 	new URLSearchParams(window.location.search).forEach((value, key) => {
-		params.set((key), (value));
+		params.set(key, value);
 	});
-	history.replaceState(
-		new NavigationForwardToRequested((factoryId), new RootViewParameters(params)),
-		'',
-		null
-	);
+	history.replaceState(new NavigationForwardToRequested(factoryId, new RootViewParameters(params)), '', null);
 }
 
 const uploadRepository = useUploadRepository();

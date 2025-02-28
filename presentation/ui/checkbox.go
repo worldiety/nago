@@ -10,6 +10,7 @@ type TCheckbox struct {
 	inputValue *core.State[bool]
 	disabled   bool
 	invisible  bool
+	id         string
 }
 
 // Checkbox represents a user interface element which spans a visible area to click or tap from the user.
@@ -37,6 +38,11 @@ func (c TCheckbox) Visible(v bool) TCheckbox {
 	return c
 }
 
+func (c TCheckbox) ID(id string) TCheckbox {
+	c.id = id
+	return c
+}
+
 func (c TCheckbox) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO this component has an intrinsic padding which must be removed
 	return &proto.Checkbox{
@@ -44,5 +50,6 @@ func (c TCheckbox) Render(ctx core.RenderContext) core.RenderNode {
 		InputValue: c.inputValue.Ptr(),
 		Disabled:   proto.Bool(c.disabled),
 		Invisible:  proto.Bool(c.invisible),
+		Id:         proto.Str(c.id),
 	}
 }

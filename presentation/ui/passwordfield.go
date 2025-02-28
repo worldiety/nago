@@ -20,6 +20,7 @@ type TPasswordField struct {
 	invisible           bool
 	frame               proto.Frame
 	lines               int
+	id                  string
 }
 
 // PasswordField represents a secret entered by the user.
@@ -121,6 +122,11 @@ func (c TPasswordField) Visible(v bool) DecoredView {
 	return c
 }
 
+func (c TPasswordField) ID(id string) TPasswordField {
+	c.id = id
+	return c
+}
+
 func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.PasswordField{
@@ -137,5 +143,6 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:               c.frame,
 		Lines:               proto.Uint(c.lines),
 		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
+		Id:                  proto.Str(c.id),
 	}
 }

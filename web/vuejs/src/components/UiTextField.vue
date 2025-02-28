@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import {computed, ref, watch} from 'vue';
+import { computed, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {frameCSS} from '@/components/shared/frame';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
+import { frameCSS } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
 import {
 	KeyboardTypeValues,
 	TextField,
@@ -17,7 +17,7 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const inputValue = ref<string>(props.ui.value ? props.ui.value : "");
+const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
 
 //console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
 
@@ -85,10 +85,8 @@ function submitInputValue(force: boolean): void {
 	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
 	nextRID();
 
-	if (force || (props.ui.disableDebounce)) {
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (inputValue.value))
-		);
+	if (force || props.ui.disableDebounce) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
 
 		return;
 	}
@@ -119,9 +117,7 @@ function debouncedInput() {
 			return;
 		}
 
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (inputValue.value))
-		);
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
 	}, debounceTime);
 }
 
@@ -130,6 +126,10 @@ const frameStyles = computed<string>(() => {
 });
 
 const id = computed<string>(() => {
+	if (props.ui.id) {
+		return props.ui.id;
+	}
+
 	return 'tf-' + props.ui.inputValue;
 });
 
@@ -195,7 +195,7 @@ const inputMode = computed<string>(() => {
 					v-if="inputValue && !props.ui.disabled"
 					class="absolute top-0 bottom-0 right-4 flex items-center h-full"
 				>
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 		</InputWrapper>

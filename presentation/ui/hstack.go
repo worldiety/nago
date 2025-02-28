@@ -31,6 +31,7 @@ type THStack struct {
 	wrap                   bool
 	disabled               bool
 	position               Position
+	id                     string
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -158,6 +159,11 @@ func (c THStack) Action(f func()) THStack {
 	return c
 }
 
+func (c THStack) ID(id string) THStack {
+	c.id = id
+	return c
+}
+
 func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 	ptr := ctx.MountCallback(c.action)
 	if core.Debug {
@@ -187,5 +193,6 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 		Position:               c.position.ora(),
 
 		StylePreset: c.stylePreset,
+		Id:          proto.Str(c.id),
 	}
 }

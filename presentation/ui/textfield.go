@@ -44,6 +44,7 @@ type TTextField struct {
 	frame           Frame
 	lines           int
 	keyboardOptions TKeyboardOptions
+	id              string
 }
 
 func (c TTextField) Padding(padding Padding) DecoredView {
@@ -231,6 +232,11 @@ func (c TTextField) KeyboardType(keyboardType KeyboardType) TTextField {
 	return c
 }
 
+func (c TTextField) ID(id string) TTextField {
+	c.id = id
+	return c
+}
+
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.TextField{
@@ -249,5 +255,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:           c.frame.ora(),
 		Lines:           proto.Uint(c.lines),
 		KeyboardOptions: c.keyboardOptions.ora(),
+		Id:              proto.Str(c.id),
 	}
 }

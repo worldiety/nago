@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import {computed} from 'vue';
+import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {borderCSS} from '@/components/shared/border';
-import {colorValue} from '@/components/shared/colors';
-import {frameCSS} from '@/components/shared/frame';
-import {cssLengthValue} from '@/components/shared/length';
-import {paddingCSS} from '@/components/shared/padding';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {AlignmentValues, FunctionCallRequested, Table} from '@/shared/proto/nprotoc_gen';
+import { borderCSS } from '@/components/shared/border';
+import { colorValue } from '@/components/shared/colors';
+import { frameCSS } from '@/components/shared/frame';
+import { cssLengthValue } from '@/components/shared/length';
+import { paddingCSS } from '@/components/shared/padding';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { AlignmentValues, FunctionCallRequested, Table } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Table;
@@ -277,41 +277,41 @@ function onRowMouseLeave(rowIdx: number) {
 <template>
 	<table class="w-full text-left rtl:text-right overflow-clip" :style="frameStyles">
 		<thead v-if="props.ui.header?.columns?.value?.length > 0" class="" :style="headStyles()">
-		<tr>
-			<th
-				class="font-normal"
-				v-for="(head, headIdx) in props.ui.header?.columns?.value"
-				scope="col"
-				:style="headCellStyles(headIdx)"
-				@click.stop="onClickHeaderCell(headIdx)"
-				@mouseenter="onHeadCellMouseEnter(headIdx)"
-				@mouseleave="onHeadCellMouseLeave(headIdx)"
-			>
-				<ui-generic v-if="head.content" :ui="head.content"/>
-			</th>
-		</tr>
+			<tr>
+				<th
+					class="font-normal"
+					v-for="(head, headIdx) in props.ui.header?.columns?.value"
+					scope="col"
+					:style="headCellStyles(headIdx)"
+					@click.stop="onClickHeaderCell(headIdx)"
+					@mouseenter="onHeadCellMouseEnter(headIdx)"
+					@mouseleave="onHeadCellMouseLeave(headIdx)"
+				>
+					<ui-generic v-if="head.content" :ui="head.content" />
+				</th>
+			</tr>
 		</thead>
 
 		<tbody class="">
-		<tr
-			v-for="(row, rowIdx) in props.ui.rows?.value"
-			:style="rowStyles(rowIdx)"
-			@click="onClickRow(rowIdx)"
-			@mouseenter="onRowMouseEnter(rowIdx)"
-			@mouseleave="onRowMouseLeave(rowIdx)"
-		>
-			<td
-				:rowspan="cell.rowSpan == 0 ? undefined : cell.rowSpan"
-				:colspan="cell.colSpan == 0 ? undefined : cell.colSpan"
-				v-for="(cell, colIdx) in row.cells?.value"
-				:style="cellStyles(rowIdx, colIdx)"
-				@click.stop="onClickCell(rowIdx, colIdx)"
-				@mouseenter="onCellMouseEnter(rowIdx, colIdx)"
-				@mouseleave="onCellMouseLeave(rowIdx, colIdx)"
+			<tr
+				v-for="(row, rowIdx) in props.ui.rows?.value"
+				:style="rowStyles(rowIdx)"
+				@click="onClickRow(rowIdx)"
+				@mouseenter="onRowMouseEnter(rowIdx)"
+				@mouseleave="onRowMouseLeave(rowIdx)"
 			>
-				<ui-generic v-if="cell.content" :ui="cell.content"/>
-			</td>
-		</tr>
+				<td
+					:rowspan="cell.rowSpan == 0 ? undefined : cell.rowSpan"
+					:colspan="cell.colSpan == 0 ? undefined : cell.colSpan"
+					v-for="(cell, colIdx) in row.cells?.value"
+					:style="cellStyles(rowIdx, colIdx)"
+					@click.stop="onClickCell(rowIdx, colIdx)"
+					@mouseenter="onCellMouseEnter(rowIdx, colIdx)"
+					@mouseleave="onCellMouseLeave(rowIdx, colIdx)"
+				>
+					<ui-generic v-if="cell.content" :ui="cell.content" />
+				</td>
+			</tr>
 		</tbody>
 	</table>
 </template>

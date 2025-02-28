@@ -1309,14 +1309,17 @@ type Checkbox struct {
 	Value      Bool
 	Disabled   Bool
 	Invisible  Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *Checkbox) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
+	fields[5] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -1359,6 +1362,14 @@ func (v *Checkbox) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -1391,6 +1402,11 @@ func (v *Checkbox) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -3485,7 +3501,8 @@ type HStack struct {
 	Position               Position
 	Disabled               Bool
 	Invisible              Bool
-	ID                     Str
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
@@ -3511,7 +3528,7 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[19] = !v.Position.IsZero()
 	fields[20] = !v.Disabled.IsZero()
 	fields[21] = !v.Invisible.IsZero()
-	fields[22] = !v.ID.IsZero()
+	fields[22] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3694,7 +3711,7 @@ func (v *HStack) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
 			return err
 		}
-		if err := v.ID.write(w); err != nil {
+		if err := v.Id.write(w); err != nil {
 			return err
 		}
 	}
@@ -3819,7 +3836,7 @@ func (v *HStack) read(r *BinaryReader) error {
 				return err
 			}
 		case 22:
-			err := v.ID.read(r)
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -4951,10 +4968,12 @@ type PasswordField struct {
 	Invisible       Bool
 	// If Revealed the password is shown
 	Revealed Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *PasswordField) write(w *BinaryWriter) error {
-	var fields [15]bool
+	var fields [16]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -4969,6 +4988,7 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 	fields[12] = !v.DisableDebounce.IsZero()
 	fields[13] = !v.Invisible.IsZero()
 	fields[14] = !v.Revealed.IsZero()
+	fields[15] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5091,6 +5111,14 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[15] {
+		if err := w.writeFieldHeader(byteSlice, 15); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5173,6 +5201,11 @@ func (v *PasswordField) read(r *BinaryReader) error {
 			}
 		case 14:
 			err := v.Revealed.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -7341,10 +7374,12 @@ type TextField struct {
 	Invisible       Bool
 	// If Revealed the password is shown
 	Revealed Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [18]bool
+	var fields [19]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7362,6 +7397,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[15] = !v.DisableDebounce.IsZero()
 	fields[16] = !v.Invisible.IsZero()
 	fields[17] = !v.Revealed.IsZero()
+	fields[18] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7522,6 +7558,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[18] {
+		if err := w.writeFieldHeader(byteSlice, 18); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7637,6 +7681,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 17:
 			err := v.Revealed.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -7958,10 +8007,12 @@ type VStack struct {
 	Position               Position
 	Disabled               Bool
 	Invisible              Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *VStack) write(w *BinaryWriter) error {
-	var fields [21]bool
+	var fields [22]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -7982,6 +8033,7 @@ func (v *VStack) write(w *BinaryWriter) error {
 	fields[18] = !v.Position.IsZero()
 	fields[19] = !v.Disabled.IsZero()
 	fields[20] = !v.Invisible.IsZero()
+	fields[21] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8152,6 +8204,14 @@ func (v *VStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[21] {
+		if err := w.writeFieldHeader(byteSlice, 21); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8264,6 +8324,11 @@ func (v *VStack) read(r *BinaryReader) error {
 			}
 		case 20:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 21:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -9721,10 +9786,11 @@ func (v *Checkbox) reset() {
 	v.Value.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.Id.reset()
 }
 
 func (v *Checkbox) IsZero() bool {
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
 // Bool represents just a user defined boolean value. This is how nprotoc works.
@@ -10574,11 +10640,11 @@ func (v *HStack) reset() {
 	v.Position.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
-	v.ID.reset()
+	v.Id.reset()
 }
 
 func (v *HStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.ID.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
 func (v *Position) reset() {
@@ -10823,10 +10889,11 @@ func (v *PasswordField) reset() {
 	v.DisableDebounce.reset()
 	v.Invisible.reset()
 	v.Revealed.reset()
+	v.Id.reset()
 }
 
 func (v *PasswordField) IsZero() bool {
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero()
 }
 
 func (v *Ping) reset() {
@@ -11304,10 +11371,11 @@ func (v *TextField) reset() {
 	v.DisableDebounce.reset()
 	v.Invisible.reset()
 	v.Revealed.reset()
+	v.Id.reset()
 }
 
 func (v *TextField) IsZero() bool {
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -11359,10 +11427,11 @@ func (v *VStack) reset() {
 	v.Position.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.Id.reset()
 }
 
 func (v *VStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
 func (v *WebView) reset() {

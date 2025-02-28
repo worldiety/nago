@@ -55,10 +55,11 @@
 							class="font-medium rounded-full px-2"
 							:class="{
 								'mb-4': subMenuEntry.menu?.value?.length > 0,
-								'cursor-pointer hover:underline focus-visible:underline': subMenuEntry.action!==undefined,
+								'cursor-pointer hover:underline focus-visible:underline':
+									subMenuEntry.action !== undefined,
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
 							}"
-							:tabindex="subMenuEntry.action!==undefined ? '0' : '-1'"
+							:tabindex="subMenuEntry.action !== undefined ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
 							@keydown.enter="menuEntryClicked(subMenuEntry)"
 						>
@@ -72,7 +73,7 @@
 							class="sub-sub-menu-entry rounded-full px-2"
 							:class="{
 								'cursor-pointer hover:underline focus-visible:underline':
-									subSubMenuEntry.action!==undefined,
+									subSubMenuEntry.action !== undefined,
 								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
 							}"
 							:tabindex="subSubMenuEntry.action !== undefined ? '0' : '-1'"
@@ -131,14 +132,14 @@ const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
-	if (!props.ui.menu){
+	if (!props.ui.menu) {
 		return [];
 	}
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
 		?.filter((menuEntry) => menuEntry.expanded)
 		.flatMap((menuEntry) => menuEntry.menu?.value ?? []);
 	// Add the expanded menu entry without its sub menu entries, if it has an action
-	if (entries.length > 0 && expandedMenuEntry.value?.action!==undefined) {
+	if (entries.length > 0 && expandedMenuEntry.value?.action !== undefined) {
 		entries.unshift(
 			new ScaffoldMenuEntry(
 				expandedMenuEntry.value?.icon,
@@ -184,9 +185,7 @@ function handleMouseMove(event: MouseEvent): void {
 }
 
 function updateSubMenuTriangleLeftOffset(): void {
-	const activeMenuEntryIndex: number | undefined = props.ui.menu?.value?.findIndex(
-		(menuEntry) => menuEntry.expanded
-	);
+	const activeMenuEntryIndex: number | undefined = props.ui.menu?.value?.findIndex((menuEntry) => menuEntry.expanded);
 	if (!subMenuTriangle.value || activeMenuEntryIndex === undefined) {
 		return;
 	}

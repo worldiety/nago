@@ -55,7 +55,6 @@ const styles = computed<string>(() => {
 			break;
 	}
 
-
 	if (props.ui.action) {
 		styles.push('cursor: pointer');
 	}

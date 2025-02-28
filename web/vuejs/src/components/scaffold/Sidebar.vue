@@ -119,7 +119,7 @@ const expandedMenuEntry = computed((): ScaffoldMenuEntry | undefined => {
 });
 
 const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
-	if (!props.ui.menu){
+	if (!props.ui.menu) {
 		return [];
 	}
 	const entries: ScaffoldMenuEntry[] = props.ui.menu.value
@@ -151,7 +151,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 
 function isClickableMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
 	// Clickable, if it has an action or sub menu entries
-	return menuEntry.action!=undefined || menuEntry.menu!==undefined;
+	return menuEntry.action != undefined || menuEntry.menu !== undefined;
 }
 
 function isActiveMenuEntry(menuEntry: ScaffoldMenuEntry): boolean {
@@ -201,7 +201,7 @@ function menuEntryClicked(menuEntry: ScaffoldMenuEntry): void {
 }
 
 function getSubSubMenuEntries(subMenuEntry: ScaffoldMenuEntry): ScaffoldMenuEntry[] {
-	if (!subMenuEntry.menu){
+	if (!subMenuEntry.menu) {
 		return [];
 	}
 	const entries: ScaffoldMenuEntry[] = [...subMenuEntry.menu.value];

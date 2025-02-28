@@ -11,7 +11,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const checked = ref<boolean>(props.ui.value?props.ui.value:false);
+const checked = ref<boolean>(props.ui.value ? props.ui.value : false);
 
 watch(
 	() => props.ui.value,
@@ -27,7 +27,7 @@ watch(
 function checkboxSelected(): void {
 	if (!props.ui.disabled) {
 		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), (bool2Str(!checked.value)))
+			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(!checked.value))
 		);
 	}
 }
@@ -35,6 +35,7 @@ function checkboxSelected(): void {
 
 <template>
 	<div
+		:id="ui.id"
 		v-if="!ui.invisible"
 		class="input-checkbox rounded-full w-fit"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"

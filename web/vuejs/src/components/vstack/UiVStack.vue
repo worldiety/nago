@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import {computed, ref} from 'vue';
+import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {borderCSS} from '@/components/shared/border';
-import {colorValue} from '@/components/shared/colors';
-import {fontCSS} from '@/components/shared/font';
-import {frameCSS} from '@/components/shared/frame';
-import {cssLengthValue} from '@/components/shared/length';
-import {paddingCSS} from '@/components/shared/padding';
-import {positionCSS} from '@/components/shared/position';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {AlignmentValues, FunctionCallRequested, StylePresetValues, VStack} from '@/shared/proto/nprotoc_gen';
+import { borderCSS } from '@/components/shared/border';
+import { colorValue } from '@/components/shared/colors';
+import { fontCSS } from '@/components/shared/font';
+import { frameCSS } from '@/components/shared/frame';
+import { cssLengthValue } from '@/components/shared/length';
+import { paddingCSS } from '@/components/shared/padding';
+import { positionCSS } from '@/components/shared/position';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { AlignmentValues, FunctionCallRequested, StylePresetValues, VStack } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: VStack;
@@ -173,7 +173,11 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- vstack-->
 	<div
-		v-if="(props.ui.stylePreset === StylePresetValues.StyleNone ||props.ui.stylePreset === undefined)  && !props.ui.invisible"
+		:id="ui.id"
+		v-if="
+			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
+			!props.ui.invisible
+		"
 		:class="clazz"
 		:style="frameStyles"
 		@mouseover="hover = true"
@@ -188,17 +192,22 @@ const clazz = computed<string>(() => {
 		@click="onClick"
 		@keydown="onKeydown"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</div>
 
 	<button
-		v-else-if="(props.ui.stylePreset !== StylePresetValues.StyleNone && props.ui.stylePreset !== undefined) && (props.ui.invisible===undefined || !props.ui.invisible)"
+		:id="ui.id"
+		v-else-if="
+			props.ui.stylePreset !== StylePresetValues.StyleNone &&
+			props.ui.stylePreset !== undefined &&
+			(props.ui.invisible === undefined || !props.ui.invisible)
+		"
 		:class="clazz"
 		:style="frameStyles"
 		@click="onClick"
 		:title="props.ui.accessibilityLabel"
 		:disabled="props.ui.disabled"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui"/>
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</button>
 </template>
