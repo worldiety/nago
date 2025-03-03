@@ -2,6 +2,7 @@ package uiusercircles
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/usercircle"
 	"go.wdy.de/nago/pkg/data/rquery"
@@ -22,7 +23,7 @@ type userState struct {
 	visible  bool
 }
 
-func PageMyCircle(wnd core.Window, useCases usercircle.UseCases) core.View {
+func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById role.FindByID) core.View {
 	id := usercircle.ID(wnd.Values()["id"])
 	optCircle, err := useCases.FindByID(wnd.Subject(), id)
 	if err != nil {
@@ -120,7 +121,7 @@ func PageMyCircle(wnd core.Window, useCases usercircle.UseCases) core.View {
 		ui.HStack(
 			ui.Lazy(func() core.View {
 				if selectedCount > 0 {
-					return makeMenu(wnd, circle, selectedCount, allUserStates)
+					return makeMenu(wnd, circle, selectedCount, allUserStates, useCases)
 				}
 
 				return ui.SecondaryButton(func() {
@@ -160,25 +161,72 @@ func PageMyCircle(wnd core.Window, useCases usercircle.UseCases) core.View {
 	).Alignment(ui.Leading).Gap(ui.L8).FullWidth()
 }
 
-func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, userStates []userState) core.View {
+func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, userStates []userState, useCases usercircle.UseCases) core.View {
+	hasUserMenu := circle.CanEnable || circle.CanDisable || circle.CanDelete || circle.CanVerify
+
+	var groups []ui.TMenuGroup
+	if hasUserMenu {
+		var items []ui.TMenuItem
+		if circle.CanDelete {
+			items = append(items, ui.MenuItem(func() {
+
+			}, ui.Text("Löschen").FullWidth().TextAlignment(ui.TextAlignStart)))
+		}
+
+		if circle.CanEnable {
+			items = append(items, ui.MenuItem(func() {
+
+			}, ui.Text("Aktivieren").FullWidth().TextAlignment(ui.TextAlignStart)))
+		}
+
+		if circle.CanDisable {
+			items = append(items, ui.MenuItem(func() {
+
+			}, ui.Text("Deaktivieren").FullWidth().TextAlignment(ui.TextAlignStart)))
+		}
+
+		if circle.CanVerify {
+			items = append(items, ui.MenuItem(func() {
+
+			}, ui.Text("E-Mail verifizieren").FullWidth().TextAlignment(ui.TextAlignStart)))
+		}
+
+		groups = append(groups, ui.MenuGroup(items...))
+	}
+
+	hasRoleMenu := len(circle.Roles) > 0
+
+	if hasRoleMenu {
+		var items []ui.TMenuItem
+		items = append(items, ui.MenuItem(func() {
+
+		}, ui.Text("Rollen hinzufügen").FullWidth().TextAlignment(ui.TextAlignStart)),
+
+			ui.MenuItem(func() {
+
+			}, ui.Text("Rollen entfernen").FullWidth().TextAlignment(ui.TextAlignStart)),
+		)
+
+		groups = append(groups, ui.MenuGroup(items...))
+	}
+
+	hasGroupMenu := len(circle.Groups) > 0
+	if hasGroupMenu {
+		var items []ui.TMenuItem
+		items = append(items, ui.MenuItem(func() {
+
+		}, ui.Text("zu Gruppen hinzufügen").FullWidth().TextAlignment(ui.TextAlignStart)),
+
+			ui.MenuItem(func() {
+
+			}, ui.Text("aus Gruppen entfernen").FullWidth().TextAlignment(ui.TextAlignStart)),
+		)
+
+		groups = append(groups, ui.MenuGroup(items...))
+	}
+
 	return ui.Menu(
 		ui.SecondaryButton(nil).Title(fmt.Sprintf("Aktion für %d Nutzer ...", selectedCount)),
-		ui.MenuGroup(
-			ui.MenuItem(func() {
-				fmt.Println("löschen")
-			}, ui.Text("Nutzer Löschen").FullWidth().TextAlignment(ui.TextAlignStart)),
-			ui.MenuItem(func() {
-				fmt.Println("deaktivieren")
-			}, ui.Text("Nutzer deaktivieren").FullWidth().TextAlignment(ui.TextAlignStart)),
-		),
-
-		ui.MenuGroup(
-			ui.MenuItem(func() {
-				fmt.Println("löschen2")
-			}, ui.Text("Nutzer Löschen").FullWidth().TextAlignment(ui.TextAlignStart)),
-			ui.MenuItem(func() {
-				fmt.Println("deaktivieren2")
-			}, ui.Text("Nutzer deaktivieren").FullWidth().TextAlignment(ui.TextAlignStart)),
-		),
+		groups...,
 	)
 }

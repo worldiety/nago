@@ -202,11 +202,11 @@ func (c *Configurator) newHandler() http.Handler {
 				cookie.Name = "wdy-ora-access"
 				cookie.Value = string(proto.NewScopeID())
 				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-				cookie.Secure = false //TODO in release-mode this must be true
+				cookie.Secure = !c.debug
 				cookie.HttpOnly = true
-				cookie.SameSite = http.SameSiteStrictMode //TODO CSRF protection however, do we actually suffer for this problem due to random addresses? if not, Lax is probably enough? => discuss with Fred
-				// TODO can we make it more secure to do something like ASLR? how does that work? Is entropy large enough?
-				// TODO alternative: use UUID + tree deltas to mitigate larger ids and avoid CSRF attacks
+				// Security note: we used http.SameSiteStrictMode but it is at least broken in firefox as of today, even with our local-storage-restore process (perhaps due to browser bugs)
+				// lets try to decrease security and see what the security review thinks. We could also improve testing and just enable Lax for firefox, if other browser work properly with our workaround.
+				cookie.SameSite = http.SameSiteLaxMode
 				cookie.Path = "/"
 				http.SetCookie(writer, cookie)
 			}
@@ -262,11 +262,10 @@ func (c *Configurator) newHandler() http.Handler {
 		cookie.Name = "wdy-ora-access"
 		cookie.Value = string(sidBuf)
 		cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-		cookie.Secure = false //TODO in release-mode this must be true
+		cookie.Secure = !c.debug
 		cookie.HttpOnly = true
-		cookie.SameSite = http.SameSiteStrictMode //TODO CSRF protection however, do we actually suffer for this problem due to random addresses? if not, Lax is probably enough? => discuss with Fred
-		// TODO can we make it more secure to do something like ASLR? how does that work? Is entropy large enough?
-		// TODO alternative: use UUID + tree deltas to mitigate larger ids and avoid CSRF attacks
+		// Security note: as above, we use the lax mode due to browser bugs and edge cases because our clever restore mechanics just not works reliable enough
+		cookie.SameSite = http.SameSiteLaxMode
 		cookie.Path = "/"
 		http.SetCookie(writer, cookie)
 	}))

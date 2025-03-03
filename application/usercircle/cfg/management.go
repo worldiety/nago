@@ -29,13 +29,18 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	roles, err := cfg.RoleManagement()
+	if err != nil {
+		return Management{}, err
+	}
+
 	entityStore, err := cfg.EntityStore("nago.usercircle.circle")
 	if err != nil {
 		return Management{}, err
 	}
 
 	circleRepo := json.NewSloppyJSONRepository[usercircle.Circle, usercircle.ID](entityStore)
-	useCases := usercircle.NewUseCases(circleRepo, users.UseCases.FindAll)
+	useCases := usercircle.NewUseCases(circleRepo, users.UseCases)
 	funcs := rcrud.Funcs[usercircle.Circle, usercircle.ID]{
 		PermFindByID:   usercircle.PermFindByID,
 		PermFindAll:    usercircle.PermFindAll,
@@ -64,7 +69,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircle, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircle(wnd, useCases)
+		return uiusercircles.PageMyCircle(wnd, useCases, roles.UseCases.FindByID)
 	})
 
 	cfg.AddAdminCenterGroup(func(uid user.ID) admin.Group {

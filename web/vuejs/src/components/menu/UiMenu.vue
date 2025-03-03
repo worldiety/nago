@@ -41,7 +41,7 @@ function itemClick(item: ProtoMenuItem) {
 		</div>
 
 
-			<transition ref="container" style="z-index: 100"
+			<transition ref="container" style="z-index: 40"
 		
 			>
 				<MenuItems
