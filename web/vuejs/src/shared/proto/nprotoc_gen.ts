@@ -9179,6 +9179,282 @@ export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEve
 	isNagoEvent(): void {}
 }
 
+export class Menu implements Writeable, Readable, Component {
+	public anchor?: Component;
+
+	public groups?: MenuGroups;
+
+	constructor(anchor: Component | undefined = undefined, groups: MenuGroups | undefined = undefined) {
+		this.anchor = anchor;
+		this.groups = groups;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.anchor = unmarshal(reader) as Component;
+					break;
+				}
+				case 2: {
+					this.groups = new MenuGroups();
+					this.groups.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.anchor !== undefined && !this.anchor.isZero(),
+			this.groups !== undefined && !this.groups.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.anchor!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.groups!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.anchor === undefined || this.anchor.isZero()) && (this.groups === undefined || this.groups.isZero())
+		);
+	}
+
+	reset(): void {
+		this.anchor = undefined;
+		this.groups = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 116);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export class MenuGroup implements Writeable, Readable {
+	public items?: MenuItems;
+
+	constructor(items: MenuItems | undefined = undefined) {
+		this.items = items;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.items = new MenuItems();
+					this.items.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.items !== undefined && !this.items.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.items!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.items === undefined || this.items.isZero();
+	}
+
+	reset(): void {
+		this.items = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 117);
+		return;
+	}
+}
+
+export class MenuItem implements Writeable, Readable {
+	public action?: Ptr;
+
+	public content?: Component;
+
+	constructor(action: Ptr | undefined = undefined, content: Component | undefined = undefined) {
+		this.action = action;
+		this.content = content;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.action = readInt(reader);
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.action !== undefined, this.content !== undefined && !this.content.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.action === undefined && (this.content === undefined || this.content.isZero());
+	}
+
+	reset(): void {
+		this.action = undefined;
+		this.content = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 118);
+		return;
+	}
+}
+
+// MenuItems is just a bunch of menu items which belong together.
+export class MenuItems implements Writeable, Readable {
+	public value: MenuItem[];
+
+	constructor(value: MenuItem[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: MenuItem[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as MenuItem); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 119);
+		return;
+	}
+}
+
+// MenuGroups is just a bunch of groups.
+export class MenuGroups implements Writeable, Readable {
+	public value: MenuGroup[];
+
+	constructor(value: MenuGroup[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: MenuGroup[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as MenuGroup); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 120);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -9722,6 +9998,31 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 115: {
 			const v = new ClipboardWriteTextRequested();
+			v.read(src);
+			return v;
+		}
+		case 116: {
+			const v = new Menu();
+			v.read(src);
+			return v;
+		}
+		case 117: {
+			const v = new MenuGroup();
+			v.read(src);
+			return v;
+		}
+		case 118: {
+			const v = new MenuItem();
+			v.read(src);
+			return v;
+		}
+		case 119: {
+			const v = new MenuItems();
+			v.read(src);
+			return v;
+		}
+		case 120: {
+			const v = new MenuGroups();
 			v.read(src);
 			return v;
 		}

@@ -266,6 +266,7 @@ func (Table) isComponent()         {}
 func (Toggle) isComponent()        {}
 func (VStack) isComponent()        {}
 func (WebView) isComponent()       {}
+func (Menu) isComponent()          {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -8807,6 +8808,218 @@ func (v *ClipboardWriteTextRequested) read(r *BinaryReader) error {
 	return nil
 }
 
+type Menu struct {
+	Anchor Component
+	Groups MenuGroups
+}
+
+func (v *Menu) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = v.Anchor != nil && !v.Anchor.IsZero()
+	fields[2] = !v.Groups.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Anchor.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Anchor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Groups.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Menu) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Anchor = obj.(Component)
+		case 2:
+			err := v.Groups.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type MenuGroup struct {
+	Items MenuItems
+}
+
+func (v *MenuGroup) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Items.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Items.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MenuGroup) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Items.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type MenuItem struct {
+	Action  Ptr
+	Content Component
+}
+
+func (v *MenuItem) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Action.IsZero()
+	fields[2] = v.Content != nil && !v.Content.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MenuItem) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -9512,6 +9725,36 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 115:
 		var v ClipboardWriteTextRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 116:
+		var v Menu
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 117:
+		var v MenuGroup
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 118:
+		var v MenuItem
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 119:
+		var v MenuItems
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 120:
+		var v MenuGroups
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -11499,6 +11742,122 @@ func (v *ClipboardWriteTextRequested) IsZero() bool {
 	return v.Text.IsZero()
 }
 
+func (v *Menu) reset() {
+	v.Anchor = nil
+	v.Groups.reset()
+}
+
+func (v *Menu) IsZero() bool {
+	return v.Anchor.IsZero() && v.Groups.IsZero()
+}
+
+func (v *MenuGroup) reset() {
+	v.Items.reset()
+}
+
+func (v *MenuGroup) IsZero() bool {
+	return v.Items.IsZero()
+}
+
+func (v *MenuItem) reset() {
+	v.Action.reset()
+	v.Content = nil
+}
+
+func (v *MenuItem) IsZero() bool {
+	return v.Action.IsZero() && v.Content.IsZero()
+}
+
+// MenuItems is just a bunch of menu items which belong together.
+type MenuItems []MenuItem
+
+func (v *MenuItems) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MenuItems) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]MenuItem, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*MenuItem)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *MenuItems) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *MenuItems) reset() {
+	*v = nil
+}
+
+// MenuGroups is just a bunch of groups.
+type MenuGroups []MenuGroup
+
+func (v *MenuGroups) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MenuGroups) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]MenuGroup, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*MenuGroup)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *MenuGroups) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *MenuGroups) reset() {
+	*v = nil
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -12292,6 +12651,41 @@ func (v *OpenHttpFlow) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ClipboardWriteTextRequested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 115); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Menu) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 116); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MenuGroup) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 117); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MenuItem) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 118); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MenuItems) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 119); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MenuGroups) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 120); err != nil {
 		return err
 	}
 	return nil

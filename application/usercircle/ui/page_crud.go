@@ -8,5 +8,5 @@ import (
 )
 
 func PageOverview(wnd core.Window, useCases rcrud.UseCases[usercircle.Circle, usercircle.ID]) core.View {
-	return crud.AutoRootView(crud.AutoRootViewOptions{}, useCases)(wnd)
+	return crud.AutoRootView(crud.AutoRootViewOptions{Title: "Kreise verwalten"}, useCases)(wnd)
 }

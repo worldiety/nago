@@ -272,7 +272,7 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
-	console.log('!!!!', evt);
+	//console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
 	if (evt.values) {
 		url += '?';

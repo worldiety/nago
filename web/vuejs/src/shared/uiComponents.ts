@@ -15,6 +15,7 @@ import UiWindowTitle from '@/components/UiWindowTitle.vue';
 import UiBox from '@/components/box/UiBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiHStack from '@/components/hstack/UiHStack.vue';
+import UiMenu from '@/components/menu/UiMenu.vue';
 import UiScaffold from '@/components/scaffold/UiScaffold.vue';
 import UiScrollView from '@/components/scrollview/UiScrollView.vue';
 import UiSpacer from '@/components/spacer/UiSpacer.vue';
@@ -29,6 +30,7 @@ import {
 	Grid,
 	HStack,
 	Img,
+	Menu,
 	Modal,
 	Component as NagoComponent,
 	PasswordField,
@@ -134,6 +136,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof WebView) {
 		return UiWebView;
+	}
+
+	if (ngc instanceof Menu) {
+		return UiMenu;
 	}
 
 	// keep this as the default fallback

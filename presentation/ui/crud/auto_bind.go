@@ -319,7 +319,7 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 						reflect.ValueOf(dst).Elem().FieldByName(field.Name).SetFloat(v)
 					})))
 			case reflect.Bool:
-				fieldsBuilder.Append(Bool[E, bool](BoolOptions{Label: label}, PropertyFuncs(
+				fieldsBuilder.Append(Bool[E, bool](BoolOptions{Label: label, SupportingText: field.Tag.Get("supportingText")}, PropertyFuncs(
 					func(obj *E) bool {
 						return reflect.ValueOf(obj).Elem().FieldByName(field.Name).Bool()
 					}, func(dst *E, v bool) {

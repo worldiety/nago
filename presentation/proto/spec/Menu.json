@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 116,
+  "fields": {
+    "1": {
+      "name": "Anchor",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Groups",
+      "type": "MenuGroups"
+    }
+  }
+}

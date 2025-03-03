@@ -22,7 +22,7 @@ const styles = computed<string>(() => {
 });
 </script>
 
-<template v-if="props.ui.children">
+<template>
 	<!-- spacer -->
 	<div class="grow shrink" :style="styles"></div>
 </template>

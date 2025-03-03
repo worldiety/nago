@@ -28,18 +28,17 @@ type TText struct {
 	font                   proto.Font
 	invisible              bool
 	onClick                func()
-	onHoverStart           func()
-	onHoverEnd             func()
-	padding                proto.Padding
-	frame                  proto.Frame
-	border                 proto.Border
-	hoveredBorder          proto.Border
-	focusedBorder          proto.Border
-	pressedBorder          proto.Border
-	accessibilityLabel     string
-	textAlignment          TextAlignment
-	action                 func()
-	lineBreak              bool
+
+	padding            proto.Padding
+	frame              Frame
+	border             proto.Border
+	hoveredBorder      proto.Border
+	focusedBorder      proto.Border
+	pressedBorder      proto.Border
+	accessibilityLabel string
+	textAlignment      TextAlignment
+	action             func()
+	lineBreak          bool
 }
 
 func MailTo(wnd core.Window, name string, email string) TText {
@@ -93,7 +92,12 @@ func (c TText) Padding(padding Padding) DecoredView {
 }
 
 func (c TText) Frame(frame Frame) DecoredView {
-	c.frame = frame.ora()
+	c.frame = frame
+	return c
+}
+
+func (c TText) FullWidth() TText {
+	c.frame = Frame{}.FullWidth()
 	return c
 }
 
@@ -165,12 +169,10 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		BackgroundColor:    c.backgroundColor,
 		Font:               c.font,
 		OnClick:            ctx.MountCallback(c.onClick),
-		OnHoverStart:       ctx.MountCallback(c.onHoverStart),
-		OnHoverEnd:         ctx.MountCallback(c.onHoverEnd),
 		Invisible:          proto.Bool(c.invisible),
 		Border:             c.border,
 		Padding:            c.padding,
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,

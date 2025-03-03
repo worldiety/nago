@@ -13,6 +13,8 @@
         "format": "prettier --write src/"
     },
     "dependencies": {
+        "@headlessui/vue": "^1.7.23",
+        "@popperjs/core": "^2.11.8",
         "pinia": "^2.1.7",
         "uuid": "^9.0.1",
         "vue": "^3.4.38",

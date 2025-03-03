@@ -11,7 +11,7 @@ import (
 type ID string
 
 type Circle struct {
-	Avatar image.ID `json:"avatar,omitempty" style:"avatar"`
+	Avatar image.ID `json:"avatar,omitempty" style:"avatar" label:""`
 	ID     ID       `json:"ID,omitempty" visible:"false"`
 	// Name of the circle
 	Name        string `json:"name,omitempty" `
@@ -23,6 +23,12 @@ type Circle struct {
 
 	// Groups allowed to assign to a user.
 	Groups []role.ID `json:"groups,omitempty" label:"Verwaltbare Gruppen" table-visible:"false" source:"nago.groups" supportingText:"Die hier ausgewählten Gruppen können durch die Administratoren des Kreises hinzügefügt oder entfernt werden. Achtung, wenn Mitglieder auf Basis von Gruppen ermittelt werden, kann der Administrator dieses Kreises seine Nutzer verlieren."`
+
+	CanDelete         bool `json:"canDelete" table-visible:"false" label:"Nutzer löschen" supportingText:"Administratoren dürfen Nutzer aus dem System unwiderruflich entfernen."`
+	CanDisable        bool `json:"canDisable" table-visible:"false" label:"Nutzer deaktivieren" supportingText:"Administratoren dürfen Nutzer im System deaktivieren."`
+	CanEnable         bool `json:"canEnable" table-visible:"false" label:"Nutzer aktivieren" supportingText:"Administratoren dürfen Nutzer im System aktivieren."`
+	CanVerify         bool `json:"canVerify" table-visible:"false" label:"Nutzer verifizieren" supportingText:"Administratoren dürfen Nutzer im System als verifiziert markieren, obwohl diese ihre EMail-Adresse nie selbst bestätigt haben."`
+	CanChangePassword bool `json:"canChangePassword" table-visible:"false" label:"Nutzer Kennwort setzen" supportingText:"Administratoren dürfen die Kennwörter von Nutzern direkt setzen."`
 
 	// Member Rules, if all of them are empty, all users are included in the circle.
 	_                 any          `label:"Die folgenden Felder bestimmen die Regeln wie bestimmt wird, ob Nutzer zu einem Kreis gehören oder nicht. Die Regeln werden dynamisch ausgewertet und ein Nutzer kann Mitglied verschiedener Kreise gleichzeitig sein."`

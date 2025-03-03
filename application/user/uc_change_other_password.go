@@ -3,7 +3,6 @@ package user
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/std"
-	"log/slog"
 	"sync"
 	"time"
 )
@@ -41,8 +40,7 @@ func NewChangeOtherPassword(mutex *sync.Mutex, repo Repository) ChangeOtherPassw
 		if err := newPassword.CompareHashAndPassword(usr.Algorithm, usr.Salt, usr.PasswordHash); err == nil {
 			return std.NewLocalizedError("Eingabebeschränkung", "Das alte Kennwort darf nicht identisch zum neuen Kennwort sein.")
 		} else {
-			// whatever, continue and write over
-			slog.Error("setting others password failed", "uid", uid, "err", err)
+			// whatever, ignore any error (e.g. either discontinued hash or just a different password), thus continue and write over
 		}
 
 		// create new credentials

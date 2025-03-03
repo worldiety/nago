@@ -7,12 +7,14 @@ import (
 )
 
 type BoolOptions struct {
-	Label string
+	Label          string
+	SupportingText string
 }
 
 func Bool[E any, T ~bool](opts BoolOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
-		Label: opts.Label,
+		Label:          opts.Label,
+		SupportingText: opts.SupportingText,
 		RenderFormElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			// here we create a copy for the local form field
 			state := core.StateOf[bool](self.Window, self.ID+"-form.local").Init(func() bool {

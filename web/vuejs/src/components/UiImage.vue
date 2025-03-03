@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import {computed} from 'vue';
-import {borderCSS} from '@/components/shared/border';
-import {colorValue} from '@/components/shared/colors';
-import {frameCSS} from '@/components/shared/frame';
-import {paddingCSS} from '@/components/shared/padding';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {FunctionCallRequested, Img} from '@/shared/proto/nprotoc_gen';
-import {nextRID} from "@/eventhandling";
+import { computed } from 'vue';
+import { borderCSS } from '@/components/shared/border';
+import { colorValue } from '@/components/shared/colors';
+import { frameCSS } from '@/components/shared/frame';
+import { paddingCSS } from '@/components/shared/padding';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { FunctionCallRequested, Img } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Img;
@@ -35,12 +35,8 @@ const styles = computed<string>(() => {
 	return styles.join(';');
 });
 
-
 function ngCall(ptr: number) {
-	serviceAdapter.sendEvent(new FunctionCallRequested(
-		ptr,
-		nextRID()
-	));
+	serviceAdapter.sendEvent(new FunctionCallRequested(ptr, nextRID()));
 }
 
 function invokePointer(evt: Event) {
@@ -49,13 +45,12 @@ function invokePointer(evt: Event) {
 		return;
 	}
 
-	if (evt.target instanceof SVGElement){
-		if (evt.target.ariaValueNow){
+	if (evt.target instanceof SVGElement) {
+		if (evt.target.ariaValueNow) {
 			ngCall(Number(evt.target.ariaValueNow));
 		}
 	}
 }
-
 
 const rewriteSVG = computed<string>(() => {
 	if (!props.ui.sVG) {
@@ -78,6 +73,10 @@ const rewriteSVG = computed<string>(() => {
 		:title="props.ui.accessibilityLabel"
 		:style="styles"
 	/>
-	<div @click.capture="invokePointer" :title="props.ui.accessibilityLabel" v-if="props.ui.sVG"
-			 v-html="rewriteSVG"></div>
+	<div
+		@click.capture="invokePointer"
+		:title="props.ui.accessibilityLabel"
+		v-if="props.ui.sVG"
+		v-html="rewriteSVG"
+	></div>
 </template>

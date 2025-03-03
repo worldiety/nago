@@ -1,0 +1,10 @@
+{
+  "kind": "Record",
+  "id": 117,
+  "fields": {
+    "1": {
+      "name": "Items",
+      "type": "MenuItems"
+    }
+  }
+}

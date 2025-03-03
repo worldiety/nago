@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 118,
+  "fields": {
+    "1": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Content",
+      "type": "Component"
+    }
+  }
+}
