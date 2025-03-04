@@ -34,6 +34,27 @@ type contactViewModel struct {
 	Website     string `label:"Website" section:"Kontakt"`
 }
 
+func newContactViewModel(email string, c user.Contact) contactViewModel {
+	return contactViewModel{
+		Avatar:      c.Avatar,
+		Title:       c.Title,
+		Salutation:  c.Salutation,
+		Firstname:   c.Firstname,
+		Lastname:    c.Lastname,
+		EMail:       email,
+		Position:    c.Position,
+		CompanyName: c.CompanyName,
+		PostalCode:  c.PostalCode,
+		City:        c.City,
+		Country:     c.Country,
+		Phone:       c.Phone,
+		MobilePhone: c.MobilePhone,
+		LinkedIn:    c.LinkedIn,
+		Website:     c.Website,
+		AboutMe:     c.AboutMe,
+	}
+}
+
 func (c contactViewModel) String() string {
 	return c.Firstname + " " + c.Lastname
 }
@@ -57,24 +78,7 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 			return contactViewModel{}
 		}
 
-		return contactViewModel{
-			Avatar:      c.Avatar,
-			Title:       c.Title,
-			Salutation:  c.Salutation,
-			Firstname:   c.Firstname,
-			Lastname:    c.Lastname,
-			EMail:       wnd.Subject().Email(),
-			Position:    c.Position,
-			CompanyName: c.CompanyName,
-			PostalCode:  c.PostalCode,
-			City:        c.City,
-			Country:     c.Country,
-			Phone:       c.Phone,
-			MobilePhone: c.MobilePhone,
-			LinkedIn:    c.LinkedIn,
-			Website:     c.Website,
-			AboutMe:     c.AboutMe,
-		}
+		return newContactViewModel(wnd.Subject().Email(), c)
 	})
 
 	return ui.VStack(

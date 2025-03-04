@@ -21,6 +21,7 @@ type alertOpts struct {
 	dlgAlign     ui.Alignment
 	modalPadding ui.Padding
 	preBody      core.View
+	minWidth     ui.Length
 }
 
 type optFunc func(opts *alertOpts)
@@ -78,6 +79,12 @@ func Closeable() Option {
 	})
 }
 
+func MinWidth(w ui.Length) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.minWidth = w
+	})
+}
+
 // Custom adds a custom footer (button) element.
 func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	return optFunc(func(opts *alertOpts) {
@@ -95,6 +102,17 @@ func Cancel(onCancel func()) Option {
 				onCancel()
 			}
 		}).Title("Abbrechen")
+	})
+}
+
+func Back(onCancel func()) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.cancelBtn = ui.SecondaryButton(func() {
+			opts.state.Set(false)
+			if onCancel != nil {
+				onCancel()
+			}
+		}).Title("Zurück")
 	})
 }
 

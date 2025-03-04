@@ -17,7 +17,7 @@ func NewMyCircleRolesRemove(mutex *sync.Mutex, repo Repository, users user.UseCa
 			return err
 		}
 
-		slices.DeleteFunc(usr.Roles, func(id role.ID) bool {
+		usr.Roles = slices.DeleteFunc(usr.Roles, func(id role.ID) bool {
 			for _, rid := range roles {
 				if rid == id {
 					return true
@@ -26,7 +26,7 @@ func NewMyCircleRolesRemove(mutex *sync.Mutex, repo Repository, users user.UseCa
 
 			return false
 		})
-		
+
 		return users.UpdateOtherRoles(user.SU(), usrId, usr.Roles)
 	}
 }

@@ -2,6 +2,7 @@ package form
 
 import (
 	"encoding/json"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
@@ -16,6 +17,9 @@ import (
 )
 
 type AutoOptions struct {
+	SectionPadding std.Option[ui.Padding]
+	ViewOnly       bool
+	IgnoreFields   []string
 }
 
 // Auto is similar to [crud.AutoBinding], however it does much less and just creates a form using
@@ -43,7 +47,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
-	for _, group := range GroupsOf(structType) {
+	for _, group := range GroupsOf(structType, opts.IgnoreFields...) {
 		var fieldsBuilder xslices.Builder[core.View]
 		for _, field := range group.Fields {
 			/*fieldTableVisible := true
@@ -53,6 +57,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 			disabled := false
 			if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "true" {
+				disabled = true
+			}
+
+			if opts.ViewOnly {
 				disabled = true
 			}
 
@@ -301,7 +309,11 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 		if group.Name == "" {
 			rootViews.Append(fields...)
 		} else {
-			rootViews.Append(cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16)).Frame(ui.Frame{}.FullWidth()))
+			card := cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16).FullWidth()).Frame(ui.Frame{}.FullWidth())
+			if opts.SectionPadding.IsSome() {
+				card = card.Padding(opts.SectionPadding.Unwrap())
+			}
+			rootViews.Append(card)
 		}
 	}
 

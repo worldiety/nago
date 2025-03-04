@@ -13,6 +13,10 @@ func FixedSpacer(width, height Length) core.View {
 	)
 }
 
+func Space(size Length) core.View {
+	return FixedSpacer(size, size)
+}
+
 type TSpacer struct {
 	backgroundColor proto.Color
 	frame           proto.Frame

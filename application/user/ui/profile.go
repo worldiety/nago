@@ -8,6 +8,7 @@ import (
 	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
+	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -138,7 +139,7 @@ func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles
 			ui.If(contact.LinkedIn != "", ui.SecondaryButton(func() {
 				core.HTTPOpen(wnd.Navigation(), core.HTTPify(contact.LinkedIn), "_blank")
 			}).AccessibilityLabel("LinkedIn").
-				PreIcon(heroSolid.Link)),
+				PreIcon(flowbiteSolid.Linkedin)),
 			ui.If(contact.Website != "", ui.SecondaryButton(func() {
 				core.HTTPOpen(wnd.Navigation(), core.HTTPify(contact.Website), "_blank")
 			}).AccessibilityLabel("Webseite").

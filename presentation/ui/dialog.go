@@ -20,7 +20,7 @@ type TDialog struct {
 
 func Dialog(body core.View) TDialog {
 	return TDialog{
-		frame: Frame{MinWidth: L400, MaxWidth: "35rem", MaxHeight: "calc(100dvh - 8rem)"}.FullWidth(),
+		frame: Frame{MinWidth: L400, MaxWidth: L560, MaxHeight: "calc(100dvh - 8rem)"}.FullWidth(),
 		body:  body,
 	}
 }

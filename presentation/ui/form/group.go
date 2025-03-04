@@ -11,7 +11,7 @@ func GroupsFor[T any]() []Group {
 	return GroupsOf(reflect.TypeFor[T]())
 }
 
-func GroupsOf(p reflect.Type) []Group {
+func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 	var res []Group
 	//
 
@@ -25,6 +25,18 @@ func GroupsOf(p reflect.Type) []Group {
 		}
 
 		if field.Name != "_" && !field.IsExported() {
+			continue
+		}
+
+		ignored := false
+		for _, ignoreField := range ignoreFields {
+			if ignoreField == field.Name {
+				ignored = true
+				break
+			}
+		}
+
+		if ignored {
 			continue
 		}
 

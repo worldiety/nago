@@ -20,12 +20,19 @@ type IsCircleAdmin func(uid user.ID) (bool, error)
 // MyCircles returns all circles, in which the subject is declared as an administrator.
 type MyCircles func(uid user.ID) iter.Seq2[Circle, error]
 
+type MyRoles func(admin user.ID, circle ID) iter.Seq2[role.Role, error]
+type MyGroups func(admin user.ID, circle ID) iter.Seq2[group.Group, error]
+
 type IsMyCircleMember func(uid user.ID, circle ID, other user.ID) (bool, error)
 type MyCircleRolesAdd func(admin user.ID, circleId ID, usrId user.ID, roles ...role.ID) error
 type MyCircleRolesRemove func(admin user.ID, circleId ID, usrId user.ID, roles ...role.ID) error
 
 type MyCircleGroupsAdd func(admin user.ID, circleId ID, usrId user.ID, groups ...group.ID) error
 type MyCircleGroupsRemove func(admin user.ID, circleId ID, usrId user.ID, groups ...group.ID) error
+
+type MyCircleUserRemove func(admin user.ID, circleId ID, usrId user.ID) error
+type MyCircleUserUpdateStatus func(admin user.ID, circleId ID, usrId user.ID, status user.AccountStatus) error
+type MyCircleUserVerified func(admin user.ID, circleId ID, usrId user.ID, emailVerified bool) error
 
 // FindAll returns all known circles.
 type FindAll func(subject auth.Subject) iter.Seq2[Circle, error]
@@ -37,42 +44,55 @@ type FindByID func(subject auth.Subject, id ID) (std.Option[Circle], error)
 type Update func(subject auth.Subject, circle Circle) error
 
 type Create func(subject auth.Subject, circle Circle) (ID, error)
+
 type UseCases struct {
-	MyCircleMembers      MyCircleMembers
-	MyCircles            MyCircles
-	MyCircleRolesAdd     MyCircleRolesAdd
-	MyCircleRolesRemove  MyCircleRolesRemove
-	MyCircleGroupsAdd    MyCircleGroupsAdd
-	MyCircleGroupsRemove MyCircleGroupsRemove
-	IsMyCircleMember     IsMyCircleMember
-	FindAll              FindAll
-	DeleteByID           DeleteByID
-	FindByID             FindByID
-	Update               Update
-	Create               Create
-	IsCircleAdmin        IsCircleAdmin
+	MyCircleMembers          MyCircleMembers
+	MyCircles                MyCircles
+	MyCircleRolesAdd         MyCircleRolesAdd
+	MyCircleRolesRemove      MyCircleRolesRemove
+	MyCircleGroupsAdd        MyCircleGroupsAdd
+	MyCircleGroupsRemove     MyCircleGroupsRemove
+	MyCircleUserRemove       MyCircleUserRemove
+	MyCircleUserUpdateStatus MyCircleUserUpdateStatus
+	MyCircleUserVerified     MyCircleUserVerified
+	MyRoles                  MyRoles
+	MyGroups                 MyGroups
+	IsMyCircleMember         IsMyCircleMember
+	FindAll                  FindAll
+	DeleteByID               DeleteByID
+	FindByID                 FindByID
+	Update                   Update
+	Create                   Create
+	IsCircleAdmin            IsCircleAdmin
 }
 
 func NewUseCases(
 	repoCircle Repository,
 	users user.UseCases,
+	findGroupByID group.FindByID,
+	findRoleByID role.FindByID,
 ) UseCases {
 	var mutex sync.Mutex
 
 	return UseCases{
-		MyCircles:            NewMyCircles(repoCircle),
-		MyCircleMembers:      NewMyCircleMembers(repoCircle, users.FindAll),
-		Create:               NewCreate(&mutex, repoCircle),
-		Update:               NewUpdate(&mutex, repoCircle),
-		DeleteByID:           NewDeleteByID(&mutex, repoCircle),
-		FindByID:             NewFindByID(repoCircle),
-		FindAll:              NewFindAll(repoCircle),
-		IsCircleAdmin:        NewIsCircleAdmin(repoCircle),
-		IsMyCircleMember:     NewIsMyCircleMember(repoCircle, users.FindByID),
-		MyCircleGroupsAdd:    NewMyCircleGroupsAdd(&mutex, repoCircle, users),
-		MyCircleGroupsRemove: NewMyCircleGroupsRemove(&mutex, repoCircle, users),
-		MyCircleRolesRemove:  NewMyCircleRolesRemove(&mutex, repoCircle, users),
-		MyCircleRolesAdd:     NewMyCircleRolesAdd(&mutex, repoCircle, users),
+		MyCircles:                NewMyCircles(repoCircle),
+		MyCircleMembers:          NewMyCircleMembers(repoCircle, users.FindAll),
+		Create:                   NewCreate(&mutex, repoCircle),
+		Update:                   NewUpdate(&mutex, repoCircle),
+		DeleteByID:               NewDeleteByID(&mutex, repoCircle),
+		FindByID:                 NewFindByID(repoCircle),
+		FindAll:                  NewFindAll(repoCircle),
+		IsCircleAdmin:            NewIsCircleAdmin(repoCircle),
+		IsMyCircleMember:         NewIsMyCircleMember(repoCircle, users.FindByID),
+		MyCircleGroupsAdd:        NewMyCircleGroupsAdd(&mutex, repoCircle, users),
+		MyCircleGroupsRemove:     NewMyCircleGroupsRemove(&mutex, repoCircle, users),
+		MyCircleRolesRemove:      NewMyCircleRolesRemove(&mutex, repoCircle, users),
+		MyCircleRolesAdd:         NewMyCircleRolesAdd(&mutex, repoCircle, users),
+		MyGroups:                 NewMyGroups(repoCircle, users, findGroupByID),
+		MyRoles:                  NewMyRoles(repoCircle, users, findRoleByID),
+		MyCircleUserRemove:       NewMyCircleUserRemove(&mutex, repoCircle, users),
+		MyCircleUserUpdateStatus: NewMyCircleUserUpdateStatus(&mutex, repoCircle, users),
+		MyCircleUserVerified:     NewMyCircleUserVerified(&mutex, repoCircle, users),
 	}
 }
 
@@ -107,6 +127,10 @@ func myCircleAndUser(repo Repository, findUserByID user.FindByID, adminUsr user.
 
 	if optUsr.IsNone() {
 		return Circle{}, user.User{}, os.ErrNotExist
+	}
+
+	if !circle.isMember(optUsr.Unwrap()) {
+		return Circle{}, user.User{}, user.PermissionDeniedErr
 	}
 
 	return circle, optUsr.Unwrap(), nil

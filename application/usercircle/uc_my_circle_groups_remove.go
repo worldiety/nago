@@ -17,7 +17,7 @@ func NewMyCircleGroupsRemove(mutex *sync.Mutex, repo Repository, users user.UseC
 			return err
 		}
 
-		slices.DeleteFunc(usr.Groups, func(id group.ID) bool {
+		usr.Groups = slices.DeleteFunc(usr.Groups, func(id group.ID) bool {
 			for _, rid := range groups {
 				if rid == id {
 					return true

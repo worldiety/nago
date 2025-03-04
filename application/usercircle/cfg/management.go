@@ -34,13 +34,18 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	groups, err := cfg.GroupManagement()
+	if err != nil {
+		return Management{}, err
+	}
+
 	entityStore, err := cfg.EntityStore("nago.usercircle.circle")
 	if err != nil {
 		return Management{}, err
 	}
 
 	circleRepo := json.NewSloppyJSONRepository[usercircle.Circle, usercircle.ID](entityStore)
-	useCases := usercircle.NewUseCases(circleRepo, users.UseCases)
+	useCases := usercircle.NewUseCases(circleRepo, users.UseCases, groups.UseCases.FindByID, roles.UseCases.FindByID)
 	funcs := rcrud.Funcs[usercircle.Circle, usercircle.ID]{
 		PermFindByID:   usercircle.PermFindByID,
 		PermFindAll:    usercircle.PermFindAll,

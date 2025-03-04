@@ -26,8 +26,9 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 		}
 
 		circleLkp := circleLookups{
-			users:  make(map[user.ID]struct{}),
-			groups: make(map[group.ID]struct{}),
+			users:     make(map[user.ID]struct{}),
+			groups:    make(map[group.ID]struct{}),
+			blacklist: make(map[user.ID]struct{}),
 		}
 
 		for _, domain := range circle.MemberRuleDomains {
@@ -44,6 +45,10 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 
 		for _, ruleUser := range circle.MemberRuleUsers {
 			circleLkp.users[ruleUser] = struct{}{}
+		}
+
+		for _, ruleUser := range circle.MemberRuleUsersBlacklist {
+			circleLkp.blacklist[ruleUser] = struct{}{}
 		}
 
 		return func(yield func(user.User, error) bool) {
@@ -70,12 +75,17 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 }
 
 type circleLookups struct {
-	domains []string
-	users   map[user.ID]struct{}
-	groups  map[group.ID]struct{}
+	domains   []string
+	users     map[user.ID]struct{}
+	blacklist map[user.ID]struct{}
+	groups    map[group.ID]struct{}
 }
 
 func (c *circleLookups) isMember(usr user.User) bool {
+	if _, ok := c.blacklist[usr.ID]; ok {
+		return false
+	}
+
 	if len(c.users) == 0 && len(c.groups) == 0 && len(c.domains) == 0 {
 		return true
 	}

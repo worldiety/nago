@@ -154,6 +154,10 @@ func HTTPify(s string) URI {
 		return URI(s)
 	}
 
+	if strings.HasPrefix(s, "mailto:") {
+		return URI(s)
+	}
+
 	return "https://" + URI(s)
 }
 

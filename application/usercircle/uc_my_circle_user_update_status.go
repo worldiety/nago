@@ -1,0 +1,20 @@
+package usercircle
+
+import (
+	"go.wdy.de/nago/application/user"
+	"sync"
+)
+
+func NewMyCircleUserUpdateStatus(mutex *sync.Mutex, repo Repository, users user.UseCases) MyCircleUserUpdateStatus {
+	return func(admin user.ID, circleId ID, usrId user.ID, status user.AccountStatus) error {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		_, usr, err := myCircleAndUser(repo, users.FindByID, admin, circleId, usrId)
+		if err != nil {
+			return err
+		}
+
+		return users.UpdateAccountStatus(user.SU(), usr.ID, status)
+	}
+}

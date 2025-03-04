@@ -91,15 +91,16 @@ const (
 )
 
 type TCard struct {
-	title  string
-	body   core.View
-	footer core.View
-	frame  ui.Frame
-	style  TitleStyle
+	title   string
+	body    core.View
+	footer  core.View
+	frame   ui.Frame
+	style   TitleStyle
+	padding ui.Padding
 }
 
 func Card(title string) TCard {
-	return TCard{title: title}
+	return TCard{title: title, padding: ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: ""}}
 }
 
 func (c TCard) Style(style TitleStyle) TCard {
@@ -109,6 +110,11 @@ func (c TCard) Style(style TitleStyle) TCard {
 
 func (c TCard) Body(view core.View) TCard {
 	c.body = view
+	return c
+}
+
+func (c TCard) Padding(padding ui.Padding) TCard {
+	c.padding = padding
 	return c
 }
 
@@ -135,13 +141,21 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 				Alignment(ui.Leading).
 				BackgroundColor(ui.ColorCardTop).
 				Padding(ui.Padding{}.All(ui.L8)).
-				Frame(ui.Frame{Height: ui.L40}.FullWidth())
+				Frame(ui.Frame{Height: c.padding.Left}.FullWidth())
 		default:
 			title = ui.VStack(
 				ui.Text(c.title).Font(ui.Title),
 				ui.HLineWithColor(ui.ColorAccent),
-			).Padding(ui.Padding{Top: ui.L40, Left: ui.L40, Right: ui.L40})
+			).Padding(ui.Padding{Top: ui.L40, Left: c.padding.Left, Right: c.padding.Right})
 		}
+	}
+
+	padding := c.padding
+	padding.Top = bodyTopPadding
+
+	var border ui.Border
+	if padding.Left != "" || padding.Bottom != "" {
+		border = ui.Border{}.Radius(ui.L16)
 	}
 
 	return ui.VStack(
@@ -149,7 +163,7 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 		ui.VStack(c.body).
 			Alignment(ui.Leading).
 			FullWidth().
-			Padding(ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: bodyTopPadding}),
+			Padding(padding),
 		ui.Spacer(),
 		ui.If(c.footer != nil, ui.HStack(c.footer).
 			FullWidth().
@@ -158,7 +172,7 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 			Padding(ui.Padding{}.All(ui.L12))),
 	).Alignment(ui.Leading).
 		BackgroundColor(ui.ColorCardBody).
-		Border(ui.Border{}.Radius(ui.L16)).
+		Border(border).
 		Frame(c.frame).
 		Render(ctx)
 }
