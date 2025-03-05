@@ -3,16 +3,17 @@ package usercircle
 import (
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"slices"
 	"sync"
 )
 
 func NewMyCircleGroupsAdd(mutex *sync.Mutex, repo Repository, users user.UseCases) MyCircleGroupsAdd {
-	return func(admin user.ID, circleId ID, usrId user.ID, groups ...group.ID) error {
+	return func(subject auth.Subject, circleId ID, usrId user.ID, groups ...group.ID) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		_, usr, err := myCircleAndUser(repo, users.FindByID, admin, circleId, usrId)
+		_, usr, err := myCircleAndUser(repo, users.FindByID, subject, circleId, usrId)
 		if err != nil {
 			return err
 		}

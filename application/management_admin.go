@@ -3,7 +3,7 @@ package application
 import (
 	"go.wdy.de/nago/application/admin"
 	uiadmin "go.wdy.de/nago/application/admin/ui"
-	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -13,7 +13,7 @@ type AdminManagement struct {
 	Pages       uiadmin.Pages
 }
 
-func (c *Configurator) AddAdminCenterGroup(group func(id user.ID) admin.Group) *Configurator {
+func (c *Configurator) AddAdminCenterGroup(group func(id auth.Subject) admin.Group) *Configurator {
 	c.adminManagementGroups = append(c.adminManagementGroups, group)
 	return c
 }
@@ -42,7 +42,10 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				AdminCenter: "admin",
 			},
 
-			FindAll: func(uid user.ID) []admin.Group {
+			FindAll: func(subject auth.Subject) []admin.Group {
+				if !subject.Valid() {
+					return nil
+				}
 				// be invariant on execution order
 				var pages admin.Pages
 				if c.mailManagement != nil {
@@ -91,15 +94,15 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 
 				var groups []admin.Group
 				for _, groupFn := range c.adminManagementGroups {
-					groups = append(groups, groupFn(uid))
+					groups = append(groups, groupFn(subject))
 				}
 
 				groups = append(groups, admin.DefaultGroups(pages)...)
 				return groups
 			},
-			QueryGroups: admin.NewGroups(func(uid user.ID) []admin.Group {
+			QueryGroups: admin.NewGroups(func(subject auth.Subject) []admin.Group {
 				// be invariant on replacements for FindAll, so that developer can inject custom admin groups
-				return c.adminManagement.FindAll(uid)
+				return c.adminManagement.FindAll(subject)
 			}),
 		}
 

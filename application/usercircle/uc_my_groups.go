@@ -3,14 +3,15 @@ package usercircle
 import (
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
 	"iter"
 )
 
 func NewMyGroups(repo Repository, users user.UseCases, findGroupByID group.FindByID) MyGroups {
-	return func(admin user.ID, circleId ID) iter.Seq2[group.Group, error] {
+	return func(subject auth.Subject, circleId ID) iter.Seq2[group.Group, error] {
 
-		circle, err := myCircle(repo, admin, circleId)
+		circle, err := myCircle(repo, subject, circleId)
 		if err != nil {
 			return xiter.WithError[group.Group](err)
 		}

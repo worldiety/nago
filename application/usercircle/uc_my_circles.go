@@ -1,13 +1,13 @@
 package usercircle
 
 import (
-	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"iter"
 	"slices"
 )
 
 func NewMyCircles(repoCircle Repository) MyCircles {
-	return func(uid user.ID) iter.Seq2[Circle, error] {
+	return func(subject auth.Subject) iter.Seq2[Circle, error] {
 		return func(yield func(Circle, error) bool) {
 			for circle, err := range repoCircle.All() {
 				if err != nil {
@@ -18,7 +18,7 @@ func NewMyCircles(repoCircle Repository) MyCircles {
 					continue
 				}
 
-				if !slices.Contains(circle.Administrators, uid) {
+				if !slices.Contains(circle.Administrators, subject.ID()) {
 					continue
 				}
 

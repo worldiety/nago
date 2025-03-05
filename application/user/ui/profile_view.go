@@ -1,6 +1,7 @@
 package uiuser
 
 import (
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/image"
@@ -16,7 +17,7 @@ import (
 	"strings"
 )
 
-func ViewProfile(wnd core.Window, roles []role.Role, email user.Email, contact user.Contact) core.View {
+func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, email user.Email, contact user.Contact) core.View {
 	var myRoleNames []string
 
 	for _, myRole := range roles {
@@ -25,6 +26,16 @@ func ViewProfile(wnd core.Window, roles []role.Role, email user.Email, contact u
 
 	if len(myRoleNames) == 0 {
 		myRoleNames = append(myRoleNames, "Kein Rollenmitglied")
+	}
+
+	var myGroupNames []string
+
+	for _, myGroup := range groups {
+		myGroupNames = append(myGroupNames, myGroup.Name)
+	}
+
+	if len(myGroupNames) == 0 {
+		myGroupNames = append(myGroupNames, "Kein Gruppenmitglied")
 	}
 
 	var avatarImg core.View
@@ -85,6 +96,7 @@ func ViewProfile(wnd core.Window, roles []role.Role, email user.Email, contact u
 				ui.If(contact.AboutMe != "", ui.Text(contact.AboutMe)),
 				ui.If(contact.AboutMe != "", ui.HLine()),
 				ui.Text(strings.Join(myRoleNames, ", ")).FullWidth().TextAlignment(ui.TextAlignEnd),
+				ui.Text(strings.Join(myGroupNames, ", ")).FullWidth().TextAlignment(ui.TextAlignEnd),
 				ui.Space(ui.L8),
 				form.Auto(form.AutoOptions{
 					SectionPadding: std.Some[ui.Padding](ui.Padding{}),
@@ -92,8 +104,7 @@ func ViewProfile(wnd core.Window, roles []role.Role, email user.Email, contact u
 					IgnoreFields:   []string{"Avatar", "AboutMe"},
 				}, fakeState),
 			).Alignment(ui.Leading).
-				FullWidth().
-				Padding(ui.Padding{Bottom: ui.L20}.Horizontal(ui.L20)),
+				FullWidth(),
 		).Alignment(ui.Leading).
 			FullWidth().
 			Gap(ui.L20).

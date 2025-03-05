@@ -27,7 +27,7 @@ type userState struct {
 	visible  bool
 }
 
-func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById role.FindByID) core.View {
+func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById role.FindByID, findGroupById group.FindByID) core.View {
 	id := usercircle.ID(wnd.Values()["id"])
 	optCircle, err := useCases.FindByID(wnd.Subject(), id)
 	if err != nil {
@@ -40,7 +40,7 @@ func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById ro
 
 	circle := optCircle.Unwrap()
 
-	allUsers, err := xslices.Collect2(useCases.MyCircleMembers(wnd.Subject().ID(), circle.ID))
+	allUsers, err := xslices.Collect2(useCases.MyCircleMembers(wnd.Subject(), circle.ID))
 	if err != nil {
 		return alert.BannerError(err)
 	}
@@ -133,15 +133,23 @@ func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById ro
 
 				usr := dlgPresentedUserUsr.Get()
 
-				var tmp []role.Role
+				var tmpRoles []role.Role
 				for _, rid := range usr.Roles {
 					r, _ := findRoleById(user.SU(), rid)
 					if r.IsSome() {
-						tmp = append(tmp, r.Unwrap())
+						tmpRoles = append(tmpRoles, r.Unwrap())
 					}
 				}
 
-				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmp, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.MinWidth(ui.L560), alert.Back(nil), alert.Closeable())
+				var tmpGroups []group.Group
+				for _, rid := range usr.Groups {
+					r, _ := findGroupById(user.SU(), rid)
+					if r.IsSome() {
+						tmpGroups = append(tmpGroups, r.Unwrap())
+					}
+				}
+
+				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmpRoles, tmpGroups, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.MinWidth(ui.L560), alert.Back(nil), alert.Closeable())
 			}),
 			ui.Lazy(func() core.View {
 				if selectedCount > 0 {
@@ -192,12 +200,12 @@ func PageMyCircle(wnd core.Window, useCases usercircle.UseCases, findRoleById ro
 func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, userStates []userState, useCases usercircle.UseCases) core.View {
 	hasUserMenu := circle.CanEnable || circle.CanDisable || circle.CanDelete || circle.CanVerify
 
-	myRoles, err := xslices.Collect2(useCases.MyRoles(wnd.Subject().ID(), circle.ID))
+	myRoles, err := xslices.Collect2(useCases.MyRoles(wnd.Subject(), circle.ID))
 	if err != nil {
 		return alert.BannerError(err)
 	}
 
-	myGroups, err := xslices.Collect2(useCases.MyGroups(wnd.Subject().ID(), circle.ID))
+	myGroups, err := xslices.Collect2(useCases.MyGroups(wnd.Subject(), circle.ID))
 	if err != nil {
 		return alert.BannerError(err)
 	}
@@ -215,7 +223,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 		rolePicker(wnd, myRoles, "Rollen hinzufügen", dlgPresentedAddRoles, func(roles []role.Role) error {
 			for _, state := range userStates {
 				if state.selected.Get() {
-					if err := useCases.MyCircleRolesAdd(wnd.Subject().ID(), circle.ID, state.usr.ID, identifiers(roles)...); err != nil {
+					if err := useCases.MyCircleRolesAdd(wnd.Subject(), circle.ID, state.usr.ID, identifiers(roles)...); err != nil {
 						return err
 					}
 				}
@@ -226,7 +234,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 		rolePicker(wnd, myRoles, "Rollen entfernen", dlgPresentedRemoveRoles, func(roles []role.Role) error {
 			for _, state := range userStates {
 				if state.selected.Get() {
-					if err := useCases.MyCircleRolesRemove(wnd.Subject().ID(), circle.ID, state.usr.ID, identifiers(roles)...); err != nil {
+					if err := useCases.MyCircleRolesRemove(wnd.Subject(), circle.ID, state.usr.ID, identifiers(roles)...); err != nil {
 						return err
 					}
 				}
@@ -237,7 +245,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 		groupPicker(wnd, myGroups, "Gruppen hinzufügen", dlgPresentedAddGroups, func(groups []group.Group) error {
 			for _, state := range userStates {
 				if state.selected.Get() {
-					if err := useCases.MyCircleGroupsAdd(wnd.Subject().ID(), circle.ID, state.usr.ID, identifiers(groups)...); err != nil {
+					if err := useCases.MyCircleGroupsAdd(wnd.Subject(), circle.ID, state.usr.ID, identifiers(groups)...); err != nil {
 						return err
 					}
 				}
@@ -249,7 +257,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 		groupPicker(wnd, myGroups, "Gruppen entfernen", dlgPresentedRemoveGroups, func(groups []group.Group) error {
 			for _, state := range userStates {
 				if state.selected.Get() {
-					if err := useCases.MyCircleGroupsRemove(wnd.Subject().ID(), circle.ID, state.usr.ID, identifiers(groups)...); err != nil {
+					if err := useCases.MyCircleGroupsRemove(wnd.Subject(), circle.ID, state.usr.ID, identifiers(groups)...); err != nil {
 						return err
 					}
 				}
@@ -266,7 +274,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 			return alert.Dialog("Nutzer aktivieren", ui.Text("Sollen die ausgewählten Nutzer alle aktiviert werden?"), dlgPresentedEnableUser, alert.Cancel(nil), alert.Save(func() (close bool) {
 				for _, state := range userStates {
 					if state.selected.Get() {
-						if err := useCases.MyCircleUserUpdateStatus(wnd.Subject().ID(), circle.ID, state.usr.ID, user.Enabled{}); err != nil {
+						if err := useCases.MyCircleUserUpdateStatus(wnd.Subject(), circle.ID, state.usr.ID, user.Enabled{}); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return false
 						}
@@ -285,7 +293,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 			return alert.Dialog("Nutzer deaktivieren", ui.Text("Sollen die ausgewählten Nutzer alle deaktiviert werden?"), dlgPresentedDisableUser, alert.Cancel(nil), alert.Save(func() (close bool) {
 				for _, state := range userStates {
 					if state.selected.Get() {
-						if err := useCases.MyCircleUserUpdateStatus(wnd.Subject().ID(), circle.ID, state.usr.ID, user.Disabled{}); err != nil {
+						if err := useCases.MyCircleUserUpdateStatus(wnd.Subject(), circle.ID, state.usr.ID, user.Disabled{}); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return false
 						}
@@ -304,7 +312,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 			return alert.Dialog("Nutzer verifizieren", ui.Text("Sollen die E-Mail Adressen der ausgewählten Nutzer ohne weitere Prüfung als verifiziert markiert werden?"), dlgPresentedVerifyUser, alert.Cancel(nil), alert.Save(func() (close bool) {
 				for _, state := range userStates {
 					if state.selected.Get() {
-						if err := useCases.MyCircleUserVerified(wnd.Subject().ID(), circle.ID, state.usr.ID, true); err != nil {
+						if err := useCases.MyCircleUserVerified(wnd.Subject(), circle.ID, state.usr.ID, true); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return false
 						}
@@ -323,7 +331,7 @@ func makeMenu(wnd core.Window, circle usercircle.Circle, selectedCount int, user
 			return alert.Dialog("Nutzer löschen", ui.Text("Sollen die ausgewählten Nutzer unwiderruflich aus dem System entfernt werden?"), dlgPresentedDeleteUser, alert.Cancel(nil), alert.Save(func() (close bool) {
 				for _, state := range userStates {
 					if state.selected.Get() {
-						if err := useCases.MyCircleUserRemove(wnd.Subject().ID(), circle.ID, state.usr.ID); err != nil {
+						if err := useCases.MyCircleUserRemove(wnd.Subject(), circle.ID, state.usr.ID); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return false
 						}

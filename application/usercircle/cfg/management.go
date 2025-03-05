@@ -4,9 +4,9 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/rcrud"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/usercircle"
 	uiusercircles "go.wdy.de/nago/application/usercircle/ui"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
@@ -74,10 +74,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircle, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircle(wnd, useCases, roles.UseCases.FindByID)
+		return uiusercircles.PageMyCircle(wnd, useCases, roles.UseCases.FindByID, groups.UseCases.FindByID)
 	})
 
-	cfg.AddAdminCenterGroup(func(uid user.ID) admin.Group {
+	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 		group := admin.Group{
 			Title: "Nutzerkreise",
 			Entries: []admin.Card{
@@ -90,7 +90,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			},
 		}
 
-		for circle, _ := range useCases.MyCircles(uid) {
+		for circle, _ := range useCases.MyCircles(subject) {
 			group.Entries = append(group.Entries, admin.Card{
 				Title:        circle.Name,
 				Text:         circle.Description,

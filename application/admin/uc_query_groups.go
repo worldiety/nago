@@ -8,7 +8,7 @@ import (
 
 func NewGroups(groups FindAllGroups) QueryGroups {
 	return func(subject auth.Subject, filterText string) []Group {
-		return filter(subject, groups(subject.ID()), filterText)
+		return filter(subject, groups(subject), filterText)
 	}
 }
 

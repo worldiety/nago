@@ -3,6 +3,7 @@ package usercircle
 import (
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
 	"iter"
 	"slices"
@@ -10,7 +11,7 @@ import (
 )
 
 func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCircleMembers {
-	return func(uid user.ID, id ID) iter.Seq2[user.User, error] {
+	return func(subject auth.Subject, id ID) iter.Seq2[user.User, error] {
 		optCircle, err := repoCircle.FindByID(id)
 		if err != nil {
 			return xiter.WithError[user.User](err)
@@ -21,7 +22,7 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 		}
 
 		circle := optCircle.Unwrap()
-		if !slices.Contains(circle.Administrators, uid) {
+		if !slices.Contains(circle.Administrators, subject.ID()) {
 			return xiter.WithError[user.User](user.PermissionDeniedErr)
 		}
 
