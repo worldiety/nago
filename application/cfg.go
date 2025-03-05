@@ -67,6 +67,7 @@ type Configurator struct {
 	mailManagementMutator    func(*MailManagement)
 	userManagement           *UserManagement
 	roleManagement           *RoleManagement
+	settingsManagement       *SettingsManagement
 	adminManagement          *AdminManagement
 	adminManagementGroups    []func(uid auth.Subject) admin.Group
 	adminManagementMutator   func(m *AdminManagement)

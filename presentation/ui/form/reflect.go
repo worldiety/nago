@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -87,6 +88,66 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			}
 
 			switch field.Type.Kind() {
+			case reflect.Slice:
+				switch field.Type.Elem().Kind() {
+				case reflect.String:
+					// just show a multi line textfield
+					var lines int
+					if str, ok := field.Tag.Lookup("lines"); ok {
+						lines, _ = strconv.Atoi(str)
+					}
+
+					if lines == 0 {
+						lines = 5
+					}
+
+					requiresInit := false
+					strState := core.DerivedState[string](state, field.Name).Init(func() string {
+						src := state.Get()
+						slice := reflect.ValueOf(src).FieldByName(field.Name)
+						tmp := make([]string, 0, slice.Len())
+						for i := 0; i < slice.Len(); i++ {
+							tmp = append(tmp, slice.Index(i).String())
+						}
+
+						str := strings.Join(tmp, "\n")
+
+						if val := field.Tag.Get("value"); val != "" && str == "" {
+							requiresInit = true
+							return val
+						}
+
+						return str
+					})
+
+					strState.Observe(func(newValue string) {
+						v := strings.Split(newValue, "\n")
+						slice := reflect.MakeSlice(field.Type, 0, len(v))
+						for _, strVal := range v {
+							newValue := reflect.New(field.Type.Elem()).Elem()
+							newValue.SetString(strVal)
+							slice = reflect.Append(slice, newValue)
+						}
+
+						dst := state.Get()
+						dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
+						state.Set(dst)
+						state.Notify()
+					})
+
+					if requiresInit {
+						strState.Notify()
+					}
+
+					fieldsBuilder.Append(ui.TextField(label, strState.Get()).
+						InputValue(strState).
+						ID(id).
+						SupportingText(field.Tag.Get("supportingText")).
+						Lines(lines).
+						Disabled(disabled).
+						Frame(ui.Frame{}.FullWidth()),
+					)
+				}
 			case reflect.Bool:
 				requiresInit := false
 				boolState := core.DerivedState[bool](state, field.Name).Init(func() bool {

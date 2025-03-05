@@ -64,7 +64,5 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible" :style="styles" @click="onClick"
-		>{{ props.ui.value }} <br v-if="!ui.invisible && ui.lineBreak" />
-	</span>
+	<span v-if="!ui.invisible" :style="styles" @click="onClick">{{props.ui.value}}<br v-if="!ui.invisible && ui.lineBreak"/></span>
 </template>

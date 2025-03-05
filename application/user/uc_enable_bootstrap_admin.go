@@ -96,6 +96,9 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			"nago.template.find_all",
 			"nago.template.create",
 			"nago.template.ensure_build_in",
+
+			"nago.settings.global.load",
+			"nago.settings.global.store",
 		}
 
 		hType := Argon2IdMin

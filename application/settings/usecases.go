@@ -1,11 +1,105 @@
 package settings
 
-import "reflect"
+import (
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/data"
+	"log/slog"
+	"reflect"
+)
 
-type Settings interface {
-	Settings() bool // open sum type which can be extended by anyone
-	IsZero() bool
+// GlobalSettings sum type is global for all known members of the settings and there is application wide exact one
+// instance. The zero value of a settings type must be valid.
+type GlobalSettings interface {
+	GlobalSettings() bool // open sum type which can be extended by anyone
 }
 
-type Load func(id string, t reflect.Type) (Settings, error)
-type Store func(id string, settings Settings) error
+// UserSettings sum type is also global in a way that all users share all globally known members of
+// UserSettings. However, each user has its own instance. The zero value of a settings type must be valid.
+type UserSettings interface {
+	UserSettings() bool // open sum type which can be extended by anyone
+}
+
+type LoadGlobal func(subject permission.Auditable, t reflect.Type) (GlobalSettings, error)
+type StoreGlobal func(subject permission.Auditable, settings GlobalSettings) error
+
+type LoadMySettings func(subject permission.Auditable, t reflect.Type) (UserSettings, error)
+type StoreMySettings func(subject permission.Auditable, settings UserSettings) error
+
+type ID string
+
+func MySettings[T UserSettings](subject permission.Auditable, settings LoadMySettings) T {
+	typ := reflect.TypeFor[T]()
+	s, err := settings(subject, typ)
+	if err != nil {
+		slog.Error("failed to load per user settings", "err", err)
+		var zero T
+		return zero
+	}
+
+	return s.(T)
+}
+
+func Global[T GlobalSettings](subject permission.Auditable, global LoadGlobal) T {
+	typ := reflect.TypeFor[T]()
+	s, err := global(subject, typ)
+	if err != nil {
+		slog.Error("failed to load global settings", "err", err)
+		var zero T
+		return zero
+	}
+
+	return s.(T)
+}
+
+type StoreBox[T any] struct {
+	ID       ID
+	Settings T
+}
+
+func (b StoreBox[T]) Identity() ID {
+	return b.ID
+}
+
+func (b StoreBox[T]) WithIdentity(id ID) StoreBox[T] {
+	b.ID = id
+	return b
+}
+
+type UseCases struct {
+	LoadGlobal      LoadGlobal
+	StoreGlobal     StoreGlobal
+	LoadMySettings  LoadMySettings
+	StoreMySettings StoreMySettings
+}
+
+func NewUseCases(globalRepo data.Repository[StoreBox[GlobalSettings], ID], userRepo data.Repository[StoreBox[UserSettings], ID]) UseCases {
+
+	return UseCases{
+		LoadGlobal:  NewLoadGlobal(globalRepo),
+		StoreGlobal: NewStoreGlobal(globalRepo),
+	}
+}
+
+type MetaData struct {
+	Title       string
+	Description string
+}
+
+func ReadMetaData(variant reflect.Type) MetaData {
+	title := variant.Name()
+	description := ""
+	field, ok := variant.FieldByName("_")
+	if ok {
+		if s, ok := field.Tag.Lookup("title"); ok {
+			title = s
+		}
+		if s, ok := field.Tag.Lookup("description"); ok {
+			description = s
+		}
+	}
+
+	return MetaData{
+		Title:       title,
+		Description: description,
+	}
+}

@@ -13,7 +13,7 @@ type AdminManagement struct {
 	Pages       uiadmin.Pages
 }
 
-func (c *Configurator) AddAdminCenterGroup(group func(id auth.Subject) admin.Group) *Configurator {
+func (c *Configurator) AddAdminCenterGroup(group func(subject auth.Subject) admin.Group) *Configurator {
 	c.adminManagementGroups = append(c.adminManagementGroups, group)
 	return c
 }
