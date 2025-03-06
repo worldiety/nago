@@ -8,14 +8,9 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/argon2"
 	rand2 "math/rand"
+	"regexp"
 	"time"
 	"unicode/utf8"
-)
-
-const (
-	minPasswordLength = 8
-	minEntropyBits    = 60
-	maxPasswordLength = 1000
 )
 
 var noLoginErr = std.NewLocalizedError("Login nicht möglich", "Der Nutzer existiert nicht, das Konto ist deaktiviert oder das Passwort ist falsch.")
@@ -27,11 +22,9 @@ func (p Password) CompareHashAndPassword(algo HashAlgorithm, salt []byte, hash [
 	// and mitigate time based attacks for non-constant operations.
 	time.Sleep(min(200, time.Duration(rand2.Intn(1000))))
 
-	// we intentionally validate the password basics, because otherwise a compromised password would open
-	// up the attack surface. imagine lifting the password length from 2 chars to 8 chars
-	if err := p.Validate(); err != nil {
-		return err
-	}
+	// security note: we got so many complains, that we don't reject valid but insecure passwords due to raising
+	// the passwords requirements. This must be ensured through the user object, by requesting the password
+	// change flag.
 
 	var myHash []byte
 	switch algo {
@@ -50,21 +43,9 @@ func (p Password) CompareHashAndPassword(algo HashAlgorithm, salt []byte, hash [
 }
 
 func (p Password) Validate() error {
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls
-	runeCount := utf8.RuneCountInString(string(p))
-	if runeCount < minPasswordLength {
-		return std.NewLocalizedError("Schwaches Passwort", fmt.Sprintf("Das Kennwort muss mindestens %d Zeichen enthalten.", minPasswordLength)) //TODO use language from subject
-	}
-
-	if err := passwordvalidator.Validate(string(p), minEntropyBits); err != nil {
-		return std.NewLocalizedError("Schwaches Passwort", "Das Kennwort hat nicht genug Entropie.") // TODO use language from subject
-	}
-
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet
-	// and https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
-	if runeCount > maxPasswordLength {
-		// probably a DOS attack
-		return std.NewLocalizedError("Eingabebeschränkung", fmt.Sprintf("Das Kennwort muss kürzer als %d Zeichen sein", maxPasswordLength)) // TODO use language from subject
+	strength := CalculatePasswordStrength(string(p))
+	if !strength.Acceptable {
+		return PasswordStrengthError{Strength: strength}
 	}
 
 	return nil
@@ -107,4 +88,97 @@ func setArgon2idMin(usr *User, password string) error {
 	usr.Algorithm = Argon2IdMin
 
 	return nil
+}
+
+type Complexity int
+
+const (
+	VeryWeak Complexity = iota
+	Weak
+	Strong
+)
+
+type PasswordStrengthError struct {
+	Strength PasswordStrengthIndicator
+}
+
+func (e PasswordStrengthError) Error() string {
+	return fmt.Sprintf("PasswordStrengthError: %#v", e.Strength)
+}
+
+// PasswordStrengthIndicator represents the strength estimation of an analyzed string for the purpose of
+// a password. See also BSI recommendations regarding passwords:
+// https://www.bsi.bund.de/DE/Themen/Verbraucherinnen-und-Verbraucher/Informationen-und-Empfehlungen/Cyber-Sicherheitsempfehlungen/Accountschutz/Sichere-Passwoerter-erstellen/sichere-passwoerter-erstellen_node.html
+// or https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Checklisten/sichere_passwoerter_faktenblatt.pdf?__blob=publicationFile&v=4#download=1
+type PasswordStrengthIndicator struct {
+	Complexity                Complexity
+	ComplexityScale           float64 // 0 = weak, 1 = super strong
+	MinLengthRequired         int
+	ContainsMinLength         bool
+	ContainsSpecial           bool
+	ContainsNumber            bool
+	ContainsUpperAndLowercase bool
+	ContainsBelowMaxLength    bool
+	MaxLengthRequired         int
+	Acceptable                bool
+}
+
+var regexSpecialChar = regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+`)
+var regexNumber = regexp.MustCompile(`[0-9]+`)
+var regexUppercase = regexp.MustCompile(`[A-ZÄÖÜ]+`)
+var regexLowercase = regexp.MustCompile(`[a-zäöü]+`)
+
+func CalculatePasswordStrength(p string) PasswordStrengthIndicator {
+	var res PasswordStrengthIndicator
+	res.MinLengthRequired = 8
+	res.MaxLengthRequired = 1000
+
+	// see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls
+	strlen := utf8.RuneCount([]byte(p))
+	if strlen >= res.MinLengthRequired {
+		res.ContainsMinLength = true
+	}
+
+	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#password-storage-cheat-sheet
+	// and https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
+	if strlen <= res.MaxLengthRequired {
+		// probably a DOS attack
+		res.ContainsBelowMaxLength = true
+	}
+
+	if regexSpecialChar.MatchString(p) {
+		res.ContainsSpecial = true
+	}
+
+	if regexNumber.MatchString(p) {
+		res.ContainsNumber = true
+	}
+
+	if regexUppercase.MatchString(p) && regexLowercase.MatchString(p) {
+		res.ContainsUpperAndLowercase = true
+	}
+
+	// see also https://reusablesec.blogspot.com/2010/10/new-paper-on-password-security-metrics.html
+	// or https://www.omnicalculator.com/other/password-entropy
+	if err := passwordvalidator.Validate(p, 60); err == nil {
+		res.Complexity = Strong
+		res.ComplexityScale = 0.8
+	} else if err := passwordvalidator.Validate(p, 45); err == nil {
+		res.Complexity = Weak
+		res.ComplexityScale = 0.5
+	} else {
+		res.Complexity = VeryWeak
+		res.ComplexityScale = 0.1
+	}
+
+	if strlen == 0 {
+		res.ComplexityScale = 0
+	}
+
+	res.Acceptable = res.ContainsMinLength && res.ContainsSpecial && res.ContainsBelowMaxLength && res.ContainsNumber && res.ContainsUpperAndLowercase && res.Complexity > Weak
+	if res.Acceptable {
+		res.ComplexityScale = 1
+	}
+
+	return res
 }
