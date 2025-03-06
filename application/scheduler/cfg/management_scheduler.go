@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/application/scheduler"
 	uischeduler "go.wdy.de/nago/application/scheduler/ui"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
@@ -42,7 +43,7 @@ func Enable(cfg *application.Configurator) (SchedulerManagement, error) {
 		return uischeduler.PageOverview(wnd, management.UseCases)
 	})
 
-	cfg.AddAdminCenterGroup(func(uid user.ID) admin.Group {
+	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 		group := admin.Group{
 			Title: "Hintergrundprozesse",
 		}
