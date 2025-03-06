@@ -429,7 +429,7 @@ func rolePicker(wnd core.Window, roles []role.Role, title string, presented *cor
 		presented,
 		alert.Cancel(nil),
 		alert.Save(func() (close bool) {
-			if err := onSelected(roles); err != nil {
+			if err := onSelected(selectedState.Get()); err != nil {
 				alert.ShowBannerError(wnd, err)
 				return false
 			}
@@ -453,7 +453,7 @@ func groupPicker(wnd core.Window, groups []group.Group, title string, presented 
 		presented,
 		alert.Cancel(nil),
 		alert.Save(func() (close bool) {
-			if err := onSelected(groups); err != nil {
+			if err := onSelected(selectedState.Get()); err != nil {
 				alert.ShowBannerError(wnd, err)
 				return false
 			}
