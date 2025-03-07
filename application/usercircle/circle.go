@@ -2,9 +2,9 @@ package usercircle
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"slices"
 	"strings"

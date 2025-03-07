@@ -59,10 +59,16 @@ const styles = computed<string>(() => {
 		styles.push('cursor: pointer');
 	}
 
+	if (props.ui.underline) {
+		styles.push('text-decoration: underline');
+	}
+
 	return styles.join(';');
 });
 </script>
 
 <template>
-	<span v-if="!ui.invisible" :style="styles" @click="onClick">{{props.ui.value}}<br v-if="!ui.invisible && ui.lineBreak"/></span>
+	<span v-if="!ui.invisible" :style="styles" @click="onClick"
+		>{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak"
+	/></span>
 </template>

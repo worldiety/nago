@@ -10,7 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/laher/mergefs"
 	"github.com/vearutop/statigz"
-	http_image "go.wdy.de/nago/image/http"
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
@@ -111,9 +112,9 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key)
-	app2.AddSystemService(c.Images().CreateSrcSet)
-	app2.AddSystemService(c.Images().LoadBestFit)
-	app2.AddSystemService(c.Images().LoadSrcSet)
+	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
+	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
+	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)
 
 	for _, dep := range c.systemServices {
 		app2.AddSystemServiceWithName(dep.name, dep.service)
@@ -413,8 +414,8 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}))
 
-	images := c.Images()
-	r.Mount(http_image.Endpoint, http_image.NewHandler(images.LoadBestFit))
+	images := option.Must(c.ImageManagement())
+	r.Mount(httpimage.Endpoint, httpimage.NewHandler(images.UseCases.LoadBestFit))
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if c.contextPath.Load() == nil {

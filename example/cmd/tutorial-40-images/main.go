@@ -3,7 +3,7 @@ package main
 
 import (
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/image"
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/ui/crud"
 	"go.wdy.de/nago/web/vuejs"

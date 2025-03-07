@@ -1,9 +1,10 @@
 package uiuser
 
 import (
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/image"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"

@@ -70,7 +70,12 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			},
 		}
 
-		c.RootView(c.sessionManagement.Pages.Login, c.DecorateRootView(func(wnd core.Window) core.View {
+		settingsManagement, err := c.SettingsManagement()
+		if err != nil {
+			return SessionManagement{}, fmt.Errorf("cannot get settings management: %w", err)
+		}
+
+		c.RootView(c.sessionManagement.Pages.Login, func(wnd core.Window) core.View {
 			return uisession.Login(
 				wnd,
 				c.sessionManagement.UseCases.Login,
@@ -78,8 +83,10 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 				c.userManagement.UseCases.FindByMail,
 				c.SendPasswordResetMail,
 				c.SendVerificationMail,
+				settingsManagement.UseCases.LoadGlobal,
+				userMgmt.Pages.Register,
 			)
-		}))
+		})
 
 		c.RootView(c.sessionManagement.Pages.Logout, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uisession.Logout(wnd, c.sessionManagement.UseCases.Logout)

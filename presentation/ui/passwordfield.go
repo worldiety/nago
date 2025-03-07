@@ -21,6 +21,7 @@ type TPasswordField struct {
 	frame               proto.Frame
 	lines               int
 	id                  string
+	keydownEnter        func()
 }
 
 // PasswordField represents a secret entered by the user.
@@ -127,6 +128,11 @@ func (c TPasswordField) ID(id string) TPasswordField {
 	return c
 }
 
+func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
+	c.keydownEnter = fn
+	return c
+}
+
 func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.PasswordField{
@@ -144,5 +150,6 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		Lines:               proto.Uint(c.lines),
 		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
 		Id:                  proto.Str(c.id),
+		KeydownEnter:        ctx.MountCallback(c.keydownEnter),
 	}
 }

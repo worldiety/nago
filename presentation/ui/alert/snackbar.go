@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -121,6 +122,30 @@ func makeMessageFromError(err error) (Message, bool) {
 		return Message{
 			Title:   "Element bereits vorhanden",
 			Message: "Die Anwendungsfall konnte nicht ausgeführt werden, da ein Element nicht bereits vorhanden sein darf, aber gefunden wurde.",
+		}, true
+	}
+
+	var passwordStrengthErr user.PasswordStrengthError
+	if errors.As(err, &passwordStrengthErr) {
+		var msg string
+		if passwordStrengthErr.Strength.Complexity < user.Strong {
+			msg = "Die Kennwortkomplexität ist zu niedrig."
+		} else if !passwordStrengthErr.Strength.ContainsUpperAndLowercase {
+			msg = "Das Kennwort muss mindestens einen Groẞ- und einen Kleinbuchstaben enthalten."
+		} else if !passwordStrengthErr.Strength.ContainsMinLength {
+			msg = fmt.Sprintf("Das Kennwort muss mindestens %d Zeichen enthalten.", passwordStrengthErr.Strength.MinLengthRequired)
+		} else if !passwordStrengthErr.Strength.ContainsSpecial {
+			msg = "Das Kennwort muss mindestens ein Sonderzeichen enthalten."
+		} else if !passwordStrengthErr.Strength.ContainsBelowMaxLength {
+			msg = "Das Kennwort ist zu lang."
+		} else if !passwordStrengthErr.Strength.ContainsNumber {
+			msg = "Das Kennwort muss mindestens eine Zahl enthalten."
+		} else {
+			msg = "Das Kennwort kann nicht verwendet werden."
+		}
+		return Message{
+			Title:   "Kennwort zu schwach",
+			Message: msg,
 		}, true
 	}
 

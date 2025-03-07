@@ -6,7 +6,12 @@ import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { PasswordField, TextFieldStyleValues, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import {
+	FunctionCallRequested,
+	PasswordField,
+	TextFieldStyleValues,
+	UpdateStateValueRequested,
+} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -80,6 +85,13 @@ const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.frame).join(';');
 });
 
+function handleKeydownEnter(event: Event) {
+	if (props.ui.keydownEnter) {
+		event.stopPropagation();
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.keydownEnter, nextRID()));
+	}
+}
+
 function toggleRevealed(): void {
 	props.ui.revealed = !props.ui.revealed;
 	passwordInput.value?.focus();
@@ -98,6 +110,7 @@ function toggleRevealed(): void {
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="ui.id"
+					@keydown.enter="handleKeydownEnter"
 					:autocomplete="props.ui.disableAutocomplete ? 'off' : 'on'"
 					ref="passwordInput"
 					v-model="inputValue"

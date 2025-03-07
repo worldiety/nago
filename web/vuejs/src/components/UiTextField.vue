@@ -6,6 +6,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import {
+	FunctionCallRequested,
 	KeyboardTypeValues,
 	TextField,
 	TextFieldStyleValues,
@@ -75,6 +76,13 @@ watch(
 		}
 	}
 );
+
+function handleKeydownEnter(event: Event) {
+	if (props.ui.keydownEnter) {
+		event.stopPropagation();
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.keydownEnter, nextRID()));
+	}
+}
 
 function submitInputValue(force: boolean): void {
 	if (inputValue.value == props.ui.value) {
@@ -170,6 +178,7 @@ const inputMode = computed<string>(() => {
 			<div class="relative">
 				<input
 					v-if="!props.ui.lines"
+					@keydown.enter="handleKeydownEnter"
 					:id="id"
 					v-model="inputValue"
 					class="input-field !pr-10"

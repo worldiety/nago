@@ -2,11 +2,12 @@ package application
 
 import (
 	_ "embed"
+	"go.wdy.de/nago/application/image"
+	"go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/image"
-	http_image "go.wdy.de/nago/image/http"
+
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -251,7 +252,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			} else {
 				var avatarIcon core.View
 				if id := wnd.Subject().Avatar(); id != "" {
-					avatarIcon = avatar.URI(http_image.URI(image.ID(id), image.FitCover, 40, 40))
+					avatarIcon = avatar.URI(httpimage.URI(image.ID(id), image.FitCover, 40, 40))
 				} else {
 					avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L40)
 				}
@@ -304,7 +305,7 @@ func (b *ScaffoldBuilder) hasAdminCenter(wnd core.Window) bool {
 func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *SessionManagement) core.View {
 	var avatarIcon core.View
 	if id := wnd.Subject().Avatar(); id != "" {
-		avatarIcon = avatar.URI(http_image.URI(image.ID(id), image.FitCover, 120, 120)).Size(ui.L120)
+		avatarIcon = avatar.URI(httpimage.URI(image.ID(id), image.FitCover, 120, 120)).Size(ui.L120)
 	} else {
 		avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L120)
 	}

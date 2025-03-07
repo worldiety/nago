@@ -61,27 +61,28 @@ type Configurator struct {
 	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri               proto.URI
 	fps                      int
-	images                   *Images
-	systemServices           []dependency
-	mailManagement           *MailManagement
-	mailManagementMutator    func(*MailManagement)
-	userManagement           *UserManagement
-	roleManagement           *RoleManagement
-	settingsManagement       *SettingsManagement
-	adminManagement          *AdminManagement
-	adminManagementGroups    []func(uid auth.Subject) admin.Group
-	adminManagementMutator   func(m *AdminManagement)
-	sessionManagement        *SessionManagement
-	permissionManagement     *PermissionManagement
-	groupManagement          *GroupManagement
-	licenseManagement        *LicenseManagement
-	billingManagement        *BillingManagement
-	backupManagement         *BackupManagement
-	secretManagement         *SecretManagement
-	templateManagement       *TemplateManagement
-	decorator                Decorator
-	eventBus                 events.EventBus
-	contextPath              atomic.Pointer[string]
+
+	systemServices         []dependency
+	mailManagement         *MailManagement
+	mailManagementMutator  func(*MailManagement)
+	userManagement         *UserManagement
+	roleManagement         *RoleManagement
+	settingsManagement     *SettingsManagement
+	adminManagement        *AdminManagement
+	adminManagementGroups  []func(uid auth.Subject) admin.Group
+	adminManagementMutator func(m *AdminManagement)
+	sessionManagement      *SessionManagement
+	permissionManagement   *PermissionManagement
+	groupManagement        *GroupManagement
+	licenseManagement      *LicenseManagement
+	billingManagement      *BillingManagement
+	imageManagement        *ImageManagement
+	backupManagement       *BackupManagement
+	secretManagement       *SecretManagement
+	templateManagement     *TemplateManagement
+	decorator              Decorator
+	eventBus               events.EventBus
+	contextPath            atomic.Pointer[string]
 }
 
 func NewConfigurator() *Configurator {

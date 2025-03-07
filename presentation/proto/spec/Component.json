@@ -23,6 +23,7 @@
     "Toggle",
     "VStack",
     "WebView",
-    "Menu"
+    "Menu",
+    "Form"
   ]
 }

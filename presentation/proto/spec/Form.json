@@ -1,0 +1,24 @@
+{
+  "kind": "Record",
+  "doc": "A Form is not rendered visually but is a help for accessibility.",
+  "id": 121,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "3": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Autocomplete",
+      "type": "Bool"
+    }
+  }
+}

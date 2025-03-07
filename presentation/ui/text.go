@@ -39,17 +39,21 @@ type TText struct {
 	textAlignment      TextAlignment
 	action             func()
 	lineBreak          bool
+	underline          bool
 }
 
 func MailTo(wnd core.Window, name string, email string) TText {
 	return Link(wnd, name, "mailto:"+email, "_parent")
 }
 
+func LinkWithAction(text string, action func()) TText {
+	return Text(text).Underline(true).Action(action).Color(ColorInteractive)
+}
+
 // Link performs a best guess based on the given href. If the href starts with http or https
 // the window will perform an Open call. Otherwise, a local forward navigation is applied.
-func Link(wnd core.Window, name string, href string, target string) TText {
-	// TODO links should be underlined due to accessibility, however, NAGO cannot express that
-	return Text(name).Action(func() {
+func Link(wnd core.Window, text string, href string, target string) TText {
+	return LinkWithAction(text, func() {
 		if wnd == nil {
 			slog.Error("cannot execute link action: window is nil")
 			return
@@ -79,11 +83,16 @@ func Link(wnd core.Window, name string, href string, target string) TText {
 			}
 
 		}
-	}).Color(ColorInteractive)
+	})
 }
 
 func Text(content string) TText {
 	return TText{content: content}
+}
+
+func (c TText) Underline(b bool) TText {
+	c.underline = b
+	return c
 }
 
 func (c TText) Padding(padding Padding) DecoredView {
@@ -184,5 +193,6 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		TextAlignment:          proto.TextAlignment(c.textAlignment),
 		Action:                 ctx.MountCallback(c.action),
 		LineBreak:              proto.Bool(c.lineBreak),
+		Underline:              proto.Bool(c.underline),
 	}
 }

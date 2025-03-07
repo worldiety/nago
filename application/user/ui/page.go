@@ -24,6 +24,7 @@ type Pages struct {
 	MyContact     core.NavigationPath
 	ConfirmMail   core.NavigationPath
 	ResetPassword core.NavigationPath
+	Register      core.NavigationPath
 }
 
 func Users(

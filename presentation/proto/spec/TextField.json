@@ -84,6 +84,10 @@
       "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
       "name": "Id",
       "type": "Str"
+    },
+    "19": {
+      "name": "KeydownEnter",
+      "type": "Ptr"
     }
   }
 }

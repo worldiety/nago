@@ -57,6 +57,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				MyContact:     "account/profile/contact",
 				ConfirmMail:   "account/confirm",
 				ResetPassword: "account/password/reset",
+				Register:      "account/register",
 			},
 		}
 
@@ -109,6 +110,10 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.ChangePasswordWithCode,
 				c.sessionManagement.UseCases.Logout,
 			)
+		})
+
+		c.RootView(c.userManagement.Pages.Register, func(wnd core.Window) core.View {
+			return uiuser.PageSelfRegister(wnd)
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {

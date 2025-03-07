@@ -5201,6 +5201,8 @@ export class PasswordField implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public keydownEnter?: Ptr;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -5216,7 +5218,8 @@ export class PasswordField implements Writeable, Readable, Component {
 		disableDebounce: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		keydownEnter: Ptr | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -5233,6 +5236,7 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.invisible = invisible;
 		this.revealed = revealed;
 		this.id = id;
+		this.keydownEnter = keydownEnter;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5302,6 +5306,10 @@ export class PasswordField implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 16: {
+					this.keydownEnter = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5326,6 +5334,7 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.revealed !== undefined,
 			this.id !== undefined,
+			this.keydownEnter !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5389,6 +5398,10 @@ export class PasswordField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 15);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 16);
+			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5407,7 +5420,8 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.disableDebounce === undefined &&
 			this.invisible === undefined &&
 			this.revealed === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.keydownEnter === undefined
 		);
 	}
 
@@ -5427,6 +5441,7 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.invisible = undefined;
 		this.revealed = undefined;
 		this.id = undefined;
+		this.keydownEnter = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7372,6 +7387,8 @@ export class TextView implements Writeable, Readable, Component {
 
 	public invisible?: Bool;
 
+	public underline?: Bool;
+
 	constructor(
 		value: Str | undefined = undefined,
 		color: Color | undefined = undefined,
@@ -7393,7 +7410,8 @@ export class TextView implements Writeable, Readable, Component {
 		pressedBorder: Border | undefined = undefined,
 		focusedBorder: Border | undefined = undefined,
 		lineBreak: Bool | undefined = undefined,
-		invisible: Bool | undefined = undefined
+		invisible: Bool | undefined = undefined,
+		underline: Bool | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -7416,6 +7434,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.focusedBorder = focusedBorder;
 		this.lineBreak = lineBreak;
 		this.invisible = invisible;
+		this.underline = underline;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7515,6 +7534,10 @@ export class TextView implements Writeable, Readable, Component {
 					this.invisible = readBool(reader);
 					break;
 				}
+				case 22: {
+					this.underline = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7545,6 +7568,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.focusedBorder !== undefined && !this.focusedBorder.isZero(),
 			this.lineBreak !== undefined,
 			this.invisible !== undefined,
+			this.underline !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7632,6 +7656,10 @@ export class TextView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 21);
 			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 22);
+			writeBool(writer, this.underline!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -7656,7 +7684,8 @@ export class TextView implements Writeable, Readable, Component {
 			(this.pressedBorder === undefined || this.pressedBorder.isZero()) &&
 			(this.focusedBorder === undefined || this.focusedBorder.isZero()) &&
 			this.lineBreak === undefined &&
-			this.invisible === undefined
+			this.invisible === undefined &&
+			this.underline === undefined
 		);
 	}
 
@@ -7682,6 +7711,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.focusedBorder = undefined;
 		this.lineBreak = undefined;
 		this.invisible = undefined;
+		this.underline = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7753,6 +7783,8 @@ export class TextField implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public keydownEnter?: Ptr;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -7771,7 +7803,8 @@ export class TextField implements Writeable, Readable, Component {
 		disableDebounce: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		keydownEnter: Ptr | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -7791,6 +7824,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.invisible = invisible;
 		this.revealed = revealed;
 		this.id = id;
+		this.keydownEnter = keydownEnter;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7883,6 +7917,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 19: {
+					this.keydownEnter = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7910,6 +7948,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.revealed !== undefined,
 			this.id !== undefined,
+			this.keydownEnter !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7989,6 +8028,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 18);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 19);
+			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8010,7 +8053,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.disableDebounce === undefined &&
 			this.invisible === undefined &&
 			this.revealed === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.keydownEnter === undefined
 		);
 	}
 
@@ -8033,6 +8077,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.invisible = undefined;
 		this.revealed = undefined;
 		this.id = undefined;
+		this.keydownEnter = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9455,6 +9500,109 @@ export class MenuGroups implements Writeable, Readable {
 	}
 }
 
+// A Form is not rendered visually but is a help for accessibility.
+export class Form implements Writeable, Readable, Component {
+	public children?: Components;
+
+	public action?: Ptr;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	public autocomplete?: Bool;
+
+	constructor(
+		children: Components | undefined = undefined,
+		action: Ptr | undefined = undefined,
+		id: Str | undefined = undefined,
+		autocomplete: Bool | undefined = undefined
+	) {
+		this.children = children;
+		this.action = action;
+		this.id = id;
+		this.autocomplete = autocomplete;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.children = new Components();
+					this.children.read(reader);
+					break;
+				}
+				case 2: {
+					this.action = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.id = readString(reader);
+					break;
+				}
+				case 4: {
+					this.autocomplete = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.children !== undefined && !this.children.isZero(),
+			this.action !== undefined,
+			this.id !== undefined,
+			this.autocomplete !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.children!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.children === undefined || this.children.isZero()) &&
+			this.action === undefined &&
+			this.id === undefined &&
+			this.autocomplete === undefined
+		);
+	}
+
+	reset(): void {
+		this.children = undefined;
+		this.action = undefined;
+		this.id = undefined;
+		this.autocomplete = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 121);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -10023,6 +10171,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 120: {
 			const v = new MenuGroups();
+			v.read(src);
+			return v;
+		}
+		case 121: {
+			const v = new Form();
 			v.read(src);
 			return v;
 		}

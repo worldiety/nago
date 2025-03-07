@@ -87,6 +87,10 @@
     "21": {
       "name": "Invisible",
       "type": "Bool"
+    },
+    "22": {
+      "name": "Underline",
+      "type": "Bool"
     }
   }
 }

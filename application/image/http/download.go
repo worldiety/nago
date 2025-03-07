@@ -1,8 +1,8 @@
-package http_image
+package httpimage
 
 import (
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/auth/iam"
-	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/presentation/core"
 	"io"
 	"log/slog"
@@ -31,6 +31,10 @@ func NewURL(apiPath string, imgOrSrcSet image.ID, fit image.ObjectFit, width, he
 
 // URI uses the default Endpoint. See [NewURL].
 func URI(imgOrSrcSet image.ID, fit image.ObjectFit, width, height int) core.URI {
+	if imgOrSrcSet == "" {
+		return ""
+	}
+
 	return core.URI(NewURL(Endpoint, imgOrSrcSet, fit, width, height))
 }
 
@@ -60,6 +64,8 @@ func NewHandler(loadFit image.LoadBestFit) http.HandlerFunc {
 		switch query.Get("fit") {
 		case image.FitCover.String():
 			fit = image.FitCover
+		case image.FitNone.String():
+			fit = image.FitNone
 		}
 
 		optReader, err := loadFit(iam.FromContext(r.Context()), srcImgId, fit, width, height)

@@ -2,6 +2,7 @@ package form
 
 import (
 	"encoding/json"
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
@@ -21,6 +22,7 @@ type AutoOptions struct {
 	SectionPadding std.Option[ui.Padding]
 	ViewOnly       bool
 	IgnoreFields   []string
+	Window         core.Window
 }
 
 // Auto is similar to [crud.AutoBinding], however it does much less and just creates a form using
@@ -289,6 +291,36 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				}
 			case reflect.String:
 				switch field.Type {
+				case reflect.TypeFor[image.ID]():
+					if opts.Window == nil {
+						fieldsBuilder.Append(ui.Text("no window available"))
+						continue
+					}
+
+					requiresInit := false
+					imageState := core.DerivedState[image.ID](state, field.Name).Init(func() image.ID {
+						src := state.Get()
+						str := reflect.ValueOf(src).FieldByName(field.Name).String()
+						if val := field.Tag.Get("value"); val != "" && str == "" {
+							requiresInit = true
+							return image.ID(val)
+						}
+
+						return image.ID(str)
+					})
+
+					imageState.Observe(func(newValue image.ID) {
+						dst := state.Get()
+						dst = setFieldValue(dst, field.Name, newValue).(T)
+						state.Set(dst)
+						state.Notify()
+					})
+
+					if requiresInit {
+						imageState.Notify()
+					}
+
+					fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
 				default:
 					var lines int
 					if str, ok := field.Tag.Lookup("lines"); ok {

@@ -16,6 +16,8 @@ type ObjectFit int
 
 func (f ObjectFit) String() string {
 	switch f {
+	case FitNone:
+		return "none"
 	case FitCover:
 		return "cover"
 	default:
@@ -24,7 +26,8 @@ func (f ObjectFit) String() string {
 }
 
 const (
-	FitCover ObjectFit = iota
+	FitNone ObjectFit = iota
+	FitCover
 )
 
 // SrcSet represents a bunch of scaled image variants of the same source.
@@ -37,6 +40,15 @@ type SrcSet struct {
 
 func (s SrcSet) Fit(kind ObjectFit, width, height int) (Image, bool) {
 	switch kind {
+	case FitNone:
+		var c Image
+		for _, img := range s.Images {
+			if img.Width > c.Width {
+				c = img
+			}
+		}
+
+		return c, c.Data != ""
 	case FitCover:
 		return s.FitCover(width, height)
 	default:

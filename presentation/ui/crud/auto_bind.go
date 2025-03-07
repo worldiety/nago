@@ -2,8 +2,8 @@ package crud
 
 import (
 	"encoding/json"
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/rcrud"
-	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"

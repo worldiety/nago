@@ -2,10 +2,10 @@ package user
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/image"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"

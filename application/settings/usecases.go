@@ -1,6 +1,8 @@
 package settings
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
 	"log/slog"
@@ -39,7 +41,8 @@ func MySettings[T UserSettings](subject permission.Auditable, settings LoadMySet
 	return s.(T)
 }
 
-func Global[T GlobalSettings](subject permission.Auditable, global LoadGlobal) T {
+// ReadGlobal avoids any permission check and directly reads global settings.
+func ReadGlobal[T GlobalSettings](subject permission.Auditable, global LoadGlobal) T {
 	typ := reflect.TypeFor[T]()
 	s, err := global(subject, typ)
 	if err != nil {
@@ -102,4 +105,9 @@ func ReadMetaData(variant reflect.Type) MetaData {
 		Title:       title,
 		Description: description,
 	}
+}
+
+func TypeIdent(t reflect.Type) string {
+	tmp := sha512.Sum512_224([]byte(t.PkgPath() + "." + t.Name()))
+	return hex.EncodeToString(tmp[:])
 }

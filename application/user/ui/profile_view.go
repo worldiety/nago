@@ -2,10 +2,10 @@ package uiuser
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/image"
+	"go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/image"
-	http_image "go.wdy.de/nago/image/http"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
@@ -42,7 +42,7 @@ func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, email
 	if contact.Avatar == "" {
 		avatarImg = avatar.Text(xstrings.Join2(" ", contact.Firstname, contact.Lastname)).Size(ui.L144)
 	} else {
-		avatarImg = avatar.URI(http_image.URI(contact.Avatar, image.FitCover, 144, 144)).Size(ui.L144)
+		avatarImg = avatar.URI(httpimage.URI(contact.Avatar, image.FitCover, 144, 144)).Size(ui.L144)
 	}
 
 	var tmpDetailsViews []core.View

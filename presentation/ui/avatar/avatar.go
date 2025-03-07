@@ -1,8 +1,9 @@
 package avatar
 
 import (
-	"go.wdy.de/nago/image"
-	http_image "go.wdy.de/nago/image/http"
+	"go.wdy.de/nago/application/image"
+	httpimage "go.wdy.de/nago/application/image/http"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"strings"
@@ -22,7 +23,7 @@ type TAvatar struct {
 
 func TextOrImage(text string, img image.ID) TAvatar {
 	if img != "" {
-		return URI(http_image.URI(img, image.FitCover, 64, 64))
+		return URI(httpimage.URI(img, image.FitCover, 64, 64))
 	}
 
 	return Text(text)

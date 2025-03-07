@@ -45,6 +45,7 @@ type TTextField struct {
 	lines           int
 	keyboardOptions TKeyboardOptions
 	id              string
+	keydownEnter    func()
 }
 
 func (c TTextField) Padding(padding Padding) DecoredView {
@@ -209,6 +210,11 @@ func (c TTextField) FullWidth() TTextField {
 	return c
 }
 
+func (c TTextField) KeydownEnter(fn func()) TTextField {
+	c.keydownEnter = fn
+	return c
+}
+
 // Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
 // This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single
 // line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand.
@@ -256,5 +262,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Lines:           proto.Uint(c.lines),
 		KeyboardOptions: c.keyboardOptions.ora(),
 		Id:              proto.Str(c.id),
+		KeydownEnter:    ctx.MountCallback(c.keydownEnter),
 	}
 }

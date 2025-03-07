@@ -267,6 +267,7 @@ func (Toggle) isComponent()        {}
 func (VStack) isComponent()        {}
 func (WebView) isComponent()       {}
 func (Menu) isComponent()          {}
+func (Form) isComponent()          {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -4970,11 +4971,12 @@ type PasswordField struct {
 	// If Revealed the password is shown
 	Revealed Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id Str
+	Id           Str
+	KeydownEnter Ptr
 }
 
 func (v *PasswordField) write(w *BinaryWriter) error {
-	var fields [16]bool
+	var fields [17]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -4990,6 +4992,7 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 	fields[13] = !v.Invisible.IsZero()
 	fields[14] = !v.Revealed.IsZero()
 	fields[15] = !v.Id.IsZero()
+	fields[16] = !v.KeydownEnter.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5120,6 +5123,14 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.KeydownEnter.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5207,6 +5218,11 @@ func (v *PasswordField) read(r *BinaryReader) error {
 			}
 		case 15:
 			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.KeydownEnter.read(r)
 			if err != nil {
 				return err
 			}
@@ -6989,10 +7005,11 @@ type TextView struct {
 	FocusedBorder          Border
 	LineBreak              Bool
 	Invisible              Bool
+	Underline              Bool
 }
 
 func (v *TextView) write(w *BinaryWriter) error {
-	var fields [22]bool
+	var fields [23]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Color.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
@@ -7014,6 +7031,7 @@ func (v *TextView) write(w *BinaryWriter) error {
 	fields[19] = !v.FocusedBorder.IsZero()
 	fields[20] = !v.LineBreak.IsZero()
 	fields[21] = !v.Invisible.IsZero()
+	fields[22] = !v.Underline.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7192,6 +7210,14 @@ func (v *TextView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[22] {
+		if err := w.writeFieldHeader(uvarint, 22); err != nil {
+			return err
+		}
+		if err := v.Underline.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7312,6 +7338,11 @@ func (v *TextView) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 22:
+			err := v.Underline.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -7376,11 +7407,12 @@ type TextField struct {
 	// If Revealed the password is shown
 	Revealed Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id Str
+	Id           Str
+	KeydownEnter Ptr
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [19]bool
+	var fields [20]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7399,6 +7431,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[16] = !v.Invisible.IsZero()
 	fields[17] = !v.Revealed.IsZero()
 	fields[18] = !v.Id.IsZero()
+	fields[19] = !v.KeydownEnter.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7567,6 +7600,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[19] {
+		if err := w.writeFieldHeader(uvarint, 19); err != nil {
+			return err
+		}
+		if err := v.KeydownEnter.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7687,6 +7728,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 18:
 			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.KeydownEnter.read(r)
 			if err != nil {
 				return err
 			}
@@ -9020,6 +9066,103 @@ func (v *MenuItem) read(r *BinaryReader) error {
 	return nil
 }
 
+// A Form is not rendered visually but is a help for accessibility.
+type Form struct {
+	Children Components
+	Action   Ptr
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id           Str
+	Autocomplete Bool
+}
+
+func (v *Form) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Action.IsZero()
+	fields[3] = !v.Id.IsZero()
+	fields[4] = !v.Autocomplete.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Autocomplete.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Form) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Autocomplete.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -9755,6 +9898,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 120:
 		var v MenuGroups
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 121:
+		var v Form
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -11133,10 +11282,11 @@ func (v *PasswordField) reset() {
 	v.Invisible.reset()
 	v.Revealed.reset()
 	v.Id.reset()
+	v.KeydownEnter.reset()
 }
 
 func (v *PasswordField) IsZero() bool {
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero()
 }
 
 func (v *Ping) reset() {
@@ -11590,10 +11740,11 @@ func (v *TextView) reset() {
 	v.FocusedBorder.reset()
 	v.LineBreak.reset()
 	v.Invisible.reset()
+	v.Underline.reset()
 }
 
 func (v *TextView) IsZero() bool {
-	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero()
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero()
 }
 
 func (v *TextField) reset() {
@@ -11615,10 +11766,11 @@ func (v *TextField) reset() {
 	v.Invisible.reset()
 	v.Revealed.reset()
 	v.Id.reset()
+	v.KeydownEnter.reset()
 }
 
 func (v *TextField) IsZero() bool {
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -11856,6 +12008,17 @@ func (v *MenuGroups) IsZero() bool {
 
 func (v *MenuGroups) reset() {
 	*v = nil
+}
+
+func (v *Form) reset() {
+	v.Children.reset()
+	v.Action.reset()
+	v.Id.reset()
+	v.Autocomplete.reset()
+}
+
+func (v *Form) IsZero() bool {
+	return v.Children.IsZero() && v.Action.IsZero() && v.Id.IsZero() && v.Autocomplete.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -12686,6 +12849,13 @@ func (v *MenuItems) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *MenuGroups) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 120); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Form) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 121); err != nil {
 		return err
 	}
 	return nil

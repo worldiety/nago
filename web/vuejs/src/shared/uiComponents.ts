@@ -14,6 +14,7 @@ import UiWebView from '@/components/UiWebView.vue';
 import UiWindowTitle from '@/components/UiWindowTitle.vue';
 import UiBox from '@/components/box/UiBox.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
+import UiForm from '@/components/form/UiForm.vue';
 import UiHStack from '@/components/hstack/UiHStack.vue';
 import UiMenu from '@/components/menu/UiMenu.vue';
 import UiScaffold from '@/components/scaffold/UiScaffold.vue';
@@ -27,6 +28,7 @@ import {
 	Checkbox,
 	DatePicker,
 	Divider,
+	Form,
 	Grid,
 	HStack,
 	Img,
@@ -140,6 +142,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Menu) {
 		return UiMenu;
+	}
+
+	if (ngc instanceof Form) {
+		return UiForm;
 	}
 
 	// keep this as the default fallback

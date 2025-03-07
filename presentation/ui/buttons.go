@@ -17,7 +17,9 @@ type TButton struct {
 	font               Font
 	action             func()
 	trace              string
+	invisible          bool
 	disabled           bool
+	id                 string
 }
 
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
@@ -57,6 +59,11 @@ func (c TButton) Title(text string) TButton {
 	return c
 }
 
+func (c TButton) Visible(b bool) TButton {
+	c.invisible = !b
+	return c
+}
+
 func (c TButton) Font(font Font) TButton {
 	c.font = font
 	return c
@@ -82,6 +89,11 @@ func (c TButton) Frame(frame Frame) TButton {
 	return c
 }
 
+func (c TButton) ID(id string) TButton {
+	c.id = id
+	return c
+}
+
 func (c TButton) Render(context core.RenderContext) proto.Component {
 	alabel := c.title
 	if alabel == "" {
@@ -99,10 +111,12 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		If(c.title != "", Text(c.title).Font(c.font)),
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
+		ID(c.id).
 		Enabled(!c.disabled).
 		Action(c.action).
 		StylePreset(c.preset).
 		Frame(c.frame).
+		Visible(!c.invisible).
 		AccessibilityLabel(alabel). // this is redundant and requires the text twice, however we are "just" an hstack
 		Render(context)
 }

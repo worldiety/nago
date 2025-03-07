@@ -20,7 +20,7 @@ func PageSettings(wnd core.Window, load settings.LoadGlobal, store settings.Stor
 
 	var rType reflect.Type
 	for r := range decl.Variants() {
-		if r.Name() == typeName {
+		if settings.TypeIdent(r) == typeName {
 			rType = r
 			break
 		}
@@ -52,7 +52,9 @@ func PageSettings(wnd core.Window, load settings.LoadGlobal, store settings.Stor
 		ui.H1(meta.Title),
 		ui.Text(meta.Description),
 		ui.HLine(),
-		form.Auto[settings.GlobalSettings](form.AutoOptions{}, state),
+		form.Auto[settings.GlobalSettings](form.AutoOptions{
+			Window: wnd,
+		}, state),
 		ui.HLine(),
 		ui.HStack(
 			ui.SecondaryButton(func() {

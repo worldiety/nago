@@ -1,11 +1,12 @@
 package uiuser
 
 import (
+	"go.wdy.de/nago/application/image"
+	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/image"
-	http_image "go.wdy.de/nago/image/http"
+
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
@@ -116,7 +117,7 @@ func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles
 	if contact.Avatar == "" {
 		avatarImg = avatar.Text(wnd.Subject().Name()).Size(ui.L144)
 	} else {
-		avatarImg = avatar.URI(http_image.URI(contact.Avatar, image.FitCover, 144, 144)).Size(ui.L144)
+		avatarImg = avatar.URI(httpimage.URI(contact.Avatar, image.FitCover, 144, 144)).Size(ui.L144)
 	}
 
 	var tmpDetailsViews []core.View

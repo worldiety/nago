@@ -8,7 +8,7 @@ import (
 )
 
 type TImage struct {
-	uri                proto.URI
+	lightUri, darkUri  proto.URI
 	accessibilityLabel string
 	invisible          bool
 	border             proto.Border
@@ -42,7 +42,14 @@ func ImageIcon(svg core.SVG) TImage {
 // way.
 // See also [core.Window.AsURI] for an uncached dynamically delivered image resource.
 func (c TImage) URI(uri core.URI) TImage {
-	c.uri = proto.URI(uri)
+	c.lightUri = proto.URI(uri)
+	return c
+}
+
+// EmbedAdaptive is like [TImage.Embed] but picks whatever fits best.
+func (c TImage) URIAdaptive(light, dark core.URI) TImage {
+	c.lightUri = proto.URI(light)
+	c.darkUri = proto.URI(dark)
 	return c
 }
 
@@ -128,19 +135,28 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 		isSvg := bytes.Contains(buf[:min(len(buf), 200)], []byte("<svg"))
 		if isSvg {
 			c.svg = buf
-			c.uri = ""
+			c.lightUri = ""
+		} else {
+			b64 := base64.StdEncoding.EncodeToString(buf)
+			c.lightUri = proto.URI(`data:application/octet-stream;base64,` + b64)
 		}
 
-		b64 := base64.StdEncoding.EncodeToString(buf)
-		//c.uri = proto.URI(`data:image/svg+xml;base64,` + b64)
-		c.uri = proto.URI(`data:application/octet-stream;base64,` + b64)
 	}
 	// end of delayed encoding
 
 	svgData := c.svg
 
+	myUri := c.lightUri
+	if c.lightUri != "" && c.darkUri != "" {
+		if ctx.Window().Info().ColorScheme == core.Dark {
+			myUri = c.darkUri
+		} else {
+			myUri = c.lightUri
+		}
+	}
+
 	return &proto.Img{
-		Uri:                c.uri,
+		Uri:                myUri,
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 		Invisible:          proto.Bool(c.invisible),
 		Border:             c.border,

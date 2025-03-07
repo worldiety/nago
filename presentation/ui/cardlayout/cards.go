@@ -91,12 +91,13 @@ const (
 )
 
 type TCard struct {
-	title   string
-	body    core.View
-	footer  core.View
-	frame   ui.Frame
-	style   TitleStyle
-	padding ui.Padding
+	title         string
+	body          core.View
+	footer        core.View
+	frame         ui.Frame
+	style         TitleStyle
+	padding       ui.Padding
+	customPadding bool
 }
 
 func Card(title string) TCard {
@@ -114,6 +115,7 @@ func (c TCard) Body(view core.View) TCard {
 }
 
 func (c TCard) Padding(padding ui.Padding) TCard {
+	c.customPadding = true
 	c.padding = padding
 	return c
 }
@@ -151,7 +153,12 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	padding := c.padding
-	padding.Top = bodyTopPadding
+	if !c.customPadding {
+		padding.Top = bodyTopPadding
+		if padding.Top == "" && c.title == "" {
+			padding.Top = padding.Left
+		}
+	}
 
 	var border ui.Border
 	if padding.Left != "" || padding.Bottom != "" {
