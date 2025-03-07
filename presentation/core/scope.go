@@ -229,6 +229,11 @@ func (s *Scope) handleMessage(buf []byte) error {
 			rid = ridSrc.GetRID()
 		}
 
+		if s.ignoreNextInvalidation.Load() {
+			s.ignoreNextInvalidation.Store(false)
+			return
+		}
+
 		if s.dirty || s.hasDirtyStates() {
 			s.forceRender(rid)
 			s.dirty = false
