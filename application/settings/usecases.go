@@ -42,9 +42,9 @@ func MySettings[T UserSettings](subject permission.Auditable, settings LoadMySet
 }
 
 // ReadGlobal avoids any permission check and directly reads global settings.
-func ReadGlobal[T GlobalSettings](subject permission.Auditable, global LoadGlobal) T {
+func ReadGlobal[T GlobalSettings](global LoadGlobal) T {
 	typ := reflect.TypeFor[T]()
-	s, err := global(subject, typ)
+	s, err := global(permission.SU(), typ)
 	if err != nil {
 		slog.Error("failed to load global settings", "err", err)
 		var zero T

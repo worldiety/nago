@@ -27,20 +27,6 @@ func (id ID) Valid() bool {
 	return regexPermissionID.MatchString(string(id))
 }
 
-// Auditable is used to bootstrap without package cycles.
-type Auditable interface {
-	// Audit checks if this identity, subject or context has the actual use case permission and may save the positive or
-	// negative result in the audit log. An error indicates, that the Subject has not the given permission. The error
-	// may just be promoted into error receiving ui components like [alert.BannerError] or [alert.ShowBannerError].
-	Audit(permission ID) error
-
-	// HasPermission checks, if the Subject or context has the given permission. A regular use case
-	// should use the [Auditable.Audit]. However, this may be used e.g. by the UI to show or hide specific aspects.
-	HasPermission(permission ID) bool
-
-	Permissions() iter.Seq[ID]
-}
-
 type Permission struct {
 	ID ID `json:"id"`
 	// Name is the unlocalized fallback or default human-readable name of the permission.

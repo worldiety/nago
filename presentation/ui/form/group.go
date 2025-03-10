@@ -1,6 +1,9 @@
 package form
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
 
 type Group struct {
 	Name   string
@@ -24,7 +27,7 @@ func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 			continue
 		}
 
-		if field.Name != "_" && !field.IsExported() {
+		if !strings.HasPrefix(field.Name, "_") && !field.IsExported() {
 			continue
 		}
 

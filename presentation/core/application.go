@@ -254,7 +254,7 @@ func SystemServiceWithName[T any](app *Application, name string) (T, bool) {
 
 	for i := len(app.systemServices) - 1; i >= 0; i-- {
 		service := app.systemServices[i]
-		if service.name != "" && service.name != name {
+		if name != "" && service.name != name {
 			continue
 		}
 

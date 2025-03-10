@@ -29,7 +29,7 @@ type AutoBindingOptions struct {
 //   - hidden to omit it completely
 //
 // To automatically also create a CRUD component e.g. for an entire page, see also [AutoView].
-func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases rcrud.UseCases[E, ID]) *Binding[E] {
+func AutoBinding[E form.Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases rcrud.UseCases[E, ID]) *Binding[E] {
 	var zero E
 	bnd := NewBinding[E](wnd)
 	for _, group := range form.GroupsFor[E]() {
@@ -71,13 +71,13 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 
 					source, ok := field.Tag.Lookup("source")
 					if ok {
-						listAll, ok := core.SystemServiceWithName[UseCaseListAny](wnd.Application(), source)
+						listAll, ok := core.SystemServiceWithName[form.UseCaseListAny](wnd.Application(), source)
 						if !ok {
 							slog.Error("can not find list by system service", "source", source)
 							continue
 						}
 
-						fieldsBuilder.Append(OneToMany[E](OneToManyOptions[AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+						fieldsBuilder.Append(OneToMany[E](OneToManyOptions[form.AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
 							func(obj *E) []string {
 								slice := reflect.ValueOf(obj).Elem().FieldByName(field.Name)
 								tmp := make([]string, 0, slice.Len())
@@ -231,13 +231,13 @@ func AutoBinding[E Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd co
 
 						source, ok := field.Tag.Lookup("source")
 						if ok {
-							listAll, ok := core.SystemServiceWithName[UseCaseListAny](wnd.Application(), source)
+							listAll, ok := core.SystemServiceWithName[form.UseCaseListAny](wnd.Application(), source)
 							if !ok {
 								slog.Error("can not find list by system service", "source", source)
 								continue
 							}
 
-							fieldsBuilder.Append(OneToOne[E](OneToOneOptions[AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
+							fieldsBuilder.Append(OneToOne[E](OneToOneOptions[form.AnyEntity, string]{Label: label, SupportingText: field.Tag.Get("supportingText"), ForeignEntities: listAll(wnd.Subject())}, PropertyFuncs(
 								func(obj *E) std.Option[string] {
 									v := reflect.ValueOf(obj).Elem().FieldByName(field.Name).String()
 									if v == "" {

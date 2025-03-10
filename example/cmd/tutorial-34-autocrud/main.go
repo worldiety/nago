@@ -10,6 +10,7 @@ import (
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/crud"
+	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/web/vuejs"
 	"time"
 )
@@ -43,7 +44,7 @@ func main() {
 		// this must happen before IAM init, otherwise the permissions are missing
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
-		cfg.AddSystemService("persons", crud.AnyUseCaseList(useCases.FindAll))
+		cfg.AddSystemService("persons", form.AnyUseCaseList(useCases.FindAll))
 
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 

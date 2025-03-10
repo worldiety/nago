@@ -3,6 +3,8 @@ package ui
 import (
 	"bytes"
 	"encoding/base64"
+	"go.wdy.de/nago/application/image"
+	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -46,11 +48,18 @@ func (c TImage) URI(uri core.URI) TImage {
 	return c
 }
 
-// EmbedAdaptive is like [TImage.Embed] but picks whatever fits best.
+// URIAdaptive is like [TImage.Embed] but picks whatever fits best.
 func (c TImage) URIAdaptive(light, dark core.URI) TImage {
 	c.lightUri = proto.URI(light)
 	c.darkUri = proto.URI(dark)
 	return c
+}
+
+func (c TImage) Adaptive(light, dark image.ID) TImage {
+	return c.URIAdaptive(
+		httpimage.URI(light, image.FitNone, 512, 512),
+		httpimage.URI(dark, image.FitNone, 512, 512),
+	)
 }
 
 // FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor.

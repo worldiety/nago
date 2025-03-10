@@ -13,8 +13,10 @@ var _ = enum.Variant[settings.GlobalSettings, Settings](
 type Settings struct {
 	_ any `title:"Theme" description:"Theme und Einstellungen der Corporate Identity."`
 
-	PageLogoLight image.ID `label:"Seitenlogo Light-Mode"`
-	PageLogoDark  image.ID `label:"Seitenlogo Dark-Mode"`
+	PageLogoLight image.ID `json:"pageLogoLight" label:"Seitenlogo Light-Mode"`
+	PageLogoDark  image.ID `json:"pageLogoDark" label:"Seitenlogo Dark-Mode"`
+	AppIconLight  image.ID `json:"appIconLight" label:"App Icon Light-Mode"`
+	AppIconDark   image.ID `json:"appIconDark" label:"App Icon Dark-Mode"`
 }
 
 func (s Settings) GlobalSettings() bool {

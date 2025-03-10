@@ -7,14 +7,10 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/form"
 )
 
 type AutoOptions struct {
-}
-
-type Aggregate[A any, ID comparable] interface {
-	data.Aggregate[ID]
-	WithIdentity(ID) A
 }
 
 type AutoRootViewOptions struct {
@@ -22,7 +18,7 @@ type AutoRootViewOptions struct {
 	CreateDisabled bool
 }
 
-func AutoRootView[E Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useCases rcrud.UseCases[E, ID]) func(wnd core.Window) core.View {
+func AutoRootView[E form.Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useCases rcrud.UseCases[E, ID]) func(wnd core.Window) core.View {
 	return func(wnd core.Window) core.View {
 		bnd := AutoBinding[E](AutoBindingOptions{}, wnd, useCases)
 		return ui.VStack(
@@ -37,24 +33,24 @@ type AutoViewOptions struct {
 	CreateDisabled        bool
 }
 
-func canFindAll[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
+func canFindAll[E form.Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
 	return bnd.wnd.Subject().HasPermission(useCases.PermFindAll())
 }
 
-func canCreate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
+func canCreate[E form.Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
 	return bnd.wnd.Subject().HasPermission(useCases.PermCreate())
 }
 
-func canDelete[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
+func canDelete[E form.Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
 	return bnd.wnd.Subject().HasPermission(useCases.PermDeleteByID())
 }
 
-func canUpdate[E Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
+func canUpdate[E form.Aggregate[E, ID], ID ~string](bnd *Binding[E], useCases rcrud.UseCases[E, ID]) bool {
 	return bnd.wnd.Subject().HasPermission(useCases.PermUpdate())
 }
 
 // AutoView creates a real simple default CRUD view for rapid prototyping.
-func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding[E], usecases rcrud.UseCases[E, ID]) core.View {
+func AutoView[E form.Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding[E], usecases rcrud.UseCases[E, ID]) core.View {
 	if !canFindAll(bnd, usecases) {
 		return ui.VStack(
 
@@ -95,6 +91,6 @@ func AutoView[E Aggregate[E, ID], ID ~string](opts AutoViewOptions, bnd *Binding
 	).Alignment(ui.Leading).Padding(ui.Padding{Top: ui.L40}).Frame(ui.Frame{}.FullWidth())
 }
 
-func NewUseCases[E Aggregate[E, ID], ID ~string](permissionPrefix permission.ID, repo data.Repository[E, ID]) rcrud.UseCases[E, ID] {
+func NewUseCases[E form.Aggregate[E, ID], ID ~string](permissionPrefix permission.ID, repo data.Repository[E, ID]) rcrud.UseCases[E, ID] {
 	return rcrud.UseCasesFrom(rcrud.DecorateRepository(rcrud.DecoratorOptions{PermissionPrefix: permissionPrefix}, repo))
 }

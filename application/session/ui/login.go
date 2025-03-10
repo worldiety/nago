@@ -32,8 +32,8 @@ func Login(
 		return alert.Banner("Login", "Sie sind bereits eingeloggt.")
 	}
 
-	usrSettings := settings.ReadGlobal[user.Settings](user.SU(), loadGlobalSettings)
-	themeSettings := settings.ReadGlobal[theme.Settings](user.SU(), loadGlobalSettings)
+	usrSettings := settings.ReadGlobal[user.Settings](loadGlobalSettings)
+	themeSettings := settings.ReadGlobal[theme.Settings](loadGlobalSettings)
 
 	var logoImg core.View
 	if themeSettings.PageLogoDark != "" || themeSettings.PageLogoLight != "" {

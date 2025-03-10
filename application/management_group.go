@@ -8,7 +8,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui/crud"
+	"go.wdy.de/nago/presentation/ui/form"
 	"iter"
 )
 
@@ -45,7 +45,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 			return uigroup.Groups(wnd, c.groupManagement.UseCases)
 		}))
 
-		c.AddSystemService("nago.groups", crud.AnyUseCaseList[group.Group, group.ID](func(subject auth.Subject) iter.Seq2[group.Group, error] {
+		c.AddSystemService("nago.groups", form.AnyUseCaseList[group.Group, group.ID](func(subject auth.Subject) iter.Seq2[group.Group, error] {
 			return c.groupManagement.UseCases.FindAll(subject)
 		}))
 	}

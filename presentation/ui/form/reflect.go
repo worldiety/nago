@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
+	"go.wdy.de/nago/presentation/ui/picker"
 	"go.wdy.de/nago/presentation/ui/timepicker"
 	"log/slog"
 	"reflect"
@@ -72,8 +73,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				label = name
 			}
 
-			if field.Name == "_" && label != "_" {
-				fieldsBuilder.Append(ui.Text(label))
+			if strings.HasPrefix(field.Name, "_") && label != "_" {
+				fieldsBuilder.Append(ui.Text(label).FullWidth().TextAlignment(ui.TextAlignStart))
 				continue
 			} else if label == "_" {
 				continue
@@ -93,62 +94,121 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			case reflect.Slice:
 				switch field.Type.Elem().Kind() {
 				case reflect.String:
-					// just show a multi line textfield
-					var lines int
-					if str, ok := field.Tag.Lookup("lines"); ok {
-						lines, _ = strconv.Atoi(str)
-					}
-
-					if lines == 0 {
-						lines = 5
-					}
-
-					requiresInit := false
-					strState := core.DerivedState[string](state, field.Name).Init(func() string {
-						src := state.Get()
-						slice := reflect.ValueOf(src).FieldByName(field.Name)
-						tmp := make([]string, 0, slice.Len())
-						for i := 0; i < slice.Len(); i++ {
-							tmp = append(tmp, slice.Index(i).String())
+					source, ok := field.Tag.Lookup("source")
+					if ok {
+						if opts.Window == nil {
+							slog.Error("form.Auto requires AutoOptions.Window but is nil")
 						}
 
-						str := strings.Join(tmp, "\n")
-
-						if val := field.Tag.Get("value"); val != "" && str == "" {
-							requiresInit = true
-							return val
+						listAll, ok := core.SystemServiceWithName[UseCaseListAny](opts.Window.Application(), source)
+						if !ok {
+							slog.Error("can not find list by system service", "source", source)
+							continue
 						}
 
-						return str
-					})
-
-					strState.Observe(func(newValue string) {
-						v := strings.Split(newValue, "\n")
-						slice := reflect.MakeSlice(field.Type, 0, len(v))
-						for _, strVal := range v {
-							newValue := reflect.New(field.Type.Elem()).Elem()
-							newValue.SetString(strVal)
-							slice = reflect.Append(slice, newValue)
+						values, err := xslices.Collect2(listAll(opts.Window.Subject()))
+						if err != nil {
+							slog.Error("can not collect list", "source", source, "err", err)
 						}
 
-						dst := state.Get()
-						dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
-						state.Set(dst)
-						state.Notify()
-					})
+						strState := core.DerivedState[[]AnyEntity](state, field.Name).Init(func() []AnyEntity {
+							src := state.Get()
+							slice := reflect.ValueOf(src).FieldByName(field.Name)
+							tmp := make([]AnyEntity, 0, slice.Len())
+							for _, id := range slice.Seq2() {
+								id := id.String()
 
-					if requiresInit {
-						strState.Notify()
+								for _, v := range values {
+									if v.id == id {
+										tmp = append(tmp, v)
+										break
+									}
+								}
+							}
+
+							return tmp
+						})
+
+						strState.Observe(func(v []AnyEntity) {
+							slice := reflect.MakeSlice(field.Type, 0, len(v))
+							for _, strVal := range v {
+								newValue := reflect.New(field.Type.Elem()).Elem()
+								newValue.SetString(strVal.id)
+								slice = reflect.Append(slice, newValue)
+							}
+
+							dst := state.Get()
+							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
+							state.Set(dst)
+							state.Notify()
+						})
+
+						fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
+							Title(label).
+							MultiSelect(true).
+							Disabled(disabled).
+							SupportingText(field.Tag.Get("supportingText")).
+							Frame(ui.Frame{}.FullWidth()))
+
+					} else {
+						// just show a multi line textfield
+						var lines int
+						if str, ok := field.Tag.Lookup("lines"); ok {
+							lines, _ = strconv.Atoi(str)
+						}
+
+						if lines == 0 {
+							lines = 5
+						}
+
+						requiresInit := false
+						strState := core.DerivedState[string](state, field.Name).Init(func() string {
+							src := state.Get()
+							slice := reflect.ValueOf(src).FieldByName(field.Name)
+							tmp := make([]string, 0, slice.Len())
+							for i := 0; i < slice.Len(); i++ {
+								tmp = append(tmp, slice.Index(i).String())
+							}
+
+							str := strings.Join(tmp, "\n")
+
+							if val := field.Tag.Get("value"); val != "" && str == "" {
+								requiresInit = true
+								return val
+							}
+
+							return str
+						})
+
+						strState.Observe(func(newValue string) {
+							v := strings.Split(newValue, "\n")
+							slice := reflect.MakeSlice(field.Type, 0, len(v))
+							for _, strVal := range v {
+								newValue := reflect.New(field.Type.Elem()).Elem()
+								newValue.SetString(strVal)
+								slice = reflect.Append(slice, newValue)
+							}
+
+							dst := state.Get()
+							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
+							state.Set(dst)
+							state.Notify()
+						})
+
+						if requiresInit {
+							strState.Notify()
+						}
+
+						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
+							InputValue(strState).
+							ID(id).
+							SupportingText(field.Tag.Get("supportingText")).
+							Lines(lines).
+							Disabled(disabled).
+							Frame(ui.Frame{}.FullWidth()),
+						)
 					}
 
-					fieldsBuilder.Append(ui.TextField(label, strState.Get()).
-						InputValue(strState).
-						ID(id).
-						SupportingText(field.Tag.Get("supportingText")).
-						Lines(lines).
-						Disabled(disabled).
-						Frame(ui.Frame{}.FullWidth()),
-					)
 				}
 			case reflect.Bool:
 				requiresInit := false
@@ -320,6 +380,9 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						imageState.Notify()
 					}
 
+					if label != "" {
+						fieldsBuilder.Append(ui.Text(label).TextAlignment(ui.TextAlignStart).FullWidth())
+					}
 					fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
 				default:
 					var lines int

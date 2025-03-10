@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/auth"
 	"golang.org/x/text/language"
 	"log/slog"
@@ -140,4 +141,16 @@ func Colors[CS ColorSet](wnd Window) CS {
 	}
 
 	return set.(CS)
+}
+
+// GlobalSettings reads with Super-User permission any Settings from the window.
+func GlobalSettings[T settings.GlobalSettings](wnd Window) T {
+	loadGlobal, ok := SystemService[settings.LoadGlobal](wnd.Application())
+	if !ok {
+		slog.Error("failed to load global settings use case from application system service")
+		var zero T
+		return zero
+	}
+
+	return settings.ReadGlobal[T](loadGlobal)
 }

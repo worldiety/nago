@@ -5,7 +5,7 @@ import (
 	uipermission "go.wdy.de/nago/application/permission/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui/crud"
+	"go.wdy.de/nago/presentation/ui/form"
 	"iter"
 )
 
@@ -23,7 +23,7 @@ func (c *Configurator) PermissionManagement() (PermissionManagement, error) {
 			},
 		}
 
-		c.AddSystemService("nago.iam.permission.list", crud.AnyUseCaseList[permission.Permission, permission.ID](func(subject auth.Subject) iter.Seq2[permission.Permission, error] {
+		c.AddSystemService("nago.iam.permission.list", form.AnyUseCaseList[permission.Permission, permission.ID](func(subject auth.Subject) iter.Seq2[permission.Permission, error] {
 			return c.permissionManagement.UseCases.FindAll(subject)
 		}))
 

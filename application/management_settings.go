@@ -24,7 +24,7 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 		}
 
 		globalRepo := json.NewSloppyJSONRepository[settings.StoreBox[settings.GlobalSettings]](globalStore)
-		
+
 		usrStore, err := c.EntityStore("nago.settings.user")
 		if err != nil {
 			return SettingsManagement{}, fmt.Errorf("cannot get entity store: %w", err)
@@ -39,6 +39,8 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 				PageSettings: "admin/settings/global",
 			},
 		}
+
+		c.AddSystemService("nago.settings.global.load", uc.LoadGlobal)
 
 		c.RootViewWithDecoration(c.settingsManagement.Pages.PageSettings, func(wnd core.Window) core.View {
 			return uisettings.PageSettings(wnd, uc.LoadGlobal, uc.StoreGlobal)

@@ -210,6 +210,14 @@ func (c TTextField) FullWidth() TTextField {
 	return c
 }
 
+// KeydownEnter currently only works for one line text fields (lines=0) and not for text area.
+// The enter key logic collides with the new line logic and it is currently not clear how this situation
+// shall be handled:
+//   - there must be a combined key gesture
+//   - using shift and enter for new lines is surprising for any user
+//   - using the inversion, which is shift and enter for submitting is also wrong, because that is already overloaded
+//     in multiple ways (e.g. line break vs paragraph behavior or opening a new window in Chrome etc)
+//   - same applies to Str + Enter which may also be overloaded, typically for a soft line break
 func (c TTextField) KeydownEnter(fn func()) TTextField {
 	c.keydownEnter = fn
 	return c

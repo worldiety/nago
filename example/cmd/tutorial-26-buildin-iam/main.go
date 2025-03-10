@@ -34,6 +34,7 @@ func main() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial")
 		cfg.Serve(vuejs.Dist())
+		cfg.SetName("Tutorial")
 
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())

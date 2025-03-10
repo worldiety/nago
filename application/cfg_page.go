@@ -129,6 +129,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}
 
+	app2.SetName(c.applicationName)
 	app2.SetVersion(c.applicationVersion)
 	app2.SetAppIcon(core.URI(c.appIconUri))
 
