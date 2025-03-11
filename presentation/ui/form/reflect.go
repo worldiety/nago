@@ -73,6 +73,11 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				label = name
 			}
 
+			if label == "---" {
+				fieldsBuilder.Append(ui.HLine())
+				continue
+			}
+
 			if strings.HasPrefix(field.Name, "_") && label != "_" {
 				fieldsBuilder.Append(ui.Text(label).FullWidth().TextAlignment(ui.TextAlignStart))
 				continue
@@ -352,6 +357,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			case reflect.String:
 				switch field.Type {
 				case reflect.TypeFor[image.ID]():
+
 					if opts.Window == nil {
 						fieldsBuilder.Append(ui.Text("no window available"))
 						continue
@@ -424,6 +430,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						)
 
 					default:
+
 						requiresInit := false
 						strState := core.DerivedState[string](state, field.Name).Init(func() string {
 							src := state.Get()

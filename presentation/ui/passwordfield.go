@@ -18,7 +18,7 @@ type TPasswordField struct {
 	disableAutocomplete bool
 	debounceTime        time.Duration
 	invisible           bool
-	frame               proto.Frame
+	frame               Frame
 	lines               int
 	id                  string
 	keydownEnter        func()
@@ -106,7 +106,7 @@ func (c TPasswordField) Disabled(disabled bool) TPasswordField {
 }
 
 func (c TPasswordField) Frame(frame Frame) DecoredView {
-	c.frame = frame.ora()
+	c.frame = frame
 	return c
 }
 
@@ -133,6 +133,11 @@ func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
 	return c
 }
 
+func (c TPasswordField) FullWidth() TPasswordField {
+	c.frame = c.frame.FullWidth()
+	return c
+}
+
 func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.PasswordField{
@@ -146,7 +151,7 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		DebounceTime:        proto.Duration(c.debounceTime),
 		DisableDebounce:     proto.Bool(c.disableDebounce),
 		Invisible:           proto.Bool(c.invisible),
-		Frame:               c.frame,
+		Frame:               c.frame.ora(),
 		Lines:               proto.Uint(c.lines),
 		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
 		Id:                  proto.Str(c.id),

@@ -7,9 +7,7 @@ import (
 	passwordvalidator "github.com/wagslane/go-password-validator"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/argon2"
-	rand2 "math/rand"
 	"regexp"
-	"time"
 	"unicode/utf8"
 )
 
@@ -20,7 +18,8 @@ type Password string
 func (p Password) CompareHashAndPassword(algo HashAlgorithm, salt []byte, hash []byte) error {
 	// see https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
 	// and mitigate time based attacks for non-constant operations.
-	time.Sleep(min(200, time.Duration(rand2.Intn(1000))))
+	// security note: we must not introduce another sleep here, because argon2id should be safe enough
+	// and we must not stall any locks here. We need a totally different attack mitigation strategy.
 
 	// security note: we got so many complains, that we don't reject valid but insecure passwords due to raising
 	// the passwords requirements. This must be ensured through the user object, by requesting the password

@@ -12,13 +12,20 @@ type TBanner struct {
 	presented *core.State[bool]
 	onClosed  func()
 	intent    Intent
+	frame     ui.Frame
 }
 
 func Banner(title, message string) TBanner {
 	return TBanner{
 		title:   title,
 		message: message,
+		frame:   ui.Frame{Width: ui.L400},
 	}
+}
+
+func (t TBanner) Frame(frame ui.Frame) TBanner {
+	t.frame = frame
+	return t
 }
 
 func (t TBanner) Closeable(presented *core.State[bool]) TBanner {
@@ -93,5 +100,5 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 		BackgroundColor(bgColor).
 		Border(ui.Border{}.Radius(ui.L12)).
 		Padding(ui.Padding{}.All(ui.L16)).
-		Frame(ui.Frame{Width: ui.L400}).Render(ctx)
+		Frame(t.frame).Render(ctx)
 }

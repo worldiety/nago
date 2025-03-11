@@ -47,10 +47,14 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			return UserManagement{}, fmt.Errorf("cannot get group usecases: %w", err)
 		}
 
+		settings, err := c.SettingsManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get settings usecases: %w", err)
+		}
 		_ = licenseUseCases
 
 		c.userManagement = &UserManagement{
-			UseCases: user.NewUseCases(c.EventBus(), userRepo, roleUseCases.roleRepository),
+			UseCases: user.NewUseCases(c.EventBus(), settings.UseCases.LoadGlobal, userRepo, roleUseCases.roleRepository),
 			Pages: uiuser.Pages{
 				Users:         "admin/accounts",
 				MyProfile:     "account/profile",
@@ -113,7 +117,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		})
 
 		c.RootView(c.userManagement.Pages.Register, func(wnd core.Window) core.View {
-			return uiuser.PageSelfRegister(wnd)
+			return uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create)
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {

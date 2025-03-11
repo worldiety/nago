@@ -70,6 +70,7 @@ func (e Email) Equals(other Email) bool {
 }
 
 type ShortRegistrationUser struct {
+	SelfRegistered    bool
 	Firstname         string
 	Lastname          string
 	Email             Email
@@ -78,6 +79,20 @@ type ShortRegistrationUser struct {
 	PreferredLanguage language.Tag
 	NotifyUser        bool
 	Verified          bool
+	// legal, optional
+	Newsletter                LegalAdoption
+	GeneralTermsAndConditions LegalAdoption
+	DataProtectionProvision   LegalAdoption
+	MinAge                    LegalAdoption
+	// additional optional contact data
+	Title             string
+	Position          string
+	CompanyName       string
+	City              string
+	PostalCode        string
+	State             string
+	Country           string
+	ProfessionalGroup string
 }
 
 // ID of a user entity in the Nago IAM.
@@ -98,11 +113,13 @@ type Contact struct {
 	Country    string `json:"country,omitempty"`
 	City       string `json:"city,omitempty"`
 	PostalCode string `json:"postalCode,omitempty"`
+	State      string `json:"state,omitempty"`
 	LinkedIn   string `json:"linkedIn,omitempty"`
 	Website    string `json:"website,omitempty"`
 	// Position is like CEO
-	Position    string `json:"position,omitempty"`
-	CompanyName string `json:"company,omitempty"`
+	Position          string `json:"position,omitempty"`
+	ProfessionalGroup string `json:"professionalGroup,omitempty"`
+	CompanyName       string `json:"company,omitempty"`
 	// DisplayLanguage is a BCP47 string like de or en_US of what the User wants to see its content.
 	DisplayLanguage string `json:"displayLanguage,omitempty"`
 	AboutMe         string `json:"aboutMe,omitempty"`
@@ -139,6 +156,17 @@ func (c Code) IsZero() bool {
 	return c.Value == "" && c.ValidUntil.IsZero()
 }
 
+type LegalAdoption struct {
+	ApprovedAt time.Time `json:"at,omitempty"`
+	Name       string    `json:"name,omitempty"`
+	Version    int       `json:"version,omitempty"`
+	Hash       string    `json:"hash,omitempty"`
+}
+
+func (l LegalAdoption) IsZero() bool {
+	return l == LegalAdoption{}
+}
+
 type User struct {
 	ID                    ID              `json:"id"`
 	Email                 Email           `json:"email"`
@@ -157,6 +185,11 @@ type User struct {
 	RequirePasswordChange bool            `json:"requirePasswordChange,omitempty"`
 	VerificationCode      Code            `json:"verificationCode,omitzero"`
 	PasswordRequestCode   Code            `json:"passwordRequestCode,omitzero"`
+	// some legal/regulatory properties
+	Newsletter                LegalAdoption `json:"newsletter,omitzero"`
+	GeneralTermsAndConditions LegalAdoption `json:"gtc,omitzero"`
+	DataProtectionProvision   LegalAdoption `json:"gdpr,omitzero"`
+	MinAge                    LegalAdoption `json:"minAge,omitzero"`
 }
 
 func (u User) String() string {

@@ -6,6 +6,7 @@ import (
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
@@ -19,6 +20,8 @@ type Repository data.Repository[User, ID]
 type Create func(subject permission.Auditable, model ShortRegistrationUser) (User, error)
 type FindByID func(subject permission.Auditable, id ID) (std.Option[User], error)
 type FindByMail func(subject permission.Auditable, email Email) (std.Option[User], error)
+
+type EMailUsed func(email Email) (bool, error)
 type FindAll func(subject permission.Auditable) iter.Seq2[User, error]
 
 type FindAllIdentifiers func(subject permission.Auditable) iter.Seq2[ID, error]
@@ -118,12 +121,13 @@ type UseCases struct {
 	UpdateVerification        UpdateVerification
 	UpdateVerificationByMail  UpdateVerificationByMail
 	FindAllIdentifiers        FindAllIdentifiers
+	EMailUsed                 EMailUsed
 }
 
-func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
-	createFn := NewCreate(&globalLock, eventBus, findByMailFn, users)
+	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
 
 	findByIdFn := NewFindByID(users)
 	findAllFn := NewFindAll(users)
@@ -188,5 +192,6 @@ func NewUseCases(eventBus events.EventBus, users Repository, roles data.ReadRepo
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 		FindAllIdentifiers:        NewFindAllIdentifiers(users),
+		EMailUsed:                 NewEMailUsed(users),
 	}
 }

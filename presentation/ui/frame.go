@@ -29,7 +29,7 @@ func (f Frame) Size(w, h Length) Frame {
 }
 
 func (f Frame) MatchScreen() Frame {
-	f.Height = ViewportHeight
+	f.MinHeight = ViewportHeight
 	f.Width = Full
 	return f
 }

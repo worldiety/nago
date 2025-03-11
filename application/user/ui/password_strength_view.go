@@ -23,7 +23,7 @@ func PasswordStrengthView(indicator user.PasswordStrengthIndicator) core.View {
 		checkText(indicator.ContainsSpecial, "Enthält ein Sonderzeichen"),
 		checkText(indicator.ContainsNumber, "Enthält eine Zahl"),
 		checkText(indicator.ContainsUpperAndLowercase, "Enthält Groß- und Kleinbuchstaben"),
-	).Gap(ui.L8).Alignment(ui.Leading)
+	).Gap(ui.L8).Alignment(ui.Leading).FullWidth()
 }
 
 func checkText(ok bool, text string) core.View {
