@@ -33,6 +33,10 @@ func (f subOptFunc) apply(opts *busSubscriberOptions) {
 	f(opts)
 }
 
+// TODO Is EventBus stuttering?
+
+type Bus = EventBus
+
 // EventBus is a basic contract to publish messages and to subscribe for them.
 type EventBus interface {
 	// Publish issues a new event to all subscribers. Depending on the implementation, this may

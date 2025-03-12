@@ -150,7 +150,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 	updateOtherRolesFn := NewUpdateOtherRoles(&globalLock, users)
 	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)
 	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)
-	updateOtherLicenseFn := NewUpdateOtherLicenses(&globalLock, users)
+	updateOtherLicenseFn := NewUpdateOtherLicenses(eventBus, &globalLock, users)
 
 	countAssignedUserLicenseFn := NewCountAssignedUserLicense(&globalLock, users)
 	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)

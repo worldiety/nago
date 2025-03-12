@@ -1,6 +1,7 @@
 package user
 
 import (
+	"go.wdy.de/nago/application/license"
 	"golang.org/x/text/language"
 	"time"
 )
@@ -13,6 +14,14 @@ type Created struct {
 	PreferredLanguage language.Tag
 	NotifyUser        bool
 	VerificationCode  Code
+}
+
+type LicensesUpdated struct {
+	ID        ID
+	Firstname string
+	Lastname  string
+	Email     Email
+	Licenses  []license.ID
 }
 
 type MFACodeCreated struct {

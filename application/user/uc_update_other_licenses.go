@@ -3,12 +3,13 @@ package user
 import (
 	"fmt"
 	"go.wdy.de/nago/application/license"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"slices"
 	"sync"
 )
 
-func NewUpdateOtherLicenses(mutex *sync.Mutex, repo Repository) UpdateOtherLicenses {
+func NewUpdateOtherLicenses(bus events.Bus, mutex *sync.Mutex, repo Repository) UpdateOtherLicenses {
 	return func(subject AuditableUser, id ID, licenses []license.ID) error {
 		if err := subject.Audit(PermUpdateOtherLicenses); err != nil {
 			return err
@@ -32,6 +33,19 @@ func NewUpdateOtherLicenses(mutex *sync.Mutex, repo Repository) UpdateOtherLicen
 
 		usr := optUsr.Unwrap()
 		usr.Licenses = licenses
-		return repo.Save(usr)
+
+		if err := repo.Save(usr); err != nil {
+			return fmt.Errorf("cannot save user: %w", err)
+		}
+
+		bus.Publish(LicensesUpdated{
+			ID:        id,
+			Firstname: usr.Contact.Firstname,
+			Lastname:  usr.Contact.Lastname,
+			Email:     usr.Email,
+			Licenses:  usr.Licenses,
+		})
+
+		return nil
 	}
 }
