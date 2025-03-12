@@ -25,6 +25,7 @@ func NewFindByID(sessions Repository) FindByID {
 			return std.None[Session](), nil
 		}
 
+		// TODO make this configurable and perhaps add another deadline for short sessions?
 		const day = 24 * time.Hour
 		if time.Now().Sub(session.AuthenticatedAt) > day*30*3 {
 			slog.Error("session expired for user", "sessionID", session.ID, "user", session.User)

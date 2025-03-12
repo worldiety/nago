@@ -37,6 +37,7 @@ type MenuEntryBuilder struct {
 	oneOfAuthorizedPerms []permission.ID
 	onlyPublic           bool
 	oneOfRoles           []role.ID
+	submenu              *SubMenuBuilder
 }
 
 func (b *MenuEntryBuilder) OneOf(perms ...permission.ID) *ScaffoldBuilder {
@@ -85,6 +86,104 @@ func (b *MenuEntryBuilder) Action(fn func(wnd core.Window)) *MenuEntryBuilder {
 	return b
 }
 
+type SubMenuBuilder struct {
+	parent  *MenuEntryBuilder
+	entries []*SubMenuEntryBuilder
+}
+
+func (b *SubMenuBuilder) Title(title string) *SubMenuBuilder {
+	b.parent.title = title
+	return b
+}
+
+func (b *SubMenuBuilder) MenuEntry() *SubMenuEntryBuilder {
+	e := &SubMenuEntryBuilder{
+		parent: b,
+	}
+
+	b.entries = append(b.entries, e)
+
+	return e
+}
+
+func (b *SubMenuBuilder) OneOf(perms ...permission.ID) *ScaffoldBuilder {
+	b.parent.oneOfAuthorizedPerms = append(b.parent.oneOfAuthorizedPerms, perms...)
+	return b.parent.parent
+}
+
+func (b *SubMenuBuilder) OneOfRole(roles ...role.ID) *ScaffoldBuilder {
+	b.parent.oneOfRoles = append(b.parent.oneOfRoles, roles...)
+	return b.parent.parent
+}
+
+func (b *SubMenuBuilder) Private() *ScaffoldBuilder {
+	b.parent.justAuthenticated = true
+	return b.parent.parent
+}
+
+// Public shows this entry for authenticated and non-authenticated users. See also [MenuEntryBuilder.OnlyPublic]
+// and [MenuEntryBuilder.Private] and [MenuEntryBuilder.PublicOnly].
+func (b *SubMenuBuilder) Public() *ScaffoldBuilder {
+	return b.parent.parent
+}
+
+func (b *SubMenuBuilder) PublicOnly() *ScaffoldBuilder {
+	b.parent.onlyPublic = true
+	return b.parent.parent
+}
+
+type SubMenuEntryBuilder struct {
+	parent               *SubMenuBuilder
+	title                string
+	dst                  core.NavigationPath
+	justAuthenticated    bool
+	action               func(wnd core.Window)
+	oneOfAuthorizedPerms []permission.ID
+	onlyPublic           bool
+	oneOfRoles           []role.ID
+}
+
+func (b *SubMenuEntryBuilder) Title(title string) *SubMenuEntryBuilder {
+	b.title = title
+	return b
+}
+
+func (b *SubMenuEntryBuilder) Forward(dst core.NavigationPath) *SubMenuEntryBuilder {
+	b.dst = dst
+	return b
+}
+
+func (b *SubMenuEntryBuilder) Action(fn func(wnd core.Window)) *SubMenuEntryBuilder {
+	b.action = fn
+	return b
+}
+
+func (b *SubMenuEntryBuilder) OneOf(perms ...permission.ID) *SubMenuBuilder {
+	b.oneOfAuthorizedPerms = append(b.oneOfAuthorizedPerms, perms...)
+	return b.parent
+}
+
+func (b *SubMenuEntryBuilder) OneOfRole(roles ...role.ID) *SubMenuBuilder {
+	b.oneOfRoles = append(b.oneOfRoles, roles...)
+	return b.parent
+}
+
+func (b *SubMenuEntryBuilder) Private() *SubMenuBuilder {
+	b.justAuthenticated = true
+	return b.parent
+}
+
+// Public shows this entry for authenticated and non-authenticated users. See also [MenuEntryBuilder.OnlyPublic]
+// and [MenuEntryBuilder.Private] and [MenuEntryBuilder.PublicOnly].
+func (b *SubMenuEntryBuilder) Public() *SubMenuBuilder {
+	return b.parent
+}
+
+func (b *SubMenuEntryBuilder) PublicOnly() *SubMenuBuilder {
+	b.onlyPublic = true
+	return b.parent
+}
+
 type ScaffoldBuilder struct {
 	cfg             *Configurator
 	alignment       ui.ScaffoldAlignment
@@ -94,9 +193,10 @@ type ScaffoldBuilder struct {
 	gdprContent     []byte
 	impressPath     core.NavigationPath
 	impressContent  []byte
-	menu            []MenuEntryBuilder
+	menu            []*MenuEntryBuilder
 	logoClick       func(wnd core.Window)
 	logoImage       ui.DecoredView
+	showLogin       bool
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -109,10 +209,16 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 		impressContent:  defaultImpress,
 		gdprPath:        "legal/gdpr",
 		gdprContent:     defaultGDPR,
+		showLogin:       true,
 		logoClick: func(wnd core.Window) {
 			wnd.Navigation().ForwardTo(".", nil)
 		},
 	}
+}
+
+func (b *ScaffoldBuilder) Login(show bool) *ScaffoldBuilder {
+	b.showLogin = show
+	return b
 }
 
 func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBuilder {
@@ -136,9 +242,27 @@ func (b *ScaffoldBuilder) LogoAction(fn func(wnd core.Window)) *ScaffoldBuilder 
 	return b
 }
 
+// SubmenuEntry configures a new entry with a single level sub menu. The ora design guidelines do not
+// specify more levels.
+func (b *ScaffoldBuilder) SubmenuEntry(fn func(menu *SubMenuBuilder)) *ScaffoldBuilder {
+	e := &MenuEntryBuilder{parent: b}
+	b.menu = append(b.menu, e)
+
+	if fn != nil {
+		subMenu := &SubMenuBuilder{
+			parent: e,
+		}
+		fn(subMenu)
+		e.submenu = subMenu
+	}
+
+	return b
+}
+
 func (b *ScaffoldBuilder) MenuEntry() *MenuEntryBuilder {
-	b.menu = append(b.menu, MenuEntryBuilder{parent: b})
-	return &b.menu[len(b.menu)-1]
+	e := &MenuEntryBuilder{parent: b}
+	b.menu = append(b.menu, e)
+	return e
 }
 
 func (b *ScaffoldBuilder) name() string {
@@ -228,7 +352,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				icoSize = ui.L40
 			}
 
-			menu = append(menu, ui.ScaffoldMenuEntry{
+			sentry := ui.ScaffoldMenuEntry{
 				Icon:  ui.If(entry.icon != nil, ui.Image().Embed(entry.icon).Frame(ui.Frame{}.Size(icoSize, icoSize))),
 				Title: entry.title,
 				Action: func() {
@@ -241,12 +365,64 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 					}
 				},
 				MarkAsActiveAt: entry.dst,
-			})
+			}
+
+			if entry.submenu != nil {
+				sentry.Action = nil
+				for _, subentry := range entry.submenu.entries {
+					// TODO this is a duplicate
+					if subentry.justAuthenticated && !wnd.Subject().Valid() {
+						continue
+					}
+
+					if wnd.Subject().Valid() && entry.onlyPublic {
+						continue
+					}
+
+					if len(subentry.oneOfAuthorizedPerms) > 0 {
+						if !auth.OneOf(wnd.Subject(), entry.oneOfAuthorizedPerms...) {
+							continue
+						}
+					}
+
+					if len(subentry.oneOfRoles) > 0 {
+						hasRole := false
+						for _, roleId := range subentry.oneOfRoles {
+							if wnd.Subject().HasRole(roleId) {
+								hasRole = true
+								break
+							}
+						}
+
+						if !hasRole {
+							continue
+						}
+
+					}
+					// TODO snap duplicate
+
+					sentry.Menu = append(sentry.Menu, ui.ScaffoldMenuEntry{
+						Title: subentry.title,
+						Action: func() {
+							if subentry.action != nil {
+								subentry.action(wnd)
+							}
+
+							if subentry.dst != "" {
+								wnd.Navigation().ForwardTo(subentry.dst, nil)
+							}
+						},
+						MarkAsActiveAt: subentry.dst,
+					})
+				}
+			}
+
+			menu = append(menu, sentry)
 		}
 
 		menuDialogPresented := core.AutoState[bool](wnd)
 
-		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil {
+		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil && b.showLogin {
 			if !wnd.Subject().Valid() {
 				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", sessionManagement.Pages.Login))
 			} else {

@@ -67,7 +67,7 @@
 						</p>
 						<!-- Sub sub menu entries -->
 						<p
-							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu.value"
+							v-for="(subSubMenuEntry, subSubMenuEntryIndex) in subMenuEntry.menu?.value"
 							:key="subSubMenuEntryIndex"
 							ref="subSubMenuEntryElements"
 							class="sub-sub-menu-entry rounded-full px-2"
