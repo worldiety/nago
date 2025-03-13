@@ -96,6 +96,11 @@ func (b *SubMenuBuilder) Title(title string) *SubMenuBuilder {
 	return b
 }
 
+func (b *SubMenuBuilder) Icon(icon core.SVG) *SubMenuBuilder {
+	b.parent.icon = icon
+	return b
+}
+
 func (b *SubMenuBuilder) MenuEntry() *SubMenuEntryBuilder {
 	e := &SubMenuEntryBuilder{
 		parent: b,

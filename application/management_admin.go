@@ -5,6 +5,8 @@ import (
 	uiadmin "go.wdy.de/nago/application/admin/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
+	"slices"
+	"strings"
 )
 
 type AdminManagement struct {
@@ -98,6 +100,17 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				}
 
 				groups = append(groups, admin.DefaultGroups(pages)...)
+
+				slices.SortFunc(groups, func(a, b admin.Group) int {
+					return strings.Compare(a.Title, b.Title)
+				})
+
+				for _, group := range groups {
+					slices.SortFunc(group.Entries, func(a, b admin.Card) int {
+						return strings.Compare(a.Title, b.Title)
+					})
+				}
+
 				return groups
 			},
 			QueryGroups: admin.NewGroups(func(subject auth.Subject) []admin.Group {
