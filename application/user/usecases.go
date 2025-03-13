@@ -55,6 +55,13 @@ type CountAssignedUserLicense func(auditable permission.Auditable, id license.ID
 // is undefined which users get revoked. A negative amount will remove the license from all users.
 type RevokeAssignedUserLicense func(auditable permission.Auditable, id license.ID, count int) error
 
+// AssignUserLicense tries to assign the given license to the user. If there are not enough free licenses,
+// false is returned, otherwise true. If the license is already assigned, this is a no-op and true is returned.
+type AssignUserLicense func(auditable permission.Auditable, id ID, license license.ID) (bool, error)
+
+// UnassignUserLicense removes the given license from the user. If no such license is assigned, this is a no-op.
+type UnassignUserLicense func(auditable permission.Auditable, id ID, license license.ID) error
+
 // SysUser returns the always mighty build-in system user. This user never authenticates but can always
 // be used from the code side to invoke any auditable use case. Use it with caution and only if necessary.
 // Never use it, if you could instead pass an authenticated user. Typical scenarios are
@@ -122,9 +129,11 @@ type UseCases struct {
 	UpdateVerificationByMail  UpdateVerificationByMail
 	FindAllIdentifiers        FindAllIdentifiers
 	EMailUsed                 EMailUsed
+	AssignUserLicense         AssignUserLicense
+	UnassignUserLicense       UnassignUserLicense
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID]) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
@@ -152,7 +161,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)
 	updateOtherLicenseFn := NewUpdateOtherLicenses(eventBus, &globalLock, users)
 
-	countAssignedUserLicenseFn := NewCountAssignedUserLicense(&globalLock, users)
+	countAssignedUserLicenseFn := NewCountAssignedUserLicense(users)
 	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)
 
 	confirmMailFn := NewConfirmMail(&globalLock, users)
@@ -193,5 +202,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 		FindAllIdentifiers:        NewFindAllIdentifiers(users),
 		EMailUsed:                 NewEMailUsed(users),
+		AssignUserLicense:         NewAssignUserLicense(&globalLock, users, countAssignedUserLicenseFn, findUserLicenseByID),
+		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 	}
 }

@@ -46,6 +46,10 @@ type UserLicense struct {
 	MaxUsers    int    `label:"Maximale Anzahl an Nutzern bzw. zugeordneten Konten"`
 }
 
+func (l UserLicense) String() string {
+	return l.Name
+}
+
 func (l UserLicense) WithIdentity(id ID) UserLicense {
 	l.ID = id
 	return l

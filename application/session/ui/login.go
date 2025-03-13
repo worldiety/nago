@@ -29,7 +29,12 @@ func Login(
 	registerPath core.NavigationPath,
 ) core.View {
 	if wnd.Subject().Valid() {
-		return alert.Banner("Login", "Sie sind bereits eingeloggt.")
+		return ui.VStack(
+			alert.Banner("Login", "Sie sind bereits eingeloggt.").Intent(alert.IntentOk),
+			ui.PrimaryButton(func() {
+				wnd.Navigation().ForwardTo(".", nil)
+			}).Title("Zurück zur Hauptseite"),
+		).Gap(ui.L8).Frame(ui.Frame{}.MatchScreen())
 	}
 
 	usrSettings := settings.ReadGlobal[user.Settings](loadGlobalSettings)

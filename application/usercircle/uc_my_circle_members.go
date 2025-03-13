@@ -2,6 +2,7 @@ package usercircle
 
 import (
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
@@ -29,6 +30,7 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 		circleLkp := circleLookups{
 			users:     make(map[user.ID]struct{}),
 			groups:    make(map[group.ID]struct{}),
+			roles:     make(map[role.ID]struct{}),
 			blacklist: make(map[user.ID]struct{}),
 		}
 
@@ -42,6 +44,10 @@ func NewMyCircleMembers(repoCircle Repository, findAllUsers user.FindAll) MyCirc
 
 		for _, ruleGroup := range circle.MemberRuleGroups {
 			circleLkp.groups[ruleGroup] = struct{}{}
+		}
+
+		for _, ruleRole := range circle.MemberRuleRoles {
+			circleLkp.roles[ruleRole] = struct{}{}
 		}
 
 		for _, ruleUser := range circle.MemberRuleUsers {
@@ -80,6 +86,7 @@ type circleLookups struct {
 	users     map[user.ID]struct{}
 	blacklist map[user.ID]struct{}
 	groups    map[group.ID]struct{}
+	roles     map[role.ID]struct{}
 }
 
 func (c *circleLookups) isMember(usr user.User) bool {
@@ -105,6 +112,12 @@ func (c *circleLookups) isMember(usr user.User) bool {
 
 	for _, gid := range usr.Groups {
 		if _, ok := c.groups[gid]; ok {
+			return true
+		}
+	}
+
+	for _, rid := range usr.Roles {
+		if _, ok := c.roles[rid]; ok {
 			return true
 		}
 	}

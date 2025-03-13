@@ -38,8 +38,9 @@ type TPicker[T any] struct {
 // the unique set of selected elements and coordinate that with the UI state.
 func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPicker[T] {
 	c := TPicker[T]{
-		selectAllCheckbox:    core.DerivedState[bool](selectedState, "pck.all"),
-		multiselect:          core.DerivedState[bool](selectedState, ".pck.ms"),
+		selectAllCheckbox: core.DerivedState[bool](selectedState, "pck.all"),
+		multiselect:       core.DerivedState[bool](selectedState, ".pck.ms"),
+		// warning: do not reference this from constructor, because it may get overridden from outside
 		pickerPresented:      core.DerivedState[bool](selectedState, ".pck.pre"),
 		quickSearch:          core.DerivedState[string](selectedState, ".pck.qs"),
 		label:                label,
@@ -133,6 +134,11 @@ func (c TPicker[T]) syncCurrentSelectedState() (selectedCount int) {
 
 func (c TPicker[T]) DialogPresented() *core.State[bool] {
 	return c.pickerPresented
+}
+
+func (c TPicker[T]) WithDialogPresented(state *core.State[bool]) TPicker[T] {
+	c.pickerPresented = state
+	return c
 }
 
 func (c TPicker[T]) syncCheckboxStates(state *core.State[[]T]) {

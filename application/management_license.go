@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/form"
 	"iter"
 )
 
@@ -101,6 +102,16 @@ func (c *Configurator) LicenseManagement() (LicenseManagement, error) {
 			}
 			return uilicense.UserLicensesPage(wnd, rcrud.UseCasesFrom(&funcs))
 		})
+
+		c.AddSystemService("nago.licenses.user", form.AnyUseCaseList[license.UserLicense, license.ID](func(subject auth.Subject) iter.Seq2[license.UserLicense, error] {
+			return c.licenseManagement.UseCases.PerUser.FindAll(subject)
+		}))
+
+		c.AddSystemService("nago.licenses.app", form.AnyUseCaseList[license.AppLicense, license.ID](func(subject auth.Subject) iter.Seq2[license.AppLicense, error] {
+			return c.licenseManagement.UseCases.PerApp.FindAll(subject)
+		}))
+
+		c.AddSystemService("nago.licenses.user.find_by_id", c.licenseManagement.UseCases.PerUser.FindByID)
 	}
 
 	return *c.licenseManagement, nil

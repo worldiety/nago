@@ -4,6 +4,7 @@ import (
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/image/http"
+	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
@@ -17,7 +18,7 @@ import (
 	"strings"
 )
 
-func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, email user.Email, contact user.Contact) core.View {
+func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, licenses []license.UserLicense, email user.Email, contact user.Contact) core.View {
 	var myRoleNames []string
 
 	for _, myRole := range roles {
@@ -36,6 +37,15 @@ func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, email
 
 	if len(myGroupNames) == 0 {
 		myGroupNames = append(myGroupNames, "Kein Gruppenmitglied")
+	}
+
+	var myLicenseNames []string
+	for _, l := range licenses {
+		myLicenseNames = append(myLicenseNames, l.Name)
+	}
+
+	if len(myLicenseNames) == 0 {
+		myLicenseNames = append(myLicenseNames, "Keine Lizenzen")
 	}
 
 	var avatarImg core.View
@@ -97,6 +107,7 @@ func ViewProfile(wnd core.Window, roles []role.Role, groups []group.Group, email
 				ui.If(contact.AboutMe != "", ui.HLine()),
 				ui.Text(strings.Join(myRoleNames, ", ")).FullWidth().TextAlignment(ui.TextAlignEnd),
 				ui.Text(strings.Join(myGroupNames, ", ")).FullWidth().TextAlignment(ui.TextAlignEnd),
+				ui.Text(strings.Join(myLicenseNames, ", ")).FullWidth().TextAlignment(ui.TextAlignEnd),
 				ui.Space(ui.L8),
 				form.Auto(form.AutoOptions{
 					SectionPadding: std.Some[ui.Padding](ui.Padding{}),

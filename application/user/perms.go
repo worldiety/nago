@@ -19,4 +19,5 @@ var (
 	PermUpdateaccountStatus       = permission.Declare[UpdateAccountStatus]("nago.user.update_account_status", "Account Status von Nutzern ändern", "Träger dieser Berechtigung können Nutzer aktivieren oder deaktivieren.")
 	PermCountAssignedUserLicense  = permission.Declare[CountAssignedUserLicense]("nago.user.count_assigned_user_license", "Anzahl Nutzerlizenzen ermitteln", "Träger dieser Berechtigung können die Menge einer zugewiesenen nutzerbasierten Lizenz ermitteln.")
 	PermRevokeAssignedUserLicense = permission.Declare[RevokeAssignedUserLicense]("nago.user.revoke_assigned_user_license", "Anzahl Nutzerlizenzen entfernen", "Träger dieser Berechtigung können eine Menge an zugewiesenen nutzerbasierten Lizenz von Nutzern anonym entfernen.")
+	PermAssignUserLicense         = permission.Declare[AssignUserLicense]("nago.user.assign_user_license", "Einem Nutzer eine Lizenz zuweisen", "Träger dieser Berechtigung können eine beliebige Lizenz einem beliebigen Nutzer zuweisen.")
 )

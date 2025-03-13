@@ -95,9 +95,9 @@ func (c TButton) ID(id string) TButton {
 }
 
 func (c TButton) Render(context core.RenderContext) proto.Component {
-	alabel := c.title
+	alabel := c.accessibilityLabel
 	if alabel == "" {
-		alabel = c.accessibilityLabel
+		alabel = c.title
 	}
 
 	if core.Debug {

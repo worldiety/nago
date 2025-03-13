@@ -114,10 +114,11 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		cardFrame = ui.Frame{}.MatchScreen()
 		content = ui.Grid(
 			ui.GridCell(ui.VStack(
-				ui.Image().
-					Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
-					Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
-
+				ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
+					ui.Image().
+						Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
+						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
+				),
 				ui.Space(ui.L16),
 				ui.Text(wnd.Application().Name()+"-Konto").Font(ui.Title),
 				ui.Text("erstellen").Font(ui.Title),
@@ -127,11 +128,13 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 			ui.GridCell(pageBody),
 		).Gap(ui.L16).Rows(1).FullWidth()
 	} else {
-		cardFrame = ui.Frame{}.FullWidth()
+		cardFrame = ui.Frame{}.MatchScreen()
 		content = ui.VStack(
-			ui.Image().
-				Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
-				Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
+			ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
+				ui.Image().
+					Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
+					Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
+			),
 
 			ui.Space(ui.L16),
 			ui.Text(wnd.Application().Name()+"-Konto").Font(ui.Title),

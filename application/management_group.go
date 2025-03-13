@@ -48,6 +48,8 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 		c.AddSystemService("nago.groups", form.AnyUseCaseList[group.Group, group.ID](func(subject auth.Subject) iter.Seq2[group.Group, error] {
 			return c.groupManagement.UseCases.FindAll(subject)
 		}))
+
+		c.AddSystemService("nago.groups.find_by_id", c.groupManagement.UseCases.FindByID)
 	}
 
 	return *c.groupManagement, nil
