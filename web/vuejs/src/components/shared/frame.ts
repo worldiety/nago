@@ -33,3 +33,14 @@ export function frameCSS(frame?: Frame): string[] {
 
 	return styles;
 }
+
+export function frameCSSObject(frame?: Frame): Object | undefined {
+	if (!frame) {
+		return undefined;
+	}
+
+	return {
+		width: cssLengthValue(frame.width),
+		height: cssLengthValue(frame.height),
+	};
+}

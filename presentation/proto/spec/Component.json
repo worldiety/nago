@@ -25,6 +25,7 @@
     "WebView",
     "Menu",
     "Form",
-    "CountDown"
+    "CountDown",
+    "CodeEditor"
   ]
 }

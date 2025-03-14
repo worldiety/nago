@@ -13,6 +13,7 @@ import UiUnknownType from '@/components/UiUnknownType.vue';
 import UiWebView from '@/components/UiWebView.vue';
 import UiWindowTitle from '@/components/UiWindowTitle.vue';
 import UiBox from '@/components/box/UiBox.vue';
+import UiCodeEditor from '@/components/codeeditor/UiCodeEditor.vue';
 import UiCountDown from '@/components/countdown/UiCountDown.vue';
 import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiForm from '@/components/form/UiForm.vue';
@@ -27,6 +28,7 @@ import UiVStack from '@/components/vstack/UiVStack.vue';
 import {
 	Box,
 	Checkbox,
+	CodeEditor,
 	CountDown,
 	DatePicker,
 	Divider,
@@ -152,6 +154,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof CountDown) {
 		return UiCountDown;
+	}
+
+	if (ngc instanceof CodeEditor) {
+		return UiCodeEditor;
 	}
 
 	// keep this as the default fallback

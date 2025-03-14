@@ -1,0 +1,38 @@
+{
+  "kind": "Record",
+  "doc": "CodeEditor provides a simple area for viewing or editing source code snippets.",
+  "id": 124,
+  "fields": {
+    "1": {
+      "doc": "Value contains the text, which shall be shown or edited.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "ReadOnly",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "TabSize",
+      "type": "Uint"
+    },
+    "6": {
+      "doc": "InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "7": {
+      "doc": "Language indicates the anticipated syntax highlighter, which shall be enabled. Defined are go, html, css, json, xml, markdown but there may be arbitrary support.",
+      "name": "Language",
+      "type": "Str"
+    }
+  }
+}

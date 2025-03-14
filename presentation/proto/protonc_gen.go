@@ -269,6 +269,7 @@ func (WebView) isComponent()       {}
 func (Menu) isComponent()          {}
 func (Form) isComponent()          {}
 func (CountDown) isComponent()     {}
+func (CodeEditor) isComponent()    {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -9373,6 +9374,150 @@ func (v *DurationSec) IsZero() bool {
 	return *v == 0
 }
 
+// CodeEditor provides a simple area for viewing or editing source code snippets.
+type CodeEditor struct {
+	// Value contains the text, which shall be shown or edited.
+	Value    Str
+	Frame    Frame
+	ReadOnly Bool
+	Disabled Bool
+	TabSize  Uint
+	// InputValue is a binding to a state, into which the frontend will the user entered text. This is the pointer a State.
+	InputValue Ptr
+	// Language indicates the anticipated syntax highlighter, which shall be enabled. Defined are go, html, css, json, xml, markdown but there may be arbitrary support.
+	Language Str
+}
+
+func (v *CodeEditor) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.ReadOnly.IsZero()
+	fields[4] = !v.Disabled.IsZero()
+	fields[5] = !v.TabSize.IsZero()
+	fields[6] = !v.InputValue.IsZero()
+	fields[7] = !v.Language.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ReadOnly.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.TabSize.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Language.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CodeEditor) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ReadOnly.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.TabSize.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Language.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -10126,6 +10271,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 123:
 		var v DurationSec
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 124:
+		var v CodeEditor
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12260,6 +12411,20 @@ func (v *CountDown) IsZero() bool {
 	return v.Action.IsZero() && v.Duration.IsZero() && v.ShowDays.IsZero() && v.ShowHours.IsZero() && v.ShowMinutes.IsZero() && v.ShowSeconds.IsZero() && v.Frame.IsZero() && v.TextColor.IsZero() && v.SeparatorColor.IsZero()
 }
 
+func (v *CodeEditor) reset() {
+	v.Value.reset()
+	v.Frame.reset()
+	v.ReadOnly.reset()
+	v.Disabled.reset()
+	v.TabSize.reset()
+	v.InputValue.reset()
+	v.Language.reset()
+}
+
+func (v *CodeEditor) IsZero() bool {
+	return v.Value.IsZero() && v.Frame.IsZero() && v.ReadOnly.IsZero() && v.Disabled.IsZero() && v.TabSize.IsZero() && v.InputValue.IsZero() && v.Language.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -13109,6 +13274,13 @@ func (v *CountDown) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *DurationSec) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 123); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CodeEditor) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 124); err != nil {
 		return err
 	}
 	return nil
