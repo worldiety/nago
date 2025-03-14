@@ -70,7 +70,6 @@ func (c TCountDown) SeparatorColor(color Color) TCountDown {
 }
 
 func (c TCountDown) Render(ctx core.RenderContext) core.RenderNode {
-	//dark := ctx.Window().Info().ColorScheme == core.Dark
 	if c.separatorColor == "" {
 		c.separatorColor = ColorLine
 	}
