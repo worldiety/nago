@@ -47,7 +47,7 @@ func DefaultGroups(pages Pages) []Group {
 	})
 
 	grps = append(grps, Group{
-		Title: "eMail und SMTP",
+		Title: "E-Mail und SMTP",
 		Entries: []Card{
 			{
 				Title:      "Warteschlange",

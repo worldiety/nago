@@ -1,0 +1,5 @@
+{
+  "doc": "DurationSec represents a duration in seconds",
+  "kind": "Uint",
+  "id": 123
+}

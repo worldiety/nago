@@ -1,0 +1,43 @@
+{
+  "kind": "Record",
+  "id": 122,
+  "fields": {
+    "1": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "2": {
+      "doc": "Duration is in seconds. After the Duration is over, the Action is invoked. If Duration is 0, Action will not get executed.",
+      "name": "Duration",
+      "type": "DurationSec"
+    },
+    "3": {
+      "name": "ShowDays",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "ShowHours",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "ShowMinutes",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "ShowSeconds",
+      "type": "Bool"
+    },
+    "7": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "8": {
+      "name": "TextColor",
+      "type": "Color"
+    },
+    "9": {
+      "name": "SeparatorColor",
+      "type": "Color"
+    }
+  }
+}

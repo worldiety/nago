@@ -10,6 +10,7 @@ type TForm struct {
 	id           string
 	action       func()
 	autocomplete bool
+	frame        Frame
 }
 
 func Form(children ...core.View) TForm {
@@ -28,6 +29,11 @@ func (c TForm) Action(action func()) TForm {
 	return c
 }
 
+func (c TForm) Frame(frame Frame) TForm {
+	c.frame = frame
+	return c
+}
+
 func (c TForm) Autocomplete(b bool) TForm {
 	c.autocomplete = b
 	return c
@@ -39,5 +45,6 @@ func (c TForm) Render(ctx core.RenderContext) core.RenderNode {
 		Action:       ctx.MountCallback(c.action),
 		Id:           proto.Str(c.id),
 		Autocomplete: proto.Bool(c.autocomplete),
+		Frame:        c.frame.ora(),
 	}
 }

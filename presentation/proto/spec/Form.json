@@ -19,6 +19,10 @@
     "4": {
       "name": "Autocomplete",
       "type": "Bool"
+    },
+    "5": {
+      "name": "Frame",
+      "type": "Frame"
     }
   }
 }

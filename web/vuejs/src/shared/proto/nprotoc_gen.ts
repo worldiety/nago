@@ -9511,16 +9511,20 @@ export class Form implements Writeable, Readable, Component {
 
 	public autocomplete?: Bool;
 
+	public frame?: Frame;
+
 	constructor(
 		children: Components | undefined = undefined,
 		action: Ptr | undefined = undefined,
 		id: Str | undefined = undefined,
-		autocomplete: Bool | undefined = undefined
+		autocomplete: Bool | undefined = undefined,
+		frame: Frame | undefined = undefined
 	) {
 		this.children = children;
 		this.action = action;
 		this.id = id;
 		this.autocomplete = autocomplete;
+		this.frame = frame;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9546,6 +9550,11 @@ export class Form implements Writeable, Readable, Component {
 					this.autocomplete = readBool(reader);
 					break;
 				}
+				case 5: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9559,6 +9568,7 @@ export class Form implements Writeable, Readable, Component {
 			this.action !== undefined,
 			this.id !== undefined,
 			this.autocomplete !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9578,6 +9588,10 @@ export class Form implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
 			writeBool(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -9585,7 +9599,8 @@ export class Form implements Writeable, Readable, Component {
 			(this.children === undefined || this.children.isZero()) &&
 			this.action === undefined &&
 			this.id === undefined &&
-			this.autocomplete === undefined
+			this.autocomplete === undefined &&
+			(this.frame === undefined || this.frame.isZero())
 		);
 	}
 
@@ -9594,6 +9609,7 @@ export class Form implements Writeable, Readable, Component {
 		this.action = undefined;
 		this.id = undefined;
 		this.autocomplete = undefined;
+		this.frame = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9603,6 +9619,189 @@ export class Form implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class CountDown implements Writeable, Readable, Component {
+	public action?: Ptr;
+
+	// Duration is in seconds. After the Duration is over, the Action is invoked. If Duration is 0, Action will not get executed.
+	public duration?: DurationSec;
+
+	public showDays?: Bool;
+
+	public showHours?: Bool;
+
+	public showMinutes?: Bool;
+
+	public showSeconds?: Bool;
+
+	public frame?: Frame;
+
+	public textColor?: Color;
+
+	public separatorColor?: Color;
+
+	constructor(
+		action: Ptr | undefined = undefined,
+		duration: DurationSec | undefined = undefined,
+		showDays: Bool | undefined = undefined,
+		showHours: Bool | undefined = undefined,
+		showMinutes: Bool | undefined = undefined,
+		showSeconds: Bool | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		textColor: Color | undefined = undefined,
+		separatorColor: Color | undefined = undefined
+	) {
+		this.action = action;
+		this.duration = duration;
+		this.showDays = showDays;
+		this.showHours = showHours;
+		this.showMinutes = showMinutes;
+		this.showSeconds = showSeconds;
+		this.frame = frame;
+		this.textColor = textColor;
+		this.separatorColor = separatorColor;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.action = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.duration = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.showDays = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.showHours = readBool(reader);
+					break;
+				}
+				case 5: {
+					this.showMinutes = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.showSeconds = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 8: {
+					this.textColor = readString(reader);
+					break;
+				}
+				case 9: {
+					this.separatorColor = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.action !== undefined,
+			this.duration !== undefined,
+			this.showDays !== undefined,
+			this.showHours !== undefined,
+			this.showMinutes !== undefined,
+			this.showSeconds !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.textColor !== undefined,
+			this.separatorColor !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.duration!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.showDays!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.showHours!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.showMinutes!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.showSeconds!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
+			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
+			writeString(writer, this.separatorColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.action === undefined &&
+			this.duration === undefined &&
+			this.showDays === undefined &&
+			this.showHours === undefined &&
+			this.showMinutes === undefined &&
+			this.showSeconds === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.textColor === undefined &&
+			this.separatorColor === undefined
+		);
+	}
+
+	reset(): void {
+		this.action = undefined;
+		this.duration = undefined;
+		this.showDays = undefined;
+		this.showHours = undefined;
+		this.showMinutes = undefined;
+		this.showSeconds = undefined;
+		this.frame = undefined;
+		this.textColor = undefined;
+		this.separatorColor = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 122);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// DurationSec represents a duration in seconds
+export type DurationSec = number;
+function writeTypeHeaderDurationSec(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 123);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -10177,6 +10376,15 @@ export function unmarshal(src: BinaryReader): any {
 		case 121: {
 			const v = new Form();
 			v.read(src);
+			return v;
+		}
+		case 122: {
+			const v = new CountDown();
+			v.read(src);
+			return v;
+		}
+		case 123: {
+			const v = readInt(src) as DurationSec;
 			return v;
 		}
 	}

@@ -268,6 +268,7 @@ func (VStack) isComponent()        {}
 func (WebView) isComponent()       {}
 func (Menu) isComponent()          {}
 func (Form) isComponent()          {}
+func (CountDown) isComponent()     {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -9073,14 +9074,16 @@ type Form struct {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	Id           Str
 	Autocomplete Bool
+	Frame        Frame
 }
 
 func (v *Form) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Action.IsZero()
 	fields[3] = !v.Id.IsZero()
 	fields[4] = !v.Autocomplete.IsZero()
+	fields[5] = !v.Frame.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -9123,6 +9126,14 @@ func (v *Form) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -9158,9 +9169,208 @@ func (v *Form) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+type CountDown struct {
+	Action Ptr
+	// Duration is in seconds. After the Duration is over, the Action is invoked. If Duration is 0, Action will not get executed.
+	Duration       DurationSec
+	ShowDays       Bool
+	ShowHours      Bool
+	ShowMinutes    Bool
+	ShowSeconds    Bool
+	Frame          Frame
+	TextColor      Color
+	SeparatorColor Color
+}
+
+func (v *CountDown) write(w *BinaryWriter) error {
+	var fields [10]bool
+	fields[1] = !v.Action.IsZero()
+	fields[2] = !v.Duration.IsZero()
+	fields[3] = !v.ShowDays.IsZero()
+	fields[4] = !v.ShowHours.IsZero()
+	fields[5] = !v.ShowMinutes.IsZero()
+	fields[6] = !v.ShowSeconds.IsZero()
+	fields[7] = !v.Frame.IsZero()
+	fields[8] = !v.TextColor.IsZero()
+	fields[9] = !v.SeparatorColor.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Duration.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ShowDays.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.ShowHours.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.ShowMinutes.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.ShowSeconds.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.TextColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.SeparatorColor.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CountDown) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Duration.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ShowDays.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.ShowHours.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.ShowMinutes.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ShowSeconds.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.TextColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.SeparatorColor.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// DurationSec represents a duration in seconds
+type DurationSec uint64
+
+func (v *DurationSec) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *DurationSec) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = DurationSec(tmp)
+	return nil
+}
+
+func (v *DurationSec) reset() {
+	*v = DurationSec(0)
+}
+func (v *DurationSec) IsZero() bool {
+	return *v == 0
 }
 
 type Writeable interface {
@@ -9904,6 +10114,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 121:
 		var v Form
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 122:
+		var v CountDown
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 123:
+		var v DurationSec
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12015,10 +12237,27 @@ func (v *Form) reset() {
 	v.Action.reset()
 	v.Id.reset()
 	v.Autocomplete.reset()
+	v.Frame.reset()
 }
 
 func (v *Form) IsZero() bool {
-	return v.Children.IsZero() && v.Action.IsZero() && v.Id.IsZero() && v.Autocomplete.IsZero()
+	return v.Children.IsZero() && v.Action.IsZero() && v.Id.IsZero() && v.Autocomplete.IsZero() && v.Frame.IsZero()
+}
+
+func (v *CountDown) reset() {
+	v.Action.reset()
+	v.Duration.reset()
+	v.ShowDays.reset()
+	v.ShowHours.reset()
+	v.ShowMinutes.reset()
+	v.ShowSeconds.reset()
+	v.Frame.reset()
+	v.TextColor.reset()
+	v.SeparatorColor.reset()
+}
+
+func (v *CountDown) IsZero() bool {
+	return v.Action.IsZero() && v.Duration.IsZero() && v.ShowDays.IsZero() && v.ShowHours.IsZero() && v.ShowMinutes.IsZero() && v.ShowSeconds.IsZero() && v.Frame.IsZero() && v.TextColor.IsZero() && v.SeparatorColor.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -12856,6 +13095,20 @@ func (v *MenuGroups) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Form) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 121); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CountDown) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 122); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *DurationSec) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 123); err != nil {
 		return err
 	}
 	return nil
