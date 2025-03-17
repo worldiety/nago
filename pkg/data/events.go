@@ -36,6 +36,10 @@ type SavedObserver[E Aggregate[ID], ID IDType] func(repository Repository[E, ID]
 // current run of calling the observers and the error is returned to the caller. The invocation order of observers
 // is not defined.
 func NewNotifyRepository[E Aggregate[ID], ID IDType](bus events.Bus, other Repository[E, ID]) NotifyRepository[E, ID] {
+	if n, ok := other.(NotifyRepository[E, ID]); ok {
+		return n
+	}
+	
 	return &eventRepository[E, ID]{
 		bus:   bus,
 		other: other,

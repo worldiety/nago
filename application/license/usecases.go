@@ -17,12 +17,12 @@ func (id ID) Valid() bool {
 
 // AppLicense either just exists or not. It cannot be assigned to a user.
 type AppLicense struct {
-	ID          ID
-	Name        string
-	Description string `label:"Beschreibung"`
-	Url         string `table-visible:"false" supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt."`
-	Incentive   string `table-visible:"false" label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt."`
-	Enabled     bool   `label:"Lizenz aktiv" supportingText:"nur aktive Lizenzen werden als verfügbar im System dargestellt."`
+	ID          ID     `json:"id" table-visible:"false"`
+	Name        string `json:"name"`
+	Description string `json:"description" label:"Beschreibung" `
+	Url         string `json:"url" table-visible:"false" supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt." table-visible:"false"`
+	Incentive   string `json:"incentive" table-visible:"false" label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt." table-visible:"false"`
+	Enabled     bool   `json:"enabled" label:"Lizenz aktiv" supportingText:"nur aktive Lizenzen werden als verfügbar im System dargestellt."`
 }
 
 func (l AppLicense) WithIdentity(id ID) AppLicense {
@@ -38,12 +38,12 @@ func (l AppLicense) Identity() ID {
 // If MaxUsers is 0, it is unlimited.
 // See also [AppLicense].
 type UserLicense struct {
-	ID          ID
-	Name        string
-	Description string `label:"Beschreibung"`
-	Url         string `supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt."`
-	Incentive   string `label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt."`
-	MaxUsers    int    `label:"Maximale Anzahl an Nutzern bzw. zugeordneten Konten"`
+	ID          ID     `json:"id" table-visible:"false"`
+	Name        string `json:"name"`
+	Description string `json:"description" label:"Beschreibung"`
+	Url         string `json:"url" supportingText:"Dies wird u.a. als weiterführender Link in der Abrechnungsansicht dargestellt." table-visible:"false"`
+	Incentive   string `json:"incentive" label:"Incentive" supportingText:"Sofern gesetzt wird dies als 'jetzt anfragen' Anreiz-Link in der Abrechnung dargestellt." table-visible:"false"`
+	MaxUsers    int    `json:"maxUsers" label:"max. Nutzer" supportingText:"Maximale Anzahl an Nutzern bzw. zugeordneten Konten"`
 }
 
 func (l UserLicense) String() string {
