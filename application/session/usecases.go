@@ -18,6 +18,11 @@ type FindUserSessionByID func(id ID) UserSession
 // Not sure, what this means security wise, but stealing a session by compromising the client
 // would always work.
 type Login func(id ID, login user.Email, password user.Password) (bool, error)
+
+// LoginUser blindly accepts the given user id and marks the session as authenticated. There is no additional check,
+// if the given user really exists or if it is a valid user at all. Afterward, the session is treated as authenticated
+// and other mechanics apply, to keep up with the user state, see [user.SubjectFromUser] for details.
+type LoginUser func(id ID, usr user.ID) error
 type Logout func(id ID) (bool, error)
 
 // UserSession represents a persistent view of an assigned client.
@@ -56,6 +61,7 @@ type UseCases struct {
 	FindSessionByID     FindByID
 	FindUserSessionByID FindUserSessionByID
 	Login               Login
+	LoginUser           LoginUser
 	Logout              Logout
 }
 
@@ -68,6 +74,7 @@ func NewUseCases(repo Repository, authByPwd user.AuthenticateByPassword) UseCase
 	return UseCases{
 		FindSessionByID:     sessionByIdFn,
 		Login:               loginFn,
+		LoginUser:           NewLoginUser(repo),
 		Logout:              logoutFn,
 		FindUserSessionByID: findUserSessionByIDFn,
 	}
