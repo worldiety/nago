@@ -90,6 +90,8 @@ type UpdateAccountStatus func(subject permission.Auditable, id ID, status Accoun
 type UpdateVerification func(subject permission.Auditable, id ID, verified bool) error
 
 type UpdateVerificationByMail func(subject permission.Auditable, mail Email, verified bool) error
+
+type CountUsers func() (int, error)
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -131,6 +133,7 @@ type UseCases struct {
 	EMailUsed                 EMailUsed
 	AssignUserLicense         AssignUserLicense
 	UnassignUserLicense       UnassignUserLicense
+	CountUsers                CountUsers
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID) UseCases {
@@ -204,5 +207,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		EMailUsed:                 NewEMailUsed(users),
 		AssignUserLicense:         NewAssignUserLicense(&globalLock, users, countAssignedUserLicenseFn, findUserLicenseByID),
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
+		CountUsers:                NewCountUsers(users),
 	}
 }
