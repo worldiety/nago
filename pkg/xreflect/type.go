@@ -49,11 +49,12 @@ func TypeIDFrom(v any) (TypeID, bool) {
 }
 
 func TypeIDFromOpt(v any) std.Option[TypeID] {
-	x, ok := idFrom(reflect.TypeOf(v))
+	/*x, ok := idFrom(reflect.TypeOf(v))
 	return std.Option[TypeID]{
 		V:     x,
 		Valid: ok,
-	}
+	}*/
+	panic("not used")
 }
 
 func idFrom(t reflect.Type) (TypeID, bool) {

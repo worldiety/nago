@@ -19,12 +19,17 @@ var _ blob.Store = (*BlobStore)(nil)
 // The transactions are just fake implementations to satisfy the contract and respect the read/write property.
 // However, the store itself is at least thread safe.
 type BlobStore struct {
+	name   string
 	values *xmaps.ConcurrentMap[string, []byte]
 }
 
+func (b *BlobStore) Name() string {
+	return b.name
+}
+
 // NewBlobStore creates a new in-memory store.
-func NewBlobStore() *BlobStore {
-	return &BlobStore{values: xmaps.NewConcurrentMap[string, []byte]()}
+func NewBlobStore(name string) *BlobStore {
+	return &BlobStore{name: name, values: xmaps.NewConcurrentMap[string, []byte]()}
 }
 
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {

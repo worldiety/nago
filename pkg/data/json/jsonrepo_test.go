@@ -37,7 +37,7 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 	})
 
 	t.Run("mem", func(t *testing.T) {
-		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
+		testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore("test")))
 	})
 
 }
