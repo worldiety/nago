@@ -51,7 +51,7 @@ func NewUseCases(outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) 
 		ID:          tplmail.ID,
 		Name:        "Mailvorlagen Berechtigungssystem",
 		Description: "Standardmailvorlagen für Nutzerregistrierung, Passwort vergessen, MFA Code und anderes.",
-		ExecType:    template.TreeTemplate,
+		ExecType:    template.TreeTemplateHTML,
 		Tags:        []template.Tag{template.TagMail, template.TagHTML},
 		Files:       tplmail.Files,
 	}, false)

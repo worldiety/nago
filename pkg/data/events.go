@@ -39,7 +39,7 @@ func NewNotifyRepository[E Aggregate[ID], ID IDType](bus events.Bus, other Repos
 	if n, ok := other.(NotifyRepository[E, ID]); ok {
 		return n
 	}
-	
+
 	return &eventRepository[E, ID]{
 		bus:   bus,
 		other: other,
@@ -64,6 +64,10 @@ type eventRepository[E Aggregate[ID], ID IDType] struct {
 	observersSaved     map[int]SavedObserver[E, ID]
 	bus                events.Bus
 	other              Repository[E, ID]
+}
+
+func (e *eventRepository[E, ID]) Name() string {
+	return e.other.Name()
 }
 
 func (e *eventRepository[E, ID]) AddDeletedObserver(fn DeletedObserver[E, ID]) (close func()) {

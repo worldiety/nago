@@ -21,6 +21,10 @@ func NewBlobStore(db *DB, bucket string) *BlobStore {
 	}
 }
 
+func (b *BlobStore) Name() string {
+	return b.bucket
+}
+
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		minK := opts.Prefix + opts.MinInc

@@ -25,6 +25,10 @@ func SU() Subject {
 type sysUser struct {
 }
 
+func (s sysUser) AuditResource(name string, id string, p permission.ID) error {
+	return nil
+}
+
 func (s sysUser) Avatar() string {
 	return ""
 }

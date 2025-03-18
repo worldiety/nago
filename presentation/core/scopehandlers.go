@@ -296,12 +296,12 @@ func (s *Scope) handleComponentDestructionRequested(evt *proto.RootViewDestructi
 }
 
 func (s *Scope) destroyView() {
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
+	if s.allocatedRootView.IsNone() {
 		slog.Error("no root view to destroy, ignoring")
 		return
 	}
 
+	alloc := s.allocatedRootView.Unwrap()
 	alloc.destroy()
 	s.allocatedRootView = std.None[*scopeWindow]()
 }

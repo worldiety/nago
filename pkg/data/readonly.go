@@ -38,3 +38,7 @@ func (r readOnlyAdapter[E, ID]) All() iter.Seq2[E, error] {
 func (r readOnlyAdapter[E, ID]) Count() (int, error) {
 	return r.other.Count()
 }
+
+func (r readOnlyAdapter[E, ID]) Name() string {
+	return r.other.Name()
+}

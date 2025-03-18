@@ -82,7 +82,7 @@ function extensions(): Extension[] {
 	<codemirror
 		:style="frameStyles"
 		v-model="props.ui.value"
-		placeholder="Code goes here..."
+		placeholder=""
 		:autofocus="true"
 		:indent-with-tab="true"
 		:tab-size="props.ui.tabSize ? props.ui.tabSize : 2"

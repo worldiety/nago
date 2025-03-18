@@ -172,6 +172,10 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 				Alignment(options.dlgAlign).
 				ModalPadding(options.modalPadding)
 
+			if options.minWidth != "" {
+				dialog = dialog.MinWidth(options.minWidth)
+			}
+
 			if len(btns) > 0 {
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))
 			}

@@ -125,7 +125,7 @@ func (s *scopeWindow) render() proto.Component {
 		s.removeDetachedStates(s.generation)
 	}()
 
-	if !s.rootFactory.Valid {
+	if s.rootFactory.IsNone() {
 		panic("invalid root factory")
 	}
 	s.reset()

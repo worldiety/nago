@@ -70,6 +70,11 @@ type storeAdapter struct {
 	key      EncryptionKey
 }
 
+// Name returns the distinct name. Stores with the same name are considered equal.
+func (c storeAdapter) Name() string {
+	return c.delegate.Name()
+}
+
 func (c storeAdapter) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
 	return c.delegate.List(ctx, opts)
 }

@@ -37,6 +37,7 @@ func (c *Configurator) TemplateManagement() (TemplateManagement, error) {
 			Pages: uitemplate.Pages{
 				Projects:   "admin/template/projects",
 				NewProject: "admin/template/new",
+				Editor:     "admin/template/edit",
 			},
 		}
 
@@ -46,6 +47,10 @@ func (c *Configurator) TemplateManagement() (TemplateManagement, error) {
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.NewProject, func(wnd core.Window) core.View {
 			return uitemplate.NewProjectPage(wnd, c.templateManagement.Pages, uc.Create)
+		})
+
+		c.RootViewWithDecoration(c.templateManagement.Pages.Editor, func(wnd core.Window) core.View {
+			return uitemplate.PageEditor(wnd, uc)
 		})
 	}
 

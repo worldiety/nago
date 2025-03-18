@@ -123,11 +123,12 @@ func (s *Scope) ID() proto.ScopeID {
 
 func (s *Scope) ExportFilesOptions(id string) (ExportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
-	root, err := s.allocatedRootView.Get()
-	if err != nil {
+	if s.allocatedRootView.IsNone() {
 		slog.Error("no such rootview allocated")
 		return ExportFilesOptions{}, false
 	}
+
+	root := s.allocatedRootView.Unwrap()
 
 	files, ok := root.exportFilesReceivers[id]
 	if !ok {
@@ -140,11 +141,12 @@ func (s *Scope) ExportFilesOptions(id string) (ExportFilesOptions, bool) {
 
 func (s *Scope) ImportFilesOptions(id string) (ImportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
-	root, err := s.allocatedRootView.Get()
-	if err != nil {
+	if s.allocatedRootView.IsNone() {
 		slog.Error("no such rootview allocated")
 		return ImportFilesOptions{}, false
 	}
+
+	root := s.allocatedRootView.Unwrap()
 
 	files, ok := root.importFilesReceivers[id]
 	if !ok {
@@ -179,10 +181,8 @@ func (s *Scope) getTempDir() (string, error) {
 
 func (s *Scope) updateWindowInfo(winfo WindowInfo) {
 	s.windowInfo = winfo
-	if s.allocatedRootView.Valid {
-		if s.allocatedRootView.Valid {
-			s.allocatedRootView.Unwrap().Invalidate()
-		}
+	if s.allocatedRootView.IsSome() {
+		s.allocatedRootView.Unwrap().Invalidate()
 	}
 }
 
@@ -407,13 +407,12 @@ func (s *Scope) destroy() {
 	s.onDestroyObservers.Clear()
 	//	clear(s.factories) // clearing this map would cause a data race, even though we use the factory as read-only
 
-	alloc, err := s.allocatedRootView.Get()
-	if err != nil {
+	if s.allocatedRootView.IsNone() {
 		return
 	}
 
+	alloc := s.allocatedRootView.Unwrap()
 	alloc.destroy()
-
 }
 
 // only for event loop

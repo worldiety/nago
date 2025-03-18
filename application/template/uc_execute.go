@@ -56,9 +56,9 @@ func NewExecute(files blob.Store, repository Repository) Execute {
 
 			return io.NopCloser(bytes.NewReader(buf)), nil
 
-		case TreeTemplate:
+		case TreeTemplatePlain, TreeTemplateHTML:
 			var tpl templater
-			if project.HasHTML() {
+			if project.Type == TreeTemplateHTML {
 				tpl, err = ParseHTML(files, fileSet)
 			} else {
 				tpl, err = ParseText(files, fileSet)

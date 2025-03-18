@@ -17,7 +17,8 @@ type TCodeEditor struct {
 
 func CodeEditor(value string) TCodeEditor {
 	return TCodeEditor{
-		value: value,
+		value:   value,
+		tabSize: 4,
 	}
 }
 
@@ -31,6 +32,13 @@ func (c TCodeEditor) Frame(frame Frame) TCodeEditor {
 	return c
 }
 
+func (c TCodeEditor) FullWidth() TCodeEditor {
+	c.frame = c.frame.FullWidth()
+	return c
+}
+
+// Language gives a syntax highlighting hint. Defined are go, html, css, json, xml,
+// markdown but there may be arbitrary support.
 func (c TCodeEditor) Language(language string) TCodeEditor {
 	c.language = language
 	return c

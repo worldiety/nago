@@ -65,6 +65,9 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	// The effort is implementation dependent and may be anything from O(n) to O(1).
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	Count() (int, error)
+
+	// Name of this repository. Repositories with the same name are considered to be equal, regarding the data origin.
+	Name() string
 }
 
 // Repository defines how to work with entities or more specific with aggregate roots, in the definition of

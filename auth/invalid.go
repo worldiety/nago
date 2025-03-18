@@ -18,6 +18,10 @@ type InvalidSubject struct {
 	DeniedLog func(permission string)
 }
 
+func (i InvalidSubject) AuditResource(name string, id string, p permission.ID) error {
+	return NotLoggedIn("invalid subject")
+}
+
 func (i InvalidSubject) Avatar() string {
 	return ""
 }

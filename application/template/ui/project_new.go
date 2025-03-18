@@ -61,13 +61,13 @@ func newProjektPage2(state *core.State[template.Project]) core.View {
 		{
 			headline:   "Text zu Text",
 			supporting: "Eine reine Plain-Text-Vorlage.",
-			typ:        template.TreeTemplate,
+			typ:        template.TreeTemplatePlain,
 		},
 
 		{
 			headline:   "HTML zu HTML",
-			supporting: "Eine Vorlage mit Text oder HTML-Dateien als HTML-Vorlage.",
-			typ:        template.TreeTemplate,
+			supporting: "Eine Vorlage mit HTML-Dateien als HTML-Vorlage.",
+			typ:        template.TreeTemplateHTML,
 		},
 
 		{

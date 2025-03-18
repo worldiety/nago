@@ -2,25 +2,38 @@ package template
 
 import (
 	"context"
-	"go.wdy.de/nago/application/group"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
 	"io"
 	"io/fs"
 	"iter"
-	"log/slog"
-	"maps"
-	"slices"
-	"strings"
 	"sync"
-	"time"
 )
 
 type ExecType int
+
+func (t ExecType) String() string {
+	switch t {
+	case Unprocessed:
+		return "Unprocessed"
+	case TreeTemplatePlain:
+		return "TreeTemplatePlain"
+	case TreeTemplateHTML:
+		return "TreeTemplateHTML"
+	case TypstPDF:
+		return "TypstPDF"
+	case LatexPDF:
+		return "LatexPDF"
+	case AsciidocPDF:
+		return "AsciidocPDF"
+	default:
+		return "Unknown"
+	}
+}
 
 const (
 	TagPDF  Tag = "pdf"
@@ -29,11 +42,12 @@ const (
 )
 
 const (
-	Unprocessed  ExecType = iota // return type is always application/zip
-	TreeTemplate                 // return type is either text/plain or text/html
-	TypstPDF                     // return type is always application/pdf
-	LatexPDF                     // return type is always application/pdf
-	AsciidocPDF                  // return type is always application/pdf
+	Unprocessed       ExecType = iota // return type is always application/zip
+	TreeTemplatePlain                 // return type is text/plain
+	TreeTemplateHTML                  // text/html
+	TypstPDF                          // return type is always application/pdf
+	LatexPDF                          // return type is always application/pdf
+	AsciidocPDF                       // return type is always application/pdf
 )
 
 type ExecOptions struct {
@@ -76,6 +90,8 @@ type Execute func(subject auth.Subject, id ID, options ExecOptions) (io.ReadClos
 // semantics.
 type FindAll func(subject auth.Subject, tags []Tag) iter.Seq2[Project, error]
 
+type FindByID func(subject auth.Subject, id ID) (option.Opt[Project], error)
+
 // Commit overwrites the given project entry with a new version, if allowed. See [Project.WriteableBy] and [PermCommit].
 // Note, that Commit will fail, if there are any groups listed, to which the user does not belong, to mitigate
 // potential security issues, like inserting malicious templates into otherwise unreachable circles.
@@ -86,6 +102,11 @@ type Create func(subject auth.Subject, project Project) (ID, error)
 
 type Versions func(subject auth.Subject, id ID) iter.Seq2[VersionID, error]
 type FindVersion func(subject auth.Subject, id VersionID) (std.Option[Project], error)
+
+type LoadProjectBlob func(subject auth.Subject, pid ID, file BlobID) (std.Option[io.ReadCloser], error)
+type UpdateProjectBlob func(subject auth.Subject, pid ID, file BlobID, reader io.Reader) error
+type DeleteProjectBlob func(subject auth.Subject, pid ID, file BlobID) error
+type CreateProjectBlob func(subject auth.Subject, pid ID, filename string) (ID, error)
 
 type NewProjectData struct {
 	ID          ID
@@ -109,175 +130,16 @@ type JSONString = string
 
 type DefinedTemplateName = string
 
-type Tag string
-type Project struct {
-	ID            ID
-	Name          string
-	Description   string
-	Logo          core.URI
-	Type          ExecType // type of evaluation/engine
-	Files         []File
-	Examples      map[DefinedTemplateName]JSONString
-	OutputMapping map[DefinedTemplateName]Filename // optionally map specific template names to create new file names as a result
-	Protected     bool                             // just an extra layer of security, for very important templates, like system mail templates
-	RemovableBy   []group.ID                       // if not empty, only members of the given groups can delete this project.
-	WriteableBy   []group.ID                       // if not empty, only members of the given groups are allowed to update this project.
-	ReadableBy    []group.ID                       // if not empty, only members of the given groups can see or execute this project.
-	Tags          []Tag                            // some arbitrary tags for filtering and inspection
-}
-
-func (p Project) Identity() ID {
-	return p.ID
-}
-
-// Localize applies the localization logic. If a locales folder exists, match against those files and blend them
-// onto the default file set and return that. An undefined tag or non locales at all will just return [Project.Default].
-func (p Project) Localize(tag language.Tag) []File {
-	files := p.Default()
-	if tag == language.Und {
-		return files
-	}
-
-	available := p.Locales()
-	if len(available) == 0 {
-		return files
-	}
-
-	tags := make([]language.Tag, 0, len(available))
-	for _, loc := range available {
-		tags = append(tags, loc.Tag)
-	}
-	matcher := language.NewMatcher(tags)
-	_, idx, _ := matcher.Match(tag) // at worst, just the first entry is returned
-	tags[idx] = tag
-
-	loc := available[idx]
-
-	for _, file := range p.Files {
-		if !strings.HasPrefix(file.Filename, loc.Prefix) {
-			continue
-		}
-
-		targetPath := strings.TrimPrefix(file.Filename, loc.Prefix)
-		files = slices.DeleteFunc(files, func(file File) bool {
-			return file.Filename == targetPath
-		})
-
-		files = append(files, File{
-			Filename: targetPath,
-			Blob:     file.Blob,
-			LastMod:  file.LastMod,
-		})
-	}
-
-	return files
-}
-
-func (p Project) HasHTML() bool {
-	for _, file := range p.Files {
-		if strings.HasSuffix(file.Filename, ".gohtml") {
-			return true
-		}
-	}
-
-	return false
-}
-
-type LocalizedPrefix struct {
-	Prefix Filename
-	Tag    language.Tag
-}
-
-// Locales returns all available language tags in sorted order.
-func (p Project) Locales() []LocalizedPrefix {
-	tmp := map[string]bool{}
-	for _, file := range p.Files {
-		if !strings.HasPrefix(file.Filename, "locales") {
-			continue
-		}
-
-		segments := strings.Split(file.Filename, "/")
-		if len(segments) <= 2 {
-			// this must be something broken, like a file in locales
-			slog.Error("template project contains stale file in locales", "file", file.Filename, "id", p.ID, "name", p.Name)
-			continue
-		}
-
-		tmp[segments[1]] = true
-	}
-
-	res := make([]LocalizedPrefix, 0, len(tmp))
-	// todo this sorting is stable but non-sense: start with en, de, fr, es languages first and then append sorted rest
-	for _, tagName := range slices.Sorted(maps.Keys(tmp)) {
-		tag, err := language.Parse(tagName)
-		if err != nil {
-			slog.Error("template project contains invalid BCP47 tag in locales", "tag", tagName, "id", p.ID, "name", p.Name)
-			continue
-		}
-
-		res = append(res, LocalizedPrefix{
-			Prefix: "locales/" + tagName,
-			Tag:    tag,
-		})
-	}
-
-	return res
-}
-
-// Default returns the default file set.
-func (p Project) Default() []File {
-	files := make([]File, 0, len(p.Files))
-	for _, file := range p.Files {
-		if strings.HasPrefix(file.Filename, "locales") {
-			continue
-		}
-
-		files = append(files, file)
-	}
-
-	return files
-}
-
-type Filename = string
-type BlobID = string
-
-type FileSet map[Filename]File
-
-type File struct {
-	// including the path, e.g. index.gohtml or locales/en/index.gohtml. The path rules follow the official fs
-	// guidelines, thus starting with / or containing . or .. is invalid.
-	Filename Filename
-
-	Blob    BlobID
-	LastMod time.Time
-}
-
-// IsTemplate inspects the file name
-func (f File) IsTemplate() bool {
-	return strings.HasSuffix(f.Filename, ".gohtml") || strings.HasSuffix(f.Filename, ".tpl")
-}
-
-// Name returns the target (stripped) filename. E.g. index.gohtml becomes index.html or index.html.tpl
-// becomes index.html.
-func cleanName(name string) string {
-	if strings.HasSuffix(name, ".gohtml") {
-		return name[:len(name)-7] + ".html"
-	}
-
-	if strings.HasSuffix(name, ".tpl") {
-		return name[:len(name)-4]
-	}
-
-	return name
-}
-
 type Repository data.Repository[Project, ID]
 
 type UseCases struct {
-	FindAll       FindAll
-	Execute       Execute
-	Create        Create
-	EnsureBuildIn EnsureBuildIn
+	FindAll           FindAll
+	Execute           Execute
+	Create            Create
+	EnsureBuildIn     EnsureBuildIn
+	FindByID          FindByID
+	LoadProjectBlob   LoadProjectBlob
+	UpdateProjectBlob UpdateProjectBlob
 }
 
 func NewUseCases(files blob.Store, repository Repository) UseCases {
@@ -289,9 +151,12 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 	ensureBuildInFn := NewEnsureBuildIn(&mutex, repository, files)
 
 	return UseCases{
-		FindAll:       findAllFn,
-		Execute:       executeFn,
-		Create:        createFn,
-		EnsureBuildIn: ensureBuildInFn,
+		FindAll:           findAllFn,
+		Execute:           executeFn,
+		Create:            createFn,
+		EnsureBuildIn:     ensureBuildInFn,
+		FindByID:          NewFindByID(repository),
+		LoadProjectBlob:   NewLoadProjectBlob(files, repository),
+		UpdateProjectBlob: NewUpdateProjectBlob(files, repository),
 	}
 }

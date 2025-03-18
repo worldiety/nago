@@ -303,3 +303,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Sav
 
 	return nil
 }
+
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Name() string {
+	return r.store.Name()
+}

@@ -66,7 +66,8 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 					if ok {
 						return []T{ent}
 					} else {
-						slog.Error("OneToOne cannot lookup selected entry", "id", optId.V)
+						var zero IDOfT
+						slog.Error("OneToOne cannot lookup selected entry", "id", optId.UnwrapOr(zero))
 					}
 				}
 
@@ -126,7 +127,8 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 			if v.IsSome() {
 				ent, ok := valuesLookupById[v.Unwrap()]
 				if !ok {
-					slog.Error("OneToOne cannot reverse lookup id", "id", v.V)
+					var zero IDOfT
+					slog.Error("OneToOne cannot reverse lookup id", "id", v.UnwrapOr(zero))
 					return ui.TableCell(ui.Text(""))
 				}
 				return ui.TableCell(opts.ForeignPickerRenderer(ent))
@@ -138,11 +140,12 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 			var tmp E
 			tmp = entity.Get()
 			v := property.Get(&tmp)
+			var zero IDOfT
 			return ui.VStack(
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				opts.ForeignPickerRenderer(valuesLookupById[v.V]),
+				opts.ForeignPickerRenderer(valuesLookupById[v.UnwrapOr(zero)]),
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {

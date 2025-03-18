@@ -60,6 +60,11 @@ func (c TDialog) Frame(frame Frame) TDialog {
 	return c
 }
 
+func (c TDialog) MinWidth(minWidth Length) TDialog {
+	c.frame.MinWidth = minWidth
+	return c
+}
+
 func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	colors := core.Colors[Colors](ctx.Window())
 	dlg := BoxAlign(c.alignment, VStack(

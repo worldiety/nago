@@ -32,13 +32,14 @@ func ProjectPickerPage(wnd core.Window, pages Pages, findAll template.FindAll) c
 				wnd.Navigation().ForwardTo(pages.NewProject, nil)
 			}).PreIcon(heroSolid.Plus).Title("Neues Projekt erstellen"),
 		).FullWidth().Alignment(ui.Trailing),
-		projectList(projects),
+		projectList(wnd, pages, projects),
 	).
+		Gap(ui.L8).
 		FullWidth().
 		Alignment(ui.Leading)
 }
 
-func projectList(projects []template.Project) core.View {
+func projectList(wnd core.Window, pages Pages, projects []template.Project) core.View {
 	if len(projects) == 0 {
 		return ui.Text("Es gibt noch keine Projekte.")
 	}
@@ -50,9 +51,9 @@ func projectList(projects []template.Project) core.View {
 				Headline(t.Name).
 				SupportingText(t.Description).
 				Trailing(
-					ui.HStack(ui.PrimaryButton(func() {
-
-					}).Title("bearbeiten")),
+					ui.HStack(ui.SecondaryButton(func() {
+						wnd.Navigation().ForwardTo(pages.Editor, core.Values{"project": string(t.ID)})
+					}).PreIcon(heroSolid.Pencil).AccessibilityLabel("bearbeiten")),
 				)
 		})...,
 	).Caption(ui.Text("Projekte")).Frame(ui.Frame{}.FullWidth())

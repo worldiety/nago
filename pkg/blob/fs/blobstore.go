@@ -12,6 +12,7 @@ import (
 	"io"
 	"iter"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
 )
@@ -51,6 +52,7 @@ type BlobStore struct {
 	storeRefCounts  *tdb.BlobStore // hash -> reference counter
 	bucketNamePaths string
 	bucketNameRC    string
+	name            string
 }
 
 func NewBlobStore(baseDir string) (*BlobStore, error) {
@@ -67,9 +69,14 @@ func NewBlobStore(baseDir string) (*BlobStore, error) {
 		storeRefCounts:  tdb.NewBlobStore(db, "c"),
 		bucketNameRC:    "c",
 		bucketNamePaths: "p",
+		name:            path.Base(baseDir),
 	}
 
 	return b, nil
+}
+
+func (b *BlobStore) Name() string {
+	return b.name
 }
 
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {

@@ -28,6 +28,16 @@ type AuditableUser interface {
 type Subject interface {
 	permission.Auditable
 
+	// AuditResource is like Audit, but instead of using the user permissions, the associated resource table
+	// is also evaluated. The order of evaluation works as follows:
+	//  - first check, if the given permission has been assigned to the user globally
+	//  - second check, if the given id is empty and the name and permission matches, the audit is successful
+	//  - third check, if the all 3 properties match, the audit is successful
+	//
+	// In all other cases, the audit will fail. The name declares the namespace of in which the given id is naturally
+	// unique, e.g. the store or repository name.
+	AuditResource(name string, id string, p permission.ID) error
+
 	// ID is the unique actor id within a single NAGO instance. These IDs are generated in a secure way,
 	// however, you must not expose that into the public or use it as a source of anonymization.
 	// This ID will never change throughout the lifetime of the user and this instance.
@@ -226,6 +236,47 @@ func (v *viewImpl) load() {
 
 	slices.Sort(v.permissions)
 
+}
+
+func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error {
+	if v.HasPermission(p) {
+		return nil
+	}
+
+	v.mutex.Lock()
+	usr := v.user
+	v.mutex.Unlock()
+
+	if len(usr.Resources) == 0 {
+		return PermissionDeniedErr
+	}
+
+	// check, if we have global rights
+	perms, ok := usr.Resources[Resource{
+		Name: name,
+		ID:   "",
+	}]
+
+	if !ok {
+		// otherwise, check if we have the exact permission
+		perms = usr.Resources[Resource{
+			Name: name,
+			ID:   id,
+		}]
+	}
+
+	if len(perms) == 0 {
+		return PermissionDeniedErr
+	}
+
+	// we are allowed, if the permission is there. We do not optimize further, because we expect only
+	// a very small set of permissions per resource.
+	if slices.Contains(perms, p) {
+		return nil
+	}
+
+	// nope
+	return PermissionDeniedErr
 }
 
 func (v *viewImpl) Permissions() iter.Seq[permission.ID] {

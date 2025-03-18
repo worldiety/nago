@@ -167,29 +167,44 @@ func (l LegalAdoption) IsZero() bool {
 	return l == LegalAdoption{}
 }
 
+type Resource struct {
+	// Name of the Store or Repository
+	Name string
+
+	// ID is the string version of the root aggregate or entity key used in the named Store or Repository.
+	// If ID is empty, all values from the Named Store or Repository must be selected.
+	ID string
+}
+
 type User struct {
-	ID                    ID              `json:"id"`
-	Email                 Email           `json:"email"`
-	Contact               Contact         `json:"contact,omitzero"`
-	Salt                  []byte          `json:"salt,omitempty"`
-	Algorithm             HashAlgorithm   `json:"algorithm,omitempty"`
-	PasswordHash          []byte          `json:"passwordHash,omitempty"`
-	LastPasswordChangedAt time.Time       `json:"lastPasswordChangedAt"`
-	CreatedAt             time.Time       `json:"createdAt"`
-	EMailVerified         bool            `json:"emailVerified,omitempty"`
-	Status                AccountStatus   `json:"status,omitempty"`
-	Roles                 []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
-	Groups                []group.ID      `json:"groups,omitempty"`      // groups may also contain inherited permissions
-	Permissions           []permission.ID `json:"permissions,omitempty"` // individual custom permissions
-	Licenses              []license.ID    `json:"licenses,omitempty"`
-	RequirePasswordChange bool            `json:"requirePasswordChange,omitempty"`
-	VerificationCode      Code            `json:"verificationCode,omitzero"`
-	PasswordRequestCode   Code            `json:"passwordRequestCode,omitzero"`
+	ID                    ID            `json:"id"`
+	Email                 Email         `json:"email"`
+	Contact               Contact       `json:"contact,omitzero"`
+	Salt                  []byte        `json:"salt,omitempty"`
+	Algorithm             HashAlgorithm `json:"algorithm,omitempty"`
+	PasswordHash          []byte        `json:"passwordHash,omitempty"`
+	LastPasswordChangedAt time.Time     `json:"lastPasswordChangedAt"`
+	CreatedAt             time.Time     `json:"createdAt"`
+	EMailVerified         bool          `json:"emailVerified,omitempty"`
+	Status                AccountStatus `json:"status,omitempty"`
+	RequirePasswordChange bool          `json:"requirePasswordChange,omitempty"`
+	VerificationCode      Code          `json:"verificationCode,omitzero"`
+	PasswordRequestCode   Code          `json:"passwordRequestCode,omitzero"`
+
 	// some legal/regulatory properties
 	Newsletter                LegalAdoption `json:"newsletter,omitzero"`
 	GeneralTermsAndConditions LegalAdoption `json:"gtc,omitzero"`
 	DataProtectionProvision   LegalAdoption `json:"gdpr,omitzero"`
 	MinAge                    LegalAdoption `json:"minAge,omitzero"`
+
+	// global permissions
+	Roles       []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
+	Groups      []group.ID      `json:"groups,omitempty"`      // groups may also contain inherited permissions
+	Permissions []permission.ID `json:"permissions,omitempty"` // individual custom permissions
+	Licenses    []license.ID    `json:"licenses,omitempty"`
+
+	// resource based permissions
+	Resources map[Resource][]permission.ID `json:"resources,omitempty"`
 }
 
 func (u User) String() string {

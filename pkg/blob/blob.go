@@ -64,6 +64,9 @@ type Store interface {
 	// such a statement is not very useful.
 	Exists(ctx context.Context, key string) (bool, error)
 
+	// Name returns the distinct name. Stores with the same name are considered equal.
+	Name() string
+
 	Deleter
 
 	ReadWriter
