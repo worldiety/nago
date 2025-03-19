@@ -5430,14 +5430,17 @@ type Scaffold struct {
 	Logo      Component
 	Menu      ScaffoldMenuEntries
 	Alignment ScaffoldAlignment
+	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
+	Breakpoint Uint
 }
 
 func (v *Scaffold) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = v.Body != nil && !v.Body.IsZero()
 	fields[2] = v.Logo != nil && !v.Logo.IsZero()
 	fields[3] = !v.Menu.IsZero()
 	fields[4] = !v.Alignment.IsZero()
+	fields[5] = !v.Breakpoint.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5494,6 +5497,14 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Breakpoint.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5544,6 +5555,11 @@ func (v *Scaffold) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Breakpoint.read(r)
 			if err != nil {
 				return err
 			}
@@ -11729,10 +11745,11 @@ func (v *Scaffold) reset() {
 	v.Logo = nil
 	v.Menu.reset()
 	v.Alignment.reset()
+	v.Breakpoint.reset()
 }
 
 func (v *Scaffold) IsZero() bool {
-	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.Alignment.IsZero()
+	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero()
 }
 
 func (v *ScaffoldMenuEntry) reset() {

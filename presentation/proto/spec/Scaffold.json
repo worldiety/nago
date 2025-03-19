@@ -17,6 +17,11 @@
     "4": {
       "name": "Alignment",
       "type": "ScaffoldAlignment"
+    },
+    "5": {
+      "name": "Breakpoint",
+      "doc": "Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.",
+      "type": "Uint"
     }
   }
 }

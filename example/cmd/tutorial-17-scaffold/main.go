@@ -12,7 +12,7 @@ import (
 )
 
 //go:embed ORA_logo.svg
-var appIco application.StaticBytes
+var appIcon application.StaticBytes
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
@@ -20,27 +20,38 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		// update the global app icon
-		cfg.AppIcon(cfg.Resource(appIco))
+		cfg.AppIcon(cfg.Resource(appIcon))
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return Scaffold(ScaffoldAlignmentTop).
 				Body(VStack(
 					// this only causes the side effect of setting the current page title
-					WindowTitle("scaffold example"),
-					Text("hello body"),
+					WindowTitle("Scaffold Example"),
+					Text("Page body"),
 				)).
-				Logo(Image().Embed(icons.SpeakerWave).Frame(Frame{}.Size(L20, L20))).
+				Logo(Image().Embed(appIcon).Frame(Frame{}.Size("auto", L64))).
+				Breakpoint(1000).
 				Menu(
 					ScaffoldMenuEntry{
-						Title: "Entry 1",
+						Title: "Without icon",
 						Action: func() {
-							fmt.Println("clicked entry 1")
+							fmt.Println("clicked 'Without icon'")
 						},
 					},
 					ScaffoldMenuEntry{
 						Icon:           Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)),
-						Title:          "Entry 2",
+						Title:          "With icon",
+						MarkAsActiveAt: ".",
+					},
+					ScaffoldMenuEntry{
+						Icon:           Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)),
+						Title:          "With icon and long title",
+						MarkAsActiveAt: ".",
+					},
+					ScaffoldMenuEntry{
+						Icon:           Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)),
+						Title:          "With sub menu",
 						MarkAsActiveAt: ".",
 						Menu: []ScaffoldMenuEntry{
 							{
@@ -51,28 +62,13 @@ func main() {
 							},
 						},
 					},
-
 					ScaffoldMenuEntry{
 						Icon:           Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)),
 						IconActive:     Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)),
-						Title:          "Entry 3",
+						Title:          "With active icon",
 						MarkAsActiveAt: ".",
 					},
-					ForwardScaffoldMenuEntry(wnd, icons.User, "forward", ""),
-					ScaffoldMenuEntry{
-						Icon:           Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)),
-						IconActive:     Image().Embed(icons2.User).Frame(Frame{}.Size(L20, L20)),
-						Title:          "nested top",
-						MarkAsActiveAt: ".",
-						Menu: []ScaffoldMenuEntry{
-							{
-								Title: "sub 1",
-							},
-							{
-								Title: "sub 2",
-							},
-						},
-					},
+					ForwardScaffoldMenuEntry(wnd, icons.User, "Forward entry", "/"),
 				)
 		})
 	}).Run()

@@ -18,9 +18,10 @@
 		@mouseup="interacted = false"
 		@focus="emit('expand', ui)"
 	>
+		<!-- icon -->
 		<div
 			v-if="ui.icon"
-			class="flex justify-center items-center grow shrink rounded-full py-2 w-full"
+			class="flex justify-center items-center grow shrink rounded-full py-2 w-16"
 			:class="{
 				'h-10': ui.title === undefined,
 				'mix-blend-multiply bg-M7': ui.isZero() && hover,
@@ -30,7 +31,7 @@
 			}"
 		>
 			<div class="relative">
-				<div class="*:h-full" v-if="ui.expanded && ui.iconActive">
+				<div v-if="ui.expanded && ui.iconActive" class="*:h-full">
 					<ui-generic :ui="props.ui.iconActive!" />
 				</div>
 				<div v-else-if="ui.title && props.ui.icon" class="*:h-full">
@@ -49,8 +50,10 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- title -->
 		<p
-			class="text-sm text-center font-medium select-none hyphens-auto w-full"
+			class="text-sm text-center font-medium select-none whitespace-nowrap w-full"
 			:class="{ 'font-semibold': linksToCurrentPage }"
 		>
 			{{ ui.title }}
