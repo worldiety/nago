@@ -34,7 +34,7 @@ type ScaffoldMenuEntry struct {
 
 func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst core.NavigationPath) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
-		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L24, L24)),
+		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L20, L20)),
 		Title: title,
 		Action: func() {
 			wnd.Navigation().ForwardTo(dst, nil)
@@ -45,17 +45,18 @@ func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst 
 
 func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, children ...ScaffoldMenuEntry) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
-		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L24, L24)),
+		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L20, L20)),
 		Title: title,
 		Menu:  children,
 	}
 }
 
 type TScaffold struct {
-	logo      core.View
-	body      core.View
-	alignment proto.ScaffoldAlignment
-	menu      []ScaffoldMenuEntry
+	logo       core.View
+	body       core.View
+	alignment  proto.ScaffoldAlignment
+	menu       []ScaffoldMenuEntry
+	breakpoint int
 }
 
 func Scaffold(alignment ScaffoldAlignment) TScaffold {
@@ -77,13 +78,19 @@ func (c TScaffold) Menu(items ...ScaffoldMenuEntry) TScaffold {
 	return c
 }
 
+func (c TScaffold) Breakpoint(breakpoint int) TScaffold {
+	c.breakpoint = breakpoint
+	return c
+}
+
 func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.Scaffold{
-		Body:      render(ctx, c.body),
-		Logo:      render(ctx, c.logo),
-		Menu:      makeMenu(ctx, c.menu),
-		Alignment: c.alignment,
+		Body:       render(ctx, c.body),
+		Logo:       render(ctx, c.logo),
+		Menu:       makeMenu(ctx, c.menu),
+		Alignment:  c.alignment,
+		Breakpoint: proto.Uint(c.breakpoint),
 	}
 }
 

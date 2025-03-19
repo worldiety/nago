@@ -5653,16 +5653,21 @@ export class Scaffold implements Writeable, Readable, Component {
 
 	public alignment?: ScaffoldAlignment;
 
+	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
+	public breakpoint?: Uint;
+
 	constructor(
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
 		menu: ScaffoldMenuEntries | undefined = undefined,
-		alignment: ScaffoldAlignment | undefined = undefined
+		alignment: ScaffoldAlignment | undefined = undefined,
+		breakpoint: Uint | undefined = undefined
 	) {
 		this.body = body;
 		this.logo = logo;
 		this.menu = menu;
 		this.alignment = alignment;
+		this.breakpoint = breakpoint;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5698,6 +5703,10 @@ export class Scaffold implements Writeable, Readable, Component {
 					this.alignment = readInt(reader);
 					break;
 				}
+				case 5: {
+					this.breakpoint = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5711,6 +5720,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.logo !== undefined && !this.logo.isZero(),
 			this.menu !== undefined && !this.menu.isZero(),
 			this.alignment !== undefined,
+			this.breakpoint !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5734,6 +5744,10 @@ export class Scaffold implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
 			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5741,7 +5755,8 @@ export class Scaffold implements Writeable, Readable, Component {
 			(this.body === undefined || this.body.isZero()) &&
 			(this.logo === undefined || this.logo.isZero()) &&
 			(this.menu === undefined || this.menu.isZero()) &&
-			this.alignment === undefined
+			this.alignment === undefined &&
+			this.breakpoint === undefined
 		);
 	}
 
@@ -5750,6 +5765,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.logo = undefined;
 		this.menu = undefined;
 		this.alignment = undefined;
+		this.breakpoint = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

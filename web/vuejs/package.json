@@ -21,9 +21,9 @@
         "@headlessui/vue": "^1.7.23",
         "@popperjs/core": "^2.11.8",
         "codemirror": "^6.0.1",
-        "pinia": "^2.1.7",
+        "pinia": "^3.0.1",
         "uuid": "^9.0.1",
-        "vue": "^3.4.38",
+        "vue": "^3.5.13",
         "vue-codemirror": "^6.1.1",
         "vue-i18n": "^10.0.6",
         "vue-router": "^4.3.0"

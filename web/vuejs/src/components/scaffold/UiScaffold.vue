@@ -34,13 +34,13 @@ onUnmounted(() => {
 
 const navigationBarVisible = computed((): boolean => {
 	return (
-		(windowWidth.value >= 768 && props.ui.alignment === undefined) ||
+		(windowWidth.value >= (props.ui.breakpoint ?? 768) && props.ui.alignment === undefined) ||
 		props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentTop
 	);
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= 768 && props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
+	return windowWidth.value >= (props.ui.breakpoint ?? 768) && props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
 });
 
 const burgerMenuVisible = computed((): boolean => {
