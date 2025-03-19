@@ -10,7 +10,7 @@ import (
 )
 
 func NewUpdateProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) UpdateProjectBlob {
-	return func(subject auth.Subject, pid ID, file BlobID, value io.Reader) error {
+	return func(subject auth.Subject, pid ID, filename string, value io.Reader) error {
 		if err := subject.AuditResource(repo.Name(), string(pid), PermUpdateProjectBlob); err != nil {
 			return err
 		}
@@ -29,8 +29,8 @@ func NewUpdateProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) 
 
 		prj := optPrj.Unwrap()
 		for _, f := range prj.Files {
-			if f.Blob == file {
-				wr, err := files.NewWriter(context.Background(), file)
+			if f.Filename == filename {
+				wr, err := files.NewWriter(context.Background(), f.Blob)
 				if err != nil {
 					return err
 				}

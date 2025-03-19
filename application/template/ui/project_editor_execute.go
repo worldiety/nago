@@ -158,7 +158,7 @@ func executeTreeTemplateView(
 				return true
 			}),
 		),
-		configurationPicker(prj, runCfgState),
+		configurationPicker(wnd, uc, prj, runCfgState),
 		ui.HLine(),
 		ui.TextField("Sprache", langState.Get()).
 			SupportingText("Leer lassen für undefined. Ansonsten BCP47 Code, wie z.B. de oder en_US").
@@ -182,7 +182,7 @@ func executeTreeTemplateView(
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 }
 
-func configurationPicker(prj template.Project, runConfigurationSelected *core.State[template.RunConfiguration]) core.View {
+func configurationPicker(wnd core.Window, uc template.UseCases, prj template.Project, runConfigurationSelected *core.State[template.RunConfiguration]) core.View {
 	var groups []ui.TMenuGroup
 
 	groups = append(groups, ui.MenuGroup(
@@ -196,6 +196,8 @@ func configurationPicker(prj template.Project, runConfigurationSelected *core.St
 		return strings.Compare(a.Name, b.Name)
 	})
 
+	invalidate := core.AutoState[int](wnd)
+
 	if len(prj.RunConfigurations) > 0 {
 		var items []ui.TMenuItem
 
@@ -208,7 +210,11 @@ func configurationPicker(prj template.Project, runConfigurationSelected *core.St
 				ui.Text(configuration.Name).TextAlignment(ui.TextAlignStart),
 				ui.Spacer(),
 				ui.TertiaryButton(func() {
-					fmt.Println("delete cfg")
+					if err := uc.RemoveRunConfiguration(wnd.Subject(), prj.ID, configuration.ID); err != nil {
+						alert.ShowBannerError(wnd, err)
+					}
+					
+					invalidate.Set(invalidate.Get() + 1)
 				}).PreIcon(flowbiteOutline.TrashBin),
 			).FullWidth()))
 		}

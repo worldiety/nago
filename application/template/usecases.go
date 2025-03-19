@@ -103,13 +103,13 @@ type Versions func(subject auth.Subject, id ID) iter.Seq2[VersionID, error]
 type FindVersion func(subject auth.Subject, id VersionID) (std.Option[Project], error)
 
 type LoadProjectBlob func(subject auth.Subject, pid ID, file BlobID) (std.Option[io.ReadCloser], error)
-type UpdateProjectBlob func(subject auth.Subject, pid ID, file BlobID, reader io.Reader) error
-type DeleteProjectBlob func(subject auth.Subject, pid ID, file BlobID) error
+type UpdateProjectBlob func(subject auth.Subject, pid ID, filename string, reader io.Reader) error
+type DeleteProjectBlob func(subject auth.Subject, pid ID, filename string) error
 type CreateProjectBlob func(subject auth.Subject, pid ID, filename string) (ID, error)
 
 type AddRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
 
-type RemoveRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
+type RemoveRunConfiguration func(subject auth.Subject, pid ID, nameOrId string) error
 
 type NewProjectData struct {
 	ID          ID
@@ -136,14 +136,16 @@ type DefinedTemplateName = string
 type Repository data.Repository[Project, ID]
 
 type UseCases struct {
-	FindAll             FindAll
-	Execute             Execute
-	Create              Create
-	EnsureBuildIn       EnsureBuildIn
-	FindByID            FindByID
-	LoadProjectBlob     LoadProjectBlob
-	UpdateProjectBlob   UpdateProjectBlob
-	AddRunConfiguration AddRunConfiguration
+	FindAll                FindAll
+	Execute                Execute
+	Create                 Create
+	EnsureBuildIn          EnsureBuildIn
+	FindByID               FindByID
+	LoadProjectBlob        LoadProjectBlob
+	UpdateProjectBlob      UpdateProjectBlob
+	AddRunConfiguration    AddRunConfiguration
+	RemoveRunConfiguration RemoveRunConfiguration
+	DeleteProjectBlob      DeleteProjectBlob
 }
 
 func NewUseCases(files blob.Store, repository Repository) UseCases {
@@ -155,13 +157,15 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 	ensureBuildInFn := NewEnsureBuildIn(&mutex, repository, files)
 
 	return UseCases{
-		FindAll:             findAllFn,
-		Execute:             executeFn,
-		Create:              createFn,
-		EnsureBuildIn:       ensureBuildInFn,
-		FindByID:            NewFindByID(repository),
-		LoadProjectBlob:     NewLoadProjectBlob(files, repository),
-		UpdateProjectBlob:   NewUpdateProjectBlob(&mutex, files, repository),
-		AddRunConfiguration: NewAddRunConfiguration(&mutex, repository),
+		FindAll:                findAllFn,
+		Execute:                executeFn,
+		Create:                 createFn,
+		EnsureBuildIn:          ensureBuildInFn,
+		FindByID:               NewFindByID(repository),
+		LoadProjectBlob:        NewLoadProjectBlob(files, repository),
+		UpdateProjectBlob:      NewUpdateProjectBlob(&mutex, files, repository),
+		AddRunConfiguration:    NewAddRunConfiguration(&mutex, repository),
+		RemoveRunConfiguration: NewRemoveRunConfiguration(&mutex, repository),
+		DeleteProjectBlob:      NewDeleteProjectBlob(&mutex, files, repository),
 	}
 }

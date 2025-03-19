@@ -37,7 +37,7 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 	lastErrorState := core.AutoState[error](wnd)
 	msgSaved := core.AutoState[string](wnd)
 	save := func(str string) {
-		if err := uc.UpdateProjectBlob(wnd.Subject(), prj.ID, selectedFile.Get().Blob, bytes.NewBuffer([]byte(str))); err != nil {
+		if err := uc.UpdateProjectBlob(wnd.Subject(), prj.ID, selectedFile.Get().Filename, bytes.NewBuffer([]byte(str))); err != nil {
 			alert.ShowBannerError(wnd, err)
 			msgSaved.Set(err.Error())
 			lastErrorState.Set(err)
