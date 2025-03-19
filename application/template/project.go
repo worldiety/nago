@@ -10,18 +10,25 @@ import (
 	"time"
 )
 
+type RunConfiguration struct {
+	ID       string
+	Name     string
+	Template DefinedTemplateName
+	Language string
+	Model    JSONString
+}
+
 type Tag string
 type Project struct {
-	ID            ID
-	Name          string
-	Description   string
-	Logo          core.URI
-	Type          ExecType // type of evaluation/engine
-	Files         []File
-	Examples      map[DefinedTemplateName]JSONString
-	OutputMapping map[DefinedTemplateName]Filename // optionally map specific template names to create new file names as a result
-	Protected     bool                             // just an extra layer of security, for very important templates, like system mail templates
-	Tags          []Tag                            // some arbitrary tags for filtering and inspection
+	ID                ID                 `json:"id,omitempty"`
+	Name              string             `json:"name,omitempty"`
+	Description       string             `json:"description,omitempty"`
+	Logo              core.URI           `json:"logo,omitempty"`
+	Type              ExecType           `json:"type,omitempty"` // type of evaluation/engine
+	Files             []File             `json:"files,omitempty"`
+	RunConfigurations []RunConfiguration `json:"runConfigurations,omitempty"`
+	Protected         bool               `json:"protected,omitempty"` // just an extra layer of security, for very important templates, like system mail templates
+	Tags              []Tag              `json:"tags,omitempty"`      // some arbitrary tags for filtering and inspection
 }
 
 func (p Project) Identity() ID {

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
+import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
+import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
@@ -27,10 +29,15 @@ function itemClick(item: ProtoMenuItem) {
 		return;
 	}
 }
+
+const styles = computed<string>(() => {
+	let styles = frameCSS(props.ui.frame);
+	return styles.join(';');
+});
 </script>
 
 <template>
-	<Menu as="div" class="relative inline-block text-left">
+	<Menu as="div" class="relative inline-block text-left" :style="styles">
 		<div>
 			<MenuButton class="inline-flex w-full justify-center" ref="trigger">
 				<ui-generic v-if="props.ui.anchor" :ui="props.ui.anchor" />

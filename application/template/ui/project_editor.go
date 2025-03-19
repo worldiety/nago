@@ -51,28 +51,22 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 		consoleState.Set("Projekt erfolgreich gespeichert: " + time.Now().Format(xtime.GermanDateTimeSec))
 	}
 
-	var savedIcon core.SVG
-	if msgSaved.Get() == "" {
-		savedIcon = flowbiteOutline.Check
-	} else {
-		savedIcon = flowbiteOutline.CheckCircle
-	}
-
 	canExecute := prj.Type != template.Unprocessed
 	launcherPresented := core.AutoState[bool](wnd)
+	runConfigurationSelected := core.AutoState[template.RunConfiguration](wnd)
 
 	return ui.VStack(
 		ui.HStack(ui.H1(prj.Name)).Alignment(ui.Leading),
 		ui.HStack(
-			viewProjectExecute(wnd, prj, uc, launcherPresented, consoleState),
+			viewProjectExecute(wnd, prj, uc, runConfigurationSelected, launcherPresented, consoleState),
 			ui.IfFunc(canExecute, func() core.View {
-				return ui.TertiaryButton(func() {
-					launcherPresented.Set(true)
-				}).PreIcon(flowbiteOutline.Play).AccessibilityLabel("als Vorschau ausführen")
+				return ui.SecondaryButton(func() {
+					launcherPresented.Set(!launcherPresented.Get())
+				}).PreIcon(flowbiteOutline.Play)
+
 			}),
-			ui.ImageIcon(savedIcon).AccessibilityLabel(msgSaved.Get()),
 		).Alignment(ui.Trailing).FullWidth(),
-		ui.HLine().Padding(ui.Padding{}),
+		ui.HLine().Padding(ui.Padding{Top: ui.L4}),
 		ui.IfFunc(sm, func() core.View {
 			return ui.VStack(
 				viewProjectExplorer(wnd, prj, selectedFile).Frame(ui.Frame{}.FullWidth()),
@@ -90,21 +84,4 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 		ui.HLine().Padding(ui.Padding{}),
 		console(wnd, consoleState),
 	).Alignment(ui.Stretch).Frame(ui.Frame{Width: ui.Full})
-}
-
-func console(wnd core.Window, consoleState *core.State[string]) core.View {
-	return ui.HStack(
-		ui.VStack(
-			ui.ScrollView(ui.Text(consoleState.Get())).Frame(ui.Frame{Height: ui.Full}.FullWidth()),
-		).Frame(ui.Frame{Width: ui.Full, Height: ui.Full}),
-		ui.VLine().Padding(ui.Padding{Left: ui.L4}).Frame(ui.Frame{}),
-		ui.VStack(
-			ui.TertiaryButton(func() {
-				if err := wnd.Clipboard().SetText(consoleState.Get()); err != nil {
-					alert.ShowBannerError(wnd, err)
-					return
-				}
-			}).PreIcon(flowbiteOutline.Clipboard).AccessibilityLabel("Ausgabe in Zwischenablage kopieren"),
-		).Frame(ui.Frame{Width: ui.L48, Height: ui.Full}),
-	).Alignment(ui.Stretch).Frame(ui.Frame{Width: ui.Full, Height: ui.L160})
 }

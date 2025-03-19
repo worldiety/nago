@@ -9,6 +9,10 @@
     "2": {
       "name": "Groups",
       "type": "MenuGroups"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
     }
   }
 }

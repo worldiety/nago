@@ -6,16 +6,17 @@ import (
 )
 
 type TDialog struct {
-	uri          core.URI
-	dlg          proto.VStack
-	preBody      core.View
-	body         core.View
-	footer       core.View
-	title        core.View
-	titleX       core.View
-	alignment    Alignment
-	modalPadding Padding
-	frame        Frame
+	uri              core.URI
+	dlg              proto.VStack
+	preBody          core.View
+	body             core.View
+	footer           core.View
+	title            core.View
+	titleX           core.View
+	alignment        Alignment
+	modalPadding     Padding
+	frame            Frame
+	disableBoxLayout bool
 }
 
 func Dialog(body core.View) TDialog {
@@ -65,9 +66,15 @@ func (c TDialog) MinWidth(minWidth Length) TDialog {
 	return c
 }
 
+func (c TDialog) DisableBoxLayout(b bool) TDialog {
+	c.disableBoxLayout = b
+	return c
+}
+
 func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	colors := core.Colors[Colors](ctx.Window())
-	dlg := BoxAlign(c.alignment, VStack(
+
+	stack := VStack(
 		If(c.title != nil, HStack(c.title, Spacer(), c.titleX).Alignment(Leading).BackgroundColor(ColorCardTop).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Right: L20, Top: L12, Bottom: L12})),
 		VStack(
 			c.preBody,
@@ -80,8 +87,13 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	).
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).
-		Frame(Frame{MinWidth: c.frame.MinWidth}),
-	).
+		Frame(Frame{MinWidth: c.frame.MinWidth})
+
+	if c.disableBoxLayout {
+		return stack.Render(ctx)
+	}
+
+	dlg := BoxAlign(c.alignment, stack).
 		BackgroundColor(colors.M5.WithTransparency(40)).Padding(c.modalPadding)
 
 	return dlg.Render(ctx)

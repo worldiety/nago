@@ -6,13 +6,17 @@ import (
 	"go.wdy.de/nago/pkg/blob"
 	"io"
 	"os"
+	"sync"
 )
 
-func NewUpdateProjectBlob(files blob.Store, repo Repository) UpdateProjectBlob {
+func NewUpdateProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) UpdateProjectBlob {
 	return func(subject auth.Subject, pid ID, file BlobID, value io.Reader) error {
 		if err := subject.AuditResource(repo.Name(), string(pid), PermUpdateProjectBlob); err != nil {
 			return err
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		optPrj, err := repo.FindByID(pid)
 		if err != nil {

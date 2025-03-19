@@ -9229,9 +9229,16 @@ export class Menu implements Writeable, Readable, Component {
 
 	public groups?: MenuGroups;
 
-	constructor(anchor: Component | undefined = undefined, groups: MenuGroups | undefined = undefined) {
+	public frame?: Frame;
+
+	constructor(
+		anchor: Component | undefined = undefined,
+		groups: MenuGroups | undefined = undefined,
+		frame: Frame | undefined = undefined
+	) {
 		this.anchor = anchor;
 		this.groups = groups;
+		this.frame = frame;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9254,6 +9261,11 @@ export class Menu implements Writeable, Readable, Component {
 					this.groups.read(reader);
 					break;
 				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9265,6 +9277,7 @@ export class Menu implements Writeable, Readable, Component {
 			false,
 			this.anchor !== undefined && !this.anchor.isZero(),
 			this.groups !== undefined && !this.groups.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9278,17 +9291,24 @@ export class Menu implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			this.groups!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
 		return (
-			(this.anchor === undefined || this.anchor.isZero()) && (this.groups === undefined || this.groups.isZero())
+			(this.anchor === undefined || this.anchor.isZero()) &&
+			(this.groups === undefined || this.groups.isZero()) &&
+			(this.frame === undefined || this.frame.isZero())
 		);
 	}
 
 	reset(): void {
 		this.anchor = undefined;
 		this.groups = undefined;
+		this.frame = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

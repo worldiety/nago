@@ -8,6 +8,7 @@ import (
 type TMenu struct {
 	anchor core.View
 	groups []TMenuGroup
+	frame  Frame
 }
 
 func Menu(anchor core.View, groups ...TMenuGroup) TMenu {
@@ -15,6 +16,11 @@ func Menu(anchor core.View, groups ...TMenuGroup) TMenu {
 		anchor: anchor,
 		groups: groups,
 	}
+}
+
+func (c TMenu) Frame(frame Frame) TMenu {
+	c.frame = frame
+	return c
 }
 
 func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
@@ -35,6 +41,7 @@ func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.Menu{
 		Anchor: render(ctx, c.anchor),
 		Groups: groups,
+		Frame:  c.frame.ora(),
 	}
 }
 

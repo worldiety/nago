@@ -80,7 +80,6 @@ type ExecOptions struct {
 //   - copy all localized files on top of it, if tag is not empty (file extensions are .nago.en-US.tpl
 //   - if template name is empty, execute each file marked as [File.IsTemplate] through the Go template engine and replace the original file in-memory
 //   - if template name is not empty, load all files marked as [File.IsTemplate] at once and execute the defined template by name. Add the result as a new file.
-//     The name is either the templateName or taken from [Project.OutputMapping].
 //   - if ExecType is Unprocessed|TextTemplateToText|HtmlTemplateToHtml and there is only a single file result, just return those bytes. Otherwise, return a zip file.
 //   - if ExecType is xToPDF try first to render locally and otherwise create a zip file, lookup a secret and try to render using a REST Service.
 type Execute func(subject auth.Subject, id ID, options ExecOptions) (io.ReadCloser, error)
@@ -108,6 +107,10 @@ type UpdateProjectBlob func(subject auth.Subject, pid ID, file BlobID, reader io
 type DeleteProjectBlob func(subject auth.Subject, pid ID, file BlobID) error
 type CreateProjectBlob func(subject auth.Subject, pid ID, filename string) (ID, error)
 
+type AddRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
+
+type RemoveRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
+
 type NewProjectData struct {
 	ID          ID
 	Name        string
@@ -133,13 +136,14 @@ type DefinedTemplateName = string
 type Repository data.Repository[Project, ID]
 
 type UseCases struct {
-	FindAll           FindAll
-	Execute           Execute
-	Create            Create
-	EnsureBuildIn     EnsureBuildIn
-	FindByID          FindByID
-	LoadProjectBlob   LoadProjectBlob
-	UpdateProjectBlob UpdateProjectBlob
+	FindAll             FindAll
+	Execute             Execute
+	Create              Create
+	EnsureBuildIn       EnsureBuildIn
+	FindByID            FindByID
+	LoadProjectBlob     LoadProjectBlob
+	UpdateProjectBlob   UpdateProjectBlob
+	AddRunConfiguration AddRunConfiguration
 }
 
 func NewUseCases(files blob.Store, repository Repository) UseCases {
@@ -151,12 +155,13 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 	ensureBuildInFn := NewEnsureBuildIn(&mutex, repository, files)
 
 	return UseCases{
-		FindAll:           findAllFn,
-		Execute:           executeFn,
-		Create:            createFn,
-		EnsureBuildIn:     ensureBuildInFn,
-		FindByID:          NewFindByID(repository),
-		LoadProjectBlob:   NewLoadProjectBlob(files, repository),
-		UpdateProjectBlob: NewUpdateProjectBlob(files, repository),
+		FindAll:             findAllFn,
+		Execute:             executeFn,
+		Create:              createFn,
+		EnsureBuildIn:       ensureBuildInFn,
+		FindByID:            NewFindByID(repository),
+		LoadProjectBlob:     NewLoadProjectBlob(files, repository),
+		UpdateProjectBlob:   NewUpdateProjectBlob(&mutex, files, repository),
+		AddRunConfiguration: NewAddRunConfiguration(&mutex, repository),
 	}
 }

@@ -8859,12 +8859,14 @@ func (v *ClipboardWriteTextRequested) read(r *BinaryReader) error {
 type Menu struct {
 	Anchor Component
 	Groups MenuGroups
+	Frame  Frame
 }
 
 func (v *Menu) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = v.Anchor != nil && !v.Anchor.IsZero()
 	fields[2] = !v.Groups.IsZero()
+	fields[3] = !v.Frame.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8895,6 +8897,14 @@ func (v *Menu) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Groups.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
 			return err
 		}
 	}
@@ -8929,6 +8939,11 @@ func (v *Menu) read(r *BinaryReader) error {
 			v.Anchor = obj.(Component)
 		case 2:
 			err := v.Groups.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
 			if err != nil {
 				return err
 			}
@@ -12270,10 +12285,11 @@ func (v *ClipboardWriteTextRequested) IsZero() bool {
 func (v *Menu) reset() {
 	v.Anchor = nil
 	v.Groups.reset()
+	v.Frame.reset()
 }
 
 func (v *Menu) IsZero() bool {
-	return v.Anchor.IsZero() && v.Groups.IsZero()
+	return v.Anchor.IsZero() && v.Groups.IsZero() && v.Frame.IsZero()
 }
 
 func (v *MenuGroup) reset() {
