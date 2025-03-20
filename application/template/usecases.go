@@ -105,7 +105,7 @@ type FindVersion func(subject auth.Subject, id VersionID) (std.Option[Project], 
 type LoadProjectBlob func(subject auth.Subject, pid ID, file BlobID) (std.Option[io.ReadCloser], error)
 type UpdateProjectBlob func(subject auth.Subject, pid ID, filename string, reader io.Reader) error
 type DeleteProjectBlob func(subject auth.Subject, pid ID, filename string) error
-type CreateProjectBlob func(subject auth.Subject, pid ID, filename string) (ID, error)
+type CreateProjectBlob func(subject auth.Subject, pid ID, filename string, reader io.Reader) error
 
 type AddRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
 
@@ -146,6 +146,7 @@ type UseCases struct {
 	AddRunConfiguration    AddRunConfiguration
 	RemoveRunConfiguration RemoveRunConfiguration
 	DeleteProjectBlob      DeleteProjectBlob
+	CreateProjectBlob      CreateProjectBlob
 }
 
 func NewUseCases(files blob.Store, repository Repository) UseCases {
@@ -167,5 +168,6 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 		AddRunConfiguration:    NewAddRunConfiguration(&mutex, repository),
 		RemoveRunConfiguration: NewRemoveRunConfiguration(&mutex, repository),
 		DeleteProjectBlob:      NewDeleteProjectBlob(&mutex, files, repository),
+		CreateProjectBlob:      NewCreateProjectBlob(&mutex, files, repository),
 	}
 }

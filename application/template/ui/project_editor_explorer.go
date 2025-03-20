@@ -1,24 +1,46 @@
 package uitemplate
 
 import (
+	"bytes"
 	"fmt"
 	"go.wdy.de/nago/application/template"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"path"
 	"strings"
 )
 
-func viewProjectExplorer(wnd core.Window, prj template.Project, selectedFile *core.State[template.File]) ui.DecoredView {
+func viewProjectExplorer(wnd core.Window, prj template.Project, uc template.UseCases, selectedFile *core.State[template.File]) ui.DecoredView {
+	presentedNewFile := core.AutoState[bool](wnd)
+	fileName := core.AutoState[string](wnd)
+
 	return ui.VStack(
+		ui.IfFunc(presentedNewFile.Get(), func() core.View {
+
+			return alert.Dialog(
+				"Neue Datei",
+				ui.TextField("Neuer Dateiname", fileName.Get()).InputValue(fileName),
+				presentedNewFile,
+				alert.Cancel(nil),
+				alert.Save(func() (close bool) {
+					if err := uc.CreateProjectBlob(wnd.Subject(), prj.ID, fileName.Get(), bytes.NewBuffer(nil)); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return false
+					}
+
+					return true
+				}),
+			)
+		}),
 		// toolbar
 		ui.HStack(
 			ui.Menu(ui.TertiaryButton(nil).PreIcon(flowbiteOutline.DotsVertical),
 				ui.MenuGroup(
 					ui.MenuItem(func() {
-
+						presentedNewFile.Set(true)
 					}, ui.Text("Neue Datei")),
 				),
 			),

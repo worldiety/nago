@@ -286,12 +286,32 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						intState.Notify()
 					}
 
+					showDays := true
+					if v, ok := field.Tag.Lookup("days"); ok {
+						showDays, _ = strconv.ParseBool(v)
+					}
+
+					showHours := true
+					if v, ok := field.Tag.Lookup("hours"); ok {
+						showHours, _ = strconv.ParseBool(v)
+					}
+
+					showMinutes := true
+					if v, ok := field.Tag.Lookup("minutes"); ok {
+						showMinutes, _ = strconv.ParseBool(v)
+					}
+
+					showSeconds := true
+					if v, ok := field.Tag.Lookup("seconds"); ok {
+						showSeconds, _ = strconv.ParseBool(v)
+					}
+
 					fieldsBuilder.Append(timepicker.Picker(label, intState).
 						Format(displayFormat).
-						Days(true).
-						Hours(true).
-						Minutes(true).
-						Seconds(true).
+						Days(showDays).
+						Hours(showHours).
+						Minutes(showMinutes).
+						Seconds(showSeconds).
 						Disabled(disabled).
 						SupportingText(field.Tag.Get("supportingText")).
 						Frame(ui.Frame{}.FullWidth()),

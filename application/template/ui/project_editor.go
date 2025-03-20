@@ -69,14 +69,14 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 		ui.HLine().Padding(ui.Padding{Top: ui.L4}),
 		ui.IfFunc(sm, func() core.View {
 			return ui.VStack(
-				viewProjectExplorer(wnd, prj, selectedFile).Frame(ui.Frame{}.FullWidth()),
+				viewProjectExplorer(wnd, prj, uc, selectedFile).Frame(ui.Frame{}.FullWidth()),
 				viewProjectSource(wnd, prj, selectedFile, uc, save),
 			).Alignment(ui.TopLeading).FullWidth()
 		}),
 
 		ui.IfFunc(!sm, func() core.View {
 			return ui.HStack(
-				viewProjectExplorer(wnd, prj, selectedFile),
+				viewProjectExplorer(wnd, prj, uc, selectedFile),
 				ui.VLine().Padding(ui.Padding{Left: ui.L4}).Frame(ui.Frame{}),
 				viewProjectSource(wnd, prj, selectedFile, uc, save),
 			).Alignment(ui.Stretch).FullWidth()
