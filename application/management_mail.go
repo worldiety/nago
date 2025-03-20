@@ -70,7 +70,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 		}
 
 		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail)
+			return uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail, templates.UseCases.Execute)
 		}))
 
 		c.RootView(c.mailManagement.Pages.OutgoingMailQueue, c.DecorateRootView(func(wnd core.Window) core.View {
