@@ -7,29 +7,13 @@
 		@keydown.enter="handleClick"
 		@keydown.down.prevent="focusFirstLinkedSubMenuEntry('down')"
 		@keydown.right.prevent="focusFirstLinkedSubMenuEntry('right')"
-		@mouseenter="
-			emit('expand', ui);
-			hover = true;
-		"
-		@mouseleave="
-			handleMouseLeave;
-			hover = false;
-		"
+		@mouseenter="handleMouseEnter"
+		@mouseleave="handleMouseLeave"
 		@mouseup="interacted = false"
 		@focus="emit('expand', ui)"
 	>
 		<!-- icon -->
-		<div
-			v-if="ui.icon"
-			class="flex justify-center items-center grow shrink rounded-full py-2 w-16"
-			:class="{
-				'h-10': ui.title === undefined,
-				'mix-blend-multiply bg-M7': ui.isZero() && hover,
-				'bg-M7 bg-opacity-25': ui.expanded === true,
-				'bg-opacity-35': interacted,
-				'bg-M7 bg-opacity-35': active,
-			}"
-		>
+		<div v-if="ui.icon" class="flex justify-center items-center grow shrink rounded-full py-2" :class="iconClasses">
 			<div class="relative">
 				<div v-if="ui.expanded && ui.iconActive" class="*:h-full">
 					<ui-generic :ui="props.ui.iconActive!" />
@@ -66,7 +50,8 @@ import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import type { ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
 
 const emit = defineEmits<{
 	(e: 'focusFirstLinkedSubMenuEntry'): void;
@@ -103,6 +88,28 @@ const hasSubMenuEntries = computed((): boolean => {
 	return props.ui.menu.value && props.ui.menu.value.length > 0;
 });
 
+const iconClasses = computed((): string => {
+	const iconClasses: string[] = [];
+	if (props.ui.title === undefined) {
+		iconClasses.push('size-12');
+	} else {
+		iconClasses.push('h-10 w-16');
+	}
+	if (props.ui.isZero() && hover.value) {
+		iconClasses.push('mix-blend-multiply', 'bg-M7');
+	}
+	if (props.ui.expanded) {
+		iconClasses.push('bg-M7', 'bg-opacity-25');
+	}
+	if (interacted.value) {
+		iconClasses.push('bg-opacity-35');
+	}
+	if (active.value) {
+		iconClasses.push('bg-M7', 'bg-opacity-35');
+	}
+	return iconClasses.join(' ');
+});
+
 function handleClick(): void {
 	if (props.ui.action && !hasSubMenuEntries.value) {
 		// If the menu entry has an action and no sub menu entries, execute the action
@@ -113,8 +120,14 @@ function handleClick(): void {
 	}
 }
 
+function handleMouseEnter(): void {
+	emit('expand', props.ui);
+	hover.value = true;
+}
+
 function handleMouseLeave(): void {
 	interacted.value = false;
+	hover.value = false;
 	if (!hasSubMenuEntries.value) {
 		// Collapse the menu entry if it has no sub menu entries
 		/*serviceAdapter.setProperties({

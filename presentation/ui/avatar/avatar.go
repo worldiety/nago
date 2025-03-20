@@ -58,7 +58,7 @@ func Text(paraphe string) TAvatar {
 
 	return TAvatar{
 		paraphe: paraphe,
-		color:   ui.A0,
+		color:   ui.M5,
 		border:  ui.Border{}.Circle(),
 	}.Size(ui.L40)
 }
@@ -66,7 +66,7 @@ func Text(paraphe string) TAvatar {
 func URI(uri core.URI) TAvatar {
 	return TAvatar{
 		url:    uri,
-		color:  ui.A0,
+		color:  ui.M5,
 		border: ui.Border{}.Circle(),
 	}.Size(ui.L40)
 }
@@ -74,7 +74,7 @@ func URI(uri core.URI) TAvatar {
 func Embed(data []byte) TAvatar {
 	return TAvatar{
 		data:   data,
-		color:  ui.A0,
+		color:  ui.M5,
 		border: ui.Border{}.Circle(),
 	}.Size(ui.L40)
 }

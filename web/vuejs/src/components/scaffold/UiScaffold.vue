@@ -40,7 +40,10 @@ const navigationBarVisible = computed((): boolean => {
 });
 
 const sidebarVisible = computed((): boolean => {
-	return windowWidth.value >= (props.ui.breakpoint ?? 768) && props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentLeading;
+	return (
+		windowWidth.value >= (props.ui.breakpoint ?? 768) &&
+		props.ui.alignment === ScaffoldAlignmentValues.ScaffoldAlignmentLeading
+	);
 });
 
 const burgerMenuVisible = computed((): boolean => {
