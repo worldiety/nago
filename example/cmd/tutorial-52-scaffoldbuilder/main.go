@@ -25,6 +25,7 @@ func main() {
 				})
 				menu.MenuEntry().Title("second").Forward(".").Public()
 			}).
+			Breakpoint(1000).
 			Decorator())
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
