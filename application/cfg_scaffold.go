@@ -202,6 +202,7 @@ type ScaffoldBuilder struct {
 	logoClick       func(wnd core.Window)
 	logoImage       ui.DecoredView
 	showLogin       bool
+	breakpoint      *int
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -219,6 +220,11 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 			wnd.Navigation().ForwardTo(".", nil)
 		},
 	}
+}
+
+func (b *ScaffoldBuilder) Breakpoint(breakpoint int) *ScaffoldBuilder {
+	b.breakpoint = &breakpoint
+	return b
 }
 
 func (b *ScaffoldBuilder) Login(show bool) *ScaffoldBuilder {
@@ -448,7 +454,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 		}
 
-		return ui.Scaffold(b.alignment).Body(
+		var scaffold = ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
 				ui.IfFunc(b.cfg.sessionManagement != nil, func() core.View {
@@ -461,6 +467,12 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			).FullWidth(),
 		).Logo(ui.HStack(logo).Action(b.logoActionClick(wnd))).
 			Menu(menu...)
+
+		if b.breakpoint != nil {
+			scaffold = scaffold.Breakpoint(*b.breakpoint)
+		}
+
+		return scaffold
 	}
 }
 

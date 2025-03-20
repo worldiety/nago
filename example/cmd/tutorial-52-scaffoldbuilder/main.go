@@ -33,6 +33,7 @@ func main() {
 				menu.MenuEntry().Title("second").Forward(".").Public()
 				menu.Icon(icons.QuestionMarkCircle)
 			}).
+			Breakpoint(1000).
 			Decorator())
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
