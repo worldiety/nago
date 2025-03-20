@@ -15,11 +15,24 @@ import (
 
 func viewProjectExplorer(wnd core.Window, prj template.Project, uc template.UseCases, selectedFile *core.State[template.File]) ui.DecoredView {
 	presentedNewFile := core.AutoState[bool](wnd)
+	presentedRenameFile := core.AutoState[bool](wnd)
+	presentedDeleteFile := core.AutoState[bool](wnd)
 	fileName := core.AutoState[string](wnd)
 
-	return ui.VStack(
-		ui.IfFunc(presentedNewFile.Get(), func() core.View {
+	var fileMenuOptions []ui.TMenuItem
+	if selectedFile.Get().Blob != "" {
+		fileMenuOptions = append(fileMenuOptions, ui.MenuItem(func() {
+			presentedRenameFile.Set(true)
+			fileName.Set(selectedFile.Get().Filename)
+		}, ui.Text(selectedFile.Get().Filename+" umbenennen").TextAlignment(ui.TextAlignStart)))
+		fileMenuOptions = append(fileMenuOptions, ui.MenuItem(func() {
+			presentedDeleteFile.Set(true)
+		}, ui.Text(selectedFile.Get().Filename+" löschen").TextAlignment(ui.TextAlignStart)))
+	}
 
+	return ui.VStack(
+		// create file
+		ui.IfFunc(presentedNewFile.Get(), func() core.View {
 			return alert.Dialog(
 				"Neue Datei",
 				ui.TextField("Neuer Dateiname", fileName.Get()).InputValue(fileName),
@@ -35,14 +48,56 @@ func viewProjectExplorer(wnd core.Window, prj template.Project, uc template.UseC
 				}),
 			)
 		}),
+
+		// rename file
+		ui.IfFunc(presentedRenameFile.Get(), func() core.View {
+			return alert.Dialog(
+				"Datei umbenennen",
+				ui.TextField("Neuer Dateiname", fileName.Get()).InputValue(fileName).SupportingText("Pfade per / trennen. Lokalisierte Dateien liegen in locales/<lang>/<filename>"),
+				presentedRenameFile,
+				alert.Cancel(nil),
+				alert.Save(func() (close bool) {
+					if err := uc.RenameProjectBlob(wnd.Subject(), prj.ID, selectedFile.Get().Filename, fileName.Get()); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return false
+					}
+
+					f := selectedFile.Get()
+					f.Filename = fileName.Get()
+					selectedFile.Set(f)
+					return true
+				}),
+			)
+		}),
+
+		// delete file
+		ui.IfFunc(presentedDeleteFile.Get(), func() core.View {
+			return alert.Dialog(
+				"Datei löschen",
+				ui.Text(fmt.Sprintf("Soll die Datei '%s' wirklich gelöscht werden?", selectedFile.Get().Filename)),
+				presentedDeleteFile,
+				alert.Cancel(nil),
+				alert.Delete(func() {
+					if err := uc.DeleteProjectBlob(wnd.Subject(), prj.ID, selectedFile.Get().Filename); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					selectedFile.Set(template.File{})
+				}),
+			)
+		}),
+
 		// toolbar
 		ui.HStack(
 			ui.Menu(ui.TertiaryButton(nil).PreIcon(flowbiteOutline.DotsVertical),
 				ui.MenuGroup(
 					ui.MenuItem(func() {
+						fileName.Set("")
 						presentedNewFile.Set(true)
 					}, ui.Text("Neue Datei")),
 				),
+				ui.MenuGroup(fileMenuOptions...),
 			),
 		).FullWidth().
 			Alignment(ui.Trailing),

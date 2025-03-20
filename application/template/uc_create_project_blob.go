@@ -13,7 +13,7 @@ import (
 
 func NewCreateProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) CreateProjectBlob {
 	return func(subject auth.Subject, pid ID, filename string, value io.Reader) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermUpdateProjectBlob); err != nil {
+		if err := subject.AuditResource(repo.Name(), string(pid), PermCreateProjectBlob); err != nil {
 			return err
 		}
 

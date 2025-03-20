@@ -58,6 +58,43 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 	return ui.VStack(
 		ui.HStack(ui.H1(prj.Name)).Alignment(ui.Leading),
 		ui.HStack(
+			ui.SecondaryButton(func() {
+				wnd.ExportFiles(core.ExportFilesOptions{
+					Files: []core.File{
+						template.AsDownloadFile(wnd.Context(), wnd.Subject(), prj.ID, uc.ExportZip),
+					},
+				})
+			}).PreIcon(flowbiteOutline.Download).AccessibilityLabel("Projekt als Zip exportieren"),
+
+			ui.SecondaryButton(func() {
+				wnd.ImportFiles(core.ImportFilesOptions{
+					MaxBytes:         0,
+					AllowedMimeTypes: []string{"application/zip"},
+					OnCompletion: func(files []core.File) {
+						for _, file := range files {
+							reader, err := file.Open()
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
+
+							if err := uc.ImportZip(wnd.Subject(), prj.ID, reader); err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
+						}
+
+						alert.ShowBannerMessage(wnd, alert.Message{
+							Title:   "Import erfolgreich",
+							Message: "Das Projekt wurde importiert.",
+							Intent:  alert.IntentOk,
+						})
+					},
+				})
+
+			}).PreIcon(flowbiteOutline.Upload).AccessibilityLabel("Projektdateien aus Zip importieren"),
+
+			ui.Spacer(),
 			viewProjectExecute(wnd, prj, uc, runConfigurationSelected, launcherPresented, consoleState),
 			ui.IfFunc(canExecute, func() core.View {
 				return ui.SecondaryButton(func() {
@@ -65,7 +102,7 @@ func PageEditor(wnd core.Window, uc template.UseCases) core.View {
 				}).PreIcon(flowbiteOutline.Play)
 
 			}),
-		).Alignment(ui.Trailing).FullWidth(),
+		).Gap(ui.L8).Alignment(ui.Trailing).FullWidth(),
 		ui.HLine().Padding(ui.Padding{Top: ui.L4}),
 		ui.IfFunc(sm, func() core.View {
 			return ui.VStack(

@@ -26,10 +26,12 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 		ui.H1("Backup und Wiederherstellung"),
 		cardlayout.Card("Backup").
 			Body(ui.VStack(
-				ui.Text("Mit dieser Funktion wird ein vollständiges Backup aller Daten erstellt. Das Backup enthält unverschlüsselte und im Klartext lesbare vertrauliche und personenbezogene Daten. "+
+				ui.Text("Mit dieser Funktion wird ein vollständiges Backup aller Daten erstellt. Das Backup enthält ggf. unverschlüsselte und im Klartext lesbare vertrauliche und personenbezogene Daten. "+
 					"Die Backup-Datei muss entsprechend vertraulich und gemäß der Richtlinien behandelt werden. Dieser Vorgang wird entsprechend im Log mit Ihren Nutzerdaten hinterlegt. "+
 					"Lassen Sie diese Seite geöffnet und stellen Sie sicher, dass mit dem System nicht gearbeitet wird, um einen konsistenten Zustand über alle Store zu erhalten. "+
-					"Der Download der Zip-Datei startet sofort. Warten Sie ab, bis der Download vollständig ist."),
+					"Der Download der Zip-Datei startet sofort. Warten Sie ab, bis der Download vollständig ist. "+
+					"\n\n"+
+					"Mit Nago verschlüsselte Stores bleiben verschlüsselt und können ohne den Masterkey nicht wieder hergestellt werden. Dieser Schlüssel ist nicht im Backup enthalten. Zu den standardmäßig verschlüsselten Stores gehören die Sessions und Secrets."),
 			)).Footer(
 			ui.PrimaryButton(func() {
 				wnd.ExportFiles(core.ExportFilesOptions{
@@ -47,7 +49,9 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 					"Dieser Vorgang vernichtet Daten und ist nicht reversibel. "+
 					"Versichern Sie sich, dass die Backup-Datei aus einer vertraulichen Quelle stammt, da ansonsten Dritte Zugriff auf das System erlangen können. "+
 					"Dieser Vorgang wird entsprechend im Log mit Ihren Nutzerdaten hinterlegt. "+
-					"Die Wiederherstellung kann einige Zeit dauern und wird bestätigt. Lassen Sie diese Seite geöffnet."),
+					"Die Wiederherstellung kann einige Zeit dauern und wird bestätigt. Lassen Sie diese Seite geöffnet. "+
+					"\n\n"+
+					"Mit Nago verschlüsselte Stores bleiben verschlüsselt und können ohne den Masterkey nicht wieder hergestellt werden. Dieser Schlüssel ist nicht im Backup enthalten. Zu den standardmäßig verschlüsselten Stores gehören die Sessions und Secrets."),
 			)).Footer(
 			ui.PrimaryButton(func() {
 				restoreBtnEnabled.Set(false)
@@ -82,5 +86,5 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 				})
 			}).Enabled(restoreBtnEnabled.Get()).Title("Aus Backup wiederherstellen"),
 		),
-	).Gap(ui.L16).FullWidth()
+	).Alignment(ui.Leading).Gap(ui.L16).FullWidth()
 }

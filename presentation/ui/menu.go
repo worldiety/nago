@@ -11,6 +11,7 @@ type TMenu struct {
 	frame  Frame
 }
 
+// Menu creates a new Menu type with the given Groups. Empty groups have no effect and are discarded.
 func Menu(anchor core.View, groups ...TMenuGroup) TMenu {
 	return TMenu{
 		anchor: anchor,
@@ -26,6 +27,10 @@ func (c TMenu) Frame(frame Frame) TMenu {
 func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 	groups := make([]proto.MenuGroup, 0, len(c.groups))
 	for _, grp := range c.groups {
+		if len(grp.items) == 0 {
+			continue
+		}
+
 		items := make([]proto.MenuItem, 0, len(grp.items))
 		for _, item := range grp.items {
 			items = append(items, proto.MenuItem{

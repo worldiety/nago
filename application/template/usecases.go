@@ -2,16 +2,19 @@ package template
 
 import (
 	"context"
+	"fmt"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
 	"io"
 	"io/fs"
 	"iter"
 	"sync"
+	"time"
 )
 
 type ExecType int
@@ -106,10 +109,14 @@ type LoadProjectBlob func(subject auth.Subject, pid ID, file BlobID) (std.Option
 type UpdateProjectBlob func(subject auth.Subject, pid ID, filename string, reader io.Reader) error
 type DeleteProjectBlob func(subject auth.Subject, pid ID, filename string) error
 type CreateProjectBlob func(subject auth.Subject, pid ID, filename string, reader io.Reader) error
+type RenameProjectBlob func(subject auth.Subject, pid ID, filename string, newFilename string) error
 
 type AddRunConfiguration func(subject auth.Subject, pid ID, configuration RunConfiguration) error
 
 type RemoveRunConfiguration func(subject auth.Subject, pid ID, nameOrId string) error
+
+type ExportZip func(subject auth.Subject, pid ID, dst io.Writer) error
+type ImportZip func(subject auth.Subject, pid ID, src io.Reader) error
 
 type NewProjectData struct {
 	ID          ID
@@ -147,6 +154,9 @@ type UseCases struct {
 	RemoveRunConfiguration RemoveRunConfiguration
 	DeleteProjectBlob      DeleteProjectBlob
 	CreateProjectBlob      CreateProjectBlob
+	RenameProjectBlob      RenameProjectBlob
+	ExportZip              ExportZip
+	ImportZip              ImportZip
 }
 
 func NewUseCases(files blob.Store, repository Repository) UseCases {
@@ -169,5 +179,45 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 		RemoveRunConfiguration: NewRemoveRunConfiguration(&mutex, repository),
 		DeleteProjectBlob:      NewDeleteProjectBlob(&mutex, files, repository),
 		CreateProjectBlob:      NewCreateProjectBlob(&mutex, files, repository),
+		RenameProjectBlob:      NewRenameProjectBlob(&mutex, files, repository),
+		ExportZip:              NewExportZip(files, repository),
+		ImportZip:              NewImportZip(&mutex, files, repository),
 	}
+}
+
+func AsDownloadFile(ctx context.Context, subject auth.Subject, pid ID, backup ExportZip) core.File {
+	return backupFile{
+		pid:     pid,
+		backup:  backup,
+		subject: subject,
+		ctx:     ctx,
+	}
+}
+
+type backupFile struct {
+	pid     ID
+	backup  ExportZip
+	subject auth.Subject
+	ctx     context.Context
+}
+
+func (b backupFile) Open() (io.ReadCloser, error) {
+	return nil, fmt.Errorf("unsupported operation")
+}
+
+func (b backupFile) Name() string {
+	return fmt.Sprintf("project_%s.zip", time.Now().Format(time.RFC3339))
+}
+
+func (b backupFile) MimeType() (string, bool) {
+	return "application/zip", true
+}
+
+func (b backupFile) Size() (int64, bool) {
+	return 0, false
+}
+
+func (b backupFile) Transfer(dst io.Writer) (int64, error) {
+	err := b.backup(b.subject, b.pid, dst)
+	return 0, err
 }
