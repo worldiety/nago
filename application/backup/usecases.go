@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
 	"io"
 	"iter"
@@ -32,18 +33,24 @@ type Persistence interface {
 	//AbsolutePathLocations() []string
 }
 
+type ExportMasterKey func(subject auth.Subject) (string, error)
+type ReplaceMasterKey func(subject auth.Subject, key string) error
 type Backup func(ctx context.Context, subject auth.Subject, dst io.Writer) error
 type Restore func(ctx context.Context, subject auth.Subject, src io.Reader) error
 
 type UseCases struct {
-	Backup  Backup
-	Restore Restore
+	Backup           Backup
+	Restore          Restore
+	ExportMasterKey  ExportMasterKey
+	ReplaceMasterKey ReplaceMasterKey
 }
 
-func NewUseCases(p Persistence) UseCases {
+func NewUseCases(p Persistence, getCryptoKey func() crypto.EncryptionKey, setCryptoKey func(crypto.EncryptionKey)) UseCases {
 	return UseCases{
-		Backup:  NewBackup(p),
-		Restore: NewRestore(p),
+		Backup:           NewBackup(p),
+		Restore:          NewRestore(p),
+		ExportMasterKey:  NewExportMasterKey(getCryptoKey),
+		ReplaceMasterKey: NewImportMasterKey(setCryptoKey),
 	}
 }
 

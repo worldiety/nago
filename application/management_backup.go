@@ -1,9 +1,11 @@
 package application
 
 import (
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/backup"
 	uibackup "go.wdy.de/nago/application/backup/ui"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
 	"iter"
@@ -18,14 +20,22 @@ type BackupManagement struct {
 func (c *Configurator) BackupManagement() (BackupManagement, error) {
 	if c.backupManagement == nil {
 		c.backupManagement = &BackupManagement{
-			UseCases: backup.NewUseCases(&cfgPersistence{c}),
+			UseCases: backup.NewUseCases(
+				&cfgPersistence{c},
+				func() crypto.EncryptionKey {
+					return option.Must(c.MasterKey())
+				},
+				func(key crypto.EncryptionKey) {
+					option.MustZero(c.WriteMasterKey(key))
+				},
+			),
 			Pages: uibackup.Pages{
 				BackupAndRestore: "admin/backup-and-restore",
 			},
 		}
 
 		c.RootViewWithDecoration(c.backupManagement.Pages.BackupAndRestore, func(wnd core.Window) core.View {
-			return uibackup.BackupAndRestorePage(wnd, c.backupManagement.UseCases.Restore, c.backupManagement.UseCases.Backup)
+			return uibackup.BackupAndRestorePage(wnd, c.backupManagement.UseCases)
 		})
 	}
 

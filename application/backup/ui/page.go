@@ -13,7 +13,7 @@ type Pages struct {
 	BackupAndRestore core.NavigationPath
 }
 
-func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.Backup) core.View {
+func BackupAndRestorePage(wnd core.Window, uc backup.UseCases) core.View {
 	backupBtnEnabled := core.AutoState[bool](wnd).Init(func() bool {
 		return true
 	})
@@ -35,7 +35,7 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 			)).Footer(
 			ui.PrimaryButton(func() {
 				wnd.ExportFiles(core.ExportFilesOptions{
-					Files: []core.File{backup.AsBackupFile(wnd.Context(), wnd.Subject(), bckup)},
+					Files: []core.File{backup.AsBackupFile(wnd.Context(), wnd.Subject(), uc.Backup)},
 				})
 				backupBtnEnabled.Set(false)
 			}).Enabled(backupBtnEnabled.Get()).
@@ -73,7 +73,7 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 
 						defer reader.Close()
 
-						if err := restore(wnd.Context(), wnd.Subject(), reader); err != nil {
+						if err := uc.Restore(wnd.Context(), wnd.Subject(), reader); err != nil {
 							alert.ShowBannerError(wnd, err)
 							return
 						}
@@ -87,5 +87,67 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 				})
 			}).Enabled(restoreBtnEnabled.Get()).Title("Aus Backup wiederherstellen"),
 		),
+
+		// export key
+		ui.IfFunc(wnd.Subject().HasPermission(backup.PermExportMasterKey), func() core.View {
+			presentKey := core.AutoState[bool](wnd)
+			return cardlayout.Card("Hauptschlüssel exportieren").
+				Body(ui.VStack(
+					ui.IfFunc(presentKey.Get(), func() core.View {
+						key, err := uc.ExportMasterKey(wnd.Subject())
+						if err != nil {
+							alert.ShowBannerError(wnd, err)
+							return nil
+						}
+
+						return alert.Dialog("MasterKey", ui.PasswordField("MasterKey / Hauptschlüssel", key).FullWidth(), presentKey, alert.Ok())
+					}),
+					ui.Text("Mit dieser Funktion kann der NAGO Masterkey bzw. Hauptschlüssel exportiert werden. Dieser erlaubt die vollständige Wiederherstellung eines Backups mit NAGO verschlüsselten Stores, wie z.B. den Sessions oder Secrets."+
+						"\n\n"+
+						"Wird dieser Schlüssel veröffentlicht, sind alle Sessions und Secrets als kompromittiert anzusehen. Die Besitzer der Secrets müssen dann benachrichtigt werden und alle Secrets müssen gemäß Richtlinie rotiert werden."),
+				)).Footer(
+				ui.PrimaryButton(func() {
+					presentKey.Set(true)
+				}).Title("Masterkey auslesen"),
+			)
+		}),
+
+		// import key
+		ui.IfFunc(wnd.Subject().HasPermission(backup.PermReplaceMasterKey), func() core.View {
+			presentKey := core.AutoState[bool](wnd)
+			keyState := core.AutoState[string](wnd)
+
+			return cardlayout.Card("Hauptschlüssel ersetzen").
+				Body(ui.VStack(
+					ui.IfFunc(presentKey.Get(), func() core.View {
+
+						return alert.Dialog(
+							"MasterKey",
+							ui.Form(
+								ui.PasswordField("Neuer Masterkey", keyState.Get()).ID("masterkey-restore").AutoComplete(false).InputValue(keyState).FullWidth(),
+							).Autocomplete(false),
+							presentKey,
+							alert.Cancel(nil),
+							alert.Save(func() (close bool) {
+								if err := uc.ReplaceMasterKey(wnd.Subject(), keyState.Get()); err != nil {
+									alert.ShowBannerError(wnd, err)
+									return false
+								}
+
+								return true
+							}),
+						)
+					}),
+					ui.Text("Mit dieser Funktion kann der NAGO Masterkey bzw. Hauptschlüssel durch einen anderen ersetzt werden. "+
+						"Dieser erlaubt die vollständige Wiederherstellung eines Backups mit NAGO verschlüsselten Stores, wie z.B. den Sessions oder Secrets. "+
+						"Das funktioniert nur, sofern der Schlüssel nicht über die Hostingumgebung verwaltet wird. "+
+						"\n\n"+
+						"Damit der neue Masterkey angewendet wird, muss dieser Service neugestartet werden."),
+				)).Footer(
+				ui.PrimaryButton(func() {
+					presentKey.Set(true)
+				}).Title("Masterkey ersetzen"),
+			)
+		}),
 	).Alignment(ui.Leading).Gap(ui.L16).FullWidth()
 }

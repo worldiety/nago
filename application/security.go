@@ -36,15 +36,14 @@ func (c *Configurator) MasterKey() (crypto.EncryptionKey, error) {
 	slog.Warn("missing environment variable NAGO_MASTER_KEY, using fallback file")
 
 	// fallback to file write
-	secFile := filepath.Join(c.DataDir(), fileNagoMasterKey)
+	secFile := c.masterKeyFile()
 	if _, err := os.Stat(secFile); os.IsNotExist(err) {
 		slog.Info("generating local NAGO_MASTER_KEY")
 		// file does not exist, thus init with random key
 		key := crypto.NewEncryptionKey()
 
-		// disallow all other users to read the key
-		if err := os.WriteFile(secFile, []byte(hex.EncodeToString((*key)[:])), 0600); err != nil {
-			return nil, fmt.Errorf("failed to write local NAGO_MASTER_KEY into %s: %w", secFile, err)
+		if err := c.WriteMasterKey(key); err != nil {
+			return nil, err
 		}
 
 		return key, nil
@@ -62,4 +61,17 @@ func (c *Configurator) MasterKey() (crypto.EncryptionKey, error) {
 	}
 
 	return &key, nil
+}
+
+func (c *Configurator) masterKeyFile() string {
+	return filepath.Join(c.DataDir(), fileNagoMasterKey)
+}
+
+func (c *Configurator) WriteMasterKey(key crypto.EncryptionKey) error {
+	// disallow all other users to read the key
+	if err := os.WriteFile(c.masterKeyFile(), []byte(hex.EncodeToString((*key)[:])), 0600); err != nil {
+		return fmt.Errorf("failed to write local NAGO_MASTER_KEY into %s: %w", c.masterKeyFile(), err)
+	}
+
+	return nil
 }
