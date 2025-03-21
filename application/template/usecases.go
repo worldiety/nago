@@ -41,6 +41,7 @@ func (t ExecType) String() string {
 const (
 	TagPDF  Tag = "pdf"
 	TagHTML Tag = "html"
+	TagText Tag = "text"
 	TagMail Tag = "mail"
 )
 

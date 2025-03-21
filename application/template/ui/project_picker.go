@@ -31,7 +31,7 @@ func ProjectPickerPage(wnd core.Window, pages Pages, findAll template.FindAll, d
 		ui.H1("Vorlagen & Templates"),
 		ui.HStack(
 			ui.PrimaryButton(func() {
-				wnd.Navigation().ForwardTo(pages.NewProject, nil)
+				wnd.Navigation().ForwardTo(pages.NewProject, core.Values{"tag": wnd.Values()["tag"]})
 			}).PreIcon(heroSolid.Plus).Title("Neues Projekt erstellen"),
 		).FullWidth().Alignment(ui.Trailing),
 		projectList(wnd, pages, projects, deleteByID),
