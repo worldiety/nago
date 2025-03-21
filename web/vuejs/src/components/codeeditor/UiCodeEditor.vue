@@ -30,13 +30,14 @@ const frameStyles = computed<Object | undefined>(() => {
 const themeManager = useThemeManager();
 
 function onTextChange(value: string, event: ViewUpdate): any {
-	//console.log(value)
+	//console.log('changed');
 	return undefined;
 }
 
 let lastSent: string | undefined;
 
 function onBlur(event: ViewUpdate): any {
+	//console.log('blurred');
 	if (props.ui.inputValue && lastSent !== props.ui.value) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, undefined, nextRID(), props.ui.value)

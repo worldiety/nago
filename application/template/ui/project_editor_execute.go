@@ -50,7 +50,7 @@ func viewProjectExecute(wnd core.Window, prj template.Project, uc template.UseCa
 
 	var content core.View
 	switch prj.Type {
-	case template.TreeTemplatePlain, template.TreeTemplateHTML:
+	case template.TreeTemplatePlain, template.TreeTemplateHTML, template.LatexPDF, template.TypstPDF:
 		content = executeTreeTemplateView(wnd, prj, uc, runCfgState, templateNameState, langState, modelState, modelErrState, presentedAddRunConfiguration)
 	}
 
@@ -213,7 +213,7 @@ func configurationPicker(wnd core.Window, uc template.UseCases, prj template.Pro
 					if err := uc.RemoveRunConfiguration(wnd.Subject(), prj.ID, configuration.ID); err != nil {
 						alert.ShowBannerError(wnd, err)
 					}
-					
+
 					invalidate.Set(invalidate.Get() + 1)
 				}).PreIcon(flowbiteOutline.TrashBin),
 			).FullWidth()))

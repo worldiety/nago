@@ -14,7 +14,8 @@ export class BinaryWriter {
 
 	private ensureCapacity(additionalBytes: number) {
 		if (this.offset + additionalBytes > this.buffer.length) {
-			const newBuffer = new Uint8Array(this.buffer.length * 2);
+			let nextSize = Math.max(additionalBytes + this.offset * 2, this.buffer.length * 2);
+			const newBuffer = new Uint8Array(nextSize);
 			newBuffer.set(this.buffer);
 			this.buffer = newBuffer;
 			this.view = new DataView(this.buffer.buffer);
