@@ -12,7 +12,7 @@ func console(wnd core.Window, consoleState *core.State[string]) core.View {
 
 	stack := ui.HStack(
 		ui.VStack(
-			ui.ScrollView(ui.Text(consoleState.Get())).Frame(ui.Frame{Height: ui.Full}.FullWidth()),
+			ui.ScrollView(ui.Text(consoleState.Get()).Font(ui.Font{Name: "monospace"})).Frame(ui.Frame{Height: ui.Full}.FullWidth()),
 		).Frame(ui.Frame{Width: ui.Full, Height: ui.Full}),
 		ui.VLine().Padding(ui.Padding{Left: ui.L4}).Frame(ui.Frame{}),
 		ui.VStack(

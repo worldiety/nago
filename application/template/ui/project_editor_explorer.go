@@ -18,6 +18,7 @@ func viewProjectExplorer(wnd core.Window, prj template.Project, uc template.UseC
 	presentedRenameFile := core.AutoState[bool](wnd)
 	presentedDeleteFile := core.AutoState[bool](wnd)
 	fileName := core.AutoState[string](wnd)
+	invalidate := core.AutoState[int](wnd)
 
 	var fileMenuOptions []ui.TMenuItem
 	if selectedFile.Get().Blob != "" {
@@ -96,6 +97,31 @@ func viewProjectExplorer(wnd core.Window, prj template.Project, uc template.UseC
 						fileName.Set("")
 						presentedNewFile.Set(true)
 					}, ui.Text("Neue Datei")),
+
+					ui.MenuItem(func() {
+						wnd.ImportFiles(core.ImportFilesOptions{
+							Multiple: true,
+							OnCompletion: func(files []core.File) {
+								for _, file := range files {
+									reader, err := file.Open()
+									if err != nil {
+										alert.ShowBannerError(wnd, err)
+										return
+									}
+
+									err = uc.CreateProjectBlob(wnd.Subject(), prj.ID, file.Name(), reader)
+									_ = reader.Close()
+									if err != nil {
+										alert.ShowBannerError(wnd, err)
+										return
+									}
+								}
+
+								invalidate.Set(invalidate.Get() + 1)
+
+							},
+						})
+					}, ui.Text("Datei(en) hochladen")),
 				),
 				ui.MenuGroup(fileMenuOptions...),
 			),

@@ -1,6 +1,7 @@
 package uitemplate
 
 import (
+	"fmt"
 	"go.wdy.de/nago/application/template"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"unicode/utf8"
 )
 
 func viewProjectSource(wnd core.Window, prj template.Project, selectedFile *core.State[template.File], uc template.UseCases, save func(str string)) core.View {
@@ -33,6 +35,10 @@ func viewProjectSource(wnd core.Window, prj template.Project, selectedFile *core
 	buf, err := io.ReadAll(reader)
 	if err != nil {
 		return alert.BannerError(err)
+	}
+
+	if !utf8.Valid(buf) {
+		return ui.VStack(ui.Text(fmt.Sprintf("binary file %d bytes", len(buf)))).Frame(ui.Frame{Height: css, MinHeight: css}.FullWidth())
 	}
 
 	editState := core.AutoState[string](wnd).Observe(func(newValue string) {

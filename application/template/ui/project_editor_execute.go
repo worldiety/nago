@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/application/template"
+	"go.wdy.de/nago/pkg/magic"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -50,8 +51,10 @@ func viewProjectExecute(wnd core.Window, prj template.Project, uc template.UseCa
 
 	var content core.View
 	switch prj.Type {
-	case template.TreeTemplatePlain, template.TreeTemplateHTML, template.LatexPDF, template.TypstPDF:
+	case template.TreeTemplatePlain, template.TreeTemplateHTML:
 		content = executeTreeTemplateView(wnd, prj, uc, runCfgState, templateNameState, langState, modelState, modelErrState, presentedAddRunConfiguration)
+	case template.LatexPDF, template.TypstPDF:
+		content = executePdfTemplateView(wnd, prj, uc, runCfgState, templateNameState, langState, modelState, modelErrState, presentedAddRunConfiguration)
 	}
 
 	return ui.Modal(ui.VStack(
@@ -112,6 +115,15 @@ func viewProjectExecute(wnd core.Window, prj template.Project, uc template.UseCa
 						console.Set(string(buf))
 					} else {
 						console.Set(fmt.Sprintf("created %d output bytes", len(buf)))
+						wnd.ExportFiles(core.ExportFilesOptions{
+							Files: []core.File{
+								core.MemFile{
+									Filename:     prj.Name + magic.Ext(buf),
+									MimeTypeHint: magic.Detect(buf),
+									Bytes:        buf,
+								},
+							},
+						})
 					}
 
 				}).Title("Ausführen"),
@@ -122,6 +134,56 @@ func viewProjectExecute(wnd core.Window, prj template.Project, uc template.UseCa
 		Right: "0px",
 	}).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{Width: "29rem", Height: ui.L880}))
 
+}
+
+func executePdfTemplateView(
+	wnd core.Window,
+	prj template.Project,
+	uc template.UseCases,
+	runCfgState *core.State[template.RunConfiguration],
+	templateNameState *core.State[string],
+	langState *core.State[string],
+	modelState *core.State[string],
+	modelErrState *core.State[string],
+	presentedAddRunConfiguration *core.State[bool],
+) core.View {
+
+	newRunConfigurationName := core.AutoState[string](wnd)
+	return ui.VStack(
+		alert.Dialog(
+			"Konfiguration hinzufügen",
+			ui.TextField("Name", newRunConfigurationName.Get()).InputValue(newRunConfigurationName),
+			presentedAddRunConfiguration,
+			alert.Cancel(nil),
+			alert.Save(func() (close bool) {
+				cfg := runCfgState.Get()
+				cfg.Name = newRunConfigurationName.Get()
+				cfg.Language = langState.Get()
+				cfg.Template = templateNameState.Get()
+				cfg.Model = modelState.Get()
+
+				if err := uc.AddRunConfiguration(wnd.Subject(), prj.ID, cfg); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return false
+				}
+
+				return true
+			}),
+		),
+		configurationPicker(wnd, uc, prj, runCfgState),
+		ui.HLine(),
+		ui.Text("Modell"),
+		ui.CodeEditor(modelState.Get()).
+			Frame(ui.Frame{Height: ui.L160}).
+			FullWidth().
+			Language("json").
+			InputValue(modelState),
+		ui.IfElse(modelErrState.Get() == "",
+			ui.Text("JSON Eingabe, mit der das Template ausgeführt werden soll. Erforderlich, wenn Variablen interpoliert werden müssen.").
+				Font(ui.Small),
+			ui.Text(modelErrState.Get()).Font(ui.Small).Color(ui.ColorError),
+		),
+	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 }
 
 func executeTreeTemplateView(

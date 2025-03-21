@@ -7,9 +7,15 @@ import (
 	"fmt"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data"
 	htmlTemplate "html/template"
 	"io"
 	"io/fs"
+	"log/slog"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing/fstest"
 	textTemplate "text/template"
@@ -90,12 +96,13 @@ func NewExecute(files blob.Store, repository Repository) Execute {
 				return nil, fmt.Errorf("cannot apply plain text templates: %w", err)
 			}
 
-			buf, err := zipIt(fsys)
+			return execTypst(fsys)
+			/*buf, err := zipIt(fsys)
 			if err != nil {
 				return nil, fmt.Errorf("cannot zip templates: %w", err)
 			}
 
-			return io.NopCloser(bytes.NewReader(buf)), nil
+			return io.NopCloser(bytes.NewReader(buf)), nil*/
 		default:
 			return nil, fmt.Errorf("unknown project type: %v", project.Type)
 		}
@@ -103,7 +110,71 @@ func NewExecute(files blob.Store, repository Repository) Execute {
 }
 
 func execTypst(fsys fs.FS) (io.ReadCloser, error) {
-	panic("not implemented")
+	mainFile, err := bestMainTypstCandiate(fsys)
+	if err != nil {
+		return nil, err
+	}
+
+	tmpDir := filepath.Join(os.TempDir(), "typst", data.RandIdent[string]())
+	_ = os.MkdirAll(tmpDir, 0700) // security note: do not allow that others read our directory
+	defer os.RemoveAll(tmpDir)
+
+	if _, ok := which("typst"); !ok {
+		// TODO try remote rendering through wdy render host
+		return nil, fmt.Errorf("cannot find typst executable")
+	}
+
+	if err := copyFS(fsys, tmpDir); err != nil {
+		return nil, fmt.Errorf("cannot copy typst files: %w", err)
+	}
+
+	cmd := exec.Command("typst", "compile", mainFile)
+	cmd.Dir = tmpDir
+	buf, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("failed to execute typst command", "cmd", cmd, "buf", string(buf))
+		return nil, fmt.Errorf("cannot execute typst command: %w:\n%s", err, string(buf))
+	}
+
+	pdfName := filepath.Join(tmpDir, mainFile[:len(mainFile)-4]+".pdf")
+	return os.Open(pdfName)
+}
+
+func bestMainTypstCandiate(fsys fs.FS) (string, error) {
+	var candidates []string
+	fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		if strings.HasSuffix(strings.ToLower(d.Name()), ".typ") {
+			candidates = append(candidates, path)
+		}
+
+		return nil
+	})
+
+	slices.Sort(candidates)
+	if len(candidates) == 0 {
+		return "", fmt.Errorf("cannot find any typst file (*.typ)")
+	}
+
+	return candidates[0], nil
+}
+
+func which(what string) (string, bool) {
+	cmd := exec.Command("which", what)
+	buf, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("cannot find which executable in $PATH")
+		return "", false
+	}
+
+	if len(buf) == 0 {
+		return "", false
+	}
+
+	return strings.TrimSpace(string(buf)), true
 }
 
 func loadFS(store blob.Store, fset []File) (fstest.MapFS, error) {
@@ -122,6 +193,7 @@ func loadFS(store blob.Store, fset []File) (fstest.MapFS, error) {
 			Data:    optBuf.Unwrap(),
 			ModTime: file.LastMod,
 			Sys:     file,
+			Mode:    os.ModePerm,
 		}
 	}
 
@@ -198,6 +270,7 @@ func applyPlainTextTemplates(fsys fstest.MapFS, model any) error {
 		fsys[cleanName(filename)] = &fstest.MapFile{
 			Data:    buf.Bytes(),
 			ModTime: time.Now(),
+			Mode:    os.ModePerm,
 		}
 	}
 
@@ -234,4 +307,38 @@ func ParseText(files blob.Store, fset []File) (*textTemplate.Template, error) {
 	}
 
 	return root, nil
+}
+
+func copyFS(srcFS fs.FS, destDir string) error {
+	// Alle Dateien und Verzeichnisse im fs.FS durchlaufen
+	return fs.WalkDir(srcFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		destPath := filepath.Join(destDir, path)
+
+		if d.IsDir() {
+			// Falls es ein Verzeichnis ist, erstellen
+			return os.MkdirAll(destPath, 0755)
+		}
+
+		// Datei öffnen
+		srcFile, err := srcFS.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		// Datei im lokalen Verzeichnis erstellen
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+
+		// Dateiinhalt kopieren
+		_, err = io.Copy(destFile, srcFile)
+		return err
+	})
 }
