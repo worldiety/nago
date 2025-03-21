@@ -39,6 +39,7 @@ func NewEnsureBuildIn(mutex *sync.Mutex, repository Repository, blobs blob.Store
 			prj.Name = project.Name
 			prj.Type = project.ExecType
 			prj.Description = project.Description
+			prj.Tags = project.Tags
 			err := fs.WalkDir(project.Files, ".", func(path string, d fs.DirEntry, err error) error {
 				if d.Type().IsRegular() {
 					hash, err := fs2.Sha512_224(project.Files, path)
@@ -57,7 +58,7 @@ func NewEnsureBuildIn(mutex *sync.Mutex, repository Repository, blobs blob.Store
 						Blob:     blobName,
 						LastMod:  time.Now(),
 					})
-					
+
 					if fileExists {
 						// ignore, already saved, do not trigger hidden writes
 						return nil

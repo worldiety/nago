@@ -46,7 +46,7 @@ func BenchmarkNewSloppyJSONRepository(b *testing.B) {
 
 	b.Run("mem", func(t *testing.B) {
 		for n := 0; n < b.N; n++ {
-			testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore()))
+			testSuite(t, NewSloppyJSONRepository[Person, string](mem.NewBlobStore("test")))
 		}
 	})
 

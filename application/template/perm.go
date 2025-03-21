@@ -16,5 +16,6 @@ var (
 	PermExportZip              = permission.Declare[ExportZip]("nago.template.project.export", "Projekt exportieren", "Träger dieser Berechtigung können ein Projekt als Zipdatei exportieren.")
 	PermImportZip              = permission.Declare[ImportZip]("nago.template.project.import", "Projekt importieren", "Träger dieser Berechtigung können ein Projekt aus einer Zipdatei importieren.")
 	PermCreate                 = permission.Declare[FindAll]("nago.template.create", "Template erstellen", "Träger dieser Berechtigung können neue Templates erstellen.")
+	PermDelete                 = permission.Declare[Delete]("nago.template.delete", "Template löschen", "Träger dieser Berechtigung können Templates löschen.")
 	PermEnsureBuildIn          = permission.Declare[FindAll]("nago.template.ensure_build_in", "Standard Template erstellen", "Träger dieser Berechtigung können neue Standard-Templates erstellen.")
 )

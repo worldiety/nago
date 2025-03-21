@@ -81,6 +81,7 @@ func BackupAndRestorePage(wnd core.Window, restore backup.Restore, bckup backup.
 						alert.ShowBannerMessage(wnd, alert.Message{
 							Title:   "Wiederherstellung erfolgreich",
 							Message: "Die Wiederherstellung wurde abgeschlossen. Laden Sie die Anwendung oder den Webbrowser neu.",
+							Intent:  alert.IntentOk,
 						})
 					},
 				})

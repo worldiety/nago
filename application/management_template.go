@@ -42,7 +42,7 @@ func (c *Configurator) TemplateManagement() (TemplateManagement, error) {
 		}
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.Projects, func(wnd core.Window) core.View {
-			return uitemplate.ProjectPickerPage(wnd, c.templateManagement.Pages, uc.FindAll)
+			return uitemplate.ProjectPickerPage(wnd, c.templateManagement.Pages, uc.FindAll, uc.Delete)
 		})
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.NewProject, func(wnd core.Window) core.View {
