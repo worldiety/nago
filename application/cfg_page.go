@@ -217,10 +217,16 @@ func (c *Configurator) newHandler() http.Handler {
 				http.SetCookie(writer, cookie)
 			}
 
+			if strings.HasPrefix(request.URL.Path, "/api/doc") {
+				assets.ServeHTTP(writer, request)
+				return
+			}
+
 			dir := filepath.Dir(request.URL.Path)
 			/*if strings.HasPrefix(base,"index"){
 				request.URL.Path = "/"
 			}*/
+
 			if dir != "" && dir != "/assets" {
 				request.URL.Path = "/"
 				assets.ServeHTTP(writer, request)

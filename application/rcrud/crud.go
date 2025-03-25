@@ -1,3 +1,5 @@
+// Package rcrud provides simple but automatic use case implementation for create, read, update and delete
+// based on a given repository. The required permissions are also automatically registered.
 package rcrud
 
 import (
