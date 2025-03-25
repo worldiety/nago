@@ -30,6 +30,8 @@ github.com/wagslane/go-password-validator v0.3.0 h1:vfxOPzGHkz5S146HDpavl0cw1DSV
 github.com/wagslane/go-password-validator v0.3.0/go.mod h1:TI1XJ6T5fRdRnHqHt14pvy1tNVnrwe7m3/f1f2fDphQ=
 github.com/worldiety/enum v0.0.0-20250122143414-8bb22f61a65c h1:7JHoFGGmN5+xJ0/ytQpy/CpEKvqP56eRay7HRBdN/Xo=
 github.com/worldiety/enum v0.0.0-20250122143414-8bb22f61a65c/go.mod h1:0uP0UsAlDy6HB1ZaikFmvMHbrp+ZajhhsOBgzUg0KPY=
+github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16 h1:9E5bS0EtiWaNaxsjxZtXFQcC95wgjAv6K27qaDhPaJs=
+github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16/go.mod h1:UX8Sb7OvGA+gh+NSJKqUsslZ7Ao7ftYVzutt70hcL9g=
 github.com/worldiety/option v0.0.0-20250215102253-75959db51930 h1:OqC/yFkrn15NOXOM2UysM7GnpuORChQ10ek06o0qKgA=
 github.com/worldiety/option v0.0.0-20250215102253-75959db51930/go.mod h1:teHsHBcwKGhykKggie4/SdJ+jLM6WlVt37dSP0lT7bU=
 github.com/yuin/goldmark v1.7.8 h1:iERMLn0/QJeHFhxSt3p6PeN9mGnvIKSpG9YYorDMnic=

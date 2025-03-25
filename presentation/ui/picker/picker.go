@@ -2,6 +2,7 @@ package picker
 
 import (
 	"fmt"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -382,7 +383,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		borderColor = ""
 		backgroundColor = colors.Disabled
 	} else {
-		borderColor = colors.I1.WithLuminosity(0.75)
+		borderColor = option.Must(colors.I1.WithChromaAndTone(16, 75))
 	}
 
 	inner := ui.HStack(

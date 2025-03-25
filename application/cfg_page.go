@@ -12,6 +12,7 @@ import (
 	"github.com/vearutop/statigz"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/image/http"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
@@ -111,7 +112,7 @@ func (c *Configurator) newHandler() http.Handler {
 		panic(fmt.Errorf("could not get master key: %v", err))
 	}
 
-	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key)
+	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key, c.eventBus)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)
@@ -124,7 +125,7 @@ func (c *Configurator) newHandler() http.Handler {
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {
 		for _, set := range m {
-			app2.AddColorSet(scheme, set)
+			app2.UpdateColorSet(scheme, set)
 		}
 
 	}
@@ -132,6 +133,9 @@ func (c *Configurator) newHandler() http.Handler {
 	app2.SetName(c.applicationName)
 	app2.SetVersion(c.applicationVersion)
 	app2.SetAppIcon(core.URI(c.appIconUri))
+	colors := option.Must(option.Must(c.ThemeManagement()).UseCases.ReadColors(user.SU()))
+	app2.UpdateColorSet(core.Dark, colors.Dark)
+	app2.UpdateColorSet(core.Light, colors.Light)
 
 	// TODO we are in a weired order here
 	for _, destructor := range c.destructors {

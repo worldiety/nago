@@ -10,6 +10,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
+	"go.wdy.de/nago/presentation/ui/colorpicker"
 	"go.wdy.de/nago/presentation/ui/picker"
 	"go.wdy.de/nago/presentation/ui/timepicker"
 	"log/slog"
@@ -376,10 +377,35 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				}
 			case reflect.String:
 				switch field.Type {
+				case reflect.TypeFor[ui.Color]():
+					requiresInit := false
+					colorState := core.DerivedState[ui.Color](state, field.Name).Init(func() ui.Color {
+						src := state.Get()
+						str := reflect.ValueOf(src).FieldByName(field.Name).String()
+						if val := field.Tag.Get("value"); val != "" && str == "" {
+							requiresInit = true
+							return ui.Color(val)
+						}
+
+						return ui.Color(str)
+					})
+
+					colorState.Observe(func(newValue ui.Color) {
+						dst := state.Get()
+						dst = setFieldValue(dst, field.Name, newValue).(T)
+						state.Set(dst)
+						state.Notify()
+					})
+
+					if requiresInit {
+						colorState.Notify()
+					}
+
+					fieldsBuilder.Append(colorpicker.PalettePicker(label, colorpicker.DefaultPalette).State(colorState).Value(colorState.Get()))
 				case reflect.TypeFor[image.ID]():
 
 					if opts.Window == nil {
-						fieldsBuilder.Append(ui.Text("no window available"))
+						fieldsBuilder.Append(ui.Text("image.ID not rendered: no window available"))
 						continue
 					}
 

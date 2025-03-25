@@ -1,6 +1,6 @@
 module go.wdy.de/nago
 
-go 1.24.0
+go 1.24.1
 
 require (
 	github.com/go-chi/chi/v5 v5.2.0
@@ -23,5 +23,6 @@ require (
 require (
 	github.com/bool64/dev v0.2.37 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )

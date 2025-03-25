@@ -5,7 +5,7 @@ func (c *Compiler) tsEmitEnum(t Typename, decl Enum) {
 	c.p(c.makeGoDoc(decl.Doc))
 	c.pf("export interface %s extends Writeable, Readable{\n", t)
 	c.inc()
-	c.pf(c.makeGoDoc("a marker method to indicate the enum / union type membership"))
+	c.p(c.makeGoDoc("a marker method to indicate the enum / union type membership"))
 	c.pf("is%s(): void;\n", t)
 	c.dec()
 	c.pn("}")

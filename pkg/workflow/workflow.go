@@ -91,7 +91,7 @@ func (w *Workflow) String() any {
 	sb.WriteString("digraph G {\n")
 	sb.WriteString(fmt.Sprintf("\t_start [shape=circle;label=Start];\n"))
 	sb.WriteString(fmt.Sprintf("\t_end [shape=circle;label=Ende];\n"))
-	for _, stage := range w.stages {
+	/*for _, stage := range w.stages {
 		in := string(stage.in)
 		if doc, ok := xreflect.TypeDoc(stage.in); ok {
 			in = doc
@@ -112,9 +112,9 @@ func (w *Workflow) String() any {
 
 		sb.WriteString(fmt.Sprintf("%s -> %s\n", in, usecase))
 		sb.WriteString(fmt.Sprintf("%s -> %s\n", usecase, out))
-	}
+	}*/
 
-	for _, stage := range w.startNodes() {
+	/*for _, stage := range w.startNodes() {
 		in := string(stage.in)
 		if doc, ok := xreflect.TypeDoc(stage.in); ok {
 			in = doc
@@ -128,7 +128,7 @@ func (w *Workflow) String() any {
 			out = doc
 		}
 		sb.WriteString(fmt.Sprintf("%s -> _end\n", out))
-	}
+	}*/
 
 	sb.WriteString("}")
 

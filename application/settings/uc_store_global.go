@@ -18,6 +18,17 @@ func NewStoreGlobal(repo data.Repository[StoreBox[GlobalSettings], ID]) StoreGlo
 		}
 
 		id := makeGlobalID(reflect.TypeOf(settings))
+
+		// only issue a write, if the settings are actually different
+		// permanent writes are costly for us and this may simplify things for developers
+		optBox, _ := repo.FindByID(id)
+		if optBox.IsSome() {
+			s := optBox.Unwrap()
+			if reflect.DeepEqual(s.Settings, settings) {
+				return nil
+			}
+		}
+
 		return repo.Save(StoreBox[GlobalSettings]{
 			ID:       id,
 			Settings: settings,

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"go.wdy.de/nago/pkg/xcolor"
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -64,85 +63,42 @@ type Colors struct {
 	DisabledText Color `json:"ST0"`
 }
 
-func DefaultColors(scheme core.ColorScheme, main, accent, interactive Color) Colors {
-	switch scheme {
-	case core.Dark:
-		return darkColors(main, accent, interactive)
-	default:
-		return lightColors(main, accent, interactive)
-	}
-}
-
-func darkColors(main, accent, interactive Color) Colors {
-	var c Colors
-	m := xcolor.MustParseHex(string(main)).RGBA().YPbPr()
-	c.M0 = main
-	c.M1 = Color(xcolor.Hex(m.WithLuma(0.1)))
-	c.M2 = Color(xcolor.Hex(m.WithLuma(0.12)))
-	c.M3 = Color(xcolor.Hex(m.WithLuma(0.22)))
-	c.M4 = Color(xcolor.Hex(m.WithLuma(0.17)))
-	c.M5 = Color(xcolor.Hex(m.WithLuma(0.3)))
-	c.M6 = Color(xcolor.Hex(m.WithLuma(0.22)))
-	c.M7 = Color(xcolor.Hex(m.WithLuma(0.60)))
-	c.M8 = Color(xcolor.Hex(m.WithLuma(0.9)))
-	c.M9 = Color(xcolor.Hex(m.WithLuma(0.14)))
-
-	_ = xcolor.MustParseHex(string(accent))
-	c.A0 = accent
-	c.A1 = accent
-	c.A2 = accent.WithLuminosity(0.80)
-
-	_ = xcolor.MustParseHex(string(interactive))
-	c.I0 = interactive
-	c.I1 = interactive
-
-	c.Error = "#F47954"
-	c.Warning = "#F7A823"
-	c.Informative = "#17428C"
-	c.Good = "#2BCA73"
-	c.Disabled = "#E2E2E2"
-	c.DisabledText = "#848484"
-
-	return c
-}
-
-func lightColors(main, accent, interactive Color) Colors {
-	var c Colors
-	m := xcolor.MustParseHex(string(main)).RGBA().YPbPr()
-	c.M0 = main
-	c.M1 = Color(xcolor.Hex(m.WithLuma(0.98)))
-	c.M2 = Color(xcolor.Hex(m.WithLuma(0.96)))
-	c.M3 = Color(xcolor.Hex(m.WithLuma(0.90)))
-	c.M4 = Color(xcolor.Hex(m.WithLuma(0.94)))
-	c.M5 = Color(xcolor.Hex(m.WithLuma(0.70)))
-	c.M6 = Color(xcolor.Hex(m.WithLuma(0.90)))
-	c.M7 = Color(xcolor.Hex(m.WithLuma(0.60)))
-	c.M8 = Color(xcolor.Hex(m.WithLuma(0.10)))
-	c.M9 = Color(xcolor.Hex(m.WithLuma(0.92)))
-
-	_ = xcolor.MustParseHex(string(accent))
-	c.A0 = accent
-	c.A1 = accent
-	c.A2 = accent.WithLuminosity(0.80)
-
-	_ = xcolor.MustParseHex(string(interactive))
-	c.I0 = interactive
-	c.I1 = interactive
-
-	c.Error = "#F47954"
-	c.Warning = "#F7A823"
-	c.Informative = "#17428C"
-	c.Good = "#2BCA73"
-	c.Disabled = "#E2E2E2"
-	c.DisabledText = "#848484"
-
-	return c
+func (c Colors) Valid() bool {
+	return c.M0 != "" && c.M1 != "" && c.M2 != "" && c.M3 != "" && c.M4 != "" &&
+		c.M5 != "" && c.M6 != "" && c.M7 != "" && c.M8 != "" && c.M9 != "" &&
+		c.A0 != "" && c.A1 != "" && c.A2 != "" &&
+		c.I0 != "" && c.I1 != "" &&
+		c.Error != "" && c.Warning != "" && c.Good != "" &&
+		c.Informative != "" && c.Disabled != "" && c.DisabledText != ""
 }
 
 func (c Colors) Default(scheme core.ColorScheme) core.ColorSet {
+	// this is done correctly in application/theme/uc_read_colors
 	var m, a, i Color
 	m, a, i = "#8462DA", "#A6A5C2", "#EF8A97"
-	return DefaultColors(scheme, m, a, i)
+	return Colors{
+		M0:           m,
+		M1:           m,
+		M2:           m,
+		M3:           m,
+		M4:           m,
+		M5:           m,
+		M6:           m,
+		M7:           m,
+		M8:           m,
+		M9:           m,
+		A0:           a,
+		A1:           a,
+		A2:           a,
+		I0:           i,
+		I1:           i,
+		Error:        "",
+		Warning:      "",
+		Good:         "",
+		Informative:  "",
+		Disabled:     "",
+		DisabledText: "",
+	}
 }
 
 func (c Colors) Namespace() core.NamespaceName {

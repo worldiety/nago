@@ -10,7 +10,6 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
-	ui "go.wdy.de/nago/presentation/ui"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -80,6 +79,7 @@ type Configurator struct {
 	backupManagement       *BackupManagement
 	secretManagement       *SecretManagement
 	templateManagement     *TemplateManagement
+	themeManagement        *ThemeManagement
 	decorator              Decorator
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]
@@ -117,13 +117,6 @@ func NewConfigurator() *Configurator {
 		applicationVersion: buildInfo,
 		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
-
-	// init our standard white label theme
-	var main, accent, interactive ui.Color
-	//main, accent, interactive = "#1B8C30", "#17428C", "#F7A823"
-	main, accent, interactive = "#221A3F", "#4fEE62", "#14EBC9"
-	cfg.ColorSet(core.Light, ui.DefaultColors(core.Light, main, accent, interactive))
-	cfg.ColorSet(core.Dark, ui.DefaultColors(core.Dark, main, accent, interactive))
 
 	return cfg
 }

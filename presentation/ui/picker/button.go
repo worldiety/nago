@@ -1,6 +1,7 @@
 package picker
 
 import (
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -71,7 +72,7 @@ func (c TButton) Render(ctx core.RenderContext) core.RenderNode {
 		borderColor = ""
 		backgroundColor = colors.Disabled
 	} else {
-		borderColor = colors.I1.WithLuminosity(0.75)
+		borderColor = std.Must(colors.I1.WithChromaAndTone(16, 75))
 	}
 
 	var fn func()

@@ -12,6 +12,18 @@ func (c RGBA8) RGBA() RGBA {
 	return RGBA{norm(c[0]), norm(c[1]), norm(c[2]), norm(c[3])}
 }
 
+func (c RGBA8) Int() int {
+	return (int(c[3]) << 24) | (int(c[0]) << 16) | (int(c[1]) << 8) | int(c[2])
+}
+
+func RGBA8FromInt(value int) RGBA8 {
+	alpha := uint8((value >> 24) & 0xFF)
+	red := uint8((value >> 16) & 0xFF)
+	green := uint8((value >> 8) & 0xFF)
+	blue := uint8(value & 0xFF)
+	return RGBA8{red, green, blue, alpha}
+}
+
 func norm(v uint8) float32 {
 	return max(0, min(1, float32(v)/255))
 }

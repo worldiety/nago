@@ -1,7 +1,6 @@
 package xreflect
 
 import (
-	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"testing"
 )
 
@@ -25,7 +24,7 @@ func TestTypeIDOf(t *testing.T) {
 	t.Log(TypeIDOf[func(world HelloWorld)]())
 	t.Log(TypeIDOf[MyService]())
 	t.Log(TypeIDOf[any]())
-	t.Log(TypeIDOf[icons.Test[MyService]]())
+	//t.Log(TypeIDOf[icons.Test[MyService]]())
 
 	t.Log("--")
 	var a HelloWorld

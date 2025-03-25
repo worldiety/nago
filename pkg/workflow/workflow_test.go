@@ -3,7 +3,6 @@ package workflow_test
 import (
 	"go.wdy.de/nago/pkg/pubsub"
 	"go.wdy.de/nago/pkg/workflow"
-	"go.wdy.de/nago/pkg/xreflect"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ type PizzaBestellungAngenommen struct {
 }
 
 func TestCreate(t *testing.T) {
-	xreflect.SetTypeDoc(xreflect.TypeIDOf[PizzaWurdeBestellt](), "PizzaWurdeBestellt")
+	/*xreflect.SetTypeDoc(xreflect.TypeIDOf[PizzaWurdeBestellt](), "PizzaWurdeBestellt")
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[PizzaBestellungAngenommen](), "PizzaBestellungAngenommen")
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[PizzaWasEaten](), "PizzaWasEaten")
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[OrderPizza](), "OrderPizza")
@@ -26,7 +25,7 @@ func TestCreate(t *testing.T) {
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[CheckIfPizzaWasDelieveredAfter50](), "checkIfPizzaWasDelieveredAfter50")
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[CancelSubscriptionRequested](), "CancelSubscriptionRequested")
 	xreflect.SetTypeDoc(xreflect.TypeIDOf[SubscriptionCancelled](), "SubscriptionCancelled")
-	xreflect.SetTypeDoc(xreflect.TypeIDOf[CancelSubscription](), "CancelSubscription")
+	xreflect.SetTypeDoc(xreflect.TypeIDOf[CancelSubscription](), "CancelSubscription")*/
 
 	pubsub := pubsub.NewPubSub()
 	func(orderPizza OrderPizza) {

@@ -100,6 +100,22 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			"nago.settings.global.load",
 			"nago.settings.global.store",
 
+			"nago.template.execute",
+			"nago.template.find_all",
+			"nago.template.find_by_id",
+			"nago.template.project.blob.load",
+			"nago.template.project.blob.update",
+			"nago.template.project.blob.delete",
+			"nago.template.project.blob.rename",
+			"nago.template.project.blob.create",
+			"nago.template.project.runcfg.add",
+			"nago.template.project.runcfg.remove",
+			"nago.template.project.export",
+			"nago.template.project.import",
+			"nago.template.create",
+			"nago.template.delete",
+			"nago.template.ensure_build_in",
+
 			// security note: we do not allow the masterkey permission by default, they are to dangerous
 			//nago.backup.masterkey.export
 			//nago.backup.masterkey.replace

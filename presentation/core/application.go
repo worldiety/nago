@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/pkg/blob/crypto"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
 	"io"
@@ -57,6 +58,7 @@ type Application struct {
 	findVirtualSession session.FindUserSessionByID
 
 	masterKey crypto.EncryptionKey
+	bus       events.Bus
 }
 
 func NewApplication(
@@ -67,10 +69,11 @@ func NewApplication(
 	fps int,
 	findVirtualSession session.FindUserSessionByID,
 	masterKey crypto.EncryptionKey,
+	bus events.Bus,
 ) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
-	return &Application{
+	a := &Application{
 		masterKey:                masterKey,
 		findVirtualSession:       findVirtualSession,
 		destructors:              concurrent.NewLinkedList[func()](),
@@ -85,7 +88,10 @@ func NewApplication(
 			Light: {},
 			Dark:  {},
 		},
+		bus: bus,
 	}
+
+	return a
 }
 
 // Context of the application.
@@ -128,7 +134,7 @@ func (a *Application) SetAppIcon(appIcon URI) {
 	a.appIcon = appIcon
 }
 
-func (a *Application) AddColorSet(scheme ColorScheme, set ColorSet) {
+func (a *Application) UpdateColorSet(scheme ColorScheme, set ColorSet) {
 	a.colorSets[scheme][set.Namespace()] = set
 }
 

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/worldiety/material-color-utilities/hct"
 	"go.wdy.de/nago/pkg/xcolor"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -24,27 +25,17 @@ func (c Color) WithTransparency(a int8) Color {
 	return Color(fmt.Sprintf("%s%02x", string(c), ai))
 }
 
-// WithLuminosity recalculates the hex RGB value into some Colorspace, set the given brightness (0-100) and returns
-// the new hex RGB value. Panics, if Color is not a parseable absolute value (like a variable name).
-// There are a lot of ways of calculating this, see also
-//   - https://github.com/penandlim/JL-s-Unity-Blend-Modes/blob/master/John%20Lim%27s%20Blend%20Modes/Luminosity.shader
-//   - https://github.com/penandlim/JL-s-Unity-Blend-Modes/blob/master/John%20Lim's%20Blend%20Modes/CGIncludes/PhotoshopBlendModes.cginc
-//   - https://printtechnologies.org/standards/files/pdf-reference-1.6-addendum-blend-modes.pdf
-func (c Color) WithLuminosity(l float32) Color {
-	return Color(xcolor.Hex(xcolor.MustParseHex(string(c)).RGBA().YPbPr().WithLuma(l)))
-}
-
-func (c Color) RGBA() (bool, xcolor.RGBA) {
+// WithChromaAndTone applies the given chroma and tone values on the actual hue value using the HCT colorspace.
+func (c Color) WithChromaAndTone(chroma float64, tone float64) (Color, error) {
 	cl, err := xcolor.ParseHex(string(c))
 	if err != nil {
-		return false, xcolor.RGBA{}
+		return c, err
 	}
 
-	return true, cl.RGBA()
-}
-
-func (c Color) Luminosity() float32 {
-	return xcolor.MustParseHex(string(c)).RGBA().YPbPr()[0]
+	v := hct.FromInt(cl.Int())
+	v.SetChroma(chroma)
+	v.SetTone(tone)
+	return Color(xcolor.Hex(xcolor.RGBA8FromInt(v.ToInt()))), nil
 }
 
 const (
