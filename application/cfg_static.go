@@ -13,6 +13,7 @@ import (
 )
 
 type rawEndpoint struct {
+	method  string // if method is empty, the endpoint will respond to any method
 	pattern string
 	handler http.HandlerFunc
 }

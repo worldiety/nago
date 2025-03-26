@@ -496,7 +496,11 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	for _, endpoint := range c.rawEndpoint {
-		r.Mount(endpoint.pattern, endpoint.handler)
+		if endpoint.method == "" {
+			r.Mount(endpoint.pattern, endpoint.handler)
+		} else {
+			r.Method(endpoint.method, endpoint.pattern, endpoint.handler)
+		}
 	}
 
 	for _, route := range r.Routes() {

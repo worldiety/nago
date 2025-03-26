@@ -37,29 +37,30 @@ type BlobStorageFactory interface {
 }
 
 type Configurator struct {
-	fileStores               map[string]blob.Store
-	entityStores             map[string]blob.Store
-	globalTDB                *tdb.DB
-	ctx                      context.Context
-	done                     context.CancelFunc
-	logger                   *slog.Logger
-	debug                    bool
-	fsys                     []fs.FS
-	host                     string
-	port                     int
-	scheme                   string
-	applicationID            core.ApplicationID
-	applicationName          string
-	applicationVersion       string
-	dataDir                  string
-	factories                map[proto.RootViewID]func(wnd core.Window) core.View
-	onWindowCreatedObservers []core.OnWindowCreatedObserver
-	destructors              []func()
-	app                      *core.Application // may be nil
-	rawEndpoint              []rawEndpoint
-	colorSets                map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
-	appIconUri               proto.URI
-	fps                      int
+	fileStores                 map[string]blob.Store
+	entityStores               map[string]blob.Store
+	globalTDB                  *tdb.DB
+	ctx                        context.Context
+	done                       context.CancelFunc
+	logger                     *slog.Logger
+	debug                      bool
+	fsys                       []fs.FS
+	host                       string
+	port                       int
+	scheme                     string
+	applicationID              core.ApplicationID
+	applicationName            string
+	applicationVersion         string
+	applicationSemanticVersion string
+	dataDir                    string
+	factories                  map[proto.RootViewID]func(wnd core.Window) core.View
+	onWindowCreatedObservers   []core.OnWindowCreatedObserver
+	destructors                []func()
+	app                        *core.Application // may be nil
+	rawEndpoint                []rawEndpoint
+	colorSets                  map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
+	appIconUri                 proto.URI
+	fps                        int
 
 	systemServices         []dependency
 	mailManagement         *MailManagement
@@ -107,15 +108,16 @@ func NewConfigurator() *Configurator {
 			core.Dark:  {},
 			core.Light: {},
 		},
-		fileStores:         map[string]blob.Store{},
-		entityStores:       map[string]blob.Store{},
-		fps:                10,
-		ctx:                ctx,
-		done:               done,
-		factories:          map[proto.RootViewID]func(wnd core.Window) core.View{},
-		applicationName:    filepath.Base(os.Args[0]),
-		applicationVersion: buildInfo,
-		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
+		applicationSemanticVersion: "0.0.0",
+		fileStores:                 map[string]blob.Store{},
+		entityStores:               map[string]blob.Store{},
+		fps:                        10,
+		ctx:                        ctx,
+		done:                       done,
+		factories:                  map[proto.RootViewID]func(wnd core.Window) core.View{},
+		applicationName:            filepath.Base(os.Args[0]),
+		applicationVersion:         buildInfo,
+		debug:                      strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 
 	return cfg
@@ -321,18 +323,36 @@ func (c *Configurator) SetApplicationID(id core.ApplicationID) {
 	slog.Info("application id updated", slog.String("id", string(id)))
 }
 
-// SetName sets the applications name which is usually the internal code name or marketing phrase of the customer
-// to identify the product. This is likely shown somewhere in error reports or logs.
+// SetName sets the applications name which is used to communicate with the user of the application.
+// This is likely not the internal code name, but instead the advertising or marketing product name.
 func (c *Configurator) SetName(name string) {
 	c.applicationName = name
+}
+
+func (c *Configurator) Name() string {
+	return c.applicationName
 }
 
 // SetVersion sets the applications version to something arbitrary. It is best practice to include information
 // about the build environment and git commit hash. This is likely shown in error reports or logs.
 // This must not be used as a marketing version for the customer, because a marketing version does not change
-// when bug fixes are released.
+// when bug fixes are released. See also [Configurator.SemanticVersion].
 func (c *Configurator) SetVersion(version string) {
 	c.applicationVersion = version
+}
+
+func (c *Configurator) Version() string {
+	return c.applicationVersion
+}
+
+// SetSemanticVersion updates the version which is communicated towards the customer and should be in SemVer style
+// like 1.2.3
+func (c *Configurator) SetSemanticVersion(version string) {
+	c.applicationSemanticVersion = version
+}
+
+func (c *Configurator) SemanticVersion() string {
+	return c.applicationSemanticVersion
 }
 
 // Host returns the host to which the binding should be made. This is different from [Configurator.ContextPath].

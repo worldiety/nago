@@ -1,6 +1,6 @@
 package oas
 
-const OAS30 = "3.0.4"
+const Version = "3.0.4"
 
 type OpenAPI struct {
 	// This string MUST be the version number of the OpenAPI Specification that the OpenAPI document uses. The openapi field SHOULD be used by tooling to interpret the OpenAPI document. Required.
@@ -55,7 +55,7 @@ type Contact struct {
 
 type Path = string
 
-type Paths map[Path]PathItem
+type Paths map[Path]*PathItem
 
 type PathItem struct {
 	// Allows for a referenced definition of this path item. The value MUST be in the form of a URL, and the referenced
