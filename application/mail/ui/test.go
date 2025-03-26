@@ -46,7 +46,7 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 	})
 
 	tplName := core.AutoState[string](wnd).Init(func() string {
-		return "ResetPassword"
+		return "<template name>"
 	})
 
 	tplLang := core.AutoState[string](wnd).Init(func() string {
@@ -92,6 +92,7 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 					ui.TextField("Empfänger", tplMailRec.Get()).InputValue(tplMailRec).FullWidth(),
 					ui.TextField("Betreff", tplMailSubject.Get()).InputValue(tplMailSubject).FullWidth(),
 					ui.TextField("Template-ID", tplMailId.Get()).InputValue(tplMailId).FullWidth(),
+					ui.TextField("Templatename", tplName.Get()).InputValue(tplName).FullWidth(),
 					ui.TextField("Language", tplLang.Get()).InputValue(tplLang).FullWidth(),
 					ui.CodeEditor(tplMailModel.Get()).InputValue(tplMailModel).Frame(ui.Frame{Width: ui.Full, Height: ui.L320}),
 				).Gap(ui.L16).FullWidth(),
