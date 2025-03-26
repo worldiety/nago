@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package xslices contains some proposals from https://github.com/golang/go/issues/61899.
 // This package will be removed, as soon as these functions become available.
 package xslices

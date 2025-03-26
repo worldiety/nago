@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 //go:generate go run go.wdy.de/nago/cmd/nprotoc -target=../../presentation/proto -source=../../presentation/proto/spec
 //go:generate go run go.wdy.de/nago/cmd/nprotoc -lang=ts -target=../../web/vuejs/src/shared/proto -source=../../presentation/proto/spec
 //go:generate sh npm_format.sh

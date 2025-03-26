@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package rcrud provides simple but automatic use case implementation for create, read, update and delete
 // based on a given repository. The required permissions are also automatically registered.
 package rcrud

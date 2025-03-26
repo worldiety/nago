@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2025 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
 import { v4 as uuidv4 } from 'uuid';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2025 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
 import { inject } from 'vue';
 import { uploadRepositoryKey } from '@/shared/injectionKeys';
 import type { Ptr } from '@/shared/protocol/ora/ptr';

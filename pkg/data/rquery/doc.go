@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package rquery contains a reflection based query API to filter structs from a sequence using
 // a query language similar to jql et al.
 package rquery

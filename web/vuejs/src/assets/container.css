@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2025 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
+
 .website-content {
 	@apply max-w-[100rem] px-4 mx-auto;
 }

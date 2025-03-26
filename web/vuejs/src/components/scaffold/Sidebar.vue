@@ -1,3 +1,12 @@
+<!--
+ Copyright (c) 2025 worldiety GmbH
+
+ This file is part of the NAGO Low-Code Platform.
+ Licensed under the terms specified in the LICENSE file.
+
+ SPDX-License-Identifier: Custom-License
+-->
+
 <template>
 	<nav ref="sidebar" class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4" aria-label="Sidebar">
 		<!-- Sidebar -->

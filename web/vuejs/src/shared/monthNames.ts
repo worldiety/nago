@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2025 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
+
 const monthMap: Map<number, string> = new Map<number, string>();
 monthMap.set(0, 'Januar');
 monthMap.set(1, 'Februar');

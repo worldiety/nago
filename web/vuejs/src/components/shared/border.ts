@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2025 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
 import { colorValue } from '@/components/shared/colors';
 import { cssLengthValue } from '@/components/shared/length';
 import { Border } from '@/shared/proto/nprotoc_gen';

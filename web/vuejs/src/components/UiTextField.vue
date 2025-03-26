@@ -1,3 +1,12 @@
+<!--
+ Copyright (c) 2025 worldiety GmbH
+
+ This file is part of the NAGO Low-Code Platform.
+ Licensed under the terms specified in the LICENSE file.
+
+ SPDX-License-Identifier: Custom-License
+-->
+
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';

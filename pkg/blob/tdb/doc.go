@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package tdb contains a naive and simple key-value database implementation (Torbens Database).
 // The NIH syndrom is kicking in, again:
 //   - etcd/bbolt is slow as hell (100-200 tps on modern NVME storage) due to single file and massive fsync-based design. Turning fsync off, corrupts db entirely. I cannot reach per machine-scale with that (1000 instances per cloud server, hell not even a single hako instance)

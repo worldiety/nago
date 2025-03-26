@@ -1,0 +1,54 @@
+Lizenzvereinbarung für die Nutzung der NAGO Low-Code-Plattform
+
+Präambel
+Diese Lizenzvereinbarung regelt die Nutzung der NAGO Low-Code-Plattform (nachfolgend "NAGO"), entwickelt und
+bereitgestellt von der worldiety GmbH, Oldenburg, Deutschland (nachfolgend "worldiety").
+
+NAGO ist eine Bibliothek bzw. ein Framework in der Programmiersprache Go. Es enthält Materialien oder Werke
+Dritter (z. B. Icons, Quellcode), die unter ihren jeweiligen Lizenzen verbleiben und nicht Gegenstand dieser
+Vereinbarung sind.
+
+1. Lizenzgewährung
+
+1.1. worldiety gewährt dem Nutzer eine nicht-exklusive, nicht übertragbare Lizenz zur Nutzung von NAGO
+gemäß den nachfolgenden Bestimmungen.
+
+1.2. Schüler, Studenten und Auszubildende dürfen NAGO kostenlos im Rahmen der Weiterbildung nutzen.
+
+1.3. Schulen, Universitäten und andere Bildungseinrichtungen können NAGO im Lehr- und Lernumfeld kostenfrei nutzen.
+
+1.4. Nutzer dürfen mit NAGO kostenfrei Anwendungen entwickeln. Der Betrieb einer mit NAGO entwickelten
+Software erfordert jedoch eine schriftliche Lizenzvereinbarung mit worldiety.
+
+1.5. Die Umsatzerlöse der Endkunden von Anwendungen, die mit NAGO erstellt wurden, sind nicht Gegenstand dieser
+Vereinbarung. Entscheidend ist, dass für den Betrieb eine separate Lizenzvereinbarung zwischen dem
+Besitzer oder Betreiber der Software und worldiety erforderlich ist.
+
+2. Lizenzbeschränkungen
+
+2.1. Die Vergabe von Unterlizenzen für NAGO ist nicht gestattet.
+
+2.2. Alle Urheberrechts- und Lizenzhinweise in NAGO müssen erhalten bleiben und sichtbar sein.
+
+2.3. Die Nutzung von NAGO erfolgt auf eigene Verantwortung. worldiety gewährt keine rechtliche Haftung und insbesondere
+keine Verteidigung vor Gericht.
+
+2.4. Separate "Perpetual Fallback Lizenzen" sind gegen gesonderte Vereinbarung erhältlich.
+
+3. Vertragsänderungen
+
+3.1. Diese Lizenzvereinbarung kann von worldiety geändert werden. Die jeweils aktuelle Fassung wird
+auf der offiziellen Repository-Seite veröffentlicht. Die weitere Nutzung von NAGO nach Inkrafttreten
+der Änderung gilt als Zustimmung zur neuen Version der Lizenzvereinbarung.
+
+4. Salvatorische Klausel
+
+Sollte eine Bestimmung dieser Vereinbarung ganz oder teilweise unwirksam oder nicht durchsetzbar sein,
+so berührt dies nicht die Gültigkeit der übrigen Bestimmungen. Die Parteien verpflichten sich, eine unwirksame
+oder nicht durchsetzbare Bestimmung durch eine wirksame Regelung zu ersetzen, die dem wirtschaftlichen Zweck
+der unwirksamen Bestimmung am nächsten kommt.
+
+5. Anwendbares Recht und Gerichtsstand
+
+Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang
+mit dieser Vereinbarung ist Oldenburg, Deutschland.

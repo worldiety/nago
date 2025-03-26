@@ -1,3 +1,12 @@
+<!--
+ Copyright (c) 2025 worldiety GmbH
+
+ This file is part of the NAGO Low-Code Platform.
+ Licensed under the terms specified in the LICENSE file.
+
+ SPDX-License-Identifier: Custom-License
+-->
+
 <template>
 	<div
 		class="fixed top-0 left-0 w-screen h-screen z-50 bg-stone-900/50 backdrop-blur flex items-center justify-center"

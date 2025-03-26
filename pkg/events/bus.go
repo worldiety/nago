@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package events provides a simple async in-process event distribution system.
 // Keep the usage of this package to a minimum, because it may be an indicator of a poorly designed and
 // maintainable architecture. It is easy to create invisible and fragile workflows based on complex event chains.

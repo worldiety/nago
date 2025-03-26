@@ -1,3 +1,10 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
 // Package iter provides an adaption of the go iter proposal, see also
 // https://go.dev/wiki/RangefuncExperiment. If this proposal is accepted as-is and
 // https://github.com/golang/go/issues/46477 is solved, our Seq and Seq2 types will
