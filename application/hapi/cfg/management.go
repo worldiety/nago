@@ -45,26 +45,26 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		RegisterHandler: func(method, pattern string, handler http.HandlerFunc) {
 			cfg.HandleMethod(method, pattern, handler)
 		},
-		OperationConfigured: func(op hapi.Operation) {
+		OperationConfigured: func(op hapi.Operation, in hapi.Input, out hapi.Output) {
 			item := &oas.PathItem{}
 
 			switch op.Method {
 			case http.MethodGet:
-				item.Get = oasOpFrom(op)
+				item.Get = oasOpFrom(op, in, out)
 			case http.MethodPost:
-				item.Post = oasOpFrom(op)
+				item.Post = oasOpFrom(op, in, out)
 			case http.MethodPut:
-				item.Put = oasOpFrom(op)
+				item.Put = oasOpFrom(op, in, out)
 			case http.MethodDelete:
-				item.Delete = oasOpFrom(op)
+				item.Delete = oasOpFrom(op, in, out)
 			case http.MethodOptions:
-				item.Options = oasOpFrom(op)
+				item.Options = oasOpFrom(op, in, out)
 			case http.MethodHead:
-				item.Head = oasOpFrom(op)
+				item.Head = oasOpFrom(op, in, out)
 			case http.MethodPatch:
-				item.Patch = oasOpFrom(op)
+				item.Patch = oasOpFrom(op, in, out)
 			case http.MethodTrace:
-				item.Trace = oasOpFrom(op)
+				item.Trace = oasOpFrom(op, in, out)
 			default:
 				slog.Error("unknown operation method", "method", op.Method)
 			}
@@ -80,14 +80,19 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	return management, nil
 }
 
-func oasOpFrom(op hapi.Operation) *oas.Operation {
-	return &oas.Operation{
+func oasOpFrom(op hapi.Operation, in hapi.Input, out hapi.Output) *oas.Operation {
+	o := &oas.Operation{
 		Summary:     op.Summary,
 		Description: op.Description,
 		Parameters:  []oas.Parameter{},
 		RequestBody: nil,
-		Responses:   map[oas.HttpStatusOrDefault]oas.Ref{},
+		Responses:   oas.Responses{},
 		Deprecated:  op.Deprecated,
 		Security:    nil,
 	}
+
+	in.DescribeInput(o)
+	out.DescribeOutput(o)
+
+	return o
 }

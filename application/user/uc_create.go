@@ -47,8 +47,10 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Auch wenn es sich um eine potentiell gültige E-Mail Adresse handeln könnte, wird dieses Format nicht unterstützt.")
 		}
 
-		if err := model.Password.Validate(); err != nil {
-			return User{}, err
+		if !requiredPasswordChange {
+			if err := model.Password.Validate(); err != nil {
+				return User{}, err
+			}
 		}
 
 		salt, hash, err := model.Password.Hash(Argon2IdMin)

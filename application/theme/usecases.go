@@ -11,8 +11,24 @@ import (
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 )
+
+type LogoType int
+
+const (
+	// NavigationBarIcon allows different formats and is limited in its height first.
+	// It should not have a transparent border, to avoid visual padding issues in the final layout.
+	NavigationBarIcon LogoType = iota + 1
+
+	// AppIcon must be quadratic. Recommended resolution is 512x512 or 1024x1024. It should not have a transparent
+	// border, to avoid visual padding issues in the final layout. It may be used as a favicon or shown
+	// during the registration process.
+	AppIcon
+)
+
+type UpdateDefaultLogo func(subject auth.Subject, logoType LogoType, scheme core.ColorScheme, img []byte) error
 
 type BaseColors struct {
 	Main        ui.Color

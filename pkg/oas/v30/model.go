@@ -111,7 +111,13 @@ type SecurityRequirement struct{}
 // The default MAY be used as a default Response Object for all HTTP codes that are not covered individually by the Responses Object.
 //
 // The Responses Object MUST contain at least one response code, and if only one response code is provided it SHOULD be the response for a successful operation call.
-type Responses map[HttpStatusOrDefault]Ref
+type Responses map[HttpStatusOrDefault]*Response
+
+type Response struct {
+	Description string               `json:"description"`
+	Headers     map[string]string    `json:"headers"`
+	Content     map[string]MediaType `json:"content"`
+}
 
 // HttpStatusOrDefault is for example, 2XX represents all response codes between 200 and 299. Only the following range definitions are allowed: 1XX, 2XX, 3XX, 4XX, and 5XX.
 // Or just "default"
@@ -136,7 +142,7 @@ type RequestBody struct {
 // When example or examples are provided, the example SHOULD match the specified schema and be in the correct format as specified by the media type and its encoding. The example and examples fields are mutually exclusive, and if either is present it SHALL override any example in the schema. See Working With Examples for further guidance regarding the different ways of specifying examples, including non-JSON/YAML values.
 type MediaType struct {
 	// The schema defining the content of the request, response, parameter, or header.
-	Schema Ref `json:"schema"`
+	Schema Schema `json:"schema"`
 	// Example of the media type; see Working With Examples.
 	Example any `json:"example"`
 	// Examples of the media type; see Working With Examples.
@@ -147,7 +153,9 @@ type MediaType struct {
 
 type Encoding struct{}
 
-type Ref = string
+type Schema struct {
+	Ref string `json:"$ref"`
+}
 
 type Parameter struct {
 	// REQUIRED. The name of the parameter. Parameter names are case sensitive.

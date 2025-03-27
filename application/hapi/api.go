@@ -9,15 +9,19 @@ package hapi
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/oas/v30"
+	"go.wdy.de/nago/pkg/std"
 	"log/slog"
 	"net/http"
+	"reflect"
 )
 
 type Options struct {
 	RegisterHandler     func(method string, pattern string, handler http.HandlerFunc)
-	OperationConfigured func(op Operation)
+	OperationConfigured func(op Operation, in Input, out Output)
 }
 
 type API struct {
@@ -43,7 +47,17 @@ type Operation struct {
 	Deprecated bool
 }
 
-func Handle[In, Out any](api *API, op Operation, fn func(ctx context.Context, in *In) (*Out, error)) {
+type Input interface {
+	Read(w http.ResponseWriter, t *http.Request) error
+	DescribeInput(op *oas.Operation)
+}
+
+type Output interface {
+	Write(w http.ResponseWriter, t *http.Request) error
+	DescribeOutput(op *oas.Operation)
+}
+
+func Handle[In Input, Out Output](api *API, op Operation, fn func(ctx context.Context, in In) (Out, error)) {
 	if op.Path == "" {
 		panic(fmt.Errorf("empty path is not allowed"))
 	}
@@ -61,50 +75,69 @@ func Handle[In, Out any](api *API, op Operation, fn func(ctx context.Context, in
 	api.operations = append(api.operations, op)
 	api.opts.RegisterHandler(op.Method, op.Path, func(writer http.ResponseWriter, request *http.Request) {
 		var in In
-		out, err := fn(request.Context(), &in)
+		if err := in.Read(writer, request); err != nil {
+			if errors.Is(err, errorAlreadyHandled) {
+				return
+			}
+
+			if errors.Is(err, user.PermissionDeniedErr) {
+				writer.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			if errors.Is(err, user.InvalidSubjectErr) {
+				writer.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			slog.Error("failed to read input", "err", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		out, err := fn(request.Context(), in)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		buf, err := json.Marshal(out)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		if err := out.Write(writer, request); err != nil {
+			if errors.Is(err, errorAlreadyHandled) {
+				return
+			}
 
-		writer.Header().Set("Content-Type", "application/json")
-		if _, err := writer.Write(buf); err != nil {
-			slog.Error("failed to write response", "err", err.Error())
+			if errors.Is(err, user.PermissionDeniedErr) {
+				writer.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			if errors.Is(err, user.InvalidSubjectErr) {
+				writer.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			slog.Error("failed to write output", "err", err.Error())
+			writer.WriteHeader(http.StatusInternalServerError) // be have already sent the header, but we don't know
 			return
 		}
 	})
 
 	if api.opts.OperationConfigured != nil {
-		api.opts.OperationConfigured(op)
+		var zeroIn Input
+		var zeroOut Output
+
+		tin := reflect.TypeFor[In]()
+		if tin.Kind() == reflect.Ptr {
+			zeroIn = reflect.New(tin.Elem()).Interface().(Input)
+		}
+
+		tout := reflect.TypeFor[Out]()
+		if tout.Kind() == reflect.Ptr {
+			zeroOut = reflect.New(tout.Elem()).Interface().(Output)
+		}
+
+		api.opts.OperationConfigured(op, zeroIn, zeroOut)
 	}
 }
 
-type ContentType string
-
-func (h *ContentType) Read(r *http.Request) error {
-	*h = ContentType(r.Header.Get("Content-Type"))
-	return nil
-}
-
-func (h *ContentType) Write(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", string(*h))
-	return nil
-}
-
-type Body[T any] struct {
-	Body T
-}
-
-func (h *Body[T]) Read(r *http.Request) error {
-	return nil
-}
-
-func (h *Body[T]) Write(w http.ResponseWriter) error {
-	return nil
-}
+const errorAlreadyHandled std.Error = "already handled"

@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+	"net/http"
 )
 
 func main() {
@@ -42,16 +43,27 @@ func main() {
 
 func configureMyAPI(api *hapi.API) {
 
-	type HelloParams struct {
-	}
+	type HelloResponse = hapi.JSON[string]
 
-	type HelloResponse struct {
-		Body string
-	}
-
-	hapi.Handle(api, hapi.Operation{Path: "/api/v1/hello"}, func(ctx context.Context, in *HelloParams) (*HelloResponse, error) {
+	hapi.Handle(api, hapi.Operation{Path: "/api/v1/hello"}, func(ctx context.Context, in *hapi.None) (*HelloResponse, error) {
 		return &HelloResponse{
-			Body: "Hello world",
+			Body: "hello world",
+		}, nil
+	})
+
+	type HelloRequest struct {
+		Name string
+	}
+
+	type HelloResponse2 struct {
+		Msg string
+	}
+
+	hapi.Handle(api, hapi.Operation{Method: http.MethodPost, Path: "/api/v1/hello"}, func(ctx context.Context, in *hapi.JSON[HelloRequest]) (*hapi.JSON[HelloResponse2], error) {
+		return &hapi.JSON[HelloResponse2]{
+			Body: HelloResponse2{
+				Msg: "hello " + in.Body.Name,
+			},
 		}, nil
 	})
 }

@@ -227,6 +227,7 @@ const clazz = computed<string>(() => {
 
 	<button
 		:id="ui.id"
+		:tabindex="focusable ? 0 : -1"
 		:disabled="props.ui.disabled"
 		v-else-if="
 			props.ui.stylePreset !== StylePresetValues.StyleNone &&
