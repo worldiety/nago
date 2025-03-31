@@ -36,7 +36,7 @@ func (d Date) Time(loc *time.Location) time.Time {
 	return time.Date(d.Year, d.Month, d.Day, 0, 0, 0, 0, loc)
 }
 
-func (d Date) Zero() bool {
+func (d Date) IsZero() bool {
 	return d == Date{}
 }
 

@@ -154,3 +154,14 @@ func All() iter.Seq[Permission] {
 
 	return slices.Values(tmp)
 }
+
+func Find(id ID) (Permission, bool) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	if p, ok := globalPermissions[id]; ok {
+		return p.Permission, true
+	}
+
+	return Permission{}, false
+}

@@ -8,9 +8,9 @@
 package role
 
 import (
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/std"
 	"iter"
 	"sync"
 )
@@ -21,7 +21,7 @@ type Role struct {
 	ID          ID              `json:"id,omitempty" table-visible:"false"`
 	Name        string          `json:"name,omitempty"`
 	Description string          `json:"description,omitempty" label:"Beschreibung"`
-	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.iam.permission.list" label:"Berechtigungen" table-visible:"false"`
+	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.permissions" label:"Berechtigungen" table-visible:"false"`
 }
 
 func (r Role) String() string {
@@ -39,7 +39,7 @@ func (r Role) Identity() ID {
 
 type Repository = data.Repository[Role, ID]
 
-type FindByID func(subject permission.Auditable, id ID) (std.Option[Role], error)
+type FindByID func(subject permission.Auditable, id ID) (option.Opt[Role], error)
 type FindAll func(subject permission.Auditable) iter.Seq2[Role, error]
 type Create func(subject permission.Auditable, role Role) (ID, error)
 

@@ -73,27 +73,25 @@ func (p Password) Hash(algo HashAlgorithm) (salt []byte, hash []byte, err error)
 	return tmp[:], hash, nil
 }
 
+// TokenHash is an insecure usage of argon2id for the sole purpose of hashing API access tokens and to speed up our
+// inverse lookup. It is insecure, because it has no salt.
+// Even though this sounds bad, remember that this is still scales of magnitudes better than any
+// other solution which stores API access tokens in plaintext, which is still quite common.
+func (p Password) TokenHash(algo HashAlgorithm) (hash []byte, err error) {
+	if algo != Argon2IdMin {
+		return nil, fmt.Errorf("unsupported hash algorithm")
+	}
+
+	hash = argon2idMin(string(p), nil)
+	return hash, nil
+}
+
 // this is used in a massive hosting environment, we cannot afford the RFC settings.
 // Therefore, we use the following minimal OWASP settings, see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html:
 //
 //	Use Argon2id with a minimum configuration of 19 MiB of memory, an iteration count of 2, and 1 degree of parallelism.
 func argon2idMin(password string, salt []byte) []byte {
 	return argon2.IDKey([]byte(password), salt, 2, 19*1024, 1, 32)
-}
-
-func setArgon2idMin(usr *User, password string) error {
-	// see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
-	var salt [32]byte
-	if _, err := rand.Read(salt[:]); err != nil {
-		return fmt.Errorf("no secure random entropy: %w", err)
-	}
-	hash := argon2idMin(password, salt[:])
-
-	usr.Salt = salt[:]
-	usr.PasswordHash = hash
-	usr.Algorithm = Argon2IdMin
-
-	return nil
 }
 
 type Complexity int

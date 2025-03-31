@@ -12,7 +12,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"go.wdy.de/nago/pkg/std"
+	"github.com/worldiety/option"
 	"iter"
 	"reflect"
 	"strconv"
@@ -40,7 +40,7 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	// The effort is implementation dependent, but most reasonable implementations guarantee something better than
 	// O(n) like a tree in O(log(n) or even a hashtable (O(1)).
 	// Returned errors are unspecified infrastructure errors of the implementation.
-	FindByID(id ID) (std.Option[E], error)
+	FindByID(id ID) (option.Opt[E], error)
 
 	// FindAllByPrefix returns an iterator over all elements whose IDs start with the given prefix.
 	// The prefix is evaluated alphanumerically, which may be a problem for integer keys, as they do not

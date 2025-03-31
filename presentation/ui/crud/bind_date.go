@@ -86,7 +86,7 @@ func Date[E any, T ~struct {
 		},
 		Stringer: func(e E) string {
 			val := property.Get(&e)
-			if xtime.Date(val).Zero() {
+			if xtime.Date(val).IsZero() {
 				return ""
 			}
 			return xtime.Date(val).Format(xtime.GermanDate)

@@ -30,7 +30,7 @@ func (c *Configurator) PermissionManagement() (PermissionManagement, error) {
 			},
 		}
 
-		c.AddSystemService("nago.iam.permission.list", form.AnyUseCaseList[permission.Permission, permission.ID](func(subject auth.Subject) iter.Seq2[permission.Permission, error] {
+		c.AddSystemService("nago.permissions", form.AnyUseCaseList[permission.Permission, permission.ID](func(subject auth.Subject) iter.Seq2[permission.Permission, error] {
 			return c.permissionManagement.UseCases.FindAll(subject)
 		}))
 

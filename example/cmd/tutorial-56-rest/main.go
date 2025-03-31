@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/hapi"
 	cfghapi "go.wdy.de/nago/application/hapi/cfg"
@@ -18,6 +19,7 @@ import (
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -28,11 +30,18 @@ func main() {
 
 		cfg.Serve(vuejs.Dist())
 		cfg.Serve(swagger.Dist())
+		cfg.SetDecorator(cfg.NewScaffold().
+			Decorator())
+
+		option.MustZero(cfg.StandardSystems())
+
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		api := std.Must(cfghapi.Enable(cfg)).API
+		std.Must(cfg.TokenManagement())
 		configureMyAPI(api)
 
-		cfg.RootView(".", func(wnd core.Window) core.View {
+		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return VStack(Text("hello world")).
 				Frame(Frame{}.MatchScreen())
 

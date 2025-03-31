@@ -45,6 +45,11 @@ type Subject interface {
 	// unique, e.g. the store or repository name.
 	AuditResource(name string, id string, p permission.ID) error
 
+	// HasResourcePermission is like [HasResource] checks, but instead of using the user permissions, the associated
+	// resource table is also evaluated. A regular use case
+	// should use the [AuditResource]. However, this may be used e.g. by the UI to show or hide specific aspects.
+	HasResourcePermission(name string, id string, p permission.ID) bool
+
 	// ID is the unique actor id within a single NAGO instance. These IDs are generated in a secure way,
 	// however, you must not expose that into the public or use it as a source of anonymization.
 	// This ID will never change throughout the lifetime of the user and this instance.
@@ -245,9 +250,9 @@ func (v *viewImpl) load() {
 
 }
 
-func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error {
+func (v *viewImpl) HasResourcePermission(name string, id string, p permission.ID) bool {
 	if v.HasPermission(p) {
-		return nil
+		return true
 	}
 
 	v.mutex.Lock()
@@ -255,7 +260,7 @@ func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error 
 	v.mutex.Unlock()
 
 	if len(usr.Resources) == 0 {
-		return PermissionDeniedErr
+		return false
 	}
 
 	// check, if we have global rights
@@ -273,17 +278,25 @@ func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error 
 	}
 
 	if len(perms) == 0 {
-		return PermissionDeniedErr
+		return false
 	}
 
 	// we are allowed, if the permission is there. We do not optimize further, because we expect only
 	// a very small set of permissions per resource.
 	if slices.Contains(perms, p) {
-		return nil
+		return true
 	}
 
 	// nope
-	return PermissionDeniedErr
+	return false
+}
+
+func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error {
+	if !v.HasResourcePermission(name, id, p) {
+		return PermissionDeniedErr
+	}
+
+	return nil
 }
 
 func (v *viewImpl) Permissions() iter.Seq[permission.ID] {
@@ -334,6 +347,9 @@ func (v *viewImpl) HasPermission(permission permission.ID) bool {
 }
 
 func (v *viewImpl) ID() ID {
+	// security note: it is important, that this implementation always returns
+	// a non-empty user id, otherwise there may be implementations which will start with a
+	// check that its valid and use this getter for future comparison which will start breaking.
 	v.refresh()
 
 	v.mutex.Lock()

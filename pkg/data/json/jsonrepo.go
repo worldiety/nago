@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/worldiety/enum/json"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
@@ -48,7 +49,7 @@ func NewSloppyJSONRepository[DomainModel data.Aggregate[DomainID], DomainID data
 	)
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindByID(id DomainID) (std.Option[DomainModel], error) {
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindByID(id DomainID) (option.Opt[DomainModel], error) {
 	var res std.Option[DomainModel]
 	// we use the reader directly here, because it allows potential optimizations. Using blob.Get requires at least another additional full slice allocation
 	optR, err := r.store.NewReader(context.Background(), data.Idtos(id))

@@ -48,6 +48,8 @@ const (
 	Argon2IdMin HashAlgorithm = "argon2-id-min"
 )
 
+var HashAlgorithmValues = []HashAlgorithm{Argon2IdMin}
+
 type Email string
 
 var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$`)

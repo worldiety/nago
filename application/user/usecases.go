@@ -8,6 +8,7 @@
 package user
 
 import (
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/license"
@@ -25,7 +26,7 @@ import (
 type Repository data.Repository[User, ID]
 
 type Create func(subject permission.Auditable, model ShortRegistrationUser) (User, error)
-type FindByID func(subject permission.Auditable, id ID) (std.Option[User], error)
+type FindByID func(subject permission.Auditable, id ID) (option.Opt[User], error)
 type FindByMail func(subject permission.Auditable, email Email) (std.Option[User], error)
 
 type EMailUsed func(email Email) (bool, error)
@@ -51,7 +52,7 @@ type ReadMyContact func(subject AuditableUser) (Contact, error)
 // mean, that a User (or Subject) is actually logged into a [core.Window]. A window, a session and a subject
 // view have NO direct relationship with each other. The process of session handling and logging in and out
 // will update the Window reference and the session persistence. It does never make a user invalid.
-type SubjectFromUser func(subject permission.Auditable, id ID) (std.Option[Subject], error)
+type SubjectFromUser func(subject permission.Auditable, id ID) (option.Opt[Subject], error)
 type EnableBootstrapAdmin func(aliveUntil time.Time, password Password) (ID, error)
 
 // CountAssignedUserLicense counts how many licenses of the given id have been assigned.

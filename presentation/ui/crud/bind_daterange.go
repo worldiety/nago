@@ -106,13 +106,13 @@ func DateRange[E any, T ~struct {
 			strStart := ""
 			strEnd := ""
 
-			if xtime.Date(valStart).Zero() {
+			if xtime.Date(valStart).IsZero() {
 				strStart = ""
 			} else {
 				strStart = xtime.Date(valStart).Format(xtime.GermanDate)
 			}
 
-			if xtime.Date(valEnd).Zero() {
+			if xtime.Date(valEnd).IsZero() {
 				strEnd = ""
 			} else {
 				strEnd = xtime.Date(valEnd).Format(xtime.GermanDate)

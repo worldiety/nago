@@ -32,6 +32,10 @@ func SU() Subject {
 type sysUser struct {
 }
 
+func (s sysUser) HasResourcePermission(name string, id string, p permission.ID) bool {
+	return true
+}
+
 func (s sysUser) AuditResource(name string, id string, p permission.ID) error {
 	return nil
 }

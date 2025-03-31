@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-// CoWMap is a copy-on-write map.
+// CoWMap is a copy-on-write map to guarantee no deadlocks. It is very inefficient, thus take a look at [RWMap].
 type CoWMap[K comparable, V any] struct {
 	m     map[K]V
 	mutex sync.Mutex

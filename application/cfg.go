@@ -88,6 +88,7 @@ type Configurator struct {
 	secretManagement       *SecretManagement
 	templateManagement     *TemplateManagement
 	themeManagement        *ThemeManagement
+	tokenManagement        *TokenManagement
 	decorator              Decorator
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]

@@ -34,7 +34,7 @@ type SavedObserver[E Aggregate[ID], ID IDType] func(repository Repository[E, ID]
 // cause any problems.
 // Note also, that batch operations are split up, thus optimizations of underlying implementations which may
 // get otherwise executed within a single transaction (e.g. DeleteAll or SaveAll) are executed per item,
-// to generate more correct events.
+// to generate more correct events (this may be changed in the future).
 //
 // See also [NotifyRepository.AddDeletedObserver] and [NotifyRepository.AddSavedObserver] for a blocking and more
 // efficient way of getting notified. These observers do not need to pass the bus (which can be nil).
