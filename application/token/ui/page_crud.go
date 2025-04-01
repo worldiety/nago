@@ -86,7 +86,7 @@ func PageCrud(wnd core.Window, uc token.UseCases) core.View {
 			}).PreIcon(flowbiteOutline.BookOpen).AccessibilityLabel("Open API Dokumentation anzeigen"),
 			ui.PrimaryButton(func() {
 				createPresented.Set(true)
-			}).Title("Access Token hinzufügen").AccessibilityLabel("Access Token in die Zwischenablage kopieren"),
+			}).Title("Access Token hinzufügen"),
 		).FullWidth().Alignment(ui.Trailing).Gap(ui.L8),
 		ui.Table(
 			ui.TableColumn(ui.Text("Name")),
@@ -234,7 +234,7 @@ func plainTokenDialog(wnd core.Window, presented *core.State[bool], plainToken *
 					if err := wnd.Clipboard().SetText(plainToken.Get()); err != nil {
 						alert.ShowBannerError(wnd, err)
 					}
-				}).PreIcon(flowbiteOutline.Clipboard),
+				}).PreIcon(flowbiteOutline.Clipboard).AccessibilityLabel("Access Token in die Zwischenablage kopieren"),
 			),
 		),
 		presented,

@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
 	"iter"
+	"log/slog"
 	"maps"
 )
 
@@ -34,6 +35,12 @@ func (c *Configurator) BackupManagement() (BackupManagement, error) {
 				},
 				func(key crypto.EncryptionKey) {
 					option.MustZero(c.WriteMasterKey(key))
+					if s := c.sessionManagement; s != nil {
+						if err := s.UseCases.Clear(); err != nil {
+							slog.Error("failed to clear session storage after setting masterkey", "err", err.Error())
+							return
+						}
+					}
 				},
 			),
 			Pages: uibackup.Pages{

@@ -10,6 +10,7 @@ package session
 import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
+	"sync"
 	"time"
 )
 
@@ -31,6 +32,9 @@ type Login func(id ID, login user.Email, password user.Password) (bool, error)
 // and other mechanics apply, to keep up with the user state, see [user.SubjectFromUser] for details.
 type LoginUser func(id ID, usr user.ID) error
 type Logout func(id ID) (bool, error)
+
+// Clear removes all entries from the session store and is only required for fixing session problems.
+type Clear func() error
 
 // UserSession represents a persistent view of an assigned client.
 // The current implementation uses a single store for all sessions, thus all values are always read and written
@@ -70,6 +74,7 @@ type UseCases struct {
 	Login               Login
 	LoginUser           LoginUser
 	Logout              Logout
+	Clear               Clear
 }
 
 func NewUseCases(repo Repository, authByPwd user.AuthenticateByPassword) UseCases {
@@ -78,11 +83,13 @@ func NewUseCases(repo Repository, authByPwd user.AuthenticateByPassword) UseCase
 	logoutFn := NewLogout(repo)
 	findUserSessionByIDFn := NewFindUserSessionByID(repo)
 
+	var mutex sync.Mutex
 	return UseCases{
 		FindSessionByID:     sessionByIdFn,
 		Login:               loginFn,
 		LoginUser:           NewLoginUser(repo),
 		Logout:              logoutFn,
 		FindUserSessionByID: findUserSessionByIDFn,
+		Clear:               NewClear(&mutex, repo),
 	}
 }
