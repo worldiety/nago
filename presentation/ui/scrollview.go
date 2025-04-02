@@ -21,6 +21,7 @@ func (a ScrollViewAxis) ora() proto.ScrollViewAxis {
 const (
 	ScrollViewAxisVertical   ScrollViewAxis = ScrollViewAxis(proto.ScrollViewAxisVertical)
 	ScrollViewAxisHorizontal                = ScrollViewAxis(proto.ScrollViewAxisHorizontal)
+	ScrollViewAxisBoth                      = ScrollViewAxis(proto.ScrollViewAxisBoth)
 )
 
 type TScrollView struct {

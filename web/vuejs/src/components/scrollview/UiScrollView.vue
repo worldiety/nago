@@ -39,6 +39,9 @@ const classes = computed<string>(() => {
 		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
 			css.push('overflow-x-auto', 'overflow-y-hidden');
 			break;
+		case ScrollViewAxisValues.ScrollViewAxisBoth:
+			css.push('overflow-x-auto', 'overflow-y-auto');
+			break;
 		default:
 			css.push('overflow-y-auto', 'overflow-x-hidden');
 			break;

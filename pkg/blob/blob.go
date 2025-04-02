@@ -9,6 +9,7 @@ package blob
 
 import (
 	"context"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"io"
@@ -29,7 +30,7 @@ type ListOptions struct {
 
 type Reader interface {
 	// NewReader opens the blob to be read.
-	NewReader(ctx context.Context, key string) (std.Option[io.ReadCloser], error)
+	NewReader(ctx context.Context, key string) (option.Opt[io.ReadCloser], error)
 }
 
 type Writer interface {

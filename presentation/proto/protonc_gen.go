@@ -5811,6 +5811,7 @@ type ScrollViewAxis uint64
 const (
 	ScrollViewAxisVertical   ScrollViewAxis = 0
 	ScrollViewAxisHorizontal ScrollViewAxis = 1
+	ScrollViewAxisBoth       ScrollViewAxis = 2
 )
 
 func (v *ScrollViewAxis) write(r *BinaryWriter) error {

@@ -7,7 +7,11 @@
 
 package magic
 
-import "bytes"
+import (
+	"bytes"
+	"go.wdy.de/nago/pkg/blob/crypto"
+	"net/http"
+)
 
 var zipMagicBytes = [][]byte{
 	{0x50, 0x4B, 0x03, 0x04}, // Normale ZIP-Datei
@@ -27,7 +31,19 @@ func Detect(buf []byte) string {
 		}
 	}
 
-	return "application/octet-stream"
+	if crypto.IsEncrypted(buf) {
+		return "application/x-nago-encrypted"
+	}
+
+	if bytes.HasPrefix(buf, []byte("{{")) {
+		return "text/html"
+	}
+
+	if bytes.HasPrefix(buf, []byte("{}")) || bytes.HasPrefix(buf, []byte("{\"")) {
+		return "application/json"
+	}
+
+	return http.DetectContentType(buf)
 }
 
 // Ext returns the typical estimated filename extensions

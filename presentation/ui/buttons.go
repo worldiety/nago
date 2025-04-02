@@ -91,6 +91,11 @@ func (c TButton) PostIcon(svg core.SVG) TButton {
 	return c
 }
 
+func (c TButton) Preset(preset StylePreset) TButton {
+	c.preset = preset
+	return c
+}
+
 func (c TButton) Frame(frame Frame) TButton {
 	c.frame = frame
 	return c

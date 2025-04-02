@@ -44,12 +44,13 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 
 	// FindAllByPrefix returns an iterator over all elements whose IDs start with the given prefix.
 	// The prefix is evaluated alphanumerically, which may be a problem for integer keys, as they do not
-	// provide leading zeros.
+	// provide leading zeros. The order of the returned keys is sorted lexicographically from
+	// smallest to largest.
 	FindAllByPrefix(prefix ID) iter.Seq2[E, error]
 
 	// Identifiers returns a sequence of all currently known identifiers, without unmarshalling any associated
-	// aggregates (respective values). The ordering is implementation dependent and stores with a sorted
-	// index may return their IDs in stable order.
+	// aggregates (respective values). The order of the returned keys is sorted lexicographically from
+	// smallest to largest.
 	Identifiers() iter.Seq2[ID, error]
 
 	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
@@ -64,6 +65,8 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	// Due to concurrent usage, visited items may be missing or may contain already deleted entries.
 	// The order of traversal is undefined and may be even different between subsequent calls.
 	// Returned errors are unspecified infrastructure errors of the implementation.
+	// The order of the returned entries is sorted by keys lexicographically from
+	// smallest to largest.
 	All() iter.Seq2[E, error]
 
 	// Count returns the estimated amount of entries. Due to concurrent usage, this

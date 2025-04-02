@@ -6023,6 +6023,7 @@ function writeTypeHeaderScrollViewAxis(dst: BinaryWriter): void {
 export enum ScrollViewAxisValues {
 	ScrollViewAxisVertical = 0,
 	ScrollViewAxisHorizontal = 1,
+	ScrollViewAxisBoth = 2,
 }
 
 // A ScrollView can either be horizontal or vertical.

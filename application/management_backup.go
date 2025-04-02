@@ -56,6 +56,10 @@ func (c *Configurator) BackupManagement() (BackupManagement, error) {
 	return *c.backupManagement, nil
 }
 
+func (c *Configurator) Persistence() backup.Persistence {
+	return &cfgPersistence{cfg: c}
+}
+
 type cfgPersistence struct {
 	cfg *Configurator
 }

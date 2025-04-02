@@ -46,6 +46,10 @@ var (
 		Size:   "0.75rem",
 		Weight: NormalFontWeight,
 	}
+
+	Monospace = Font{
+		Name: "monospace",
+	}
 )
 
 type FontStyle uint

@@ -126,6 +126,8 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 			// security note: we do not allow the masterkey permission by default, they are to dangerous
 			//nago.backup.masterkey.export
 			//nago.backup.masterkey.replace
+
+			"nago.data.inspector",
 		}
 
 		hType := Argon2IdMin
