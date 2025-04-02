@@ -52,7 +52,7 @@ const innerStyles = computed<string>(() => {
 
 	switch (props.ui.axis) {
 		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
-			css.push('width: max-content');
+			css.push('min-width: max-content');
 			break;
 		default:
 			css.push('height: max-content');
