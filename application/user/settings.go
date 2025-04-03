@@ -68,9 +68,10 @@ type Settings struct {
 	RequireTermsAndConditions       bool `section:"Rechtliches" json:"requireTermsAndConditions" label:"AGB Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung der AGB explizit zustimmen."`
 	RequireDataProtectionConditions bool `section:"Rechtliches" json:"requireDataProtectionConditions" label:"Datenschutz Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Datenschutzbestimmungen explizit zustimmen."`
 	CanAcceptNewsletter             bool `section:"Rechtliches" json:"canAcceptNewsletter" label:"Newsletter anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von Newslettern zustimmen kann."`
+	CanReceiveSMS                   bool `section:"Rechtliches" json:"canAcceptSMS" label:"SMS-Versand anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von SMS zustimmen kann."`
 	RequireMinAge                   int  `section:"Rechtliches" json:"requireMinAge" label:"Mindestalter bestätigen" supportingText:"Je nach Angebot und Markt, gibt es ein Mindestalter, um als Nutzer geschäftsfähig zu sein. Vollgeschäftsfähig gilt man in Deutschland grundsätzlich ab 18 Jahre. Es ist jedoch üblich, gemäß Taschengeldparagraphen auch Minderjährige und damit beschränkt geschäftsfähige Personen zu erlauben."`
 
-	____              any             `section:"Kontakt" label:"Die folgenden Kontaktinformationen müssen bei der freien Registrierung abgefragt werden. Ein leeres Feld bedeutet, dass das bezeichnete Feld ausgeblendet wird. Ansonsten drückt ein regulärer Ausdruck die Validierung aus. ^.*$ steht für optional und ^.+$ für erforderlich."`
+	____              any             `section:"Kontakt" label:"Die folgenden Kontaktinformationen müssen bei der freien Registrierung abgefragt werden. Ein leeres Feld bedeutet, dass das bezeichnete Feld ausgeblendet wird. Ansonsten drückt ein regulärer Ausdruck die Validierung aus. ^.*$ steht für optional und ^.+$ für erforderlich. Um einen Wert aus einer festen Menge zu verwenden, kannst du einen Ausdruck wie ^(OptionA|OptionB)$ verwenden."`
 	Title             FieldConstraint `section:"Kontakt" label:"Titel"`
 	Position          FieldConstraint `section:"Kontakt" label:"Position"`
 	CompanyName       FieldConstraint `section:"Kontakt" label:"Unternehmen"`
@@ -79,6 +80,7 @@ type Settings struct {
 	State             FieldConstraint `section:"Kontakt" label:"Bundesland"`
 	Country           FieldConstraint `section:"Kontakt" label:"Land"`
 	ProfessionalGroup FieldConstraint `section:"Kontakt" label:"Berufsgruppe"`
+	MobilePhone       FieldConstraint `section:"Kontakt" label:"Mobile"`
 }
 
 func (s Settings) GlobalSettings() bool { return true }

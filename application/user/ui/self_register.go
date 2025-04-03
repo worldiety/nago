@@ -68,11 +68,16 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	adoptNewsletter := core.AutoState[bool](wnd)
 	adoptMinAge := core.AutoState[bool](wnd)
 	adoptShowError := core.AutoState[bool](wnd)
+	adoptSendSMS := core.AutoState[bool](wnd)
 
 	// email
 	email := core.AutoState[string](wnd)
 	emailRepeated := core.AutoState[string](wnd)
 	errEmailRepeated := core.AutoState[string](wnd)
+
+	// mobile
+	mobile := core.AutoState[string](wnd)
+	errMobile := core.AutoState[string](wnd)
 
 	// register
 	regErr := core.AutoState[error](wnd)
@@ -95,13 +100,14 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 			state, errState,
 			country, errCountry,
 			professionalGroup, errProfessionalGroup,
+			mobile, errMobile,
 		)
 	case registerPasswords:
 		subcaption = "Bitte die Passwörter eingeben"
 		pageBody = passwords(password, passwordRepeated, errPasswordRepeated)
 	case registerAdoptAny:
 		subcaption = "Bitte stimmen Sie zu"
-		pageBody = adoption(wnd, userSettings, adoptShowError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge)
+		pageBody = adoption(wnd, userSettings, adoptShowError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS)
 	case registerMails:
 		subcaption = "Bitte die E-Mail eingeben"
 		pageBody = emails(email, emailRepeated, errEmailRepeated)
@@ -231,6 +237,10 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 								Version:    userSettings.RequireMinAge,
 								Name:       "Mindestalter",
 							},
+							SMS: user.LegalAdoption{
+								ApprovedAt: acceptedAt(adoptSendSMS.Get()),
+								Name:       "SMS",
+							},
 							Title:             title.Get(),
 							Position:          position.Get(),
 							CompanyName:       companyName.Get(),
@@ -239,6 +249,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							State:             state.Get(),
 							Country:           country.Get(),
 							ProfessionalGroup: professionalGroup.Get(),
+							MobilePhone:       mobile.Get(),
 						})
 
 						regErr.Set(err)

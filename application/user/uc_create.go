@@ -76,6 +76,7 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 				ProfessionalGroup: model.ProfessionalGroup,
 				CompanyName:       model.CompanyName,
 				DisplayLanguage:   model.PreferredLanguage.String(),
+				MobilePhone:       model.MobilePhone,
 			},
 			Salt:                  salt,
 			PasswordHash:          hash,
@@ -93,6 +94,7 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			GeneralTermsAndConditions: model.GeneralTermsAndConditions,
 			DataProtectionProvision:   model.DataProtectionProvision,
 			MinAge:                    model.MinAge,
+			SMS:                       model.SMS,
 		}
 
 		if model.SelfRegistered {

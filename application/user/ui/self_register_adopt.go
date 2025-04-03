@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge *core.State[bool]) core.View {
+func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS *core.State[bool]) core.View {
 
 	return ui.VStack(
 		ui.Space(ui.L48),
@@ -55,6 +55,16 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				ui.VStack(
 					ui.Text("Ja, ich melde mich zum Newsletter an. Eine Abbestellung ist jederzeit möglich. (optional)"),
 					ui.Text("Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos/über Abmeldelink in den E-Mails möglich, ohne dass weitere (Übermittlungs-)Kosten als die nach den Basistarifen entstehen.").Font(ui.Small),
+				),
+			).Alignment(ui.TopLeading)
+		}),
+
+		ui.IfFunc(usrSettings.CanReceiveSMS, func() core.View {
+			return ui.HStack(
+				ui.Checkbox(adoptSendSMS.Get()).InputChecked(adoptSendSMS),
+				ui.VStack(
+					ui.Text("Ja, ich melde mich zum SMS Versand an. Eine Abbestellung ist jederzeit möglich. (optional)"),
+					ui.Text("Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos möglich.").Font(ui.Small),
 				),
 			).Alignment(ui.TopLeading)
 		}),

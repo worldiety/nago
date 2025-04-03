@@ -13,9 +13,11 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/user"
 	cfgusercircle "go.wdy.de/nago/application/usercircle/cfg"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xreflect"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
@@ -51,6 +53,10 @@ func main() {
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		sayHello := NewSayHello()
+
+		// remember to update your user.Settings to use the matching regex like ^(Kaufmann|Informatiker)$
+		xreflect.SetFieldTagFor[user.Settings]("ProfessionalGroup", "supportingText", "Die Berufsgruppe muss Kaufmann oder Informatiker sein.")
+		xreflect.SetFieldTagFor[user.Settings]("MobilePhone", "supportingText", "Wir benötigen die Telefonnummer, um Ihnen Buchungsbestätigungen zu schicken.")
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(

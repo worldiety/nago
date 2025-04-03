@@ -90,6 +90,7 @@ type ShortRegistrationUser struct {
 	Verified          bool
 	// legal, optional
 	Newsletter                LegalAdoption
+	SMS                       LegalAdoption
 	GeneralTermsAndConditions LegalAdoption
 	DataProtectionProvision   LegalAdoption
 	MinAge                    LegalAdoption
@@ -102,6 +103,7 @@ type ShortRegistrationUser struct {
 	State             string
 	Country           string
 	ProfessionalGroup string
+	MobilePhone       string
 }
 
 // ID of a user entity in the Nago IAM.
@@ -205,6 +207,7 @@ type User struct {
 	GeneralTermsAndConditions LegalAdoption `json:"gtc,omitzero"`
 	DataProtectionProvision   LegalAdoption `json:"gdpr,omitzero"`
 	MinAge                    LegalAdoption `json:"minAge,omitzero"`
+	SMS                       LegalAdoption `json:"sms,omitzero"`
 
 	// global permissions
 	Roles       []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
