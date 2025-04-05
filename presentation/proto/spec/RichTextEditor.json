@@ -1,0 +1,29 @@
+{
+  "kind": "Record",
+  "doc": "RichTextEditor provides a simple area for viewing and editing simple html styled text fragments.",
+  "id": 125,
+  "fields": {
+    "1": {
+      "doc": "Value contains the text, which shall be shown or edited.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "ReadOnly",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "5": {
+      "doc": "InputValue is a binding to a state, into which the frontend will submit its state. This is the pointer to a State.",
+      "name": "InputValue",
+      "type": "Ptr"
+    }
+  }
+}

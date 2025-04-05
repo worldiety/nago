@@ -27,6 +27,8 @@ import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
 import UiForm from '@/components/form/UiForm.vue';
 import UiHStack from '@/components/hstack/UiHStack.vue';
 import UiMenu from '@/components/menu/UiMenu.vue';
+import UiRichText from '@/components/richtexteditor/UiRichText.vue';
+import UiRichTextEditor from '@/components/richtexteditor/UiRichTextEditor.vue';
 import UiScaffold from '@/components/scaffold/UiScaffold.vue';
 import UiScrollView from '@/components/scrollview/UiScrollView.vue';
 import UiSpacer from '@/components/spacer/UiSpacer.vue';
@@ -49,6 +51,8 @@ import {
 	Component as NagoComponent,
 	PasswordField,
 	Radiobutton,
+	RichText,
+	RichTextEditor,
 	Scaffold,
 	ScrollView,
 	Spacer,
@@ -166,6 +170,14 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof CodeEditor) {
 		return UiCodeEditor;
+	}
+
+	if (ngc instanceof RichText) {
+		return UiRichText;
+	}
+
+	if (ngc instanceof RichTextEditor) {
+		return UiRichTextEditor;
 	}
 
 	// keep this as the default fallback

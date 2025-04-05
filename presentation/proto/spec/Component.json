@@ -26,6 +26,8 @@
     "Menu",
     "Form",
     "CountDown",
-    "CodeEditor"
+    "CodeEditor",
+    "RichTextEditor",
+    "RichText"
   ]
 }

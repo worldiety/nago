@@ -245,31 +245,33 @@ type Component interface {
 	Readable
 }
 
-func (Box) isComponent()           {}
-func (DatePicker) isComponent()    {}
-func (Checkbox) isComponent()      {}
-func (Divider) isComponent()       {}
-func (Grid) isComponent()          {}
-func (HStack) isComponent()        {}
-func (Img) isComponent()           {}
-func (Modal) isComponent()         {}
-func (WindowTitle) isComponent()   {}
-func (PasswordField) isComponent() {}
-func (Radiobutton) isComponent()   {}
-func (ScrollView) isComponent()    {}
-func (Scaffold) isComponent()      {}
-func (Spacer) isComponent()        {}
-func (TextView) isComponent()      {}
-func (TextField) isComponent()     {}
-func (TextLayout) isComponent()    {}
-func (Table) isComponent()         {}
-func (Toggle) isComponent()        {}
-func (VStack) isComponent()        {}
-func (WebView) isComponent()       {}
-func (Menu) isComponent()          {}
-func (Form) isComponent()          {}
-func (CountDown) isComponent()     {}
-func (CodeEditor) isComponent()    {}
+func (Box) isComponent()            {}
+func (DatePicker) isComponent()     {}
+func (Checkbox) isComponent()       {}
+func (Divider) isComponent()        {}
+func (Grid) isComponent()           {}
+func (HStack) isComponent()         {}
+func (Img) isComponent()            {}
+func (Modal) isComponent()          {}
+func (WindowTitle) isComponent()    {}
+func (PasswordField) isComponent()  {}
+func (Radiobutton) isComponent()    {}
+func (ScrollView) isComponent()     {}
+func (Scaffold) isComponent()       {}
+func (Spacer) isComponent()         {}
+func (TextView) isComponent()       {}
+func (TextField) isComponent()      {}
+func (TextLayout) isComponent()     {}
+func (Table) isComponent()          {}
+func (Toggle) isComponent()         {}
+func (VStack) isComponent()         {}
+func (WebView) isComponent()        {}
+func (Menu) isComponent()           {}
+func (Form) isComponent()           {}
+func (CountDown) isComponent()      {}
+func (CodeEditor) isComponent()     {}
+func (RichTextEditor) isComponent() {}
+func (RichText) isComponent()       {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -9550,6 +9552,186 @@ func (v *CodeEditor) read(r *BinaryReader) error {
 	return nil
 }
 
+// RichTextEditor provides a simple area for viewing and editing simple html styled text fragments.
+type RichTextEditor struct {
+	// Value contains the text, which shall be shown or edited.
+	Value    Str
+	Frame    Frame
+	ReadOnly Bool
+	Disabled Bool
+	// InputValue is a binding to a state, into which the frontend will submit its state. This is the pointer to a State.
+	InputValue Ptr
+}
+
+func (v *RichTextEditor) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.ReadOnly.IsZero()
+	fields[4] = !v.Disabled.IsZero()
+	fields[5] = !v.InputValue.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ReadOnly.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RichTextEditor) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ReadOnly.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RichText renders a small subset of HTML which shall look mostly native in the current view context.
+type RichText struct {
+	// Value contains the text, which shall be shown or edited.
+	Value Str
+	Frame Frame
+}
+
+func (v *RichText) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RichText) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -10309,6 +10491,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 124:
 		var v CodeEditor
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 125:
+		var v RichTextEditor
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 126:
+		var v RichText
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12459,6 +12653,27 @@ func (v *CodeEditor) IsZero() bool {
 	return v.Value.IsZero() && v.Frame.IsZero() && v.ReadOnly.IsZero() && v.Disabled.IsZero() && v.TabSize.IsZero() && v.InputValue.IsZero() && v.Language.IsZero()
 }
 
+func (v *RichTextEditor) reset() {
+	v.Value.reset()
+	v.Frame.reset()
+	v.ReadOnly.reset()
+	v.Disabled.reset()
+	v.InputValue.reset()
+}
+
+func (v *RichTextEditor) IsZero() bool {
+	return v.Value.IsZero() && v.Frame.IsZero() && v.ReadOnly.IsZero() && v.Disabled.IsZero() && v.InputValue.IsZero()
+}
+
+func (v *RichText) reset() {
+	v.Value.reset()
+	v.Frame.reset()
+}
+
+func (v *RichText) IsZero() bool {
+	return v.Value.IsZero() && v.Frame.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -13315,6 +13530,20 @@ func (v *DurationSec) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CodeEditor) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 124); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RichTextEditor) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 125); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RichText) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 126); err != nil {
 		return err
 	}
 	return nil

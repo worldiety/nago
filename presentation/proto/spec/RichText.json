@@ -1,0 +1,16 @@
+{
+  "kind": "Record",
+  "doc": "RichText renders a small subset of HTML which shall look mostly native in the current view context.",
+  "id": 126,
+  "fields": {
+    "1": {
+      "doc": "Value contains the text, which shall be shown or edited.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}

@@ -20,7 +20,9 @@ export default {
 			addVariant('protanopia', '.protanopia &');
 			addVariant('deuteranopia', '.deuteranopia &');
 			addVariant('tritanopia', '.tritanopia &');
-		})
+		}),
+		require('@tailwindcss/typography'),
+
 	],
 
 	theme: {
@@ -28,6 +30,18 @@ export default {
 			screens: {
 				'xs': '400px',
 			},
+	/*		typography: (theme) => ({
+				DEFAULT: {
+					css: {
+						'h1, h2, h3': {
+							color: theme('colors.M8'),
+						'code':{
+							color: theme('colors.M8'),
+						}
+						},
+					},
+				},
+			}),*/
 			colors: ({colors}) => {
 				const customColors = {
 					// generic colors

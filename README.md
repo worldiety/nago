@@ -52,3 +52,8 @@ Then launch the backend:
 go run ./example/cmd/tutorial-01-helloworld
 ```
 
+## Prod und Dev Ports
+
+The default production setting serves the precompiled VueJS build from http://localhost:3000
+
+When using the vite development build with hot reloading, you need to use http://localhost:8090
