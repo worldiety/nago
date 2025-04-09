@@ -166,6 +166,7 @@ func validateContact(
 	state, errState *core.State[string],
 	country, errCountry *core.State[string],
 	professionalGroup, errProfessionalGroup *core.State[string],
+	mobile, errMobile *core.State[string],
 ) bool {
 	errFirstname.Set("")
 	errLastname.Set("")
@@ -177,6 +178,7 @@ func validateContact(
 	errCountry.Set("")
 	errState.Set("")
 	errProfessionalGroup.Set("")
+	errMobile.Set("")
 	anyError := false
 
 	if firstname.Get() == "" {
@@ -232,6 +234,11 @@ func validateContact(
 
 	if !userSettings.ProfessionalGroup.Match(professionalGroup.Get()) {
 		errProfessionalGroup.Set(xstrings.Space("Bitte die Berufsgruppe eingeben.", supportingTextProfessionalGroup()))
+		anyError = true
+	}
+
+	if !userSettings.MobilePhone.Match(mobile.Get()) {
+		errMobile.Set(xstrings.Space("Bitte die mobile Telefonnummer eingeben.", supportingTextMobilePhone()))
 		anyError = true
 	}
 

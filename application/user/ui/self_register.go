@@ -185,6 +185,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							state, errState,
 							country, errCountry,
 							professionalGroup, errProfessionalGroup,
+							mobile, errMobile,
 						) {
 							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
 						}
