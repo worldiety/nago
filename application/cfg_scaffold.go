@@ -438,7 +438,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			menu = append(menu, sentry)
 		}
 
-		menuDialogPresented := core.AutoState[bool](wnd)
+		menuDialogPresented := ScaffoldUserMenuPresentedState(wnd)
 
 		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil && b.showLogin {
 			if !wnd.Subject().Valid() {
@@ -481,6 +481,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 
 		return scaffold
 	}
+}
+
+func ScaffoldUserMenuPresentedState(wnd core.Window) *core.State[bool] {
+	return core.StateOf[bool](wnd, "nago.scaffold.user.menu.presented")
 }
 
 func (b *ScaffoldBuilder) logoActionClick(wnd core.Window) func() {

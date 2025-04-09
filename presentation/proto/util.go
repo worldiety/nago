@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-var validComponentIdRegex = regexp.MustCompile(`[A-Za-z0-9_\-{/}]+`)
+var validComponentIdRegex = regexp.MustCompile(`[A-Za-z0-9_\-{/}]+[/*]?`)
 
 // NewScopeID returns a hex encoded and filename safe 32 byte entropy.
 func NewScopeID() ScopeID {
@@ -41,4 +41,20 @@ func (c RootViewID) Valid() bool {
 	}
 
 	return validComponentIdRegex.FindString(string(c)) == string(c)
+}
+
+func (c RootViewID) IsWildcard() bool {
+	return strings.HasSuffix(string(c), "/*")
+}
+
+func (c RootViewID) Matches(other RootViewID) bool {
+	if c == other {
+		return true
+	}
+
+	if c.IsWildcard() {
+		return strings.HasPrefix(string(other), string(c[:len(c)-1]))
+	}
+
+	return false
 }

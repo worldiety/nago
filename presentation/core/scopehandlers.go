@@ -195,6 +195,16 @@ func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequest
 	window := newScopeWindow(s, evt.Factory, newValuesFromProto(evt.Values))
 	fac := s.factories[evt.Factory]
 	if fac == nil {
+		// slow fallback, maybe a wildcard route
+		for rootViewID, factory := range s.factories {
+			if rootViewID.IsWildcard() && rootViewID.Matches(evt.Factory) {
+				fac = factory
+				break
+			}
+		}
+	}
+
+	if fac == nil {
 		slog.Error("frontend requested unknown factory", slog.String("path", string(evt.Factory)), slog.Int("requestId", int(evt.RID)))
 		fac = s.factories["_"]
 		if fac == nil {

@@ -24,15 +24,20 @@ import (
 //   - Main Activity resp. index page: .
 //   - Fallback resp. not found page: _
 //
+// There is also a wildcard support to capture multiple pages at once, independently of many suffix elements are
+// appended. A wildcard can only occur at the end of a path.
+//
 // Valid examples:
 //   - a
 //   - a/b/c
+//   - a/b/c/*
 //
 // Invalid examples:
 //
 //	-
 //	- a?b=c&d=e
 //	- \a b \c
+//	- a/*/b
 type NavigationPath string
 
 func intoStrSlice[A, B ~string](in []A) []B {
