@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/session"
 	uisession "go.wdy.de/nago/application/session/ui"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
@@ -107,14 +106,14 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			}
 
 			if optSession.IsNone() {
-				wnd.UpdateSubject(auth.InvalidSubject{})
+				wnd.UpdateSubject(nil)
 				return
 			}
 
 			ses := optSession.Unwrap()
 
 			if ses.User.IsNone() {
-				wnd.UpdateSubject(auth.InvalidSubject{})
+				wnd.UpdateSubject(nil)
 				return
 			}
 
@@ -129,7 +128,7 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			if optSubject.IsSome() {
 				wnd.UpdateSubject(optSubject.Unwrap())
 			} else {
-				wnd.UpdateSubject(auth.InvalidSubject{})
+				wnd.UpdateSubject(nil)
 			}
 
 		})

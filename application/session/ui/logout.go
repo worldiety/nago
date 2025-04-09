@@ -10,7 +10,6 @@ package uisession
 import (
 	"fmt"
 	"go.wdy.de/nago/application/session"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -28,7 +27,7 @@ func Logout(wnd core.Window, logoutFn session.Logout) core.View {
 						return
 					}
 
-					wnd.UpdateSubject(auth.InvalidSubject{})
+					wnd.UpdateSubject(nil)
 				}).Title("Jetzt abmelden"),
 			).Gap(ui.L16),
 			ui.Text("Sie sind abgemeldet.").TextAlignment(ui.TextAlignCenter),
