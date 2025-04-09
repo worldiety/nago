@@ -28,6 +28,7 @@
     "CountDown",
     "CodeEditor",
     "RichTextEditor",
-    "RichText"
+    "RichText",
+    "HoverGroup"
   ]
 }

@@ -16,6 +16,7 @@ type TVStack struct {
 	children               []core.View
 	alignment              proto.Alignment
 	backgroundColor        proto.Color
+	textColor              proto.Color
 	hoveredBackgroundColor proto.Color
 	pressedBackgroundColor proto.Color
 	focusedBackgroundColor proto.Color
@@ -35,6 +36,7 @@ type TVStack struct {
 	action             func()
 	position           Position
 	id                 string
+	noClip             bool
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -62,6 +64,11 @@ func (c TVStack) StylePreset(preset StylePreset) TVStack {
 	return c
 }
 
+func (c TVStack) TextColor(textColor Color) TVStack {
+	c.textColor = textColor.ora()
+	return c
+}
+
 func (c TVStack) BackgroundColor(backgroundColor Color) DecoredView {
 	c.backgroundColor = backgroundColor.ora()
 	return c
@@ -84,6 +91,11 @@ func (c TVStack) FocusedBackgroundColor(backgroundColor proto.Color) TVStack {
 
 func (c TVStack) Action(f func()) TVStack {
 	c.action = f
+	return c
+}
+
+func (c TVStack) NoClip(b bool) TVStack {
+	c.noClip = b
 	return c
 }
 
@@ -161,6 +173,7 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		StylePreset:        c.stylePreset,
+		TextColor:          c.textColor,
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,
 		PressedBackgroundColor: c.pressedBackgroundColor,
@@ -171,5 +184,6 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Action:                 ctx.MountCallback(c.action),
 		Position:               c.position.ora(),
 		Id:                     proto.Str(c.id),
+		NoClip:                 proto.Bool(c.noClip),
 	}
 }

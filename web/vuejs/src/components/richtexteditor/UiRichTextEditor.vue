@@ -8,12 +8,12 @@
 -->
 
 <script setup lang="ts">
-import {computed} from 'vue';
+import { computed } from 'vue';
 import Editor from '@/components/richtexteditor/Editor.vue';
-import {frameCSSObject} from '@/components/shared/frame';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
-import {RichTextEditor, UpdateStateValueRequested} from '@/shared/proto/nprotoc_gen';
+import { frameCSSObject } from '@/components/shared/frame';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import { RichTextEditor, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: RichTextEditor;
@@ -50,5 +50,5 @@ function onBlur(): any {
 </script>
 
 <template v-if="props.ui.iv">
-	<editor v-model="ui.value" :style="frameStyles" :disabled="props.ui.disabled" @blur="onBlur"/>
+	<editor v-model="ui.value" :style="frameStyles" :disabled="props.ui.disabled" @blur="onBlur" />
 </template>

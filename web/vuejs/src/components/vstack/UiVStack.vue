@@ -108,6 +108,10 @@ function commonStyles(): string[] {
 		styles.push('outline: 2px solid black'); // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
 	}
 
+	if (props.ui.textColor) {
+		styles.push(`color: ${colorValue(props.ui.textColor)}`);
+	}
+
 	return styles;
 }
 
@@ -122,7 +126,10 @@ const frameStyles = computed<string>(() => {
 });
 
 const clazz = computed<string>(() => {
-	let classes = ['overflow-clip', 'inline-flex', 'flex-col'];
+	let classes = ['inline-flex', 'flex-col'];
+	if (!props.ui.noClip) {
+		classes.push('overflow-clip');
+	}
 	switch (props.ui.alignment) {
 		case AlignmentValues.Stretch:
 			classes.push('items-stretch');

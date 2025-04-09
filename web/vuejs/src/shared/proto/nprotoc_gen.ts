@@ -6042,6 +6042,8 @@ export class ScrollView implements Writeable, Readable, Component {
 
 	public invisible?: Bool;
 
+	public position?: Position;
+
 	constructor(
 		content: Component | undefined = undefined,
 		border: Border | undefined = undefined,
@@ -6049,7 +6051,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		padding: Padding | undefined = undefined,
 		backgroundColor: Color | undefined = undefined,
 		axis: ScrollViewAxis | undefined = undefined,
-		invisible: Bool | undefined = undefined
+		invisible: Bool | undefined = undefined,
+		position: Position | undefined = undefined
 	) {
 		this.content = content;
 		this.border = border;
@@ -6058,6 +6061,7 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.backgroundColor = backgroundColor;
 		this.axis = axis;
 		this.invisible = invisible;
+		this.position = position;
 	}
 
 	read(reader: BinaryReader): void {
@@ -6102,6 +6106,11 @@ export class ScrollView implements Writeable, Readable, Component {
 					this.invisible = readBool(reader);
 					break;
 				}
+				case 8: {
+					this.position = new Position();
+					this.position.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -6118,6 +6127,7 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.backgroundColor !== undefined,
 			this.axis !== undefined,
 			this.invisible !== undefined,
+			this.position !== undefined && !this.position.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6151,6 +6161,10 @@ export class ScrollView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
 			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -6161,7 +6175,8 @@ export class ScrollView implements Writeable, Readable, Component {
 			(this.padding === undefined || this.padding.isZero()) &&
 			this.backgroundColor === undefined &&
 			this.axis === undefined &&
-			this.invisible === undefined
+			this.invisible === undefined &&
+			(this.position === undefined || this.position.isZero())
 		);
 	}
 
@@ -6173,6 +6188,7 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.backgroundColor = undefined;
 		this.axis = undefined;
 		this.invisible = undefined;
+		this.position = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8465,6 +8481,10 @@ export class VStack implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public textColor?: Color;
+
+	public noClip?: Bool;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -8486,7 +8506,9 @@ export class VStack implements Writeable, Readable, Component {
 		position: Position | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		textColor: Color | undefined = undefined,
+		noClip: Bool | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -8509,6 +8531,8 @@ export class VStack implements Writeable, Readable, Component {
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.textColor = textColor;
+		this.noClip = noClip;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8610,6 +8634,14 @@ export class VStack implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 22: {
+					this.textColor = readString(reader);
+					break;
+				}
+				case 23: {
+					this.noClip = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8640,6 +8672,8 @@ export class VStack implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.textColor !== undefined,
+			this.noClip !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8727,6 +8761,14 @@ export class VStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 21);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
+			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[23]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8751,7 +8793,9 @@ export class VStack implements Writeable, Readable, Component {
 			(this.position === undefined || this.position.isZero()) &&
 			this.disabled === undefined &&
 			this.invisible === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.textColor === undefined &&
+			this.noClip === undefined
 		);
 	}
 
@@ -8777,6 +8821,8 @@ export class VStack implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.textColor = undefined;
+		this.noClip = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -10182,6 +10228,185 @@ export class RichText implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// A ScrollView can either be horizontal or vertical.
+export class HoverGroup implements Writeable, Readable, Component {
+	public content?: Component;
+
+	public border?: Border;
+
+	public frame?: Frame;
+
+	public padding?: Padding;
+
+	public backgroundColor?: Color;
+
+	public invisible?: Bool;
+
+	public position?: Position;
+
+	public contentHover?: Component;
+
+	constructor(
+		content: Component | undefined = undefined,
+		border: Border | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		padding: Padding | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		position: Position | undefined = undefined,
+		contentHover: Component | undefined = undefined
+	) {
+		this.content = content;
+		this.border = border;
+		this.frame = frame;
+		this.padding = padding;
+		this.backgroundColor = backgroundColor;
+		this.invisible = invisible;
+		this.position = position;
+		this.contentHover = contentHover;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				case 2: {
+					this.border = new Border();
+					this.border.read(reader);
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 4: {
+					this.padding = new Padding();
+					this.padding.read(reader);
+					break;
+				}
+				case 5: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
+				case 6: {
+					this.invisible = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.position = new Position();
+					this.position.read(reader);
+					break;
+				}
+				case 8: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.contentHover = unmarshal(reader) as Component;
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.content !== undefined && !this.content.isZero(),
+			this.border !== undefined && !this.border.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.padding !== undefined && !this.padding.isZero(),
+			this.backgroundColor !== undefined,
+			this.invisible !== undefined,
+			this.position !== undefined && !this.position.isZero(),
+			this.contentHover !== undefined && !this.contentHover.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 8);
+			writer.writeByte(1);
+			this.contentHover!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.content === undefined || this.content.isZero()) &&
+			(this.border === undefined || this.border.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			(this.padding === undefined || this.padding.isZero()) &&
+			this.backgroundColor === undefined &&
+			this.invisible === undefined &&
+			(this.position === undefined || this.position.isZero()) &&
+			(this.contentHover === undefined || this.contentHover.isZero())
+		);
+	}
+
+	reset(): void {
+		this.content = undefined;
+		this.border = undefined;
+		this.frame = undefined;
+		this.padding = undefined;
+		this.backgroundColor = undefined;
+		this.invisible = undefined;
+		this.position = undefined;
+		this.contentHover = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 127);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -10779,6 +11004,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 126: {
 			const v = new RichText();
+			v.read(src);
+			return v;
+		}
+		case 127: {
+			const v = new HoverGroup();
 			v.read(src);
 			return v;
 		}

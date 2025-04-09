@@ -71,7 +71,7 @@ export default {
 </script>
 
 <template>
-	<div v-if="editor" class="container">
+	<div v-if="editor" class="">
 		<div class="control-group">
 			<div class="gap-1 flex flex-wrap">
 				<button

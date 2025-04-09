@@ -272,6 +272,7 @@ func (CountDown) isComponent()      {}
 func (CodeEditor) isComponent()     {}
 func (RichTextEditor) isComponent() {}
 func (RichText) isComponent()       {}
+func (HoverGroup) isComponent()     {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -5845,10 +5846,11 @@ type ScrollView struct {
 	BackgroundColor Color
 	Axis            ScrollViewAxis
 	Invisible       Bool
+	Position        Position
 }
 
 func (v *ScrollView) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Border.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -5856,6 +5858,7 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 	fields[5] = !v.BackgroundColor.IsZero()
 	fields[6] = !v.Axis.IsZero()
 	fields[7] = !v.Invisible.IsZero()
+	fields[8] = !v.Position.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5929,6 +5932,14 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5985,6 +5996,11 @@ func (v *ScrollView) read(r *BinaryReader) error {
 			}
 		case 7:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Position.read(r)
 			if err != nil {
 				return err
 			}
@@ -8076,11 +8092,13 @@ type VStack struct {
 	Disabled               Bool
 	Invisible              Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id Str
+	Id        Str
+	TextColor Color
+	NoClip    Bool
 }
 
 func (v *VStack) write(w *BinaryWriter) error {
-	var fields [22]bool
+	var fields [24]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -8102,6 +8120,8 @@ func (v *VStack) write(w *BinaryWriter) error {
 	fields[19] = !v.Disabled.IsZero()
 	fields[20] = !v.Invisible.IsZero()
 	fields[21] = !v.Id.IsZero()
+	fields[22] = !v.TextColor.IsZero()
+	fields[23] = !v.NoClip.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8280,6 +8300,22 @@ func (v *VStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[22] {
+		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
+			return err
+		}
+		if err := v.TextColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[23] {
+		if err := w.writeFieldHeader(uvarint, 23); err != nil {
+			return err
+		}
+		if err := v.NoClip.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8397,6 +8433,16 @@ func (v *VStack) read(r *BinaryReader) error {
 			}
 		case 21:
 			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 22:
+			err := v.TextColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 23:
+			err := v.NoClip.read(r)
 			if err != nil {
 				return err
 			}
@@ -9732,6 +9778,194 @@ func (v *RichText) read(r *BinaryReader) error {
 	return nil
 }
 
+// A ScrollView can either be horizontal or vertical.
+type HoverGroup struct {
+	Content         Component
+	Border          Border
+	Frame           Frame
+	Padding         Padding
+	BackgroundColor Color
+	Invisible       Bool
+	Position        Position
+	ContentHover    Component
+}
+
+func (v *HoverGroup) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.Border.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.Padding.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.Invisible.IsZero()
+	fields[7] = !v.Position.IsZero()
+	fields[8] = v.ContentHover != nil && !v.ContentHover.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 8); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.ContentHover.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.ContentHover.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *HoverGroup) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.ContentHover = obj.(Component)
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -10503,6 +10737,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 126:
 		var v RichText
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 127:
+		var v HoverGroup
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12030,10 +12270,11 @@ func (v *ScrollView) reset() {
 	v.BackgroundColor.reset()
 	v.Axis.reset()
 	v.Invisible.reset()
+	v.Position.reset()
 }
 
 func (v *ScrollView) IsZero() bool {
-	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero()
+	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero()
 }
 
 func (v *Resource) reset() {
@@ -12423,10 +12664,12 @@ func (v *VStack) reset() {
 	v.Disabled.reset()
 	v.Invisible.reset()
 	v.Id.reset()
+	v.TextColor.reset()
+	v.NoClip.reset()
 }
 
 func (v *VStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero()
 }
 
 func (v *WebView) reset() {
@@ -12672,6 +12915,21 @@ func (v *RichText) reset() {
 
 func (v *RichText) IsZero() bool {
 	return v.Value.IsZero() && v.Frame.IsZero()
+}
+
+func (v *HoverGroup) reset() {
+	v.Content = nil
+	v.Border.reset()
+	v.Frame.reset()
+	v.Padding.reset()
+	v.BackgroundColor.reset()
+	v.Invisible.reset()
+	v.Position.reset()
+	v.ContentHover = nil
+}
+
+func (v *HoverGroup) IsZero() bool {
+	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ContentHover.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -13544,6 +13802,13 @@ func (v *RichTextEditor) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *RichText) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 126); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *HoverGroup) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 127); err != nil {
 		return err
 	}
 	return nil

@@ -26,9 +26,11 @@ const serviceAdapter = useServiceAdapter();
 let [trigger, container] = usePopper({
 	placement: 'bottom-end',
 	strategy: 'fixed',
+	disablePortal: false,
 	modifiers: [
 		{ name: 'flip', enabled: true },
-		{ name: 'offset', options: { offset: [0, 8] } },
+		{ name: 'preventOverflow:', enabled: true, boundariesElement: 'viewport' },
+		{ name: 'offset', options: { offset: [0, 0] } },
 	],
 });
 

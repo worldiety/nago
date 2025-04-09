@@ -1,7 +1,7 @@
 {
   "doc": "A ScrollView can either be horizontal or vertical.",
   "kind": "Record",
-  "id": 90,
+  "id": 127,
   "fields": {
     "1": {
       "name": "Content",
@@ -24,16 +24,16 @@
       "type": "Color"
     },
     "6": {
-      "name": "Axis",
-      "type": "ScrollViewAxis"
-    },
-    "7": {
       "name": "Invisible",
       "type": "Bool"
     },
-    "8": {
+    "7": {
       "name": "Position",
       "type": "Position"
+    },
+    "8": {
+      "name": "ContentHover",
+      "type": "Component"
     }
   }
 }

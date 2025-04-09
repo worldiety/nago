@@ -15,10 +15,10 @@ import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
-import { ScrollView, ScrollViewAxisValues } from '@/shared/proto/nprotoc_gen';
+import { HoverGroup } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
-	ui: ScrollView;
+	ui: HoverGroup;
 }>();
 
 const styles = computed<string>(() => {
@@ -35,48 +35,21 @@ const styles = computed<string>(() => {
 	return styles.join(';');
 });
 
-const classes = computed<string>(() => {
-	const css: string[] = [];
-
-	// note, that we defined its style in scrollbars.css
-	switch (props.ui.axis) {
-		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
-			css.push('overflow-x-auto', 'overflow-y-hidden');
-			break;
-		case ScrollViewAxisValues.ScrollViewAxisBoth:
-			css.push('overflow-x-auto', 'overflow-y-auto');
-			break;
-		default:
-			css.push('overflow-y-auto', 'overflow-x-hidden');
-			break;
-	}
-
-	return css.join(' ');
-});
-
-const innerStyles = computed<string>(() => {
-	const css: string[] = []; //borderCSS(props.ui.border);
-
-	switch (props.ui.axis) {
-		case ScrollViewAxisValues.ScrollViewAxisHorizontal:
-			css.push('min-width: max-content');
-			break;
-		default:
-			css.push('height: max-content');
-			break;
-	}
-
-	return css.join(';');
-});
-
 // note that we need the max-content hack, otherwise we get layout bugs at least for horizontal areas
 </script>
 
 <template v-if="props.ui.iv">
-	<!-- UiScrollView -->
-	<div :class="classes" :style="styles">
-		<div :style="innerStyles">
-			<UiGeneric v-if="ui.content" :ui="ui.content" />
-		</div>
+	<!-- UiHoverGroup -->
+	<div class="group relative" :style="styles">
+		<UiGeneric
+			v-if="ui.content"
+			:ui="ui.content"
+			class="absolute transition-opacity duration-300 opacity-100 group-hover:opacity-0"
+		/>
+		<UiGeneric
+			v-if="ui.contentHover"
+			:ui="ui.contentHover"
+			class="absolute transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+		/>
 	</div>
 </template>

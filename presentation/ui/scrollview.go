@@ -25,9 +25,13 @@ const (
 )
 
 type TScrollView struct {
-	content core.View
-	axis    ScrollViewAxis
-	frame   Frame
+	content         core.View
+	axis            ScrollViewAxis
+	frame           Frame
+	position        Position
+	border          Border
+	backgroundColor Color
+	padding         Padding
 }
 
 // A ScrollView can either be horizontal or vertical. By default, it is vertical.
@@ -48,10 +52,34 @@ func (c TScrollView) Frame(frame Frame) TScrollView {
 	return c
 }
 
+func (c TScrollView) Position(position Position) TScrollView {
+	c.position = position
+	return c
+}
+
+func (c TScrollView) Border(border Border) TScrollView {
+	c.border = border
+	return c
+}
+
+func (c TScrollView) Padding(padding Padding) TScrollView {
+	c.padding = padding
+	return c
+}
+
+func (c TScrollView) BackgroundColor(color Color) TScrollView {
+	c.backgroundColor = color
+	return c
+}
+
 func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.ScrollView{
-		Content: render(ctx, c.content),
-		Axis:    c.axis.ora(),
-		Frame:   c.frame.ora(),
+		Content:         render(ctx, c.content),
+		Axis:            c.axis.ora(),
+		Frame:           c.frame.ora(),
+		Position:        c.position.ora(),
+		Border:          c.border.ora(),
+		BackgroundColor: c.backgroundColor.ora(),
+		Padding:         c.padding.ora(),
 	}
 }

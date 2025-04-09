@@ -10,8 +10,8 @@ import { onMounted, ref, watchEffect } from 'vue';
 import { createPopper } from '@popperjs/core';
 
 export function usePopper(options) {
-	let reference = ref(null);
-	let popper = ref(null);
+	let reference = ref<HTMLElement | null>(null);
+	let popper = ref<HTMLElement | null>(null);
 
 	onMounted(() => {
 		watchEffect((onInvalidate) => {
