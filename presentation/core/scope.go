@@ -228,6 +228,11 @@ func (s *Scope) handleMessage(buf []byte) error {
 		return fmt.Errorf("protocol error while handle message: %T is not a proto.NagoEvent", t)
 	}
 
+	if s.destroyed.Value() {
+		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
+		return fmt.Errorf("scope already destroyed")
+	}
+
 	s.eventLoop.Post(func() {
 		s.handleEvent(nagoEvt)
 
