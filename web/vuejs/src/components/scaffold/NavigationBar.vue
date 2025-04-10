@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<nav class="fixed top-0 left-0 right-0 text-black h-24 z-30 bg-M1">
+	<nav class="fixed top-0 left-0 right-0 h-24 z-30 bg-M1">
 		<!-- Top bar -->
 		<div class="relative bg-M1 h-full py-5 z-20 flex items-center">
 			<div class="website-content w-full flex justify-between items-center">

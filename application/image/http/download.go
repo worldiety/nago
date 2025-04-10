@@ -36,6 +36,23 @@ func NewURL(apiPath string, imgOrSrcSet image.ID, fit image.ObjectFit, width, he
 	return apiPath + "?" + values.Encode()
 }
 
+// EstimateWidth calculates a worst maximum width of the image assuming a landscape image stretched within
+// the conventional bounds within a nago application. This underestimates (== picking a resolution which is to low):
+//   - if image is in portrait mode but has a fit cover on width, because the width is actually much larger to fill
+//     the resulting height
+//   - if image is not within the content bounds of 100 rem.
+//
+// Note, that we don't implement the SrcSet logic because it is actually of no help for us.
+// In CSS this is entirely broken and stupid: the browser literally knows exactly how
+// to layout an image, including any transformation matrix (especially inner scaling e.g. due to fitcover) and
+// the final amount of required pixel resolution, but they decided to not integrate that deep enough.
+//
+// TODO start always with a low-res image and write a javascript estimation which picks the requires resolution after layout
+func EstimateWidth(wnd core.Window) int {
+	targetWidth := min(wnd.Info().Width, 100*16) //100 rem * 16px or just the window width
+	return int(targetWidth)
+}
+
 // URI uses the default Endpoint. See [NewURL].
 func URI(imgOrSrcSet image.ID, fit image.ObjectFit, width, height int) core.URI {
 	if imgOrSrcSet == "" {

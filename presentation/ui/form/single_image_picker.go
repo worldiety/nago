@@ -56,8 +56,8 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	}
 
 	// the preview case
-	// TODO replace me with source set due to different density problem
-	uri := core.URI(http_image.NewURL(http_image.Endpoint, id, image.FitCover, 550, 256))
+	targetWidth := http_image.EstimateWidth(wnd)
+	uri := core.URI(http_image.NewURL(http_image.Endpoint, id, image.FitCover, targetWidth, targetWidth))
 
 	return ui.Box(ui.BoxLayout{
 		TopTrailing: ui.HStack(

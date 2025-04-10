@@ -52,7 +52,7 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 	}
 
 	if opts.MaxWidthOrHeight == 0 {
-		opts.MaxWidthOrHeight = 3840
+		opts.MaxWidthOrHeight = 8500 // this is 72MP, note that iPhone 15 Pro already takes 48,8 MP at 8064 × 6048
 	}
 
 	return func(user permission.Auditable, customOpts Options, img File) (SrcSet, error) {
