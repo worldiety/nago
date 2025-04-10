@@ -101,7 +101,7 @@ func (c *circleLookups) isMember(usr user.User) bool {
 		return false
 	}
 
-	if len(c.users) == 0 && len(c.groups) == 0 && len(c.domains) == 0 {
+	if len(c.users) == 0 && len(c.groups) == 0 && len(c.domains) == 0 && len(c.roles) == 0 {
 		return true
 	}
 
