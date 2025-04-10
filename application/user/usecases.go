@@ -76,6 +76,10 @@ type UnassignUserLicense func(auditable permission.Auditable, id ID, license lic
 // automations, cron jobs, scheduled processes or data(base) migrations.
 type SysUser func() Subject
 
+// GetAnonUser returns an anonymous user which has all the declared permissions, roles and groups defined by the
+// settings.
+type GetAnonUser func() Subject
+
 // AuthenticateByPassword checks mail and password and returns the view of the user to the caller.
 type AuthenticateByPassword func(email Email, password Password) (std.Option[User], error)
 
@@ -142,9 +146,10 @@ type UseCases struct {
 	AssignUserLicense         AssignUserLicense
 	UnassignUserLicense       UnassignUserLicense
 	CountUsers                CountUsers
+	GetAnonUser               GetAnonUser
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
@@ -216,5 +221,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		AssignUserLicense:         NewAssignUserLicense(&globalLock, users, countAssignedUserLicenseFn, findUserLicenseByID),
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
+		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
 	}
 }

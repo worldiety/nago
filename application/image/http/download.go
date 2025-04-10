@@ -9,7 +9,7 @@ package httpimage
 
 import (
 	"go.wdy.de/nago/application/image"
-	"go.wdy.de/nago/auth/iam"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"io"
 	"log/slog"
@@ -92,7 +92,8 @@ func NewHandler(loadFit image.LoadBestFit) http.HandlerFunc {
 			fit = image.FitNone
 		}
 
-		optReader, err := loadFit(iam.FromContext(r.Context()), srcImgId, fit, width, height)
+		// TODO we need to discuss our security model for images
+		optReader, err := loadFit(user.SU(), srcImgId, fit, width, height)
 		if err != nil {
 			http.Error(w, "blob error", http.StatusInternalServerError)
 			slog.Error("cannot load image blob", "err", err, "src", srcImgId)

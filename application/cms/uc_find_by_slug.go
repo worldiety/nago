@@ -30,7 +30,7 @@ func NewFindBySlug(slugs *concurrent.RWMap[Slug, ID], repo Repository) FindBySlu
 			return option.None[*Document](), os.ErrNotExist
 		}
 
-		if err := subject.AuditResource(repo.Name(), string(optDoc.Unwrap().ID), PermFindAll); err != nil {
+		if err := subject.AuditResource(repo.Name(), string(optDoc.Unwrap().ID), PermFindBySlug); err != nil {
 			return option.None[*Document](), err
 		}
 

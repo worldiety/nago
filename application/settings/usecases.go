@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"log/slog"
 	"reflect"
 )
@@ -82,11 +83,11 @@ type UseCases struct {
 	StoreMySettings StoreMySettings
 }
 
-func NewUseCases(globalRepo data.Repository[StoreBox[GlobalSettings], ID], userRepo data.Repository[StoreBox[UserSettings], ID]) UseCases {
+func NewUseCases(globalRepo data.Repository[StoreBox[GlobalSettings], ID], userRepo data.Repository[StoreBox[UserSettings], ID], bus events.Bus) UseCases {
 
 	return UseCases{
 		LoadGlobal:  NewLoadGlobal(globalRepo),
-		StoreGlobal: NewStoreGlobal(globalRepo),
+		StoreGlobal: NewStoreGlobal(globalRepo, bus),
 	}
 }
 

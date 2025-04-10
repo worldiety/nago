@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID], subjectFromUser user.SubjectFromUser, subjectLookup *concurrent.RWMap[Plaintext, user.Subject]) AuthenticateSubject {
+func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID], subjectFromUser user.SubjectFromUser, subjectLookup *concurrent.RWMap[Plaintext, user.Subject], anonUser user.GetAnonUser) AuthenticateSubject {
 	return func(plaintext Plaintext) (auth.Subject, error) {
 		subj, ok := subjectLookup.Get(plaintext)
 		if ok {
@@ -38,7 +38,7 @@ func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHas
 		tid, ok := reverseHashLookup.Get(hash)
 		if !ok {
 			//
-			return auth.InvalidSubject{}, nil
+			return anonUser(), nil
 		}
 
 		// security note: we bypass the constant time comparison of the argon2id (or whatever algorithm)
@@ -49,7 +49,7 @@ func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHas
 		}
 
 		if optToken.IsNone() {
-			return auth.InvalidSubject{}, nil
+			return anonUser(), nil
 		}
 
 		token := optToken.Unwrap()
@@ -67,7 +67,7 @@ func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHas
 		}
 
 		if optUsr.IsNone() {
-			return auth.InvalidSubject{}, nil
+			return anonUser(), nil
 		}
 
 		usr := optUsr.Unwrap()

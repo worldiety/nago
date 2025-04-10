@@ -22,6 +22,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/blob/crypto"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/proto"
@@ -119,7 +120,9 @@ func (c *Configurator) newHandler() http.Handler {
 		panic(fmt.Errorf("could not get master key: %v", err))
 	}
 
-	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key, c.eventBus)
+	getAnonUser := std.Must(c.UserManagement()).UseCases.GetAnonUser // user management is also not optional anymore
+
+	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key, c.eventBus, getAnonUser)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)
@@ -466,6 +469,7 @@ func (c *Configurator) newHandler() http.Handler {
 		// todo new
 		defer func() {
 			if r := recover(); r != nil {
+				fmt.Println(r)
 				debug.PrintStack()
 			}
 		}()

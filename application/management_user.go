@@ -61,7 +61,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		_ = licenseUseCases
 
 		c.userManagement = &UserManagement{
-			UseCases: user.NewUseCases(c.EventBus(), settings.UseCases.LoadGlobal, userRepo, roleUseCases.roleRepository, licenseUseCases.UseCases.PerUser.FindByID),
+			UseCases: user.NewUseCases(c.EventBus(), settings.UseCases.LoadGlobal, userRepo, roleUseCases.roleRepository, licenseUseCases.UseCases.PerUser.FindByID, roleUseCases.UseCases.FindByID),
 			Pages: uiuser.Pages{
 				Users:         "admin/accounts",
 				MyProfile:     "account/profile",

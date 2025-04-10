@@ -57,9 +57,10 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 			groups.UseCases.FindByID,
 			roles.UseCases.FindByID,
 			users.UseCases.FindByID,
+			users.UseCases.GetAnonUser,
 			licenses.UseCases.PerUser.FindByID,
 		)
-		
+
 		if err != nil {
 			return TokenManagement{}, fmt.Errorf("cannot get token usecases: %w", err)
 		}

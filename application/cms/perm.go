@@ -16,6 +16,7 @@ var (
 	PermUpdatePublished = permission.Declare[UpdatePublished]("nago.cms.doc.published.update", "CMS Dokument-Published aktualisieren", "Träger dieser Berechtigung können die Veröffentlichung eines Dokumentes aktualisieren.")
 	PermUpdateTitle     = permission.Declare[UpdateTitle]("nago.cms.doc.title.update", "CMS Dokument-Titel aktualisieren", "Träger dieser Berechtigung können den Titel eines Dokumentes aktualisieren.")
 	PermFindAll         = permission.Declare[FindAll]("nago.cms.doc.find_all", "CMS Dokumente auflisten", "Träger dieser Berechtigung können CMS Dokumente auflisten.")
+	PermFindBySlug      = permission.Declare[FindBySlug]("nago.cms.doc.find_by_slug", "CMS Dokument per Slug anzeigen", "Träger dieser Berechtigung können einzelne CMS Dokumente mittels Slug anzeigen.")
 	PermAppendElement   = permission.Declare[AppendElement]("nago.cms.elem.append", "CMS Dokument Element anhängen", "Träger dieser Berechtigung können ein Element an ein CMS Dokument anhängen.")
 	PermUpdateElement   = permission.Declare[UpdateElement]("nago.cms.elem.update", "CMS Dokument Element aktualisieren", "Träger dieser Berechtigung können ein Element aktualisieren.")
 	PermReplaceElement  = permission.Declare[ReplaceElement]("nago.cms.elem.replace", "CMS Dokument Element ersetzen", "Träger dieser Berechtigung können ein Element ersetzen.")

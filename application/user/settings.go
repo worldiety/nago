@@ -53,7 +53,8 @@ func (f FieldConstraint) Match(str string) bool {
 }
 
 type Settings struct {
-	_                 any  `title:"Nutzerverwaltung" description:"Allgemeine Vorgaben bezüglich der Nutzerverwaltung vornehmen."`
+	_ any `title:"Nutzerverwaltung" description:"Allgemeine Vorgaben bezüglich der Nutzerverwaltung vornehmen."`
+
 	SelfPasswordReset bool `json:"selfPasswordReset" label:"Passwort vergessen Funktion" supportingText:"Nutzer können im Self-Service ihre Kennwörter zurücksetzen. Hierfür ist ein Mail-Server erforderlich."`
 
 	SelfRegistration bool `json:"selfRegistration" label:"Freie Registrierung" supportingText:"Wenn erlaubt, dann kann sich jeder anonyme Besucher ein eigenes Konto erstellen. Ansonsten müssen die Nutzerkonten manuell durch einen Administrator erstellt werden."`
@@ -81,6 +82,10 @@ type Settings struct {
 	Country           FieldConstraint `section:"Kontakt" label:"Land"`
 	ProfessionalGroup FieldConstraint `section:"Kontakt" label:"Berufsgruppe"`
 	MobilePhone       FieldConstraint `section:"Kontakt" label:"Mobile"`
+
+	______     any        `section:"Anonyme Nutzer" label:"Standardrollen und Gruppen von anonymen oder ungültigen Nutzern. Diese Rollen werden nicht auf gültige und angemeldete Nutzer vererbt, sodass eine Unterscheidung möglich ist."`
+	AnonRoles  []role.ID  `section:"Anonyme Nutzer" json:"anonRoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen hat jeder anonyme Nutzer."`
+	AnonGroups []group.ID `section:"Anonyme Nutzer" json:"anonGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen hat jeder anonyme Nutzer."`
 }
 
 func (s Settings) GlobalSettings() bool { return true }

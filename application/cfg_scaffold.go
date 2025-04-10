@@ -533,7 +533,9 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 							return
 						}
 
-						wnd.UpdateSubject(auth.InvalidSubject{})
+						if b.cfg.userManagement != nil {
+							wnd.UpdateSubject(b.cfg.userManagement.UseCases.GetAnonUser())
+						}
 						wnd.Navigation().ForwardTo(sessionManagement.Pages.Logout, nil)
 					}).PreIcon(heroOutline.ArrowLeftStartOnRectangle).AccessibilityLabel("Abmelden"),
 				).FullWidth().Gap(ui.L8).Alignment(ui.Leading),

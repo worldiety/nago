@@ -37,7 +37,7 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 
 		c.roleManagement = &RoleManagement{
 			roleRepository: roleRepo,
-			UseCases:       role.NewUseCases(roleRepo),
+			UseCases:       role.NewUseCases(roleRepo, c.EventBus()),
 			Pages:          uirole.Pages{Roles: "admin/iam/role"},
 		}
 

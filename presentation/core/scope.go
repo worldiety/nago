@@ -99,7 +99,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id prot
 	}
 	s.location = loc
 
-	s.subject.SetValue(auth.InvalidSubject{})
+	s.subject.SetValue(s.app.getAnonUser())
 
 	s.eventLoop.SetOnPanicHandler(func(p any) {
 		/*s.Publish(proto.ErrorOccurred{

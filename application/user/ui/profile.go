@@ -12,8 +12,6 @@ import (
 	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/auth"
-
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
@@ -33,7 +31,7 @@ func ProfilePage(
 	findMyRoles role.FindMyRoles,
 ) core.View {
 	if !wnd.Subject().Valid() {
-		return alert.BannerError(auth.NotLoggedIn(""))
+		return alert.BannerError(user.PermissionDeniedErr)
 	}
 
 	contact, err := readMyContact(wnd.Subject())

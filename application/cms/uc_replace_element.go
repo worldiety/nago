@@ -15,7 +15,7 @@ import (
 
 func NewReplaceElement(mutex *sync.Mutex, repo Repository) ReplaceElement {
 	return func(subject auth.Subject, id ID, elem Element) error {
-		if err := subject.AuditResource(repo.Name(), string(id), PermUpdateElement); err != nil {
+		if err := subject.AuditResource(repo.Name(), string(id), PermReplaceElement); err != nil {
 			return err
 		}
 

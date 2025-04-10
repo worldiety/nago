@@ -241,7 +241,7 @@ func (s *scopeWindow) Application() *Application {
 
 func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 	if subject == nil {
-		subject = auth.InvalidSubject{}
+		subject = s.parent.app.getAnonUser()
 	}
 
 	s.parent.subject.SetValue(subject)

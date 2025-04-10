@@ -88,6 +88,7 @@ func NewUseCases(
 	findGroupByID group.FindByID,
 	findRoleByID role.FindByID,
 	findUserByID user.FindByID,
+	getAnonUser user.GetAnonUser,
 	findLicenseByID license.FindUserLicenseByID,
 ) (UseCases, error) {
 	var mutex sync.Mutex
@@ -147,7 +148,7 @@ func NewUseCases(
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
-		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup),
+		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
 		ResolveTokenRights: NewResolveTokenRights(
 			repo,

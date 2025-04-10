@@ -11,6 +11,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"iter"
 	"sync"
 )
@@ -62,15 +63,15 @@ type UseCases struct {
 	FindMyRoles FindMyRoles
 }
 
-func NewUseCases(repo Repository) UseCases {
+func NewUseCases(repo Repository, bus events.Bus) UseCases {
 	// note, that we cannot refactor to use auth.Decorate the repo, due to bootstrapping and cycle problem
 	var roleMutex sync.Mutex
 	findByIdFn := NewFindByID(repo)
 	findAllFn := NewFindAll(repo)
-	createFn := NewCreate(&roleMutex, repo)
-	upsertFn := NewUpsert(&roleMutex, repo)
-	updateFn := NewUpdate(&roleMutex, repo)
-	deleteFn := NewDelete(&roleMutex, repo)
+	createFn := NewCreate(&roleMutex, repo, bus)
+	upsertFn := NewUpsert(&roleMutex, repo, bus)
+	updateFn := NewUpdate(&roleMutex, repo, bus)
+	deleteFn := NewDelete(&roleMutex, repo, bus)
 	findMyRolesFn := NewFindMyRoles(repo)
 
 	return UseCases{

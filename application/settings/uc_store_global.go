@@ -11,10 +11,11 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"reflect"
 )
 
-func NewStoreGlobal(repo data.Repository[StoreBox[GlobalSettings], ID]) StoreGlobal {
+func NewStoreGlobal(repo data.Repository[StoreBox[GlobalSettings], ID], bus events.Bus) StoreGlobal {
 	return func(subject permission.Auditable, settings GlobalSettings) error {
 		if err := subject.Audit(PermStoreGlobal); err != nil {
 			return err
@@ -36,9 +37,16 @@ func NewStoreGlobal(repo data.Repository[StoreBox[GlobalSettings], ID]) StoreGlo
 			}
 		}
 
-		return repo.Save(StoreBox[GlobalSettings]{
+		err := repo.Save(StoreBox[GlobalSettings]{
 			ID:       id,
 			Settings: settings,
 		})
+
+		if err != nil {
+			return err
+		}
+
+		bus.Publish(GlobalSettingsUpdated{Settings: settings})
+		return nil
 	}
 }

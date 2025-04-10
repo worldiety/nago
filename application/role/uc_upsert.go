@@ -11,11 +11,12 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"strings"
 	"sync"
 )
 
-func NewUpsert(mutex *sync.Mutex, repo Repository) Upsert {
+func NewUpsert(mutex *sync.Mutex, repo Repository, bus events.Bus) Upsert {
 	return func(subject permission.Auditable, role Role) (ID, error) {
 		if err := subject.Audit(PermCreate); err != nil {
 			return "", err
@@ -43,6 +44,12 @@ func NewUpsert(mutex *sync.Mutex, repo Repository) Upsert {
 			return "", fmt.Errorf("random id collision on upsert creation")
 		}
 
-		return role.ID, repo.Save(role)
+		if err := repo.Save(role); err != nil {
+			return "", err
+		}
+
+		bus.Publish(Updated{Role: role.ID})
+
+		return role.ID, nil
 	}
 }

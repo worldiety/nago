@@ -39,7 +39,7 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 
 		usrRepo := json.NewSloppyJSONRepository[settings.StoreBox[settings.UserSettings]](usrStore)
 
-		uc := settings.NewUseCases(globalRepo, usrRepo)
+		uc := settings.NewUseCases(globalRepo, usrRepo, c.EventBus())
 		c.settingsManagement = &SettingsManagement{
 			UseCases: uc,
 			Pages: uisettings.Pages{

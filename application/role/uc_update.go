@@ -9,12 +9,13 @@ package role
 
 import (
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"strings"
 	"sync"
 )
 
-func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
+func NewUpdate(mutex *sync.Mutex, repo Repository, bus events.Bus) Update {
 	return func(subject permission.Auditable, role Role) error {
 		if err := subject.Audit(PermUpdate); err != nil {
 			return err
@@ -27,6 +28,12 @@ func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
 			return std.NewLocalizedError("Ungültige EID", "Eine leere Gruppen EID ist nicht zulässig.")
 		}
 
-		return repo.Save(role)
+		if err := repo.Save(role); err != nil {
+			return err
+		}
+
+		bus.Publish(Updated{Role: role.ID})
+
+		return nil
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -64,8 +65,9 @@ type Application struct {
 
 	findVirtualSession session.FindUserSessionByID
 
-	masterKey crypto.EncryptionKey
-	bus       events.Bus
+	masterKey   crypto.EncryptionKey
+	bus         events.Bus
+	getAnonUser user.GetAnonUser
 }
 
 func NewApplication(
@@ -77,6 +79,7 @@ func NewApplication(
 	findVirtualSession session.FindUserSessionByID,
 	masterKey crypto.EncryptionKey,
 	bus events.Bus,
+	getAnonUser user.GetAnonUser,
 ) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
@@ -95,7 +98,8 @@ func NewApplication(
 			Light: {},
 			Dark:  {},
 		},
-		bus: bus,
+		bus:         bus,
+		getAnonUser: getAnonUser,
 	}
 
 	return a
