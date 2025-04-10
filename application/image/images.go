@@ -10,6 +10,7 @@ package image
 import (
 	"fmt"
 	"go.wdy.de/nago/pkg/data"
+	"math"
 )
 
 type Format string
@@ -72,6 +73,14 @@ func (s SrcSet) FitCover(width, height int) (Image, bool) {
 
 	if len(s.Images) == 1 {
 		return s.Images[0], true
+	}
+
+	if width <= 0 {
+		width = math.MaxInt
+	}
+
+	if height <= 0 {
+		height = math.MaxInt
 	}
 
 	srcAspect := float64(s.Images[0].Width) / float64(s.Images[0].Height)
