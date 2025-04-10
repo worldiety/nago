@@ -48,7 +48,7 @@ type CreateSrcSet func(user permission.Auditable, customOpts Options, img File) 
 
 func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) CreateSrcSet {
 	if opts.MaxFileSize == 0 {
-		opts.MaxFileSize = 1024 * 1024 * 32
+		opts.MaxFileSize = 1024 * 1024 * 64
 	}
 
 	if opts.MaxWidthOrHeight == 0 {
