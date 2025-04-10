@@ -88,10 +88,6 @@ type Window interface {
 	// a new unique random scope id.
 	Session() session.UserSession
 
-	// Authenticate triggers a round trip so that [Window.Subject] may contain a valid user afterward.
-	// For sure, the user can always cancel that.
-	Authenticate()
-
 	// Locale returns the negotiated language tag or locale identifier between the frontend and the backend.
 	Locale() language.Tag
 

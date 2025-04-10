@@ -2031,15 +2031,17 @@ type WindowInfo struct {
 	SizeClass WindowSizeClass
 	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
 	ColorScheme ColorScheme
+	UserAgent   Str
 }
 
 func (v *WindowInfo) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [7]bool
 	fields[1] = !v.Width.IsZero()
 	fields[2] = !v.Height.IsZero()
 	fields[3] = !v.Density.IsZero()
 	fields[4] = !v.SizeClass.IsZero()
 	fields[5] = !v.ColorScheme.IsZero()
+	fields[6] = !v.UserAgent.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2090,6 +2092,14 @@ func (v *WindowInfo) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.UserAgent.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2127,6 +2137,11 @@ func (v *WindowInfo) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.ColorScheme.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.UserAgent.read(r)
 			if err != nil {
 				return err
 			}
@@ -11301,10 +11316,11 @@ func (v *WindowInfo) reset() {
 	v.Density.reset()
 	v.SizeClass.reset()
 	v.ColorScheme.reset()
+	v.UserAgent.reset()
 }
 
 func (v *WindowInfo) IsZero() bool {
-	return v.Width.IsZero() && v.Height.IsZero() && v.Density.IsZero() && v.SizeClass.IsZero() && v.ColorScheme.IsZero()
+	return v.Width.IsZero() && v.Height.IsZero() && v.Density.IsZero() && v.SizeClass.IsZero() && v.ColorScheme.IsZero() && v.UserAgent.IsZero()
 }
 
 type DP float64

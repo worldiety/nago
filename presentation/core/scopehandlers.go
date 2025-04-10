@@ -49,6 +49,7 @@ func (s *Scope) handleEvent(t proto.NagoEvent) {
 func (s *Scope) handleWindowInfoChanged(evt *proto.WindowInfoChanged) {
 	winfo := evt.WindowInfo
 	s.updateWindowInfo(WindowInfo{
+		UserAgent:   UserAgent(winfo.UserAgent),
 		Width:       DP(winfo.Width),
 		Height:      DP(winfo.Height),
 		Density:     Density(winfo.Density),

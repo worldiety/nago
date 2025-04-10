@@ -22,6 +22,10 @@
       "doc": "ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.",
       "name": "ColorScheme",
       "type": "ColorScheme"
+    },
+    "6": {
+      "name": "UserAgent",
+      "type": "Str"
     }
   }
 }

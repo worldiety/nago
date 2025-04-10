@@ -7,7 +7,10 @@
 
 package core
 
-import "go.wdy.de/nago/presentation/proto"
+import (
+	"go.wdy.de/nago/presentation/proto"
+	"strings"
+)
 
 // DP is Density-independent pixels: an abstract unit that is based on the physical density of the screen.
 // These units are relative to a 160 dpi (dots per inch) screen, on which 1 dp is roughly equal to 1 px.
@@ -32,12 +35,45 @@ type Density float64
 // of all weights and recalculate the effective percentage.
 type Weight float64
 
+type UserAgent string
+
+func (a UserAgent) IsSafari() bool {
+	ua := string(a)
+	return strings.Contains(ua, "Safari") &&
+		!strings.Contains(ua, "Chrome") &&
+		!strings.Contains(ua, "Chromium")
+}
+
+func (a UserAgent) IsMobile() bool {
+	ua := string(a)
+	return strings.Contains(ua, "Mobile") || strings.Contains(ua, "EdgA") || strings.Contains(ua, "EdgiOS")
+}
+
+func (a UserAgent) IsChrome() bool {
+	ua := string(a)
+	return strings.Contains(ua, "Chrome") &&
+		!strings.Contains(ua, "Edg") && // Microsoft Edge
+		!strings.Contains(ua, "OPR") && // Opera
+		!strings.Contains(ua, "Chromium") // Chromium selbst
+}
+
+func (a UserAgent) IsFirefox() bool {
+	ua := string(a)
+	return strings.Contains(ua, "Firefox") && !strings.Contains(ua, "Seamonkey")
+}
+
+func (a UserAgent) IsEdge() bool {
+	ua := string(a)
+	return strings.Contains(ua, "Edg") && !strings.Contains(ua, "EdgiOS") && !strings.Contains(ua, "EdgA")
+}
+
 type WindowInfo struct {
 	Width       DP
 	Height      DP
 	Density     Density
 	SizeClass   WindowSizeClass
 	ColorScheme ColorScheme
+	UserAgent   UserAgent
 }
 
 // WindowSizeClass represents media break points of the screen which an ora application is shown.

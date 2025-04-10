@@ -2057,18 +2057,22 @@ export class WindowInfo implements Writeable, Readable {
 	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
 	public colorScheme?: ColorScheme;
 
+	public userAgent?: Str;
+
 	constructor(
 		width: DP | undefined = undefined,
 		height: DP | undefined = undefined,
 		density: Density | undefined = undefined,
 		sizeClass: WindowSizeClass | undefined = undefined,
-		colorScheme: ColorScheme | undefined = undefined
+		colorScheme: ColorScheme | undefined = undefined,
+		userAgent: Str | undefined = undefined
 	) {
 		this.width = width;
 		this.height = height;
 		this.density = density;
 		this.sizeClass = sizeClass;
 		this.colorScheme = colorScheme;
+		this.userAgent = userAgent;
 	}
 
 	read(reader: BinaryReader): void {
@@ -2097,6 +2101,10 @@ export class WindowInfo implements Writeable, Readable {
 					this.colorScheme = readInt(reader);
 					break;
 				}
+				case 6: {
+					this.userAgent = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -2111,6 +2119,7 @@ export class WindowInfo implements Writeable, Readable {
 			this.density !== undefined,
 			this.sizeClass !== undefined,
 			this.colorScheme !== undefined,
+			this.userAgent !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -2134,6 +2143,10 @@ export class WindowInfo implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
 			writeInt(writer, this.colorScheme!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.userAgent!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -2142,7 +2155,8 @@ export class WindowInfo implements Writeable, Readable {
 			this.height === undefined &&
 			this.density === undefined &&
 			this.sizeClass === undefined &&
-			this.colorScheme === undefined
+			this.colorScheme === undefined &&
+			this.userAgent === undefined
 		);
 	}
 
@@ -2152,6 +2166,7 @@ export class WindowInfo implements Writeable, Readable {
 		this.density = undefined;
 		this.sizeClass = undefined;
 		this.colorScheme = undefined;
+		this.userAgent = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

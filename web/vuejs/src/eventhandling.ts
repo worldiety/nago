@@ -24,7 +24,6 @@ import {
 	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
 	SendMultipleRequested,
-	Str,
 	ThemeRequested,
 	URI,
 	WindowInfo,
@@ -68,6 +67,7 @@ export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
 	windowInfo.width = window.innerWidth;
 	windowInfo.height = window.innerHeight;
 	windowInfo.sizeClass = currentSizeClass();
+	windowInfo.userAgent = navigator.userAgent;
 
 	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
 		windowInfo.colorScheme = ColorSchemeValues.Dark;
