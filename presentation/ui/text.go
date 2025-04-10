@@ -15,6 +15,8 @@ import (
 	"strings"
 )
 
+const LinkTargetNewWindowOrTab = "_blank"
+
 type TextAlignment uint
 
 const (

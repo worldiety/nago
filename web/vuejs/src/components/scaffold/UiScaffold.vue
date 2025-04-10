@@ -12,10 +12,15 @@
 	<Sidebar v-if="sidebarVisible" :ui="props.ui" />
 	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui" />
 
-	<div class="min-h-full" :class="bodyWrapperClass">
-		<div class="website-content min-h-full">
+	<div class="min-h-full flex flex-col min-h-screen" :class="bodyWrapperClass">
+		<div class="website-content min-h-full flex-grow w-full">
 			<ui-generic v-if="props.ui.body" :ui="props.ui.body" />
 		</div>
+
+		<!-- Footer -->
+		<footer v-if="props.ui.footer" class="">
+			<ui-generic :ui="props.ui.footer" />
+		</footer>
 	</div>
 </template>
 
@@ -68,6 +73,8 @@ const bodyWrapperClass = computed((): string | undefined => {
 	}
 	return undefined;
 });
+
+console.log(props.ui);
 
 function updateWindowWidth(): void {
 	windowWidth.value = window.innerWidth;

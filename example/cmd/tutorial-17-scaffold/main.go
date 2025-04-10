@@ -15,6 +15,7 @@ import (
 	icons2 "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	icons "go.wdy.de/nago/presentation/icons/hero/solid"
 	. "go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/footer"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -37,6 +38,13 @@ func main() {
 					WindowTitle("Scaffold Example"),
 					Text("Page body"),
 				)).
+				Footer(footer.Footer().
+					Logo(Image().Embed(appIcon)).
+					Impress("https://www.worldiety.de/impressum").
+					PrivacyPolicy("https://www.worldiety.de/datenschutz").
+					GeneralTermsAndConditions("https://www.worldiety.de/loesungen/software-entwicklung").
+					ProviderName("© worldiety GmbH"),
+				).
 				Logo(Image().Embed(appIcon).Frame(Frame{}.Size("auto", L64))).
 				Breakpoint(1000).
 				Menu(

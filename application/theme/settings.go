@@ -26,10 +26,17 @@ type Colors struct {
 type Settings struct {
 	_ any `title:"Theme" description:"Theme und Einstellungen der Corporate Identity."`
 
-	PageLogoLight image.ID `json:"pageLogoLight" label:"Seitenlogo Light-Mode"`
-	PageLogoDark  image.ID `json:"pageLogoDark" label:"Seitenlogo Dark-Mode"`
-	AppIconLight  image.ID `json:"appIconLight" label:"App Icon Light-Mode"`
-	AppIconDark   image.ID `json:"appIconDark" label:"App Icon Dark-Mode"`
+	PageLogoLight image.ID `json:"pageLogoLight" section:"Logos" label:"Seitenlogo Light-Mode"`
+	PageLogoDark  image.ID `json:"pageLogoDark" section:"Logos" label:"Seitenlogo Dark-Mode"`
+	AppIconLight  image.ID `json:"appIconLight" section:"Logos" label:"App Icon Light-Mode"`
+	AppIconDark   image.ID `json:"appIconDark" section:"Logos" label:"App Icon Dark-Mode"`
+
+	Impress                   string `json:"impress" section:"Rechtliches" label:"Impressum" supportingText:"Link zum Impressum. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/impressum."`
+	PrivacyPolicy             string `json:"privacyPolicy" section:"Rechtliches" label:"Datenschutz" supportingText:"Link zur Datenschutzerklärung. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/datenschutz."`
+	GeneralTermsAndConditions string `json:"generalTermsAndConditions" section:"Rechtliches" label:"AGB" supportingText:"Link zur AGB. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/agb."`
+	ProviderName              string `json:"providerName" section:"Rechtliches" label:"Anbieter" supportingText:"Name des Anbieters der rechtlich für die Inhalte verantwortlich ist."`
+
+	Slogan string `json:"slogan" section:"Sonstiges" label:"Slogan" supportingText:"Slogan oder Mission des Anbieters."`
 
 	Colors Colors `json:"colors"` // TODO form.Auto cannot render that today, also this is not wanted from the designers perspective and it affects the global applications
 }

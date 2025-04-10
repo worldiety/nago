@@ -13,7 +13,9 @@ import (
 	"go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/presentation/ui/footer"
 
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
@@ -21,18 +23,8 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
-	"go.wdy.de/nago/presentation/ui/markdown"
 	"go.wdy.de/nago/presentation/ui/tracking"
 )
-
-//go:embed content_impress_de.md
-var defaultImpress []byte
-
-//go:embed content_gdpr_de.md
-var defaultGDPR []byte
-
-//go:embed content_policies_de.md
-var defaultPolicies []byte
 
 type MenuEntryBuilder struct {
 	parent               *ScaffoldBuilder
@@ -197,32 +189,24 @@ func (b *SubMenuEntryBuilder) PublicOnly() *SubMenuBuilder {
 }
 
 type ScaffoldBuilder struct {
-	cfg             *Configurator
-	alignment       ui.ScaffoldAlignment
-	policiesPath    core.NavigationPath
-	policiesContent []byte
-	gdprPath        core.NavigationPath
-	gdprContent     []byte
-	impressPath     core.NavigationPath
-	impressContent  []byte
-	menu            []*MenuEntryBuilder
-	logoClick       func(wnd core.Window)
-	logoImage       ui.DecoredView
-	showLogin       bool
-	breakpoint      *int
+	cfg              *Configurator
+	alignment        ui.ScaffoldAlignment
+	menu             []*MenuEntryBuilder
+	logoClick        func(wnd core.Window)
+	logoImage        ui.DecoredView
+	showLogin        bool
+	breakpoint       *int
+	footer           core.View
+	enableAutoFooter bool
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 	return &ScaffoldBuilder{
-		cfg:             c,
-		alignment:       ui.ScaffoldAlignmentTop,
-		policiesPath:    "legal/policies",
-		policiesContent: defaultPolicies,
-		impressPath:     "legal/impress",
-		impressContent:  defaultImpress,
-		gdprPath:        "legal/gdpr",
-		gdprContent:     defaultGDPR,
-		showLogin:       true,
+		cfg:       c,
+		alignment: ui.ScaffoldAlignmentTop,
+
+		showLogin:        true,
+		enableAutoFooter: true,
 		logoClick: func(wnd core.Window) {
 			wnd.Navigation().ForwardTo(".", nil)
 		},
@@ -249,6 +233,12 @@ func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBui
 // See [ScaffoldBuilder.LogoAction] to declare a listener which receives [core.Window] for navigation.
 func (b *ScaffoldBuilder) Logo(image ui.DecoredView) *ScaffoldBuilder {
 	b.logoImage = image
+	return b
+}
+
+func (b *ScaffoldBuilder) Footer(footer core.View) *ScaffoldBuilder {
+	b.footer = footer
+	b.enableAutoFooter = false
 	return b
 }
 
@@ -296,27 +286,6 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 				ui.WindowTitle("Nicht gefunden"),
 				alert.Banner("Resource nicht gefunden", "Die Seite, Funktion oder Resource wurde nicht gefunden."),
 			)
-		})(wnd)
-	})
-
-	b.cfg.RootView(b.impressPath, func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return markdown.Render(markdown.Options{Window: wnd}, b.impressContent)
-		})(wnd)
-	})
-
-	b.cfg.RootView(b.policiesPath, func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return markdown.Render(markdown.Options{Window: wnd}, b.policiesContent)
-		})(wnd)
-	})
-
-	b.cfg.RootView(b.gdprPath, func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return markdown.Render(markdown.Options{Window: wnd}, b.gdprContent)
 		})(wnd)
 	})
 
@@ -479,6 +448,21 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			scaffold = scaffold.Breakpoint(*b.breakpoint)
 		}
 
+		if b.footer != nil {
+			scaffold = scaffold.Footer(b.footer)
+		} else if b.enableAutoFooter {
+			themeCfg := core.GlobalSettings[theme.Settings](wnd)
+			autoFooter := footer.Footer().
+				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark)).
+				Impress(themeCfg.Impress).
+				PrivacyPolicy(themeCfg.PrivacyPolicy).
+				ProviderName(themeCfg.ProviderName).
+				Slogan(themeCfg.Slogan).
+				GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
+
+			scaffold = scaffold.Footer(autoFooter)
+		}
+
 		return scaffold
 	}
 }
@@ -514,6 +498,8 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 		avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L120)
 	}
 
+	themeCfg := core.GlobalSettings[theme.Settings](wnd)
+
 	return ui.VStack(
 		ui.HStack(
 			avatarIcon,
@@ -548,15 +534,17 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *Sessio
 			}).Title("Konto verwalten"),
 		).FullWidth().Alignment(ui.Trailing),
 		ui.HStack(
-			ui.Text("Datenschutzerklärung").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(b.gdprPath, nil)
-			}),
-			ui.Text("Nutzungsbedingungen").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(b.policiesPath, nil)
-			}),
-			ui.Text("Impressum").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(b.impressPath, nil)
-			}),
+			ui.If(themeCfg.PrivacyPolicy != "", ui.Text("Datenschutzerklärung").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.PrivacyPolicy), nil)
+			})),
+
+			ui.If(themeCfg.GeneralTermsAndConditions != "", ui.Text("Nutzungsbedingungen").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.PrivacyPolicy), nil)
+			})),
+
+			ui.If(themeCfg.Impress != "", ui.Text("Impressum").Font(ui.Small).Action(func() {
+				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.Impress), nil)
+			})),
 		).FullWidth().Gap(ui.L8).Padding(ui.Padding{Top: ui.L16}),
 	).Alignment(ui.Leading).FullWidth()
 }

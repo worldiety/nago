@@ -64,6 +64,7 @@ type TScaffold struct {
 	alignment  proto.ScaffoldAlignment
 	menu       []ScaffoldMenuEntry
 	breakpoint int
+	footer     core.View
 }
 
 func Scaffold(alignment ScaffoldAlignment) TScaffold {
@@ -85,6 +86,11 @@ func (c TScaffold) Menu(items ...ScaffoldMenuEntry) TScaffold {
 	return c
 }
 
+func (c TScaffold) Footer(view core.View) TScaffold {
+	c.footer = view
+	return c
+}
+
 func (c TScaffold) Breakpoint(breakpoint int) TScaffold {
 	c.breakpoint = breakpoint
 	return c
@@ -98,6 +104,7 @@ func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 		Menu:       makeMenu(ctx, c.menu),
 		Alignment:  c.alignment,
 		Breakpoint: proto.Uint(c.breakpoint),
+		Footer:     render(ctx, c.footer),
 	}
 }
 

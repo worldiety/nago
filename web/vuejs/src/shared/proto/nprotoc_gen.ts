@@ -5681,18 +5681,22 @@ export class Scaffold implements Writeable, Readable, Component {
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
 	public breakpoint?: Uint;
 
+	public footer?: Component;
+
 	constructor(
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
 		menu: ScaffoldMenuEntries | undefined = undefined,
 		alignment: ScaffoldAlignment | undefined = undefined,
-		breakpoint: Uint | undefined = undefined
+		breakpoint: Uint | undefined = undefined,
+		footer: Component | undefined = undefined
 	) {
 		this.body = body;
 		this.logo = logo;
 		this.menu = menu;
 		this.alignment = alignment;
 		this.breakpoint = breakpoint;
+		this.footer = footer;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5732,6 +5736,15 @@ export class Scaffold implements Writeable, Readable, Component {
 					this.breakpoint = readInt(reader);
 					break;
 				}
+				case 6: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.footer = unmarshal(reader) as Component;
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5746,6 +5759,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.menu !== undefined && !this.menu.isZero(),
 			this.alignment !== undefined,
 			this.breakpoint !== undefined,
+			this.footer !== undefined && !this.footer.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5773,6 +5787,12 @@ export class Scaffold implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
 			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 6);
+			writer.writeByte(1);
+			this.footer!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5781,7 +5801,8 @@ export class Scaffold implements Writeable, Readable, Component {
 			(this.logo === undefined || this.logo.isZero()) &&
 			(this.menu === undefined || this.menu.isZero()) &&
 			this.alignment === undefined &&
-			this.breakpoint === undefined
+			this.breakpoint === undefined &&
+			(this.footer === undefined || this.footer.isZero())
 		);
 	}
 
@@ -5791,6 +5812,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.menu = undefined;
 		this.alignment = undefined;
 		this.breakpoint = undefined;
+		this.footer = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
