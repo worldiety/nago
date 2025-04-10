@@ -126,7 +126,8 @@ func execTypst(fsys fs.FS) (io.ReadCloser, error) {
 	_ = os.MkdirAll(tmpDir, 0700) // security note: do not allow that others read our directory
 	defer os.RemoveAll(tmpDir)
 
-	if _, ok := which("typst"); !ok {
+	typstExec, ok := which("typst")
+	if !ok {
 		// TODO try remote rendering through wdy render host
 		return nil, fmt.Errorf("cannot find typst executable")
 	}
@@ -135,7 +136,7 @@ func execTypst(fsys fs.FS) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("cannot copy typst files: %w", err)
 	}
 
-	cmd := exec.Command("typst", "compile", mainFile)
+	cmd := exec.Command(typstExec, "compile", mainFile)
 	cmd.Dir = tmpDir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
@@ -149,7 +150,7 @@ func execTypst(fsys fs.FS) (io.ReadCloser, error) {
 
 func bestMainTypstCandiate(fsys fs.FS) (string, error) {
 	var candidates []string
-	fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -161,6 +162,10 @@ func bestMainTypstCandiate(fsys fs.FS) (string, error) {
 		return nil
 	})
 
+	if err != nil {
+		return "", err
+	}
+
 	slices.Sort(candidates)
 	if len(candidates) == 0 {
 		return "", fmt.Errorf("cannot find any typst file (*.typ)")
@@ -170,6 +175,13 @@ func bestMainTypstCandiate(fsys fs.FS) (string, error) {
 }
 
 func which(what string) (string, bool) {
+	var staticLookups = []string{"/bin/typst", "/opt/homebrew/bin/typst"}
+	for _, path := range staticLookups {
+		if _, err := os.Stat(path); err == nil {
+			return path, true
+		}
+	}
+
 	cmd := exec.Command("which", what)
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
