@@ -85,6 +85,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	var subcaption string
 	var pageBody core.View
 	nextCaption := "weiter"
+	nextVisible := true
 	switch registerPageCurrent.Get() {
 	case registerPageNames:
 		subcaption = "Bitte den Kontakt eingeben"
@@ -119,6 +120,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		subcaption = "Konto verifizieren"
 		pageBody = registerResult(regErr.Get())
 		nextCaption = "Fertig"
+		nextVisible = false
 	}
 
 	var content core.View
@@ -256,7 +258,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 						regErr.Set(err)
 						registerPageCurrent.Set(registerPageCurrent.Get() + 1)
 					}
-				}).Title(nextCaption).Enabled(registerPageCurrent.Get() != registerRes),
+				}).Title(nextCaption).Enabled(registerPageCurrent.Get() != registerRes).Visible(nextVisible),
 			).Gap(ui.L8)),
 	).Frame(cardFrame).Padding(ui.Padding{}.All(ui.L16))
 }
