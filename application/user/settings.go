@@ -83,7 +83,7 @@ type Settings struct {
 	ProfessionalGroup FieldConstraint `section:"Kontakt" label:"Berufsgruppe"`
 	MobilePhone       FieldConstraint `section:"Kontakt" label:"Mobile"`
 
-	______     any        `section:"Anonyme Nutzer" label:"Standardrollen und Gruppen von anonymen oder ungültigen Nutzern. Diese Rollen werden nicht auf gültige und angemeldete Nutzer vererbt, sodass eine Unterscheidung möglich ist."`
+	______     any        `section:"Anonyme Nutzer" label:"Standardrollen und Gruppen von anonymen Nutzern. Diese Rollen werden nicht auf gültige, ungültige oder angemeldete Nutzer vererbt, sodass eine entsprechende Unterscheidung möglich ist."`
 	AnonRoles  []role.ID  `section:"Anonyme Nutzer" json:"anonRoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen hat jeder anonyme Nutzer."`
 	AnonGroups []group.ID `section:"Anonyme Nutzer" json:"anonGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen hat jeder anonyme Nutzer."`
 }
