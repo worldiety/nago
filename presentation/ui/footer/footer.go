@@ -71,7 +71,9 @@ func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
 	}
 	wnd := ctx.Window()
 	return ui.VStack(
-		t.logo.Frame(ui.Frame{Height: ui.L64}),
+		ui.IfFunc(t.logo != nil, func() core.View {
+			return t.logo.Frame(ui.Frame{Height: ui.L64})
+		}),
 		ui.If(t.slogan != "", ui.Text(t.slogan)),
 		ui.IfFunc(anyLegal, func() core.View {
 			return ui.HStack(

@@ -9,6 +9,7 @@ package uiuser
 
 import (
 	"fmt"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -16,6 +17,7 @@ import (
 )
 
 func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS *core.State[bool]) core.View {
+	cfgTheme := core.GlobalSettings[theme.Settings](wnd)
 
 	return ui.VStack(
 		ui.Space(ui.L48),
@@ -25,7 +27,7 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				ui.Checkbox(adoptGDPR.Get()).InputChecked(adoptGDPR),
 				ui.TextLayout(
 					ui.Text("Ja, ich habe die "),
-					ui.Link(wnd, "Datenschutzbestimmungen", "#", "_blank"),
+					ui.Link(wnd, "Datenschutzbestimmungen", cfgTheme.PrivacyPolicy, ui.LinkTargetNewWindowOrTab),
 					ui.Text(" gelesen und akzeptiert"),
 				),
 			).Alignment(ui.TopLeading)
@@ -36,7 +38,7 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				ui.Checkbox(adoptGTC.Get()).InputChecked(adoptGTC),
 				ui.TextLayout(
 					ui.Text("Ja, ich habe die "),
-					ui.Link(wnd, "Geschäftsbedingungen", "#", "_blank"),
+					ui.Link(wnd, "Geschäftsbedingungen", cfgTheme.GeneralTermsAndConditions, ui.LinkTargetNewWindowOrTab),
 					ui.Text(" gelesen und akzeptiert"),
 				),
 			).Alignment(ui.TopLeading)
@@ -55,7 +57,7 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				ui.VStack(
 					ui.Text("Ja, ich melde mich zum Newsletter an. Eine Abbestellung ist jederzeit möglich. (optional)"),
 					ui.Text("Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos/über Abmeldelink in den E-Mails möglich, ohne dass weitere (Übermittlungs-)Kosten als die nach den Basistarifen entstehen.").Font(ui.Small),
-				),
+				).Alignment(ui.TopLeading),
 			).Alignment(ui.TopLeading)
 		}),
 
@@ -63,9 +65,9 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 			return ui.HStack(
 				ui.Checkbox(adoptSendSMS.Get()).InputChecked(adoptSendSMS),
 				ui.VStack(
-					ui.Text("Ja, ich melde mich zum SMS Versand an. Eine Abbestellung ist jederzeit möglich. (optional)"),
+					ui.Text("Ja, ich melde mich zum SMS Versand an, um kurzfristige Benachrichtigungen zu erhalten. Eine Abbestellung ist jederzeit möglich. (optional)"),
 					ui.Text("Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos möglich.").Font(ui.Small),
-				),
+				).Alignment(ui.Leading),
 			).Alignment(ui.TopLeading)
 		}),
 

@@ -12,7 +12,9 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
+	"go.wdy.de/nago/presentation/ui/footer"
 	"time"
 )
 
@@ -159,10 +161,15 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		).FullWidth().Alignment(ui.TopLeading)
 	}
 
+	cfgTheme := core.GlobalSettings[theme.Settings](wnd)
+	hasFooter := cfgTheme.ProviderName != "" || cfgTheme.Impress != "" || cfgTheme.GeneralTermsAndConditions != "" || cfgTheme.PrivacyPolicy != ""
+
 	return ui.VStack( //scaffold replacement
+		alert.BannerMessages(wnd),
 		ui.WindowTitle("Konto erstellen"),
+		ui.Spacer(),
 		cardlayout.Card("").Body(
-			content,
+			ui.VStack(content).Padding(ui.Padding{}.All(ui.L16)),
 		).Padding(ui.Padding{}.All(ui.L40)).
 			Frame(ui.Frame{MaxWidth: ui.L880}.FullWidth()).
 			Footer(ui.HStack(
@@ -260,7 +267,18 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 					}
 				}).Title(nextCaption).Enabled(registerPageCurrent.Get() != registerRes).Visible(nextVisible),
 			).Gap(ui.L8)),
-	).Frame(cardFrame).Padding(ui.Padding{}.All(ui.L16))
+
+		ui.Spacer(),
+		ui.IfFunc(hasFooter, func() core.View {
+			return footer.Footer().
+				ProviderName(cfgTheme.ProviderName).
+				Impress(cfgTheme.Impress).
+				PrivacyPolicy(cfgTheme.PrivacyPolicy).
+				Logo(ui.Image().Adaptive(cfgTheme.PageLogoLight, cfgTheme.PageLogoDark)).
+				GeneralTermsAndConditions(cfgTheme.GeneralTermsAndConditions).
+				Slogan(cfgTheme.Slogan)
+		}),
+	).Frame(cardFrame)
 }
 
 func acceptedAt(b bool) time.Time {
