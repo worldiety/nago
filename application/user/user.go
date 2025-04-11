@@ -175,6 +175,10 @@ type LegalAdoption struct {
 	Hash       string    `json:"hash,omitempty"`
 }
 
+func (l LegalAdoption) Approved() bool {
+	return !l.ApprovedAt.IsZero()
+}
+
 func (l LegalAdoption) IsZero() bool {
 	return l == LegalAdoption{}
 }
