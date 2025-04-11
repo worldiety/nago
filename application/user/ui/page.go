@@ -162,6 +162,7 @@ func Users(
 				editPresented.Set(true)
 			}).
 			Headline(view.Name()).
+			SupportingView(ui.Text(view.Email())).
 			SupportingText(fmt.Sprintf("%d Berechtigungen, %d Rollen", permCount, len(entity.Roles)))
 	})
 

@@ -15,6 +15,7 @@ import (
 type TEntry struct {
 	headline       string
 	supportingText string
+	supportingView core.View
 	leading        core.View
 	trailing       core.View
 	action         func()
@@ -32,6 +33,11 @@ func (c TEntry) Headline(s string) TEntry {
 
 func (c TEntry) SupportingText(s string) TEntry {
 	c.supportingText = s
+	return c
+}
+
+func (c TEntry) SupportingView(view core.View) TEntry {
+	c.supportingView = view
 	return c
 }
 
@@ -62,6 +68,7 @@ func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 		ui.VStack(
 			ui.If(c.headline != "", ui.Text(c.headline).Font(ui.SubTitle)),
 			ui.If(c.supportingText != "", ui.Text(c.supportingText)),
+			c.supportingView,
 		).Alignment(ui.Leading),
 		ui.Spacer(),
 		c.trailing,
@@ -116,7 +123,7 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 				c.onClickedEntry(idx)
 			})
 		}
-		
+
 		rows = append(rows, hstack.Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))
 		if idx < len(c.rows)-1 {
 			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
