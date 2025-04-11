@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<div class="fixed top-0 left-0 right-0 text-black bg-M1 border-b border-b-M5 h-24 py-4 px-8 z-30">
+	<div class="fixed top-0 left-0 right-0 bg-M1 border-b border-b-M5 h-24 py-4 px-8 z-30">
 		<!-- Top bar -->
 		<div class="relative flex justify-start items-center h-full">
 			<MenuIcon

@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<nav ref="sidebar" class="fixed top-0 left-0 bottom-0 text-black h-full w-32 z-30 bg-M4" aria-label="Sidebar">
+	<nav ref="sidebar" class="fixed top-0 left-0 bottom-0 h-full w-32 z-30 bg-M4" aria-label="Sidebar">
 		<!-- Sidebar -->
 		<div class="relative flex flex-col items-center justify-start gap-y-4 h-full w-full pt-6 px-4 pb-7 z-10 bg-M4">
 			<div v-if="ui.logo" class="w-full *:w-full mb-4">

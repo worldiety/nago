@@ -81,7 +81,7 @@ export default {
 					title="Bold"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -105,7 +105,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('italic') }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -130,7 +130,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('underline') }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -206,7 +206,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('bulletList') }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -228,7 +228,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('orderedList') }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -271,7 +271,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('blockquote') }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -288,7 +288,7 @@ export default {
 				</button>
 				<button title="horizontal line" @click="editor.chain().focus().setHorizontalRule().run()">
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -313,7 +313,7 @@ export default {
 					:disabled="!editor.can().chain().focus().undo().run()"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -336,7 +336,7 @@ export default {
 					:disabled="!editor.can().chain().focus().redo().run()"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -360,7 +360,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('textStyle', { color: 'var(--M0)' }) }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -387,7 +387,7 @@ export default {
 					:class="{ 'bg-I0 rounded-sm': editor.isActive('textStyle', { color: 'var(--I0)' }) }"
 				>
 					<svg
-						class="w-6 h-6 text-gray-800 dark:text-white"
+						class="w-6 h-6"
 						aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"

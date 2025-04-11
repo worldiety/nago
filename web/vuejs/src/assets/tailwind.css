@@ -12,7 +12,7 @@
 @tailwind utilities;
 
 .prose-custom {
-	@apply prose prose-code:text-M8 prose-strong:text-M8 prose-hr:border-M3 prose-li:marker:text-M8 prose-h1:text-M8 prose-h2:text-M8 prose-h3:text-M8 prose-pre:text-M3 prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-none focus-visible:outline-none;
+	@apply prose text-M8 prose-p:text-M8 prose-em:text-M8 prose-p:text-M8 prose-code:text-M8 prose-strong:text-M8 prose-hr:border-M3 prose-li:marker:text-M8 prose-h1:text-M8 prose-h2:text-M8 prose-h3:text-M8 prose-pre:text-M3 prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-none focus-visible:outline-none;
 }
 
 .ProseMirror-focused {

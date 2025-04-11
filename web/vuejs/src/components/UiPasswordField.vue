@@ -129,7 +129,7 @@ function toggleRevealed(): void {
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
-				<div class="absolute top-0 bottom-0 right-4 flex items-center text-black h-full">
+				<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
 					<div
 						:tabindex="props.ui.disabled ? '-1' : '0'"
 						@click="toggleRevealed"

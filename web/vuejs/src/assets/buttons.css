@@ -17,22 +17,13 @@
 	@apply focus-visible:outline-none focus-visible:outline-black focus-visible:outline-offset-2 focus-visible:ring-white focus-visible:ring-2;
 }
 
-/* depending on the weired evaluation order, the body * rules come first, thus we need to be more specific*/
-.button-primary * {
-	@apply text-black;
-}
-
 .button-primary {
-	@apply rounded-full h-10 w-fit px-5 text-black bg-I0;
+	@apply text-black;
+	@apply rounded-full h-10 w-fit px-5 bg-I0;
 	@apply hover:brightness-105;
 	@apply active:brightness-150;
 	@apply disabled:text-ST0 disabled:bg-SI0;
 	@apply disabled:pointer-events-none;
-}
-
-.button-primary * {
-	/*@apply text-M8;
-	@apply darkmode:text-M8;*/
 }
 
 .button-primary:disabled * {

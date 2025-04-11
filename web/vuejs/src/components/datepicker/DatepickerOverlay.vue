@@ -11,7 +11,7 @@
 	<div
 		v-if="expanded"
 		ref="datepicker"
-		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center text-black z-30"
+		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30"
 	>
 		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
@@ -427,6 +427,6 @@ function selectDate(datepickerDay: DatepickerDay): void {
 }
 
 .button-confirm:not(:disabled) {
-	@apply text-black;
+	/*@apply text-black;*/
 }
 </style>
