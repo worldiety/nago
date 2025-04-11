@@ -17,6 +17,7 @@ import (
 
 type Navigation interface {
 	ForwardTo(id NavigationPath, values Values)
+	ForwardToTarget(id NavigationPath, target string, values Values)
 	BackwardTo(id NavigationPath, values Values)
 	Back()
 	ResetTo(id NavigationPath, values Values)
@@ -51,6 +52,10 @@ func (n *navigationController) Window() Window {
 }
 
 func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
+	n.ForwardToTarget(id, "", values)
+}
+
+func (n *navigationController) ForwardToTarget(id NavigationPath, target string, values Values) {
 	if n.destroyed {
 		return
 	}
@@ -60,6 +65,7 @@ func (n *navigationController) ForwardTo(id NavigationPath, values Values) {
 	n.scope.Publish(&proto.NavigationForwardToRequested{
 		RootView: proto.RootViewID(id),
 		Values:   values.proto(),
+		Target:   proto.Str(target),
 	})
 }
 

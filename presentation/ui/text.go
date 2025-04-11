@@ -74,7 +74,7 @@ func Link(wnd core.Window, text string, href string, target string) TText {
 			u, err := url.Parse(href)
 			if err != nil {
 				slog.Error("Failed to parse href link URL", "err", err.Error(), "href", href)
-				wnd.Navigation().ForwardTo(core.NavigationPath(href), nil)
+				wnd.Navigation().ForwardToTarget(core.NavigationPath(href), target, nil)
 				return
 			}
 
@@ -86,9 +86,9 @@ func Link(wnd core.Window, text string, href string, target string) TText {
 						tmp[k] = v[0]
 					}
 				}
-				wnd.Navigation().ForwardTo(core.NavigationPath(u.Path), tmp)
+				wnd.Navigation().ForwardToTarget(core.NavigationPath(u.Path), target, tmp)
 			} else {
-				wnd.Navigation().ForwardTo(core.NavigationPath(u.Path), nil)
+				wnd.Navigation().ForwardToTarget(core.NavigationPath(u.Path), target, nil)
 			}
 
 		}

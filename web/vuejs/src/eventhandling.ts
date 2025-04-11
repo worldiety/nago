@@ -279,7 +279,6 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
  * @param evt
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
-	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
 	//console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
 	if (evt.values) {
@@ -296,6 +295,15 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 			idx++;
 		});
 	}
+
+	if (evt.target === '_blank') {
+		// special case without manipulating our history, instead open in new tab
+		window.open(url, '_blank');
+		return;
+	}
+
+	// otherwise handle locally
+	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
 
 	history.pushState(evt, '', url);
 }

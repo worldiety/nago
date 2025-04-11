@@ -9,6 +9,11 @@
     "2": {
       "name": "Values",
       "type": "RootViewParameters"
+    },
+    "3": {
+      "doc": "Target gives a hint for the frontend navigation where the RootView shall appear. This allows internal root views to behave more similar to conventional http refs and _blank shall be supported, if possible.",
+      "name": "Target",
+      "type": "Str"
     }
   }
 }

@@ -4694,12 +4694,15 @@ func (v *ThemeRequested) read(r *BinaryReader) error {
 type NavigationForwardToRequested struct {
 	RootView RootViewID
 	Values   RootViewParameters
+	// Target gives a hint for the frontend navigation where the RootView shall appear. This allows internal root views to behave more similar to conventional http refs and _blank shall be supported, if possible.
+	Target Str
 }
 
 func (v *NavigationForwardToRequested) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.RootView.IsZero()
 	fields[2] = !v.Values.IsZero()
+	fields[3] = !v.Target.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -4726,6 +4729,14 @@ func (v *NavigationForwardToRequested) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Target.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4748,6 +4759,11 @@ func (v *NavigationForwardToRequested) read(r *BinaryReader) error {
 			}
 		case 2:
 			err := v.Values.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Target.read(r)
 			if err != nil {
 				return err
 			}
@@ -12080,10 +12096,11 @@ func (v *ThemeRequested) IsZero() bool {
 func (v *NavigationForwardToRequested) reset() {
 	v.RootView.reset()
 	v.Values.reset()
+	v.Target.reset()
 }
 
 func (v *NavigationForwardToRequested) IsZero() bool {
-	return v.RootView.IsZero() && v.Values.IsZero()
+	return v.RootView.IsZero() && v.Values.IsZero() && v.Target.IsZero()
 }
 
 func (v *NavigationResetRequested) reset() {

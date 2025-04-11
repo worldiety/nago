@@ -4964,9 +4964,17 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 
 	public values?: RootViewParameters;
 
-	constructor(rootView: RootViewID | undefined = undefined, values: RootViewParameters | undefined = undefined) {
+	// Target gives a hint for the frontend navigation where the RootView shall appear. This allows internal root views to behave more similar to conventional http refs and _blank shall be supported, if possible.
+	public target?: Str;
+
+	constructor(
+		rootView: RootViewID | undefined = undefined,
+		values: RootViewParameters | undefined = undefined,
+		target: Str | undefined = undefined
+	) {
 		this.rootView = rootView;
 		this.values = values;
+		this.target = target;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4984,6 +4992,10 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 					this.values.read(reader);
 					break;
 				}
+				case 3: {
+					this.target = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4991,7 +5003,12 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.rootView !== undefined, this.values !== undefined && !this.values.isZero()];
+		const fields = [
+			false,
+			this.rootView !== undefined,
+			this.values !== undefined && !this.values.isZero(),
+			this.target !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -5002,15 +5019,24 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			this.values!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.rootView === undefined && (this.values === undefined || this.values.isZero());
+		return (
+			this.rootView === undefined &&
+			(this.values === undefined || this.values.isZero()) &&
+			this.target === undefined
+		);
 	}
 
 	reset(): void {
 		this.rootView = undefined;
 		this.values = undefined;
+		this.target = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
