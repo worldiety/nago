@@ -14,8 +14,16 @@ import (
 
 func NewFindByID(repository Repository) FindByID {
 	return func(subject permission.Auditable, id ID) (std.Option[User], error) {
-		if err := subject.Audit(PermFindByID); err != nil {
-			return std.None[User](), err
+		self := false
+		if subj, ok := subject.(Subject); ok {
+			// TODO cannot remember why the use case requires the permission.Auditable
+			self = subj.ID() == id
+		}
+
+		if !self {
+			if err := subject.Audit(PermFindByID); err != nil {
+				return std.None[User](), err
+			}
 		}
 
 		return repository.FindByID(id)

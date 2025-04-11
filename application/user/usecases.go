@@ -104,6 +104,11 @@ type UpdateVerification func(subject permission.Auditable, id ID, verified bool)
 type UpdateVerificationByMail func(subject permission.Auditable, mail Email, verified bool) error
 
 type CountUsers func() (int, error)
+
+type AdoptSMS func(subject AuditableUser, uid ID, adopt bool) error
+
+type AdoptNewsletter func(subject AuditableUser, uid ID, adopt bool) error
+
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -147,6 +152,8 @@ type UseCases struct {
 	UnassignUserLicense       UnassignUserLicense
 	CountUsers                CountUsers
 	GetAnonUser               GetAnonUser
+	AdoptSMS                  AdoptSMS
+	AdoptNewsletter           AdoptNewsletter
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -222,5 +229,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
+		AdoptNewsletter:           NewAdoptNewsletter(&globalLock, users),
+		AdoptSMS:                  NewAdoptSMS(&globalLock, users),
 	}
 }

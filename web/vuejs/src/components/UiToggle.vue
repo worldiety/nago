@@ -67,7 +67,7 @@ function onClick() {
 }
 
 .toggle-switch.toggle-switch-checked {
-	@apply after:translate-x-[105%] after:border-M8 after:border-M8;
+	@apply after:translate-x-[105%] after:border-M8 after:border-M8 bg-I1;
 }
 
 .toggle-switch-container {

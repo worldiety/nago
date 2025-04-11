@@ -117,6 +117,10 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	for idx, row := range c.rows {
+		if row == nil {
+			continue
+		}
+
 		hstack := ui.HStack(row).HoveredBackgroundColor(ui.ColorCardFooter)
 		if c.onClickedEntry != nil {
 			hstack = hstack.Action(func() {

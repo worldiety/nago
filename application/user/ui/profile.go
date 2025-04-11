@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/list"
+	"os"
 	"strings"
 )
 
@@ -29,6 +30,9 @@ func ProfilePage(
 	changeMyPassword user.ChangeMyPassword,
 	readMyContact user.ReadMyContact,
 	findMyRoles role.FindMyRoles,
+	findUserByID user.FindByID,
+	adoptNewsletter user.AdoptNewsletter,
+	adoptSMS user.AdoptSMS,
 ) core.View {
 	if !wnd.Subject().Valid() {
 		return alert.BannerError(user.PermissionDeniedErr)
@@ -44,7 +48,7 @@ func ProfilePage(
 		passwordChangeDialog(wnd, changeMyPassword, presentPasswordChange),
 		ui.H1("Mein Profil"),
 		profileCard(wnd, pages, contact, findMyRoles),
-		actionCard(wnd, presentPasswordChange),
+		actionCard(wnd, presentPasswordChange, findUserByID, adoptNewsletter, adoptSMS),
 	).Gap(ui.L20).
 		Alignment(ui.Leading).
 		Frame(ui.Frame{Width: ui.L560})
@@ -92,8 +96,58 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPasswor
 	}))
 }
 
-func actionCard(wnd core.Window, presentPasswordChange *core.State[bool]) core.View {
+func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUserByID user.FindByID, adoptNewsletter user.AdoptNewsletter, adoptSMS user.AdoptSMS) core.View {
+	cfgUsers := core.GlobalSettings[user.Settings](wnd)
+
+	var usr user.User
+	if cfgUsers.CanReceiveSMS || cfgUsers.CanAcceptNewsletter {
+		optUsr, err := findUserByID(wnd.Subject(), wnd.Subject().ID())
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+		}
+
+		if optUsr.IsNone() {
+			alert.ShowBannerError(wnd, os.ErrNotExist)
+		}
+
+		if optUsr.IsSome() {
+			usr = optUsr.Unwrap()
+		}
+	}
+
 	return list.List(
+		ui.IfFunc(cfgUsers.CanAcceptNewsletter, func() core.View {
+			acceptedState := core.AutoState[bool](wnd).Init(func() bool {
+				return !usr.Newsletter.ApprovedAt.IsZero()
+			}).Observe(func(newValue bool) {
+				if err := adoptNewsletter(wnd.Subject(), wnd.Subject().ID(), newValue); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+			})
+
+			return list.Entry().
+				Headline("Newsletter erhalten").
+				SupportingText("Neuigkeiten erhalten und über Änderungen informiert werden.").
+				Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState))
+		}),
+
+		ui.IfFunc(cfgUsers.CanReceiveSMS, func() core.View {
+			acceptedState := core.AutoState[bool](wnd).Init(func() bool {
+				return !usr.SMS.ApprovedAt.IsZero()
+			}).Observe(func(newValue bool) {
+				if err := adoptSMS(wnd.Subject(), wnd.Subject().ID(), newValue); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+			})
+
+			return list.Entry().
+				Headline("SMS erhalten").
+				SupportingText("Kurzfristige Aktualisierungen und Benachrichtigungen erhalten.").
+				Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState))
+		}),
+
 		list.Entry().
 			Headline("Passwort ändern").
 			Action(func() {
