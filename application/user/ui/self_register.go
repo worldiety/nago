@@ -71,6 +71,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	adoptMinAge := core.AutoState[bool](wnd)
 	adoptShowError := core.AutoState[bool](wnd)
 	adoptSendSMS := core.AutoState[bool](wnd)
+	adoptTermsOfUse := core.AutoState[bool](wnd)
 
 	// email
 	email := core.AutoState[string](wnd)
@@ -110,7 +111,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		pageBody = passwords(password, passwordRepeated, errPasswordRepeated)
 	case registerAdoptAny:
 		subcaption = "Bitte stimmen Sie zu"
-		pageBody = adoption(wnd, userSettings, adoptShowError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS)
+		pageBody = adoption(wnd, userSettings, adoptShowError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS, adoptTermsOfUse)
 	case registerMails:
 		subcaption = "Bitte die E-Mail eingeben"
 		pageBody = emails(email, emailRepeated, errEmailRepeated)
@@ -208,7 +209,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							}
 						}
 					case registerAdoptAny:
-						if validateAdoption(userSettings, adoptGDPR, adoptGTC, adoptMinAge) {
+						if validateAdoption(userSettings, adoptGDPR, adoptGTC, adoptMinAge, adoptTermsOfUse) {
 							adoptShowError.Set(false)
 							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
 						} else {
@@ -251,6 +252,10 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 								ApprovedAt: acceptedAt(adoptSendSMS.Get()),
 								Name:       "SMS",
 							},
+							TermsOfUse: user.LegalAdoption{
+								ApprovedAt: acceptedAt(adoptTermsOfUse.Get()),
+								Name:       "Nutzungsbedingungen",
+							},
 							Title:             title.Get(),
 							Position:          position.Get(),
 							CompanyName:       companyName.Get(),
@@ -274,6 +279,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 				ProviderName(cfgTheme.ProviderName).
 				Impress(cfgTheme.Impress).
 				PrivacyPolicy(cfgTheme.PrivacyPolicy).
+				TermsOfUse(cfgTheme.TermsOfUse).
 				Logo(ui.Image().Adaptive(cfgTheme.PageLogoLight, cfgTheme.PageLogoDark)).
 				GeneralTermsAndConditions(cfgTheme.GeneralTermsAndConditions).
 				Slogan(cfgTheme.Slogan)

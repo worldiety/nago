@@ -247,6 +247,16 @@ func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 	s.parent.subject.SetValue(subject)
 }
 
+func (s *scopeWindow) Logout() error {
+	if _, err := s.parent.app.logoutSession(s.Session().ID()); err != nil {
+		return err
+	}
+
+	s.UpdateSubject(nil)
+
+	return nil
+}
+
 func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
 	if s.destroyed {
 		return "", nil

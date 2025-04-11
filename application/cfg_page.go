@@ -122,7 +122,18 @@ func (c *Configurator) newHandler() http.Handler {
 
 	getAnonUser := std.Must(c.UserManagement()).UseCases.GetAnonUser // user management is also not optional anymore
 
-	app2 := core.NewApplication(c.ctx, tmpDir, factories, c.onWindowCreatedObservers, c.fps, sessionMgmt.UseCases.FindUserSessionByID, key, c.eventBus, getAnonUser)
+	app2 := core.NewApplication(
+		c.ctx,
+		tmpDir,
+		factories,
+		c.onWindowCreatedObservers,
+		c.fps,
+		sessionMgmt.UseCases.FindUserSessionByID,
+		key,
+		c.eventBus,
+		getAnonUser,
+		sessionMgmt.UseCases.Logout,
+	)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)

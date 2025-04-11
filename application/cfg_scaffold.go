@@ -14,11 +14,11 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/theme"
+	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/ui/footer"
 
 	"go.wdy.de/nago/presentation/core"
-	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -456,6 +456,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark)).
 				Impress(themeCfg.Impress).
 				PrivacyPolicy(themeCfg.PrivacyPolicy).
+				TermsOfUse(themeCfg.TermsOfUse).
 				ProviderName(themeCfg.ProviderName).
 				Slogan(themeCfg.Slogan).
 				GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
@@ -490,63 +491,8 @@ func (b *ScaffoldBuilder) hasAdminCenter(wnd core.Window) bool {
 	return len(visibleEntries) > 0
 }
 
-func (b *ScaffoldBuilder) profileMenu(wnd core.Window, sessionManagement *SessionManagement) core.View {
-	var avatarIcon core.View
-	if id := wnd.Subject().Avatar(); id != "" {
-		avatarIcon = avatar.URI(httpimage.URI(image.ID(id), image.FitCover, 120, 120)).Size(ui.L120)
-	} else {
-		avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L120)
-	}
-
-	themeCfg := core.GlobalSettings[theme.Settings](wnd)
-
-	return ui.VStack(
-		ui.HStack(
-			avatarIcon,
-			ui.VStack(
-				ui.Text(wnd.Subject().Name()).Font(ui.Title),
-				ui.Text(wnd.Subject().Email()),
-				ui.HStack(
-					colorSchemeToggle(wnd),
-					ui.If(b.hasAdminCenter(wnd), ui.SecondaryButton(func() {
-						if admMgmt := b.cfg.adminManagement; admMgmt != nil {
-							wnd.Navigation().ForwardTo(admMgmt.Pages.AdminCenter, nil)
-						}
-					}).PreIcon(heroOutline.Cog6Tooth).AccessibilityLabel("Admin Center")),
-					ui.SecondaryButton(func() {
-						if _, err := sessionManagement.UseCases.Logout(wnd.Session().ID()); err != nil {
-							alert.ShowBannerError(wnd, err)
-							return
-						}
-
-						if b.cfg.userManagement != nil {
-							wnd.UpdateSubject(b.cfg.userManagement.UseCases.GetAnonUser())
-						}
-						wnd.Navigation().ForwardTo(sessionManagement.Pages.Logout, nil)
-					}).PreIcon(heroOutline.ArrowLeftStartOnRectangle).AccessibilityLabel("Abmelden"),
-				).FullWidth().Gap(ui.L8).Alignment(ui.Leading),
-			).Gap(ui.L4).Alignment(ui.Leading),
-		).Gap(ui.L16),
-		ui.HLineWithColor(ui.ColorAccent),
-		ui.HStack(
-			ui.SecondaryButton(func() {
-				wnd.Navigation().ForwardTo(b.cfg.userManagement.Pages.MyProfile, nil)
-			}).Title("Konto verwalten"),
-		).FullWidth().Alignment(ui.Trailing),
-		ui.HStack(
-			ui.If(themeCfg.PrivacyPolicy != "", ui.Text("Datenschutzerklärung").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.PrivacyPolicy), nil)
-			})),
-
-			ui.If(themeCfg.GeneralTermsAndConditions != "", ui.Text("Nutzungsbedingungen").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.PrivacyPolicy), nil)
-			})),
-
-			ui.If(themeCfg.Impress != "", ui.Text("Impressum").Font(ui.Small).Action(func() {
-				wnd.Navigation().ForwardTo(core.NavigationPath(themeCfg.Impress), nil)
-			})),
-		).FullWidth().Gap(ui.L8).Padding(ui.Padding{Top: ui.L16}),
-	).Alignment(ui.Leading).FullWidth()
+func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
+	return uiuser.AccountView(wnd)
 }
 
 func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *SessionManagement, state *core.State[bool]) core.View {
@@ -554,26 +500,5 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 		return nil
 	}
 
-	subj := wnd.Subject()
-	return alert.Dialog(subj.Name(), b.profileMenu(wnd, sessionManagement), state, alert.Closeable(), alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
-}
-
-func colorSchemeToggle(wnd core.Window) core.View {
-	var icon core.SVG
-	if wnd.Info().ColorScheme == core.Dark {
-		icon = heroOutline.Sun
-	} else {
-		icon = heroOutline.Moon
-	}
-
-	return ui.SecondaryButton(func() {
-		current := wnd.Info().ColorScheme
-		if current == core.Dark {
-			current = core.Light
-		} else {
-			current = core.Dark
-		}
-
-		wnd.SetColorScheme(current)
-	}).AccessibilityLabel("Modus Hell und Dunkel umschalten").PreIcon(icon)
+	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, alert.Closeable(), alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
 }

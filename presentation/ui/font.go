@@ -42,6 +42,11 @@ var (
 		Weight: BoldFontWeight,
 	}
 
+	Large = Font{
+		Size:   "1.5rem",
+		Weight: NormalFontWeight,
+	}
+
 	Small = Font{
 		Size:   "0.75rem",
 		Weight: NormalFontWeight,

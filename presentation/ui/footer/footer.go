@@ -19,6 +19,7 @@ type TFooter struct {
 	impress         LinkOrNavigationPath
 	gdpr            LinkOrNavigationPath
 	gtc             LinkOrNavigationPath
+	termOfUse       LinkOrNavigationPath
 	copyright       string
 	backgroundColor ui.Color
 }
@@ -57,6 +58,11 @@ func (t TFooter) GeneralTermsAndConditions(gtc LinkOrNavigationPath) TFooter {
 	return t
 }
 
+func (t TFooter) TermsOfUse(termsOfUse LinkOrNavigationPath) TFooter {
+	t.termOfUse = termsOfUse
+	return t
+}
+
 func (t TFooter) BackgroundColor(backgroundColor ui.Color) TFooter {
 	t.backgroundColor = backgroundColor
 	return t
@@ -80,6 +86,7 @@ func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
 				ui.If(t.impress != "", ui.Link(wnd, "Impressum", t.impress, ui.LinkTargetNewWindowOrTab)),
 				ui.If(t.gdpr != "", ui.Link(wnd, "Datenschutz", t.gdpr, ui.LinkTargetNewWindowOrTab)),
 				ui.If(t.gtc != "", ui.Link(wnd, "AGB", t.gtc, ui.LinkTargetNewWindowOrTab)),
+				ui.If(t.termOfUse != "", ui.Link(wnd, "Nutzungsbedingungen", t.termOfUse, ui.LinkTargetNewWindowOrTab)),
 				ui.If(t.copyright != "", ui.Text(t.copyright).Padding(ui.Padding{Left: ui.L16})),
 			).Gap(ui.L16)
 		}),

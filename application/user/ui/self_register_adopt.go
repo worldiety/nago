@@ -16,7 +16,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS *core.State[bool]) core.View {
+func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS, adoptTermsOfUse *core.State[bool]) core.View {
 	cfgTheme := core.GlobalSettings[theme.Settings](wnd)
 
 	return ui.VStack(
@@ -39,6 +39,17 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				ui.TextLayout(
 					ui.Text("Ja, ich habe die "),
 					ui.Link(wnd, "Geschäftsbedingungen", cfgTheme.GeneralTermsAndConditions, ui.LinkTargetNewWindowOrTab),
+					ui.Text(" gelesen und akzeptiert"),
+				),
+			).Alignment(ui.TopLeading)
+		}),
+
+		ui.IfFunc(usrSettings.RequireTermsOfUse, func() core.View {
+			return ui.HStack(
+				ui.Checkbox(adoptTermsOfUse.Get()).InputChecked(adoptTermsOfUse),
+				ui.TextLayout(
+					ui.Text("Ja, ich habe die "),
+					ui.Link(wnd, "Nutzungsbedingungen", cfgTheme.TermsOfUse, ui.LinkTargetNewWindowOrTab),
 					ui.Text(" gelesen und akzeptiert"),
 				),
 			).Alignment(ui.TopLeading)
@@ -71,7 +82,7 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 			).Alignment(ui.TopLeading)
 		}),
 
-		ui.IfFunc(showError.Get() && !validateAdoption(usrSettings, adoptGDPR, adoptGTC, adoptMinAge), func() core.View {
+		ui.IfFunc(showError.Get() && !validateAdoption(usrSettings, adoptGDPR, adoptGTC, adoptMinAge, adoptTermsOfUse), func() core.View {
 			var msg string
 			if usrSettings.RequireDataProtectionConditions && !adoptGDPR.Get() {
 				msg += "Bitte akzeptieren Sie unsere Datenschutzbestimmungen. "
@@ -85,12 +96,16 @@ func adoption(wnd core.Window, usrSettings user.Settings, showError, adoptGDPR, 
 				msg += "Bitte bestätigen Sie Ihr Alter. "
 			}
 
+			if usrSettings.RequireTermsOfUse && !adoptTermsOfUse.Get() {
+				msg += "Bitte akzeptieren Sie die Nutzungsbedingungen. "
+			}
+
 			return alert.Banner("Zustimmung erforderlich", msg).Frame(ui.Frame{}.FullWidth())
 		}),
 	).Alignment(ui.TopLeading).FullWidth().Gap(ui.L8)
 }
 
-func validateAdoption(usrSettings user.Settings, adoptGDPR, adoptGTC, adoptMinAge *core.State[bool]) bool {
+func validateAdoption(usrSettings user.Settings, adoptGDPR, adoptGTC, adoptMinAge, adoptTermsOfUse *core.State[bool]) bool {
 	if usrSettings.RequireTermsAndConditions && !adoptGTC.Get() {
 		return false
 	}
@@ -100,6 +115,10 @@ func validateAdoption(usrSettings user.Settings, adoptGDPR, adoptGTC, adoptMinAg
 	}
 
 	if usrSettings.RequireDataProtectionConditions && !adoptGDPR.Get() {
+		return false
+	}
+
+	if usrSettings.RequireTermsOfUse && !adoptTermsOfUse.Get() {
 		return false
 	}
 

@@ -70,7 +70,7 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				}
 
 				if c.userManagement != nil {
-					pages.User = c.userManagement.Pages
+					pages.UsersOverview = c.userManagement.Pages.Users
 				}
 
 				if c.permissionManagement != nil {
@@ -133,6 +133,9 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 		c.RootView(c.adminManagement.Pages.AdminCenter, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uiadmin.AdminCenter(wnd, c.adminManagement.QueryGroups)
 		}))
+
+		c.AddSystemService("", c.adminManagement.Pages)
+		c.AddSystemService("", c.adminManagement.QueryGroups)
 	}
 
 	return *c.adminManagement, nil

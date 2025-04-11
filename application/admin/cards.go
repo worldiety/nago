@@ -29,7 +29,7 @@ func DefaultGroups(pages Pages) []Group {
 			{
 				Title:      "Konten",
 				Text:       "Über die Kontenverwaltung können die einzelnen bekannten Identitäten der Nutzer verwaltet werden. Hierüber können Rollen, Gruppen und Einzelberechtigungen einem Individuum zugeordnet werden.",
-				Target:     pages.User.Users,
+				Target:     pages.UsersOverview,
 				Permission: user.PermFindAll,
 			},
 			{

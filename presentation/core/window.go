@@ -123,6 +123,10 @@ type Window interface {
 
 	// Clipboard gives access to the frontend clipboard.
 	Clipboard() Clipboard
+
+	// Logout tries to invalidate and logout the current subject. It is not a failure to logout an invalid or anon
+	// subject.
+	Logout() error
 }
 
 // Colors returns a type safe value based ColorSet instance.

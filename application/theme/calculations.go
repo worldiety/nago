@@ -25,7 +25,7 @@ func DarkMode(base BaseColors) ui.Colors {
 		M1: option.Must(base.Main.WithChromaAndTone(16, 5)),
 		M0: base.Main,
 
-		I1: option.Must(base.Interactive.WithChromaAndTone(16, 22)),
+		I1: option.Must(base.Interactive.WithChromaAndTone(100, 50)),
 		I0: base.Interactive,
 
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),
@@ -77,7 +77,7 @@ func LightMode(base BaseColors) ui.Colors {
 		M1: option.Must(base.Main.WithChromaAndTone(4, 98)),
 		M0: base.Main,
 
-		I1: option.Must(base.Interactive.WithChromaAndTone(16, 22)),
+		I1: option.Must(base.Interactive.WithChromaAndTone(100, 90)),
 		I0: base.Interactive,
 
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),

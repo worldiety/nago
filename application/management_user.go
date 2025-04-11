@@ -158,6 +158,8 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			return c.userManagement.UseCases.FindAll(subject)
 		}))
 
+		c.AddSystemService("", c.userManagement.UseCases.DisplayName)
+		c.AddSystemService("", c.userManagement.Pages)
 	}
 
 	return *c.userManagement, nil

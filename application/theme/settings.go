@@ -34,6 +34,7 @@ type Settings struct {
 	Impress                   string `json:"impress" section:"Rechtliches" label:"Impressum" supportingText:"Link zum Impressum. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/impressum."`
 	PrivacyPolicy             string `json:"privacyPolicy" section:"Rechtliches" label:"Datenschutz" supportingText:"Link zur Datenschutzerklärung. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/datenschutz."`
 	GeneralTermsAndConditions string `json:"generalTermsAndConditions" section:"Rechtliches" label:"AGB" supportingText:"Link zur AGB. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/agb."`
+	TermsOfUse                string `json:"termsOfUse" section:"Rechtliches" label:"Nutzungsbedingungen" supportingText:"Link zu den Nutzungsbedingungen. Nutzungsbedingungen regeln Handlungspflichten ohne Vertragsbeziehung, im Gegensatz zur AGB. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/nutzungsbedingungen."`
 	ProviderName              string `json:"providerName" section:"Rechtliches" label:"Anbieter" supportingText:"Name des Anbieters der rechtlich für die Inhalte verantwortlich ist."`
 
 	Slogan string `json:"slogan" section:"Sonstiges" label:"Slogan" supportingText:"Slogan oder Mission des Anbieters."`

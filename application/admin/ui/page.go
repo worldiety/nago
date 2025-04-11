@@ -33,7 +33,7 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 
 	var viewBuilder xslices.Builder[core.View]
 	viewBuilder.Append(
-		ui.H1("Admin Center"),
+		ui.H1("Einstellungen"),
 
 		ui.HStack(
 			ui.ImageIcon(heroSolid.MagnifyingGlass),

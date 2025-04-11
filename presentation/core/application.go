@@ -65,9 +65,10 @@ type Application struct {
 
 	findVirtualSession session.FindUserSessionByID
 
-	masterKey   crypto.EncryptionKey
-	bus         events.Bus
-	getAnonUser user.GetAnonUser
+	masterKey     crypto.EncryptionKey
+	bus           events.Bus
+	getAnonUser   user.GetAnonUser
+	logoutSession session.Logout
 }
 
 func NewApplication(
@@ -80,6 +81,7 @@ func NewApplication(
 	masterKey crypto.EncryptionKey,
 	bus events.Bus,
 	getAnonUser user.GetAnonUser,
+	logoutSession session.Logout,
 ) *Application {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
@@ -98,8 +100,9 @@ func NewApplication(
 			Light: {},
 			Dark:  {},
 		},
-		bus:         bus,
-		getAnonUser: getAnonUser,
+		bus:           bus,
+		getAnonUser:   getAnonUser,
+		logoutSession: logoutSession,
 	}
 
 	return a

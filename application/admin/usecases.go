@@ -20,7 +20,6 @@ import (
 	uisecret "go.wdy.de/nago/application/secret/ui"
 	uisession "go.wdy.de/nago/application/session/ui"
 	uitemplate "go.wdy.de/nago/application/template/ui"
-	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -29,18 +28,18 @@ type FindAllGroups func(subject auth.Subject) []Group
 type QueryGroups func(subject auth.Subject, filterText string) []Group
 
 type Pages struct {
-	Mail       uimail.Pages
-	Billing    uibilling.Pages
-	Session    uisession.Pages
-	User       uiuser.Pages
-	Role       uirole.Pages
-	Group      uigroup.Pages
-	Permission uipermission.Pages
-	License    uilicense.Pages
-	Dashboard  core.NavigationPath
-	Backup     uibackup.Pages
-	Secret     uisecret.Pages
-	Template   uitemplate.Pages
+	Mail          uimail.Pages
+	Billing       uibilling.Pages
+	Session       uisession.Pages
+	UsersOverview core.NavigationPath
+	Role          uirole.Pages
+	Group         uigroup.Pages
+	Permission    uipermission.Pages
+	License       uilicense.Pages
+	Dashboard     core.NavigationPath
+	Backup        uibackup.Pages
+	Secret        uisecret.Pages
+	Template      uitemplate.Pages
 }
 
 type Card struct {

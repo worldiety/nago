@@ -67,6 +67,7 @@ type Settings struct {
 
 	___                             any  `section:"Rechtliches" label:"Die folgenden Einschränkungen gelten für die freie Registrierung."`
 	RequireTermsAndConditions       bool `section:"Rechtliches" json:"requireTermsAndConditions" label:"AGB Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung der AGB explizit zustimmen."`
+	RequireTermsOfUse               bool `section:"Rechtliches" json:"requireTermsOfUse" label:"Zustimmung zu den Nutzungsbedingungen erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Nutzungsbedingungen explizit zustimmen."`
 	RequireDataProtectionConditions bool `section:"Rechtliches" json:"requireDataProtectionConditions" label:"Datenschutz Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Datenschutzbestimmungen explizit zustimmen."`
 	CanAcceptNewsletter             bool `section:"Rechtliches" json:"canAcceptNewsletter" label:"Newsletter anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von Newslettern zustimmen kann."`
 	CanReceiveSMS                   bool `section:"Rechtliches" json:"canAcceptSMS" label:"SMS-Versand anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von SMS zustimmen kann."`

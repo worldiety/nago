@@ -92,6 +92,7 @@ type ShortRegistrationUser struct {
 	Newsletter                LegalAdoption
 	SMS                       LegalAdoption
 	GeneralTermsAndConditions LegalAdoption
+	TermsOfUse                LegalAdoption
 	DataProtectionProvision   LegalAdoption
 	MinAge                    LegalAdoption
 	// additional optional contact data
@@ -205,6 +206,7 @@ type User struct {
 	// some legal/regulatory properties
 	Newsletter                LegalAdoption `json:"newsletter,omitzero"`
 	GeneralTermsAndConditions LegalAdoption `json:"gtc,omitzero"`
+	TermsOfUse                LegalAdoption `json:"termsOfUse,omitzero"`
 	DataProtectionProvision   LegalAdoption `json:"gdpr,omitzero"`
 	MinAge                    LegalAdoption `json:"minAge,omitzero"`
 	SMS                       LegalAdoption `json:"sms,omitzero"`

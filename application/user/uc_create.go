@@ -95,6 +95,7 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			DataProtectionProvision:   model.DataProtectionProvision,
 			MinAge:                    model.MinAge,
 			SMS:                       model.SMS,
+			TermsOfUse:                model.TermsOfUse,
 		}
 
 		if model.SelfRegistered {
