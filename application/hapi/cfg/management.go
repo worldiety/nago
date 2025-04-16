@@ -8,10 +8,12 @@
 package cfghapi
 
 import (
+	"encoding/json"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/hapi"
-	"go.wdy.de/nago/pkg/oas/v30"
-	"go.wdy.de/nago/pkg/swagger"
+	"go.wdy.de/nago/application/settings"
+	"go.wdy.de/nago/application/theme"
+	"go.wdy.de/nago/pkg/oas/v31"
 	"log/slog"
 	"net/http"
 )
@@ -26,53 +28,35 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return management, nil
 	}
 
+	sets, err := cfg.SettingsManagement()
+	if err != nil {
+		return Management{}, err
+	}
+
+	cfgTheme := settings.ReadGlobal[theme.Settings](sets.UseCases.LoadGlobal)
+
 	oapi := &oas.OpenAPI{
 		Openapi: oas.Version,
 		Info: oas.Info{
 			Title:   cfg.Name(),
-			Version: cfg.SemanticVersion(),
+			Version: cfg.SemanticVersion() + " (" + cfg.VCSVersion() + ")",
 			Contact: &oas.Contact{
-				Name:  "worldiety GmbH",
-				URL:   "/",
-				Email: "impressum@example.com",
+				Name:  cfgTheme.ProviderName,
+				URL:   cfgTheme.APIPage,
+				Email: cfgTheme.APIContact,
 			},
 		},
 
 		Paths: oas.Paths{},
 	}
 
-	management.API = hapi.NewAPI(hapi.Options{
+	management.API = hapi.NewAPI(oapi, hapi.Options{
 		RegisterHandler: func(method, pattern string, handler http.HandlerFunc) {
 			cfg.HandleMethod(method, pattern, handler)
 		},
-		OperationConfigured: func(op hapi.Operation, in hapi.Input, out hapi.Output) {
-			item := &oas.PathItem{}
-
-			switch op.Method {
-			case http.MethodGet:
-				item.Get = oasOpFrom(op, in, out)
-			case http.MethodPost:
-				item.Post = oasOpFrom(op, in, out)
-			case http.MethodPut:
-				item.Put = oasOpFrom(op, in, out)
-			case http.MethodDelete:
-				item.Delete = oasOpFrom(op, in, out)
-			case http.MethodOptions:
-				item.Options = oasOpFrom(op, in, out)
-			case http.MethodHead:
-				item.Head = oasOpFrom(op, in, out)
-			case http.MethodPatch:
-				item.Patch = oasOpFrom(op, in, out)
-			case http.MethodTrace:
-				item.Trace = oasOpFrom(op, in, out)
-			default:
-				slog.Error("unknown operation method", "method", op.Method)
-			}
-			oapi.Paths[op.Path] = item
-		},
 	})
 
-	cfg.HandleFunc("/api/doc/spec.json", swagger.HandleOAS(oapi))
+	cfg.HandleFunc("/api/doc/spec.json", handleOAS(oapi))
 
 	cfg.AddSystemService("nago.api.hapi", management)
 	slog.Info("installed user api management")
@@ -80,19 +64,19 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	return management, nil
 }
 
-func oasOpFrom(op hapi.Operation, in hapi.Input, out hapi.Output) *oas.Operation {
-	o := &oas.Operation{
-		Summary:     op.Summary,
-		Description: op.Description,
-		Parameters:  []oas.Parameter{},
-		RequestBody: nil,
-		Responses:   oas.Responses{},
-		Deprecated:  op.Deprecated,
-		Security:    nil,
+func handleOAS(spec *oas.OpenAPI) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		buf, err := json.MarshalIndent(spec, "  ", " ")
+		if err != nil {
+			slog.Error("failed to marshal oas spec", "err", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := w.Write(buf); err != nil {
+			slog.Error("failed to write oas spec", "err", err)
+			return
+		}
 	}
-
-	in.DescribeInput(o)
-	out.DescribeOutput(o)
-
-	return o
 }

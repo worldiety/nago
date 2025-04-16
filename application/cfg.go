@@ -363,6 +363,10 @@ func (c *Configurator) SemanticVersion() string {
 	return c.applicationSemanticVersion
 }
 
+func (c *Configurator) VCSVersion() string {
+	return c.applicationVersion
+}
+
 // Host returns the host to which the binding should be made. This is different from [Configurator.ContextPath].
 func (c *Configurator) getHost() string {
 	if c.host != "" {

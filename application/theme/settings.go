@@ -36,6 +36,8 @@ type Settings struct {
 	GeneralTermsAndConditions string `json:"generalTermsAndConditions" section:"Rechtliches" label:"AGB" supportingText:"Link zur AGB. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/agb."`
 	TermsOfUse                string `json:"termsOfUse" section:"Rechtliches" label:"Nutzungsbedingungen" supportingText:"Link zu den Nutzungsbedingungen. Nutzungsbedingungen regeln Handlungspflichten ohne Vertragsbeziehung, im Gegensatz zur AGB. Dies muss entweder ein absoluter externer Link sein beginnend mit https:// oder eine interne Navigationsroute wie page/nutzungsbedingungen."`
 	ProviderName              string `json:"providerName" section:"Rechtliches" label:"Anbieter" supportingText:"Name des Anbieters der rechtlich für die Inhalte verantwortlich ist."`
+	APIContact                string `json:"apiContact" section:"Rechtliches" label:"API Kontakt" supportingText:"Wenn eine API bereitgestellt wird, sollte hier die Mail-Adresse eines technischen Ansprechpartners genannt werden."`
+	APIPage                   string `json:"apiPage" section:"Rechtliches" label:"API Webseite" supportingText:"Wenn eine API bereitgestellt wird, sollte hier die Web-Adresse mit weiteren technischen Details angezeigt werden."`
 
 	Slogan string `json:"slogan" section:"Sonstiges" label:"Slogan" supportingText:"Slogan oder Mission des Anbieters."`
 

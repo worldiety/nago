@@ -5,11 +5,9 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package swagger
+package oas
 
-import (
-	"embed"
-)
-
-//go:embed api/doc
-var files embed.FS
+type Components struct {
+	Schemas         map[string]*Schema         `json:"schemas"`
+	SecuritySchemes map[string]*SecurityScheme `json:"securitySchemes"`
+}

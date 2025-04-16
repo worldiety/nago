@@ -8,11 +8,16 @@
 package auth
 
 import (
+	"context"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/user"
 )
 
 type Subject = user.Subject
+
+type contextKey string
+
+const subjectKey contextKey = "authSubject"
 
 func OneOf(subject Subject, permissions ...permission.ID) bool {
 	for _, permission := range permissions {
@@ -22,4 +27,13 @@ func OneOf(subject Subject, permissions ...permission.ID) bool {
 	}
 
 	return false
+}
+
+func WithSubject(ctx context.Context, subject Subject) context.Context {
+	return context.WithValue(ctx, subjectKey, subject)
+}
+
+func FromContext(ctx context.Context) (Subject, bool) {
+	subject, ok := ctx.Value(subjectKey).(Subject)
+	return subject, ok
 }

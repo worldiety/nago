@@ -5,4 +5,12 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package cfghapi
+package redocly
+
+import (
+	"io/fs"
+)
+
+func Dist() fs.FS {
+	return files
+}

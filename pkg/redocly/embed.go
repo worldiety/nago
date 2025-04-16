@@ -5,7 +5,7 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package swagger
+package redocly
 
 import (
 	"embed"

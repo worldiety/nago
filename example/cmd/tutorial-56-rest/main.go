@@ -8,17 +8,17 @@
 package main
 
 import (
-	"context"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/hapi"
 	cfghapi "go.wdy.de/nago/application/hapi/cfg"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/swagger"
+	"go.wdy.de/nago/pkg/stoplight"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"net/http"
+	"mime/multipart"
+	"net/url"
 	"time"
 )
 
@@ -29,7 +29,13 @@ func main() {
 		cfg.SetName("Tutorial 56")
 
 		cfg.Serve(vuejs.Dist())
-		cfg.Serve(swagger.Dist())
+		// we have multiple frontend openapi distributions provided, e.g. swagger, redocly or stoplight.
+		// Note, that ALL frontends are broken in one or another way. E.g. swagger does not support even simplest
+		// recursions and stoplight does not support multipart files.
+		cfg.Serve(stoplight.Dist())
+		//cfg.Serve(swagger.Dist())
+		//cfg.Serve(redocly.Dist())
+
 		cfg.SetDecorator(cfg.NewScaffold().
 			Decorator())
 
@@ -38,8 +44,8 @@ func main() {
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		api := std.Must(cfghapi.Enable(cfg)).API
-		std.Must(cfg.TokenManagement())
-		configureMyAPI(api)
+		tokens := std.Must(cfg.TokenManagement())
+		configureMyAPI(api, tokens)
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return VStack(Text("hello world")).
@@ -50,29 +56,69 @@ func main() {
 		Run()
 }
 
-func configureMyAPI(api *hapi.API) {
-
-	type HelloResponse = hapi.JSON[string]
-
-	hapi.Handle(api, hapi.Operation{Path: "/api/v1/hello"}, func(ctx context.Context, in *hapi.None) (*HelloResponse, error) {
-		return &HelloResponse{
-			Body: "hello world",
-		}, nil
-	})
-
-	type HelloRequest struct {
-		Name string
+func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
+	type StackElement struct {
+		Line int
+		File string
 	}
 
-	type HelloResponse2 struct {
-		Msg string
+	type Exception struct {
+		Name  string         `json:"name"`
+		Stack []StackElement `json:"stack"`
+		Cause *Exception     `json:"cause"`
 	}
 
-	hapi.Handle(api, hapi.Operation{Method: http.MethodPost, Path: "/api/v1/hello"}, func(ctx context.Context, in *hapi.JSON[HelloRequest]) (*hapi.JSON[HelloResponse2], error) {
-		return &hapi.JSON[HelloResponse2]{
-			Body: HelloResponse2{
-				Msg: "hello " + in.Body.Name,
-			},
-		}, nil
-	})
+	type UploadMetadata struct {
+		DeviceName string
+		AppVersion string
+		KeyValues  map[string]string
+		Exception  *Exception
+	}
+
+	type UploadRequest struct {
+		TestHeader string
+		Metadata   UploadMetadata
+		Files      []*multipart.FileHeader
+	}
+
+	type SomeID string
+	type NestedResponse struct {
+		ID       SomeID  `json:"id,omitempty" example:"1234"`
+		Url      url.URL `json:"url,omitempty"`
+		OtherNum int32   `json:"other_num,omitempty"`
+	}
+
+	type UploadResponse struct {
+		ID     string         `json:"id"`
+		Yes    bool           `json:"yes" doc:"say no" required:"true"`
+		Num    int            `json:"num" supportingText:"Irgendeine Nummer"`
+		When   time.Time      `json:"when"`
+		Nested NestedResponse `json:"nested"`
+	}
+
+	hapi.Post[UploadRequest](api, hapi.Operation{Path: "/api/v1/events", Summary: "Create a new event", Description: "A post will take the given meta data and files and persists it as an event. A unique tracking code is returned."}).
+		Request(
+			hapi.BearerAuth[UploadRequest](tokens.UseCases.AuthenticateSubject),
+
+			hapi.StrFromHeader(hapi.StrParam[UploadRequest]{Name: "test-header", IntoModel: func(dst *UploadRequest, value string) error {
+				dst.TestHeader = value
+				return nil
+			}}),
+			// this can be a simple alternative
+			/*hapi.JSONFromBody(func(dst *UploadRequest, model UploadMetadata) error {
+				dst.Metadata = model
+				return nil
+			}),*/
+			hapi.JSONFromFormField("meta", func(dst *UploadRequest, model UploadMetadata) error {
+				dst.Metadata = model
+				return nil
+			}),
+			hapi.FilesFromFormField("files", func(dst *UploadRequest, files []*multipart.FileHeader) error {
+				dst.Files = files
+				return nil
+			}),
+		).
+		Response(hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
+			return UploadResponse{ID: "1234-" + in.TestHeader, When: time.Now()}, nil
+		}))
 }
