@@ -1,0 +1,15 @@
+{
+  "doc": "A Fonts type describes the default font and various defined font faces.",
+  "kind": "Record",
+  "id": 130,
+  "fields": {
+    "1": {
+      "name": "DefaultFontFace",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Faces",
+      "type": "FontFaces"
+    }
+  }
+}

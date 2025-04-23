@@ -11,6 +11,7 @@ import (
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/settings"
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 )
 
@@ -41,7 +42,8 @@ type Settings struct {
 
 	Slogan string `json:"slogan" section:"Sonstiges" label:"Slogan" supportingText:"Slogan oder Mission des Anbieters."`
 
-	Colors Colors `json:"colors"` // TODO form.Auto cannot render that today, also this is not wanted from the designers perspective and it affects the global applications
+	Colors Colors     `json:"colors"` // TODO form.Auto cannot render that today, also this is not wanted from the designers perspective and it affects the global applications
+	Fonts  core.Fonts `json:"fonts"`
 }
 
 func (s Settings) GlobalSettings() bool {

@@ -12,6 +12,7 @@ import {
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
 	FileImportRequested,
+	Fonts,
 	Locale,
 	NavigationForwardToRequested,
 	OpenHttpFlow,
@@ -137,7 +138,50 @@ export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: Sco
 
 	updateFavicon(evt.appIcon);
 
+	if (evt.fonts) {
+		loadFonts(evt.fonts);
+	}
+
 	console.log('onScopeConfigurationChanged', evt);
+}
+
+const alreadyLoadedFonts = new Map<string, boolean>();
+
+/**
+ * loadFonts inspects whatever is in the given fonts and loads only those faces, which are unknown.
+ */
+function loadFonts(fonts: Fonts) {
+	if (fonts.defaultFontFace) {
+		document.documentElement.style.setProperty('font-family', `'${fonts.defaultFontFace}', sans-serif`);
+	}
+
+	if (!fonts.faces) {
+		return;
+	}
+
+	fonts.faces.value.forEach((faceDef) => {
+		if (alreadyLoadedFonts.has(faceDef.source!)) {
+			return;
+		}
+
+		const fontFace = new FontFace(faceDef.family!, `url(${faceDef.source!})`, {
+			weight: faceDef.weight ? faceDef.weight : '400',
+			style: faceDef.style ? faceDef.style : 'normal',
+		});
+
+		fontFace
+			.load()
+			.then((value) => {
+				document.fonts.add(fontFace);
+				console.log(`extra font ${JSON.stringify(faceDef)} loaded`);
+			})
+			.catch((err) => {
+				const debug = JSON.stringify(faceDef);
+				console.log(`failed to load font ${debug}:`, err);
+			});
+
+		alreadyLoadedFonts.set(faceDef.source!, true);
+	});
 }
 
 /**

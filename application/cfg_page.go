@@ -148,7 +148,6 @@ func (c *Configurator) newHandler() http.Handler {
 		for _, set := range m {
 			app2.UpdateColorSet(scheme, set)
 		}
-
 	}
 
 	app2.SetName(c.applicationName)
@@ -157,6 +156,9 @@ func (c *Configurator) newHandler() http.Handler {
 	colors := option.Must(option.Must(c.ThemeManagement()).UseCases.ReadColors(user.SU()))
 	app2.UpdateColorSet(core.Dark, colors.Dark)
 	app2.UpdateColorSet(core.Light, colors.Light)
+
+	fonts := option.Must(option.Must(c.ThemeManagement()).UseCases.ReadFonts(user.SU()))
+	app2.UpdateFonts(fonts)
 
 	// TODO we are in a weired order here
 	for _, destructor := range c.destructors {

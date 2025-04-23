@@ -62,6 +62,13 @@ func ReadGlobal[T GlobalSettings](global LoadGlobal) T {
 	return s.(T)
 }
 
+func WriteGlobal[T GlobalSettings](global StoreGlobal, settings T) {
+	err := global(permission.SU(), settings)
+	if err != nil {
+		slog.Error("failed to write per user settings", "err", err)
+	}
+}
+
 type StoreBox[T any] struct {
 	ID       ID
 	Settings T

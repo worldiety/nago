@@ -2162,10 +2162,11 @@ type ScopeConfigurationChanged struct {
 	ActiveLocale       Locale
 	Themes             Themes
 	RID                RID
+	Fonts              Fonts
 }
 
 func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = !v.ApplicationID.IsZero()
 	fields[2] = !v.ApplicationName.IsZero()
 	fields[3] = !v.ApplicationVersion.IsZero()
@@ -2174,6 +2175,7 @@ func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
 	fields[6] = !v.ActiveLocale.IsZero()
 	fields[7] = !v.Themes.IsZero()
 	fields[8] = !v.RID.IsZero()
+	fields[9] = !v.Fonts.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2248,6 +2250,14 @@ func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
+			return err
+		}
+		if err := v.Fonts.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2300,6 +2310,11 @@ func (v *ScopeConfigurationChanged) read(r *BinaryReader) error {
 			}
 		case 8:
 			err := v.RID.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Fonts.read(r)
 			if err != nil {
 				return err
 			}
@@ -10028,6 +10043,168 @@ func (v *HoverGroup) read(r *BinaryReader) error {
 	return nil
 }
 
+// A FontFace describes a specific font file with different type settings attributes.
+type FontFace struct {
+	Family Str
+	Style  Str
+	Weight Str
+	Source URI
+}
+
+func (v *FontFace) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Family.IsZero()
+	fields[2] = !v.Style.IsZero()
+	fields[3] = !v.Weight.IsZero()
+	fields[4] = !v.Source.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Family.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Weight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Source.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FontFace) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Family.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Weight.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Source.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// A Fonts type describes the default font and various defined font faces.
+type Fonts struct {
+	DefaultFontFace Str
+	Faces           FontFaces
+}
+
+func (v *Fonts) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.DefaultFontFace.IsZero()
+	fields[2] = !v.Faces.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.DefaultFontFace.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Faces.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Fonts) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.DefaultFontFace.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Faces.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -10809,6 +10986,24 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 128:
+		var v FontFaces
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 129:
+		var v FontFace
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 130:
+		var v Fonts
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -11427,10 +11622,11 @@ func (v *ScopeConfigurationChanged) reset() {
 	v.ActiveLocale.reset()
 	v.Themes.reset()
 	v.RID.reset()
+	v.Fonts.reset()
 }
 
 func (v *ScopeConfigurationChanged) IsZero() bool {
-	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero()
+	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero() && v.Fonts.IsZero()
 }
 
 // Locales is just a bunch of locales.
@@ -12997,6 +13193,70 @@ func (v *HoverGroup) IsZero() bool {
 	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ContentHover.IsZero()
 }
 
+type FontFaces []FontFace
+
+func (v *FontFaces) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FontFaces) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]FontFace, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*FontFace)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *FontFaces) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *FontFaces) reset() {
+	*v = nil
+}
+
+func (v *FontFace) reset() {
+	v.Family.reset()
+	v.Style.reset()
+	v.Weight.reset()
+	v.Source.reset()
+}
+
+func (v *FontFace) IsZero() bool {
+	return v.Family.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.Source.IsZero()
+}
+
+func (v *Fonts) reset() {
+	v.DefaultFontFace.reset()
+	v.Faces.reset()
+}
+
+func (v *Fonts) IsZero() bool {
+	return v.DefaultFontFace.IsZero() && v.Faces.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -13874,6 +14134,27 @@ func (v *RichText) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *HoverGroup) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 127); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FontFaces) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 128); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FontFace) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 129); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Fonts) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 130); err != nil {
 		return err
 	}
 	return nil

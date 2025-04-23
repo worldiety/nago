@@ -290,6 +290,23 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 			}
 		}
 	}
+	configuredFonts := s.app.fonts.Load()
+	if configuredFonts == nil {
+		configuredFonts = &Fonts{}
+	}
+
+	fonts := proto.Fonts{
+		DefaultFontFace: proto.Str(configuredFonts.DefaultFont),
+	}
+
+	for _, face := range configuredFonts.Faces {
+		fonts.Faces = append(fonts.Faces, proto.FontFace{
+			Family: proto.Str(face.Family),
+			Style:  proto.Str(face.Style),
+			Weight: proto.Str(face.Weight),
+			Source: proto.URI(face.Source),
+		})
+	}
 
 	s.Publish(&proto.ScopeConfigurationChanged{
 		ApplicationID:      proto.Str(s.app.id),
@@ -300,6 +317,7 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 		ActiveLocale:       proto.Locale(s.locale.String()),
 		Themes:             themes,
 		RID:                evt.RID,
+		Fonts:              fonts,
 	})
 }
 

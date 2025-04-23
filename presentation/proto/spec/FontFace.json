@@ -1,0 +1,23 @@
+{
+  "doc": "A FontFace describes a specific font file with different type settings attributes.",
+  "kind": "Record",
+  "id": 129,
+  "fields": {
+    "1": {
+      "name": "Family",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Style",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Weight",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Source",
+      "type": "URI"
+    }
+  }
+}

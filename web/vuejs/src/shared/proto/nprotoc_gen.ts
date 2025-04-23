@@ -2207,6 +2207,8 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 
 	public rID?: RID;
 
+	public fonts?: Fonts;
+
 	constructor(
 		applicationID: Str | undefined = undefined,
 		applicationName: Str | undefined = undefined,
@@ -2215,7 +2217,8 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 		appIcon: URI | undefined = undefined,
 		activeLocale: Locale | undefined = undefined,
 		themes: Themes | undefined = undefined,
-		rID: RID | undefined = undefined
+		rID: RID | undefined = undefined,
+		fonts: Fonts | undefined = undefined
 	) {
 		this.applicationID = applicationID;
 		this.applicationName = applicationName;
@@ -2225,6 +2228,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 		this.activeLocale = activeLocale;
 		this.themes = themes;
 		this.rID = rID;
+		this.fonts = fonts;
 	}
 
 	read(reader: BinaryReader): void {
@@ -2267,6 +2271,11 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 					this.rID = readInt(reader);
 					break;
 				}
+				case 9: {
+					this.fonts = new Fonts();
+					this.fonts.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -2284,6 +2293,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 			this.activeLocale !== undefined,
 			this.themes !== undefined && !this.themes.isZero(),
 			this.rID !== undefined,
+			this.fonts !== undefined && !this.fonts.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -2319,6 +2329,10 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
 			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.fonts!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -2330,7 +2344,8 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 			this.appIcon === undefined &&
 			this.activeLocale === undefined &&
 			(this.themes === undefined || this.themes.isZero()) &&
-			this.rID === undefined
+			this.rID === undefined &&
+			(this.fonts === undefined || this.fonts.isZero())
 		);
 	}
 
@@ -2343,6 +2358,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 		this.activeLocale = undefined;
 		this.themes = undefined;
 		this.rID = undefined;
+		this.fonts = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -10470,6 +10486,210 @@ export class HoverGroup implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class FontFaces implements Writeable, Readable {
+	public value: FontFace[];
+
+	constructor(value: FontFace[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: FontFace[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as FontFace); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 128);
+		return;
+	}
+}
+
+// A FontFace describes a specific font file with different type settings attributes.
+export class FontFace implements Writeable, Readable {
+	public family?: Str;
+
+	public style?: Str;
+
+	public weight?: Str;
+
+	public source?: URI;
+
+	constructor(
+		family: Str | undefined = undefined,
+		style: Str | undefined = undefined,
+		weight: Str | undefined = undefined,
+		source: URI | undefined = undefined
+	) {
+		this.family = family;
+		this.style = style;
+		this.weight = weight;
+		this.source = source;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.family = readString(reader);
+					break;
+				}
+				case 2: {
+					this.style = readString(reader);
+					break;
+				}
+				case 3: {
+					this.weight = readString(reader);
+					break;
+				}
+				case 4: {
+					this.source = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.family !== undefined,
+			this.style !== undefined,
+			this.weight !== undefined,
+			this.source !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.family!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.weight!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.source!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.family === undefined &&
+			this.style === undefined &&
+			this.weight === undefined &&
+			this.source === undefined
+		);
+	}
+
+	reset(): void {
+		this.family = undefined;
+		this.style = undefined;
+		this.weight = undefined;
+		this.source = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 129);
+		return;
+	}
+}
+
+// A Fonts type describes the default font and various defined font faces.
+export class Fonts implements Writeable, Readable {
+	public defaultFontFace?: Str;
+
+	public faces?: FontFaces;
+
+	constructor(defaultFontFace: Str | undefined = undefined, faces: FontFaces | undefined = undefined) {
+		this.defaultFontFace = defaultFontFace;
+		this.faces = faces;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.defaultFontFace = readString(reader);
+					break;
+				}
+				case 2: {
+					this.faces = new FontFaces();
+					this.faces.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.defaultFontFace !== undefined, this.faces !== undefined && !this.faces.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.defaultFontFace!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.faces!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.defaultFontFace === undefined && (this.faces === undefined || this.faces.isZero());
+	}
+
+	reset(): void {
+		this.defaultFontFace = undefined;
+		this.faces = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 130);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -11072,6 +11292,21 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 127: {
 			const v = new HoverGroup();
+			v.read(src);
+			return v;
+		}
+		case 128: {
+			const v = new FontFaces();
+			v.read(src);
+			return v;
+		}
+		case 129: {
+			const v = new FontFace();
+			v.read(src);
+			return v;
+		}
+		case 130: {
+			const v = new Fonts();
 			v.read(src);
 			return v;
 		}

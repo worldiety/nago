@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -69,6 +70,7 @@ type Application struct {
 	bus           events.Bus
 	getAnonUser   user.GetAnonUser
 	logoutSession session.Logout
+	fonts         atomic.Pointer[Fonts]
 }
 
 func NewApplication(
@@ -150,6 +152,10 @@ func (a *Application) SetAppIcon(appIcon URI) {
 
 func (a *Application) UpdateColorSet(scheme ColorScheme, set ColorSet) {
 	a.colorSets[scheme][set.Namespace()] = set
+}
+
+func (a *Application) UpdateFonts(fonts Fonts) {
+	a.fonts.Store(&fonts)
 }
 
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific
