@@ -80,8 +80,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.ReadMyContact,
 				c.roleManagement.UseCases.FindMyRoles,
 				c.userManagement.UseCases.FindByID,
-				c.userManagement.UseCases.AdoptNewsletter,
-				c.userManagement.UseCases.AdoptSMS,
+				c.userManagement.UseCases.Consent,
 			)
 		})
 

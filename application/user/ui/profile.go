@@ -8,6 +8,7 @@
 package uiuser
 
 import (
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/role"
@@ -31,8 +32,7 @@ func ProfilePage(
 	readMyContact user.ReadMyContact,
 	findMyRoles role.FindMyRoles,
 	findUserByID user.FindByID,
-	adoptNewsletter user.AdoptNewsletter,
-	adoptSMS user.AdoptSMS,
+	consent user.Consent,
 ) core.View {
 	if !wnd.Subject().Valid() {
 		return alert.BannerError(user.PermissionDeniedErr)
@@ -48,7 +48,7 @@ func ProfilePage(
 		passwordChangeDialog(wnd, changeMyPassword, presentPasswordChange),
 		ui.H1("Mein Profil"),
 		profileCard(wnd, pages, contact, findMyRoles),
-		actionCard(wnd, presentPasswordChange, findUserByID, adoptNewsletter, adoptSMS),
+		actionCard(wnd, presentPasswordChange, findUserByID, consent),
 	).Gap(ui.L20).
 		Alignment(ui.Leading).
 		Frame(ui.Frame{Width: ui.L560})
@@ -96,66 +96,58 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPasswor
 	}))
 }
 
-func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUserByID user.FindByID, adoptNewsletter user.AdoptNewsletter, adoptSMS user.AdoptSMS) core.View {
+func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUserByID user.FindByID, consentFn user.Consent) core.View {
 	cfgUsers := core.GlobalSettings[user.Settings](wnd)
 
-	var usr user.User
-	if cfgUsers.CanReceiveSMS || cfgUsers.CanAcceptNewsletter {
-		optUsr, err := findUserByID(wnd.Subject(), wnd.Subject().ID())
-		if err != nil {
-			alert.ShowBannerError(wnd, err)
-		}
-
-		if optUsr.IsNone() {
-			alert.ShowBannerError(wnd, os.ErrNotExist)
-		}
-
-		if optUsr.IsSome() {
-			usr = optUsr.Unwrap()
-		}
+	optUsr, err := findUserByID(wnd.Subject(), wnd.Subject().ID())
+	if err != nil {
+		alert.ShowBannerError(wnd, err)
 	}
 
-	return list.List(
-		ui.IfFunc(cfgUsers.CanAcceptNewsletter, func() core.View {
-			acceptedState := core.AutoState[bool](wnd).Init(func() bool {
-				return !usr.Newsletter.ApprovedAt.IsZero()
-			}).Observe(func(newValue bool) {
-				if err := adoptNewsletter(wnd.Subject(), wnd.Subject().ID(), newValue); err != nil {
-					alert.ShowBannerError(wnd, err)
-					return
-				}
-			})
+	if optUsr.IsNone() {
+		return alert.BannerError(os.ErrNotExist)
+	}
 
-			return list.Entry().
-				Headline("Newsletter erhalten").
-				SupportingText("Neuigkeiten erhalten und über Änderungen informiert werden.").
-				Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState))
-		}),
+	usr := optUsr.Unwrap()
+	consents := usr.CompatConsents()
 
-		ui.IfFunc(cfgUsers.CanReceiveSMS, func() core.View {
-			acceptedState := core.AutoState[bool](wnd).Init(func() bool {
-				return !usr.SMS.ApprovedAt.IsZero()
-			}).Observe(func(newValue bool) {
-				if err := adoptSMS(wnd.Subject(), wnd.Subject().ID(), newValue); err != nil {
-					alert.ShowBannerError(wnd, err)
-					return
-				}
-			})
+	var actionItems []core.View
+	for _, consentOption := range cfgUsers.Consents {
+		if consentOption.Required {
+			// not clear, how to handle this. Some information must never be changed or confirmed again, like
+			// min age. But others, like changed terms and conditions, must be approved again.
+			continue
+		}
 
-			return list.Entry().
-				Headline("SMS erhalten").
-				SupportingText("Kurzfristige Aktualisierungen und Benachrichtigungen erhalten.").
-				Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState))
-		}),
+		acceptedState := core.StateOf[bool](wnd, string(consentOption.ID)).Init(func() bool {
+			return consent.HasApproved(consents, consentOption.ID)
+		}).Observe(func(newValue bool) {
+			var status consent.Status
+			if newValue {
+				status = consent.Approved
+			}
 
-		list.Entry().
-			Headline("Passwort ändern").
-			Action(func() {
-				presentPasswordChange.Set(true)
-			}).
-			Frame(ui.Frame{Height: ui.L48}.FullWidth()).
-			Trailing(ui.ImageIcon(heroSolid.ChevronRight)),
-	).Frame(ui.Frame{}.FullWidth())
+			if err := consentFn(wnd.Subject(), wnd.Subject().ID(), consentOption.ID, status); err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+		})
+
+		actionItems = append(actionItems, list.Entry().
+			Headline(consentOption.Profile.Label).
+			SupportingText(consentOption.Profile.SupportingText).
+			Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState)))
+	}
+
+	actionItems = append(actionItems, list.Entry().
+		Headline("Passwort ändern").
+		Action(func() {
+			presentPasswordChange.Set(true)
+		}).
+		Frame(ui.Frame{Height: ui.L48}.FullWidth()).
+		Trailing(ui.ImageIcon(heroSolid.ChevronRight)))
+
+	return list.List(actionItems...).Frame(ui.Frame{}.FullWidth())
 }
 
 func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles role.FindMyRoles) core.View {

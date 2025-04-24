@@ -8,13 +8,14 @@
 package user
 
 import (
+	"go.wdy.de/nago/application/consent"
 	"os"
 	"sync"
 	"time"
 )
 
-func NewAdoptSMS(mutex *sync.Mutex, usersRepo Repository) AdoptSMS {
-	return func(subject AuditableUser, uid ID, adopt bool) error {
+func NewConsent(mutex *sync.Mutex, usersRepo Repository) Consent {
+	return func(subject AuditableUser, uid ID, cid consent.ID, status consent.Status) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
@@ -35,13 +36,28 @@ func NewAdoptSMS(mutex *sync.Mutex, usersRepo Repository) AdoptSMS {
 		}
 
 		usr := optUsr.Unwrap()
-		if adopt {
-			usr.SMS = LegalAdoption{
-				ApprovedAt: time.Now(),
-				Name:       "SMS",
+		updated := false
+		for idx, c := range usr.Consents {
+			if c.ID == cid {
+				c.History = append(c.History, consent.Action{
+					At:     time.Now(),
+					Status: status,
+				})
+
+				usr.Consents[idx] = c
+				updated = true
+
+				break
 			}
-		} else {
-			usr.SMS = LegalAdoption{}
+		}
+
+		if !updated {
+			usr.Consents = append(usr.Consents, consent.Consent{
+				ID: cid,
+				History: []consent.Action{
+					{At: time.Now(), Status: status},
+				},
+			})
 		}
 
 		return usersRepo.Save(usr)

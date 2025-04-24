@@ -90,12 +90,7 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			VerificationCode: NewCode(DefaultVerificationLifeTime),
 
 			// legal fields
-			Newsletter:                model.Newsletter,
-			GeneralTermsAndConditions: model.GeneralTermsAndConditions,
-			DataProtectionProvision:   model.DataProtectionProvision,
-			MinAge:                    model.MinAge,
-			SMS:                       model.SMS,
-			TermsOfUse:                model.TermsOfUse,
+			Consents: model.Consents,
 		}
 
 		if model.SelfRegistered {

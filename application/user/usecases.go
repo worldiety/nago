@@ -9,6 +9,7 @@ package user
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/license"
@@ -105,9 +106,10 @@ type UpdateVerificationByMail func(subject permission.Auditable, mail Email, ver
 
 type CountUsers func() (int, error)
 
-type AdoptSMS func(subject AuditableUser, uid ID, adopt bool) error
+// Consent either approves or revokes a given consent. Usually, this is something caused by GDPR concerns.
+type Consent func(subject AuditableUser, user ID, consentID consent.ID, status consent.Status) error
 
-type AdoptNewsletter func(subject AuditableUser, uid ID, adopt bool) error
+type LoadSettings func(subject AuditableUser) Settings
 
 type Compact struct {
 	Avatar      image.ID
@@ -152,8 +154,7 @@ type UseCases struct {
 	UnassignUserLicense       UnassignUserLicense
 	CountUsers                CountUsers
 	GetAnonUser               GetAnonUser
-	AdoptSMS                  AdoptSMS
-	AdoptNewsletter           AdoptNewsletter
+	Consent                   Consent
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -229,7 +230,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
-		AdoptNewsletter:           NewAdoptNewsletter(&globalLock, users),
-		AdoptSMS:                  NewAdoptSMS(&globalLock, users),
+		Consent:                   NewConsent(&globalLock, users),
 	}
 }

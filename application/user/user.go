@@ -9,6 +9,7 @@ package user
 
 import (
 	"github.com/worldiety/enum"
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/license"
@@ -88,13 +89,8 @@ type ShortRegistrationUser struct {
 	PreferredLanguage language.Tag
 	NotifyUser        bool
 	Verified          bool
-	// legal, optional
-	Newsletter                LegalAdoption
-	SMS                       LegalAdoption
-	GeneralTermsAndConditions LegalAdoption
-	TermsOfUse                LegalAdoption
-	DataProtectionProvision   LegalAdoption
-	MinAge                    LegalAdoption
+
+	Consents []consent.Consent
 	// additional optional contact data
 	Title             string
 	Position          string
@@ -168,6 +164,7 @@ func (c Code) IsZero() bool {
 	return c.Value == "" && c.ValidUntil.IsZero()
 }
 
+// deprecated: use consent.Consent
 type LegalAdoption struct {
 	ApprovedAt time.Time `json:"at,omitempty"`
 	Name       string    `json:"name,omitempty"`
@@ -208,12 +205,20 @@ type User struct {
 	PasswordRequestCode   Code          `json:"passwordRequestCode,omitzero"`
 
 	// some legal/regulatory properties
-	Newsletter                LegalAdoption `json:"newsletter,omitzero"`
+
+	//deprecated: use Consents
+	Newsletter LegalAdoption `json:"newsletter,omitzero"`
+	//deprecated: use Consents
 	GeneralTermsAndConditions LegalAdoption `json:"gtc,omitzero"`
-	TermsOfUse                LegalAdoption `json:"termsOfUse,omitzero"`
-	DataProtectionProvision   LegalAdoption `json:"gdpr,omitzero"`
-	MinAge                    LegalAdoption `json:"minAge,omitzero"`
-	SMS                       LegalAdoption `json:"sms,omitzero"`
+	//deprecated: use Consents
+	TermsOfUse LegalAdoption `json:"termsOfUse,omitzero"`
+	//deprecated: use Consents
+	DataProtectionProvision LegalAdoption `json:"gdpr,omitzero"`
+	//deprecated: use Consents
+	MinAge LegalAdoption `json:"minAge,omitzero"`
+	//deprecated: use Consents
+	SMS      LegalAdoption     `json:"sms,omitzero"`
+	Consents []consent.Consent `json:"consents,omitzero"`
 
 	// global permissions
 	Roles       []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
@@ -223,6 +228,87 @@ type User struct {
 
 	// resource based permissions
 	Resources map[Resource][]permission.ID `json:"resources,omitempty"`
+}
+
+// CompatConsents merges the deprecated options into the new consent structure. This method will be removed,
+// if no project uses the deprecated legal fields anymore.
+func (u User) CompatConsents() []consent.Consent {
+	var res []consent.Consent
+	if !u.Newsletter.IsZero() && !consent.IsKnown(u.Consents, consent.Newsletter) {
+		res = append(res, consent.Consent{
+			ID: consent.Newsletter,
+			History: []consent.Action{
+				{
+					At:     u.Newsletter.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	if !u.GeneralTermsAndConditions.IsZero() && !consent.IsKnown(u.Consents, consent.GeneralTermsAndConditions) {
+		res = append(res, consent.Consent{
+			ID: consent.GeneralTermsAndConditions,
+			History: []consent.Action{
+				{
+					At:     u.GeneralTermsAndConditions.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	if !u.TermsOfUse.IsZero() && !consent.IsKnown(u.Consents, consent.TermsOfUse) {
+		res = append(res, consent.Consent{
+			ID: consent.TermsOfUse,
+			History: []consent.Action{
+				{
+					At:     u.TermsOfUse.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	if !u.DataProtectionProvision.IsZero() && !consent.IsKnown(u.Consents, consent.DataProtectionProvision) {
+		res = append(res, consent.Consent{
+			ID: consent.DataProtectionProvision,
+			History: []consent.Action{
+				{
+					At:     u.DataProtectionProvision.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	if !u.MinAge.IsZero() && !consent.IsKnown(u.Consents, consent.MinAge) {
+		res = append(res, consent.Consent{
+			ID: consent.MinAge,
+			History: []consent.Action{
+				{
+					At:     u.MinAge.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	if !u.SMS.IsZero() && !consent.IsKnown(u.Consents, consent.SMS) {
+		res = append(res, consent.Consent{
+			ID: consent.SMS,
+			History: []consent.Action{
+				{
+					At:     u.SMS.ApprovedAt,
+					Status: consent.Approved,
+				},
+			},
+		})
+	}
+
+	res = append(res, u.Consents...)
+
+	return res
 }
 
 func (u User) String() string {

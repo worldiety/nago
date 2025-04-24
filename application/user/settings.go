@@ -9,6 +9,7 @@ package user
 
 import (
 	"github.com/worldiety/enum"
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
@@ -52,6 +53,18 @@ func (f FieldConstraint) Match(str string) bool {
 	return regex.MatchString(str)
 }
 
+type ConsentOption struct {
+	ID       consent.ID  `json:"id,omitempty"`
+	Register ConsentText `json:"register,omitempty"`
+	Profile  ConsentText `json:"profile,omitempty"`
+	Required bool        `json:"required,omitempty"`
+}
+
+type ConsentText struct {
+	Label          string `json:"name,omitempty"`
+	SupportingText string `json:"text,omitempty"`
+}
+
 type Settings struct {
 	_ any `title:"Nutzerverwaltung" description:"Allgemeine Vorgaben bezüglich der Nutzerverwaltung vornehmen."`
 
@@ -65,13 +78,20 @@ type Settings struct {
 	DefaultRoles   []role.ID  `section:"Rechte" json:"defaultRoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen werden pauschal einem neuen Nutzer hinzugefügt."`
 	DefaultGroups  []group.ID `section:"Rechte" json:"defaultGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen werden pauschal einem neuen Nutzer hinzugefügt."`
 
-	___                             any  `section:"Rechtliches" label:"Die folgenden Einschränkungen gelten für die freie Registrierung."`
-	RequireTermsAndConditions       bool `section:"Rechtliches" json:"requireTermsAndConditions" label:"AGB Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung der AGB explizit zustimmen."`
-	RequireTermsOfUse               bool `section:"Rechtliches" json:"requireTermsOfUse" label:"Zustimmung zu den Nutzungsbedingungen erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Nutzungsbedingungen explizit zustimmen."`
-	RequireDataProtectionConditions bool `section:"Rechtliches" json:"requireDataProtectionConditions" label:"Datenschutz Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Datenschutzbestimmungen explizit zustimmen."`
-	CanAcceptNewsletter             bool `section:"Rechtliches" json:"canAcceptNewsletter" label:"Newsletter anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von Newslettern zustimmen kann."`
-	CanReceiveSMS                   bool `section:"Rechtliches" json:"canAcceptSMS" label:"SMS-Versand anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von SMS zustimmen kann."`
-	RequireMinAge                   int  `section:"Rechtliches" json:"requireMinAge" label:"Mindestalter bestätigen" supportingText:"Je nach Angebot und Markt, gibt es ein Mindestalter, um als Nutzer geschäftsfähig zu sein. Vollgeschäftsfähig gilt man in Deutschland grundsätzlich ab 18 Jahre. Es ist jedoch üblich, gemäß Taschengeldparagraphen auch Minderjährige und damit beschränkt geschäftsfähige Personen zu erlauben."`
+	___ any `section:"Rechtliches" label:"Die folgenden Einschränkungen gelten für die freie Registrierung."`
+	// deprecated: use Consents
+	RequireTermsAndConditions bool `section:"Rechtliches" visible:"false" json:"requireTermsAndConditions" label:"AGB Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung der AGB explizit zustimmen."`
+	// deprecated: use Consents
+	RequireTermsOfUse bool `section:"Rechtliches" visible:"false" json:"requireTermsOfUse" label:"Zustimmung zu den Nutzungsbedingungen erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Nutzungsbedingungen explizit zustimmen."`
+	// deprecated: use Consents
+	RequireDataProtectionConditions bool `section:"Rechtliches" visible:"false" json:"requireDataProtectionConditions" label:"Datenschutz Zustimmung erforderlich" supportingText:"Wenn erforderlich, muss der Nutzer bei der Registrierung den Datenschutzbestimmungen explizit zustimmen."`
+	// deprecated: use Consents
+	CanAcceptNewsletter bool `section:"Rechtliches" visible:"false" json:"canAcceptNewsletter" label:"Newsletter anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von Newslettern zustimmen kann."`
+	// deprecated: use Consents
+	CanReceiveSMS bool `section:"Rechtliches" visible:"false" json:"canAcceptSMS" label:"SMS-Versand anbieten" supportingText:"Wenn eingeschaltet, wird die Möglichkeit angeboten, dass der Nutzer dem Empfang von SMS zustimmen kann."`
+	// deprecated: use Consents
+	RequireMinAge int             `section:"Rechtliches" visible:"false" json:"requireMinAge" label:"Mindestalter bestätigen" supportingText:"Je nach Angebot und Markt, gibt es ein Mindestalter, um als Nutzer geschäftsfähig zu sein. Vollgeschäftsfähig gilt man in Deutschland grundsätzlich ab 18 Jahre. Es ist jedoch üblich, gemäß Taschengeldparagraphen auch Minderjährige und damit beschränkt geschäftsfähige Personen zu erlauben."`
+	Consents      []ConsentOption `section:"Rechtliches" json:"adoptionOptions"`
 
 	____              any             `section:"Kontakt" label:"Die folgenden Kontaktinformationen müssen bei der freien Registrierung abgefragt werden. Ein leeres Feld bedeutet, dass das bezeichnete Feld ausgeblendet wird. Ansonsten drückt ein regulärer Ausdruck die Validierung aus. ^.*$ steht für optional und ^.+$ für erforderlich. Um einen Wert aus einer festen Menge zu verwenden, kannst du einen Ausdruck wie ^(OptionA|OptionB)$ verwenden."`
 	Title             FieldConstraint `section:"Kontakt" label:"Titel"`

@@ -8,6 +8,7 @@
 package uiuser
 
 import (
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
@@ -65,13 +66,11 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	errPasswordRepeated := core.AutoState[string](wnd)
 
 	// legal stuff
-	adoptGDPR := core.AutoState[bool](wnd)
-	adoptGTC := core.AutoState[bool](wnd)
-	adoptNewsletter := core.AutoState[bool](wnd)
-	adoptMinAge := core.AutoState[bool](wnd)
-	adoptShowError := core.AutoState[bool](wnd)
-	adoptSendSMS := core.AutoState[bool](wnd)
-	adoptTermsOfUse := core.AutoState[bool](wnd)
+	consentStates := map[consent.ID]*core.State[bool]{}
+	for _, consentOpt := range userSettings.Consents {
+		consentStates[consentOpt.ID] = core.StateOf[bool](wnd, string(consentOpt.ID))
+		consentStates[consentOpt.ID+"err"] = core.StateOf[bool](wnd, string(consentOpt.ID+"err"))
+	}
 
 	// email
 	email := core.AutoState[string](wnd)
@@ -111,7 +110,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		pageBody = passwords(password, passwordRepeated, errPasswordRepeated)
 	case registerAdoptAny:
 		subcaption = "Bitte stimmen Sie zu"
-		pageBody = adoption(wnd, userSettings, adoptShowError, adoptGDPR, adoptGTC, adoptNewsletter, adoptMinAge, adoptSendSMS, adoptTermsOfUse)
+		pageBody = consents(wnd, userSettings, consentStates)
 	case registerMails:
 		subcaption = "Bitte die E-Mail eingeben"
 		pageBody = emails(email, emailRepeated, errEmailRepeated)
@@ -209,11 +208,8 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							}
 						}
 					case registerAdoptAny:
-						if validateAdoption(userSettings, adoptGDPR, adoptGTC, adoptMinAge, adoptTermsOfUse) {
-							adoptShowError.Set(false)
+						if validateConsents(userSettings, consentStates) {
 							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-						} else {
-							adoptShowError.Set(true)
 						}
 
 					case registerMails:
@@ -222,40 +218,29 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 						}
 
 					case registerCheck:
+						var myConsents []consent.Consent
+						for _, option := range userSettings.Consents {
+							status := consent.Revoked
+							if consentStates[option.ID].Get() {
+								status = consent.Approved
+							}
+
+							myConsents = append(myConsents, consent.Consent{
+								ID:      option.ID,
+								History: []consent.Action{{At: time.Now(), Status: status}},
+							})
+						}
+
 						_, err := createUser(user.SU(), user.ShortRegistrationUser{
-							SelfRegistered:   true,
-							Firstname:        firstname.Get(),
-							Lastname:         lastname.Get(),
-							Email:            user.Email(email.Get()),
-							Password:         user.Password(password.Get()),
-							PasswordRepeated: user.Password(passwordRepeated.Get()),
-							NotifyUser:       true,
-							Verified:         false, // important, keep it always false
-							Newsletter: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptNewsletter.Get()),
-								Name:       "Newsletter",
-							},
-							GeneralTermsAndConditions: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptGTC.Get()),
-								Name:       "AGB",
-							},
-							DataProtectionProvision: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptGDPR.Get()),
-								Name:       "Datenschutzerklärung",
-							},
-							MinAge: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptMinAge.Get()),
-								Version:    userSettings.RequireMinAge,
-								Name:       "Mindestalter",
-							},
-							SMS: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptSendSMS.Get()),
-								Name:       "SMS",
-							},
-							TermsOfUse: user.LegalAdoption{
-								ApprovedAt: acceptedAt(adoptTermsOfUse.Get()),
-								Name:       "Nutzungsbedingungen",
-							},
+							SelfRegistered:    true,
+							Firstname:         firstname.Get(),
+							Lastname:          lastname.Get(),
+							Email:             user.Email(email.Get()),
+							Password:          user.Password(password.Get()),
+							PasswordRepeated:  user.Password(passwordRepeated.Get()),
+							NotifyUser:        true,
+							Verified:          false, // important, keep it always false
+							Consents:          myConsents,
 							Title:             title.Get(),
 							Position:          position.Get(),
 							CompanyName:       companyName.Get(),
@@ -307,5 +292,5 @@ const (
 )
 
 func requiresAnyAdoption(s user.Settings) bool {
-	return s.CanAcceptNewsletter || s.RequireDataProtectionConditions || s.RequireTermsAndConditions || s.RequireMinAge > 0
+	return len(s.Consents) > 0
 }
