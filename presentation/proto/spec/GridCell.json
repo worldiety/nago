@@ -38,6 +38,10 @@
     "9": {
       "name": "Alignment",
       "type": "Alignment"
+    },
+    "10": {
+      "name": "BackgroundColor",
+      "type": "Color"
     }
   }
 }

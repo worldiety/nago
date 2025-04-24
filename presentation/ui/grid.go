@@ -14,15 +14,16 @@ import (
 )
 
 type TGridCell struct {
-	body      core.View
-	colStart  int
-	colEnd    int
-	rowStart  int
-	rowEnd    int
-	colSpan   int
-	rowSpan   int
-	padding   proto.Padding
-	alignment Alignment
+	body            core.View
+	colStart        int
+	colEnd          int
+	rowStart        int
+	rowEnd          int
+	colSpan         int
+	rowSpan         int
+	padding         proto.Padding
+	alignment       Alignment
+	backgroundColor Color
 }
 
 // GridCell creates a cell based on the given body. Rows and Columns start at 1, not zero.
@@ -36,6 +37,11 @@ func GridCell(body core.View) TGridCell {
 
 func (c TGridCell) Padding(p Padding) TGridCell {
 	c.padding = p.ora()
+	return c
+}
+
+func (c TGridCell) BackgroundColor(color Color) TGridCell {
+	c.backgroundColor = color
 	return c
 }
 
@@ -89,15 +95,16 @@ func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
 	}
 
 	return proto.GridCell{
-		Body:      body,
-		ColStart:  proto.Uint(c.colStart),
-		ColEnd:    proto.Uint(c.colEnd),
-		RowStart:  proto.Uint(c.rowStart),
-		RowEnd:    proto.Uint(c.rowEnd),
-		ColSpan:   proto.Uint(c.colSpan),
-		RowSpan:   proto.Uint(c.rowSpan),
-		Padding:   c.padding,
-		Alignment: c.alignment.ora(),
+		Body:            body,
+		ColStart:        proto.Uint(c.colStart),
+		ColEnd:          proto.Uint(c.colEnd),
+		RowStart:        proto.Uint(c.rowStart),
+		RowEnd:          proto.Uint(c.rowEnd),
+		ColSpan:         proto.Uint(c.colSpan),
+		RowSpan:         proto.Uint(c.rowSpan),
+		Padding:         c.padding,
+		Alignment:       c.alignment.ora(),
+		BackgroundColor: c.backgroundColor.ora(),
 	}
 }
 

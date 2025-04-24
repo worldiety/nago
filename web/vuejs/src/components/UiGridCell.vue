@@ -10,6 +10,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
+import { colorValue } from '@/components/shared/colors';
 import { marginCSS } from '@/components/shared/padding';
 import { AlignmentValues, GridCell } from '@/shared/proto/nprotoc_gen';
 
@@ -42,6 +43,10 @@ const style = computed<string>(() => {
 
 	if (props.ui.colEnd) {
 		styles.push(`grid-column-end: ${props.ui.colEnd}`);
+	}
+
+	if (props.ui.backgroundColor) {
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
 	}
 
 	if (props.ui.alignment === undefined) {

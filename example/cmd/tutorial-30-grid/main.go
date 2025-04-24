@@ -34,7 +34,7 @@ func main() {
 				Text("A simple grid row using stacks for alignment"),
 				Grid(
 					GridCell(VStack(Text("cell 1").BackgroundColor("#ff0000")).Alignment(Leading)),
-					GridCell(VStack(Text("cell 2").BackgroundColor("#ff0000")).Alignment(Center)),
+					GridCell(VStack(Text("cell 2").BackgroundColor("#ff0000")).Alignment(Center)).BackgroundColor("#0000ff"),
 					GridCell(VStack(Text("cell 3").BackgroundColor("#ff0000")).Alignment(Trailing)),
 				).
 					Rows(1).

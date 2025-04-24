@@ -3324,19 +3324,20 @@ func (v *Uint) IsZero() bool {
 
 // GridCell is undefined, if explicit row start/col start etc. is set and span values.
 type GridCell struct {
-	Body      Component
-	ColStart  Uint
-	ColEnd    Uint
-	RowStart  Uint
-	RowEnd    Uint
-	ColSpan   Uint
-	RowSpan   Uint
-	Padding   Padding
-	Alignment Alignment
+	Body            Component
+	ColStart        Uint
+	ColEnd          Uint
+	RowStart        Uint
+	RowEnd          Uint
+	ColSpan         Uint
+	RowSpan         Uint
+	Padding         Padding
+	Alignment       Alignment
+	BackgroundColor Color
 }
 
 func (v *GridCell) write(w *BinaryWriter) error {
-	var fields [10]bool
+	var fields [11]bool
 	fields[1] = v.Body != nil && !v.Body.IsZero()
 	fields[2] = !v.ColStart.IsZero()
 	fields[3] = !v.ColEnd.IsZero()
@@ -3346,6 +3347,7 @@ func (v *GridCell) write(w *BinaryWriter) error {
 	fields[7] = !v.RowSpan.IsZero()
 	fields[8] = !v.Padding.IsZero()
 	fields[9] = !v.Alignment.IsZero()
+	fields[10] = !v.BackgroundColor.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3435,6 +3437,14 @@ func (v *GridCell) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3501,6 +3511,11 @@ func (v *GridCell) read(r *BinaryReader) error {
 			}
 		case 9:
 			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.BackgroundColor.read(r)
 			if err != nil {
 				return err
 			}
@@ -12102,10 +12117,11 @@ func (v *GridCell) reset() {
 	v.RowSpan.reset()
 	v.Padding.reset()
 	v.Alignment.reset()
+	v.BackgroundColor.reset()
 }
 
 func (v *GridCell) IsZero() bool {
-	return v.Body.IsZero() && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero()
+	return v.Body.IsZero() && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero()
 }
 
 func (v *HStack) reset() {

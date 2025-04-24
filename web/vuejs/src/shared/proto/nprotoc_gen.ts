@@ -3597,6 +3597,8 @@ export class GridCell implements Writeable, Readable {
 
 	public alignment?: Alignment;
 
+	public backgroundColor?: Color;
+
 	constructor(
 		body: Component | undefined = undefined,
 		colStart: Uint | undefined = undefined,
@@ -3606,7 +3608,8 @@ export class GridCell implements Writeable, Readable {
 		colSpan: Uint | undefined = undefined,
 		rowSpan: Uint | undefined = undefined,
 		padding: Padding | undefined = undefined,
-		alignment: Alignment | undefined = undefined
+		alignment: Alignment | undefined = undefined,
+		backgroundColor: Color | undefined = undefined
 	) {
 		this.body = body;
 		this.colStart = colStart;
@@ -3617,6 +3620,7 @@ export class GridCell implements Writeable, Readable {
 		this.rowSpan = rowSpan;
 		this.padding = padding;
 		this.alignment = alignment;
+		this.backgroundColor = backgroundColor;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3667,6 +3671,10 @@ export class GridCell implements Writeable, Readable {
 					this.alignment = readInt(reader);
 					break;
 				}
+				case 10: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3685,6 +3693,7 @@ export class GridCell implements Writeable, Readable {
 			this.rowSpan !== undefined,
 			this.padding !== undefined && !this.padding.isZero(),
 			this.alignment !== undefined,
+			this.backgroundColor !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3726,6 +3735,10 @@ export class GridCell implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
 			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -3738,7 +3751,8 @@ export class GridCell implements Writeable, Readable {
 			this.colSpan === undefined &&
 			this.rowSpan === undefined &&
 			(this.padding === undefined || this.padding.isZero()) &&
-			this.alignment === undefined
+			this.alignment === undefined &&
+			this.backgroundColor === undefined
 		);
 	}
 
@@ -3752,6 +3766,7 @@ export class GridCell implements Writeable, Readable {
 		this.rowSpan = undefined;
 		this.padding = undefined;
 		this.alignment = undefined;
+		this.backgroundColor = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
