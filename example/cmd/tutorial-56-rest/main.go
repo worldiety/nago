@@ -8,10 +8,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/hapi"
 	cfghapi "go.wdy.de/nago/application/hapi/cfg"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/stoplight"
 	"go.wdy.de/nago/presentation/core"
@@ -19,6 +21,7 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 	"mime/multipart"
 	"net/url"
+	"slices"
 	"time"
 )
 
@@ -79,6 +82,7 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 		TestHeader string
 		Metadata   UploadMetadata
 		Files      []*multipart.FileHeader
+		Subject    auth.Subject
 	}
 
 	type SomeID string
@@ -98,7 +102,10 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 
 	hapi.Post[UploadRequest](api, hapi.Operation{Path: "/api/v1/events", Summary: "Create a new event", Description: "A post will take the given meta data and files and persists it as an event. A unique tracking code is returned."}).
 		Request(
-			hapi.BearerAuth[UploadRequest](tokens.UseCases.AuthenticateSubject),
+			hapi.BearerAuth[UploadRequest](tokens.UseCases.AuthenticateSubject, func(dst *UploadRequest, subject auth.Subject) error {
+				dst.Subject = subject
+				return nil
+			}),
 
 			hapi.StrFromHeader(hapi.StrParam[UploadRequest]{Name: "test-header", IntoModel: func(dst *UploadRequest, value string) error {
 				dst.TestHeader = value
@@ -119,6 +126,7 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 			}),
 		).
 		Response(hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
+			fmt.Println(in.Subject.Valid(), in.Subject.ID(), slices.Collect(in.Subject.Permissions()))
 			return UploadResponse{ID: "1234-" + in.TestHeader, When: time.Now()}, nil
 		}))
 }

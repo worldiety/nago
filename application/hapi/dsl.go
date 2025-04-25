@@ -35,6 +35,11 @@ func Endpoint[In any](api *API, op Operation) *EndpointBuilder[In] {
 	return b
 }
 
+// Request defined arbitrary options which are usually mapper functions from the raw request input to something
+// more structured. The goal of this additional abstraction, is to collect specific information about the request,
+// to automatically generate the according open api documentation. See also [Response]. If a mapper fails,
+// this is usually due to a bad request, which is communicated accordingly. If all request options has been applied,
+// the [Response] options are evaluated.
 func (b *EndpointBuilder[In]) Request(opts ...RequestOption[In]) *EndpointBuilder[In] {
 	if b.request == nil {
 		b.request = newRequestBuilder[In](b)
@@ -46,6 +51,10 @@ func (b *EndpointBuilder[In]) Request(opts ...RequestOption[In]) *EndpointBuilde
 	return b
 }
 
+// Response defines arbitrary options which are usually mapper functions to modify the raw response output to be more
+// structured. The goal of this additional abstraction is to collect specific information about the request,
+// to automatically generate the according open api documentation. Invalid subjects are intentionally passed through,
+// so that the use case can decide to either reject the request entirely or to just return public data.
 func (b *EndpointBuilder[In]) Response(opts ...ResponseOption[In]) {
 	if b.response == nil {
 		b.response = &ResponseBuilder[In]{}

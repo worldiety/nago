@@ -8,12 +8,21 @@
 package token
 
 import (
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID], subjectFromUser user.SubjectFromUser, subjectLookup *concurrent.RWMap[Plaintext, user.Subject], anonUser user.GetAnonUser) AuthenticateSubject {
+func NewAuthenticateSubject(
+	repo Repository,
+	algo user.HashAlgorithm,
+	reverseHashLookup *concurrent.RWMap[Hash, ID],
+	subjectFromUser user.SubjectFromUser,
+	subjectLookup *concurrent.RWMap[Plaintext, user.Subject],
+	anonUser user.GetAnonUser,
+	findRoleByID role.FindByID,
+) AuthenticateSubject {
 	return func(plaintext Plaintext) (auth.Subject, error) {
 		subj, ok := subjectLookup.Get(plaintext)
 		if ok {
@@ -55,7 +64,7 @@ func NewAuthenticateSubject(repo Repository, algo user.HashAlgorithm, reverseHas
 		token := optToken.Unwrap()
 
 		if token.Impersonation.IsNone() {
-			s := newSubject(token)
+			s := newSubject(findRoleByID, repo, token)
 			subjectLookup.Put(plaintext, s)
 			return s, nil
 		}

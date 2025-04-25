@@ -64,8 +64,9 @@ type StrParam[T any] struct {
 const bearerAuthSecName = "bearerAuth"
 
 // BearerAuth requires that an API bearer token must be submitted as header value for request authentication.
-// This is the default. The api keys can be configured through the according web ui element.
-func BearerAuth[In any](authenticate token.AuthenticateSubject) RequestOption[In] {
+// This is the default. The api keys can be configured through the according web ui element. If the authentication is
+// missing entirely, the subject will still trigger the authenticate use case, to ensure an initialized anon subject.
+func BearerAuth[In any](authenticate token.AuthenticateSubject, fn func(dst *In, subject auth.Subject) error) RequestOption[In] {
 	return func(doc *oas.OpenAPI, b *RequestBuilder[In]) {
 		if _, ok := doc.ComponentsSecurity()[bearerAuthSecName]; !ok {
 			doc.ComponentsSecurity()[bearerAuthSecName] = &oas.SecurityScheme{
@@ -78,31 +79,57 @@ func BearerAuth[In any](authenticate token.AuthenticateSubject) RequestOption[In
 		}
 
 		b.handlers = append(b.handlers, requestSchema[In]{
+
 			requestDecorator: func(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 				authHeader := r.Header.Get("Authorization")
 
+				var subject auth.Subject
 				if authHeader == "" {
-					http.Error(w, "Authorization header missing", http.StatusUnauthorized)
-					return nil, user.InvalidSubjectErr
+					sub, err := authenticate("")
+					if err != nil {
+						http.Error(w, "authenticate use case does not support anon call", http.StatusInternalServerError)
+						return nil, err
+					}
+
+					subject = sub
+				} else {
+					const prefix = "Bearer "
+
+					if !strings.HasPrefix(authHeader, prefix) {
+						http.Error(w, "Invalid auth header format", http.StatusUnauthorized)
+						return nil, user.InvalidSubjectErr
+					}
+
+					tokenStr := strings.TrimPrefix(authHeader, prefix)
+					subj, err := authenticate(token.Plaintext(tokenStr))
+					if err != nil {
+						http.Error(w, "Authorization header missing", http.StatusInternalServerError)
+						return nil, err
+					}
+
+					subject = subj
 				}
 
-				const prefix = "Bearer "
-
-				if !strings.HasPrefix(authHeader, prefix) {
-					http.Error(w, "Invalid auth header format", http.StatusUnauthorized)
-					return nil, user.InvalidSubjectErr
-				}
-
-				tokenStr := strings.TrimPrefix(authHeader, prefix)
-				subj, err := authenticate(token.Plaintext(tokenStr))
-				if err != nil {
-					http.Error(w, "Authorization header missing", http.StatusInternalServerError)
-					return nil, err
-				}
-
-				newCtx := auth.WithSubject(r.Context(), subj)
+				newCtx := auth.WithSubject(r.Context(), subject)
 				r = r.WithContext(newCtx)
 				return r, nil
+			},
+
+			// intoModel is evaluated after all decorators
+			intoModel: func(dst *In, writer http.ResponseWriter, request *http.Request) error {
+				if fn != nil {
+					subject, ok := auth.FromContext(request.Context())
+					if !ok {
+						http.Error(writer, "Authorization subject required, but missing in request context", http.StatusInternalServerError)
+						return fmt.Errorf("authorization subject required, but missing in request context")
+					}
+
+					if err := fn(dst, subject); err != nil {
+						return err
+					}
+				}
+
+				return nil
 			},
 		})
 

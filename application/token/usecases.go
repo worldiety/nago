@@ -148,7 +148,7 @@ func NewUseCases(
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
-		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser),
+		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
 		ResolveTokenRights: NewResolveTokenRights(
 			repo,
