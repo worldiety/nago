@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xstrings"
 	"golang.org/x/text/language"
+	"iter"
 	"regexp"
 	"strings"
 	"time"
@@ -185,8 +186,13 @@ type Resource struct {
 	Name string
 
 	// ID is the string version of the root aggregate or entity key used in the named Store or Repository.
-	// If ID is empty, all values from the Named Store or Repository must be selected.
+	// If ID is empty, all values from the Named Store or Repository are applicable.
 	ID string
+}
+
+type ResourceWithPermissions struct {
+	Permissions iter.Seq[permission.ID]
+	Resource
 }
 
 type User struct {

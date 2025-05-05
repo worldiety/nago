@@ -111,6 +111,19 @@ type Consent func(subject AuditableUser, user ID, consentID consent.ID, status c
 
 type LoadSettings func(subject AuditableUser) Settings
 
+// AddResourcePermissions appends those permissions to the users' resource lookup table which have not been already
+// defined. Adding a wildcard does not automatically substitute fine-grained permissions. A wildcard takes
+// logically a higher precedence.
+type AddResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
+
+// RemoveResourcePermissions removes those permissions from the users' resource lookup table which have been already
+// defined. Removing a wildcard does not automatically remove fine-grained permissions.
+type RemoveResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
+
+// ListResourcePermissions returns an iterator over all defined resource permissions. Note that the
+// returned order of resources is implementation-dependent and may be even random for subsequent calls.
+type ListResourcePermissions func(subject AuditableUser, uid ID) iter.Seq2[ResourceWithPermissions, error]
+
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -155,6 +168,9 @@ type UseCases struct {
 	CountUsers                CountUsers
 	GetAnonUser               GetAnonUser
 	Consent                   Consent
+	AddResourcePermissions    AddResourcePermissions
+	RemoveResourcePermissions RemoveResourcePermissions
+	ListResourcePermissions   ListResourcePermissions
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -231,5 +247,8 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
 		Consent:                   NewConsent(&globalLock, users),
+		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
+		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),
+		ListResourcePermissions:   NewListResourcePermissions(&globalLock, users),
 	}
 }
