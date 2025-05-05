@@ -53,6 +53,10 @@ func NewRemoveResourcePermissions(mutex *sync.Mutex, repo Repository) RemoveReso
 		// clean up properly
 		slices.Sort(perms)
 		perms = slices.Compact(perms)
+		if usr.Resources == nil {
+			usr.Resources = map[Resource][]permission.ID{}
+		}
+		
 		usr.Resources[resource] = perms
 
 		return repo.Save(usr)

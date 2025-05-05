@@ -49,6 +49,9 @@ func NewAddResourcePermissions(mutex *sync.Mutex, repo Repository) AddResourcePe
 
 		slices.Sort(perms)
 		perms = slices.Compact(perms)
+		if usr.Resources == nil {
+			usr.Resources = map[Resource][]permission.ID{}
+		}
 		usr.Resources[resource] = perms
 
 		return repo.Save(usr)
