@@ -114,6 +114,7 @@ func (c TButton) Render(ctx core.RenderContext) core.RenderNode {
 		),
 	).Alignment(ui.Leading).
 		Gap(ui.L4).
+		Visible(!c.invisible).
 		Frame(c.frame).
 		Border(c.border).
 		Padding(c.padding).
