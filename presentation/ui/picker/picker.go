@@ -40,6 +40,7 @@ type TPicker[T any] struct {
 	quickFilterSupported bool
 	disabled             bool
 	detailView           core.View
+	invisible            bool
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -196,7 +197,7 @@ func (c TPicker[T]) Border(border ui.Border) ui.DecoredView {
 }
 
 func (c TPicker[T]) Visible(visible bool) ui.DecoredView {
-	//TODO implement me
+	c.invisible = !visible
 	return c
 }
 
@@ -425,6 +426,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		),
 	).Alignment(ui.Leading).
 		Gap(ui.L4).
+		Visible(!c.invisible).
 		Frame(c.frame).
 		Render(ctx)
 }
