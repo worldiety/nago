@@ -22,6 +22,7 @@ type TFooter struct {
 	termOfUse       LinkOrNavigationPath
 	copyright       string
 	backgroundColor ui.Color
+	textColor       ui.Color
 }
 
 func Footer() TFooter {
@@ -68,6 +69,11 @@ func (t TFooter) BackgroundColor(backgroundColor ui.Color) TFooter {
 	return t
 }
 
+func (t TFooter) TextColor(textColor ui.Color) TFooter {
+	t.textColor = textColor
+	return t
+}
+
 func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
 	anyLegal := t.impress != "" || t.gtc != "" || t.gdpr != ""
 	height := ui.L160
@@ -90,7 +96,7 @@ func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
 				ui.If(t.copyright != "", ui.Text(t.copyright).Padding(ui.Padding{Left: ui.L16})),
 			).Gap(ui.L16)
 		}),
-	).
+	).TextColor(t.textColor).
 		Gap(ui.L24).
 		BackgroundColor(t.backgroundColor).
 		Border(ui.Border{TopColor: ui.M6, TopWidth: ui.L1}).

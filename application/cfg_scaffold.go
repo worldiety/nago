@@ -189,15 +189,17 @@ func (b *SubMenuEntryBuilder) PublicOnly() *SubMenuBuilder {
 }
 
 type ScaffoldBuilder struct {
-	cfg              *Configurator
-	alignment        ui.ScaffoldAlignment
-	menu             []*MenuEntryBuilder
-	logoClick        func(wnd core.Window)
-	logoImage        ui.DecoredView
-	showLogin        bool
-	breakpoint       *int
-	footer           core.View
-	enableAutoFooter bool
+	cfg                   *Configurator
+	alignment             ui.ScaffoldAlignment
+	menu                  []*MenuEntryBuilder
+	logoClick             func(wnd core.Window)
+	logoImage             ui.DecoredView
+	showLogin             bool
+	breakpoint            *int
+	footer                core.View
+	enableAutoFooter      bool
+	footerBackgroundColor ui.Color
+	footerTextColor       ui.Color
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -239,6 +241,20 @@ func (b *ScaffoldBuilder) Logo(image ui.DecoredView) *ScaffoldBuilder {
 func (b *ScaffoldBuilder) Footer(footer core.View) *ScaffoldBuilder {
 	b.footer = footer
 	b.enableAutoFooter = false
+	return b
+}
+
+// FooterBackgroundColor is only applied for the automatically generated footer and not if a custom component
+// is configured by user [ScaffoldBuilder.Footer].
+func (b *ScaffoldBuilder) FooterBackgroundColor(color ui.Color) *ScaffoldBuilder {
+	b.footerBackgroundColor = color
+	return b
+}
+
+// FooterTextColor is only applied for the automatically generated footer and not if a custom component
+// is configured by user [ScaffoldBuilder.Footer].
+func (b *ScaffoldBuilder) FooterTextColor(color ui.Color) *ScaffoldBuilder {
+	b.footerTextColor = color
 	return b
 }
 
@@ -458,6 +474,8 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				PrivacyPolicy(themeCfg.PrivacyPolicy).
 				TermsOfUse(themeCfg.TermsOfUse).
 				ProviderName(themeCfg.ProviderName).
+				TextColor(b.footerTextColor).
+				BackgroundColor(b.footerBackgroundColor).
 				Slogan(themeCfg.Slogan).
 				GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
 
