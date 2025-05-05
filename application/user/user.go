@@ -8,6 +8,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
@@ -20,6 +21,7 @@ import (
 	"golang.org/x/text/language"
 	"iter"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -188,6 +190,31 @@ type Resource struct {
 	// ID is the string version of the root aggregate or entity key used in the named Store or Repository.
 	// If ID is empty, all values from the Named Store or Repository are applicable.
 	ID string
+}
+
+func (r Resource) MarshalText() ([]byte, error) {
+	return []byte(strconv.Quote(r.Name + "/" + r.ID)), nil
+}
+
+func (r *Resource) UnmarshalText(data []byte) error {
+	if len(data) == 0 {
+		r.Name = ""
+		r.ID = ""
+	}
+
+	str, err := strconv.Unquote(string(data))
+	if err != nil {
+		return err
+	}
+
+	tokens := strings.SplitN(str, "/", 2)
+	if len(tokens) != 2 {
+		return fmt.Errorf("invalid json format for resource: %s", str)
+	}
+
+	r.Name = tokens[0]
+	r.ID = tokens[1]
+	return nil
 }
 
 type ResourceWithPermissions struct {
