@@ -9,6 +9,7 @@ package form
 
 import (
 	"encoding/json"
+	"fmt"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
@@ -442,7 +443,13 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					if label != "" {
 						fieldsBuilder.Append(ui.Text(label).TextAlignment(ui.TextAlignStart).FullWidth())
 					}
-					fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
+
+					if field.Tag.Get("style") == "avatar" {
+						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get())))
+					} else {
+						fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
+					}
+
 				default:
 					var lines int
 					if str, ok := field.Tag.Lookup("lines"); ok {
