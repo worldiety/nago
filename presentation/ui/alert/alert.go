@@ -41,6 +41,7 @@ func Ok() Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.okBtn = ui.PrimaryButton(func() {
 			opts.state.Set(false)
+			opts.state.Notify()
 		}).Title("Schließen")
 	})
 }
@@ -49,6 +50,7 @@ func Delete(onDelete func()) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.delBtn = ui.PrimaryButton(func() {
 			opts.state.Set(false)
+			opts.state.Notify()
 			if onDelete != nil {
 				onDelete()
 			}
@@ -73,7 +75,8 @@ func save(caption string, onSave func() (close bool)) Option {
 			}
 
 			opts.state.Set(open)
-
+			opts.state.Notify()
+			
 		}).Title(caption)
 	})
 }
@@ -82,6 +85,7 @@ func Closeable() Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.closeable = ui.TertiaryButton(func() {
 			opts.state.Set(false)
+			opts.state.Notify()
 		}).PreIcon(heroOutline.XMark)
 	})
 }
@@ -97,6 +101,7 @@ func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.custom = append(opts.custom, makeCustomView(func(closeDlg bool) {
 			opts.state.Set(!closeDlg)
+			opts.state.Notify()
 		}))
 	})
 }
@@ -105,6 +110,7 @@ func Cancel(onCancel func()) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
 			opts.state.Set(false)
+			opts.state.Notify()
 			if onCancel != nil {
 				onCancel()
 			}
@@ -116,6 +122,7 @@ func Back(onCancel func()) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
 			opts.state.Set(false)
+			opts.state.Notify()
 			if onCancel != nil {
 				onCancel()
 			}
