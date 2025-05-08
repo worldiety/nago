@@ -19,9 +19,9 @@ import (
 )
 
 func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID]) Create {
-	return func(subject auth.Subject, cdata CreationData) (Plaintext, error) {
+	return func(subject auth.Subject, cdata CreationData) (ID, Plaintext, error) {
 		if err := subject.Audit(PermCreate); err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		mutex.Lock()
@@ -38,7 +38,7 @@ func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 		plaintext := Plaintext(rand.Text())
 		hBytes, err := plaintext.TokenHash(algo)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		hash := HashString(hBytes)
@@ -47,7 +47,7 @@ func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 		// If the way we treat these hashes becomes invalid, we must remove/revoke/rotate all of them at once, to
 		// avoid potential attacks on broken algorithms or collisions across the output of different algorithms.
 		if _, ok := reverseHashLookup.Get(hash); ok {
-			return "", fmt.Errorf("generated hash collision from random token")
+			return "", "", fmt.Errorf("generated hash collision from random token")
 		}
 
 		token := Token{
@@ -67,19 +67,19 @@ func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 
 		optToken, err := repo.FindByID(token.ID)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		if optToken.IsSome() {
-			return "", fmt.Errorf("token already exists")
+			return "", "", fmt.Errorf("token already exists")
 		}
 
 		if err := repo.Save(token); err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		reverseHashLookup.Put(hash, token.ID)
 
-		return plaintext, nil
+		return token.ID, plaintext, nil
 	}
 }

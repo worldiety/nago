@@ -35,7 +35,7 @@ type CreationData struct {
 }
 
 // Create allocates a new token and returns the generated Hash and Plaintext. The Plaintext is never stored.
-type Create func(subject auth.Subject, data CreationData) (Plaintext, error)
+type Create func(subject auth.Subject, data CreationData) (ID, Plaintext, error)
 
 type UserCreationData struct {
 	Name        string

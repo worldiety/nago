@@ -257,7 +257,7 @@ func createDialog(wnd core.Window, presented *core.State[bool], plainToken *core
 		alert.MinWidth(ui.L560),
 		alert.Cancel(nil),
 		alert.Save(func() (close bool) {
-			plain, err := uc.Create(wnd.Subject(), tokenState.Get())
+			_, plain, err := uc.Create(wnd.Subject(), tokenState.Get())
 			if err != nil {
 				alert.ShowBannerError(wnd, err)
 				return false
