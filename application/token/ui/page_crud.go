@@ -79,7 +79,7 @@ func PageCrud(wnd core.Window, uc token.UseCases) core.View {
 		deleteDialog(wnd, deletePresented, selectedToken.Get(), uc),
 		viewAccessRightsDialog(wnd, accessRightsPresented, selectedToken.Get(), uc),
 		rotateDialog(wnd, rotatePresented, selectedToken.Get(), plainToken, uc),
-		plainTokenDialog(wnd, plainTokenPresented, plainToken),
+		PlainTokenDialog(wnd, plainTokenPresented, plainToken),
 		ui.HStack(
 			ui.SecondaryButton(func() {
 				core.HTTPOpen(wnd.Navigation(), "/api/doc", "_blank")
@@ -219,7 +219,7 @@ func rotateDialog(wnd core.Window, presented *core.State[bool], token token.Toke
 	)
 }
 
-func plainTokenDialog(wnd core.Window, presented *core.State[bool], plainToken *core.State[string]) core.View {
+func PlainTokenDialog(wnd core.Window, presented *core.State[bool], plainToken *core.State[string]) core.View {
 	if !presented.Get() {
 		return nil
 	}
