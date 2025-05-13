@@ -26,6 +26,21 @@ func Post[In any](api *API, op Operation) *EndpointBuilder[In] {
 	return Endpoint[In](api, op)
 }
 
+func Get[In any](api *API, op Operation) *EndpointBuilder[In] {
+	op.Method = http.MethodGet
+	return Endpoint[In](api, op)
+}
+
+func Delete[In any](api *API, op Operation) *EndpointBuilder[In] {
+	op.Method = http.MethodDelete
+	return Endpoint[In](api, op)
+}
+
+func Put[In any](api *API, op Operation) *EndpointBuilder[In] {
+	op.Method = http.MethodPut
+	return Endpoint[In](api, op)
+}
+
 func Endpoint[In any](api *API, op Operation) *EndpointBuilder[In] {
 	b := &EndpointBuilder[In]{
 		op:  op,
