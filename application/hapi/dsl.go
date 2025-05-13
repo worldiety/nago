@@ -94,6 +94,21 @@ func (b *EndpointBuilder[In]) register(api *API) {
 	switch b.op.Method {
 	case http.MethodPost:
 		itemOp = &pathItem.Post
+	case http.MethodPut:
+		itemOp = &pathItem.Put
+	case http.MethodDelete:
+		itemOp = &pathItem.Delete
+	case http.MethodPatch:
+		itemOp = &pathItem.Patch
+	case http.MethodOptions:
+		itemOp = &pathItem.Options
+	case http.MethodHead:
+		itemOp = &pathItem.Head
+	case http.MethodTrace:
+		itemOp = &pathItem.Trace
+	case http.MethodGet:
+		itemOp = &pathItem.Get
+
 	default:
 		// developer error
 		panic(fmt.Errorf("unsupported method: %s", b.op.Method))
