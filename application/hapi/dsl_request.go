@@ -26,18 +26,20 @@ type requestSchema[In any] struct {
 }
 
 type RequestBuilder[In any] struct {
-	ep              *EndpointBuilder[In]
-	security        []*oas.SecurityRequirement
-	inputStrHeaders map[string]StrParam[In]
-	handlers        []requestSchema[In]
+	ep                  *EndpointBuilder[In]
+	security            []*oas.SecurityRequirement
+	inputStrHeaders     map[string]StrParam[In]
+	inputStrQueryParams map[string]StrParam[In]
+	handlers            []requestSchema[In]
 	//handler         func(in In, writer http.ResponseWriter, request *http.Request) error
 
 }
 
 func newRequestBuilder[In any](ep *EndpointBuilder[In]) *RequestBuilder[In] {
 	return &RequestBuilder[In]{
-		ep:              ep,
-		inputStrHeaders: map[string]StrParam[In]{},
+		ep:                  ep,
+		inputStrHeaders:     map[string]StrParam[In]{},
+		inputStrQueryParams: map[string]StrParam[In]{},
 	}
 }
 
@@ -48,6 +50,16 @@ func StrFromHeader[In any](field StrParam[In]) RequestOption[In] {
 		}
 
 		b.inputStrHeaders[field.Name] = field
+	}
+}
+
+func StrFromQuery[In any](field StrParam[In]) RequestOption[In] {
+	return func(doc *oas.OpenAPI, b *RequestBuilder[In]) {
+		if _, ok := b.inputStrQueryParams[field.Name]; ok {
+			panic(fmt.Errorf("duplicate query field %s", field.Name))
+		}
+
+		b.inputStrQueryParams[field.Name] = field
 	}
 }
 

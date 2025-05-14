@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/pkg/oas/v31"
 	"net/http"
+	"net/url"
 )
 
 type EndpointBuilder[In any] struct {
@@ -137,6 +138,18 @@ func (b *EndpointBuilder[In]) register(api *API) {
 				AllowEmptyValue: true,
 			})
 		}
+
+		for _, strQuery := range b.request.inputStrQueryParams {
+			op.Parameters = append(op.Parameters, oas.Parameter{
+				Name:            strQuery.Name,
+				In:              oas.LocationQuery,
+				Description:     strQuery.Description,
+				Required:        strQuery.Required,
+				Deprecated:      strQuery.Deprecated,
+				Schema:          schemaOf[string](api.doc),
+				AllowEmptyValue: true,
+			})
+		}
 	}
 
 	if b.response != nil && b.response.schema != nil {
@@ -240,9 +253,24 @@ func (b *EndpointBuilder[In]) register(api *API) {
 				}
 			}
 
+			reqUrl := request.URL
+			if reqUrl == nil {
+				reqUrl = &url.URL{}
+			}
+			reqQueryValues := request.URL.Query()
+
 			for _, strHeader := range b.request.inputStrHeaders {
 				if strHeader.IntoModel != nil {
 					if err := strHeader.IntoModel(&input, request.Header.Get(strHeader.Name)); err != nil {
+						writer.WriteHeader(http.StatusBadRequest)
+						return
+					}
+				}
+			}
+
+			for _, strQuery := range b.request.inputStrQueryParams {
+				if strQuery.IntoModel != nil {
+					if err := strQuery.IntoModel(&input, reqQueryValues.Get(strQuery.Name)); err != nil {
 						writer.WriteHeader(http.StatusBadRequest)
 						return
 					}

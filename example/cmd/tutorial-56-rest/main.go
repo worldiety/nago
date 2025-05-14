@@ -21,7 +21,6 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 	"mime/multipart"
 	"net/url"
-	"slices"
 	"time"
 )
 
@@ -80,6 +79,7 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 
 	type UploadRequest struct {
 		TestHeader string
+		TestQuery  string
 		Metadata   UploadMetadata
 		Files      []*multipart.FileHeader
 		Subject    auth.Subject
@@ -111,6 +111,11 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 				dst.TestHeader = value
 				return nil
 			}}),
+
+			hapi.StrFromQuery(hapi.StrParam[UploadRequest]{Name: "test-query", IntoModel: func(dst *UploadRequest, value string) error {
+				dst.TestQuery = value
+				return nil
+			}}),
 			// this can be a simple alternative
 			/*hapi.JSONFromBody(func(dst *UploadRequest, model UploadMetadata) error {
 				dst.Metadata = model
@@ -126,7 +131,7 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 			}),
 		).
 		Response(hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
-			fmt.Println(in.Subject.Valid(), in.Subject.ID(), slices.Collect(in.Subject.Permissions()))
+			fmt.Printf("%+v\n", in)
 			return UploadResponse{ID: "1234-" + in.TestHeader, When: time.Now()}, nil
 		}))
 }
