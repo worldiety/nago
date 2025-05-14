@@ -130,8 +130,13 @@ func configureMyAPI(api *hapi.API, tokens application.TokenManagement) {
 				return nil
 			}),
 		).
-		Response(hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
-			fmt.Printf("%+v\n", in)
-			return UploadResponse{ID: "1234-" + in.TestHeader, When: time.Now()}, nil
-		}))
+		Response(
+			hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
+				fmt.Printf("%+v\n", in)
+				return UploadResponse{ID: "1234-" + in.TestHeader, When: time.Now()}, nil
+			}),
+			/*hapi.ToBinary[UploadRequest](func(in UploadRequest) (io.Reader, error) {
+				return bytes.NewReader([]byte(in.TestHeader)), nil
+			}),*/
+		)
 }

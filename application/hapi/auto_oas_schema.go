@@ -9,6 +9,7 @@ package hapi
 
 import (
 	"go.wdy.de/nago/pkg/oas/v31"
+	"io"
 	"log/slog"
 	"mime/multipart"
 	"net/url"
@@ -106,6 +107,17 @@ func schemaOfT(doc *oas.OpenAPI, t reflect.Type) *oas.Schema {
 				Type: "object",
 				AdditionalProperties: &oas.Schema{
 					Type: "string",
+				},
+			}
+		}
+	case reflect.Interface:
+		switch t {
+		case reflect.TypeFor[io.ReadCloser](), reflect.TypeFor[io.Reader]():
+			return &oas.Schema{
+				Type: "array",
+				Items: &oas.Schema{
+					Type:   "string",
+					Format: "binary",
 				},
 			}
 		}
