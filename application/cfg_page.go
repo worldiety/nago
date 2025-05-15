@@ -231,7 +231,7 @@ func (c *Configurator) newHandler() http.Handler {
 				cookie.Name = "wdy-ora-access"
 				cookie.Value = string(proto.NewScopeID())
 				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-				cookie.Secure = !c.debug
+				cookie.Secure = c.secureCookie()
 				cookie.HttpOnly = true
 				// Security note: we used http.SameSiteStrictMode but it is at least broken in firefox as of today, even with our local-storage-restore process (perhaps due to browser bugs)
 				// lets try to decrease security and see what the security review thinks. We could also improve testing and just enable Lax for firefox, if other browser work properly with our workaround.
@@ -297,7 +297,7 @@ func (c *Configurator) newHandler() http.Handler {
 		cookie.Name = "wdy-ora-access"
 		cookie.Value = string(sidBuf)
 		cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-		cookie.Secure = !c.debug
+		cookie.Secure = c.secureCookie()
 		cookie.HttpOnly = true
 		// Security note: as above, we use the lax mode due to browser bugs and edge cases because our clever restore mechanics just not works reliable enough
 		cookie.SameSite = http.SameSiteLaxMode
@@ -508,7 +508,8 @@ func (c *Configurator) newHandler() http.Handler {
 				return
 			}
 		} else {
-			// TODO I can't remember if this sessionID is essential and how it is different from the sid above? Will the looper below fail?
+			// if debug is false (e.g. on a linux) secure will switch to on but without https we will never get that cookie
+			slog.Error("cookie is missing in /wire, maybe missing due to browser security constraints and wrong settings. If you want insecure cookies set env NAGO_COOKIES_INSECURE=true")
 		}
 
 		if err := channel.Loop(); err != nil {

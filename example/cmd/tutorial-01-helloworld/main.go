@@ -19,7 +19,7 @@ import (
 func main() {
 	// we use the applications package to bootstrap our configuration
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial")
+		cfg.SetApplicationID("de.worldiety.tutorial_01")
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {

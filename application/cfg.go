@@ -95,6 +95,8 @@ type Configurator struct {
 }
 
 func NewConfigurator() *Configurator {
+	printEnv()
+
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	var buildInfo string
@@ -129,6 +131,24 @@ func NewConfigurator() *Configurator {
 	}
 
 	return cfg
+}
+
+func printEnv() {
+	for _, s := range os.Environ() {
+		slog.Info(s)
+	}
+}
+
+func (c *Configurator) secureCookie() bool {
+	if strV, ok := os.LookupEnv("NAGO_COOKIES_INSECURE"); ok {
+		if ok, _ := strconv.ParseBool(strV); ok {
+			return false
+		} else {
+			return true
+		}
+	}
+
+	return !c.debug
 }
 
 type envVarConfig struct {
@@ -213,12 +233,19 @@ func (c *Configurator) AppIcon(ico core.URI) *core.Application {
 }
 
 // DataDir returns the most private data directory, which is accessible. If not manually set, initialize as follows:
+//   - use STATE_DIRECTORY from systemd, if defined or
 //   - use user home if available or
 //   - use working dir if available or
 //   - use temp dir if available
 //   - append .nago/<application id>
 //   - ensure directory with 0700 to only allow owner to access
 func (c *Configurator) DataDir() string {
+	if c.dataDir == "" {
+		if sysdStateDir, ok := os.LookupEnv("STATE_DIRECTORY"); ok {
+			c.dataDir = strings.Split(sysdStateDir, ":")[0]
+		}
+	}
+
 	if c.dataDir == "" {
 		dataDir, err := os.UserHomeDir()
 		if err != nil {
