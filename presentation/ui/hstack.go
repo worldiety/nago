@@ -56,6 +56,11 @@ func HStack(children ...core.View) *THStack {
 	return c
 }
 
+func (c THStack) Append(children ...core.View) THStack {
+	c.children = append(c.children, children...)
+	return c
+}
+
 // Enabled has only an effect if StylePreset is applied, otherwise it is ignored.
 func (c THStack) Enabled(enabled bool) THStack {
 	c.disabled = !enabled

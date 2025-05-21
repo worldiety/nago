@@ -49,6 +49,11 @@ func VStack(children ...core.View) TVStack {
 	return c
 }
 
+func (c TVStack) Append(children ...core.View) TVStack {
+	c.children = append(c.children, children...)
+	return c
+}
+
 func (c TVStack) Gap(gap Length) TVStack {
 	c.gap = gap.ora()
 	return c
