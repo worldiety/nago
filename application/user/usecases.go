@@ -124,6 +124,8 @@ type RemoveResourcePermissions func(subject AuditableUser, uid ID, resource Reso
 // returned order of resources is implementation-dependent and may be even random for subsequent calls.
 type ListResourcePermissions func(subject AuditableUser, uid ID) iter.Seq2[ResourceWithPermissions, error]
 
+// SetResourcePermissions removes all assigned permissions to the resource rule and sets the exact given set to it.
+type SetResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
 type Compact struct {
 	Avatar      image.ID
 	Displayname string
@@ -171,6 +173,7 @@ type UseCases struct {
 	AddResourcePermissions    AddResourcePermissions
 	RemoveResourcePermissions RemoveResourcePermissions
 	ListResourcePermissions   ListResourcePermissions
+	SetResourcePermissions    SetResourcePermissions
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -250,5 +253,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
 		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),
 		ListResourcePermissions:   NewListResourcePermissions(&globalLock, users),
+		SetResourcePermissions:    NewSetResourcePermissions(&globalLock, users),
 	}
 }
