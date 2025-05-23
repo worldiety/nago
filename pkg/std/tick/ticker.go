@@ -32,11 +32,13 @@ func init() {
 	lastTickTime = time.Now()
 	ticker := time.NewTicker(time.Minute)
 	go func() {
-		select {
-		case t := <-ticker.C:
-			tickMutex.Lock()
-			lastTickTime = t
-			tickMutex.Unlock()
+		for {
+			select {
+			case t := <-ticker.C:
+				tickMutex.Lock()
+				lastTickTime = t
+				tickMutex.Unlock()
+			}
 		}
 	}()
 }
