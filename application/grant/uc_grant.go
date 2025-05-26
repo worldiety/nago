@@ -50,7 +50,7 @@ func NewGrant(repo Repository, findUserByID user.FindByID, setUserPerm user.SetR
 		slices.Sort(permissions)
 
 		// security note: we checked above with a different rule set
-		if err := setUserPerm(user.SU(), uid, user.Resource{Name: repo.Name(), ID: string(id)}, permissions...); err != nil {
+		if err := setUserPerm(user.SU(), uid, res, permissions...); err != nil {
 			return fmt.Errorf("cannot set user resource permission: %w", err)
 		}
 
