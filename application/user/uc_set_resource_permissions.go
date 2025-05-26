@@ -40,8 +40,8 @@ func NewSetResourcePermissions(mutex *sync.Mutex, repo Repository) SetResourcePe
 			// nothing to write, exit early
 			return nil
 		}
-		
-		perms = slices.Compact(perms)
+
+		perms = slices.Compact(permissions)
 		if usr.Resources == nil {
 			usr.Resources = map[Resource][]permission.ID{}
 		}
