@@ -165,6 +165,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		c.AddSystemService("", c.userManagement.UseCases.DisplayName)
 		c.AddSystemService("", c.userManagement.Pages)
 		c.AddSystemService("", c.userManagement.UseCases.FindByID)
+		c.AddSystemService("", c.userManagement.UseCases.FindAllIdentifiers)
 
 		// init grants package
 		storeGrants, err := c.EntityStore("nago.iam.grant")
