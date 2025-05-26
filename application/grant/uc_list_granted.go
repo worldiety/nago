@@ -29,7 +29,7 @@ func NewListGranted(repo Repository) ListGranted {
 		}
 
 		return func(yield func(user.ID, error) bool) {
-			for granting, err := range repo.FindAllByPrefix(ID(res.Name)) {
+			for granting, err := range repo.FindAllByPrefix(ID(res.Name + "/" + res.ID)) {
 				if err != nil {
 					if !yield("", err) {
 						return
