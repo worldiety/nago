@@ -36,6 +36,10 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 	return func(yield func(string, error) bool) {
 		minK := opts.Prefix + opts.MinInc
 		maxK := opts.Prefix + opts.MaxInc
+		if opts.Prefix != "" && len(opts.MaxInc) == 0 {
+			maxK = nextPrefix(maxK)
+		}
+		
 		for entry := range b.db.Range(b.bucket, minK, maxK) {
 			if !yield(entry.key, nil) {
 				return
@@ -43,6 +47,16 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		}
 	}
 
+}
+
+func nextPrefix(s string) string {
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] < 0xFF {
+			return s[:i] + string(s[i]+1)
+		}
+	}
+
+	return ""
 }
 
 func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
