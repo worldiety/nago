@@ -33,7 +33,8 @@ func NewGrant(repo Repository, findUserByID user.FindByID, setUserPerm user.SetR
 			return user.PermissionDeniedErr
 		}
 
-		optUsr, err := findUserByID(subject, uid)
+		// security note: our permissions are checked above
+		optUsr, err := findUserByID(user.SU(), uid)
 		if err != nil {
 			return err
 		}

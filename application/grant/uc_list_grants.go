@@ -32,7 +32,8 @@ func NewListGrants(repo Repository, findUserByID user.FindByID) ListGrants {
 			return nil, user.PermissionDeniedErr
 		}
 
-		optUsr, err := findUserByID(subject, uid)
+		// security note: our permissions have been checked above
+		optUsr, err := findUserByID(user.SU(), uid)
 		if err != nil {
 			return nil, err
 		}
