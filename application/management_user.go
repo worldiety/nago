@@ -10,6 +10,7 @@ package application
 import (
 	"fmt"
 	"go.wdy.de/nago/application/billing"
+	"go.wdy.de/nago/application/grant"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
@@ -23,6 +24,7 @@ import (
 type UserManagement struct {
 	UseCases user.UseCases
 	Pages    uiuser.Pages
+	Grant    grant.UseCases
 }
 
 func (c *Configurator) UserManagement() (UserManagement, error) {
@@ -162,6 +164,19 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		c.AddSystemService("", c.userManagement.UseCases.DisplayName)
 		c.AddSystemService("", c.userManagement.Pages)
+		c.AddSystemService("", c.userManagement.UseCases.FindByID)
+
+		// init grants package
+		storeGrants, err := c.EntityStore("nago.iam.grant")
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get entity store for grants: %w", err)
+		}
+
+		repoGrants := json.NewSloppyJSONRepository[grant.Granting, grant.ID](storeGrants)
+		c.userManagement.Grant = grant.NewUseCases(repoGrants, c.userManagement.UseCases.FindByID, c.userManagement.UseCases.SetResourcePermissions)
+		c.AddSystemService("", c.userManagement.Grant.Grant)
+		c.AddSystemService("", c.userManagement.Grant.ListGranted)
+		c.AddSystemService("", c.userManagement.Grant.ListGrants)
 	}
 
 	return *c.userManagement, nil
