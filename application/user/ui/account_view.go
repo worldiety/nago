@@ -38,7 +38,7 @@ func AccountView(wnd core.Window) TAccountView {
 	if !ok {
 		slog.Error("no system service user.DisplayName")
 		getDisplayName = func(uid user.ID) user.Compact {
-			return user.Compact{}
+			return user.Compact{ID: uid}
 		}
 	}
 

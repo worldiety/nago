@@ -45,6 +45,7 @@ func NewDisplayName(repo Repository, refreshInterval time.Duration) DisplayName 
 
 		usr := optUsr.Unwrap()
 		info = Compact{
+			ID:          uid,
 			Avatar:      usr.Contact.Avatar,
 			Displayname: xstrings.Join2(" ", usr.Contact.Firstname, usr.Contact.Lastname),
 			Mail:        usr.Email,

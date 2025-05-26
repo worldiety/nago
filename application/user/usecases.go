@@ -127,6 +127,7 @@ type ListResourcePermissions func(subject AuditableUser, uid ID) iter.Seq2[Resou
 // SetResourcePermissions removes all assigned permissions to the resource rule and sets the exact given set to it.
 type SetResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
 type Compact struct {
+	ID          ID
 	Avatar      image.ID
 	Displayname string
 	Mail        Email
