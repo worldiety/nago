@@ -49,7 +49,7 @@ func AccountView(wnd core.Window) TAccountView {
 		schemeModeText = "Dunkle Darstellung verwenden"
 	} else {
 		schemeModeIcon = flowbiteOutline.Sun
-		schemeModeText = "Hello Darstellung verwenden"
+		schemeModeText = "Helle Darstellung verwenden"
 	}
 
 	userPages, _ := core.SystemService[Pages](wnd.Application())
