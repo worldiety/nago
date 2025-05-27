@@ -1,6 +1,9 @@
 package concurrent
 
-import "sync"
+import (
+	"iter"
+	"sync"
+)
 
 // RWMap is a simple rw mutex based map. This is probably the most memory efficient way and for mostly read
 // workloads perhaps also the fastest choice. However, there is the danger of deadlocks for all
@@ -43,6 +46,20 @@ func (c *RWMap[K, V]) DeleteFunc(fn func(K, V) bool) {
 	for k, v := range c.m {
 		if fn(k, v) {
 			delete(c.m, k)
+		}
+	}
+}
+
+// All iterates over all key-values within the map under the maps global read mutex. Note that you will
+// cause a guaranteed deadlock if you do other reads or writes within the loop body.
+func (c *RWMap[K, V]) All() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		c.mutex.RLock()
+		defer c.mutex.RUnlock()
+		for k, v := range c.m {
+			if !yield(k, v) {
+				return
+			}
 		}
 	}
 }
