@@ -129,6 +129,9 @@ const frameStyles = computed<string>(() => {
 
 const clazz = computed<string>(() => {
 	let classes = ['inline-flex'];
+	if (!props.ui.noClip) {
+		classes.push('overflow-clip');
+	}
 	switch (props.ui.alignment) {
 		case AlignmentValues.Stretch:
 			classes.push('items-stretch');

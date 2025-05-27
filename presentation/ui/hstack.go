@@ -39,6 +39,7 @@ type THStack struct {
 	disabled               bool
 	position               Position
 	id                     string
+	noClip                 bool
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -176,6 +177,11 @@ func (c THStack) ID(id string) THStack {
 	return c
 }
 
+func (c THStack) NoClip(b bool) THStack {
+	c.noClip = b
+	return c
+}
+
 func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 	ptr := ctx.MountCallback(c.action)
 	if core.Debug {
@@ -206,5 +212,6 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 
 		StylePreset: c.stylePreset,
 		Id:          proto.Str(c.id),
+		NoClip:      proto.Bool(c.noClip),
 	}
 }

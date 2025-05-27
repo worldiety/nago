@@ -3828,6 +3828,8 @@ export class HStack implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public noClip?: Bool;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -3850,7 +3852,8 @@ export class HStack implements Writeable, Readable, Component {
 		position: Position | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		noClip: Bool | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -3874,6 +3877,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.noClip = noClip;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3979,6 +3983,10 @@ export class HStack implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 23: {
+					this.noClip = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4010,6 +4018,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.noClip !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4101,6 +4110,10 @@ export class HStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[23]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4126,7 +4139,8 @@ export class HStack implements Writeable, Readable, Component {
 			(this.position === undefined || this.position.isZero()) &&
 			this.disabled === undefined &&
 			this.invisible === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.noClip === undefined
 		);
 	}
 
@@ -4153,6 +4167,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.noClip = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
