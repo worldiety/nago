@@ -30,9 +30,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { cssLengthValue } from '@/components/shared/length';
+import { onModalClose, onModalOpen } from '@/components/shared/modalManager';
 import { Modal, ModalTypeValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
@@ -45,12 +46,21 @@ let firstFocusableElement: HTMLElement | undefined;
 let lastFocusableElement: HTMLElement | undefined;
 
 onMounted(() => {
+	if (!props.ui.allowBackgroundScrolling) {
+		onModalOpen();
+	}
 	//if (props.isActiveDialog) {
 	if (props.ui.modalType !== ModalTypeValues.ModalTypeOverlay) {
 		captureFocusInDialog();
 	}
 
 	//}
+});
+
+onBeforeUnmount(() => {
+	if (!props.ui.allowBackgroundScrolling) {
+		onModalClose();
+	}
 });
 
 // TODO the following code causes focus-lost event in input elements and seems not be appropriate anymore - this is a port from a dialog

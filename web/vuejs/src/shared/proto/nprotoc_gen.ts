@@ -4815,6 +4815,8 @@ export class Modal implements Writeable, Readable, Component {
 
 	public bottom?: Length;
 
+	public allowBackgroundScrolling?: Bool;
+
 	constructor(
 		content: Component | undefined = undefined,
 		onDismissRequest: Ptr | undefined = undefined,
@@ -4822,7 +4824,8 @@ export class Modal implements Writeable, Readable, Component {
 		top: Length | undefined = undefined,
 		left: Length | undefined = undefined,
 		right: Length | undefined = undefined,
-		bottom: Length | undefined = undefined
+		bottom: Length | undefined = undefined,
+		allowBackgroundScrolling: Bool | undefined = undefined
 	) {
 		this.content = content;
 		this.onDismissRequest = onDismissRequest;
@@ -4831,6 +4834,7 @@ export class Modal implements Writeable, Readable, Component {
 		this.left = left;
 		this.right = right;
 		this.bottom = bottom;
+		this.allowBackgroundScrolling = allowBackgroundScrolling;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4872,6 +4876,10 @@ export class Modal implements Writeable, Readable, Component {
 					this.bottom = readString(reader);
 					break;
 				}
+				case 8: {
+					this.allowBackgroundScrolling = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4888,6 +4896,7 @@ export class Modal implements Writeable, Readable, Component {
 			this.left !== undefined,
 			this.right !== undefined,
 			this.bottom !== undefined,
+			this.allowBackgroundScrolling !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4921,6 +4930,10 @@ export class Modal implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
 			writeString(writer, this.bottom!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.allowBackgroundScrolling!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4931,7 +4944,8 @@ export class Modal implements Writeable, Readable, Component {
 			this.top === undefined &&
 			this.left === undefined &&
 			this.right === undefined &&
-			this.bottom === undefined
+			this.bottom === undefined &&
+			this.allowBackgroundScrolling === undefined
 		);
 	}
 
@@ -4943,6 +4957,7 @@ export class Modal implements Writeable, Readable, Component {
 		this.left = undefined;
 		this.right = undefined;
 		this.bottom = undefined;
+		this.allowBackgroundScrolling = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

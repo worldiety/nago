@@ -17,6 +17,7 @@ type TModal struct {
 	onDismissRequest         func()
 	mtype                    proto.ModalType
 	top, left, right, bottom Length
+	allowBackgroundScrolling bool
 }
 
 // Modal places the content and blocks the background controls. See also [Overlay] for a different behavior.
@@ -28,11 +29,16 @@ func Modal(content core.View) TModal {
 // view. The html frontend renderer has a problem to distinguish between capturing events for conventional modals
 // and not capturing them as in [Modal] mode.
 func Overlay(content core.View) TModal {
-	return TModal{content: content, mtype: proto.ModalTypeOverlay}
+	return TModal{content: content, mtype: proto.ModalTypeOverlay, allowBackgroundScrolling: true}
 }
 
 func (c TModal) Top(top Length) TModal {
 	c.top = top
+	return c
+}
+
+func (c TModal) AllowBackgroundScrolling(allowBackgroundScrolling bool) TModal {
+	c.allowBackgroundScrolling = allowBackgroundScrolling
 	return c
 }
 
@@ -53,12 +59,13 @@ func (c TModal) Bottom(bottom Length) TModal {
 
 func (c TModal) Render(context core.RenderContext) core.RenderNode {
 	return &proto.Modal{
-		Content:          render(context, c.content),
-		ModalType:        c.mtype,
-		OnDismissRequest: context.MountCallback(c.onDismissRequest),
-		Top:              c.top.ora(),
-		Left:             c.left.ora(),
-		Right:            c.right.ora(),
-		Bottom:           c.bottom.ora(),
+		Content:                  render(context, c.content),
+		ModalType:                c.mtype,
+		OnDismissRequest:         context.MountCallback(c.onDismissRequest),
+		Top:                      c.top.ora(),
+		Left:                     c.left.ora(),
+		Right:                    c.right.ora(),
+		Bottom:                   c.bottom.ora(),
+		AllowBackgroundScrolling: proto.Bool(c.allowBackgroundScrolling),
 	}
 }

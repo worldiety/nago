@@ -30,6 +30,10 @@
     "7": {
       "name": "Bottom",
       "type": "Length"
+    },
+    "8": {
+      "name": "AllowBackgroundScrolling",
+      "type": "Bool"
     }
   }
 }

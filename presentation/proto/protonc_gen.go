@@ -4527,16 +4527,17 @@ func (v *ModalType) IsZero() bool {
 type Modal struct {
 	Content Component
 	// OnDismissRequest is called, if the user wants to dismiss the dialog, e.g. by clicking outside or pressing escape. You can then decide to disable you dialog, or not.
-	OnDismissRequest Ptr
-	ModalType        ModalType
-	Top              Length
-	Left             Length
-	Right            Length
-	Bottom           Length
+	OnDismissRequest         Ptr
+	ModalType                ModalType
+	Top                      Length
+	Left                     Length
+	Right                    Length
+	Bottom                   Length
+	AllowBackgroundScrolling Bool
 }
 
 func (v *Modal) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.OnDismissRequest.IsZero()
 	fields[3] = !v.ModalType.IsZero()
@@ -4544,6 +4545,7 @@ func (v *Modal) write(w *BinaryWriter) error {
 	fields[5] = !v.Left.IsZero()
 	fields[6] = !v.Right.IsZero()
 	fields[7] = !v.Bottom.IsZero()
+	fields[8] = !v.AllowBackgroundScrolling.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -4617,6 +4619,14 @@ func (v *Modal) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.AllowBackgroundScrolling.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4673,6 +4683,11 @@ func (v *Modal) read(r *BinaryReader) error {
 			}
 		case 7:
 			err := v.Bottom.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.AllowBackgroundScrolling.read(r)
 			if err != nil {
 				return err
 			}
@@ -12307,10 +12322,11 @@ func (v *Modal) reset() {
 	v.Left.reset()
 	v.Right.reset()
 	v.Bottom.reset()
+	v.AllowBackgroundScrolling.reset()
 }
 
 func (v *Modal) IsZero() bool {
-	return v.Content.IsZero() && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
+	return v.Content.IsZero() && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.AllowBackgroundScrolling.IsZero()
 }
 
 func (v *ThemeRequested) reset() {
