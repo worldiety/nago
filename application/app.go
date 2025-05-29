@@ -10,8 +10,11 @@ package application
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"go.wdy.de/nago/application/adm"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/internal/server"
 	"log/slog"
+	"path/filepath"
 )
 
 type Application struct {
@@ -42,6 +45,24 @@ func (a *Application) Run() {
 	defer func() {
 		a.cfg.done()
 	}()
+
+	// apply adm commands
+	admDir := filepath.Join(a.cfg.DataDir(), "adm/once-after-cfg")
+	slog.Info("checking adm once instructions", "dir", admDir)
+	cmds := adm.ReadCommands(admDir, adm.ReadCommandsOptions{DeleteAfterRead: true})
+	slog.Info("read adm once instructions complete", "found", len(cmds))
+	for _, cmd := range cmds {
+		switch cmd := cmd.(type) {
+		case adm.EnableBootstrapAdmin:
+			if users := a.cfg.userManagement; users != nil {
+				if _, err := users.UseCases.EnableBootstrapAdmin(cmd.AliveUntil, user.Password(cmd.Password)); err != nil {
+					slog.Error("failed to enable bootstrap admin", "err", err.Error())
+				} else {
+					slog.Warn("enabled bootstrap admin by cmd", "alive", cmd.AliveUntil)
+				}
+			}
+		}
+	}
 
 	err := a.runServer()
 	a.cfg.done()
