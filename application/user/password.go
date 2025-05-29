@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	passwordvalidator "github.com/wagslane/go-password-validator"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/argon2"
 	"regexp"
@@ -21,6 +22,26 @@ import (
 var noLoginErr = std.NewLocalizedError("Login nicht möglich", "Der Nutzer existiert nicht, das Konto ist deaktiviert oder das Passwort ist falsch.")
 
 type Password string
+
+const pwdAlphabet = "!@#$%&*()_+-=[]{};':\"|,.<>/?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+// NewPassword generates a random password which passes our own validation.
+func NewPassword() Password {
+	src := make([]byte, 26)
+	for range 10 {
+		option.Must(rand.Read(src))
+		for i := range src {
+			src[i] = pwdAlphabet[int(src[i])%len(pwdAlphabet)]
+		}
+
+		p := Password(src)
+		if err := p.Validate(); err == nil {
+			return p
+		}
+	}
+
+	panic("unable to generate password")
+}
 
 func (p Password) CompareHashAndPassword(algo HashAlgorithm, salt []byte, hash []byte) error {
 	// see https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
