@@ -166,6 +166,8 @@ func AutoBinding[E form.Aggregate[E, ID], ID ~string](opts AutoBindingOptions, w
 					switch field.Tag.Get("style") {
 					case "avatar":
 						styleOpts = PickOneImageStyleAvatar
+					case "icon":
+						styleOpts = PickOneImageStyleIcon
 					default:
 						styleOpts = PickOneImageStyleSingle
 					}

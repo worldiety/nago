@@ -37,6 +37,11 @@
     "9": {
       "name": "Invisible",
       "type": "Bool"
+    },
+    "10": {
+      "doc": "Optional ObjectFit. If 0 or omitted, an automatic behavior is applied. This may treat SVG and raster formats differently.",
+      "name": "ObjectFit",
+      "type": "ObjectFit"
     }
   }
 }

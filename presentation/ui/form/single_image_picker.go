@@ -104,6 +104,6 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 			}).PreIcon(heroOutline.Trash).
 				AccessibilityLabel("Bild entfernen"),
 		),
-		Center: ui.Image().URI(uri).Frame(ui.Frame{Width: ui.Full, Height: ui.L256}).Border(ui.Border{}.Radius(ui.L16)),
+		Center: ui.Image().URI(uri).ObjectFit(ui.FitContain).Frame(ui.Frame{Width: ui.Full, Height: ui.L256}).Border(ui.Border{}.Radius(ui.L16)),
 	}).Frame(ui.Frame{Width: ui.Full, Height: ui.L256})
 }

@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/colorpicker"
 	"go.wdy.de/nago/presentation/ui/picker"
@@ -444,9 +445,12 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						fieldsBuilder.Append(ui.Text(label).TextAlignment(ui.TextAlignStart).FullWidth())
 					}
 
-					if field.Tag.Get("style") == "avatar" {
-						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get())))
-					} else {
+					switch field.Tag.Get("style") {
+					case "avatar":
+						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get()), avatar.Circle))
+					case "icon":
+						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get()), avatar.Rounded))
+					default:
 						fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
 					}
 

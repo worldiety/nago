@@ -14,10 +14,13 @@ import (
 
 // FixedSpacer returns an empty view with the given dimensions.
 func FixedSpacer(width, height Length) core.View {
-	return VStack(
+	/*return VStack(
 		// double wrap, to trick the CSS flexbox (mis) behavior
 		VStack().Frame(Frame{Width: width, Height: height}),
-	)
+	)*/
+
+	// trying to simplify the above: is this even more correct?
+	return VStack().Frame(Frame{MinWidth: width, MaxWidth: width, MinHeight: height, MaxHeight: height})
 }
 
 func Space(size Length) core.View {

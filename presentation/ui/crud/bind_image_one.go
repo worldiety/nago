@@ -23,6 +23,7 @@ type PickOneImageStyle int
 const (
 	PickOneImageStyleSingle PickOneImageStyle = iota
 	PickOneImageStyleAvatar
+	PickOneImageStyleIcon
 )
 
 type PickOneImageOptions[E, T any] struct {
@@ -95,7 +96,9 @@ func PickOneImage[E any, T ~string](opts PickOneImageOptions[E, T], property Pro
 
 			switch opts.Style {
 			case PickOneImageStyleAvatar:
-				return form.AvatarPicker(self.Window, opts.CreateSrcSet, self.ID, state.Get(), state, opts.Paraphe(entity.Get()))
+				return form.AvatarPicker(self.Window, opts.CreateSrcSet, self.ID, state.Get(), state, opts.Paraphe(entity.Get()), avatar.Circle)
+			case PickOneImageStyleIcon:
+				return form.AvatarPicker(self.Window, opts.CreateSrcSet, self.ID, state.Get(), state, opts.Paraphe(entity.Get()), avatar.Rounded)
 			default:
 				return form.SingleImagePicker(self.Window, opts.CreateSrcSet, opts.LoadSrcSet, opts.LoadBestFit, self.ID, state.Get(), state)
 			}

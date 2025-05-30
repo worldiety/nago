@@ -15,7 +15,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, Img } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested, Img, ObjectFitValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Img;
@@ -28,9 +28,26 @@ const styles = computed<string>(() => {
 	styles.push(...frameCSS(props.ui.frame));
 	styles.push(...paddingCSS(props.ui.padding));
 
-	if (!props.ui.sVG) {
-		// special case for normal images, not for svg
-		styles.push('object-fit: cover');
+	switch (props.ui.objectFit) {
+		case ObjectFitValues.Fill:
+			styles.push('object-fit: fill');
+			break;
+		case ObjectFitValues.None:
+			styles.push('object-fit: none');
+			break;
+		case ObjectFitValues.Contain:
+			styles.push('object-fit: contain');
+			break;
+		case ObjectFitValues.Cover:
+			styles.push('object-fit: cover');
+			break;
+		default:
+			// Auto behavior and unknown states
+			if (!props.ui.sVG) {
+				// special case for normal images, not for svg
+				styles.push('object-fit: cover');
+			}
+			break;
 	}
 
 	if (props.ui.fillColor) {

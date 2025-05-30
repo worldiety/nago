@@ -1,0 +1,21 @@
+{
+  "kind": "Uint",
+  "id": 131,
+  "const": {
+    "0": {
+      "name": "Auto"
+    },
+    "1": {
+      "name": "Fill"
+    },
+    "2": {
+      "name": "Cover"
+    },
+    "3": {
+      "name": "Contain"
+    },
+    "4": {
+      "name": "None"
+    }
+  }
+}

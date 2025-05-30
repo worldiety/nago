@@ -16,7 +16,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/avatar"
 )
 
-func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string) ui.DecoredView {
+func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string, style avatar.Style) ui.DecoredView {
 	if setCreator == nil {
 		fn, ok := core.SystemService[image.CreateSrcSet](wnd.Application())
 		if !ok {
@@ -30,9 +30,9 @@ func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string,
 	if id != "" {
 		// TODO replace me with source set due to different density problem
 		uri := core.URI(http_image.NewURL(http_image.Endpoint, id, image.FitCover, 120, 120))
-		img = avatar.URI(uri).Size(ui.L120)
+		img = avatar.URI(uri).Size(ui.L120).Style(style)
 	} else {
-		img = avatar.Text(paraphe).Size(ui.L120)
+		img = avatar.Text(paraphe).Size(ui.L120).Style(style)
 	}
 
 	var actionBtn core.View

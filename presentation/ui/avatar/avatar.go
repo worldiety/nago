@@ -17,6 +17,13 @@ import (
 	"unicode"
 )
 
+type Style int
+
+const (
+	Circle Style = iota
+	Rounded
+)
+
 type TAvatar struct {
 	paraphe  string
 	url      core.URI
@@ -99,6 +106,17 @@ func (c TAvatar) Action(fn func()) TAvatar {
 func (c TAvatar) Size(widthAndHeight ui.Length) TAvatar {
 	c.frame = ui.Frame{}.Size(widthAndHeight, widthAndHeight)
 	c.textSize = widthAndHeight.Mul(0.4)
+	return c
+}
+
+func (c TAvatar) Style(style Style) TAvatar {
+	switch style {
+	default:
+		c.border = ui.Border{}.Circle()
+	case Rounded:
+		c.border = ui.Border{}.Radius(ui.L8)
+	}
+
 	return c
 }
 

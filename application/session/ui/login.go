@@ -51,7 +51,7 @@ func Login(
 	if themeSettings.PageLogoDark != "" || themeSettings.PageLogoLight != "" {
 		dark := httpimage.URI(themeSettings.PageLogoDark, image.FitCover, 512, 512)
 		light := httpimage.URI(themeSettings.PageLogoLight, image.FitCover, 512, 512)
-		logoImg = ui.Image().URIAdaptive(light, dark).Frame(ui.Frame{Width: ui.Full, Height: ui.L64})
+		logoImg = ui.Image().URIAdaptive(light, dark).ObjectFit(ui.FitContain).Frame(ui.Frame{Width: ui.Full, Height: ui.L64})
 	}
 
 	emailErr := core.AutoState[string](wnd)

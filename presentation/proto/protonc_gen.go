@@ -4107,10 +4107,12 @@ type Img struct {
 	FillColor          Color
 	StrokeColor        Color
 	Invisible          Bool
+	// Optional ObjectFit. If 0 or omitted, an automatic behavior is applied. This may treat SVG and raster formats differently.
+	ObjectFit ObjectFit
 }
 
 func (v *Img) write(w *BinaryWriter) error {
-	var fields [10]bool
+	var fields [11]bool
 	fields[1] = !v.Uri.IsZero()
 	fields[2] = !v.AccessibilityLabel.IsZero()
 	fields[3] = !v.Border.IsZero()
@@ -4120,6 +4122,7 @@ func (v *Img) write(w *BinaryWriter) error {
 	fields[7] = !v.FillColor.IsZero()
 	fields[8] = !v.StrokeColor.IsZero()
 	fields[9] = !v.Invisible.IsZero()
+	fields[10] = !v.ObjectFit.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -4202,6 +4205,14 @@ func (v *Img) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.ObjectFit.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4259,6 +4270,11 @@ func (v *Img) read(r *BinaryReader) error {
 			}
 		case 9:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.ObjectFit.read(r)
 			if err != nil {
 				return err
 			}
@@ -10250,6 +10266,36 @@ func (v *Fonts) read(r *BinaryReader) error {
 	return nil
 }
 
+type ObjectFit uint64
+
+const (
+	Auto    ObjectFit = 0
+	Fill    ObjectFit = 1
+	Cover   ObjectFit = 2
+	Contain ObjectFit = 3
+	None    ObjectFit = 4
+)
+
+func (v *ObjectFit) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ObjectFit) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ObjectFit(tmp)
+	return nil
+}
+
+func (v *ObjectFit) reset() {
+	*v = ObjectFit(0)
+}
+func (v *ObjectFit) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -11045,6 +11091,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 130:
 		var v Fonts
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 131:
+		var v ObjectFit
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12206,10 +12258,11 @@ func (v *Img) reset() {
 	v.FillColor.reset()
 	v.StrokeColor.reset()
 	v.Invisible.reset()
+	v.ObjectFit.reset()
 }
 
 func (v *Img) IsZero() bool {
-	return v.Uri.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.SVG.IsZero() && v.FillColor.IsZero() && v.StrokeColor.IsZero() && v.Invisible.IsZero()
+	return v.Uri.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.SVG.IsZero() && v.FillColor.IsZero() && v.StrokeColor.IsZero() && v.Invisible.IsZero() && v.ObjectFit.IsZero()
 }
 
 // SVG contains the valid embeddable source of Scalable Vector Graphics.
@@ -14203,6 +14256,13 @@ func (v *FontFace) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Fonts) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 130); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ObjectFit) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 131); err != nil {
 		return err
 	}
 	return nil

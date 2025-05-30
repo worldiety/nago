@@ -16,6 +16,26 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// ObjectFit declares how to layout an image in the according image view.
+// If 0 or omitted, an automatic behavior is applied. This may treat SVG and raster formats differently.
+type ObjectFit int
+
+const (
+	// FitAuto is mostly undefined and used to not break the default behavior of the web-renderer.
+	// For raster images like png or jpg this results in FitCover and for SVG it is FitFill.
+	FitAuto ObjectFit = 0
+	// FitFill fills the entire image view by stretching the pixel buffer.
+	FitFill ObjectFit = 1
+	// FitCover fills the entire image view, possibly zooming the image so much, that the resolution would
+	// not be enough for a sharp image or to understand the image geometrics at all.
+	FitCover ObjectFit = 2
+	// FitContain is the inverse of FitCover which means still respecting the aspect ratio but scaling the
+	// image down so that it can be seen entirely and the image view adds transparent borders (letterboxing).
+	FitContain ObjectFit = 3
+	// FitNone maps the pixel buffer 1:1 into its render context.
+	FitNone ObjectFit = 4
+)
+
 type TImage struct {
 	lightUri, darkUri  proto.URI
 	accessibilityLabel string
@@ -26,6 +46,7 @@ type TImage struct {
 	svg                proto.SVG
 	fillColor          proto.Color
 	strokeColor        proto.Color
+	objectFit          ObjectFit
 	light, dark        []byte
 }
 
@@ -130,6 +151,11 @@ func (c TImage) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TImage) ObjectFit(fit ObjectFit) TImage {
+	c.objectFit = fit
+	return c
+}
+
 func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 	// start of delayed encoding
 	if c.light != nil || c.dark != nil {
@@ -181,5 +207,6 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 		SVG:                svgData,
 		FillColor:          c.fillColor,
 		StrokeColor:        c.strokeColor,
+		ObjectFit:          proto.ObjectFit(c.objectFit),
 	}
 }
