@@ -8,7 +8,6 @@
 package uisecret
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -172,7 +171,6 @@ func EditSecretPage(
 					return
 				}
 
-				fmt.Println(state.Get())
 				wnd.Navigation().ForwardTo(pages.Vault, nil)
 			}).Title("Speichern"),
 		).
