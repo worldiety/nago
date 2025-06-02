@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"net/http"
+	"unicode"
 )
 
 var zipMagicBytes = [][]byte{
@@ -39,7 +40,7 @@ func Detect(buf []byte) string {
 		return "text/html"
 	}
 
-	if bytes.HasPrefix(buf, []byte("{}")) || bytes.HasPrefix(buf, []byte("{\"")) {
+	if maybeJson(buf) {
 		return "application/json"
 	}
 
@@ -56,4 +57,23 @@ func Ext(buf []byte) string {
 	default:
 		return ".bin"
 	}
+}
+
+func maybeJson(buf []byte) bool {
+	for _, b := range buf {
+		// inspect without producing any garbage
+		if unicode.IsSpace(rune(b)) {
+			continue
+		}
+
+		if b == '{' || b == '[' {
+			// looks like a start of an object or array. Thus, a simple text starting with this, will be falsely detected as json
+			return true
+		} else {
+			// anything else is definitely not JSON
+			return false
+		}
+	}
+
+	return false
 }
