@@ -8,6 +8,7 @@
 package user
 
 import (
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/license"
 	"golang.org/x/text/language"
 	"time"
@@ -39,4 +40,9 @@ type MFACodeCreated struct {
 	PreferredLanguage language.Tag
 	ValidUntil        time.Time
 	Code              string
+}
+
+type ConsentChanged struct {
+	ID     consent.ID
+	Action consent.Action
 }

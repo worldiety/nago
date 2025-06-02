@@ -9,12 +9,13 @@ package user
 
 import (
 	"go.wdy.de/nago/application/consent"
+	"go.wdy.de/nago/pkg/events"
 	"os"
 	"sync"
 	"time"
 )
 
-func NewConsent(mutex *sync.Mutex, usersRepo Repository) Consent {
+func NewConsent(mutex *sync.Mutex, bus events.Bus, usersRepo Repository) Consent {
 	return func(subject AuditableUser, uid ID, cid consent.ID, status consent.Status) error {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -37,12 +38,14 @@ func NewConsent(mutex *sync.Mutex, usersRepo Repository) Consent {
 
 		usr := optUsr.Unwrap()
 		updated := false
+		var action consent.Action
 		for idx, c := range usr.Consents {
 			if c.ID == cid {
-				c.History = append(c.History, consent.Action{
+				action = consent.Action{
 					At:     time.Now(),
 					Status: status,
-				})
+				}
+				c.History = append(c.History, action)
 
 				usr.Consents[idx] = c
 				updated = true
@@ -52,14 +55,24 @@ func NewConsent(mutex *sync.Mutex, usersRepo Repository) Consent {
 		}
 
 		if !updated {
+			action = consent.Action{At: time.Now(), Status: status}
 			usr.Consents = append(usr.Consents, consent.Consent{
 				ID: cid,
 				History: []consent.Action{
-					{At: time.Now(), Status: status},
+					action,
 				},
 			})
 		}
 
-		return usersRepo.Save(usr)
+		if err := usersRepo.Save(usr); err != nil {
+			return err
+		}
+
+		bus.Publish(ConsentChanged{
+			ID:     cid,
+			Action: action,
+		})
+
+		return nil
 	}
 }

@@ -250,7 +250,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
-		Consent:                   NewConsent(&globalLock, users),
+		Consent:                   NewConsent(&globalLock, eventBus, users),
 		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
 		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),
 		ListResourcePermissions:   NewListResourcePermissions(&globalLock, users),
