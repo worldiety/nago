@@ -8,12 +8,14 @@
 package blob
 
 import (
+	"bytes"
 	"context"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
 	"io"
 	"iter"
+	"time"
 )
 
 type ListOptions struct {
@@ -57,6 +59,17 @@ type ReadWriter interface {
 type Deleter interface {
 	// Delete removes the denoted entry. It is not an error to remove a non-existent file.
 	Delete(ctx context.Context, key string) error
+}
+
+type Info struct {
+	Size    int64     // -1 if Size is unavailable.
+	ModTime time.Time // zero value if unavailable
+	Sys     any       // contains any implementation specific details about the object.
+}
+
+type StatReader interface {
+	// Stat reads some metadata for the given key.
+	Stat(ctx context.Context, key string) (option.Opt[Info], error)
 }
 
 // Store represents a single bucket store for blobs. Note, that individual methods are thread safe, however
@@ -123,15 +136,8 @@ func Write(store Writer, key string, src io.Reader) (written int64, err error) {
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
 func Put(store Writer, key string, value []byte) (err error) {
-	w, err := store.NewWriter(context.Background(), key)
-	if err != nil {
-		return err
-	}
-
-	defer std.Try(w.Close, &err)
-
-	_, err = w.Write(value)
-	return
+	_, err = Write(store, key, bytes.NewReader(value))
+	return err
 }
 
 func Delete(store Store, key string) error {
