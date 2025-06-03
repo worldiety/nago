@@ -41,6 +41,14 @@ type Writer interface {
 	NewWriter(ctx context.Context, key string) (io.WriteCloser, error)
 }
 
+type ObjectWriter interface {
+	Put(ctx context.Context, key string, r io.Reader) (int64, error)
+}
+
+type ObjectReader interface {
+	Get(ctx context.Context, key string, r io.Writer) (int64, error)
+}
+
 type ReadWriter interface {
 	Reader
 	Writer
@@ -99,6 +107,10 @@ func Read(store Reader, key string, dst io.Writer) (exists bool, err error) {
 
 // Write transfers all bytes from the given source into the store, e.g. from a request body.
 func Write(store Writer, key string, src io.Reader) (written int64, err error) {
+	if objWriter, ok := store.(ObjectWriter); ok {
+		return objWriter.Put(context.Background(), key, src)
+	}
+
 	w, err := store.NewWriter(context.Background(), key)
 	if err != nil {
 		return 0, err
