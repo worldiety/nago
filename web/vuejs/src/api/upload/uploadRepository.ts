@@ -7,9 +7,9 @@
  * SPDX-License-Identifier: Custom-License
  */
 import { inject } from 'vue';
+import { uploadProgressManager } from '@/api/upload/uploadProgressManager';
 import { uploadRepositoryKey } from '@/shared/injectionKeys';
-import type { Ptr } from '@/shared/protocol/ora/ptr';
-import type { ScopeID } from '@/shared/protocol/ora/scopeID';
+import { Ptr, ScopeID } from '@/shared/proto/nprotoc_gen';
 
 export class UploadRepository {
 	private readonly uploads = new Map<string, XMLHttpRequest>();
@@ -27,16 +27,23 @@ export class UploadRepository {
 		const formData = new FormData();
 		formData.append(file.name, file, file.name);
 
+		uploadProgressManager.addUpload(uploadId, file.name, file.size);
+
 		return new Promise<void>((resolve) => {
 			const request = new XMLHttpRequest();
 			request.upload.addEventListener('progress', (event: ProgressEvent) => {
 				uploadProgressCallback(uploadId, event.loaded, event.total);
+
+				const percent = Math.round((event.loaded / event.total) * 100);
+				uploadProgressManager.updateProgress(uploadId, percent);
 			});
 			request.addEventListener('error', () => {
+				uploadProgressManager.removeUpload(uploadId);
 				uploadFailedCallback(uploadId, request.status);
 				resolve();
 			});
 			request.addEventListener('load', () => {
+				uploadProgressManager.removeUpload(uploadId);
 				if (request.status.toString(10).startsWith('2')) {
 					uploadFinishedCallback(uploadId);
 					resolve();
@@ -46,6 +53,7 @@ export class UploadRepository {
 				resolve();
 			});
 			request.addEventListener('abort', () => {
+				uploadProgressManager.removeUpload(uploadId);
 				uploadAbortedCallback(uploadId);
 				resolve();
 			});

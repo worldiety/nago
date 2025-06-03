@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import UiUpload from '@/api/upload/UiUpload.vue';
 import { useUploadRepository } from '@/api/upload/uploadRepository';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
@@ -45,7 +46,6 @@ import {
 	NavigationResetRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
-	RootViewID,
 	RootViewInvalidated,
 	RootViewParameters,
 	RootViewRenderingRequested,
@@ -308,6 +308,8 @@ watch(
 	></div>
 
 	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40"></div>
+
+	<ui-upload></ui-upload>
 
 	<div class="bg-M1 content-container min-h-screen">
 		<!--  <div>Dynamic page information: {{ page }}</div> -->

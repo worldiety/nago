@@ -14,6 +14,8 @@ import (
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
+	"io"
+	"time"
 )
 
 func main() {
@@ -29,6 +31,20 @@ func main() {
 						Multiple: true,
 						OnCompletion: func(files []core.File) {
 							for _, file := range files {
+								r, err := file.Open()
+								if err != nil {
+									alert.ShowBannerError(wnd, err)
+									return
+								}
+
+								defer r.Close()
+
+								time.Sleep(time.Second)
+								if _, err := io.Copy(io.Discard, r); err != nil {
+									alert.ShowBannerError(wnd, err)
+									return
+								}
+
 								fmt.Println(file.Name())
 							}
 							alert.ShowBannerMessage(wnd, alert.Message{

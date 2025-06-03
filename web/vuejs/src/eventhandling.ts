@@ -280,19 +280,23 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
  * @param uploadRepository
  * @param evt
  */
-export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): void {
+export async function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): void {
 	let input = document.createElement('input');
 	input.className = 'hidden';
 	input.type = 'file';
 	input.id = evt.iD!;
 	input.multiple = evt.multiple!;
-	input.onchange = (event) => {
+	input.onchange = async (event) => {
 		const item = event.target as HTMLInputElement;
 		if (!item.files) {
 			return;
 		}
 		for (let i = 0; i < item.files.length; i++) {
-			uploadRepository.fetchUpload(
+			// design decision: disallow parallel uploads which complicates backend onCompletionHandler design for developers.
+			// Without serializing, the naive backend implementation will receive file handlers concurrently and in "no-time"
+			// but block a "decade" which results in a lot of (at least) logical data races caused by appending to
+			// slices.
+			await uploadRepository.fetchUpload(
 				item.files[i],
 				evt.iD!,
 				0,
@@ -300,8 +304,12 @@ export function triggerFileUpload(uploadRepository: UploadRepository, evt: FileI
 				(uploauploadId: string, progress: number, total: number) => {
 					console.log('progress', progress);
 				},
-				(uploadId) => {},
-				(uploadId) => {},
+				(uploadId) => {
+					// upload finished
+				},
+				(uploadId) => {
+					// upload aborted
+				},
 				(uploadId) => {
 					console.log('upload failed');
 				}
