@@ -73,6 +73,22 @@ type StrParam[T any] struct {
 	IntoModel   func(dst *T, value string) error
 }
 
+// RawRequest provides access to the underlying http request. Note, that nothing you do or expect here
+// will be made visible in the [oas.OpenAPI] which you must modify manually.
+func RawRequest[In any](fn func(dst *In, req *http.Request) error) RequestOption[In] {
+	return func(doc *oas.OpenAPI, b *RequestBuilder[In]) {
+		b.handlers = append(b.handlers, requestSchema[In]{
+			intoModel: func(dst *In, writer http.ResponseWriter, request *http.Request) error {
+				if fn != nil {
+					return fn(dst, request)
+				}
+
+				return nil
+			},
+		})
+	}
+}
+
 const bearerAuthSecName = "bearerAuth"
 
 // BearerAuth requires that an API bearer token must be submitted as header value for request authentication.

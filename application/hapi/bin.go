@@ -36,3 +36,25 @@ func ToBinary[In any](fn func(in In) (io.Reader, error)) ResponseOption[In] {
 		}
 	}
 }
+
+// FromBinary declares an application/octet-stream as the request body but accepts anything.
+func FromBinary[In any](fn func(dst *In, body io.Reader) error) RequestOption[In] {
+	return func(doc *oas.OpenAPI, b *RequestBuilder[In]) {
+
+		b.handlers = append(b.handlers, requestSchema[In]{
+			contentType: "application/octet-stream",
+			schema:      schemaOf[io.ReadCloser](doc),
+			intoModel: func(dst *In, writer http.ResponseWriter, request *http.Request) error {
+				if request.Body != nil {
+					defer request.Body.Close()
+				}
+
+				if fn != nil {
+					return fn(dst, request.Body)
+				}
+
+				return nil
+			},
+		})
+	}
+}
