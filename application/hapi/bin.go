@@ -45,10 +45,6 @@ func FromBinary[In any](fn func(dst *In, body io.Reader) error) RequestOption[In
 			contentType: "application/octet-stream",
 			schema:      schemaOf[io.ReadCloser](doc),
 			intoModel: func(dst *In, writer http.ResponseWriter, request *http.Request) error {
-				if request.Body != nil {
-					defer request.Body.Close()
-				}
-
 				if fn != nil {
 					return fn(dst, request.Body)
 				}
