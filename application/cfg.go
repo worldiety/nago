@@ -92,6 +92,7 @@ type Configurator struct {
 	decorator              Decorator
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]
+	hasSSL                 bool
 }
 
 func NewConfigurator() *Configurator {
@@ -130,6 +131,8 @@ func NewConfigurator() *Configurator {
 		debug:                      strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 
+	cfg.hasSSL = cfg.determineSecureCookie()
+
 	return cfg
 }
 
@@ -139,16 +142,23 @@ func printEnv() {
 	}
 }
 
-func (c *Configurator) secureCookie() bool {
-	if strV, ok := os.LookupEnv("NAGO_COOKIES_INSECURE"); ok {
+func (c *Configurator) determineSecureCookie() bool {
+	slog.Info("secure cookie", "NO_SSL", os.Getenv("NO_SSL"), "NAGO_COOKIES_INSECURE", os.Getenv("NAGO_COOKIES_INSECURE"), "debug", c.debug)
+	if strV, ok := os.LookupEnv("NO_SSL"); ok {
 		if ok, _ := strconv.ParseBool(strV); ok {
+			slog.Info("must return insecure cookie")
 			return false
 		} else {
+			slog.Info("must return a secure cookie")
 			return true
 		}
 	}
 
 	return !c.debug
+}
+
+func (c *Configurator) secureCookie() bool {
+	return c.hasSSL
 }
 
 type envVarConfig struct {
@@ -159,23 +169,34 @@ type envVarConfig struct {
 
 var envConfig []envVarConfig = []envVarConfig{
 	{
-		key:      "NAGO_HOST",
+		key:      "HOST",
 		required: false,
 		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
 			cfg.SetHost(s)
 			return nil
 		}},
 	{
-		key:      "NAGO_PORT",
+		key:      "PORT",
 		required: false,
 		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
 			parsed, err := strconv.Atoi(s)
 			if err != nil {
-				return fmt.Errorf("Invalid port value %v in %s: %w", s, env.key, err)
+				return fmt.Errorf("invalid port value %v in %s: %w", s, env.key, err)
 			}
 			cfg.port = parsed
 			return nil
 		}},
+	{
+		key:      "HOSTNAME",
+		required: false,
+		cb: func(config envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			if s != "" {
+				cfg.SetContextPath("https://" + s)
+			}
+
+			return nil
+		},
+	},
 }
 
 func (c *Configurator) LoadConfigFromEnv() {
