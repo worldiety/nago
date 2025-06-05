@@ -174,7 +174,17 @@ var envConfig []envVarConfig = []envVarConfig{
 		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
 			cfg.SetHost(s)
 			return nil
-		}},
+		},
+	},
+	// deprecated
+	{
+		key:      "NAGO_HOST",
+		required: false,
+		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			cfg.SetHost(s)
+			return nil
+		},
+	},
 	{
 		key:      "PORT",
 		required: false,
@@ -185,7 +195,21 @@ var envConfig []envVarConfig = []envVarConfig{
 			}
 			cfg.port = parsed
 			return nil
-		}},
+		},
+	},
+	// deprecated
+	{
+		key:      "NAGO_PORT",
+		required: false,
+		cb: func(env envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			parsed, err := strconv.Atoi(s)
+			if err != nil {
+				return fmt.Errorf("invalid port value %v in %s: %w", s, env.key, err)
+			}
+			cfg.port = parsed
+			return nil
+		},
+	},
 	{
 		key:      "HOSTNAME",
 		required: false,
