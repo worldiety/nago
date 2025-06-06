@@ -175,7 +175,7 @@ func (s *Scheduler) Launch() {
 						nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
 					}
 
-					pauseTime = now.Sub(nextPlannedAt)
+					pauseTime = nextPlannedAt.Sub(now)
 					s.nextPlannedAt.Store(&nextPlannedAt)
 				}
 
