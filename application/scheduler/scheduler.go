@@ -135,16 +135,20 @@ func (s *Scheduler) Launch() {
 
 				// perform the actual work execution
 
-				startedAt := time.Now()
-				s.lastStartedAt.Store(&startedAt)
-				err := s.protectExec(func() error {
-					return s.opts.Runner(s.ctx)
-				})
+				if s.opts.Kind != Cron {
+					startedAt := time.Now()
+					s.lastStartedAt.Store(&startedAt)
+					err := s.protectExec(func() error {
+						return s.opts.Runner(s.ctx)
+					})
 
-				if err != nil {
-					slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
-					s.logError(err)
+					if err != nil {
+						slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
+						s.logError(err)
+					}
 				}
+
+				pauseTime := settings.PauseTime
 
 				switch s.opts.Kind {
 				case OneShot, Manual:
@@ -154,6 +158,24 @@ func (s *Scheduler) Launch() {
 				case Schedule:
 					// do nothing, go ahead and sleep
 					nextPlannedAt := time.Now().Add(settings.PauseTime)
+					s.nextPlannedAt.Store(&nextPlannedAt)
+				case Cron:
+					now := time.Now()
+					startOfDay := time.Date(
+						now.Year(), now.Month(), now.Day(),
+						0, 0, 0, 0,
+						now.Location(),
+					)
+
+					nextPlannedAt := startOfDay.
+						Add(time.Duration(settings.CronHour) * time.Hour).
+						Add(time.Duration(settings.CronMinute) * time.Minute)
+
+					if nextPlannedAt.Before(now) {
+						nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
+					}
+
+					pauseTime = now.Sub(nextPlannedAt)
 					s.nextPlannedAt.Store(&nextPlannedAt)
 				}
 
@@ -165,7 +187,21 @@ func (s *Scheduler) Launch() {
 					slog.Info("service shutdown due to context signal", "id", s.opts.ID)
 					return
 					// do not schedule faster than 1 second, everything else is probably a configuration mistake
-				case <-time.After(max(settings.PauseTime, time.Second)):
+				case <-time.After(max(pauseTime, time.Second)):
+
+					if s.opts.Kind == Cron {
+						startedAt := time.Now()
+						s.lastStartedAt.Store(&startedAt)
+						err := s.protectExec(func() error {
+							return s.opts.Runner(s.ctx)
+						})
+
+						if err != nil {
+							slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
+							s.logError(err)
+						}
+					}
+
 					continue
 				}
 			}

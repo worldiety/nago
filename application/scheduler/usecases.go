@@ -32,6 +32,7 @@ const (
 	OneShot Kind = iota
 	Schedule
 	Manual
+	Cron
 )
 
 type CustomAction struct {

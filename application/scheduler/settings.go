@@ -17,6 +17,8 @@ type Settings struct {
 	StartDelay time.Duration `json:"startDelay,omitempty" label:"Verzögerung nach Systemstart"`
 	PauseTime  time.Duration `json:"pauseTime,omitempty" label:"Verzögerung zwischen den Ausführungen"`
 	Disabled   bool          `json:"disabled,omitempty" label:"Deaktiviert"`
+	CronHour   int           `json:"cronHour,omitempty" label:"Cron Hour"`
+	CronMinute int           `json:"cronMinute,omitempty" label:"Cron Minute"`
 }
 
 func (s Settings) Identity() ID {

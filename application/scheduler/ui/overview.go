@@ -110,6 +110,8 @@ func kindStr(kind scheduler.Kind) string {
 		return "Einmalig"
 	case scheduler.Manual:
 		return "Manuell"
+	case scheduler.Cron:
+		return "Zeitgesteuert"
 	default:
 		return "Unknown"
 	}
@@ -123,6 +125,8 @@ func kindIco(kind scheduler.Kind) core.SVG {
 		return heroSolid.RocketLaunch
 	case scheduler.Manual:
 		return heroSolid.Play
+	case scheduler.Cron:
+		return heroSolid.Clock
 	default:
 		return heroSolid.QuestionMarkCircle
 	}
