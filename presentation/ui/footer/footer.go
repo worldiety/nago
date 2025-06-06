@@ -30,7 +30,7 @@ func Footer() TFooter {
 	return TFooter{contentPadding: ui.L48}
 }
 
-func (t TFooter) Logo(logo ui.TImage) TFooter {
+func (t TFooter) Logo(logo ui.DecoredView) TFooter {
 	t.logo = logo
 	return t
 }
