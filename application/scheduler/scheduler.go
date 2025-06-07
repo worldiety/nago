@@ -10,6 +10,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"runtime/debug"
 	"slices"
@@ -25,7 +26,6 @@ type LogEntry struct {
 	Values map[string]any
 }
 
-type ctxKey string
 type Scheduler struct {
 	externalCtx     context.Context
 	ctx             context.Context
@@ -85,7 +85,9 @@ func (s *Scheduler) ResetContext() {
 
 	s.cancel()
 
-	myCtx, cancel := context.WithCancel(context.WithValue(s.externalCtx, ctxKey("logger"), Logger(s)))
+	ctx := logging.WithContext(s.externalCtx, slog.New(slogHandler{sched: s}))
+
+	myCtx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 	s.ctx = myCtx
 }
@@ -200,6 +202,7 @@ func (s *Scheduler) Launch() {
 							slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
 							s.logError(err)
 						}
+						
 					}
 
 					continue
@@ -301,6 +304,8 @@ func (s *Scheduler) logLevel(level slog.Level, msg string, args ...any) {
 	s.logsMutex.Lock()
 	defer s.logsMutex.Unlock()
 
+	// TODO remove this and make me real slog handler
+
 	if len(args)%2 != 0 {
 		slog.Error("invalid arguments in log level")
 		debug.PrintStack()
@@ -342,19 +347,58 @@ func (e *PanicError) Unwrap() error {
 	return e.Cause
 }
 
-type Logger interface {
-	Info(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-	Debug(msg string, args ...any)
+func LoggerFrom(ctx context.Context) *slog.Logger {
+	return logging.FromContext(ctx)
 }
 
-func LoggerFrom(ctx context.Context) Logger {
-	val := ctx.Value(ctxKey("logger"))
-	if l, ok := val.(Logger); ok {
-		return l
+type slogHandler struct {
+	sched *Scheduler
+	attrs []slog.Attr
+	group string
+}
+
+func (s slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return true
+}
+
+func (s slogHandler) Handle(ctx context.Context, record slog.Record) error {
+	var allAttr []slog.Attr
+	for _, attr := range s.attrs {
+		allAttr = append(allAttr, attr)
 	}
 
-	slog.Error("LoggerFrom must be used from service context")
-	return slog.Default()
+	record.Attrs(func(attr slog.Attr) bool {
+		allAttr = append(allAttr, attr)
+		return true
+	})
+
+	// TODO remove me and make a real handler
+	tmp := ""
+	for _, a := range allAttr {
+		tmp = tmp + a.String() + " "
+	}
+
+	switch record.Level {
+	case slog.LevelDebug:
+		s.sched.Debug(record.Message, "attr", tmp)
+	case slog.LevelInfo:
+		s.sched.Info(record.Message, "attr", tmp)
+	case slog.LevelWarn:
+		s.sched.Warn(record.Message, "attr", tmp)
+	default:
+		s.sched.Error(record.Message, "attr", tmp)
+
+	}
+
+	return nil
+}
+
+func (s slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	s.attrs = append(s.attrs, attrs...)
+	return s
+}
+
+func (s slogHandler) WithGroup(name string) slog.Handler {
+	s.group = name
+	return s
 }
