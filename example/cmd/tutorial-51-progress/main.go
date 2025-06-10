@@ -35,7 +35,7 @@ func main() {
 				ui.Text("hello world"),
 				ui.TextField("Password", pwdState.Get()).InputValue(pwdState),
 				progress.LinearProgress().Progress(indicator.ComplexityScale),
-				uiuser.PasswordStrengthView(indicator),
+				uiuser.PasswordStrengthView(wnd, indicator),
 			).Gap(ui.L8).Frame(ui.Frame{}.MatchScreen())
 
 		}))

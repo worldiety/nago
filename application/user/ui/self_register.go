@@ -107,7 +107,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		)
 	case registerPasswords:
 		subcaption = "Bitte Passwort vergeben"
-		pageBody = passwords(password, passwordRepeated, errPasswordRepeated)
+		pageBody = passwords(wnd, password, passwordRepeated, errPasswordRepeated)
 	case registerAdoptAny:
 		subcaption = "Bitte zustimmen"
 		pageBody = consents(wnd, userSettings, consentStates)

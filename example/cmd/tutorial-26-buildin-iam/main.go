@@ -64,6 +64,7 @@ func main() {
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
+				//uiuser.PasswordStrengthView(wnd, user.PasswordStrengthIndicator{}),
 				ui.Text(fmt.Sprintf("%s", sayHello(wnd.Subject()))),
 			).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen())
 		})

@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func passwords(password, passwordRepeated, errPasswordRepeated *core.State[string]) core.View {
+func passwords(wnd core.Window, password, passwordRepeated, errPasswordRepeated *core.State[string]) core.View {
 	strength := user.CalculatePasswordStrength(password.Get())
 
 	return ui.VStack(
@@ -29,7 +29,7 @@ func passwords(password, passwordRepeated, errPasswordRepeated *core.State[strin
 			FullWidth(),
 
 		ui.Space(ui.L2),
-		PasswordStrengthView(strength),
+		PasswordStrengthView(wnd, strength),
 	).FullWidth().Gap(ui.L8)
 }
 
