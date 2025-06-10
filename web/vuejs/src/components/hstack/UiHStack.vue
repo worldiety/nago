@@ -131,7 +131,10 @@ const clazz = computed<string>(() => {
 	let classes = ['inline-flex'];
 	if (!props.ui.noClip) {
 		classes.push('overflow-clip');
+	} else {
+		classes.push('overflow-auto');
 	}
+
 	switch (props.ui.alignment) {
 		case AlignmentValues.Stretch:
 			classes.push('items-stretch');
