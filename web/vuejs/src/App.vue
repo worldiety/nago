@@ -260,6 +260,8 @@ onMounted(async () => {});
 
 onUnmounted(() => {
 	serviceAdapter.teardown();
+	// TODO we have seen weired side effects, which cannot normally occur. Perhaps we have multiple instances of the same App or still registered listeners?
+	ConnectionHandler.reset();
 });
 
 //modal dialog support

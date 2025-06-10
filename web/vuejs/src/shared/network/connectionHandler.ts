@@ -28,4 +28,10 @@ export default class ConnectionHandler {
 	public static publishEvent(evt: NagoEvent): void {
 		this.eventListeners.forEach((callback) => callback(evt));
 	}
+
+	// reset removes all registered change or event listeners.
+	public static reset(): void {
+		this.changeListeners.length = 0;
+		this.eventListeners.length = 0;
+	}
 }
