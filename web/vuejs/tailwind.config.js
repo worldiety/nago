@@ -96,6 +96,9 @@ export default {
 				customColors['I0'] = 'rgb(from var(--I0) r g b / <alpha-value>)';
 				customColors['I1'] = 'rgb(from var(--I1) r g b / <alpha-value>)';
 
+				// more specific type/class colors
+				customColors['PrimaryButtonText'] = 'rgb(from var(--PrimaryButtonText) r g b / <alpha-value>)';
+
 				return customColors;
 			},
 			boxShadow: {

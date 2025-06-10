@@ -9,6 +9,7 @@ package theme
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/xcolor"
 	"go.wdy.de/nago/presentation/ui"
 )
 
@@ -31,6 +32,8 @@ func DarkMode(base BaseColors) ui.Colors {
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),
 		A1: option.Must(base.Main.WithChromaAndTone(16, 22)),
 		A0: base.Accent,
+
+		PrimaryButtonText: calcTextColor(base.Interactive),
 	}
 
 	withSemanticColors(&c)
@@ -57,6 +60,8 @@ func TrueDarkMode(base BaseColors) ui.Colors {
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),
 		A1: option.Must(base.Main.WithChromaAndTone(16, 22)),
 		A0: base.Accent,
+
+		PrimaryButtonText: calcTextColor(base.Interactive),
 	}
 
 	withSemanticColors(&c)
@@ -83,6 +88,8 @@ func LightMode(base BaseColors) ui.Colors {
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),
 		A1: option.Must(base.Main.WithChromaAndTone(16, 22)),
 		A0: base.Accent,
+
+		PrimaryButtonText: calcTextColor(base.Interactive),
 	}
 
 	withSemanticColors(&c)
@@ -109,6 +116,8 @@ func TrueLightMode(base BaseColors) ui.Colors {
 		A2: option.Must(base.Accent.WithChromaAndTone(8, 75)),
 		A1: option.Must(base.Main.WithChromaAndTone(16, 22)),
 		A0: base.Accent,
+
+		PrimaryButtonText: calcTextColor(base.Interactive),
 	}
 
 	withSemanticColors(&c)
@@ -123,4 +132,13 @@ func withSemanticColors(c *ui.Colors) {
 	c.Good = "#2BCA73"
 	c.Disabled = "#E2E2E2"
 	c.DisabledText = "#848484"
+}
+
+func calcTextColor(background ui.Color) ui.Color {
+	c := xcolor.MustParseHex(string(background))
+	if c.LumaBT709() < 128 {
+		return "#FFFFFF"
+	} else {
+		return "#000000"
+	}
 }

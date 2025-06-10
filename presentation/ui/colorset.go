@@ -68,6 +68,9 @@ type Colors struct {
 
 	// DisabledText defines the color of (T)ext which has been rendered on a disabled color.
 	DisabledText Color `json:"ST0"`
+
+	// PrimaryButtonText is the color of the text which a primary-colored button should have.
+	PrimaryButtonText Color `json:"PrimaryButtonText"`
 }
 
 func (c Colors) Valid() bool {

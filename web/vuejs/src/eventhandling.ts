@@ -280,7 +280,7 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
  * @param uploadRepository
  * @param evt
  */
-export async function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): void {
+export async function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): Promise<void> {
 	let input = document.createElement('input');
 	input.className = 'hidden';
 	input.type = 'file';

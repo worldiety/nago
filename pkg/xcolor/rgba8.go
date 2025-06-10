@@ -23,6 +23,21 @@ func (c RGBA8) Int() int {
 	return (int(c[3]) << 24) | (int(c[0]) << 16) | (int(c[1]) << 8) | int(c[2])
 }
 
+// LumaBT709 calculates the photometric luminance using the ITU BT.709 formular.
+func (c RGBA8) LumaBT709() uint8 {
+	r := float64(c[0])
+	g := float64(c[1])
+	b := float64(c[2])
+
+	y := 0.2126*r + 0.7152*g + 0.0722*b
+
+	if y > 255 {
+		y = 255
+	}
+
+	return uint8(y + 0.5)
+}
+
 func RGBA8FromInt(value int) RGBA8 {
 	alpha := uint8((value >> 24) & 0xFF)
 	red := uint8((value >> 16) & 0xFF)
