@@ -16,10 +16,10 @@ import (
 	"go.wdy.de/nago/application/theme"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
+	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui/footer"
 
 	"go.wdy.de/nago/presentation/core"
-	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
@@ -427,7 +427,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 
 		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil && b.showLogin {
 			if !wnd.Subject().Valid() {
-				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, heroSolid.ArrowLeftEndOnRectangle, "Anmelden", sessionManagement.Pages.Login))
+				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, flowbiteOutline.ArrowLeftToBracket, "Anmelden", sessionManagement.Pages.Login))
 			} else {
 				var avatarIcon core.View
 				if id := wnd.Subject().Avatar(); id != "" {
