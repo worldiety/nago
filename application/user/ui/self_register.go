@@ -106,10 +106,10 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 			mobile, errMobile,
 		)
 	case registerPasswords:
-		subcaption = "Bitte die Passwörter eingeben"
+		subcaption = "Bitte Passwort vergeben"
 		pageBody = passwords(password, passwordRepeated, errPasswordRepeated)
 	case registerAdoptAny:
-		subcaption = "Bitte stimmen Sie zu"
+		subcaption = "Bitte zustimmen"
 		pageBody = consents(wnd, userSettings, consentStates)
 	case registerMails:
 		subcaption = "Bitte die E-Mail eingeben"
