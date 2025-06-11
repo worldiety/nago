@@ -18,7 +18,7 @@
 }
 
 .button-primary {
-	@apply text-PrimaryButtonText;
+	@apply text-PBT;
 	@apply rounded-full h-10 w-fit px-5 bg-I0;
 	@apply hover:brightness-105;
 	@apply active:brightness-150;

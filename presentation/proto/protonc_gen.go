@@ -9401,18 +9401,22 @@ func (v *Form) read(r *BinaryReader) error {
 type CountDown struct {
 	Action Ptr
 	// Duration is in seconds. After the Duration is over, the Action is invoked. If Duration is 0, Action will not get executed.
-	Duration       DurationSec
-	ShowDays       Bool
-	ShowHours      Bool
-	ShowMinutes    Bool
-	ShowSeconds    Bool
-	Frame          Frame
-	TextColor      Color
-	SeparatorColor Color
+	Duration           DurationSec
+	ShowDays           Bool
+	ShowHours          Bool
+	ShowMinutes        Bool
+	ShowSeconds        Bool
+	Frame              Frame
+	TextColor          Color
+	SeparatorColor     Color
+	Style              CountDownStyle
+	Done               Bool
+	ProgressBackground Color
+	ProgressColor      Color
 }
 
 func (v *CountDown) write(w *BinaryWriter) error {
-	var fields [10]bool
+	var fields [14]bool
 	fields[1] = !v.Action.IsZero()
 	fields[2] = !v.Duration.IsZero()
 	fields[3] = !v.ShowDays.IsZero()
@@ -9422,6 +9426,10 @@ func (v *CountDown) write(w *BinaryWriter) error {
 	fields[7] = !v.Frame.IsZero()
 	fields[8] = !v.TextColor.IsZero()
 	fields[9] = !v.SeparatorColor.IsZero()
+	fields[10] = !v.Style.IsZero()
+	fields[11] = !v.Done.IsZero()
+	fields[12] = !v.ProgressBackground.IsZero()
+	fields[13] = !v.ProgressColor.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -9504,6 +9512,38 @@ func (v *CountDown) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(uvarint, 11); err != nil {
+			return err
+		}
+		if err := v.Done.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.ProgressBackground.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(byteSlice, 13); err != nil {
+			return err
+		}
+		if err := v.ProgressColor.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -9561,6 +9601,26 @@ func (v *CountDown) read(r *BinaryReader) error {
 			}
 		case 9:
 			err := v.SeparatorColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Done.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.ProgressBackground.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.ProgressColor.read(r)
 			if err != nil {
 				return err
 			}
@@ -10293,6 +10353,33 @@ func (v *ObjectFit) reset() {
 	*v = ObjectFit(0)
 }
 func (v *ObjectFit) IsZero() bool {
+	return *v == 0
+}
+
+type CountDownStyle uint64
+
+const (
+	CountDownClock    CountDownStyle = 0
+	CountDownProgress CountDownStyle = 1
+)
+
+func (v *CountDownStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *CountDownStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = CountDownStyle(tmp)
+	return nil
+}
+
+func (v *CountDownStyle) reset() {
+	*v = CountDownStyle(0)
+}
+func (v *CountDownStyle) IsZero() bool {
 	return *v == 0
 }
 
@@ -11097,6 +11184,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 131:
 		var v ObjectFit
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 132:
+		var v CountDownStyle
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -13238,10 +13331,14 @@ func (v *CountDown) reset() {
 	v.Frame.reset()
 	v.TextColor.reset()
 	v.SeparatorColor.reset()
+	v.Style.reset()
+	v.Done.reset()
+	v.ProgressBackground.reset()
+	v.ProgressColor.reset()
 }
 
 func (v *CountDown) IsZero() bool {
-	return v.Action.IsZero() && v.Duration.IsZero() && v.ShowDays.IsZero() && v.ShowHours.IsZero() && v.ShowMinutes.IsZero() && v.ShowSeconds.IsZero() && v.Frame.IsZero() && v.TextColor.IsZero() && v.SeparatorColor.IsZero()
+	return v.Action.IsZero() && v.Duration.IsZero() && v.ShowDays.IsZero() && v.ShowHours.IsZero() && v.ShowMinutes.IsZero() && v.ShowSeconds.IsZero() && v.Frame.IsZero() && v.TextColor.IsZero() && v.SeparatorColor.IsZero() && v.Style.IsZero() && v.Done.IsZero() && v.ProgressBackground.IsZero() && v.ProgressColor.IsZero()
 }
 
 func (v *CodeEditor) reset() {
@@ -14263,6 +14360,13 @@ func (v *Fonts) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ObjectFit) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 131); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CountDownStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 132); err != nil {
 		return err
 	}
 	return nil

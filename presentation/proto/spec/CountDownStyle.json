@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 132,
+  "const": {
+    "0": {
+      "name": "CountDownClock"
+    },
+    "1":{
+      "name": "CountDownProgress"
+    }
+  }
+}

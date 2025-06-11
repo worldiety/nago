@@ -38,6 +38,22 @@
     "9": {
       "name": "SeparatorColor",
       "type": "Color"
+    },
+    "10": {
+      "name": "Style",
+      "type": "CountDownStyle"
+    },
+    "11": {
+      "name": "Done",
+      "type": "Bool"
+    },
+    "12": {
+      "name": "ProgressBackground",
+      "type": "Color"
+    },
+    "13": {
+      "name": "ProgressColor",
+      "type": "Color"
     }
   }
 }

@@ -146,4 +146,9 @@ const (
 	ColorSemanticGood  = SG0
 	ColorSemanticWarn  = SW0
 	ColorSemanticError = SE0
+
+	ColorBannerErrorBackground = "CBEB"
+	ColorBannerErrorText       = "CBET"
+	ColorBannerInfoBackground  = "CBIB"
+	ColorBannerInfoText        = "CBIT"
 )

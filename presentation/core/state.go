@@ -183,7 +183,7 @@ func (s *State[T]) Set(v T) {
 		return
 	}
 
-	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration()) // TODO set this once in the scope_window for better performance
+	s.Invalidate() // TODO set this once in the scope_window for better performance
 	s.value = v
 	s.valid = true
 }
@@ -222,6 +222,12 @@ func (s *State[T]) isDestroyed() bool {
 // dirty returns true, if the value has been changed within the current render generation.
 func (s *State[T]) dirty() bool {
 	return atomic.LoadInt64(&s.lastChangedGeneration) >= s.getGeneration()
+}
+
+// Invalidate marks this state as dirty, even if the value has not been changed from the perspective of the
+// state.
+func (s *State[T]) Invalidate() {
+	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration())
 }
 
 func (s *State[T]) Ptr() proto.Ptr {

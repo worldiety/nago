@@ -12,6 +12,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
 	"time"
 )
@@ -27,14 +28,25 @@ func main() {
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
 			done := core.AutoState[bool](wnd)
+			nr := core.AutoState[int](wnd)
 			fmt.Println("render was called")
 
 			return ui.VStack(
 				ui.Text("hello world!"),
+				ui.PrimaryButton(func() {
+					nr.Set(nr.Get() + 1)
+					alert.ShowBannerMessage(wnd, alert.Message{
+						Title:   "ok message",
+						Message: fmt.Sprintf("Message no %d", nr.Get()),
+						Intent:  alert.IntentOk,
+					})
+				}).Title("Spawn"),
 				ui.If(done.Get(), ui.Text("timer is done")),
 				ui.CountDown(time.Second*10).Action(func() {
 					done.Set(true)
-				}).Frame(ui.Frame{}.FullWidth()),
+				}).Style(ui.CountDownStyleClock).
+					Done(done.Get()).
+					Frame(ui.Frame{}.FullWidth()),
 			).Gap(ui.L8).Frame(ui.Frame{}.MatchScreen())
 
 		}))

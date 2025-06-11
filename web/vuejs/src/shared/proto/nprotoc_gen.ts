@@ -9872,6 +9872,14 @@ export class CountDown implements Writeable, Readable, Component {
 
 	public separatorColor?: Color;
 
+	public style?: CountDownStyle;
+
+	public done?: Bool;
+
+	public progressBackground?: Color;
+
+	public progressColor?: Color;
+
 	constructor(
 		action: Ptr | undefined = undefined,
 		duration: DurationSec | undefined = undefined,
@@ -9881,7 +9889,11 @@ export class CountDown implements Writeable, Readable, Component {
 		showSeconds: Bool | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		textColor: Color | undefined = undefined,
-		separatorColor: Color | undefined = undefined
+		separatorColor: Color | undefined = undefined,
+		style: CountDownStyle | undefined = undefined,
+		done: Bool | undefined = undefined,
+		progressBackground: Color | undefined = undefined,
+		progressColor: Color | undefined = undefined
 	) {
 		this.action = action;
 		this.duration = duration;
@@ -9892,6 +9904,10 @@ export class CountDown implements Writeable, Readable, Component {
 		this.frame = frame;
 		this.textColor = textColor;
 		this.separatorColor = separatorColor;
+		this.style = style;
+		this.done = done;
+		this.progressBackground = progressBackground;
+		this.progressColor = progressColor;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9937,6 +9953,22 @@ export class CountDown implements Writeable, Readable, Component {
 					this.separatorColor = readString(reader);
 					break;
 				}
+				case 10: {
+					this.style = readInt(reader);
+					break;
+				}
+				case 11: {
+					this.done = readBool(reader);
+					break;
+				}
+				case 12: {
+					this.progressBackground = readString(reader);
+					break;
+				}
+				case 13: {
+					this.progressColor = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9955,6 +9987,10 @@ export class CountDown implements Writeable, Readable, Component {
 			this.frame !== undefined && !this.frame.isZero(),
 			this.textColor !== undefined,
 			this.separatorColor !== undefined,
+			this.style !== undefined,
+			this.done !== undefined,
+			this.progressBackground !== undefined,
+			this.progressColor !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9994,6 +10030,22 @@ export class CountDown implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
 			writeString(writer, this.separatorColor!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 11);
+			writeBool(writer, this.done!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			writeString(writer, this.progressBackground!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
+			writeString(writer, this.progressColor!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -10006,7 +10058,11 @@ export class CountDown implements Writeable, Readable, Component {
 			this.showSeconds === undefined &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.textColor === undefined &&
-			this.separatorColor === undefined
+			this.separatorColor === undefined &&
+			this.style === undefined &&
+			this.done === undefined &&
+			this.progressBackground === undefined &&
+			this.progressColor === undefined
 		);
 	}
 
@@ -10020,6 +10076,10 @@ export class CountDown implements Writeable, Readable, Component {
 		this.frame = undefined;
 		this.textColor = undefined;
 		this.separatorColor = undefined;
+		this.style = undefined;
+		this.done = undefined;
+		this.progressBackground = undefined;
+		this.progressColor = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -10765,6 +10825,17 @@ export enum ObjectFitValues {
 	None = 4,
 }
 
+export type CountDownStyle = number;
+function writeTypeHeaderCountDownStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 132);
+	return;
+}
+// companion enum containing all defined constants for CountDownStyle
+export enum CountDownStyleValues {
+	CountDownClock = 0,
+	CountDownProgress = 1,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -11387,6 +11458,10 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 131: {
 			const v = readInt(src) as ObjectFit;
+			return v;
+		}
+		case 132: {
+			const v = readInt(src) as CountDownStyle;
 			return v;
 		}
 	}

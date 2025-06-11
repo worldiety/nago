@@ -13,17 +13,28 @@ import (
 	"time"
 )
 
+type CountDownStyle int
+
+const (
+	CountDownStyleClock CountDownStyle = iota
+	CountDownStyleProgress
+)
+
 type TCountDown struct {
-	children       []core.View
-	action         func()
-	duration       time.Duration
-	frame          Frame
-	showDays       bool
-	showHours      bool
-	showMinutes    bool
-	showSeconds    bool
-	textColor      Color
-	separatorColor Color
+	children           []core.View
+	action             func()
+	duration           time.Duration
+	frame              Frame
+	showDays           bool
+	showHours          bool
+	showMinutes        bool
+	showSeconds        bool
+	textColor          Color
+	separatorColor     Color
+	style              CountDownStyle
+	done               bool
+	progressBackground Color
+	progressForeground Color
 }
 
 func CountDown(duration time.Duration) TCountDown {
@@ -34,6 +45,11 @@ func CountDown(duration time.Duration) TCountDown {
 		showMinutes: true,
 		showSeconds: true,
 	}
+}
+
+func (c TCountDown) Style(style CountDownStyle) TCountDown {
+	c.style = style
+	return c
 }
 
 func (c TCountDown) Action(action func()) TCountDown {
@@ -76,6 +92,21 @@ func (c TCountDown) SeparatorColor(color Color) TCountDown {
 	return c
 }
 
+func (c TCountDown) Done(done bool) TCountDown {
+	c.done = done
+	return c
+}
+
+func (c TCountDown) ProgressBackground(background Color) TCountDown {
+	c.progressBackground = background
+	return c
+}
+
+func (c TCountDown) ProgressColor(foreground Color) TCountDown {
+	c.progressForeground = foreground
+	return c
+}
+
 func (c TCountDown) Render(ctx core.RenderContext) core.RenderNode {
 	if c.separatorColor == "" {
 		c.separatorColor = ColorLine
@@ -86,14 +117,18 @@ func (c TCountDown) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.CountDown{
-		Action:         ctx.MountCallback(c.action),
-		Frame:          c.frame.ora(),
-		Duration:       proto.DurationSec(c.duration.Seconds()),
-		ShowDays:       proto.Bool(c.showDays),
-		ShowHours:      proto.Bool(c.showHours),
-		ShowMinutes:    proto.Bool(c.showMinutes),
-		ShowSeconds:    proto.Bool(c.showSeconds),
-		TextColor:      proto.Color(c.textColor),
-		SeparatorColor: proto.Color(c.separatorColor),
+		Action:             ctx.MountCallback(c.action),
+		Frame:              c.frame.ora(),
+		Duration:           proto.DurationSec(c.duration.Seconds()),
+		ShowDays:           proto.Bool(c.showDays),
+		ShowHours:          proto.Bool(c.showHours),
+		ShowMinutes:        proto.Bool(c.showMinutes),
+		ShowSeconds:        proto.Bool(c.showSeconds),
+		TextColor:          proto.Color(c.textColor),
+		SeparatorColor:     proto.Color(c.separatorColor),
+		Style:              proto.CountDownStyle(c.style),
+		Done:               proto.Bool(c.done),
+		ProgressBackground: proto.Color(c.progressBackground),
+		ProgressColor:      proto.Color(c.progressForeground),
 	}
 }

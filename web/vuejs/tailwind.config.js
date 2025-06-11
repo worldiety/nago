@@ -97,7 +97,11 @@ export default {
 				customColors['I1'] = 'rgb(from var(--I1) r g b / <alpha-value>)';
 
 				// more specific type/class colors
-				customColors['PrimaryButtonText'] = 'rgb(from var(--PrimaryButtonText) r g b / <alpha-value>)';
+				customColors['PBT'] = 'rgb(from var(--PBT) r g b / <alpha-value>)'; // PrimaryButtonText
+				customColors['CBEB'] = 'rgb(from var(--CBEB) r g b / <alpha-value>)'; // BannerErrorBackground
+				customColors['CBET'] = 'rgb(from var(--CBET) r g b / <alpha-value>)'; // BannerErrorText
+				customColors['CBIB'] = 'rgb(from var(--CBIB) r g b / <alpha-value>)'; // BannerInfoBackground
+				customColors['CBIT'] = 'rgb(from var(--CBIT) r g b / <alpha-value>)'; // BannerInfoText
 
 				return customColors;
 			},

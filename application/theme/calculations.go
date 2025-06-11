@@ -34,6 +34,11 @@ func DarkMode(base BaseColors) ui.Colors {
 		A0: base.Accent,
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
+
+		BannerErrorBackground: "#3b1812",
+		BannerErrorText:       "#FF543E",
+		BannerInfoBackground:  "#1c3b12",
+		BannerInfoText:        "#55ff3e",
 	}
 
 	withSemanticColors(&c)
@@ -62,6 +67,11 @@ func TrueDarkMode(base BaseColors) ui.Colors {
 		A0: base.Accent,
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
+
+		BannerErrorBackground: "#3b1812",
+		BannerErrorText:       "#FF543E",
+		BannerInfoBackground:  "#1c3b12",
+		BannerInfoText:        "#55ff3e",
 	}
 
 	withSemanticColors(&c)
@@ -90,6 +100,11 @@ func LightMode(base BaseColors) ui.Colors {
 		A0: base.Accent,
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
+
+		BannerErrorBackground: "#F6d2de",
+		BannerErrorText:       "#FF543E",
+		BannerInfoBackground:  "#1c3b12",
+		BannerInfoText:        "#55ff3e",
 	}
 
 	withSemanticColors(&c)
@@ -118,6 +133,11 @@ func TrueLightMode(base BaseColors) ui.Colors {
 		A0: base.Accent,
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
+
+		BannerErrorBackground: "#F6d2de",
+		BannerErrorText:       "#FF543E",
+		BannerInfoBackground:  "#1c3b12",
+		BannerInfoText:        "#55ff3e",
 	}
 
 	withSemanticColors(&c)

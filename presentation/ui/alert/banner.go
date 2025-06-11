@@ -11,6 +11,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"time"
 )
 
 type TBanner struct {
@@ -58,25 +59,17 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 	var textColor ui.Color
 	var bgColor ui.Color
 	var ico core.SVG
-	isDarkMode := ctx.Window().Info().ColorScheme == core.Dark
 
 	switch t.intent {
 	case IntentOk:
-		textColor = "#55ff3e" // actually the color is "#FF543E" however, we don't want transparency
+		textColor = ui.ColorBannerInfoText
+		bgColor = ui.ColorBannerInfoBackground
 		ico = heroSolid.Check
-		if isDarkMode {
-			bgColor = "#1c3b12"
-		} else {
-			bgColor = "#1c3b12"
-		}
+
 	default:
 		ico = heroSolid.ExclamationTriangle
-		textColor = "#FF543E"
-		if isDarkMode {
-			bgColor = "#3b1812"
-		} else {
-			bgColor = "#F6d2de"
-		}
+		textColor = ui.ColorBannerErrorText
+		bgColor = ui.ColorBannerErrorBackground
 	}
 
 	return ui.VStack(
@@ -102,6 +95,33 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 		).Gap(ui.L4).
 			FullWidth(),
 		ui.Text(t.message).Color(textColor),
+		ui.IfFunc(t.intent == IntentOk, func() core.View {
+			targetTime := core.DerivedState[time.Time](t.presented, "ctt").Init(func() time.Time {
+				return time.Now().Add(time.Second * 5)
+			})
+
+			// TODO something is fishy here
+			// TODO is this a problem of recycling function pointer ids between allocated views?
+			duration := targetTime.Get().Sub(time.Now())
+			//fmt.Println(duration, targetTime.ID())
+			if duration < 0 {
+				t.presented.Set(false)
+				t.presented.Invalidate()
+			}
+
+			duration = max(duration, 0)
+
+			return ui.CountDown(duration).
+				Done(!t.presented.Get()).
+				Style(ui.CountDownStyleProgress).
+				ProgressColor(ui.ColorBannerInfoText).
+				Frame(ui.Frame{}.FullWidth()).
+				Action(func() {
+					t.presented.Set(false)
+					t.presented.Invalidate()
+					//fmt.Println("set presented to false", t.presented.ID())
+				})
+		}),
 	).Alignment(ui.Leading).
 		Gap(ui.L8).
 		BackgroundColor(bgColor).
