@@ -57,6 +57,11 @@ func (c TDatePicker) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TDatePicker) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TDatePicker) Border(border Border) DecoredView {
 	//TODO implement me
 	return c

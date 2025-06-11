@@ -32,7 +32,7 @@ type BoxLayout struct {
 type TBox struct {
 	children           []alignedComponent
 	backgroundColor    proto.Color
-	frame              proto.Frame
+	frame              Frame
 	padding            proto.Padding
 	font               proto.Font
 	border             proto.Border
@@ -155,7 +155,12 @@ func (c TBox) BackgroundColor(backgroundColor Color) DecoredView {
 }
 
 func (c TBox) Frame(fr Frame) DecoredView {
-	c.frame = fr.ora()
+	c.frame = fr
+	return c
+}
+
+func (c TBox) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -195,7 +200,7 @@ func (c TBox) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.Box{
 		Children:        tmp,
-		Frame:           c.frame,
+		Frame:           c.frame.ora(),
 		BackgroundColor: c.backgroundColor,
 		Padding:         c.padding,
 		Border:          c.border,

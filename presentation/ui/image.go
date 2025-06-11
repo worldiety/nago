@@ -41,7 +41,7 @@ type TImage struct {
 	accessibilityLabel string
 	invisible          bool
 	border             proto.Border
-	frame              proto.Frame
+	frame              Frame
 	padding            proto.Padding
 	svg                proto.SVG
 	fillColor          proto.Color
@@ -52,7 +52,7 @@ type TImage struct {
 
 func Image() TImage {
 	return TImage{
-		frame: Frame{}.Size(Auto, L160).ora(),
+		frame: Frame{}.Size(Auto, L160),
 	}
 }
 
@@ -147,7 +147,12 @@ func (c TImage) Border(border Border) DecoredView {
 }
 
 func (c TImage) Frame(frame Frame) DecoredView {
-	c.frame = frame.ora()
+	c.frame = frame
+	return c
+}
+
+func (c TImage) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -202,7 +207,7 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 		Invisible:          proto.Bool(c.invisible),
 		Border:             c.border,
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		Padding:            c.padding,
 		SVG:                svgData,
 		FillColor:          c.fillColor,

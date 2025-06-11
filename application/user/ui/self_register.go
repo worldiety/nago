@@ -267,7 +267,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 				Impress(cfgTheme.Impress).
 				PrivacyPolicy(cfgTheme.PrivacyPolicy).
 				TermsOfUse(cfgTheme.TermsOfUse).
-				Logo(ui.Image().Adaptive(cfgTheme.PageLogoLight, cfgTheme.PageLogoDark)).
+				Logo(ui.Image().Adaptive(cfgTheme.PageLogoLight, cfgTheme.PageLogoDark).Frame(ui.Frame{Height: ui.L64})).
 				GeneralTermsAndConditions(cfgTheme.GeneralTermsAndConditions).
 				Slogan(cfgTheme.Slogan)
 		}),

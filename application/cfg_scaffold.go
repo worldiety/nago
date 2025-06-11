@@ -469,7 +469,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		} else if b.enableAutoFooter {
 			themeCfg := core.GlobalSettings[theme.Settings](wnd)
 			autoFooter := footer.Footer().
-				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark)).
+				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark).Frame(ui.Frame{Height: ui.L64})).
 				Impress(themeCfg.Impress).
 				PrivacyPolicy(themeCfg.PrivacyPolicy).
 				TermsOfUse(themeCfg.TermsOfUse).

@@ -56,6 +56,11 @@ func (c TButton) Frame(frame ui.Frame) ui.DecoredView {
 	return c
 }
 
+func (c TButton) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TButton) Border(border ui.Border) ui.DecoredView {
 	c.border = border
 	return c

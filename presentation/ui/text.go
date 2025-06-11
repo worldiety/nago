@@ -114,6 +114,11 @@ func (c TText) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TText) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TText) FullWidth() TText {
 	c.frame = Frame{}.FullWidth()
 	return c

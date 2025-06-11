@@ -20,7 +20,7 @@ type TVStack struct {
 	hoveredBackgroundColor proto.Color
 	pressedBackgroundColor proto.Color
 	focusedBackgroundColor proto.Color
-	frame                  proto.Frame
+	frame                  Frame
 	gap                    proto.Length
 	padding                proto.Padding
 	border                 proto.Border
@@ -115,7 +115,12 @@ func (c TVStack) Font(font Font) TVStack {
 }
 
 func (c TVStack) Frame(f Frame) DecoredView {
-	c.frame = f.ora()
+	c.frame = f
+	return c
+}
+
+func (c TVStack) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -168,7 +173,7 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.VStack{
 		Children:           renderComponents(ctx, c.children),
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		Alignment:          c.alignment,
 		BackgroundColor:    c.backgroundColor,
 		Gap:                c.gap,

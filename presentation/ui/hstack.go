@@ -22,7 +22,7 @@ type THStack struct {
 	hoveredBackgroundColor proto.Color
 	pressedBackgroundColor proto.Color
 	focusedBackgroundColor proto.Color
-	frame                  proto.Frame
+	frame                  Frame
 	gap                    proto.Length
 	padding                proto.Padding
 	font                   proto.Font
@@ -118,7 +118,12 @@ func (c THStack) Alignment(alignment Alignment) THStack {
 }
 
 func (c THStack) Frame(fr Frame) DecoredView {
-	c.frame = fr.ora()
+	c.frame = fr
+	return c
+}
+
+func (c THStack) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -190,7 +195,7 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.HStack{
 		Children:           renderComponents(ctx, c.children),
 		Gap:                c.gap,
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		Alignment:          c.alignment,
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,

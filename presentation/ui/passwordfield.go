@@ -117,6 +117,11 @@ func (c TPasswordField) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TPasswordField) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 // Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created.
 // This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single
 // line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand.

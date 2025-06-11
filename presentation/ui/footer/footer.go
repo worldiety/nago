@@ -84,33 +84,51 @@ func (t TFooter) ContentPadding(content ui.Length) TFooter {
 }
 
 func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
-	anyLegal := t.impress != "" || t.gtc != "" || t.gdpr != ""
+	anyLegal := t.impress != "" || t.gtc != "" || t.gdpr != "" || t.copyright != ""
 	height := ui.L160
 
 	if t.slogan != "" && anyLegal {
 		height = ui.L200
 	}
+
 	wnd := ctx.Window()
+	isMobile := ctx.Window().Info().SizeClass <= core.SizeClassSmall
+
 	return ui.VStack(
 		ui.If(t.contentPadding != "", ui.Space(t.contentPadding)),
 		ui.VStack(
 			ui.IfFunc(t.logo != nil, func() core.View {
-				return t.logo.Frame(ui.Frame{Height: ui.L64})
+				return t.logo.WithFrame(func(frame ui.Frame) ui.Frame {
+					if frame.IsZero() {
+						return ui.Frame{Height: ui.L64}
+					}
+
+					return frame
+				})
 			}),
 			ui.If(t.slogan != "", ui.Text(t.slogan)),
 			ui.IfFunc(anyLegal, func() core.View {
-				return ui.HStack(
+				var tmp []core.View
+				tmp = append(tmp,
 					ui.If(t.impress != "", ui.Link(wnd, "Impressum", t.impress, ui.LinkTargetNewWindowOrTab)),
 					ui.If(t.gdpr != "", ui.Link(wnd, "Datenschutz", t.gdpr, ui.LinkTargetNewWindowOrTab)),
 					ui.If(t.gtc != "", ui.Link(wnd, "AGB", t.gtc, ui.LinkTargetNewWindowOrTab)),
 					ui.If(t.termOfUse != "", ui.Link(wnd, "Nutzungsbedingungen", t.termOfUse, ui.LinkTargetNewWindowOrTab)),
-					ui.If(t.copyright != "", ui.Text(t.copyright).Padding(ui.Padding{Left: ui.L16})),
-				).Gap(ui.L16)
+					ui.If(!isMobile, ui.Space(ui.L16)),
+					ui.If(t.copyright != "", ui.Text(t.copyright)),
+				)
+
+				if isMobile {
+					return ui.VStack(tmp...).Gap(ui.L16).Alignment(ui.Leading).FullWidth()
+				}
+
+				return ui.HStack(tmp...).Gap(ui.L16)
 			}),
 		).TextColor(t.textColor).
 			Gap(ui.L24).
 			BackgroundColor(t.backgroundColor).
 			Border(ui.Border{TopColor: ui.M6, TopWidth: ui.L1}).
-			Frame(ui.Frame{Width: ui.Full, Height: height}),
+			Padding(ui.Padding{}.All(ui.L16)).
+			Frame(ui.Frame{Width: ui.Full, MinHeight: height}),
 	).FullWidth().Render(ctx)
 }

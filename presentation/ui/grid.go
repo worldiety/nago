@@ -111,7 +111,7 @@ func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
 type TGrid struct {
 	cells              []TGridCell
 	backgroundColor    proto.Color
-	frame              proto.Frame
+	frame              Frame
 	rows               int
 	cols               int
 	colWidths          []proto.Length
@@ -178,7 +178,12 @@ func (c TGrid) BackgroundColor(backgroundColor Color) DecoredView {
 }
 
 func (c TGrid) Frame(fr Frame) DecoredView {
-	c.frame = fr.ora()
+	c.frame = fr
+	return c
+}
+
+func (c TGrid) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -252,7 +257,7 @@ func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
 		Columns:            proto.Uint(c.cols),
 		RowGap:             c.rowGap,
 		ColGap:             c.colGap,
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,
 		Border:             c.border,

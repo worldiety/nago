@@ -83,6 +83,11 @@ func (c TPicker) Frame(frame ui.Frame) ui.DecoredView {
 	return c
 }
 
+func (c TPicker) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TPicker) Border(border ui.Border) ui.DecoredView {
 	//TODO implement me
 	return c

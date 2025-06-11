@@ -54,6 +54,11 @@ func (c TCheckboxField) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TCheckboxField) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TCheckboxField) Border(border Border) DecoredView {
 	c.border = border
 	return c

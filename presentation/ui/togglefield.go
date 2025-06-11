@@ -43,6 +43,11 @@ func (c TToggleField) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TToggleField) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TToggleField) Border(border Border) DecoredView {
 	c.border = border
 	return c

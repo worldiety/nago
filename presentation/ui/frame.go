@@ -18,6 +18,10 @@ type Frame struct {
 	Height    Length
 }
 
+func (f Frame) IsZero() bool {
+	return Frame{} == f
+}
+
 func (f Frame) ora() proto.Frame {
 	return proto.Frame{
 		MinWidth:  proto.Length(f.MinWidth),

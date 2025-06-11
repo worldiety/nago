@@ -14,10 +14,11 @@ import (
 type DecoredView interface {
 	core.View
 	Padding(padding Padding) DecoredView
+	WithFrame(fn func(Frame) Frame) DecoredView
 	Frame(frame Frame) DecoredView
 	Border(border Border) DecoredView
 	Visible(visible bool) DecoredView
-	// AccessibilityLabel is used to help screen readers, see guidelines, when use them.
+	// AccessibilityLabel is used to help screen readers, see guidelines, when to use it.
 	// https://www.w3.org/WAI/tutorials/images/decision-tree/
 	AccessibilityLabel(label string) DecoredView
 }

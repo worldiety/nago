@@ -16,7 +16,7 @@ type TTextLayout struct {
 	children        []core.View
 	alignment       proto.TextAlignment
 	backgroundColor proto.Color
-	frame           proto.Frame
+	frame           Frame
 	gap             proto.Length
 	padding         proto.Padding
 	border          proto.Border
@@ -68,7 +68,12 @@ func (c TTextLayout) Font(font Font) TTextLayout {
 }
 
 func (c TTextLayout) Frame(f Frame) DecoredView {
-	c.frame = f.ora()
+	c.frame = f
+	return c
+}
+
+func (c TTextLayout) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -91,7 +96,7 @@ func (c TTextLayout) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.TextLayout{
 		Children:           renderComponents(ctx, c.children),
-		Frame:              c.frame,
+		Frame:              c.frame.ora(),
 		TextAlignment:      c.alignment,
 		BackgroundColor:    c.backgroundColor,
 		Padding:            c.padding,

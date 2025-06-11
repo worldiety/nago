@@ -212,6 +212,11 @@ func (c TTextField) Frame(frame Frame) DecoredView {
 	return c
 }
 
+func (c TTextField) WithFrame(fn func(Frame) Frame) DecoredView {
+	c.frame = fn(c.frame)
+	return c
+}
+
 func (c TTextField) FullWidth() TTextField {
 	c.frame = c.frame.FullWidth()
 	return c
