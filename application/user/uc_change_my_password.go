@@ -8,8 +8,8 @@
 package user
 
 import (
+	"errors"
 	"fmt"
-	"go.wdy.de/nago/pkg/std"
 	"sync"
 	"time"
 )
@@ -24,11 +24,11 @@ func NewChangeMyPassword(mutex *sync.Mutex, repo Repository) ChangeMyPassword {
 		}
 
 		if oldPassword == newPassword {
-			return std.NewLocalizedError("Eingabebeschränkung", "Das alte und das neue Kennwort müssen sich unterscheiden.")
+			return NewPasswordMustBeDifferentFromOldPasswordErr
 		}
 
 		if newPassword != newRepeated {
-			return std.NewLocalizedError("Eingabefehler", "Das neue Kennwort unterscheidet sich in der wiederholten Eingabe.")
+			return PasswordsDontMatchErr
 		}
 
 		if err := newPassword.Validate(); err != nil {
@@ -48,6 +48,10 @@ func NewChangeMyPassword(mutex *sync.Mutex, repo Repository) ChangeMyPassword {
 		usr := optUsr.Unwrap()
 
 		if err := oldPassword.CompareHashAndPassword(Argon2IdMin, usr.Salt, usr.PasswordHash); err != nil {
+			if errors.Is(err, noLoginErr) {
+				return InvalidOldPasswordErr
+			}
+			
 			return err
 		}
 

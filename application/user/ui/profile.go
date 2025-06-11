@@ -8,6 +8,7 @@
 package uiuser
 
 import (
+	"errors"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
@@ -55,25 +56,45 @@ func ProfilePage(
 }
 
 func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPassword, presentPasswordChange *core.State[bool]) core.View {
+	if !presentPasswordChange.Get() {
+		// security note: purge our states below, if dialog is not visible
+		return nil
+	}
+
 	oldPassword := core.AutoState[string](wnd)
 	password0 := core.AutoState[string](wnd)
 	password1 := core.AutoState[string](wnd)
 	errMsg := core.AutoState[error](wnd)
+	oldPwdErrMsg := core.AutoState[string](wnd)
+	newPwdErrMsg := core.AutoState[string](wnd)
+
+	strength := user.CalculatePasswordStrength(password0.Get())
 	body := ui.VStack(
 		ui.If(errMsg.Get() != nil, ui.VStack(alert.BannerError(errMsg.Get())).Padding(ui.Padding{Bottom: ui.L20})),
 		ui.PasswordField("Altes Passwort", oldPassword.Get()).
+			ID("nago-password"). //this is the same ID as in package uilogin
 			AutoComplete(false).
 			InputValue(oldPassword).
+			ErrorText(oldPwdErrMsg.Get()).
 			Frame(ui.Frame{}.FullWidth()),
+
 		ui.HLine(),
 		ui.PasswordField("Neues Passwort", password0.Get()).
 			AutoComplete(false).
 			InputValue(password0).
+			ErrorText(newPwdErrMsg.Get()).
 			Frame(ui.Frame{}.FullWidth()),
+		ui.Space(ui.L16),
+
 		ui.PasswordField("Neues Passwort wiederholen", password1.Get()).
 			AutoComplete(false).
 			InputValue(password1).
+			ErrorText(newPwdErrMsg.Get()).
 			Frame(ui.Frame{}.FullWidth()),
+
+		ui.Space(ui.L16),
+
+		PasswordStrengthView(wnd, strength),
 	).FullWidth()
 
 	return alert.Dialog("Passwort ändern", body, presentPasswordChange, alert.Cancel(func() {
@@ -81,19 +102,41 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPasswor
 		oldPassword.Set("")
 		password0.Set("")
 		password1.Set("")
-	}), alert.Save(func() (close bool) {
-		if err := changeMyPassword(wnd.Subject(), user.Password(oldPassword.Get()), user.Password(password0.Get()), user.Password(password1.Get())); err != nil {
-			errMsg.Set(err)
-			return false
-		}
+	}),
+		alert.MinWidth(ui.L560),
+		alert.Custom(
+			func(close func(closeDlg bool)) core.View {
+				return ui.PrimaryButton(func() {
+					errMsg.Set(nil)
+					oldPwdErrMsg.Set("")
+					newPwdErrMsg.Set("")
 
-		errMsg.Set(nil)
-		oldPassword.Set("")
-		password0.Set("")
-		password1.Set("")
+					if err := changeMyPassword(wnd.Subject(), user.Password(oldPassword.Get()), user.Password(password0.Get()), user.Password(password1.Get())); err != nil {
 
-		return true
-	}))
+						switch {
+						case errors.Is(err, user.NewPasswordMustBeDifferentFromOldPasswordErr):
+							newPwdErrMsg.Set("Das alte und das neue Kennwort müssen sich unterscheiden.")
+						case errors.Is(err, user.PasswordsDontMatchErr):
+							newPwdErrMsg.Set("Die Passwörter stimmen nicht überein")
+						case errors.Is(err, user.InvalidOldPasswordErr):
+							oldPwdErrMsg.Set("Das alte Kennwort ist falsch.")
+						default:
+							errMsg.Set(err)
+						}
+
+						return
+					}
+
+					// security note: purge passwords from memory
+					oldPassword.Set("")
+					password0.Set("")
+					password1.Set("")
+
+					close(true)
+				}).Enabled(strength.Acceptable).Title("Passwort ändern")
+
+			},
+		))
 }
 
 func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUserByID user.FindByID, consentFn user.Consent) core.View {
