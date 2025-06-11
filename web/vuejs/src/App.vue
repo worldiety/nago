@@ -21,6 +21,7 @@ import {
 	getWindowInfo,
 	lastRID,
 	navigateForward,
+	nextInvalidationScrollsTop,
 	nextRID,
 	onScopeConfigurationChanged,
 	openHttpFlow,
@@ -28,6 +29,7 @@ import {
 	requestRootViewAllocation,
 	requestRootViewRendering,
 	requestScopeConfigurationChange,
+	scrollToTop,
 	setTheme,
 	triggerFileDownload,
 	triggerFileUpload,
@@ -114,6 +116,13 @@ async function applyConfiguration(): Promise<void> {
 
 			ui.value = evt.root;
 			state.value = State.ShowUI;
+
+			// because our views are replaced dynamically, the browser don't know about page
+			// changes, thus scroll to the top of a new page, only if really intended
+			if (nextInvalidationScrollsTop()) {
+				scrollToTop(false);
+			}
+
 			return;
 		}
 

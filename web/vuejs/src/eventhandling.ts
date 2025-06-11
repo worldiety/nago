@@ -356,8 +356,34 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 
 	// otherwise handle locally
 	chan.sendEvent(new RootViewAllocationRequested(getLocale(), evt.rootView, nextRID(), evt.values));
+	if (lastScrolledRootView !== evt.rootView) {
+		lastScrolledRootView = evt.rootView;
+		nextInvalidationScrollsTopFlag = true;
+	}
 
 	history.pushState(evt, '', url);
+}
+
+// nextInvalidationScrollsTop is set by navigation events and tells if a redraw must trigger a scroll to top,
+// e.g. because it is really a new page.
+var nextInvalidationScrollsTopFlag: boolean;
+var lastScrolledRootView: RootViewID | undefined;
+
+export function nextInvalidationScrollsTop(): boolean {
+	let tmp = nextInvalidationScrollsTopFlag;
+	nextInvalidationScrollsTopFlag = false;
+	console.log('reset next scroll flag');
+	return tmp;
+}
+
+// scrollToTop issues a scrolling to the top of the window. Note that posting may cause a flickering.
+export function scrollToTop(post: boolean) {
+	console.log('scroll to top');
+	if (post) {
+		setTimeout(() => window.scrollTo(0, 0), 0);
+	} else {
+		window.scrollTo(0, 0);
+	}
 }
 
 /**
@@ -385,6 +411,9 @@ export function applyRootViewState(chan: Channel, state: any) {
 
 	req.locale = getLocale();
 	req.rID = nextRID();
+
+	lastScrolledRootView = evt.rootView;
+	nextInvalidationScrollsTopFlag = true;
 
 	chan.sendEvent(req);
 }
