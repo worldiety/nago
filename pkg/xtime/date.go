@@ -41,11 +41,11 @@ func (d Date) IsZero() bool {
 }
 
 func (d Date) Format(pattern string) string {
-	return d.Time(time.UTC).Format(pattern)
+	return d.Time(time.Local).Format(pattern)
 }
 
 func (d Date) After(other Date) bool {
-	return d.Time(time.UTC).After(other.Time(time.UTC))
+	return d.Time(time.Local).After(other.Time(time.Local))
 }
 
 // TimeFrame represents a Start/End time interval in timezone less unix epoch.
@@ -98,15 +98,15 @@ func (i TimeFrame) Format(formatDate string) string {
 // A Timezone represents the time zone identifier like Europe/Berlin
 type Timezone string
 
-// Location returns the loadable location. If not loadable, returns UTC.
+// Location returns the loadable location. If not loadable, returns Local.
 func (t Timezone) Location() *time.Location {
 	if t == "" {
-		return time.UTC
+		return time.Local
 	}
 
 	loc, err := time.LoadLocation(string(t))
 	if err != nil {
-		return time.UTC
+		return time.Local
 	}
 
 	return loc
