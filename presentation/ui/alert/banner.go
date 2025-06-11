@@ -95,7 +95,7 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 		).Gap(ui.L4).
 			FullWidth(),
 		ui.Text(t.message).Color(textColor),
-		ui.IfFunc(t.intent == IntentOk, func() core.View {
+		ui.IfFunc(t.intent == IntentOk && t.presented != nil, func() core.View {
 			targetTime := core.DerivedState[time.Time](t.presented, "ctt").Init(func() time.Time {
 				return time.Now().Add(time.Second * 5)
 			})
