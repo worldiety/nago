@@ -134,6 +134,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 				ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
 					ui.Image().
 						Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
+						ObjectFit(ui.FitContain).
 						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
 				),
 				ui.Space(ui.L16),
@@ -150,6 +151,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 			ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
 				ui.Image().
 					Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
+					ObjectFit(ui.FitContain).
 					Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
 			),
 
