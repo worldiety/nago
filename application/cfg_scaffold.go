@@ -518,5 +518,14 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 		return nil
 	}
 
-	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, alert.Closeable(), alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
+	isMobile := wnd.Info().SizeClass == core.SizeClassSmall
+
+	var opts []alert.Option
+
+	opts = append(opts, alert.Closeable())
+	if !isMobile {
+		opts = append(opts, alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
+	}
+
+	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, opts...)
 }
