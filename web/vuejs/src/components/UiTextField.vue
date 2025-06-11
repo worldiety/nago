@@ -210,7 +210,7 @@ const inputMode = computed<string>(() => {
 				/>
 
 				<div
-					v-if="inputValue && !props.ui.disabled"
+					v-if="inputValue && !props.ui.disabled && !props.ui.lines"
 					class="absolute top-0 bottom-0 right-4 flex items-center h-full"
 				>
 					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
