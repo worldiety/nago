@@ -44,16 +44,16 @@ function onClick() {
 </script>
 
 <template>
-	<div v-if="!ui.invisible">
-		<div
-			class="toggle-switch-container"
-			:class="{ 'toggle-switch-container-disabled': props.ui.disabled }"
-			:tabindex="props.ui.disabled ? '-1' : '0'"
-			@click="onClick"
-			@keydown.enter="onClick"
-		>
-			<div class="toggle-switch" :class="{ 'toggle-switch-checked': checked }"></div>
-		</div>
+	<div
+		style="padding: 1px"
+		v-if="!ui.invisible"
+		class="toggle-switch-container"
+		:class="{ 'toggle-switch-container-disabled': props.ui.disabled }"
+		:tabindex="props.ui.disabled ? '-1' : '0'"
+		@click="onClick"
+		@keydown.enter="onClick"
+	>
+		<div class="toggle-switch" :class="{ 'toggle-switch-checked': checked }"></div>
 	</div>
 </template>
 
