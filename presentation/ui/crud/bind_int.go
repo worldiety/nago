@@ -61,6 +61,7 @@ func Int[E any, T std.Integer](opts IntOptions, property Property[E, T]) Field[E
 			return ui.IntField(opts.Label, state.Get(), state).
 				SupportingText(self.SupportingText).
 				ErrorText(errState.Get()).
+				Disabled(self.Disabled).
 				Frame(ui.Frame{}.FullWidth())
 		},
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
