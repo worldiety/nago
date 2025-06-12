@@ -170,7 +170,12 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUs
 				status = consent.Approved
 			}
 
-			if err := consentFn(wnd.Subject(), wnd.Subject().ID(), consentOption.ID, status); err != nil {
+			action := consent.Action{
+				Location: string(wnd.Path()),
+				Status:   status,
+			}
+
+			if err := consentFn(wnd.Subject(), wnd.Subject().ID(), consentOption.ID, action); err != nil {
 				alert.ShowBannerError(wnd, err)
 				return
 			}

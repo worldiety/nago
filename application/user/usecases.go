@@ -107,7 +107,8 @@ type UpdateVerificationByMail func(subject permission.Auditable, mail Email, ver
 type CountUsers func() (int, error)
 
 // Consent either approves or revokes a given consent. Usually, this is something caused by GDPR concerns.
-type Consent func(subject AuditableUser, user ID, consentID consent.ID, status consent.Status) error
+// If the [consent.Action.At] time is the zero value, the current time stamp is inserted.
+type Consent func(subject AuditableUser, user ID, consentID consent.ID, action consent.Action) error
 
 type LoadSettings func(subject AuditableUser) Settings
 

@@ -79,6 +79,16 @@ const (
 type Action struct {
 	At     time.Time `json:"at,omitempty"`
 	Status Status    `json:"status,omitempty"`
+	// Location is an arbitrary string, which shall be used to document where in the users journey
+	// the status change has happened, e.g. while registering or at the profile page.
+	// It is recommended to use the current [core.NavigationPath] value.
+	//
+	// # Example
+	//   action := consent.Action{
+	//				Location: string(wnd.Path()),
+	//				Status:   status,
+	//			}
+	Location string `json:"location,omitempty"`
 }
 
 func HasApproved(consents []Consent, id ID) bool {

@@ -16,7 +16,7 @@ import (
 )
 
 func NewConsent(mutex *sync.Mutex, bus events.Bus, usersRepo Repository) Consent {
-	return func(subject AuditableUser, uid ID, cid consent.ID, status consent.Status) error {
+	return func(subject AuditableUser, uid ID, cid consent.ID, action consent.Action) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
@@ -38,13 +38,12 @@ func NewConsent(mutex *sync.Mutex, bus events.Bus, usersRepo Repository) Consent
 
 		usr := optUsr.Unwrap()
 		updated := false
-		var action consent.Action
+		if action.At.IsZero() {
+			action.At = time.Now()
+		}
+
 		for idx, c := range usr.Consents {
 			if c.ID == cid {
-				action = consent.Action{
-					At:     time.Now(),
-					Status: status,
-				}
 				c.History = append(c.History, action)
 
 				usr.Consents[idx] = c
@@ -55,7 +54,6 @@ func NewConsent(mutex *sync.Mutex, bus events.Bus, usersRepo Repository) Consent
 		}
 
 		if !updated {
-			action = consent.Action{At: time.Now(), Status: status}
 			usr.Consents = append(usr.Consents, consent.Consent{
 				ID: cid,
 				History: []consent.Action{
