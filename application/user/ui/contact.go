@@ -29,11 +29,12 @@ type contactViewModel struct {
 	AboutMe string `label:"" section:"Über mich" lines:"5"`
 
 	// job
-	Position    string `label:"Position" section:"Beruf"`
-	CompanyName string `label:"Firma" section:"Beruf"`
-	PostalCode  string `label:"Postleitzahl" section:"Beruf"`
-	City        string `label:"Ort" section:"Beruf"`
-	Country     string `label:"Land" section:"Beruf"`
+	Position          string `label:"Position" section:"Beruf"`
+	ProfessionalGroup string `label:"Berufsgruppe" section:"Beruf"`
+	CompanyName       string `label:"Firma" section:"Beruf"`
+	PostalCode        string `label:"Postleitzahl" section:"Beruf"`
+	City              string `label:"Ort" section:"Beruf"`
+	Country           string `label:"Land" section:"Beruf"`
 
 	// contact
 	Phone       string `label:"Telefon" section:"Kontakt"`
@@ -44,22 +45,23 @@ type contactViewModel struct {
 
 func newContactViewModel(email string, c user.Contact) contactViewModel {
 	return contactViewModel{
-		Avatar:      c.Avatar,
-		Title:       c.Title,
-		Salutation:  c.Salutation,
-		Firstname:   c.Firstname,
-		Lastname:    c.Lastname,
-		EMail:       email,
-		Position:    c.Position,
-		CompanyName: c.CompanyName,
-		PostalCode:  c.PostalCode,
-		City:        c.City,
-		Country:     c.Country,
-		Phone:       c.Phone,
-		MobilePhone: c.MobilePhone,
-		LinkedIn:    c.LinkedIn,
-		Website:     c.Website,
-		AboutMe:     c.AboutMe,
+		Avatar:            c.Avatar,
+		Title:             c.Title,
+		Salutation:        c.Salutation,
+		Firstname:         c.Firstname,
+		Lastname:          c.Lastname,
+		EMail:             email,
+		Position:          c.Position,
+		ProfessionalGroup: c.ProfessionalGroup,
+		CompanyName:       c.CompanyName,
+		PostalCode:        c.PostalCode,
+		City:              c.City,
+		Country:           c.Country,
+		Phone:             c.Phone,
+		MobilePhone:       c.MobilePhone,
+		LinkedIn:          c.LinkedIn,
+		Website:           c.Website,
+		AboutMe:           c.AboutMe,
 	}
 }
 
@@ -101,22 +103,23 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 				ui.PrimaryButton(func() {
 					c := state.Get()
 					err := changeMyContact(wnd.Subject(), user.Contact{
-						Avatar:          c.Avatar,
-						Title:           c.Title,
-						Salutation:      c.Salutation,
-						Firstname:       c.Firstname,
-						Lastname:        c.Lastname,
-						Phone:           c.Phone,
-						MobilePhone:     c.MobilePhone,
-						Country:         c.Country,
-						City:            c.City,
-						PostalCode:      c.PostalCode,
-						LinkedIn:        c.LinkedIn,
-						Website:         c.Website,
-						Position:        c.Position,
-						CompanyName:     c.CompanyName,
-						DisplayLanguage: wnd.Locale().String(),
-						AboutMe:         c.AboutMe,
+						Avatar:            c.Avatar,
+						Title:             c.Title,
+						Salutation:        c.Salutation,
+						Firstname:         c.Firstname,
+						Lastname:          c.Lastname,
+						Phone:             c.Phone,
+						MobilePhone:       c.MobilePhone,
+						Country:           c.Country,
+						City:              c.City,
+						PostalCode:        c.PostalCode,
+						LinkedIn:          c.LinkedIn,
+						Website:           c.Website,
+						Position:          c.Position,
+						ProfessionalGroup: c.ProfessionalGroup,
+						CompanyName:       c.CompanyName,
+						DisplayLanguage:   wnd.Locale().String(),
+						AboutMe:           c.AboutMe,
 					})
 
 					if err != nil {
