@@ -42,6 +42,14 @@ func BannerMessages(wnd core.Window) core.View {
 		return nil
 	}
 
+	padRight := ui.L24
+	overlayRight := ui.L8
+	isSmall := wnd.Info().SizeClass <= core.SizeClassSmall
+	if isSmall {
+		padRight = ui.L8
+		overlayRight = ""
+	}
+
 	return ui.Overlay(
 		ui.ScrollView(
 			ui.VStack(
@@ -59,10 +67,12 @@ func BannerMessages(wnd core.Window) core.View {
 							}))
 						})
 				})...,
-			).Gap(ui.L8).Padding(ui.Padding{Right: ui.L16}),
+			).Gap(ui.L8).Padding(ui.Padding{Right: padRight}),
 		).
-			Frame(ui.Frame{MaxHeight: "calc(100dvh - 8rem)"}),
-	).Right(ui.L8).Top(ui.L120)
+			Frame(ui.Frame{MaxHeight: "calc(100dvh - 8rem)", MaxWidth: "100dvw"}),
+	).
+		Right(overlayRight).
+		Top(ui.L120)
 }
 
 // ShowBannerMessage puts the given msg into the global messages state list.

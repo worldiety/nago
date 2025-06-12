@@ -27,7 +27,7 @@ func Banner(title, message string) TBanner {
 	return TBanner{
 		title:   title,
 		message: message,
-		frame:   ui.Frame{Width: ui.L400},
+		frame:   ui.Frame{Width: ui.L400, MaxWidth: "calc(100% - 2rem)"},
 	}
 }
 
@@ -107,6 +107,9 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 			if duration < 0 {
 				t.presented.Set(false)
 				t.presented.Invalidate()
+				if t.onClosed != nil {
+					t.onClosed()
+				}
 			}
 
 			duration = max(duration, 0)
@@ -120,6 +123,9 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 					t.presented.Set(false)
 					t.presented.Invalidate()
 					//fmt.Println("set presented to false", t.presented.ID())
+					if t.onClosed != nil {
+						t.onClosed()
+					}
 				})
 		}),
 	).Alignment(ui.Leading).
