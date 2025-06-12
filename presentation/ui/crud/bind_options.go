@@ -107,7 +107,9 @@ func CreateDialog[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], initial
 				onSaved()
 			}
 			return true
-		})),
+		}),
+			alert.Width(ui.L560),
+		),
 		alert.Dialog("Erstellen nicht möglich", ui.Text("Sie sind nicht berechtigt diesen Eintrag zu erstellen."), noSuchPermissionPresented, alert.Ok()),
 	), formPresented
 
@@ -189,7 +191,9 @@ func buttonEdit[E data.Aggregate[ID], ID data.IDType](bnd *Binding[E], renderBtn
 				}
 
 				return true
-			})),
+			}),
+				alert.Width(ui.L560),
+			),
 			ui.If(renderBtn, ui.TertiaryButton(func() {
 				formPresented.Set(true)
 			}).PreIcon(heroSolid.Pencil).AccessibilityLabel("Bearbeiten")),

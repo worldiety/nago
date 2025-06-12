@@ -27,23 +27,35 @@ func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) 
 		dataView = List(opts)
 	}
 
-	return ui.VStack(
-		ui.HStack(
-			ui.If(opts.title != "", ui.H1(opts.title)),
-			ui.Spacer(),
-			ui.HStack(slices.Collect[core.View](func(yield func(core.View) bool) {
-				yield(ui.ImageIcon(heroSolid.MagnifyingGlass))
-				yield(ui.TextField("", opts.queryState.String()).InputValue(opts.queryState).Style(ui.TextFieldReduced))
-				if len(opts.actions) > 0 {
-					yield(ui.FixedSpacer(ui.L16, ""))
-				}
+	searchbarAndActions := slices.Collect[core.View](func(yield func(core.View) bool) {
+		yield(ui.ImageIcon(heroSolid.MagnifyingGlass))
+		yield(ui.TextField("", opts.queryState.String()).InputValue(opts.queryState).Style(ui.TextFieldReduced))
+		if len(opts.actions) > 0 {
+			yield(ui.FixedSpacer(ui.L16, ""))
+		}
 
-				for _, action := range opts.actions {
-					yield(action)
-				}
-			})...,
-			).Padding(ui.Padding{Bottom: ui.L16}),
-		).FullWidth(),
+		for _, action := range opts.actions {
+			yield(action)
+		}
+	})
+
+	isSmall := opts.wnd.Info().SizeClass <= core.SizeClassSmall
+
+	return ui.VStack(
+		ui.IfFunc(isSmall, func() core.View {
+			return ui.VStack(
+				ui.HStack(ui.If(opts.title != "", ui.H1(opts.title))).FullWidth().Alignment(ui.Leading),
+				ui.HStack(searchbarAndActions...).Padding(ui.Padding{Bottom: ui.L16}),
+			).FullWidth().Alignment(ui.Trailing)
+		}),
+		ui.IfFunc(!isSmall, func() core.View {
+			return ui.HStack(
+				ui.If(opts.title != "", ui.H1(opts.title)),
+				ui.Spacer(),
+				ui.HStack(searchbarAndActions...).Padding(ui.Padding{Bottom: ui.L16}),
+			).FullWidth()
+		}),
+
 		dataView,
 	).Frame(ui.Frame{MinWidth: ui.L400})
 }
