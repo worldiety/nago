@@ -229,7 +229,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 
 							myConsents = append(myConsents, consent.Consent{
 								ID:      option.ID,
-								History: []consent.Action{{At: time.Now(), Status: status}},
+								History: []consent.Action{{At: time.Now(), Status: status, Location: string(wnd.Path())}},
 							})
 						}
 
