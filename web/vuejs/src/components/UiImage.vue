@@ -46,6 +46,7 @@ const styles = computed<string>(() => {
 			if (!props.ui.sVG) {
 				// special case for normal images, not for svg
 				styles.push('object-fit: cover');
+				styles.push('aspect-ratio: 1');
 			}
 			break;
 	}

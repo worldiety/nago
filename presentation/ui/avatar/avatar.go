@@ -33,11 +33,14 @@ type TAvatar struct {
 	textSize ui.Length
 	border   ui.Border
 	color    ui.Color
+	imgID    image.ID
 }
 
 func TextOrImage(text string, img image.ID) TAvatar {
 	if img != "" {
-		return URI(httpimage.URI(img, image.FitCover, 64, 64))
+		c := URI(httpimage.URI(img, image.FitCover, 64, 64))
+		c.imgID = img
+		return c
 	}
 
 	return Text(text)
@@ -106,6 +109,11 @@ func (c TAvatar) Action(fn func()) TAvatar {
 func (c TAvatar) Size(widthAndHeight ui.Length) TAvatar {
 	c.frame = ui.Frame{}.Size(widthAndHeight, widthAndHeight)
 	c.textSize = widthAndHeight.Mul(0.4)
+	if c.imgID != "" {
+		s := int(max(widthAndHeight.Estimate(), 64))
+		c.url = httpimage.URI(c.imgID, image.FitCover, s, s)
+	}
+
 	return c
 }
 
@@ -121,6 +129,9 @@ func (c TAvatar) Style(style Style) TAvatar {
 }
 
 func (c TAvatar) Render(ctx core.RenderContext) core.RenderNode {
+	c.frame.MinWidth = c.frame.Width // force the correct dimensions in flex layouts
+	c.frame.MinHeight = c.frame.Height
+
 	if c.paraphe != "" {
 		return ui.VStack(ui.Text(c.paraphe).Font(ui.Font{Size: c.textSize}).Color("#000000")).
 			Action(c.action).
