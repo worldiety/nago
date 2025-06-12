@@ -5,15 +5,14 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package grant
+package user
 
 import (
-	"go.wdy.de/nago/application/user"
 	"testing"
 )
 
 func TestID_Split(t *testing.T) {
-	id0 := NewID(user.Resource{
+	id0 := NewGrantingKey(Resource{
 		Name: "orgs",
 		ID:   "1234",
 	}, "567")

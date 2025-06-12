@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
+	"strings"
 	"sync"
 	"time"
 )
@@ -123,10 +124,60 @@ type RemoveResourcePermissions func(subject AuditableUser, uid ID, resource Reso
 
 // ListResourcePermissions returns an iterator over all defined resource permissions. Note that the
 // returned order of resources is implementation-dependent and may be even random for subsequent calls.
+// See also [ListGrantedPermissions] and [ListGrantedUsers].
 type ListResourcePermissions func(subject AuditableUser, uid ID) iter.Seq2[ResourceWithPermissions, error]
 
-// SetResourcePermissions removes all assigned permissions to the resource rule and sets the exact given set to it.
-type SetResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
+// GrantPermissions sets the exact permission set for the given user. The user is removed automatically from the
+// [GrantingIndexRepository] if permissions are empty.
+type GrantPermissions func(subject AuditableUser, id GrantingKey, permissions ...permission.ID) error
+
+// ListGrantedPermissions returns the set of permissions which have been granted to the given user and resource
+// combination. It is way more efficient when iterating over all users, because the inverse index
+// [GrantingIndexRepository] is used.
+type ListGrantedPermissions func(subject AuditableUser, id GrantingKey) ([]permission.ID, error)
+
+// ListGrantedUsers returns the set of all known users who have at least a single granted permission to the
+// given resource. Note that due to eventual consistency, the returned sequence of user ids must not match
+// the actual set of available users. This is efficient, because the inverse index
+// [GrantingIndexRepository] is used.
+type ListGrantedUsers func(subject AuditableUser, res Resource) iter.Seq2[ID, error]
+
+// GrantingKey is a triple composite key of <repo-name>/<resource-id>/<user-id>.
+type GrantingKey string
+
+func NewGrantingKey(resource Resource, uid ID) GrantingKey {
+	return GrantingKey(resource.Name + "/" + resource.ID + "/" + string(uid)) // this is faster than str buffer or sprintf
+}
+
+func (id GrantingKey) Valid() bool {
+	// no heap
+	return strings.Count(string(id), "/") == 2
+}
+
+func (id GrantingKey) Split() (Resource, ID) {
+	// no heap
+	a := strings.Index(string(id), "/")
+	b := strings.LastIndex(string(id), "/")
+	if a == b {
+		return Resource{}, ""
+	}
+
+	return Resource{
+		Name: string(id[:a]),
+		ID:   string(id[a+1 : b]),
+	}, ID(id[b+1:])
+}
+
+type Granting struct {
+	ID GrantingKey `json:"id"`
+}
+
+func (g Granting) Identity() GrantingKey {
+	return g.ID
+}
+
+type GrantingIndexRepository data.Repository[Granting, GrantingKey]
+
 type Compact struct {
 	ID          ID
 	Avatar      image.ID
@@ -175,10 +226,12 @@ type UseCases struct {
 	AddResourcePermissions    AddResourcePermissions
 	RemoveResourcePermissions RemoveResourcePermissions
 	ListResourcePermissions   ListResourcePermissions
-	SetResourcePermissions    SetResourcePermissions
+	GrantPermissions          GrantPermissions
+	ListGrantedPermissions    ListGrantedPermissions
+	ListGrantedUsers          ListGrantedUsers
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
@@ -255,6 +308,8 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
 		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),
 		ListResourcePermissions:   NewListResourcePermissions(&globalLock, users),
-		SetResourcePermissions:    NewSetResourcePermissions(&globalLock, users),
+		GrantPermissions:          NewGrantPermissions(&globalLock, users, grantingIndexRepository, findByIdFn),
+		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
+		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
 	}
 }

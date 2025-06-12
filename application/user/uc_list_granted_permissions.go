@@ -5,17 +5,15 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package grant
+package user
 
 import (
 	"fmt"
 	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/auth"
 )
 
-func NewListGrants(repo Repository, findUserByID user.FindByID) ListGrants {
-	return func(subject auth.Subject, id ID) ([]permission.ID, error) {
+func NewListGrantedPermissions(repo Repository, findUserByID FindByID) ListGrantedPermissions {
+	return func(subject AuditableUser, id GrantingKey) ([]permission.ID, error) {
 
 		res, uid := id.Split()
 		if res.Name == "" {
@@ -23,17 +21,17 @@ func NewListGrants(repo Repository, findUserByID user.FindByID) ListGrants {
 		}
 
 		// are we globally allowed?
-		globalAllowed := subject.HasResourcePermission(repo.Name(), string(id), PermGrant)
+		globalAllowed := subject.HasResourcePermission(repo.Name(), string(id), PermListGrantedPermissions)
 
 		// are we allowed for the specified resource+user?
-		resAllowed := subject.HasResourcePermission(res.Name, res.ID, PermGrant)
+		resAllowed := subject.HasResourcePermission(res.Name, res.ID, PermListGrantedPermissions)
 
 		if !globalAllowed && !resAllowed {
-			return nil, user.PermissionDeniedErr
+			return nil, PermissionDeniedErr
 		}
 
 		// security note: our permissions have been checked above
-		optUsr, err := findUserByID(user.SU(), uid)
+		optUsr, err := findUserByID(SU(), uid)
 		if err != nil {
 			return nil, err
 		}

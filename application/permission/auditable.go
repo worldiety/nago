@@ -20,6 +20,11 @@ type Auditable interface {
 	// should use the [Auditable.Audit]. However, this may be used e.g. by the UI to show or hide specific aspects.
 	HasPermission(permission ID) bool
 
+	// HasResourcePermission is like [HasResource] checks, but instead of using the user permissions, the associated
+	// resource table is also evaluated. A regular use case
+	// should use the [AuditResource]. However, this may be used e.g. by the UI to show or hide specific aspects.
+	HasResourcePermission(name string, id string, p ID) bool
+
 	Permissions() iter.Seq[ID]
 }
 
@@ -30,6 +35,10 @@ func SU() Auditable {
 }
 
 type suAuditable struct {
+}
+
+func (s suAuditable) HasResourcePermission(name string, id string, p ID) bool {
+	return true
 }
 
 func (s suAuditable) Audit(permission ID) error {

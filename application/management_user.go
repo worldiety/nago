@@ -10,7 +10,6 @@ package application
 import (
 	"fmt"
 	"go.wdy.de/nago/application/billing"
-	"go.wdy.de/nago/application/grant"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
@@ -24,7 +23,6 @@ import (
 type UserManagement struct {
 	UseCases user.UseCases
 	Pages    uiuser.Pages
-	Grant    grant.UseCases
 }
 
 func (c *Configurator) UserManagement() (UserManagement, error) {
@@ -62,8 +60,23 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		}
 		_ = licenseUseCases
 
+		storeGrants, err := c.EntityStore("nago.iam.grant")
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get entity store for grants: %w", err)
+		}
+
+		repoGrants := json.NewSloppyJSONRepository[user.Granting, user.GrantingKey](storeGrants)
+
 		c.userManagement = &UserManagement{
-			UseCases: user.NewUseCases(c.EventBus(), settings.UseCases.LoadGlobal, userRepo, roleUseCases.roleRepository, licenseUseCases.UseCases.PerUser.FindByID, roleUseCases.UseCases.FindByID),
+			UseCases: user.NewUseCases(
+				c.EventBus(),
+				settings.UseCases.LoadGlobal,
+				userRepo,
+				repoGrants,
+				roleUseCases.roleRepository,
+				licenseUseCases.UseCases.PerUser.FindByID,
+				roleUseCases.UseCases.FindByID,
+			),
 			Pages: uiuser.Pages{
 				Users:         "admin/accounts",
 				MyProfile:     "account/profile",
@@ -167,17 +180,9 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		c.AddSystemService("", c.userManagement.UseCases.FindByID)
 		c.AddSystemService("", c.userManagement.UseCases.FindAllIdentifiers)
 
-		// init grants package
-		storeGrants, err := c.EntityStore("nago.iam.grant")
-		if err != nil {
-			return UserManagement{}, fmt.Errorf("cannot get entity store for grants: %w", err)
-		}
-
-		repoGrants := json.NewSloppyJSONRepository[grant.Granting, grant.ID](storeGrants)
-		c.userManagement.Grant = grant.NewUseCases(repoGrants, c.userManagement.UseCases.FindByID, c.userManagement.UseCases.SetResourcePermissions)
-		c.AddSystemService("", c.userManagement.Grant.Grant)
-		c.AddSystemService("", c.userManagement.Grant.ListGranted)
-		c.AddSystemService("", c.userManagement.Grant.ListGrants)
+		c.AddSystemService("", c.userManagement.UseCases.GrantPermissions)
+		c.AddSystemService("", c.userManagement.UseCases.ListGrantedUsers)
+		c.AddSystemService("", c.userManagement.UseCases.ListGrantedPermissions)
 	}
 
 	return *c.userManagement, nil
