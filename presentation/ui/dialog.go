@@ -28,7 +28,7 @@ type TDialog struct {
 
 func Dialog(body core.View) TDialog {
 	return TDialog{
-		frame: Frame{MinWidth: L400, MaxWidth: L560, MaxHeight: "calc(100dvh - 8rem)"}.FullWidth(),
+		frame: Frame{Width: L400, MaxWidth: Full, MaxHeight: "calc(100dvh - 8rem)"},
 		body:  body,
 	}
 }
@@ -68,8 +68,8 @@ func (c TDialog) Frame(frame Frame) TDialog {
 	return c
 }
 
-func (c TDialog) MinWidth(minWidth Length) TDialog {
-	c.frame.MinWidth = minWidth
+func (c TDialog) WithFrame(fn func(Frame) Frame) TDialog {
+	c.frame = fn(c.frame)
 	return c
 }
 
@@ -89,12 +89,12 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 			If(c.footer != nil, HLineWithColor(ColorAccent)),
 			HStack(c.footer).Alignment(Trailing).Frame(Frame{}.FullWidth()),
 		).
-			Frame(c.frame).
+			Frame(c.frame). // TODO this vs ...
 			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 	).
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).
-		Frame(Frame{MinWidth: c.frame.MinWidth})
+		Frame(Frame{MinWidth: c.frame.MinWidth, Width: c.frame.Width, MaxWidth: "calc(100% - 2rem)"}) // TODO ... this looks wrong
 
 	if c.disableBoxLayout {
 		return stack.Render(ctx)

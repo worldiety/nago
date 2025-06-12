@@ -31,17 +31,33 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 
 	adminGroups := queryGroups(wnd.Subject(), query.Get())
 
+	isSmall := wnd.Info().SizeClass <= core.SizeClassSmall
+
 	var viewBuilder xslices.Builder[core.View]
 	viewBuilder.Append(
 		ui.H1("Einstellungen"),
 
-		ui.HStack(
-			ui.ImageIcon(heroSolid.MagnifyingGlass),
-			ui.TextField("", query.Get()).
-				InputValue(query).
-				Style(ui.TextFieldReduced),
-		).Alignment(ui.Trailing).
-			FullWidth(),
+		ui.IfFunc(isSmall, func() core.View {
+			return ui.VStack(
+				ui.ImageIcon(heroSolid.MagnifyingGlass),
+				ui.TextField("", query.Get()).
+					InputValue(query).
+					Style(ui.TextFieldReduced).
+					FullWidth(),
+				ui.Space(ui.L16),
+			).Alignment(ui.Trailing).
+				FullWidth()
+		}),
+
+		ui.IfFunc(!isSmall, func() core.View {
+			return ui.HStack(
+				ui.ImageIcon(heroSolid.MagnifyingGlass),
+				ui.TextField("", query.Get()).
+					InputValue(query).
+					Style(ui.TextFieldReduced),
+			).Alignment(ui.Trailing).
+				FullWidth()
+		}),
 	)
 
 	for _, grp := range adminGroups {

@@ -52,7 +52,7 @@ func ProfilePage(
 		actionCard(wnd, presentPasswordChange, findUserByID, consent),
 	).Gap(ui.L20).
 		Alignment(ui.Leading).
-		Frame(ui.Frame{Width: ui.L560})
+		Frame(ui.Frame{Width: ui.L560, MaxWidth: "100%"})
 }
 
 func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPassword, presentPasswordChange *core.State[bool]) core.View {
@@ -103,7 +103,7 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPasswor
 		password0.Set("")
 		password1.Set("")
 	}),
-		alert.MinWidth(ui.L560),
+		alert.Width(ui.L560),
 		alert.Custom(
 			func(close func(closeDlg bool)) core.View {
 				return ui.PrimaryButton(func() {

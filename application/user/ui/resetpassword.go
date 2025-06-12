@@ -82,7 +82,7 @@ func ResetPasswordPage(
 			ui.H1("Kennwort zurücksetzen"),
 			body,
 		).Alignment(ui.Center).
-			Frame(ui.Frame{MaxWidth: ui.L560}),
+			Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}),
 	).Gap(ui.L16).FullWidth()
 
 }

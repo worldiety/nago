@@ -254,7 +254,7 @@ func createDialog(wnd core.Window, presented *core.State[bool], plainToken *core
 		"Neuen API Access Token erstellen",
 		form.Auto(form.AutoOptions{Window: wnd}, tokenState),
 		presented,
-		alert.MinWidth(ui.L560),
+		alert.Width(ui.L560),
 		alert.Cancel(nil),
 		alert.Save(func() (close bool) {
 			_, plain, err := uc.Create(wnd.Subject(), tokenState.Get())

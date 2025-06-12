@@ -29,6 +29,7 @@ type alertOpts struct {
 	modalPadding ui.Padding
 	preBody      core.View
 	minWidth     ui.Length
+	width        ui.Length
 }
 
 type optFunc func(opts *alertOpts)
@@ -76,7 +77,7 @@ func save(caption string, onSave func() (close bool)) Option {
 
 			opts.state.Set(open)
 			opts.state.Notify()
-			
+
 		}).Title(caption)
 	})
 }
@@ -90,9 +91,16 @@ func Closeable() Option {
 	})
 }
 
+// MinWidth is probably not what you want. Consider [Width] instead.
 func MinWidth(w ui.Length) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.minWidth = w
+	})
+}
+
+func Width(w ui.Length) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.width = w
 	})
 }
 
@@ -186,9 +194,17 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 				Alignment(options.dlgAlign).
 				ModalPadding(options.modalPadding)
 
-			if options.minWidth != "" {
-				dialog = dialog.MinWidth(options.minWidth)
-			}
+			dialog = dialog.WithFrame(func(frame ui.Frame) ui.Frame {
+				if options.minWidth != "" {
+					frame.MinWidth = options.minWidth
+				}
+
+				if options.width != "" {
+					frame.Width = options.width
+				}
+
+				return frame
+			})
 
 			if len(btns) > 0 {
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))

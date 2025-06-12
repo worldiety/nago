@@ -191,7 +191,7 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 					}
 				}
 
-				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmpRoles, tmpGroups, tmpLicenses, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.MinWidth(ui.L560), alert.Back(nil), alert.Closeable())
+				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmpRoles, tmpGroups, tmpLicenses, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.Width(ui.L560), alert.Back(nil), alert.Closeable())
 			}),
 			ui.Lazy(func() core.View {
 				if selectedCount > 0 {
