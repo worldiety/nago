@@ -152,7 +152,6 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUs
 	}
 
 	usr := optUsr.Unwrap()
-	consents := usr.CompatConsents()
 
 	var actionItems []core.View
 	for _, consentOption := range cfgUsers.Consents {
@@ -163,7 +162,7 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUs
 		}
 
 		acceptedState := core.StateOf[bool](wnd, string(consentOption.ID)).Init(func() bool {
-			return consent.HasApproved(consents, consentOption.ID)
+			return consent.HasApproved(usr.Consents, consentOption.ID)
 		}).Observe(func(newValue bool) {
 			var status consent.Status
 			if newValue {
