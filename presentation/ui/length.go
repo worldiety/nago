@@ -144,7 +144,7 @@ const (
 	L4 Length = "0.25rem"
 	// L8 relates to about 8dp at default font scale.
 	L8 Length = "0.5rem"
-	//L12 relates to about 12dp at default font scale.
+	// L12 relates to about 12dp at default font scale.
 	L12 Length = "0.75rem"
 	// L14 corresponds to 14dp at default font scale.
 	L14 Length = "0.875rem"
@@ -152,41 +152,43 @@ const (
 	L16 Length = "1rem"
 	// L20 relates to about 20dp at default font scale.
 	L20 Length = "1.25rem"
-	//L24 relates to about 24dp at default font scale.
+	// L24 relates to about 24dp at default font scale.
 	L24 Length = "1.5rem"
-	//L32 relates to about 32dp at default font scale.
+	// L32 relates to about 32dp at default font scale.
 	L32 Length = "2rem"
-	//L40 relates to about 40dp at default font scale.
+	// L40 relates to about 40dp at default font scale.
 	L40 Length = "2.5rem"
-	//L44 relates to about 44dp at default font scale.
+	// L44 relates to about 44dp at default font scale.
 	L44 Length = "2.75rem"
-	//L48 relates to about 48dp at default font scale.
+	// L48 relates to about 48dp at default font scale.
 	L48 Length = "3rem"
-	//L64 relates to about 64dp at default font scale.
+	// L60 relates to about 60dp at default font scale.
+	L60 Length = "3.75rem"
+	// L64 relates to about 64dp at default font scale.
 	L64 Length = "4rem"
-	//L80 relates to about 80dp at default font scale.
+	// L80 relates to about 80dp at default font scale.
 	L80 Length = "5rem"
-	//L96 relates to about 96dp at default font scale.
+	// L96 relates to about 96dp at default font scale.
 	L96 Length = "6rem"
-	//L120 relates to about 120dp at default font scale.
+	// L120 relates to about 120dp at default font scale.
 	L120 Length = "7.5rem"
-	//L144 relates to about 144dp at default font scale.
+	// L144 relates to about 144dp at default font scale.
 	L144 Length = "9rem"
-	//L160 relates to about 160dp at default font scale.
+	// L160 relates to about 160dp at default font scale.
 	L160 Length = "10rem"
-	//L200 relates to about 200dp at default font scale.
+	// L200 relates to about 200dp at default font scale.
 	L200 Length = "12.5rem"
-	//L256 relates to about 256dp at default font scale.
+	// L256 relates to about 256dp at default font scale.
 	L256 Length = "16rem"
-	//L320 relates to about 320dp at default font scale.
+	// L320 relates to about 320dp at default font scale.
 	L320 Length = "20rem"
-	//L400 relates to about 400dp at default font scale.
+	// L400 relates to about 400dp at default font scale.
 	L400 Length = "25rem"
-	//L480 relates to about 480dp at default font scale.
+	// L480 relates to about 480dp at default font scale.
 	L480 Length = "30rem"
-	//L560 relates to about 560dp at default font scale.
+	// L560 relates to about 560dp at default font scale.
 	L560 Length = "35rem"
-	//L880 relates to about 880dp at default font scale.
+	// L880 relates to about 880dp at default font scale.
 	L880 Length = "50rem"
 )
 
