@@ -8,8 +8,9 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
+import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
@@ -27,6 +28,8 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+const leadingElement = useTemplateRef('leadingElement');
+const trailingElement = useTemplateRef('trailingElement');
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
 
 //console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
@@ -150,28 +153,38 @@ const id = computed<string>(() => {
 	return 'tf-' + props.ui.inputValue;
 });
 
-const inputMode = computed<string>(() => {
-	switch (props.ui.keyboardOptions?.keyboardType) {
-		case KeyboardTypeValues.KeyboardInteger:
-			return 'numeric';
-		case KeyboardTypeValues.KeyboardFloat:
-			return 'decimal';
-		case KeyboardTypeValues.KeyboardEMail:
-			return 'email';
-		case KeyboardTypeValues.KeyboardPhone:
-			return 'tel';
-		case KeyboardTypeValues.KeyboardURL:
-			return 'url';
-		case KeyboardTypeValues.KeyboardSearch:
-			return 'search';
-	}
+const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'search' | 'text' | 'none' | undefined>(
+	() => {
+		switch (props.ui.keyboardOptions?.keyboardType) {
+			case KeyboardTypeValues.KeyboardInteger:
+				return 'numeric';
+			case KeyboardTypeValues.KeyboardFloat:
+				return 'decimal';
+			case KeyboardTypeValues.KeyboardEMail:
+				return 'email';
+			case KeyboardTypeValues.KeyboardPhone:
+				return 'tel';
+			case KeyboardTypeValues.KeyboardURL:
+				return 'url';
+			case KeyboardTypeValues.KeyboardSearch:
+				return 'search';
+		}
 
-	return 'text';
+		return 'text';
+	}
+);
+
+const inputStyle = computed<Record<string, string>>(() => {
+	const leadingElementWidth = leadingElement.value?.offsetWidth;
+	const trailingElementWidth = trailingElement.value?.offsetWidth;
+	return {
+		'padding-left': leadingElementWidth ? `${leadingElementWidth}px` : 'auto',
+		'padding-right': trailingElementWidth ? `${trailingElementWidth}px` : 'auto',
+	};
 });
 
 // TODO check :id="idPrefix + props.ui.id.toString()"
 
-// TODO this is not properly modelled: the padding trick below does not work with arbitrary content (prefix, postfix). Use focus-within and a border around flex flex-row, so that we don't need that padding stuff
 // TODO implement TextFieldBasic (b) render mode
 </script>
 
@@ -185,12 +198,22 @@ const inputMode = computed<string>(() => {
 			:disabled="props.ui.disabled"
 		>
 			<div class="relative">
+				<!-- Leading view -->
+				<div
+					v-if="props.ui.leading"
+					ref="leadingElement"
+					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
+				>
+					<UiGeneric :ui="props.ui.leading" />
+				</div>
+
 				<input
 					v-if="!props.ui.lines"
 					@keydown.enter="handleKeydownEnter"
 					:id="id"
 					v-model="inputValue"
-					class="input-field !pr-10"
+					class="input-field"
+					:style="inputStyle"
 					:disabled="props.ui.disabled"
 					type="text"
 					:inputmode="inputMode"
@@ -201,7 +224,7 @@ const inputMode = computed<string>(() => {
 					v-if="props.ui.lines"
 					:id="id"
 					v-model="inputValue"
-					class="input-field !pr-10"
+					class="input-field"
 					:disabled="props.ui.disabled"
 					type="text"
 					:rows="props.ui.lines"
@@ -209,11 +232,19 @@ const inputMode = computed<string>(() => {
 					@input="submitInputValue(false)"
 				/>
 
-				<div
-					v-if="inputValue && !props.ui.disabled && !props.ui.lines"
-					class="absolute top-0 bottom-0 right-4 flex items-center h-full"
-				>
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
+				<div ref="trailingElement" class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center">
+					<!-- Trailing view -->
+					<div
+						v-if="props.ui.trailing"
+						class="pointer-events-none"
+					>
+						<UiGeneric :ui="props.ui.trailing" />
+					</div>
+
+					<!-- Clear button -->
+					<div v-else-if="inputValue && !props.ui.disabled && !props.ui.lines">
+						<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
+					</div>
 				</div>
 			</div>
 		</InputWrapper>
