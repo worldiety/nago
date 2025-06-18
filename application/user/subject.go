@@ -293,7 +293,12 @@ func (v *viewImpl) HasResourcePermission(name string, id string, p permission.ID
 
 func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error {
 	if !v.HasResourcePermission(name, id, p) {
-		return PermissionDeniedErr
+		var permName = string(p)
+		if perm, ok := permission.Find(p); ok {
+			permName = perm.Name
+		}
+
+		return PermissionDeniedError(permName)
 	}
 
 	return nil
@@ -310,7 +315,7 @@ func (v *viewImpl) Permissions() iter.Seq[permission.ID] {
 	return slices.Values(v.permissions)
 }
 
-func (v *viewImpl) Audit(permission permission.ID) error {
+func (v *viewImpl) Audit(perm permission.ID) error {
 	usr := v.refresh()
 
 	if v.user.ID == "" {
@@ -325,8 +330,13 @@ func (v *viewImpl) Audit(permission permission.ID) error {
 		return std.NewLocalizedError("Keine Berechtigung", "Das Nutzerkonto ist nicht gültig.")
 	}
 
-	if !v.HasPermission(permission) {
-		return PermissionDeniedErr
+	if !v.HasPermission(perm) {
+		var name = string(perm)
+		if p, ok := permission.Find(perm); ok {
+			name = p.Name
+		}
+
+		return PermissionDeniedError(name)
 	}
 
 	return nil
