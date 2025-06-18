@@ -71,6 +71,7 @@ type Application struct {
 	getAnonUser   user.GetAnonUser
 	logoutSession session.Logout
 	fonts         atomic.Pointer[Fonts]
+	debug         bool
 }
 
 func NewApplication(
@@ -140,6 +141,14 @@ func (a *Application) Name() string {
 
 func (a *Application) ID() ApplicationID {
 	return a.id
+}
+
+func (a *Application) IsDebug() bool {
+	return a.debug
+}
+
+func (a *Application) SetDebug(debug bool) {
+	a.debug = debug
 }
 
 func (a *Application) SetVersion(version string) {
