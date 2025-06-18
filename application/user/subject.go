@@ -228,12 +228,12 @@ func (v *viewImpl) load() {
 	for _, roleId := range v.user.Roles {
 		optRole, err := v.roleRepo.FindByID(roleId)
 		if err != nil {
-			slog.Error("referenced role in user not loadable", "id", v.user.ID, "roleID", roleId, "err", err)
+			slog.Error("referenced role in user not loadable", "user", v.user.ID, "role", roleId, "err", err.Error())
 			continue
 		}
 
 		if optRole.IsNone() {
-			slog.Error("referenced role in user is orphaned", "id", v.user.ID, "roleID", roleId)
+			slog.Error("referenced role in user is orphaned", "user", v.user.ID, "role", roleId)
 			continue
 		}
 
