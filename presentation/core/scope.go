@@ -352,8 +352,12 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 	renderResult := func() (rn RenderNode) {
 		defer func() {
 			if r := recover(); r != nil {
-				slog.Error(fmt.Sprintf("%v", r))
-				debug.PrintStack()
+				if s.app.IsDebug() {
+					fmt.Println(r)
+					debug.PrintStack()
+				} else {
+					slog.Error(fmt.Sprintf("%v", r), slog.String("panic", string(debug.Stack())))
+				}
 				rn = &proto.VStack{
 					Children: []proto.Component{
 						&proto.TextView{Value: "panic during rendering, check server-side logs"},

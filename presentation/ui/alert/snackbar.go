@@ -112,10 +112,14 @@ func makeMessageFromError(err error) (Message, bool) {
 	}
 
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
+		name := "diese"
+		if str, ok := permissionDenied.(user.PermissionDeniedError); ok {
+			name = "'" + string(str) + "'"
+		}
 
 		return Message{
 			Title:   "Zugriff verweigert",
-			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen.",
+			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss " + name + " zunächst explizit erteilen.",
 		}, true
 	}
 
@@ -174,18 +178,20 @@ func BannerError(err error) core.View {
 		return nil
 	}
 
-	if msg, ok := makeMessageFromError(err); ok {
-		return Banner(msg.Title, msg.Message)
-	}
-
 	tmp := sha3.Sum224([]byte(err.Error()))
 	token := hex.EncodeToString(tmp[:16])
+
+	if msg, ok := makeMessageFromError(err); ok {
+		slog.Error("handled customized banner error", "err", err.Error(), "token", token)
+		return Banner(msg.Title, msg.Message+" Code: "+token)
+	}
+
 	msg := Message{
 		Title:   "Ein unerwarteter Fehler ist aufgetreten",
 		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
 	}
 
-	slog.Error("unexpected banner error", "token", token, "err", err)
+	slog.Error("unexpected banner error", "token", token, "err", err.Error())
 
 	return Banner(msg.Title, msg.Message)
 }
@@ -199,13 +205,16 @@ func ShowBannerError(wnd core.Window, err error) {
 		return
 	}
 
+	tmp := sha3.Sum224([]byte(err.Error()))
+	token := hex.EncodeToString(tmp[:16])
+
 	if msg, ok := makeMessageFromError(err); ok {
+		slog.Error("handled customized show banner error", "err", err.Error(), "token", token)
+		msg.Message += " Code: " + token
 		ShowBannerMessage(wnd, msg)
 		return
 	}
 
-	tmp := sha3.Sum224([]byte(err.Error()))
-	token := hex.EncodeToString(tmp[:16])
 	msg := Message{
 		Title:   "Ein unerwarteter Fehler ist aufgetreten",
 		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),

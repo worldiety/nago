@@ -134,6 +134,8 @@ func (c *Configurator) newHandler() http.Handler {
 		getAnonUser,
 		sessionMgmt.UseCases.Logout,
 	)
+	app2.SetDebug(c.debug)
+
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
 	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)
