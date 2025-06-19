@@ -18,9 +18,9 @@ import { nextRID } from '@/eventhandling';
 import {
 	FunctionCallRequested,
 	PasswordField,
-	TextFieldStyleValues,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -49,6 +49,10 @@ watch(
 		inputValue.value = newValue.value ? newValue.value : '';
 	}
 );
+
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.frame).join(';');
+});
 
 function submitInputValue(force: boolean): void {
 	if (inputValue.value == props.ui.value) {
@@ -90,10 +94,6 @@ function debouncedInput() {
 	}, debounceTime);
 }
 
-const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
-});
-
 function handleKeydownEnter(event: Event) {
 	if (props.ui.keydownEnter) {
 		event.stopPropagation();
@@ -110,7 +110,7 @@ function toggleRevealed(): void {
 <template>
 	<div v-if="!ui.invisible" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style == TextFieldStyleValues.TextFieldReduced"
+			:wrapper-style="inputWrapperStyleFrom(props.ui.style)"
 			:label="props.ui.label"
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"

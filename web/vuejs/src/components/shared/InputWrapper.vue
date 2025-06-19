@@ -42,9 +42,10 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ErrorIcon from '@/assets/svg/closeBold.svg';
 import LockIcon from '@/assets/svg/lock.svg';
+import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
-	simple?: boolean;
+	wrapperStyle?: InputWrapperStyle;
 	label?: string;
 	error?: string;
 	hint?: string;
@@ -66,9 +67,14 @@ const labelClass = computed((): string | null => {
 
 const inputFieldWrapperClasses = computed((): string | null => {
 	const classes: string[] = [];
-	if (!props.simple) {
+	if (props.wrapperStyle === InputWrapperStyle.REDUCED) {
+		classes.push('input-field-wrapper-reduced');
+	} else if (props.wrapperStyle === InputWrapperStyle.BASIC) {
+		classes.push('input-field-wrapper-basic');
+	} else {
 		classes.push('input-field-wrapper-detailed');
 	}
+
 	if (props.disabled) {
 		classes.push('input-field-wrapper-disabled');
 	} else if (props.error) {
@@ -80,11 +86,15 @@ const inputFieldWrapperClasses = computed((): string | null => {
 
 <style>
 .input-field-wrapper .input-field {
-	@apply relative bg-transparent border-M8 border-0 border-b text-M8 w-full px-0 py-2;
+	@apply relative bg-transparent border-M8 text-M8 w-full py-2;
 }
 
 .input-field-wrapper.input-field-wrapper-detailed .input-field {
 	@apply border rounded-md px-3;
+}
+
+.input-field-wrapper.input-field-wrapper-reduced .input-field {
+	@apply border-b;
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {

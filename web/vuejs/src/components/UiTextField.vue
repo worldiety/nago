@@ -19,9 +19,9 @@ import {
 	FunctionCallRequested,
 	KeyboardTypeValues,
 	TextField,
-	TextFieldStyleValues,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
 	ui: TextField;
@@ -191,7 +191,7 @@ const inputStyle = computed<Record<string, string>>(() => {
 <template>
 	<div v-if="!ui.invisible" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style == TextFieldStyleValues.TextFieldReduced"
+			:wrapper-style="inputWrapperStyleFrom(props.ui.style)"
 			:label="props.ui.label"
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"

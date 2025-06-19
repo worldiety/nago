@@ -26,6 +26,7 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			firstname := core.AutoState[string](wnd)
+			basicInput := core.AutoState[string](wnd)
 			secret := core.AutoState[string](wnd)
 			showAlert := core.AutoState[bool](wnd)
 			myIntState := core.AutoState[int64](wnd)
@@ -47,6 +48,11 @@ func main() {
 						InputValue(firstname).
 						KeyboardType(KeyboardInteger).
 						Style(TextFieldReduced).
+						FullWidth(),
+
+					TextField("basic text field", basicInput.Get()).
+						InputValue(basicInput).
+						Style(TextFieldBasic).
 						FullWidth(),
 
 					// learn task: take your time to understand what
