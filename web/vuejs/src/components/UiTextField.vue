@@ -225,6 +225,7 @@ const inputStyle = computed<Record<string, string>>(() => {
 					:id="id"
 					v-model="inputValue"
 					class="input-field"
+					:style="inputStyle"
 					:disabled="props.ui.disabled"
 					type="text"
 					:rows="props.ui.lines"
