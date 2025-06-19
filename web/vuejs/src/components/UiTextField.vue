@@ -30,6 +30,7 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const leadingElement = useTemplateRef('leadingElement');
 const trailingElement = useTemplateRef('trailingElement');
+const clearButton = useTemplateRef('clearButton');
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
 
 //console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
@@ -176,16 +177,24 @@ const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'se
 
 const inputStyle = computed<Record<string, string>>(() => {
 	const leadingElementWidth = leadingElement.value?.offsetWidth;
+	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
+
+	let paddingRight: string;
 	const trailingElementWidth = trailingElement.value?.offsetWidth;
+	if (trailingElementWidth !== undefined) {
+		paddingRight = `${trailingElementWidth}px`;
+	} else {
+		const clearButtonElementWidth = clearButton.value?.offsetWidth;
+		paddingRight = clearButtonElementWidth ? `${clearButtonElementWidth}px` : 'auto';
+	}
+
 	return {
-		'padding-left': leadingElementWidth ? `${leadingElementWidth}px` : 'auto',
-		'padding-right': trailingElementWidth ? `${trailingElementWidth}px` : 'auto',
+		'padding-left': paddingLeft,
+		'padding-right': paddingRight,
 	};
 });
 
 // TODO check :id="idPrefix + props.ui.id.toString()"
-
-// TODO implement TextFieldBasic (b) render mode
 </script>
 
 <template>
@@ -233,19 +242,22 @@ const inputStyle = computed<Record<string, string>>(() => {
 					@input="submitInputValue(false)"
 				/>
 
-				<div ref="trailingElement" class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center">
-					<!-- Trailing view -->
-					<div
-						v-if="props.ui.trailing"
-						class="pointer-events-none"
-					>
-						<UiGeneric :ui="props.ui.trailing" />
-					</div>
+				<!-- Trailing view -->
+				<div
+					v-if="props.ui.trailing"
+					ref="trailingElement"
+					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center pointer-events-none"
+				>
+					<UiGeneric :ui="props.ui.trailing" />
+				</div>
 
-					<!-- Clear button -->
-					<div v-else-if="inputValue && !props.ui.disabled && !props.ui.lines">
-						<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
-					</div>
+				<!-- Clear button -->
+				<div
+					v-else-if="inputValue && !props.ui.disabled && !props.ui.lines"
+					ref="clearButton"
+					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center"
+				>
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 		</InputWrapper>
