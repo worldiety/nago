@@ -70,9 +70,8 @@ const props = defineProps<{
 	ui: DatePicker;
 }>();
 
-const expanded = ref<boolean>(false);
-
 const serviceAdapter = useServiceAdapter();
+const expanded = ref<boolean>(false);
 const selectedStartDay = ref<number>(0);
 const selectedStartMonth = ref<number>(0);
 const selectedStartYear = ref<number>(0);
@@ -84,12 +83,31 @@ const endDateSelected = ref<boolean>(false);
 
 onMounted(initialize);
 
-watch(
-	() => props.ui,
-	(newValue) => {
-		initialize();
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.frame).join(';');
+});
+
+const dateFormatted = computed((): string | null => {
+	if (!props.ui.value) {
+		return null;
 	}
-);
+
+	if (!props.ui.value.year) {
+		return null;
+	}
+
+	const startDate = new Date();
+	startDate.setFullYear(selectedStartYear.value, selectedStartMonth.value - 1, selectedStartDay.value);
+	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
+		//console.log("bugs!!",startDate.toLocaleDateString())
+		return startDate.toLocaleDateString();
+	}
+	const endDate = new Date();
+	endDate.setFullYear(selectedEndYear.value, selectedEndMonth.value - 1, selectedEndDay.value);
+	return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+});
+
+watch(() => props.ui, initialize);
 
 function initialize(): void {
 	if (props.ui.value === undefined) {
@@ -115,30 +133,7 @@ function initialize(): void {
 		startDateSelected.value = true;
 		endDateSelected.value = true;
 	}
-
-	//console.log("start", selectedStartDay.value, selectedStartMonth.value, selectedStartYear.value)
-	//console.log("ende", selectedEndDay.value, selectedEndMonth.value, selectedEndYear.value)
 }
-
-const dateFormatted = computed((): string | null => {
-	if (!props.ui.value) {
-		return null;
-	}
-
-	if (!props.ui.value.year) {
-		return null;
-	}
-
-	const startDate = new Date();
-	startDate.setFullYear(selectedStartYear.value, selectedStartMonth.value - 1, selectedStartDay.value);
-	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
-		//console.log("bugs!!",startDate.toLocaleDateString())
-		return startDate.toLocaleDateString();
-	}
-	const endDate = new Date();
-	endDate.setFullYear(selectedEndYear.value, selectedEndMonth.value - 1, selectedEndDay.value);
-	return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
-});
 
 function showDatepicker(): void {
 	if (!props.ui.disabled && !expanded.value) {
@@ -197,15 +192,6 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 			selectStartDate(currentEndDate);
 		}
 	}
-}
-
-interface MyDate {
-	// Day
-	d /*omitempty*/? /*Day*/ : number /*int*/;
-	// Month
-	m /*omitempty*/? /*Month*/ : number /*int*/;
-	// Year
-	y /*omitempty*/? /*Year*/ : number /*int*/;
 }
 
 function selectStartDate(selectedDate: Date): void {
@@ -282,8 +268,4 @@ function submitSelection(): void {
 			throw 'unknown date picker style';
 	}
 }
-
-const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
-});
 </script>

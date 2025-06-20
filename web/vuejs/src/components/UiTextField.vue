@@ -13,6 +13,7 @@ import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import {
@@ -21,7 +22,6 @@ import {
 	TextField,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
-import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
 	ui: TextField;
@@ -32,115 +32,7 @@ const leadingElement = useTemplateRef('leadingElement');
 const trailingElement = useTemplateRef('trailingElement');
 const clearButton = useTemplateRef('clearButton');
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
-
-//console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
-
-/**
- * Validates the input value and submits it, if it is valid.
- * The '-' sign and the empty string are treated as 0.
- * If the input value is invalid, the value gets reset to the last known valid value.
- */
-watch(inputValue, (newValue, oldValue) => {
-	if (newValue == oldValue) {
-		return;
-	}
-
-	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger) {
-		if (newValue === '' || newValue === '-') {
-			inputValue.value = '0';
-		} else if (!newValue.match(/^-?[0-9]+$/)) {
-			inputValue.value = oldValue;
-		}
-
-		return;
-	}
-
-	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardFloat) {
-		if (newValue === '' || newValue === '-') {
-			inputValue.value = '0';
-		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
-			inputValue.value = oldValue;
-		}
-
-		return;
-	}
-});
-
-watch(
-	() => props.ui.value,
-	(newValue) => {
-		//console.log("textfield triggered props.ui.value",inputValue.value,newValue)
-		if (newValue) {
-			inputValue.value = newValue;
-		} else {
-			inputValue.value = '';
-		}
-	}
-);
-
-watch(
-	() => props.ui,
-	(newValue) => {
-		//console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
-		if (newValue.value) {
-			inputValue.value = newValue.value;
-		} else {
-			inputValue.value = '';
-		}
-	}
-);
-
-function handleKeydownEnter(event: Event) {
-	if (props.ui.keydownEnter) {
-		event.stopPropagation();
-		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.keydownEnter, nextRID()));
-	}
-}
-
-function submitInputValue(force: boolean): void {
-	if (inputValue.value == props.ui.value) {
-		return;
-	}
-
-	// Note, that the sendEvent may have a huge latency, causing ghost updates for the user input.
-	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
-	nextRID();
-
-	if (force || props.ui.disableDebounce) {
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
-
-		return;
-	}
-
-	debouncedInput();
-}
-
-function clearInputValue(): void {
-	inputValue.value = '';
-	submitInputValue(true);
-}
-
-function deserializeGoDuration(durationInNanoseconds: number): number {
-	return durationInNanoseconds / 1e6;
-}
-
 let timer: number = 0;
-
-function debouncedInput() {
-	let debounceTime = 500; // ms
-	if (props.ui.debounceTime && props.ui.debounceTime > 0) {
-		debounceTime = deserializeGoDuration(props.ui.debounceTime);
-	}
-
-	clearTimeout(timer);
-	timer = window.setTimeout(() => {
-		if (inputValue.value == props.ui.value) {
-			return;
-		}
-
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
-	}, debounceTime);
-}
 
 const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.frame).join(';');
@@ -193,6 +85,109 @@ const inputStyle = computed<Record<string, string>>(() => {
 		'padding-right': paddingRight,
 	};
 });
+
+/**
+ * Validates the input value and submits it, if it is valid.
+ * The '-' sign and the empty string are treated as 0.
+ * If the input value is invalid, the value gets reset to the last known valid value.
+ */
+watch(inputValue, (newValue, oldValue) => {
+	if (newValue == oldValue) {
+		return;
+	}
+
+	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger) {
+		if (newValue === '' || newValue === '-') {
+			inputValue.value = '0';
+		} else if (!newValue.match(/^-?[0-9]+$/)) {
+			inputValue.value = oldValue;
+		}
+
+		return;
+	}
+
+	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardFloat) {
+		if (newValue === '' || newValue === '-') {
+			inputValue.value = '0';
+		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
+			inputValue.value = oldValue;
+		}
+
+		return;
+	}
+});
+
+watch(
+	() => props.ui.value,
+	(newValue) => {
+		if (newValue) {
+			inputValue.value = newValue;
+		} else {
+			inputValue.value = '';
+		}
+	}
+);
+
+watch(
+	() => props.ui,
+	(newValue) => {
+		if (newValue.value) {
+			inputValue.value = newValue.value;
+		} else {
+			inputValue.value = '';
+		}
+	}
+);
+
+function handleKeydownEnter(event: Event) {
+	if (props.ui.keydownEnter) {
+		event.stopPropagation();
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.keydownEnter, nextRID()));
+	}
+}
+
+function submitInputValue(force: boolean): void {
+	if (inputValue.value == props.ui.value) {
+		return;
+	}
+
+	// Note, that the sendEvent may have a huge latency, causing ghost updates for the user input.
+	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
+	nextRID();
+
+	if (force || props.ui.disableDebounce) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
+
+		return;
+	}
+
+	debouncedInput();
+}
+
+function clearInputValue(): void {
+	inputValue.value = '';
+	submitInputValue(true);
+}
+
+function deserializeGoDuration(durationInNanoseconds: number): number {
+	return durationInNanoseconds / 1e6;
+}
+
+function debouncedInput() {
+	let debounceTime = 500; // ms
+	if (props.ui.debounceTime && props.ui.debounceTime > 0) {
+		debounceTime = deserializeGoDuration(props.ui.debounceTime);
+	}
+
+	clearTimeout(timer);
+	timer = window.setTimeout(() => {
+		if (inputValue.value == props.ui.value) {
+			return;
+		}
+
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
+	}, debounceTime);
+}
 
 // TODO check :id="idPrefix + props.ui.id.toString()"
 </script>

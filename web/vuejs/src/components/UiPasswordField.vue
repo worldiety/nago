@@ -13,14 +13,10 @@ import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import {
-	FunctionCallRequested,
-	PasswordField,
-	UpdateStateValueRequested,
-} from '@/shared/proto/nprotoc_gen';
-import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
+import { FunctionCallRequested, PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -29,6 +25,11 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const passwordInput = ref<HTMLElement | undefined>();
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
+let timer: number = 0;
+
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.frame).join(';');
+});
 
 watch(
 	() => props.ui.value,
@@ -38,21 +39,15 @@ watch(
 		} else {
 			inputValue.value = '';
 		}
-		//console.log("textfield triggered props.ui.value")
 	}
 );
 
 watch(
 	() => props.ui,
 	(newValue) => {
-		//console.log("textfield triggered props.ui")
 		inputValue.value = newValue.value ? newValue.value : '';
 	}
 );
-
-const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
-});
 
 function submitInputValue(force: boolean): void {
 	if (inputValue.value == props.ui.value) {
@@ -75,8 +70,6 @@ function submitInputValue(force: boolean): void {
 function deserializeGoDuration(durationInNanoseconds: number): number {
 	return durationInNanoseconds / 1e6;
 }
-
-let timer: number = 0;
 
 function debouncedInput() {
 	let debounceTime = 500; // ms

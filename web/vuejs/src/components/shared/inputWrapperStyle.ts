@@ -5,7 +5,7 @@ export enum InputWrapperStyle {
 	BASIC,
 }
 
-export function inputWrapperStyleFrom(textFieldStyle?: TextFieldStyleValues): InputWrapperStyle|undefined {
+export function inputWrapperStyleFrom(textFieldStyle?: TextFieldStyleValues): InputWrapperStyle | undefined {
 	if (textFieldStyle === TextFieldStyleValues.TextFieldReduced) {
 		return InputWrapperStyle.REDUCED;
 	}
