@@ -116,7 +116,9 @@ func (c *Compiler) tsEmitRecordRead(t Typename, decl Record) error {
 				c.pf("this.%s = readFloat(reader);\n", tsFieldName(field.Name))
 			} else if c.isBool(field.Type) {
 				c.pf("this.%s = readBool(reader);\n", tsFieldName(field.Name))
-			} else if c.isInt(field.Type) {
+			} else if c.isSint(field.Type) {
+				c.pf("this.%s = readSint(reader);\n", tsFieldName(field.Name))
+			} else if c.isUint(field.Type) {
 				c.pf("this.%s = readInt(reader);\n", tsFieldName(field.Name))
 			} else {
 				c.pf("this.%s=new %s()\n", tsFieldName(field.Name), field.Type)
@@ -195,7 +197,9 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 				c.pf("writeFloat(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
 			} else if c.isBool(field.Type) {
 				c.pf("writeBool(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
-			} else if c.isInt(field.Type) {
+			} else if c.isSint(field.Type) {
+				c.pf("writeSint(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
+			} else if c.isUint(field.Type) {
 				c.pf("writeInt(writer,this.%s!); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))
 			} else {
 				c.pf("this.%s!.write(writer); // typescript linters cannot see, that we already checked this properly above\n", tsFieldName(field.Name))

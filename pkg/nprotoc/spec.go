@@ -22,6 +22,7 @@ type Declaration interface {
 var DeclEnum = enum.Declare[Declaration, func(
 	func(Enum),
 	func(Uint),
+	func(Int),
 	func(Record),
 	func(Project),
 	func(Map),
@@ -40,6 +41,7 @@ type Kind string
 const (
 	EnumKind    Kind = "Enum"
 	UintKind    Kind = "Uint"
+	IntKind     Kind = "Int"
 	RecordKind  Kind = "Record"
 	ProjectKind Kind = "Project"
 	MapKind     Kind = "Map"
@@ -95,6 +97,34 @@ func (d Uint) ID() int {
 }
 
 func (Uint) decl() {}
+
+type Int struct {
+	Doc         string          `json:"doc"`
+	Kind        Kind            `json:"kind"`
+	Id          int             `json:"id"`
+	ConstValues map[Value]Const `json:"const"`
+}
+
+func (d Int) Knd() Kind {
+	return d.Kind
+}
+
+func (d Int) sortedConst() iter.Seq2[Value, Const] {
+	return func(yield func(Value, Const) bool) {
+		for _, key := range slices.Sorted(maps.Keys(d.ConstValues)) {
+			if !yield(key, d.ConstValues[key]) {
+				return
+			}
+		}
+	}
+
+}
+
+func (d Int) ID() int {
+	return d.Id
+}
+
+func (Int) decl() {}
 
 // String has intentionally no const block, because we do not (yet) optimize that. Thus, you are much more efficient
 // if you use Uint consts instead.

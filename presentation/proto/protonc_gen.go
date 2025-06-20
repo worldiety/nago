@@ -37,9 +37,10 @@ func (w *BinaryWriter) writeBool(b bool) {
 	w.write(w.tmp[0:1])
 }
 
-func (w *BinaryWriter) writeVarint(i int64) {
+func (w *BinaryWriter) writeVarint(i int64) error {
 	n := binary.PutVarint(w.tmp[:], i)
 	w.write(w.tmp[0:n])
+	return nil
 }
 
 func (w *BinaryWriter) writeUvarint(i uint64) error {
@@ -137,6 +138,10 @@ func (r *BinaryReader) readTypeHeader() (shape, typeId, error) {
 
 func (r *BinaryReader) readUvarint() (uint64, error) {
 	return binary.ReadUvarint(r.reader)
+}
+
+func (r *BinaryReader) readVarint() (int64, error) {
+	return binary.ReadVarint(r.reader)
 }
 
 func (r *BinaryReader) readFloat64() (float64, error) {
@@ -3952,15 +3957,17 @@ type Position struct {
 	Top    Length
 	Right  Length
 	Bottom Length
+	ZIndex Int
 }
 
 func (v *Position) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [7]bool
 	fields[1] = !v.Kind.IsZero()
 	fields[2] = !v.Left.IsZero()
 	fields[3] = !v.Top.IsZero()
 	fields[4] = !v.Right.IsZero()
 	fields[5] = !v.Bottom.IsZero()
+	fields[6] = !v.ZIndex.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -4011,6 +4018,14 @@ func (v *Position) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(varint, 6); err != nil {
+			return err
+		}
+		if err := v.ZIndex.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4048,6 +4063,11 @@ func (v *Position) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Bottom.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ZIndex.read(r)
 			if err != nil {
 				return err
 			}
@@ -10383,6 +10403,29 @@ func (v *CountDownStyle) IsZero() bool {
 	return *v == 0
 }
 
+// Int represents just a user defined signed integer value. This is how nprotoc works.
+type Int int64
+
+func (v *Int) write(r *BinaryWriter) error {
+	return r.writeVarint(int64(*v))
+}
+
+func (v *Int) read(r *BinaryReader) error {
+	tmp, err := r.readVarint()
+	if err != nil {
+		return err
+	}
+	*v = Int(tmp)
+	return nil
+}
+
+func (v *Int) reset() {
+	*v = Int(0)
+}
+func (v *Int) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -11190,6 +11233,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 132:
 		var v CountDownStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 133:
+		var v Int
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12335,10 +12384,11 @@ func (v *Position) reset() {
 	v.Top.reset()
 	v.Right.reset()
 	v.Bottom.reset()
+	v.ZIndex.reset()
 }
 
 func (v *Position) IsZero() bool {
-	return v.Kind.IsZero() && v.Left.IsZero() && v.Top.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
+	return v.Kind.IsZero() && v.Left.IsZero() && v.Top.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.ZIndex.IsZero()
 }
 
 func (v *Img) reset() {
@@ -14367,6 +14417,13 @@ func (v *ObjectFit) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CountDownStyle) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 132); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Int) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(varint, 133); err != nil {
 		return err
 	}
 	return nil

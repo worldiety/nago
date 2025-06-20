@@ -21,6 +21,10 @@
     "5": {
       "name": "Bottom",
       "type": "Length"
+    },
+    "6": {
+      "name": "ZIndex",
+      "type": "Int"
     }
   }
 }

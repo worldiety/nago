@@ -43,9 +43,10 @@ func (w *BinaryWriter) writeBool(b bool) {
 	w.write(w.tmp[0:1])
 }
 
-func (w *BinaryWriter) writeVarint(i int64) {
+func (w *BinaryWriter) writeVarint(i int64) error {
 	n := binary.PutVarint(w.tmp[:], i)
 	w.write(w.tmp[0:n])
+	return nil
 }
 
 func (w *BinaryWriter) writeUvarint(i uint64) error {
@@ -143,6 +144,10 @@ func (r *BinaryReader) readTypeHeader() (shape, typeId, error) {
 
 func (r *BinaryReader) readUvarint() (uint64, error) {
 	return binary.ReadUvarint(r.reader)
+}
+
+func (r *BinaryReader) readVarint() (int64, error) {
+	return binary.ReadVarint(r.reader)
 }
 
 func (r *BinaryReader) readFloat64() (float64, error) {

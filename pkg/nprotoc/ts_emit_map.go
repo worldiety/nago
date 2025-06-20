@@ -54,8 +54,10 @@ func (c *Compiler) tsEmitMap(t Typename, decl Map) error {
 
 		if c.isString(decl.Value) {
 			c.pf("  writeString(writer,value);\n")
-		} else if c.isInt(decl.Value) {
+		} else if c.isUint(decl.Value) {
 			c.pf("  writeInt(writer,value);\n")
+		} else if c.isSint(decl.Value) {
+			c.pf("		writeSint(writer, c)\n")
 		} else if c.isFloat(decl.Value) {
 			c.pf("  writeFloat(writer,value);\n")
 		} else if c.isBool(decl.Value) {

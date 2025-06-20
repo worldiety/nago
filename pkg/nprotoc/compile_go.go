@@ -80,6 +80,9 @@ func (c *Compiler) emitGoDecl() error {
 			c.emitGoEnum(typename, decl)
 		case Uint:
 			c.emitGoUint(typename, decl)
+		case Int:
+			c.emitGoInt(typename, decl)
+
 		case Record:
 			if err := c.emitGoRecord(typename, decl); err != nil {
 				return fmt.Errorf("cannot emit record %s: %w", typename, err)

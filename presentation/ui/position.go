@@ -34,16 +34,24 @@ const (
 
 type Position struct {
 	Type PositionType
+
 	// Left defines the absolute length from within the left border of the (anchor) parent.
 	Left Length
+
 	// Top defines the absolute length from within the top border of the (anchor) parent.
 	Top Length
+
 	// Right defines the absolute length seen from the right border of the (anchor) parent.
 	// Note, that you must not define the right but can instead set an explicit width.
 	Right Length
+
 	// Bottom defines the absolute length seen from the bottom border of the (anchor) parent.
 	// Note, that you must not define the bottom but can instead set an explicit height.
 	Bottom Length
+
+	// ZIndex influences the z ordering of positioned elements if it shall be different
+	// from declaration order. A higher index means a later drawing respective drawing on top of others.
+	ZIndex int
 }
 
 func (p Position) ora() proto.Position {
@@ -53,5 +61,6 @@ func (p Position) ora() proto.Position {
 		Right:  p.Right.ora(),
 		Bottom: p.Bottom.ora(),
 		Kind:   proto.PositionType(p.Type),
+		ZIndex: proto.Int(p.ZIndex),
 	}
 }

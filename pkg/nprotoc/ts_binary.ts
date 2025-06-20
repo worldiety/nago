@@ -142,6 +142,12 @@ export class BinaryReader {
         return result;
     }
 
+    readVarint(): number {
+        const uvalue = this.readUvarint();
+        return (uvalue >>> 1) ^ -(uvalue & 1);
+    }
+
+
     readFloat64(): number {
         let tmp = this.readBytes(8);
         const buffer = tmp.buffer;
@@ -207,6 +213,14 @@ function writeInt(writer: BinaryWriter, value: number): void {
 
 function readInt(reader: BinaryReader): number {
     return reader.readUvarint();
+}
+
+function writeSint(writer: BinaryWriter, value: number): void {
+    writer.writeVarint(value);
+}
+
+function readSint(reader: BinaryReader): number {
+    return reader.readVarint();
 }
 
 

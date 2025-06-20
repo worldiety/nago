@@ -42,8 +42,10 @@ func (c *Compiler) tsEmitArray(t Typename, decl Array) error {
 		c.pf("		writeString(writer, c)\n")
 	} else if c.isBool(decl.Type) {
 		c.pf("		writeBool(writer, c)\n")
-	} else if c.isInt(decl.Type) {
+	} else if c.isUint(decl.Type) {
 		c.pf("		writeInt(writer, c)\n")
+	} else if c.isSint(decl.Type) {
+		c.pf("		writeSint(writer, c)\n")
 	} else if c.isFloat(decl.Type) {
 		c.pf("		writeFloat(writer, c)\n")
 	} else {

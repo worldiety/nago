@@ -26,6 +26,10 @@ func (c *Compiler) GenerateTS() ([]byte, error) {
 			if err := c.tsEmitUint(typename, decl); err != nil {
 				return nil, err
 			}
+		case Int:
+			if err := c.tsEmitUint(typename, Uint(decl)); err != nil {
+				return nil, err
+			}
 		case Enum:
 			c.tsEmitEnum(typename, decl)
 		case String:

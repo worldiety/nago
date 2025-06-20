@@ -38,7 +38,9 @@ func (c *Compiler) tsEmitUnmarshal() error {
 			c.pf("const v = readString(src) as %s;\n", typename)
 		} else if c.isBool(typename) {
 			c.pf("const v = readBool(src) as %s;\n", typename)
-		} else if c.isInt(typename) {
+		} else if c.isSint(typename) {
+			c.pf("const v = readSint(src) as %s;\n", typename)
+		} else if c.isUint(typename) {
 			c.pf("const v = readInt(src) as %s;\n", typename)
 		} else if c.isFloat(typename) {
 			c.pf("const v = readFloat(src) as %s;\n", typename)

@@ -1,0 +1,5 @@
+{
+  "doc": "Int represents just a user defined signed integer value. This is how nprotoc works.",
+  "kind": "Int",
+  "id": 133
+}
