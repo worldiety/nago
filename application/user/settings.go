@@ -60,6 +60,31 @@ type ConsentOption struct {
 	Required bool        `json:"required,omitempty"`
 }
 
+func (c ConsentOption) Label() string {
+	if c.Profile.Label != "" {
+		return c.Profile.Label
+	}
+
+	if c.Register.Label != "" {
+		return c.Register.Label
+	}
+
+	return ""
+}
+
+func (c ConsentOption) WithIdentity(id consent.ID) ConsentOption {
+	c.ID = id
+	return c
+}
+
+func (c ConsentOption) Identity() consent.ID {
+	return c.ID
+}
+
+func (c ConsentOption) String() string {
+	return c.Label()
+}
+
 type ConsentText struct {
 	Label          string `json:"name,omitempty"`
 	SupportingText string `json:"text,omitempty"`
