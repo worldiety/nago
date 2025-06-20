@@ -53,6 +53,11 @@ func (c TProgress) BackgroundColor(color ui.Color) TProgress {
 	return c
 }
 
+func (c TProgress) FullWidth() TProgress {
+	c.frame.Width = ui.Full
+	return c
+}
+
 // Progress must be between 0 and 1. Values are clamped.
 func (c TProgress) Progress(v float64) TProgress {
 	c.progress = max(min(v, 1), 0)

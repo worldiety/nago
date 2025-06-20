@@ -77,8 +77,11 @@ const (
 )
 
 type Action struct {
-	At     time.Time `json:"at,omitempty"`
-	Status Status    `json:"status,omitempty"`
+	At time.Time `json:"at,omitempty"`
+
+	// Status of the associated consent which is valid from the given time stamp.
+	Status Status `json:"status"` // Implementation note: do not omit empty, to be exact for every auditor who does not know the Go semantic here (zero value vs undefined vs null).
+
 	// Location is an arbitrary string, which shall be used to document where in the users journey
 	// the status change has happened, e.g. while registering or at the profile page.
 	// It is recommended to use the current [core.NavigationPath] value.

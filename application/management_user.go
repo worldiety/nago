@@ -10,10 +10,13 @@ package application
 import (
 	"fmt"
 	"go.wdy.de/nago/application/billing"
+	"go.wdy.de/nago/application/consent"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
 	"iter"
@@ -54,7 +57,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			return UserManagement{}, fmt.Errorf("cannot get group usecases: %w", err)
 		}
 
-		settings, err := c.SettingsManagement()
+		sets, err := c.SettingsManagement()
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get settings usecases: %w", err)
 		}
@@ -67,10 +70,21 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		repoGrants := json.NewSloppyJSONRepository[user.Granting, user.GrantingKey](storeGrants)
 
+		c.AddSystemService("nago.consent.options", form.AnyUseCaseList[user.ConsentOption, consent.ID](func(subject auth.Subject) iter.Seq2[user.ConsentOption, error] {
+			return func(yield func(user.ConsentOption, error) bool) {
+				usrSettings := settings.ReadGlobal[user.Settings](std.Must(c.SettingsManagement()).UseCases.LoadGlobal)
+				for _, option := range usrSettings.Consents {
+					if !yield(option, nil) {
+						return
+					}
+				}
+			}
+		}))
+
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(
 				c.EventBus(),
-				settings.UseCases.LoadGlobal,
+				sets.UseCases.LoadGlobal,
 				userRepo,
 				repoGrants,
 				roleUseCases.roleRepository,

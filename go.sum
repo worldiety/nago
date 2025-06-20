@@ -32,6 +32,14 @@ github.com/wagslane/go-password-validator v0.3.0 h1:vfxOPzGHkz5S146HDpavl0cw1DSV
 github.com/wagslane/go-password-validator v0.3.0/go.mod h1:TI1XJ6T5fRdRnHqHt14pvy1tNVnrwe7m3/f1f2fDphQ=
 github.com/worldiety/enum v0.0.0-20250415071812-195794096336 h1:5GA/jISeRFoiVDYuxFVHZifGdKM7LX9Qb1Uhit8BdLY=
 github.com/worldiety/enum v0.0.0-20250415071812-195794096336/go.mod h1:0uP0UsAlDy6HB1ZaikFmvMHbrp+ZajhhsOBgzUg0KPY=
+github.com/worldiety/jsonptr v0.0.3 h1:ffGNVohTh1IugpB16/u07C3Euok3YBil+xfdnYNyeLU=
+github.com/worldiety/jsonptr v0.0.3/go.mod h1:kZmTZng3ftd1GW8sa+O3Xaoi7n+OmsdAm4SsCb1AYEk=
+github.com/worldiety/jsonptr v0.0.4 h1:g3JX0rka2wpB+1rFguyS3mns+bVWoLJChOHpM0aTQJU=
+github.com/worldiety/jsonptr v0.0.4/go.mod h1:kyo2JYOmJCdyNCN6btIc4Len+DNX5Lxd3mGoxVzVKoQ=
+github.com/worldiety/jsonptr v0.0.5 h1:51m5n/sHWp957+V3JdMkXekJa8HQvsrhP0Iey3qZ/DQ=
+github.com/worldiety/jsonptr v0.0.5/go.mod h1:9UA8zEZhmBdoRKyyWD/4vXygiiS6XYrA9Yq7rl73ook=
+github.com/worldiety/jsonptr v0.0.6 h1:T7Rj8GvOcFP8Oa/m5w4H1ZpQq2J55LzXSh9nYhHwBdI=
+github.com/worldiety/jsonptr v0.0.6/go.mod h1:9UA8zEZhmBdoRKyyWD/4vXygiiS6XYrA9Yq7rl73ook=
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16 h1:9E5bS0EtiWaNaxsjxZtXFQcC95wgjAv6K27qaDhPaJs=
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16/go.mod h1:UX8Sb7OvGA+gh+NSJKqUsslZ7Ao7ftYVzutt70hcL9g=
 github.com/worldiety/option v0.0.0-20250215102253-75959db51930 h1:OqC/yFkrn15NOXOM2UysM7GnpuORChQ10ek06o0qKgA=

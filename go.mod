@@ -23,5 +23,6 @@ require (
 
 require (
 	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/worldiety/jsonptr v0.0.6 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 )

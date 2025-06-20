@@ -1,0 +1,36 @@
+@startchen
+
+entity Entry {
+    ID <<key>>
+    In
+    Transformed
+}
+
+entity Batch {
+ID <<key>>
+CreatedAt
+CreatedFrom
+Name
+Comment
+}
+
+entity Transformation {
+ID <<key>>
+CopyRules
+}
+
+relationship Member_Of_Batch {
+}
+
+Entry -N- Member_Of_Batch
+Member_Of_Batch -1- Batch
+
+
+
+relationship Has_Transformation {
+}
+
+Batch -1- Has_Transformation
+Has_Transformation -N- Transformation
+
+@endchen
