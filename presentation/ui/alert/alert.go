@@ -104,6 +104,14 @@ func Width(w ui.Length) Option {
 	})
 }
 
+func Large() Option {
+	return Width(ui.L560)
+}
+
+func Larger() Option {
+	return Width(ui.L880)
+}
+
 // Custom adds a custom footer (button) element.
 func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	return optFunc(func(opts *alertOpts) {
@@ -158,13 +166,17 @@ func PreBody(v core.View) Option {
 }
 
 func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) core.View {
+	if !isPresented.Get() {
+		return nil
+	}
+
 	var options alertOpts
 	options.state = isPresented
 	for _, opt := range opts {
 		opt.apply(&options)
 	}
 
-	return ui.If(isPresented.Get(), ui.Modal(
+	return ui.Modal(
 		//Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())
 		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{}.FullWidth())).
 			Title(ui.If(title != "", ui.Text(title))), func(dialog ui.TDialog) ui.TDialog {
@@ -210,6 +222,6 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))
 			}
 			return dialog
-		})),
-	)
+		}))
+
 }
