@@ -93,8 +93,13 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	@apply border rounded-md px-3;
 }
 
-.input-field-wrapper.input-field-wrapper-reduced .input-field {
+.input-field-wrapper.input-field-wrapper-reduced .input-field,
+.input-field-wrapper.input-field-wrapper-basic .input-field {
 	@apply border-b;
+}
+
+.input-field-wrapper.input-field-wrapper-basic .input-field {
+	@apply border-transparent;
 }
 
 .input-field-wrapper.input-field-wrapper-error .input-field {
