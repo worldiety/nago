@@ -166,6 +166,26 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Ide
 	}
 }
 
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) IdentifiersByPrefix(prefix DomainID) iter.Seq2[DomainID, error] {
+	return func(yield func(DomainID, error) bool) {
+		var zeroID DomainID
+		for id, err := range r.store.List(context.Background(), blob.ListOptions{
+			Prefix: data.Idtos(prefix),
+		}) {
+			if err != nil {
+				if !yield(zeroID, err) {
+					return
+				}
+			} else {
+				ci, err := data.Stoid[DomainID](id)
+				if !yield(ci, err) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) FindAllByID(ids iter.Seq[DomainID]) iter.Seq2[DomainModel, error] {
 	return func(yield func(DomainModel, error) bool) {
 		var zeroDomain DomainModel

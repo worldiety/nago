@@ -53,6 +53,11 @@ type ReadRepository[E Aggregate[ID], ID IDType] interface {
 	// smallest to largest.
 	Identifiers() iter.Seq2[ID, error]
 
+	// IdentifiersByPrefix returns an iterator over all IDs which start with the given prefix.
+	// The order of the returned keys is sorted lexicographically from
+	// smallest to largest.
+	IdentifiersByPrefix(prefix ID) iter.Seq2[ID, error]
+
 	// FindAllByID collects all available entities and yields at most (or less) than the amount of given ids.
 	// It is not an error, if an entity has not been found.
 	// The order is undefined, to allow optimizations.

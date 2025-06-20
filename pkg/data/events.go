@@ -124,6 +124,10 @@ func (e *eventRepository[E, ID]) Identifiers() iter.Seq2[ID, error] {
 	return e.other.Identifiers()
 }
 
+func (e *eventRepository[E, ID]) IdentifiersByPrefix(prefix ID) iter.Seq2[ID, error] {
+	return e.other.IdentifiersByPrefix(prefix)
+}
+
 func (e *eventRepository[E, ID]) FindAllByID(ids iter.Seq[ID]) iter.Seq2[E, error] {
 	return e.other.FindAllByID(ids)
 }

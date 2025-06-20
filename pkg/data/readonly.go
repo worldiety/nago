@@ -30,6 +30,10 @@ func (r readOnlyAdapter[E, ID]) Identifiers() iter.Seq2[ID, error] {
 	return r.other.Identifiers()
 }
 
+func (r readOnlyAdapter[E, ID]) IdentifiersByPrefix(prefix ID) iter.Seq2[ID, error] {
+	return r.other.IdentifiersByPrefix(prefix)
+}
+
 func (r readOnlyAdapter[E, ID]) FindByID(id ID) (std.Option[E], error) {
 	return r.other.FindByID(id)
 }
