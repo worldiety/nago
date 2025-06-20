@@ -34,8 +34,8 @@ func (c TCodeEditor) InputValue(state *core.State[string]) TCodeEditor {
 	return c
 }
 
-func (c TCodeEditor) ReadOnly(b bool) TCodeEditor {
-	c.readOnly = b
+func (c TCodeEditor) Disabled(b bool) TCodeEditor {
+	c.disabled = b
 	return c
 }
 
