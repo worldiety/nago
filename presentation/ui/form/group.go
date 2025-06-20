@@ -8,6 +8,7 @@
 package form
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -24,6 +25,10 @@ func GroupsFor[T any]() []Group {
 func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 	var res []Group
 	//
+
+	if p.Kind() != reflect.Struct {
+		panic(fmt.Errorf("type must be a struct but got %s", p.Kind()))
+	}
 
 	//typ := reflect.TypeOf(zero)
 	//for i := 0; i < typ.NumField(); i++ {

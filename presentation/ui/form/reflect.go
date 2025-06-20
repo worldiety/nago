@@ -383,6 +383,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						Frame(ui.Frame{}.FullWidth()),
 					)
 
+				default:
+					// TODO implement generic recursive struct rendering
+					// TODO also accept pointers
+					// TODO also accept slices of structs
 				}
 			case reflect.String:
 				switch field.Type {
