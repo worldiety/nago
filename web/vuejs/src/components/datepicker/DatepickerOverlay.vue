@@ -125,7 +125,7 @@ import monthNames from '@/shared/monthNames';
 const props = defineProps<{
 	expanded: boolean;
 	rangeMode: boolean;
-	label: string;
+	label?: string;
 	startDateSelected: boolean;
 	selectedStartDay: number;
 	selectedStartMonth: number;

@@ -13,14 +13,10 @@ import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import {
-	FunctionCallRequested,
-	PasswordField,
-	TextFieldStyleValues,
-	UpdateStateValueRequested,
-} from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested, PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: PasswordField;
@@ -29,6 +25,11 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const passwordInput = ref<HTMLElement | undefined>();
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
+let timer: number = 0;
+
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.frame).join(';');
+});
 
 watch(
 	() => props.ui.value,
@@ -38,14 +39,12 @@ watch(
 		} else {
 			inputValue.value = '';
 		}
-		//console.log("textfield triggered props.ui.value")
 	}
 );
 
 watch(
 	() => props.ui,
 	(newValue) => {
-		//console.log("textfield triggered props.ui")
 		inputValue.value = newValue.value ? newValue.value : '';
 	}
 );
@@ -72,8 +71,6 @@ function deserializeGoDuration(durationInNanoseconds: number): number {
 	return durationInNanoseconds / 1e6;
 }
 
-let timer: number = 0;
-
 function debouncedInput() {
 	let debounceTime = 500; // ms
 	if (props.ui.debounceTime && props.ui.debounceTime > 0) {
@@ -89,10 +86,6 @@ function debouncedInput() {
 		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
 	}, debounceTime);
 }
-
-const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
-});
 
 function handleKeydownEnter(event: Event) {
 	if (props.ui.keydownEnter) {
@@ -110,7 +103,7 @@ function toggleRevealed(): void {
 <template>
 	<div v-if="!ui.invisible" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style == TextFieldStyleValues.TextFieldReduced"
+			:wrapper-style="inputWrapperStyleFrom(props.ui.style)"
 			:label="props.ui.label"
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"

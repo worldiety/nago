@@ -8,17 +8,18 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
+import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import {
 	FunctionCallRequested,
 	KeyboardTypeValues,
 	TextField,
-	TextFieldStyleValues,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
 
@@ -27,9 +28,63 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+const leadingElement = useTemplateRef('leadingElement');
+const trailingElement = useTemplateRef('trailingElement');
+const clearButton = useTemplateRef('clearButton');
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
+let timer: number = 0;
 
-//console.log("uitextfield", props.ui.inputValue.value, "=" + props.ui.value.value)
+const frameStyles = computed<string>(() => {
+	return frameCSS(props.ui.frame).join(';');
+});
+
+const id = computed<string>(() => {
+	if (props.ui.id) {
+		return props.ui.id;
+	}
+
+	return 'tf-' + props.ui.inputValue;
+});
+
+const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'search' | 'text' | 'none' | undefined>(
+	() => {
+		switch (props.ui.keyboardOptions?.keyboardType) {
+			case KeyboardTypeValues.KeyboardInteger:
+				return 'numeric';
+			case KeyboardTypeValues.KeyboardFloat:
+				return 'decimal';
+			case KeyboardTypeValues.KeyboardEMail:
+				return 'email';
+			case KeyboardTypeValues.KeyboardPhone:
+				return 'tel';
+			case KeyboardTypeValues.KeyboardURL:
+				return 'url';
+			case KeyboardTypeValues.KeyboardSearch:
+				return 'search';
+		}
+
+		return 'text';
+	}
+);
+
+const inputStyle = computed<Record<string, string>>(() => {
+	const leadingElementWidth = leadingElement.value?.offsetWidth;
+	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
+
+	let paddingRight: string;
+	const trailingElementWidth = trailingElement.value?.offsetWidth;
+	if (trailingElementWidth !== undefined) {
+		paddingRight = `${trailingElementWidth}px`;
+	} else {
+		const clearButtonElementWidth = clearButton.value?.offsetWidth;
+		paddingRight = clearButtonElementWidth ? `${clearButtonElementWidth}px` : 'auto';
+	}
+
+	return {
+		'padding-left': paddingLeft,
+		'padding-right': paddingRight,
+	};
+});
 
 /**
  * Validates the input value and submits it, if it is valid.
@@ -65,7 +120,6 @@ watch(inputValue, (newValue, oldValue) => {
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		//console.log("textfield triggered props.ui.value",inputValue.value,newValue)
 		if (newValue) {
 			inputValue.value = newValue;
 		} else {
@@ -77,7 +131,6 @@ watch(
 watch(
 	() => props.ui,
 	(newValue) => {
-		//console.log("textfield triggered props.ui","p="+props.ui.p,"old="+inputValue.value," new="+newValue.v,newValue)
 		if (newValue.value) {
 			inputValue.value = newValue.value;
 		} else {
@@ -120,8 +173,6 @@ function deserializeGoDuration(durationInNanoseconds: number): number {
 	return durationInNanoseconds / 1e6;
 }
 
-let timer: number = 0;
-
 function debouncedInput() {
 	let debounceTime = 500; // ms
 	if (props.ui.debounceTime && props.ui.debounceTime > 0) {
@@ -138,59 +189,35 @@ function debouncedInput() {
 	}, debounceTime);
 }
 
-const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
-});
-
-const id = computed<string>(() => {
-	if (props.ui.id) {
-		return props.ui.id;
-	}
-
-	return 'tf-' + props.ui.inputValue;
-});
-
-const inputMode = computed<string>(() => {
-	switch (props.ui.keyboardOptions?.keyboardType) {
-		case KeyboardTypeValues.KeyboardInteger:
-			return 'numeric';
-		case KeyboardTypeValues.KeyboardFloat:
-			return 'decimal';
-		case KeyboardTypeValues.KeyboardEMail:
-			return 'email';
-		case KeyboardTypeValues.KeyboardPhone:
-			return 'tel';
-		case KeyboardTypeValues.KeyboardURL:
-			return 'url';
-		case KeyboardTypeValues.KeyboardSearch:
-			return 'search';
-	}
-
-	return 'text';
-});
-
 // TODO check :id="idPrefix + props.ui.id.toString()"
-
-// TODO this is not properly modelled: the padding trick below does not work with arbitrary content (prefix, postfix). Use focus-within and a border around flex flex-row, so that we don't need that padding stuff
-// TODO implement TextFieldBasic (b) render mode
 </script>
 
 <template>
 	<div v-if="!ui.invisible" :style="frameStyles">
 		<InputWrapper
-			:simple="props.ui.style == TextFieldStyleValues.TextFieldReduced"
+			:wrapper-style="inputWrapperStyleFrom(props.ui.style)"
 			:label="props.ui.label"
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"
 			:disabled="props.ui.disabled"
 		>
 			<div class="relative">
+				<!-- Leading view -->
+				<div
+					v-if="props.ui.leading"
+					ref="leadingElement"
+					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
+				>
+					<UiGeneric :ui="props.ui.leading" />
+				</div>
+
 				<input
 					v-if="!props.ui.lines"
 					@keydown.enter="handleKeydownEnter"
 					:id="id"
 					v-model="inputValue"
-					class="input-field !pr-10"
+					class="input-field"
+					:style="inputStyle"
 					:disabled="props.ui.disabled"
 					type="text"
 					:inputmode="inputMode"
@@ -201,7 +228,8 @@ const inputMode = computed<string>(() => {
 					v-if="props.ui.lines"
 					:id="id"
 					v-model="inputValue"
-					class="input-field !pr-10"
+					class="input-field"
+					:style="inputStyle"
 					:disabled="props.ui.disabled"
 					type="text"
 					:rows="props.ui.lines"
@@ -209,9 +237,20 @@ const inputMode = computed<string>(() => {
 					@input="submitInputValue(false)"
 				/>
 
+				<!-- Trailing view -->
 				<div
-					v-if="inputValue && !props.ui.disabled && !props.ui.lines"
-					class="absolute top-0 bottom-0 right-4 flex items-center h-full"
+					v-if="props.ui.trailing"
+					ref="trailingElement"
+					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center pointer-events-none"
+				>
+					<UiGeneric :ui="props.ui.trailing" />
+				</div>
+
+				<!-- Clear button -->
+				<div
+					v-else-if="inputValue && !props.ui.disabled && !props.ui.lines"
+					ref="clearButton"
+					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center"
 				>
 					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>

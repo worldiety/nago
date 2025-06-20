@@ -11,7 +11,7 @@
 	<!-- Datepicker header -->
 	<div>
 		<div class="flex justify-between items-center gap-x-2">
-			<p class="truncate">{{ label }}</p>
+			<p class="truncate">{{ label ?? '' }}</p>
 			<div
 				class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8 shrink-0 grow-0"
 				tabindex="0"
@@ -29,7 +29,7 @@
 import Close from '@/assets/svg/closeBold.svg';
 
 defineProps<{
-	label: string;
+	label?: string;
 }>();
 
 defineEmits<{
