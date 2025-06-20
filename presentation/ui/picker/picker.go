@@ -61,7 +61,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
 	}
 
-	textColor := ui.Color(ui.ST0)
+	textColor := ui.M8
 
 	c.renderPicked = func(t []T) core.View {
 		switch len(t) {
@@ -418,7 +418,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.Text(c.label).Font(ui.Font{Size: ui.L14}),
+			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14})),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
@@ -426,7 +426,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		),
 		inner,
 		ui.IfElse(c.errorText == "",
-			ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0),
+			ui.If(c.supportingText == "", ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0)),
 			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
 		),
 	).Alignment(ui.Leading).
