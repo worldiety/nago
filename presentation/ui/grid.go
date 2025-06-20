@@ -131,6 +131,11 @@ func Grid(cells ...TGridCell) TGrid {
 	return TGrid{cells: cells}
 }
 
+func (c TGrid) Append(cells ...TGridCell) TGrid {
+	c.cells = append(c.cells, cells...)
+	return c
+}
+
 // Rows sets the amount of rows explicitly. If not set, the result is undefined. This component tries its
 // best to calculate the right amount cells, however, when used with areas, this cannot work properly.
 func (c TGrid) Rows(rows int) TGrid {
