@@ -52,8 +52,11 @@ type Entry struct {
 	// for the import process.
 	Confirmed bool `json:"confirmed,omitempty"`
 
-	// Ignore is a flag which tells the importer to ignore this entry
-	Ignore bool `json:"rejected,omitempty"`
+	// Ignore is a flag which tells the importer to ignore this entry.
+	Ignored bool `json:"rejected,omitempty"`
+
+	// Imported is a flag that tells the importer to ignore this entry, because it has already been imported.
+	Imported bool `json:"imported,omitempty"`
 }
 
 // Transform either returns Transformed if not nil or applies the given transformation
@@ -95,6 +98,8 @@ type UpdateEntryTransformation func(subject auth.Subject, id Key, t Transformati
 type UpdateEntryConfirmation func(subject auth.Subject, id Key, confirmed bool) error
 
 type UpdateEntryIgnored func(subject auth.Subject, id Key, ignored bool) error
+
+type UpdateEntryTransformed func(subject auth.Subject, id Key, transformed *jsonptr.Obj) error
 
 type EntryRepository data.Repository[Entry, Key]
 
@@ -207,6 +212,19 @@ type Validate func(subject auth.Subject, key Key, imp importer.ID) error
 // FindMatches returns the next top 3 matches from the data set. The first Match has the highest score.
 type FindMatches func(subject auth.Subject, key Key, imp importer.ID) ([]importer.Match, error)
 
+type StagingReviewStatus struct {
+	Total     int
+	Confirmed int
+	Ignored   int
+	Imported  int
+}
+
+func (s StagingReviewStatus) Checked() int {
+	return s.Confirmed + s.Ignored + s.Imported
+}
+
+type CalculateStagingReviewStatus func(subject auth.Subject, staging SID) (StagingReviewStatus, error)
+
 type FilterEntriesOptions struct {
 	Query      string
 	Page       int
@@ -224,22 +242,24 @@ type FilterEntriesPage struct {
 type FilterEntries func(subject auth.Subject, stage SID, opts FilterEntriesOptions) (FilterEntriesPage, error)
 
 type UseCases struct {
-	RegisterImporter            RegisterImporter
-	RegisterParser              RegisterParser
-	FindImporters               FindImporters
-	FindParsers                 FindParsers
-	FindStagingsForImporter     FindStagingsForImporter
-	FindStagingByID             FindStagingByID
-	FindImporterByID            FindImporterByID
-	Parse                       Parse
-	CreateStaging               CreateStaging
-	FilterEntries               FilterEntries
-	DeleteStaging               DeleteStaging
-	UpdateStagingTransformation UpdateStagingTransformation
-	FindEntryByID               FindEntryByID
-	UpdateEntryConfirmation     UpdateEntryConfirmation
-	UpdateEntryIgnored          UpdateEntryIgnored
-	UpdateEntryTransformation   UpdateEntryTransformation
+	RegisterImporter             RegisterImporter
+	RegisterParser               RegisterParser
+	FindImporters                FindImporters
+	FindParsers                  FindParsers
+	FindStagingsForImporter      FindStagingsForImporter
+	FindStagingByID              FindStagingByID
+	FindImporterByID             FindImporterByID
+	Parse                        Parse
+	CreateStaging                CreateStaging
+	FilterEntries                FilterEntries
+	DeleteStaging                DeleteStaging
+	UpdateStagingTransformation  UpdateStagingTransformation
+	FindEntryByID                FindEntryByID
+	UpdateEntryConfirmation      UpdateEntryConfirmation
+	UpdateEntryIgnored           UpdateEntryIgnored
+	UpdateEntryTransformation    UpdateEntryTransformation
+	CalculateStagingReviewStatus CalculateStagingReviewStatus
+	UpdateEntryTransformed       UpdateEntryTransformed
 }
 
 func NewUseCases(repoStaging StagingRepository, repoEntry EntryRepository) UseCases {
@@ -248,18 +268,22 @@ func NewUseCases(repoStaging StagingRepository, repoEntry EntryRepository) UseCa
 
 	var mutex sync.Mutex
 	return UseCases{
-		RegisterImporter:            NewRegisterImporter(&imports),
-		RegisterParser:              NewRegisterParser(&parsers),
-		FindImporters:               NewFindImporters(&imports),
-		FindParsers:                 NewFindParsers(&parsers),
-		FindStagingsForImporter:     NewFindStagingsForImporter(repoStaging),
-		FindStagingByID:             NewFindStagingByID(repoStaging),
-		FindImporterByID:            NewFindImporterByID(&imports),
-		Parse:                       NewParse(repoStaging, repoEntry, &parsers),
-		CreateStaging:               NewCreateStaging(&mutex, repoStaging),
-		FilterEntries:               NewFilterEntries(repoEntry),
-		DeleteStaging:               NewDeleteStaging(repoStaging, repoEntry),
-		UpdateStagingTransformation: NewUpdateStagingTransformation(&mutex, repoStaging),
-		FindEntryByID:               NewFindEntryByID(repoEntry),
+		RegisterImporter:             NewRegisterImporter(&imports),
+		RegisterParser:               NewRegisterParser(&parsers),
+		FindImporters:                NewFindImporters(&imports),
+		FindParsers:                  NewFindParsers(&parsers),
+		FindStagingsForImporter:      NewFindStagingsForImporter(repoStaging),
+		FindStagingByID:              NewFindStagingByID(repoStaging),
+		FindImporterByID:             NewFindImporterByID(&imports),
+		Parse:                        NewParse(repoStaging, repoEntry, &parsers),
+		CreateStaging:                NewCreateStaging(&mutex, repoStaging),
+		FilterEntries:                NewFilterEntries(repoEntry),
+		DeleteStaging:                NewDeleteStaging(repoStaging, repoEntry),
+		UpdateStagingTransformation:  NewUpdateStagingTransformation(&mutex, repoStaging),
+		FindEntryByID:                NewFindEntryByID(repoEntry),
+		UpdateEntryIgnored:           NewUpdateEntryIgnored(&mutex, repoEntry),
+		UpdateEntryConfirmation:      NewUpdateEntryConfirmation(&mutex, repoEntry),
+		CalculateStagingReviewStatus: NewCalculateStagingReviewStatus(repoStaging, repoEntry),
+		UpdateEntryTransformed:       NewUpdateEntryTransformed(&mutex, repoEntry),
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/worldiety/enum/json"
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/dataimport"
-	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -72,17 +71,28 @@ func PageEntry(wnd core.Window, ucImp dataimport.UseCases) core.View {
 	return ui.VStack(
 		ui.H1("Prüfung Eintrag"),
 
-		toolbar(wnd),
+		ui.HStack(
+			ui.TertiaryButton(func() {
+				wnd.Navigation().BackwardTo("admin/data/stagings", core.Values{"importer": string(stage.Importer)})
+			}).Title("Import "+imp.Configuration().Name),
+			ui.ImageIcon(flowbiteOutline.ChevronRight),
+			ui.TertiaryButton(func() {
+				wnd.Navigation().BackwardTo("admin/data/staging", core.Values{"stage": string(stage.ID)})
+			}).Title(stage.Name),
+			ui.ImageIcon(flowbiteOutline.ChevronRight),
+			ui.TertiaryButton(nil).Title("Eintrag prüfen"),
+		).Alignment(ui.Leading),
+		toolbar(wnd, ucImp, stage, entry, entryState),
 		ui.Space(ui.L32),
 		ui.Grid(
 			ui.GridCell(
-				ui.VStack(viewSrc(wnd, imp, stage, entry.In)).Alignment(ui.TopLeading).
+				ui.VStack(viewSrc(wnd, stage, entry.In)).Alignment(ui.TopLeading).
 					Padding(ui.Padding{Right: ui.L32}),
 			),
 			ui.GridCell(
 				ui.VStack(
 					ui.H2("Ziel"),
-					form.Auto(form.AutoOptions{Window: wnd}, entryState),
+					form.Auto(form.AutoOptions{Window: wnd, ViewOnly: entry.Confirmed || entry.Imported || entry.Ignored}, entryState),
 				).Alignment(ui.TopLeading).
 					BackgroundColor(ui.ColorCardBody).
 					Border(ui.Border{}.Radius(ui.L16)).
@@ -95,11 +105,16 @@ func PageEntry(wnd core.Window, ucImp dataimport.UseCases) core.View {
 
 }
 
-func toolbar(wnd core.Window) core.View {
+func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Staging, entry dataimport.Entry, obj *core.State[any]) core.View {
+	stat, err := ucImp.CalculateStagingReviewStatus(wnd.Subject(), stage.ID)
+	if err != nil {
+		return alert.BannerError(err)
+	}
+
 	return ui.VStack(
 		ui.VStack(
-			ui.HStack(ui.Text(fmt.Sprintf("?/? geprüft"))).Alignment(ui.Trailing).FullWidth(),
-			progress.LinearProgress().Progress(0.3).FullWidth(),
+			ui.HStack(ui.Text(fmt.Sprintf("%d/%d geprüft", stat.Checked(), stat.Total))).Alignment(ui.Trailing).FullWidth(),
+			progress.LinearProgress().Progress(float64(stat.Checked())/float64(stat.Total)).FullWidth(),
 			ui.HStack(
 				ui.TertiaryButton(func() {
 
@@ -108,12 +123,46 @@ func toolbar(wnd core.Window) core.View {
 
 				}).Title("Nächster").PostIcon(flowbiteOutline.ChevronRight),
 				ui.Spacer(),
+
 				ui.SecondaryButton(func() {
+					if err := ucImp.UpdateEntryIgnored(wnd.Subject(), entry.ID, false); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
 
-				}).Title("Ablehnen"),
+					if err := ucImp.UpdateEntryConfirmation(wnd.Subject(), entry.ID, false); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					obj.Invalidate()
+
+				}).Title("Erneut prüfen").Enabled((entry.Ignored || entry.Confirmed) && !entry.Imported),
+
+				ui.SecondaryButton(func() {
+					if err := ucImp.UpdateEntryIgnored(wnd.Subject(), entry.ID, true); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					if err := updateTransformation(wnd, ucImp, entry, obj); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+				}).Title("Ablehnen").Enabled(!entry.Ignored),
+
 				ui.PrimaryButton(func() {
+					if err := ucImp.UpdateEntryConfirmation(wnd.Subject(), entry.ID, true); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
 
-				}).Title("Bestätigen"),
+					if err := updateTransformation(wnd, ucImp, entry, obj); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+				}).Title("Bestätigen").Enabled(!entry.Confirmed),
 			).FullWidth().Gap(ui.L8),
 		).Gap(ui.L8).
 			FullWidth().
@@ -130,7 +179,7 @@ func toolbar(wnd core.Window) core.View {
 		Padding(ui.Padding{}.All(ui.L32))
 }
 
-func viewSrc(wnd core.Window, imp importer.Importer, stage dataimport.Staging, entry *jsonptr.Obj) core.View {
+func viewSrc(wnd core.Window, stage dataimport.Staging, entry *jsonptr.Obj) core.View {
 	fields := determineStubFields(entry)
 	viewRawMode := core.AutoState[bool](wnd)
 
@@ -206,4 +255,24 @@ func viewSrc(wnd core.Window, imp importer.Importer, stage dataimport.Staging, e
 		Border(ui.Border{}.Radius(ui.L16).Color(ui.ColorCardBody).Width(ui.L1)).
 		Padding(ui.Padding{}.All(ui.L16))
 
+}
+
+func updateTransformation(wnd core.Window, ucImp dataimport.UseCases, entry dataimport.Entry, obj *core.State[any]) error {
+	buf, err := json.Marshal(obj.Get())
+	if err != nil {
+		return fmt.Errorf("cannot convert entry type model to intermediate json model: %w", err)
+	}
+
+	var tmp *jsonptr.Obj
+	if err := json.Unmarshal(buf, &tmp); err != nil {
+		return fmt.Errorf("cannot convert intermediate json model to jsonptr.Obj: %w", err)
+	}
+
+	if err := ucImp.UpdateEntryTransformed(wnd.Subject(), entry.ID, tmp); err != nil {
+		return fmt.Errorf("cannot update entry transformed model: %w", err)
+	}
+
+	obj.Invalidate()
+
+	return nil
 }
