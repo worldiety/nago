@@ -20,7 +20,7 @@ import (
 )
 
 type TPicker[T any] struct {
-	renderPicked         func([]T) core.View
+	renderPicked         func(TPicker[T], []T) core.View
 	renderToSelect       func(T) core.View
 	stringer             func(T) string
 	label                string
@@ -61,9 +61,12 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
 	}
 
-	textColor := ui.M8
+	c.renderPicked = func(p TPicker[T], t []T) core.View {
+		textColor := ui.M8
+		if p.disabled {
+			textColor = ui.ColorIconsMuted
+		}
 
-	c.renderPicked = func(t []T) core.View {
 		switch len(t) {
 		case 0:
 			return ui.Text("nichts gewählt").Color(textColor)
@@ -249,7 +252,9 @@ func (c TPicker[T]) QuickFilterSupported(flag bool) TPicker[T] {
 // ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown
 // within the selected window for the currently selected items.
 func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
-	c.renderPicked = fn
+	c.renderPicked = func(t TPicker[T], ts []T) core.View {
+		return fn(ts)
+	}
 	return c
 }
 
@@ -393,32 +398,39 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	borderColor := ui.Color("")
 	backgroundColor := ui.Color("")
 	if c.disabled {
-		borderColor = ""
-		backgroundColor = colors.Disabled
+		backgroundColor = ""
+		borderColor = ui.ColorIconsMuted
 	} else {
-		borderColor = option.Must(colors.I1.WithChromaAndTone(16, 75))
+		borderColor = ui.ColorText
 	}
 
 	inner := ui.HStack(
 		c.Dialog(),
-		c.renderPicked(c.targetSelectedState.Get()),
+		c.renderPicked(c, c.targetSelectedState.Get()),
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-	).Action(func() {
-		if c.disabled {
-			return
-		}
-		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
+	).
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
 		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
+		Border(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))
+
+	if !c.disabled {
+		inner = inner.(ui.THStack).Action(func() {
+			if c.disabled {
+				return
+			}
+			c.pickerPresented.Set(true)
+		})
+
+		hoverBC := option.Must(colors.I1.WithChromaAndTone(16, 75))
+		inner = inner.(ui.THStack).HoveredBorder(ui.Border{}.Color(hoverBC).Width(ui.L1).Radius("0.375rem"))
+	}
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14})),
+			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14}).Color(borderColor)),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
