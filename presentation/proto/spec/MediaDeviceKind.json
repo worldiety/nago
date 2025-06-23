@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 135,
+  "const": {
+    "0": {
+      "name": "AudioInput"
+    },
+    "1": {
+      "name": "AudioOutput"
+    },
+    "2": {
+      "name": "VideoInput"
+    }
+  }
+}

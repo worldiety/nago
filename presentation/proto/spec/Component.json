@@ -29,6 +29,9 @@
     "CodeEditor",
     "RichTextEditor",
     "RichText",
-    "HoverGroup"
+    "HoverGroup",
+    "QrCode",
+    "QrCodeReader",
+    "MediaDevices"
   ]
 }

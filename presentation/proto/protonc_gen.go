@@ -37,10 +37,9 @@ func (w *BinaryWriter) writeBool(b bool) {
 	w.write(w.tmp[0:1])
 }
 
-func (w *BinaryWriter) writeVarint(i int64) error {
+func (w *BinaryWriter) writeVarint(i int64) {
 	n := binary.PutVarint(w.tmp[:], i)
 	w.write(w.tmp[0:n])
-	return nil
 }
 
 func (w *BinaryWriter) writeUvarint(i uint64) error {
@@ -138,10 +137,6 @@ func (r *BinaryReader) readTypeHeader() (shape, typeId, error) {
 
 func (r *BinaryReader) readUvarint() (uint64, error) {
 	return binary.ReadUvarint(r.reader)
-}
-
-func (r *BinaryReader) readVarint() (int64, error) {
-	return binary.ReadVarint(r.reader)
 }
 
 func (r *BinaryReader) readFloat64() (float64, error) {
@@ -278,6 +273,9 @@ func (CodeEditor) isComponent()     {}
 func (RichTextEditor) isComponent() {}
 func (RichText) isComponent()       {}
 func (HoverGroup) isComponent()     {}
+func (QrCode) isComponent()         {}
+func (QrCodeReader) isComponent()   {}
+func (MediaDevices) isComponent()   {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -3957,17 +3955,15 @@ type Position struct {
 	Top    Length
 	Right  Length
 	Bottom Length
-	ZIndex Int
 }
 
 func (v *Position) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [6]bool
 	fields[1] = !v.Kind.IsZero()
 	fields[2] = !v.Left.IsZero()
 	fields[3] = !v.Top.IsZero()
 	fields[4] = !v.Right.IsZero()
 	fields[5] = !v.Bottom.IsZero()
-	fields[6] = !v.ZIndex.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -4018,14 +4014,6 @@ func (v *Position) write(w *BinaryWriter) error {
 			return err
 		}
 	}
-	if fields[6] {
-		if err := w.writeFieldHeader(varint, 6); err != nil {
-			return err
-		}
-		if err := v.ZIndex.write(w); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -4063,11 +4051,6 @@ func (v *Position) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Bottom.read(r)
-			if err != nil {
-				return err
-			}
-		case 6:
-			err := v.ZIndex.read(r)
 			if err != nil {
 				return err
 			}
@@ -10403,27 +10386,474 @@ func (v *CountDownStyle) IsZero() bool {
 	return *v == 0
 }
 
-// Int represents just a user defined signed integer value. This is how nprotoc works.
-type Int int64
-
-func (v *Int) write(r *BinaryWriter) error {
-	return r.writeVarint(int64(*v))
+// This component takes a value and renders it as a QR code.
+type QrCode struct {
+	// The value to be generated into a QR code.
+	Value Str
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	AccessibilityLabel Str
+	Frame              Frame
 }
 
-func (v *Int) read(r *BinaryReader) error {
-	tmp, err := r.readVarint()
-	if err != nil {
+func (v *QrCode) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.AccessibilityLabel.IsZero()
+	fields[3] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
 		return err
 	}
-	*v = Int(tmp)
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (v *Int) reset() {
-	*v = Int(0)
+func (v *QrCode) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
-func (v *Int) IsZero() bool {
+
+// This component uses the camera to process and return a QR code value.
+type QrCodeReader struct {
+	// InputValue stores the pointer to the updated state of the scanned QR code value.
+	InputValue Ptr
+	// The device that shall be used for the scanning process.
+	MediaDevice MediaDevice
+	// ShowTracker indicates whether the tracking lines should be displayed when scanning QR codes.
+	ShowTracker Bool
+	// The color of the tracker. Defaults to M0.
+	TrackerColor Color
+	// The line width in pixels of the tracker. Defaults to 2 pixels.
+	TrackerLineWidth Uint
+	// Flag that activates the torch for scanning qr codes.
+	ActivatedTorch Bool
+	// Callback function to execute after the camera is ready.
+	OnCameraReady Ptr
+	Frame         Frame
+}
+
+func (v *QrCodeReader) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.MediaDevice.IsZero()
+	fields[3] = !v.ShowTracker.IsZero()
+	fields[4] = !v.TrackerColor.IsZero()
+	fields[5] = !v.TrackerLineWidth.IsZero()
+	fields[6] = !v.ActivatedTorch.IsZero()
+	fields[7] = !v.OnCameraReady.IsZero()
+	fields[8] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.MediaDevice.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ShowTracker.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.TrackerColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.TrackerLineWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.ActivatedTorch.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.OnCameraReady.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *QrCodeReader) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.MediaDevice.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ShowTracker.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.TrackerColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.TrackerLineWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ActivatedTorch.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.OnCameraReady.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type MediaDeviceKind uint64
+
+const (
+	AudioInput  MediaDeviceKind = 0
+	AudioOutput MediaDeviceKind = 1
+	VideoInput  MediaDeviceKind = 2
+)
+
+func (v *MediaDeviceKind) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *MediaDeviceKind) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = MediaDeviceKind(tmp)
+	return nil
+}
+
+func (v *MediaDeviceKind) reset() {
+	*v = MediaDeviceKind(0)
+}
+func (v *MediaDeviceKind) IsZero() bool {
 	return *v == 0
+}
+
+// MediaDevice describes a frontend user media device.
+type MediaDevice struct {
+	DeviceID Str
+	GroupID  Str
+	Label    Str
+	Kind     MediaDeviceKind
+}
+
+func (v *MediaDevice) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.DeviceID.IsZero()
+	fields[2] = !v.GroupID.IsZero()
+	fields[3] = !v.Label.IsZero()
+	fields[4] = !v.Kind.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.DeviceID.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.GroupID.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Kind.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MediaDevice) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.DeviceID.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.GroupID.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Kind.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// This component returns all media devices that the user allowed us access to.
+type MediaDevices struct {
+	// InputValue stores the pointer to the updated state of the current media devices.
+	InputValue Ptr
+	// Flag to load audio devices.
+	WithAudio Bool
+	// Flag to load video devices.
+	WithVideo Bool
+	// Whether the user has granted the requested audio or video permissions.
+	HasGrantedPermissions Ptr
+}
+
+func (v *MediaDevices) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.WithAudio.IsZero()
+	fields[3] = !v.WithVideo.IsZero()
+	fields[4] = !v.HasGrantedPermissions.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.WithAudio.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.WithVideo.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.HasGrantedPermissions.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MediaDevices) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.WithAudio.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.WithVideo.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.HasGrantedPermissions.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type Writeable interface {
@@ -11238,7 +11668,31 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		}
 		return &v, nil
 	case 133:
-		var v Int
+		var v QrCode
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 134:
+		var v QrCodeReader
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 135:
+		var v MediaDeviceKind
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 136:
+		var v MediaDevice
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 137:
+		var v MediaDevices
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12384,11 +12838,10 @@ func (v *Position) reset() {
 	v.Top.reset()
 	v.Right.reset()
 	v.Bottom.reset()
-	v.ZIndex.reset()
 }
 
 func (v *Position) IsZero() bool {
-	return v.Kind.IsZero() && v.Left.IsZero() && v.Top.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.ZIndex.IsZero()
+	return v.Kind.IsZero() && v.Left.IsZero() && v.Top.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
 }
 
 func (v *Img) reset() {
@@ -13505,6 +13958,53 @@ func (v *Fonts) IsZero() bool {
 	return v.DefaultFontFace.IsZero() && v.Faces.IsZero()
 }
 
+func (v *QrCode) reset() {
+	v.Value.reset()
+	v.AccessibilityLabel.reset()
+	v.Frame.reset()
+}
+
+func (v *QrCode) IsZero() bool {
+	return v.Value.IsZero() && v.AccessibilityLabel.IsZero() && v.Frame.IsZero()
+}
+
+func (v *QrCodeReader) reset() {
+	v.InputValue.reset()
+	v.MediaDevice.reset()
+	v.ShowTracker.reset()
+	v.TrackerColor.reset()
+	v.TrackerLineWidth.reset()
+	v.ActivatedTorch.reset()
+	v.OnCameraReady.reset()
+	v.Frame.reset()
+}
+
+func (v *QrCodeReader) IsZero() bool {
+	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && v.OnCameraReady.IsZero() && v.Frame.IsZero()
+}
+
+func (v *MediaDevice) reset() {
+	v.DeviceID.reset()
+	v.GroupID.reset()
+	v.Label.reset()
+	v.Kind.reset()
+}
+
+func (v *MediaDevice) IsZero() bool {
+	return v.DeviceID.IsZero() && v.GroupID.IsZero() && v.Label.IsZero() && v.Kind.IsZero()
+}
+
+func (v *MediaDevices) reset() {
+	v.InputValue.reset()
+	v.WithAudio.reset()
+	v.WithVideo.reset()
+	v.HasGrantedPermissions.reset()
+}
+
+func (v *MediaDevices) IsZero() bool {
+	return v.InputValue.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero() && v.HasGrantedPermissions.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -14422,8 +14922,36 @@ func (v *CountDownStyle) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *Int) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(varint, 133); err != nil {
+func (v *QrCode) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 133); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *QrCodeReader) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 134); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MediaDeviceKind) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 135); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MediaDevice) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 136); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MediaDevices) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 137); err != nil {
 		return err
 	}
 	return nil

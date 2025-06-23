@@ -1,0 +1,23 @@
+{
+  "kind": "Record",
+  "doc": "MediaDevice describes a frontend user media device.",
+  "id": 136,
+  "fields": {
+    "1": {
+      "name": "DeviceID",
+      "type": "Str"
+    },
+    "2": {
+      "name": "GroupID",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Kind",
+      "type": "MediaDeviceKind"
+    }
+  }
+}
