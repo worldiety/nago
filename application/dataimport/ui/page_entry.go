@@ -106,7 +106,7 @@ func PageEntry(wnd core.Window, ucImp dataimport.UseCases) core.View {
 }
 
 func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Staging, entry dataimport.Entry, obj *core.State[any]) core.View {
-	stat, err := ucImp.CalculateStagingReviewStatus(wnd.Subject(), stage.ID)
+	stat, err := ucImp.CalculateStagingReviewStatus(wnd.Subject(), stage.ID, dataimport.CalculateStagingReviewStatusOptions{Position: entry.ID})
 	if err != nil {
 		return alert.BannerError(err)
 	}
@@ -117,11 +117,16 @@ func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Stagin
 			progress.LinearProgress().Progress(float64(stat.Checked())/float64(stat.Total)).FullWidth(),
 			ui.HStack(
 				ui.TertiaryButton(func() {
+					values := wnd.Values().Clone()
+					values["entry"] = string(stat.PreviousEntry)
+					wnd.Navigation().ForwardTo(wnd.Path(), values)
+				}).Title("Vorheriger").PreIcon(flowbiteOutline.ChevronLeft).Enabled(stat.PreviousEntry != ""),
 
-				}).Title("Vorheriger").PreIcon(flowbiteOutline.ChevronLeft),
 				ui.TertiaryButton(func() {
-
-				}).Title("Nächster").PostIcon(flowbiteOutline.ChevronRight),
+					values := wnd.Values().Clone()
+					values["entry"] = string(stat.NextEntry)
+					wnd.Navigation().ForwardTo(wnd.Path(), values)
+				}).Title("Nächster").PostIcon(flowbiteOutline.ChevronRight).Enabled(stat.NextEntry != ""),
 				ui.Spacer(),
 
 				ui.SecondaryButton(func() {
@@ -137,7 +142,7 @@ func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Stagin
 
 					obj.Invalidate()
 
-				}).Title("Erneut prüfen").Enabled((entry.Ignored || entry.Confirmed) && !entry.Imported),
+				}).Title("Erneut prüfen").Enabled(entry.Ignored || entry.Confirmed || entry.Imported),
 
 				ui.SecondaryButton(func() {
 					if err := ucImp.UpdateEntryIgnored(wnd.Subject(), entry.ID, true); err != nil {
@@ -149,7 +154,7 @@ func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Stagin
 						alert.ShowBannerError(wnd, err)
 						return
 					}
-				}).Title("Ablehnen").Enabled(!entry.Ignored),
+				}).Title("Ablehnen").Enabled(!entry.Confirmed && !entry.Imported && !entry.Ignored),
 
 				ui.PrimaryButton(func() {
 					if err := ucImp.UpdateEntryConfirmation(wnd.Subject(), entry.ID, true); err != nil {
@@ -162,7 +167,7 @@ func toolbar(wnd core.Window, ucImp dataimport.UseCases, stage dataimport.Stagin
 						return
 					}
 
-				}).Title("Bestätigen").Enabled(!entry.Confirmed),
+				}).Title("Bestätigen").Enabled(!entry.Confirmed && !entry.Imported && !entry.Ignored),
 			).FullWidth().Gap(ui.L8),
 		).Gap(ui.L8).
 			FullWidth().

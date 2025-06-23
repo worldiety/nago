@@ -8,6 +8,7 @@
 package dataimport
 
 import (
+	"context"
 	"fmt"
 	"github.com/worldiety/jsonptr"
 	"github.com/worldiety/option"
@@ -31,7 +32,7 @@ type Key string
 var seqNum atomic.Int64
 
 func NewKey(batch SID) Key {
-	return Key(fmt.Sprintf("%s/%13d/%5d", batch, time.Now().UnixMilli(), seqNum.Add(1)))
+	return Key(fmt.Sprintf("%s/%13d/%05d", batch, time.Now().UnixMilli(), seqNum.Add(1)))
 }
 
 // Entry represents at least a parsed In-Object which belongs to a batch. The Transformed field is optional and may
@@ -56,7 +57,9 @@ type Entry struct {
 	Ignored bool `json:"rejected,omitempty"`
 
 	// Imported is a flag that tells the importer to ignore this entry, because it has already been imported.
-	Imported bool `json:"imported,omitempty"`
+	Imported      bool      `json:"imported,omitempty"`
+	ImportedAt    time.Time `json:"importedAt,omitempty"`
+	ImportedError string    `json:"importedError,omitempty"`
 }
 
 // Transform either returns Transformed if not nil or applies the given transformation
@@ -205,7 +208,12 @@ type ParseStats struct {
 	Count int64
 }
 type Parse func(subject auth.Subject, dst SID, src parser.ID, opts parser.Options, reader io.Reader) (ParseStats, error)
-type Import func(subject auth.Subject, stage SID, dst importer.ID, opts importer.Importer) error
+
+type ImportOptions struct {
+	Context         context.Context
+	ImporterOptions importer.Options
+}
+type Import func(subject auth.Subject, stage SID, dst importer.ID, opts ImportOptions) error
 
 type Validate func(subject auth.Subject, key Key, imp importer.ID) error
 
@@ -214,16 +222,26 @@ type FindMatches func(subject auth.Subject, key Key, imp importer.ID) ([]importe
 
 type StagingReviewStatus struct {
 	Total     int
-	Confirmed int
+	Confirmed int // confirmed also contains imported entries
 	Ignored   int
 	Imported  int
+
+	// The following fields are only set, if [CalculateStagingReviewStatusOptions.Position] has been declared.
+
+	PreviousEntry Key
+	CurrentEntry  Key
+	NextEntry     Key
 }
 
 func (s StagingReviewStatus) Checked() int {
-	return s.Confirmed + s.Ignored + s.Imported
+	return s.Confirmed + s.Ignored
 }
 
-type CalculateStagingReviewStatus func(subject auth.Subject, staging SID) (StagingReviewStatus, error)
+type CalculateStagingReviewStatusOptions struct {
+	Position Key
+}
+
+type CalculateStagingReviewStatus func(subject auth.Subject, staging SID, opts CalculateStagingReviewStatusOptions) (StagingReviewStatus, error)
 
 type FilterEntriesOptions struct {
 	Query      string
@@ -260,6 +278,7 @@ type UseCases struct {
 	UpdateEntryTransformation    UpdateEntryTransformation
 	CalculateStagingReviewStatus CalculateStagingReviewStatus
 	UpdateEntryTransformed       UpdateEntryTransformed
+	Import                       Import
 }
 
 func NewUseCases(repoStaging StagingRepository, repoEntry EntryRepository) UseCases {
@@ -285,5 +304,6 @@ func NewUseCases(repoStaging StagingRepository, repoEntry EntryRepository) UseCa
 		UpdateEntryConfirmation:      NewUpdateEntryConfirmation(&mutex, repoEntry),
 		CalculateStagingReviewStatus: NewCalculateStagingReviewStatus(repoStaging, repoEntry),
 		UpdateEntryTransformed:       NewUpdateEntryTransformed(&mutex, repoEntry),
+		Import:                       NewImport(&mutex, repoEntry, repoStaging, &imports),
 	}
 }

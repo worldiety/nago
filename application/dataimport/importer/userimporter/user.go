@@ -67,7 +67,7 @@ func (u usrImporter) Identity() importer.ID {
 	return ID
 }
 
-func (u usrImporter) Import(ctx context.Context, opts importer.Options, data iter.Seq2[jsonptr.Obj, error]) error {
+func (u usrImporter) Import(ctx context.Context, opts importer.Options, data iter.Seq2[*jsonptr.Obj, error]) error {
 	for obj, err := range data {
 		if err != nil {
 			return err
@@ -136,14 +136,14 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			if opts.ContinueOnError {
 				continue
 			}
-			return fmt.Errorf("cannot create user: %v", err)
+			return fmt.Errorf("cannot create user: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (u usrImporter) Validate(ctx context.Context, obj jsonptr.Obj) error {
+func (u usrImporter) Validate(ctx context.Context, obj *jsonptr.Obj) error {
 	usr, err := importer.FromJSON[User](obj)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (u usrImporter) Validate(ctx context.Context, obj jsonptr.Obj) error {
 	return nil
 }
 
-func (u usrImporter) FindMatches(ctx context.Context, opts importer.MatchOptions, obj jsonptr.Obj) iter.Seq2[importer.Match, error] {
+func (u usrImporter) FindMatches(ctx context.Context, opts importer.MatchOptions, obj *jsonptr.Obj) iter.Seq2[importer.Match, error] {
 	return func(yield func(importer.Match, error) bool) {
 		for usr, err := range u.users.FindAll(user.SU()) {
 			if err != nil {

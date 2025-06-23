@@ -10,6 +10,7 @@ package uidataimport
 import (
 	"fmt"
 	"go.wdy.de/nago/application/dataimport"
+	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -80,17 +81,25 @@ func PageStaging(wnd core.Window, ucImp dataimport.UseCases) core.View {
 	})
 
 	dlgPresentedFieldMapping := core.AutoState[bool](wnd)
+	dlgPresentedImport := core.AutoState[bool](wnd)
 
 	return ui.VStack(
 		ui.H1("Entwürfe prüfen - "+stage.Name),
 		dialogDeleteStaging(wnd, deleteStagingPresented, stage, ucImp),
+		dialogDoImport(wnd, dlgPresentedImport, stage, page.Get(), pageIdx, ucImp),
 		ui.HStack(
+
+			ui.SecondaryButton(func() {
+				deleteStagingPresented.Set(true)
+			}).Title("Gesamten Entwurf löschen"),
+
 			ui.SecondaryButton(func() {
 				dlgPresentedFieldMapping.Set(true)
 			}).Title("Felder zuordnen"),
-			ui.SecondaryButton(func() {
-				deleteStagingPresented.Set(true)
-			}).Title("Diesen Entwurf löschen"),
+
+			ui.PrimaryButton(func() {
+				dlgPresentedImport.Set(true)
+			}).Title("Importieren"),
 		).Alignment(ui.Trailing).
 			FullWidth().Gap(ui.L8),
 
@@ -114,5 +123,38 @@ func dialogDeleteStaging(wnd core.Window, presented *core.State[bool], stage dat
 
 		wnd.Navigation().BackwardTo("admin/data/stagings", core.Values{"importer": string(stage.Importer)})
 
+	}))
+}
+
+func dialogDoImport(wnd core.Window, presented *core.State[bool], stage dataimport.Staging, page dataimport.FilterEntriesPage, pageIdx *core.State[int], ucImp dataimport.UseCases) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	return alert.Dialog("Diesen Entwurf importieren", ui.Text(fmt.Sprintf("Soll dieser Entwurf mit %d Einträgen jetzt importiert werden? Abgelehnte und bereits importierte Einträge werden dabei übersprungen.", page.Count)), presented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
+		return ui.PrimaryButton(func() {
+			close(true)
+			defer func() {
+				pageIdx.Notify()
+				pageIdx.Invalidate()
+			}()
+
+			if err := ucImp.Import(wnd.Subject(), stage.ID, stage.Importer, dataimport.ImportOptions{
+				Context: wnd.Context(),
+				ImporterOptions: importer.Options{
+					ContinueOnError: true,
+					MergeDuplicates: true,
+				},
+			}); err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+
+			alert.ShowBannerMessage(wnd, alert.Message{
+				Title:   "Import erfolgreich",
+				Message: "Alle Einträge wurden erfolgreich importiert.",
+				Intent:  alert.IntentOk,
+			})
+		}).Title("Importieren")
 	}))
 }

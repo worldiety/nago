@@ -21,12 +21,12 @@ func ToMatch(v any, score float64) (Match, error) {
 	return Match{Obj: obj, Score: score}, nil
 }
 
-func ToJSON(v any) (jsonptr.Obj, error) {
-	if obj, ok := v.(jsonptr.Obj); ok {
+func ToJSON(v any) (*jsonptr.Obj, error) {
+	if obj, ok := v.(*jsonptr.Obj); ok {
 		return obj, nil
 	}
 
-	var tmp jsonptr.Obj
+	var tmp *jsonptr.Obj
 	buf, err := json.Marshal(v)
 	if err != nil {
 		return tmp, err
@@ -39,7 +39,7 @@ func ToJSON(v any) (jsonptr.Obj, error) {
 	return tmp, nil
 }
 
-func FromJSON[T any](v jsonptr.Obj) (T, error) {
+func FromJSON[T any](v *jsonptr.Obj) (T, error) {
 	var tmp T
 	buf, err := json.Marshal(v)
 	if err != nil {

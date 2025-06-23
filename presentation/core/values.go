@@ -56,7 +56,14 @@ type Values map[string]string
 func newValuesFromProto(v proto.RootViewParameters) Values {
 	tmp := make(Values, len(v))
 	for k, v := range v {
-		tmp[string(k)] = string(v)
+		decV, err := url.QueryUnescape(string(v))
+		if err != nil {
+			slog.Error("failed to unescape values from proto", "key", k, "value", v, "error", err)
+			tmp[string(k)] = string(v)
+			continue
+		}
+
+		tmp[string(k)] = decV
 	}
 
 	return tmp
@@ -69,7 +76,7 @@ func (v Values) proto() proto.RootViewParameters {
 
 	tmp := make(proto.RootViewParameters, len(v))
 	for k, v := range v {
-		tmp[proto.Str(k)] = proto.Str(v)
+		tmp[proto.Str(k)] = proto.Str(url.QueryEscape(v))
 	}
 
 	return tmp
@@ -82,6 +89,15 @@ func (v Values) URLEncode() string {
 	}
 
 	return tmp.Encode()
+}
+
+func (v Values) Clone() Values {
+	tmp := make(Values, len(v))
+	for k, v := range v {
+		tmp[k] = v
+	}
+
+	return tmp
 }
 
 // UnmarshalValues takes a Values type and tries to deserialize the fields. Supported fields with underlying field types are

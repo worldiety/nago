@@ -57,20 +57,20 @@ type MatchOptions struct {
 type Importer interface {
 	Identity() ID
 	Configuration() Configuration
-	Import(ctx context.Context, opts Options, data iter.Seq2[jsonptr.Obj, error]) error
+	Import(ctx context.Context, opts Options, data iter.Seq2[*jsonptr.Obj, error]) error
 
 	// Validate takes the given object and validates it as if it would be imported.
-	Validate(ctx context.Context, obj jsonptr.Obj) error
+	Validate(ctx context.Context, obj *jsonptr.Obj) error
 
 	// FindMatches calculates similarity distances between the given object and all other already stored
 	// entities. An implementation may but must not return matches with a score of 0. The resulting sequence is
 	// unordered.
-	FindMatches(ctx context.Context, opts MatchOptions, obj jsonptr.Obj) iter.Seq2[Match, error]
+	FindMatches(ctx context.Context, opts MatchOptions, obj *jsonptr.Obj) iter.Seq2[Match, error]
 }
 
 type Match struct {
 	// Obj contains the converted duplicate candidate.
-	Obj jsonptr.Obj
+	Obj *jsonptr.Obj
 
 	// A Score of 1 is 100% duplicate. A Score of 0 is definitely not a duplicate.
 	Score float64

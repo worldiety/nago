@@ -10,6 +10,7 @@ package dataimport
 import (
 	"go.wdy.de/nago/auth"
 	"sync"
+	"time"
 )
 
 func NewUpdateEntryConfirmation(mutex *sync.Mutex, repo EntryRepository) UpdateEntryConfirmation {
@@ -17,6 +18,9 @@ func NewUpdateEntryConfirmation(mutex *sync.Mutex, repo EntryRepository) UpdateE
 		return updateEntry(mutex, repo, subject, id, PermUpdateEntryConfirmation, func(entry Entry) (Entry, error) {
 			entry.Confirmed = confirmed
 			entry.Ignored = false // note, that not confirming something means not that it has been ignored, but ignoring and confirming at the same time are not allowed
+			entry.ImportedAt = time.Time{}
+			entry.ImportedError = ""
+			entry.Imported = false
 			return entry, nil
 		})
 	}
