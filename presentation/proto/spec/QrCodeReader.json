@@ -1,0 +1,46 @@
+{
+  "kind": "Record",
+  "doc": "This component uses the camera to process and return a QR code value.",
+  "id": 134,
+  "fields": {
+    "1": {
+      "doc": "InputValue stores the pointer to the updated state of the scanned QR code value.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "2": {
+      "doc": "The device that shall be used for the scanning process.",
+      "name": "MediaDevice",
+      "type": "MediaDevice"
+    },
+    "3": {
+      "doc": "ShowTracker indicates whether the tracking lines should be displayed when scanning QR codes.",
+      "name": "ShowTracker",
+      "type": "Bool"
+    },
+    "4": {
+      "doc": "The color of the tracker. Defaults to M0.",
+      "name": "TrackerColor",
+      "type": "Color"
+    },
+    "5": {
+      "doc": "The line width in pixels of the tracker. Defaults to 2 pixels.",
+      "name": "TrackerLineWidth",
+      "type": "Uint"
+    },
+    "6": {
+      "doc": "Flag that activates the torch for scanning qr codes.",
+      "name": "ActivatedTorch",
+      "type": "Bool"
+    },
+    "7": {
+      "doc": "Callback function to execute after the camera is ready.",
+      "name": "OnCameraReady",
+      "type": "Ptr"
+    },
+    "8": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}

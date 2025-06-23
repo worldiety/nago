@@ -1,0 +1,21 @@
+{
+  "kind": "Record",
+  "doc": "This component takes a value and renders it as a QR code.",
+  "id": 133,
+  "fields": {
+    "1": {
+      "name": "Value",
+      "type": "Str",
+      "doc": "The value to be generated into a QR code."
+    },
+    "2": {
+      "name": "AccessibilityLabel",
+      "type": "Str",
+      "doc": "see also https://www.w3.org/WAI/tutorials/images/decision-tree/"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}

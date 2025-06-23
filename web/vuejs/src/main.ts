@@ -11,6 +11,7 @@ import App from '@/App.vue';
 import { UploadRepository } from '@/api/upload/uploadRepository';
 import i18n from '@/i18n';
 import { createPinia } from 'pinia';
+import { VueQrcodeReader } from 'vue-qrcode-reader';
 import { serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import ThemeManager from '@/shared/themeManager';
@@ -38,4 +39,5 @@ app.directive('inline', (element: HTMLElement) => {
 	}
 	element.replaceWith(...Object.values(element.children));
 });
-app.use(pinia).use(i18n).mount('#app');
+
+app.use(pinia).use(i18n).use(VueQrcodeReader).mount('#app');

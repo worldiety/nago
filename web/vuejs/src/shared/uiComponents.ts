@@ -11,8 +11,11 @@ import UiCheckbox from '@/components/UiCheckbox.vue';
 import UiDivider from '@/components/UiDivider.vue';
 import UiGrid from '@/components/UiGrid.vue';
 import UiImage from '@/components/UiImage.vue';
+import UiMediaDevices from '@/components/UiMediaDevices.vue';
 import UiModal from '@/components/UiModal.vue';
 import UiPasswordField from '@/components/UiPasswordField.vue';
+import UiQrCode from '@/components/UiQrCode.vue';
+import UiQrCodeReader from '@/components/UiQrCodeReader.vue';
 import UiRadioButton from '@/components/UiRadioButton.vue';
 import UiText from '@/components/UiText.vue';
 import UiTextField from '@/components/UiTextField.vue';
@@ -48,10 +51,13 @@ import {
 	HStack,
 	HoverGroup,
 	Img,
+	MediaDevices,
 	Menu,
 	Modal,
 	Component as NagoComponent,
 	PasswordField,
+	QrCode,
+	QrCodeReader,
 	Radiobutton,
 	RichText,
 	RichTextEditor,
@@ -184,6 +190,18 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof HoverGroup) {
 		return UiHoverGroup;
+	}
+
+	if (ngc instanceof QrCode) {
+		return UiQrCode;
+	}
+
+	if (ngc instanceof QrCodeReader) {
+		return UiQrCodeReader;
+	}
+
+	if (ngc instanceof MediaDevices) {
+		return UiMediaDevices;
 	}
 
 	// keep this as the default fallback

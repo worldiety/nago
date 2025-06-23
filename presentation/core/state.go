@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/pkg/xmediadevice"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
@@ -130,7 +131,35 @@ func (s *State[T]) parse(v string) error {
 		d.Year = int(obj["y"].(float64))
 
 		s.Set(any(d).(T))
+	case xmediadevice.MediaDevice:
+		var obj map[string]interface{}
+		err := json.Unmarshal([]byte(v), &obj)
+		if err != nil {
+			return err
+		}
+		var md xmediadevice.MediaDevice
+		md.DeviceID = obj["deviceID"].(string)
+		md.GroupID = obj["groupID"].(string)
+		md.Label = obj["label"].(string)
 
+		s.Set(any(md).(T))
+	case []xmediadevice.MediaDevice:
+		var obj []map[string]interface{}
+		err := json.Unmarshal([]byte(v), &obj)
+		if err != nil {
+			return err
+		}
+		var md []xmediadevice.MediaDevice
+		for _, o := range obj {
+			md = append(md, xmediadevice.MediaDevice{
+				DeviceID: o["deviceID"].(string),
+				GroupID:  o["groupID"].(string),
+				Label:    o["label"].(string),
+				Kind:     xmediadevice.MediaDeviceKind(o["kind"].(float64)),
+			})
+		}
+
+		s.Set(any(md).(T))
 	case string:
 		s.Set(any(v).(T))
 
