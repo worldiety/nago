@@ -160,6 +160,14 @@ func (s *State[T]) parse(v string) error {
 		}
 
 		s.Set(any(md).(T))
+	case []string:
+		var obj []string
+		err := json.Unmarshal([]byte(v), &obj)
+		if err != nil {
+			return err
+		}
+
+		s.Set(any(obj).(T))
 	case string:
 		s.Set(any(v).(T))
 

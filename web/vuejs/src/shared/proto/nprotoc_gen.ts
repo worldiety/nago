@@ -11042,6 +11042,9 @@ export class QrCodeReader implements Writeable, Readable, Component {
 	// Flag that activates the torch for scanning qr codes.
 	public activatedTorch?: Bool;
 
+	// The content to show if no media device is selected.
+	public noMediaDeviceContent?: Component;
+
 	// Callback function to execute after the camera is ready.
 	public onCameraReady?: Ptr;
 
@@ -11054,6 +11057,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		trackerColor: Color | undefined = undefined,
 		trackerLineWidth: Uint | undefined = undefined,
 		activatedTorch: Bool | undefined = undefined,
+		noMediaDeviceContent: Component | undefined = undefined,
 		onCameraReady: Ptr | undefined = undefined,
 		frame: Frame | undefined = undefined
 	) {
@@ -11063,6 +11067,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		this.trackerColor = trackerColor;
 		this.trackerLineWidth = trackerLineWidth;
 		this.activatedTorch = activatedTorch;
+		this.noMediaDeviceContent = noMediaDeviceContent;
 		this.onCameraReady = onCameraReady;
 		this.frame = frame;
 	}
@@ -11099,10 +11104,19 @@ export class QrCodeReader implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.onCameraReady = readInt(reader);
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.noMediaDeviceContent = unmarshal(reader) as Component;
 					break;
 				}
 				case 8: {
+					this.onCameraReady = readInt(reader);
+					break;
+				}
+				case 9: {
 					this.frame = new Frame();
 					this.frame.read(reader);
 					break;
@@ -11122,6 +11136,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			this.trackerColor !== undefined,
 			this.trackerLineWidth !== undefined,
 			this.activatedTorch !== undefined,
+			this.noMediaDeviceContent !== undefined && !this.noMediaDeviceContent.isZero(),
 			this.onCameraReady !== undefined,
 			this.frame !== undefined && !this.frame.isZero(),
 		];
@@ -11152,11 +11167,18 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			writeBool(writer, this.activatedTorch!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			writeInt(writer, this.onCameraReady!); // typescript linters cannot see, that we already checked this properly above
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
+			writer.writeByte(1);
+			this.noMediaDeviceContent.writeTypeHeader(writer);
+			this.noMediaDeviceContent!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
-			writer.writeFieldHeader(Shapes.RECORD, 8);
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.onCameraReady!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -11169,6 +11191,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			this.trackerColor === undefined &&
 			this.trackerLineWidth === undefined &&
 			this.activatedTorch === undefined &&
+			(this.noMediaDeviceContent === undefined || this.noMediaDeviceContent.isZero()) &&
 			this.onCameraReady === undefined &&
 			(this.frame === undefined || this.frame.isZero())
 		);
@@ -11181,6 +11204,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		this.trackerColor = undefined;
 		this.trackerLineWidth = undefined;
 		this.activatedTorch = undefined;
+		this.noMediaDeviceContent = undefined;
 		this.onCameraReady = undefined;
 		this.frame = undefined;
 	}
