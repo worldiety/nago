@@ -35,14 +35,13 @@
 			:expanded="expanded"
 			:range-mode="props.ui.style == DatePickerStyleValues.DatePickerDateRange"
 			:label="props.ui.label"
-			:start-date-selected="startDateSelected"
 			:selected-start-day="selectedStartDay"
 			:selected-start-month="selectedStartMonth"
 			:selected-start-year="selectedStartYear"
-			:end-date-selected="endDateSelected"
 			:selected-end-day="selectedEndDay"
 			:selected-end-month="selectedEndMonth"
 			:selected-end-year="selectedEndYear"
+			:range-selection-state="rangeSelectionState"
 			@close="closeDatepicker"
 			@select="selectDate"
 			@submit-selection="submitSelection"
@@ -54,6 +53,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
+import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
@@ -75,11 +75,10 @@ const expanded = ref<boolean>(false);
 const selectedStartDay = ref<number>(0);
 const selectedStartMonth = ref<number>(0);
 const selectedStartYear = ref<number>(0);
-const startDateSelected = ref<boolean>(false);
 const selectedEndDay = ref<number>(0);
 const selectedEndMonth = ref<number>(0);
 const selectedEndYear = ref<number>(0);
-const endDateSelected = ref<boolean>(false);
+const rangeSelectionState = ref<RangeSelectionState>(RangeSelectionState.SELECT_START);
 
 onMounted(initialize);
 
@@ -117,9 +116,6 @@ function initialize(): void {
 	selectedStartMonth.value = props.ui.value.month ? props.ui.value.month : 0;
 	selectedStartYear.value = props.ui.value.year ? props.ui.value.year : 0;
 
-	startDateSelected.value =
-		props.ui.style == DatePickerStyleValues.DatePickerDateRange && selectedStartYear.value != 0;
-
 	if (props.ui.endValue === undefined) {
 		props.ui.endValue = new DateData();
 	}
@@ -127,70 +123,39 @@ function initialize(): void {
 	selectedEndMonth.value = props.ui.endValue.month ? props.ui.endValue.month : 0;
 	selectedEndYear.value = props.ui.endValue.year ? props.ui.endValue.year : 0;
 
-	endDateSelected.value = props.ui.style == DatePickerStyleValues.DatePickerDateRange && selectedEndYear.value != 0;
-
-	if (props.ui.style == DatePickerStyleValues.DatePickerSingleDate || props.ui.style === undefined) {
-		startDateSelected.value = true;
-		endDateSelected.value = true;
-	}
+	rangeSelectionState.value = RangeSelectionState.SELECT_START;
 }
 
 function showDatepicker(): void {
 	if (!props.ui.disabled && !expanded.value) {
+		rangeSelectionState.value = RangeSelectionState.SELECT_START;
 		expanded.value = true;
 	}
 }
 
 function closeDatepicker(): void {
 	expanded.value = false;
-	// TODO fix me: range style-only: the range is not resetted when closed without submission
+	initialize();
 }
 
 function selectDate(day: number, monthIndex: number, year: number): void {
 	const selectedDate = new Date(year, monthIndex, day, 0, 0, 0, 0);
-	if (props.ui.style != DatePickerStyleValues.DatePickerDateRange || !startDateSelected.value) {
+
+	if (props.ui.style === DatePickerStyleValues.DatePickerSingleDate) {
 		selectStartDate(selectedDate);
 		return;
 	}
-	const currentStartDate: Date = new Date(
-		selectedStartYear.value,
-		selectedStartMonth.value - 1,
-		selectedStartDay.value,
-		0,
-		0,
-		0,
-		0
-	);
-	if (selectedDate.getTime() > currentStartDate.getTime()) {
-		// If the selected date is after the current start date, set it as the end date
-		selectEndDate(selectedDate);
-	} else if (selectedDate.getTime() < currentStartDate.getTime()) {
-		// If the selected date is before the current start date, set is as the start date
-		selectStartDate(selectedDate);
-		if (!endDateSelected.value) {
-			// If the no end date is selected yet, set the current start date as the end date
-			selectEndDate(currentStartDate);
-		}
-	} else {
-		if (!endDateSelected.value) {
-			// If the selected date is equal to the current start date and no end date has been selected yet, set the selected
-			// date as the start and end date
+
+	switch (rangeSelectionState.value) {
+		case RangeSelectionState.SELECT_START:
 			selectStartDate(selectedDate);
+			break;
+		case RangeSelectionState.SELECT_END:
 			selectEndDate(selectedDate);
-		} else {
-			// If the selected date is equal to the current start date and an end date has been selected yet, set the current
-			// end date as the start date
-			const currentEndDate: Date = new Date(
-				selectedEndYear.value,
-				selectedEndMonth.value - 1,
-				selectedEndDay.value,
-				0,
-				0,
-				0,
-				0
-			);
-			selectStartDate(currentEndDate);
-		}
+			break;
+		case RangeSelectionState.CLEAR:
+			initialize();
+			break;
 	}
 }
 
@@ -198,7 +163,6 @@ function selectStartDate(selectedDate: Date): void {
 	selectedStartDay.value = selectedDate.getDate();
 	selectedStartMonth.value = selectedDate.getMonth() + 1;
 	selectedStartYear.value = selectedDate.getFullYear();
-	startDateSelected.value = true;
 	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(
@@ -213,13 +177,14 @@ function selectStartDate(selectedDate: Date): void {
 			)
 		);
 	}
+	rangeSelectionState.value = RangeSelectionState.SELECT_END;
 }
 
 function selectEndDate(selectedDate: Date): void {
 	selectedEndDay.value = selectedDate.getDate();
 	selectedEndMonth.value = selectedDate.getMonth() + 1;
 	selectedEndYear.value = selectedDate.getFullYear();
-	endDateSelected.value = true;
+	rangeSelectionState.value = RangeSelectionState.CLEAR;
 }
 
 function submitSelection(): void {
