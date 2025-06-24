@@ -23,13 +23,6 @@ type RenderContext interface {
 	// may invoke the wrong callbacks.
 	// All callbacks are removed between render calls.
 	MountCallback(func()) proto.Ptr
-
-	// Handle returns a unique pointer based on the contents of the given buffer. Note, that for performance reasons
-	// the implementation may assume static slices and short circuit based on the slice pointer. It is only guaranteed
-	// that the returned pointer is valid during the window lifetime. The first time, a handle is created, the returned
-	// flag is true. Also check, if hnd is 0, e.g. due to nil slices. Important: the returned pointers are only valid
-	// for the scope lifetime.
-	Handle([]byte) (hnd proto.Ptr, created bool)
 }
 
 type RenderNode = proto.Component

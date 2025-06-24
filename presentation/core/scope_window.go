@@ -38,23 +38,21 @@ type scopeWindow struct {
 	callbackPtr   proto.Ptr
 	callbacks     map[proto.Ptr]func()
 	//lastAutoStatePtr      proto.Ptr
-	lastStatePtrById      proto.Ptr
-	states                map[proto.Ptr]Property
-	statesById            map[string]Property
-	filesReceiver         map[proto.Ptr]FilesReceiver
-	destroyObservers      map[int]func()
-	importFilesReceivers  map[string]ImportFilesOptions
-	exportFilesReceivers  map[string]ExportFilesOptions
-	hnd                   int
-	factory               proto.RootViewID
-	navController         *navigationController
-	values                Values
-	declaredBuffers       map[declaredBufferKey]proto.Ptr
-	lastDeclaredBufferPtr proto.Ptr
-	isRendering           bool
-	generation            int64
-	mutex                 sync.Mutex
-	clipboard             *clipboardController
+	lastStatePtrById     proto.Ptr
+	states               map[proto.Ptr]Property
+	statesById           map[string]Property
+	filesReceiver        map[proto.Ptr]FilesReceiver
+	destroyObservers     map[int]func()
+	importFilesReceivers map[string]ImportFilesOptions
+	exportFilesReceivers map[string]ExportFilesOptions
+	hnd                  int
+	factory              proto.RootViewID
+	navController        *navigationController
+	values               Values
+	isRendering          bool
+	generation           int64
+	mutex                sync.Mutex
+	clipboard            *clipboardController
 }
 
 func (s *scopeWindow) Clipboard() Clipboard {
@@ -68,7 +66,6 @@ func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *sco
 	s.states = map[proto.Ptr]Property{}
 	s.statesById = map[string]Property{}
 	s.lastStatePtrById = maxAutoPtr
-	s.declaredBuffers = map[declaredBufferKey]proto.Ptr{}
 	s.generation = 0
 
 	if values == nil {
@@ -203,26 +200,6 @@ func (s *scopeWindow) destroy() {
 	}
 	clear(s.destroyObservers)
 
-}
-
-func (s *scopeWindow) Handle(buf []byte) (proto.Ptr, bool) {
-	if len(buf) == 0 {
-		return 0, false
-	}
-
-	key := declaredBufferKey{
-		ptr: &buf[0],
-		len: len(buf),
-	}
-
-	ptr, ok := s.declaredBuffers[key]
-	if ok {
-		return ptr, false
-	}
-
-	s.lastDeclaredBufferPtr++
-	s.declaredBuffers[key] = s.lastDeclaredBufferPtr
-	return s.lastDeclaredBufferPtr, true
 }
 
 func (s *scopeWindow) MountCallback(f func()) proto.Ptr {
