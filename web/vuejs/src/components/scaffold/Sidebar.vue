@@ -15,9 +15,11 @@
 				<ui-generic :ui="ui.logo" />
 			</div>
 			<!-- Top level menu entries -->
-			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto grow w-full">
+			<div
+				class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto overflow-x-hidden h-full w-full"
+			>
 				<div v-for="(menuEntry, index) in ui.menu.value" :key="index" ref="menuEntryElements" class="w-full">
-					<MenuEntryComponent
+					<TopLevelMenuEntry
 						:ui="menuEntry"
 						:menu-entry-index="index"
 						:mode="'sidebar'"
@@ -96,7 +98,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
+import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
