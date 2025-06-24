@@ -10578,21 +10578,24 @@ type QrCodeReader struct {
 	TrackerLineWidth Uint
 	// Flag that activates the torch for scanning qr codes.
 	ActivatedTorch Bool
+	// The content to show if no media device is selected.
+	NoMediaDeviceContent Component
 	// Callback function to execute after the camera is ready.
 	OnCameraReady Ptr
 	Frame         Frame
 }
 
 func (v *QrCodeReader) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.MediaDevice.IsZero()
 	fields[3] = !v.ShowTracker.IsZero()
 	fields[4] = !v.TrackerColor.IsZero()
 	fields[5] = !v.TrackerLineWidth.IsZero()
 	fields[6] = !v.ActivatedTorch.IsZero()
-	fields[7] = !v.OnCameraReady.IsZero()
-	fields[8] = !v.Frame.IsZero()
+	fields[7] = v.NoMediaDeviceContent != nil && !v.NoMediaDeviceContent.IsZero()
+	fields[8] = !v.OnCameraReady.IsZero()
+	fields[9] = !v.Frame.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -10652,15 +10655,30 @@ func (v *QrCodeReader) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[7] {
-		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 7); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.NoMediaDeviceContent.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.NoMediaDeviceContent.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
 			return err
 		}
 		if err := v.OnCameraReady.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[8] {
-		if err := w.writeFieldHeader(record, 8); err != nil {
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
 			return err
 		}
 		if err := v.Frame.write(w); err != nil {
@@ -10713,11 +10731,25 @@ func (v *QrCodeReader) read(r *BinaryReader) error {
 				return err
 			}
 		case 7:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.NoMediaDeviceContent = obj.(Component)
+		case 8:
 			err := v.OnCameraReady.read(r)
 			if err != nil {
 				return err
 			}
-		case 8:
+		case 9:
 			err := v.Frame.read(r)
 			if err != nil {
 				return err
@@ -14562,12 +14594,13 @@ func (v *QrCodeReader) reset() {
 	v.TrackerColor.reset()
 	v.TrackerLineWidth.reset()
 	v.ActivatedTorch.reset()
+	v.NoMediaDeviceContent = nil
 	v.OnCameraReady.reset()
 	v.Frame.reset()
 }
 
 func (v *QrCodeReader) IsZero() bool {
-	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && v.OnCameraReady.IsZero() && v.Frame.IsZero()
+	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && v.NoMediaDeviceContent.IsZero() && v.OnCameraReady.IsZero() && v.Frame.IsZero()
 }
 
 func (v *MediaDevice) reset() {
