@@ -2495,8 +2495,8 @@ func (v *Themes) read(r *BinaryReader) error {
 type DatePickerStyle uint64
 
 const (
-	DatePickerSingleDate DatePickerStyle = 0
-	DatePickerDateRange  DatePickerStyle = 1
+	DatePickerSingleDate DatePickerStyle = 1
+	DatePickerDateRange  DatePickerStyle = 2
 )
 
 func (v *DatePickerStyle) write(r *BinaryWriter) error {
