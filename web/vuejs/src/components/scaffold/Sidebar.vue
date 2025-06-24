@@ -26,7 +26,6 @@
 					/>
 				</div>
 			</div>
-			<ThemeToggle />
 		</div>
 
 		<!-- Sub menu -->
@@ -93,7 +92,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
@@ -102,7 +100,6 @@ import {
 	Scaffold,
 	ScaffoldMenuEntries,
 	ScaffoldMenuEntry,
-	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{

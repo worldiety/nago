@@ -89,9 +89,6 @@
 						/>
 					</div>
 				</div>
-				<div class="flex justify-center items-center w-full p-4">
-					<ThemeToggle />
-				</div>
 			</div>
 		</Transition>
 	</div>
@@ -103,7 +100,6 @@ import CloseIcon from '@/assets/svg/closeBold.svg';
 import MenuIcon from '@/assets/svg/menu.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
