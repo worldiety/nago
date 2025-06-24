@@ -15,7 +15,7 @@
 				<ui-generic :ui="ui.logo" />
 			</div>
 			<!-- Top level menu entries -->
-			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
+			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto grow w-full">
 				<div v-for="(menuEntry, index) in ui.menu.value" :key="index" ref="menuEntryElements" class="w-full">
 					<MenuEntryComponent
 						:ui="menuEntry"
@@ -25,6 +25,10 @@
 						@expand="expandMenuEntry"
 					/>
 				</div>
+			</div>
+			<!-- Bottom view -->
+			<div v-if="ui.bottomView">
+				<ui-generic :ui="ui.bottomView" />
 			</div>
 		</div>
 
@@ -95,12 +99,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import {
-	FunctionCallRequested,
-	Scaffold,
-	ScaffoldMenuEntries,
-	ScaffoldMenuEntry,
-} from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;

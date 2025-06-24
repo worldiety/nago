@@ -28,9 +28,9 @@
 		<Transition name="slide">
 			<div
 				v-if="menuOpen"
-				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-M4 shadow-md z-20"
+				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start gap-y-4 w-full xs:w-80 bg-M4 shadow-md z-20 p-4"
 			>
-				<div class="flex justify-start items-center h-24 p-8">
+				<div class="flex justify-start items-center h-20 px-4">
 					<CloseIcon
 						tabindex="0"
 						class="cursor-pointer h-6"
@@ -38,7 +38,8 @@
 						@keydown.enter="menuOpen = false"
 					/>
 				</div>
-				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
+
+				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry
@@ -88,6 +89,11 @@
 							@clicked="menuOpen = false"
 						/>
 					</div>
+				</div>
+
+				<!-- Bottom view -->
+				<div v-if="ui.bottomView" class="w-full">
+					<ui-generic :ui="ui.bottomView" />
 				</div>
 			</div>
 		</Transition>

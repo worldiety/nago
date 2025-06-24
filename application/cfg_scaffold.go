@@ -446,6 +446,16 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 		}
 
+		var schemeModeIcon core.SVG
+		var schemeModeText string
+		if wnd.Info().ColorScheme == core.Light {
+			schemeModeIcon = flowbiteOutline.Moon
+			schemeModeText = "Dunkle Darstellung verwenden"
+		} else {
+			schemeModeIcon = flowbiteOutline.Sun
+			schemeModeText = "Helle Darstellung verwenden"
+		}
+
 		var scaffold = ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
@@ -457,7 +467,14 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
-		).Logo(ui.HStack(logo).Action(b.logoActionClick(wnd))).
+		).BottomView(lightDarkButton(schemeModeIcon, schemeModeText, func() {
+			if wnd.Info().ColorScheme == core.Light {
+				wnd.SetColorScheme(core.Dark)
+			} else {
+				wnd.SetColorScheme(core.Light)
+			}
+		})).
+			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd))).
 			Menu(menu...)
 
 		if b.breakpoint != nil {
@@ -528,4 +545,16 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 	}
 
 	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, opts...)
+}
+
+func lightDarkButton(icon core.SVG, text string, action func()) core.View {
+	return ui.HStack(
+		ui.ImageIcon(icon),
+		ui.Text(text).Font(ui.Font{Weight: ui.BoldFontWeight}),
+	).Gap(ui.L8).
+		HoveredBackgroundColor(ui.I1).
+		Action(action).
+		FullWidth().
+		Padding(ui.Padding{}.All(ui.L4)).
+		Border(ui.Border{}.Radius(ui.L8))
 }

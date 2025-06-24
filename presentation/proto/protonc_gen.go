@@ -5602,23 +5602,26 @@ func (v *ScaffoldAlignment) IsZero() bool {
 }
 
 type Scaffold struct {
-	Body      Component
-	Logo      Component
-	Menu      ScaffoldMenuEntries
-	Alignment ScaffoldAlignment
+	Body Component
+	Logo Component
+	Menu ScaffoldMenuEntries
+	// A view displayed at the bottom of the burger menu or sidebar
+	BottomView Component
+	Alignment  ScaffoldAlignment
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
 	Breakpoint Uint
 	Footer     Component
 }
 
 func (v *Scaffold) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [8]bool
 	fields[1] = v.Body != nil && !v.Body.IsZero()
 	fields[2] = v.Logo != nil && !v.Logo.IsZero()
 	fields[3] = !v.Menu.IsZero()
-	fields[4] = !v.Alignment.IsZero()
-	fields[5] = !v.Breakpoint.IsZero()
-	fields[6] = v.Footer != nil && !v.Footer.IsZero()
+	fields[4] = v.BottomView != nil && !v.BottomView.IsZero()
+	fields[5] = !v.Alignment.IsZero()
+	fields[6] = !v.Breakpoint.IsZero()
+	fields[7] = v.Footer != nil && !v.Footer.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5668,10 +5671,17 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[4] {
-		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 4); err != nil {
 			return err
 		}
-		if err := v.Alignment.write(w); err != nil {
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.BottomView.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.BottomView.write(w); err != nil {
 			return err
 		}
 	}
@@ -5679,13 +5689,21 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 5); err != nil {
 			return err
 		}
-		if err := v.Breakpoint.write(w); err != nil {
+		if err := v.Alignment.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Breakpoint.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
 		// polymorphic field (enum) type encodes as polymorphic array
-		if err := w.writeFieldHeader(array, 6); err != nil {
+		if err := w.writeFieldHeader(array, 7); err != nil {
 			return err
 		}
 		if err := w.writeUvarint(1); err != nil {
@@ -5747,16 +5765,30 @@ func (v *Scaffold) read(r *BinaryReader) error {
 				return err
 			}
 		case 4:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.BottomView = obj.(Component)
+		case 5:
 			err := v.Alignment.read(r)
 			if err != nil {
 				return err
 			}
-		case 5:
+		case 6:
 			err := v.Breakpoint.read(r)
 			if err != nil {
 				return err
 			}
-		case 6:
+		case 7:
 			// polymorphic field type (enum) decodes as polymorphic array
 			count, err := r.readUvarint()
 			if err != nil {
@@ -13705,13 +13737,14 @@ func (v *Scaffold) reset() {
 	v.Body = nil
 	v.Logo = nil
 	v.Menu.reset()
+	v.BottomView = nil
 	v.Alignment.reset()
 	v.Breakpoint.reset()
 	v.Footer = nil
 }
 
 func (v *Scaffold) IsZero() bool {
-	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero()
+	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero()
 }
 
 func (v *ScaffoldMenuEntry) reset() {
