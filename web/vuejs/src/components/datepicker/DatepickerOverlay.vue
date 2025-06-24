@@ -101,7 +101,7 @@
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
 				<button
 					class="button-confirm button-primary"
-					:disabled="!startDateSelected || !endDateSelected"
+					:disabled="confirmButtonDisabled"
 					@click="emit('submitSelection')"
 				>
 					{{ t('datepicker.confirm') }}
@@ -120,20 +120,20 @@ import { useI18n } from 'vue-i18n';
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
+import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
 import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
 	expanded: boolean;
 	rangeMode: boolean;
 	label?: string;
-	startDateSelected: boolean;
 	selectedStartDay: number;
 	selectedStartMonth: number;
 	selectedStartYear: number;
-	endDateSelected: boolean;
 	selectedEndDay: number;
 	selectedEndMonth: number;
 	selectedEndYear: number;
+	rangeSelectionState: RangeSelectionState;
 }>();
 
 const emit = defineEmits<{
@@ -159,6 +159,13 @@ watch(yearInput, (newValue, oldValue) => {
 	} else {
 		yearInput.value = oldValue;
 	}
+});
+
+const confirmButtonDisabled = computed((): boolean => {
+	return (
+		props.rangeSelectionState === RangeSelectionState.SELECT_START ||
+		props.rangeSelectionState === RangeSelectionState.SELECT_END
+	);
 });
 
 const selectedStartDate = computed((): Date => {
@@ -307,7 +314,7 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
 	return (
-		props.startDateSelected &&
+		props.rangeSelectionState > RangeSelectionState.SELECT_START &&
 		day === props.selectedStartDay &&
 		monthIndex === props.selectedStartMonth - 1 &&
 		year === props.selectedStartYear
@@ -316,7 +323,7 @@ function isSelectedStartDay(day: number, monthIndex: number, year: number): bool
 
 function isSelectedEndDay(day: number, monthIndex: number, year: number): boolean {
 	return (
-		props.endDateSelected &&
+		props.rangeSelectionState > RangeSelectionState.SELECT_END &&
 		day === props.selectedEndDay &&
 		monthIndex === props.selectedEndMonth - 1 &&
 		year === props.selectedEndYear
@@ -324,7 +331,7 @@ function isSelectedEndDay(day: number, monthIndex: number, year: number): boolea
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
-	if (!props.startDateSelected || !props.endDateSelected) {
+	if (props.rangeSelectionState !== RangeSelectionState.CLEAR) {
 		//console.log("not in range",day,monthIndex,year)
 		return false;
 	}
@@ -424,9 +431,5 @@ function selectDate(datepickerDay: DatepickerDay): void {
 
 .button-confirm {
 	@apply w-full;
-}
-
-.button-confirm:not(:disabled) {
-	/*@apply text-black;*/
 }
 </style>

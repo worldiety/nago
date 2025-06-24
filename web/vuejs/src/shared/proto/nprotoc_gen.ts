@@ -2731,8 +2731,8 @@ function writeTypeHeaderDatePickerStyle(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for DatePickerStyle
 export enum DatePickerStyleValues {
-	DatePickerSingleDate = 0,
-	DatePickerDateRange = 1,
+	DatePickerSingleDate = 1,
+	DatePickerDateRange = 2,
 }
 
 // Day represents a day in month in the range 1-31.
