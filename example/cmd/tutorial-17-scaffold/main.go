@@ -45,7 +45,7 @@ func main() {
 					GeneralTermsAndConditions("https://www.worldiety.de/loesungen/software-entwicklung").
 					ProviderName("© worldiety GmbH"),
 				).
-				Logo(Image().Embed(appIcon).Frame(Frame{}.Size("auto", L64))).
+				Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))).
 				Breakpoint(1000).
 				Menu(
 					ScaffoldMenuEntry{
