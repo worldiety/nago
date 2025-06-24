@@ -4,10 +4,14 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
+				"dev": "vite --config vite.config.modern.ts",
+				"dev:modern": "vite --config vite.config.modern.ts",
+				"dev:legacy": "vite --config vite.config.legacy.ts",
         "build": "run-p  \"build-only {@}\" --",
         "preview": "vite preview",
-        "build-only": "vite build",
+				"build-only:modern": "vite build --config vite.config.modern.ts",
+				"build-only:legacy": "vite build --config vite.config.legacy.ts",
+				"build-only": "npm run build-only:modern && npm run build-only:legacy",
         "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
         "format": "prettier --write src/"
