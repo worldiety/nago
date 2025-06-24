@@ -5838,6 +5838,9 @@ export class Scaffold implements Writeable, Readable, Component {
 
 	public menu?: ScaffoldMenuEntries;
 
+	// A view displayed at the bottom of the burger menu or sidebar
+	public bottomView?: Component;
+
 	public alignment?: ScaffoldAlignment;
 
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
@@ -5849,6 +5852,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
 		menu: ScaffoldMenuEntries | undefined = undefined,
+		bottomView: Component | undefined = undefined,
 		alignment: ScaffoldAlignment | undefined = undefined,
 		breakpoint: Uint | undefined = undefined,
 		footer: Component | undefined = undefined
@@ -5856,6 +5860,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.body = body;
 		this.logo = logo;
 		this.menu = menu;
+		this.bottomView = bottomView;
 		this.alignment = alignment;
 		this.breakpoint = breakpoint;
 		this.footer = footer;
@@ -5891,14 +5896,23 @@ export class Scaffold implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.alignment = readInt(reader);
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.bottomView = unmarshal(reader) as Component;
 					break;
 				}
 				case 5: {
-					this.breakpoint = readInt(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 6: {
+					this.breakpoint = readInt(reader);
+					break;
+				}
+				case 7: {
 					// decode polymorphic field as 1 element array
 					const len = reader.readUvarint();
 					if (len != 1) {
@@ -5919,6 +5933,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.body !== undefined && !this.body.isZero(),
 			this.logo !== undefined && !this.logo.isZero(),
 			this.menu !== undefined && !this.menu.isZero(),
+			this.bottomView !== undefined && !this.bottomView.isZero(),
 			this.alignment !== undefined,
 			this.breakpoint !== undefined,
 			this.footer !== undefined && !this.footer.isZero(),
@@ -5944,16 +5959,23 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.menu!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			writer.writeByte(1);
+			this.bottomView.writeTypeHeader(writer);
+			this.bottomView!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
 			// encode polymorphic enum as 1 element slice
-			writer.writeFieldHeader(Shapes.ARRAY, 6);
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
 			writer.writeByte(1);
 			this.footer.writeTypeHeader(writer);
 			this.footer!.write(writer); // typescript linters cannot see, that we already checked this properly above
@@ -5965,6 +5987,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			(this.body === undefined || this.body.isZero()) &&
 			(this.logo === undefined || this.logo.isZero()) &&
 			(this.menu === undefined || this.menu.isZero()) &&
+			(this.bottomView === undefined || this.bottomView.isZero()) &&
 			this.alignment === undefined &&
 			this.breakpoint === undefined &&
 			(this.footer === undefined || this.footer.isZero())
@@ -5975,6 +5998,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.body = undefined;
 		this.logo = undefined;
 		this.menu = undefined;
+		this.bottomView = undefined;
 		this.alignment = undefined;
 		this.breakpoint = undefined;
 		this.footer = undefined;

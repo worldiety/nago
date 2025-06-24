@@ -32,7 +32,7 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
-			return Scaffold(ScaffoldAlignmentTop).
+			return Scaffold(ScaffoldAlignmentLeading).
 				Body(VStack(
 					// this only causes the side effect of setting the current page title
 					WindowTitle("Scaffold Example"),
@@ -84,6 +84,13 @@ func main() {
 						MarkAsActiveAt: ".",
 					},
 					ForwardScaffoldMenuEntry(wnd, icons.User, "Forward entry", "/"),
+				).
+				BottomView(
+					VStack(
+						Text("Ein Text"),
+						Link(wnd, "worldiety GmbH", "https://www.worldiety.de/", "_blank").
+							TextAlignment(TextAlignCenter),
+					).FullWidth(),
 				)
 		})
 	}).Run()
