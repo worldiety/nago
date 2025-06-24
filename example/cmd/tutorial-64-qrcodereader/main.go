@@ -31,13 +31,13 @@ func main() {
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			valueRead := core.AutoState[string](wnd)
-			allAvailableMediaDevices := core.AutoState[[]xmediadevice.MediaDevice](wnd)
 			selectedMediaDevice := core.AutoState[[]xmediadevice.MediaDevice](wnd)
-			if len(allAvailableMediaDevices.Get()) > 0 {
+			allAvailableMediaDevices := core.AutoState[[]xmediadevice.MediaDevice](wnd)
+			/*	if len(allAvailableMediaDevices.Get()) > 0 {
 				// initially set first media device as selected if available
 				firstMediaDevice := []xmediadevice.MediaDevice{allAvailableMediaDevices.Get()[0]}
 				selectedMediaDevice.Set(firstMediaDevice)
-			}
+			}*/
 			return ui.VStack(
 				ui.Text("qr code reader demo"),
 				ui.MediaDevices().InputValue(allAvailableMediaDevices).WithAudio(false),

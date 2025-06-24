@@ -144,6 +144,11 @@ export class BinaryReader {
 		return result;
 	}
 
+	readVarint(): number {
+		const uvalue = this.readUvarint();
+		return (uvalue >>> 1) ^ -(uvalue & 1);
+	}
+
 	readFloat64(): number {
 		let tmp = this.readBytes(8);
 		const buffer = tmp.buffer;
@@ -206,6 +211,14 @@ function writeInt(writer: BinaryWriter, value: number): void {
 
 function readInt(reader: BinaryReader): number {
 	return reader.readUvarint();
+}
+
+function writeSint(writer: BinaryWriter, value: number): void {
+	writer.writeVarint(value);
+}
+
+function readSint(reader: BinaryReader): number {
+	return reader.readVarint();
 }
 
 function writeBool(writer: BinaryWriter, value: boolean): void {
@@ -4207,18 +4220,22 @@ export class Position implements Writeable, Readable {
 
 	public bottom?: Length;
 
+	public zIndex?: Int;
+
 	constructor(
 		kind: PositionType | undefined = undefined,
 		left: Length | undefined = undefined,
 		top: Length | undefined = undefined,
 		right: Length | undefined = undefined,
-		bottom: Length | undefined = undefined
+		bottom: Length | undefined = undefined,
+		zIndex: Int | undefined = undefined
 	) {
 		this.kind = kind;
 		this.left = left;
 		this.top = top;
 		this.right = right;
 		this.bottom = bottom;
+		this.zIndex = zIndex;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4247,6 +4264,10 @@ export class Position implements Writeable, Readable {
 					this.bottom = readString(reader);
 					break;
 				}
+				case 6: {
+					this.zIndex = readSint(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4261,6 +4282,7 @@ export class Position implements Writeable, Readable {
 			this.top !== undefined,
 			this.right !== undefined,
 			this.bottom !== undefined,
+			this.zIndex !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4284,6 +4306,10 @@ export class Position implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
 			writeString(writer, this.bottom!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.VARINT, 6);
+			writeSint(writer, this.zIndex!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4292,7 +4318,8 @@ export class Position implements Writeable, Readable {
 			this.left === undefined &&
 			this.top === undefined &&
 			this.right === undefined &&
-			this.bottom === undefined
+			this.bottom === undefined &&
+			this.zIndex === undefined
 		);
 	}
 
@@ -4302,6 +4329,7 @@ export class Position implements Writeable, Readable {
 		this.top = undefined;
 		this.right = undefined;
 		this.bottom = undefined;
+		this.zIndex = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -11312,6 +11340,12 @@ export class MediaDevices implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// Int represents just a user defined signed integer value. This is how nprotoc works.
+export type Int = number;
+function writeTypeHeaderInt(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.VARINT, 138);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -11962,6 +11996,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 137: {
 			const v = new MediaDevices();
 			v.read(src);
+			return v;
+		}
+		case 138: {
+			const v = readSint(src) as Int;
 			return v;
 		}
 	}

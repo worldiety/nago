@@ -50,7 +50,7 @@ export function positionCSS(position?: Position): string[] {
 		styles.push('bottom:' + cssLengthValue(position.bottom));
 	}
 
-	if (position.zIndex){
+	if (position.zIndex) {
 		styles.push('z-index:' + position.zIndex);
 	}
 
