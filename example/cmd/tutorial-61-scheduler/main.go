@@ -25,7 +25,7 @@ import (
 func main() {
 
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial_60")
+		cfg.SetApplicationID("de.worldiety.tutorial_61")
 
 		cfg.Serve(vuejs.Dist())
 		cfg.SetDecorator(cfg.NewScaffold().

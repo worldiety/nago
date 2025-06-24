@@ -10864,10 +10864,486 @@ export enum CountDownStyleValues {
 	CountDownProgress = 1,
 }
 
+// This component takes a value and renders it as a QR code.
+export class QrCode implements Writeable, Readable, Component {
+	// The value to be generated into a QR code.
+	public value?: Str;
+
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	public accessibilityLabel?: Str;
+
+	public frame?: Frame;
+
+	constructor(
+		value: Str | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined,
+		frame: Frame | undefined = undefined
+	) {
+		this.value = value;
+		this.accessibilityLabel = accessibilityLabel;
+		this.frame = frame;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.value = readString(reader);
+					break;
+				}
+				case 2: {
+					this.accessibilityLabel = readString(reader);
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.value !== undefined,
+			this.accessibilityLabel !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.value === undefined &&
+			this.accessibilityLabel === undefined &&
+			(this.frame === undefined || this.frame.isZero())
+		);
+	}
+
+	reset(): void {
+		this.value = undefined;
+		this.accessibilityLabel = undefined;
+		this.frame = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 133);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// This component uses the camera to process and return a QR code value.
+export class QrCodeReader implements Writeable, Readable, Component {
+	// InputValue stores the pointer to the updated state of the scanned QR code value.
+	public inputValue?: Ptr;
+
+	// The device that shall be used for the scanning process.
+	public mediaDevice?: MediaDevice;
+
+	// ShowTracker indicates whether the tracking lines should be displayed when scanning QR codes.
+	public showTracker?: Bool;
+
+	// The color of the tracker. Defaults to M0.
+	public trackerColor?: Color;
+
+	// The line width in pixels of the tracker. Defaults to 2 pixels.
+	public trackerLineWidth?: Uint;
+
+	// Flag that activates the torch for scanning qr codes.
+	public activatedTorch?: Bool;
+
+	// Callback function to execute after the camera is ready.
+	public onCameraReady?: Ptr;
+
+	public frame?: Frame;
+
+	constructor(
+		inputValue: Ptr | undefined = undefined,
+		mediaDevice: MediaDevice | undefined = undefined,
+		showTracker: Bool | undefined = undefined,
+		trackerColor: Color | undefined = undefined,
+		trackerLineWidth: Uint | undefined = undefined,
+		activatedTorch: Bool | undefined = undefined,
+		onCameraReady: Ptr | undefined = undefined,
+		frame: Frame | undefined = undefined
+	) {
+		this.inputValue = inputValue;
+		this.mediaDevice = mediaDevice;
+		this.showTracker = showTracker;
+		this.trackerColor = trackerColor;
+		this.trackerLineWidth = trackerLineWidth;
+		this.activatedTorch = activatedTorch;
+		this.onCameraReady = onCameraReady;
+		this.frame = frame;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.mediaDevice = new MediaDevice();
+					this.mediaDevice.read(reader);
+					break;
+				}
+				case 3: {
+					this.showTracker = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.trackerColor = readString(reader);
+					break;
+				}
+				case 5: {
+					this.trackerLineWidth = readInt(reader);
+					break;
+				}
+				case 6: {
+					this.activatedTorch = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.onCameraReady = readInt(reader);
+					break;
+				}
+				case 8: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.inputValue !== undefined,
+			this.mediaDevice !== undefined && !this.mediaDevice.isZero(),
+			this.showTracker !== undefined,
+			this.trackerColor !== undefined,
+			this.trackerLineWidth !== undefined,
+			this.activatedTorch !== undefined,
+			this.onCameraReady !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.mediaDevice!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.showTracker!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.trackerColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.trackerLineWidth!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.activatedTorch!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeInt(writer, this.onCameraReady!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.inputValue === undefined &&
+			(this.mediaDevice === undefined || this.mediaDevice.isZero()) &&
+			this.showTracker === undefined &&
+			this.trackerColor === undefined &&
+			this.trackerLineWidth === undefined &&
+			this.activatedTorch === undefined &&
+			this.onCameraReady === undefined &&
+			(this.frame === undefined || this.frame.isZero())
+		);
+	}
+
+	reset(): void {
+		this.inputValue = undefined;
+		this.mediaDevice = undefined;
+		this.showTracker = undefined;
+		this.trackerColor = undefined;
+		this.trackerLineWidth = undefined;
+		this.activatedTorch = undefined;
+		this.onCameraReady = undefined;
+		this.frame = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 134);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export type MediaDeviceKind = number;
+function writeTypeHeaderMediaDeviceKind(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 135);
+	return;
+}
+// companion enum containing all defined constants for MediaDeviceKind
+export enum MediaDeviceKindValues {
+	AudioInput = 0,
+	AudioOutput = 1,
+	VideoInput = 2,
+}
+
+// MediaDevice describes a frontend user media device.
+export class MediaDevice implements Writeable, Readable {
+	public deviceID?: Str;
+
+	public groupID?: Str;
+
+	public label?: Str;
+
+	public kind?: MediaDeviceKind;
+
+	constructor(
+		deviceID: Str | undefined = undefined,
+		groupID: Str | undefined = undefined,
+		label: Str | undefined = undefined,
+		kind: MediaDeviceKind | undefined = undefined
+	) {
+		this.deviceID = deviceID;
+		this.groupID = groupID;
+		this.label = label;
+		this.kind = kind;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.deviceID = readString(reader);
+					break;
+				}
+				case 2: {
+					this.groupID = readString(reader);
+					break;
+				}
+				case 3: {
+					this.label = readString(reader);
+					break;
+				}
+				case 4: {
+					this.kind = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.deviceID !== undefined,
+			this.groupID !== undefined,
+			this.label !== undefined,
+			this.kind !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.deviceID!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.groupID!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.kind!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.deviceID === undefined &&
+			this.groupID === undefined &&
+			this.label === undefined &&
+			this.kind === undefined
+		);
+	}
+
+	reset(): void {
+		this.deviceID = undefined;
+		this.groupID = undefined;
+		this.label = undefined;
+		this.kind = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 136);
+		return;
+	}
+}
+
+// This component returns all media devices that the user allowed us access to.
+export class MediaDevices implements Writeable, Readable, Component {
+	// InputValue stores the pointer to the updated state of the current media devices.
+	public inputValue?: Ptr;
+
+	// Flag to load audio devices.
+	public withAudio?: Bool;
+
+	// Flag to load video devices.
+	public withVideo?: Bool;
+
+	// Whether the user has granted the requested audio or video permissions.
+	public hasGrantedPermissions?: Ptr;
+
+	constructor(
+		inputValue: Ptr | undefined = undefined,
+		withAudio: Bool | undefined = undefined,
+		withVideo: Bool | undefined = undefined,
+		hasGrantedPermissions: Ptr | undefined = undefined
+	) {
+		this.inputValue = inputValue;
+		this.withAudio = withAudio;
+		this.withVideo = withVideo;
+		this.hasGrantedPermissions = hasGrantedPermissions;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.withAudio = readBool(reader);
+					break;
+				}
+				case 3: {
+					this.withVideo = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.hasGrantedPermissions = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.inputValue !== undefined,
+			this.withAudio !== undefined,
+			this.withVideo !== undefined,
+			this.hasGrantedPermissions !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.withAudio!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.withVideo!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.hasGrantedPermissions!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.inputValue === undefined &&
+			this.withAudio === undefined &&
+			this.withVideo === undefined &&
+			this.hasGrantedPermissions === undefined
+		);
+	}
+
+	reset(): void {
+		this.inputValue = undefined;
+		this.withAudio = undefined;
+		this.withVideo = undefined;
+		this.hasGrantedPermissions = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 137);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Int represents just a user defined signed integer value. This is how nprotoc works.
 export type Int = number;
 function writeTypeHeaderInt(dst: BinaryWriter): void {
-	dst.writeTypeHeader(Shapes.VARINT, 133);
+	dst.writeTypeHeader(Shapes.VARINT, 138);
 	return;
 }
 // Function to marshal a Writeable object into a BinaryWriter
@@ -11499,6 +11975,30 @@ export function unmarshal(src: BinaryReader): any {
 			return v;
 		}
 		case 133: {
+			const v = new QrCode();
+			v.read(src);
+			return v;
+		}
+		case 134: {
+			const v = new QrCodeReader();
+			v.read(src);
+			return v;
+		}
+		case 135: {
+			const v = readInt(src) as MediaDeviceKind;
+			return v;
+		}
+		case 136: {
+			const v = new MediaDevice();
+			v.read(src);
+			return v;
+		}
+		case 137: {
+			const v = new MediaDevices();
+			v.read(src);
+			return v;
+		}
+		case 138: {
 			const v = readSint(src) as Int;
 			return v;
 		}

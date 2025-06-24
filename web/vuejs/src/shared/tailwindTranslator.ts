@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
+import type { Color } from '@/shared/proto/nprotoc_gen';
 
 export function gapSize2Tailwind(s: string): string {
 	if (s == null || s == '') {
@@ -17,4 +18,16 @@ export function gapSize2Tailwind(s: string): string {
 	}
 
 	return s;
+}
+
+export function colorToHexValue(color: Color): string {
+	if (color.startsWith('#')) {
+		return color;
+	}
+
+	if (color.startsWith('var(')) {
+		color = color.replace('var(', '').replace(')', '');
+	}
+
+	return getComputedStyle(document.documentElement).getPropertyValue(color).trim();
 }
