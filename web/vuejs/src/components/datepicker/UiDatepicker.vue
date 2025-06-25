@@ -45,6 +45,7 @@
 			@close="closeDatepicker"
 			@select="selectDate"
 			@submit-selection="submitSelection"
+			@clear-selection="initialize"
 		/>
 	</div>
 </template>
@@ -153,8 +154,8 @@ function selectDate(day: number, monthIndex: number, year: number): void {
 		case RangeSelectionState.SELECT_END:
 			selectEndDate(selectedDate);
 			break;
-		case RangeSelectionState.CLEAR:
-			initialize();
+		case RangeSelectionState.COMPLETE:
+			selectStartDate(selectedDate);
 			break;
 	}
 }
@@ -163,6 +164,7 @@ function selectStartDate(selectedDate: Date): void {
 	selectedStartDay.value = selectedDate.getDate();
 	selectedStartMonth.value = selectedDate.getMonth() + 1;
 	selectedStartYear.value = selectedDate.getFullYear();
+
 	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(
@@ -176,15 +178,38 @@ function selectStartDate(selectedDate: Date): void {
 				})
 			)
 		);
+	} else {
+		rangeSelectionState.value = RangeSelectionState.SELECT_END;
 	}
-	rangeSelectionState.value = RangeSelectionState.SELECT_END;
 }
 
 function selectEndDate(selectedDate: Date): void {
-	selectedEndDay.value = selectedDate.getDate();
-	selectedEndMonth.value = selectedDate.getMonth() + 1;
-	selectedEndYear.value = selectedDate.getFullYear();
-	rangeSelectionState.value = RangeSelectionState.CLEAR;
+	selectedDate.setHours(0, 0, 0, 0);
+	const selectedStartDate = new Date(
+		selectedStartYear.value,
+		selectedStartMonth.value - 1,
+		selectedStartDay.value,
+		0,
+		0,
+		0,
+		0,
+	);
+	if (selectedDate < selectedStartDate) {
+		// selected date is before currently selected start date so we switch start and end dates here
+		selectedStartDay.value = selectedDate.getDate();
+		selectedStartMonth.value = selectedDate.getMonth() + 1;
+		selectedStartYear.value = selectedDate.getFullYear();
+
+		selectedEndDay.value = selectedStartDate.getDate();
+		selectedEndMonth.value = selectedStartDate.getMonth() + 1;
+		selectedEndYear.value = selectedStartDate.getFullYear();
+	} else {
+		// selected date equals or is after currently selected start date so we just have to set it as the end date
+		selectedEndDay.value = selectedDate.getDate();
+		selectedEndMonth.value = selectedDate.getMonth() + 1;
+		selectedEndYear.value = selectedDate.getFullYear();
+	}
+	rangeSelectionState.value = RangeSelectionState.COMPLETE;
 }
 
 function submitSelection(): void {
