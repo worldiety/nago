@@ -60,6 +60,9 @@ type Entry struct {
 	Imported      bool      `json:"imported,omitempty"`
 	ImportedAt    time.Time `json:"importedAt,omitempty"`
 	ImportedError string    `json:"importedError,omitempty"`
+
+	LastModBy user.ID   `json:"lastModBy,omitempty"`
+	LastModAt time.Time `json:"lastModAt,omitempty"`
 }
 
 // Transform either returns Transformed if not nil or applies the given transformation
