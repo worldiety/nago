@@ -20,7 +20,7 @@
 				<!-- Datepicker content -->
 				<div class="flex justify-between items-center mb-4 h-8">
 					<div
-						class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8"
+						class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
 						tabindex="0"
 						@click="decreaseMonth"
 						@keydown.enter="decreaseMonth"
@@ -31,7 +31,7 @@
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
 							<select
 								v-model="currentMonthIndex"
-								class="effect-hover border-0 bg-M1 text-right cursor-pointer rounded-l-md w-full h-full px-2"
+								class="hover:bg-I0/15 border-0 bg-M1 text-right cursor-pointer rounded-l-md w-full h-full px-2"
 							>
 								<option
 									v-for="(monthEntry, index) of monthNames.entries()"
@@ -46,12 +46,12 @@
 							<input
 								v-model="yearInput"
 								type="text"
-								class="effect-hover border-0 bg-M1 rounded-r-md text-left w-full h-full px-2"
+								class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md text-left w-full h-full px-2"
 							/>
 						</div>
 					</div>
 					<div
-						class="effect-hover flex justify-center items-center cursor-pointer rounded-full size-8"
+						class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
 						tabindex="0"
 						@click="increaseMonth"
 						@keydown.enter="increaseMonth"
@@ -80,7 +80,7 @@
 						}"
 					>
 						<div
-							class="day effect-hover flex justify-center items-center cursor-pointer"
+							class="day hover:bg-I0/15 flex justify-center items-center cursor-pointer"
 							:class="{
 								'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
 								'text-disabled-text':
@@ -98,10 +98,21 @@
 
 			<!-- Confirm button when in range mode -->
 			<template v-if="rangeMode">
+				<p v-if="rangeSelectionState === RangeSelectionState.SELECT_START" class="mt-2">
+					Bitte wählen Sie einen Startzeitpunkt aus
+				</p>
+				<p v-else-if="rangeSelectionState === RangeSelectionState.SELECT_END" class="mt-2">
+					Bitte wählen Sie einen Endzeitpunkt aus
+				</p>
+				<button v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE" @click="$emit('clearSelection')" class="flex justify-start items-center gap-x-2 text-I0 underline mt-2">
+					<undo-icon class="h-4" /> Auswahl aufheben
+				</button>
+
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
+
 				<button
 					class="button-confirm button-primary"
-					:disabled="confirmButtonDisabled"
+					:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
 					@click="emit('submitSelection')"
 				>
 					{{ t('datepicker.confirm') }}
@@ -121,6 +132,7 @@ import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
+import UndoIcon from '@/assets/svg/undo.svg';
 import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
@@ -140,6 +152,7 @@ const emit = defineEmits<{
 	(e: 'close'): void;
 	(e: 'select', day: number, month: number, year: number): void;
 	(e: 'submitSelection'): void;
+	(e: 'clearSelection'): void;
 }>();
 
 const { t } = useI18n();
@@ -159,13 +172,6 @@ watch(yearInput, (newValue, oldValue) => {
 	} else {
 		yearInput.value = oldValue;
 	}
-});
-
-const confirmButtonDisabled = computed((): boolean => {
-	return (
-		props.rangeSelectionState === RangeSelectionState.SELECT_START ||
-		props.rangeSelectionState === RangeSelectionState.SELECT_END
-	);
 });
 
 const selectedStartDate = computed((): Date => {
@@ -331,8 +337,7 @@ function isSelectedEndDay(day: number, monthIndex: number, year: number): boolea
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
-	if (props.rangeSelectionState !== RangeSelectionState.CLEAR) {
-		//console.log("not in range",day,monthIndex,year)
+	if (props.rangeSelectionState !== RangeSelectionState.COMPLETE) {
 		return false;
 	}
 
