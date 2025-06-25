@@ -19,7 +19,7 @@ export default defineConfig({
 	plugins: [
 		vue(),
 		svgLoader({
-		defaultImport: 'component',
+			defaultImport: 'component',
 		}),
 		vueDevTools(),
 	],
@@ -35,5 +35,10 @@ export default defineConfig({
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url))
 		}
+	},
+	build: {
+		target: 'es2015',
+		outDir: 'dist/legacy',
+		manifest: true,
 	},
 });
