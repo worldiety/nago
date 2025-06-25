@@ -12,10 +12,12 @@
 		v-if="expanded"
 		ref="datepicker"
 		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30"
+		@keydown.tab.exact="moveFocusForward"
+		@keydown.shift.tab="moveFocusBackwards"
 	>
 		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
-				<DatepickerHeader :label="label" @close="emit('close')" class="mb-4" />
+				<DatepickerHeader ref="datepickerHeader" :label="label" @close="emit('close')" class="mb-4" />
 
 				<!-- Datepicker content -->
 				<div class="flex justify-between items-center mb-4 h-8">
@@ -80,6 +82,7 @@
 						}"
 					>
 						<div
+							:ref="(el) => setLastDatepickerDayElement(el, index)"
 							class="day hover:bg-I0/15 flex justify-center items-center cursor-pointer"
 							:class="{
 								'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
@@ -96,21 +99,27 @@
 				</div>
 			</div>
 
-			<!-- Confirm button when in range mode -->
 			<template v-if="rangeMode">
+				<!-- Hint texts and clear button when in range mode -->
 				<p v-if="rangeSelectionState === RangeSelectionState.SELECT_START" class="mt-2">
 					Bitte wählen Sie einen Startzeitpunkt aus
 				</p>
 				<p v-else-if="rangeSelectionState === RangeSelectionState.SELECT_END" class="mt-2">
 					Bitte wählen Sie einen Endzeitpunkt aus
 				</p>
-				<button v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE" @click="$emit('clearSelection')" class="flex justify-start items-center gap-x-2 text-I0 underline mt-2">
+				<button
+					v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE"
+					@click="$emit('clearSelection')"
+					class="flex justify-start items-center gap-x-2 text-I0 underline mt-2"
+				>
 					<undo-icon class="h-4" /> Auswahl aufheben
 				</button>
 
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
 
+				<!-- Confirm button when in range mode -->
 				<button
+					ref="confirmButton"
 					class="button-confirm button-primary"
 					:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
 					@click="emit('submitSelection')"
@@ -126,13 +135,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ComponentPublicInstance, computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
+import UndoIcon from '@/assets/svg/undo.svg';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
-import UndoIcon from '@/assets/svg/undo.svg';
 import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
@@ -156,11 +165,24 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const datepickerHeader = useTemplateRef('datepickerHeader');
+const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
 const currentDate = new Date(Date.now());
 const currentYear = ref<number>(currentDate.getFullYear());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
 const yearInput = ref<string>(currentYear.value.toString(10));
+const lastDatepickerDayIndex = ref<number | null>(null);
+const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
+
+watch(
+	() => props.expanded,
+	(newValue) => {
+		if (newValue) {
+			nextTick(() => datepickerHeader.value?.closeButton?.focus());
+		}
+	}
+);
 
 /**
  * Only allow year values with a length between 1 and 4.
@@ -201,6 +223,15 @@ const datepickerDays = computed((): DatepickerDay[] => {
 
 	return datepickerDays;
 });
+
+function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | Element | null, index: number) {
+	// Update the last element if its index is greater than the index of the current last element or the index of the
+	// current last element is null
+	if (lastDatepickerDayIndex.value === null || index > lastDatepickerDayIndex.value) {
+		lastDatepickerDayIndex.value = index;
+		lastDatepickerDayElement.value = datepickerDay;
+	}
+}
 
 function getDaysOfCurrentMonth(): DatepickerDay[] {
 	const daysOfCurrentMonth: DatepickerDay[] = [];
@@ -370,6 +401,30 @@ function selectDate(datepickerDay: DatepickerDay): void {
 	emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 	if (!props.rangeMode) {
 		emit('close');
+	}
+}
+
+function moveFocusForward(event: Event) {
+	if (document.activeElement === getLastFocusableElement()) {
+		event.preventDefault();
+		datepickerHeader.value?.closeButton?.focus();
+	}
+}
+
+function getLastFocusableElement(): HTMLElement | null {
+	if (props.rangeSelectionState === RangeSelectionState.COMPLETE) {
+		return confirmButton.value;
+	}
+	if (lastDatepickerDayElement.value instanceof HTMLElement) {
+		return lastDatepickerDayElement.value;
+	}
+	return null;
+}
+
+function moveFocusBackwards(event: Event) {
+	if (document.activeElement === datepickerHeader.value?.closeButton) {
+		event.preventDefault();
+		getLastFocusableElement()?.focus();
 	}
 }
 </script>
