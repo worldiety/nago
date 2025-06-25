@@ -33,7 +33,7 @@
 
 		<DatepickerOverlay
 			:expanded="expanded"
-			:range-mode="props.ui.style == DatePickerStyleValues.DatePickerDateRange"
+			:range-mode="props.ui.style === DatePickerStyleValues.DatePickerDateRange"
 			:label="props.ui.label"
 			:selected-start-day="selectedStartDay"
 			:selected-start-month="selectedStartMonth"
@@ -192,7 +192,7 @@ function selectEndDate(selectedDate: Date): void {
 		0,
 		0,
 		0,
-		0,
+		0
 	);
 	if (selectedDate < selectedStartDate) {
 		// selected date is before currently selected start date so we switch start and end dates here
