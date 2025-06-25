@@ -1,0 +1,11 @@
+{
+  "doc": "RetMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.",
+  "kind": "Record",
+  "id": 144,
+  "fields": {
+    "1": {
+      "name": "Devices",
+      "type": "MediaDevices2"
+    }
+  }
+}

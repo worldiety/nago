@@ -127,6 +127,9 @@ type Window interface {
 	// Logout tries to invalidate and logout the current subject. It is not a failure to logout an invalid or anon
 	// subject.
 	Logout() error
+
+	// MediaDevices returns an api access to the frontends attached media devices.
+	MediaDevices() MediaDevices
 }
 
 // Colors returns a type safe value based ColorSet instance.

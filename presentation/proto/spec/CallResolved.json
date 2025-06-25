@@ -1,0 +1,22 @@
+{
+  "doc": "CallResolved is issued by the frontend to the backend to submit the result asynchronously.",
+  "kind": "Record",
+  "id": 141,
+  "fields": {
+    "1": {
+      "doc": "CallPtr denotes the backend pointer which is resolved through this ret call.",
+      "name": "CallPtr",
+      "type": "Ptr"
+    },
+    "2": {
+      "doc": "CallRetArgs describes through the type how the result looks.",
+      "name": "Ret",
+      "type": "CallRet"
+    },
+    "3": {
+      "name": "RID",
+      "type": "RID",
+      "getter": true
+    }
+  }
+}

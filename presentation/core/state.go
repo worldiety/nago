@@ -217,6 +217,12 @@ func (s *State[T]) Set(v T) {
 	s.valid = true
 }
 
+// Update sets and notifies the state. See also [State.Set] and [State.Notify].
+func (s *State[T]) Update(v T) {
+	s.Set(v)
+	s.Notify()
+}
+
 func (s *State[T]) addDestroyObserver(fn func()) {
 	s.observerLock.Lock()
 	defer s.observerLock.Unlock()

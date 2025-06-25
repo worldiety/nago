@@ -1,0 +1,9 @@
+{
+  "doc": "CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.",
+  "kind": "Enum",
+  "variants": [
+    "RetVoid",
+    "RetError",
+    "RetMediaDevicesEnumerate"
+  ]
+}

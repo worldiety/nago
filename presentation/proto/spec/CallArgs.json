@@ -1,0 +1,7 @@
+{
+  "doc": "CallArgs is the sum type of all declared type safe async method invocations including their arguments. See also [RetArgs] for the async result.",
+  "kind": "Enum",
+  "variants": [
+    "CallMediaDevicesEnumerate"
+  ]
+}

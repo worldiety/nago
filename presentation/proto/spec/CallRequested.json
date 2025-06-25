@@ -1,0 +1,17 @@
+{
+  "doc": "CallRequested is issued by the backend to the frontend to execute something asynchronously.",
+  "kind": "Record",
+  "id": 142,
+  "fields": {
+    "1": {
+      "doc": "CallPtr denotes the backend pointer to resolve the call in the future.",
+      "name": "CallPtr",
+      "type": "Ptr"
+    },
+    "2": {
+      "doc": "CallArgs describes through the type which function is called and declares the actual arguments for it.",
+      "name": "Call",
+      "type": "CallArgs"
+    }
+  }
+}

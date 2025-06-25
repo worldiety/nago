@@ -6,24 +6,32 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import { UploadRepository } from '@/api/upload/uploadRepository';
-import { Channel } from '@/shared/network/serviceAdapter';
+import {UploadRepository} from '@/api/upload/uploadRepository';
+import {Channel} from '@/shared/network/serviceAdapter';
 import {
+	CallMediaDevicesEnumerate,
+	CallRequested,
+	CallResolved,
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
 	FileImportRequested,
 	Fonts,
 	Locale,
+	MediaDevice,
+	MediaDeviceKindValues,
+	MediaDevices2,
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
+	RetError,
+	RetMediaDevicesEnumerate,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
 	SendMultipleRequested,
 	ThemeRequested,
 	URI,
@@ -32,7 +40,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -466,4 +474,51 @@ export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
 		.catch((reason) => {
 			console.log('failed to copy text into clipboard', reason);
 		});
+}
+
+export async function callRequested(chan: Channel, evt: CallRequested) {
+	if (evt.call instanceof CallMediaDevicesEnumerate) {
+		await callMediaDevicesEnumerate(chan, evt, evt.call);
+	}
+}
+
+async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args: CallMediaDevicesEnumerate) {
+	try {
+		await navigator.mediaDevices.getUserMedia({
+			audio: args.withAudio ?? false,
+			video: args.withVideo ?? false,
+		});
+		console.log("media device get user media success", "video", args.withVideo, "audio", args.withAudio)
+	} catch (e) {
+		console.warn("Couldn't get requested permissions", e);
+		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(e.toString(), -1)));
+		return
+	}
+
+	const devices = await navigator.mediaDevices.enumerateDevices();
+	let tmp: MediaDevice[] = [];
+
+
+	for (let i = devices.length - 1; i >= 0; i--) {
+		const d = devices[i];
+		if (d.deviceId === '') {
+			// TODO don't know what this empty entry is
+			continue;
+		}
+		tmp.push(new MediaDevice(d.deviceId, d.groupId, d.label, getMediaDeviceKindFromMediaDeviceInfo(d)));
+	}
+
+	console.log('got media devices enumeration', tmp);
+	chan.sendEvent(new CallResolved(evt.callPtr, new RetMediaDevicesEnumerate(new MediaDevices2(tmp))));
+}
+
+function getMediaDeviceKindFromMediaDeviceInfo(device: MediaDeviceInfo): MediaDeviceKindValues {
+	switch (device.kind) {
+		case 'audioinput':
+			return MediaDeviceKindValues.AudioInput;
+		case 'audiooutput':
+			return MediaDeviceKindValues.AudioOutput;
+		case 'videoinput':
+			return MediaDeviceKindValues.VideoInput;
+	}
 }

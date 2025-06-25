@@ -1,0 +1,6 @@
+{
+  "doc": "MediaDevices2 is a bunch of MediaDevice entries and should be renamed to just MediaDevices if the headless MediaDevices component is removed.",
+  "kind": "Array",
+  "id": 140,
+  "type": "MediaDevice"
+}

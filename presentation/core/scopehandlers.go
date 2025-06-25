@@ -41,6 +41,8 @@ func (s *Scope) handleEvent(t proto.NagoEvent) {
 	// do nothing, we already applied our keep-alive-tick
 	case *proto.WindowInfoChanged:
 		s.handleWindowInfoChanged(evt)
+	case *proto.CallResolved:
+		s.handleCallResolved(evt)
 	default:
 		slog.Error("unexpected event type in scope processing", slog.String("type", fmt.Sprintf("%T", evt)))
 	}
@@ -56,6 +58,30 @@ func (s *Scope) handleWindowInfoChanged(evt *proto.WindowInfoChanged) {
 		SizeClass:   WindowSizeClass(winfo.SizeClass),
 		ColorScheme: ColorScheme(winfo.ColorScheme),
 	})
+}
+
+func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
+	if s.allocatedRootView.IsNone() {
+		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: evt.GetRID()})
+		return
+	}
+
+	alloc := s.allocatedRootView.Unwrap()
+
+	if evt.CallPtr.IsZero() {
+		return
+	}
+
+	fn, ok := alloc.asyncCallbacks.Get(evt.CallPtr)
+	if !ok {
+		slog.Error("async callback not found", slog.Any("evt", evt))
+		s.Publish(&proto.ErrorOccurred{
+			Message: proto.Str(fmt.Sprintf("cannot call async: no such pointer found: %d", evt.CallPtr)),
+		})
+		return
+	}
+
+	fn(evt.Ret)
 }
 
 func (s *Scope) handleScopeDestructionRequested(evt *proto.ScopeDestructionRequested) {

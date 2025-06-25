@@ -240,6 +240,32 @@ func parseTypeHeader(value uint8) fieldHeader {
 	}
 }
 
+// CallArgs is the sum type of all declared type safe async method invocations including their arguments. See also [RetArgs] for the async result.
+type CallArgs interface {
+	// a marker method to indicate the enum / union type membership
+	isCallArgs()
+	IsZero() bool
+	reset()
+	Writeable
+	Readable
+}
+
+func (CallMediaDevicesEnumerate) isCallArgs() {}
+
+// CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
+type CallRet interface {
+	// a marker method to indicate the enum / union type membership
+	isCallRet()
+	IsZero() bool
+	reset()
+	Writeable
+	Readable
+}
+
+func (RetVoid) isCallRet()                  {}
+func (RetError) isCallRet()                 {}
+func (RetMediaDevicesEnumerate) isCallRet() {}
+
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 type Component interface {
 	// a marker method to indicate the enum / union type membership
@@ -317,6 +343,8 @@ func (SendMultipleRequested) isNagoEvent()             {}
 func (OpenHttpFlow) isNagoEvent()                      {}
 func (OpenHttpLink) isNagoEvent()                      {}
 func (ClipboardWriteTextRequested) isNagoEvent()       {}
+func (CallRequested) isNagoEvent()                     {}
+func (CallResolved) isNagoEvent()                      {}
 
 // A Box aligns children elements in absolute within its bounds.
 //   - there is no intrinsic component dimension, so you have to set it by hand
@@ -10899,6 +10927,424 @@ func (v *Int) IsZero() bool {
 	return *v == 0
 }
 
+// CallMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
+type CallMediaDevicesEnumerate struct {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep      Bool
+	WithAudio Bool
+	WithVideo Bool
+}
+
+func (v *CallMediaDevicesEnumerate) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Keep.IsZero()
+	fields[2] = !v.WithAudio.IsZero()
+	fields[3] = !v.WithVideo.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.WithAudio.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.WithVideo.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallMediaDevicesEnumerate) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.WithAudio.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.WithVideo.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// CallResolved is issued by the frontend to the backend to submit the result asynchronously.
+type CallResolved struct {
+	// CallPtr denotes the backend pointer which is resolved through this ret call.
+	CallPtr Ptr
+	// CallRetArgs describes through the type how the result looks.
+	Ret CallRet
+	RID RID
+}
+
+func (v *CallResolved) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.CallPtr.IsZero()
+	fields[2] = v.Ret != nil && !v.Ret.IsZero()
+	fields[3] = !v.RID.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.CallPtr.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Ret.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Ret.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.RID.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallResolved) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.CallPtr.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Ret = obj.(CallRet)
+		case 3:
+			err := v.RID.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// CallRequested is issued by the backend to the frontend to execute something asynchronously.
+type CallRequested struct {
+	// CallPtr denotes the backend pointer to resolve the call in the future.
+	CallPtr Ptr
+	// CallArgs describes through the type which function is called and declares the actual arguments for it.
+	Call CallArgs
+}
+
+func (v *CallRequested) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.CallPtr.IsZero()
+	fields[2] = v.Call != nil && !v.Call.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.CallPtr.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Call.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Call.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.CallPtr.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Call = obj.(CallArgs)
+		}
+	}
+	return nil
+}
+
+// RetError indicates that an unexpected error occurred during the invocation call or during the async resolving. Known error types should be usually modelled explicitly.
+type RetError struct {
+	Message Str
+	Code    Int
+}
+
+func (v *RetError) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Message.IsZero()
+	fields[2] = !v.Code.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Message.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Code.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetError) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Message.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Code.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RetMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
+type RetMediaDevicesEnumerate struct {
+	Devices MediaDevices2
+}
+
+func (v *RetMediaDevicesEnumerate) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Devices.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Devices.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetMediaDevicesEnumerate) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Devices.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RetVoid has no further fields and indicates that no more return arguments as a response are provided.
+type RetVoid struct {
+}
+
+func (v *RetVoid) write(w *BinaryWriter) error {
+	var fields [1]bool
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetVoid) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -11742,6 +12188,48 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 138:
 		var v Int
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 139:
+		var v CallMediaDevicesEnumerate
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 140:
+		var v MediaDevices2
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 141:
+		var v CallResolved
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 142:
+		var v CallRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 143:
+		var v RetError
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 144:
+		var v RetMediaDevicesEnumerate
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 145:
+		var v RetVoid
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -14055,6 +14543,107 @@ func (v *MediaDevices) IsZero() bool {
 	return v.InputValue.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero() && v.HasGrantedPermissions.IsZero()
 }
 
+func (v *CallMediaDevicesEnumerate) reset() {
+	v.Keep.reset()
+	v.WithAudio.reset()
+	v.WithVideo.reset()
+}
+
+func (v *CallMediaDevicesEnumerate) IsZero() bool {
+	return v.Keep.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero()
+}
+
+// MediaDevices2 is a bunch of MediaDevice entries and should be renamed to just MediaDevices if the headless MediaDevices component is removed.
+type MediaDevices2 []MediaDevice
+
+func (v *MediaDevices2) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *MediaDevices2) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]MediaDevice, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*MediaDevice)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *MediaDevices2) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *MediaDevices2) reset() {
+	*v = nil
+}
+
+func (v *CallResolved) reset() {
+	v.CallPtr.reset()
+	v.Ret = nil
+	v.RID.reset()
+}
+
+func (v *CallResolved) IsZero() bool {
+	return v.CallPtr.IsZero() && v.Ret.IsZero() && v.RID.IsZero()
+}
+
+func (v *CallResolved) GetRID() RID {
+	return v.RID
+}
+func (v *CallRequested) reset() {
+	v.CallPtr.reset()
+	v.Call = nil
+}
+
+func (v *CallRequested) IsZero() bool {
+	return v.CallPtr.IsZero() && v.Call.IsZero()
+}
+
+func (v *RetError) reset() {
+	v.Message.reset()
+	v.Code.reset()
+}
+
+func (v *RetError) IsZero() bool {
+	return v.Message.IsZero() && v.Code.IsZero()
+}
+
+func (v *RetMediaDevicesEnumerate) reset() {
+	v.Devices.reset()
+}
+
+func (v *RetMediaDevicesEnumerate) IsZero() bool {
+	return v.Devices.IsZero()
+}
+
+func (v *RetVoid) reset() {
+}
+
+func (v *RetVoid) IsZero() bool {
+	return true
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -15009,6 +15598,55 @@ func (v *MediaDevices) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Int) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(varint, 138); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallMediaDevicesEnumerate) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 139); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *MediaDevices2) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 140); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallResolved) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 141); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 142); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetError) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 143); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetMediaDevicesEnumerate) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 144); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetVoid) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 145); err != nil {
 		return err
 	}
 	return nil
