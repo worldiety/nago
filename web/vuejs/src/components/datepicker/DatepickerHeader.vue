@@ -13,6 +13,7 @@
 		<div class="flex justify-between items-center gap-x-2">
 			<p class="truncate">{{ label ?? '' }}</p>
 			<div
+				ref="closeButton"
 				class="flex justify-center items-center cursor-pointer rounded-full size-8 shrink-0 grow-0"
 				tabindex="0"
 				@click="$emit('close')"
@@ -26,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import { useTemplateRef } from 'vue';
 import Close from '@/assets/svg/closeBold.svg';
 
 defineProps<{
@@ -35,4 +37,8 @@ defineProps<{
 defineEmits<{
 	(e: 'close'): void;
 }>();
+
+const closeButton = useTemplateRef('closeButton');
+
+defineExpose({ closeButton });
 </script>
