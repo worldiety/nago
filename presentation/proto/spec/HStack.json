@@ -94,6 +94,10 @@
       "type": "Str"
     },
     "23": {
+      "name": "TextColor",
+      "type": "Color"
+    },
+    "24": {
       "name": "NoClip",
       "type": "Bool"
     }

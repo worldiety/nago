@@ -3590,12 +3590,13 @@ type HStack struct {
 	Disabled               Bool
 	Invisible              Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id     Str
-	NoClip Bool
+	Id        Str
+	TextColor Color
+	NoClip    Bool
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
-	var fields [24]bool
+	var fields [25]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -3618,7 +3619,8 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[20] = !v.Disabled.IsZero()
 	fields[21] = !v.Invisible.IsZero()
 	fields[22] = !v.Id.IsZero()
-	fields[23] = !v.NoClip.IsZero()
+	fields[23] = !v.TextColor.IsZero()
+	fields[24] = !v.NoClip.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3806,7 +3808,15 @@ func (v *HStack) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[23] {
-		if err := w.writeFieldHeader(uvarint, 23); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 23); err != nil {
+			return err
+		}
+		if err := v.TextColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[24] {
+		if err := w.writeFieldHeader(uvarint, 24); err != nil {
 			return err
 		}
 		if err := v.NoClip.write(w); err != nil {
@@ -3939,6 +3949,11 @@ func (v *HStack) read(r *BinaryReader) error {
 				return err
 			}
 		case 23:
+			err := v.TextColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
 			err := v.NoClip.read(r)
 			if err != nil {
 				return err
@@ -13362,11 +13377,12 @@ func (v *HStack) reset() {
 	v.Disabled.reset()
 	v.Invisible.reset()
 	v.Id.reset()
+	v.TextColor.reset()
 	v.NoClip.reset()
 }
 
 func (v *HStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.NoClip.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero()
 }
 
 func (v *Position) reset() {

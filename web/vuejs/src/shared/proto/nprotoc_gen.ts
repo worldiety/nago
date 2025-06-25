@@ -3856,6 +3856,8 @@ export class HStack implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public textColor?: Color;
+
 	public noClip?: Bool;
 
 	constructor(
@@ -3881,6 +3883,7 @@ export class HStack implements Writeable, Readable, Component {
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
+		textColor: Color | undefined = undefined,
 		noClip: Bool | undefined = undefined
 	) {
 		this.children = children;
@@ -3905,6 +3908,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.textColor = textColor;
 		this.noClip = noClip;
 	}
 
@@ -4012,6 +4016,10 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 23: {
+					this.textColor = readString(reader);
+					break;
+				}
+				case 24: {
 					this.noClip = readBool(reader);
 					break;
 				}
@@ -4046,6 +4054,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.textColor !== undefined,
 			this.noClip !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
@@ -4139,7 +4148,11 @@ export class HStack implements Writeable, Readable, Component {
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[23]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writer.writeFieldHeader(Shapes.BYTESLICE, 23);
+			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 24);
 			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -4168,6 +4181,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.disabled === undefined &&
 			this.invisible === undefined &&
 			this.id === undefined &&
+			this.textColor === undefined &&
 			this.noClip === undefined
 		);
 	}
@@ -4195,6 +4209,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.textColor = undefined;
 		this.noClip = undefined;
 	}
 

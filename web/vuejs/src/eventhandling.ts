@@ -6,8 +6,8 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import {UploadRepository} from '@/api/upload/uploadRepository';
-import {Channel} from '@/shared/network/serviceAdapter';
+import { UploadRepository } from '@/api/upload/uploadRepository';
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
 	CallRequested,
@@ -23,15 +23,15 @@ import {
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
+	RID,
 	RetError,
 	RetMediaDevicesEnumerate,
-	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	ThemeRequested,
 	URI,
@@ -40,7 +40,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -488,16 +488,15 @@ async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args
 			audio: args.withAudio ?? false,
 			video: args.withVideo ?? false,
 		});
-		console.log("media device get user media success", "video", args.withVideo, "audio", args.withAudio)
+		console.log('media device get user media success', 'video', args.withVideo, 'audio', args.withAudio);
 	} catch (e) {
 		console.warn("Couldn't get requested permissions", e);
 		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(e.toString(), -1)));
-		return
+		return;
 	}
 
 	const devices = await navigator.mediaDevices.enumerateDevices();
 	let tmp: MediaDevice[] = [];
-
 
 	for (let i = devices.length - 1; i >= 0; i--) {
 		const d = devices[i];
