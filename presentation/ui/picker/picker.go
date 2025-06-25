@@ -16,7 +16,9 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"reflect"
+	"regexp"
 	"slices"
+	"strings"
 )
 
 type TPicker[T any] struct {
@@ -71,7 +73,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		case 0:
 			return ui.Text("nichts gewählt").Color(textColor)
 		case 1:
-			return ui.Text(fmt.Sprintf("%v", t[0])).Color(textColor)
+			return ui.Text(cleanMarkdown(fmt.Sprintf("%v", t[0]))).Color(textColor)
 		default:
 			return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
 		}
@@ -264,7 +266,7 @@ func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 	c.renderToSelect = fn
 	if fn == nil {
 		c.renderToSelect = func(t T) core.View {
-			return ui.HStack(ui.Text(fmt.Sprintf("%v", t))).Padding(ui.Padding{}.Vertical(ui.L16))
+			return ui.HStack(ui.Text(cleanMarkdown(fmt.Sprintf("%v", t)))).Padding(ui.Padding{}.Vertical(ui.L16))
 		}
 	}
 
@@ -446,4 +448,22 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		Visible(!c.invisible).
 		Frame(c.frame).
 		Render(ctx)
+}
+
+var regexMarkdownLink = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+
+func cleanMarkdown(str string) string {
+	if maybeMarkdown(str) {
+		return regexMarkdownLink.ReplaceAllStringFunc(str, func(s string) string {
+			start := strings.IndexRune(s, '[')
+			end := strings.IndexRune(s, ']')
+			return s[start+1 : end]
+		})
+	}
+
+	return str
+}
+
+func maybeMarkdown(str string) bool {
+	return strings.IndexRune(str, '[') >= 0 && strings.IndexRune(str, ']') >= 0 && strings.IndexRune(str, '(') >= 0 && strings.IndexRune(str, ')') >= 0
 }

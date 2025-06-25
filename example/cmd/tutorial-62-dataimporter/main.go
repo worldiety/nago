@@ -87,7 +87,7 @@ func configureGDPRConsents(cfg *application.Configurator) {
 		{
 			ID: consent.TermsOfUse,
 			Register: user.ConsentText{
-				Label: "Ja, ich habe die [Nutzungsbedingungen](/page/nutzungsbedingungen) gelesen und akzeptiert.",
+				Label: "Ja, ich habe die [Nutzungsbedingungen](http://localhost:3000/admin/data/entry?stage=95ad3e6442a7c7de61f8d5b70ae38cd4&importer=nago.data.importer.user&entry=95ad3e6442a7c7de61f8d5b70ae38cd4%2F1750422709492%2F++++2) gelesen und akzeptiert.",
 			},
 			Required: true,
 		},
