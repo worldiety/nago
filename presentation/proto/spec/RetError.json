@@ -1,0 +1,15 @@
+{
+  "doc": "RetError indicates that an unexpected error occurred during the invocation call or during the async resolving. Known error types should be usually modelled explicitly.",
+  "kind": "Record",
+  "id": 143,
+  "fields": {
+    "1": {
+      "name": "Message",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Code",
+      "type": "Int"
+    }
+  }
+}

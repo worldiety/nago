@@ -13,11 +13,13 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
 	"io"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -53,6 +55,8 @@ type scopeWindow struct {
 	generation           int64
 	mutex                sync.Mutex
 	clipboard            *clipboardController
+	lastAsyncInvokePtr   atomic.Int64
+	asyncCallbacks       concurrent.RWMap[proto.Ptr, func(ret proto.CallRet)]
 }
 
 func (s *scopeWindow) Clipboard() Clipboard {
@@ -103,6 +107,7 @@ func (s *scopeWindow) reset() {
 	clear(s.filesReceiver)
 	//clear(s.destroyObservers) ???
 	clear(s.callbacks)
+	s.asyncCallbacks.Clear()
 
 	for _, property := range s.states {
 		property.clearObservers()

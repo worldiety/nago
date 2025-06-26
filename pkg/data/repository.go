@@ -35,12 +35,16 @@ type IDType interface {
 	~int | ~int64 | ~int32 | ~string
 }
 
-type ReadRepository[E Aggregate[ID], ID IDType] interface {
+type ByIDFinder[E Aggregate[ID], ID IDType] interface {
 	// FindByID either returns some Aggregate or none.
 	// The effort is implementation dependent, but most reasonable implementations guarantee something better than
 	// O(n) like a tree in O(log(n) or even a hashtable (O(1)).
 	// Returned errors are unspecified infrastructure errors of the implementation.
 	FindByID(id ID) (option.Opt[E], error)
+}
+
+type ReadRepository[E Aggregate[ID], ID IDType] interface {
+	ByIDFinder[E, ID]
 
 	// FindAllByPrefix returns an iterator over all elements whose IDs start with the given prefix.
 	// The prefix is evaluated alphanumerically, which may be a problem for integer keys, as they do not

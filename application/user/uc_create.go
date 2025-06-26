@@ -65,6 +65,7 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			Email:     mail,
 			Algorithm: Argon2IdMin,
 			Contact: Contact{
+				Salutation:        model.Salutation,
 				Title:             model.Title,
 				Firstname:         model.Firstname,
 				Lastname:          model.Lastname,

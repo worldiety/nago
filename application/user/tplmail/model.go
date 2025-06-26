@@ -16,6 +16,7 @@ import (
 type MailVerificationModel struct {
 	ID                user.ID
 	Title             string
+	Salutation        string
 	Firstname         string
 	Lastname          string
 	Email             user.Email
@@ -27,6 +28,7 @@ type MailVerificationModel struct {
 type PasswordResetModel struct {
 	ID                user.ID
 	Title             string
+	Salutation        string
 	Firstname         string
 	Lastname          string
 	Email             user.Email

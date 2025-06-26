@@ -130,6 +130,7 @@ func (c *Configurator) SendPasswordResetMail(mail user.Email) error {
 	model := tplmail.PasswordResetModel{
 		ID:                usr.ID,
 		Title:             usr.Contact.Title,
+		Salutation:        usr.Contact.Salutation,
 		Firstname:         usr.Contact.Firstname,
 		Lastname:          usr.Contact.Lastname,
 		Email:             usr.Email,
@@ -172,6 +173,7 @@ func (c *Configurator) SendVerificationMail(uid user.ID) error {
 	model := tplmail.MailVerificationModel{
 		ID:                usr.ID,
 		Title:             usr.Contact.Title,
+		Salutation:        usr.Contact.Salutation,
 		Firstname:         usr.Contact.Firstname,
 		Lastname:          usr.Contact.Lastname,
 		Email:             usr.Email,

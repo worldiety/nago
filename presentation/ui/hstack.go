@@ -40,6 +40,7 @@ type THStack struct {
 	position               Position
 	id                     string
 	noClip                 bool
+	textColor              Color
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -172,6 +173,11 @@ func (c THStack) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
+func (c THStack) TextColor(textColor Color) THStack {
+	c.textColor = textColor
+	return c
+}
+
 func (c THStack) Action(f func()) THStack {
 	c.action = f
 	return c
@@ -214,6 +220,7 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 		Wrap:                   proto.Bool(c.wrap),
 		Disabled:               proto.Bool(c.disabled),
 		Position:               c.position.ora(),
+		TextColor:              proto.Color(c.textColor),
 
 		StylePreset: c.stylePreset,
 		Id:          proto.Str(c.id),

@@ -21,6 +21,8 @@ func NewUpdateEntryConfirmation(mutex *sync.Mutex, repo EntryRepository) UpdateE
 			entry.ImportedAt = time.Time{}
 			entry.ImportedError = ""
 			entry.Imported = false
+			entry.LastModBy = subject.ID()
+			entry.LastModAt = time.Now()
 			return entry, nil
 		})
 	}

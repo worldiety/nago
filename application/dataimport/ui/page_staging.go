@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -42,7 +43,7 @@ func PageStaging(wnd core.Window, ucImp dataimport.UseCases) core.View {
 	imp := optImp.Unwrap()
 
 	exampleData := core.AutoState[[]dataimport.Entry](wnd).Init(func() []dataimport.Entry {
-		page, err := ucImp.FilterEntries(wnd.Subject(), stage.ID, dataimport.FilterEntriesOptions{
+		page, err := ucImp.FilterEntries(wnd.Subject(), stage.ID, data.PaginateOptions{
 			MaxResults: 3,
 		})
 		if err != nil {
@@ -50,25 +51,25 @@ func PageStaging(wnd core.Window, ucImp dataimport.UseCases) core.View {
 			return nil
 		}
 
-		return page.Entries
+		return page.Items
 	})
 
 	deleteStagingPresented := core.AutoState[bool](wnd)
 
-	page := core.AutoState[dataimport.FilterEntriesPage](wnd).Init(func() dataimport.FilterEntriesPage {
-		page, err := ucImp.FilterEntries(wnd.Subject(), sid, dataimport.FilterEntriesOptions{})
+	page := core.AutoState[data.Page[dataimport.Entry]](wnd).Init(func() data.Page[dataimport.Entry] {
+		page, err := ucImp.FilterEntries(wnd.Subject(), sid, data.PaginateOptions{})
 
 		if err != nil {
 			alert.ShowBannerError(wnd, err)
-			return dataimport.FilterEntriesPage{}
+			return data.Page[dataimport.Entry]{}
 		}
 
 		return page
 	})
 
 	pageIdx := core.AutoState[int](wnd).Observe(func(newValue int) {
-		p, err := ucImp.FilterEntries(wnd.Subject(), sid, dataimport.FilterEntriesOptions{
-			Page: newValue,
+		p, err := ucImp.FilterEntries(wnd.Subject(), sid, data.PaginateOptions{
+			PageIdx: newValue,
 		})
 
 		if err != nil {
@@ -126,12 +127,12 @@ func dialogDeleteStaging(wnd core.Window, presented *core.State[bool], stage dat
 	}))
 }
 
-func dialogDoImport(wnd core.Window, presented *core.State[bool], stage dataimport.Staging, page dataimport.FilterEntriesPage, pageIdx *core.State[int], ucImp dataimport.UseCases) core.View {
+func dialogDoImport(wnd core.Window, presented *core.State[bool], stage dataimport.Staging, page data.Page[dataimport.Entry], pageIdx *core.State[int], ucImp dataimport.UseCases) core.View {
 	if !presented.Get() {
 		return nil
 	}
 
-	return alert.Dialog("Diesen Entwurf importieren", ui.Text(fmt.Sprintf("Soll dieser Entwurf mit %d Einträgen jetzt importiert werden? Abgelehnte und bereits importierte Einträge werden dabei übersprungen.", page.Count)), presented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
+	return alert.Dialog("Diesen Entwurf importieren", ui.Text(fmt.Sprintf("Soll dieser Entwurf mit %d Einträgen jetzt importiert werden? Abgelehnte und bereits importierte Einträge werden dabei übersprungen.", page.Total)), presented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
 		return ui.PrimaryButton(func() {
 			close(true)
 			defer func() {

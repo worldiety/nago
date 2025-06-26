@@ -28,9 +28,9 @@
 		<Transition name="slide">
 			<div
 				v-if="menuOpen"
-				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start w-full xs:w-80 bg-M4 shadow-md z-20"
+				class="fixed top-0 left-0 bottom-0 flex flex-col justify-start items-start gap-y-4 w-full xs:w-80 bg-M4 shadow-md z-20 p-4"
 			>
-				<div class="flex justify-start items-center h-24 p-8">
+				<div class="flex justify-start items-center h-20 px-4">
 					<CloseIcon
 						tabindex="0"
 						class="cursor-pointer h-6"
@@ -38,7 +38,8 @@
 						@keydown.enter="menuOpen = false"
 					/>
 				</div>
-				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full p-4">
+
+				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<BurgerMenuEntry
@@ -89,8 +90,10 @@
 						/>
 					</div>
 				</div>
-				<div class="flex justify-center items-center w-full p-4">
-					<ThemeToggle />
+
+				<!-- Bottom view -->
+				<div v-if="ui.bottomView" class="w-full">
+					<ui-generic :ui="ui.bottomView" />
 				</div>
 			</div>
 		</Transition>
@@ -103,7 +106,6 @@ import CloseIcon from '@/assets/svg/closeBold.svg';
 import MenuIcon from '@/assets/svg/menu.svg';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
 import BurgerMenuEntry from '@/components/scaffold/burgermenu/BurgerMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';

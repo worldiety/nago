@@ -8,7 +8,9 @@
 -->
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import UiGeneric from '@/components/UiGeneric.vue';
+import LoadingAnimation from '@/components/shared/LoadingAnimation.vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
@@ -25,6 +27,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
+const isCameraReady = ref<boolean>(false);
 const error = ref<string>();
 
 const frameStyles = computed<string>(() => {
@@ -32,25 +35,22 @@ const frameStyles = computed<string>(() => {
 
 	return styles.join(';');
 });
-const constraints = computed<MediaTrackConstraints>(() => {
-	if (!props.ui.mediaDevice) return { deviceId: 'disabled' };
 
-	return { deviceId: props.ui.mediaDevice.deviceID, groupId: props.ui.mediaDevice.groupID };
+const constraints = computed<MediaTrackConstraints>(() => {
+	return { deviceId: props.ui.mediaDevice?.deviceID, groupId: props.ui.mediaDevice?.groupID };
 });
 
-function submitValue(newValue: string) {
+function onDetect(detectedCodes: DetectedBarcode[]) {
+	const payload = JSON.stringify(detectedCodes.map((code) => code.rawValue));
+
 	// Note, that the sendEvent may have a huge latency, causing ghost updates for the user input.
 	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
 	nextRID();
 
-	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), newValue));
-}
-function onDetect(detectedCodes: DetectedBarcode[]) {
-	const result = JSON.stringify(detectedCodes.map((code) => code.rawValue));
-
-	submitValue(result);
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), payload));
 }
 function onCameraReady() {
+	isCameraReady.value = true;
 	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.onCameraReady, nextRID()));
 }
 function paintBoundingBox(detectedCodes: DetectedBarcode[], ctx: CanvasRenderingContext2D) {
@@ -88,18 +88,45 @@ function onError(err: Error) {
 
 	console.error(error.value);
 }
+function onUpdatedConstraints(newConstraints?: MediaTrackConstraints, oldConstraints?: MediaTrackConstraints) {
+	if (
+		newConstraints &&
+		oldConstraints &&
+		newConstraints.deviceId === oldConstraints.deviceId &&
+		newConstraints.groupId === oldConstraints.groupId
+	)
+		return;
+
+	// if the constraints changed, we need to initialize a new camera, therefore enable the loading animation by setting isCameraReady to false
+	isCameraReady.value = false;
+}
+
+watch(
+	() => constraints.value,
+	(newValue, oldValue) => onUpdatedConstraints(newValue, oldValue)
+);
 </script>
 
 <template>
-	<div :style="frameStyles">
-		<qrcode-stream
-			:track="paintBoundingBox"
-			:formats="['qr_code']"
-			:constaints="constraints"
-			:torch="props.ui.activatedTorch"
-			@detect="onDetect"
-			@error="onError"
-			@camera-on="onCameraReady"
-		></qrcode-stream>
+	<div class="relative" :style="frameStyles">
+		<div v-if="props.ui.mediaDevice" class="relative h-full w-full">
+			<qrcode-stream
+				v-show="isCameraReady"
+				:track="paintBoundingBox"
+				:formats="['qr_code']"
+				:constraints="constraints"
+				:torch="props.ui.activatedTorch"
+				@detect="onDetect"
+				@error="onError"
+				@camera-on="onCameraReady"
+				@camera-off="isCameraReady = false"
+			></qrcode-stream>
+			<div v-if="!isCameraReady" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+				<LoadingAnimation class="h-5 w-5" />
+			</div>
+		</div>
+		<div v-else class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
+			<UiGeneric v-if="props.ui.noMediaDeviceContent" :ui="props.ui.noMediaDeviceContent" />
+		</div>
 	</div>
 </template>

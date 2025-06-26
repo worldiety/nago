@@ -46,8 +46,11 @@
 
 		<!-- title -->
 		<p
-			class="text-sm text-center font-medium select-none whitespace-nowrap w-full"
-			:class="{ 'font-semibold': linksToCurrentPage }"
+			class="text-sm text-center font-medium select-none w-full"
+			:class="{
+				'font-semibold': linksToCurrentPage,
+				'whitespace-nowrap': mode === 'navigationBar',
+			}"
 		>
 			{{ ui.title }}
 		</p>

@@ -15,9 +15,11 @@
 				<ui-generic :ui="ui.logo" />
 			</div>
 			<!-- Top level menu entries -->
-			<div class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto h-full w-full">
-				<div v-for="(menuEntry, index) in ui.menu.value" :key="index" ref="menuEntryElements" class="w-full">
-					<MenuEntryComponent
+			<div
+				class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto overflow-x-hidden h-full w-full"
+			>
+				<div v-for="(menuEntry, index) in ui.menu?.value" :key="index" ref="menuEntryElements" class="w-full">
+					<TopLevelMenuEntry
 						:ui="menuEntry"
 						:menu-entry-index="index"
 						:mode="'sidebar'"
@@ -26,7 +28,10 @@
 					/>
 				</div>
 			</div>
-			<ThemeToggle />
+			<!-- Bottom view -->
+			<div v-if="ui.bottomView">
+				<ui-generic :ui="ui.bottomView" />
+			</div>
 		</div>
 
 		<!-- Sub menu -->
@@ -34,7 +39,7 @@
 			<div
 				v-if="subMenuEntries.length > 0"
 				ref="subMenu"
-				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 bg-M1 border-l border-l-M5 rounded-r-2xl shadow-md w-72 py-8 px-2 z-0 bg-M4"
+				class="absolute top-0 left-32 bottom-0 flex flex-col justify-start gap-y-4 border-l border-l-M5 rounded-r-2xl shadow-md w-72 py-8 px-2 z-0 bg-M4"
 			>
 				<!-- Sub menu entries -->
 				<div
@@ -56,13 +61,13 @@
 					>
 						<p class="font-medium">{{ subMenuEntry.title }}</p>
 						<TriangleDown
-							v-if="subMenuEntry.menu?.value?.length > 0"
+							v-if="subMenuEntry.menu?.value?.length ?? 0 > 0"
 							class="duration-150 w-2 -mr-1"
 							:class="{ 'rotate-180': subMenuEntry.expanded }"
 						/>
 					</div>
 					<div
-						v-if="subMenuEntry.expanded && subMenuEntry.menu?.value?.length > 0"
+						v-if="subMenuEntry.expanded && (subMenuEntry.menu?.value?.length ?? 0 > 0)"
 						class="flex flex-col justify-start gap-y-2 pl-4"
 					>
 						<!-- Sub sub menu entries -->
@@ -93,17 +98,10 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
-import ThemeToggle from '@/components/scaffold/ThemeToggle.vue';
-import MenuEntryComponent from '@/components/scaffold/TopLevelMenuEntry.vue';
+import TopLevelMenuEntry from '@/components/scaffold/TopLevelMenuEntry.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import {
-	FunctionCallRequested,
-	Scaffold,
-	ScaffoldMenuEntries,
-	ScaffoldMenuEntry,
-	UpdateStateValueRequested,
-} from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested, Scaffold, ScaffoldMenuEntries, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;

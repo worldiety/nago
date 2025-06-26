@@ -47,19 +47,6 @@ export default class ThemeManager {
 		return activeThemeKey ? (activeThemeKey as ThemeKey) : null;
 	}
 
-	toggleDarkMode(): void {
-		if (!this.themes) {
-			return;
-		}
-
-		if (localStorage.getItem(this.localStorageKey) === ThemeKey.LIGHT) {
-			this.applyDarkmodeTheme();
-			return;
-		} else if (localStorage.getItem(this.localStorageKey) === ThemeKey.DARK) {
-			this.applyLightmodeTheme();
-		}
-	}
-
 	applyLightmodeTheme(): void {
 		if (!this.themes) {
 			return;

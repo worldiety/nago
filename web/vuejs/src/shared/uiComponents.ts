@@ -7,38 +7,7 @@
  * SPDX-License-Identifier: Custom-License
  */
 import type { Component } from 'vue';
-import UiCheckbox from '@/components/UiCheckbox.vue';
-import UiDivider from '@/components/UiDivider.vue';
-import UiGrid from '@/components/UiGrid.vue';
-import UiImage from '@/components/UiImage.vue';
-import UiMediaDevices from '@/components/UiMediaDevices.vue';
-import UiModal from '@/components/UiModal.vue';
-import UiPasswordField from '@/components/UiPasswordField.vue';
-import UiQrCode from '@/components/UiQrCode.vue';
-import UiQrCodeReader from '@/components/UiQrCodeReader.vue';
-import UiRadioButton from '@/components/UiRadioButton.vue';
-import UiText from '@/components/UiText.vue';
-import UiTextField from '@/components/UiTextField.vue';
-import UiToggle from '@/components/UiToggle.vue';
-import UiUnknownType from '@/components/UiUnknownType.vue';
-import UiWebView from '@/components/UiWebView.vue';
-import UiWindowTitle from '@/components/UiWindowTitle.vue';
-import UiBox from '@/components/box/UiBox.vue';
-import UiCodeEditor from '@/components/codeeditor/UiCodeEditor.vue';
-import UiCountDown from '@/components/countdown/UiCountDown.vue';
-import UiDatepicker from '@/components/datepicker/UiDatepicker.vue';
-import UiForm from '@/components/form/UiForm.vue';
-import UiHoverGroup from '@/components/hovergroup/UiHoverGroup.vue';
-import UiHStack from '@/components/hstack/UiHStack.vue';
-import UiMenu from '@/components/menu/UiMenu.vue';
-import UiRichText from '@/components/richtexteditor/UiRichText.vue';
-import UiRichTextEditor from '@/components/richtexteditor/UiRichTextEditor.vue';
-import UiScaffold from '@/components/scaffold/UiScaffold.vue';
-import UiScrollView from '@/components/scrollview/UiScrollView.vue';
-import UiSpacer from '@/components/spacer/UiSpacer.vue';
-import UiTable from '@/components/table/UiTable.vue';
-import UiTextLayout from '@/components/textlayout/UiTextLayout.vue';
-import UiVStack from '@/components/vstack/UiVStack.vue';
+import { defineAsyncComponent } from 'vue';
 import {
 	Box,
 	Checkbox,
@@ -74,6 +43,39 @@ import {
 	WindowTitle,
 } from '@/shared/proto/nprotoc_gen';
 
+const LazyUiCheckbox = defineAsyncComponent(() => import('@/components/UiCheckbox.vue'));
+const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
+const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
+const LazyUiImage = defineAsyncComponent(() => import('@/components/UiImage.vue'));
+const LazyUiMediaDevices = defineAsyncComponent(() => import('@/components/UiMediaDevices.vue'));
+const LazyUiModal = defineAsyncComponent(() => import('@/components/UiModal.vue'));
+const LazyUiPasswordField = defineAsyncComponent(() => import('@/components/UiPasswordField.vue'));
+const LazyUiRadioButton = defineAsyncComponent(() => import('@/components/UiRadioButton.vue'));
+const LazyUiText = defineAsyncComponent(() => import('@/components/UiText.vue'));
+const LazyUiTextField = defineAsyncComponent(() => import('@/components/UiTextField.vue'));
+const LazyUiToggle = defineAsyncComponent(() => import('@/components/UiToggle.vue'));
+const LazyUiUnknownType = defineAsyncComponent(() => import('@/components/UiUnknownType.vue'));
+const LazyUiWebView = defineAsyncComponent(() => import('@/components/UiWebView.vue'));
+const LazyUiWindowTitle = defineAsyncComponent(() => import('@/components/UiWindowTitle.vue'));
+const LazyUiBox = defineAsyncComponent(() => import('@/components/box/UiBox.vue'));
+const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdown/UiCountDown.vue'));
+const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
+const LazyUiForm = defineAsyncComponent(() => import('@/components/form/UiForm.vue'));
+const LazyUiHoverGroup = defineAsyncComponent(() => import('@/components/hovergroup/UiHoverGroup.vue'));
+const LazyUiHStack = defineAsyncComponent(() => import('@/components/hstack/UiHStack.vue'));
+const LazyUiMenu = defineAsyncComponent(() => import('@/components/menu/UiMenu.vue'));
+const LazyUiRichText = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichText.vue'));
+const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichTextEditor.vue'));
+const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/UiScaffold.vue'));
+const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
+const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
+const LazyUiTable = defineAsyncComponent(() => import('@/components/table/UiTable.vue'));
+const LazyUiTextLayout = defineAsyncComponent(() => import('@/components/textlayout/UiTextLayout.vue'));
+const LazyUiVStack = defineAsyncComponent(() => import('@/components/vstack/UiVStack.vue'));
+const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeeditor/UiCodeEditor.vue'));
+const LazyUiQrCode = defineAsyncComponent(() => import('@/components/UiQrCode.vue'));
+const LazyUiQrCodeReader = defineAsyncComponent(() => import('@/components/UiQrCodeReader.vue'));
+
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
  * If new components are introduced, this method must be updated by hand, to type-switch and associate
@@ -81,129 +83,129 @@ import {
  */
 export function vueComponentFor(ngc: NagoComponent): Component {
 	if (ngc instanceof TextView) {
-		return UiText;
+		return LazyUiText;
 	}
 
 	if (ngc instanceof VStack) {
-		return UiVStack;
+		return LazyUiVStack;
 	}
 
 	if (ngc instanceof HStack) {
-		return UiHStack;
+		return LazyUiHStack;
 	}
 
 	if (ngc instanceof Img) {
-		return UiImage;
+		return LazyUiImage;
 	}
 
 	if (ngc instanceof TextField) {
-		return UiTextField;
+		return LazyUiTextField;
 	}
 
 	if (ngc instanceof Toggle) {
-		return UiToggle;
+		return LazyUiToggle;
 	}
 
 	if (ngc instanceof Grid) {
-		return UiGrid;
+		return LazyUiGrid;
 	}
 
 	if (ngc instanceof Table) {
-		return UiTable;
+		return LazyUiTable;
 	}
 
 	if (ngc instanceof DatePicker) {
-		return UiDatepicker;
+		return LazyUiDatepicker;
 	}
 
 	if (ngc instanceof PasswordField) {
-		return UiPasswordField;
+		return LazyUiPasswordField;
 	}
 
 	if (ngc instanceof Checkbox) {
-		return UiCheckbox;
+		return LazyUiCheckbox;
 	}
 
 	if (ngc instanceof Radiobutton) {
-		return UiRadioButton;
+		return LazyUiRadioButton;
 	}
 
 	if (ngc instanceof Box) {
-		return UiBox;
+		return LazyUiBox;
 	}
 
 	if (ngc instanceof Spacer) {
-		return UiSpacer;
+		return LazyUiSpacer;
 	}
 
 	if (ngc instanceof Modal) {
-		return UiModal;
+		return LazyUiModal;
 	}
 
 	if (ngc instanceof WindowTitle) {
-		return UiWindowTitle;
+		return LazyUiWindowTitle;
 	}
 
 	if (ngc instanceof ScrollView) {
-		return UiScrollView;
+		return LazyUiScrollView;
 	}
 
 	if (ngc instanceof TextLayout) {
-		return UiTextLayout;
+		return LazyUiTextLayout;
 	}
 
 	if (ngc instanceof Scaffold) {
-		return UiScaffold;
+		return LazyUiScaffold;
 	}
 
 	if (ngc instanceof Divider) {
-		return UiDivider;
+		return LazyUiDivider;
 	}
 
 	if (ngc instanceof WebView) {
-		return UiWebView;
+		return LazyUiWebView;
 	}
 
 	if (ngc instanceof Menu) {
-		return UiMenu;
+		return LazyUiMenu;
 	}
 
 	if (ngc instanceof Form) {
-		return UiForm;
+		return LazyUiForm;
 	}
 
 	if (ngc instanceof CountDown) {
-		return UiCountDown;
+		return LazyUiCountDown;
 	}
 
 	if (ngc instanceof CodeEditor) {
-		return UiCodeEditor;
+		return LazyUiCodeEditor;
 	}
 
 	if (ngc instanceof RichText) {
-		return UiRichText;
+		return LazyUiRichText;
 	}
 
 	if (ngc instanceof RichTextEditor) {
-		return UiRichTextEditor;
+		return LazyUiRichTextEditor;
 	}
 
 	if (ngc instanceof HoverGroup) {
-		return UiHoverGroup;
+		return LazyUiHoverGroup;
 	}
 
 	if (ngc instanceof QrCode) {
-		return UiQrCode;
+		return LazyUiQrCode;
 	}
 
 	if (ngc instanceof QrCodeReader) {
-		return UiQrCodeReader;
+		return LazyUiQrCodeReader;
 	}
 
 	if (ngc instanceof MediaDevices) {
-		return UiMediaDevices;
+		return LazyUiMediaDevices;
 	}
 
 	// keep this as the default fallback
-	return UiUnknownType;
+	return LazyUiUnknownType;
 }

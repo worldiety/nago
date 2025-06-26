@@ -60,6 +60,9 @@ type Entry struct {
 	Imported      bool      `json:"imported,omitempty"`
 	ImportedAt    time.Time `json:"importedAt,omitempty"`
 	ImportedError string    `json:"importedError,omitempty"`
+
+	LastModBy user.ID   `json:"lastModBy,omitempty"`
+	LastModAt time.Time `json:"lastModAt,omitempty"`
 }
 
 // Transform either returns Transformed if not nil or applies the given transformation
@@ -243,21 +246,7 @@ type CalculateStagingReviewStatusOptions struct {
 
 type CalculateStagingReviewStatus func(subject auth.Subject, staging SID, opts CalculateStagingReviewStatusOptions) (StagingReviewStatus, error)
 
-type FilterEntriesOptions struct {
-	Query      string
-	Page       int
-	PageSize   int
-	MaxResults int
-}
-
-type FilterEntriesPage struct {
-	Entries   []Entry
-	Page      int
-	PageSize  int
-	PageCount int
-	Count     int64
-}
-type FilterEntries func(subject auth.Subject, stage SID, opts FilterEntriesOptions) (FilterEntriesPage, error)
+type FilterEntries func(subject auth.Subject, stage SID, opts data.PaginateOptions) (data.Page[Entry], error)
 
 type UseCases struct {
 	RegisterImporter             RegisterImporter

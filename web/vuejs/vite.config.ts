@@ -13,6 +13,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import svgLoader from 'vite-svg-loader';
 import vueDevTools from 'vite-plugin-vue-devtools';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,6 +23,10 @@ export default defineConfig({
 		defaultImport: 'component',
 		}),
 		vueDevTools(),
+		visualizer({
+			filename: 'dist/bundle-report.html',
+			gzipSize: true,
+		}),
 	],
 	server: {
 		port: 8090,

@@ -237,6 +237,18 @@ function readFloat(reader: BinaryReader): number {
 	return reader.readFloat64();
 }
 
+// CallArgs is the sum type of all declared type safe async method invocations including their arguments. See also [RetArgs] for the async result.
+export interface CallArgs extends Writeable, Readable {
+	// a marker method to indicate the enum / union type membership
+	isCallArgs(): void;
+}
+
+// CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
+export interface CallRet extends Writeable, Readable {
+	// a marker method to indicate the enum / union type membership
+	isCallRet(): void;
+}
+
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 export interface Component extends Writeable, Readable {
 	// a marker method to indicate the enum / union type membership
@@ -1210,6 +1222,7 @@ export class AlignedComponent implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.component.writeTypeHeader(writer);
 			this.component!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -1743,6 +1756,7 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			writer.writeByte(1);
+			this.root.writeTypeHeader(writer);
 			this.root!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -3714,6 +3728,7 @@ export class GridCell implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.body.writeTypeHeader(writer);
 			this.body!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -3841,6 +3856,8 @@ export class HStack implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public textColor?: Color;
+
 	public noClip?: Bool;
 
 	constructor(
@@ -3866,6 +3883,7 @@ export class HStack implements Writeable, Readable, Component {
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
+		textColor: Color | undefined = undefined,
 		noClip: Bool | undefined = undefined
 	) {
 		this.children = children;
@@ -3890,6 +3908,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.textColor = textColor;
 		this.noClip = noClip;
 	}
 
@@ -3997,6 +4016,10 @@ export class HStack implements Writeable, Readable, Component {
 					break;
 				}
 				case 23: {
+					this.textColor = readString(reader);
+					break;
+				}
+				case 24: {
 					this.noClip = readBool(reader);
 					break;
 				}
@@ -4031,6 +4054,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.textColor !== undefined,
 			this.noClip !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
@@ -4124,7 +4148,11 @@ export class HStack implements Writeable, Readable, Component {
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[23]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writer.writeFieldHeader(Shapes.BYTESLICE, 23);
+			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 24);
 			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -4153,6 +4181,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.disabled === undefined &&
 			this.invisible === undefined &&
 			this.id === undefined &&
+			this.textColor === undefined &&
 			this.noClip === undefined
 		);
 	}
@@ -4180,6 +4209,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.textColor = undefined;
 		this.noClip = undefined;
 	}
 
@@ -4948,6 +4978,7 @@ export class Modal implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -5807,6 +5838,9 @@ export class Scaffold implements Writeable, Readable, Component {
 
 	public menu?: ScaffoldMenuEntries;
 
+	// A view displayed at the bottom of the burger menu or sidebar
+	public bottomView?: Component;
+
 	public alignment?: ScaffoldAlignment;
 
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
@@ -5818,6 +5852,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
 		menu: ScaffoldMenuEntries | undefined = undefined,
+		bottomView: Component | undefined = undefined,
 		alignment: ScaffoldAlignment | undefined = undefined,
 		breakpoint: Uint | undefined = undefined,
 		footer: Component | undefined = undefined
@@ -5825,6 +5860,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.body = body;
 		this.logo = logo;
 		this.menu = menu;
+		this.bottomView = bottomView;
 		this.alignment = alignment;
 		this.breakpoint = breakpoint;
 		this.footer = footer;
@@ -5860,14 +5896,23 @@ export class Scaffold implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.alignment = readInt(reader);
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.bottomView = unmarshal(reader) as Component;
 					break;
 				}
 				case 5: {
-					this.breakpoint = readInt(reader);
+					this.alignment = readInt(reader);
 					break;
 				}
 				case 6: {
+					this.breakpoint = readInt(reader);
+					break;
+				}
+				case 7: {
 					// decode polymorphic field as 1 element array
 					const len = reader.readUvarint();
 					if (len != 1) {
@@ -5888,6 +5933,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.body !== undefined && !this.body.isZero(),
 			this.logo !== undefined && !this.logo.isZero(),
 			this.menu !== undefined && !this.menu.isZero(),
+			this.bottomView !== undefined && !this.bottomView.isZero(),
 			this.alignment !== undefined,
 			this.breakpoint !== undefined,
 			this.footer !== undefined && !this.footer.isZero(),
@@ -5898,12 +5944,14 @@ export class Scaffold implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.body.writeTypeHeader(writer);
 			this.body!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			writer.writeByte(1);
+			this.logo.writeTypeHeader(writer);
 			this.logo!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
@@ -5911,17 +5959,25 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.menu!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			writer.writeByte(1);
+			this.bottomView.writeTypeHeader(writer);
+			this.bottomView!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.breakpoint!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
 			// encode polymorphic enum as 1 element slice
-			writer.writeFieldHeader(Shapes.ARRAY, 6);
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
 			writer.writeByte(1);
+			this.footer.writeTypeHeader(writer);
 			this.footer!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -5931,6 +5987,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			(this.body === undefined || this.body.isZero()) &&
 			(this.logo === undefined || this.logo.isZero()) &&
 			(this.menu === undefined || this.menu.isZero()) &&
+			(this.bottomView === undefined || this.bottomView.isZero()) &&
 			this.alignment === undefined &&
 			this.breakpoint === undefined &&
 			(this.footer === undefined || this.footer.isZero())
@@ -5941,6 +5998,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.body = undefined;
 		this.logo = undefined;
 		this.menu = undefined;
+		this.bottomView = undefined;
 		this.alignment = undefined;
 		this.breakpoint = undefined;
 		this.footer = undefined;
@@ -6063,12 +6121,14 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.icon.writeTypeHeader(writer);
 			this.icon!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			writer.writeByte(1);
+			this.iconActive.writeTypeHeader(writer);
 			this.iconActive!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
@@ -6303,6 +6363,7 @@ export class ScrollView implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -6972,6 +7033,7 @@ export class TableCell implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -7171,6 +7233,7 @@ export class TableColumn implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -8195,12 +8258,14 @@ export class TextField implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 8);
 			writer.writeByte(1);
+			this.leading.writeTypeHeader(writer);
 			this.leading!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 9);
 			writer.writeByte(1);
+			this.trailing.writeTypeHeader(writer);
 			this.trailing!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
@@ -9526,6 +9591,7 @@ export class Menu implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.anchor.writeTypeHeader(writer);
 			this.anchor!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -9654,6 +9720,7 @@ export class MenuItem implements Writeable, Readable {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 2);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -10570,6 +10637,7 @@ export class HoverGroup implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
@@ -10600,6 +10668,7 @@ export class HoverGroup implements Writeable, Readable, Component {
 			// encode polymorphic enum as 1 element slice
 			writer.writeFieldHeader(Shapes.ARRAY, 8);
 			writer.writeByte(1);
+			this.contentHover.writeTypeHeader(writer);
 			this.contentHover!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -10973,6 +11042,9 @@ export class QrCodeReader implements Writeable, Readable, Component {
 	// Flag that activates the torch for scanning qr codes.
 	public activatedTorch?: Bool;
 
+	// The content to show if no media device is selected.
+	public noMediaDeviceContent?: Component;
+
 	// Callback function to execute after the camera is ready.
 	public onCameraReady?: Ptr;
 
@@ -10985,6 +11057,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		trackerColor: Color | undefined = undefined,
 		trackerLineWidth: Uint | undefined = undefined,
 		activatedTorch: Bool | undefined = undefined,
+		noMediaDeviceContent: Component | undefined = undefined,
 		onCameraReady: Ptr | undefined = undefined,
 		frame: Frame | undefined = undefined
 	) {
@@ -10994,6 +11067,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		this.trackerColor = trackerColor;
 		this.trackerLineWidth = trackerLineWidth;
 		this.activatedTorch = activatedTorch;
+		this.noMediaDeviceContent = noMediaDeviceContent;
 		this.onCameraReady = onCameraReady;
 		this.frame = frame;
 	}
@@ -11030,10 +11104,19 @@ export class QrCodeReader implements Writeable, Readable, Component {
 					break;
 				}
 				case 7: {
-					this.onCameraReady = readInt(reader);
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.noMediaDeviceContent = unmarshal(reader) as Component;
 					break;
 				}
 				case 8: {
+					this.onCameraReady = readInt(reader);
+					break;
+				}
+				case 9: {
 					this.frame = new Frame();
 					this.frame.read(reader);
 					break;
@@ -11053,6 +11136,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			this.trackerColor !== undefined,
 			this.trackerLineWidth !== undefined,
 			this.activatedTorch !== undefined,
+			this.noMediaDeviceContent !== undefined && !this.noMediaDeviceContent.isZero(),
 			this.onCameraReady !== undefined,
 			this.frame !== undefined && !this.frame.isZero(),
 		];
@@ -11083,11 +11167,18 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			writeBool(writer, this.activatedTorch!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[7]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 7);
-			writeInt(writer, this.onCameraReady!); // typescript linters cannot see, that we already checked this properly above
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
+			writer.writeByte(1);
+			this.noMediaDeviceContent.writeTypeHeader(writer);
+			this.noMediaDeviceContent!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
-			writer.writeFieldHeader(Shapes.RECORD, 8);
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.onCameraReady!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -11100,6 +11191,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			this.trackerColor === undefined &&
 			this.trackerLineWidth === undefined &&
 			this.activatedTorch === undefined &&
+			(this.noMediaDeviceContent === undefined || this.noMediaDeviceContent.isZero()) &&
 			this.onCameraReady === undefined &&
 			(this.frame === undefined || this.frame.isZero())
 		);
@@ -11112,6 +11204,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 		this.trackerColor = undefined;
 		this.trackerLineWidth = undefined;
 		this.activatedTorch = undefined;
+		this.noMediaDeviceContent = undefined;
 		this.onCameraReady = undefined;
 		this.frame = undefined;
 	}
@@ -11346,6 +11439,424 @@ function writeTypeHeaderInt(dst: BinaryWriter): void {
 	dst.writeTypeHeader(Shapes.VARINT, 138);
 	return;
 }
+
+// CallMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
+export class CallMediaDevicesEnumerate implements Writeable, Readable, CallArgs {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	public withAudio?: Bool;
+
+	public withVideo?: Bool;
+
+	constructor(
+		keep: Bool | undefined = undefined,
+		withAudio: Bool | undefined = undefined,
+		withVideo: Bool | undefined = undefined
+	) {
+		this.keep = keep;
+		this.withAudio = withAudio;
+		this.withVideo = withVideo;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.keep = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.withAudio = readBool(reader);
+					break;
+				}
+				case 3: {
+					this.withVideo = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.keep !== undefined, this.withAudio !== undefined, this.withVideo !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.withAudio!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.withVideo!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.keep === undefined && this.withAudio === undefined && this.withVideo === undefined;
+	}
+
+	reset(): void {
+		this.keep = undefined;
+		this.withAudio = undefined;
+		this.withVideo = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 139);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+// MediaDevices2 is a bunch of MediaDevice entries and should be renamed to just MediaDevices if the headless MediaDevices component is removed.
+export class MediaDevices2 implements Writeable, Readable {
+	public value: MediaDevice[];
+
+	constructor(value: MediaDevice[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: MediaDevice[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as MediaDevice); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 140);
+		return;
+	}
+}
+
+// CallResolved is issued by the frontend to the backend to submit the result asynchronously.
+export class CallResolved implements Writeable, Readable, NagoEvent {
+	// CallPtr denotes the backend pointer which is resolved through this ret call.
+	public callPtr?: Ptr;
+
+	// CallRetArgs describes through the type how the result looks.
+	public ret?: CallRet;
+
+	public rID?: RID;
+
+	constructor(
+		callPtr: Ptr | undefined = undefined,
+		ret: CallRet | undefined = undefined,
+		rID: RID | undefined = undefined
+	) {
+		this.callPtr = callPtr;
+		this.ret = ret;
+		this.rID = rID;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.callPtr = readInt(reader);
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.ret = unmarshal(reader) as CallRet;
+					break;
+				}
+				case 3: {
+					this.rID = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.callPtr !== undefined,
+			this.ret !== undefined && !this.ret.isZero(),
+			this.rID !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.callPtr!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.ret.writeTypeHeader(writer);
+			this.ret!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.rID!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.callPtr === undefined && (this.ret === undefined || this.ret.isZero()) && this.rID === undefined;
+	}
+
+	reset(): void {
+		this.callPtr = undefined;
+		this.ret = undefined;
+		this.rID = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 141);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
+// CallRequested is issued by the backend to the frontend to execute something asynchronously.
+export class CallRequested implements Writeable, Readable, NagoEvent {
+	// CallPtr denotes the backend pointer to resolve the call in the future.
+	public callPtr?: Ptr;
+
+	// CallArgs describes through the type which function is called and declares the actual arguments for it.
+	public call?: CallArgs;
+
+	constructor(callPtr: Ptr | undefined = undefined, call: CallArgs | undefined = undefined) {
+		this.callPtr = callPtr;
+		this.call = call;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.callPtr = readInt(reader);
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.call = unmarshal(reader) as CallArgs;
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.callPtr !== undefined, this.call !== undefined && !this.call.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.callPtr!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.call.writeTypeHeader(writer);
+			this.call!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.callPtr === undefined && (this.call === undefined || this.call.isZero());
+	}
+
+	reset(): void {
+		this.callPtr = undefined;
+		this.call = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 142);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
+// RetError indicates that an unexpected error occurred during the invocation call or during the async resolving. Known error types should be usually modelled explicitly.
+export class RetError implements Writeable, Readable, CallRet {
+	public message?: Str;
+
+	public code?: Int;
+
+	constructor(message: Str | undefined = undefined, code: Int | undefined = undefined) {
+		this.message = message;
+		this.code = code;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.message = readString(reader);
+					break;
+				}
+				case 2: {
+					this.code = readSint(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.message !== undefined, this.code !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.message!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.code!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.message === undefined && this.code === undefined;
+	}
+
+	reset(): void {
+		this.message = undefined;
+		this.code = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 143);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+// RetMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
+export class RetMediaDevicesEnumerate implements Writeable, Readable, CallRet {
+	public devices?: MediaDevices2;
+
+	constructor(devices: MediaDevices2 | undefined = undefined) {
+		this.devices = devices;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.devices = new MediaDevices2();
+					this.devices.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.devices !== undefined && !this.devices.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.devices!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.devices === undefined || this.devices.isZero();
+	}
+
+	reset(): void {
+		this.devices = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 144);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+// RetVoid has no further fields and indicates that no more return arguments as a response are provided.
+export class RetVoid implements Writeable, Readable, CallRet {
+	constructor() {}
+
+	read(r: BinaryReader): void {
+		r.readByte();
+	}
+	write(w: BinaryWriter): void {
+		w.writeByte(0);
+	}
+	isZero(): boolean {
+		return true;
+	}
+	reset(): void {}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 145);
+		return;
+	}
+	isCallRet(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -12000,6 +12511,41 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 138: {
 			const v = readSint(src) as Int;
+			return v;
+		}
+		case 139: {
+			const v = new CallMediaDevicesEnumerate();
+			v.read(src);
+			return v;
+		}
+		case 140: {
+			const v = new MediaDevices2();
+			v.read(src);
+			return v;
+		}
+		case 141: {
+			const v = new CallResolved();
+			v.read(src);
+			return v;
+		}
+		case 142: {
+			const v = new CallRequested();
+			v.read(src);
+			return v;
+		}
+		case 143: {
+			const v = new RetError();
+			v.read(src);
+			return v;
+		}
+		case 144: {
+			const v = new RetMediaDevicesEnumerate();
+			v.read(src);
+			return v;
+		}
+		case 145: {
+			const v = new RetVoid();
+			v.read(src);
 			return v;
 		}
 	}

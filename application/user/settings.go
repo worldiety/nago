@@ -119,6 +119,7 @@ type Settings struct {
 	Consents      []ConsentOption `section:"Rechtliches" json:"adoptionOptions"`
 
 	____              any             `section:"Kontakt" label:"Die folgenden Kontaktinformationen müssen bei der freien Registrierung abgefragt werden. Ein leeres Feld bedeutet, dass das bezeichnete Feld ausgeblendet wird. Ansonsten drückt ein regulärer Ausdruck die Validierung aus. ^.*$ steht für optional und ^.+$ für erforderlich. Um einen Wert aus einer festen Menge zu verwenden, kannst du einen Ausdruck wie ^(OptionA|OptionB)$ verwenden."`
+	Salutation        FieldConstraint `section:"Kontakt" label:"Anrede"`
 	Title             FieldConstraint `section:"Kontakt" label:"Titel"`
 	Position          FieldConstraint `section:"Kontakt" label:"Position"`
 	CompanyName       FieldConstraint `section:"Kontakt" label:"Unternehmen"`

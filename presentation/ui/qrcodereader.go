@@ -14,14 +14,15 @@ import (
 )
 
 type TQrCodeReader struct {
-	inputValue       *core.State[string]
-	mediaDevice      xmediadevice.MediaDevice
-	showTracker      bool
-	trackerColor     Color
-	trackerLineWidth int
-	activatedTorch   bool
-	onCameraReady    func()
-	frame            Frame
+	inputValue           *core.State[[]string]
+	mediaDevice          xmediadevice.MediaDevice
+	showTracker          bool
+	trackerColor         Color
+	trackerLineWidth     int
+	activatedTorch       bool
+	noMediaDeviceContent core.View
+	onCameraReady        func()
+	frame                Frame
 }
 
 func QrCodeReader(mediaDevice xmediadevice.MediaDevice) TQrCodeReader {
@@ -35,7 +36,7 @@ func QrCodeReader(mediaDevice xmediadevice.MediaDevice) TQrCodeReader {
 	}
 }
 
-func (c TQrCodeReader) InputValue(inputValue *core.State[string]) TQrCodeReader {
+func (c TQrCodeReader) InputValue(inputValue *core.State[[]string]) TQrCodeReader {
 	c.inputValue = inputValue
 	return c
 }
@@ -60,6 +61,11 @@ func (c TQrCodeReader) ActivatedTorch(activatedTorch bool) TQrCodeReader {
 	return c
 }
 
+func (c TQrCodeReader) NoMediaDeviceContent(noMediaDeviceContent core.View) TQrCodeReader {
+	c.noMediaDeviceContent = noMediaDeviceContent
+	return c
+}
+
 func (c TQrCodeReader) OnCameraReady(onCameraReady func()) TQrCodeReader {
 	c.onCameraReady = onCameraReady
 	return c
@@ -79,11 +85,12 @@ func (c TQrCodeReader) Render(ctx core.RenderContext) core.RenderNode {
 			Label:    proto.Str(c.mediaDevice.Label),
 			Kind:     proto.MediaDeviceKind(c.mediaDevice.Kind),
 		},
-		ShowTracker:      proto.Bool(c.showTracker),
-		TrackerColor:     proto.Color(c.trackerColor),
-		TrackerLineWidth: proto.Uint(c.trackerLineWidth),
-		ActivatedTorch:   proto.Bool(c.activatedTorch),
-		OnCameraReady:    ctx.MountCallback(c.onCameraReady),
-		Frame:            c.frame.ora(),
+		ShowTracker:          proto.Bool(c.showTracker),
+		TrackerColor:         proto.Color(c.trackerColor),
+		TrackerLineWidth:     proto.Uint(c.trackerLineWidth),
+		ActivatedTorch:       proto.Bool(c.activatedTorch),
+		NoMediaDeviceContent: render(ctx, c.noMediaDeviceContent),
+		OnCameraReady:        ctx.MountCallback(c.onCameraReady),
+		Frame:                c.frame.ora(),
 	}
 }

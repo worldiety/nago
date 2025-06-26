@@ -1,0 +1,20 @@
+{
+  "doc": "CallMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.",
+  "kind": "Record",
+  "id": 139,
+  "fields": {
+    "1": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    },
+    "2": {
+      "name": "WithAudio",
+      "type": "Bool"
+    },
+    "3": {
+      "name": "WithVideo",
+      "type": "Bool"
+    }
+  }
+}

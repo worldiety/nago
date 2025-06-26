@@ -160,6 +160,14 @@ func (s *State[T]) parse(v string) error {
 		}
 
 		s.Set(any(md).(T))
+	case []string:
+		var obj []string
+		err := json.Unmarshal([]byte(v), &obj)
+		if err != nil {
+			return err
+		}
+
+		s.Set(any(obj).(T))
 	case string:
 		s.Set(any(v).(T))
 
@@ -215,6 +223,12 @@ func (s *State[T]) Set(v T) {
 	s.Invalidate() // TODO set this once in the scope_window for better performance
 	s.value = v
 	s.valid = true
+}
+
+// Update sets and notifies the state. See also [State.Set] and [State.Notify].
+func (s *State[T]) Update(v T) {
+	s.Set(v)
+	s.Notify()
 }
 
 func (s *State[T]) addDestroyObserver(fn func()) {

@@ -1,0 +1,7 @@
+{
+  "doc": "RetVoid has no further fields and indicates that no more return arguments as a response are provided.",
+  "kind": "Record",
+  "id": 145,
+  "fields": {
+  }
+}

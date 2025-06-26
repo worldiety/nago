@@ -11,9 +11,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
@@ -47,7 +47,7 @@ type Scope struct {
 	app               *Application
 	id                proto.ScopeID
 	factories         map[proto.RootViewID]ComponentFactory
-	allocatedRootView std.Option[*scopeWindow]
+	allocatedRootView option.Opt[*scopeWindow]
 	lifetime          time.Duration
 	endOfLifeAt       atomic.Pointer[time.Time]
 	channel           concurrent.Value[Channel]

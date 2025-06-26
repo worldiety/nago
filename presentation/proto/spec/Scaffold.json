@@ -15,15 +15,20 @@
       "type": "ScaffoldMenuEntries"
     },
     "4": {
+      "name": "BottomView",
+      "doc": "A view displayed at the bottom of the burger menu or sidebar",
+      "type": "Component"
+    },
+    "5": {
       "name": "Alignment",
       "type": "ScaffoldAlignment"
     },
-    "5": {
+    "6": {
       "name": "Breakpoint",
       "doc": "Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.",
       "type": "Uint"
     },
-    "6": {
+    "7": {
       "name": "Footer",
       "type": "Component"
     }

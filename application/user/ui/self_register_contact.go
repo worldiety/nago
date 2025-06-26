@@ -19,6 +19,7 @@ func contact(
 	userSettings user.Settings,
 	firstname, errLastname *core.State[string],
 	lastname, errFirstname *core.State[string],
+	salutation, errSalutation *core.State[string],
 	title, errTitle *core.State[string],
 	position, errPosition *core.State[string],
 	companyName, errCompanyName *core.State[string],
@@ -32,6 +33,15 @@ func contact(
 	return ui.VStack(
 		ui.Space(ui.L48),
 		ui.Space(ui.L8), // -8 due to gap
+
+		ui.IfFunc(!userSettings.Salutation.Hidden(), func() core.View {
+			return ui.TextField("Anrede"+requiredChar(userSettings.Salutation), salutation.Get()).
+				ErrorText(errSalutation.Get()).
+				InputValue(salutation).
+				SupportingText(supportingTextSalutation()).
+				FullWidth()
+		}),
+
 		ui.IfFunc(!userSettings.Title.Hidden(), func() core.View {
 			return ui.TextField("Titel"+requiredChar(userSettings.Title), title.Get()).
 				ErrorText(errTitle.Get()).
@@ -118,6 +128,10 @@ func contact(
 	).FullWidth().Gap(ui.L8)
 }
 
+func supportingTextSalutation() string {
+	return xreflect.FieldTagFor[user.Settings]("Salutation", "supportingText")
+}
+
 func supportingTextTitle() string {
 	return xreflect.FieldTagFor[user.Settings]("Title", "supportingText")
 }
@@ -159,6 +173,7 @@ func validateContact(
 	firstname, errLastname *core.State[string],
 	lastname, errFirstname *core.State[string],
 	title, errTitle *core.State[string],
+	salutation, errSalutation *core.State[string],
 	position, errPosition *core.State[string],
 	companyName, errCompanyName *core.State[string],
 	cityName, errCityName *core.State[string],
@@ -170,6 +185,7 @@ func validateContact(
 ) bool {
 	errFirstname.Set("")
 	errLastname.Set("")
+	errSalutation.Set("")
 	errTitle.Set("")
 	errPosition.Set("")
 	errCompanyName.Set("")
@@ -199,6 +215,11 @@ func validateContact(
 	// other things
 	if !userSettings.Title.Match(title.Get()) {
 		errTitle.Set(xstrings.Space("Bitte den Titel eingeben.", supportingTextTitle()))
+		anyError = true
+	}
+
+	if !userSettings.Salutation.Match(salutation.Get()) {
+		errTitle.Set(xstrings.Space("Bitte die Anrede eingeben.", supportingTextSalutation()))
 		anyError = true
 	}
 

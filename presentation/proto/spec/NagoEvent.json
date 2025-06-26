@@ -26,6 +26,8 @@
     "SendMultipleRequested",
     "OpenHttpFlow",
     "OpenHttpLink",
-    "ClipboardWriteTextRequested"
+    "ClipboardWriteTextRequested",
+    "CallRequested",
+    "CallResolved"
   ]
 }

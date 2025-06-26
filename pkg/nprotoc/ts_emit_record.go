@@ -186,6 +186,7 @@ func (c *Compiler) tsEmitRecordWrite(t Typename, decl Record) error {
 			c.pn("// encode polymorphic enum as 1 element slice")
 			c.pf("writer.writeFieldHeader(Shapes.%s, %d);\n", strings.ToUpper(array.String()), fid)
 			c.pf("writer.writeByte(1);\n")
+			c.pf("this.%s.writeTypeHeader(writer);\n", tsFieldName(field.Name))
 		} else {
 			c.pf("writer.writeFieldHeader(Shapes.%s, %d);\n", strings.ToUpper(sh.String()), fid)
 		}

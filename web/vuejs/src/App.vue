@@ -17,6 +17,7 @@ import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.v
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import {
 	applyRootViewState,
+	callRequested,
 	clipboardWriteText,
 	getWindowInfo,
 	lastRID,
@@ -38,6 +39,7 @@ import {
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { ConnectionState } from '@/shared/network/connectionState';
 import {
+	CallRequested,
 	ClipboardWriteTextRequested,
 	Component,
 	ErrorRootViewAllocationRequired,
@@ -179,6 +181,11 @@ async function applyConfiguration(): Promise<void> {
 
 		if (evt instanceof ClipboardWriteTextRequested) {
 			clipboardWriteText(evt);
+			return;
+		}
+
+		if (evt instanceof CallRequested) {
+			callRequested(serviceAdapter, evt);
 			return;
 		}
 
