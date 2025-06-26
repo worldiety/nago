@@ -172,8 +172,8 @@ func validateContact(
 	userSettings user.Settings,
 	firstname, errLastname *core.State[string],
 	lastname, errFirstname *core.State[string],
-	title, errTitle *core.State[string],
 	salutation, errSalutation *core.State[string],
+	title, errTitle *core.State[string],
 	position, errPosition *core.State[string],
 	companyName, errCompanyName *core.State[string],
 	cityName, errCityName *core.State[string],
@@ -219,7 +219,7 @@ func validateContact(
 	}
 
 	if !userSettings.Salutation.Match(salutation.Get()) {
-		errTitle.Set(xstrings.Space("Bitte die Anrede eingeben.", supportingTextSalutation()))
+		errSalutation.Set(xstrings.Space("Bitte die Anrede eingeben.", supportingTextSalutation()))
 		anyError = true
 	}
 
