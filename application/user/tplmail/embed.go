@@ -22,5 +22,5 @@ const (
 	ResetPasswordSubject template.DefinedTemplateName = "ResetPasswordSubject"
 )
 
-//go:embed *
+//go:embed *.gohtml
 var Files embed.FS
