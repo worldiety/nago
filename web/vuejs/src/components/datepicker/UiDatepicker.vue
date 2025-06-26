@@ -24,6 +24,7 @@
 			:selected-end-year="selectedEndYear"
 			:selected-end-month="selectedEndMonth"
 			:selected-end-day="selectedEndDay"
+			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
 			@show-datepicker="showDatepicker"
 		/>
 
