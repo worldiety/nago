@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
@@ -24,7 +25,7 @@ import (
 	"strings"
 )
 
-func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, ucImp dataimport.UseCases, pageIdx *core.State[int], page dataimport.FilterEntriesPage) core.View {
+func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, ucImp dataimport.UseCases, pageIdx *core.State[int], page data.Page[dataimport.Entry]) core.View {
 
 	var statusWidth ui.Length
 	var columns int
@@ -81,7 +82,7 @@ func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, 
 			).FullWidth(),
 		).
 			Append(
-				ui.ForEach(page.Entries, func(e dataimport.Entry) core.View {
+				ui.ForEach(page.Items, func(e dataimport.Entry) core.View {
 					var values []string
 
 				NextMapping:
@@ -157,7 +158,7 @@ func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, 
 		ui.Space(ui.L8),
 
 		ui.HStack(
-			ui.Text(fmt.Sprintf("%d-%d von %d Einträgen", page.Page*page.PageSize+1, min(page.Page*page.PageSize+page.PageSize, int(page.Count)), page.Count)),
+			ui.Text(fmt.Sprintf("%d-%d von %d Einträgen", page.PageIdx*page.PageSize+1, min(page.PageIdx*page.PageSize+page.PageSize, int(page.Total)), page.Total)),
 			ui.Spacer(),
 			pager.Pager(pageIdx).Count(page.PageCount),
 		).
