@@ -10,31 +10,27 @@
 <template>
 	<div v-if="!ui.invisible" class="relative" :style="frameStyles">
 		<!-- Input field -->
-		<InputWrapper
-			:label="props.ui.label"
-			:error="props.ui.errorText"
-			:hint="props.ui.supportingText"
-			:disabled="props.ui.disabled"
-		>
-			<div
-				class="input-field relative z-0 !pr-10"
-				tabindex="0"
-				@click="showDatepicker"
-				@keydown.enter="showDatepicker"
-			>
-				<p :class="{ 'text-placeholder-text': !dateFormatted }">
-					{{ dateFormatted ?? $t('datepicker.select') }}
-				</p>
-				<div class="absolute top-0 bottom-0 right-4 flex items-center pointer-events-none h-full">
-					<Calendar class="w-4" />
-				</div>
-			</div>
-		</InputWrapper>
+		<DatepickerInput
+			:value="ui.value"
+			:label="ui.label"
+			:error-text="ui.errorText"
+			:supporting-text="ui.supportingText"
+			:disabled="ui.disabled"
+			:datepicker-style="ui.style"
+			:datepicker-expanded="expanded"
+			:selected-start-year="selectedStartYear"
+			:selected-start-month="selectedStartMonth"
+			:selected-start-day="selectedStartDay"
+			:selected-end-year="selectedEndYear"
+			:selected-end-month="selectedEndMonth"
+			:selected-end-day="selectedEndDay"
+			@show-datepicker="showDatepicker"
+		/>
 
 		<DatepickerOverlay
-			:expanded="expanded"
-			:range-mode="props.ui.style === DatePickerStyleValues.DatePickerDateRange"
-			:label="props.ui.label"
+			:datepicker-expanded="expanded"
+			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
+			:label="ui.label"
 			:selected-start-day="selectedStartDay"
 			:selected-start-month="selectedStartMonth"
 			:selected-start-year="selectedStartYear"
@@ -52,10 +48,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import Calendar from '@/assets/svg/calendar.svg';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
-import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
@@ -66,6 +60,7 @@ import {
 	UpdateStateValueRequested,
 	UpdateStateValues2Requested,
 } from '@/shared/proto/nprotoc_gen';
+import DatepickerInput from '@/components/datepicker/DatepickerInput.vue';
 
 const props = defineProps<{
 	ui: DatePicker;
@@ -85,26 +80,6 @@ onMounted(initialize);
 
 const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.frame).join(';');
-});
-
-const dateFormatted = computed((): string | null => {
-	if (!props.ui.value) {
-		return null;
-	}
-
-	if (!props.ui.value.year) {
-		return null;
-	}
-
-	const startDate = new Date();
-	startDate.setFullYear(selectedStartYear.value, selectedStartMonth.value - 1, selectedStartDay.value);
-	if (props.ui.style !== DatePickerStyleValues.DatePickerDateRange) {
-		//console.log("bugs!!",startDate.toLocaleDateString())
-		return startDate.toLocaleDateString();
-	}
-	const endDate = new Date();
-	endDate.setFullYear(selectedEndYear.value, selectedEndMonth.value - 1, selectedEndDay.value);
-	return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 });
 
 watch(() => props.ui, initialize);
