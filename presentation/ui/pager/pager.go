@@ -17,6 +17,7 @@ import (
 type TPager struct {
 	count int
 	page  *core.State[int]
+	frame ui.Frame
 }
 
 // Pager creates a new Page with the given state.
@@ -33,13 +34,18 @@ func (c TPager) Count(count int) TPager {
 	return c
 }
 
+func (c TPager) Frame(frame ui.Frame) TPager {
+	c.frame = frame
+	return c
+}
+
 func (c TPager) Render(ctx core.RenderContext) core.RenderNode {
 	if c.count <= 1 {
 		return ui.HStack(
 			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronLeft).Enabled(false),
 			ui.Text("1 von 1"),
 			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronRight).Enabled(false),
-		).FullWidth().Gap(ui.L16).Render(ctx)
+		).Gap(ui.L16).Frame(c.frame).Render(ctx)
 	}
 
 	return ui.HStack(
@@ -52,5 +58,5 @@ func (c TPager) Render(ctx core.RenderContext) core.RenderNode {
 			c.page.Set(c.page.Get() + 1)
 			c.page.Notify()
 		}).PreIcon(flowbiteOutline.ChevronRight).Enabled(c.page.Get() < c.count-1),
-	).Gap(ui.L8).FullWidth().Render(ctx)
+	).Gap(ui.L8).Frame(c.frame).Render(ctx)
 }

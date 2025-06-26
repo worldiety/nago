@@ -8,6 +8,7 @@
 package uidataimport
 
 import (
+	"fmt"
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
@@ -155,7 +156,11 @@ func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, 
 
 		ui.Space(ui.L8),
 
-		ui.HStack(pager.Pager(pageIdx).Count(page.PageCount)).
+		ui.HStack(
+			ui.Text(fmt.Sprintf("%d-%d von %d Einträgen", page.Page*page.PageSize+1, min(page.Page*page.PageSize+page.PageSize, int(page.Count)), page.Count)),
+			ui.Spacer(),
+			pager.Pager(pageIdx).Count(page.PageCount),
+		).
 			FullWidth().
 			BackgroundColor(ui.ColorCardFooter).
 			Padding(ui.Padding{}.All(ui.L8)).
@@ -173,7 +178,7 @@ func statusGrid(wnd core.Window, e dataimport.Entry, statusWidth ui.Length, last
 		columns = 3
 		widths = []ui.Length{"1fr", "1fr", ui.L64}
 	}
-	
+
 	if e.ImportedError != "" {
 		return ui.HStack(
 			statusView(e),

@@ -42,9 +42,9 @@ func NewFilterEntries(repoEntries EntryRepository) FilterEntries {
 			return page, nil
 		}
 
-		offsetStart := min(opts.Page*opts.PageSize, len(idents)-1)
-		offsetEnd := min(offsetStart+opts.PageSize, len(idents)-1)
-		idents = idents[offsetStart : offsetEnd+1]
+		offsetStart := min(opts.Page*opts.PageSize, len(idents))
+		offsetEnd := min(offsetStart+opts.PageSize, len(idents))
+		idents = idents[offsetStart:offsetEnd]
 
 		entries := make([]Entry, 0, len(idents))
 		for _, ident := range idents {
