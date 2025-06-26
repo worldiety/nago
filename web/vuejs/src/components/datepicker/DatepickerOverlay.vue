@@ -9,7 +9,7 @@
 
 <template>
 	<div
-		v-if="expanded"
+		v-if="datepickerExpanded"
 		ref="datepicker"
 		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30"
 		@keydown.tab.exact="moveFocusForward"
@@ -145,7 +145,7 @@ import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState
 import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
-	expanded: boolean;
+	datepickerExpanded: boolean;
 	rangeMode: boolean;
 	label?: string;
 	selectedStartDay: number;
@@ -176,7 +176,7 @@ const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
 
 watch(
-	() => props.expanded,
+	() => props.datepickerExpanded,
 	(newValue) => {
 		if (newValue) {
 			nextTick(() => datepickerHeader.value?.closeButton?.focus());
