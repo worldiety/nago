@@ -18,6 +18,6 @@ func NewFilterEntries(repoEntries EntryRepository) FilterEntries {
 			return data.Page[Entry]{}, err
 		}
 
-		return data.Paginate(repoEntries, repoEntries.IdentifiersByPrefix(Key(string(stage)+"/")), opts)
+		return data.Paginate(repoEntries.FindByID, repoEntries.IdentifiersByPrefix(Key(string(stage)+"/")), opts)
 	}
 }

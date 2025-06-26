@@ -34,15 +34,16 @@ type Page[E any] struct {
 	PageSize  int
 	PageCount int
 	// Total is the number of all available entries.
-	Total int64
+	Total int
 }
 
 // Paginate requires the read repository which is used to resolve the items on a page.
 // Technically, if no MaxResults is given, all identifiers are loaded into memory to calculate the actual paging.
-// Afterward, just the items for the required page are loaded from the repository.
-func Paginate[E Aggregate[ID], ID IDType](repo ByIDFinder[E, ID], it iter.Seq2[ID, error], opts PaginateOptions) (Page[E], error) {
+// Afterward, just the items for the required page are loaded from the repository. See also [Filter] to combine
+// a paging based on an ID or Aggregate Filter.
+func Paginate[E Aggregate[ID], ID IDType](findByID ByIDFinder[E, ID], it iter.Seq2[ID, error], opts PaginateOptions) (Page[E], error) {
 	if opts.PageSize < 1 {
-		opts.PageSize = 10
+		opts.PageSize = 50
 	}
 
 	if opts.PageIdx < 0 {
@@ -72,7 +73,7 @@ func Paginate[E Aggregate[ID], ID IDType](repo ByIDFinder[E, ID], it iter.Seq2[I
 	var page Page[E]
 	page.PageCount = int(math.Ceil(float64(len(idents)) / float64(opts.PageSize)))
 	page.PageIdx = opts.PageIdx
-	page.Total = int64(len(idents))
+	page.Total = len(idents)
 	page.PageSize = opts.PageSize
 
 	if len(idents) == 0 {
@@ -85,7 +86,7 @@ func Paginate[E Aggregate[ID], ID IDType](repo ByIDFinder[E, ID], it iter.Seq2[I
 
 	entries := make([]E, 0, len(idents))
 	for _, ident := range idents {
-		optEnt, err := repo.FindByID(ident)
+		optEnt, err := findByID(ident)
 		if err != nil {
 			if opts.IgnoreErrors {
 				slog.Error("failed to paginate: cannot find entry", "err", err.Error())
