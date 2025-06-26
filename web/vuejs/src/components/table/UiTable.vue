@@ -284,7 +284,7 @@ function onRowMouseLeave(rowIdx: number) {
 </script>
 
 <template>
-	<table class="w-full text-left rtl:text-right overflow-clip" :style="frameStyles">
+	<table class="w-full text-left rtl:text-right overflow-clip break-all md:break-normal whitespace-normal sm:whitespace-nowrap" :style="frameStyles">
 		<thead v-if="props.ui.header?.columns?.value?.length > 0" class="" :style="headStyles()">
 			<tr>
 				<th
