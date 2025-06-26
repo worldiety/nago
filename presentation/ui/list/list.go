@@ -100,6 +100,11 @@ func (c TList) Frame(frame ui.Frame) TList {
 	return c
 }
 
+func (c TList) FullWidth() TList {
+	c.frame.Width = ui.Full
+	return c
+}
+
 func (c TList) Footer(s core.View) TList {
 	c.footer = s
 	return c

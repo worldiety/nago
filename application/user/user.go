@@ -267,3 +267,7 @@ func (u User) Enabled() bool {
 
 	return enabled
 }
+
+func (u User) RequiresVerification() bool {
+	return u.RequirePasswordChange || !u.PasswordRequestCode.IsZero() || !u.VerificationCode.IsZero() || len(u.PasswordHash) == 0
+}

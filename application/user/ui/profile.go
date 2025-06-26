@@ -49,7 +49,7 @@ func ProfilePage(
 		passwordChangeDialog(wnd, changeMyPassword, presentPasswordChange),
 		ui.H1("Mein Profil"),
 		profileCard(wnd, pages, contact, findMyRoles),
-		actionCard(wnd, presentPasswordChange, findUserByID, consent),
+		actionCard(wnd, presentPasswordChange, wnd.Subject().ID(), findUserByID, consent),
 	).Gap(ui.L20).
 		Alignment(ui.Leading).
 		Frame(ui.Frame{Width: ui.L560, MaxWidth: "100%"})
@@ -139,10 +139,10 @@ func passwordChangeDialog(wnd core.Window, changeMyPassword user.ChangeMyPasswor
 		))
 }
 
-func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUserByID user.FindByID, consentFn user.Consent) core.View {
+func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], uid user.ID, findUserByID user.FindByID, consentFn user.Consent) core.View {
 	cfgUsers := core.GlobalSettings[user.Settings](wnd)
 
-	optUsr, err := findUserByID(wnd.Subject(), wnd.Subject().ID())
+	optUsr, err := findUserByID(wnd.Subject(), uid)
 	if err != nil {
 		alert.ShowBannerError(wnd, err)
 	}
@@ -174,7 +174,7 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUs
 				Status:   status,
 			}
 
-			if err := consentFn(wnd.Subject(), wnd.Subject().ID(), consentOption.ID, action); err != nil {
+			if err := consentFn(wnd.Subject(), uid, consentOption.ID, action); err != nil {
 				alert.ShowBannerError(wnd, err)
 				return
 			}
@@ -186,13 +186,16 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], findUs
 			Trailing(ui.Toggle(acceptedState.Get()).InputChecked(acceptedState)))
 	}
 
-	actionItems = append(actionItems, list.Entry().
-		Headline("Passwort ändern").
-		Action(func() {
-			presentPasswordChange.Set(true)
-		}).
-		Frame(ui.Frame{Height: ui.L48}.FullWidth()).
-		Trailing(ui.ImageIcon(heroSolid.ChevronRight)))
+	if presentPasswordChange != nil {
+
+		actionItems = append(actionItems, list.Entry().
+			Headline("Passwort ändern").
+			Action(func() {
+				presentPasswordChange.Set(true)
+			}).
+			Frame(ui.Frame{Height: ui.L48}.FullWidth()).
+			Trailing(ui.ImageIcon(heroSolid.ChevronRight)))
+	}
 
 	return list.List(actionItems...).Frame(ui.Frame{}.FullWidth())
 }

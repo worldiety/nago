@@ -34,6 +34,7 @@ type Pages struct {
 	Register      core.NavigationPath
 }
 
+// deprecated
 func Users(
 	wnd core.Window,
 	deleteUser user.Delete,
@@ -210,16 +211,6 @@ func Users(
 
 	return crud.View[user.User](opts).Frame(ui.Frame{}.FullWidth())
 
-}
-
-type createUserModel struct {
-	Firstname string
-	Lastname  string
-	EMail     string
-	Password1 string
-	Password2 string
-	Notify    bool
-	Verified  bool
 }
 
 func (createUserModel) Identity() string {

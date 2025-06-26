@@ -189,7 +189,11 @@ const (
 	// L560 relates to about 560dp at default font scale.
 	L560 Length = "35rem"
 	// L880 relates to about 880dp at default font scale.
-	L880 Length = "50rem"
+	L880 Length = "55rem"
+	// L1200 relates to about 1200dp at default font scale.
+	L1200 Length = "75rem"
+	// L1600 relates to about 1600dp at default font scale.
+	L1600 Length = "100rem"
 )
 
 const Auto = ""

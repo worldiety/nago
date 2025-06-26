@@ -77,6 +77,28 @@ func (c contactViewModel) Identity() string {
 	return "self"
 }
 
+func (c contactViewModel) IntoContact(wnd core.Window) user.Contact {
+	return user.Contact{
+		Avatar:            c.Avatar,
+		Title:             c.Title,
+		Salutation:        c.Salutation,
+		Firstname:         c.Firstname,
+		Lastname:          c.Lastname,
+		Phone:             c.Phone,
+		MobilePhone:       c.MobilePhone,
+		Country:           c.Country,
+		City:              c.City,
+		PostalCode:        c.PostalCode,
+		LinkedIn:          c.LinkedIn,
+		Website:           c.Website,
+		Position:          c.Position,
+		ProfessionalGroup: c.ProfessionalGroup,
+		CompanyName:       c.CompanyName,
+		DisplayLanguage:   wnd.Locale().String(),
+		AboutMe:           c.AboutMe,
+	}
+}
+
 func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyContact, readMyContact user.ReadMyContact) core.View {
 	uc := rcrud.UseCasesFrom[contactViewModel, string](&rcrud.Funcs[contactViewModel, string]{})
 
@@ -102,25 +124,7 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 				}).Title("Abbrechen"),
 				ui.PrimaryButton(func() {
 					c := state.Get()
-					err := changeMyContact(wnd.Subject(), user.Contact{
-						Avatar:            c.Avatar,
-						Title:             c.Title,
-						Salutation:        c.Salutation,
-						Firstname:         c.Firstname,
-						Lastname:          c.Lastname,
-						Phone:             c.Phone,
-						MobilePhone:       c.MobilePhone,
-						Country:           c.Country,
-						City:              c.City,
-						PostalCode:        c.PostalCode,
-						LinkedIn:          c.LinkedIn,
-						Website:           c.Website,
-						Position:          c.Position,
-						ProfessionalGroup: c.ProfessionalGroup,
-						CompanyName:       c.CompanyName,
-						DisplayLanguage:   wnd.Locale().String(),
-						AboutMe:           c.AboutMe,
-					})
+					err := changeMyContact(wnd.Subject(), c.IntoContact(wnd))
 
 					if err != nil {
 						alert.ShowBannerError(wnd, err)

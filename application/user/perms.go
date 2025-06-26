@@ -35,4 +35,6 @@ var (
 	PermGrantPermissions       = permission.Declare[GrantPermissions]("nago.grant.grant", "Grant permissions to others", "A user with that permission assigned can grant permissions to other users.")
 	PermListGrantedUsers       = permission.Declare[ListGrantedUsers]("nago.grant.listgranted", "List granted users for resource", "A user with that permission assigned can list other users which have granted permissions on a specific resource.")
 	PermListGrantedPermissions = permission.Declare[ListGrantedPermissions]("nago.grant.listgrants", "List permissions for a users resource", "A user with that permission assigned can list granted permissions for specific user and resource.")
+
+	PermConsent = permission.Declare[Consent]("nago.user.consent_other", "Zustimmungen anderer Nutzer setzen", "Träger dieser Berechtigung können die Datenschutz, Nutzungsbedingungen oder sonstige Erlaubnisse in deren Namen zustimmen.")
 )
