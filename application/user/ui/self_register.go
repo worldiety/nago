@@ -36,6 +36,9 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	lastname := core.AutoState[string](wnd)
 	errLastname := core.AutoState[string](wnd)
 
+	salutation := core.AutoState[string](wnd)
+	errSalutation := core.AutoState[string](wnd)
+
 	title := core.AutoState[string](wnd)
 	errTitle := core.AutoState[string](wnd)
 
@@ -95,6 +98,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 			userSettings,
 			firstname, errFirstname,
 			lastname, errLastname,
+			salutation, errSalutation,
 			title, errTitle,
 			position, errPosition,
 			companyName, errCompanyName,
@@ -189,6 +193,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							firstname, errFirstname,
 							lastname, errLastname,
 							title, errTitle,
+							salutation, errSalutation,
 							position, errPosition,
 							companyName, errCompanyName,
 							city, errCity,
@@ -243,6 +248,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 							NotifyUser:        true,
 							Verified:          false, // important, keep it always false
 							Consents:          myConsents,
+							Salutation:        salutation.Get(),
 							Title:             title.Get(),
 							Position:          position.Get(),
 							CompanyName:       companyName.Get(),

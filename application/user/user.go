@@ -95,6 +95,7 @@ type ShortRegistrationUser struct {
 
 	Consents []consent.Consent
 	// additional optional contact data
+	Salutation        string
 	Title             string
 	Position          string
 	CompanyName       string
