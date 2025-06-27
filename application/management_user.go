@@ -168,20 +168,14 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 					return billing.UserLicenseStatistics{}, nil
 				}
 			}
-			return uiuser.Users(wnd,
-				c.userManagement.UseCases.Delete,
-				c.userManagement.UseCases.FindAll,
-				c.userManagement.UseCases.Create,
-				c.userManagement.UseCases.UpdateOtherContact,
-				c.userManagement.UseCases.UpdateOtherGroups,
-				c.userManagement.UseCases.UpdateOtherRoles,
-				c.userManagement.UseCases.UpdateOtherPermissions,
-				c.userManagement.UseCases.UpdateOtherLicenses,
-				roleUseCases.UseCases.FindAll,
-				permissions.UseCases.FindAll,
-				groups.UseCases.FindAll,
-				c.userManagement.UseCases.SubjectFromUser,
-				ucBillingUserLicense,
+
+			_ = ucBillingUserLicense
+			_ = permissions
+			return uiuser.PageUsers(wnd,
+				c.userManagement.UseCases,
+				groups.UseCases,
+				roleUseCases.UseCases,
+				permissions.UseCases,
 			)
 		})
 

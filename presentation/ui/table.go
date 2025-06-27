@@ -207,8 +207,9 @@ func (c TTable) HeaderDividerColor(color Color) TTable {
 	return c
 }
 
+// Rows appends the given arguments to the internal slice of rows.
 func (c TTable) Rows(rows ...TTableRow) TTable {
-	c.rows = rows
+	c.rows = append(c.rows, rows...)
 	return c
 }
 

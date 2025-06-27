@@ -30,6 +30,7 @@ type alertOpts struct {
 	preBody      core.View
 	minWidth     ui.Length
 	width        ui.Length
+	height       ui.Length
 }
 
 type optFunc func(opts *alertOpts)
@@ -112,6 +113,24 @@ func Larger() Option {
 	return Width(ui.L880)
 }
 
+func XLarge() Option {
+	return Width(ui.L1200)
+}
+
+func XXLarge() Option {
+	return Width(ui.L1600)
+}
+
+func FullHeight() Option {
+	return Height(ui.Full)
+}
+
+func Height(h ui.Length) Option {
+	return optFunc(func(opts *alertOpts) {
+		opts.height = h
+	})
+}
+
 // Custom adds a custom footer (button) element.
 func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	return optFunc(func(opts *alertOpts) {
@@ -176,9 +195,15 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 		opt.apply(&options)
 	}
 
+	var fixHeight ui.Length
+	if options.height == ui.Full {
+		fixHeight = ui.ViewportHeight
+	}
+
 	return ui.Modal(
 		//Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())
-		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{}.FullWidth())).
+
+		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{Height: fixHeight}.FullWidth())).
 			Title(ui.If(title != "", ui.Text(title))), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			// we do this to keep sensible order
@@ -213,6 +238,10 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 
 				if options.width != "" {
 					frame.Width = options.width
+				}
+
+				if options.height != "" {
+					frame.Height = options.height
 				}
 
 				return frame

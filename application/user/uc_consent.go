@@ -22,9 +22,9 @@ func NewConsent(mutex *sync.Mutex, bus events.Bus, usersRepo Repository) Consent
 
 		self := subject.ID() == uid
 		if !self {
-			// it is not allowed - even for admins - to enable this, because at any time we may get sued
-			// badly for any small error. Thus, just be sure to not technically allow that at all.
-			return PermissionDeniedErr
+			if err := subject.Audit(PermConsent); err != nil {
+				return err
+			}
 		}
 
 		optUsr, err := usersRepo.FindByID(uid)

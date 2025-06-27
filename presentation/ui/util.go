@@ -95,8 +95,8 @@ func Each[T any, V any](seq iter.Seq[T], m func(T) V, more ...V) []V {
 	return res
 }
 
-func Each2[K, V any](seq iter.Seq2[K, V], m func(K, V) core.View) []core.View {
-	var res []core.View
+func Each2[K, V any, X any](seq iter.Seq2[K, V], m func(K, V) X) []X {
+	var res []X
 	seq(func(k K, v V) bool {
 		res = append(res, m(k, v))
 		return true
