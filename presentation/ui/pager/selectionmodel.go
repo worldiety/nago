@@ -177,3 +177,17 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 func (m Model[E, ID]) PageString() string {
 	return fmt.Sprintf("%d-%d von %d Einträgen", m.Page.PageIdx*m.Page.PageSize+1, m.Page.PageIdx*m.Page.PageSize+m.Page.PageSize, m.Page.Total)
 }
+
+// Selected allocates and returns a slice of all those ids which are currently selected. The IDs are sorted in
+// their stable natural order.
+func (m Model[E, ID]) Selected() []ID {
+	tmp := make([]ID, 0, len(m.Selections))
+	for id, state := range m.Selections {
+		if state.Get() {
+			tmp = append(tmp, id)
+		}
+	}
+
+	slices.Sort(tmp)
+	return tmp
+}

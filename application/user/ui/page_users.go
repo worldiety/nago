@@ -43,6 +43,7 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 		return alert.BannerError(err)
 	}
 
+	batchEtcPresented := core.AutoState[bool](wnd)
 	editUserPresented := core.AutoState[bool](wnd)
 	createUserPresented := core.AutoState[bool](wnd)
 	selectedUser := core.AutoState[user.User](wnd)
@@ -54,6 +55,14 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 
 	return ui.VStack(
 		ui.H1("Nutzerkonten"),
+		func() core.View {
+			if !batchEtcPresented.Get() {
+				return nil
+			}
+			
+			idents := model.Selected()
+			return dialogEtcBatch(wnd, ucUsers, batchEtcPresented, idents)
+		}(),
 		dlgEditUser(wnd, ucUsers, ucGroups, ucRoles, ucPermissions, editUserPresented, selectedUser),
 		dlgCreateUserModel(wnd, ucUsers, createUserPresented),
 		ui.HStack(
@@ -62,7 +71,7 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 				model.UnselectAll()
 			}).Title(fmt.Sprintf("%d ausgewählt", model.SelectionCount)).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
 			ui.SecondaryButton(func() {
-
+				batchEtcPresented.Set(true)
 			}).Title("Optionen").PreIcon(icons.Grid).Enabled(model.SelectionCount > 0),
 			ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40}),
 			ui.PrimaryButton(func() {

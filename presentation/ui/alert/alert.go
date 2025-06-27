@@ -68,6 +68,10 @@ func Apply(onSave func() (close bool)) Option {
 	return save("Übernehmen", onSave)
 }
 
+func Close(onSave func() (close bool)) Option {
+	return save("Schließen", onSave)
+}
+
 func Confirm(onSave func() (close bool)) Option {
 	return save("Bestätigen", onSave)
 }

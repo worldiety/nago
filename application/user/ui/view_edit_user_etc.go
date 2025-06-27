@@ -21,36 +21,22 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 
 	return ui.VStack(
 		ui.Text("Die Änderungen und Aktionen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),
-		etcAction(
-			wnd,
-			"Nutzer über Konto benachrichtigen",
-			"Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten.",
-			"",
-			"Nutzer benachrichtigen",
-			func() {
-				bus := wnd.Application().EventBus()
-				user.PublishUserCreated(bus, usr.Get(), true)
-				alert.ShowBannerMessage(wnd, alert.Message{
-					Title:    "Nutzer erstellt",
-					Message:  "Ereignis für " + usr.String() + " erstellt.",
-					Intent:   alert.IntentOk,
-					Duration: time.Second * 2,
-				})
-			},
-		),
+		etcActionNotifyUser(wnd, func() {
+			bus := wnd.Application().EventBus()
+			user.PublishUserCreated(bus, usr.Get(), true)
+			alert.ShowBannerMessage(wnd, alert.Message{
+				Title:    "Nutzer erstellt",
+				Message:  "Ereignis für " + usr.String() + " erstellt.",
+				Intent:   alert.IntentOk,
+				Duration: time.Second * 2,
+			})
+		}),
 
-		etcAction(
-			wnd,
-			"Nutzer löschen",
-			"Den Nutzer aus dem System unwiderruflich entfernen. Einige mit dem Nutzer verbundene Ressourcen oder getrennt gespeicherte personenbezogenen Daten bleiben möglicherweise weiterhin im System erhalten.",
-			"Den Nutzer wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.",
-			"Nutzer löschen",
-			func() {
-				if err := ucUsers.Delete(wnd.Subject(), usr.Get().ID); err != nil {
-					alert.ShowBannerError(wnd, err)
-				}
-			},
-		),
+		etcActionDeleteUser(wnd, func() {
+			if err := ucUsers.Delete(wnd.Subject(), usr.Get().ID); err != nil {
+				alert.ShowBannerError(wnd, err)
+			}
+		}),
 
 		ui.If(usr.Get().Enabled(),
 			etcAction(
@@ -130,6 +116,28 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 			},
 		),
 	).FullWidth().Gap(ui.L32)
+}
+
+func etcActionDeleteUser(wnd core.Window, action func()) core.View {
+	return etcAction(
+		wnd,
+		"Nutzer löschen",
+		"Den Nutzer aus dem System unwiderruflich entfernen. Einige mit dem Nutzer verbundene Ressourcen oder getrennt gespeicherte personenbezogenen Daten bleiben möglicherweise weiterhin im System erhalten.",
+		"Den Nutzer wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.",
+		"Nutzer löschen",
+		action,
+	)
+}
+
+func etcActionNotifyUser(wnd core.Window, action func()) core.View {
+	return etcAction(
+		wnd,
+		"Nutzer über Konto benachrichtigen",
+		"Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten.",
+		"",
+		"Nutzer benachrichtigen",
+		action,
+	)
 }
 
 func etcAction(wnd core.Window, title, text, confirmText, actionText string, action func()) core.View {
