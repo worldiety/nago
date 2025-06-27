@@ -34,15 +34,21 @@ func (k MediaDeviceKind) String() string {
 
 type MediaDeviceID string
 
+type MediaDeviceGroupID string
+
 type MediaDevice struct {
 	id      MediaDeviceID
-	groupID string
+	groupID MediaDeviceGroupID
 	label   string
 	kind    MediaDeviceKind
 }
 
 func (m MediaDevice) ID() MediaDeviceID {
 	return m.id
+}
+
+func (m MediaDevice) GroupID() MediaDeviceGroupID {
+	return m.groupID
 }
 
 func (m MediaDevice) Label() string {
@@ -72,13 +78,18 @@ func (m MediaDevices) List(opts MediaDeviceListOptions) *async.Future[[]MediaDev
 			for _, device := range ret.Devices {
 				tmp = append(tmp, MediaDevice{
 					id:      MediaDeviceID(device.DeviceID),
-					groupID: string(device.GroupID),
+					groupID: MediaDeviceGroupID(device.GroupID),
 					label:   string(device.Label),
 					kind:    MediaDeviceKind(device.Kind),
 				})
 			}
 
 			fut.Set(tmp, nil)
+		case *proto.RetMediaDevicesPermissionsError:
+			fut.Set(nil, newAsyncError(&proto.RetError{
+				Code:    ret.Code,
+				Message: ret.Message,
+			}))
 		case *proto.RetError:
 			fut.Set(nil, newAsyncError(ret))
 		}

@@ -5,7 +5,7 @@
   "fields": {
     "1": {
       "name": "Devices",
-      "type": "MediaDevices2"
+      "type": "MediaDevices"
     }
   }
 }
