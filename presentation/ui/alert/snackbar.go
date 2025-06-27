@@ -19,6 +19,7 @@ import (
 	"log/slog"
 	"os"
 	"slices"
+	"time"
 )
 
 type Intent int
@@ -29,9 +30,10 @@ const (
 )
 
 type Message struct {
-	Title   string
-	Message string
-	Intent  Intent
+	Title    string
+	Message  string
+	Intent   Intent
+	Duration time.Duration
 }
 
 // BannerMessages may return nil, if no information needs to be displayed. Otherwise, it appends to
@@ -61,6 +63,7 @@ func BannerMessages(wnd core.Window) core.View {
 					return Banner(t.Title, t.Message).
 						Intent(t.Intent).
 						Closeable(presented).
+						AutoCloseTimeoutOrDefault(t.Duration).
 						OnClosed(func() {
 							messages.Set(slices.DeleteFunc(messages.Get(), func(message Message) bool {
 								return message == t

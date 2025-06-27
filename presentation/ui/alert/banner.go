@@ -15,20 +15,32 @@ import (
 )
 
 type TBanner struct {
-	title     string
-	message   string
-	presented *core.State[bool]
-	onClosed  func()
-	intent    Intent
-	frame     ui.Frame
+	title            string
+	message          string
+	presented        *core.State[bool]
+	onClosed         func()
+	intent           Intent
+	frame            ui.Frame
+	autoCloseTimeout time.Duration
 }
 
 func Banner(title, message string) TBanner {
 	return TBanner{
-		title:   title,
-		message: message,
-		frame:   ui.Frame{Width: ui.L400, MaxWidth: "calc(100% - 2rem)"},
+		title:            title,
+		message:          message,
+		frame:            ui.Frame{Width: ui.L400, MaxWidth: "calc(100% - 2rem)"},
+		autoCloseTimeout: 5 * time.Second,
 	}
+}
+
+// AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds.
+func (t TBanner) AutoCloseTimeoutOrDefault(d time.Duration) TBanner {
+	if d <= 0 {
+		d = time.Second * 5
+	}
+
+	t.autoCloseTimeout = d
+	return t
 }
 
 func (t TBanner) Frame(frame ui.Frame) TBanner {
@@ -97,7 +109,7 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Text(t.message).Color(textColor),
 		ui.IfFunc(t.intent == IntentOk && t.presented != nil, func() core.View {
 			targetTime := core.DerivedState[time.Time](t.presented, "ctt").Init(func() time.Time {
-				return time.Now().Add(time.Second * 5)
+				return time.Now().Add(t.autoCloseTimeout)
 			})
 
 			// TODO something is fishy here
