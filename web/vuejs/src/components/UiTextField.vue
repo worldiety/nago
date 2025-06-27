@@ -142,7 +142,9 @@ watch(
 function handleKeydownEnter(event: Event) {
 	if (props.ui.keydownEnter) {
 		event.stopPropagation();
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), inputValue.value))
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), inputValue.value)
+		);
 	}
 }
 
