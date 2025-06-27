@@ -9,11 +9,11 @@
 
 /* Custom scrollbar styling: https://css-tricks.com/the-current-state-of-styling-scrollbars-in-css/ */
 .overflow-y-auto {
-	scrollbar-color: theme('colors.I0') transparent;
+	scrollbar-color: theme('colors.M7') transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-	@apply bg-I1 rounded-full;
+	@apply bg-M7 rounded-full;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
@@ -21,15 +21,15 @@
 }
 
 .overflow-y-auto::-webkit-scrollbar {
-	width: 8px;
+	width: 0.38rem;
 }
 
 .overflow-x-auto {
-	scrollbar-color: theme('colors.I0') transparent;
+	scrollbar-color: theme('colors.M7') transparent;
 }
 
 .overflow-x-auto::-webkit-scrollbar-thumb {
-	@apply bg-I1 rounded-full;
+	@apply bg-M7 rounded-full;
 }
 
 .overflow-x-auto::-webkit-scrollbar-track {
@@ -37,5 +37,5 @@
 }
 
 .overflow-x-auto::-webkit-scrollbar {
-	height: 8px;
+	height: 0.38rem;
 }

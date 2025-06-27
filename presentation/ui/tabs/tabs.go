@@ -85,7 +85,7 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 						}
 					}).Title(p.title).PreIcon(p.icon).Preset(style).Enabled(c.idx != nil && !p.disabled)
 				})...,
-			).FullWidth().Alignment(ui.Leading).Gap(ui.L8),
+			).FullWidth().Alignment(ui.Leading).Gap(ui.L8).Padding(ui.Padding{Bottom: ui.L8}),
 		).Axis(ui.ScrollViewAxisHorizontal).Frame(ui.Frame{Width: ui.Full}),
 		ui.Space(ui.L32),
 		func() core.View {
