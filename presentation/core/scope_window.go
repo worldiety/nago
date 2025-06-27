@@ -107,7 +107,6 @@ func (s *scopeWindow) reset() {
 	clear(s.filesReceiver)
 	//clear(s.destroyObservers) ???
 	clear(s.callbacks)
-	s.asyncCallbacks.Clear()
 
 	for _, property := range s.states {
 		property.clearObservers()
@@ -205,6 +204,7 @@ func (s *scopeWindow) destroy() {
 	}
 	clear(s.destroyObservers)
 
+	s.asyncCallbacks.Clear()
 }
 
 func (s *scopeWindow) MountCallback(f func()) proto.Ptr {
