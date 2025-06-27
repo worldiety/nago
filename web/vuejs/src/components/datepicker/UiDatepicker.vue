@@ -25,6 +25,8 @@
 			:selected-end-month="selectedEndMonth"
 			:selected-end-day="selectedEndDay"
 			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
+			:input-value="ui.inputValue"
+			:end-input-value="ui.endInputValue"
 			@show-datepicker="showDatepicker"
 		/>
 
@@ -49,6 +51,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import DatepickerInput from '@/components/datepicker/DatepickerInput.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
 import { frameCSS } from '@/components/shared/frame';
@@ -61,7 +64,6 @@ import {
 	UpdateStateValueRequested,
 	UpdateStateValues2Requested,
 } from '@/shared/proto/nprotoc_gen';
-import DatepickerInput from '@/components/datepicker/DatepickerInput.vue';
 
 const props = defineProps<{
 	ui: DatePicker;
@@ -69,6 +71,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const expanded = ref<boolean>(false);
+// TODO: Update date values as soon as date values from backend change
 const selectedStartDay = ref<number>(0);
 const selectedStartMonth = ref<number>(0);
 const selectedStartYear = ref<number>(0);
