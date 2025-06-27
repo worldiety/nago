@@ -35,7 +35,7 @@ func main() {
 			mediaDevices := core.AutoState[[]core.MediaDevice](wnd)
 
 			core.OnAppear(wnd, "list-devices", func(ctx context.Context) {
-				wnd.MediaDevices().List(core.MediaDeviceListOptions{WithVideo: true}).Observe(func(t []core.MediaDevice, err error) {
+				wnd.MediaDevices().List(core.MediaDeviceListOptions{WithVideo: true, WithAudio: true}).Observe(func(t []core.MediaDevice, err error) {
 					if err != nil {
 						alert.ShowBannerError(wnd, err)
 						return
@@ -51,7 +51,6 @@ func main() {
 					return list.Entry().Headline(dev.Label()).SupportingText(string(dev.ID()))
 				})...,
 			).Caption(ui.Text("media devices demo"))
-
 		})
 	}).Run()
 }

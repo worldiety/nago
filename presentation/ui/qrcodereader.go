@@ -8,14 +8,13 @@
 package ui
 
 import (
-	"go.wdy.de/nago/pkg/xmediadevice"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
 
 type TQrCodeReader struct {
 	inputValue           *core.State[[]string]
-	mediaDevice          xmediadevice.MediaDevice
+	mediaDevice          core.MediaDevice
 	showTracker          bool
 	trackerColor         Color
 	trackerLineWidth     int
@@ -25,7 +24,7 @@ type TQrCodeReader struct {
 	frame                Frame
 }
 
-func QrCodeReader(mediaDevice xmediadevice.MediaDevice) TQrCodeReader {
+func QrCodeReader(mediaDevice core.MediaDevice) TQrCodeReader {
 	return TQrCodeReader{
 		mediaDevice:      mediaDevice,
 		showTracker:      true,
@@ -80,10 +79,10 @@ func (c TQrCodeReader) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.QrCodeReader{
 		InputValue: c.inputValue.Ptr(),
 		MediaDevice: proto.MediaDevice{
-			DeviceID: proto.Str(c.mediaDevice.DeviceID),
-			GroupID:  proto.Str(c.mediaDevice.GroupID),
-			Label:    proto.Str(c.mediaDevice.Label),
-			Kind:     proto.MediaDeviceKind(c.mediaDevice.Kind),
+			DeviceID: proto.Str(c.mediaDevice.ID()),
+			GroupID:  proto.Str(c.mediaDevice.GroupID()),
+			Label:    proto.Str(c.mediaDevice.Label()),
+			Kind:     proto.MediaDeviceKind(c.mediaDevice.Kind()),
 		},
 		ShowTracker:          proto.Bool(c.showTracker),
 		TrackerColor:         proto.Color(c.trackerColor),

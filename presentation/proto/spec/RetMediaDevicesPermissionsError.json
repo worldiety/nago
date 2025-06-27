@@ -1,0 +1,15 @@
+{
+  "doc": "RetMediaDevicesPermissionsError indicates that the user has not given the requested permissions for the media devices.",
+  "kind": "Record",
+  "id": 146,
+  "fields": {
+    "1": {
+      "name": "Message",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Code",
+      "type": "Int"
+    }
+  }
+}

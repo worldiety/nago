@@ -1,27 +1,6 @@
 {
-  "kind": "Record",
-  "doc": "This component returns all media devices that the user allowed us access to.",
-  "id": 137,
-  "fields": {
-    "1": {
-      "doc": "InputValue stores the pointer to the updated state of the current media devices.",
-      "name": "InputValue",
-      "type": "Ptr"
-    },
-    "2": {
-      "doc": "Flag to load audio devices.",
-      "name": "WithAudio",
-      "type": "Bool"
-    },
-    "3": {
-      "doc": "Flag to load video devices.",
-      "name": "WithVideo",
-      "type": "Bool"
-    },
-    "4": {
-      "doc": "Whether the user has granted the requested audio or video permissions.",
-      "name": "HasGrantedPermissions",
-      "type": "Ptr"
-    }
-  }
+  "doc": "MediaDevices is a bunch of MediaDevice entries.",
+  "kind": "Array",
+  "id": 140,
+  "type": "MediaDevice"
 }
