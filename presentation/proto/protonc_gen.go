@@ -262,9 +262,10 @@ type CallRet interface {
 	Readable
 }
 
-func (RetVoid) isCallRet()                  {}
-func (RetError) isCallRet()                 {}
-func (RetMediaDevicesEnumerate) isCallRet() {}
+func (RetVoid) isCallRet()                         {}
+func (RetError) isCallRet()                        {}
+func (RetMediaDevicesEnumerate) isCallRet()        {}
+func (RetMediaDevicesPermissionsError) isCallRet() {}
 
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 type Component interface {
@@ -10883,106 +10884,6 @@ func (v *MediaDevice) read(r *BinaryReader) error {
 	return nil
 }
 
-// This component returns all media devices that the user allowed us access to.
-type MediaDevices struct {
-	// InputValue stores the pointer to the updated state of the current media devices.
-	InputValue Ptr
-	// Flag to load audio devices.
-	WithAudio Bool
-	// Flag to load video devices.
-	WithVideo Bool
-	// Whether the user has granted the requested audio or video permissions.
-	HasGrantedPermissions Ptr
-}
-
-func (v *MediaDevices) write(w *BinaryWriter) error {
-	var fields [5]bool
-	fields[1] = !v.InputValue.IsZero()
-	fields[2] = !v.WithAudio.IsZero()
-	fields[3] = !v.WithVideo.IsZero()
-	fields[4] = !v.HasGrantedPermissions.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(uvarint, 1); err != nil {
-			return err
-		}
-		if err := v.InputValue.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[2] {
-		if err := w.writeFieldHeader(uvarint, 2); err != nil {
-			return err
-		}
-		if err := v.WithAudio.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[3] {
-		if err := w.writeFieldHeader(uvarint, 3); err != nil {
-			return err
-		}
-		if err := v.WithVideo.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[4] {
-		if err := w.writeFieldHeader(uvarint, 4); err != nil {
-			return err
-		}
-		if err := v.HasGrantedPermissions.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *MediaDevices) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.InputValue.read(r)
-			if err != nil {
-				return err
-			}
-		case 2:
-			err := v.WithAudio.read(r)
-			if err != nil {
-				return err
-			}
-		case 3:
-			err := v.WithVideo.read(r)
-			if err != nil {
-				return err
-			}
-		case 4:
-			err := v.HasGrantedPermissions.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // Int represents just a user defined signed integer value. This is how nprotoc works.
 type Int int64
 
@@ -11339,7 +11240,7 @@ func (v *RetError) read(r *BinaryReader) error {
 
 // RetMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
 type RetMediaDevicesEnumerate struct {
-	Devices MediaDevices2
+	Devices MediaDevices
 }
 
 func (v *RetMediaDevicesEnumerate) write(w *BinaryWriter) error {
@@ -11419,6 +11320,72 @@ func (v *RetVoid) read(r *BinaryReader) error {
 			return err
 		}
 		switch fh.fieldId {
+		}
+	}
+	return nil
+}
+
+// RetMediaDevicesPermissionsError indicates that the user has not given the requested permissions for the media devices.
+type RetMediaDevicesPermissionsError struct {
+	Message Str
+	Code    Int
+}
+
+func (v *RetMediaDevicesPermissionsError) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Message.IsZero()
+	fields[2] = !v.Code.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Message.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Code.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetMediaDevicesPermissionsError) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Message.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Code.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -12259,12 +12226,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
-	case 137:
-		var v MediaDevices
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
 	case 138:
 		var v Int
 		if err := v.read(src); err != nil {
@@ -12278,7 +12239,7 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		}
 		return &v, nil
 	case 140:
-		var v MediaDevices2
+		var v MediaDevices
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -12309,6 +12270,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 145:
 		var v RetVoid
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 146:
+		var v RetMediaDevicesPermissionsError
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -14614,17 +14581,6 @@ func (v *MediaDevice) IsZero() bool {
 	return v.DeviceID.IsZero() && v.GroupID.IsZero() && v.Label.IsZero() && v.Kind.IsZero()
 }
 
-func (v *MediaDevices) reset() {
-	v.InputValue.reset()
-	v.WithAudio.reset()
-	v.WithVideo.reset()
-	v.HasGrantedPermissions.reset()
-}
-
-func (v *MediaDevices) IsZero() bool {
-	return v.InputValue.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero() && v.HasGrantedPermissions.IsZero()
-}
-
 func (v *CallMediaDevicesEnumerate) reset() {
 	v.Keep.reset()
 	v.WithAudio.reset()
@@ -14635,10 +14591,10 @@ func (v *CallMediaDevicesEnumerate) IsZero() bool {
 	return v.Keep.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero()
 }
 
-// MediaDevices2 is a bunch of MediaDevice entries and should be renamed to just MediaDevices if the headless MediaDevices component is removed.
-type MediaDevices2 []MediaDevice
+// MediaDevices is a bunch of MediaDevice entries.
+type MediaDevices []MediaDevice
 
-func (v *MediaDevices2) write(w *BinaryWriter) error {
+func (v *MediaDevices) write(w *BinaryWriter) error {
 	if err := w.writeUvarint(uint64(len(*v))); err != nil {
 		return err
 	}
@@ -14653,7 +14609,7 @@ func (v *MediaDevices2) write(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *MediaDevices2) read(r *BinaryReader) error {
+func (v *MediaDevices) read(r *BinaryReader) error {
 	count, err := r.readUvarint()
 	if err != nil {
 		return err
@@ -14672,11 +14628,11 @@ func (v *MediaDevices2) read(r *BinaryReader) error {
 	return nil
 }
 
-func (v *MediaDevices2) IsZero() bool {
+func (v *MediaDevices) IsZero() bool {
 	return v == nil || *v == nil || len(*v) == 0
 }
 
-func (v *MediaDevices2) reset() {
+func (v *MediaDevices) reset() {
 	*v = nil
 }
 
@@ -14724,6 +14680,15 @@ func (v *RetVoid) reset() {
 
 func (v *RetVoid) IsZero() bool {
 	return true
+}
+
+func (v *RetMediaDevicesPermissionsError) reset() {
+	v.Message.reset()
+	v.Code.reset()
+}
+
+func (v *RetMediaDevicesPermissionsError) IsZero() bool {
+	return v.Message.IsZero() && v.Code.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -15671,13 +15636,6 @@ func (v *MediaDevice) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *MediaDevices) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 137); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (v *Int) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(varint, 138); err != nil {
 		return err
@@ -15692,7 +15650,7 @@ func (v *CallMediaDevicesEnumerate) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *MediaDevices2) writeTypeHeader(w *BinaryWriter) error {
+func (v *MediaDevices) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 140); err != nil {
 		return err
 	}
@@ -15729,6 +15687,13 @@ func (v *RetMediaDevicesEnumerate) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *RetVoid) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 145); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetMediaDevicesPermissionsError) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 146); err != nil {
 		return err
 	}
 	return nil

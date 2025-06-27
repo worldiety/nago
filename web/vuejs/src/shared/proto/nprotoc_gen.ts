@@ -11328,111 +11328,6 @@ export class MediaDevice implements Writeable, Readable {
 	}
 }
 
-// This component returns all media devices that the user allowed us access to.
-export class MediaDevices implements Writeable, Readable, Component {
-	// InputValue stores the pointer to the updated state of the current media devices.
-	public inputValue?: Ptr;
-
-	// Flag to load audio devices.
-	public withAudio?: Bool;
-
-	// Flag to load video devices.
-	public withVideo?: Bool;
-
-	// Whether the user has granted the requested audio or video permissions.
-	public hasGrantedPermissions?: Ptr;
-
-	constructor(
-		inputValue: Ptr | undefined = undefined,
-		withAudio: Bool | undefined = undefined,
-		withVideo: Bool | undefined = undefined,
-		hasGrantedPermissions: Ptr | undefined = undefined
-	) {
-		this.inputValue = inputValue;
-		this.withAudio = withAudio;
-		this.withVideo = withVideo;
-		this.hasGrantedPermissions = hasGrantedPermissions;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.inputValue = readInt(reader);
-					break;
-				}
-				case 2: {
-					this.withAudio = readBool(reader);
-					break;
-				}
-				case 3: {
-					this.withVideo = readBool(reader);
-					break;
-				}
-				case 4: {
-					this.hasGrantedPermissions = readInt(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [
-			false,
-			this.inputValue !== undefined,
-			this.withAudio !== undefined,
-			this.withVideo !== undefined,
-			this.hasGrantedPermissions !== undefined,
-		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			writeBool(writer, this.withAudio!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[3]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 3);
-			writeBool(writer, this.withVideo!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeInt(writer, this.hasGrantedPermissions!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return (
-			this.inputValue === undefined &&
-			this.withAudio === undefined &&
-			this.withVideo === undefined &&
-			this.hasGrantedPermissions === undefined
-		);
-	}
-
-	reset(): void {
-		this.inputValue = undefined;
-		this.withAudio = undefined;
-		this.withVideo = undefined;
-		this.hasGrantedPermissions = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 137);
-		return;
-	}
-	isComponent(): void {}
-}
-
 // Int represents just a user defined signed integer value. This is how nprotoc works.
 export type Int = number;
 function writeTypeHeaderInt(dst: BinaryWriter): void {
@@ -11518,8 +11413,8 @@ export class CallMediaDevicesEnumerate implements Writeable, Readable, CallArgs 
 	isCallArgs(): void {}
 }
 
-// MediaDevices2 is a bunch of MediaDevice entries and should be renamed to just MediaDevices if the headless MediaDevices component is removed.
-export class MediaDevices2 implements Writeable, Readable {
+// MediaDevices is a bunch of MediaDevice entries.
+export class MediaDevices implements Writeable, Readable, Component {
 	public value: MediaDevice[];
 
 	constructor(value: MediaDevice[] = []) {
@@ -11788,9 +11683,9 @@ export class RetError implements Writeable, Readable, CallRet {
 
 // RetMediaDevicesEnumerate tries to enumerate all available media devices. It has no further arguments.
 export class RetMediaDevicesEnumerate implements Writeable, Readable, CallRet {
-	public devices?: MediaDevices2;
+	public devices?: MediaDevices;
 
-	constructor(devices: MediaDevices2 | undefined = undefined) {
+	constructor(devices: MediaDevices | undefined = undefined) {
 		this.devices = devices;
 	}
 
@@ -11801,7 +11696,7 @@ export class RetMediaDevicesEnumerate implements Writeable, Readable, CallRet {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.devices = new MediaDevices2();
+					this.devices = new MediaDevices();
 					this.devices.read(reader);
 					break;
 				}
@@ -11852,6 +11747,67 @@ export class RetVoid implements Writeable, Readable, CallRet {
 	reset(): void {}
 	writeTypeHeader(dst: BinaryWriter): void {
 		dst.writeTypeHeader(Shapes.RECORD, 145);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+// RetMediaDevicesPermissionsError indicates that the user has not given the requested permissions for the media devices.
+export class RetMediaDevicesPermissionsError implements Writeable, Readable, CallRet {
+	public message?: Str;
+
+	public code?: Int;
+
+	constructor(message: Str | undefined = undefined, code: Int | undefined = undefined) {
+		this.message = message;
+		this.code = code;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.message = readString(reader);
+					break;
+				}
+				case 2: {
+					this.code = readSint(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.message !== undefined, this.code !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.message!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.code!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.message === undefined && this.code === undefined;
+	}
+
+	reset(): void {
+		this.message = undefined;
+		this.code = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 146);
 		return;
 	}
 	isCallRet(): void {}
@@ -12504,11 +12460,6 @@ export function unmarshal(src: BinaryReader): any {
 			v.read(src);
 			return v;
 		}
-		case 137: {
-			const v = new MediaDevices();
-			v.read(src);
-			return v;
-		}
 		case 138: {
 			const v = readSint(src) as Int;
 			return v;
@@ -12519,7 +12470,7 @@ export function unmarshal(src: BinaryReader): any {
 			return v;
 		}
 		case 140: {
-			const v = new MediaDevices2();
+			const v = new MediaDevices();
 			v.read(src);
 			return v;
 		}
@@ -12545,6 +12496,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 145: {
 			const v = new RetVoid();
+			v.read(src);
+			return v;
+		}
+		case 146: {
+			const v = new RetMediaDevicesPermissionsError();
 			v.read(src);
 			return v;
 		}
