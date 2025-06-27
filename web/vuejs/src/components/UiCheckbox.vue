@@ -33,6 +33,15 @@ watch(
 	}
 );
 
+function checkboxSelectedClick(event: Event): void {
+	if (!props.ui.disabled) {
+		event.stopPropagation();
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(!checked.value))
+		);
+	}
+}
+
 function checkboxSelected(): void {
 	if (!props.ui.disabled) {
 		serviceAdapter.sendEvent(
@@ -49,7 +58,7 @@ function checkboxSelected(): void {
 		class="input-checkbox rounded-full w-fit"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"
 		:tabindex="ui.disabled ? '-1' : '0'"
-		@click="checkboxSelected"
+		@click="checkboxSelectedClick"
 		@keydown.enter="checkboxSelected"
 	>
 		<div class="p-2.5">
