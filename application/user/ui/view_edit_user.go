@@ -19,7 +19,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/tabs"
-	"time"
 )
 
 func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases, usr *core.State[user.User]) ui.DecoredView {
@@ -203,26 +202,5 @@ func viewConsents(wnd core.Window, ucUser user.UseCases, usr *core.State[user.Us
 	return ui.VStack(
 		ui.Text("Die Änderungen an den Zustimmungen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),
 		actionCard(wnd, nil, usr.Get().ID, ucUser.FindByID, ucUser.Consent),
-	).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
-}
-
-func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User]) core.View {
-	return ui.VStack(
-		ui.VStack(
-			ui.H2("Nutzer über Konto benachrichtigen"),
-			ui.Text("Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten."),
-			ui.HStack(
-				ui.SecondaryButton(func() {
-					bus := wnd.Application().EventBus()
-					user.PublishUserCreated(bus, usr.Get(), true)
-					alert.ShowBannerMessage(wnd, alert.Message{
-						Title:    "Nutzer erstellt",
-						Message:  "Ereignis für " + usr.String() + " erstellt.",
-						Intent:   alert.IntentOk,
-						Duration: time.Second * 2,
-					})
-				}).Title("Nutzer benachrichtigen"),
-			).FullWidth().Alignment(ui.Trailing),
-		).FullWidth().Alignment(ui.Leading).Gap(ui.L8).Border(ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.ColorInputBorder)).Padding(ui.Padding{}.All(ui.L16)),
 	).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
 }

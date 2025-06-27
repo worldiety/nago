@@ -68,6 +68,10 @@ func Apply(onSave func() (close bool)) Option {
 	return save("Übernehmen", onSave)
 }
 
+func Confirm(onSave func() (close bool)) Option {
+	return save("Bestätigen", onSave)
+}
+
 func save(caption string, onSave func() (close bool)) Option {
 	return optFunc(func(opts *alertOpts) {
 		opts.saveBtn = ui.PrimaryButton(func() {

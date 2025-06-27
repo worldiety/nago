@@ -47,6 +47,11 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 	createUserPresented := core.AutoState[bool](wnd)
 	selectedUser := core.AutoState[user.User](wnd)
 
+	if editUserPresented.Get() && selectedUser.Get().ID != "" && model.Selections[selectedUser.Get().ID] == nil {
+		selectedUser.Set(user.User{})
+		editUserPresented.Set(false)
+	}
+
 	return ui.VStack(
 		ui.H1("Nutzerkonten"),
 		dlgEditUser(wnd, ucUsers, ucGroups, ucRoles, ucPermissions, editUserPresented, selectedUser),
@@ -108,8 +113,12 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 
 func stateStr(usr user.User) string {
 	if usr.Enabled() {
-		if usr.RequiresVerification() {
-			return "Verifizierung erforderlich"
+		if !usr.VerificationCode.IsZero() {
+			return "E-Mail-Bestätigung erforderlich"
+		}
+
+		if usr.RequirePasswordChange {
+			return "Kennwort erforderlich"
 		}
 
 		return "Aktiv"
