@@ -47,6 +47,9 @@ func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCase
 			tabs.Page("Berechtigungen", func() core.View {
 				return viewPermissions(wnd, usr)
 			}).Icon(icons.Shield),
+			tabs.Page("Ressourcen", func() core.View {
+				return ui.Text("TODO")
+			}).Icon(icons.Shield).Disabled(true),
 			tabs.Page("Zustimmungen", func() core.View {
 				return viewConsents(wnd, ucUsers, usr)
 			}).Icon(icons.Bookmark),
@@ -207,7 +210,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 	return ui.VStack(
 		ui.VStack(
 			ui.H2("Nutzer über Konto benachrichtigen"),
-			ui.Text("Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden."),
+			ui.Text("Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten."),
 			ui.HStack(
 				ui.SecondaryButton(func() {
 					bus := wnd.Application().EventBus()
