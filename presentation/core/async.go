@@ -16,7 +16,7 @@ import (
 // to trigger some native blocking behavior or to query some specific (hardware) information. The lifecycle
 // is identical to conventional function callbacks, which means that the callback is removed automatically just
 // right before the next render cycle starts. It is also never guaranteed, that a result will ever occur, either due to
-// the lifecyle or because of a communication interruption or because the user never confirms something required to
+// the lifecycle or because of a communication interruption or because the user never confirms something required to
 // continue at the frontend-side.
 //
 // To know which calls are defined and how they respond, you have to inspect the according [proto.CallArgs]

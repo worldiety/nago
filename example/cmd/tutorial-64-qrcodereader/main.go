@@ -8,12 +8,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/xmediadevice"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/picker"
 	"go.wdy.de/nago/web/vuejs"
@@ -32,18 +34,30 @@ func main() {
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			valuesRead := core.AutoState[[]string](wnd)
-			selectedMediaDevices := core.AutoState[[]xmediadevice.MediaDevice](wnd)
-			allAvailableMediaDevices := core.AutoState[[]xmediadevice.MediaDevice](wnd)
+			selectedMediaDevices := core.AutoState[[]core.MediaDevice](wnd)
+			allAvailableMediaDevices := core.AutoState[[]core.MediaDevice](wnd)
+
+			core.OnAppear(wnd, "list-devices", func(ctx context.Context) {
+				wnd.MediaDevices().List(core.MediaDeviceListOptions{WithVideo: true}).Observe(func(t []core.MediaDevice, err error) {
+					if err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					allAvailableMediaDevices.Update(t)
+					fmt.Println("got media devices", t)
+				})
+			})
+
 			return ui.VStack(
 				ui.Text("qr code reader demo"),
-				ui.MediaDevices().InputValue(allAvailableMediaDevices).WithAudio(false),
-				picker.Picker[xmediadevice.MediaDevice]("Dieses Gerät zum Scannen verwenden", allAvailableMediaDevices.Get(), selectedMediaDevices).
-					ItemRenderer(func(item xmediadevice.MediaDevice) core.View {
-						return ui.Text(item.Label)
+				picker.Picker[core.MediaDevice]("Dieses Gerät zum Scannen verwenden", allAvailableMediaDevices.Get(), selectedMediaDevices).
+					ItemRenderer(func(item core.MediaDevice) core.View {
+						return ui.Text(item.Label())
 					}).
-					ItemPickedRenderer(func(items []xmediadevice.MediaDevice) core.View {
+					ItemPickedRenderer(func(items []core.MediaDevice) core.View {
 						if len(items) > 0 {
-							return ui.Text(items[0].Label)
+							return ui.Text(items[0].Label())
 						}
 						return ui.Text("")
 					}).
@@ -61,10 +75,10 @@ func main() {
 	}).Run()
 }
 
-func getCurrentSelectedMediaDevice(mediaDevices []xmediadevice.MediaDevice) xmediadevice.MediaDevice {
+func getCurrentSelectedMediaDevice(mediaDevices []core.MediaDevice) core.MediaDevice {
 	if len(mediaDevices) > 0 {
 		return mediaDevices[0]
 	}
 
-	return xmediadevice.MediaDevice{}
+	return core.MediaDevice{}
 }

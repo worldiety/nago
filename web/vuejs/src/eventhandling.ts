@@ -19,13 +19,13 @@ import {
 	Locale,
 	MediaDevice,
 	MediaDeviceKindValues,
-	MediaDevices2,
+	MediaDevices,
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
 	RID,
-	RetError,
 	RetMediaDevicesEnumerate,
+	RetMediaDevicesPermissionsError,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
@@ -483,32 +483,51 @@ export async function callRequested(chan: Channel, evt: CallRequested) {
 }
 
 async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args: CallMediaDevicesEnumerate) {
+	const withAudio = args.withAudio ?? false;
+	const withVideo = args.withVideo ?? false;
 	try {
 		await navigator.mediaDevices.getUserMedia({
-			audio: args.withAudio ?? false,
-			video: args.withVideo ?? false,
+			audio: withAudio,
+			video: withVideo,
 		});
-		console.log('media device get user media success', 'video', args.withVideo, 'audio', args.withAudio);
+		console.log('media device get user media success', 'video', withVideo, 'audio', withAudio);
 	} catch (e) {
 		console.warn("Couldn't get requested permissions", e);
-		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(e.toString(), -1)));
+		chan.sendEvent(new CallResolved(evt.callPtr, new RetMediaDevicesPermissionsError(e.toString(), 403)));
 		return;
 	}
 
 	const devices = await navigator.mediaDevices.enumerateDevices();
-	let tmp: MediaDevice[] = [];
-
-	for (let i = devices.length - 1; i >= 0; i--) {
-		const d = devices[i];
-		if (d.deviceId === '') {
-			// TODO don't know what this empty entry is
-			continue;
-		}
-		tmp.push(new MediaDevice(d.deviceId, d.groupId, d.label, getMediaDeviceKindFromMediaDeviceInfo(d)));
-	}
+	const tmp: MediaDevice[] = devices
+		.map(mapMediaDeviceInfoToMediaDevice)
+		.filter((d): d is MediaDevice => filterByMediaKind(d, withVideo, withAudio));
 
 	console.log('got media devices enumeration', tmp);
-	chan.sendEvent(new CallResolved(evt.callPtr, new RetMediaDevicesEnumerate(new MediaDevices2(tmp))));
+
+	chan.sendEvent(new CallResolved(evt.callPtr, new RetMediaDevicesEnumerate(new MediaDevices(tmp)), nextRID()));
+}
+
+function filterByMediaKind(device: MediaDevice | undefined, withVideo: boolean, withAudio: boolean): boolean {
+	if (!device) return false;
+
+	switch (device.kind) {
+		case MediaDeviceKindValues.AudioInput:
+		case MediaDeviceKindValues.AudioOutput:
+			return withAudio;
+		case MediaDeviceKindValues.VideoInput:
+			return withVideo;
+		default:
+			return false;
+	}
+}
+
+function mapMediaDeviceInfoToMediaDevice(d: MediaDeviceInfo): MediaDevice | undefined {
+	if (!d.deviceId || d.deviceId.length === 0) {
+		// do not map unidentified devices
+		return undefined;
+	}
+
+	return new MediaDevice(d.deviceId, d.groupId, d.label, getMediaDeviceKindFromMediaDeviceInfo(d));
 }
 
 function getMediaDeviceKindFromMediaDeviceInfo(device: MediaDeviceInfo): MediaDeviceKindValues {

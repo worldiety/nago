@@ -4,6 +4,7 @@
   "variants": [
     "RetVoid",
     "RetError",
-    "RetMediaDevicesEnumerate"
+    "RetMediaDevicesEnumerate",
+    "RetMediaDevicesPermissionsError"
   ]
 }
