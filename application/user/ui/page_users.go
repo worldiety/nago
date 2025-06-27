@@ -21,6 +21,7 @@ import (
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/pager"
 	"golang.org/x/text/language"
@@ -58,6 +59,11 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 	createUserPresented := core.AutoState[bool](wnd)
 	selectedUser := core.AutoState[user.User](wnd)
 
+	allSelected := core.AutoState[bool](wnd)
+	checkboxModel := core.AutoState[map[user.ID]*core.State[bool]](wnd).Init(func() map[user.ID]*core.State[bool] {
+		return map[user.ID]*core.State[bool]{}
+	})
+
 	return ui.VStack(
 		ui.H1("Nutzerkonten"),
 		dlgEditUser(wnd, ucUsers, ucGroups, ucRoles, ucPermissions, editUserPresented, selectedUser),
@@ -71,14 +77,22 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 		ui.Space(ui.L32),
 
 		ui.Table(
+			ui.TableColumn(ui.Checkbox(allSelected.Get()).InputChecked(allSelected)).Width(ui.L64),
+			ui.TableColumn(ui.Text("")).Width(ui.L64),
 			ui.TableColumn(ui.Text("Anzeigename")),
 			ui.TableColumn(ui.Text("E-Mail")),
 			ui.TableColumn(ui.Text("Status")),
 			ui.TableColumn(ui.Text("")).Width(ui.L64),
 		).Rows(
 			ui.ForEach(page.Items, func(u user.User) ui.TTableRow {
+				myState := core.StateOf[bool](wnd, "checkbox-"+string(u.ID))
+				checkboxModel.Get()[u.ID] = myState
+
+				display := xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname)
 				return ui.TableRow(
-					ui.TableCell(ui.Text(xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname))),
+					ui.TableCell(ui.Checkbox(false)),
+					ui.TableCell(avatar.TextOrImage(display, u.Contact.Avatar)),
+					ui.TableCell(ui.Text(display)),
 					ui.TableCell(ui.Text(string(u.Email))),
 					ui.TableCell(ui.Text(stateStr(u))),
 					ui.TableCell(ui.ImageIcon(icons.ChevronRight)),
@@ -95,7 +109,7 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 						ui.Spacer(),
 						pager.Pager(pageIdx).Count(page.PageCount),
 					).FullWidth(),
-				).ColSpan(4),
+				).ColSpan(6),
 			).BackgroundColor(ui.ColorCardFooter),
 		).
 			Frame(ui.Frame{}.FullWidth()),

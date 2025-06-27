@@ -150,22 +150,26 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 			return User{}, fmt.Errorf("cannot persist new user: %w", err)
 		}
 
-		tag, err := language.Parse(user.Contact.DisplayLanguage)
-		if err != nil {
-			slog.Error("user contact has invalid preferred language", "err", err)
-		}
-
 		// publish in any case
-		eventBus.Publish(Created{
-			ID:                user.ID,
-			Firstname:         user.Contact.Firstname,
-			Lastname:          user.Contact.Lastname,
-			Email:             user.Email,
-			PreferredLanguage: tag,
-			NotifyUser:        model.NotifyUser,
-			VerificationCode:  user.VerificationCode,
-		})
+		PublishUserCreated(eventBus, user, model.NotifyUser)
 
 		return user, nil
 	}
+}
+
+func PublishUserCreated(eventBus events.Bus, user User, notify bool) {
+	tag, err := language.Parse(user.Contact.DisplayLanguage)
+	if err != nil {
+		slog.Error("user contact has invalid preferred language", "err", err)
+	}
+
+	eventBus.Publish(Created{
+		ID:                user.ID,
+		Firstname:         user.Contact.Firstname,
+		Lastname:          user.Contact.Lastname,
+		Email:             user.Email,
+		PreferredLanguage: tag,
+		NotifyUser:        notify,
+		VerificationCode:  user.VerificationCode,
+	})
 }

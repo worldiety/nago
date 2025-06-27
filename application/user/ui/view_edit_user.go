@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/tabs"
+	"time"
 )
 
 func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases, usr *core.State[user.User]) ui.DecoredView {
@@ -53,8 +54,8 @@ func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCase
 				return ui.Text("todo")
 			}).Icon(icons.Book).Disabled(true),
 			tabs.Page("Sonstiges", func() core.View {
-				return ui.Text("todo")
-			}).Icon(icons.UserSettings).Disabled(true),
+				return viewEtc(wnd, ucUsers, usr)
+			}).Icon(icons.UserSettings),
 		).InputValue(pageIdx).Frame(ui.Frame{}.FullWidth()),
 	).FullWidth().Alignment(ui.Leading)
 }
@@ -199,5 +200,26 @@ func viewConsents(wnd core.Window, ucUser user.UseCases, usr *core.State[user.Us
 	return ui.VStack(
 		ui.Text("Die Änderungen an den Zustimmungen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),
 		actionCard(wnd, nil, usr.Get().ID, ucUser.FindByID, ucUser.Consent),
+	).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
+}
+
+func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User]) core.View {
+	return ui.VStack(
+		ui.VStack(
+			ui.H2("Nutzer über Konto benachrichtigen"),
+			ui.Text("Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden."),
+			ui.HStack(
+				ui.SecondaryButton(func() {
+					bus := wnd.Application().EventBus()
+					user.PublishUserCreated(bus, usr.Get(), true)
+					alert.ShowBannerMessage(wnd, alert.Message{
+						Title:    "Nutzer erstellt",
+						Message:  "Ereignis für " + usr.String() + " erstellt.",
+						Intent:   alert.IntentOk,
+						Duration: time.Second * 2,
+					})
+				}).Title("Nutzer benachrichtigen"),
+			).FullWidth().Alignment(ui.Trailing),
+		).FullWidth().Alignment(ui.Leading).Gap(ui.L8).Border(ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.ColorInputBorder)).Padding(ui.Padding{}.All(ui.L16)),
 	).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
 }

@@ -127,6 +127,10 @@ func (a *Application) SetID(id ApplicationID) {
 	a.id = id
 }
 
+func (a *Application) EventBus() events.Bus {
+	return a.bus
+}
+
 func (a *Application) SetName(name string) {
 	a.name = name
 }
