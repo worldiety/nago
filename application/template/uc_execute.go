@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/semver"
 	htmlTemplate "html/template"
 	"io"
 	"io/fs"
@@ -175,6 +176,10 @@ func bestMainTypstCandiate(fsys fs.FS) (string, error) {
 }
 
 func which(what string) (string, bool) {
+	if path, ok := findBestWorldietyHubCandidate(what); ok {
+		return path, true
+	}
+
 	var staticLookups = []string{"/bin/typst", "/opt/homebrew/bin/typst"}
 	for _, path := range staticLookups {
 		if _, err := os.Stat(path); err == nil {
@@ -194,6 +199,70 @@ func which(what string) (string, bool) {
 	}
 
 	return strings.TrimSpace(string(buf)), true
+}
+
+// findBestWorldietyHubCandidate searches through /opt/<what>/v<major>.<minor>.<patch> and takes the largest
+// version of whatever it finds.
+func findBestWorldietyHubCandidate(what string) (string, bool) {
+	dir := filepath.Join("/", "opt", what)
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		slog.Error("cannot read /opt dir", "dir", dir, "err", err.Error())
+		return "", false
+	}
+
+	type versionedFolder struct {
+		version semver.Version
+		path    string
+	}
+
+	var tmp []versionedFolder
+
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+
+		version, ok := semver.Parse(file.Name())
+		if !ok {
+			continue
+		}
+
+		tmp = append(tmp, versionedFolder{version, filepath.Join(dir, file.Name())})
+	}
+
+	if len(tmp) == 0 {
+		return "", false
+	}
+
+	slices.SortFunc(tmp, func(a, b versionedFolder) int {
+		return -semver.Compare(a.version, b.version)
+	})
+
+	bestMatch := tmp[0]
+
+	files, err = os.ReadDir(bestMatch.path)
+	if err != nil {
+		slog.Error("cannot read versioned exec dir", "dir", bestMatch.path, "err", err.Error())
+		return "", false
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		ifo, err := file.Info()
+		if err != nil {
+			continue
+		}
+
+		if ifo.Mode()&0111 != 0 {
+			return filepath.Join(bestMatch.path, file.Name()), true
+		}
+	}
+
+	return "", false
 }
 
 func loadFS(store blob.Store, fset []File) (fstest.MapFS, error) {
