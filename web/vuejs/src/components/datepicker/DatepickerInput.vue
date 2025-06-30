@@ -1,6 +1,7 @@
 <template>
 	<InputWrapper :label="label" :error="errorText" :hint="supportingText" :disabled="disabled">
 		<div
+			ref="datepickerContainer"
 			class="input-field cursor-pointer relative z-0 !pr-10"
 			tabindex="0"
 			@click="$emit('showDatepicker')"
@@ -8,7 +9,7 @@
 		>
 			<!-- Editable start date parts -->
 			<template v-if="dateSelected">
-				<select :value="editableStartDay" @input="startDayChanged" class="cursor-pointer bg-transparent" @click.stop>
+				<select :value="editableStartDay" @input="startDayChanged" @blur="trySubmitSelection" class="cursor-pointer bg-transparent" @click.stop>
 					<option
 						v-for="option in totalDaysForEditableStartMonth"
 						:value="formatDateComponent(option)"
@@ -18,7 +19,7 @@
 					</option>
 				</select>
         <span>.</span>
-				<select :value="editableStartMonth" @input="startMonthChanged" class="cursor-pointer bg-transparent" @click.stop>
+				<select :value="editableStartMonth" @input="startMonthChanged" @blur="trySubmitSelection" class="cursor-pointer bg-transparent" @click.stop>
 					<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
 						{{ formatDateComponent(option) }}
 					</option>
@@ -37,7 +38,7 @@
       <!-- Editable end date parts-->
       <template v-if="dateSelected && rangeMode">
         <span class="mr-2">-</span>
-        <select :value="editableEndDay" @input="endDayChanged" class="cursor-pointer bg-transparent" @click.stop>
+        <select :value="editableEndDay" @input="endDayChanged" @blur="trySubmitSelection" class="cursor-pointer bg-transparent" @click.stop>
           <option
             v-for="option in totalDaysForEditableEndMonth"
             :value="formatDateComponent(option)"
@@ -47,7 +48,7 @@
           </option>
         </select>
         <span>.</span>
-        <select :value="editableEndMonth" @input="endMonthChanged" class="cursor-pointer bg-transparent" @click.stop>
+        <select :value="editableEndMonth" @input="endMonthChanged" @blur="trySubmitSelection" class="cursor-pointer bg-transparent" @click.stop>
           <option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
             {{ formatDateComponent(option) }}
           </option>
@@ -77,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { isNumber } from '@tiptap/vue-3';
@@ -117,6 +118,7 @@ defineEmits<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+const datepickerContainer = useTemplateRef('datepickerContainer');
 const editableStartYear = ref<number>(props.selectedStartYear);
 const editableStartMonth = ref<string>(formatDateComponent(props.selectedStartMonth));
 const editableStartDay = ref<string>(formatDateComponent(props.selectedStartDay));
@@ -219,8 +221,6 @@ function startDayChanged(event: Event) {
 		return;
 	}
 	editableStartDay.value = (event.target as HTMLInputElement).value;
-
-  submitSelection();
 }
 
 function endDayChanged(event: Event) {
@@ -228,8 +228,6 @@ function endDayChanged(event: Event) {
     return;
   }
   editableEndDay.value = (event.target as HTMLInputElement).value;
-
-	submitSelection();
 }
 
 function startMonthChanged(event: Event) {
@@ -239,8 +237,6 @@ function startMonthChanged(event: Event) {
 	editableStartMonth.value = (event.target as HTMLInputElement).value;
 
 	adjustEditableStartDay();
-
-  submitSelection();
 }
 
 function endMonthChanged(event: Event) {
@@ -250,11 +246,9 @@ function endMonthChanged(event: Event) {
   editableEndMonth.value = (event.target as HTMLInputElement).value;
 
   adjustEditableEndDay();
-
-	submitSelection();
 }
 
-function startYearChanged(event: Event) {
+function startYearChanged(event: FocusEvent) {
 	if (!event.target) {
 		return;
 	}
@@ -274,10 +268,10 @@ function startYearChanged(event: Event) {
 
 	adjustEditableStartDay();
 
-  submitSelection();
+  trySubmitSelection(event);
 }
 
-function endYearChanged(event: Event) {
+function endYearChanged(event: FocusEvent) {
   if (!event.target) {
     return;
   }
@@ -297,7 +291,7 @@ function endYearChanged(event: Event) {
 
   adjustEditableEndDay();
 
-  submitSelection();
+  trySubmitSelection(event);
 }
 
 function adjustEditableStartDay() {
@@ -354,6 +348,18 @@ function swapEditableDates() {
 	editableEndDay.value = tempStartDay;
 	editableEndMonth.value = tempStartMonth;
 	editableEndYear.value = tempStartYear;
+}
+
+function trySubmitSelection(event: FocusEvent) {
+	if (!event.relatedTarget) {
+		return;
+	}
+
+	const relatedNode = event.relatedTarget as Node;
+	if (!datepickerContainer.value?.contains(relatedNode)) {
+		// Focus left datepicker container so update the selection
+		submitSelection();
+	}
 }
 
 function submitSelection() {
