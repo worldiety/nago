@@ -29,7 +29,7 @@
           type="text"
           inputmode="numeric"
           class="bg-transparent w-12"
-          @input="startYearChanged"
+          @blur="startYearChanged"
           @click.stop
         />
 			</template>
@@ -58,7 +58,7 @@
           type="text"
           inputmode="numeric"
           class="bg-transparent w-12"
-          @input="endYearChanged"
+          @blur="endYearChanged"
           @click.stop
         />
       </template>
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { isNumber } from '@tiptap/vue-3';
@@ -262,7 +262,15 @@ function startYearChanged(event: Event) {
 	if (!/^[0-9]+$/.test(newValue)) {
 		return;
 	}
-	editableStartYear.value = parseInt(newValue, 10);
+	const updatedValue = parseInt(newValue, 10);
+	if (updatedValue <= 1582) {
+		// only support years after introduction of the gregorian calendar
+		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
+		editableStartYear.value = 0;
+		editableStartYear.value = props.selectedStartYear;
+		return;
+	}
+	editableStartYear.value = updatedValue;
 
 	adjustEditableStartDay();
 
@@ -277,7 +285,15 @@ function endYearChanged(event: Event) {
   if (!/^[0-9]+$/.test(newValue)) {
     return;
   }
-  editableEndYear.value = parseInt(newValue, 10);
+  const updatedValue = parseInt(newValue, 10);
+	if (updatedValue <= 1582) {
+		// only support years after introduction of the gregorian calendar
+		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
+		editableEndYear.value = 0;
+		editableEndYear.value = props.selectedEndYear;
+		return;
+	}
+	editableEndYear.value = updatedValue;
 
   adjustEditableEndDay();
 
@@ -300,7 +316,51 @@ function adjustEditableEndDay() {
   }
 }
 
+function isEditableEndDateBeforeEditableStartDate() {
+	if (!props.rangeMode) {
+		return false;
+	}
+
+	const editableStartDate = new Date(
+		editableStartYear.value,
+		parseInt(editableStartMonth.value, 10),
+		parseInt(editableStartDay.value, 10),
+		0,
+		0,
+		0,
+		0,
+	);
+	const editableEndDate = new Date(
+		editableEndYear.value,
+		parseInt(editableEndMonth.value, 10),
+		parseInt(editableEndDay.value, 10),
+		0,
+		0,
+		0,
+		0,
+	);
+	return editableEndDate < editableStartDate;
+}
+
+function swapEditableDates() {
+	const tempStartDay = editableStartDay.value;
+	const tempStartMonth = editableStartMonth.value;
+	const tempStartYear = editableStartYear.value;
+
+	editableStartDay.value = editableEndDay.value;
+	editableStartMonth.value = editableEndMonth.value;
+	editableStartYear.value = editableEndYear.value;
+
+	editableEndDay.value = tempStartDay;
+	editableEndMonth.value = tempStartMonth;
+	editableEndYear.value = tempStartYear;
+}
+
 function submitSelection() {
+	if (isEditableEndDateBeforeEditableStartDate()) {
+		swapEditableDates();
+	}
+
   const updatedStartDay = parseInt(editableStartDay.value, 10);
   const updatedStartMonth = parseInt(editableStartMonth.value, 10);
   const updatedEndDay = parseInt(editableEndDay.value, 10);
