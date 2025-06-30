@@ -37,17 +37,19 @@ func (c TPage) Disabled(disabled bool) TPage {
 }
 
 type TTabs struct {
-	pages        []TPage
-	frame        ui.Frame
-	position     ui.Position
-	tabAlignment ui.Alignment
-	idx          *core.State[int]
+	pages         []TPage
+	frame         ui.Frame
+	position      ui.Position
+	tabAlignment  ui.Alignment
+	idx           *core.State[int]
+	pageTabSpacer ui.Length
 }
 
 func Tabs(pages ...TPage) TTabs {
 	return TTabs{
-		pages:        pages,
-		tabAlignment: ui.Leading,
+		pages:         pages,
+		tabAlignment:  ui.Leading,
+		pageTabSpacer: ui.L32,
 	}
 }
 
@@ -61,8 +63,16 @@ func (c TTabs) FullWidth() TTabs {
 	return c
 }
 
+// ButtonAlignment sets the alignment of the tab buttons within the button bar. Defaults to Leading.
 func (c TTabs) ButtonAlignment(tabAlignment ui.Alignment) TTabs {
 	c.tabAlignment = tabAlignment
+	return c
+}
+
+// PageTabSpace is the amount of space between the tab button bar and the actual page content. Default to L32.
+// Set to the empty string to disable any space.
+func (c TTabs) PageTabSpace(space ui.Length) TTabs {
+	c.pageTabSpacer = space
 	return c
 }
 
@@ -99,7 +109,7 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 				})...,
 			).FullWidth().Alignment(c.tabAlignment).Gap(ui.L8).Padding(ui.Padding{Bottom: ui.L8}),
 		).Axis(ui.ScrollViewAxisHorizontal).Frame(ui.Frame{Width: ui.Full}),
-		ui.Space(ui.L32),
+		ui.If(c.pageTabSpacer != "", ui.Space(c.pageTabSpacer)),
 		func() core.View {
 			if c.idx == nil || c.idx.Get() < 0 || c.idx.Get() >= len(c.pages) {
 				return nil
