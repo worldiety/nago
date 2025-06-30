@@ -71,7 +71,6 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const expanded = ref<boolean>(false);
-// TODO: Update date values as soon as date values from backend change
 const selectedStartDay = ref<number>(0);
 const selectedStartMonth = ref<number>(0);
 const selectedStartYear = ref<number>(0);

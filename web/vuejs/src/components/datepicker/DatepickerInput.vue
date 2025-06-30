@@ -142,7 +142,7 @@ watch(
 	}
 );
 
-watch(() => props.selectedStartMonth, (newValue) => {
+watch(() => props.selectedEndMonth, (newValue) => {
   editableEndMonth.value = formatDateComponent(newValue);
 });
 
@@ -220,7 +220,7 @@ function startDayChanged(event: Event) {
 	}
 	editableStartDay.value = (event.target as HTMLInputElement).value;
 
-  // TODO: Submit
+  submitSelection();
 }
 
 function endDayChanged(event: Event) {
@@ -229,7 +229,7 @@ function endDayChanged(event: Event) {
   }
   editableEndDay.value = (event.target as HTMLInputElement).value;
 
-  // TODO: Submit
+	submitSelection();
 }
 
 function startMonthChanged(event: Event) {
@@ -240,7 +240,7 @@ function startMonthChanged(event: Event) {
 
 	adjustEditableStartDay();
 
-  // TODO: Submit
+  submitSelection();
 }
 
 function endMonthChanged(event: Event) {
@@ -250,7 +250,8 @@ function endMonthChanged(event: Event) {
   editableEndMonth.value = (event.target as HTMLInputElement).value;
 
   adjustEditableEndDay();
-  // TODO: Submit
+
+	submitSelection();
 }
 
 function startYearChanged(event: Event) {
