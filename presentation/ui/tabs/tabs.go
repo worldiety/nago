@@ -37,20 +37,32 @@ func (c TPage) Disabled(disabled bool) TPage {
 }
 
 type TTabs struct {
-	pages    []TPage
-	frame    ui.Frame
-	position ui.Position
-	idx      *core.State[int]
+	pages        []TPage
+	frame        ui.Frame
+	position     ui.Position
+	tabAlignment ui.Alignment
+	idx          *core.State[int]
 }
 
 func Tabs(pages ...TPage) TTabs {
 	return TTabs{
-		pages: pages,
+		pages:        pages,
+		tabAlignment: ui.Leading,
 	}
 }
 
 func (c TTabs) Frame(frame ui.Frame) TTabs {
 	c.frame = frame
+	return c
+}
+
+func (c TTabs) FullWidth() TTabs {
+	c.frame.Width = ui.Full
+	return c
+}
+
+func (c TTabs) ButtonAlignment(tabAlignment ui.Alignment) TTabs {
+	c.tabAlignment = tabAlignment
 	return c
 }
 
@@ -85,7 +97,7 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 						}
 					}).Title(p.title).PreIcon(p.icon).Preset(style).Enabled(c.idx != nil && !p.disabled)
 				})...,
-			).FullWidth().Alignment(ui.Leading).Gap(ui.L8).Padding(ui.Padding{Bottom: ui.L8}),
+			).FullWidth().Alignment(c.tabAlignment).Gap(ui.L8).Padding(ui.Padding{Bottom: ui.L8}),
 		).Axis(ui.ScrollViewAxisHorizontal).Frame(ui.Frame{Width: ui.Full}),
 		ui.Space(ui.L32),
 		func() core.View {
