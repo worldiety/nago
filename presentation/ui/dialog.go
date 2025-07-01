@@ -91,11 +91,12 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 			Padding(Padding{Left: L20, Top: L16, Right: L20, Bottom: L20}),
 
 		// footer must spawn without padding
-		HStack(c.footer).
+		If(c.footer != nil, HStack(c.footer).
 			Alignment(Trailing).
 			BackgroundColor(ColorCardFooter).
 			Padding(Padding{}.Horizontal(L16)).
 			Frame(Frame{Width: Full, Height: L60, MinHeight: L60}),
+		),
 	).
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).

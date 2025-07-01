@@ -540,7 +540,8 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 	var opts []alert.Option
 
 	opts = append(opts, alert.Closeable())
-	if !isMobile {
+	// TODO read how many impress, gtc etc entries we have and if we have all 4 use alert.Large
+	if !isMobile && wnd.Info().Height > 600 {
 		opts = append(opts, alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
 	}
 
