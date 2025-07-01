@@ -99,7 +99,7 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	).
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).
-		Frame(Frame{MinWidth: c.frame.MinWidth, Width: c.frame.Width, MaxWidth: "calc(100% - 2rem)"}) // TODO ... this looks wrong
+		Frame(Frame{Height: c.frame.Height, MinWidth: c.frame.MinWidth, Width: c.frame.Width, MaxWidth: "calc(100% - 2rem)"}) // TODO ... this looks wrong
 
 	if c.disableBoxLayout {
 		return stack.Render(ctx)
