@@ -13,6 +13,7 @@ import (
 	uisession "go.wdy.de/nago/application/session/ui"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
@@ -99,10 +100,13 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 		}))
 
 		c.AddOnWindowCreatedObserver(func(wnd core.Window) {
-			optSession, err := useCases.FindSessionByID(wnd.Session().ID())
-			if err != nil {
-				alert.ShowBannerError(wnd, err)
-				return
+			var optSession std.Option[session.Session]
+			if wndSession := wnd.Session(); wndSession != nil {
+				optSession, err = useCases.FindSessionByID(wndSession.ID())
+				if err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
 			}
 
 			if optSession.IsNone() {

@@ -80,7 +80,7 @@ type Window interface {
 	Context() context.Context
 
 	// Session returns access to the technical client identity. This identity is usually assigned by the server
-	// using a cookie mechanics. It is the same for all browser windows and tabs of the same browser instance.
+	// using a cookie mechanic. It is the same for all browser windows and tabs of the same browser instance.
 	//
 	// Note, that this is different from the allocated scope which is connected over the wire (usually a websocket).
 	// A scope is uniquely assigned either to none or exact one client instance (usually a browser tab).

@@ -23,8 +23,7 @@
 		"src/**/*.d.ts",
 		"src/**/*.tsx",
 		"src/**/*.vue",
-    "vite.config.legacy.ts",
-		"vite.config.modern.ts"
+    "vite.config.ts"
   ],
   "references": [
       {

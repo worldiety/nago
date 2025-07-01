@@ -1,0 +1,4 @@
+:80
+
+root * /usr/share/nago
+file_server
