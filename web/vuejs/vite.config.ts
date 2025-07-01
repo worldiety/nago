@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
 		},
 		base: isModern ? '/modern/' : '/legacy/',
 		build: {
-			target: isModern ? 'esnext' : 'this gets overridden by @vitejs/plugin-legacy',
+			target: isModern ? 'esnext' : undefined,
 			outDir: `dist/${isModern ? 'modern' : 'legacy'}`,
 			manifest: `manifest.json`,
 			rollupOptions: {

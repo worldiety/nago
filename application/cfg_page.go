@@ -251,7 +251,8 @@ func (c *Configurator) newHandler() http.Handler {
 				request.URL.Path = "/"
 			}*/
 
-			if dir != "" && dir != "/assets" {
+			if dir != "" &&
+				!(strings.HasPrefix(dir, "/modern") || strings.HasPrefix(dir, "/legacy")) {
 				request.URL.Path = "/"
 				assets.ServeHTTP(writer, request)
 				return
