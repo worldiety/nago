@@ -88,12 +88,7 @@ func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *sco
 }
 
 func (s *scopeWindow) Session() session.UserSession {
-	tmp := s.parent.virtualSession.Load()
-	if tmp == nil {
-		return nil
-	}
-
-	return *tmp
+	return *s.parent.virtualSession.Load()
 }
 
 func (s *scopeWindow) setFactory(view ComponentFactory) {

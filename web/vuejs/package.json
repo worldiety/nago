@@ -10,7 +10,8 @@
 		"preview:legacy": "vite preview --mode legacy --base ''",
 		"build-only:modern": "vite build --mode modern",
 		"build-only:legacy": "vite build --mode legacy",
-		"build-only": "npm run build-only:modern && npm run build-only:legacy && cp index-build.html dist/index.html",
+		"build-only": "npm run build-only:modern && npm run build-only:legacy && npm run postbuild",
+		"postbuild": "cp index-build.html dist/index.html",
 		"type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
 		"lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
 		"format": "prettier --write src/ index.html index-build.html package.json vite.config.ts"

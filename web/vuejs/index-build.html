@@ -86,7 +86,7 @@
 				try {
 					loadJSON(`/${buildType}/manifest.json`, function (err, manifest) {
 						if (err) {
-							console.error(`Error while loading build manifest for build ${buildType}`);
+							console.error(`Error while loading build manifest for build ${buildType}`, err);
 							return;
 						}
 
