@@ -9,6 +9,7 @@ package token
 
 import (
 	"fmt"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
@@ -62,6 +63,8 @@ type Rotate func(subject auth.Subject, id ID) (Plaintext, error)
 // tokens.
 type FindAll func(subject auth.Subject) iter.Seq2[Token, error]
 
+type FindByID func(subject auth.Subject, id ID) (option.Opt[Token], error)
+
 type ResolvedTokenRights struct {
 	Impersonated bool
 	Groups       []group.Group
@@ -80,6 +83,7 @@ type UseCases struct {
 	FindAll             FindAll
 	Rotate              Rotate
 	ResolveTokenRights  ResolveTokenRights
+	FindByID            FindByID
 }
 
 func NewUseCases(
@@ -150,6 +154,7 @@ func NewUseCases(
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
 		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
+		FindByID:            NewFindByID(repo),
 		ResolveTokenRights: NewResolveTokenRights(
 			repo,
 			findGroupByID,

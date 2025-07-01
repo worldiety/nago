@@ -14,5 +14,5 @@ var (
 	PermCreate             = permission.Declare[Create]("nago.token.create", "Access Token anlegen", "Träger dieser Berechtigung können neue Tokens anlegen.")
 	PermDelete             = permission.Declare[Delete]("nago.token.delete", "Access Token entfernen", "Träger dieser Berechtigung können Tokens entfernen.")
 	PermFindAll            = permission.Declare[FindAll]("nago.token.find_all", "Access Token finden", "Träger dieser Berechtigung können die Metadaten vorhandener Tokens sehen.")
-	PermResolveTokenRights = permission.Declare[FindAll]("nago.token.resolve_token_rights", "Access Token Rechte einsehen", "Träger dieser Berechtigung können rekursiv die Metadaten vorhandener Tokens abrufen.")
+	PermResolveTokenRights = permission.Declare[ResolvedTokenRights]("nago.token.resolve_token_rights", "Access Token Rechte einsehen", "Träger dieser Berechtigung können rekursiv die Metadaten vorhandener Tokens abrufen.")
 )
