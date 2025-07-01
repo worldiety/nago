@@ -320,7 +320,7 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 			Frame(ui.Frame{}.FullWidth()),
 	).Gap(ui.L4).
 		Visible(quickFilterVisible).
-		Frame(ui.Frame{MinHeight: ui.L48}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16})
+		Frame(ui.Frame{MinHeight: ui.L64}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16})
 
 	return ui.VStack(
 
