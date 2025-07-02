@@ -8,6 +8,7 @@
 package semver
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -48,6 +49,14 @@ func Parse(str string) (Version, bool) {
 	}
 
 	return res, true
+}
+
+func (v Version) String() string {
+	return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
+}
+
+func (v Version) Newer(other Version) bool {
+	return Compare(v, other) > 0
 }
 
 func Compare(a, b Version) int {

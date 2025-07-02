@@ -59,3 +59,51 @@ func TestParse(t *testing.T) {
 		})
 	}
 }
+
+func TestVersion_Newer(t *testing.T) {
+	type fields struct {
+		Major int
+		Minor int
+		Patch int
+	}
+	type args struct {
+		other Version
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "test1",
+			fields: fields{Major: 1, Minor: 2, Patch: 3},
+			args:   args{other: Version{Major: 1, Minor: 2, Patch: 3}},
+			want:   false,
+		},
+		{
+			name:   "test2",
+			fields: fields{Major: 0, Minor: 2, Patch: 3},
+			args:   args{other: Version{Major: 1, Minor: 2, Patch: 3}},
+			want:   false,
+		},
+		{
+			name:   "test3",
+			fields: fields{Major: 2, Minor: 2, Patch: 3},
+			args:   args{other: Version{Major: 1, Minor: 2, Patch: 3}},
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := Version{
+				Major: tt.fields.Major,
+				Minor: tt.fields.Minor,
+				Patch: tt.fields.Patch,
+			}
+			if got := v.Newer(tt.args.other); got != tt.want {
+				t.Errorf("Newer() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
