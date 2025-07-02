@@ -1,0 +1,22 @@
+{
+  "kind": "Record",
+  "id": 1,
+  "fields": {
+    "1": {
+      "name": "X",
+      "type": "Str"
+    },
+    "2":{
+      "name": "Y",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "4": {
+      "name": "Markers",
+      "type": "BarChartMarkers"
+    }
+  }
+}
