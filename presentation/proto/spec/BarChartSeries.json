@@ -1,0 +1,15 @@
+{
+  "kind": "Record",
+  "id": 1,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Data",
+      "kind": "Array",
+      "type": "BarChartDataPoint"
+    }
+  }
+}

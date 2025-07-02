@@ -1,0 +1,5 @@
+{
+  "doc": "BarChartMarkers is an array of markers for one BarChartDataPoint of the bar chart.",
+  "kind": "Array",
+  "type": "BarChartMarker"
+}
