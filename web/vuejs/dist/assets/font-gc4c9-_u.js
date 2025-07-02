@@ -1,0 +1,1 @@
+import{ac as i}from"./index-CThvLDnZ.js";function a(e){const s=[];if(!e)return s;switch(e.style){case i.Normal:s.push("font-style: normal");break;case i.Italic:s.push("font-style: italic");break}return e.weight&&s.push(`font-weight: ${e.weight}`),e.name&&s.push(`font-family: ${e.name}`),e.size&&s.push(`font-size: ${e.size}`),s}export{a as f};

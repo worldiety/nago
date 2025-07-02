@@ -29,5 +29,9 @@ export function colorToHexValue(color: Color): string {
 		color = color.replace('var(', '').replace(')', '');
 	}
 
+	if (!color.startsWith('--')) {
+		color = '--'.concat(color);
+	}
+
 	return getComputedStyle(document.documentElement).getPropertyValue(color).trim();
 }

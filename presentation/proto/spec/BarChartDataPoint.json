@@ -1,6 +1,6 @@
 {
   "kind": "Record",
-  "id": 1,
+  "id": 148,
   "fields": {
     "1": {
       "name": "X",
@@ -11,10 +11,6 @@
       "type": "Str"
     },
     "3": {
-      "name": "Color",
-      "type": "Color"
-    },
-    "4": {
       "name": "Markers",
       "type": "BarChartMarkers"
     }
