@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"io"
 	"iter"
+	"mime/multipart"
 )
 
 // File provides a simple File interface.
@@ -164,4 +165,38 @@ func (b basicMTReader) Close() error {
 
 func WithMimeType(mimeType string, r io.Reader) ReaderWithMimeType {
 	return basicMTReader{r, mimeType}
+}
+
+type multiPartFileHeaderAdapter struct {
+	header *multipart.FileHeader
+}
+
+func NewMultipartFile(header *multipart.FileHeader) File {
+	return multiPartFileHeaderAdapter{header}
+}
+
+func (m multiPartFileHeaderAdapter) Transfer(dst io.Writer) (int64, error) {
+	reader, err := m.header.Open()
+	if err != nil {
+		return 0, err
+	}
+	defer reader.Close()
+
+	return io.Copy(dst, reader)
+}
+
+func (m multiPartFileHeaderAdapter) MimeType() (string, bool) {
+	return m.header.Header.Get("Content-Type"), true
+}
+
+func (m multiPartFileHeaderAdapter) Size() (int64, bool) {
+	return m.header.Size, true
+}
+
+func (m multiPartFileHeaderAdapter) Open() (io.ReadCloser, error) {
+	return m.header.Open()
+}
+
+func (m multiPartFileHeaderAdapter) Name() string {
+	return m.header.Filename
 }

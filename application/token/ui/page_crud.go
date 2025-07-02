@@ -240,6 +240,7 @@ func PlainTokenDialog(wnd core.Window, presented *core.State[bool], plainToken *
 		presented,
 		alert.Closeable(),
 		alert.Ok(),
+		alert.Large(),
 	)
 }
 

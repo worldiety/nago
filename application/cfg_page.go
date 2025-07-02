@@ -31,7 +31,6 @@ import (
 	"log"
 	"log/slog"
 	"mime"
-	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"runtime/debug"
@@ -428,7 +427,7 @@ func (c *Configurator) newHandler() http.Handler {
 			for _, headers := range r.MultipartForm.File {
 				// we don't care about specific field names and instead just collect everything what looks like a file
 				for _, header := range headers {
-					files = append(files, mulitPartFileHeaderAdapter{header})
+					files = append(files, core.NewMultipartFile(header))
 				}
 			}
 
@@ -535,34 +534,4 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
-}
-
-type mulitPartFileHeaderAdapter struct {
-	header *multipart.FileHeader
-}
-
-func (m mulitPartFileHeaderAdapter) Transfer(dst io.Writer) (int64, error) {
-	reader, err := m.header.Open()
-	if err != nil {
-		return 0, err
-	}
-	defer reader.Close()
-
-	return io.Copy(dst, reader)
-}
-
-func (m mulitPartFileHeaderAdapter) MimeType() (string, bool) {
-	return m.header.Header.Get("Content-Type"), true
-}
-
-func (m mulitPartFileHeaderAdapter) Size() (int64, bool) {
-	return m.header.Size, true
-}
-
-func (m mulitPartFileHeaderAdapter) Open() (io.ReadCloser, error) {
-	return m.header.Open()
-}
-
-func (m mulitPartFileHeaderAdapter) Name() string {
-	return m.header.Filename
 }
