@@ -1,5 +1,6 @@
 {
-  "doc": "BarChartMarkers is an array of markers for one BarChartDataPoint of the bar chart.",
+  "doc": "BarChartMarkers is an array of markers for one BarChartDataPoint of the bar chart. Markers do not work with stacked BarCharts.",
+  "id": 151,
   "kind": "Array",
   "type": "BarChartMarker"
 }

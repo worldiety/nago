@@ -307,7 +307,7 @@ func (RichText) isComponent()       {}
 func (HoverGroup) isComponent()     {}
 func (QrCode) isComponent()         {}
 func (QrCodeReader) isComponent()   {}
-func (MediaDevices) isComponent()   {}
+func (BarChart) isComponent()       {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -1531,8 +1531,10 @@ func (v *ErrorOccurred) read(r *BinaryReader) error {
 type FontStyle uint64
 
 const (
-	Normal FontStyle = 0
-	Italic FontStyle = 1
+	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
+	Unsolicited FontStyle = 0
+	Normal      FontStyle = 1
+	Italic      FontStyle = 2
 )
 
 func (v *FontStyle) write(r *BinaryWriter) error {
@@ -3013,17 +3015,14 @@ type Font struct {
 	Size   Length
 	Style  FontStyle
 	Weight FontWeight
-	// Line height of the element that uses this font
-	LineHeight LineHeight
 }
 
 func (v *Font) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [5]bool
 	fields[1] = !v.Name.IsZero()
 	fields[2] = !v.Size.IsZero()
 	fields[3] = !v.Style.IsZero()
 	fields[4] = !v.Weight.IsZero()
-	fields[5] = !v.LineHeight.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3066,14 +3065,6 @@ func (v *Font) write(w *BinaryWriter) error {
 			return err
 		}
 	}
-	if fields[5] {
-		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
-			return err
-		}
-		if err := v.LineHeight.write(w); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -3106,11 +3097,6 @@ func (v *Font) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Weight.read(r)
-			if err != nil {
-				return err
-			}
-		case 5:
-			err := v.LineHeight.read(r)
 			if err != nil {
 				return err
 			}
@@ -11405,6 +11391,481 @@ func (v *RetMediaDevicesPermissionsError) read(r *BinaryReader) error {
 	return nil
 }
 
+type BarChart struct {
+	Series        BarChartSeriesArray
+	Frame         Frame
+	Colors        Colors
+	IsHorizontal  Bool
+	IsStacked     Bool
+	NoDataMessage Str
+}
+
+func (v *BarChart) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Series.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.Colors.IsZero()
+	fields[4] = !v.IsHorizontal.IsZero()
+	fields[5] = !v.IsStacked.IsZero()
+	fields[6] = !v.NoDataMessage.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Series.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Colors.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.IsHorizontal.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.IsStacked.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.NoDataMessage.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChart) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Series.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Colors.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.IsHorizontal.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.IsStacked.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.NoDataMessage.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type BarChartDataPoint struct {
+	X       Str
+	Y       Str
+	Markers BarChartMarkers
+}
+
+func (v *BarChartDataPoint) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.X.IsZero()
+	fields[2] = !v.Y.IsZero()
+	fields[3] = !v.Markers.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Markers.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartDataPoint) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Markers.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type BarChartLegend struct {
+	Label Str
+	Data  BarChartDataPoint
+}
+
+func (v *BarChartLegend) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.Data.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Data.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartLegend) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Data.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type BarChartMarker struct {
+	Label    Str
+	Value    Str
+	Width    Int
+	Height   Int
+	IsRound  Bool
+	IsDashed Bool
+	Color    Color
+}
+
+func (v *BarChartMarker) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = !v.Width.IsZero()
+	fields[4] = !v.Height.IsZero()
+	fields[5] = !v.IsRound.IsZero()
+	fields[6] = !v.IsDashed.IsZero()
+	fields[7] = !v.Color.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(varint, 3); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(varint, 4); err != nil {
+			return err
+		}
+		if err := v.Height.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.IsRound.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.IsDashed.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartMarker) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.IsRound.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.IsDashed.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type BarChartSeries struct {
+	Label      Str
+	DataPoints BarChartDataPoints
+}
+
+func (v *BarChartSeries) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.DataPoints.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.DataPoints.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartSeries) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.DataPoints.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -12295,7 +12756,55 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		}
 		return &v, nil
 	case 147:
-		var v LineHeight
+		var v BarChart
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 148:
+		var v BarChartDataPoint
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 149:
+		var v BarChartLegend
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 150:
+		var v BarChartMarker
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 151:
+		var v BarChartMarkers
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 152:
+		var v BarChartSeries
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 153:
+		var v BarChartDataPoints
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 155:
+		var v BarChartSeriesArray
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 156:
+		var v Colors
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -13272,11 +13781,10 @@ func (v *Font) reset() {
 	v.Size.reset()
 	v.Style.reset()
 	v.Weight.reset()
-	v.LineHeight.reset()
 }
 
 func (v *Font) IsZero() bool {
-	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.LineHeight.IsZero()
+	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero()
 }
 
 func (v *Grid) reset() {
@@ -14712,39 +15220,238 @@ func (v *RetMediaDevicesPermissionsError) IsZero() bool {
 	return v.Message.IsZero() && v.Code.IsZero()
 }
 
-// Line height for text elements
-type LineHeight string
-
-func (v *LineHeight) write(r *BinaryWriter) error {
-	data := *(*[]byte)(unsafe.Pointer(v))
-	if err := r.writeUvarint(uint64(len(data))); err != nil {
-		return err
-	}
-	return r.write(data)
+func (v *BarChart) reset() {
+	v.Series.reset()
+	v.Frame.reset()
+	v.Colors.reset()
+	v.IsHorizontal.reset()
+	v.IsStacked.reset()
+	v.NoDataMessage.reset()
 }
 
-func (v *LineHeight) read(r *BinaryReader) error {
-	strLen, err := r.readUvarint()
+func (v *BarChart) IsZero() bool {
+	return v.Series.IsZero() && v.Frame.IsZero() && v.Colors.IsZero() && v.IsHorizontal.IsZero() && v.IsStacked.IsZero() && v.NoDataMessage.IsZero()
+}
+
+func (v *BarChartDataPoint) reset() {
+	v.X.reset()
+	v.Y.reset()
+	v.Markers.reset()
+}
+
+func (v *BarChartDataPoint) IsZero() bool {
+	return v.X.IsZero() && v.Y.IsZero() && v.Markers.IsZero()
+}
+
+func (v *BarChartLegend) reset() {
+	v.Label.reset()
+	v.Data.reset()
+}
+
+func (v *BarChartLegend) IsZero() bool {
+	return v.Label.IsZero() && v.Data.IsZero()
+}
+
+func (v *BarChartMarker) reset() {
+	v.Label.reset()
+	v.Value.reset()
+	v.Width.reset()
+	v.Height.reset()
+	v.IsRound.reset()
+	v.IsDashed.reset()
+	v.Color.reset()
+}
+
+func (v *BarChartMarker) IsZero() bool {
+	return v.Label.IsZero() && v.Value.IsZero() && v.Width.IsZero() && v.Height.IsZero() && v.IsRound.IsZero() && v.IsDashed.IsZero() && v.Color.IsZero()
+}
+
+// BarChartMarkers is an array of markers for one BarChartDataPoint of the bar chart. Markers do not work with stacked BarCharts.
+type BarChartMarkers []BarChartMarker
+
+func (v *BarChartMarkers) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartMarkers) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
 	if err != nil {
 		return err
 	}
 
-	buf := make([]byte, strLen)
-
-	if err := r.read(buf); err != nil {
-		return err
+	slice := make([]BarChartMarker, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*BarChartMarker)
 	}
 
-	*v = *(*LineHeight)(unsafe.Pointer(&buf))
+	*v = slice
 	return nil
 }
 
-func (v *LineHeight) IsZero() bool {
-	return len(*v) == 0
+func (v *BarChartMarkers) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
 }
 
-func (v *LineHeight) reset() {
-	*v = LineHeight("")
+func (v *BarChartMarkers) reset() {
+	*v = nil
+}
+
+func (v *BarChartSeries) reset() {
+	v.Label.reset()
+	v.DataPoints.reset()
+}
+
+func (v *BarChartSeries) IsZero() bool {
+	return v.Label.IsZero() && v.DataPoints.IsZero()
+}
+
+// BarChartDataPoints is an array of values of the bar chart.
+type BarChartDataPoints []BarChartDataPoint
+
+func (v *BarChartDataPoints) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartDataPoints) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]BarChartDataPoint, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*BarChartDataPoint)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *BarChartDataPoints) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *BarChartDataPoints) reset() {
+	*v = nil
+}
+
+// BarChartSeriesArray is an array of series which hold the data for the bar chart.
+type BarChartSeriesArray []BarChartSeries
+
+func (v *BarChartSeriesArray) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BarChartSeriesArray) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]BarChartSeries, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*BarChartSeries)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *BarChartSeriesArray) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *BarChartSeriesArray) reset() {
+	*v = nil
+}
+
+type Colors []Color
+
+func (v *Colors) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Colors) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]Color, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*Color)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *Colors) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *Colors) reset() {
+	*v = nil
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -15755,8 +16462,64 @@ func (v *RetMediaDevicesPermissionsError) writeTypeHeader(w *BinaryWriter) error
 	return nil
 }
 
-func (v *LineHeight) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(byteSlice, 147); err != nil {
+func (v *BarChart) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 147); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartDataPoint) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 148); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartLegend) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 149); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartMarker) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 150); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartMarkers) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 151); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartSeries) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 152); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartDataPoints) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 153); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BarChartSeriesArray) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 155); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Colors) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 156); err != nil {
 		return err
 	}
 	return nil

@@ -9,6 +9,7 @@
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import {
+	BarChart,
 	Box,
 	Checkbox,
 	CodeEditor,
@@ -20,7 +21,6 @@ import {
 	HStack,
 	HoverGroup,
 	Img,
-	MediaDevices,
 	Menu,
 	Modal,
 	Component as NagoComponent,
@@ -47,7 +47,6 @@ const LazyUiCheckbox = defineAsyncComponent(() => import('@/components/UiCheckbo
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
 const LazyUiImage = defineAsyncComponent(() => import('@/components/UiImage.vue'));
-const LazyUiMediaDevices = defineAsyncComponent(() => import('@/components/UiMediaDevices.vue'));
 const LazyUiModal = defineAsyncComponent(() => import('@/components/UiModal.vue'));
 const LazyUiPasswordField = defineAsyncComponent(() => import('@/components/UiPasswordField.vue'));
 const LazyUiRadioButton = defineAsyncComponent(() => import('@/components/UiRadioButton.vue'));
@@ -75,6 +74,7 @@ const LazyUiVStack = defineAsyncComponent(() => import('@/components/vstack/UiVS
 const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeeditor/UiCodeEditor.vue'));
 const LazyUiQrCode = defineAsyncComponent(() => import('@/components/UiQrCode.vue'));
 const LazyUiQrCodeReader = defineAsyncComponent(() => import('@/components/UiQrCodeReader.vue'));
+const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
 
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -202,8 +202,8 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 		return LazyUiQrCodeReader;
 	}
 
-	if (ngc instanceof MediaDevices) {
-		return LazyUiMediaDevices;
+	if (ngc instanceof BarChart) {
+		return LazyUiBarChart;
 	}
 
 	// keep this as the default fallback
