@@ -1,0 +1,28 @@
+{
+  "kind": "Record",
+  "id": 1,
+  "fields": {
+    "1": {
+      "name": "Data",
+      "kind": "Array",
+      "type": "BarChartDataPoint"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "Colors",
+      "kind": "Array",
+      "type": "Color"
+    },
+    "4": {
+      "name": "IsHorizontal",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "IsStacked",
+      "type": "Bool"
+    }
+  }
+}
