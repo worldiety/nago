@@ -1,0 +1,48 @@
+name: Build & Deploy Hugo Site
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Run go generate
+        run: go generate ./...
+
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.147.9'
+          extended: true
+
+      - name: Build site with Hugo
+        run: |
+          cd doc2/nago.dev
+          hugo build --minify
+
+      - name: Build hugo-go-binary
+        run: |
+          cd doc2
+          GOOS=linux GOARCH=amd64 go build serve.go
+
+      - name: Upload site via curl
+        run: |
+          curl -v -X POST http://nago.app/api/v1/application/build \
+            -H "Authorization: Bearer $UPLOAD_TOKEN" \
+            -F "file=@doc2/serve" \
+            -F 'info={"app":"aa06698613a0895fc8293c15208db041", "version":{"major":0, "minor":0, "patch":0}, "vcs":{"commit":"$GITHUB_SHA", "branch":"$GITHUB_REF_NAME", "tag":"$GITHUB_REF_TYPE"}};type=application/json'
+        env:
+          UPLOAD_URL: ${{ secrets.UPLOAD_TOKEN }}
+
+

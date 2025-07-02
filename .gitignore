@@ -2,3 +2,5 @@
 planner-db.db
 test2-db.db
 nagodb.db
+serve
+.hugo_build.lock
