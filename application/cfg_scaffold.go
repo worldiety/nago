@@ -312,10 +312,14 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 	b.registerLegalViews()
 
 	return func(wnd core.Window, view core.View) core.View {
+		themeCfg := core.GlobalSettings[theme.Settings](wnd)
+
 		var logo core.View
 		if b.logoImage != nil {
 			//logo = ui.HStack(b.logoImage).Frame(ui.Frame{}.Size("", "6rem"))
 			logo = b.logoImage
+		} else {
+			logo = ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark).ObjectFit(ui.FitContain).Frame(ui.Frame{Height: ui.L80})
 		}
 
 		var menu []ui.ScaffoldMenuEntry
@@ -474,7 +478,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				wnd.SetColorScheme(core.Light)
 			}
 		})).
-			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd))).
+			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd)).Frame(ui.Frame{Height: ui.L96})).
 			Menu(menu...)
 
 		if b.breakpoint != nil {
@@ -484,7 +488,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		if b.footer != nil {
 			scaffold = scaffold.Footer(b.footer)
 		} else if b.enableAutoFooter {
-			themeCfg := core.GlobalSettings[theme.Settings](wnd)
+
 			autoFooter := footer.Footer().
 				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark).ObjectFit(ui.FitContain).Frame(ui.Frame{Height: ui.L64})).
 				Impress(themeCfg.Impress).
