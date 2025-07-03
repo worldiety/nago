@@ -1,0 +1,34 @@
+{
+  "kind": "Record",
+  "id": 150,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Value",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Width",
+      "type": "Int"
+    },
+    "4": {
+      "name": "Height",
+      "type": "Int"
+    },
+    "5": {
+      "name": "IsRound",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "IsDashed",
+      "type": "Bool"
+    },
+    "7": {
+      "name": "Color",
+      "type": "Color"
+    }
+  }
+}

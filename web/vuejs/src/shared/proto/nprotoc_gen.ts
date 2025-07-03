@@ -11414,7 +11414,7 @@ export class CallMediaDevicesEnumerate implements Writeable, Readable, CallArgs 
 }
 
 // MediaDevices is a bunch of MediaDevice entries.
-export class MediaDevices implements Writeable, Readable, Component {
+export class MediaDevices implements Writeable, Readable {
 	public value: MediaDevice[];
 
 	constructor(value: MediaDevice[] = []) {
@@ -11813,6 +11813,699 @@ export class RetMediaDevicesPermissionsError implements Writeable, Readable, Cal
 	isCallRet(): void {}
 }
 
+export class BarChart implements Writeable, Readable, Component {
+	public series?: BarChartSeriesArray;
+
+	public frame?: Frame;
+
+	public colors?: Colors;
+
+	// If Horizontal is true, bars will be displayed from left to right. Can be combined with Horizontal.
+	public horizontal?: Bool;
+
+	// If Stacked is true, multiple series get stacked on top of each other. Can be combined with Horizontal.
+	public stacked?: Bool;
+
+	public noDataMessage?: Str;
+
+	// Labels for the series data, shown on the x-axis for vertical bar charts and the y-axis for horizontal ones. By default, these labels are taken from the x value of each BarChartDataPoint, but you can override them by providing this array of strings.
+	public labels?: Strings;
+
+	// The BarChart is per default downloadable. By setting Downloadable to false the toolbar to download the BarChart gets hidden.
+	public downloadable?: Bool;
+
+	constructor(
+		series: BarChartSeriesArray | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		colors: Colors | undefined = undefined,
+		horizontal: Bool | undefined = undefined,
+		stacked: Bool | undefined = undefined,
+		noDataMessage: Str | undefined = undefined,
+		labels: Strings | undefined = undefined,
+		downloadable: Bool | undefined = undefined
+	) {
+		this.series = series;
+		this.frame = frame;
+		this.colors = colors;
+		this.horizontal = horizontal;
+		this.stacked = stacked;
+		this.noDataMessage = noDataMessage;
+		this.labels = labels;
+		this.downloadable = downloadable;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.series = new BarChartSeriesArray();
+					this.series.read(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 3: {
+					this.colors = new Colors();
+					this.colors.read(reader);
+					break;
+				}
+				case 4: {
+					this.horizontal = readBool(reader);
+					break;
+				}
+				case 5: {
+					this.stacked = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.noDataMessage = readString(reader);
+					break;
+				}
+				case 7: {
+					this.labels = new Strings();
+					this.labels.read(reader);
+					break;
+				}
+				case 8: {
+					this.downloadable = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.series !== undefined && !this.series.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.colors !== undefined && !this.colors.isZero(),
+			this.horizontal !== undefined,
+			this.stacked !== undefined,
+			this.noDataMessage !== undefined,
+			this.labels !== undefined && !this.labels.isZero(),
+			this.downloadable !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.series!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.colors!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.horizontal!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.stacked!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.noDataMessage!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
+			this.labels!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.downloadable!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.series === undefined || this.series.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			(this.colors === undefined || this.colors.isZero()) &&
+			this.horizontal === undefined &&
+			this.stacked === undefined &&
+			this.noDataMessage === undefined &&
+			(this.labels === undefined || this.labels.isZero()) &&
+			this.downloadable === undefined
+		);
+	}
+
+	reset(): void {
+		this.series = undefined;
+		this.frame = undefined;
+		this.colors = undefined;
+		this.horizontal = undefined;
+		this.stacked = undefined;
+		this.noDataMessage = undefined;
+		this.labels = undefined;
+		this.downloadable = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 147);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export class BarChartDataPoint implements Writeable, Readable {
+	public x?: Str;
+
+	public y?: Float;
+
+	public markers?: BarChartMarkers;
+
+	constructor(
+		x: Str | undefined = undefined,
+		y: Float | undefined = undefined,
+		markers: BarChartMarkers | undefined = undefined
+	) {
+		this.x = x;
+		this.y = y;
+		this.markers = markers;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.x = readString(reader);
+					break;
+				}
+				case 2: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.markers = new BarChartMarkers();
+					this.markers.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.markers !== undefined && !this.markers.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.markers!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.x === undefined && this.y === undefined && (this.markers === undefined || this.markers.isZero());
+	}
+
+	reset(): void {
+		this.x = undefined;
+		this.y = undefined;
+		this.markers = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 148);
+		return;
+	}
+}
+
+export class BarChartLegend implements Writeable, Readable {
+	public label?: Str;
+
+	public data?: BarChartDataPoint;
+
+	constructor(label: Str | undefined = undefined, data: BarChartDataPoint | undefined = undefined) {
+		this.label = label;
+		this.data = data;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.data = new BarChartDataPoint();
+					this.data.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.label !== undefined, this.data !== undefined && !this.data.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.data!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.label === undefined && (this.data === undefined || this.data.isZero());
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.data = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 149);
+		return;
+	}
+}
+
+export class BarChartMarker implements Writeable, Readable {
+	public label?: Str;
+
+	public value?: Str;
+
+	public width?: Int;
+
+	public height?: Int;
+
+	public isRound?: Bool;
+
+	public isDashed?: Bool;
+
+	public color?: Color;
+
+	constructor(
+		label: Str | undefined = undefined,
+		value: Str | undefined = undefined,
+		width: Int | undefined = undefined,
+		height: Int | undefined = undefined,
+		isRound: Bool | undefined = undefined,
+		isDashed: Bool | undefined = undefined,
+		color: Color | undefined = undefined
+	) {
+		this.label = label;
+		this.value = value;
+		this.width = width;
+		this.height = height;
+		this.isRound = isRound;
+		this.isDashed = isDashed;
+		this.color = color;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.value = readString(reader);
+					break;
+				}
+				case 3: {
+					this.width = readSint(reader);
+					break;
+				}
+				case 4: {
+					this.height = readSint(reader);
+					break;
+				}
+				case 5: {
+					this.isRound = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.isDashed = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.color = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.label !== undefined,
+			this.value !== undefined,
+			this.width !== undefined,
+			this.height !== undefined,
+			this.isRound !== undefined,
+			this.isDashed !== undefined,
+			this.color !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.VARINT, 3);
+			writeSint(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.VARINT, 4);
+			writeSint(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.isRound!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.isDashed!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.label === undefined &&
+			this.value === undefined &&
+			this.width === undefined &&
+			this.height === undefined &&
+			this.isRound === undefined &&
+			this.isDashed === undefined &&
+			this.color === undefined
+		);
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.value = undefined;
+		this.width = undefined;
+		this.height = undefined;
+		this.isRound = undefined;
+		this.isDashed = undefined;
+		this.color = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 150);
+		return;
+	}
+}
+
+// BarChartMarkers is an array of markers for one BarChartDataPoint of the bar chart. Markers do not work with stacked BarCharts.
+export class BarChartMarkers implements Writeable, Readable {
+	public value: BarChartMarker[];
+
+	constructor(value: BarChartMarker[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: BarChartMarker[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as BarChartMarker); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 151);
+		return;
+	}
+}
+
+export class BarChartSeries implements Writeable, Readable {
+	public label?: Str;
+
+	public dataPoints?: BarChartDataPoints;
+
+	constructor(label: Str | undefined = undefined, dataPoints: BarChartDataPoints | undefined = undefined) {
+		this.label = label;
+		this.dataPoints = dataPoints;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.dataPoints = new BarChartDataPoints();
+					this.dataPoints.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.label !== undefined, this.dataPoints !== undefined && !this.dataPoints.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.dataPoints!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.label === undefined && (this.dataPoints === undefined || this.dataPoints.isZero());
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.dataPoints = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 152);
+		return;
+	}
+}
+
+// BarChartDataPoints is an array of values of the bar chart.
+export class BarChartDataPoints implements Writeable, Readable {
+	public value: BarChartDataPoint[];
+
+	constructor(value: BarChartDataPoint[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: BarChartDataPoint[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as BarChartDataPoint); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 153);
+		return;
+	}
+}
+
+// BarChartSeriesArray is an array of series which hold the data for the bar chart.
+export class BarChartSeriesArray implements Writeable, Readable {
+	public value: BarChartSeries[];
+
+	constructor(value: BarChartSeries[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: BarChartSeries[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as BarChartSeries); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 155);
+		return;
+	}
+}
+
+export class Colors implements Writeable, Readable {
+	public value: Color[];
+
+	constructor(value: Color[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			writeTypeHeaderColor(writer);
+			writeString(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: Color[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as Color); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 156);
+		return;
+	}
+}
+
+export type Float = number;
+function writeTypeHeaderFloat(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.F64, 157);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -12502,6 +13195,55 @@ export function unmarshal(src: BinaryReader): any {
 		case 146: {
 			const v = new RetMediaDevicesPermissionsError();
 			v.read(src);
+			return v;
+		}
+		case 147: {
+			const v = new BarChart();
+			v.read(src);
+			return v;
+		}
+		case 148: {
+			const v = new BarChartDataPoint();
+			v.read(src);
+			return v;
+		}
+		case 149: {
+			const v = new BarChartLegend();
+			v.read(src);
+			return v;
+		}
+		case 150: {
+			const v = new BarChartMarker();
+			v.read(src);
+			return v;
+		}
+		case 151: {
+			const v = new BarChartMarkers();
+			v.read(src);
+			return v;
+		}
+		case 152: {
+			const v = new BarChartSeries();
+			v.read(src);
+			return v;
+		}
+		case 153: {
+			const v = new BarChartDataPoints();
+			v.read(src);
+			return v;
+		}
+		case 155: {
+			const v = new BarChartSeriesArray();
+			v.read(src);
+			return v;
+		}
+		case 156: {
+			const v = new Colors();
+			v.read(src);
+			return v;
+		}
+		case 157: {
+			const v = readFloat(src) as Float;
 			return v;
 		}
 	}

@@ -1,0 +1,6 @@
+{
+  "doc": "BarChartDataPoints is an array of values of the bar chart.",
+  "id": 153,
+  "kind": "Array",
+  "type": "BarChartDataPoint"
+}

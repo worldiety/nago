@@ -32,6 +32,6 @@
     "HoverGroup",
     "QrCode",
     "QrCodeReader",
-    "MediaDevices"
+    "BarChart"
   ]
 }
