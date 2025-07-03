@@ -14,8 +14,8 @@ import { createPinia } from 'pinia';
 import { serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import ThemeManager from '@/shared/themeManager';
-import '@/assets/style.css';
-import '@/assets/tailwind.css';
+import '@/assets/css/style.css';
+import '@/assets/css/tailwind.css';
 
 const pinia = createPinia();
 
