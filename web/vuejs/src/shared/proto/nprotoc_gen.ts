@@ -11820,26 +11820,38 @@ export class BarChart implements Writeable, Readable, Component {
 
 	public colors?: Colors;
 
-	public isHorizontal?: Bool;
+	// If Horizontal is true, bars will be displayed from left to right. Can be combined with Horizontal.
+	public horizontal?: Bool;
 
-	public isStacked?: Bool;
+	// If Stacked is true, multiple series get stacked on top of each other. Can be combined with Horizontal.
+	public stacked?: Bool;
 
 	public noDataMessage?: Str;
+
+	// Labels for the series data, shown on the x-axis for vertical bar charts and the y-axis for horizontal ones. By default, these labels are taken from the x value of each BarChartDataPoint, but you can override them by providing this array of strings.
+	public labels?: Strings;
+
+	// The BarChart is per default downloadable. By setting Downloadable to false the toolbar to download the BarChart gets hidden.
+	public downloadable?: Bool;
 
 	constructor(
 		series: BarChartSeriesArray | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		colors: Colors | undefined = undefined,
-		isHorizontal: Bool | undefined = undefined,
-		isStacked: Bool | undefined = undefined,
-		noDataMessage: Str | undefined = undefined
+		horizontal: Bool | undefined = undefined,
+		stacked: Bool | undefined = undefined,
+		noDataMessage: Str | undefined = undefined,
+		labels: Strings | undefined = undefined,
+		downloadable: Bool | undefined = undefined
 	) {
 		this.series = series;
 		this.frame = frame;
 		this.colors = colors;
-		this.isHorizontal = isHorizontal;
-		this.isStacked = isStacked;
+		this.horizontal = horizontal;
+		this.stacked = stacked;
 		this.noDataMessage = noDataMessage;
+		this.labels = labels;
+		this.downloadable = downloadable;
 	}
 
 	read(reader: BinaryReader): void {
@@ -11864,15 +11876,24 @@ export class BarChart implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.isHorizontal = readBool(reader);
+					this.horizontal = readBool(reader);
 					break;
 				}
 				case 5: {
-					this.isStacked = readBool(reader);
+					this.stacked = readBool(reader);
 					break;
 				}
 				case 6: {
 					this.noDataMessage = readString(reader);
+					break;
+				}
+				case 7: {
+					this.labels = new Strings();
+					this.labels.read(reader);
+					break;
+				}
+				case 8: {
+					this.downloadable = readBool(reader);
 					break;
 				}
 				default:
@@ -11887,9 +11908,11 @@ export class BarChart implements Writeable, Readable, Component {
 			this.series !== undefined && !this.series.isZero(),
 			this.frame !== undefined && !this.frame.isZero(),
 			this.colors !== undefined && !this.colors.isZero(),
-			this.isHorizontal !== undefined,
-			this.isStacked !== undefined,
+			this.horizontal !== undefined,
+			this.stacked !== undefined,
 			this.noDataMessage !== undefined,
+			this.labels !== undefined && !this.labels.isZero(),
+			this.downloadable !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -11907,15 +11930,23 @@ export class BarChart implements Writeable, Readable, Component {
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeBool(writer, this.isHorizontal!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.horizontal!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
-			writeBool(writer, this.isStacked!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.stacked!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[6]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
 			writeString(writer, this.noDataMessage!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
+			this.labels!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.downloadable!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -11924,9 +11955,11 @@ export class BarChart implements Writeable, Readable, Component {
 			(this.series === undefined || this.series.isZero()) &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			(this.colors === undefined || this.colors.isZero()) &&
-			this.isHorizontal === undefined &&
-			this.isStacked === undefined &&
-			this.noDataMessage === undefined
+			this.horizontal === undefined &&
+			this.stacked === undefined &&
+			this.noDataMessage === undefined &&
+			(this.labels === undefined || this.labels.isZero()) &&
+			this.downloadable === undefined
 		);
 	}
 
@@ -11934,9 +11967,11 @@ export class BarChart implements Writeable, Readable, Component {
 		this.series = undefined;
 		this.frame = undefined;
 		this.colors = undefined;
-		this.isHorizontal = undefined;
-		this.isStacked = undefined;
+		this.horizontal = undefined;
+		this.stacked = undefined;
 		this.noDataMessage = undefined;
+		this.labels = undefined;
+		this.downloadable = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -11949,13 +11984,13 @@ export class BarChart implements Writeable, Readable, Component {
 export class BarChartDataPoint implements Writeable, Readable {
 	public x?: Str;
 
-	public y?: Str;
+	public y?: Float;
 
 	public markers?: BarChartMarkers;
 
 	constructor(
 		x: Str | undefined = undefined,
-		y: Str | undefined = undefined,
+		y: Float | undefined = undefined,
 		markers: BarChartMarkers | undefined = undefined
 	) {
 		this.x = x;
@@ -11974,7 +12009,7 @@ export class BarChartDataPoint implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.y = readString(reader);
+					this.y = readFloat(reader);
 					break;
 				}
 				case 3: {
@@ -12002,8 +12037,8 @@ export class BarChartDataPoint implements Writeable, Readable {
 			writeString(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			writeString(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 3);
@@ -12466,6 +12501,11 @@ export class Colors implements Writeable, Readable {
 	}
 }
 
+export type Float = number;
+function writeTypeHeaderFloat(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.F64, 157);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -13200,6 +13240,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 156: {
 			const v = new Colors();
 			v.read(src);
+			return v;
+		}
+		case 157: {
+			const v = readFloat(src) as Float;
 			return v;
 		}
 	}

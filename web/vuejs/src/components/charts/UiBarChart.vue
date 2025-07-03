@@ -23,11 +23,16 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
 			type: 'bar',
-			stacked: props.ui.isStacked,
+			stacked: props.ui.stacked ?? false,
+			toolbar: {
+				tools: {
+					download: props.ui.downloadable ?? false,
+				},
+			},
 		},
 		plotOptions: {
 			bar: {
-				horizontal: props.ui.isHorizontal ?? false,
+				horizontal: props.ui.horizontal ?? false,
 			},
 		},
 		colors: colors.value,
@@ -35,6 +40,7 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 		noData: {
 			text: props.ui.noDataMessage,
 		},
+		labels: props.ui.labels?.value ?? [],
 	};
 });
 const colors = computed<string[]>(() => {
@@ -71,8 +77,8 @@ function mapMarkerToGoal(marker: BarChartMarker) {
 		value: marker.value,
 		strokeDashArray: marker.isDashed ? 3 : undefined,
 		strokeColor: marker.color ? colorToHexValue(marker.color) : undefined,
-		strokeWidth: marker.isRound ? (props.ui.isHorizontal ? marker.width : 0) : marker.width,
-		strokeHeight: marker.isRound ? (!props.ui.isHorizontal ? marker.height : 0) : marker.height,
+		strokeWidth: marker.isRound ? (props.ui.horizontal ? marker.width : 0) : marker.width,
+		strokeHeight: marker.isRound ? (!props.ui.horizontal ? marker.height : 0) : marker.height,
 		strokeLineCap: 'round',
 	};
 }

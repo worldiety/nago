@@ -36,7 +36,7 @@ func main() {
 				DataPoints: []charts.TBarChartDataPoint{
 					{
 						X: "2009",
-						Y: "200",
+						Y: 200,
 						Markers: []charts.TBarChartMarker{
 							{
 								Label:   "marker 1",
@@ -50,7 +50,7 @@ func main() {
 					},
 					{
 						X: "2010",
-						Y: "300",
+						Y: 300,
 					},
 				},
 			})
@@ -60,7 +60,7 @@ func main() {
 				DataPoints: []charts.TBarChartDataPoint{
 					{
 						X: "2009",
-						Y: "400",
+						Y: 400,
 						Markers: []charts.TBarChartMarker{
 							{
 								Label: "marker 2",
@@ -70,8 +70,8 @@ func main() {
 						},
 					},
 					{
-						X: "2010",
-						Y: "500",
+						X: "2011",
+						Y: 500,
 						Markers: []charts.TBarChartMarker{
 							{
 								Label:    "marker 3",
@@ -91,9 +91,9 @@ func main() {
 
 			return ui.VStack(
 				ui.Text("bar chart demo"),
-				charts.BarChart().Series(barChartSeries).Colors(colorPalette).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
-				charts.BarChart().Series(barChartSeries).Colors(colorPalette).IsHorizontal(true).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
-				charts.BarChart().Series(barChartSeries).Colors(colorPalette).IsStacked(true).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
+				charts.BarChart().Series(barChartSeries).Colors(colorPalette).Downloadable(false).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
+				charts.BarChart().Series(barChartSeries).Colors(colorPalette).Horizontal(true).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
+				charts.BarChart().Series(barChartSeries).Colors(colorPalette).Stacked(true).Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
 				charts.BarChart().Series([]charts.TBarChartSeries{}).NoDataMessage("Ein BarChart ohne Daten").Frame(ui.Frame{}.Size(ui.L320, ui.L200)),
 			)
 		})
