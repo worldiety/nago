@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: Custom-License
  */
 
+@import 'typography.css';
 @import 'inputs.css';
 @import 'effects.css';
 @import 'buttons.css';
