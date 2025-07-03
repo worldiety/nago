@@ -6,6 +6,8 @@
   :root {
 		font-family: "InterVariable", sans-serif;
 		font-optical-sizing: auto;
+		font-variant-alternates: styleset(ss01, ss02, ss03); /* ss02 includes slashed zero */
+		font-feature-settings: "calt" 1, "tnum" 1, "frac" 1;
 	}
 }
 
