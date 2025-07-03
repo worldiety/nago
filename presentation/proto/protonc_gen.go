@@ -11392,22 +11392,30 @@ func (v *RetMediaDevicesPermissionsError) read(r *BinaryReader) error {
 }
 
 type BarChart struct {
-	Series        BarChartSeriesArray
-	Frame         Frame
-	Colors        Colors
-	IsHorizontal  Bool
-	IsStacked     Bool
+	Series BarChartSeriesArray
+	Frame  Frame
+	Colors Colors
+	// If Horizontal is true, bars will be displayed from left to right. Can be combined with Horizontal.
+	Horizontal Bool
+	// If Stacked is true, multiple series get stacked on top of each other. Can be combined with Horizontal.
+	Stacked       Bool
 	NoDataMessage Str
+	// Labels for the series data, shown on the x-axis for vertical bar charts and the y-axis for horizontal ones. By default, these labels are taken from the x value of each BarChartDataPoint, but you can override them by providing this array of strings.
+	Labels Strings
+	// The BarChart is per default downloadable. By setting Downloadable to false the toolbar to download the BarChart gets hidden.
+	Downloadable Bool
 }
 
 func (v *BarChart) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [9]bool
 	fields[1] = !v.Series.IsZero()
 	fields[2] = !v.Frame.IsZero()
 	fields[3] = !v.Colors.IsZero()
-	fields[4] = !v.IsHorizontal.IsZero()
-	fields[5] = !v.IsStacked.IsZero()
+	fields[4] = !v.Horizontal.IsZero()
+	fields[5] = !v.Stacked.IsZero()
 	fields[6] = !v.NoDataMessage.IsZero()
+	fields[7] = !v.Labels.IsZero()
+	fields[8] = !v.Downloadable.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11446,7 +11454,7 @@ func (v *BarChart) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 4); err != nil {
 			return err
 		}
-		if err := v.IsHorizontal.write(w); err != nil {
+		if err := v.Horizontal.write(w); err != nil {
 			return err
 		}
 	}
@@ -11454,7 +11462,7 @@ func (v *BarChart) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 5); err != nil {
 			return err
 		}
-		if err := v.IsStacked.write(w); err != nil {
+		if err := v.Stacked.write(w); err != nil {
 			return err
 		}
 	}
@@ -11463,6 +11471,22 @@ func (v *BarChart) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.NoDataMessage.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(array, 7); err != nil {
+			return err
+		}
+		if err := v.Labels.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Downloadable.write(w); err != nil {
 			return err
 		}
 	}
@@ -11497,17 +11521,27 @@ func (v *BarChart) read(r *BinaryReader) error {
 				return err
 			}
 		case 4:
-			err := v.IsHorizontal.read(r)
+			err := v.Horizontal.read(r)
 			if err != nil {
 				return err
 			}
 		case 5:
-			err := v.IsStacked.read(r)
+			err := v.Stacked.read(r)
 			if err != nil {
 				return err
 			}
 		case 6:
 			err := v.NoDataMessage.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Labels.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Downloadable.read(r)
 			if err != nil {
 				return err
 			}
@@ -11518,7 +11552,7 @@ func (v *BarChart) read(r *BinaryReader) error {
 
 type BarChartDataPoint struct {
 	X       Str
-	Y       Str
+	Y       Float
 	Markers BarChartMarkers
 }
 
@@ -11546,7 +11580,7 @@ func (v *BarChartDataPoint) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[2] {
-		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
 			return err
 		}
 		if err := v.Y.write(w); err != nil {
@@ -12805,6 +12839,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 156:
 		var v Colors
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 157:
+		var v Float
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -15224,13 +15264,15 @@ func (v *BarChart) reset() {
 	v.Series.reset()
 	v.Frame.reset()
 	v.Colors.reset()
-	v.IsHorizontal.reset()
-	v.IsStacked.reset()
+	v.Horizontal.reset()
+	v.Stacked.reset()
 	v.NoDataMessage.reset()
+	v.Labels.reset()
+	v.Downloadable.reset()
 }
 
 func (v *BarChart) IsZero() bool {
-	return v.Series.IsZero() && v.Frame.IsZero() && v.Colors.IsZero() && v.IsHorizontal.IsZero() && v.IsStacked.IsZero() && v.NoDataMessage.IsZero()
+	return v.Series.IsZero() && v.Frame.IsZero() && v.Colors.IsZero() && v.Horizontal.IsZero() && v.Stacked.IsZero() && v.NoDataMessage.IsZero() && v.Labels.IsZero() && v.Downloadable.IsZero()
 }
 
 func (v *BarChartDataPoint) reset() {
@@ -15452,6 +15494,30 @@ func (v *Colors) IsZero() bool {
 
 func (v *Colors) reset() {
 	*v = nil
+}
+
+type Float float64
+
+func (v *Float) write(r *BinaryWriter) error {
+	return r.writeFloat64(float64(*v))
+}
+
+func (v *Float) read(r *BinaryReader) error {
+	val, err := r.readFloat64()
+	if err != nil {
+		return err
+	}
+
+	*v = Float(val)
+	return nil
+}
+
+func (v *Float) IsZero() bool {
+	return *v == 0.0
+}
+
+func (v *Float) reset() {
+	*v = 0.0
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -16520,6 +16586,13 @@ func (v *BarChartSeriesArray) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Colors) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 156); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Float) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(f64, 157); err != nil {
 		return err
 	}
 	return nil

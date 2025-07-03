@@ -27,7 +27,7 @@ type TBarChartMarker struct {
 
 type TBarChartDataPoint struct {
 	X       string
-	Y       string
+	Y       float64
 	Markers []TBarChartMarker
 }
 
@@ -37,19 +37,27 @@ type TBarChartSeries struct {
 }
 
 type TBarChart struct {
+	labels        []string
 	series        []TBarChartSeries
 	colors        []ui.Color
 	frame         ui.Frame
-	isHorizontal  bool
-	isStacked     bool
+	horizontal    bool
+	stacked       bool
+	downloadable  bool
 	noDataMessage string
 }
 
 func BarChart() TBarChart {
 	return TBarChart{
-		isHorizontal: false,
-		isStacked:    false,
+		horizontal:   false,
+		stacked:      false,
+		downloadable: true,
 	}
+}
+
+func (c TBarChart) Labels(labels []string) TBarChart {
+	c.labels = labels
+	return c
 }
 
 func (c TBarChart) Series(series []TBarChartSeries) TBarChart {
@@ -67,13 +75,18 @@ func (c TBarChart) Frame(frame ui.Frame) TBarChart {
 	return c
 }
 
-func (c TBarChart) IsHorizontal(isHorizontal bool) TBarChart {
-	c.isHorizontal = isHorizontal
+func (c TBarChart) Horizontal(horizontal bool) TBarChart {
+	c.horizontal = horizontal
 	return c
 }
 
-func (c TBarChart) IsStacked(isStacked bool) TBarChart {
-	c.isStacked = isStacked
+func (c TBarChart) Stacked(stacked bool) TBarChart {
+	c.stacked = stacked
+	return c
+}
+
+func (c TBarChart) Downloadable(downloadable bool) TBarChart {
+	c.downloadable = downloadable
 	return c
 }
 
@@ -87,12 +100,19 @@ func (c TBarChart) Render(ctx core.RenderContext) core.RenderNode {
 	for i, color := range c.colors {
 		protoColors[i] = proto.Color(color)
 	}
+	labels := make([]proto.Str, len(c.labels))
+	for i, label := range c.labels {
+		labels[i] = proto.Str(label)
+	}
+
 	return &proto.BarChart{
+		Labels:        labels,
 		Series:        c.getSeriesAsProtoSeries(),
 		Colors:        protoColors,
 		Frame:         c.getFrameAsProtoFrame(),
-		IsHorizontal:  proto.Bool(c.isHorizontal),
-		IsStacked:     proto.Bool(c.isStacked),
+		Horizontal:    proto.Bool(c.horizontal),
+		Stacked:       proto.Bool(c.stacked),
+		Downloadable:  proto.Bool(c.downloadable),
 		NoDataMessage: proto.Str(c.noDataMessage),
 	}
 }
@@ -104,7 +124,7 @@ func (c TBarChart) getSeriesAsProtoSeries() []proto.BarChartSeries {
 		for j, dataPoint := range series.DataPoints {
 			var protoMarkers []proto.BarChartMarker
 
-			if !c.isStacked {
+			if !c.stacked {
 				protoMarkers = make([]proto.BarChartMarker, len(dataPoint.Markers))
 				for k, marker := range dataPoint.Markers {
 					protoMarkers[k] = proto.BarChartMarker{
@@ -123,7 +143,7 @@ func (c TBarChart) getSeriesAsProtoSeries() []proto.BarChartSeries {
 
 			protoDataPoints[j] = proto.BarChartDataPoint{
 				X:       proto.Str(dataPoint.X),
-				Y:       proto.Str(dataPoint.Y),
+				Y:       proto.Float(dataPoint.Y),
 				Markers: protoMarkers,
 			}
 		}

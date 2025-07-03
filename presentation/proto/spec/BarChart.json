@@ -15,16 +15,28 @@
       "type": "Colors"
     },
     "4": {
-      "name": "IsHorizontal",
+      "doc": "If Horizontal is true, bars will be displayed from left to right. Can be combined with Horizontal.",
+      "name": "Horizontal",
       "type": "Bool"
     },
     "5": {
-      "name": "IsStacked",
+      "doc": "If Stacked is true, multiple series get stacked on top of each other. Can be combined with Horizontal.",
+      "name": "Stacked",
       "type": "Bool"
     },
     "6": {
       "name": "NoDataMessage",
       "type": "Str"
+    },
+    "7": {
+      "doc": "Labels for the series data, shown on the x-axis for vertical bar charts and the y-axis for horizontal ones. By default, these labels are taken from the x value of each BarChartDataPoint, but you can override them by providing this array of strings.",
+      "name": "Labels",
+      "type": "Strings"
+    },
+    "8": {
+      "doc": "The BarChart is per default downloadable. By setting Downloadable to false the toolbar to download the BarChart gets hidden.",
+      "name": "Downloadable",
+      "type": "Bool"
     }
   }
 }
