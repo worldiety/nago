@@ -21,6 +21,7 @@ import {
 	HStack,
 	HoverGroup,
 	Img,
+	LineChart,
 	Menu,
 	Modal,
 	Component as NagoComponent,
@@ -75,6 +76,7 @@ const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeedi
 const LazyUiQrCode = defineAsyncComponent(() => import('@/components/UiQrCode.vue'));
 const LazyUiQrCodeReader = defineAsyncComponent(() => import('@/components/UiQrCodeReader.vue'));
 const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
+const LazyUiLineChart = defineAsyncComponent(() => import('@/components/charts/UiLineChart.vue'));
 
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -204,6 +206,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof BarChart) {
 		return LazyUiBarChart;
+	}
+
+	if (ngc instanceof LineChart) {
+		return LazyUiLineChart;
 	}
 
 	// keep this as the default fallback
