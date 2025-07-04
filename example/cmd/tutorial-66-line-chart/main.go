@@ -33,6 +33,8 @@ func main() {
 			var lineChartSeries []chart.Series
 			var lineChartSeries2 []chart.Series
 
+			grow := core.AutoState[float64](wnd)
+
 			lineChartSeries = append(lineChartSeries, chart.Series{
 				Label: "series 1",
 				DataPoints: []chart.DataPoint{
@@ -54,7 +56,7 @@ func main() {
 					},
 					{
 						X: "2013",
-						Y: 600,
+						Y: grow.Get(),
 					},
 				},
 			})
@@ -79,7 +81,7 @@ func main() {
 					},
 					{
 						X: "2013",
-						Y: 50,
+						Y: grow.Get(),
 					},
 				},
 			})
@@ -105,7 +107,7 @@ func main() {
 					},
 					{
 						X: "2013",
-						Y: 600,
+						Y: grow.Get(),
 					},
 				},
 			})
@@ -131,10 +133,14 @@ func main() {
 					},
 					{
 						X: "2013",
-						Y: 50,
+						Y: grow.Get(),
 					},
 				},
 			})
+
+			markers := linechart.Markers{
+				Size: 5,
+			}
 
 			colorPalette := []ui.Color{
 				ui.M0,
@@ -160,11 +166,14 @@ func main() {
 			}
 			return ui.VStack(
 				ui.Text("line chart demo"),
-				linechart.LineChart(chart1).Series(lineChartSeries),
+				linechart.LineChart(chart1).Series(lineChartSeries).Markers(markers),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveSmooth),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveStepline),
 				linechart.LineChart(chart2).Series(lineChartSeries2),
 				linechart.LineChart(chart3).Series([]chart.Series{}),
+				ui.PrimaryButton(func() {
+					grow.Set(grow.Get() + 100)
+				}).Title("grow 2013"),
 			)
 		})
 	}).Run()

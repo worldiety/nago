@@ -31,7 +31,7 @@
 		"@tiptap/pm": "^2.11.7",
 		"@tiptap/starter-kit": "^2.11.7",
 		"@tiptap/vue-3": "^2.11.7",
-        "apexcharts": "^4.7.0",
+		"apexcharts": "^4.7.0",
 		"@vitejs/plugin-legacy": "^6.1.1",
 		"codemirror": "^6.0.1",
 		"pinia": "^3.0.1",
@@ -42,8 +42,8 @@
 		"vue-codemirror": "^6.1.1",
 		"vue-i18n": "^10.0.6",
 		"vue-qrcode-reader": "^5.7.2",
-        "vue-router": "^4.3.0",
-        "vue3-apexcharts": "^1.8.0"
+		"vue-router": "^4.3.0",
+		"vue3-apexcharts": "^1.8.0"
 	},
 	"devDependencies": {
 		"@rushstack/eslint-patch": "^1.10.1",
