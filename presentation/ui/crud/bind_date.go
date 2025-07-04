@@ -19,9 +19,9 @@ type DateOptions struct {
 }
 
 func Date[E any, T ~struct {
-	Day   int        // Year like 2024.
-	Month time.Month // Month in year, offset at 1.
-	Year  int        // Day of month, offset at 1.
+	Day   int        `json:"Day,omitempty"`   // Day of month, offset at 1.
+	Month time.Month `json:"Month,omitempty"` // Month in year, offset at 1.
+	Year  int        `json:"Year,omitempty"`  // Year like 2024.
 }](opts DateOptions, property Property[E, T]) Field[E] {
 	return Field[E]{
 		Label: opts.Label,

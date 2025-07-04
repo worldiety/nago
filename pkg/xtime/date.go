@@ -21,10 +21,11 @@ const (
 )
 
 // Date represents a day/month/year tuple without any associated timezone.
+// Historically, we must keep the uppercase field names to be compatible.
 type Date struct {
-	Day   int        // Day of month, offset at 1.
-	Month time.Month // Month in year, offset at 1.
-	Year  int        // Year like 2024.
+	Day   int        `json:"Day,omitempty"`   // Day of month, offset at 1.
+	Month time.Month `json:"Month,omitempty"` // Month in year, offset at 1.
+	Year  int        `json:"Year,omitempty"`  // Year like 2024.
 }
 
 func (d Date) String() string {
