@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 165,
+  "fields": {
+    "1": {
+      "name": "Size",
+      "type": "Int"
+    },
+    "2": {
+      "name": "Colors",
+      "type": "Colors"
+    }
+  }
+}

@@ -1,6 +1,0 @@
-{
-  "doc": "BarChartSeriesArray is an array of series which hold the data for the bar chart.",
-  "kind": "Array",
-  "id": 155,
-  "type": "BarChartSeries"
-}

@@ -12,27 +12,21 @@ import { computed } from 'vue';
 import { frameCSS } from '@/components/shared/frame';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import { BarChart, BarChartMarker, ChartDataPoint } from '@/shared/proto/nprotoc_gen';
+import { ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
 
 const props = defineProps<{
-	ui: BarChart;
+	ui: LineChart;
 }>();
 
 const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
-			type: 'bar',
-			stacked: props.ui.stacked ?? false,
+			type: 'line',
 			toolbar: {
 				tools: {
 					download: props.ui.chart?.downloadable ?? false,
 				},
-			},
-		},
-		plotOptions: {
-			bar: {
-				horizontal: props.ui.horizontal ?? false,
 			},
 		},
 		colors: colors.value,
@@ -41,20 +35,24 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			text: props.ui.chart?.noDataMessage,
 		},
 		labels: props.ui.chart?.labels?.value ?? [],
+		stroke: {
+			curve: mapCurve(props.ui.curve),
+		},
 	};
 });
 const colors = computed<string[]>(() => {
 	if (!props.ui.chart?.colors) return [];
 
-	return props.ui.chart?.colors.value.map(colorToHexValue).filter((c) => c.length > 0);
+	return props.ui.chart.colors.value.map(colorToHexValue).filter((c) => c.length > 0);
 });
 const series = computed<ApexAxisChartSeries>(() => {
 	if (!props.ui.series) return [];
 
-	return props.ui.series.value.map((s, sIndex) => {
+	return props.ui.series.value.map((s) => {
 		return {
 			name: s.label,
-			data: s.dataPoints?.value.map((dp, dpIndex) => mapDataPointsToData(dp, sIndex, dpIndex)),
+			type: mapSeriesType(s.type),
+			data: s.dataPoints?.value.map(mapDataPointsToData),
 		};
 	}) as ApexAxisChartSeries;
 });
@@ -64,32 +62,40 @@ const frameStyles = computed<string>(() => {
 	return styles.join(';');
 });
 
-function mapDataPointsToData(dataPoint: ChartDataPoint, seriesIndex: number, dataPointIndex: number) {
-	const markers = props.ui.markers?.value.filter(
-		(marker) => marker.seriesIndex === seriesIndex && marker.dataPointIndex === dataPointIndex
-	);
-
+function mapDataPointsToData(dataPoint: ChartDataPoint) {
 	return {
 		x: dataPoint.x,
 		y: dataPoint.y,
-		goals: markers?.map(mapMarkerToGoal),
 	};
 }
-function mapMarkerToGoal(marker: BarChartMarker) {
-	return {
-		name: marker.label,
-		value: marker.value,
-		strokeDashArray: marker.dashed ? 3 : undefined,
-		strokeColor: marker.color ? colorToHexValue(marker.color) : undefined,
-		strokeWidth: marker.round ? (props.ui.horizontal ? marker.width : 0) : marker.width,
-		strokeHeight: marker.round ? (!props.ui.horizontal ? marker.height : 0) : marker.height,
-		strokeLineCap: 'round',
-	};
+function mapCurve(curve: number | undefined) {
+	switch (curve) {
+		case LineChartCurveValues.LineChartCurveStraight:
+			return 'straight';
+		case LineChartCurveValues.LineChartCurveSmooth:
+			return 'smooth';
+		case LineChartCurveValues.LineChartCurveStepline:
+			return 'stepline';
+		default:
+			return 'straight';
+	}
+}
+function mapSeriesType(seriesType: number | undefined) {
+	switch (seriesType) {
+		case ChartSeriesTypeValues.ChartSeriesTypeLine:
+			return 'line';
+		case ChartSeriesTypeValues.ChartSeriesTypeColumn:
+			return 'column';
+		case ChartSeriesTypeValues.ChartSeriesTypeArea:
+			return 'area';
+		default:
+			return 'line';
+	}
 }
 </script>
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="bar" :series="options.series" :options="options" />
+		<VueApexCharts type="line" :series="options.series" :options="options" />
 	</div>
 </template>

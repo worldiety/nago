@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 159,
+  "const": {
+    "0": {
+      "name": "LineChartCurveStraight"
+    },
+    "1": {
+      "name": "LineChartCurveSmooth"
+    },
+    "2": {
+      "name": "LineChartCurveStepline"
+    }
+  }
+}
