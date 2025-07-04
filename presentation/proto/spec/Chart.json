@@ -1,0 +1,37 @@
+{
+  "doc": "The chart is not a standalone component, but rather a shared base container that gets embedded by all chart types.",
+  "kind": "Record",
+  "id": 166,
+  "fields": {
+    "1": {
+      "doc": "Labels for the series data, shown on the x-axis for vertical charts and the y-axis for horizontal ones. By default, these labels are taken from the x value of each DataPoint, but you can override them by providing this array of strings.",
+      "name": "Labels",
+      "type": "Strings"
+    },
+    "2": {
+      "name": "Colors",
+      "type": "Colors"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "doc": "The chart is per default downloadable. By setting Downloadable to false the toolbar to download the chart gets hidden.",
+      "name": "Downloadable",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "NoDataMessage",
+      "type": "Str"
+    },
+    "6": {
+      "name": "XAxisTitle",
+      "type": "Str"
+    },
+    "7": {
+      "name": "YAxisTitle",
+      "type": "Str"
+    }
+  }
+}

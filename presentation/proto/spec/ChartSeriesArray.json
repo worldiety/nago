@@ -1,0 +1,6 @@
+{
+  "doc": "ChartSeriesArray is an array of series which hold the data for the chart.",
+  "kind": "Array",
+  "id": 160,
+  "type": "ChartSeries"
+}

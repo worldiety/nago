@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 161,
+  "const": {
+    "0": {
+      "name": "ChartSeriesTypeLine"
+    },
+    "1": {
+      "name": "ChartSeriesTypeColumn"
+    },
+    "2": {
+      "name": "ChartSeriesTypeArea"
+    }
+  }
+}

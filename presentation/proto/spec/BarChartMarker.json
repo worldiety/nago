@@ -7,26 +7,36 @@
       "type": "Str"
     },
     "2": {
-      "name": "Value",
-      "type": "Str"
+      "doc": "SeriesIndex specifies the index of the series the marker is associated with.",
+      "name": "SeriesIndex",
+      "type": "Int"
     },
     "3": {
-      "name": "Width",
+      "doc": "DataPointIndex specifies the index of the data point inside a series the marker is associated with.",
+      "name": "DataPointIndex",
       "type": "Int"
     },
     "4": {
+      "name": "Value",
+      "type": "Str"
+    },
+    "5": {
+      "name": "Width",
+      "type": "Int"
+    },
+    "6": {
       "name": "Height",
       "type": "Int"
     },
-    "5": {
-      "name": "IsRound",
-      "type": "Bool"
-    },
-    "6": {
-      "name": "IsDashed",
-      "type": "Bool"
-    },
     "7": {
+      "name": "Round",
+      "type": "Bool"
+    },
+    "8": {
+      "name": "Dashed",
+      "type": "Bool"
+    },
+    "9": {
       "name": "Color",
       "type": "Color"
     }
