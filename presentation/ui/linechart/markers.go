@@ -7,10 +7,21 @@
 
 package linechart
 
-import "go.wdy.de/nago/presentation/ui"
+import (
+	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui"
+)
 
 type Markers struct {
 	Size               int
-	Color              ui.Color
+	BorderColor        ui.Color
 	ShowNullDataPoints bool
+}
+
+func (s Markers) Ora() proto.LineChartMarkers {
+	return proto.LineChartMarkers{
+		Size:               proto.Int(s.Size),
+		BorderColor:        proto.Color(s.BorderColor),
+		ShowNullDataPoints: proto.Bool(s.ShowNullDataPoints),
+	}
 }

@@ -1532,10 +1532,8 @@ func (v *ErrorOccurred) read(r *BinaryReader) error {
 type FontStyle uint64
 
 const (
-	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
-	Unsolicited FontStyle = 0
-	Normal      FontStyle = 1
-	Italic      FontStyle = 2
+	Normal FontStyle = 0
+	Italic FontStyle = 1
 )
 
 func (v *FontStyle) write(r *BinaryWriter) error {
@@ -3016,14 +3014,17 @@ type Font struct {
 	Size   Length
 	Style  FontStyle
 	Weight FontWeight
+	// Line height of the element that uses this font
+	LineHeight LineHeight
 }
 
 func (v *Font) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.Name.IsZero()
 	fields[2] = !v.Size.IsZero()
 	fields[3] = !v.Style.IsZero()
 	fields[4] = !v.Weight.IsZero()
+	fields[5] = !v.LineHeight.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3066,6 +3067,14 @@ func (v *Font) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.LineHeight.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3098,6 +3107,11 @@ func (v *Font) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Weight.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.LineHeight.read(r)
 			if err != nil {
 				return err
 			}
@@ -11677,16 +11691,18 @@ func (v *BarChartMarker) read(r *BinaryReader) error {
 }
 
 type LineChart struct {
-	Chart  Chart
-	Series ChartSeriesArray
-	Curve  LineChartCurve
+	Chart   Chart
+	Series  ChartSeriesArray
+	Curve   LineChartCurve
+	Markers LineChartMarkers
 }
 
 func (v *LineChart) write(w *BinaryWriter) error {
-	var fields [4]bool
+	var fields [5]bool
 	fields[1] = !v.Chart.IsZero()
 	fields[2] = !v.Series.IsZero()
 	fields[3] = !v.Curve.IsZero()
+	fields[4] = !v.Markers.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11721,6 +11737,14 @@ func (v *LineChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Markers.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -11748,6 +11772,11 @@ func (v *LineChart) read(r *BinaryReader) error {
 			}
 		case 3:
 			err := v.Curve.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Markers.read(r)
 			if err != nil {
 				return err
 			}
@@ -11958,14 +11987,16 @@ func (v *ChartSeries) read(r *BinaryReader) error {
 }
 
 type LineChartMarkers struct {
-	Size   Int
-	Colors Colors
+	Size               Int
+	BorderColor        Color
+	ShowNullDataPoints Bool
 }
 
 func (v *LineChartMarkers) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.Size.IsZero()
-	fields[2] = !v.Colors.IsZero()
+	fields[2] = !v.BorderColor.IsZero()
+	fields[3] = !v.ShowNullDataPoints.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11985,10 +12016,18 @@ func (v *LineChartMarkers) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[2] {
-		if err := w.writeFieldHeader(array, 2); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
 			return err
 		}
-		if err := v.Colors.write(w); err != nil {
+		if err := v.BorderColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ShowNullDataPoints.write(w); err != nil {
 			return err
 		}
 	}
@@ -12013,7 +12052,12 @@ func (v *LineChartMarkers) read(r *BinaryReader) error {
 				return err
 			}
 		case 2:
-			err := v.Colors.read(r)
+			err := v.BorderColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ShowNullDataPoints.read(r)
 			if err != nil {
 				return err
 			}
@@ -13138,6 +13182,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 167:
+		var v LineHeight
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -14110,10 +14160,11 @@ func (v *Font) reset() {
 	v.Size.reset()
 	v.Style.reset()
 	v.Weight.reset()
+	v.LineHeight.reset()
 }
 
 func (v *Font) IsZero() bool {
-	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero()
+	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.LineHeight.IsZero()
 }
 
 func (v *Grid) reset() {
@@ -15694,10 +15745,11 @@ func (v *LineChart) reset() {
 	v.Chart.reset()
 	v.Series.reset()
 	v.Curve.reset()
+	v.Markers.reset()
 }
 
 func (v *LineChart) IsZero() bool {
-	return v.Chart.IsZero() && v.Series.IsZero() && v.Curve.IsZero()
+	return v.Chart.IsZero() && v.Series.IsZero() && v.Curve.IsZero() && v.Markers.IsZero()
 }
 
 // ChartSeriesArray is an array of series which hold the data for the chart.
@@ -15811,11 +15863,12 @@ func (v *ChartSeries) IsZero() bool {
 
 func (v *LineChartMarkers) reset() {
 	v.Size.reset()
-	v.Colors.reset()
+	v.BorderColor.reset()
+	v.ShowNullDataPoints.reset()
 }
 
 func (v *LineChartMarkers) IsZero() bool {
-	return v.Size.IsZero() && v.Colors.IsZero()
+	return v.Size.IsZero() && v.BorderColor.IsZero() && v.ShowNullDataPoints.IsZero()
 }
 
 func (v *Chart) reset() {
@@ -15830,6 +15883,41 @@ func (v *Chart) reset() {
 
 func (v *Chart) IsZero() bool {
 	return v.Labels.IsZero() && v.Colors.IsZero() && v.Frame.IsZero() && v.Downloadable.IsZero() && v.NoDataMessage.IsZero() && v.XAxisTitle.IsZero() && v.YAxisTitle.IsZero()
+}
+
+// Line height for text elements
+type LineHeight string
+
+func (v *LineHeight) write(r *BinaryWriter) error {
+	data := *(*[]byte)(unsafe.Pointer(v))
+	if err := r.writeUvarint(uint64(len(data))); err != nil {
+		return err
+	}
+	return r.write(data)
+}
+
+func (v *LineHeight) read(r *BinaryReader) error {
+	strLen, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, strLen)
+
+	if err := r.read(buf); err != nil {
+		return err
+	}
+
+	*v = *(*LineHeight)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *LineHeight) IsZero() bool {
+	return len(*v) == 0
+}
+
+func (v *LineHeight) reset() {
+	*v = LineHeight("")
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -16933,6 +17021,13 @@ func (v *LineChartMarkers) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Chart) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 166); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *LineHeight) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 167); err != nil {
 		return err
 	}
 	return nil

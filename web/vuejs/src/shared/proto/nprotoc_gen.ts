@@ -1537,10 +1537,8 @@ function writeTypeHeaderFontStyle(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for FontStyle
 export enum FontStyleValues {
-	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
-	Unsolicited = 0,
-	Normal = 1,
-	Italic = 2,
+	Normal = 0,
+	Italic = 1,
 }
 
 // RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.
@@ -3180,16 +3178,21 @@ export class Font implements Writeable, Readable {
 
 	public weight?: FontWeight;
 
+	// Line height of the element that uses this font
+	public lineHeight?: LineHeight;
+
 	constructor(
 		name: Str | undefined = undefined,
 		size: Length | undefined = undefined,
 		style: FontStyle | undefined = undefined,
-		weight: FontWeight | undefined = undefined
+		weight: FontWeight | undefined = undefined,
+		lineHeight: LineHeight | undefined = undefined
 	) {
 		this.name = name;
 		this.size = size;
 		this.style = style;
 		this.weight = weight;
+		this.lineHeight = lineHeight;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3214,6 +3217,10 @@ export class Font implements Writeable, Readable {
 					this.weight = readInt(reader);
 					break;
 				}
+				case 5: {
+					this.lineHeight = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3227,6 +3234,7 @@ export class Font implements Writeable, Readable {
 			this.size !== undefined,
 			this.style !== undefined,
 			this.weight !== undefined,
+			this.lineHeight !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3246,11 +3254,19 @@ export class Font implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
 			writeInt(writer, this.weight!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.lineHeight!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.name === undefined && this.size === undefined && this.style === undefined && this.weight === undefined
+			this.name === undefined &&
+			this.size === undefined &&
+			this.style === undefined &&
+			this.weight === undefined &&
+			this.lineHeight === undefined
 		);
 	}
 
@@ -3259,6 +3275,7 @@ export class Font implements Writeable, Readable {
 		this.size = undefined;
 		this.style = undefined;
 		this.weight = undefined;
+		this.lineHeight = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -12209,14 +12226,18 @@ export class LineChart implements Writeable, Readable, Component {
 
 	public curve?: LineChartCurve;
 
+	public markers?: LineChartMarkers;
+
 	constructor(
 		chart: Chart | undefined = undefined,
 		series: ChartSeriesArray | undefined = undefined,
-		curve: LineChartCurve | undefined = undefined
+		curve: LineChartCurve | undefined = undefined,
+		markers: LineChartMarkers | undefined = undefined
 	) {
 		this.chart = chart;
 		this.series = series;
 		this.curve = curve;
+		this.markers = markers;
 	}
 
 	read(reader: BinaryReader): void {
@@ -12239,6 +12260,11 @@ export class LineChart implements Writeable, Readable, Component {
 					this.curve = readInt(reader);
 					break;
 				}
+				case 4: {
+					this.markers = new LineChartMarkers();
+					this.markers.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -12251,6 +12277,7 @@ export class LineChart implements Writeable, Readable, Component {
 			this.chart !== undefined && !this.chart.isZero(),
 			this.series !== undefined && !this.series.isZero(),
 			this.curve !== undefined,
+			this.markers !== undefined && !this.markers.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -12266,13 +12293,18 @@ export class LineChart implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 3);
 			writeInt(writer, this.curve!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.markers!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.chart === undefined || this.chart.isZero()) &&
 			(this.series === undefined || this.series.isZero()) &&
-			this.curve === undefined
+			this.curve === undefined &&
+			(this.markers === undefined || this.markers.isZero())
 		);
 	}
 
@@ -12280,6 +12312,7 @@ export class LineChart implements Writeable, Readable, Component {
 		this.chart = undefined;
 		this.series = undefined;
 		this.curve = undefined;
+		this.markers = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -12548,11 +12581,18 @@ export class ChartSeries implements Writeable, Readable {
 export class LineChartMarkers implements Writeable, Readable {
 	public size?: Int;
 
-	public colors?: Colors;
+	public borderColor?: Color;
 
-	constructor(size: Int | undefined = undefined, colors: Colors | undefined = undefined) {
+	public showNullDataPoints?: Bool;
+
+	constructor(
+		size: Int | undefined = undefined,
+		borderColor: Color | undefined = undefined,
+		showNullDataPoints: Bool | undefined = undefined
+	) {
 		this.size = size;
-		this.colors = colors;
+		this.borderColor = borderColor;
+		this.showNullDataPoints = showNullDataPoints;
 	}
 
 	read(reader: BinaryReader): void {
@@ -12566,8 +12606,11 @@ export class LineChartMarkers implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.colors = new Colors();
-					this.colors.read(reader);
+					this.borderColor = readString(reader);
+					break;
+				}
+				case 3: {
+					this.showNullDataPoints = readBool(reader);
 					break;
 				}
 				default:
@@ -12577,7 +12620,12 @@ export class LineChartMarkers implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.size !== undefined, this.colors !== undefined && !this.colors.isZero()];
+		const fields = [
+			false,
+			this.size !== undefined,
+			this.borderColor !== undefined,
+			this.showNullDataPoints !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -12585,18 +12633,23 @@ export class LineChartMarkers implements Writeable, Readable {
 			writeSint(writer, this.size!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 2);
-			this.colors!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.borderColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.showNullDataPoints!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.size === undefined && (this.colors === undefined || this.colors.isZero());
+		return this.size === undefined && this.borderColor === undefined && this.showNullDataPoints === undefined;
 	}
 
 	reset(): void {
 		this.size = undefined;
-		this.colors = undefined;
+		this.borderColor = undefined;
+		this.showNullDataPoints = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -12755,6 +12808,12 @@ export class Chart implements Writeable, Readable {
 	}
 }
 
+// Line height for text elements
+export type LineHeight = string;
+function writeTypeHeaderLineHeight(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 167);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -13511,6 +13570,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 166: {
 			const v = new Chart();
 			v.read(src);
+			return v;
+		}
+		case 167: {
+			const v = readString(src) as LineHeight;
 			return v;
 		}
 	}
