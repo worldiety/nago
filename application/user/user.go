@@ -10,6 +10,7 @@ package user
 import (
 	"fmt"
 	"github.com/worldiety/enum"
+	"go.wdy.de/nago/application/address"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
@@ -17,7 +18,9 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xstrings"
+	"go.wdy.de/nago/pkg/xtime"
 	"golang.org/x/text/language"
 	"iter"
 	"regexp"
@@ -116,18 +119,30 @@ type Contact struct {
 	// an academic degree like Diploma, Bachelor, Master or Doctor
 	Title string `json:"title,omitempty"`
 	// Saluation is like Mr, Mrs or divers
-	Salutation  string `json:"salutation,omitempty"`
-	Firstname   string `json:"firstname,omitempty"`
-	Lastname    string `json:"lastname,omitempty"`
-	Phone       string `json:"phone,omitempty"`
-	MobilePhone string `json:"mobilePhone,omitempty"`
+	Salutation  string     `json:"salutation,omitempty"`
+	Firstname   string     `json:"firstname,omitempty"`
+	Lastname    string     `json:"lastname,omitempty"`
+	Phone       string     `json:"phone,omitempty"`
+	MobilePhone string     `json:"mobilePhone,omitempty"`
+	DayOfBirth  xtime.Date `json:"dayOfBirth,omitzero"`
+
+	// Address section
 	// Country is like Deutschland, not the BCP47 code
-	Country    string `json:"country,omitempty"`
-	City       string `json:"city,omitempty"`
+	//deprecated use Addresses
+	Country string `json:"country,omitempty"`
+	//deprecated use Addresses
+	State string `json:"state,omitempty"`
+	//deprecated use Addresses
 	PostalCode string `json:"postalCode,omitempty"`
-	State      string `json:"state,omitempty"`
-	LinkedIn   string `json:"linkedIn,omitempty"`
-	Website    string `json:"website,omitempty"`
+	//deprecated use Addresses
+	City string `json:"city,omitempty"`
+
+	// These Addresses are owned and part of this address and cannot exist without the enclosing contact.
+	Addresses xslices.Slice[address.Address] `json:"addresses,omitempty"`
+
+	// Social Media section
+	LinkedIn string `json:"linkedIn,omitempty"`
+	Website  string `json:"website,omitempty"`
 	// Position is like CEO
 	Position          string `json:"position,omitempty"`
 	ProfessionalGroup string `json:"professionalGroup,omitempty"`
@@ -137,8 +152,27 @@ type Contact struct {
 	AboutMe         string `json:"aboutMe,omitempty"`
 }
 
-func (d Contact) IsZero() bool {
-	return d == Contact{}
+func (c Contact) IsZero() bool {
+	return c.Avatar == "" &&
+		c.Title == "" &&
+		c.Salutation == "" &&
+		c.Firstname == "" &&
+		c.Lastname == "" &&
+		c.Phone == "" &&
+		c.MobilePhone == "" &&
+		c.DayOfBirth.IsZero() &&
+		c.Country == "" &&
+		c.State == "" &&
+		c.PostalCode == "" &&
+		c.City == "" &&
+		c.IsZero() &&
+		c.LinkedIn == "" &&
+		c.Website == "" &&
+		c.Position == "" &&
+		c.ProfessionalGroup == "" &&
+		c.CompanyName == "" &&
+		c.DisplayLanguage == "" &&
+		c.AboutMe == ""
 }
 
 type Code struct {
