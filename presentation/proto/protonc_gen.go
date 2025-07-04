@@ -11677,16 +11677,18 @@ func (v *BarChartMarker) read(r *BinaryReader) error {
 }
 
 type LineChart struct {
-	Chart  Chart
-	Series ChartSeriesArray
-	Curve  LineChartCurve
+	Chart   Chart
+	Series  ChartSeriesArray
+	Curve   LineChartCurve
+	Markers LineChartMarkers
 }
 
 func (v *LineChart) write(w *BinaryWriter) error {
-	var fields [4]bool
+	var fields [5]bool
 	fields[1] = !v.Chart.IsZero()
 	fields[2] = !v.Series.IsZero()
 	fields[3] = !v.Curve.IsZero()
+	fields[4] = !v.Markers.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11721,6 +11723,14 @@ func (v *LineChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Markers.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -11748,6 +11758,11 @@ func (v *LineChart) read(r *BinaryReader) error {
 			}
 		case 3:
 			err := v.Curve.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Markers.read(r)
 			if err != nil {
 				return err
 			}
@@ -11958,14 +11973,16 @@ func (v *ChartSeries) read(r *BinaryReader) error {
 }
 
 type LineChartMarkers struct {
-	Size   Int
-	Colors Colors
+	Size               Int
+	BorderColor        Color
+	ShowNullDataPoints Bool
 }
 
 func (v *LineChartMarkers) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.Size.IsZero()
-	fields[2] = !v.Colors.IsZero()
+	fields[2] = !v.BorderColor.IsZero()
+	fields[3] = !v.ShowNullDataPoints.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11985,10 +12002,18 @@ func (v *LineChartMarkers) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[2] {
-		if err := w.writeFieldHeader(array, 2); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
 			return err
 		}
-		if err := v.Colors.write(w); err != nil {
+		if err := v.BorderColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ShowNullDataPoints.write(w); err != nil {
 			return err
 		}
 	}
@@ -12013,7 +12038,12 @@ func (v *LineChartMarkers) read(r *BinaryReader) error {
 				return err
 			}
 		case 2:
-			err := v.Colors.read(r)
+			err := v.BorderColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ShowNullDataPoints.read(r)
 			if err != nil {
 				return err
 			}
@@ -15694,10 +15724,11 @@ func (v *LineChart) reset() {
 	v.Chart.reset()
 	v.Series.reset()
 	v.Curve.reset()
+	v.Markers.reset()
 }
 
 func (v *LineChart) IsZero() bool {
-	return v.Chart.IsZero() && v.Series.IsZero() && v.Curve.IsZero()
+	return v.Chart.IsZero() && v.Series.IsZero() && v.Curve.IsZero() && v.Markers.IsZero()
 }
 
 // ChartSeriesArray is an array of series which hold the data for the chart.
@@ -15811,11 +15842,12 @@ func (v *ChartSeries) IsZero() bool {
 
 func (v *LineChartMarkers) reset() {
 	v.Size.reset()
-	v.Colors.reset()
+	v.BorderColor.reset()
+	v.ShowNullDataPoints.reset()
 }
 
 func (v *LineChartMarkers) IsZero() bool {
-	return v.Size.IsZero() && v.Colors.IsZero()
+	return v.Size.IsZero() && v.BorderColor.IsZero() && v.ShowNullDataPoints.IsZero()
 }
 
 func (v *Chart) reset() {

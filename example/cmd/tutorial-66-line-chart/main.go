@@ -136,6 +136,10 @@ func main() {
 				},
 			})
 
+			markers := linechart.Markers{
+				Size: 5,
+			}
+
 			colorPalette := []ui.Color{
 				ui.M0,
 				ui.A0,
@@ -160,7 +164,7 @@ func main() {
 			}
 			return ui.VStack(
 				ui.Text("line chart demo"),
-				linechart.LineChart(chart1).Series(lineChartSeries),
+				linechart.LineChart(chart1).Series(lineChartSeries).Markers(markers),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveSmooth),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveStepline),
 				linechart.LineChart(chart2).Series(lineChartSeries2),

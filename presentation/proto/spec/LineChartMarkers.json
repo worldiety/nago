@@ -7,8 +7,12 @@
       "type": "Int"
     },
     "2": {
-      "name": "Colors",
-      "type": "Colors"
+      "name": "BorderColor",
+      "type": "Color"
+    },
+    "3": {
+      "name": "ShowNullDataPoints",
+      "type": "Bool"
     }
   }
 }

@@ -54,8 +54,9 @@ func (c TLineChart) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.LineChart{
-		Chart:  c.chart.Ora(),
-		Series: protoSeries,
-		Curve:  c.curve.ora(),
+		Chart:   c.chart.Ora(),
+		Series:  protoSeries,
+		Curve:   c.curve.ora(),
+		Markers: c.markers.Ora(),
 	}
 }

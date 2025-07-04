@@ -13,6 +13,10 @@
     "3": {
       "name": "Curve",
       "type": "LineChartCurve"
+    },
+    "4": {
+      "name": "Markers",
+      "type": "LineChartMarkers"
     }
   }
 }
