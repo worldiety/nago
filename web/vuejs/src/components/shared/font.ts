@@ -36,7 +36,7 @@ export function fontCSS(font?: Font): string[] {
 	if (font.size) {
 		styles.push(`font-size: ${font.size}`);
 	}
-	
+
 	if (font.lineHeight) {
 		styles.push(`line-height: ${font.lineHeight}`);
 	}

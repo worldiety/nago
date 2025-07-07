@@ -1531,10 +1531,8 @@ func (v *ErrorOccurred) read(r *BinaryReader) error {
 type FontStyle uint64
 
 const (
-	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
-	Unsolicited FontStyle = 0
-	Normal      FontStyle = 1
-	Italic      FontStyle = 2
+	Normal FontStyle = 0
+	Italic FontStyle = 1
 )
 
 func (v *FontStyle) write(r *BinaryWriter) error {

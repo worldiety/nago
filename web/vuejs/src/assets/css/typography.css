@@ -9,12 +9,168 @@
 		'calt' 1,
 		'tnum' 1,
 		'frac' 1;
-	line-height: 1.625;
 }
+
+/* Font definitions in accordance with WDYNAGO-218 */
 
 .font-display-large {
 	font-family: InterVariable, sans-serif;
 	font-size: 3.5625rem;
 	font-weight: 600;
-	line-height: 3.875;
+	line-height: 3.875rem;
+}
+
+.font-display-medium {
+	font-family: InterVariable, sans-serif;
+	font-size: 2.8125rem;
+	font-weight: 600;
+	line-height: 3.25rem;
+}
+
+.font-display-small {
+	font-family: InterVariable, sans-serif;
+	font-size: 2.25rem;
+	font-weight: 600;
+	line-height: 2.75rem;
+}
+
+.font-headline-large {
+	font-family: InterVariable, sans-serif;
+	font-size: 2.5rem;
+	font-weight: 700;
+	line-height: 3rem;
+}
+
+.font-headline-medium {
+	font-family: InterVariable, sans-serif;
+	font-size: 1.875rem;
+	font-weight: 700;
+	line-height: 2.4375rem;
+}
+
+.font-headline-small {
+	font-family: InterVariable, sans-serif;
+	font-size: 1.5rem;
+	font-weight: 700;
+	line-height: 1.9375rem;
+}
+
+.font-title-large {
+	font-family: InterVariable, sans-serif;
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1.375rem;
+}
+
+.font-title-medium {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 700;
+	line-height: 1.25rem;
+}
+
+.font-title-small {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1rem;
+}
+
+.font-body-large {
+	font-family: InterVariable, sans-serif;
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.625rem;
+}
+
+.font-body-medium {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 400;
+	line-height: 1.25rem;
+}
+
+.font-body-small {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.75rem;
+	font-weight: 400;
+	line-height: 1rem;
+}
+
+.font-label-large {
+	font-family: InterVariable, sans-serif;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.0625rem;
+}
+
+.font-label-medium {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 0.9375rem;
+}
+
+.font-label-small {
+	font-family: InterVariable, sans-serif;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 0.8125rem;
+}
+
+.font-mono-large {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 1.5rem;
+	font-weight: 400;
+}
+
+.font-mono-medium {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 1rem;
+	font-weight: 400;
+}
+
+.font-mono-small {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 0.75rem;
+	font-weight: 400;
+}
+
+.font-mono-bold-large {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+
+.font-mono-bold-medium {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.font-mono-bold-small {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.font-mono-italic-large {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-style: italic;
+	font-size: 1.5rem;
+	font-weight: 400;
+}
+
+.font-mono-italic-medium {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-style: italic;
+	font-size: 1rem;
+	font-weight: 400;
+}
+
+.font-mono-italic-small {
+	font-family: 'IBM Plex Mono', sans-serif;
+	font-style: italic;
+	font-size: 0.75rem;
+	font-weight: 400;
 }
