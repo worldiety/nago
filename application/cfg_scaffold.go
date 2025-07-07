@@ -555,7 +555,7 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 func lightDarkButton(icon core.SVG, text string, action func()) core.View {
 	return ui.HStack(
 		ui.ImageIcon(icon),
-		ui.Text(text).Font(ui.Font{Weight: ui.BoldFontWeight}),
+		ui.Text(text).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
 	).Gap(ui.L8).
 		HoveredBackgroundColor(ui.I1).
 		Action(action).

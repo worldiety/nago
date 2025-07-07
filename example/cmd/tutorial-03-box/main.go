@@ -51,7 +51,7 @@ func Avatar(data core.URI) core.View {
 			Border(Border{}.Circle().Width(L4).Color("#ffffff").Shadow(L4)),
 		BottomTrailing: Box(BoxLayout{
 			Center: Text("42").
-				Font(Font{Weight: BoldFontWeight}).
+				Font(Font{Weight: HeadlineAndTitleFontWeight}).
 				Color("#2d6187"),
 		}).
 			BackgroundColor("#52eb8f").

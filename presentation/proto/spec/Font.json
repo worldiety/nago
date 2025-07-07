@@ -18,6 +18,11 @@
     "4": {
       "name": "Weight",
       "type": "FontWeight"
+    },
+    "5": {
+      "doc": "Line height of the element that uses this font",
+      "name": "LineHeight",
+      "type": "LineHeight"
     }
   }
 }

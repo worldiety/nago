@@ -43,7 +43,7 @@ func Heading(level int, title string) core.View {
 			WindowTitle(title),
 			Text(title).Font(Font{
 				Size:   "2rem",
-				Weight: BoldFontWeight,
+				Weight: HeadlineAndTitleFontWeight,
 			}),
 			HLineWithColor(ColorAccent),
 		).Alignment(Leading).Padding(Padding{Bottom: Length("2rem")})
@@ -51,7 +51,7 @@ func Heading(level int, title string) core.View {
 		return VStack(
 			Text(title).Font(Font{
 				Size:   "1.2rem",
-				Weight: BoldFontWeight,
+				Weight: HeadlineAndTitleFontWeight,
 			}),
 			HLine(),
 		).Alignment(Leading).Padding(Padding{Bottom: Length("2rem")})
