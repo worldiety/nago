@@ -499,38 +499,93 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 					default:
 
-						requiresInit := false
-						strState := core.DerivedState[string](state, field.Name).Init(func() string {
-							src := state.Get()
-							str := reflect.ValueOf(src).FieldByName(field.Name).String()
-							if val := field.Tag.Get("value"); val != "" && str == "" {
-								requiresInit = true
-								return val
+						source, ok := field.Tag.Lookup("source")
+						if ok {
+							if opts.Window == nil {
+								panic(fmt.Errorf("form.Auto requires AutoOptions.Window but is nil"))
 							}
 
-							return str
-						})
+							listAll, ok := core.SystemServiceWithName[UseCaseListAny](opts.Window.Application(), source)
+							if !ok {
+								slog.Error("can not find list by system service", "source", source)
+								continue
+							}
 
-						strState.Observe(func(newValue string) {
-							dst := state.Get()
-							dst = setFieldValue(dst, field.Name, newValue).(T)
-							state.Set(dst)
-							state.Notify()
-						})
+							values, err := xslices.Collect2(listAll(opts.Window.Subject()))
+							if err != nil {
+								slog.Error("can not collect list", "source", source, "err", err)
+							}
 
-						if requiresInit {
-							strState.Notify()
+							strState := core.DerivedState[[]AnyEntity](state, field.Name).Init(func() []AnyEntity {
+								src := state.Get()
+								slice := reflect.ValueOf(src).FieldByName(field.Name)
+								tmp := make([]AnyEntity, 0, slice.Len())
+								for _, id := range slice.Seq2() {
+									id := id.String()
+
+									for _, v := range values {
+										if v.id == id {
+											tmp = append(tmp, v)
+											break
+										}
+									}
+								}
+
+								return tmp
+							})
+
+							strState.Observe(func(v []AnyEntity) {
+								var strValue string
+								if len(v) > 0 {
+									strValue = v[0].id
+								}
+								dst := state.Get()
+								dst = setFieldValue(dst, field.Name, strValue).(T)
+								state.Set(dst)
+								state.Notify()
+							})
+
+							fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
+								Title(label).
+								MultiSelect(false).
+								Disabled(disabled).
+								SupportingText(field.Tag.Get("supportingText")).
+								Frame(ui.Frame{}.FullWidth()))
+
+						} else {
+
+							requiresInit := false
+							strState := core.DerivedState[string](state, field.Name).Init(func() string {
+								src := state.Get()
+								str := reflect.ValueOf(src).FieldByName(field.Name).String()
+								if val := field.Tag.Get("value"); val != "" && str == "" {
+									requiresInit = true
+									return val
+								}
+
+								return str
+							})
+
+							strState.Observe(func(newValue string) {
+								dst := state.Get()
+								dst = setFieldValue(dst, field.Name, newValue).(T)
+								state.Set(dst)
+								state.Notify()
+							})
+
+							if requiresInit {
+								strState.Notify()
+							}
+
+							fieldsBuilder.Append(ui.TextField(label, strState.Get()).
+								InputValue(strState).
+								ID(id).
+								SupportingText(field.Tag.Get("supportingText")).
+								Lines(lines).
+								Disabled(disabled).
+								Frame(ui.Frame{}.FullWidth()),
+							)
 						}
-
-						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
-							InputValue(strState).
-							ID(id).
-							SupportingText(field.Tag.Get("supportingText")).
-							Lines(lines).
-							Disabled(disabled).
-							Frame(ui.Frame{}.FullWidth()),
-						)
-
 					}
 				}
 			}
