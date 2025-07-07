@@ -3015,14 +3015,17 @@ type Font struct {
 	Size   Length
 	Style  FontStyle
 	Weight FontWeight
+	// Line height of the element that uses this font
+	LineHeight LineHeight
 }
 
 func (v *Font) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.Name.IsZero()
 	fields[2] = !v.Size.IsZero()
 	fields[3] = !v.Style.IsZero()
 	fields[4] = !v.Weight.IsZero()
+	fields[5] = !v.LineHeight.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3065,6 +3068,14 @@ func (v *Font) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.LineHeight.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3097,6 +3108,11 @@ func (v *Font) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Weight.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.LineHeight.read(r)
 			if err != nil {
 				return err
 			}
@@ -12280,6 +12296,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 147:
+		var v LineHeight
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -13252,10 +13274,11 @@ func (v *Font) reset() {
 	v.Size.reset()
 	v.Style.reset()
 	v.Weight.reset()
+	v.LineHeight.reset()
 }
 
 func (v *Font) IsZero() bool {
-	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero()
+	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.LineHeight.IsZero()
 }
 
 func (v *Grid) reset() {
@@ -14691,6 +14714,41 @@ func (v *RetMediaDevicesPermissionsError) IsZero() bool {
 	return v.Message.IsZero() && v.Code.IsZero()
 }
 
+// Line height for text elements
+type LineHeight string
+
+func (v *LineHeight) write(r *BinaryWriter) error {
+	data := *(*[]byte)(unsafe.Pointer(v))
+	if err := r.writeUvarint(uint64(len(data))); err != nil {
+		return err
+	}
+	return r.write(data)
+}
+
+func (v *LineHeight) read(r *BinaryReader) error {
+	strLen, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, strLen)
+
+	if err := r.read(buf); err != nil {
+		return err
+	}
+
+	*v = *(*LineHeight)(unsafe.Pointer(&buf))
+	return nil
+}
+
+func (v *LineHeight) IsZero() bool {
+	return len(*v) == 0
+}
+
+func (v *LineHeight) reset() {
+	*v = LineHeight("")
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -15694,6 +15752,13 @@ func (v *RetVoid) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *RetMediaDevicesPermissionsError) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 146); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *LineHeight) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(byteSlice, 147); err != nil {
 		return err
 	}
 	return nil

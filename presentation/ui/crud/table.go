@@ -70,7 +70,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 					opts.sortByFieldState.Set(&field)
 				}
 
-			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.NormalFontWeight}))).
+			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.BodyFontWeight}))).
 				BackgroundColor(ui.ColorCardTop).
 				Padding(ui.Padding{Left: ui.L0, Right: ui.L24, Top: ui.L16, Bottom: ui.L16})
 		})...,

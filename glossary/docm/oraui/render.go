@@ -88,7 +88,7 @@ func renderHeading(elem *docm.Heading) core.View {
 	case 3:
 		font = ui.Font{
 			Size:   "1rem",
-			Weight: ui.BoldFontWeight,
+			Weight: ui.HeadlineAndTitleFontWeight,
 			Style:  ui.ItalicFontStyle,
 		}
 	case 4:

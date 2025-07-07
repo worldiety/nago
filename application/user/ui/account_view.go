@@ -172,7 +172,7 @@ func (c TAccountSection) Render(ctx core.RenderContext) core.RenderNode {
 func AccountAction(icon core.SVG, text string, action func()) core.View {
 	return ui.HStack(
 		ui.ImageIcon(icon),
-		ui.Text(text).Font(ui.Font{Weight: ui.BoldFontWeight}),
+		ui.Text(text).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
 		ui.Spacer(),
 		ui.ImageIcon(flowbiteOutline.ChevronRight),
 	).Gap(ui.L8).

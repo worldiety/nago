@@ -3180,16 +3180,21 @@ export class Font implements Writeable, Readable {
 
 	public weight?: FontWeight;
 
+	// Line height of the element that uses this font
+	public lineHeight?: LineHeight;
+
 	constructor(
 		name: Str | undefined = undefined,
 		size: Length | undefined = undefined,
 		style: FontStyle | undefined = undefined,
-		weight: FontWeight | undefined = undefined
+		weight: FontWeight | undefined = undefined,
+		lineHeight: LineHeight | undefined = undefined
 	) {
 		this.name = name;
 		this.size = size;
 		this.style = style;
 		this.weight = weight;
+		this.lineHeight = lineHeight;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3214,6 +3219,10 @@ export class Font implements Writeable, Readable {
 					this.weight = readInt(reader);
 					break;
 				}
+				case 5: {
+					this.lineHeight = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3227,6 +3236,7 @@ export class Font implements Writeable, Readable {
 			this.size !== undefined,
 			this.style !== undefined,
 			this.weight !== undefined,
+			this.lineHeight !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3246,11 +3256,19 @@ export class Font implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
 			writeInt(writer, this.weight!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.lineHeight!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
 		return (
-			this.name === undefined && this.size === undefined && this.style === undefined && this.weight === undefined
+			this.name === undefined &&
+			this.size === undefined &&
+			this.style === undefined &&
+			this.weight === undefined &&
+			this.lineHeight === undefined
 		);
 	}
 
@@ -3259,6 +3277,7 @@ export class Font implements Writeable, Readable {
 		this.size = undefined;
 		this.style = undefined;
 		this.weight = undefined;
+		this.lineHeight = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -11813,6 +11832,12 @@ export class RetMediaDevicesPermissionsError implements Writeable, Readable, Cal
 	isCallRet(): void {}
 }
 
+// Line height for text elements
+export type LineHeight = string;
+function writeTypeHeaderLineHeight(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.BYTESLICE, 147);
+	return;
+}
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -12502,6 +12527,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 146: {
 			const v = new RetMediaDevicesPermissionsError();
 			v.read(src);
+			return v;
+		}
+		case 147: {
+			const v = readString(src) as LineHeight;
 			return v;
 		}
 	}
