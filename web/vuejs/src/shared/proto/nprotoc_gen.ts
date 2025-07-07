@@ -1537,10 +1537,8 @@ function writeTypeHeaderFontStyle(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for FontStyle
 export enum FontStyleValues {
-	// A 0 represents something which was issued without any user interaction, which means by own-initiative.
-	Unsolicited = 0,
-	Normal = 1,
-	Italic = 2,
+	Normal = 0,
+	Italic = 1,
 }
 
 // RootViewID is a unique address for a specific view factory, e.g. my/component/path. This is typically a page. Even though this looks like an URI, it is not. Especially, there are no path parameters or query parameters.

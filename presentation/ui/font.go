@@ -34,6 +34,7 @@ func (f Font) ora() proto.Font {
 	}
 }
 
+// Font definitions in accordance with WDYNAGO-218
 var (
 	// DisplayLarge is primarily meant for large stylistic text like in hero or header elements
 	DisplayLarge = Font{
@@ -136,7 +137,7 @@ var (
 	// LabelLarge is primarily meant for texts in buttons, menus, ...
 	LabelLarge = Font{
 		Name:       DefaultFontName,
-		Size:       "1.0625rem",
+		Size:       "1rem",
 		Weight:     DisplayAndLabelFontWeight,
 		LineHeight: "1.0625rem",
 	}
@@ -146,7 +147,7 @@ var (
 		Name:       DefaultFontName,
 		Size:       "0.875rem",
 		Weight:     DisplayAndLabelFontWeight,
-		LineHeight: "0.875rem",
+		LineHeight: "0.9375rem",
 	}
 
 	// LabelSmall is primarily meant for texts in buttons, menus, ...
@@ -202,6 +203,7 @@ var (
 	// MonoItalicLarge is primarily meant for monospaced font e.g. in code blocks
 	MonoItalicLarge = Font{
 		Name:   MonoFontName,
+		Style:  ItalicFontStyle,
 		Size:   "1.5rem",
 		Weight: MonoItalicFontWeight,
 	}
@@ -209,6 +211,7 @@ var (
 	// MonoItalicMedium is primarily meant for monospaced font e.g. in code blocks
 	MonoItalicMedium = Font{
 		Name:   MonoFontName,
+		Style:  ItalicFontStyle,
 		Size:   "1rem",
 		Weight: MonoItalicFontWeight,
 	}
@@ -216,6 +219,7 @@ var (
 	// MonoItalicSmall is primarily meant for monospaced font e.g. in code blocks
 	MonoItalicSmall = Font{
 		Name:   MonoFontName,
+		Style:  ItalicFontStyle,
 		Size:   "0.75rem",
 		Weight: MonoItalicFontWeight,
 	}
