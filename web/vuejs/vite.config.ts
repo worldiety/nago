@@ -45,7 +45,10 @@ export default defineConfig(({ mode }) => {
 			host: true,
 			proxy: {
 				'/api': 'http://localhost:3000',
-				'/wire': 'http://localhost:3000',
+				'/wire': {
+					target: 'http://localhost:3000',
+					ws: true,
+				},
 			},
 		},
 		resolve: {
