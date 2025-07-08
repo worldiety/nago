@@ -12,20 +12,16 @@ import type ServiceAdapter from '@/shared/network/serviceAdapter';
 import { BinaryReader, BinaryWriter, NagoEvent, Ping, marshal, unmarshal } from '@/shared/proto/nprotoc_gen';
 
 export default class WebSocketAdapter implements ServiceAdapter {
-	private readonly webSocketPort: string;
 	private readonly isSecure: boolean = false;
 	private readonly scopeId: string;
 	private webSocket: WebSocket | null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number | null = null;
 	private retries: number = 0;
-	private httpBaseUrl: string;
 	private lastEventSendAt: number;
 
 	constructor() {
 		this.lastEventSendAt = new Date().getTime();
-		this.httpBaseUrl = '';
-		this.webSocketPort = this.initializeWebSocketPort();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
 		// browser tabs and windows will try to steal the scope from each other.
@@ -35,28 +31,17 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		this.isSecure = location.protocol == 'https:';
 	}
 
-	private initializeWebSocketPort(): string {
-		let port = import.meta.env.VITE_WS_BACKEND_PORT;
-		if (port === '') {
-			port = window.location.port;
-		}
-		return port;
-	}
-
 	async initialize(): Promise<void> {
 		let proto = 'ws';
-		let httpProto = 'http';
 		if (this.isSecure) {
 			proto = 'wss';
-			httpProto = 'https';
 		}
-		let webSocketURL = `${proto}://${window.location.hostname}:${this.webSocketPort}/wire?_sid=${this.scopeId}`;
+		const webSocketPort = window.location.port;
+		let webSocketURL = `${proto}://${window.location.hostname}:${webSocketPort}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
 		}
-
-		this.httpBaseUrl = `${proto}://${window.location.hostname}:${this.webSocketPort}/`;
 
 		return new Promise<void>((resolve) => {
 			this.webSocket = new WebSocket(webSocketURL);
