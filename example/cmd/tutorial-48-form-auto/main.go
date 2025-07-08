@@ -26,6 +26,7 @@ type SomeThing struct {
 	Name   string `id:"abc1234"`
 	When   xtime.Date
 	Who    user.ID   `source:"nago.users"`
+	Who2   user.ID   `source:"nago.users"`
 	Others []user.ID `source:"nago.users"`
 }
 
@@ -39,10 +40,15 @@ func main() {
 			Decorator())
 
 		option.MustZero(cfg.StandardSystems())
-		option.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
+		uid := option.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		cfg.RootView(".", cfg.DecorateRootView(func(wnd core.Window) core.View {
-			thingState := core.AutoState[SomeThing](wnd)
+			thingState := core.AutoState[SomeThing](wnd).Init(func() SomeThing {
+				return SomeThing{
+					Who:    uid,
+					Others: []user.ID{uid},
+				}
+			})
 			return ui.VStack(
 				form.Auto(form.AutoOptions{Window: wnd}, thingState),
 				ui.PrimaryButton(func() {

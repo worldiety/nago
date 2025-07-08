@@ -518,16 +518,12 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 							strState := core.DerivedState[[]AnyEntity](state, field.Name).Init(func() []AnyEntity {
 								src := state.Get()
-								slice := reflect.ValueOf(src).FieldByName(field.Name)
-								tmp := make([]AnyEntity, 0, slice.Len())
-								for _, id := range slice.Seq2() {
-									id := id.String()
-
-									for _, v := range values {
-										if v.id == id {
-											tmp = append(tmp, v)
-											break
-										}
+								str := reflect.ValueOf(src).FieldByName(field.Name)
+								tmp := make([]AnyEntity, 0, 1)
+								for _, v := range values {
+									if v.id == str.String() {
+										tmp = append(tmp, v)
+										break
 									}
 								}
 
