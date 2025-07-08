@@ -36,8 +36,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		if (this.isSecure) {
 			proto = 'wss';
 		}
-		const webSocketPort = window.location.port;
-		let webSocketURL = `${proto}://${window.location.hostname}:${webSocketPort}/wire?_sid=${this.scopeId}`;
+		let webSocketURL = `${proto}://${window.location.hostname}:${window.location.port}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
