@@ -46,8 +46,8 @@ type THStack struct {
 // HStack is a container, in which the given children will be layout in a row according to the applied
 // alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
 // you need to apply additional padding.
-func HStack(children ...core.View) *THStack {
-	c := &THStack{
+func HStack(children ...core.View) THStack {
+	c := THStack{
 		children: children,
 	}
 

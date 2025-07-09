@@ -136,7 +136,7 @@ const clazz = computed<string>(() => {
 	if (!props.ui.noClip) {
 		classes.push('overflow-clip');
 	} else {
-		classes.push('overflow-auto');
+		classes.push('overflow-visible');
 	}
 
 	switch (props.ui.alignment) {

@@ -74,7 +74,7 @@ func (c TVStack) TextColor(textColor Color) TVStack {
 	return c
 }
 
-func (c TVStack) BackgroundColor(backgroundColor Color) DecoredView {
+func (c TVStack) BackgroundColor(backgroundColor Color) TVStack {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }

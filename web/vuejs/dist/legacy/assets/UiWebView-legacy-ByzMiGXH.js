@@ -1,1 +1,0 @@
-System.register(["./main-legacy-DHqY5ayP.js"],function(e,t){"use strict";var s,r,c;return{setters:[e=>{s=e.d,r=e.c,c=e.o}],execute:function(){const t=["srcdoc"];e("default",s({__name:"UiWebView",props:{ui:{}},setup(e){const s=e;return(e,i)=>(c(),r("iframe",{style:{width:"100%",height:"100vh"},srcdoc:s.ui.uRI},null,8,t))}}))}}});
