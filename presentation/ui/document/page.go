@@ -37,7 +37,7 @@ type TPage struct {
 // Page create a kind of virtual endless DinA4 styled paper document.
 func Page(items ...core.View) TPage {
 	return TPage{
-		alignment: ui.Leading,
+		alignment: ui.Center,
 		frame:     ui.Frame{MaxWidth: "70rem"}.FullWidth(),
 		padding:   ui.Padding{}.All(ui.L48),
 		items:     items,
@@ -115,6 +115,7 @@ func (c TPage) Render(ctx core.RenderContext) core.RenderNode {
 			c.items...,
 		).FullWidth().
 			BackgroundColor(bgColor).
+			Alignment(c.alignment).
 			Frame(c.frame).
 			Padding(ui.Padding{}.Horizontal("5rem").Vertical("4rem")).
 			Border(ui.Border{}.Width(ui.L1).Color(ui.ColorIconsMuted).Radius(ui.L4)),
