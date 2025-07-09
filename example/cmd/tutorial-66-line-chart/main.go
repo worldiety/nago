@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/breadcrumb"
 	"go.wdy.de/nago/presentation/ui/chart"
 	"go.wdy.de/nago/presentation/ui/linechart"
 	"go.wdy.de/nago/web/vuejs"
@@ -166,6 +167,10 @@ func main() {
 			}
 			return ui.VStack(
 				ui.Text("line chart demo"),
+				breadcrumb.Breadcrumbs().
+					Item("home", nil).
+					Item("a", nil).
+					Item("b", nil),
 				linechart.LineChart(chart1).Series(lineChartSeries).Markers(markers),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveSmooth),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveStepline),
