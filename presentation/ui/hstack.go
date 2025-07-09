@@ -93,7 +93,7 @@ func (c THStack) Wrap(wrap bool) THStack {
 	return c
 }
 
-func (c THStack) BackgroundColor(backgroundColor Color) DecoredView {
+func (c THStack) BackgroundColor(backgroundColor Color) THStack {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }

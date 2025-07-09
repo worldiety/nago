@@ -57,6 +57,26 @@ func (c TPage) Size(size Size) TPage {
 	return c
 }
 
+func (c TPage) Alignment(alignment ui.Alignment) TPage {
+	c.alignment = alignment
+	return c
+}
+
+func (c TPage) Border(border ui.Border) TPage {
+	c.border = border
+	return c
+}
+
+func (c TPage) Frame(frame ui.Frame) TPage {
+	c.frame = frame
+	return c
+}
+
+func (c TPage) BackgroundColor(color ui.Color) TPage {
+	c.backgroundColor = color
+	return c
+}
+
 // Comment appends the given comments to any already existing comments.
 func (c TPage) Comment(comments ...TComment) TPage {
 	c.comments = append(c.comments, comments...)

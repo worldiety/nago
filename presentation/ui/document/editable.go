@@ -57,6 +57,26 @@ func (c TEditable) Comment(action func()) TEditable {
 	return c
 }
 
+func (c TEditable) Frame(frame ui.Frame) TEditable {
+	c.frame = frame
+	return c
+}
+
+func (c TEditable) BackgroundColor(color ui.Color) TEditable {
+	c.backgroundColor = color
+	return c
+}
+
+func (c TEditable) Alignment(alignment ui.Alignment) TEditable {
+	c.alignment = alignment
+	return c
+}
+
+func (c TEditable) Border(border ui.Border) TEditable {
+	c.border = border
+	return c
+}
+
 func (c TEditable) Render(ctx core.RenderContext) core.RenderNode {
 	switch c.style {
 	default:
@@ -72,11 +92,18 @@ func (c TEditable) renderInlineTrailing(ctx core.RenderContext) core.RenderNode 
 	return ui.HStack(
 		c.renderContent(),
 		c.renderToggleButton(),
-	).Gap(ui.L8).Render(ctx)
+	).BackgroundColor(c.backgroundColor).
+		Gap(ui.L8).
+		Frame(c.frame).
+		Border(c.border).
+		Render(ctx)
 }
 
 func (c TEditable) renderClickable(ctx core.RenderContext) core.RenderNode {
-	v := ui.VStack().Gap(ui.L8)
+	v := ui.VStack().BackgroundColor(c.backgroundColor).
+		Gap(ui.L8).
+		Frame(c.frame).
+		Border(c.border).(ui.TVStack)
 
 	if c.editPresented != nil {
 		if !c.editPresented.Get() {
@@ -98,6 +125,11 @@ func (c TEditable) renderClickable(ctx core.RenderContext) core.RenderNode {
 	return v.Render(ctx)
 }
 
+func (c TEditable) FullWidth() TEditable {
+	c.frame.Width = ui.Full
+	return c
+}
+
 func (c TEditable) renderTopTrailing(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
 		// toolbar
@@ -106,7 +138,11 @@ func (c TEditable) renderTopTrailing(ctx core.RenderContext) core.RenderNode {
 		}),
 
 		c.renderContent(),
-	).Gap(ui.L8).Render(ctx)
+	).BackgroundColor(c.backgroundColor).
+		Gap(ui.L8).
+		Frame(c.frame).
+		Border(c.border).
+		Render(ctx)
 }
 
 func (c TEditable) renderToggleButton() core.View {
