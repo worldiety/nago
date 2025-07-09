@@ -63,6 +63,11 @@ func (c TPage) Comment(comments ...TComment) TPage {
 	return c
 }
 
+func (c TPage) Append(items ...core.View) TPage {
+	c.items = append(c.items, items...)
+	return c
+}
+
 func (c TPage) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 
