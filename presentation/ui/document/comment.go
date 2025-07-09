@@ -12,7 +12,9 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"time"
 )
@@ -153,14 +155,48 @@ func (c TComment) Render(ctx core.RenderContext) core.RenderNode {
 	return v.Render(ctx)
 }
 
-func WithCommentSelection(selection *core.State[bool], v ui.DecoredView) ui.DecoredView {
+func AttachComment(selection *core.State[bool], v ui.DecoredView) ui.DecoredView {
 	if selection == nil {
 		return v
 	}
 
 	if selection.Get() {
-		return ui.VStack(ui.VStack(v).Padding(ui.Padding{}.All(ui.L8)).Border(ui.Border{}.Width(ui.L1).Color(ui.ColorInteractive).Radius(ui.L8).Shadow(ui.L8))).Padding(ui.Padding{}.All(ui.L8))
+		return ui.VStack(
+			v,
+			ui.VStack(
+				ui.ImageIcon(flowbiteSolid.Annotation)).Position(ui.Position{Type: ui.PositionAbsolute, Top: "-1rem", Right: "0rem"}).
+				NoClip(true),
+		).BackgroundColor(ui.ColorCardFooter).Position(ui.Position{Type: ui.PositionOffset}).NoClip(true)
 	} else {
 		return v
 	}
+}
+
+// NewCommentDialog is a real dialog, because we are limited scrollwise. It is not clear in large documents,
+// where the new comment field at the side would be created, and it may be entirely off the actual screen.
+// This helps a bit to reduce that problem, by showing the dialog always modal in the screen center.
+func NewCommentDialog(presented *core.State[bool], addComment func(text string)) core.View {
+	wnd := presented.Window()
+	displayUser, _ := core.SystemService[user.DisplayName](wnd.Application())
+	usr := displayUser(wnd.Subject().ID())
+
+	commentText := core.DerivedState[string](presented, "-cmt-text")
+	return alert.Dialog(
+		"Kommentar hinzufügen",
+		ui.VStack(
+			ui.HStack(
+				avatar.TextOrImage(usr.Displayname, usr.Avatar),
+				ui.Text(usr.Displayname),
+			).Gap(ui.L8),
+			ui.TextField("", commentText.Get()).InputValue(commentText).FullWidth(),
+		).Gap(ui.L8).FullWidth().Alignment(ui.Leading),
+		presented,
+		alert.Closeable(),
+		alert.Custom(func(close func(closeDlg bool)) core.View {
+			return ui.PrimaryButton(func() {
+				close(true)
+				addComment(commentText.Get())
+			}).PreIcon(flowbiteOutline.PaperPlane).Enabled(commentText.Get() != "").AccessibilityLabel("Kommentar hinzufügen")
+		}),
+	)
 }

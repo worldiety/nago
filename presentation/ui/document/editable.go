@@ -31,6 +31,7 @@ type TEditable struct {
 	onEdit          func() core.View
 	editPresented   *core.State[bool]
 	style           ToggleStyle
+	comment         func()
 }
 
 func Editable(onView func() core.View, onEdit func() core.View) TEditable {
@@ -48,6 +49,11 @@ func (c TEditable) InputValue(editPresented *core.State[bool]) TEditable {
 
 func (c TEditable) Style(style ToggleStyle) TEditable {
 	c.style = style
+	return c
+}
+
+func (c TEditable) Comment(action func()) TEditable {
+	c.comment = action
 	return c
 }
 
@@ -109,11 +115,22 @@ func (c TEditable) renderToggleButton() core.View {
 	}
 
 	if !c.editPresented.Get() {
-		return ui.SecondaryButton(func() {
-			c.editPresented.Set(true)
-			c.editPresented.Notify()
-		}).PreIcon(flowbiteOutline.Edit).
-			AccessibilityLabel("Bearbeiten")
+		v := ui.HStack(
+
+			ui.SecondaryButton(func() {
+				c.editPresented.Set(true)
+				c.editPresented.Notify()
+			}).PreIcon(flowbiteOutline.Edit).
+				AccessibilityLabel("Bearbeiten"),
+		)
+
+		if c.comment != nil {
+			v = v.Append(
+				ui.TertiaryButton(c.comment).PreIcon(flowbiteOutline.Annotation).AccessibilityLabel("Kommentar hinzufügen"),
+			).Gap(ui.L4)
+		}
+
+		return v
 	}
 
 	return ui.SecondaryButton(func() {

@@ -41,20 +41,27 @@ func main() {
 
 			selectedA := core.AutoState[bool](wnd)
 			selectedB := core.AutoState[bool](wnd)
+			newCommentPresented := core.AutoState[bool](wnd)
 
 			return ui.VStack(
 				ui.H1("Document example"),
+				document.NewCommentDialog(newCommentPresented, func(text string) {
+					alert.ShowBannerMessage(wnd, alert.Message{Title: "Neuer Kommentar", Message: text, Intent: alert.IntentOk})
+				}),
 				document.Page(
-					document.WithCommentSelection(selectedA, ui.Text("hello word")),
+					document.AttachComment(selectedA, ui.Text("hello word")),
 					document.Editable(
 						func() core.View {
-							return document.WithCommentSelection(selectedB, ui.Text(text.Get()))
+							return document.AttachComment(selectedB, ui.Text(text.Get()))
 						},
 
 						func() core.View {
 							return ui.TextField("text", text.Get()).InputValue(text)
 						},
 					).Style(document.TopTrailing).
+						Comment(func() {
+							newCommentPresented.Set(true)
+						}).
 						InputValue(edit),
 				).Size(document.DinA4).
 					Comment(
