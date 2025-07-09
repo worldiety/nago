@@ -166,11 +166,14 @@ func main() {
 				NoDataMessage: "Ein LineChart ohne Daten",
 			}
 			return ui.VStack(
-				ui.Text("line chart demo"),
-				breadcrumb.Breadcrumbs().
-					Item("home", nil).
-					Item("a", nil).
-					Item("b", nil),
+				ui.VStack(
+					ui.Text("line chart demo"),
+					breadcrumb.Breadcrumbs().
+						Item("home", nil).
+						Item("a", nil).
+						Item("b", nil).
+						ClampLeading(),
+				).Alignment(ui.Leading),
 				linechart.LineChart(chart1).Series(lineChartSeries).Markers(markers),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveSmooth),
 				linechart.LineChart(chart1).Series(lineChartSeries).Curve(linechart.CurveStepline),
