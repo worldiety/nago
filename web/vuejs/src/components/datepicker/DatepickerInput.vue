@@ -1,100 +1,94 @@
 <template>
-	<InputWrapper :label="label" :error="errorText" :hint="supportingText" :disabled="disabled">
-		<div
-			ref="datepickerContainer"
-			class="input-field cursor-pointer relative z-0 !pr-10"
-			tabindex="0"
-			:aria-label="datepickerContainerAriaLabel"
-			role="button"
-			@click="$emit('showDatepicker')"
-			@keydown.enter="$emit('showDatepicker')"
-		>
-			<!-- Editable start date parts -->
-			<template v-if="dateSelected">
-				<select
-					:value="editableStartDay"
-					@input="startDayChanged"
-					@blur="trySubmitSelection"
-					class="cursor-pointer bg-transparent"
-					:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
-					@click.stop
-				>
-					<option
-						v-for="option in totalDaysForEditableStartMonth"
-						:value="formatDateComponent(option)"
-						:key="option"
+	<InputWrapper :label="label" :error="errorText" :hint="supportingText" :disabled="disabled" :no-hover-effect="true">
+		<div class="input-field relative z-0 !pr-10">
+			<div ref="datepickerInputContainer">
+				<!-- Editable start date parts -->
+				<template v-if="dateSelected">
+					<select
+						:value="editableStartDay"
+						@input="startDayChanged"
+						@blur="trySubmitSelection"
+						class="cursor-pointer bg-transparent"
+						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
+						@click.stop
 					>
-						{{ formatDateComponent(option) }}
-					</option>
-				</select>
-				<span aria-hidden="true">.</span>
-				<select
-					:value="editableStartMonth"
-					@input="startMonthChanged"
-					@blur="trySubmitSelection"
-					class="cursor-pointer bg-transparent"
-					:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
-					@click.stop
-				>
-					<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
-						{{ formatDateComponent(option) }}
-					</option>
-				</select>
-				<span aria-hidden="true">.</span>
-				<input
-					:value="editableStartYear"
-					type="text"
-					inputmode="numeric"
-					class="bg-transparent w-12"
-					:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
-					@blur="startYearChanged"
-					@click.stop
-				/>
-			</template>
+						<option
+							v-for="option in totalDaysForEditableStartMonth"
+							:value="formatDateComponent(option)"
+							:key="option"
+						>
+							{{ formatDateComponent(option) }}
+						</option>
+					</select>
+					<span aria-hidden="true">.</span>
+					<select
+						:value="editableStartMonth"
+						@input="startMonthChanged"
+						@blur="trySubmitSelection"
+						class="cursor-pointer bg-transparent"
+						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
+						@click.stop
+					>
+						<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
+							{{ formatDateComponent(option) }}
+						</option>
+					</select>
+					<span aria-hidden="true">.</span>
+					<input
+						:value="editableStartYear"
+						type="text"
+						inputmode="numeric"
+						class="bg-transparent w-12"
+						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
+						@blur="startYearChanged"
+						@click.stop
+					/>
+				</template>
 
-			<!-- Editable end date parts-->
-			<template v-if="dateSelected && rangeMode">
-				<span class="mr-2">-</span>
-				<select
-					:value="editableEndDay"
-					@input="endDayChanged"
-					@blur="trySubmitSelection"
-					class="cursor-pointer bg-transparent"
-					aria-label="Enddatum Tag auswählen"
-					@click.stop
-				>
-					<option
-						v-for="option in totalDaysForEditableEndMonth"
-						:value="formatDateComponent(option)"
-						:key="option"
+				<!-- Editable end date parts-->
+				<template v-if="dateSelected && rangeMode">
+					<span class="mr-2">-</span>
+					<select
+						:value="editableEndDay"
+						@input="endDayChanged"
+						@blur="trySubmitSelection"
+						class="cursor-pointer bg-transparent"
+						aria-label="Enddatum Tag auswählen"
+						@click.stop
 					>
-						{{ formatDateComponent(option) }}
-					</option>
-				</select>
-				<span aria-hidden="true">.</span>
-				<select
-					:value="editableEndMonth"
-					@input="endMonthChanged"
-					@blur="trySubmitSelection"
-					class="cursor-pointer bg-transparent"
-					aria-label="Enddatum Monat auswählen"
-					@click.stop
-				>
-					<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
-						{{ formatDateComponent(option) }}
-					</option>
-				</select>
-				<span aria-hidden="true">.</span>
-				<input
-					:value="editableEndYear"
-					type="text"
-					inputmode="numeric"
-					class="bg-transparent w-12"
-					aria-label="Enddatum Jahr eingeben"
-					@blur="endYearChanged"
-					@click.stop
-				/>
-			</template>
+						<option
+							v-for="option in totalDaysForEditableEndMonth"
+							:value="formatDateComponent(option)"
+							:key="option"
+						>
+							{{ formatDateComponent(option) }}
+						</option>
+					</select>
+					<span aria-hidden="true">.</span>
+					<select
+						:value="editableEndMonth"
+						@input="endMonthChanged"
+						@blur="trySubmitSelection"
+						class="cursor-pointer bg-transparent"
+						aria-label="Enddatum Monat auswählen"
+						@click.stop
+					>
+						<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
+							{{ formatDateComponent(option) }}
+						</option>
+					</select>
+					<span aria-hidden="true">.</span>
+					<input
+						:value="editableEndYear"
+						type="text"
+						inputmode="numeric"
+						class="bg-transparent w-12"
+						aria-label="Enddatum Jahr eingeben"
+						@blur="endYearChanged"
+						@click.stop
+					/>
+				</template>
+			</div>
 
 			<!-- Placeholder text -->
 			<p v-if="!dateSelected" class="text-placeholder-text">
@@ -102,8 +96,17 @@
 			</p>
 
 			<!-- Clickable calendar icon -->
-			<div class="absolute top-0 bottom-0 right-4 flex items-center h-full" aria-hidden="true">
-				<Calendar class="w-4" />
+			<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
+				<div
+					class="cursor-pointer hover:text-I0"
+					tabindex="0"
+					@click="$emit('showDatepicker')"
+					@keydown.enter="$emit('showDatepicker')"
+					role="button"
+					:aria-label="datepickerCalendarAriaLabel"
+				>
+					<Calendar class="w-4" aria-hidden="true" />
+				</div>
 			</div>
 		</div>
 	</InputWrapper>
@@ -150,7 +153,7 @@ defineEmits<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const datepickerContainer = useTemplateRef('datepickerContainer');
+const datepickerInputContainer = useTemplateRef('datepickerInputContainer');
 const editableStartYear = ref<number>(props.selectedStartYear);
 const editableStartMonth = ref<string>(formatDateComponent(props.selectedStartMonth));
 const editableStartDay = ref<string>(formatDateComponent(props.selectedStartDay));
@@ -239,7 +242,7 @@ const dateSelected = computed((): boolean => {
 	return !!(props.selectedEndYear && props.selectedEndMonth - 1 && props.selectedEndDay);
 });
 
-const datepickerContainerAriaLabel = computed((): string => {
+const datepickerCalendarAriaLabel = computed((): string => {
 	if (props.rangeMode) {
 		return `Zeitraumauswahldialog öffnen, ${screenreaderDateFormatted.value}`;
 	}
@@ -422,8 +425,8 @@ function trySubmitSelection(event: FocusEvent) {
 	}
 
 	const relatedNode = event.relatedTarget as Node;
-	if (!datepickerContainer.value?.contains(relatedNode)) {
-		// Focus left datepicker container so update the selection
+	if (!datepickerInputContainer.value?.contains(relatedNode)) {
+		// Focus left datepicker input container so update the selection
 		submitSelection();
 	}
 }
