@@ -351,7 +351,6 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
 	return (
-		props.rangeSelectionState > RangeSelectionState.SELECT_START &&
 		day === props.selectedStartDay &&
 		monthIndex === props.selectedStartMonth - 1 &&
 		year === props.selectedStartYear
@@ -360,7 +359,7 @@ function isSelectedStartDay(day: number, monthIndex: number, year: number): bool
 
 function isSelectedEndDay(day: number, monthIndex: number, year: number): boolean {
 	return (
-		props.rangeSelectionState > RangeSelectionState.SELECT_END &&
+		props.rangeSelectionState !== RangeSelectionState.SELECT_END &&
 		day === props.selectedEndDay &&
 		monthIndex === props.selectedEndMonth - 1 &&
 		year === props.selectedEndYear
@@ -368,7 +367,7 @@ function isSelectedEndDay(day: number, monthIndex: number, year: number): boolea
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
-	if (props.rangeSelectionState !== RangeSelectionState.COMPLETE) {
+	if (props.rangeSelectionState === RangeSelectionState.SELECT_END) {
 		return false;
 	}
 
