@@ -51,6 +51,7 @@ const props = defineProps<{
 	hint?: string;
 	help?: string;
 	disabled?: boolean;
+	noHoverEffect?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -67,6 +68,7 @@ const labelClass = computed((): string | null => {
 
 const inputFieldWrapperClasses = computed((): string | null => {
 	const classes: string[] = [];
+
 	if (props.wrapperStyle === InputWrapperStyle.REDUCED) {
 		classes.push('input-field-wrapper-reduced');
 	} else if (props.wrapperStyle === InputWrapperStyle.BASIC) {
@@ -80,6 +82,11 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	} else if (props.error) {
 		classes.push('input-field-wrapper-error');
 	}
+
+	if (props.noHoverEffect) {
+		classes.push('input-field-wrapper-no-hover');
+	}
+
 	return classes.join(' ') || null;
 });
 </script>
@@ -114,7 +121,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	@apply text-ST0;
 }
 
-.input-field-wrapper:hover .input-field,
+.input-field-wrapper:not(.input-field-wrapper-no-hover):hover .input-field,
 .input-field-wrapper .input-field:focus {
 	@apply border-I0 border-opacity-75 text-M8;
 }

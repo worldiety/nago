@@ -16,10 +16,11 @@
 				ref="closeButton"
 				class="flex justify-center items-center cursor-pointer rounded-full size-8 shrink-0 grow-0"
 				tabindex="0"
+				aria-label="Dialog schließen"
 				@click="$emit('close')"
 				@keydown.enter="$emit('close')"
 			>
-				<Close class="h-4" />
+				<Close class="h-4" aria-hidden="true" />
 			</div>
 		</div>
 		<div class="border-b border-b-primary mt-2"></div>

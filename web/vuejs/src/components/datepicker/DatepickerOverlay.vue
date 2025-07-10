@@ -14,6 +14,7 @@
 		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30"
 		@keydown.tab.exact="moveFocusForward"
 		@keydown.shift.tab="moveFocusBackwards"
+		@keydown.esc="$emit('close')"
 	>
 		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
 			<div class="h-[23rem]">
@@ -109,10 +110,10 @@
 				</p>
 				<button
 					v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE"
-					@click="$emit('clearSelection')"
+					@click="clearSelection"
 					class="flex justify-start items-center gap-x-2 text-I0 underline mt-2"
 				>
-					<undo-icon class="h-4" /> Auswahl aufheben
+					<undo-icon class="h-4" aria-hidden="true" /> Auswahl aufheben
 				</button>
 
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
@@ -434,6 +435,11 @@ function moveFocusBackwards(event: Event) {
 		event.preventDefault();
 		getLastFocusableElement()?.focus();
 	}
+}
+
+function clearSelection() {
+	emit('clearSelection');
+	datepickerHeader.value?.closeButton?.focus();
 }
 </script>
 
