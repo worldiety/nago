@@ -171,7 +171,7 @@ const datepicker = ref<HTMLElement | undefined>();
 const currentDate = new Date(Date.now());
 const currentYear = ref<number>(currentDate.getFullYear());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
-const yearInput = ref<string>(currentYear.value.toString(10));
+const yearInput = ref<string>('');
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
 
@@ -179,7 +179,10 @@ watch(
 	() => props.datepickerExpanded,
 	(newValue) => {
 		if (newValue) {
-			nextTick(() => datepickerHeader.value?.closeButton?.focus());
+			nextTick(() => {
+				datepickerHeader.value?.closeButton?.focus();
+				switchToMonthWithSelectedStartDate();
+			});
 		}
 	}
 );
@@ -223,6 +226,12 @@ const datepickerDays = computed((): DatepickerDay[] => {
 
 	return datepickerDays;
 });
+
+function switchToMonthWithSelectedStartDate() {
+	currentYear.value = selectedStartDate.value.getFullYear();
+	yearInput.value = currentYear.value.toString(10);
+	currentMonthIndex.value = selectedStartDate.value.getMonth();
+}
 
 function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | Element | null, index: number) {
 	// Update the last element if its index is greater than the index of the current last element or the index of the
