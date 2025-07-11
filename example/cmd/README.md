@@ -1,3 +1,12 @@
+---
+# Static content
+title: Examples
+weight: 3
+next: /docs/examples/tutorial-01-helloworld
+sidebar:
+  open: false
+---
+
 ## Das obligatorische _hello world_ Beispiel.
 
 Sämtliche Tutorialbeispiele befinden sich auch als ausführbare Packages im [Nago-Projekt](https://gitlab.worldiety.net/group/ora/nago/-/tree/main/example/cmd?ref_type=heads). Um ein Tutorial Paket auszuführen, reicht ein Aufruf wie `go run go.wdy.de/nago/example/cmd/tutorial-helloworld@latest`.
