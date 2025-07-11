@@ -1,0 +1,113 @@
+baseURL = "/"
+languageCode = "en"
+title = "Nago Docs"
+defaultContentLanguage = "en"
+
+[pagination]
+  pagerSize = 21 # Number of entries in e.g. changelog before pagination
+
+[module]
+  [[module.imports]]
+    path = "github.com/imfing/hextra"
+
+[menu]
+ [[menu.main]]
+   name = "Documentation"
+   pageRef = "/docs/getting-started"
+   weight = 1
+
+ #[[menu.main]]
+ #  name = "Examples"
+ #  pageRef = "/docs/examples"
+ #  weight = 2
+
+ [[menu.main]]
+   name = "Playground ↗"
+   url = "https://www.worldiety.de"
+   weight = 3
+
+ [[menu.main]]
+   name = "Showcase"
+   pageRef = "/showcase"
+   weight = 4
+
+ [[menu.main]]
+   name = "News"
+   pageRef = "/blog"
+   weight = 5
+
+ [[menu.main]]
+   name = "Changelog"
+   pageRef = "/changelog"
+   weight = 6
+
+ [[menu.main]]
+   name = "Pricing Plans ↗"
+   url = "https://www.worldiety.de"
+   weight = 7
+
+ [[menu.main]]
+   name = "Search"
+   weight = 8
+   [menu.main.params]
+     type = "search"
+
+ [[menu.main]]
+   name = "Github"
+   url = "https://github.com/worldiety/nago"
+   weight = 9
+   [menu.main.params]
+     icon = "github"
+
+ [[menu.sidebar]]
+   name = "More"
+   weight = 7
+   [menu.sidebar.params]
+     type = "separator"
+
+ [[menu.sidebar]]
+   name = "Testimonials"
+   pageRef = "/testimonials"
+   weight = 8
+
+ [[menu.sidebar]]
+   name = "Deployment ↗"
+   url = "https://www.worldiety.de"
+   weight = 9
+
+ [[menu.sidebar]]
+   name = "Pricing Plans ↗"
+   url = "https://www.worldiety.de"
+   weight = 10
+
+ [[menu.sidebar]]
+   name = "worldiety GmbH ↗"
+   url = "https://www.worldiety.de"
+   weight = 11
+
+[params]
+  description = "Documentation for Nago"
+  navbarTitle = "Nago Docs"
+  favicon = "favicon.svg"
+
+  [params.navbar]
+    [params.navbar.logo]
+      path = "images/nago_logo.svg"
+      dark = "images/nago_logo_white.svg"
+      width = "40"
+
+  [params.theme]
+    default = "system"
+
+  [params.footer]
+    displayCopyright = true
+    displayPoweredBy = false
+    height = "auto"
+
+  [params.sidebar]
+    section = "testimonials"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true

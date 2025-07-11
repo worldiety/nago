@@ -1,0 +1,12 @@
+{{ $basePath := .Page.File.Dir }}
+{{ $relPath := .Get 0 }}
+{{ $fullPath := path.Join $basePath $relPath }}
+{{ $code := readFile $fullPath }}
+
+{{ if $code }}
+    <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
+        {{ highlight $code "go" | safeHTML }}
+    </div>
+{{ else }}
+<p><em>Error: file '{{ $fullPath }}' not found or empty.</em></p>
+{{ end }}
