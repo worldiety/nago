@@ -256,6 +256,14 @@ func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
 		c.rows = int(math.Round(float64(virtualCellCount) / float64(c.cols)))
 	}
 
+	if c.rows < 0 {
+		c.rows = 0
+	}
+
+	if c.cols < 0 {
+		c.cols = 0
+	}
+
 	return &proto.Grid{
 		Cells:              cells,
 		Rows:               proto.Uint(c.rows),
