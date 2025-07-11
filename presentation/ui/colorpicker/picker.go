@@ -19,6 +19,10 @@ import (
 	"slices"
 )
 
+// TPalettePicker is a composite component(Palette Picker).
+// This component allows users to select a color
+// from a predefined palette. It is typically used in design tools or
+// configuration interfaces where color choices are limited to a fixed set.
 type TPalettePicker struct {
 	palette            Palette
 	paletteCols        int

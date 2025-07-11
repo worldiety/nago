@@ -12,6 +12,11 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TVStack is a layout component(VStack).
+// VStack is a vertical layout container that arranges its child views in a column.
+// It supports alignment, spacing, background styling, borders, and interaction states.
+// The VStack is interactive if an action is defined and can respond to hover, press,
+// and focus states with visual feedback.
 type TVStack struct {
 	children               []core.View
 	alignment              proto.Alignment

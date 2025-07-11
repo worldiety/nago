@@ -14,6 +14,9 @@ import (
 	"runtime/debug"
 )
 
+// TButton is a basic component(Button).
+// A basic clickable UI component used to trigger actions or events. There are three different kinds of Buttons:
+// PrimaryButton, SecondaryButton & TertiaryButton.
 type TButton struct {
 	title              string
 	accessibilityLabel string

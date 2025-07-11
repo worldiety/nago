@@ -6,7 +6,7 @@ In einer Webbrowser-Umgebung wird immer genau ein Datei-Download ausgelöst.
 Wurden mehrere Dateien gesendet, werden diese vorher in einer Zip-Datei zusammengefasst und als `files.zip` zum Download angeboten.
 Auf anderen Plattformen werden in Abhängigkeit der automatisch ermittelten Mimetypes Anwendungen zur Weiterverarbeitung angeboten, z.B. mittels dem `ACTION_SEND_MULTIPLE` Intent unter Android.
 
-![Screenshot](screenshot.png)
+![Screenshot](screenshot-01.png)
 
 Die zum Download angebotenen Dateien sind nur temporär mit einem geheimen Token verfügbar.
 Dazu werden die Dateien aus dem `fs.FS` kopiert und an den Lebenszyklus eines _Scopes_ gebunden, d.h. wird der Scope zerstört, wird auch die Datei gelöscht.

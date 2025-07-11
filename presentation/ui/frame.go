@@ -9,6 +9,11 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
+// Frame is a layout component(Frame).
+// Frame defines the sizing constraints and fixed dimensions for a UI element.
+// It allows you to specify minimum and maximum width/height, as well as fixed
+// dimensions. Frames are used to control layout behavior and responsiveness.
+// All fields are optional. If a field is zero, it will not constrain the layout.
 type Frame struct {
 	MinWidth  Length
 	MaxWidth  Length
@@ -18,6 +23,7 @@ type Frame struct {
 	Height    Length
 }
 
+// IsZero returns true if all fields of the Frame are unset (zero value).
 func (f Frame) IsZero() bool {
 	return Frame{} == f
 }
@@ -33,23 +39,28 @@ func (f Frame) ora() proto.Frame {
 	}
 }
 
+// Size sets both Width and Height to the given values and returns the updated Frame.
 func (f Frame) Size(w, h Length) Frame {
 	f.Height = h
 	f.Width = w
 	return f
 }
 
+// MatchScreen sets the frame to match the full viewport height and width.
+// This is useful for fullscreen layouts or sections that should fill the screen.
 func (f Frame) MatchScreen() Frame {
 	f.MinHeight = ViewportHeight
 	f.Width = Full
 	return f
 }
 
+// FullWidth sets the frame's width to 100% of the available space.
 func (f Frame) FullWidth() Frame {
 	f.Width = "100%"
 	return f
 }
 
+// FullHeight sets the frame's height to 100% of the available space.
 func (f Frame) FullHeight() Frame {
 	f.Height = "100%"
 	return f

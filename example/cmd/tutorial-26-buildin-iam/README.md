@@ -16,7 +16,7 @@ macro:
 	GOPROXY=direct go run github.com/worldiety/macro/cmd/expand@latest
 ```
 
-![Screenshot](screenshot-1.png)
+![Screenshot](screenshot-01.png)
 
 Das System ist ein reines OptIn System, sodass natürlich auch eine komplett eigene IAM-Logik umgesetzt werden kann - empfohlen sei das an dieser Stelle aber grundsätzlich nicht.
 Insbesondere sollte darauf verzichtet werden Passwörter oder Sessions zu verarbeiten.
@@ -87,4 +87,4 @@ func main() {
 
 ```
 
-![Screenshot](screenshot-2.png)
+![Screenshot](screenshot-02.png)

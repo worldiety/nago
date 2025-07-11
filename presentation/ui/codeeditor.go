@@ -12,6 +12,10 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TCodeEditor is a composite component(Code Editor).
+// This component provides a text editor interface
+// optimized for writing and displaying code. It supports syntax highlighting,
+// configurable tab size, and optional read-only or disabled states.
 type TCodeEditor struct {
 	value      string
 	inputValue *core.State[string]
@@ -49,8 +53,8 @@ func (c TCodeEditor) FullWidth() TCodeEditor {
 	return c
 }
 
-// Language gives a syntax highlighting hint. Defined are go, html, css, json, xml,
-// markdown but there may be arbitrary support.
+// Language gives a syntax highlighting hint.
+// Defined are go, html, css, json, xml, markdown but there may be arbitrary support.
 func (c TCodeEditor) Language(language string) TCodeEditor {
 	c.language = language
 	return c

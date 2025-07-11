@@ -12,6 +12,8 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TWindowTitle is an utility component(Window Title).
+// This component sets the browser or application window title which is also displayed in the browser tab.
 type TWindowTitle struct {
 	title string
 }
@@ -26,10 +28,12 @@ func (c TWindowTitle) Render(ctx core.RenderContext) core.RenderNode {
 	}
 }
 
+// H1 creates a level 1 heading (page title) and sets the window title accordingly.
 func H1(title string) core.View {
 	return Heading(1, title)
 }
 
+// H2 creates a level 2 heading with a slightly smaller bold font and a standard horizontal line.
 func H2(title string) core.View {
 	return Heading(2, title)
 }

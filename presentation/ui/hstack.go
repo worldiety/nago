@@ -15,6 +15,11 @@ import (
 	"strings"
 )
 
+// THStack is a layout component(HStack).
+// HStack is a horizontal layout container that arranges its child views in a row.
+// It supports alignment, spacing, background styling, borders, and interaction states.
+// The HStack is interactive if an action is defined and can respond to hover, press,
+// and focus states with visual feedback.
 type THStack struct {
 	children               []core.View
 	alignment              proto.Alignment
