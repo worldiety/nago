@@ -1,4 +1,0 @@
-baseURL = 'https://www.nago.dev/'
-languageCode = 'en-us'
-title = 'My New Hugo Site'
-theme = 'ananke'
