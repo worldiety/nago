@@ -14,6 +14,13 @@ import (
 	"time"
 )
 
+// TBanner is an overlay component(Banner).
+// This component displays a prominent message to the user,
+// typically used for notifications, warnings, or confirmations. It consists
+// of a title and message, and can optionally be dismissible and styled
+// according to intent (e.g., success, warning, error).
+//
+// It also supports a callback when the banner is closed.
 type TBanner struct {
 	title            string
 	message          string
@@ -43,21 +50,25 @@ func (t TBanner) AutoCloseTimeoutOrDefault(d time.Duration) TBanner {
 	return t
 }
 
+// Frame sets a custom frame (layout constraints) for the banner.
 func (t TBanner) Frame(frame ui.Frame) TBanner {
 	t.frame = frame
 	return t
 }
 
+// Closeable makes the banner dismissible by binding its visibility to the given state.
 func (t TBanner) Closeable(presented *core.State[bool]) TBanner {
 	t.presented = presented
 	return t
 }
 
+// OnClosed sets a callback function that is triggered when the banner is closed.
 func (t TBanner) OnClosed(fn func()) TBanner {
 	t.onClosed = fn
 	return t
 }
 
+// Intent sets the visual intent of the banner (e.g., success, warning, error).
 func (t TBanner) Intent(intent Intent) TBanner {
 	t.intent = intent
 	return t

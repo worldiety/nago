@@ -9,6 +9,10 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
+// TKeyboardOptions is an utility component(Keyboard Options).
+// Keyboard Options defines configuration options for virtual keyboard behavior.
+// It allows customization of capitalization, auto-correction, and keyboard type hints.
+// These options are primarily used in text input components to enhance user experience.
 type TKeyboardOptions struct {
 	capitalization     bool
 	autoCorrectEnabled bool
@@ -27,11 +31,13 @@ func (opts TKeyboardOptions) ora() proto.KeyboardOptions {
 	}
 }
 
+// Capitalization enables or disables automatic capitalization.
 func (opts TKeyboardOptions) Capitalization(capitalization bool) TKeyboardOptions {
 	opts.capitalization = capitalization
 	return opts
 }
 
+// AutoCorrectEnabled enables or disables auto-correction.
 func (opts TKeyboardOptions) AutoCorrectEnabled(autoCorrectEnabled bool) TKeyboardOptions {
 	opts.autoCorrectEnabled = autoCorrectEnabled
 	return opts
