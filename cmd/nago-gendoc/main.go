@@ -17,7 +17,7 @@ func main() {
 	generateDocsForComponents(projectRoot)
 
 	cmd := exec.Command("hugo", "build")
-	cmd.Dir = filepath.Join(findProjectRoot(), "docs")
+	cmd.Dir = filepath.Join(findProjectRoot(), "docs/nago.dev")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
