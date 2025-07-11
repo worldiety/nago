@@ -43,6 +43,7 @@ type TPicker[T any] struct {
 	disabled             bool
 	detailView           core.View
 	invisible            bool
+	dlgOptions           []alert.Option
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -367,6 +368,11 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 	).Frame(ui.Frame{}.FullWidth()), quickFilter
 }
 
+func (c TPicker[T]) DialogOptions(opts ...alert.Option) TPicker[T] {
+	c.dlgOptions = append(c.dlgOptions, opts...)
+	return c
+}
+
 // Dialog returns the dialog view as if pressed on the actual button.
 func (c TPicker[T]) Dialog() core.View {
 
@@ -379,11 +385,12 @@ func (c TPicker[T]) Dialog() core.View {
 
 	table, quickFilter := c.pickerTable()
 
-	return alert.Dialog(c.title, table, c.pickerPresented, alert.Cancel(func() {
-		c.currentSelectedState.Set(c.targetSelectedState.Get())
-		c.syncCheckboxStates(c.targetSelectedState)
-	}),
-		alert.PreBody(quickFilter),
+	dlgOpts := make([]alert.Option, 0, 4+len(c.dlgOptions))
+	dlgOpts = append(dlgOpts, alert.PreBody(quickFilter),
+		alert.Cancel(func() {
+			c.currentSelectedState.Set(c.targetSelectedState.Get())
+			c.syncCheckboxStates(c.targetSelectedState)
+		}),
 		alert.Custom(func(close func(closeDlg bool)) core.View {
 			// positive case
 			return ui.PrimaryButton(func() {
@@ -392,6 +399,10 @@ func (c TPicker[T]) Dialog() core.View {
 				close(true)
 			}).Title(fmt.Sprintf("%d übernehmen", selectedCount))
 		}))
+
+	dlgOpts = append(dlgOpts, c.dlgOptions...)
+
+	return alert.Dialog(c.title, table, c.pickerPresented, dlgOpts...)
 }
 
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
