@@ -249,7 +249,7 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 				}
 
 				if options.height != "" {
-					frame.Height = options.height
+					frame.MaxHeight = options.height
 				}
 
 				return frame
