@@ -1,0 +1,12 @@
+{{/* Shortcode: example-image */}}
+
+{{ $src := .Get "src" }}
+{{ $alt := .Get "alt" | default "" }}
+{{ $size := .Get "size" | default "800x webp" }}
+{{ $class := .Get "class" | default "" }}
+
+{{ $img := resources.Get (printf "images/%s" $src) }}
+{{ $processed := $img.Resize $size }}
+
+
+<img src="{{ $processed.RelPermalink }}" alt="{{ $alt }}" class="{{ $class }}">
