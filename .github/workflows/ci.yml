@@ -34,6 +34,7 @@ jobs:
       - name: Build hugo-go-binary
         run: |
           cd docs
+          rm nago.dev/go.mod 
           GOOS=linux GOARCH=amd64 go build serve.go
 
       - name: Upload site via curl
@@ -41,7 +42,7 @@ jobs:
           set -e
           curl -v -X POST https://nago.app/api/v1/application/build \
             -H "Authorization: Bearer $UPLOAD_TOKEN" \
-            -F "file=@doc2/serve" \
+            -F "file=@docs/serve" \
             -F "info={\"app\":\"aa06698613a0895fc8293c15208db041\", \"version\":{\"major\":0, \"minor\":0, \"patch\":0}, \"vcs\":{\"commit\":\"$GITHUB_SHA\", \"branch\":\"$GITHUB_REF_NAME\", \"tag\":\"$GITHUB_REF_NAME\"}};type=application/json"
         env:
           UPLOAD_TOKEN: ${{ secrets.UPLOAD_TOKEN }}
