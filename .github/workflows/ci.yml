@@ -28,7 +28,7 @@ jobs:
 
       - name: Build site with Hugo
         run: |
-          cd doc/nago.dev
+          cd docs/nago.dev
           hugo build --minify
 
       - name: Build hugo-go-binary
