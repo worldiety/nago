@@ -12,14 +12,14 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/esignature"
+	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
 	"time"
 )
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial_69")
+		cfg.SetApplicationID("de.worldiety.tutorial_70")
 		cfg.Serve(vuejs.Dist())
 
 		option.MustZero(cfg.StandardSystems())
@@ -29,10 +29,33 @@ func main() {
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
 				ui.Text("hello world"),
-				esignature.Signature().
-					TopText("Nago Signature").
-					BottomText("Apprentice").
-					Body(ui.Text("Torben")),
+				calendar.Calendar(
+					calendar.Event{
+						From: calendar.Instant{
+							At: time.Date(2025, 07, 11, 0, 0, 0, 0, time.Local),
+						},
+						To: calendar.Instant{
+							At: time.Date(2025, 8, 11, 0, 0, 0, 0, time.Local),
+						},
+						Label: "Some Event",
+						Lane: calendar.Lane{
+							Label: "Torben",
+						},
+					},
+
+					calendar.Event{
+						From: calendar.Instant{
+							At: time.Date(2025, 2, 1, 0, 0, 0, 0, time.Local),
+						},
+						To: calendar.Instant{
+							At: time.Date(2025, 8, 31, 0, 0, 0, 0, time.Local),
+						},
+						Label: "Some other Event",
+						Lane: calendar.Lane{
+							Label: "Torben",
+						},
+					},
+				).Year(2025),
 			).FullWidth()
 
 		})

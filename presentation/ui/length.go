@@ -131,6 +131,10 @@ func (l Length) Mul(s float64) Length {
 	return Length(fmt.Sprintf("%.3f%s", v*s, ext))
 }
 
+func L(dip float64) Length {
+	return Length(fmt.Sprintf("%.2f", dip/16))
+}
+
 // The following Length sizes are common for the ORA design system and will automatically adjust to the root elements font size.
 // It is similar to the effect of Androids SP unit, however its factor is by default at 16, because we just use the CSS semantics.
 const (
