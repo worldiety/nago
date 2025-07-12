@@ -9,9 +9,21 @@ package calendar
 
 import (
 	"go.wdy.de/nago/presentation/ui"
+	"strconv"
 	"testing"
 	"time"
 )
+
+func percentInYear(year int, t time.Time) float64 {
+	iv := Year(year)
+
+	return float64(iv.Percent(t))
+}
+
+func cssPercentInYear(year int, t time.Time) ui.Length {
+	p := percentInYear(year, t)
+	return ui.Length(strconv.FormatFloat(p, 'f', -1, 64)) + "%"
+}
 
 func Test_percentInYear(t *testing.T) {
 	type args struct {

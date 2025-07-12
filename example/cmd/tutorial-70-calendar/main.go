@@ -55,7 +55,7 @@ func main() {
 							Label: "Torben",
 						},
 					},
-				).Year(2025),
+				).ViewPort(calendar.Year(2025)),
 			).FullWidth()
 
 		})

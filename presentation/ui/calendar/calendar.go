@@ -25,7 +25,7 @@ type TCalendar struct {
 	style  Style
 	events []Event
 	frame  ui.Frame
-	year   int
+	vp     ViewPort
 }
 
 func Calendar(events ...Event) TCalendar {
@@ -33,7 +33,7 @@ func Calendar(events ...Event) TCalendar {
 	return TCalendar{
 		events: events,
 		style:  TimelineYear,
-		year:   now.Year(),
+		vp:     Year(now.Year()),
 	}
 }
 
@@ -52,8 +52,8 @@ func (c TCalendar) Frame(frame ui.Frame) TCalendar {
 	return c
 }
 
-func (c TCalendar) Year(year int) TCalendar {
-	c.year = year
+func (c TCalendar) ViewPort(vp ViewPort) TCalendar {
+	c.vp = vp
 	return c
 }
 
