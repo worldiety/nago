@@ -33,7 +33,7 @@ jobs:
 
       - name: Build hugo-go-binary
         run: |
-          cd doc2
+          cd docs
           GOOS=linux GOARCH=amd64 go build serve.go
 
       - name: Upload site via curl
