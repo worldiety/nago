@@ -8,6 +8,7 @@
 package calendar
 
 import (
+	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"maps"
@@ -17,11 +18,59 @@ import (
 	"time"
 )
 
+type evt struct {
+	v        core.View
+	from, to time.Time
+}
+
+func timelineLane(a, b ui.Length, year int, evts ...evt) ui.THStack {
+	return ui.HStack(
+		ui.HStack().Frame(ui.Frame{Width: a}),
+		ui.VStack(
+			slices.Collect(func(yield func(view core.View) bool) {
+
+				// background
+				offset := 0.0
+				for range time.December {
+					left := ui.Length(fmt.Sprintf("%f%%", offset))
+					right := ui.Length(fmt.Sprintf("%f%%", 100-offset))
+					yield(ui.HStack().Position(ui.Position{Type: ui.PositionAbsolute, Left: left, Right: right, Top: "0%", Bottom: "0%"}).Border(ui.Border{LeftWidth: ui.L1, LeftColor: ui.ColorIconsMuted}))
+					offset += 8.3
+				}
+
+				// actual events
+				for _, e := range evts {
+					yield(
+						timelineEventPill(year, e),
+					)
+				}
+
+			})...,
+		).Gap(ui.L4).Position(ui.Position{Type: ui.PositionOffset}).BackgroundColor(ui.ColorAccent).Frame(ui.Frame{Width: b}).Padding(ui.Padding{Top: ui.L8, Bottom: ui.L8}),
+	).FullWidth()
+}
+
+func timelineEventPill(year int, e evt) core.View {
+	return ui.HStack(
+		ui.HStack(
+			ui.HStack().BackgroundColor("#00ffff").Frame(ui.Frame{Width: ui.L12}),
+			ui.HStack(e.v).BackgroundColor("#00ff00").FullWidth(),
+		).
+			Gap(ui.L2).
+			Alignment(ui.Stretch).
+			Border(ui.Border{}.Radius(ui.L8)).
+			Frame(ui.Frame{MinHeight: ui.L40, Width: ui.Full}),
+	).Position(ui.Position{ZIndex: 1}).
+		Padding(ui.Padding{Left: cssAbsLeftPercentInYear(year, e.from), Right: cssAbsRightPercentInYear(year, e.to)}).
+		Frame(ui.Frame{Width: ui.Full})
+}
+
 func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 	const (
-		widthLane  ui.Length = "16%"
-		widthMonth ui.Length = "7%"
-		rowHeight            = 16
+		widthLane     ui.Length = "16%"
+		widthLaneRest ui.Length = "84%"
+		widthMonth    ui.Length = "7%"
+		rowHeight               = 16
 	)
 
 	return ui.VStack(
@@ -38,6 +87,29 @@ func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 
 				})...,
 			).FullWidth())
+
+			// test
+			yield(
+				timelineLane(widthLane, widthLaneRest, c.year,
+					evt{
+						v:    ui.Text("event in januar dessen name zu lang ist"),
+						from: time.Date(c.year, time.January, 1, 0, 0, 0, 0, time.UTC),
+						to:   time.Date(c.year, time.January, 31, 24, 0, 0, 0, time.UTC),
+					},
+					evt{
+						v:    ui.Text("lololo"),
+						from: time.Date(c.year, time.July, 1, 0, 0, 0, 0, time.UTC),
+						to:   time.Date(c.year, time.September, 1, 0, 0, 0, 0, time.UTC),
+					},
+
+					evt{
+						v:    ui.Text("cccc"),
+						from: time.Date(c.year, time.February, 1, 0, 0, 0, 0, time.UTC),
+						to:   time.Date(c.year, time.September, 1, 0, 0, 0, 0, time.UTC),
+					},
+				),
+			)
+
 			// some bubbles
 			lanes := mapLanes(c.year, c.events)
 			for _, lane := range lanes {
