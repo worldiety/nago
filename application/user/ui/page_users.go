@@ -59,7 +59,7 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 			if !batchEtcPresented.Get() {
 				return nil
 			}
-			
+
 			idents := model.Selected()
 			return dialogEtcBatch(wnd, ucUsers, batchEtcPresented, idents)
 		}(),

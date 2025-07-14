@@ -130,7 +130,7 @@ func XXLarge() Option {
 }
 
 func FullHeight() Option {
-	return Height(ui.Full)
+	return Height("calc(100dvh - 12rem)")
 }
 
 func Height(h ui.Length) Option {
