@@ -130,7 +130,7 @@ func XXLarge() Option {
 }
 
 func FullHeight() Option {
-	return Height("calc(100dvh - 12rem)")
+	return Height(ui.Full)
 }
 
 func Height(h ui.Length) Option {
@@ -205,7 +205,7 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 
 	var fixHeight ui.Length
 	if options.height == ui.Full {
-		fixHeight = ui.ViewportHeight
+		fixHeight = "calc(100dvh - 12rem)"
 	}
 
 	return ui.Modal(
