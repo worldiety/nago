@@ -90,7 +90,7 @@ func main() {
 							Label: "Kategorie 1",
 							Color: "#00ff00",
 						},
-						Label: "Some other Event (Olaf)",
+						Label: "Some other Event with more text in a larger box and how does it look with padding? (Olaf)",
 						Lane: calendar.Lane{
 							Label: "Olaf",
 						},

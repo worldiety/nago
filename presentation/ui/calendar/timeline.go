@@ -87,7 +87,7 @@ func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
 					}
 
 					return stack
-				}),
+				}).Padding(ui.Padding{}.All(ui.L8)),
 		).
 			Gap(ui.L2).
 			Alignment(ui.Stretch).
