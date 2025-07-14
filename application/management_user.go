@@ -70,7 +70,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		repoGrants := json.NewSloppyJSONRepository[user.Granting, user.GrantingKey](storeGrants)
 
-		c.AddSystemService("nago.consent.options", form.AnyUseCaseList[user.ConsentOption, consent.ID](func(subject auth.Subject) iter.Seq2[user.ConsentOption, error] {
+		c.AddContextValue(core.ContextValue("nago.consent.options", form.AnyUseCaseList[user.ConsentOption, consent.ID](func(subject auth.Subject) iter.Seq2[user.ConsentOption, error] {
 			return func(yield func(user.ConsentOption, error) bool) {
 				usrSettings := settings.ReadGlobal[user.Settings](std.Must(c.SettingsManagement()).UseCases.LoadGlobal)
 				for _, option := range usrSettings.Consents {
@@ -79,7 +79,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 					}
 				}
 			}
-		}))
+		})))
 
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(
@@ -179,18 +179,18 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			)
 		})
 
-		c.AddSystemService("nago.users", form.AnyUseCaseList[user.User, user.ID](func(subject auth.Subject) iter.Seq2[user.User, error] {
+		c.AddContextValue(core.ContextValue("nago.users", form.AnyUseCaseList[user.User, user.ID](func(subject auth.Subject) iter.Seq2[user.User, error] {
 			return c.userManagement.UseCases.FindAll(subject)
-		}))
+		})))
 
-		c.AddSystemService("", c.userManagement.UseCases.DisplayName)
-		c.AddSystemService("", c.userManagement.Pages)
-		c.AddSystemService("", c.userManagement.UseCases.FindByID)
-		c.AddSystemService("", c.userManagement.UseCases.FindAllIdentifiers)
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.DisplayName))
+		c.AddContextValue(core.ContextValue("", c.userManagement.Pages))
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.FindByID))
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.FindAllIdentifiers))
 
-		c.AddSystemService("", c.userManagement.UseCases.GrantPermissions)
-		c.AddSystemService("", c.userManagement.UseCases.ListGrantedUsers)
-		c.AddSystemService("", c.userManagement.UseCases.ListGrantedPermissions)
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.GrantPermissions))
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.ListGrantedUsers))
+		c.AddContextValue(core.ContextValue("", c.userManagement.UseCases.ListGrantedPermissions))
 	}
 
 	return *c.userManagement, nil

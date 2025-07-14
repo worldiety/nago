@@ -24,7 +24,7 @@ type Management struct {
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
-	management, ok := application.SystemServiceFor[Management](cfg, "")
+	management, ok := core.FromContext[Management](cfg.Context(), "")
 	if ok {
 		return management, nil
 	}
@@ -71,7 +71,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		}
 	})
 
-	cfg.AddSystemService("nago.cms", management)
+	cfg.AddContextValue(core.ContextValue("nago.cms", management))
 
 	slog.Info("installed cms management")
 

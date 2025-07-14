@@ -130,9 +130,9 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 
 	dlgPresentedAddUser := core.AutoState[bool](wnd)
 
-	findRoleByID, _ := core.SystemService[role.FindByID](wnd.Application())
-	findGroupByID, _ := core.SystemService[group.FindByID](wnd.Application())
-	findLicenseByID, _ := core.SystemService[license.FindUserLicenseByID](wnd.Application())
+	findRoleByID, _ := core.FromContext[role.FindByID](wnd.Context(), "")
+	findGroupByID, _ := core.FromContext[group.FindByID](wnd.Context(), "")
+	findLicenseByID, _ := core.FromContext[license.FindUserLicenseByID](wnd.Context(), "")
 
 	return ui.VStack(
 		ui.H1(circle.Name+" / "+subtitle),

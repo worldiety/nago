@@ -108,7 +108,7 @@ func createMarkdownAndCopyToHugo(
 		case Composite:
 			dirPath = filepath.Join(advancedComponentOutputPath, component.DirName)
 		default:
-			slog.Warn("Unknown component type:", component.ComponentType, "Component directory:", component.DirName, "Component display name:", component.DisplayName)
+			slog.Warn("Unknown component type", "type", component.ComponentType, "Component directory", component.DirName, "Component display name", component.DisplayName)
 			continue
 		}
 
@@ -193,7 +193,7 @@ func createMarkdownForFactory(name string, factory *api.Func) string {
 	sb.WriteString(fmt.Sprintf("### %s\n", name))
 
 	if factory.Doc != "" {
-		sb.WriteString(fmt.Sprintf(factory.Doc))
+		sb.WriteString(factory.Doc)
 	}
 
 	if len(factory.Examples) > 0 {
@@ -365,7 +365,7 @@ func createMarkdownForRelatedComponents(
 			case Composite:
 				related = append(related, fmt.Sprintf("- [%s](%s)\n", relatedComponent.DisplayName, "../../composite/"+relatedComponent.DirName+"/"))
 			default:
-				slog.Warn("Unknown component type. Could not add to related types:", relatedComponent.ComponentType)
+				slog.Warn("Unknown component type. Could not add to related types", "type", relatedComponent.ComponentType)
 			}
 		}
 	}

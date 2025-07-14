@@ -78,7 +78,7 @@ func AutoBinding[E form.Aggregate[E, ID], ID ~string](opts AutoBindingOptions, w
 
 					source, ok := field.Tag.Lookup("source")
 					if ok {
-						listAll, ok := core.SystemServiceWithName[form.UseCaseListAny](wnd.Application(), source)
+						listAll, ok := core.FromContext[form.UseCaseListAny](wnd.Context(), source)
 						if !ok {
 							slog.Error("can not find list by system service", "source", source)
 							continue
@@ -240,7 +240,7 @@ func AutoBinding[E form.Aggregate[E, ID], ID ~string](opts AutoBindingOptions, w
 
 						source, ok := field.Tag.Lookup("source")
 						if ok {
-							listAll, ok := core.SystemServiceWithName[form.UseCaseListAny](wnd.Application(), source)
+							listAll, ok := core.FromContext[form.UseCaseListAny](wnd.Context(), source)
 							if !ok {
 								slog.Error("can not find list by system service", "source", source)
 								continue

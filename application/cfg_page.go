@@ -135,13 +135,15 @@ func (c *Configurator) newHandler() http.Handler {
 	)
 	app2.SetDebug(c.debug)
 
-	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.CreateSrcSet)
-	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadBestFit)
-	app2.AddSystemService(option.Must(c.ImageManagement()).UseCases.LoadSrcSet)
+	app2.SetContext(core.WithContext(app2.Context(),
+		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.CreateSrcSet),
+		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.LoadBestFit),
+		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.LoadSrcSet),
+	))
 
-	for _, dep := range c.systemServices {
-		app2.AddSystemServiceWithName(dep.name, dep.service)
-	}
+	app2.SetContext(core.WithContext(app2.Context(),
+		c.systemServices...,
+	))
 
 	c.app = app2
 	app2.SetID(c.applicationID)

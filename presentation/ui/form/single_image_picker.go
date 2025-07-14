@@ -20,7 +20,7 @@ import (
 
 func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSet image.LoadSrcSet, loadBestFit image.LoadBestFit, selfId string, id image.ID, state *core.State[image.ID]) ui.DecoredView {
 	if setCreator == nil {
-		fn, ok := core.SystemService[image.CreateSrcSet](wnd.Application())
+		fn, ok := core.FromContext[image.CreateSrcSet](wnd.Context(), "")
 		if !ok {
 			panic("image.CreateSrcSet not available") // TODO or better an alert.Banner?
 		}
@@ -29,7 +29,7 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	}
 
 	if loadSrcSet == nil {
-		fn, ok := core.SystemService[image.LoadSrcSet](wnd.Application())
+		fn, ok := core.FromContext[image.LoadSrcSet](wnd.Context(), "")
 		if !ok {
 			panic("image.LoadSrcSet not available") // TODO or better an alert.Banner?
 		}
@@ -38,7 +38,7 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	}
 
 	if loadBestFit == nil {
-		fn, ok := core.SystemService[image.LoadBestFit](wnd.Application())
+		fn, ok := core.FromContext[image.LoadBestFit](wnd.Context(), "")
 		if !ok {
 			panic("image.LoadSrcSet not available") // TODO or better an alert.Banner?
 		}

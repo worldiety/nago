@@ -47,7 +47,7 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 			},
 		}
 
-		c.AddSystemService("nago.settings.global.load", uc.LoadGlobal)
+		c.AddContextValue(core.ContextValue("nago.settings.global.load", uc.LoadGlobal))
 
 		c.RootViewWithDecoration(c.settingsManagement.Pages.PageSettings, func(wnd core.Window) core.View {
 			return uisettings.PageSettings(wnd, uc.LoadGlobal, uc.StoreGlobal)

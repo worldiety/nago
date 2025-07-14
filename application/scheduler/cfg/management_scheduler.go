@@ -26,7 +26,7 @@ type SchedulerManagement struct {
 }
 
 func Enable(cfg *application.Configurator) (SchedulerManagement, error) {
-	management, ok := application.SystemServiceFor[SchedulerManagement](cfg, "")
+	management, ok := core.FromContext[SchedulerManagement](cfg.Context(), "")
 	if ok {
 		return management, nil
 	}
@@ -72,7 +72,7 @@ func Enable(cfg *application.Configurator) (SchedulerManagement, error) {
 
 		return group
 	})
-	cfg.AddSystemService("nago.scheduler", management)
+	cfg.AddContextValue(core.ContextValue("nago.scheduler", management))
 
 	slog.Info("installed scheduler management")
 

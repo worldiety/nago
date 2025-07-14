@@ -2,6 +2,7 @@ package concurrent
 
 import (
 	"iter"
+	"maps"
 	"sync"
 )
 
@@ -11,6 +12,10 @@ import (
 type RWMap[K comparable, V any] struct {
 	m     map[K]V
 	mutex sync.RWMutex
+}
+
+func WrapRWMap[K comparable, V any](m map[K]V) *RWMap[K, V] {
+	return &RWMap[K, V]{m: m}
 }
 
 func (c *RWMap[K, V]) Put(key K, value V) {
@@ -25,6 +30,11 @@ func (c *RWMap[K, V]) Put(key K, value V) {
 }
 
 func (c *RWMap[K, V]) Get(key K) (value V, ok bool) {
+	if c.m == nil {
+		var zero V
+		return zero, false
+	}
+
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	v, ok := c.m[key]
@@ -74,4 +84,8 @@ func (c *RWMap[K, V]) Len() int {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	return len(c.m)
+}
+
+func (c *RWMap[K, V]) Clone() *RWMap[K, V] {
+	return &RWMap[K, V]{m: maps.Clone(c.m)}
 }

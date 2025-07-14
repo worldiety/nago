@@ -36,7 +36,7 @@ func PageStagings(wnd core.Window, ucImp dataimport.UseCases) core.View {
 
 	imp := optImp.Unwrap()
 
-	displayName, ok := core.SystemService[user.DisplayName](wnd.Application())
+	displayName, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
 		displayName = func(uid user.ID) user.Compact {
 			return user.Compact{ID: uid}

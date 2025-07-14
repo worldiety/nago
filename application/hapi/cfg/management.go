@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/pkg/oas/v31"
+	"go.wdy.de/nago/presentation/core"
 	"log/slog"
 	"net/http"
 )
@@ -23,7 +24,7 @@ type Management struct {
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
-	management, ok := application.SystemServiceFor[Management](cfg, "")
+	management, ok := core.FromContext[Management](cfg.Context(), "")
 	if ok {
 		return management, nil
 	}
@@ -58,7 +59,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.HandleFunc("/api/doc/spec.json", handleOAS(oapi))
 
-	cfg.AddSystemService("nago.api.hapi", management)
+	cfg.AddContextValue(core.ContextValue("nago.api.hapi", management))
 	slog.Info("installed user api management")
 
 	return management, nil

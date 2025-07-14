@@ -34,7 +34,7 @@ type TComment struct {
 }
 
 func Thread(wnd core.Window, messages ...Message) TComment {
-	displayName, _ := core.SystemService[user.DisplayName](wnd.Application())
+	displayName, _ := core.FromContext[user.DisplayName](wnd.Context(), "")
 
 	first := true
 	return TComment{
@@ -177,7 +177,7 @@ func AttachComment(selection *core.State[bool], v ui.DecoredView) ui.DecoredView
 // This helps a bit to reduce that problem, by showing the dialog always modal in the screen center.
 func NewCommentDialog(presented *core.State[bool], addComment func(text string)) core.View {
 	wnd := presented.Window()
-	displayUser, _ := core.SystemService[user.DisplayName](wnd.Application())
+	displayUser, _ := core.FromContext[user.DisplayName](wnd.Context(), "")
 	usr := displayUser(wnd.Subject().ID())
 
 	commentText := core.DerivedState[string](presented, "-cmt-text")

@@ -57,12 +57,6 @@ type Application struct {
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
 	colorSets                map[ColorScheme]map[NamespaceName]ColorSet
-	// this fills a dependency hole just the same way as the android system service call.
-	// sometimes we have just a deeply nested thing and we just want eventually access to
-	// a global instance of something. I actually never wanted this kind of API
-	// but any other API does not make sense for things like crud.Auto where a lot of stuff
-	// is only eventually relevant and available automatically anyway.
-	systemServices []dependency
 
 	findVirtualSession session.FindUserSessionByID
 
@@ -113,7 +107,18 @@ func NewApplication(
 
 // Context of the application.
 func (a *Application) Context() context.Context {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	return a.ctx
+}
+
+// SetContext updates the current context.
+func (a *Application) SetContext(ctx context.Context) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	a.ctx = ctx
 }
 
 func (a *Application) MasterKey() crypto.EncryptionKey {
@@ -245,64 +250,4 @@ func (a *Application) Destroy() {
 
 	a.scopes.Destroy()
 	a.cancelCtx()
-}
-
-// AddSystemService appends the given service to the internal list. It is kept alive and
-// accessible through [SystemService]. If another service of the same type has already been added,
-// the newly added service has a higher precedence but the older service is not removed.
-func (a *Application) AddSystemService(service any) {
-	a.AddSystemServiceWithName("", service)
-}
-
-// AddSystemServiceWithName is like [AddSystemService], but adds a name as an additional criteria.
-func (a *Application) AddSystemServiceWithName(name string, service any) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	a.systemServices = append(a.systemServices, dependency{
-		name:  name,
-		value: service,
-	})
-}
-
-// SystemServiceByName returns last added service identified by the given name.
-func (a *Application) SystemServiceByName(name string) (any, bool) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-	for i := len(a.systemServices) - 1; i >= 0; i-- {
-		service := a.systemServices[i]
-		if service.name == name {
-			return service.value, true
-		}
-	}
-	return nil, false
-}
-
-// SystemService returns the T which is assignable to any of the registered Scheduler via
-// [Application.AddSystemService] or returns false. The matching is applied reverse, so that the last added type
-// is matched first. The name is ignored. See also [SystemServiceWithName].
-func SystemService[T any](app *Application) (T, bool) {
-	return SystemServiceWithName[T](app, "")
-}
-
-// SystemServiceWithName is like [SystemService] but filters by name. The last added named and matching service
-// has the highest precedence.
-func SystemServiceWithName[T any](app *Application, name string) (T, bool) {
-	app.mutex.Lock()
-	defer app.mutex.Unlock()
-
-	for i := len(app.systemServices) - 1; i >= 0; i-- {
-		service := app.systemServices[i]
-		if name != "" && service.name != name {
-			continue
-		}
-
-		if t, ok := service.value.(T); ok {
-			return t, ok
-		}
-	}
-
-	var zero T
-
-	return zero, false
 }

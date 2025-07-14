@@ -18,7 +18,7 @@ import (
 
 func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string, style avatar.Style) ui.DecoredView {
 	if setCreator == nil {
-		fn, ok := core.SystemService[image.CreateSrcSet](wnd.Application())
+		fn, ok := core.FromContext[image.CreateSrcSet](wnd.Context(), "")
 		if !ok {
 			panic("image.CreateSrcSet not available")
 		}

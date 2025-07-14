@@ -134,8 +134,8 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 			return uiadmin.AdminCenter(wnd, c.adminManagement.QueryGroups)
 		}))
 
-		c.AddSystemService("", c.adminManagement.Pages)
-		c.AddSystemService("", c.adminManagement.QueryGroups)
+		c.AddContextValue(core.ContextValue("", c.adminManagement.Pages))
+		c.AddContextValue(core.ContextValue("", c.adminManagement.QueryGroups))
 	}
 
 	return *c.adminManagement, nil

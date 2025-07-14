@@ -25,7 +25,7 @@ type Management struct {
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
-	management, ok := application.SystemServiceFor[Management](cfg, "")
+	management, ok := core.FromContext[Management](cfg.Context(), "")
 	if ok {
 		return management, nil
 	}
@@ -52,7 +52,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	entryRepo := json.NewSloppyJSONRepository[dataimport.Entry](entryStore)
 
 	management.UseCases = dataimport.NewUseCases(stagingRepo, entryRepo)
-	cfg.AddSystemService("nago.dataimport", management)
+	cfg.AddContextValue(core.ContextValue("nago.dataimport", management))
 
 	cfg.RootViewWithDecoration(management.Pages.PageStagings, func(wnd core.Window) core.View {
 		return uidataimport.PageStagings(wnd, management.UseCases)

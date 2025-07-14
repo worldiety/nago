@@ -71,11 +71,11 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 			}))
 		}))
 
-		c.AddSystemService("nago.roles", form.AnyUseCaseList[role.Role, role.ID](func(subject auth.Subject) iter.Seq2[role.Role, error] {
+		c.AddContextValue(core.ContextValue("nago.roles", form.AnyUseCaseList[role.Role, role.ID](func(subject auth.Subject) iter.Seq2[role.Role, error] {
 			return c.roleManagement.UseCases.FindAll(subject)
-		}))
+		})))
 
-		c.AddSystemService("nago.roles.find_by_id", c.roleManagement.UseCases.FindByID)
+		c.AddContextValue(core.ContextValue("nago.roles.find_by_id", c.roleManagement.UseCases.FindByID))
 	}
 
 	return *c.roleManagement, nil

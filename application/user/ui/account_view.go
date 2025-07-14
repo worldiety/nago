@@ -34,7 +34,7 @@ type TAccountView struct {
 //   - uiuser.Pages
 //   - uisession.Pages
 func AccountView(wnd core.Window) TAccountView {
-	getDisplayName, ok := core.SystemService[user.DisplayName](wnd.Application())
+	getDisplayName, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
 		slog.Error("no system service user.DisplayName")
 		getDisplayName = func(uid user.ID) user.Compact {
@@ -52,8 +52,8 @@ func AccountView(wnd core.Window) TAccountView {
 		schemeModeText = "Helle Darstellung verwenden"
 	}
 
-	userPages, _ := core.SystemService[Pages](wnd.Application())
-	sessionPages, _ := core.SystemService[uisession.Pages](wnd.Application())
+	userPages, _ := core.FromContext[Pages](wnd.Context(), "")
+	sessionPages, _ := core.FromContext[uisession.Pages](wnd.Context(), "")
 
 	c := TAccountView{
 		wnd:            wnd,
@@ -77,8 +77,8 @@ func AccountView(wnd core.Window) TAccountView {
 			),
 	)
 
-	if adminPages, ok := core.SystemService[uiadmin.Pages](wnd.Application()); ok {
-		if queryGroups, ok := core.SystemService[admin.QueryGroups](wnd.Application()); ok {
+	if adminPages, ok := core.FromContext[uiadmin.Pages](wnd.Context(), ""); ok {
+		if queryGroups, ok := core.FromContext[admin.QueryGroups](wnd.Context(), ""); ok {
 			visibleEntries := queryGroups(wnd.Subject(), "")
 			if len(visibleEntries) > 0 {
 				c = c.WithSections(

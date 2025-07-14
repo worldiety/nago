@@ -155,7 +155,7 @@ func Colors[CS ColorSet](wnd Window) CS {
 
 // GlobalSettings reads with Super-User permission any Settings from the window.
 func GlobalSettings[T settings.GlobalSettings](wnd Window) T {
-	loadGlobal, ok := SystemService[settings.LoadGlobal](wnd.Application())
+	loadGlobal, ok := FromContext[settings.LoadGlobal](wnd.Context(), "")
 	if !ok {
 		slog.Error("failed to load global settings use case from application system service")
 		var zero T

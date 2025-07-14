@@ -8,6 +8,7 @@
 package form
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"go.wdy.de/nago/application/image"
@@ -34,6 +35,20 @@ type AutoOptions struct {
 	ViewOnly       bool
 	IgnoreFields   []string
 	Window         core.Window
+	// Context is used to resolve the data sources. If Context is nil, the Window context is used to resolve the sources.
+	Context context.Context
+}
+
+func (o AutoOptions) context() context.Context {
+	if o.Context != nil {
+		return o.Context
+	}
+
+	if o.Window != nil {
+		return o.Window.Context()
+	}
+
+	return context.Background()
 }
 
 // Auto is similar to [crud.AutoBinding], however it does much less and just creates a form using
@@ -115,7 +130,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 							slog.Error("form.Auto requires AutoOptions.Window but is nil")
 						}
 
-						listAll, ok := core.SystemServiceWithName[UseCaseListAny](opts.Window.Application(), source)
+						listAll, ok := core.FromContext[UseCaseListAny](opts.context(), source)
 						if !ok {
 							slog.Error("can not find list by system service", "source", source)
 							continue
@@ -505,7 +520,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 								panic(fmt.Errorf("form.Auto requires AutoOptions.Window but is nil"))
 							}
 
-							listAll, ok := core.SystemServiceWithName[UseCaseListAny](opts.Window.Application(), source)
+							listAll, ok := core.FromContext[UseCaseListAny](opts.context(), source)
 							if !ok {
 								slog.Error("can not find list by system service", "source", source)
 								continue

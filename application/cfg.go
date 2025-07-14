@@ -69,7 +69,8 @@ type Configurator struct {
 	appIconUri                 proto.URI
 	fps                        int
 
-	systemServices         []dependency
+	systemServices         []core.CtxOption
+	systemServicesModified bool
 	mailManagement         *MailManagement
 	mailManagementMutator  func(*MailManagement)
 	userManagement         *UserManagement
@@ -240,27 +241,10 @@ func (c *Configurator) LoadConfigFromEnv() {
 	}
 }
 
-func (c *Configurator) AddSystemService(name string, service any) *Configurator {
-	c.systemServices = append(c.systemServices, dependency{
-		name:    name,
-		service: service,
-	})
-
+func (c *Configurator) AddContextValue(opts ...core.CtxOption) *Configurator {
+	c.systemServices = append(c.systemServices, opts...)
+	c.systemServicesModified = true
 	return c
-}
-
-func SystemServiceFor[T any](cfg *Configurator, name string) (T, bool) {
-	for _, service := range cfg.systemServices {
-		if v, ok := service.service.(T); ok {
-			if name == "" || service.name == name {
-				return v, ok
-			}
-		}
-	}
-
-	var zero T
-
-	return zero, false
 }
 
 func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedObserver) *Configurator {
@@ -469,8 +453,13 @@ func (c *Configurator) getScheme() string {
 	return "http"
 }
 
-// Context returns the applications default context.
+// Context returns the applications default context enriched with currently configured context values.
 func (c *Configurator) Context() context.Context {
+	if c.systemServicesModified {
+		c.ctx = core.WithContext(c.ctx, c.systemServices...)
+		c.systemServicesModified = false
+	}
+
 	return c.ctx
 }
 

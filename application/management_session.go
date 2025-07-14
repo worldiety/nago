@@ -133,7 +133,7 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 
 		})
 
-		c.AddSystemService("", c.sessionManagement.Pages)
+		c.AddContextValue(core.ContextValue("", c.sessionManagement.Pages))
 	}
 
 	return *c.sessionManagement, nil

@@ -26,7 +26,7 @@ type Management struct {
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
-	management, ok := application.SystemServiceFor[Management](cfg, "")
+	management, ok := core.FromContext[Management](cfg.Context(), "")
 	if ok {
 		return management, nil
 	}
@@ -154,7 +154,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 		return group
 	})
-	cfg.AddSystemService("nago.usercircles", management)
+	cfg.AddContextValue(core.ContextValue("nago.usercircles", management))
 
 	slog.Info("installed user circle management")
 

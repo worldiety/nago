@@ -51,7 +51,7 @@ func main() {
 		// this must happen before IAM init, otherwise the permissions are missing
 		persons := application.SloppyRepository[Person](cfg)
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
-		cfg.AddSystemService("persons", form.AnyUseCaseList(useCases.FindAll))
+		cfg.AddContextValue(core.ContextValue("persons", form.AnyUseCaseList(useCases.FindAll)))
 
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
 

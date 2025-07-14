@@ -43,7 +43,7 @@ func ViewPage(wnd core.Window, imp importer.Importer, stage dataimport.Staging, 
 		statusWidth = ui.L320
 	}
 
-	displayUser, ok := core.SystemService[user.DisplayName](wnd.Application())
+	displayUser, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
 		return alert.BannerError(os.ErrNotExist)
 	}
