@@ -133,6 +133,10 @@ func (c THStack) WithFrame(fn func(Frame) Frame) DecoredView {
 	return c
 }
 
+func (c THStack) With(fn func(stack THStack) THStack) THStack {
+	return fn(c)
+}
+
 func (c THStack) FullWidth() THStack {
 	c.frame.Width = "100%"
 	return c

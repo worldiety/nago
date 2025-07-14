@@ -8,9 +8,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
+	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
@@ -32,27 +34,65 @@ func main() {
 				calendar.Calendar(
 					calendar.Event{
 						From: calendar.Instant{
-							At: time.Date(2025, 07, 11, 0, 0, 0, 0, time.Local),
+							At: time.Date(2025, 7, 11, 0, 0, 0, 0, time.Local),
 						},
 						To: calendar.Instant{
 							At: time.Date(2025, 8, 11, 0, 0, 0, 0, time.Local),
 						},
-						Label: "Some Event",
+						Label: "Some Event (Torben)",
 						Lane: calendar.Lane{
 							Label: "Torben",
+						},
+						Category: calendar.Category{
+							Label: "Kategorie 2",
+							Color: "#ff0000",
+						},
+					},
+
+					calendar.Event{
+						From: calendar.Instant{
+							At: time.Date(2025, 10, 11, 0, 0, 0, 0, time.Local),
+						},
+						To: calendar.Instant{
+							At: time.Date(2025, 11, 11, 0, 0, 0, 0, time.Local),
+						},
+						Label: "Some Event (Torben 2)",
+						Lane: calendar.Lane{
+							Label: "Torben",
+						},
+						Category: calendar.Category{
+							Label: "Kategorie 2",
+							Color: "#ff0000",
 						},
 					},
 
 					calendar.Event{
 						From: calendar.Instant{
 							At: time.Date(2025, 2, 1, 0, 0, 0, 0, time.Local),
+							Offset: calendar.Offset{
+								Label:    "Anfahrt",
+								Icon:     flowbiteOutline.Bell,
+								Duration: time.Hour * 24 * 3,
+							},
 						},
 						To: calendar.Instant{
 							At: time.Date(2025, 8, 31, 0, 0, 0, 0, time.Local),
+							Offset: calendar.Offset{
+								Label:    "Abfahrt",
+								Icon:     flowbiteOutline.BellActive,
+								Duration: time.Hour * 24 * 6,
+							},
 						},
-						Label: "Some other Event",
+						Action: func() {
+							fmt.Println("clicked this event")
+						},
+						Category: calendar.Category{
+							Label: "Kategorie 1",
+							Color: "#00ff00",
+						},
+						Label: "Some other Event (Olaf)",
 						Lane: calendar.Lane{
-							Label: "Torben",
+							Label: "Olaf",
 						},
 					},
 				).ViewPort(calendar.Year(2025)),

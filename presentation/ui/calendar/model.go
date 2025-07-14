@@ -24,7 +24,8 @@ type Category struct {
 }
 
 type Instant struct {
-	At time.Time
+	At     time.Time
+	Offset Offset
 }
 
 type Offset struct {
