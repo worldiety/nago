@@ -451,7 +451,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		),
 		inner,
 		ui.IfElse(c.errorText == "",
-			ui.If(c.supportingText == "", ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0)),
+			ui.If(c.supportingText != "", ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0)),
 			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
 		),
 	).Alignment(ui.Leading).
