@@ -32,7 +32,7 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
-			return Scaffold(ScaffoldAlignmentTop).
+			return Scaffold(ScaffoldAlignmentLeading).
 				Body(VStack(
 					// this only causes the side effect of setting the current page title
 					WindowTitle("Scaffold Example"),
@@ -45,7 +45,7 @@ func main() {
 					GeneralTermsAndConditions("https://www.worldiety.de/loesungen/software-entwicklung").
 					ProviderName("© worldiety GmbH"),
 				).
-				Logo(Image().Embed(appIcon).Frame(Frame{}.Size("auto", L64))).
+				Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))).
 				Breakpoint(1000).
 				Menu(
 					ScaffoldMenuEntry{
@@ -84,6 +84,13 @@ func main() {
 						MarkAsActiveAt: ".",
 					},
 					ForwardScaffoldMenuEntry(wnd, icons.User, "Forward entry", "/"),
+				).
+				BottomView(
+					VStack(
+						Text("Ein Text"),
+						Link(wnd, "worldiety GmbH", "https://www.worldiety.de/", "_blank").
+							TextAlignment(TextAlignCenter),
+					).FullWidth(),
 				)
 		})
 	}).Run()

@@ -20,6 +20,7 @@ according to intent (e. g. , success, warning, error). It also supports a callba
 ## Methods
 | Method | Description |
 |--------| ------------|
+| `AutoCloseTimeoutOrDefault(d time.Duration)` | AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds. |
 | `Closeable(presented *core.State[bool])` | Closeable makes the banner dismissible by binding its visibility to the given state. |
 | `Frame(frame ui.Frame)` | Frame sets a custom frame (layout constraints) for the banner. |
 | `Intent(intent Intent)` | Intent sets the visual intent of the banner (e.g., success, warning, error). |
@@ -28,3 +29,5 @@ according to intent (e. g. , success, warning, error). It also supports a callba
 ## Related
 
 - [Banner](../../feedback-and-overlay/banner/)
+
+

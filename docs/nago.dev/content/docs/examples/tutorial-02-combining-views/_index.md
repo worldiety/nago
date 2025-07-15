@@ -16,3 +16,11 @@ More static content.
 
 ## Image
 ![](screenshot-01.png)
+
+
+## See also
+- [Frame](../../components/layout/frame)
+- [HStack](../../components/layout/hstack)
+- [Text](../../components/basic/text)
+- [VStack](../../components/layout/vstack)
+
