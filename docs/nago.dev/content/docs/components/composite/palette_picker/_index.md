@@ -54,7 +54,5 @@ func main() {
 | `pickerTable()` |  |
 ---
 ## Related
-
 - [Palette Picker](../../composite/palette_picker/)
-
 

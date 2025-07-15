@@ -42,7 +42,6 @@ you need to apply additional padding.
 | `WithFrame(fn func(Frame) Frame)` |  |
 ---
 ## Related
-
 - [Frame](../../layout/frame/)
 - [VStack](../../layout/vstack/)
 
@@ -50,4 +49,3 @@ you need to apply additional padding.
 - [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)
 - [tutorial-02-combining-views](../../../examples/tutorial-02-combining-views)
 - [tutorial-54-codeeditor](../../../examples/tutorial-54-codeeditor)
-

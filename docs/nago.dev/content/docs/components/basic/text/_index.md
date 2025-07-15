@@ -77,7 +77,6 @@ func main() {
 | `WithFrame(fn func(Frame) Frame)` | WithFrame sets width, minWidth, maxWidth, height, minHeight and maxHeight using a function. |
 ---
 ## Related
-
 - [Frame](../../layout/frame/)
 - [Text](../../basic/text/)
 
@@ -85,4 +84,3 @@ func main() {
 - [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)
 - [tutorial-02-combining-views](../../../examples/tutorial-02-combining-views)
 - [tutorial-54-codeeditor](../../../examples/tutorial-54-codeeditor)
-
