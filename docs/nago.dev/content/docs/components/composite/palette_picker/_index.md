@@ -53,6 +53,4 @@ func main() {
 | `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
 | `pickerTable()` |  |
 ---
-## Related
-- [Palette Picker](../../composite/palette_picker/)
 

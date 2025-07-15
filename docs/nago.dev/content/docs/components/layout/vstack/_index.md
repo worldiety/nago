@@ -41,9 +41,9 @@ you need to apply additional padding.
 | `Visible(visible bool)` |  |
 | `WithFrame(fn func(Frame) Frame)` |  |
 ---
+
 ## Related
 - [Frame](../../layout/frame/)
-- [VStack](../../layout/vstack/)
 
 ## Tutorials
 - [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)

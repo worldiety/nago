@@ -76,9 +76,9 @@ func main() {
 | `Visible(visible bool)` | Visible decides whether a text is shown. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame sets width, minWidth, maxWidth, height, minHeight and maxHeight using a function. |
 ---
+
 ## Related
 - [Frame](../../layout/frame/)
-- [Text](../../basic/text/)
 
 ## Tutorials
 - [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)
