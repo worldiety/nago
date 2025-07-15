@@ -10,12 +10,11 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
 )
-
-type ComponentType int
 
 const (
 	Unknown ComponentType = iota
@@ -26,10 +25,24 @@ const (
 	Composite
 )
 
-// generateDocsForComponents generates markdown for all components in the packages.
+type ComponentType int
+
+type DocComponent struct {
+	DisplayName   string
+	Related       []string
+	DirName       string
+	ComponentType ComponentType
+	Type          *api.Type
+}
+
+// generateDocsForComponents generates Markdown for all components in the packages.
 // Make sure to include all needed packages in cfg.Packages and separate them with ;
 // e.g. "go.wdy.de/nago/presentation/ui;go.wdy.de/nago/presentation/ui/picker"
-func generateDocsForComponents(projectRoot string) {
+// It returns a map containing all components and their component type (basic, composite etc.).
+func generateDocsForComponents(
+	projectRoot string,
+	componentTotTutorialMap map[string][]string,
+) (map[string]ComponentType, error) {
 	var cfg app.Config
 	cfg.Reset()
 	cfg.Flags(flag.CommandLine)
@@ -39,40 +52,40 @@ func generateDocsForComponents(projectRoot string) {
 
 	buf, err := app.Apply(cfg)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var module api.Module
 	err = json.Unmarshal(buf, &module)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	basicComponentOutputPath := filepath.Join(projectRoot, "/docs/content/docs/components/basic")
-	layoutComponentOutputPath := filepath.Join(projectRoot, "/docs/content/docs/components/layout")
-	utilComponentOutputPath := filepath.Join(projectRoot, "/docs/content/docs/components/utility")
-	feedbackAndOverlayComponentOutputPath := filepath.Join(projectRoot, "/docs/content/docs/components/feedback-and-overlay")
-	advancedComponentOutputPath := filepath.Join(projectRoot, "/docs/content/docs/components/composite")
+	basicComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/basic")
+	layoutComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/layout")
+	utilComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/utility")
+	feedbackAndOverlayComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/feedback-and-overlay")
+	advancedComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/composite")
 
 	err = os.MkdirAll(basicComponentOutputPath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = os.MkdirAll(layoutComponentOutputPath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = os.MkdirAll(utilComponentOutputPath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = os.MkdirAll(feedbackAndOverlayComponentOutputPath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = os.MkdirAll(advancedComponentOutputPath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	docComponents := make(map[string]DocComponent)
@@ -80,7 +93,25 @@ func generateDocsForComponents(projectRoot string) {
 	pattern := regexp.MustCompile(`is (a|an) (basic|layout|utility|feedback|overlay|composite) component\([^)]+\)`)
 
 	createDocComponentMapEntries(module, pattern, docComponents)
-	createMarkdownAndCopyToHugo(docComponents, basicComponentOutputPath, layoutComponentOutputPath, utilComponentOutputPath, feedbackAndOverlayComponentOutputPath, advancedComponentOutputPath, pattern)
+	err = createMarkdownAndCopyToHugo(docComponents, basicComponentOutputPath, layoutComponentOutputPath, utilComponentOutputPath, feedbackAndOverlayComponentOutputPath, advancedComponentOutputPath, pattern, componentTotTutorialMap)
+	if err != nil {
+		return nil, err
+	}
+
+	componentDisplayNameToTypeMap := createComponentDisplayNameToComponentTypeMap(docComponents)
+
+	return componentDisplayNameToTypeMap, nil
+}
+
+// createComponentDisplayNameToComponentTypeMap creates a map including the component display name and it's ComponentType.
+// e.g. "Filled Button" -> Basic.
+// This assignment is needed to set the correct path while creating links between tutorials and components.
+func createComponentDisplayNameToComponentTypeMap(docComponents map[string]DocComponent) map[string]ComponentType {
+	componentDisplayNameToTypeMap := make(map[string]ComponentType)
+	for _, value := range docComponents {
+		componentDisplayNameToTypeMap[value.DisplayName] = value.ComponentType
+	}
+	return componentDisplayNameToTypeMap
 }
 
 // createMarkdownAndCopyToHugo generates markdown for every component and copies it into the hugo project.
@@ -92,7 +123,8 @@ func createMarkdownAndCopyToHugo(
 	feedbackAndOverlayComponentOutputPath string,
 	advancedComponentOutputPath string,
 	pattern *regexp.Regexp,
-) {
+	componentToTutorialMap map[string][]string,
+) error {
 	for _, component := range docComponents {
 		var dirPath string
 
@@ -114,17 +146,42 @@ func createMarkdownAndCopyToHugo(
 
 		err := os.MkdirAll(dirPath, os.ModePerm)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		filePath := filepath.Join(dirPath, "_index.md")
 		md := createMarkdownForComponent(component, docComponents, pattern)
+		md = updateTutorialsSection(md, component, componentToTutorialMap)
 
 		err = os.WriteFile(filePath, []byte(md), 0644)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+
+	return nil
+}
+
+// updateTutorialsSection searches the file for a "Tutorials" section that contains all linked tutorials.
+// If a section  already exist, it is replaced. Otherwise, a new section is appended.
+func updateTutorialsSection(
+	content string,
+	component DocComponent,
+	componentToTutorialMap map[string][]string,
+) string {
+	newTutorialsSection := createMarkdownForTutorials(component, componentToTutorialMap)
+
+	// find old "Tutorials" section
+	tutorialsPattern := regexp.MustCompile(`(?s)## Tutorials\n(.*?)(\n## |\n\z)`)
+	if tutorialsPattern.MatchString(content) {
+		// replace
+		content = tutorialsPattern.ReplaceAllString(content, newTutorialsSection+"$2")
+	} else {
+		// append if there is no "Tutorials" section
+		content = strings.TrimSpace(content) + "\n\n" + newTutorialsSection + "\n"
+	}
+
+	return content
 }
 
 // createDocComponentMapEntries creates a map entry for every component.
@@ -266,6 +323,28 @@ func createMarkdownForComponent(
 
 	// Related
 	createMarkdownForRelatedComponents(component, docComponents, &sb)
+
+	return sb.String()
+}
+
+// createMarkdownForTutorials generates the "Tutorials" section for components containing all linked tutorials.
+func createMarkdownForTutorials(
+	component DocComponent,
+	componentToTypeMap map[string][]string,
+) string {
+	var sb strings.Builder
+
+	tutorials, found := componentToTypeMap[component.DisplayName]
+	if !found {
+		return ""
+	}
+
+	slices.Sort(tutorials)
+
+	sb.WriteString("## Tutorials\n")
+	for _, t := range tutorials {
+		sb.WriteString(fmt.Sprintf("- [%s](../../../examples/%s)\n", t, t))
+	}
 
 	return sb.String()
 }
@@ -416,14 +495,6 @@ func cleanDoc(doc string, pattern *regexp.Regexp) string {
 	}
 
 	return ""
-}
-
-type DocComponent struct {
-	DisplayName   string
-	Related       []string
-	DirName       string
-	ComponentType ComponentType
-	Type          *api.Type
 }
 
 // getRelatedTypesInOrder collects all parameter and result types for every method of the *api.Type.

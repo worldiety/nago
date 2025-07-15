@@ -1,0 +1,30 @@
+# This file defines the mapping between alle components and tutorials.
+# It's used to generate "See also" sections in the corresponding Markdown files.
+#
+# Use the components *display name*, not its Go type name!
+# You can find the *display name* in the component documentation, in parentheses after the type.
+# For example:
+#  // TCodeEditor is a composite component(Code Editor).
+# In this case, use "Code Editor" - not "TCodeEditor" - as "TCodeEditor" will not be matched.
+
+tutorial-01-helloworld:
+  - VStack
+  - Text
+  - Frame
+
+tutorial-02-combining-views:
+  - VStack
+  - Image
+  - URI
+  - Frame
+  - Text
+  - HStack
+  - Spacer
+  - HLine
+  - Alignment
+
+tutorial-54-codeeditor:
+  - VStack
+  - Text
+  - Frame
+  - Code Editor

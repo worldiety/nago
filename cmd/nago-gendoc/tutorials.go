@@ -3,15 +3,124 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"io/fs"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
+	"strings"
 )
+
+// generateDocsForTutorials generates Markdown for all tutorials in example/cmd.
+func generateDocsForTutorials(
+	projectRoot string,
+	tutorialsToComponentMap map[string][]string,
+	componentToTypeMap map[string]ComponentType,
+) error {
+	src := filepath.Join(projectRoot, "example/cmd")
+
+	err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+			return nil
+		}
+
+		tutorialID := filepath.Base(filepath.Dir(path))
+
+		components, found := tutorialsToComponentMap[tutorialID]
+		if !found {
+			return nil
+		}
+
+		return updateSeeAlsoSection(path, components, componentToTypeMap)
+	})
+
+	return err
+}
+
+// updateSeeAlsoSection searches the file for a "See also" section that contains all linked components.
+// If a section  already exist, it is replaced. Otherwise, a new section is appended.
+func updateSeeAlsoSection(
+	path string,
+	components []string,
+	componentToTypeMap map[string]ComponentType,
+) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("error reading file: %w", err)
+	}
+	content := string(data)
+
+	newSeeAlsoSection := createMarkdownForSeeAlso(components, componentToTypeMap)
+
+	// find old "See also" section
+	seeAlsoPattern := regexp.MustCompile(`(?s)## See also\n(.*?)(\n## |\n\z)`)
+	if seeAlsoPattern.MatchString(content) {
+		// replace
+		content = seeAlsoPattern.ReplaceAllString(content, newSeeAlsoSection+"$2")
+	} else {
+		// append if there is no "See also" section
+		content = strings.TrimSpace(content) + "\n\n" + newSeeAlsoSection + "\n"
+	}
+
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// createMarkdownForSeeAlso generates the "See also" section for tutorials containing all linked components.
+func createMarkdownForSeeAlso(
+	components []string,
+	componentToTypeMap map[string]ComponentType,
+) string {
+	var sb strings.Builder
+
+	slices.Sort(components)
+
+	sb.WriteString("## See also\n")
+	for _, c := range components {
+		componentPathInHugo, err := getComponentPathInHugo(c, componentToTypeMap)
+		if err != nil {
+			slog.Error("Error getting component path in hugo file: ", slog.Any("err", err))
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("- [%s](%s)\n", c, componentPathInHugo))
+	}
+	return sb.String()
+}
+
+// getComponentPathInHugo generates the correct path for a linked component within the hugo project.
+// It uses the map to look up the ComponentType and create the path e.g. docs/components/composite/code_editor.
+func getComponentPathInHugo(
+	component string,
+	componentToTypeMap map[string]ComponentType,
+) (string, error) {
+	componentDirName := strings.ReplaceAll(strings.ToLower(component), " ", "_")
+
+	switch componentToTypeMap[component] {
+	case Basic:
+		return fmt.Sprintf("../../components/basic/%s", componentDirName), nil
+	case Utility:
+		return fmt.Sprintf("../../components/utiltity/%s", componentDirName), nil
+	case Layout:
+		return fmt.Sprintf("../../components/layout/%s", componentDirName), nil
+	case FeedbackAndOverlay:
+		return fmt.Sprintf("../../components/feedback-and-overlay/%s", componentDirName), nil
+	case Composite:
+		return fmt.Sprintf("../../components/composite/%s", componentDirName), nil
+	default:
+		return "", fmt.Errorf("unknown component: %s", component)
+	}
+}
 
 func copyFilesToHugo(projectRoot string) {
 	srcRoot := filepath.Join(projectRoot, "example/cmd")
-	dstRoot := filepath.Join(projectRoot, "docs/content/docs/examples")
+	dstRoot := filepath.Join(projectRoot, "docs/nago.dev/content/docs/examples")
 
 	if err := copyDir(srcRoot, dstRoot, srcRoot); err != nil {
 		log.Fatalf("Fehler beim Kopieren: %v", err)

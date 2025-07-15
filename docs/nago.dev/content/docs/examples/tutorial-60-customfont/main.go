@@ -69,7 +69,7 @@ func main() {
 				ui.Text("new default text"),
 				ui.Text("new default title text").Font(ui.Title),
 				ui.Text("custom 2 regular").Font(ui.Font{Name: "Silk"}),
-				ui.Text("custom 2 bold").Font(ui.Font{Name: "Silk", Weight: ui.BoldFontWeight}),
+				ui.Text("custom 2 bold").Font(ui.Font{Name: "Silk", Weight: ui.HeadlineAndTitleFontWeight}),
 			).
 				Frame(ui.Frame{}.MatchScreen())
 
