@@ -20,9 +20,9 @@ configurable tab size, and optional read-only or disabled states.
 | `InputValue(state *core.State[string])` |  |
 | `Language(language string)` | Language gives a syntax highlighting hint. Defined are go, html, css, json, xml, markdown but there may be arbitrary support. |
 ---
+
 ## Related
 - [Frame](../../layout/frame/)
-- [Code Editor](../../composite/code_editor/)
 
 ## Tutorials
 - [tutorial-54-codeeditor](../../../examples/tutorial-54-codeeditor)

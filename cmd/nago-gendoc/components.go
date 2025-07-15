@@ -393,7 +393,7 @@ func createMarkdownForMethods(
 			sb.WriteString(fmt.Sprintf(")` | %s |\n", cleanedDoc))
 		}
 
-		sb.WriteString("---\n")
+		sb.WriteString("---\n\n")
 	}
 }
 
@@ -408,7 +408,7 @@ func createMarkdownForRelatedComponents(
 	if len(component.Related) > 0 {
 		for _, s := range component.Related {
 			relatedComponent, ok := docComponents[s]
-			if !ok {
+			if !ok || relatedComponent.DisplayName == component.DisplayName {
 				continue
 			}
 
