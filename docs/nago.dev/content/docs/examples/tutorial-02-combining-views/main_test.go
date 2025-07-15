@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
+	. "go.wdy.de/nago/presentation/ui"
 	"testing"
 	"time"
 )

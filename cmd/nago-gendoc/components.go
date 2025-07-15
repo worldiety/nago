@@ -150,8 +150,7 @@ func createMarkdownAndCopyToHugo(
 		}
 
 		filePath := filepath.Join(dirPath, "_index.md")
-		md := createMarkdownForComponent(component, docComponents, pattern)
-		md = updateTutorialsSection(md, component, componentToTutorialMap)
+		md := createMarkdownForComponent(component, docComponents, pattern, componentToTutorialMap)
 
 		err = os.WriteFile(filePath, []byte(md), 0644)
 		if err != nil {
@@ -160,28 +159,6 @@ func createMarkdownAndCopyToHugo(
 	}
 
 	return nil
-}
-
-// updateTutorialsSection searches the file for a "Tutorials" section that contains all linked tutorials.
-// If a section  already exist, it is replaced. Otherwise, a new section is appended.
-func updateTutorialsSection(
-	content string,
-	component DocComponent,
-	componentToTutorialMap map[string][]string,
-) string {
-	newTutorialsSection := createMarkdownForTutorials(component, componentToTutorialMap)
-
-	// find old "Tutorials" section
-	tutorialsPattern := regexp.MustCompile(`(?s)## Tutorials\n(.*?)(\n## |\n\z)`)
-	if tutorialsPattern.MatchString(content) {
-		// replace
-		content = tutorialsPattern.ReplaceAllString(content, newTutorialsSection+"$2")
-	} else {
-		// append if there is no "Tutorials" section
-		content = strings.TrimSpace(content) + "\n\n" + newTutorialsSection + "\n"
-	}
-
-	return content
 }
 
 // createDocComponentMapEntries creates a map entry for every component.
@@ -301,6 +278,7 @@ func createMarkdownForComponent(
 	component DocComponent,
 	docComponents map[string]DocComponent,
 	pattern *regexp.Regexp,
+	componentToTutorialMap map[string][]string,
 ) string {
 	var sb strings.Builder
 
@@ -324,6 +302,9 @@ func createMarkdownForComponent(
 	// Related
 	createMarkdownForRelatedComponents(component, docComponents, &sb)
 
+	// Tutorials
+	createMarkdownForTutorials(component, componentToTutorialMap, &sb)
+
 	return sb.String()
 }
 
@@ -331,9 +312,8 @@ func createMarkdownForComponent(
 func createMarkdownForTutorials(
 	component DocComponent,
 	componentToTypeMap map[string][]string,
+	sb *strings.Builder,
 ) string {
-	var sb strings.Builder
-
 	tutorials, found := componentToTypeMap[component.DisplayName]
 	if !found {
 		return ""
@@ -450,11 +430,13 @@ func createMarkdownForRelatedComponents(
 	}
 
 	if len(related) > 0 {
-		sb.WriteString("## Related\n\n")
+		sb.WriteString("## Related\n")
 
 		for _, relatedComponent := range related {
 			sb.WriteString(relatedComponent)
 		}
+
+		sb.WriteString("\n")
 	}
 }
 

@@ -28,21 +28,37 @@ func generateDocsForTutorials(
 			return err
 		}
 
-		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+		if d.IsDir() || !strings.HasSuffix(d.Name(), "index.md") {
 			return nil
 		}
 
 		tutorialID := filepath.Base(filepath.Dir(path))
 
 		components, found := tutorialsToComponentMap[tutorialID]
-		if !found {
-			return nil
+		if !found || len(components) == 0 {
+			return removeSeeAlsoSection(path)
 		}
 
 		return updateSeeAlsoSection(path, components, componentToTypeMap)
 	})
 
 	return err
+}
+
+// removeSeeAlsoSection removes the "See also" section of the file.
+func removeSeeAlsoSection(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("error reading file: %w", err)
+	}
+
+	content := string(data)
+	seeAlsoPattern := regexp.MustCompile(`(?s)## See also\n(.*?)(\n## |\n\z)`)
+	if seeAlsoPattern.MatchString(content) {
+		content = seeAlsoPattern.ReplaceAllString(content, "\n"+"$2")
+	}
+
+	return os.WriteFile(path, []byte(content), 0644)
 }
 
 // updateSeeAlsoSection searches the file for a "See also" section that contains all linked components.

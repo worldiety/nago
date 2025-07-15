@@ -27,7 +27,5 @@ according to intent (e. g. , success, warning, error). It also supports a callba
 | `OnClosed(fn func())` | OnClosed sets a callback function that is triggered when the banner is closed. |
 ---
 ## Related
-
 - [Banner](../../feedback-and-overlay/banner/)
-
 
