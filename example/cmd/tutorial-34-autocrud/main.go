@@ -53,9 +53,7 @@ func main() {
 		useCases := crud.NewUseCases("de.tutorial.person", persons)
 		cfg.AddContextValue(core.ContextValue("persons", form.AnyUseCaseList(useCases.FindAll)))
 
-		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
-
-		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "8fb8724f-e604-444c-9671-58d07dd76164"))
+		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		std.Must(cfg.Authentication())
 		cfg.SetDecorator(cfg.NewScaffold().

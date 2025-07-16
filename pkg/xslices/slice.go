@@ -19,7 +19,7 @@ type Slice[T any] struct {
 	s []T
 }
 
-// Wrap takes ownership of the given slice without an additional copy. See also [New].
+// Wrap takes ownership of the given slice without an additional copy. See also [New]. This is inherently unsafe.
 func Wrap[T any](v ...T) Slice[T] {
 	return Slice[T]{v}
 }
