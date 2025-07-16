@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-func NewBackup(src Persistence) Backup {
+func NewBackup(src blob.Stores) Backup {
 	return func(ctx context.Context, subject auth.Subject, dst io.Writer) (err error) {
 		if err := subject.Audit(PermBackup); err != nil {
 			return err
@@ -41,21 +41,42 @@ func NewBackup(src Persistence) Backup {
 		}
 
 		fileCounter := 0
-		for fileStoreName, err := range src.FileStores() {
+		for fileStoreName, err := range src.All() {
 			if err != nil {
 				return err
 			}
 
-			slog.Info("backup", "action", "large blob store started", "store", fileStoreName)
-
-			storeIdx := Store{
-				Name:       fileStoreName,
-				Stereotype: StereotypeBlob,
+			optStat, err := src.Stat(fileStoreName)
+			if err != nil {
+				return err
 			}
 
-			store, err := src.FileStore(fileStoreName)
+			if optStat.IsNone() {
+				return fmt.Errorf("file store %s is empty", fileStoreName)
+			}
+
+			stat := optStat.Unwrap()
+
+			slog.Info("backup", "action", "blob store started", "store", fileStoreName)
+
+			storeIdx := Store{
+				Name: fileStoreName,
+			}
+
+			switch stat.Type {
+			case blob.FileStore:
+				storeIdx.Stereotype = StereotypeBlob
+			case blob.EntityStore:
+				storeIdx.Stereotype = StereotypeDocument
+			default:
+				return fmt.Errorf("unknown store type: %v", stat.Type)
+			}
+
+			store, err := src.Open(fileStoreName, blob.OpenStoreOptions{
+				Type: stat.Type,
+			})
 			if err != nil {
-				return fmt.Errorf("cannot open file store %s: %w", fileStoreName, err)
+				return fmt.Errorf("cannot open store %s: %w", fileStoreName, err)
 			}
 
 			if err := addFilesFromStoreToZipStream(&storeIdx, &fileCounter, ctx, zipWriter, store); err != nil {
@@ -64,35 +85,9 @@ func NewBackup(src Persistence) Backup {
 
 			index.Stores = append(index.Stores, storeIdx)
 
-			slog.Info("backup", "action", "large blob store completed", "store", fileStoreName, "blobs", len(storeIdx.Blobs))
+			slog.Info("backup", "action", "store completed", "store", fileStoreName, "blobs", len(storeIdx.Blobs))
 		}
-
-		for entityStoreName, err := range src.EntityStores() {
-			if err != nil {
-				return err
-			}
-
-			storeIdx := Store{
-				Name:       entityStoreName,
-				Stereotype: StereotypeDocument,
-			}
-
-			slog.Info("backup", "action", "document store started", "store", entityStoreName)
-
-			store, err := src.EntityStore(entityStoreName)
-			if err != nil {
-				return fmt.Errorf("cannot open entity store %s: %w", entityStoreName, err)
-			}
-
-			if err := addFilesFromStoreToZipStream(&storeIdx, &fileCounter, ctx, zipWriter, store); err != nil {
-				return fmt.Errorf("cannot add file store files to zip stream: %w", err)
-			}
-
-			index.Stores = append(index.Stores, storeIdx)
-
-			slog.Info("backup", "action", "document store completed", "store", entityStoreName, "blobs", len(storeIdx.Blobs))
-		}
-
+		
 		// write backup index
 		bufIdx, err := json.Marshal(index)
 		if err != nil {

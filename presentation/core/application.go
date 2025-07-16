@@ -35,11 +35,6 @@ func (a ApplicationID) Valid() bool {
 
 type OnWindowCreatedObserver func(wnd Window)
 
-type dependency struct {
-	name  string
-	value any
-}
-
 type Application struct {
 	id                       ApplicationID
 	name                     string

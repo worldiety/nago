@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 )
 
-func NewRestore(dst Persistence) Restore {
+func NewRestore(dst blob.Stores) Restore {
 	return func(ctx context.Context, subject auth.Subject, src io.Reader) error {
 		if err := subject.Audit(PermRestore); err != nil {
 			return err
@@ -109,13 +109,13 @@ func NewRestore(dst Persistence) Restore {
 			var store blob.Store
 			switch idxStore.Stereotype {
 			case StereotypeDocument:
-				store, err = dst.EntityStore(idxStore.Name)
+				store, err = dst.Open(idxStore.Name, blob.OpenStoreOptions{Type: blob.EntityStore})
 				if err != nil {
 					return fmt.Errorf("could not create entity store %s: %w", idxStore.Name, err)
 				}
 
 			case StereotypeBlob:
-				store, err = dst.FileStore(idxStore.Name)
+				store, err = dst.Open(idxStore.Name, blob.OpenStoreOptions{Type: blob.FileStore})
 				if err != nil {
 					return fmt.Errorf("could not create blob store %s: %w", idxStore.Name, err)
 				}

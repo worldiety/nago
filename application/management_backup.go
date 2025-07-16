@@ -11,13 +11,9 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/backup"
 	uibackup "go.wdy.de/nago/application/backup/ui"
-	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/crypto"
-	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
-	"iter"
 	"log/slog"
-	"maps"
 )
 
 type BackupManagement struct {
@@ -27,9 +23,14 @@ type BackupManagement struct {
 
 func (c *Configurator) BackupManagement() (BackupManagement, error) {
 	if c.backupManagement == nil {
+		stores, err := c.Stores()
+		if err != nil {
+			return BackupManagement{}, err
+		}
+
 		c.backupManagement = &BackupManagement{
 			UseCases: backup.NewUseCases(
-				&cfgPersistence{c},
+				stores,
 				func() crypto.EncryptionKey {
 					return option.Must(c.MasterKey())
 				},
@@ -54,28 +55,4 @@ func (c *Configurator) BackupManagement() (BackupManagement, error) {
 	}
 
 	return *c.backupManagement, nil
-}
-
-func (c *Configurator) Persistence() backup.Persistence {
-	return &cfgPersistence{cfg: c}
-}
-
-type cfgPersistence struct {
-	cfg *Configurator
-}
-
-func (c *cfgPersistence) FileStores() iter.Seq2[string, error] {
-	return xiter.Zero2[string, error](maps.Keys(c.cfg.fileStores))
-}
-
-func (c *cfgPersistence) EntityStores() iter.Seq2[string, error] {
-	return xiter.Zero2[string, error](maps.Keys(c.cfg.entityStores))
-}
-
-func (c *cfgPersistence) FileStore(name string) (blob.Store, error) {
-	return c.cfg.FileStore(name)
-}
-
-func (c *cfgPersistence) EntityStore(name string) (blob.Store, error) {
-	return c.cfg.EntityStore(name)
 }

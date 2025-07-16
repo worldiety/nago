@@ -28,8 +28,13 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return management, nil
 	}
 
+	stores, err := cfg.Stores()
+	if err != nil {
+		return Management{}, err
+	}
+
 	management = Management{
-		UseCases: inspector.NewUseCases(cfg.Persistence()),
+		UseCases: inspector.NewUseCases(stores),
 		Pages: uiinspector.Pages{
 			PageDataInspector: "admin/inspector",
 		},

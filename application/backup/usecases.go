@@ -15,30 +15,8 @@ import (
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
 	"io"
-	"iter"
 	"time"
 )
-
-type Persistence interface {
-	// FileStores returns all names of those bucket stores which are tagged for the use of streamable very large
-	// binary files.
-	FileStores() iter.Seq2[string, error]
-
-	// EntityStores returns all names of those buckets, which are tagged for the use of rather small entities,
-	// usually json files.
-	EntityStores() iter.Seq2[string, error]
-
-	// FileStore creates or opens the named store as a file storage. This likely has a different implementation
-	// than an EntityStore.
-	FileStore(name string) (blob.Store, error)
-
-	// EntityStore creates or opens the named store as an entity storage. This likely has a different implementation
-	// than a FileStore.
-	EntityStore(name string) (blob.Store, error)
-
-	// TODO we need also some local fs restore and backup e.g. for embedded non-abstract things like key stores
-	//AbsolutePathLocations() []string
-}
 
 type ExportMasterKey func(subject auth.Subject) (string, error)
 type ReplaceMasterKey func(subject auth.Subject, key string) error
@@ -52,7 +30,7 @@ type UseCases struct {
 	ReplaceMasterKey ReplaceMasterKey
 }
 
-func NewUseCases(p Persistence, getCryptoKey func() crypto.EncryptionKey, setCryptoKey func(crypto.EncryptionKey)) UseCases {
+func NewUseCases(p blob.Stores, getCryptoKey func() crypto.EncryptionKey, setCryptoKey func(crypto.EncryptionKey)) UseCases {
 	return UseCases{
 		Backup:           NewBackup(p),
 		Restore:          NewRestore(p),

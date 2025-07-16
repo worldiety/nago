@@ -13,7 +13,6 @@ import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -26,14 +25,10 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 )
-
-type dependency struct {
-	name    string
-	service any
-}
 
 type EntityStorageFactory interface {
 	EntityStore(bucketName string) (blob.Store, error)
@@ -44,9 +39,8 @@ type BlobStorageFactory interface {
 }
 
 type Configurator struct {
-	fileStores                 map[string]blob.Store
-	entityStores               map[string]blob.Store
-	globalTDB                  *tdb.DB
+	stores                     *LocalStores
+	storesMutex                sync.Mutex
 	ctx                        context.Context
 	done                       context.CancelFunc
 	logger                     *slog.Logger
@@ -121,15 +115,14 @@ func NewConfigurator() *Configurator {
 			core.Light: {},
 		},
 		applicationSemanticVersion: "0.0.0",
-		fileStores:                 map[string]blob.Store{},
-		entityStores:               map[string]blob.Store{},
-		fps:                        10,
-		ctx:                        ctx,
-		done:                       done,
-		factories:                  map[proto.RootViewID]func(wnd core.Window) core.View{},
-		applicationName:            filepath.Base(os.Args[0]),
-		applicationVersion:         buildInfo,
-		debug:                      strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
+
+		fps:                10,
+		ctx:                ctx,
+		done:               done,
+		factories:          map[proto.RootViewID]func(wnd core.Window) core.View{},
+		applicationName:    filepath.Base(os.Args[0]),
+		applicationVersion: buildInfo,
+		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 	}
 
 	cfg.hasSSL = cfg.determineSecureCookie()

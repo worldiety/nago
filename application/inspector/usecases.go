@@ -52,7 +52,7 @@ type UseCases struct {
 	Filter  Filter
 }
 
-func NewUseCases(p backup.Persistence) UseCases {
+func NewUseCases(p blob.Stores) UseCases {
 
 	return UseCases{
 		FindAll: NewFindAll(p),
