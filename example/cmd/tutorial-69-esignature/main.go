@@ -10,6 +10,7 @@ package main
 import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
+	cfgsignature "go.wdy.de/nago/application/signature/cfg"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/esignature"
@@ -26,13 +27,20 @@ func main() {
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
+		option.Must(cfgsignature.Enable(cfg))
+
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
 				ui.Text("hello world"),
+
+				// this is just a simple anemic view component
 				esignature.Signature().
 					TopText("Nago Signature").
 					BottomText("Apprentice").
 					Body(ui.Text("Torben")),
+
+				//
+
 			).FullWidth()
 
 		})

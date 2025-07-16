@@ -15,7 +15,6 @@ import (
 	"go.wdy.de/nago/pkg/blob/tdb"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
-	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xslices"
 	"iter"
@@ -77,15 +76,24 @@ func (c *Configurator) Stores() (blob.Stores, error) {
 // bucket name, so be careful when renaming types or having type name collisions.
 func SloppyRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator) data.Repository[A, ID] {
 	bucketName := reflect.TypeFor[A]().Name()
-	return JSONRepository[A, ID](cfg, bucketName)
+	repo, err := JSONRepository[A, ID](cfg, bucketName)
+	if err != nil {
+		panic(err)
+	}
+
+	return repo
 }
 
 // JSONRepository returns a sloppy json Repository implementation for the given type, which just serializes the domain
 // type, which is fine for rapid prototyping, but should be used with care for products which must be maintained.
 // This shares the bucket name space with [Configurator.EntityStore].
-func JSONRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator, bucketName string) data.Repository[A, ID] {
-	store := std.Must(cfg.EntityStore(bucketName))
-	return json.NewSloppyJSONRepository[A, ID](store)
+func JSONRepository[A data.Aggregate[ID], ID data.IDType](cfg *Configurator, bucketName string) (data.Repository[A, ID], error) {
+	store, err := cfg.EntityStore(bucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.NewSloppyJSONRepository[A, ID](store), nil
 }
 
 // security: only owner can read,write,exec

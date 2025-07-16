@@ -10,6 +10,7 @@ package signature
 import (
 	"crypto/sha3"
 	"encoding/hex"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
@@ -159,10 +160,30 @@ type FindSignaturesByUser func(subject user.Subject, uid user.ID) iter.Seq2[Sign
 // get its own signatures.
 type FindSignaturesByResource func(subject user.Subject, res user.Resource) iter.Seq2[Signature, error]
 
+type FindByID func(subject user.Subject, id ID) (option.Opt[Signature], error)
+
 // ValidateSignatureChain recalculates the signature hash based on the rules as defined by [Signature]. This
 // does not validate the existence or the original bytes involved in calculating the hashes. A subject
 // can always validate its own signatures.
 type ValidateSignatureChain func(subject user.Subject, id ID) error
+
+type UserSettings struct {
+	User           user.ID
+	ImageSignature image.ID
+}
+
+func (s UserSettings) Identity() user.ID {
+	return s.User
+}
+
+type LoadUserSettings func(subject user.Subject, uid user.ID) (UserSettings, error)
+
+type UpdateUserSettingsData struct {
+	ImageSignature image.ID
+}
+type UpdateUserSettings func(subject user.Subject, uid user.ID, cdata UpdateUserSettingsData) error
+
+type UserSettingsRepository data.Repository[UserSettings, user.ID]
 
 type Repository data.Repository[Signature, ID]
 
@@ -172,11 +193,14 @@ type UseCases struct {
 	FindSignaturesByUser       FindSignaturesByUser
 	FindSignaturesByResource   FindSignaturesByResource
 	ValidateSignatureChain     ValidateSignatureChain
+	FindByID                   FindByID
+	LoadUserSettings           LoadUserSettings
+	UpdateUserSettings         UpdateUserSettings
 }
 
 // NewUseCases loads and keeps the entire repository in memory and builds an inverse index so that the Find* use cases
 // have efficient O(1) implementations.
-func NewUseCases(stores blob.Stores, repo Repository, openImgReader image.OpenReader) (UseCases, error) {
+func NewUseCases(stores blob.Stores, repo Repository, settingsRepo UserSettingsRepository, openImgReader image.OpenReader) (UseCases, error) {
 	var mutex sync.Mutex
 	var index inMemoryIndex
 
@@ -191,5 +215,10 @@ func NewUseCases(stores blob.Stores, repo Repository, openImgReader image.OpenRe
 	return UseCases{
 		SignUnqualified:            NewSignUnqualified(&mutex, openImgReader, repo, stores, &index),
 		SignUnqualifiedWithSubject: NewSignUnqualifiedWithSubject(&mutex, openImgReader, repo, stores, &index),
+		FindSignaturesByUser:       NewFindSignaturesByUser(&index),
+		FindSignaturesByResource:   NewFindSignaturesByResource(&index),
+		FindByID:                   NewFindByID(repo, &index),
+		LoadUserSettings:           NewLoadUserSettings(settingsRepo),
+		UpdateUserSettings:         NewUpdateUserSettings(settingsRepo),
 	}, nil
 }

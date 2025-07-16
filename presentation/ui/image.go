@@ -202,6 +202,17 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 		}
 	}
 
+	if myUri == "" && len(svgData) == 0 {
+		// browsers may cause awkward renderings of empty images
+		return &proto.VStack{
+			AccessibilityLabel: proto.Str(c.accessibilityLabel),
+			Invisible:          proto.Bool(c.invisible),
+			Border:             c.border,
+			Frame:              c.frame.ora(),
+			Padding:            c.padding,
+		}
+	}
+
 	return &proto.Img{
 		Uri:                myUri,
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),

@@ -11,7 +11,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"go.wdy.de/nago/pkg/xslices"
+	"iter"
 	"sync"
 )
 
@@ -23,8 +23,8 @@ type memPtr uint32
 type inMemoryIndex struct {
 	byMemPtr      concurrent.RWMap[memPtr, Signature]
 	byID          concurrent.RWMap[ID, memPtr]
-	byUser        concurrent.RWMap[user.ID, xslices.Slice[memPtr]]
-	byResource    concurrent.RWMap[user.Resource, xslices.Slice[memPtr]]
+	byUser        concurrent.RWMap[user.ID, []memPtr]
+	byResource    concurrent.RWMap[user.Resource, []memPtr]
 	lastSignature option.Opt[memPtr]
 	lastMemPtr    memPtr
 	mutex         sync.Mutex
@@ -44,13 +44,13 @@ func (idx *inMemoryIndex) Index(sig Signature) {
 
 	if sig.User != "" {
 		sigs, _ := idx.byUser.Get(sig.User)
-		sigs = sigs.Append(ptr)
+		sigs = append(sigs, ptr)
 		idx.byUser.Put(sig.User, sigs)
 	}
 
 	for document := range sig.Documents.All() {
 		slice, _ := idx.byResource.Get(document.Resource)
-		slice = slice.Append(ptr)
+		slice = append(slice, ptr)
 		idx.byResource.Put(document.Resource, slice)
 	}
 
@@ -64,19 +64,46 @@ func (idx *inMemoryIndex) Index(sig Signature) {
 	}
 }
 
-/*func (idx *inMemoryIndex) ByUser(user user.ID) xslices.Slice[Signature] {
-	slice, _ := idx.byUser.Get(user)
-	return slice
+func (idx *inMemoryIndex) ByUser(user user.ID) iter.Seq2[Signature, error] {
+	return func(yield func(Signature, error) bool) {
+		slice, _ := idx.byUser.Get(user)
+		for _, ptr := range slice {
+			v, ok := idx.byMemPtr.Get(ptr)
+			if !ok {
+				panic("unreachable")
+			}
+
+			if !yield(v, nil) {
+				return
+			}
+		}
+	}
 }
 
-func (idx *inMemoryIndex) ByResource(res user.Resource) xslices.Slice[Signature] {
-	slice, _ := idx.byResource.Get(res)
-	return slice
+func (idx *inMemoryIndex) ByResource(res user.Resource) iter.Seq2[Signature, error] {
+	return func(yield func(Signature, error) bool) {
+		slice, _ := idx.byResource.Get(res)
+		for _, ptr := range slice {
+			v, ok := idx.byMemPtr.Get(ptr)
+			if !ok {
+				panic("unreachable")
+			}
+
+			if !yield(v, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (idx *inMemoryIndex) ByID(id ID) (Signature, bool) {
-	return idx.byID.Get(id)
-}*/
+	ptr, ok := idx.byID.Get(id)
+	if !ok {
+		panic("unreachable")
+	}
+
+	return idx.byMemPtr.Get(ptr)
+}
 
 func (idx *inMemoryIndex) LastSignature() option.Opt[Signature] {
 	idx.mutex.Lock()
