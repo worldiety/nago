@@ -1,1 +1,0 @@
-System.register(["./main-legacy-Cy6UPOit.js"],function(e,t){"use strict";var u;return{setters:[e=>{u=e.d}],execute:function(){e("default",u({__name:"UiWindowTitle",props:{ui:{}},setup(e){const t=e;return t.ui.value&&(document.title=t.ui.value),(e,t)=>null}}))}}});
