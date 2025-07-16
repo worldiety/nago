@@ -1,5 +1,5 @@
 <template>
-	<InputWrapper :label="label" :error="errorText" :hint="supportingText" :disabled="disabled" :no-hover-effect="true">
+	<InputWrapper :label="label" :error="errorText" :help="supportingText" :disabled="disabled" :no-hover-effect="true">
 		<div class="input-field relative z-0 !pr-10">
 			<div ref="datepickerInputContainer">
 				<!-- Editable start date parts -->

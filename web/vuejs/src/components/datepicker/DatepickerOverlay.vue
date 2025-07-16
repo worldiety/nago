@@ -47,9 +47,10 @@
 						</div>
 						<div class="basis-1/2 shrink-0 grow-0 h-full">
 							<input
-								v-model="yearInput"
+								v-model="yearInputModel"
 								type="text"
 								class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md text-left w-full h-full px-2"
+								@blur="trySubmitYearInput"
 							/>
 						</div>
 					</div>
@@ -113,7 +114,7 @@
 					@click="clearSelection"
 					class="flex justify-start items-center gap-x-2 text-I0 underline mt-2"
 				>
-					<undo-icon class="h-4" aria-hidden="true" /> Auswahl aufheben
+					<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
 				</button>
 
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
@@ -169,10 +170,11 @@ const { t } = useI18n();
 const datepickerHeader = useTemplateRef('datepickerHeader');
 const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
-const currentDate = new Date(Date.now());
+const currentDate = new Date();
 const currentYear = ref<number>(currentDate.getFullYear());
 const currentMonthIndex = ref<number>(currentDate.getMonth());
 const yearInput = ref<string>('');
+const yearInputModel = ref<string>('');
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
 
@@ -188,23 +190,17 @@ watch(
 	}
 );
 
-/**
- * Only allow year values with a length between 1 and 4.
- * Does also prevent values less than 1 and greater than 9999.
- */
-watch(yearInput, (newValue, oldValue) => {
-	if (newValue.match(/^[1-9][0-9]{0,3}$/)) {
-		currentYear.value = parseInt(newValue, 10);
-	} else {
-		yearInput.value = oldValue;
-	}
-});
-
 const selectedStartDate = computed((): Date => {
+	if (!props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
+		return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
+	}
 	return new Date(props.selectedStartYear, props.selectedStartMonth - 1, props.selectedStartDay, 0, 0, 0, 0);
 });
 
 const selectedEndDate = computed((): Date => {
+	if (!props.selectedEndYear || !props.selectedEndMonth || !props.selectedEndDay) {
+		return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
+	}
 	return new Date(props.selectedEndYear, props.selectedEndMonth - 1, props.selectedEndDay, 0, 0, 0, 0);
 });
 
@@ -230,6 +226,7 @@ const datepickerDays = computed((): DatepickerDay[] => {
 
 function switchToMonthWithSelectedStartDate() {
 	currentYear.value = selectedStartDate.value.getFullYear();
+	yearInputModel.value = currentYear.value.toString(10);
 	yearInput.value = currentYear.value.toString(10);
 	currentMonthIndex.value = selectedStartDate.value.getMonth();
 }
@@ -264,16 +261,18 @@ function getDaysOfCurrentMonth(): DatepickerDay[] {
 			datepickerDay.monthIndex,
 			datepickerDay.year
 		);
-		datepickerDay.selectedEnd = isSelectedEndDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
-		datepickerDay.withinRange = isWithinRange(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
+		if (props.rangeMode) {
+			datepickerDay.selectedEnd = isSelectedEndDay(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+			datepickerDay.withinRange = isWithinRange(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+		}
 		daysOfCurrentMonth.push(datepickerDay);
 	}
 
@@ -302,16 +301,18 @@ function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
 			datepickerDay.monthIndex,
 			datepickerDay.year
 		);
-		datepickerDay.selectedEnd = isSelectedEndDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
-		datepickerDay.withinRange = isWithinRange(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
+		if (props.rangeMode) {
+			datepickerDay.selectedEnd = isSelectedEndDay(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+			datepickerDay.withinRange = isWithinRange(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+		}
 		fillingDaysOfPreviousMonth.unshift(datepickerDay);
 	}
 
@@ -343,16 +344,18 @@ function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): Datepicke
 			datepickerDay.monthIndex,
 			datepickerDay.year
 		);
-		datepickerDay.selectedEnd = isSelectedEndDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
-		datepickerDay.withinRange = isWithinRange(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
+		if (props.rangeMode) {
+			datepickerDay.selectedEnd = isSelectedEndDay(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+			datepickerDay.withinRange = isWithinRange(
+				datepickerDay.dayOfMonth,
+				datepickerDay.monthIndex,
+				datepickerDay.year
+			);
+		}
 		fillingDaysOfNextMonth.push(datepickerDay);
 	}
 
@@ -377,7 +380,7 @@ function isSelectedEndDay(day: number, monthIndex: number, year: number): boolea
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
-	if (props.rangeSelectionState === RangeSelectionState.SELECT_END) {
+	if (props.rangeSelectionState === RangeSelectionState.SELECT_END || !props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
 		return false;
 	}
 
@@ -390,6 +393,7 @@ function decreaseMonth(): void {
 	if (currentMonthIndex.value === 0) {
 		currentMonthIndex.value = 11;
 		currentYear.value -= 1;
+		yearInputModel.value = currentYear.value.toString(10);
 		yearInput.value = currentYear.value.toString(10);
 		return;
 	}
@@ -400,6 +404,7 @@ function increaseMonth(): void {
 	if (currentMonthIndex.value === 11) {
 		currentMonthIndex.value = 0;
 		currentYear.value += 1;
+		yearInputModel.value = currentYear.value.toString(10);
 		yearInput.value = currentYear.value.toString(10);
 		return;
 	}
@@ -440,6 +445,18 @@ function moveFocusBackwards(event: Event) {
 function clearSelection() {
 	emit('clearSelection');
 	datepickerHeader.value?.closeButton?.focus();
+}
+
+function trySubmitYearInput() {
+	// Only support years after introduction of the gregorian calendar
+	const updatedValue = parseInt(yearInputModel.value, 10);
+	if (updatedValue <= 1582) {
+		yearInputModel.value = '1583';
+		yearInput.value = '1583';
+		currentYear.value = 1583;
+	} else {
+		currentYear.value = updatedValue;
+	}
 }
 </script>
 
