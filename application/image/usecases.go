@@ -7,12 +7,19 @@
 
 package image
 
-import "go.wdy.de/nago/pkg/blob"
+import (
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/blob"
+	"io"
+)
 
+type OpenReader func(user permission.Auditable, id ID) (option.Opt[io.ReadCloser], error)
 type UseCases struct {
 	LoadBestFit  LoadBestFit
 	CreateSrcSet CreateSrcSet
 	LoadSrcSet   LoadSrcSet
+	OpenReader   OpenReader
 }
 
 func NewUseCases(imageSrcSetRepo Repository, imageBlobs blob.Store) UseCases {
@@ -25,5 +32,6 @@ func NewUseCases(imageSrcSetRepo Repository, imageBlobs blob.Store) UseCases {
 		LoadBestFit:  imgBestFit,
 		CreateSrcSet: imgCreateSrcSet,
 		LoadSrcSet:   loadSrcSet,
+		OpenReader:   NewOpenReader(imageBlobs),
 	}
 }
