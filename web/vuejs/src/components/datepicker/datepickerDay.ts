@@ -15,4 +15,5 @@ export default interface DatepickerDay {
 	selectedStart: boolean;
 	selectedEnd: boolean;
 	withinRange: boolean;
+	selectable: boolean;
 }

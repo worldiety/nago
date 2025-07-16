@@ -232,14 +232,14 @@ const dateSelected = computed((): boolean => {
 
 	const startDate = new Date();
 	startDate.setFullYear(props.selectedStartYear, props.selectedStartMonth - 1, props.selectedStartDay);
-	if (!props.selectedStartYear || !(props.selectedStartMonth - 1) || !props.selectedStartDay) {
+	if (!props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
 		return false;
 	}
 	if (!props.rangeMode) {
 		return true;
 	}
 
-	return !!(props.selectedEndYear && props.selectedEndMonth - 1 && props.selectedEndDay);
+	return !!(props.selectedEndYear && props.selectedEndMonth && props.selectedEndDay);
 });
 
 const datepickerCalendarAriaLabel = computed((): string => {

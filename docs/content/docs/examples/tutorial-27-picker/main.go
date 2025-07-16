@@ -56,6 +56,9 @@ func main() {
 					SupportingText("Wähle jemanden aus").
 					Title("Alle Personen").
 					MultiSelect(true).
+					DialogOptions(
+						alert.Height("20dvh"),
+					).
 					//ErrorText("Falsch").
 					Frame(Frame{Width: L320}),
 				PrimaryButton(func() {
