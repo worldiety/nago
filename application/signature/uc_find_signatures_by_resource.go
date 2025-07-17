@@ -28,7 +28,7 @@ func NewFindSignaturesByResource(idx *inMemoryIndex) FindSignaturesByResource {
 					continue
 				}
 
-				if err := subject.AuditResource(res.Name, res.ID, PermFindSignaturesByResource); err != nil {
+				if err := subject.AuditResource(res.Name, res.ID, PermFindSignaturesByResource); err == nil {
 					if !yield(sig, nil) {
 						return
 					}

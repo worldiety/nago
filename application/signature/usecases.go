@@ -83,6 +83,10 @@ func (s Signature) Identity() ID {
 	return s.ID
 }
 
+func (s Signature) IsZero() bool {
+	return s.Number == 0
+}
+
 func (s Signature) CalcHash() Sha3H256 {
 	h := sha3.New256()
 	w(h, strconv.Itoa(s.Number))

@@ -8,15 +8,22 @@
 package cfgsignature
 
 import (
+	_ "embed"
 	"fmt"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/signature"
 	uisignature "go.wdy.de/nago/application/signature/ui"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
 )
+
+//go:embed caveat.ttf
+var fntCaveat application.StaticBytes
 
 type Management struct {
 	UseCases signature.UseCases
@@ -79,6 +86,21 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})
 
 	cfg.AddContextValue(core.ContextValue("nago.signatures", management))
+	cfg.AddContextValue(core.ContextValue("nago.signatures.usecases", management.UseCases))
+
+	uriCaveat := cfg.Resource(fntCaveat)
+
+	cfgTheme := settings.ReadGlobal[theme.Settings](option.Must(cfg.SettingsManagement()).UseCases.LoadGlobal)
+	if !cfgTheme.Fonts.Contains("Caveat") {
+		cfgTheme.Fonts.Faces = append(cfgTheme.Fonts.Faces,
+			core.FontFace{
+				Family: "Caveat",
+				Source: uriCaveat,
+			},
+		)
+
+		settings.WriteGlobal(option.Must(cfg.SettingsManagement()).UseCases.StoreGlobal, cfgTheme)
+	}
 
 	slog.Info("installed signature management")
 

@@ -26,3 +26,13 @@ type Fonts struct {
 	DefaultFont string     `json:"default,omitempty"`
 	Faces       []FontFace `json:"faces,omitempty"`
 }
+
+func (ff Fonts) Contains(family string) bool {
+	for _, face := range ff.Faces {
+		if face.Family == family {
+			return true
+		}
+	}
+	
+	return false
+}

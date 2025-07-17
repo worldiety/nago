@@ -61,8 +61,10 @@ func (c TSignature) Render(ctx core.RenderContext) core.RenderNode {
 				LeftWidth: ui.L1,
 			}.Color(ui.ColorInputBorder)).Frame(ui.Frame{MinWidth: ui.L1, MinHeight: ui.L32}),
 
-			c.sigView,
-		).Gap(ui.L16),
+			ui.VStack(
+				c.sigView,
+			).Alignment(ui.Leading),
+		).Gap(ui.L16).Alignment(ui.Stretch),
 
 		// bottom left line
 		ui.HStack(
