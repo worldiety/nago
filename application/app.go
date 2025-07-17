@@ -40,6 +40,10 @@ func (a *Application) init(configure func(cfg *Configurator)) {
 
 }
 
+func (a *Application) Stop() {
+	a.cfg.done()
+}
+
 func (a *Application) Run() {
 
 	defer func() {
