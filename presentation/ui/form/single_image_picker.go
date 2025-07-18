@@ -76,7 +76,7 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 				srcSet := optSet.Unwrap()
 
 				rf := core.NewReaderFile(func() (io.ReadCloser, error) {
-					optReader, err := loadBestFit(wnd.Subject(), id, image.FitCover, 0, 0)
+					optReader, err := loadBestFit(wnd.Subject(), id, image.FitNone, 0, 0)
 					if err != nil {
 						alert.ShowBannerError(wnd, err)
 						return nil, err
