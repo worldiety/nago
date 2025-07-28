@@ -1,1 +1,0 @@
-System.register([],function(t,e){"use strict";return{execute:function(){t("c",function(t){return t.startsWith("#")?t:(t.startsWith("var(")&&(t=t.replace("var(","").replace(")","")),t.startsWith("--")||(t="--".concat(t)),getComputedStyle(document.documentElement).getPropertyValue(t).trim())})}}});

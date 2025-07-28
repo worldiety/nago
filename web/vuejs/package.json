@@ -9,7 +9,7 @@
 		"preview:modern": "vite preview --mode modern --base ''",
 		"preview:legacy": "vite preview --mode legacy --base ''",
 		"build-only:modern": "vite build --mode modern",
-		"build-only:legacy": "vite build --mode legacy",
+		"build-only:legacy": "vite build --mode legacy && npx babel dist/legacy/assets --out-dir dist/legacy/assets --ignore \"*.css\"",
 		"build-only": "npm run build-only:modern && npm run build-only:legacy && npm run postbuild",
 		"postbuild": "cp index-build.html dist/index.html",
 		"type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
@@ -32,7 +32,6 @@
 		"@tiptap/starter-kit": "^2.11.7",
 		"@tiptap/vue-3": "^2.11.7",
 		"apexcharts": "^4.7.0",
-		"@vitejs/plugin-legacy": "^6.1.1",
 		"codemirror": "^6.0.1",
 		"pinia": "^3.0.1",
 		"qrcode": "^1.5.4",
@@ -46,6 +45,10 @@
 		"vue3-apexcharts": "^1.8.0"
 	},
 	"devDependencies": {
+		"@babel/cli": "^7.28.0",
+		"@babel/core": "^7.28.0",
+		"@babel/plugin-transform-modules-commonjs": "^7.27.1",
+		"@babel/preset-env": "^7.28.0",
 		"@rushstack/eslint-patch": "^1.10.1",
 		"@tailwindcss/typography": "^0.5.16",
 		"@trivago/prettier-plugin-sort-imports": "^4.3.0",

@@ -41,6 +41,10 @@ We generate **two builds**:
    * targets modern browsers with ECMAScript `esnext`
 2. legacy
 	 * Output-Directory: `dist/legacy/`
-   * targets get generated via the framework `@vitejs/plugin-legacy`
+	 * targets legacy browsers with `Proxy` support
+   * the generated build output by vite gets transpiled via babel (see `babel.config.json`) and loads three polyfill-scripts to provide functionalities for a wide range of browsers
+     * https://cdn.jsdelivr.net/npm/es5-polyfill@0.0.6/dist/polyfill.min.js
+     * https://cdn.jsdelivr.net/npm/core-js-bundle@3/minified.js
+     * https://cdn.jsdelivr.net/npm/regenerator-runtime/runtime.js
 
 After the browser is identified by `bowser`, we use the thresholds defined in `index-build.html` to select either the legacy or modern bundle.

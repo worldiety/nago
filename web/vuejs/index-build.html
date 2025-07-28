@@ -58,12 +58,14 @@
 					script.defer = true;
 					script.type = type;
 					document.head.appendChild(script);
+					console.debug(`Loaded script '${src}' with type '${type}'`);
 				}
 				function loadLink(rel, href) {
 					var link = document.createElement('link');
 					link.rel = rel;
 					link.href = href;
 					document.head.appendChild(link);
+					console.debug(`Loaded link '${rel}' with href '${href}'`);
 				}
 
 				var browser = bowser.getParser(window.navigator.userAgent);
@@ -83,6 +85,8 @@
 				var isOutdated = thresholds[name] !== undefined && version < thresholds[name];
 				var buildType = isOutdated ? 'legacy' : 'modern';
 
+				console.info(`Detected browser '${name}' with version '${version}'. Loading build '${buildType}'...`);
+
 				try {
 					loadJSON(`/${buildType}/manifest.json`, function (err, manifest) {
 						if (err) {
@@ -90,15 +94,23 @@
 							return;
 						}
 
-						var entry = isOutdated ? manifest['src/main-legacy.ts'] : manifest['src/main.ts'];
-						if (!entry || !entry.file) {
+						var mainEntry = manifest['src/main.ts'];
+						if (!mainEntry || !mainEntry.file) {
 							console.error(`No entry file in build manifest found for build ${buildType}`);
 							return;
 						}
 
-						loadScript(`/${buildType}/${entry.file}`, isOutdated ? 'text/javascript' : 'module');
-						if (entry.css) {
-							entry.css.forEach((cssFile) => {
+						if (isOutdated) {
+							// manually load polyfills
+							loadScript(`https://cdn.jsdelivr.net/npm/es5-polyfill@0.0.6/dist/polyfill.min.js`, 'text/javascript');
+							loadScript(`https://cdn.jsdelivr.net/npm/core-js-bundle@3/minified.js`, 'text/javascript');
+							loadScript(`https://cdn.jsdelivr.net/npm/regenerator-runtime/runtime.js`, 'text/javascript');
+						}
+
+						// load build and stylesheets
+						loadScript(`/${buildType}/${mainEntry.file}`, isOutdated ? 'text/javascript' : 'module');
+						if (mainEntry.css) {
+							mainEntry.css.forEach((cssFile) => {
 								loadLink('stylesheet', `/${buildType}/${cssFile}`);
 							});
 						}
