@@ -6,7 +6,6 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import legacy from '@vitejs/plugin-legacy';
 import vue from '@vitejs/plugin-vue';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'path';
@@ -22,11 +21,7 @@ const basePlugins: PluginOption[] = [
 	}),
 	vueDevTools(),
 ];
-const legacyPlugins: PluginOption[] = [
-	legacy({
-		targets: ['defaults', 'not IE 11'],
-	}),
-];
+const legacyPlugins: PluginOption[] = [];
 const modernPlugins: PluginOption[] = [
 	visualizer({
 		filename: 'dist/bundle-report.html',
@@ -63,8 +58,11 @@ export default defineConfig(({ mode }) => {
 			manifest: `manifest.json`,
 			rollupOptions: {
 				input: 'src/main.ts',
+				output: {
+					format: isModern ? 'es' : 'iife',
+				}
 			},
-			chunkSizeWarningLimit: 600,
+			chunkSizeWarningLimit: isModern ? 600 : 5_000, // 600 KB, 5 MB
 		},
 	};
 });

@@ -1,1 +1,0 @@
-function e(t){return t.startsWith("#")?t:(t.startsWith("var(")&&(t=t.replace("var(","").replace(")","")),t.startsWith("--")||(t="--".concat(t)),getComputedStyle(document.documentElement).getPropertyValue(t).trim())}export{e as c};
