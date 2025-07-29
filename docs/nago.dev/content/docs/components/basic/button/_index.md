@@ -63,17 +63,17 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 ## Methods
 | Method | Description |
 |--------| ------------|
-| `AccessibilityLabel(label string)` |  |
+| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
 | `Disabled(b bool)` |  |
-| `Enabled(b bool)` | Enabled has only an effect for StylePreset otherwise it is ignored. |
-| `Font(font Font)` |  |
-| `Frame(frame Frame)` |  |
-| `ID(id string)` |  |
-| `PostIcon(svg core.SVG)` |  |
-| `PreIcon(svg core.SVG)` |  |
-| `Preset(preset StylePreset)` |  |
-| `Title(text string)` |  |
-| `Visible(b bool)` |  |
+| `Enabled(b bool)` | Enabled toggles whether the button is interactive. This has an effect only if a StylePreset is applied; otherwise it is ignored. |
+| `Font(font Font)` | Font sets the font style for the button's text label. |
+| `Frame(frame Frame)` | Frame sets the layout frame of the button, including size and positioning. |
+| `ID(id string)` | ID assigns a unique identifier to the button, useful for testing or referencing. |
+| `PostIcon(svg core.SVG)` | PostIcon sets the icon displayed after the text label. |
+| `PreIcon(svg core.SVG)` | PreIcon sets the icon displayed before the text label. |
+| `Preset(preset StylePreset)` | Preset applies a style preset to the button, controlling its appearance and behavior. |
+| `Title(text string)` | Title sets the text label displayed on the button. |
+| `Visible(b bool)` | Visible controls the visibility of the button; setting false hides it. |
 ---
 
 ## Related
