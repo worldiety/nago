@@ -192,14 +192,31 @@ func PreBody(v core.View) Option {
 	})
 }
 
-func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) core.View {
-	if !isPresented.Get() {
+// TDialog is an overlay component(Dialog).
+type TDialog struct {
+	title       string
+	body        core.View
+	isPresented *core.State[bool]
+	opts        []Option
+}
+
+func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) TDialog {
+	return TDialog{
+		title:       title,
+		body:        body,
+		isPresented: isPresented,
+		opts:        opts,
+	}
+}
+
+func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
+	if !t.isPresented.Get() {
 		return nil
 	}
 
 	var options alertOpts
-	options.state = isPresented
-	for _, opt := range opts {
+	options.state = t.isPresented
+	for _, opt := range t.opts {
 		opt.apply(&options)
 	}
 
@@ -209,10 +226,8 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 	}
 
 	return ui.Modal(
-		//Alignment(ui.Leading).Frame(ui.Frame{}.FullWidth())
-
-		ui.With(ui.Dialog(ui.ScrollView(body).Frame(ui.Frame{Height: fixHeight}.FullWidth())).
-			Title(ui.If(title != "", ui.Text(title))), func(dialog ui.TDialog) ui.TDialog {
+		ui.With(ui.Dialog(ui.ScrollView(t.body).Frame(ui.Frame{Height: fixHeight}.FullWidth())).
+			Title(ui.If(t.title != "", ui.Text(t.title))), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
 			// we do this to keep sensible order
 			if options.okBtn != nil {
@@ -259,6 +274,5 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))
 			}
 			return dialog
-		}))
-
+		})).Render(ctx)
 }
