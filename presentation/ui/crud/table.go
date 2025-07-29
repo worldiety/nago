@@ -18,12 +18,29 @@ import (
 	"slices"
 )
 
-func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
-	ds := opts.datasource()
-	bnd := opts.bnd
+// TTable is a crud component(CRUD Table).
+type TTable[Entity data.Aggregate[ID], ID data.IDType] struct {
+	opts TOptions[Entity, ID]
+
+	padding            ui.Padding
+	frame              ui.Frame
+	border             ui.Border
+	accessibilityLabel string
+	invisible          bool
+}
+
+func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) TTable[Entity, ID] {
+	return TTable[Entity, ID]{
+		opts: opts,
+	}
+}
+
+func (t TTable[Entity, ID]) Render(ctx core.RenderContext) core.RenderNode {
+	ds := t.opts.datasource()
+	bnd := t.opts.bnd
 
 	rows := ui.Each(slices.Values(ds.List()), func(entity Entity) ui.TTableRow {
-		entityState := core.StateOf[Entity](opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).Init(func() Entity {
+		entityState := core.StateOf[Entity](t.opts.wnd, fmt.Sprintf("crud.row.entity.%v", entity.Identity())).Init(func() Entity {
 			return entity
 		})
 
@@ -40,7 +57,7 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 	})
 
 	if err := ds.Error(); err != nil {
-		return ui.VStack(alert.BannerError(err)).Frame(ui.Frame{}.FullWidth())
+		return ui.VStack(alert.BannerError(err)).Frame(ui.Frame{}.FullWidth()).Render(ctx)
 	}
 
 	//todo localize
@@ -55,8 +72,8 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 				sortIcon = heroSolid.ArrowsUpDown
 			}
 
-			if opts.sortByFieldState.Get() != nil && opts.sortByFieldState.Get().Label == field.Label {
-				if opts.sortDirState.Get() == asc {
+			if t.opts.sortByFieldState.Get() != nil && t.opts.sortByFieldState.Get().Label == field.Label {
+				if t.opts.sortDirState.Get() == asc {
 					sortIcon = heroSolid.ArrowUp
 				} else {
 					sortIcon = heroSolid.ArrowDown
@@ -64,10 +81,10 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 			}
 
 			return ui.TableColumn(ui.IfElse(field.Comparator == nil, ui.Text(field.Label), ui.TertiaryButton(func() {
-				if f := opts.sortByFieldState.Get(); f != nil && f.Label == field.Label {
-					opts.sortDirState.Set(!opts.sortDirState.Get())
+				if f := t.opts.sortByFieldState.Get(); f != nil && f.Label == field.Label {
+					t.opts.sortDirState.Set(!t.opts.sortDirState.Get())
 				} else {
-					opts.sortByFieldState.Set(&field)
+					t.opts.sortByFieldState.Set(&field)
 				}
 
 			}).PreIcon(sortIcon).Title(field.Label).Font(ui.Font{Size: ui.L16, Weight: ui.BodyFontWeight}))).
@@ -77,5 +94,40 @@ func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID])
 		).Rows(rows...).
 			HeaderDividerColor("#00000000").
 			Frame(ui.Frame{}.FullWidth()),
-	)
+	).Visible(!t.invisible).
+		Frame(t.frame).
+		Border(t.border).
+		Padding(t.padding).
+		AccessibilityLabel(t.accessibilityLabel).
+		Render(ctx)
+}
+
+func (t TTable[Entity, ID]) Padding(padding ui.Padding) ui.DecoredView {
+	t.padding = padding
+	return t
+}
+
+func (t TTable[Entity, ID]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	t.frame = fn(t.frame)
+	return t
+}
+
+func (t TTable[Entity, ID]) Frame(frame ui.Frame) ui.DecoredView {
+	t.frame = frame
+	return t
+}
+
+func (t TTable[Entity, ID]) Border(border ui.Border) ui.DecoredView {
+	t.border = border
+	return t
+}
+
+func (t TTable[Entity, ID]) Visible(visible bool) ui.DecoredView {
+	t.invisible = !visible
+	return t
+}
+
+func (t TTable[Entity, ID]) AccessibilityLabel(label string) ui.DecoredView {
+	t.accessibilityLabel = label
+	return t
 }
