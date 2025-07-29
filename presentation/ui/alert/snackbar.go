@@ -37,17 +37,28 @@ type Message struct {
 	Duration time.Duration
 }
 
+// TBannerMessages is an overlay component(Banner Messages).
+type TBannerMessages struct {
+	wnd core.Window
+}
+
 // BannerMessages may return nil, if no information needs to be displayed. Otherwise, it appends to
 // the modal overlay.
-func BannerMessages(wnd core.Window) core.View {
-	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
+func BannerMessages(wnd core.Window) TBannerMessages {
+	return TBannerMessages{
+		wnd: wnd,
+	}
+}
+
+func (t TBannerMessages) Render(ctx core.RenderContext) core.RenderNode {
+	messages := core.TransientStateOf[[]Message](t.wnd, ".nago-messages")
 	if len(messages.Get()) == 0 {
 		return nil
 	}
 
 	padRight := ui.L24
 	overlayRight := ui.L8
-	isSmall := wnd.Info().SizeClass <= core.SizeClassSmall
+	isSmall := t.wnd.Info().SizeClass <= core.SizeClassSmall
 	if isSmall {
 		padRight = ui.L8
 		overlayRight = ""
@@ -56,18 +67,18 @@ func BannerMessages(wnd core.Window) core.View {
 	return ui.Overlay(
 		ui.ScrollView(
 			ui.VStack(
-				ui.Each(slices.Values(messages.Get()), func(t Message) core.View {
-					presented := core.StateOf[bool](wnd, ".msg-"+t.Title+t.Message).Init(func() bool {
+				ui.Each(slices.Values(messages.Get()), func(m Message) core.View {
+					presented := core.StateOf[bool](t.wnd, ".msg-"+m.Title+m.Message).Init(func() bool {
 						return true
 					})
 
-					return Banner(t.Title, t.Message).
-						Intent(t.Intent).
+					return Banner(m.Title, m.Message).
+						Intent(m.Intent).
 						Closeable(presented).
-						AutoCloseTimeoutOrDefault(t.Duration).
+						AutoCloseTimeoutOrDefault(m.Duration).
 						OnClosed(func() {
 							messages.Set(slices.DeleteFunc(messages.Get(), func(message Message) bool {
-								return message == t
+								return message == m
 							}))
 						})
 				})...,
@@ -76,7 +87,8 @@ func BannerMessages(wnd core.Window) core.View {
 			Frame(ui.Frame{MaxHeight: "calc(100dvh - 8rem)", MaxWidth: "100dvw"}),
 	).
 		Right(overlayRight).
-		Top(ui.L120)
+		Top(ui.L120).
+		Render(ctx)
 }
 
 // ShowBannerMessage puts the given msg into the global messages state list.
