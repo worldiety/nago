@@ -177,17 +177,26 @@ func makeMessageFromError(err error) (Message, bool) {
 	return Message{}, false
 }
 
-func BannerError(err error) core.View {
-	if err == nil {
+// TBannerError is an overlay component(Banner Error).
+type TBannerError struct {
+	err error
+}
+
+func BannerError(err error) TBannerError {
+	return TBannerError{err: err}
+}
+
+func (t TBannerError) Render(ctx core.RenderContext) core.RenderNode {
+	if t.err == nil {
 		return nil
 	}
 
-	tmp := sha3.Sum224([]byte(err.Error()))
+	tmp := sha3.Sum224([]byte(t.err.Error()))
 	token := hex.EncodeToString(tmp[:16])
 
-	if msg, ok := makeMessageFromError(err); ok {
-		slog.Error("handled customized banner error", "err", err.Error(), "token", token)
-		return Banner(msg.Title, msg.Message+" Code: "+token)
+	if msg, ok := makeMessageFromError(t.err); ok {
+		slog.Error("handled customized banner error", "err", t.err.Error(), "token", token)
+		return Banner(msg.Title, msg.Message+" Code: "+token).Render(ctx)
 	}
 
 	msg := Message{
@@ -195,9 +204,9 @@ func BannerError(err error) core.View {
 		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
 	}
 
-	slog.Error("unexpected banner error", "token", token, "err", err.Error())
+	slog.Error("unexpected banner error", "token", token, "err", t.err.Error())
 
-	return Banner(msg.Title, msg.Message)
+	return Banner(msg.Title, msg.Message).Render(ctx)
 }
 
 // ShowBannerError is like ShowBannerMessage but specialized on internal unhandled errors and hides
