@@ -15,47 +15,100 @@ import (
 	"slices"
 )
 
-func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) ui.DecoredView {
+// TView is a crud component(CRUD View).
+type TView[Entity data.Aggregate[ID], ID data.IDType] struct {
+	opts TOptions[Entity, ID]
+
+	padding            ui.Padding
+	frame              ui.Frame
+	border             ui.Border
+	accessibilityLabel string
+	invisible          bool
+}
+
+func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) TView[Entity, ID] {
+	return TView[Entity, ID]{
+		opts:  opts,
+		frame: ui.Frame{MinWidth: ui.L400},
+	}
+}
+
+func (t TView[Entity, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	var dataView core.View
 
-	if opts.viewMode == ViewStyleDefault {
-		dataView = ui.ViewThatMatches(opts.wnd,
-			ui.SizeClass(core.SizeClassSmall, func() core.View { return Cards[Entity, ID](opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth()) }),
-			ui.SizeClass(core.SizeClassMedium, func() core.View { return Table[Entity, ID](opts).Frame(ui.Frame{}.FullWidth()) }),
+	if t.opts.viewMode == ViewStyleDefault {
+		dataView = ui.ViewThatMatches(t.opts.wnd,
+			ui.SizeClass(core.SizeClassSmall, func() core.View { return Cards[Entity, ID](t.opts).Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth()) }),
+			ui.SizeClass(core.SizeClassMedium, func() core.View { return Table[Entity, ID](t.opts).Frame(ui.Frame{}.FullWidth()) }),
 		)
 	} else {
-		dataView = List(opts)
+		dataView = List(t.opts)
 	}
 
 	searchbarAndActions := slices.Collect[core.View](func(yield func(core.View) bool) {
 		yield(ui.ImageIcon(heroSolid.MagnifyingGlass))
-		yield(ui.TextField("", opts.queryState.String()).InputValue(opts.queryState).Style(ui.TextFieldReduced))
-		if len(opts.actions) > 0 {
+		yield(ui.TextField("", t.opts.queryState.String()).InputValue(t.opts.queryState).Style(ui.TextFieldReduced))
+		if len(t.opts.actions) > 0 {
 			yield(ui.FixedSpacer(ui.L16, ""))
 		}
 
-		for _, action := range opts.actions {
+		for _, action := range t.opts.actions {
 			yield(action)
 		}
 	})
 
-	isSmall := opts.wnd.Info().SizeClass <= core.SizeClassSmall
+	isSmall := t.opts.wnd.Info().SizeClass <= core.SizeClassSmall
 
 	return ui.VStack(
 		ui.IfFunc(isSmall, func() core.View {
 			return ui.VStack(
-				ui.HStack(ui.If(opts.title != "", ui.H1(opts.title))).FullWidth().Alignment(ui.Leading),
+				ui.HStack(ui.If(t.opts.title != "", ui.H1(t.opts.title))).FullWidth().Alignment(ui.Leading),
 				ui.HStack(searchbarAndActions...).Padding(ui.Padding{Bottom: ui.L16}),
 			).FullWidth().Alignment(ui.Trailing)
 		}),
 		ui.IfFunc(!isSmall, func() core.View {
 			return ui.HStack(
-				ui.If(opts.title != "", ui.H1(opts.title)),
+				ui.If(t.opts.title != "", ui.H1(t.opts.title)),
 				ui.Spacer(),
 				ui.HStack(searchbarAndActions...).Padding(ui.Padding{Bottom: ui.L16}),
 			).FullWidth()
 		}),
 
 		dataView,
-	).Frame(ui.Frame{MinWidth: ui.L400})
+	).Visible(!t.invisible).
+		Frame(t.frame).
+		Border(t.border).
+		Padding(t.padding).
+		AccessibilityLabel(t.accessibilityLabel).
+		Render(ctx)
+}
+
+func (t TView[Entity, ID]) Padding(padding ui.Padding) ui.DecoredView {
+	t.padding = padding
+	return t
+}
+
+func (t TView[Entity, ID]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	t.frame = fn(t.frame)
+	return t
+}
+
+func (t TView[Entity, ID]) Frame(frame ui.Frame) ui.DecoredView {
+	t.frame = frame
+	return t
+}
+
+func (t TView[Entity, ID]) Border(border ui.Border) ui.DecoredView {
+	t.border = border
+	return t
+}
+
+func (t TView[Entity, ID]) Visible(visible bool) ui.DecoredView {
+	t.invisible = !visible
+	return t
+}
+
+func (t TView[Entity, ID]) AccessibilityLabel(label string) ui.DecoredView {
+	t.accessibilityLabel = label
+	return t
 }
