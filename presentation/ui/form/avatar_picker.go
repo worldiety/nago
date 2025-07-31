@@ -123,7 +123,7 @@ func (t TAvatarPicker) Render(ctx core.RenderContext) core.RenderNode {
 		if t.id == "" {
 			actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Plus).StrokeColor(ui.ColorBlack).Frame(ui.Frame{}.FullWidth())).
 				Action(func() {
-					wndImportFiles(t.wnd, t.setCreator, t.selfID, t.state)
+				wndImportFiles(t.wnd, t.setCreator, t.selfID, t.state)
 				}).
 				BackgroundColor(ui.ColorWhite).
 				Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
@@ -132,8 +132,8 @@ func (t TAvatarPicker) Render(ctx core.RenderContext) core.RenderNode {
 		} else {
 			actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Trash).StrokeColor(ui.ColorError).Frame(ui.Frame{}.FullWidth())).
 				Action(func() {
-					t.state.Set("")
-					t.state.Notify()
+				t.state.Set("")
+				t.state.Notify()
 				}).
 				BackgroundColor(ui.ColorWhite).
 				Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
