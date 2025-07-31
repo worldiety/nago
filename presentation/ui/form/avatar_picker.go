@@ -16,30 +16,90 @@ import (
 	"go.wdy.de/nago/presentation/ui/avatar"
 )
 
-func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string, style avatar.Style) ui.DecoredView {
-	if setCreator == nil {
-		fn, ok := core.FromContext[image.CreateSrcSet](wnd.Context(), "")
+// TAvatarPicker is a composite component(Avatar Picker).
+type TAvatarPicker struct {
+	wnd        core.Window
+	setCreator image.CreateSrcSet
+	selfID     string
+	id         image.ID
+	state      *core.State[image.ID]
+	paraphe    string
+	style      avatar.Style
+
+	padding            ui.Padding
+	frame              ui.Frame
+	border             ui.Border
+	accessibilityLabel string
+	invisible          bool
+}
+
+func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string, style avatar.Style) TAvatarPicker {
+	return TAvatarPicker{
+		wnd:        wnd,
+		setCreator: setCreator,
+		selfID:     selfId,
+		id:         id,
+		state:      state,
+		paraphe:    paraphe,
+		style:      style,
+		frame:      ui.Frame{}.Size(ui.L120, ui.L120),
+	}
+}
+
+func (t TAvatarPicker) Padding(padding ui.Padding) ui.DecoredView {
+	t.padding = padding
+	return t
+}
+
+func (t TAvatarPicker) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	t.frame = fn(t.frame)
+	return t
+}
+
+func (t TAvatarPicker) Frame(frame ui.Frame) ui.DecoredView {
+	t.frame = frame
+	return t
+}
+
+func (t TAvatarPicker) Border(border ui.Border) ui.DecoredView {
+	t.border = border
+	return t
+}
+
+func (t TAvatarPicker) Visible(visible bool) ui.DecoredView {
+	t.invisible = !visible
+	return t
+}
+
+func (t TAvatarPicker) AccessibilityLabel(label string) ui.DecoredView {
+	t.accessibilityLabel = label
+	return t
+}
+
+func (t TAvatarPicker) Render(ctx core.RenderContext) core.RenderNode {
+	if t.setCreator == nil {
+		fn, ok := core.FromContext[image.CreateSrcSet](t.wnd.Context(), "")
 		if !ok {
 			panic("image.CreateSrcSet not available")
 		}
 
-		setCreator = fn
+		t.setCreator = fn
 	}
 
 	var img core.View
-	if id != "" {
+	if t.id != "" {
 		// TODO replace me with source set due to different density problem
-		uri := core.URI(http_image.NewURL(http_image.Endpoint, id, image.FitCover, 120, 120))
-		img = avatar.URI(uri).Size(ui.L120).Style(style)
+		uri := core.URI(http_image.NewURL(http_image.Endpoint, t.id, image.FitCover, 120, 120))
+		img = avatar.URI(uri).Size(ui.L120).Style(t.style)
 	} else {
-		img = avatar.Text(paraphe).Size(ui.L120).Style(style)
+		img = avatar.Text(t.paraphe).Size(ui.L120).Style(t.style)
 	}
 
 	var actionBtn core.View
-	if id == "" {
+	if t.id == "" {
 		actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Plus).StrokeColor(ui.ColorBlack).Frame(ui.Frame{}.FullWidth())).
 			Action(func() {
-				wndImportFiles(wnd, setCreator, selfId, state)
+				wndImportFiles(t.wnd, t.setCreator, t.selfID, t.state)
 			}).
 			BackgroundColor(ui.ColorWhite).
 			Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
@@ -48,8 +108,8 @@ func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string,
 	} else {
 		actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Trash).StrokeColor(ui.ColorError).Frame(ui.Frame{}.FullWidth())).
 			Action(func() {
-				state.Set("")
-				state.Notify()
+				t.state.Set("")
+				t.state.Notify()
 			}).
 			BackgroundColor(ui.ColorWhite).
 			Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
@@ -61,5 +121,6 @@ func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string,
 
 		Center:         img,
 		BottomTrailing: actionBtn,
-	}).Frame(ui.Frame{}.Size(ui.L120, ui.L120))
+	}).Frame(t.frame).
+		Render(ctx)
 }
