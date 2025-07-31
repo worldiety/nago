@@ -51,6 +51,18 @@ func (o AutoOptions) context() context.Context {
 	return context.Background()
 }
 
+// TAuto is a composite component(Auto Form).
+type TAuto[T any] struct {
+	opts  AutoOptions
+	state *core.State[T]
+
+	padding            ui.Padding
+	frame              ui.Frame
+	border             ui.Border
+	accessibilityLabel string
+	invisible          bool
+}
+
 // Auto is similar to [crud.AutoBinding], however it does much less and just creates a form using
 // reflection from the given type. It does not require or understand entities and identities.
 // Also note, that the concrete type is inspected at runtime and not the given template T, which
@@ -62,21 +74,58 @@ func (o AutoOptions) context() context.Context {
 //   - integer fields (literally)
 //
 // Other features, which are supported by [crud.Auto] are not (yet) supported.
-func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
+func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
+	return TAuto[T]{
+		opts:  opts,
+		state: state,
+	}
+}
+
+func (t TAuto[T]) Padding(padding ui.Padding) ui.DecoredView {
+	t.padding = padding
+	return t
+}
+
+func (t TAuto[T]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
+	t.frame = fn(t.frame)
+	return t
+}
+
+func (t TAuto[T]) Frame(frame ui.Frame) ui.DecoredView {
+	t.frame = frame
+	return t
+}
+
+func (t TAuto[T]) Border(border ui.Border) ui.DecoredView {
+	t.border = border
+	return t
+}
+
+func (t TAuto[T]) Visible(visible bool) ui.DecoredView {
+	t.invisible = !visible
+	return t
+}
+
+func (t TAuto[T]) AccessibilityLabel(label string) ui.DecoredView {
+	t.accessibilityLabel = label
+	return t
+}
+
+func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO can we unify this with the crud package, but it is so different under the hood and equal at the same time?
-	value := any(state.Get())
+	value := any(t.state.Get())
 	if value == nil {
 		var zero T
 		value = zero
 	}
 
 	if value == nil {
-		return ui.VStack(alert.Banner("implementation error", "no type information available for [form.Auto]"))
+		return ui.VStack(alert.Banner("implementation error", "no type information available for [form.Auto]")).Render(ctx)
 	}
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
-	for _, group := range GroupsOf(structType, opts.IgnoreFields...) {
+	for _, group := range GroupsOf(structType, t.opts.IgnoreFields...) {
 		var fieldsBuilder xslices.Builder[core.View]
 		for _, field := range group.Fields {
 			/*fieldTableVisible := true
@@ -89,7 +138,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				disabled = true
 			}
 
-			if opts.ViewOnly {
+			if t.opts.ViewOnly {
 				disabled = true
 			}
 
@@ -126,23 +175,23 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				case reflect.String:
 					source, ok := field.Tag.Lookup("source")
 					if ok {
-						if opts.Window == nil {
+						if t.opts.Window == nil {
 							slog.Error("form.Auto requires AutoOptions.Window but is nil")
 						}
 
-						listAll, ok := core.FromContext[UseCaseListAny](opts.context(), source)
+						listAll, ok := core.FromContext[UseCaseListAny](t.opts.context(), source)
 						if !ok {
 							slog.Error("can not find list by system service", "source", source)
 							continue
 						}
 
-						values, err := xslices.Collect2(listAll(opts.Window.Subject()))
+						values, err := xslices.Collect2(listAll(t.opts.Window.Subject()))
 						if err != nil {
 							slog.Error("can not collect list", "source", source, "err", err)
 						}
 
-						strState := core.DerivedState[[]AnyEntity](state, field.Name).Init(func() []AnyEntity {
-							src := state.Get()
+						strState := core.DerivedState[[]AnyEntity](t.state, field.Name).Init(func() []AnyEntity {
+							src := t.state.Get()
 							slice := reflect.ValueOf(src).FieldByName(field.Name)
 							tmp := make([]AnyEntity, 0, slice.Len())
 							for _, id := range slice.Seq2() {
@@ -167,10 +216,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 								slice = reflect.Append(slice, newValue)
 							}
 
-							dst := state.Get()
+							dst := t.state.Get()
 							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
-							state.Set(dst)
-							state.Notify()
+							t.state.Set(dst)
+							t.state.Notify()
 						})
 
 						fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
@@ -192,8 +241,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						}
 
 						requiresInit := false
-						strState := core.DerivedState[string](state, field.Name).Init(func() string {
-							src := state.Get()
+						strState := core.DerivedState[string](t.state, field.Name).Init(func() string {
+							src := t.state.Get()
 							slice := reflect.ValueOf(src).FieldByName(field.Name)
 							tmp := make([]string, 0, slice.Len())
 							for i := 0; i < slice.Len(); i++ {
@@ -219,10 +268,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 								slice = reflect.Append(slice, newValue)
 							}
 
-							dst := state.Get()
+							dst := t.state.Get()
 							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
-							state.Set(dst)
-							state.Notify()
+							t.state.Set(dst)
+							t.state.Notify()
 						})
 
 						if requiresInit {
@@ -242,8 +291,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				}
 			case reflect.Bool:
 				requiresInit := false
-				boolState := core.DerivedState[bool](state, field.Name).Init(func() bool {
-					src := state.Get()
+				boolState := core.DerivedState[bool](t.state, field.Name).Init(func() bool {
+					src := t.state.Get()
 					v := reflect.ValueOf(src).FieldByName(field.Name).Bool()
 					if val := field.Tag.Get("value"); val != "" && v == false {
 						p, err := strconv.ParseBool(val)
@@ -257,10 +306,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				})
 
 				boolState.Observe(func(newValue bool) {
-					dst := state.Get()
+					dst := t.state.Get()
 					dst = setFieldValue(dst, field.Name, newValue).(T)
-					state.Set(dst)
-					state.Notify()
+					t.state.Set(dst)
+					t.state.Notify()
 				})
 
 				if requiresInit {
@@ -286,8 +335,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					}
 
 					requiresInit := false
-					intState := core.DerivedState[time.Duration](state, field.Name).Init(func() time.Duration {
-						src := state.Get()
+					intState := core.DerivedState[time.Duration](t.state, field.Name).Init(func() time.Duration {
+						src := t.state.Get()
 						v := reflect.ValueOf(src).FieldByName(field.Name).Int()
 						if val := field.Tag.Get("value"); val != "" && v == 0 {
 							p, err := strconv.ParseInt(val, 10, 64)
@@ -301,10 +350,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					})
 
 					intState.Observe(func(newValue time.Duration) {
-						dst := state.Get()
+						dst := t.state.Get()
 						dst = setFieldValue(dst, field.Name, newValue).(T)
-						state.Set(dst)
-						state.Notify()
+						t.state.Set(dst)
+						t.state.Notify()
 					})
 
 					if requiresInit {
@@ -343,8 +392,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					)
 				default:
 					requiresInit := false
-					intState := core.DerivedState[int64](state, field.Name).Init(func() int64 {
-						src := state.Get()
+					intState := core.DerivedState[int64](t.state, field.Name).Init(func() int64 {
+						src := t.state.Get()
 						v := reflect.ValueOf(src).FieldByName(field.Name).Int()
 						if val := field.Tag.Get("value"); val != "" && v == 0 {
 							p, err := strconv.ParseInt(val, 10, 64)
@@ -358,10 +407,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					})
 
 					intState.Observe(func(newValue int64) {
-						dst := state.Get()
+						dst := t.state.Get()
 						dst = setFieldValue(dst, field.Name, newValue).(T)
-						state.Set(dst)
-						state.Notify()
+						t.state.Set(dst)
+						t.state.Notify()
 					})
 
 					if requiresInit {
@@ -378,18 +427,18 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				switch field.Type {
 				case reflect.TypeFor[xtime.Date]():
 
-					dateState := core.DerivedState[xtime.Date](state, field.Name).Init(func() xtime.Date {
-						src := state.Get()
+					dateState := core.DerivedState[xtime.Date](t.state, field.Name).Init(func() xtime.Date {
+						src := t.state.Get()
 						v := reflect.ValueOf(src).FieldByName(field.Name).Interface()
 
 						return v.(xtime.Date)
 					})
 
 					dateState.Observe(func(newValue xtime.Date) {
-						dst := state.Get()
+						dst := t.state.Get()
 						dst = setFieldValue(dst, field.Name, newValue).(T)
-						state.Set(dst)
-						state.Notify()
+						t.state.Set(dst)
+						t.state.Notify()
 					})
 
 					fieldsBuilder.Append(ui.SingleDatePicker(label, dateState.Get(), dateState).
@@ -407,8 +456,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 				switch field.Type {
 				case reflect.TypeFor[ui.Color]():
 					requiresInit := false
-					colorState := core.DerivedState[ui.Color](state, field.Name).Init(func() ui.Color {
-						src := state.Get()
+					colorState := core.DerivedState[ui.Color](t.state, field.Name).Init(func() ui.Color {
+						src := t.state.Get()
 						str := reflect.ValueOf(src).FieldByName(field.Name).String()
 						if val := field.Tag.Get("value"); val != "" && str == "" {
 							requiresInit = true
@@ -419,10 +468,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					})
 
 					colorState.Observe(func(newValue ui.Color) {
-						dst := state.Get()
+						dst := t.state.Get()
 						dst = setFieldValue(dst, field.Name, newValue).(T)
-						state.Set(dst)
-						state.Notify()
+						t.state.Set(dst)
+						t.state.Notify()
 					})
 
 					if requiresInit {
@@ -432,14 +481,14 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					fieldsBuilder.Append(colorpicker.PalettePicker(label, colorpicker.DefaultPalette).State(colorState).Value(colorState.Get()))
 				case reflect.TypeFor[image.ID]():
 
-					if opts.Window == nil {
+					if t.opts.Window == nil {
 						fieldsBuilder.Append(ui.Text("image.ID not rendered: no window available"))
 						continue
 					}
 
 					requiresInit := false
-					imageState := core.DerivedState[image.ID](state, field.Name).Init(func() image.ID {
-						src := state.Get()
+					imageState := core.DerivedState[image.ID](t.state, field.Name).Init(func() image.ID {
+						src := t.state.Get()
 						str := reflect.ValueOf(src).FieldByName(field.Name).String()
 						if val := field.Tag.Get("value"); val != "" && str == "" {
 							requiresInit = true
@@ -450,10 +499,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					})
 
 					imageState.Observe(func(newValue image.ID) {
-						dst := state.Get()
+						dst := t.state.Get()
 						dst = setFieldValue(dst, field.Name, newValue).(T)
-						state.Set(dst)
-						state.Notify()
+						t.state.Set(dst)
+						t.state.Notify()
 					})
 
 					if requiresInit {
@@ -466,11 +515,11 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 					switch field.Tag.Get("style") {
 					case "avatar":
-						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get()), avatar.Circle))
+						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Circle))
 					case "icon":
-						fieldsBuilder.Append(AvatarPicker(opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", state.Get()), avatar.Rounded))
+						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Rounded))
 					default:
-						fieldsBuilder.Append(SingleImagePicker(opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
+						fieldsBuilder.Append(SingleImagePicker(t.opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
 					}
 
 				default:
@@ -482,8 +531,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 					switch field.Tag.Get("style") {
 					case "secret":
 						requiresInit := false
-						secretState := core.DerivedState[string](state, field.Name).Init(func() string {
-							src := state.Get()
+						secretState := core.DerivedState[string](t.state, field.Name).Init(func() string {
+							src := t.state.Get()
 							str := reflect.ValueOf(src).FieldByName(field.Name).String()
 							if val := field.Tag.Get("value"); val != "" && str == "" {
 								requiresInit = true
@@ -494,10 +543,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						})
 
 						secretState.Observe(func(newValue string) {
-							dst := state.Get()
+							dst := t.state.Get()
 							dst = setFieldValue(dst, field.Name, newValue).(T)
-							state.Set(dst)
-							state.Notify()
+							t.state.Set(dst)
+							t.state.Notify()
 						})
 
 						if requiresInit {
@@ -516,23 +565,23 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 
 						source, ok := field.Tag.Lookup("source")
 						if ok {
-							if opts.Window == nil {
+							if t.opts.Window == nil {
 								panic(fmt.Errorf("form.Auto requires AutoOptions.Window but is nil"))
 							}
 
-							listAll, ok := core.FromContext[UseCaseListAny](opts.context(), source)
+							listAll, ok := core.FromContext[UseCaseListAny](t.opts.context(), source)
 							if !ok {
 								slog.Error("can not find list by system service", "source", source)
 								continue
 							}
 
-							values, err := xslices.Collect2(listAll(opts.Window.Subject()))
+							values, err := xslices.Collect2(listAll(t.opts.Window.Subject()))
 							if err != nil {
 								slog.Error("can not collect list", "source", source, "err", err)
 							}
 
-							strState := core.DerivedState[[]AnyEntity](state, field.Name).Init(func() []AnyEntity {
-								src := state.Get()
+							strState := core.DerivedState[[]AnyEntity](t.state, field.Name).Init(func() []AnyEntity {
+								src := t.state.Get()
 								str := reflect.ValueOf(src).FieldByName(field.Name)
 								tmp := make([]AnyEntity, 0, 1)
 								for _, v := range values {
@@ -550,10 +599,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 								if len(v) > 0 {
 									strValue = v[0].id
 								}
-								dst := state.Get()
+								dst := t.state.Get()
 								dst = setFieldValue(dst, field.Name, strValue).(T)
-								state.Set(dst)
-								state.Notify()
+								t.state.Set(dst)
+								t.state.Notify()
 							})
 
 							fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
@@ -566,8 +615,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 						} else {
 
 							requiresInit := false
-							strState := core.DerivedState[string](state, field.Name).Init(func() string {
-								src := state.Get()
+							strState := core.DerivedState[string](t.state, field.Name).Init(func() string {
+								src := t.state.Get()
 								str := reflect.ValueOf(src).FieldByName(field.Name).String()
 								if val := field.Tag.Get("value"); val != "" && str == "" {
 									requiresInit = true
@@ -578,10 +627,10 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 							})
 
 							strState.Observe(func(newValue string) {
-								dst := state.Get()
+								dst := t.state.Get()
 								dst = setFieldValue(dst, field.Name, newValue).(T)
-								state.Set(dst)
-								state.Notify()
+								t.state.Set(dst)
+								t.state.Notify()
 							})
 
 							if requiresInit {
@@ -607,14 +656,14 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) ui.DecoredView {
 			rootViews.Append(fields...)
 		} else {
 			card := cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16).FullWidth()).Frame(ui.Frame{}.FullWidth())
-			if opts.SectionPadding.IsSome() {
-				card = card.Padding(opts.SectionPadding.Unwrap())
+			if t.opts.SectionPadding.IsSome() {
+				card = card.Padding(t.opts.SectionPadding.Unwrap())
 			}
 			rootViews.Append(card)
 		}
 	}
 
-	return ui.VStack(rootViews.Collect()...).Gap(ui.L16).FullWidth()
+	return ui.VStack(rootViews.Collect()...).Gap(ui.L16).FullWidth().Render(ctx)
 }
 
 func setFieldValue(dst any, fieldName string, val any) any {
