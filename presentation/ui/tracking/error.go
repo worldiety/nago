@@ -82,6 +82,16 @@ func requestSupportView(wnd core.Window, code AnonymousErrorCode) core.View {
 
 }
 
+type TErrorView struct {
+	wnd core.Window
+	err error
+
+	padding ui.Padding
+	gap     ui.Length
+	frame   ui.Frame
+	border  ui.Border
+}
+
 // ErrorView returns a view which is suited to be displayed instead of your actual view in case of an unexpected
 // error. It is similar to the combined tuple of collecting errors using RequestSupport and showing them
 // through SupportRequestDialog. However, it returns an empty view, if err is nil. It returns a special view
@@ -89,30 +99,41 @@ func requestSupportView(wnd core.Window, code AnonymousErrorCode) core.View {
 // is denied and a support view in case of anything else to avoid leaking confidential error details.
 // Note, that unlike RequestSupport, each call to SupportView will immediately allocate a new SupportView, thus
 // better don't use it in loops to create error views over and over again.
-func ErrorView(wnd core.Window, err error) core.View {
-	if err == nil {
-		return ui.VStack()
+func ErrorView(wnd core.Window, err error) TErrorView {
+	return TErrorView{
+		wnd:     wnd,
+		err:     err,
+		gap:     ui.L16,
+		frame:   ui.Frame{MaxWidth: ui.L320},
+		padding: ui.Padding{}.All(ui.L16),
+		border:  ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.M5),
+	}
+}
+
+func (t TErrorView) Render(ctx core.RenderContext) core.RenderNode {
+	if t.err == nil {
+		return ui.VStack().Render(ctx)
 	}
 
 	var permissionDenied interface {
 		PermissionDenied() bool
 	}
 
-	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
+	if errors.As(t.err, &permissionDenied) && permissionDenied.PermissionDenied() {
 		return ui.VStack(
 			ui.HStack(ui.Image().Embed(icons.Lock).Frame(ui.Frame{}.Size(ui.L44, ui.L44))),
 			ui.Text("Berechtigungshinweis").Font(ui.Title),
 			ui.Text("Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss diese zunächst explizit erteilen."),
-			ui.PrimaryButton(wnd.Navigation().Back).Title("Zurück"),
-		).
-			Gap(ui.L16).
-			Frame(ui.Frame{MaxWidth: ui.L320}).
-			Padding(ui.Padding{}.All(ui.L16)).
-			Border(ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.M5))
+			ui.PrimaryButton(t.wnd.Navigation().Back).Title("Zurück"),
+		).Gap(t.gap).
+			Frame(t.frame).
+			Padding(t.padding).
+			Border(t.border).
+			Render(ctx)
 	}
 
 	code := randCode()
-	slog.Error("captured unexpected failure in presentation code", slog.String("rootView", string(wnd.Path())), slog.Any("err", err), slog.String("code", string(code)))
+	slog.Error("captured unexpected failure in presentation code", slog.String("rootView", string(t.wnd.Path())), slog.Any("err", t.err), slog.String("code", string(code)))
 
 	return ui.VStack(
 		ui.HStack(ui.Image().Embed(icons.Bug).Frame(ui.Frame{}.Size(ui.L44, ui.L44))),
@@ -120,13 +141,14 @@ func ErrorView(wnd core.Window, err error) core.View {
 		ui.Text("Wir entschuldigen uns für diese Unannehmlichkeit."),
 		ui.Text("Sie können uns einen Bericht schicken."),
 		ui.SecondaryButton(func() {
-			sendReport(wnd, code)
+			sendReport(t.wnd, code)
 		}).Title("Bericht erstellen"),
-		ui.PrimaryButton(wnd.Navigation().Reload).Title("Anwendung neu laden"),
-	).Gap(ui.L16).
-		Frame(ui.Frame{MaxWidth: ui.L320}).
-		Padding(ui.Padding{}.All(ui.L16)).
-		Border(ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.M5))
+		ui.PrimaryButton(t.wnd.Navigation().Reload).Title("Anwendung neu laden"),
+	).Gap(t.gap).
+		Frame(t.frame).
+		Padding(t.padding).
+		Border(t.border).
+		Render(ctx)
 }
 
 // RequestSupport communicates an unexpected technical problem, e.g. an error from the infrastructure,
