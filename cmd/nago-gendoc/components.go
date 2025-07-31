@@ -199,7 +199,7 @@ func filterComponentType(t *api.Type) ComponentType {
 		return Basic
 	case strings.Contains(t.Doc, "is a layout component"):
 		return Layout
-	case strings.Contains(t.Doc, "is an utility component"):
+	case strings.Contains(t.Doc, "is a utility component"):
 		return Utility
 	case strings.Contains(t.Doc, "is a feedback component") || strings.Contains(t.Doc, "is an overlay component"):
 		return FeedbackAndOverlay
