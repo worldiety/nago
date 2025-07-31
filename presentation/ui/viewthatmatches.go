@@ -26,20 +26,32 @@ func SizeClass(class core.WindowSizeClass, view func() core.View) ViewWithSizeCl
 	}
 }
 
+type TViewThatMatches struct {
+	wnd     core.Window
+	matches []ViewWithSizeClass
+}
+
 // ViewThatMatches returns the best logical match for the given view with size class matcher.
-func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
-	if len(matches) == 0 {
+func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) TViewThatMatches {
+	return TViewThatMatches{
+		wnd:     wnd,
+		matches: matches,
+	}
+}
+
+func (t TViewThatMatches) Render(ctx core.RenderContext) core.RenderNode {
+	if len(t.matches) == 0 {
 		panic("you must provide at least a single matcher")
 	}
 
-	class := wnd.Info().SizeClass
+	class := t.wnd.Info().SizeClass
 	if !class.Valid() {
 		slog.Error("frontend has not submitted a window size class, assuming sm")
 		class = core.SizeClassSmall
 	}
 
 	var best ViewWithSizeClass
-	for _, match := range matches {
+	for _, match := range t.matches {
 		if match.View == nil {
 			panic(fmt.Errorf("match branch %v contains nil view, which is not allowed", match.SizeClass))
 		}
@@ -52,8 +64,8 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 	if best.SizeClass == 0 {
 		// obviously, we have an undefined size class which has no real match
 		// pick either the largest or smallest, whatever is nearer
-		best = matches[0]
-		for _, match := range matches {
+		best = t.matches[0]
+		for _, match := range t.matches {
 			if math.Abs(float64(class.Ordinal()-match.SizeClass.Ordinal())) < math.Abs(float64(match.SizeClass.Ordinal()-best.SizeClass.Ordinal())) {
 				best = match
 			}
@@ -64,5 +76,5 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) core.View {
 		panic("unreachable")
 	}
 
-	return best.View()
+	return best.View().Render(ctx)
 }
