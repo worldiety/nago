@@ -173,22 +173,33 @@ func RequestSupport(wnd core.Window, err error) {
 	showErrState.Set(true)
 }
 
+// TSupportRequestDialog is an overlay component(Support Request Dialog).
+type TSupportRequestDialog struct {
+	wnd core.Window
+}
+
 // SupportRequestDialog return either nil or the dialog to which allows contacting the developers. It shows the latest
 // anonymous error code, to avoid security sensitive details. Use
 // [RequestSupport] to insert an error into the global error list.
-func SupportRequestDialog(wnd core.Window) core.View {
-	showErrState := core.StateOf[bool](wnd, ".nago.global.errors.show")
+func SupportRequestDialog(wnd core.Window) TSupportRequestDialog {
+	return TSupportRequestDialog{
+		wnd: wnd,
+	}
+}
+
+func (t TSupportRequestDialog) Render(ctx core.RenderContext) core.RenderNode {
+	showErrState := core.StateOf[bool](t.wnd, ".nago.global.errors.show")
 	if !showErrState.Get() {
 		return nil
 	}
 
-	errState := core.StateOf[UnhandledErrors](wnd, ".nago.global.errors")
+	errState := core.StateOf[UnhandledErrors](t.wnd, ".nago.global.errors")
 	if len(errState.Get().errors) == 0 {
 		panic("unreachable")
 	}
 
 	err := errState.Get().errors[len(errState.Get().errors)-1]
-	return alert.Dialog("Ein unerwarteter Fehler ist aufgetreten", requestSupportView(wnd, err.Code), showErrState)
+	return alert.Dialog("Ein unerwarteter Fehler ist aufgetreten", requestSupportView(t.wnd, err.Code), showErrState).Render(ctx)
 }
 
 func sendReport(wnd core.Window, code AnonymousErrorCode) {
@@ -202,5 +213,4 @@ func sendReport(wnd core.Window, code AnonymousErrorCode) {
 	msg += fmt.Sprintf("code: %s\n", code)
 
 	wnd.ExportFiles(core.ExportFileBytes("report.txt", []byte(msg)))
-
 }
