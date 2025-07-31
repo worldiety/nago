@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TWindowTitle is an utility component(Window Title).
+// TWindowTitle is a utility component(Window Title).
 // This component sets the browser or application window title which is also displayed in the browser tab.
 type TWindowTitle struct {
 	title string
