@@ -86,6 +86,8 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	}
 }
 
+
+
 // Padding sets the padding of the auto form.
 func (t TAuto[T]) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
