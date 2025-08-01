@@ -12,6 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+
 // TSpace is a layout component (Space).
 // It represents a fixed-size spacer used to add consistent spacing
 // between UI elements in both vertical and horizontal layouts.
@@ -29,6 +30,7 @@ func Space(size Length) TSpace {
 func (t TSpace) Render(ctx core.RenderContext) core.RenderNode {
 	return VStack().Frame(Frame{MinWidth: t.size, MaxWidth: t.size, MinHeight: t.size, MaxHeight: t.size}).Render(ctx)
 }
+
 
 // TSpacer is a layout component (Spacer).
 // Unlike TSpace, Spacer grows and shrinks dynamically to fill
