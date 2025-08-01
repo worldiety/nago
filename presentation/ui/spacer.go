@@ -12,21 +12,41 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TFixedSpacer is a utility component(Fixed Spacer).
+type TFixedSpacer struct {
+	width  Length
+	height Length
+}
+
 // FixedSpacer returns an empty view with the given dimensions.
-func FixedSpacer(width, height Length) core.View {
+func FixedSpacer(width, height Length) TFixedSpacer {
+	return TFixedSpacer{width: width, height: height}
+}
+
+func (t TFixedSpacer) Render(ctx core.RenderContext) core.RenderNode {
 	/*return VStack(
 		// double wrap, to trick the CSS flexbox (mis) behavior
 		VStack().Frame(Frame{Width: width, Height: height}),
 	)*/
 
 	// trying to simplify the above: is this even more correct?
-	return VStack().Frame(Frame{MinWidth: width, MaxWidth: width, MinHeight: height, MaxHeight: height})
+	return VStack().Frame(Frame{MinWidth: t.width, MaxWidth: t.width, MinHeight: t.height, MaxHeight: t.height}).Render(ctx)
 }
 
-func Space(size Length) core.View {
-	return FixedSpacer(size, size)
+// TSpace is a layout component(Space).
+type TSpace struct {
+	size Length
 }
 
+func Space(size Length) TSpace {
+	return TSpace{size: size}
+}
+
+func (t TSpace) Render(ctx core.RenderContext) core.RenderNode {
+	return FixedSpacer(t.size, t.size).Render(ctx)
+}
+
+// TSpacer is a layout component(Spacer).
 type TSpacer struct {
 	backgroundColor proto.Color
 	frame           proto.Frame
