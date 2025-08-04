@@ -189,7 +189,7 @@ const baseRemIndent = 1
 
 func nodeFileEntry(name string, indent int) core.View {
 	return ui.HStack(
-		ui.FixedSpacer(ui.Length(fmt.Sprintf("%0.2frem", baseRemIndent*float64(indent))), ""),
+		ui.Space(ui.Length(fmt.Sprintf("%0.2frem", baseRemIndent*float64(indent)))),
 		ui.ImageIcon(flowbiteOutline.ChevronDown),
 		ui.ImageIcon(flowbiteOutline.Folder),
 		ui.Text(name),
@@ -215,7 +215,7 @@ func leafFileEntry(selectedFile *core.State[template.File], file template.File, 
 	}
 
 	return ui.HStack(
-		ui.FixedSpacer(ui.Length(fmt.Sprintf("%0.2frem", moreIndent+baseRemIndent*float64(indent))), ""),
+		ui.Space(ui.Length(fmt.Sprintf("%0.2frem", moreIndent+baseRemIndent*float64(indent)))),
 		ui.ImageIcon(iconByFileName(name)),
 		ui.Text(name),
 	).Gap(ui.L8).

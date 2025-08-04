@@ -49,7 +49,7 @@ func (t TView[Entity, ID]) Render(ctx core.RenderContext) core.RenderNode {
 		yield(ui.ImageIcon(heroSolid.MagnifyingGlass))
 		yield(ui.TextField("", t.opts.queryState.String()).InputValue(t.opts.queryState).Style(ui.TextFieldReduced))
 		if len(t.opts.actions) > 0 {
-			yield(ui.FixedSpacer(ui.L16, ""))
+			yield(ui.Space(ui.L16))
 		}
 
 		for _, action := range t.opts.actions {
