@@ -140,6 +140,6 @@ func ContactPage(wnd core.Window, pages Pages, changeMyContact user.UpdateMyCont
 		).
 			Alignment(ui.Leading).
 			Frame(ui.Frame{MaxWidth: ui.L480}.FullWidth()),
-		ui.FixedSpacer("", ui.L16),
+		ui.Space(ui.L16),
 	).FullWidth()
 }
