@@ -25,6 +25,15 @@ import (
 	"go.wdy.de/nago/presentation/ui/form"
 )
 
+// UserManagement is a nago system(User Management).
+// The User Management system is responsible for creating, managing, and maintaining user accounts within the platform.
+// It provides both administrative and self-service features, allowing administrators to manage users and permissions, while enabling end users to maintain their own profiles.
+// Typical workflows include:
+//   - Creating and deleting user accounts
+//   - Assigning roles, groups, and permissions
+//   - Managing user profile data and contact details
+//   - Password management (self-service and administrative)
+//   - Email verification and account activation notifications
 type UserManagement struct {
 	UseCases user.UseCases
 	Pages    uiuser.Pages

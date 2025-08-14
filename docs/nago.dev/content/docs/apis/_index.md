@@ -1,8 +1,8 @@
 ---
 # Static content
 title: APIs
-weight: 4
-prev: /docs/examples
+weight: 5
+prev: /docs/systems
 next: /docs/architecture
 sidebar:
   open: false
