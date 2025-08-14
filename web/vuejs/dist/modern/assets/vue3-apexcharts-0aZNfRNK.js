@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:web/vuejs/dist/modern/assets/vue3-apexcharts-0aZNfRNK.js
 import{d as es,a2 as ts,r as Yi,aj as is,m as as,a6 as ss,p as rs,ak as ns,w as lt,N as os}from"./main-Byd6RlsK.js";/*!
+========
+import{d as es,a1 as ts,r as Yi,ai as is,m as as,a5 as ss,p as rs,aj as ns,w as lt,N as os}from"./main-DWpMdvdE.js";/*!
+>>>>>>>> 47c09433 (fix: cell alignment was wrongly interpreted):web/vuejs/dist/modern/assets/vue3-apexcharts-DKhfSVUw.js
  * ApexCharts v4.7.0
  * (c) 2018-2025 ApexCharts
  * Released under the MIT License.
