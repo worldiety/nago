@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="/vendor/swiper/swiper-bundle.min.css">
+
+{{ $name := .Get "name" }}
+{{ $loop := .Get "loop" | default "true" }}
+{{ $images := index .Page.Params $name }}
+
+<div class="swiper" data-loop="{{ $loop }}">
+    <div class="swiper-wrapper">
+        {{ range $images }}
+        <div class="swiper-slide">
+            <div class="swiper-zoom-container">
+                <img src="{{ .src }}" alt="{{ .alt }}">
+            </div>
+        </div>
+        {{ end }}
+    </div>
+
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-pagination"></div>
+</div>
+
+<script src="/vendor/swiper/swiper-bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.swiper').forEach(function(el) {
+            new Swiper(el, {
+                zoom: true,
+                loop: el.dataset.loop === "true",
+                navigation: {
+                    nextEl: el.querySelector('.swiper-button-next'),
+                    prevEl: el.querySelector('.swiper-button-prev'),
+                },
+            });
+        });
+    });
+</script>
