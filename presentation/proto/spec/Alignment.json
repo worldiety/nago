@@ -3,7 +3,7 @@
   "id": 5,
   "const": {
     "0": {
-      "name": "Center"
+      "name": "Leading"
     },
     "1": {
       "name": "Top"
@@ -12,7 +12,7 @@
       "name": "Bottom"
     },
     "3": {
-      "name": "Leading"
+      "name": "Center"
     },
     "4": {
       "name": "Trailing"
