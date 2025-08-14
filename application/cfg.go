@@ -249,6 +249,9 @@ func (c *Configurator) OnDestroy(f func()) {
 	c.destructors = append(c.destructors, f)
 }
 
+// AppIcon sets the icon of the application
+//
+// Warning: Safari currently (version < 26) doesn't support .svg files
 func (c *Configurator) AppIcon(ico core.URI) *core.Application {
 	c.appIconUri = proto.URI(ico)
 	return c.app
