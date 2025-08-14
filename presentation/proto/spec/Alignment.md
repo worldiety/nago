@@ -18,4 +18,4 @@ Alignment is specified as follows:
 	│                                              │
 	└BottomLeading───────Bottom──────BottomTrailing┘
 
-An empty Alignment must be interpreted as Center (="c").
+An empty Alignment must be interpreted as Leading (="l").
