@@ -179,7 +179,7 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 			}
 		}
 
-		isSvg := bytes.Contains(buf[:min(len(buf), 200)], []byte("<svg"))
+		isSvg := bytes.Contains(buf[:min(len(buf), 512)], []byte("<svg"))
 		if isSvg {
 			c.svg = buf
 			c.lightUri = ""

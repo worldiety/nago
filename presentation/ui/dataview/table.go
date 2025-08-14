@@ -1,0 +1,74 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
+package dataview
+
+import (
+	"iter"
+
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/pager"
+)
+
+type Data[E data.Aggregate[ID], ID ~string] struct {
+	FindAll  iter.Seq2[ID, error]
+	FindByID data.ByIDFinder[E, ID]
+	Fields   []Field[E]
+}
+
+type Field[E any] struct {
+	Name string
+	Map  func(obj E) core.View
+}
+
+func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) core.View {
+	model, err := pager.NewModel(
+		wnd,
+		data.FindByID,
+		data.FindAll,
+		pager.ModelOptions{},
+	)
+
+	if err != nil {
+		return alert.BannerError(err)
+	}
+
+	var cols []ui.TTableColumn
+	cols = append(cols, ui.TableColumn(ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset)).Width(ui.L64))
+	for _, field := range data.Fields {
+		cols = append(cols, ui.TableColumn(ui.Text(field.Name)))
+	}
+
+	return ui.Table(cols...).Rows(
+		ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
+			myState := model.Selections[u.Identity()]
+
+			var cells []ui.TTableCell
+			cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
+			for _, field := range data.Fields {
+				cells = append(cells, ui.TableCell(field.Map(u)))
+			}
+
+			return ui.TableRow(cells...).Action(func() {
+			}).HoveredBackgroundColor(ui.ColorCardFooter)
+		})...,
+	).Rows(
+		ui.TableRow(
+			ui.TableCell(
+				ui.HStack(
+					ui.Text(model.PageString()),
+					ui.Spacer(),
+					pager.Pager(model.PageIdx).Count(model.Page.PageCount).Visible(model.HasPages()),
+				).FullWidth(),
+			).ColSpan(6),
+		).BackgroundColor(ui.ColorCardFooter),
+	).
+		Frame(ui.Frame{}.FullWidth())
+}

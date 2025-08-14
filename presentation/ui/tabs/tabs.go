@@ -8,6 +8,9 @@
 package tabs
 
 import (
+	"strconv"
+	"unicode/utf8"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 )
@@ -104,6 +107,9 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 						if c.idx != nil {
 							c.idx.Set(myIdx)
 							c.idx.Notify()
+							if utf8.ValidString(c.idx.ID()) {
+								ctx.Window().Navigation().ForwardTo(ctx.Window().Path(), ctx.Window().Values().Put(c.idx.ID()+"-idx", strconv.Itoa(myIdx)))
+							}
 						}
 					}).Title(p.title).PreIcon(p.icon).Preset(style).Enabled(c.idx != nil && !p.disabled)
 				})...,
@@ -118,4 +124,14 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 			return c.pages[c.idx.Get()].body()
 		}(),
 	).Position(c.position).Frame(c.frame).Render(ctx)
+}
+
+// NewIndexState uses [core.StateOf] to create a new state but it is initialized using the name and the postfix
+// -idx to pass the index through the query parameter. If a valid name is used, clicking the page tab button will
+// cause a navigation.
+func NewIndexState(wnd core.Window, name string) *core.State[int] {
+	return core.StateOf[int](wnd, name).Init(func() int {
+		idx, _ := strconv.Atoi(wnd.Values()[name+"-idx"])
+		return idx
+	})
 }

@@ -9,12 +9,13 @@ package pager
 
 import (
 	"fmt"
+	"iter"
+	"slices"
+
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
-	"iter"
-	"slices"
 )
 
 type ModelOptions struct {
@@ -175,7 +176,17 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 
 // PageString returns a formatted localized string like "1-50 von 123 Einträgen".
 func (m Model[E, ID]) PageString() string {
-	return fmt.Sprintf("%d-%d von %d Einträgen", m.Page.PageIdx*m.Page.PageSize+1, m.Page.PageIdx*m.Page.PageSize+m.Page.PageSize, m.Page.Total)
+	to := m.Page.PageIdx*m.Page.PageSize + m.Page.PageSize
+	if len(m.Selections) == 0 {
+		return "Keine Einträge"
+	}
+
+	if to > len(m.Selections) {
+		// just a single page
+		return fmt.Sprintf("%d Einträge", len(m.Selections))
+	}
+
+	return fmt.Sprintf("%d-%d von %d Einträgen", m.Page.PageIdx*m.Page.PageSize+1, to, m.Page.Total)
 }
 
 // Selected allocates and returns a slice of all those ids which are currently selected. The IDs are sorted in
@@ -190,4 +201,8 @@ func (m Model[E, ID]) Selected() []ID {
 
 	slices.Sort(tmp)
 	return tmp
+}
+
+func (m Model[E, ID]) HasPages() bool {
+	return m.Page.PageCount > 1
 }

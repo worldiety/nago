@@ -9,9 +9,10 @@ package json
 
 import (
 	"encoding/json"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/std"
 	"log/slog"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/blob"
 )
 
 // GetOrZero either returns the unmarshalled value or silently returns the zero value.
@@ -27,22 +28,22 @@ func GetOrZero[T any](store blob.Store, key string) T {
 }
 
 // Get reads the value identified by key using the same unmarshalling as JSON [Repository].
-func Get[T any](store blob.Reader, key string) (std.Option[T], error) {
+func Get[T any](store blob.Reader, key string) (option.Opt[T], error) {
 	var v T
 	optBuf, err := blob.Get(store, key)
 	if err != nil {
-		return std.None[T](), err
+		return option.None[T](), err
 	}
 
 	if optBuf.IsNone() {
-		return std.None[T](), nil
+		return option.None[T](), nil
 	}
 
 	if err := json.Unmarshal(optBuf.Unwrap(), &v); err != nil {
-		return std.None[T](), err
+		return option.None[T](), err
 	}
 
-	return std.Some(v), nil
+	return option.Some(v), nil
 }
 
 // Put inserts or updates the value identified by key using the same serialization as JSON [Repository].

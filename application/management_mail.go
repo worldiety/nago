@@ -71,7 +71,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			SendMailTest:      "admin/mail/test",
 		}
 
-		c.mailManagement.UseCases, err = mail.NewUseCases(outgoingMailRepo, templates.UseCases.EnsureBuildIn)
+		c.mailManagement.UseCases, err = mail.NewUseCases(c.EventBus(), outgoingMailRepo, templates.UseCases.EnsureBuildIn)
 		if err != nil {
 			return MailManagement{}, fmt.Errorf("cannot create mail usecases: %w", err)
 		}

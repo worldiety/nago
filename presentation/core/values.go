@@ -9,11 +9,12 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"net/url"
 	"reflect"
 	"strconv"
+
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // A NavigationPath defines a unique declaration to a root view.
@@ -97,6 +98,13 @@ func (v Values) Clone() Values {
 		tmp[k] = v
 	}
 
+	return tmp
+}
+
+// Put clones the current values and updates the given key-value-pair.
+func (v Values) Put(key string, value string) Values {
+	tmp := v.Clone()
+	tmp[key] = value
 	return tmp
 }
 

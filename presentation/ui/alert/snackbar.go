@@ -11,15 +11,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
+	"slices"
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"golang.org/x/crypto/sha3"
-	"log/slog"
-	"os"
-	"slices"
-	"time"
 )
 
 type Intent int
@@ -138,14 +139,14 @@ func makeMessageFromError(err error) (Message, bool) {
 	if errors.Is(err, os.ErrNotExist) {
 		return Message{
 			Title:   "Element nicht gefunden",
-			Message: "Die Anwendungsfall konnte nicht ausgeführt werden, da ein Element erwartet aber nicht gefunden wurde.",
+			Message: "Der Anwendungsfall konnte nicht ausgeführt werden, da ein Element erwartet aber nicht gefunden wurde.",
 		}, true
 	}
 
 	if errors.Is(err, os.ErrExist) {
 		return Message{
 			Title:   "Element bereits vorhanden",
-			Message: "Die Anwendungsfall konnte nicht ausgeführt werden, da ein Element nicht bereits vorhanden sein darf, aber gefunden wurde.",
+			Message: "Der Anwendungsfall konnte nicht ausgeführt werden, da ein Element nicht bereits vorhanden sein darf, aber gefunden wurde.",
 		}, true
 	}
 

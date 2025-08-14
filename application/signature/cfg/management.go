@@ -15,8 +15,11 @@ import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/signature"
+	"go.wdy.de/nago/application/signature/document"
 	uisignature "go.wdy.de/nago/application/signature/ui"
 	"go.wdy.de/nago/application/theme"
+	"go.wdy.de/nago/application/user"
+	cfgworkflow "go.wdy.de/nago/application/workflow/cfg"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"log/slog"
@@ -59,6 +62,15 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	uc, err := signature.NewUseCases(stores, signatureRepo, settingsRepo, images.UseCases.OpenReader)
 	if err != nil {
 		return Management{}, fmt.Errorf("failed to create signature usecases: %w", err)
+	}
+
+	workflows, err := cfgworkflow.Enable(cfg)
+	if err != nil {
+		return Management{}, err
+	}
+
+	if _, err := workflows.UseCases.Declare(user.SU(), document.NewWorkflow()); err != nil {
+		return Management{}, fmt.Errorf("failed to declare workflow: %w", err)
 	}
 
 	management = Management{

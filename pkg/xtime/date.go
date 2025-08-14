@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"golang.org/x/text/language"
 )
 
 const (
@@ -111,4 +113,19 @@ func (t Timezone) Location() *time.Location {
 	}
 
 	return loc
+}
+
+func FormatDateTime(tag language.Tag, t time.Time) string {
+	switch tag {
+	case language.German:
+		if t.IsZero() {
+			return "unbekannt"
+		}
+		return t.Format(GermanDateTime)
+	default:
+		if t.IsZero() {
+			return "unknown"
+		}
+		return t.Format("2006-01-02 15:04:05")
+	}
 }

@@ -17,8 +17,10 @@ import (
 	"go.wdy.de/nago/application/user/tplmail"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"iter"
+	"log/slog"
 )
 
 var _ = enum.Variant[secret.Credentials, secret.SMTP]()
@@ -46,7 +48,7 @@ type UseCases struct {
 	SendMail SendMail
 }
 
-func NewUseCases(outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) (UseCases, error) {
+func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) (UseCases, error) {
 	outgoingCrud := rcrud.DecorateRepository(rcrud.DecoratorOptions{EntityName: "Ausgehende Mails", PermissionPrefix: "nago.mail.outgoing"}, outgoingRepo)
 	sendMailFn := NewSendMail(outgoingRepo)
 
@@ -75,5 +77,33 @@ func NewUseCases(outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) 
 	uc.Outgoing.FindAll = outgoingCrud.FindAll
 	uc.Outgoing.Save = outgoingCrud.Upsert
 
+	events.SubscribeFor[SendMailRequested](bus, func(evt SendMailRequested) {
+		var parts []Part
+		if len(evt.TextBody) != 0 {
+			parts = append(parts, NewTextPart(evt.TextBody))
+		}
+
+		if len(evt.HTMLBody) != 0 {
+			parts = append(parts, NewHtmlPart(evt.HTMLBody))
+		}
+
+		for name, buf := range evt.Attachments {
+			parts = append(parts, NewAttachmentPart(name, buf))
+		}
+
+		_, err := uc.SendMail(user.SU(), Mail{
+			To:       evt.To,
+			CC:       evt.CC,
+			BCC:      evt.BCC,
+			Subject:  evt.Subject,
+			Parts:    parts,
+			SmtpHint: evt.SmtpHint,
+		})
+
+		if err != nil {
+			slog.Error("cannot send mail by SendMailRequested event", "err", err)
+			return
+		}
+	})
 	return uc, nil
 }

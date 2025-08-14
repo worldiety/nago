@@ -9,6 +9,12 @@ package user
 
 import (
 	"fmt"
+	"iter"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/address"
 	"go.wdy.de/nago/application/consent"
@@ -22,11 +28,6 @@ import (
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/pkg/xtime"
 	"golang.org/x/text/language"
-	"iter"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var AccountStatusEnum = enum.Declare[AccountStatus, func(func(Enabled), func(Disabled), func(EnabledUntil), func(any))]()
@@ -212,6 +213,7 @@ type Resource struct {
 }
 
 func (r Resource) MarshalText() ([]byte, error) {
+	// TODO fix me: this looks awful in json and is usually totally unnecessary
 	return []byte(strconv.Quote(r.Name + "/" + r.ID)), nil
 }
 
