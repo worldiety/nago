@@ -16,6 +16,13 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// SecretManagement is a nago system(Secret Management).
+// The Secret Management system is responsible for storing, managing, and controlling access to sensitive data such as passwords, API keys, and external system configurations.
+// It stores all data in an encrypted blob store and allows secure sharing with other users or groups.
+// Typical workflows include:
+//   - Creating, updating, and deleting secrets
+//   - Sharing secrets with users or groups
+//   - Defining new secret types in the source code by implementing the secret.Credentials interface
 type SecretManagement struct {
 	UseCases secret.UseCases
 	Pages    uisecret.Pages

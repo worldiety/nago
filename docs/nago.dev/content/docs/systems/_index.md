@@ -55,6 +55,10 @@ settingsManagement := option.Must(configurator.SettingisManagement())
 settingsManagement := std.Must(configurator.SettingisManagement())
 ```
 
+{{< callout type="info" >}}
+Each of these systems becomes available with its default UI pages and functionality, including integration into the Admin Center.
+{{< /callout >}}
+
 ### Enabling all Standard Systems
 
 To quickly get started with the default NAGO functionality, you can use the built-in method:
@@ -77,8 +81,6 @@ The following systems are enabled when calling StandardSystems():
 - Settings Management
 - Template Management
 - User Management
-
-Each of these systems becomes available with its default UI pages and functionality, including integration into the Admin Center.
 
 ### Custom Configuration
 If you want full control over which systems are active in your application, you can skip StandardSystems() and activate each system manually.
