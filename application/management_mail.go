@@ -22,6 +22,16 @@ import (
 	mail2 "net/mail"
 )
 
+// MailManagement is a nago system (Mail Management).
+// The Mail Management system is responsible for sending emails within the platform,
+// including notifications, password resets, and user registration confirmations.
+// It requires an SMTP secret configured SecretManagement.
+// and uses predefined templates from TemplateManagement, which can be customized as needed.
+type MailManagement struct {
+	UseCases mail.UseCases
+	Pages    uimail.Pages
+}
+
 // HasMailManagement returns false, as long as [MailManagement] has not been requested to get initialized.
 func (c *Configurator) HasMailManagement() bool {
 	return c.mailManagement != nil
@@ -210,9 +220,4 @@ func (c *Configurator) SendMailTemplate(to user.Email, tpl template.ID, subjName
 	})
 
 	return err
-}
-
-type MailManagement struct {
-	UseCases mail.UseCases
-	Pages    uimail.Pages
 }
