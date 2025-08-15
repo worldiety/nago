@@ -50,6 +50,8 @@ Mail Management offers the following key functions:
 - [Template Management](../template_management/_index.md) for email templates
 - [User Management](../user_management/_index.md) for workflows such as password resets
 
+If these are not already active, they will be enabled automatically when Mail Management is activated.
+
 **Is required by:**
 - [Session Management](../session_management/_index.md)
 
