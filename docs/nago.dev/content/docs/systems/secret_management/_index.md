@@ -1,7 +1,7 @@
 ---
 title: Secret Management
 galleryOverview:
-  - src: "/images/systems/admin_center.png"
+  - src: "/images/systems/shared/admin_center.png"
   - src: "/images/systems/secret_management/galleries/overview/admin_center.png"
   - src: "/images/systems/secret_management/galleries/overview/secret_vault_overview.png"
   - src: "/images/systems/secret_management/galleries/overview/create_secret.png"
@@ -115,20 +115,14 @@ as these are used for rendering the UI of the secret.
 - Secrets shared in groups making them available to all members of those groups for relevant use cases but **not** visible in their secret store
 - The SMTP secret type is implemented by default and already available after activating the Secret Management
 
-[//]: # (## Create new secrets)
-[//]: # (Developers can add new secret types by implementing `secret.Credentials` interface and defining the struct fields and UI behavior via struct tags:)
-[//]: # (- `value:"..."` sets a pre-filled default value.)
-[//]: # (- `style:"secret"` masks the input for sensitive data.)
-[//]: # (- `credentialName`, `credentialDescription`, and `credentialLogo` improve the display in the secret overview.)
-
 ## Dependencies
-Secret Management requires:
+**Requires:**
 - [User Management](../user_management/_index.md)
 - [Group Management](../group_management/_index.md)  
 
 If these are not already active, they will be enabled automatically when Secret Management is activated.
 
-Secret Management is required by:
+**Is required by:**
 - [Mail Management](../mail_management/_index.md) – for storing SMTP configuration.
 
 ## Activation
