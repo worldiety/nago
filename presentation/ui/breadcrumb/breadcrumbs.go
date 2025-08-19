@@ -13,6 +13,10 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// TBreadcrumbs is a navigation component (Breadcrumbs).
+// It displays a horizontal trail of items representing the user's navigation path
+// within the application. Each item is typically a link or label, separated by a
+// configurable gap, and the layout can be styled with frame and padding options.
 type TBreadcrumbs struct {
 	items   []core.View
 	gap     ui.Length
@@ -20,20 +24,24 @@ type TBreadcrumbs struct {
 	padding ui.Padding
 }
 
+// Breadcrumbs creates a new breadcrumb trail with the given items.
 func Breadcrumbs(items ...core.View) TBreadcrumbs {
 	return TBreadcrumbs{items: items}
 }
 
+// Gap sets the spacing between breadcrumb items.
 func (c TBreadcrumbs) Gap(l ui.Length) TBreadcrumbs {
 	c.gap = l
 	return c
 }
 
+// Frame defines the frame layout (size and positioning) of the breadcrumbs.
 func (c TBreadcrumbs) Frame(frame ui.Frame) TBreadcrumbs {
 	c.frame = frame
 	return c
 }
 
+// Padding sets the inner padding around the breadcrumb trail.
 func (c TBreadcrumbs) Padding(padding ui.Padding) TBreadcrumbs {
 	c.padding = padding
 	return c
@@ -53,6 +61,9 @@ func (c TBreadcrumbs) Item(title string, action func()) TBreadcrumbs {
 	return c
 }
 
+// Render builds the breadcrumb trail as a horizontal stack,
+// automatically inserting a chevron (›) icon between items
+// and applying the configured gap, frame, and padding.
 func (c TBreadcrumbs) Render(ctx core.RenderContext) core.RenderNode {
 	var tmp []core.View
 	for idx, item := range c.items {
