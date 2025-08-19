@@ -11,10 +11,11 @@ import (
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
 
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
 	"strings"
 	"unicode"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 type Style int
@@ -24,6 +25,12 @@ const (
 	Rounded
 )
 
+// TAvatar is a visual component (Avatar).
+// This component displays a user or entity representation,
+// either as an image (via URL, raw data, or image ID) or as
+// a fallback with initials (paraphe). It can be styled with
+// frame, border, text size, and color, and also supports an
+// optional click action.
 type TAvatar struct {
 	paraphe  string
 	url      core.URI
@@ -36,6 +43,7 @@ type TAvatar struct {
 	imgID    image.ID
 }
 
+// TextOrImage creates an avatar from either an image (if provided) or falls back to a text-based avatar.
 func TextOrImage(text string, img image.ID) TAvatar {
 	if img != "" {
 		c := URI(httpimage.URI(img, image.FitCover, 64, 64))
@@ -46,6 +54,7 @@ func TextOrImage(text string, img image.ID) TAvatar {
 	return Text(text)
 }
 
+// Text creates a text-based avatar using initials derived from the given string.
 func Text(paraphe string) TAvatar {
 	if paraphe == "" {
 		paraphe = "?"
@@ -80,6 +89,7 @@ func Text(paraphe string) TAvatar {
 	}.Size(ui.L40)
 }
 
+// URI creates an avatar from a given image URL.
 func URI(uri core.URI) TAvatar {
 	return TAvatar{
 		url:    uri,
@@ -88,6 +98,7 @@ func URI(uri core.URI) TAvatar {
 	}.Size(ui.L40)
 }
 
+// Embed creates an avatar directly from raw image data.
 func Embed(data []byte) TAvatar {
 	return TAvatar{
 		data:   data,
@@ -96,16 +107,19 @@ func Embed(data []byte) TAvatar {
 	}.Size(ui.L40)
 }
 
+// Border sets the border style of the avatar.
 func (c TAvatar) Border(border ui.Border) TAvatar {
 	c.border = border
 	return c
 }
 
+// Action sets an optional click action for the avatar.
 func (c TAvatar) Action(fn func()) TAvatar {
 	c.action = fn
 	return c
 }
 
+// Size sets the avatar's size and adjusts text size and image resolution accordingly.
 func (c TAvatar) Size(widthAndHeight ui.Length) TAvatar {
 	c.frame = ui.Frame{}.Size(widthAndHeight, widthAndHeight)
 	c.textSize = widthAndHeight.Mul(0.4)
@@ -117,6 +131,7 @@ func (c TAvatar) Size(widthAndHeight ui.Length) TAvatar {
 	return c
 }
 
+// Style sets the avatar’s border style (circle by default, rounded when specified).
 func (c TAvatar) Style(style Style) TAvatar {
 	switch style {
 	default:
@@ -128,6 +143,7 @@ func (c TAvatar) Style(style Style) TAvatar {
 	return c
 }
 
+// Render draws the avatar as either text initials or an image, applying frame, border, and optional action.
 func (c TAvatar) Render(ctx core.RenderContext) core.RenderNode {
 	c.frame.MinWidth = c.frame.Width // force the correct dimensions in flex layouts
 	c.frame.MinHeight = c.frame.Height
