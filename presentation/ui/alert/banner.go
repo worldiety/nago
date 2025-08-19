@@ -8,10 +8,11 @@
 package alert
 
 import (
+	"time"
+
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
-	"time"
 )
 
 // TBanner is an overlay component(Banner).
@@ -74,6 +75,13 @@ func (t TBanner) Intent(intent Intent) TBanner {
 	return t
 }
 
+// Render builds and displays the banner component with styling and behavior
+// based on its intent (e.g., success/info or error). It shows an icon, title,
+// and message, and optionally provides a dismiss button. If auto-close is
+// enabled, a countdown progress bar is displayed and the banner closes itself
+// after the timeout. The banner adapts colors (text/background) according to
+// its intent and applies padding, spacing, and rounded borders for consistent
+// styling.
 func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 	if t.presented != nil && !t.presented.Get() {
 		return ui.HStack().Render(ctx)
