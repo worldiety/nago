@@ -8,6 +8,8 @@
 package document
 
 import (
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
@@ -16,15 +18,19 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
-	"time"
 )
 
+// Message represents a user comment or note entry.
+// It contains the user ID, the message text, and the timestamp.
 type Message struct {
 	User    user.ID
 	Message string
 	Time    time.Time
 }
 
+// TComment is a util component(Comment).
+// It manages the comment text, selection state, and optional resolution.
+// A custom view function can be provided to render the comment.
 type TComment struct {
 	view         func(c TComment) core.View
 	selected     *core.State[bool]
@@ -33,6 +39,11 @@ type TComment struct {
 	resolve      func()
 }
 
+// Thread creates a TComment component that displays a list of messages
+// (a comment thread) along with metadata such as user name, avatar, and timestamp.
+// It also supports an optional "resolve" action for the first message and an
+// input field for adding new comments. The appearance changes when the thread
+// is selected, highlighting it with a border and shadow.
 func Thread(wnd core.Window, messages ...Message) TComment {
 	displayName, _ := core.FromContext[user.DisplayName](wnd.Context(), "")
 
@@ -100,6 +111,9 @@ func Thread(wnd core.Window, messages ...Message) TComment {
 	}
 }
 
+// LogEntry creates a simple TComment displaying a log message,
+// the author (who), and the timestamp (when). It is marked to
+// require a separating line from other comments.
 func LogEntry(message string, who string, when time.Time) TComment {
 	return TComment{
 		view: func(c TComment) core.View {
@@ -113,6 +127,7 @@ func LogEntry(message string, who string, when time.Time) TComment {
 	}
 }
 
+// Comment wraps an arbitrary core.View as a TComment.
 func Comment(v core.View) TComment {
 	return TComment{
 		view: func(c TComment) core.View {
@@ -121,21 +136,25 @@ func Comment(v core.View) TComment {
 	}
 }
 
+// InputSelectedValue binds the comment’s selected state.
 func (c TComment) InputSelectedValue(selected *core.State[bool]) TComment {
 	c.selected = selected
 	return c
 }
 
+// InputValue binds the comment’s text state.
 func (c TComment) InputValue(comment *core.State[string]) TComment {
 	c.comment = comment
 	return c
 }
 
+// Resolve sets a callback to mark the comment thread as resolved.
 func (c TComment) Resolve(action func()) TComment {
 	c.resolve = action
 	return c
 }
 
+// Render draws the comment with optional selection handling.
 func (c TComment) Render(ctx core.RenderContext) core.RenderNode {
 	v := ui.HStack(
 		c.view(c),
@@ -155,6 +174,7 @@ func (c TComment) Render(ctx core.RenderContext) core.RenderNode {
 	return v.Render(ctx)
 }
 
+// AttachComment decorates a view with a comment marker if selected.
 func AttachComment(selection *core.State[bool], v ui.DecoredView) ui.DecoredView {
 	if selection == nil {
 		return v
