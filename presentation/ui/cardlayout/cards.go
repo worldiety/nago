@@ -8,16 +8,23 @@
 package cardlayout
 
 import (
+	"slices"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"slices"
 )
 
+// sizeClassColumns defines a responsive rule for card layouts.
+// It maps a given WindowSizeClass to a specific number of columns.
 type sizeClassColumns struct {
 	SizeClass core.WindowSizeClass
 	Columns   int
 }
 
+// TCardLayout is a container component (Card Layout).
+// It organizes child views into a grid-like layout, typically using multiple
+// columns. The number of columns can be defined globally or customized per
+// window size class to enable responsive design.
 type TCardLayout struct {
 	children       []core.View
 	frame          ui.Frame
@@ -26,6 +33,8 @@ type TCardLayout struct {
 	defaultColumns int
 }
 
+// Layout creates a new TCardLayout with the given child views.
+// Nil children are automatically skipped. By default, the layout uses 3 columns.
 func Layout(children ...core.View) TCardLayout {
 	tmp := make([]core.View, 0, len(children))
 	for _, child := range children {
@@ -39,6 +48,8 @@ func Layout(children ...core.View) TCardLayout {
 	return TCardLayout{children: tmp, defaultColumns: 3}
 }
 
+// Columns sets a custom number of columns for a specific WindowSizeClass.
+// This allows the layout to adapt responsively to different screen sizes.
 func (c TCardLayout) Columns(class core.WindowSizeClass, columns int) TCardLayout {
 	c.customColumns = append(c.customColumns, sizeClassColumns{
 		SizeClass: class,
@@ -48,16 +59,26 @@ func (c TCardLayout) Columns(class core.WindowSizeClass, columns int) TCardLayou
 	return c
 }
 
+// Frame sets the frame (size and positioning) for the card layout.
 func (c TCardLayout) Frame(frame ui.Frame) TCardLayout {
 	c.frame = frame
 	return c
 }
 
+// Padding sets the inner spacing for the card layout.
+// This allows customizing the distance between the layout border and its content.
 func (c TCardLayout) Padding(padding ui.Padding) TCardLayout {
 	c.padding = padding
 	return c
 }
 
+// Render builds the card layout as a responsive grid.
+// It determines the number of columns based on either:
+//   - explicitly defined rules for specific window size classes, or
+//   - default fallbacks (1 column for small/medium, 2 for large, 3 by default).
+//
+// Each child is rendered into a GridCell, with consistent spacing, padding,
+// and frame configuration applied to the overall layout.
 func (c TCardLayout) Render(ctx core.RenderContext) core.RenderNode {
 	columns := c.defaultColumns
 	wnd := ctx.Window()
@@ -97,6 +118,12 @@ const (
 	TitleCompact
 )
 
+// TCard is a container component (Card).
+// It represents a structured UI element that can display content in three
+// sections: a title, a body, and an optional footer.
+// Cards are typically used to group related information or actions together
+// in a visually distinct block, and they support custom styling, padding,
+// and layout adjustments via frame and title style.
 type TCard struct {
 	title         string
 	body          core.View
@@ -107,36 +134,43 @@ type TCard struct {
 	customPadding bool
 }
 
+// Card creates a new card with a title and default padding.
 func Card(title string) TCard {
 	return TCard{title: title, padding: ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: ""}}
 }
 
+// Style sets the title style of the card (e.g., heading level or visual variant).
 func (c TCard) Style(style TitleStyle) TCard {
 	c.style = style
 	return c
 }
 
+// Body defines the main content area of the card.
 func (c TCard) Body(view core.View) TCard {
 	c.body = view
 	return c
 }
 
+// Padding overrides the default padding of the card and marks it as custom.
 func (c TCard) Padding(padding ui.Padding) TCard {
 	c.customPadding = true
 	c.padding = padding
 	return c
 }
 
+// Footer adds a footer view below the card body, typically for actions or secondary info.
 func (c TCard) Footer(view core.View) TCard {
 	c.footer = view
 	return c
 }
 
+// Frame sets the layout frame (size and positioning) of the card.
 func (c TCard) Frame(frame ui.Frame) TCard {
 	c.frame = frame
 	return c
 }
 
+// Render builds and displays the card with title, body, optional footer, padding, and styling.
 func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	var bodyTopPadding ui.Length
 	var title core.View
