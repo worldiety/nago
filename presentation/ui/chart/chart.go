@@ -12,6 +12,8 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// Chart defines common chart metadata such as labels, colors, frame, and axis titles,
+// including options like download availability and a fallback message when no data exists.
 type Chart struct {
 	Labels        []string
 	Colors        []ui.Color
@@ -22,6 +24,8 @@ type Chart struct {
 	YAxisTitle    string
 }
 
+// Ora converts Chart into its proto.Chart representation, mapping labels, colors,
+// frame, download flag, no-data message, and axis titles.
 func (c Chart) Ora() proto.Chart {
 	protoColors := make([]proto.Color, len(c.Colors))
 	for i, color := range c.Colors {
@@ -43,6 +47,7 @@ func (c Chart) Ora() proto.Chart {
 	}
 }
 
+// ora maps the UI frame to its proto.Frame equivalent (size and constraints).
 func (c Chart) ora() proto.Frame {
 	return proto.Frame{
 		MinWidth:  proto.Length(c.Frame.MinWidth),

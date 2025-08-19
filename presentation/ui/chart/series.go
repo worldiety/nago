@@ -13,22 +13,26 @@ import (
 
 type ChartSeriesType int
 
+// ora converts ChartSeriesType into its proto.ChartSeriesType equivalent.
 func (cst ChartSeriesType) ora() proto.ChartSeriesType {
 	return proto.ChartSeriesType(cst)
 }
 
+// Supported chart series types.
 const (
 	ChartSeriesTypeLine   = ChartSeriesType(proto.ChartSeriesTypeLine)
 	ChartSeriesTypeColumn = ChartSeriesType(proto.ChartSeriesTypeColumn)
 	ChartSeriesTypeArea   = ChartSeriesType(proto.ChartSeriesTypeArea)
 )
 
+// Series represents a labeled set of data points for a chart, with a specific series type.
 type Series struct {
 	Label      string
 	Type       ChartSeriesType
 	DataPoints []DataPoint
 }
 
+// Ora converts the Series into its proto.ChartSeries equivalent.
 func (s Series) Ora() proto.ChartSeries {
 	protoDataPoints := make([]proto.ChartDataPoint, len(s.DataPoints))
 
