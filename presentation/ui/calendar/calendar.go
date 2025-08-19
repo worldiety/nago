@@ -22,7 +22,7 @@ const (
 	StartTimeSequence
 )
 
-// TCalendar is a component (Calendar).
+// TCalendar is a composite component (Calendar).
 // This component displays calendar data in different styles (e.g., monthly or weekly view)
 // and supports rendering events within a defined viewport.
 // It allows customization of frame, style, and colors to adapt to different use cases.

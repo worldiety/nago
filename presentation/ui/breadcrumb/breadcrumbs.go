@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TBreadcrumbs is a navigation component (Breadcrumbs).
+// TBreadcrumbs is a feedback and overlays component (Breadcrumbs).
 // It displays a horizontal trail of items representing the user's navigation path
 // within the application. Each item is typically a link or label, separated by a
 // configurable gap, and the layout can be styled with frame and padding options.
