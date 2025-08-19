@@ -8,16 +8,20 @@
 package calendar
 
 import (
-	"go.wdy.de/nago/presentation/ui"
 	"math"
 	"strconv"
 	"time"
+
+	"go.wdy.de/nago/presentation/ui"
 )
 
+// Column represents a single labeled column in the timeline (e.g. a month).
 type Column struct {
 	Label string
 }
 
+// ViewPort defines the visible time range of the calendar, including start/end,
+// displayed columns, lane width, and a label for the lane.
 type ViewPort struct {
 	From      time.Time
 	To        time.Time
@@ -26,6 +30,8 @@ type ViewPort struct {
 	LaneLabel string
 }
 
+// Year creates a ViewPort for a given year, spanning from January to December
+// and dividing the range into 12 monthly columns.
 func Year(year int) ViewPort {
 	return ViewPort{
 		From: time.Date(year, time.January, 1, 0, 0, 0, 0, time.Local),
@@ -38,6 +44,8 @@ func Year(year int) ViewPort {
 	}
 }
 
+// Percent returns the relative position of a given time within the ViewPort,
+// expressed as a percentage (0–100).
 func (i ViewPort) Percent(t time.Time) Percent {
 	start := float64(i.From.Unix())
 	end := float64(i.To.Unix())
@@ -55,6 +63,8 @@ func (p Percent) String() string {
 	return strconv.FormatFloat(float64(p), 'f', -1, 64) + "%"
 }
 
+// Length converts the Percent value into a ui.Length,
+// which can be directly used for sizing in UI components.
 func (p Percent) Length() ui.Length {
 	return ui.Length(p.String())
 }
