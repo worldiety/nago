@@ -118,7 +118,7 @@ const (
 	TitleCompact
 )
 
-// TCard is a container component (Card).
+// TCard is a basic component (Card).
 // It represents a structured UI element that can display content in three
 // sections: a title, a body, and an optional footer.
 // Cards are typically used to group related information or actions together

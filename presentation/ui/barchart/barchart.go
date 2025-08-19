@@ -16,7 +16,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/chart"
 )
 
-// TBarChart is a data visualization component (Bar Chart).
+// TBarChart is a composite component (Bar Chart).
 // It represents categorical data with rectangular bars, supporting
 // horizontal or vertical orientation, stacked bars, and markers.
 // The chart can be customized by providing multiple data series
