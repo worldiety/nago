@@ -14,19 +14,23 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// TButton is a basic component (Button).
+// It represents a clickable UI element with optional label, content, and supporting text.
+// The button can be enabled/disabled, styled with frame, padding, and border,
+// and may include accessibility attributes for better usability.
 type TButton struct {
-	dialog             core.View
-	content            core.View
-	disabled           bool
-	errorText          string
-	label              string
-	frame              ui.Frame
-	supportingText     string
-	action             func()
-	padding            ui.Padding
-	border             ui.Border
-	invisible          bool
-	accessibilityLabel string
+	dialog             core.View  // optional dialog opened by the button
+	content            core.View  // custom content inside the button (icon, text, etc.)
+	disabled           bool       // disables interaction when true
+	errorText          string     // error message shown below or near the button
+	label              string     // main label text for the button
+	frame              ui.Frame   // layout frame for sizing and positioning
+	supportingText     string     // additional descriptive text
+	action             func()     // callback function executed on click
+	padding            ui.Padding // spacing inside the button
+	border             ui.Border  // border styling (color, radius, width)
+	invisible          bool       // hides the button when true
+	accessibilityLabel string     // label for screen readers
 }
 
 func Button(action func()) TButton {
@@ -46,31 +50,37 @@ func (c TButton) Dialog(dialog core.View) TButton {
 	return c
 }
 
+// Padding sets inner spacing.
 func (c TButton) Padding(padding ui.Padding) ui.DecoredView {
 	c.padding = padding
 	return c
 }
 
+// Frame sets size and position.
 func (c TButton) Frame(frame ui.Frame) ui.DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame modifies the current frame.
 func (c TButton) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// Border defines the border styling (color, width, radius) of the button.
 func (c TButton) Border(border ui.Border) ui.DecoredView {
 	c.border = border
 	return c
 }
 
+// Visible toggles visibility.
 func (c TButton) Visible(visible bool) ui.DecoredView {
 	c.invisible = !visible
 	return c
 }
 
+// AccessibilityLabel sets screen reader label.
 func (c TButton) AccessibilityLabel(label string) ui.DecoredView {
 	c.accessibilityLabel = label
 	return c
