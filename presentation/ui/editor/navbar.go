@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TNavbar represents a composite component (Navbar).
+// TNavbar is a composite component (Navbar).
 // This component organizes views into top and bottom sections
 // within a vertical navigation bar, which can be shown or hidden.
 type TNavbar struct {
