@@ -18,7 +18,7 @@ const (
 	toolbarWidth = ui.L320
 )
 
-// TScreen represents a container (Screen).
+// TScreen represents a composite component (Screen).
 // This component models a full application screen with title, header,
 // navbar, tool windows, main content, and optional modals.
 type TScreen struct {
