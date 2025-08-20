@@ -9,13 +9,14 @@ package timepicker
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"strings"
-	"time"
 )
 
 type PickerFormat int
@@ -30,21 +31,26 @@ const (
 	DecomposedFormat
 )
 
+// TPicker is a composite component (Time Picker).
+// It lets users choose a duration with optional granularity for days,
+// hours, minutes, and seconds. The picker can be shown in a dialog,
+// bind to external state, and format its value either as a clock or
+// as decomposed units.
 type TPicker struct {
-	label                string
-	supportingText       string
-	errorText            string
-	frame                ui.Frame
-	pickerPresented      *core.State[bool]
-	targetSelectedState  *core.State[time.Duration]
-	currentSelectedState *core.State[time.Duration]
-	title                string
-	showDays             bool
-	showHours            bool
-	showMinutes          bool
-	showSeconds          bool
-	format               PickerFormat
-	disabled             bool
+	label                string                     // primary label shown with the control
+	supportingText       string                     // helper or secondary text shown below the label
+	errorText            string                     // validation or error message
+	frame                ui.Frame                   // layout frame for size and positioning
+	pickerPresented      *core.State[bool]          // controls whether the picker UI is currently shown
+	targetSelectedState  *core.State[time.Duration] // external binding for the selected duration
+	currentSelectedState *core.State[time.Duration] // working copy used while editing
+	title                string                     // title used when presenting the picker (e.g., in a dialog)
+	showDays             bool                       // enables selection of days
+	showHours            bool                       // enables selection of hours
+	showMinutes          bool                       // enables selection of minutes
+	showSeconds          bool                       // enables selection of seconds
+	format               PickerFormat               // display format (clock or decomposed units)
+	disabled             bool                       // when true, interaction is disabled
 	// why is the scale-to-seconds removed? because it limits the picker to be in seconds, however we also need at least millisecond resolution in the near future.
 }
 
@@ -73,85 +79,111 @@ func Picker(label string, selectedState *core.State[time.Duration]) TPicker {
 	return p
 }
 
+// Padding sets the inner spacing around the time picker content.
+// (currently not implemented)
 func (c TPicker) Padding(padding ui.Padding) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Frame sets the layout frame of the time picker, including size and positioning.
 func (c TPicker) Frame(frame ui.Frame) ui.DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame applies a transformation function to the picker's frame
+// and returns the updated component.
 func (c TPicker) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// Border sets the border style of the time picker.
+// (currently not implemented)
 func (c TPicker) Border(border ui.Border) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Visible controls the visibility of the time picker; setting false hides it.
+// (currently not implemented)
 func (c TPicker) Visible(visible bool) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// AccessibilityLabel sets a label used by screen readers for accessibility.
+// (currently not implemented)
 func (c TPicker) AccessibilityLabel(label string) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Disabled enables or disables user interaction with the time picker.
 func (c TPicker) Disabled(disabled bool) TPicker {
 	c.disabled = disabled
 	return c
 }
 
+// Title sets the title of the picker, typically shown in dialogs.
 func (c TPicker) Title(title string) TPicker {
 	c.title = title
 	return c
 }
 
+// Format sets the display format for the duration value (clock or decomposed).
 func (c TPicker) Format(format PickerFormat) TPicker {
 	c.format = format
 	return c
 }
 
+// SupportingText sets helper or secondary text displayed below the picker label.
 func (c TPicker) SupportingText(text string) TPicker {
 	c.supportingText = text
 	return c
 }
 
+// ErrorText sets the validation or error message displayed below the picker.
 func (c TPicker) ErrorText(text string) TPicker {
 	c.errorText = text
 	return c
 }
 
+// Hours toggles whether the picker allows selecting hours.
 func (c TPicker) Hours(showHours bool) TPicker {
 	c.showHours = showHours
 	return c
 }
 
+// Minutes toggles whether the picker allows selecting minutes.
 func (c TPicker) Minutes(showMinutes bool) TPicker {
 	c.showMinutes = showMinutes
 	return c
 }
 
+// Days toggles whether the picker allows selecting days.
 func (c TPicker) Days(showDays bool) TPicker {
 	c.showDays = showDays
 	return c
 }
 
+// Seconds toggles whether the picker allows selecting seconds.
 func (c TPicker) Seconds(showSeconds bool) TPicker {
 	c.showSeconds = showSeconds
 	return c
 }
 
+// auto returns true if none of the time units are explicitly enabled,
+// indicating that the picker should choose units automatically.
 func auto(showDays, showHours, showMinutes, showSeconds bool) bool {
 	return !showDays && !showHours && !showMinutes && !showSeconds
 }
 
+// fmtDurationTime formats a duration into a human-readable string,
+// showing days, hours, minutes, and/or seconds depending on the flags.
+// If no units are explicitly enabled, the function chooses appropriate
+// ones based on the actual duration values.
 func fmtDurationTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
 	if auto(showDays, showHours, showMinutes, showSeconds) {
@@ -186,6 +218,9 @@ func fmtDurationTime(showDays, showHours, showMinutes, showSeconds bool, d time.
 	return strings.Join(segments, " ")
 }
 
+// fmtClockTime formats a duration in a clock-like style, using zero-padded
+// values separated by thin spaces and colons. Units shown are determined
+// by the flags or inferred from the duration.
 func fmtClockTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
 
@@ -221,6 +256,8 @@ func fmtClockTime(showDays, showHours, showMinutes, showSeconds bool, d time.Dur
 	return strings.Join(segments, "\u202F:\u202F") // use thin space instead of space
 }
 
+// dayDown decreases the number of days in the current selection,
+// wrapping around to 99 if it goes below 0.
 func (c TPicker) dayDown() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	days--
@@ -230,6 +267,8 @@ func (c TPicker) dayDown() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// dayUp increases the number of days in the current selection,
+// wrapping back to 0 if it exceeds 99.
 func (c TPicker) dayUp() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	days++
@@ -239,6 +278,8 @@ func (c TPicker) dayUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// hourDown decreases the hours in the current selection,
+// wrapping around to 23 if it goes below 0.
 func (c TPicker) hourDown() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	hours--
@@ -248,6 +289,8 @@ func (c TPicker) hourDown() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// hourUp increases the hours in the current selection,
+// wrapping back to 0 if it reaches 24.
 func (c TPicker) hourUp() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	hours++
@@ -257,6 +300,8 @@ func (c TPicker) hourUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// minDown decreases the minutes in the current selection,
+// wrapping around to 59 if it goes below 0.
 func (c TPicker) minDown() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	minutes--
@@ -266,6 +311,8 @@ func (c TPicker) minDown() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// minUp increases the minutes in the current selection,
+// wrapping back to 0 if it exceeds 59.
 func (c TPicker) minUp() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	minutes++
@@ -275,6 +322,8 @@ func (c TPicker) minUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// secDown decreases the seconds in the current selection,
+// wrapping around to 59 if it goes below 0.
 func (c TPicker) secDown() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	seconds--
@@ -284,6 +333,8 @@ func (c TPicker) secDown() {
 	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
 }
 
+// secUp increases the seconds in the current selection,
+// wrapping back to 0 if it exceeds 59.
 func (c TPicker) secUp() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	seconds++
@@ -293,6 +344,9 @@ func (c TPicker) secUp() {
 	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
 }
 
+// round normalizes the given duration based on the picker's configuration.
+// If seconds are not displayed, the duration is truncated to the nearest minute;
+// otherwise, it is returned unchanged.
 func (c TPicker) round(d time.Duration) time.Duration {
 	if !c.showSeconds {
 		return d.Truncate(time.Minute)
@@ -301,6 +355,11 @@ func (c TPicker) round(d time.Duration) time.Duration {
 	return d
 }
 
+// renderPicker builds the interactive picker view for adjusting the duration.
+// It shows increment and decrement buttons with numeric labels for each
+// enabled unit (days, hours, minutes, seconds). If no units are explicitly
+// enabled, the picker automatically decides which units to display based on
+// the current duration.
 func (c TPicker) renderPicker() core.View {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 
@@ -364,6 +423,11 @@ func (c TPicker) renderPicker() core.View {
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
+// Render builds and returns the UI representation of the time picker.
+// It displays the current duration value, opens a dialog for selecting
+// a new duration, and shows labels, supporting text, or error messages
+// depending on its state. The picker can be disabled, in which case
+// interaction is blocked.
 func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
 
