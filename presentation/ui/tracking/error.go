@@ -12,12 +12,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
+	"runtime/debug"
+
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"log/slog"
-	"runtime/debug"
 )
 
 type AnonymousErrorCode string
@@ -82,14 +83,18 @@ func requestSupportView(wnd core.Window, code AnonymousErrorCode) core.View {
 
 }
 
+// TErrorView is a UI component for displaying errors (Error View).
+// It shows an error message inside a styled container with optional
+// padding, spacing, borders, and layout configuration. Typically used
+// to surface application or runtime errors to the user.
 type TErrorView struct {
-	wnd core.Window
-	err error
+	wnd core.Window // reference to the current window, used for context
+	err error       // the error to display
 
-	padding ui.Padding
-	gap     ui.Length
-	frame   ui.Frame
-	border  ui.Border
+	padding ui.Padding // spacing inside the error container
+	gap     ui.Length  // spacing between child elements
+	frame   ui.Frame   // layout frame for sizing and positioning
+	border  ui.Border  // border styling for the error container
 }
 
 // ErrorView returns a view which is suited to be displayed instead of your actual view in case of an unexpected
@@ -187,6 +192,11 @@ func SupportRequestDialog(wnd core.Window) TSupportRequestDialog {
 	}
 }
 
+// Render builds and returns the UI for the support request dialog.
+// It is shown when there are unhandled errors in the global error state.
+// The dialog displays an error message and provides a view for submitting
+// a support request. If no errors are present, the function panics as this
+// state should be unreachable.
 func (t TSupportRequestDialog) Render(ctx core.RenderContext) core.RenderNode {
 	showErrState := core.StateOf[bool](t.wnd, ".nago.global.errors.show")
 	if !showErrState.Get() {
@@ -202,6 +212,10 @@ func (t TSupportRequestDialog) Render(ctx core.RenderContext) core.RenderNode {
 	return alert.Dialog("Ein unerwarteter Fehler ist aufgetreten", requestSupportView(t.wnd, err.Code), showErrState).Render(ctx)
 }
 
+// sendReport collects diagnostic information about the current application
+// and window state, combines it with the given error code, and exports it
+// as a text file. This file can be used for debugging or sending support
+// requests.
 func sendReport(wnd core.Window, code AnonymousErrorCode) {
 
 	msg := "# error report\n\n"
