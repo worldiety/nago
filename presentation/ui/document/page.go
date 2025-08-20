@@ -24,6 +24,9 @@ var (
 	}
 )
 
+// TPage is a util component(Page).
+// It provides a structured layout with optional padding, borders, background
+// color, alignment, and holds both regular content (items) and threaded comments.
 type TPage struct {
 	frame           ui.Frame
 	padding         ui.Padding
@@ -44,6 +47,7 @@ func Page(items ...core.View) TPage {
 	}
 }
 
+// Size sets the page size to fixed width and height constraints.
 func (c TPage) Size(size Size) TPage {
 	c.frame = ui.Frame{
 		MaxWidth:  size.Width,
@@ -57,21 +61,26 @@ func (c TPage) Size(size Size) TPage {
 	return c
 }
 
+// Alignment sets how child elements inside the page are aligned
+// (leading, trailing, center, stretch, etc.).
 func (c TPage) Alignment(alignment ui.Alignment) TPage {
 	c.alignment = alignment
 	return c
 }
 
+// Border applies a border style (width, radius, color, etc.) to the page.
 func (c TPage) Border(border ui.Border) TPage {
 	c.border = border
 	return c
 }
 
+// Frame directly sets the frame (size and layout constraints) of the page.
 func (c TPage) Frame(frame ui.Frame) TPage {
 	c.frame = frame
 	return c
 }
 
+// BackgroundColor sets the background color of the page.
 func (c TPage) BackgroundColor(color ui.Color) TPage {
 	c.backgroundColor = color
 	return c
@@ -83,11 +92,16 @@ func (c TPage) Comment(comments ...TComment) TPage {
 	return c
 }
 
+// Append adds one or more UI views to the page’s main content items.
 func (c TPage) Append(items ...core.View) TPage {
 	c.items = append(c.items, items...)
 	return c
 }
 
+// Render composes a responsive page layout.
+// On small screens it shows content full-width (ignoring frame); on larger screens it
+// renders the page with padding/border and, if space allows, a right-hand comments
+// sidebar (with single-selection behavior). It also derives a background color when unset.
 func (c TPage) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 
