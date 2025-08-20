@@ -9,6 +9,10 @@ package editor
 
 import (
 	"fmt"
+	"iter"
+	"slices"
+	"strings"
+
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xslices"
@@ -16,21 +20,23 @@ import (
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"iter"
-	"slices"
-	"strings"
 )
 
+// TVToolWindow is a composite component (Tool Window).
+// This component displays a window with an icon, title, and optional
+// top, content, and bottom sections. It can be positioned and toggled visible.
 type TVToolWindow struct {
-	name     string
-	icon     core.SVG
-	top      ui.DecoredView
-	content  ui.DecoredView
-	bottom   ui.DecoredView
-	visible  bool
-	position ui.Position
+	name     string         // the display name of the tool window
+	icon     core.SVG       // the icon representing the tool window
+	top      ui.DecoredView // optional top section (e.g., toolbar or controls)
+	content  ui.DecoredView // main content area of the tool window
+	bottom   ui.DecoredView // optional bottom section (e.g., status or actions)
+	visible  bool           // controls whether the tool window is visible
+	position ui.Position    // position of the tool window on the screen
 }
 
+// ToolWindow creates a new TVToolWindow with the given icon and name.
+// By default, the window is visible.
 func ToolWindow(icon core.SVG, name string) TVToolWindow {
 	return TVToolWindow{
 		visible: true,
@@ -38,26 +44,33 @@ func ToolWindow(icon core.SVG, name string) TVToolWindow {
 	}
 }
 
+// Visible sets the visibility state of the tool window.
 func (c TVToolWindow) Visible(b bool) TVToolWindow {
 	c.visible = b
 	return c
 }
 
+// Top sets the top section of the tool window to the given view.
 func (c TVToolWindow) Top(v ui.DecoredView) TVToolWindow {
 	c.top = v
 	return c
 }
 
+// Bottom sets the bottom section of the tool window to the given view.
 func (c TVToolWindow) Bottom(v ui.DecoredView) TVToolWindow {
 	c.bottom = v
 	return c
 }
 
+// Content sets the main content section of the tool window to the given view.
 func (c TVToolWindow) Content(v ui.DecoredView) TVToolWindow {
 	c.content = v
 	return c
 }
 
+// Render builds and returns the RenderNode for the TVToolWindow.
+// It stacks the optional top, content (scrollable), and bottom sections
+// vertically inside a full-size container.
 func (c TVToolWindow) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
 		ui.IfFunc(c.top != nil, func() core.View {
@@ -73,6 +86,9 @@ func (c TVToolWindow) Render(ctx core.RenderContext) core.RenderNode {
 
 }
 
+// ToolWindowListConfig defines the configuration for ToolWindowList.
+// It provides icons, callbacks, and data sources to manage a list
+// of aggregates inside a tool window.
 type ToolWindowListConfig[T data.Aggregate[ID], ID data.IDType] struct {
 	Name           string
 	Icon           core.SVG
@@ -85,6 +101,9 @@ type ToolWindowListConfig[T data.Aggregate[ID], ID data.IDType] struct {
 	CreateEmpty    func(subject auth.Subject) error
 }
 
+// ToolWindowList creates a TVToolWindow that displays a list of items
+// based on the provided configuration. It supports selection, deletion,
+// creation, and optional actions for each item.
 func ToolWindowList[T data.Aggregate[ID], ID data.IDType](wnd core.Window, cfg ToolWindowListConfig[T, ID]) TVToolWindow {
 	var files ui.DecoredView
 
