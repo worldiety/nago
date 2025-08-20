@@ -18,23 +18,26 @@ import (
 	"io"
 )
 
-// TSingleImagePicker is a composite component(Single Image Picker).
+// TSingleImagePicker is a composite component (Single Image Picker).
+// This component allows selecting, displaying, and managing a single image,
+// with support for responsive sources, state binding, and accessibility options.
 type TSingleImagePicker struct {
-	wnd         core.Window
-	setCreator  image.CreateSrcSet
-	loadSrcSet  image.LoadSrcSet
-	loadBestFit image.LoadBestFit
-	selfID      string
-	id          image.ID
-	state       *core.State[image.ID]
+	wnd         core.Window           // reference to the application window
+	setCreator  image.CreateSrcSet    // function to create responsive image sources
+	loadSrcSet  image.LoadSrcSet      // function to load responsive image sources
+	loadBestFit image.LoadBestFit     // function to load the best-fit image
+	selfID      string                // identifier of the current user
+	id          image.ID              // identifier of the image
+	state       *core.State[image.ID] // state holding the selected image ID (nil if static)
 
-	padding            ui.Padding
-	frame              ui.Frame
-	border             ui.Border
-	accessibilityLabel string
-	invisible          bool
+	padding            ui.Padding // layout padding
+	frame              ui.Frame   // frame defining size and layout
+	border             ui.Border  // border styling
+	accessibilityLabel string     // accessibility label for screen readers
+	invisible          bool       // whether the picker is hidden
 }
 
+// SingleImagePicker creates a new TSingleImagePicker with the given configuration.
 func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSet image.LoadSrcSet, loadBestFit image.LoadBestFit, selfId string, id image.ID, state *core.State[image.ID]) TSingleImagePicker {
 	return TSingleImagePicker{
 		wnd:         wnd,
@@ -47,36 +50,45 @@ func SingleImagePicker(wnd core.Window, setCreator image.CreateSrcSet, loadSrcSe
 	}
 }
 
+// Padding sets the padding of the single image picker.
 func (t TSingleImagePicker) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
 	return t
 }
 
+// WithFrame updates the frame of the single image picker using a transformation function.
 func (t TSingleImagePicker) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	t.frame = fn(t.frame)
 	return t
 }
 
+// Frame sets the frame of the single image picker directly.
 func (t TSingleImagePicker) Frame(frame ui.Frame) ui.DecoredView {
 	t.frame = frame
 	return t
 }
 
+// Border sets the border styling of the single image picker.
 func (t TSingleImagePicker) Border(border ui.Border) ui.DecoredView {
 	t.border = border
 	return t
 }
 
+// Visible toggles the visibility of the single image picker.
 func (t TSingleImagePicker) Visible(visible bool) ui.DecoredView {
 	t.invisible = !visible
 	return t
 }
 
+// AccessibilityLabel sets the accessibility label for the single image picker.
 func (t TSingleImagePicker) AccessibilityLabel(label string) ui.DecoredView {
 	t.accessibilityLabel = label
 	return t
 }
 
+// Render shows the single image picker.
+// If no image is set, it displays an "add image" button.
+// Otherwise, it shows a preview with actions to download or remove the image.
 func (t TSingleImagePicker) Render(ctx core.RenderContext) core.RenderNode {
 	if t.setCreator == nil {
 		fn, ok := core.FromContext[image.CreateSrcSet](t.wnd.Context(), "")

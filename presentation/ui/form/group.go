@@ -15,6 +15,8 @@ import (
 	"github.com/worldiety/i18n"
 )
 
+// Group represents a reflection-based field group (Group).
+// Fields sharing the same "section" struct tag are collected under the same group.
 type Group struct {
 	Name   string
 	Fields []reflect.StructField
@@ -24,14 +26,21 @@ func LocalizeGroups(bnd *i18n.Bundle, groups []Group) []Group {
 	for idx := range groups {
 		groups[idx].Name = bnd.Resolve(groups[idx].Name)
 	}
-	
+
 	return groups
 }
 
+// GroupsFor returns field groups for the struct type parameter T.
+// It uses the "section" tag to group fields.
 func GroupsFor[T any]() []Group {
 	return GroupsOf(reflect.TypeFor[T]())
 }
 
+// GroupsOf returns field groups for the given struct type.
+// It groups fields by their "section" tag, skipping fields when:
+// - tag `visible:"false"` is set
+// - the field is unexported and does not start with "_" (private)
+// - the field name appears in ignoreFields
 func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 	var res []Group
 	//

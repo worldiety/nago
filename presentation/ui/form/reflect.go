@@ -52,16 +52,18 @@ func (o AutoOptions) context() context.Context {
 	return context.Background()
 }
 
-// TAuto is a composite component(Auto Form).
+// TAuto is a composite component (Auto Form).
+// This component renders a form for type T driven by reflection,
+// bound to a state and configurable via AutoOptions.
 type TAuto[T any] struct {
-	opts  AutoOptions
-	state *core.State[T]
+	opts  AutoOptions    // options controlling form generation and behavior
+	state *core.State[T] // bound state holding the form model
 
-	padding            ui.Padding
-	frame              ui.Frame
-	border             ui.Border
-	accessibilityLabel string
-	invisible          bool
+	padding            ui.Padding // layout padding
+	frame              ui.Frame   // frame defining size and layout
+	border             ui.Border  // border styling
+	accessibilityLabel string     // accessibility label for screen readers
+	invisible          bool       // whether the form is hidden
 	cardPadding        ui.Padding
 }
 
@@ -84,6 +86,7 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	}
 }
 
+// Padding sets the padding of the auto form.
 func (t TAuto[T]) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
 	return t
@@ -94,11 +97,13 @@ func (t TAuto[T]) CardPadding(padding ui.Padding) TAuto[T] {
 	return t
 }
 
+// WithFrame updates the frame of the auto form using a transformation function.
 func (t TAuto[T]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	t.frame = fn(t.frame)
 	return t
 }
 
+// Frame sets the frame of the auto form directly.
 func (t TAuto[T]) Frame(frame ui.Frame) ui.DecoredView {
 	t.frame = frame
 	return t
@@ -109,16 +114,19 @@ func (t TAuto[T]) FullWidth() TAuto[T] {
 	return t
 }
 
+// Border sets the border styling of the auto form.
 func (t TAuto[T]) Border(border ui.Border) ui.DecoredView {
 	t.border = border
 	return t
 }
 
+// Visible toggles the visibility of the auto form.
 func (t TAuto[T]) Visible(visible bool) ui.DecoredView {
 	t.invisible = !visible
 	return t
 }
 
+// AccessibilityLabel sets the accessibility label for the auto form.
 func (t TAuto[T]) AccessibilityLabel(label string) ui.DecoredView {
 	t.accessibilityLabel = label
 	return t
