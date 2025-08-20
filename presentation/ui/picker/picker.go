@@ -9,41 +9,48 @@ package picker
 
 import (
 	"fmt"
+	"reflect"
+	"regexp"
+	"slices"
+	"strings"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"reflect"
-	"regexp"
-	"slices"
-	"strings"
 )
 
+// TPicker is a composite component (Picker).
+// It displays a list of values and lets users choose one or multiple items,
+// with optional "Select all" and quick-filtering support. Rendering of both the
+// selected summary and the selectable rows is customizable via callbacks.
+// The picker can bind to external selection state or manage its own, and it
+// can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
-	renderPicked         func(TPicker[T], []T) core.View
-	renderToSelect       func(T) core.View
-	stringer             func(T) string
-	label                string
-	supportingText       string
-	errorText            string
-	values               []T
-	frame                ui.Frame
-	title                string
-	selectAllCheckbox    *core.State[bool]
-	targetSelectedState  *core.State[[]T]
-	currentSelectedState *core.State[[]T]
-	pickerPresented      *core.State[bool]
-	multiselect          *core.State[bool]
-	checkboxStates       []*core.State[bool]
-	quickSearch          *core.State[string]
-	selectAllSupported   bool
-	quickFilterSupported bool
-	disabled             bool
-	detailView           core.View
-	invisible            bool
-	dlgOptions           []alert.Option
+	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
+	renderToSelect       func(T) core.View               // renders a single row/item inside the selection list
+	stringer             func(T) string                  // returns a textual representation (used e.g. for quick search/filter)
+	label                string                          // primary label shown with the control
+	supportingText       string                          // secondary/helper text shown under the label
+	errorText            string                          // validation or error message
+	values               []T                             // full set of candidate values to pick from
+	frame                ui.Frame                        // layout container / sizing and spacing context
+	title                string                          // title used when the picker is presented (e.g., in a dialog)
+	selectAllCheckbox    *core.State[bool]               // nil if "Select all" is not applicable/enabled
+	targetSelectedState  *core.State[[]T]                // external binding; nil if uncontrolled
+	currentSelectedState *core.State[[]T]                // internal working selection (mirrors/buffers target state during edits)
+	pickerPresented      *core.State[bool]               // controls whether the picker UI is currently shown
+	multiselect          *core.State[bool]               // true for multi-select mode; single-select otherwise
+	checkboxStates       []*core.State[bool]             // per-item selection states (used in multi-select list)
+	quickSearch          *core.State[string]             // current quick-filter query; nil if filtering is disabled
+	selectAllSupported   bool                            // enables/disables "Select all" behavior
+	quickFilterSupported bool                            // enables/disables quick search/filter UI
+	disabled             bool                            // when true, interaction is disabled
+	detailView           core.View                       // optional detail pane shown alongside the list
+	invisible            bool                            // when true, the control is not rendered
+	dlgOptions           []alert.Option                  // dialog options used when presenting the picker
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
