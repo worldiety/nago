@@ -9,6 +9,7 @@ package ui
 
 import (
 	"fmt"
+
 	"github.com/worldiety/material-color-utilities/hct"
 	"go.wdy.de/nago/pkg/xcolor"
 	"go.wdy.de/nago/presentation/proto"
@@ -116,6 +117,8 @@ const (
 	ColorCardTop = M9
 
 	ColorCardFooter = M3
+
+	ColorContainer = M6
 
 	ColorBackground = M1
 

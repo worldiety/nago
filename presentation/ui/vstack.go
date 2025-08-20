@@ -124,6 +124,10 @@ func (c TVStack) Frame(f Frame) DecoredView {
 	return c
 }
 
+func (c TVStack) With(fn func(stack TVStack) TVStack) TVStack {
+	return fn(c)
+}
+
 func (c TVStack) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c

@@ -39,7 +39,7 @@ type UpdateDocumentState struct {
 func (a *UpdateDocumentState) Configure(cfg *workflow.Configuration) error {
 	cfg.SetName("Dokumentenstatus aktualisieren")
 	workflow.LocalEvent[SignatoriesCompleted](cfg)
-	workflow.LocalEvent[SignaturesRequested](cfg)
+	//workflow.LocalEvent[SignaturesRequested](cfg)
 	cfg.SetDescription("If all signatures have been collected, the [SignatoriesCompleted]\nevent is raised and the workflow is completed.")
 	return nil
 }

@@ -8,9 +8,10 @@
 package calendar
 
 import (
+	"time"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"time"
 )
 
 type Style int
@@ -66,6 +67,8 @@ func (c TCalendar) Colors(colors Colors) TCalendar {
 
 func (c TCalendar) Render(ctx core.RenderContext) core.RenderNode {
 	switch c.style {
+	case StartTimeSequence:
+		return renderStartTimeSequence(c, ctx)
 	default:
 		return renderTimelineYear(c, ctx)
 	}

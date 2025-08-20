@@ -8,9 +8,10 @@
 package calendar
 
 import (
+	"time"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"time"
 )
 
 type Occupation struct {
@@ -46,4 +47,7 @@ type Event struct {
 	Category   Category
 	Lane       Lane
 	Occupation Occupation
+	Organiser  string
+	Location   string
+	Render     func(Style) core.View // custom render func, may be nil to render the default way
 }

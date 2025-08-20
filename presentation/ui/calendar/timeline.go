@@ -9,10 +9,11 @@ package calendar
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
 	"maps"
 	"slices"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
@@ -79,7 +80,7 @@ func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
 		ui.HStack(
 			// category color
 			ui.HStack().BackgroundColor(e.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(e.Category.Label),
-			ui.HStack(ui.Text(e.Label).Color(colors.EventText)).BackgroundColor(colors.EventBackground).
+			ui.HStack(ui.Text(e.Label).Color(colors.EventText).AccessibilityLabel(e.Label)).BackgroundColor(colors.EventBackground).
 				FullWidth().
 				With(func(stack ui.THStack) ui.THStack {
 					if e.Action != nil {

@@ -9,6 +9,8 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
@@ -16,7 +18,6 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 func main() {
@@ -39,13 +40,49 @@ func main() {
 						To: calendar.Instant{
 							At: time.Date(2025, 8, 11, 0, 0, 0, 0, time.Local),
 						},
-						Label: "Some Event (Torben)",
+						Label:     "Some Event (Torben)",
+						Organiser: "Torben",
+						Location:  "WZO",
 						Lane: calendar.Lane{
 							Label: "Torben",
 						},
 						Category: calendar.Category{
 							Label: "Kategorie 2",
 							Color: "#ff0000",
+						},
+					},
+
+					calendar.Event{
+						From: calendar.Instant{
+							At: time.Date(2025, 8, 12, 0, 0, 0, 0, time.Local),
+						},
+						To: calendar.Instant{
+							At: time.Date(2025, 8, 13, 0, 0, 0, 0, time.Local),
+						},
+						Label: "Some Event Day 1",
+						Lane: calendar.Lane{
+							Label: "Torben",
+						},
+						Category: calendar.Category{
+							Label: "Kategorie 2",
+							Color: "#ffff00",
+						},
+					},
+
+					calendar.Event{
+						From: calendar.Instant{
+							At: time.Date(2025, 8, 14, 0, 0, 0, 0, time.Local),
+						},
+						To: calendar.Instant{
+							At: time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local),
+						},
+						Label: "Some Event Day 2",
+						Lane: calendar.Lane{
+							Label: "Torben",
+						},
+						Category: calendar.Category{
+							Label: "Kategorie 2",
+							Color: "#ffff00",
 						},
 					},
 
@@ -95,7 +132,9 @@ func main() {
 							Label: "Olaf",
 						},
 					},
-				).ViewPort(calendar.Year(2025)),
+				).ViewPort(calendar.Year(2025)).
+					Frame(ui.Frame{}.FullWidth()).
+					Style(calendar.StartTimeSequence),
 			).FullWidth()
 
 		})
