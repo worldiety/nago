@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// THeader represents a composite container (Header).
+// THeader is a composite container (Header).
 // This component organizes views into distinct regions (leading corner,
 // leading, center, and trailing) typically used in application headers.
 // It can also be toggled visible or hidden.

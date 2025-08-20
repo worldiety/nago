@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TColor is a component for displaying a color.
+// TColor is a util component(Color).
 // It wraps a ui.Color and can be rendered to show its visual representation.
 type TColor struct {
 	color ui.Color
