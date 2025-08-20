@@ -15,13 +15,18 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// TPage represents a single tab page (Page).
+// Each page can define a title, an optional icon, and a body
+// function that renders the content. Pages can also be disabled
+// to prevent user interaction.
 type TPage struct {
-	title    string
-	icon     core.SVG
-	body     func() core.View
-	disabled bool
+	title    string           // text label shown on the tab
+	icon     core.SVG         // optional icon displayed next to the title
+	body     func() core.View // function that renders the page content
+	disabled bool             // when true, the tab is visible but not selectable
 }
 
+// Page creates a new tab page with the given title and content body.
 func Page(title string, body func() core.View) TPage {
 	return TPage{
 		title: title,
@@ -29,25 +34,33 @@ func Page(title string, body func() core.View) TPage {
 	}
 }
 
+// Icon sets the icon displayed next to the page title.
 func (c TPage) Icon(ico core.SVG) TPage {
 	c.icon = ico
 	return c
 }
 
+// Disabled marks the page as disabled, making it visible but not selectable.
 func (c TPage) Disabled(disabled bool) TPage {
 	c.disabled = disabled
 	return c
 }
 
+// TTabs is a util component (Tabs).
+// It manages the layout and navigation between different TPage elements,
+// including alignment, positioning, and spacing between the tab bar and content.
+// An optional state can track the currently active tab index.
 type TTabs struct {
-	pages         []TPage
-	frame         ui.Frame
-	position      ui.Position
-	tabAlignment  ui.Alignment
-	idx           *core.State[int]
-	pageTabSpacer ui.Length
+	pages         []TPage          // list of tab pages
+	frame         ui.Frame         // layout frame for the entire tabs container
+	position      ui.Position      // position of the tab bar (e.g., top, bottom)
+	tabAlignment  ui.Alignment     // alignment of the tab buttons (e.g., leading, center)
+	idx           *core.State[int] // external or internal state tracking the active page index
+	pageTabSpacer ui.Length        // spacing between the tab bar and the page content
 }
 
+// Tabs creates a new tab container with the given pages,
+// defaulting to leading alignment and a standard page-to-tab spacer.
 func Tabs(pages ...TPage) TTabs {
 	return TTabs{
 		pages:         pages,
@@ -56,11 +69,13 @@ func Tabs(pages ...TPage) TTabs {
 	}
 }
 
+// Frame sets the layout frame of the tabs container, including size and spacing.
 func (c TTabs) Frame(frame ui.Frame) TTabs {
 	c.frame = frame
 	return c
 }
 
+// FullWidth sets the tabs container to span the full available width.
 func (c TTabs) FullWidth() TTabs {
 	c.frame.Width = ui.Full
 	return c
@@ -79,11 +94,14 @@ func (c TTabs) PageTabSpace(space ui.Length) TTabs {
 	return c
 }
 
+// Position sets the position of the tab bar (e.g., top, bottom, start, end).
 func (c TTabs) Position(pos ui.Position) TTabs {
 	c.position = pos
 	return c
 }
 
+// InputValue binds the tab container to an external state that tracks
+// the index of the currently active page.
 func (c TTabs) InputValue(activeIdx *core.State[int]) TTabs {
 	c.idx = activeIdx
 	return c
