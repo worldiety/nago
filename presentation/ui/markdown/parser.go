@@ -8,6 +8,8 @@
 package markdown
 
 import (
+	"strings"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
@@ -16,7 +18,6 @@ import (
 	"github.com/yuin/goldmark/text"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"strings"
 )
 
 type Options struct {
@@ -82,6 +83,7 @@ func Render(opts Options, source []byte) core.View {
 	return r.Top().Render(opts.Window)
 }
 
+// renderer manages a stack of mutView while traversing the AST.
 type renderer struct {
 	stack []mutView
 }
@@ -109,11 +111,13 @@ func (r *renderer) Top() mutView {
 	return r.stack[len(r.stack)-1]
 }
 
+// mutView is a lightweight interface for building intermediate nodes.
 type mutView interface {
 	Add(view mutView)
 	Render(wnd core.Window) core.View
 }
 
+// mutDocument corresponds to a markdown document root.
 type mutDocument struct {
 	views []mutView
 }
@@ -131,6 +135,7 @@ func (c *mutDocument) Render(wnd core.Window) core.View {
 	return ui.VStack(tmp...).Alignment(ui.Leading).Gap(ui.L16).FullWidth()
 }
 
+// mutHeading represents a markdown heading (only plain text supported).
 type mutHeading struct {
 	level int
 	views []mutView
@@ -152,6 +157,7 @@ func (c *mutHeading) Render(wnd core.Window) core.View {
 	return ui.Heading(c.level, buf.String())
 }
 
+// mutText is a text leaf node with optional hard line break.
 type mutText struct {
 	value     string
 	linebreak bool
@@ -165,6 +171,7 @@ func (c *mutText) Render(wnd core.Window) core.View {
 	return ui.Text(c.value).LineBreak(c.linebreak)
 }
 
+// mutTextLayout groups inline text fragments into a paragraph.
 type mutTextLayout struct {
 	views []mutView
 }
@@ -181,6 +188,7 @@ func (c *mutTextLayout) Render(wnd core.Window) core.View {
 	return ui.TextLayout(tmp...)
 }
 
+// mutLink represents a markdown link, limited to plain text as label.
 type mutLink struct {
 	views []mutView
 	href  string
