@@ -9,9 +9,10 @@ package stepper
 
 import (
 	"fmt"
+	"strconv"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"strconv"
 )
 
 type Style int
@@ -22,16 +23,21 @@ const (
 	Full
 )
 
+// TStepper is a composite component (Stepper).
+// It visually represents a sequence of steps in a process, highlighting
+// completed, current, and upcoming steps with distinct colors and styles.
+// Each step can display a label, and the layout adapts between simple
+// or full-sized step representations.
 type TStepper struct {
-	style          Style
-	colorDone      ui.Color // default lightest main color
-	colorCurrent   ui.Color // default is accent
-	colorFuture    ui.Color // default is darkest main color
-	index          int
-	steps          []TStep
-	simpleStepText string
-	fullCircleSize ui.Length
-	fullStepWidth  ui.Length
+	style          Style     // visual style of the stepper (e.g., horizontal or vertical)
+	colorDone      ui.Color  // color for completed steps (default: lightest main color)
+	colorCurrent   ui.Color  // color for the active/current step (default: accent)
+	colorFuture    ui.Color  // color for upcoming steps (default: darkest main color)
+	index          int       // current step index
+	steps          []TStep   // list of steps making up the stepper
+	simpleStepText string    // label format for simplified step display
+	fullCircleSize ui.Length // size of the step circle in full layout
+	fullStepWidth  ui.Length // width allocated to each step in full layout
 }
 
 func Stepper(steps ...TStep) TStepper {
@@ -47,11 +53,13 @@ func Stepper(steps ...TStep) TStepper {
 	}
 }
 
+// FullCircleSize sets the diameter of the step circles in full layout mode.
 func (c TStepper) FullCircleSize(length ui.Length) TStepper {
 	c.fullCircleSize = length
 	return c
 }
 
+// FullStepWidth sets the width allocated to each step in full layout mode.
 func (c TStepper) FullStepWidth(length ui.Length) TStepper {
 	c.fullStepWidth = length
 	return c
