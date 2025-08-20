@@ -51,11 +51,13 @@ func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string,
 	}
 }
 
+
 func (t TAvatarPicker) Enabled(b bool) TAvatarPicker {
 	t.disabled = !b
 	return t
 }
 
+// Padding sets the padding around the avatar picker.
 func (t TAvatarPicker) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
 	return t
