@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TSignature represents a composite component (Signature).
+// TSignature is a composite component (Signature).
 // This component arranges a top label, a main signature body view,
 // and a bottom label inside a frame.
 type TSignature struct {
