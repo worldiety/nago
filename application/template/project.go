@@ -8,13 +8,14 @@
 package template
 
 import (
-	"go.wdy.de/nago/presentation/core"
-	"golang.org/x/text/language"
 	"log/slog"
 	"maps"
 	"slices"
 	"strings"
 	"time"
+
+	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
 )
 
 type RunConfiguration struct {
@@ -156,7 +157,7 @@ type File struct {
 
 // IsTemplate inspects the file name
 func (f File) IsTemplate() bool {
-	return strings.HasSuffix(f.Filename, ".gohtml") || strings.HasSuffix(f.Filename, ".tpl")
+	return IsTemplate(f.Filename)
 }
 
 // Name returns the target (stripped) filename. E.g. index.gohtml becomes index.html or index.html.tpl
@@ -171,4 +172,8 @@ func cleanName(name string) string {
 	}
 
 	return name
+}
+
+func IsTemplate(filename string) bool {
+	return strings.HasSuffix(filename, ".gohtml") || strings.HasSuffix(filename, ".tpl")
 }

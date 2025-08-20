@@ -12,10 +12,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/semver"
 	htmlTemplate "html/template"
 	"io"
 	"io/fs"
@@ -23,11 +19,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing/fstest"
 	textTemplate "text/template"
 	"time"
+
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/semver"
 )
 
 func NewExecute(files blob.Store, repository Repository) Execute {
@@ -172,6 +174,12 @@ func bestMainTypstCandiate(fsys fs.FS) (string, error) {
 		return "", fmt.Errorf("cannot find any typst file (*.typ)")
 	}
 
+	for _, candidate := range candidates {
+		if strings.ToLower(candidate) == "main.typ" {
+			return candidate, nil
+		}
+	}
+
 	return candidates[0], nil
 }
 
@@ -204,6 +212,11 @@ func which(what string) (string, bool) {
 // findBestWorldietyHubCandidate searches through /opt/<what>/v<major>.<minor>.<patch> and takes the largest
 // version of whatever it finds.
 func findBestWorldietyHubCandidate(what string) (string, bool) {
+	if runtime.GOOS != "linux" {
+		slog.Info("cannot find best executable in hub environment: not on linux")
+		return "", false
+	}
+
 	dir := filepath.Join("/", "opt", what)
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -339,6 +352,45 @@ func ParseHTML(files blob.Store, fset []File) (*htmlTemplate.Template, error) {
 	return root, nil
 }
 
+// FSParseHTML loads all those Files which look like a template.
+func FSParseHTML(fsys fs.FS) (*htmlTemplate.Template, error) {
+	root := htmlTemplate.New("")
+	var tpl *htmlTemplate.Template
+
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if !d.Type().IsRegular() {
+			return nil
+		}
+
+		if !IsTemplate(d.Name()) {
+			return nil
+		}
+
+		buf, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return fmt.Errorf("cannot read file '%s': %w", path, err)
+		}
+
+		tpl, err = root.New(path).Parse(string(buf))
+
+		if err != nil {
+			return fmt.Errorf("cannot parse html file '%s': %w", path, err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tpl == nil {
+		return nil, fmt.Errorf("no template found")
+	}
+
+	return root, nil
+}
+
 func applyPlainTextTemplates(fsys fstest.MapFS, model any) error {
 	for filename, file := range fsys {
 		if !(strings.HasSuffix(filename, ".gohtml") || strings.HasSuffix(filename, ".tpl")) {
@@ -388,6 +440,45 @@ func ParseText(files blob.Store, fset []File) (*textTemplate.Template, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse html file '%s': %w", file.Filename, err)
 		}
+	}
+
+	if tpl == nil {
+		return nil, fmt.Errorf("no template found")
+	}
+
+	return root, nil
+}
+
+// FSParseText loads all those Files which look like a template.
+func FSParseText(fsys fs.FS) (*textTemplate.Template, error) {
+	root := textTemplate.New("")
+	var tpl *textTemplate.Template
+
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if !d.Type().IsRegular() {
+			return nil
+		}
+
+		if !IsTemplate(d.Name()) {
+			return nil
+		}
+
+		buf, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return fmt.Errorf("cannot read file '%s': %w", path, err)
+		}
+
+		tpl, err = root.New(path).Parse(string(buf))
+
+		if err != nil {
+			return fmt.Errorf("cannot parse html file '%s': %w", path, err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	if tpl == nil {

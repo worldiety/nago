@@ -10,6 +10,12 @@ package template
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/fs"
+	"iter"
+	"sync"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -17,11 +23,6 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
-	"io"
-	"io/fs"
-	"iter"
-	"sync"
-	"time"
 )
 
 type ExecType int
@@ -79,6 +80,7 @@ type ExecOptions struct {
 	//  - All *PDF templates must be executed with an empty template name.
 	//    These are large document structures with its own include mechanic, like latex or typst templates, eventually
 	//    with templated graphic files (like SVG). These files are also renamed by removing the .tpl suffix.
+	//    For typst, the main.typ is favored, otherwise all .typ files are sorted ascending and the first is picked.
 	TemplateName DefinedTemplateName
 
 	// Model may be nil or whatever fits the template. To know more, inspect the [Project.Examples] of what may
@@ -94,6 +96,10 @@ type ExecOptions struct {
 //   - if ExecType is Unprocessed|TextTemplateToText|HtmlTemplateToHtml and there is only a single file result, just return those bytes. Otherwise, return a zip file.
 //   - if ExecType is xToPDF try first to render locally and otherwise create a zip file, lookup a secret and try to render using a REST Service.
 type Execute func(subject auth.Subject, id ID, options ExecOptions) (io.ReadCloser, error)
+
+// FSExecute is like Execute but does not allow to be modified by the user. The files are directly evaluated but follow
+// the same rules as in [Execute].
+type FSExecute func(subject auth.Subject, fsys fs.FS, execType ExecType, options ExecOptions) (io.ReadCloser, error)
 
 // FindAll returns those Project entries, which are allowed by [Project.ReadableBy] (empty means, read by all). Also, the subject must
 // have the permission per se. If tags are empty, the filter is ignored. Otherwise, all tags are evaluated using AND
@@ -155,6 +161,7 @@ type Repository data.Repository[Project, ID]
 type UseCases struct {
 	FindAll                FindAll
 	Execute                Execute
+	FSExecute              FSExecute
 	Create                 Create
 	Delete                 Delete
 	EnsureBuildIn          EnsureBuildIn
@@ -194,6 +201,7 @@ func NewUseCases(files blob.Store, repository Repository) UseCases {
 		ExportZip:              NewExportZip(files, repository),
 		ImportZip:              NewImportZip(&mutex, files, repository),
 		Delete:                 NewDelete(&mutex, files, repository),
+		FSExecute:              NewFSExecute(),
 	}
 }
 
