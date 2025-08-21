@@ -10,7 +10,9 @@ import vue from '@vitejs/plugin-vue';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { PluginOption, defineConfig } from 'vite';
+import type { PluginOption } from 'vite';
+import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import svgLoader from 'vite-svg-loader';
 
@@ -21,7 +23,28 @@ const basePlugins: PluginOption[] = [
 	}),
 	vueDevTools(),
 ];
-const legacyPlugins: PluginOption[] = [];
+const legacyPlugins: PluginOption[] = [
+	viteStaticCopy({
+		targets: [
+			{
+				src: 'node_modules/es5-polyfill/dist/polyfill.min.js',
+				dest: 'assets',
+			},
+			{
+				src: 'node_modules/core-js-bundle/minified.js',
+				dest: 'assets',
+			},
+			{
+				src: 'node_modules/regenerator-runtime/runtime.js',
+				dest: 'assets',
+			},
+			{
+				src: 'node_modules/bowser/es5.js',
+				dest: 'assets',
+			},
+		],
+	}),
+];
 const modernPlugins: PluginOption[] = [
 	visualizer({
 		filename: 'dist/bundle-report.html',
@@ -60,7 +83,7 @@ export default defineConfig(({ mode }) => {
 				input: 'src/main.ts',
 				output: {
 					format: isModern ? 'es' : 'iife',
-				}
+				},
 			},
 			chunkSizeWarningLimit: isModern ? 600 : 5_000, // 600 KB, 5 MB
 		},
