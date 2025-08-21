@@ -15,8 +15,8 @@
 		<!-- TODO conceptually only the JIT will work efficiently!?! -->
 		<!-- <script src="https://cdn.tailwindcss.com"></script> -->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<!-- parse user agent for the script loader via https://github.com/bowser-js/bowser -->
-		<script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
+		<!-- parse user agent for the script loader via https://github.com/bowser-js/bowser es5.js file -->
+		<script src="/legacy/assets/es5.js"></script>
 		<title>Nago</title>
 	</head>
 	<body>
@@ -102,9 +102,9 @@
 
 						if (isOutdated) {
 							// manually load polyfills
-							loadScript(`https://cdn.jsdelivr.net/npm/es5-polyfill@0.0.6/dist/polyfill.min.js`, 'text/javascript');
-							loadScript(`https://cdn.jsdelivr.net/npm/core-js-bundle@3/minified.js`, 'text/javascript');
-							loadScript(`https://cdn.jsdelivr.net/npm/regenerator-runtime/runtime.js`, 'text/javascript');
+							loadScript(`/${buildType}/assets/polyfill.min.js`, 'text/javascript');
+							loadScript(`/${buildType}/assets/minified.js`, 'text/javascript');
+							loadScript(`/${buildType}/assets/runtime.js`, 'text/javascript');
 						}
 
 						// load build and stylesheets
