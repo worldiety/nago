@@ -13,7 +13,10 @@
 				"useBuiltIns": "entry",
 				"corejs": "3.6.5"
 			}
-		]
+		],
+		"@babel/preset-typescript"
 	],
-	"plugins": ["@babel/plugin-transform-modules-commonjs"]
+	"plugins": [
+		["@babel/plugin-transform-modules-umd", { "globals": { "bowser": "bowser" } }]
+	]
 }
