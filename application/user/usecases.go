@@ -8,6 +8,11 @@
 package user
 
 import (
+	"iter"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
@@ -19,10 +24,6 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
-	"iter"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Repository data.Repository[User, ID]
@@ -252,8 +253,8 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 
 	readMyContactFn := NewReadMyContact(users)
 
-	updateMyContactFn := NewUpdateMyContact(&globalLock, users)
-	updateOtherContactFn := NewUpdateOtherContact(&globalLock, users)
+	updateMyContactFn := NewUpdateMyContact(&globalLock, eventBus, users)
+	updateOtherContactFn := NewUpdateOtherContact(&globalLock, eventBus, users)
 	updateOtherRolesFn := NewUpdateOtherRoles(&globalLock, users)
 	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)
 	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)

@@ -8,10 +8,11 @@
 package user
 
 import (
+	"time"
+
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/license"
 	"golang.org/x/text/language"
-	"time"
 )
 
 type Created struct {
@@ -45,4 +46,9 @@ type MFACodeCreated struct {
 type ConsentChanged struct {
 	ID     consent.ID
 	Action consent.Action
+}
+
+type ContactUpdated struct {
+	ID      ID
+	Contact Contact
 }

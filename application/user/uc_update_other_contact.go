@@ -9,11 +9,13 @@ package user
 
 import (
 	"fmt"
-	"go.wdy.de/nago/pkg/std"
 	"sync"
+
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/std"
 )
 
-func NewUpdateOtherContact(mutex *sync.Mutex, repo Repository) UpdateOtherContact {
+func NewUpdateOtherContact(mutex *sync.Mutex, bus events.Bus, repo Repository) UpdateOtherContact {
 	return func(subject AuditableUser, id ID, contact Contact) error {
 		if err := subject.Audit(PermUpdateOtherContact); err != nil {
 			return err
@@ -34,6 +36,16 @@ func NewUpdateOtherContact(mutex *sync.Mutex, repo Repository) UpdateOtherContac
 
 		usr := optUsr.Unwrap()
 		usr.Contact = contact
-		return repo.Save(usr)
+
+		if err := repo.Save(usr); err != nil {
+			return fmt.Errorf("cannot save user: %w", err)
+		}
+
+		bus.Publish(ContactUpdated{
+			ID:      subject.ID(),
+			Contact: contact,
+		})
+
+		return nil
 	}
 }
