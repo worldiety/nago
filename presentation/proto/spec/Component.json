@@ -33,6 +33,7 @@
     "QrCode",
     "QrCodeReader",
     "BarChart",
-    "LineChart"
+    "LineChart",
+    "Video"
   ]
 }

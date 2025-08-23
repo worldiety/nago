@@ -309,6 +309,7 @@ func (QrCode) isComponent()         {}
 func (QrCodeReader) isComponent()   {}
 func (BarChart) isComponent()       {}
 func (LineChart) isComponent()      {}
+func (Video) isComponent()          {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -12209,6 +12210,162 @@ func (v *Chart) read(r *BinaryReader) error {
 	return nil
 }
 
+type Video struct {
+	Src   URI
+	Frame Frame
+	// If set to true, the video player will offer controls to allow users controlling things like volume, seeking or pause and resume.
+	Controls    Bool
+	Loop        Bool
+	Muted       Bool
+	PlaysInline Bool
+	Poster      URI
+	Autoplay    Bool
+}
+
+func (v *Video) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.Src.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.Controls.IsZero()
+	fields[4] = !v.Loop.IsZero()
+	fields[5] = !v.Muted.IsZero()
+	fields[6] = !v.PlaysInline.IsZero()
+	fields[7] = !v.Poster.IsZero()
+	fields[8] = !v.Autoplay.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Src.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Controls.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Loop.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Muted.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.PlaysInline.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Poster.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Autoplay.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Video) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Src.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Controls.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Loop.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Muted.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.PlaysInline.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Poster.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Autoplay.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13184,6 +13341,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 167:
 		var v LineHeight
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 168:
+		var v Video
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -15920,6 +16083,21 @@ func (v *LineHeight) reset() {
 	*v = LineHeight("")
 }
 
+func (v *Video) reset() {
+	v.Src.reset()
+	v.Frame.reset()
+	v.Controls.reset()
+	v.Loop.reset()
+	v.Muted.reset()
+	v.PlaysInline.reset()
+	v.Poster.reset()
+	v.Autoplay.reset()
+}
+
+func (v *Video) IsZero() bool {
+	return v.Src.IsZero() && v.Frame.IsZero() && v.Controls.IsZero() && v.Loop.IsZero() && v.Muted.IsZero() && v.PlaysInline.IsZero() && v.Poster.IsZero() && v.Autoplay.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -17028,6 +17206,13 @@ func (v *Chart) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *LineHeight) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(byteSlice, 167); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Video) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 168); err != nil {
 		return err
 	}
 	return nil

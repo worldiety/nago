@@ -1,0 +1,39 @@
+{
+  "kind": "Record",
+  "id": 168,
+  "fields": {
+    "1": {
+      "name": "Src",
+      "type": "URI"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "doc": "If set to true, the video player will offer controls to allow users controlling things like volume, seeking or pause and resume.",
+      "name":"Controls",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "Loop",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "Muted",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "PlaysInline",
+      "type": "Bool"
+    },
+    "7": {
+      "name": "Poster",
+      "type": "URI"
+    },
+    "8": {
+      "name": "Autoplay",
+      "type": "Bool"
+    }
+  }
+}

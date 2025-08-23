@@ -12814,6 +12814,169 @@ function writeTypeHeaderLineHeight(dst: BinaryWriter): void {
 	dst.writeTypeHeader(Shapes.BYTESLICE, 167);
 	return;
 }
+
+export class Video implements Writeable, Readable, Component {
+	public src?: URI;
+
+	public frame?: Frame;
+
+	// If set to true, the video player will offer controls to allow users controlling things like volume, seeking or pause and resume.
+	public controls?: Bool;
+
+	public loop?: Bool;
+
+	public muted?: Bool;
+
+	public playsInline?: Bool;
+
+	public poster?: URI;
+
+	public autoplay?: Bool;
+
+	constructor(
+		src: URI | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		controls: Bool | undefined = undefined,
+		loop: Bool | undefined = undefined,
+		muted: Bool | undefined = undefined,
+		playsInline: Bool | undefined = undefined,
+		poster: URI | undefined = undefined,
+		autoplay: Bool | undefined = undefined
+	) {
+		this.src = src;
+		this.frame = frame;
+		this.controls = controls;
+		this.loop = loop;
+		this.muted = muted;
+		this.playsInline = playsInline;
+		this.poster = poster;
+		this.autoplay = autoplay;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.src = readString(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 3: {
+					this.controls = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.loop = readBool(reader);
+					break;
+				}
+				case 5: {
+					this.muted = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.playsInline = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.poster = readString(reader);
+					break;
+				}
+				case 8: {
+					this.autoplay = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.src !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.controls !== undefined,
+			this.loop !== undefined,
+			this.muted !== undefined,
+			this.playsInline !== undefined,
+			this.poster !== undefined,
+			this.autoplay !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.src!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.controls!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.loop!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.muted!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.playsInline!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.poster!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.autoplay!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.src === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.controls === undefined &&
+			this.loop === undefined &&
+			this.muted === undefined &&
+			this.playsInline === undefined &&
+			this.poster === undefined &&
+			this.autoplay === undefined
+		);
+	}
+
+	reset(): void {
+		this.src = undefined;
+		this.frame = undefined;
+		this.controls = undefined;
+		this.loop = undefined;
+		this.muted = undefined;
+		this.playsInline = undefined;
+		this.poster = undefined;
+		this.autoplay = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 168);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -13574,6 +13737,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 167: {
 			const v = readString(src) as LineHeight;
+			return v;
+		}
+		case 168: {
+			const v = new Video();
+			v.read(src);
 			return v;
 		}
 	}
