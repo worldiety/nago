@@ -27,6 +27,7 @@ var (
 	PermCountAssignedUserLicense  = permission.Declare[CountAssignedUserLicense]("nago.user.count_assigned_user_license", "Anzahl Nutzerlizenzen ermitteln", "Träger dieser Berechtigung können die Menge einer zugewiesenen nutzerbasierten Lizenz ermitteln.")
 	PermRevokeAssignedUserLicense = permission.Declare[RevokeAssignedUserLicense]("nago.user.revoke_assigned_user_license", "Anzahl Nutzerlizenzen entfernen", "Träger dieser Berechtigung können eine Menge an zugewiesenen nutzerbasierten Lizenz von Nutzern anonym entfernen.")
 	PermAssignUserLicense         = permission.Declare[AssignUserLicense]("nago.user.assign_user_license", "Einem Nutzer eine Lizenz zuweisen", "Träger dieser Berechtigung können eine beliebige Lizenz einem beliebigen Nutzer zuweisen.")
+	PermExportUsers               = permission.Declare[ExportUsers]("nago.user.export_users", "Ausgewählte Nutzer exportieren", "Träger dieser Berechtigung können die Kontaktdaten beliebiger Nutzer exportieren.")
 
 	PermAddResourcePermissions    = permission.Declare[AddResourcePermissions]("nago.user.resource.addperm", "Eine Resourcen-Berechtigung einem Nutzer zuweisen", "Träger dieser Berechtigung können einem Nutzer eine Resourcen-orientierte Berechtigung zuweisen.")
 	PermRemoveResourcePermissions = permission.Declare[RemoveResourcePermissions]("nago.user.resource.removeperm", "Eine Resourcen-Berechtigung entfernen", "Träger dieser Berechtigung können die Resourcen-orientierte Berechtigungen eines Nutzers entfernen.")

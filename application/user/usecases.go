@@ -24,6 +24,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
+	"golang.org/x/text/language"
 )
 
 type Repository data.Repository[User, ID]
@@ -179,6 +180,19 @@ func (g Granting) Identity() GrantingKey {
 
 type GrantingIndexRepository data.Repository[Granting, GrantingKey]
 
+type ExportFormat int
+
+const (
+	ExportCSV ExportFormat = iota
+)
+
+type ExportUsersOptions struct {
+	Format   ExportFormat
+	Language language.Tag
+}
+
+type ExportUsers func(subject Subject, users []ID, opts ExportUsersOptions) ([]byte, error)
+
 type Compact struct {
 	ID          ID
 	Avatar      image.ID
@@ -230,6 +244,7 @@ type UseCases struct {
 	GrantPermissions          GrantPermissions
 	ListGrantedPermissions    ListGrantedPermissions
 	ListGrantedUsers          ListGrantedUsers
+	ExportUsers               ExportUsers
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -312,5 +327,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		GrantPermissions:          NewGrantPermissions(&globalLock, users, grantingIndexRepository, findByIdFn),
 		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
 		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
+		ExportUsers:               NewExportUsers(users),
 	}
 }

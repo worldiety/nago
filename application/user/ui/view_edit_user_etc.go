@@ -118,6 +118,17 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 	).FullWidth().Gap(ui.L32)
 }
 
+func etcActionExportUsers(wnd core.Window, action func()) core.View {
+	return etcAction(
+		wnd,
+		"Nutzer als CSV exportieren",
+		"Die ausgewählten Nutzer mit ihren persönlichen Daten in einer CSV Datei exportieren. Beachten Sie, dass die Verwendung dieser Daten ohne Zustimmung der Nutzer ein Verstoß gegen die DSGVO sein könnte.",
+		"",
+		"Nutzer exportieren",
+		action,
+	)
+}
+
 func etcActionDeleteUser(wnd core.Window, action func()) core.View {
 	return etcAction(
 		wnd,

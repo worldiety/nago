@@ -9,11 +9,12 @@ package uiuser
 
 import (
 	"fmt"
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"time"
 )
 
 func dialogEtcBatch(wnd core.Window, ucUsers user.UseCases, presented *core.State[bool], uids []user.ID) core.View {
@@ -66,6 +67,18 @@ func viewEtcBatch(wnd core.Window, ucUsers user.UseCases, uids []user.ID) core.V
 				}
 			}
 		}),
-		
+
+		etcActionExportUsers(wnd, func() {
+			buf, err := ucUsers.ExportUsers(wnd.Subject(), uids, user.ExportUsersOptions{
+				Format:   user.ExportCSV,
+				Language: wnd.Locale(),
+			})
+			if err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+
+			wnd.ExportFiles(core.ExportFileBytes("users.csv", buf))
+		}),
 	).FullWidth().Gap(ui.L32)
 }

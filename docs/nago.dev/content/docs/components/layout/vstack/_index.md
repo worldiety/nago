@@ -19,6 +19,7 @@ you need to apply additional padding.
 | `AccessibilityLabel(label string)` |  |
 | `Action(f func())` |  |
 | `Alignment(alignment Alignment)` |  |
+| `Animation(animation Animation)` |  |
 | `Append(children ...)` |  |
 | `BackgroundColor(backgroundColor Color)` |  |
 | `Border(border Border)` |  |
@@ -38,7 +39,9 @@ you need to apply additional padding.
 | `PressedBorder(border Border)` |  |
 | `StylePreset(preset StylePreset)` |  |
 | `TextColor(textColor Color)` |  |
+| `Transformation(transformation Transformation)` |  |
 | `Visible(visible bool)` |  |
+| `With(fn func(stack TVStack) TVStack)` |  |
 | `WithFrame(fn func(Frame) Frame)` |  |
 ---
 
