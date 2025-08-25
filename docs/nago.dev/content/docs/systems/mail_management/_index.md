@@ -10,13 +10,13 @@ galleryLogs:
   - src: "/images/systems/mail_management/galleries/logs/overview.png"
 galleryTemplates:
   - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/mail_management/galleries/templates/overview.png"
-  - src: "/images/systems/mail_management/galleries/templates/projects.png"
-  - src: "/images/systems/mail_management/galleries/templates/edit.png"
+  - src: "/images/systems/template_management/galleries/overview.png"
+  - src: "/images/systems/template_management/galleries/email_templates/projects.png"
+  - src: "/images/systems/template_management/galleries/email_templates/edit.png"
 ---
 The Mail Management system handles the sending of emails within the platform.
-It requires an SMTP secret created in [Secret Management](../secret_management/_index.md).
-It also integrates with [Template Management](../template_management/_index.md) to use customizable email templates for common workflows.
+It requires an SMTP secret created in [Secret Management](../secret_management/).
+It also integrates with [Template Management](../template_management/) to use customizable email templates for common workflows.
 
 {{< swiper name="galleryOverview" loop="false" >}}
 
@@ -46,14 +46,14 @@ Mail Management offers the following key functions:
 
 ## Dependencies
 **Requires:**
-- [Secret Management](../secret_management/_index.md) for storing SMTP credentials
-- [Template Management](../template_management/_index.md) for email templates
-- [User Management](../user_management/_index.md) for workflows such as password resets
+- [Secret Management](../secret_management/) for storing SMTP credentials
+- [Template Management](../template_management/) for email templates
+- [User Management](../user_management/) for workflows such as password resets
 
 If these are not already active, they will be enabled automatically when Mail Management is activated.
 
 **Is required by:**
-- [Session Management](../session_management/_index.md)
+- [Session Management](../session_management/)
 
 ## Activation
 This system is activated via:
