@@ -117,13 +117,13 @@ as these are used for rendering the UI of the secret.
 
 ## Dependencies
 **Requires:**
-- [User Management](../user_management/_index.md)
-- [Group Management](../group_management/_index.md)  
+- [User Management](../user_management/)
+- [Group Management](../group_management/)  
 
 If these are not already active, they will be enabled automatically when Secret Management is activated.
 
 **Is required by:**
-- [Mail Management](../mail_management/_index.md) – for storing SMTP configuration.
+- [Mail Management](../mail_management/) – for storing SMTP configuration.
 
 ## Activation
 This system is activated via the configurator:
