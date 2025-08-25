@@ -17,6 +17,13 @@ import (
 	"io"
 )
 
+// TemplateManagement is a nago system(Template Management).
+// Template Management is used for creating, editing, and managing reusable templates.
+// It provides a centralized way to separate content from code and supports multiple output formats,
+// including Go HTML templates for emails, plain text, and various text-to-PDF workflows (Typst, LaTeX, AsciiDoc).
+// The system is primarily used by other modules such as Mail Management for standardized emails,
+// but can also support document generation (e.g., reports, certificates, invoices).
+// By centralizing template logic, it increases flexibility, maintainability, and consistency across the platform.
 type TemplateManagement struct {
 	UseCases template.UseCases
 	Pages    uitemplate.Pages
