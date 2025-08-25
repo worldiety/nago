@@ -3607,13 +3607,15 @@ type HStack struct {
 	Disabled               Bool
 	Invisible              Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id        Str
-	TextColor Color
-	NoClip    Bool
+	Id             Str
+	TextColor      Color
+	NoClip         Bool
+	Animation      Animation
+	Transformation Transformation
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
-	var fields [25]bool
+	var fields [27]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -3638,6 +3640,8 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[22] = !v.Id.IsZero()
 	fields[23] = !v.TextColor.IsZero()
 	fields[24] = !v.NoClip.IsZero()
+	fields[25] = !v.Animation.IsZero()
+	fields[26] = !v.Transformation.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3840,6 +3844,22 @@ func (v *HStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[25] {
+		if err := w.writeFieldHeader(uvarint, 25); err != nil {
+			return err
+		}
+		if err := v.Animation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[26] {
+		if err := w.writeFieldHeader(record, 26); err != nil {
+			return err
+		}
+		if err := v.Transformation.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3972,6 +3992,16 @@ func (v *HStack) read(r *BinaryReader) error {
 			}
 		case 24:
 			err := v.NoClip.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.Animation.read(r)
+			if err != nil {
+				return err
+			}
+		case 26:
+			err := v.Transformation.read(r)
 			if err != nil {
 				return err
 			}
@@ -8345,13 +8375,15 @@ type VStack struct {
 	Disabled               Bool
 	Invisible              Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id        Str
-	TextColor Color
-	NoClip    Bool
+	Id             Str
+	TextColor      Color
+	NoClip         Bool
+	Animation      Animation
+	Transformation Transformation
 }
 
 func (v *VStack) write(w *BinaryWriter) error {
-	var fields [24]bool
+	var fields [26]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -8375,6 +8407,8 @@ func (v *VStack) write(w *BinaryWriter) error {
 	fields[21] = !v.Id.IsZero()
 	fields[22] = !v.TextColor.IsZero()
 	fields[23] = !v.NoClip.IsZero()
+	fields[24] = !v.Animation.IsZero()
+	fields[25] = !v.Transformation.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8569,6 +8603,22 @@ func (v *VStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[24] {
+		if err := w.writeFieldHeader(uvarint, 24); err != nil {
+			return err
+		}
+		if err := v.Animation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[25] {
+		if err := w.writeFieldHeader(record, 25); err != nil {
+			return err
+		}
+		if err := v.Transformation.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8696,6 +8746,16 @@ func (v *VStack) read(r *BinaryReader) error {
 			}
 		case 23:
 			err := v.NoClip.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
+			err := v.Animation.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.Transformation.read(r)
 			if err != nil {
 				return err
 			}
@@ -12366,6 +12426,177 @@ func (v *Video) read(r *BinaryReader) error {
 	return nil
 }
 
+type Animation uint64
+
+const (
+	AnimateTransition Animation = 1
+	AnimatePulse      Animation = 2
+	AnimateBounce     Animation = 3
+	AnimatePing       Animation = 4
+	AnimateSpin       Animation = 5
+)
+
+func (v *Animation) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *Animation) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = Animation(tmp)
+	return nil
+}
+
+func (v *Animation) reset() {
+	*v = Animation(0)
+}
+func (v *Animation) IsZero() bool {
+	return *v == 0
+}
+
+type Transformation struct {
+	TranslateX Length
+	TranslateY Length
+	TranslateZ Length
+	ScaleX     Float
+	ScaleY     Float
+	ScaleZ     Float
+	// RotateZ defines rotation in degree
+	RotateZ Float
+}
+
+func (v *Transformation) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.TranslateX.IsZero()
+	fields[2] = !v.TranslateY.IsZero()
+	fields[3] = !v.TranslateZ.IsZero()
+	fields[4] = !v.ScaleX.IsZero()
+	fields[5] = !v.ScaleY.IsZero()
+	fields[6] = !v.ScaleZ.IsZero()
+	fields[7] = !v.RotateZ.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.TranslateX.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.TranslateY.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.TranslateZ.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.ScaleX.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.ScaleY.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.ScaleZ.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.RotateZ.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Transformation) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.TranslateX.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.TranslateY.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.TranslateZ.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.ScaleX.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.ScaleY.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ScaleZ.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.RotateZ.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13347,6 +13578,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 168:
 		var v Video
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 169:
+		var v Animation
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 170:
+		var v Transformation
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -14482,10 +14725,12 @@ func (v *HStack) reset() {
 	v.Id.reset()
 	v.TextColor.reset()
 	v.NoClip.reset()
+	v.Animation.reset()
+	v.Transformation.reset()
 }
 
 func (v *HStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero()
 }
 
 func (v *Position) reset() {
@@ -15282,10 +15527,12 @@ func (v *VStack) reset() {
 	v.Id.reset()
 	v.TextColor.reset()
 	v.NoClip.reset()
+	v.Animation.reset()
+	v.Transformation.reset()
 }
 
 func (v *VStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero()
 }
 
 func (v *WebView) reset() {
@@ -16096,6 +16343,20 @@ func (v *Video) reset() {
 
 func (v *Video) IsZero() bool {
 	return v.Src.IsZero() && v.Frame.IsZero() && v.Controls.IsZero() && v.Loop.IsZero() && v.Muted.IsZero() && v.PlaysInline.IsZero() && v.Poster.IsZero() && v.Autoplay.IsZero()
+}
+
+func (v *Transformation) reset() {
+	v.TranslateX.reset()
+	v.TranslateY.reset()
+	v.TranslateZ.reset()
+	v.ScaleX.reset()
+	v.ScaleY.reset()
+	v.ScaleZ.reset()
+	v.RotateZ.reset()
+}
+
+func (v *Transformation) IsZero() bool {
+	return v.TranslateX.IsZero() && v.TranslateY.IsZero() && v.TranslateZ.IsZero() && v.ScaleX.IsZero() && v.ScaleY.IsZero() && v.ScaleZ.IsZero() && v.RotateZ.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -17213,6 +17474,20 @@ func (v *LineHeight) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Video) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 168); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Animation) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 169); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Transformation) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 170); err != nil {
 		return err
 	}
 	return nil

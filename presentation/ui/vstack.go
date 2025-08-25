@@ -33,6 +33,7 @@ type TVStack struct {
 	focusedBorder          proto.Border
 	pressedBorder          proto.Border
 	stylePreset            proto.StylePreset
+	transformation         Transformation
 
 	invisible bool
 	font      proto.Font
@@ -42,6 +43,7 @@ type TVStack struct {
 	position           Position
 	id                 string
 	noClip             bool
+	animation          Animation
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -178,6 +180,16 @@ func (c TVStack) ID(id string) TVStack {
 	return c
 }
 
+func (c TVStack) Animation(animation Animation) TVStack {
+	c.animation = animation
+	return c
+}
+
+func (c TVStack) Transformation(transformation Transformation) TVStack {
+	c.transformation = transformation
+	return c
+}
+
 func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.VStack{
@@ -193,6 +205,8 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Font:               c.font,
 		StylePreset:        c.stylePreset,
 		TextColor:          c.textColor,
+		Animation:          proto.Animation(c.animation),
+		Transformation:     c.transformation.ora(),
 
 		HoveredBackgroundColor: c.hoveredBackgroundColor,
 		PressedBackgroundColor: c.pressedBackgroundColor,

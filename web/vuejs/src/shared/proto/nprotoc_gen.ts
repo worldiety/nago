@@ -3877,6 +3877,10 @@ export class HStack implements Writeable, Readable, Component {
 
 	public noClip?: Bool;
 
+	public animation?: Animation;
+
+	public transformation?: Transformation;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -3901,7 +3905,9 @@ export class HStack implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
 		textColor: Color | undefined = undefined,
-		noClip: Bool | undefined = undefined
+		noClip: Bool | undefined = undefined,
+		animation: Animation | undefined = undefined,
+		transformation: Transformation | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -3927,6 +3933,8 @@ export class HStack implements Writeable, Readable, Component {
 		this.id = id;
 		this.textColor = textColor;
 		this.noClip = noClip;
+		this.animation = animation;
+		this.transformation = transformation;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4040,6 +4048,15 @@ export class HStack implements Writeable, Readable, Component {
 					this.noClip = readBool(reader);
 					break;
 				}
+				case 25: {
+					this.animation = readInt(reader);
+					break;
+				}
+				case 26: {
+					this.transformation = new Transformation();
+					this.transformation.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4073,6 +4090,8 @@ export class HStack implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.textColor !== undefined,
 			this.noClip !== undefined,
+			this.animation !== undefined,
+			this.transformation !== undefined && !this.transformation.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4172,6 +4191,14 @@ export class HStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 24);
 			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 25);
+			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.RECORD, 26);
+			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4199,7 +4226,9 @@ export class HStack implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			this.id === undefined &&
 			this.textColor === undefined &&
-			this.noClip === undefined
+			this.noClip === undefined &&
+			this.animation === undefined &&
+			(this.transformation === undefined || this.transformation.isZero())
 		);
 	}
 
@@ -4228,6 +4257,8 @@ export class HStack implements Writeable, Readable, Component {
 		this.id = undefined;
 		this.textColor = undefined;
 		this.noClip = undefined;
+		this.animation = undefined;
+		this.transformation = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8735,6 +8766,10 @@ export class VStack implements Writeable, Readable, Component {
 
 	public noClip?: Bool;
 
+	public animation?: Animation;
+
+	public transformation?: Transformation;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -8758,7 +8793,9 @@ export class VStack implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
 		textColor: Color | undefined = undefined,
-		noClip: Bool | undefined = undefined
+		noClip: Bool | undefined = undefined,
+		animation: Animation | undefined = undefined,
+		transformation: Transformation | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -8783,6 +8820,8 @@ export class VStack implements Writeable, Readable, Component {
 		this.id = id;
 		this.textColor = textColor;
 		this.noClip = noClip;
+		this.animation = animation;
+		this.transformation = transformation;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8892,6 +8931,15 @@ export class VStack implements Writeable, Readable, Component {
 					this.noClip = readBool(reader);
 					break;
 				}
+				case 24: {
+					this.animation = readInt(reader);
+					break;
+				}
+				case 25: {
+					this.transformation = new Transformation();
+					this.transformation.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8924,6 +8972,8 @@ export class VStack implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.textColor !== undefined,
 			this.noClip !== undefined,
+			this.animation !== undefined,
+			this.transformation !== undefined && !this.transformation.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9019,6 +9069,14 @@ export class VStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 23);
 			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 24);
+			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.RECORD, 25);
+			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -9045,7 +9103,9 @@ export class VStack implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			this.id === undefined &&
 			this.textColor === undefined &&
-			this.noClip === undefined
+			this.noClip === undefined &&
+			this.animation === undefined &&
+			(this.transformation === undefined || this.transformation.isZero())
 		);
 	}
 
@@ -9073,6 +9133,8 @@ export class VStack implements Writeable, Readable, Component {
 		this.id = undefined;
 		this.textColor = undefined;
 		this.noClip = undefined;
+		this.animation = undefined;
+		this.transformation = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -12977,6 +13039,165 @@ export class Video implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export type Animation = number;
+function writeTypeHeaderAnimation(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 169);
+	return;
+}
+// companion enum containing all defined constants for Animation
+export enum AnimationValues {
+	AnimateTransition = 1,
+	AnimatePulse = 2,
+	AnimateBounce = 3,
+	AnimatePing = 4,
+	AnimateSpin = 5,
+}
+
+export class Transformation implements Writeable, Readable {
+	public translateX?: Length;
+
+	public translateY?: Length;
+
+	public translateZ?: Length;
+
+	public scaleX?: Float;
+
+	public scaleY?: Float;
+
+	public scaleZ?: Float;
+
+	// RotateZ defines rotation in degree
+	public rotateZ?: Float;
+
+	constructor(
+		translateX: Length | undefined = undefined,
+		translateY: Length | undefined = undefined,
+		translateZ: Length | undefined = undefined,
+		scaleX: Float | undefined = undefined,
+		scaleY: Float | undefined = undefined,
+		scaleZ: Float | undefined = undefined,
+		rotateZ: Float | undefined = undefined
+	) {
+		this.translateX = translateX;
+		this.translateY = translateY;
+		this.translateZ = translateZ;
+		this.scaleX = scaleX;
+		this.scaleY = scaleY;
+		this.scaleZ = scaleZ;
+		this.rotateZ = rotateZ;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.translateX = readString(reader);
+					break;
+				}
+				case 2: {
+					this.translateY = readString(reader);
+					break;
+				}
+				case 3: {
+					this.translateZ = readString(reader);
+					break;
+				}
+				case 4: {
+					this.scaleX = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.scaleY = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.scaleZ = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.rotateZ = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.translateX !== undefined,
+			this.translateY !== undefined,
+			this.translateZ !== undefined,
+			this.scaleX !== undefined,
+			this.scaleY !== undefined,
+			this.scaleZ !== undefined,
+			this.rotateZ !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.translateX!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.translateY!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.translateZ!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.scaleX!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.scaleY!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.scaleZ!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.rotateZ!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.translateX === undefined &&
+			this.translateY === undefined &&
+			this.translateZ === undefined &&
+			this.scaleX === undefined &&
+			this.scaleY === undefined &&
+			this.scaleZ === undefined &&
+			this.rotateZ === undefined
+		);
+	}
+
+	reset(): void {
+		this.translateX = undefined;
+		this.translateY = undefined;
+		this.translateZ = undefined;
+		this.scaleX = undefined;
+		this.scaleY = undefined;
+		this.scaleZ = undefined;
+		this.rotateZ = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 170);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -13741,6 +13962,15 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 168: {
 			const v = new Video();
+			v.read(src);
+			return v;
+		}
+		case 169: {
+			const v = readInt(src) as Animation;
+			return v;
+		}
+		case 170: {
+			const v = new Transformation();
 			v.read(src);
 			return v;
 		}

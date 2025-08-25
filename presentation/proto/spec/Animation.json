@@ -1,0 +1,21 @@
+{
+  "kind": "Uint",
+  "id": 169,
+  "const": {
+    "1": {
+      "name": "AnimateTransition"
+    },
+    "2": {
+      "name": "AnimatePulse"
+    },
+    "3": {
+      "name": "AnimateBounce"
+    },
+    "4": {
+      "name": "AnimatePing"
+    },
+    "5": {
+      "name": "AnimateSpin"
+    }
+  }
+}

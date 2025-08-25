@@ -1,0 +1,35 @@
+{
+  "kind": "Record",
+  "id": 170,
+  "fields": {
+    "1": {
+      "name": "TranslateX",
+      "type": "Length"
+    },
+    "2": {
+      "name": "TranslateY",
+      "type": "Length"
+    },
+    "3": {
+      "name": "TranslateZ",
+      "type": "Length"
+    },
+    "4": {
+      "name": "ScaleX",
+      "type": "Float"
+    },
+    "5": {
+      "name": "ScaleY",
+      "type": "Float"
+    },
+    "6": {
+      "name": "ScaleZ",
+      "type": "Float"
+    },
+    "7": {
+      "doc": "RotateZ defines rotation in degree",
+      "name": "RotateZ",
+      "type": "Float"
+    }
+  }
+}

@@ -17,9 +17,16 @@ import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
+import { transformationCSS } from '@/components/shared/transformation';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { AlignmentValues, FunctionCallRequested, StylePresetValues, VStack } from '@/shared/proto/nprotoc_gen';
+import {
+	AlignmentValues,
+	AnimationValues,
+	FunctionCallRequested,
+	StylePresetValues,
+	VStack,
+} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: VStack;
@@ -51,6 +58,7 @@ function onKeydown(event: KeyboardEvent) {
 function commonStyles(): string[] {
 	let styles = frameCSS(props.ui.frame);
 	styles.push(...positionCSS(props.ui.position));
+	styles.push(...transformationCSS(props.ui.transformation));
 
 	// background handling
 	if (props.ui.pressedBackgroundColor && pressed.value) {
@@ -131,6 +139,24 @@ const clazz = computed<string>(() => {
 		classes.push('overflow-clip');
 	} else {
 		classes.push('overflow-visible');
+	}
+
+	switch (props.ui.animation) {
+		case AnimationValues.AnimateBounce:
+			classes.push('animate-bounce');
+			break;
+		case AnimationValues.AnimatePing:
+			classes.push('animate-ping');
+			break;
+		case AnimationValues.AnimatePulse:
+			classes.push('animate-pulse');
+			break;
+		case AnimationValues.AnimateSpin:
+			classes.push('animate-spin');
+			break;
+		case AnimationValues.AnimateTransition:
+			classes.push('transition-all');
+			break;
 	}
 
 	switch (props.ui.alignment) {

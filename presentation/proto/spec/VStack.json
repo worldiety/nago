@@ -96,6 +96,14 @@
     "23": {
       "name": "NoClip",
       "type": "Bool"
+    },
+    "24": {
+      "name": "Animation",
+      "type": "Animation"
+    },
+    "25": {
+      "name": "Transformation",
+      "type": "Transformation"
     }
   }
 }
