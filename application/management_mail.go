@@ -23,7 +23,7 @@ import (
 )
 
 // MailManagement is a nago system (Mail Management).
-// The Mail Management system is responsible for sending emails within the platform,
+// It is responsible for sending emails within the platform,
 // including notifications, password resets, and user registration confirmations.
 // It requires an SMTP secret configured SecretManagement.
 // and uses predefined templates from TemplateManagement, which can be customized as needed.
