@@ -26,7 +26,7 @@ import (
 )
 
 // UserManagement is a nago system(User Management).
-// The User Management system is responsible for creating, managing, and maintaining user accounts within the platform.
+// It is responsible for creating, managing, and maintaining user accounts within the platform.
 // It provides both administrative and self-service features, allowing administrators to manage users and permissions, while enabling end users to maintain their own profiles.
 // Typical workflows include:
 //   - Creating and deleting user accounts
