@@ -60,7 +60,7 @@ var HashAlgorithmValues = []HashAlgorithm{Argon2IdMin}
 
 type Email string
 
-var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$`)
+var regexMail = regexp.MustCompile(`^[\w-.]+@([\w-]+\.)+[\w-]{2,20}$`)
 
 // Valid checks if the Mail looks like structural valid mail. It does not mean that the address actually exists
 // or has been verified. There are also way more kinds of technical valid addresses, e.g. without a top level
