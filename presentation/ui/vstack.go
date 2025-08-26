@@ -35,8 +35,8 @@ type TVStack struct {
 	stylePreset            proto.StylePreset
 	transformation         Transformation
 
-	invisible bool
-	font      proto.Font
+	invisible bool       // controls visibility
+	font      proto.Font // font applied to text children
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	accessibilityLabel string
 	action             func()
@@ -204,7 +204,6 @@ func (c TVStack) ID(id string) TVStack {
 	return c
 }
 
-// Render builds and returns the protocol representation of the VStack.
 func (c TVStack) Animation(animation Animation) TVStack {
 	c.animation = animation
 	return c
@@ -215,6 +214,7 @@ func (c TVStack) Transformation(transformation Transformation) TVStack {
 	return c
 }
 
+// Render builds and returns the protocol representation of the VStack.
 func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.VStack{
