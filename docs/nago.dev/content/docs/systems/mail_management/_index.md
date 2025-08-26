@@ -44,6 +44,37 @@ Mail Management offers the following key functions:
 
 {{< swiper name="galleryTemplates" loop="false" >}}
 
+## Code usage
+
+In addition to the UI workflows, Mail Management can also be used directly in code.  
+The following example demonstrates how to send a simple text email via the `SendMail` use case:
+
+{{< callout type="warning" >}}
+An SMTP server must be configured, otherwise sending emails will fail.  
+See [Secret Management](../secret_management/) for configuration details.
+{{< /callout >}}
+
+```go
+import (
+    "go.wdy.de/nago/application/mail"
+    "go.wdy.de/nago/application/user"
+    "go.wdy.de/nago/pkg/std"
+    netmail "net/mail"
+)
+
+mailManagement := std.Must(cfg.MailManagement())
+
+_, err := mailManagement.UseCases.SendMail(user.SU(), mail.Mail {
+	To:       []netmail.Address{{Address: "nago@dev.com"}},
+	CC:       nil,
+	BCC:      nil,
+	From:     netmail.Address{},
+	Subject:  "Test Mail",
+	Parts:    []mail.Part{mail.NewTextPart("This mail was sent via the SendMail usecase.")},
+	SmtpHint: "",
+})
+```
+
 ## Dependencies
 **Requires:**
 - [Secret Management](../secret_management/) for storing SMTP credentials
