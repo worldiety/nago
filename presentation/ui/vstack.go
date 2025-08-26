@@ -12,36 +12,36 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TVStack is a layout component(VStack).
+// TVStack is a layout component (VStack).
 // VStack is a vertical layout container that arranges its child views in a column.
 // It supports alignment, spacing, background styling, borders, and interaction states.
-// The VStack is interactive if an action is defined and can respond to hover, press,
+// The VStack can be interactive if an action is defined and responds to hover, press,
 // and focus states with visual feedback.
 type TVStack struct {
-	children               []core.View
-	alignment              proto.Alignment
-	backgroundColor        proto.Color
-	textColor              proto.Color
-	hoveredBackgroundColor proto.Color
-	pressedBackgroundColor proto.Color
-	focusedBackgroundColor proto.Color
-	frame                  Frame
-	gap                    proto.Length
-	padding                proto.Padding
-	border                 proto.Border
-	hoveredBorder          proto.Border
-	focusedBorder          proto.Border
-	pressedBorder          proto.Border
-	stylePreset            proto.StylePreset
+	children               []core.View       // child views arranged in a vertical column
+	alignment              proto.Alignment   // alignment of children within the column
+	backgroundColor        proto.Color       // default background color
+	textColor              proto.Color       // default text color
+	hoveredBackgroundColor proto.Color       // background color when hovered
+	pressedBackgroundColor proto.Color       // background color when pressed
+	focusedBackgroundColor proto.Color       // background color when focused
+	frame                  Frame             // layout frame for sizing/positioning
+	gap                    proto.Length      // spacing between child views
+	padding                proto.Padding     // inner padding around child views
+	border                 proto.Border      // default border
+	hoveredBorder          proto.Border      // border when hovered
+	focusedBorder          proto.Border      // border when focused
+	pressedBorder          proto.Border      // border when pressed
+	stylePreset            proto.StylePreset // reusable style preset
 
-	invisible bool
-	font      proto.Font
+	invisible bool       // controls visibility
+	font      proto.Font // font applied to text children
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	accessibilityLabel string
-	action             func()
-	position           Position
-	id                 string
-	noClip             bool
+	accessibilityLabel string   // accessibility label for screen readers
+	action             func()   // optional action handler, makes the stack interactive
+	position           Position // explicit position settings
+	id                 string   // unique identifier
+	noClip             bool     // disables clipping of child content when true
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -54,126 +54,151 @@ func VStack(children ...core.View) TVStack {
 	return c
 }
 
+// Append adds additional child views to the VStack.
 func (c TVStack) Append(children ...core.View) TVStack {
 	c.children = append(c.children, children...)
 	return c
 }
 
+// Gap sets the spacing between child views.
 func (c TVStack) Gap(gap Length) TVStack {
 	c.gap = gap.ora()
 	return c
 }
 
+// Position sets the positioning of the VStack.
 func (c TVStack) Position(position Position) TVStack {
 	c.position = position
 	return c
 }
 
+// StylePreset applies a predefined style preset.
 func (c TVStack) StylePreset(preset StylePreset) TVStack {
 	c.stylePreset = preset.ora()
 	return c
 }
 
+// TextColor sets the default text color for the VStack.
 func (c TVStack) TextColor(textColor Color) TVStack {
 	c.textColor = textColor.ora()
 	return c
 }
 
+// BackgroundColor sets the background color.
 func (c TVStack) BackgroundColor(backgroundColor Color) TVStack {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
+// HoveredBackgroundColor sets the background color when hovered.
 func (c TVStack) HoveredBackgroundColor(backgroundColor Color) TVStack {
 	c.hoveredBackgroundColor = backgroundColor.ora()
 	return c
 }
 
+// PressedBackgroundColor sets the background color when pressed.
 func (c TVStack) PressedBackgroundColor(backgroundColor Color) TVStack {
 	c.pressedBackgroundColor = backgroundColor.ora()
 	return c
 }
 
+// FocusedBackgroundColor sets the background color when focused.
 func (c TVStack) FocusedBackgroundColor(backgroundColor proto.Color) TVStack {
 	c.focusedBackgroundColor = backgroundColor
 	return c
 }
 
+// Action assigns an action handler, making the VStack interactive.
 func (c TVStack) Action(f func()) TVStack {
 	c.action = f
 	return c
 }
 
+// NoClip disables clipping of child content when true.
 func (c TVStack) NoClip(b bool) TVStack {
 	c.noClip = b
 	return c
 }
 
+// Alignment sets the alignment of child views within the column.
 func (c TVStack) Alignment(alignment Alignment) TVStack {
 	c.alignment = alignment.ora()
 	return c
 }
 
+// Font sets the default font for text children.
 func (c TVStack) Font(font Font) TVStack {
 	c.font = font.ora()
 	return c
 }
 
+// Frame sets the layout frame of the VStack.
 func (c TVStack) Frame(f Frame) DecoredView {
 	c.frame = f
 	return c
 }
 
+// WithFrame modifies the current frame using the provided function.
 func (c TVStack) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// FullWidth sets the VStack to span 100% of the available width.
 func (c TVStack) FullWidth() TVStack {
 	c.frame.Width = "100%"
 	return c
 }
 
+// Padding sets the inner padding of the VStack.
 func (c TVStack) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
 	return c
 }
 
+// Border sets the default border styling.
 func (c TVStack) Border(border Border) DecoredView {
 	c.border = border.ora()
 	return c
 }
 
+// HoveredBorder sets the border styling when hovered.
 func (c TVStack) HoveredBorder(border Border) TVStack {
 	c.hoveredBorder = border.ora()
 	return c
 }
 
+// PressedBorder sets the border styling when pressed.
 func (c TVStack) PressedBorder(border Border) TVStack {
 	c.pressedBorder = border.ora()
 	return c
 }
 
+// FocusedBorder sets the border styling when focused.
 func (c TVStack) FocusedBorder(border Border) TVStack {
 	c.focusedBorder = border.ora()
 	return c
 }
 
+// Visible controls the visibility of the VStack.
 func (c TVStack) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
+// AccessibilityLabel sets the accessibility label for screen readers.
 func (c TVStack) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
+// ID assigns a unique identifier to the VStack.
 func (c TVStack) ID(id string) TVStack {
 	c.id = id
 	return c
 }
 
+// Render builds and returns the protocol representation of the VStack.
 func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.VStack{

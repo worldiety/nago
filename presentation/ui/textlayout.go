@@ -12,31 +12,38 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TTextLayout is a layout component (Text Layout).
+// It arranges multiple text (and text-like) child views with shared typography,
+// spacing, and alignment. Useful for paragraphs, captions, or any block of text
+// that needs consistent styling and optional interaction (action callback).
 type TTextLayout struct {
-	children        []core.View
-	alignment       proto.TextAlignment
-	backgroundColor proto.Color
-	frame           Frame
-	gap             proto.Length
-	padding         proto.Padding
-	border          proto.Border
-	invisible       bool
-	font            proto.Font
+	children        []core.View         // child views (typically text nodes)
+	alignment       proto.TextAlignment // text alignment for the block
+	backgroundColor proto.Color         // optional background fill
+	frame           Frame               // layout constraints (size, min/max)
+	gap             proto.Length        // spacing between children
+	padding         proto.Padding       // inner spacing around children
+	border          proto.Border        // border styling
+	invisible       bool                // hides the layout when true
+	font            proto.Font          // default font applied to children
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	accessibilityLabel string
-	action             func()
+	accessibilityLabel string // label for screen readers describing the text block
+	action             func() // optional click/tap action for the entire block
 }
 
+// Border applies the given border (widths, radii, colors, shadow) to the layout.
 func (c TTextLayout) Border(border Border) DecoredView {
 	c.border = border.ora()
 	return c
 }
 
+// Visible toggles visibility of the layout. Setting false hides it.
 func (c TTextLayout) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
+// AccessibilityLabel sets the screen-reader label describing the layout's content or purpose.
 func (c TTextLayout) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
@@ -52,46 +59,55 @@ func TextLayout(views ...core.View) TTextLayout {
 	}
 }
 
+// Action sets a callback function that is executed when the layout is clicked.
 func (c TTextLayout) Action(f func()) TTextLayout {
 	c.action = f
 	return c
 }
 
+// Alignment defines the text alignment within the layout.
 func (c TTextLayout) Alignment(alignment TextAlignment) TTextLayout {
 	c.alignment = proto.TextAlignment(alignment)
 	return c
 }
 
+// Font sets the font styling for the text in the layout.
 func (c TTextLayout) Font(font Font) TTextLayout {
 	c.font = font.ora()
 	return c
 }
 
+// Frame sets the dimensions and position of the layout.
 func (c TTextLayout) Frame(f Frame) DecoredView {
 	c.frame = f
 	return c
 }
 
+// WithFrame modifies the current frame using the provided function.
 func (c TTextLayout) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// FullWidth expands the layout to occupy the full available width.
 func (c TTextLayout) FullWidth() TTextLayout {
 	c.frame.Width = "100%"
 	return c
 }
 
+// Padding sets the inner spacing of the layout.
 func (c TTextLayout) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
 	return c
 }
 
+// BackgroundColor sets the background color of the layout.
 func (c TTextLayout) BackgroundColor(backgroundColor Color) DecoredView {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
+// Render converts the text layout into a renderable node.
 func (c TTextLayout) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.TextLayout{

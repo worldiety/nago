@@ -9,16 +9,20 @@ package ui
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/core"
 	"log/slog"
 	"math"
+
+	"go.wdy.de/nago/presentation/core"
 )
 
+// ViewWithSizeClass associates a view with a specific window size class.
+// It allows defining different views for different screen sizes.
 type ViewWithSizeClass struct {
-	SizeClass core.WindowSizeClass
-	View      func() core.View
+	SizeClass core.WindowSizeClass // the size class this view is intended for
+	View      func() core.View     // function that creates the view
 }
 
+// SizeClass creates a new ViewWithSizeClass from the given size class and view function.
 func SizeClass(class core.WindowSizeClass, view func() core.View) ViewWithSizeClass {
 	return ViewWithSizeClass{
 		SizeClass: class,
@@ -26,12 +30,14 @@ func SizeClass(class core.WindowSizeClass, view func() core.View) ViewWithSizeCl
 	}
 }
 
+// TViewThatMatches is a util component (View That Matches).
+// It selects the most appropriate view based on the current window's size class.
 type TViewThatMatches struct {
-	wnd     core.Window
-	matches []ViewWithSizeClass
+	wnd     core.Window         // current window context
+	matches []ViewWithSizeClass // candidate views for different size classes
 }
 
-// ViewThatMatches returns the best logical match for the given view with size class matcher.
+// ViewThatMatches creates a TViewThatMatches for a window and a set of size-specific views.
 func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) TViewThatMatches {
 	return TViewThatMatches{
 		wnd:     wnd,
@@ -39,6 +45,7 @@ func ViewThatMatches(wnd core.Window, matches ...ViewWithSizeClass) TViewThatMat
 	}
 }
 
+// Render selects and renders the most appropriate view based on the window's size class.
 func (t TViewThatMatches) Render(ctx core.RenderContext) core.RenderNode {
 	if len(t.matches) == 0 {
 		panic("you must provide at least a single matcher")
