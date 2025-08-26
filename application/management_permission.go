@@ -16,6 +16,11 @@ import (
 	"iter"
 )
 
+// PermissionManagement is a nago system(Permission Management).
+// It is responsible for managing permission.Permission.
+// These are the most fine-grained access control unit in the system.
+// They are always defined at development time in code, and cannot be created or modified at runtime.
+// Permissions can be granted to individual users or roles.
 type PermissionManagement struct {
 	UseCases permission.UseCases
 	Pages    uipermission.Pages
