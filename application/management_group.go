@@ -20,11 +20,10 @@ import (
 )
 
 // GroupManagement is a nago system(Group Management).
-// It is responsible for creating and managing user groups.
-// Groups are used to bundle users together and assign shared permissions.
+// It provides UseCases for creating and managing user groups.
+// Groups are used to bundle users together and control access to certain pages or resources.
 // They can be created, edited, and deleted via UI or code.
-// Group membership is managed through UserManagement, while groups define
-// names, descriptions, and rights to control access to features and pages.
+// Group membership is managed through UserManagement.
 // A special "System" group is created automatically for internal services
 // and is not intended for real users.
 type GroupManagement struct {

@@ -54,8 +54,6 @@ These allow integration into workflows beyond email, such as automated reporting
 **Is required by:**
 - [Mail Management](../mail_management/)
 
-If these are not already active, they will be enabled automatically when Template Management is activated.
-
 ## Activation
 This system is activated via:
 ```go
