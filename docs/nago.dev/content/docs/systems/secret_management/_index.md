@@ -20,6 +20,7 @@ Typical workflows include:
 - Deleting secrets
 - Sharing secrets with specific users or groups
 
+## SMTP server
 {{< swiper name="galleryOverview" loop="false" >}}
 
 {{< callout type="info" >}}
