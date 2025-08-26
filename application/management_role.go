@@ -20,6 +20,11 @@ import (
 	"iter"
 )
 
+// RoleManagement is a nago system(Role Management).
+// It provides UseCases for creating, editing, deleting roles.
+// Roles are used to grant users bundled permissions.
+// They can be created, edited, and deleted via UI or code.
+// Roles assignment is managed through UserManagement.
 type RoleManagement struct {
 	UseCases       role.UseCases
 	Pages          uirole.Pages
