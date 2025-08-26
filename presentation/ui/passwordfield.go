@@ -8,27 +8,33 @@
 package ui
 
 import (
+	"time"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
-	"time"
 )
 
+// TPasswordField is a composite component (Password Field).
+// It provides a secure input field for entering passwords or secrets.
+// Unlike normal text fields, it ensures that sensitive values are not exposed
+// after input. It supports validation feedback, debouncing, autocomplete
+// control, multiline behavior, accessibility labels, and styling options.
 type TPasswordField struct {
-	label               string
-	value               string
-	inputValue          *core.State[string]
-	supportingText      string
-	errorText           string
-	disabled            bool
-	style               proto.TextFieldStyle
-	disableDebounce     bool
-	disableAutocomplete bool
-	debounceTime        time.Duration
-	invisible           bool
-	frame               Frame
-	lines               int
-	id                  string
-	keydownEnter        func()
+	label               string               // field label shown to the user
+	value               string               // initial value (should not be reused after input for security reasons)
+	inputValue          *core.State[string]  // bound state for two-way data binding
+	supportingText      string               // optional supporting/helper text
+	errorText           string               // error message displayed when validation fails
+	disabled            bool                 // disables the input if true
+	style               proto.TextFieldStyle // visual style (e.g., outlined, filled)
+	disableDebounce     bool                 // disables input debouncing if true
+	disableAutocomplete bool                 // disables browser autocomplete if true
+	debounceTime        time.Duration        // custom debounce time for input updates
+	invisible           bool                 // hides the field if true
+	frame               Frame                // layout frame
+	lines               int                  // number of lines (0 = single-line text field, >0 = text area)
+	id                  string               // unique identifier
+	keydownEnter        func()               // callback for Enter key press
 }
 
 // PasswordField represents a secret entered by the user.
@@ -52,28 +58,34 @@ func PasswordField(label string, value string) TPasswordField {
 	return c
 }
 
+// AutoComplete enables or disables browser autocomplete for the field.
 func (c TPasswordField) AutoComplete(autoComplete bool) TPasswordField {
 	c.disableAutocomplete = !autoComplete
 	return c
 }
 
+// Padding sets the padding around the field.
 func (c TPasswordField) Padding(padding Padding) DecoredView {
 	return c // TODO
 }
 
+// Border sets the border styling of the field.
 func (c TPasswordField) Border(border Border) DecoredView {
 	return c // TODO
 }
 
+// AccessibilityLabel sets an accessibility label for screen readers.
 func (c TPasswordField) AccessibilityLabel(label string) DecoredView {
 	return c // TODO
 }
 
+// SupportingText sets helper text displayed below the field.
 func (c TPasswordField) SupportingText(text string) TPasswordField {
 	c.supportingText = text
 	return c
 }
 
+// ErrorText sets the error message displayed when validation fails.
 func (c TPasswordField) ErrorText(text string) TPasswordField {
 	c.errorText = text
 	return c
@@ -98,25 +110,30 @@ func (c TPasswordField) Debounce(enabled bool) TPasswordField {
 	return c
 }
 
+// Label sets the field label.
 func (c TPasswordField) Label(label string) {
 	c.label = label
 }
 
+// InputValue binds the password field to the given state for two-way data binding.
 func (c TPasswordField) InputValue(input *core.State[string]) TPasswordField {
 	c.inputValue = input
 	return c
 }
 
+// Disabled enables or disables the field.
 func (c TPasswordField) Disabled(disabled bool) TPasswordField {
 	c.disabled = disabled
 	return c
 }
 
+// Frame sets the layout frame for the field.
 func (c TPasswordField) Frame(frame Frame) DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame applies a transformation function to the field's frame.
 func (c TPasswordField) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
@@ -130,26 +147,31 @@ func (c TPasswordField) Lines(lines int) TPasswordField {
 	return c
 }
 
+// Visible sets the field's visibility.
 func (c TPasswordField) Visible(v bool) DecoredView {
 	c.invisible = !v
 	return c
 }
 
+// ID sets a unique identifier for the field.
 func (c TPasswordField) ID(id string) TPasswordField {
 	c.id = id
 	return c
 }
 
+// KeydownEnter sets a callback function to be triggered when the Enter key is pressed.
 func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
 	c.keydownEnter = fn
 	return c
 }
 
+// FullWidth expands the field to take up the full available width.
 func (c TPasswordField) FullWidth() TPasswordField {
 	c.frame = c.frame.FullWidth()
 	return c
 }
 
+// Render builds and returns the protocol representation of the password field.
 func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.PasswordField{
