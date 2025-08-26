@@ -8,11 +8,12 @@
 package ui
 
 import (
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"net/url"
 	"strings"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 const LinkTargetNewWindowOrTab = "_blank"
@@ -27,37 +28,43 @@ const (
 	TextAlignJustify TextAlignment = TextAlignment(proto.TextAlignJustify)
 )
 
-// TText is a basic component(Text).
-// This component displays a piece of text with rich styling and interaction options.
-// It can be used for static labels, links, or interactive elements with click actions.
+// TText is a basic component (Text).
+// This component displays text with customizable styling and interaction options.
+// It supports colors, background states, padding, borders, accessibility labels,
+// text alignment, and interaction callbacks.
+// It can be used for labels, inline text, or as an interactive element (e.g. links).
 type TText struct {
-	content                string
-	color                  proto.Color
-	backgroundColor        proto.Color
-	hoveredBackgroundColor proto.Color
-	pressedBackgroundColor proto.Color
-	focusedBackgroundColor proto.Color
-	font                   proto.Font
-	invisible              bool
-	onClick                func()
+	content                string      // the text content
+	color                  proto.Color // text color
+	backgroundColor        proto.Color // background color
+	hoveredBackgroundColor proto.Color // background color when hovered
+	pressedBackgroundColor proto.Color // background color when pressed
+	focusedBackgroundColor proto.Color // background color when focused
+	font                   proto.Font  // font styling (size, weight, etc.)
+	invisible              bool        // whether the text is hidden
+	onClick                func()      // optional legacy click handler
 
-	padding            proto.Padding
-	frame              Frame
-	border             proto.Border
-	hoveredBorder      proto.Border
-	focusedBorder      proto.Border
-	pressedBorder      proto.Border
-	accessibilityLabel string
-	textAlignment      TextAlignment
-	action             func()
-	lineBreak          bool
-	underline          bool
+	padding            proto.Padding // padding around the text
+	frame              Frame         // layout frame (size, width, height, etc.)
+	border             proto.Border  // border styling
+	hoveredBorder      proto.Border  // border styling on hover
+	focusedBorder      proto.Border  // border styling when focused
+	pressedBorder      proto.Border  // border styling when pressed
+	accessibilityLabel string        // accessibility label for screen readers
+	textAlignment      TextAlignment // text alignment (left, right, center, justify)
+	action             func()        // click/tap action
+	lineBreak          bool          // whether text should wrap
+	underline          bool          // underline the text
 }
 
+// MailTo creates a mailto: link text component.
+// When clicked, it opens the user's email client with the given email address.
 func MailTo(wnd core.Window, name string, email string) TText {
 	return Link(wnd, name, "mailto:"+email, "_parent")
 }
 
+// LinkWithAction creates an interactive link-like text component.
+// It applies underline styling, interactive color, and attaches an action callback.
 func LinkWithAction(text string, action func()) TText {
 	return Text(text).Underline(true).Action(action).Color(ColorInteractive)
 }

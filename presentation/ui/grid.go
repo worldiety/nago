@@ -8,43 +8,50 @@
 package ui
 
 import (
+	"math"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
-	"math"
 )
 
+// TGridCell is a layout component (Grid Cell).
+// It represents a single cell inside a grid layout, defining its
+// position, span, alignment, padding, and background color.
 type TGridCell struct {
-	body            core.View
-	colStart        int
-	colEnd          int
-	rowStart        int
-	rowEnd          int
-	colSpan         int
-	rowSpan         int
-	padding         proto.Padding
-	alignment       Alignment
-	backgroundColor Color
+	body            core.View     // the content rendered inside the grid cell
+	colStart        int           // starting column (1-based index)
+	colEnd          int           // ending column (1-based index)
+	rowStart        int           // starting row (1-based index)
+	rowEnd          int           // ending row (1-based index)
+	colSpan         int           // number of columns to span
+	rowSpan         int           // number of rows to span
+	padding         proto.Padding // spacing inside the grid cell
+	alignment       Alignment     // alignment of the content inside the cell
+	backgroundColor Color         // background color of the cell
 }
 
-// GridCell creates a cell based on the given body. Rows and Columns start at 1, not zero.
-// Without any alignment rules, the cell will stretch its body automatically to the calculated
-// cell dimensions. Otherwise, if a cell alignment is set, the size is wrap-content semantics
-// and the background of the grid will be visible. Thus, the default specification of no-alignment
-// is different here.
+// GridCell creates a new grid cell containing the given body view.
+// Rows and columns are 1-based (starting at 1). By default, the cell
+// uses Stretch alignment, meaning its content will expand to fill the
+// available space. If another alignment is set, the content uses
+// wrap-content semantics and the grid background becomes visible.
 func GridCell(body core.View) TGridCell {
 	return TGridCell{body: body, alignment: Stretch}
 }
 
+// Padding sets the inner spacing around the cell content.
 func (c TGridCell) Padding(p Padding) TGridCell {
 	c.padding = p.ora()
 	return c
 }
 
+// BackgroundColor sets the background color of the grid cell.
 func (c TGridCell) BackgroundColor(color Color) TGridCell {
 	c.backgroundColor = color
 	return c
 }
 
+// Alignment sets the alignment of the content within the grid cell.
 func (c TGridCell) Alignment(a Alignment) TGridCell {
 	c.alignment = a
 	return c
@@ -108,29 +115,36 @@ func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
 	}
 }
 
+// TGrid is a layout component (Grid).
+// It arranges its children into a grid of rows and columns.
+// The grid supports flexible sizing, spacing, alignment, borders,
+// accessibility labels, and visibility control. For complex cases
+// (e.g., overlapping cells), row/column boundaries must be explicitly defined.
 type TGrid struct {
-	cells              []TGridCell
-	backgroundColor    proto.Color
-	frame              Frame
-	rows               int
-	cols               int
-	colWidths          []proto.Length
-	rowGap             proto.Length
-	colGap             proto.Length
-	padding            proto.Padding
-	font               proto.Font
-	border             proto.Border
-	accessibilityLabel string
-	invisible          bool
+	cells              []TGridCell    // collection of grid cells
+	backgroundColor    proto.Color    // background color of the grid
+	frame              Frame          // layout frame for size and positioning
+	rows               int            // number of rows in the grid
+	cols               int            // number of columns in the grid
+	colWidths          []proto.Length // optional column widths
+	rowGap             proto.Length   // spacing between rows
+	colGap             proto.Length   // spacing between columns
+	padding            proto.Padding  // inner spacing around the grid
+	font               proto.Font     // font applied to text inside the grid
+	border             proto.Border   // border styling of the grid
+	accessibilityLabel string         // accessibility label for screen readers
+	invisible          bool           // when true, the grid is not rendered
 }
 
-// Grid is a complex component and hard to control. For simple situations, it usually works by just setting the
-// required amount of rows or columns. However, in complex (e.g. overlapping) situations, you must be as explicit
-// as possible and define the exact amount of rows and columns and for each cell the row-start/end and col-start/end.
+// Grid creates a new grid containing the given cells.
+// For simple cases, only rows or columns need to be set.
+// For complex layouts (like overlapping), rows, columns,
+// and explicit start/end positions must be defined.
 func Grid(cells ...TGridCell) TGrid {
 	return TGrid{cells: cells}
 }
 
+// Append adds one or more cells to the grid.
 func (c TGrid) Append(cells ...TGridCell) TGrid {
 	c.cells = append(c.cells, cells...)
 	return c
@@ -150,11 +164,13 @@ func (c TGrid) Gap(g Length) TGrid {
 	return c
 }
 
+// RowGap sets the vertical spacing between rows in the grid.
 func (c TGrid) RowGap(g Length) TGrid {
 	c.rowGap = g.ora()
 	return c
 }
 
+// ColGap sets the horizontal spacing between columns in the grid.
 func (c TGrid) ColGap(g Length) TGrid {
 	c.colGap = g.ora()
 	return c
@@ -177,51 +193,65 @@ func (c TGrid) Widths(colWidths ...Length) TGrid {
 	return c
 }
 
+// BackgroundColor sets the background color of the grid.
 func (c TGrid) BackgroundColor(backgroundColor Color) DecoredView {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
+// Frame sets the layout frame of the grid, including size and positioning.
 func (c TGrid) Frame(fr Frame) DecoredView {
 	c.frame = fr
 	return c
 }
 
+// WithFrame applies a transformation function to the grid's frame
+// and returns the updated component.
 func (c TGrid) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// FullWidth sets the grid to span the full available width.
 func (c TGrid) FullWidth() TGrid {
 	c.frame.Width = "100%"
 	return c
 }
 
+// Font sets the font style applied to text inside the grid.
 func (c TGrid) Font(font Font) DecoredView {
 	c.font = font.ora()
 	return c
 }
 
+// Border sets the border styling of the grid.
 func (c TGrid) Border(border Border) DecoredView {
 	c.border = border.ora()
 	return c
 }
 
+// Visible controls the visibility of the grid; setting false hides it.
 func (c TGrid) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
+// AccessibilityLabel sets the accessibility label of the grid,
+// used by screen readers.
 func (c TGrid) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
+// Padding sets the inner spacing around the grid.
 func (c TGrid) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
 	return c
 }
 
+// cellCount calculates the number of grid cells based on spans and column positions.
+// It accounts for cells with explicit colSpan or colStart/colEnd values, falling back
+// to counting as one cell if no span information is provided.
 func (c TGrid) cellCount() int {
 	count := 0
 	for _, cell := range c.cells {
@@ -241,6 +271,7 @@ func (c TGrid) cellCount() int {
 	return count
 }
 
+// Render builds and returns the protocol representation of the grid.
 func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
 	cells := make([]proto.GridCell, 0, len(c.cells))
 	for _, cell := range c.cells {
