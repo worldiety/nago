@@ -10,6 +10,10 @@ package userimporter
 import (
 	"context"
 	"fmt"
+	"iter"
+	"reflect"
+	"time"
+
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/dataimport/importer"
@@ -17,8 +21,6 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xstrings"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
-	"iter"
-	"reflect"
 )
 
 const (
@@ -115,7 +117,7 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			return fmt.Errorf("user email is required")
 		}
 
-		_, err = u.users.Create(user.SU(), user.ShortRegistrationUser{
+		createdUser, err := u.users.Create(user.SU(), user.ShortRegistrationUser{
 			Firstname:         usr.Firstname,
 			Lastname:          usr.Lastname,
 			Email:             usr.Email,
@@ -138,6 +140,24 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			}
 			return fmt.Errorf("cannot create user: %w", err)
 		}
+
+		// attach the consents, that requires a special use case
+		for _, cid := range usr.Consents {
+			err := u.users.Consent(user.SU(), createdUser.ID, cid, consent.Action{
+				At:       time.Now(),
+				Status:   consent.Approved,
+				Location: "userimporter",
+			})
+
+			if err != nil {
+				if opts.ContinueOnError {
+					continue
+				}
+
+				return fmt.Errorf("cannot import user consent: %v", err)
+			}
+		}
+
 	}
 
 	return nil
