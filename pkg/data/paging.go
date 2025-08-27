@@ -29,7 +29,7 @@ type PaginateOptions struct {
 // Page wraps a set of loaded items.
 type Page[E any] struct {
 	Items []E
-	// PageIdx is zero based.
+	// PageIdx is zero based. Note that this may be different from the requested page, if the page would be behind the dataset
 	PageIdx   int
 	PageSize  int
 	PageCount int
@@ -78,6 +78,12 @@ func Paginate[E Aggregate[ID], ID IDType](findByID ByIDFinder[E, ID], it iter.Se
 
 	if len(idents) == 0 {
 		return page, nil
+	}
+	if len(idents) < opts.PageIdx*opts.PageSize {
+		// this happens e.g. if the UI requests e.g. the second page and then applies a filter, which will cause a drop
+		// of entries below the entire result set
+		opts.PageIdx = len(idents) / opts.PageSize
+		page.PageIdx = opts.PageIdx
 	}
 
 	offsetStart := min(opts.PageIdx*opts.PageSize, len(idents))

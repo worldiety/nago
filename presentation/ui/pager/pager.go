@@ -16,10 +16,10 @@ import (
 )
 
 type TPager struct {
-	count   int
-	page    *core.State[int]
-	frame   ui.Frame
-	visible bool
+	count     int
+	page      *core.State[int]
+	frame     ui.Frame
+	invisible bool
 }
 
 // Pager creates a new Page with the given state.
@@ -42,12 +42,12 @@ func (c TPager) Frame(frame ui.Frame) TPager {
 }
 
 func (c TPager) Visible(v bool) TPager {
-	c.visible = v
+	c.invisible = !v
 	return c
 }
 
 func (c TPager) Render(ctx core.RenderContext) core.RenderNode {
-	if !c.visible {
+	if c.invisible {
 		return ui.VStack().Visible(false).Render(ctx)
 	}
 

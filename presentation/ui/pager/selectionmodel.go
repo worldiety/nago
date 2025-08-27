@@ -181,9 +181,14 @@ func (m Model[E, ID]) PageString() string {
 		return "Keine Einträge"
 	}
 
-	if to > len(m.Selections) {
+	if m.Page.PageIdx == 0 && len(m.Page.Items) < m.Page.PageSize {
 		// just a single page
-		return fmt.Sprintf("%d Einträge", len(m.Selections))
+		if len(m.Page.Items) == len(m.Selections) {
+			return fmt.Sprintf("%d Einträge", len(m.Page.Items))
+		}
+
+		// this is a single page but filtered
+		return fmt.Sprintf("%d Einträge sichtbar von %d", len(m.Page.Items), len(m.Selections))
 	}
 
 	return fmt.Sprintf("%d-%d von %d Einträgen", m.Page.PageIdx*m.Page.PageSize+1, to, m.Page.Total)
