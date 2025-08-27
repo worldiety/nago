@@ -12,6 +12,10 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// Marker represents an annotation for a specific data point within a bar chart.
+// It can highlight or label values by attaching a text label, size, color, and
+// optional styles (e.g., rounded or dashed). The marker is associated with a
+// specific series and data point index.
 type Marker struct {
 	Label          string
 	SeriesIndex    int
@@ -24,6 +28,9 @@ type Marker struct {
 	Dashed         bool
 }
 
+// Ora converts the Marker into its proto.BarChartMarker representation,
+// mapping all configuration fields (position, style, and label) into the
+// protocol buffer format used for rendering.
 func (m Marker) Ora() proto.BarChartMarker {
 	return proto.BarChartMarker{
 		Label:          proto.Str(m.Label),

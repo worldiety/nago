@@ -13,6 +13,8 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
+// wndImportFiles opens a file import dialog for single PNG/JPEG uploads.
+// On success, it creates a new SrcSet via setCreator and updates the state.
 func wndImportFiles(wnd core.Window, setCreator image.CreateSrcSet, selfId string, state *core.State[image.ID]) {
 	wnd.ImportFiles(core.ImportFilesOptions{
 		ID:               selfId + "-upload",

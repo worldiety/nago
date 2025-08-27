@@ -12,10 +12,13 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+// TDivider is a utility component (Divider).
+// It is typically used to visually separate sections of content.
+// The divider can be styled with frame, border, and padding.
 type TDivider struct {
-	frame   proto.Frame
-	border  proto.Border
-	padding proto.Padding
+	frame   proto.Frame   // layout frame defining size and positioning
+	border  proto.Border  // border styling, typically a thin line
+	padding proto.Padding // spacing around the divider
 }
 
 // HLineWithColor configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
@@ -55,23 +58,27 @@ func VLine() TDivider {
 		Padding(Padding{}.Horizontal(L16))
 }
 
+// Padding sets the spacing around the divider.
 func (c TDivider) Padding(padding Padding) TDivider {
 	c.padding = padding.ora()
 	return c
 }
 
+// Frame sets the layout frame of the divider, including size and positioning.
 func (c TDivider) Frame(frame Frame) TDivider {
 	c.frame = frame.ora()
 	return c
 }
 
+// Border sets the border styling of the divider, typically its line thickness and color.
 func (c TDivider) Border(border Border) TDivider {
 	c.border = border.ora()
 	return c
 }
 
+// Render builds and returns the protocol representation of the divider,
+// including its frame, border, and padding.
 func (c TDivider) Render(ctx core.RenderContext) core.RenderNode {
-
 	return &proto.Divider{
 		Frame:   c.frame,
 		Border:  c.border,

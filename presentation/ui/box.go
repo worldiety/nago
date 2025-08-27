@@ -17,6 +17,9 @@ type alignedComponent struct {
 	Alignment proto.Alignment
 }
 
+// BoxLayout defines a layout configuration.
+// It specifies which child views are placed at the top, bottom,
+// center, leading, trailing, or any of the four corners.
 type BoxLayout struct {
 	Top            core.View
 	Center         core.View
@@ -29,6 +32,11 @@ type BoxLayout struct {
 	BottomTrailing core.View
 }
 
+// TBox is a layout component (Box).
+// It lays out its children according to BoxLayout rules. By definition,
+// the container clips its children. This makes it suitable for overlapping
+// layouts, but usually requires absolute height and width. Shadows may require
+// extra padding since clipped children cannot extend beyond the container.
 type TBox struct {
 	children           []alignedComponent
 	backgroundColor    proto.Color
@@ -40,6 +48,8 @@ type TBox struct {
 	invisible          bool
 }
 
+// BoxAlign creates a new Box with a single child aligned according to
+// the given alignment position (e.g., Top, Center, Bottom, etc.).
 func BoxAlign(alignment Alignment, child core.View) TBox {
 	var bl BoxLayout
 	switch alignment {
@@ -144,51 +154,64 @@ func Box(layout BoxLayout) TBox {
 	return c
 }
 
+// Padding sets the inner spacing around the box's children.
 func (c TBox) Padding(p Padding) DecoredView {
 	c.padding = p.ora()
 	return c
 }
 
+// BackgroundColor sets the background color of the box.
 func (c TBox) BackgroundColor(backgroundColor Color) DecoredView {
 	c.backgroundColor = backgroundColor.ora()
 	return c
 }
 
+// Frame sets the layout frame of the box, including size and positioning.
 func (c TBox) Frame(fr Frame) DecoredView {
 	c.frame = fr
 	return c
 }
 
+// WithFrame applies a transformation function to the box's frame
+// and returns the updated component.
 func (c TBox) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// FullWidth sets the box to span the full available width.
 func (c TBox) FullWidth() TBox {
 	c.frame.Width = "100%"
 	return c
 }
 
+// Font sets the font style for text content inside the box.
 func (c TBox) Font(font Font) DecoredView {
 	c.font = font.ora()
 	return c
 }
 
+// Border sets the border styling of the box.
 func (c TBox) Border(border Border) DecoredView {
 	c.border = border.ora()
 	return c
 }
 
+// Visible controls the visibility of the box; setting false hides it.
 func (c TBox) Visible(visible bool) DecoredView {
 	c.invisible = !visible
 	return c
 }
 
+// AccessibilityLabel sets a label used by screen readers for accessibility.
 func (c TBox) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
 	return c
 }
 
+// Render builds and returns the protocol representation of the box,
+// including its children, frame, background color, padding, and border.
+// Each child is rendered according to its alignment within the box.
 func (c TBox) Render(ctx core.RenderContext) core.RenderNode {
 	var tmp []proto.AlignedComponent
 	for _, child := range c.children {

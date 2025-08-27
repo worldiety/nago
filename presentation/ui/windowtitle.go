@@ -12,16 +12,20 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TWindowTitle is a utility component(Window Title).
-// This component sets the browser or application window title which is also displayed in the browser tab.
+// TWindowTitle is a utility component (Window Title).
+// This component sets the browser or application window title,
+// which is also displayed in the browser tab.
 type TWindowTitle struct {
-	title string
+	title string // the window title text
 }
 
+// WindowTitle creates a new TWindowTitle with the given title text.
 func WindowTitle(title string) TWindowTitle {
 	return TWindowTitle{title: title}
 }
 
+// Render builds the protocol representation of the window title.
+// It sets the title value that will be displayed in the browser or application.
 func (c TWindowTitle) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.WindowTitle{
 		Value: proto.Str(c.title),

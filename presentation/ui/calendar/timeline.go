@@ -16,6 +16,12 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// timelineLane renders a single lane within the timeline view.
+//
+// A lane consists of two main areas:
+//  1. The **lane header** on the left, showing the label of the lane.
+//  2. The **lane events area** on the right, which displays the lane's events,
+//     background grid, and separators.
 func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
 	// background padding look-through
 	var bgTop ui.Length = "0rem"
@@ -68,6 +74,8 @@ func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
 	).FullWidth().Alignment(ui.Stretch)
 }
 
+// timelineEventPill renders a timeline event as a pill with optional pre/post durations,
+// a category color bar, and an event body that can include hover/click actions.
 func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
 	left := iv.Percent(e.From.At).Length()
 	right := (100 - iv.Percent(e.To.At)).Length()
@@ -105,6 +113,8 @@ func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
 		Frame(ui.Frame{Width: ui.Full})
 }
 
+// renderTimelineYear builds a year-view calendar layout with a header row
+// (lane label + month labels) and corresponding timeline lanes for events.
 func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 
 	widthLane := c.vp.LaneWidth.Length()
@@ -136,6 +146,8 @@ func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 		Render(ctx)
 }
 
+// laneCluster represents a group of events within the same lane,
+// including metadata to mark the first and last lane in the timeline.
 type laneCluster struct {
 	Label  string
 	Events []Event
@@ -143,6 +155,8 @@ type laneCluster struct {
 	last   bool
 }
 
+// mapLanes groups events by their lane label within the viewport range,
+// clamps their start/end times to fit, and marks the first/last lane.
 func mapLanes(vp ViewPort, events []Event) []laneCluster {
 	tmp := map[string]laneCluster{}
 	for _, event := range events {

@@ -13,6 +13,10 @@ import (
 	"go.wdy.de/nago/presentation/ui/stepper"
 )
 
+// TMultiSteps is a composite component (Multi Steps).
+// This component manages and displays a sequence of steps,
+// tracking the active step index, available steps, and a completion button.
+// It can also apply custom logic to determine if a step can be shown.
 type TMultiSteps struct {
 	activeIndex *core.State[int]
 	buttonDone  core.View
@@ -21,30 +25,36 @@ type TMultiSteps struct {
 	frame       ui.Frame
 }
 
+// MultiSteps creates a new TMultiSteps with the provided steps.
 func MultiSteps(steps ...TStep) TMultiSteps {
 	return TMultiSteps{steps: steps}
 }
 
+// InputValue binds the active step index state to the multi-steps component.
 func (c TMultiSteps) InputValue(idx *core.State[int]) TMultiSteps {
 	c.activeIndex = idx
 	return c
 }
 
+// ButtonDone sets the view to display when the steps are completed.
 func (c TMultiSteps) ButtonDone(view core.View) TMultiSteps {
 	c.buttonDone = view
 	return c
 }
 
+// CanShow sets a predicate to control whether a given step can be shown.
 func (c TMultiSteps) CanShow(fn func(currentIdx int, wantedIndex int) bool) TMultiSteps {
 	c.canShow = fn
 	return c
 }
 
+// Frame sets the layout frame of the multi-steps component.
 func (c TMultiSteps) Frame(frame ui.Frame) TMultiSteps {
 	c.frame = frame
 	return c
 }
 
+// Render shows the current step with a stepper and nav buttons; clamps the index and respects CanShow.
 func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 	if c.activeIndex == nil {
 		c.activeIndex = core.AutoState[int](ctx.Window())
@@ -107,23 +117,28 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 	).Frame(c.frame).Render(ctx)
 }
 
+// TStep is a basic component (Step).
+// Each step contains a body view with optional headline and supporting text.
 type TStep struct {
-	headline       string
-	supportingText string
-	body           core.View
+	headline       string    // title of the step
+	supportingText string    // descriptive text for the step
+	body           core.View // main content of the step
 }
 
+// Step creates a new TStep with the given body view.
 func Step(body core.View) TStep {
 	return TStep{
 		body: body,
 	}
 }
 
+// Headline sets the headline text of the step.
 func (c TStep) Headline(headline string) TStep {
 	c.headline = headline
 	return c
 }
 
+// SupportingText sets the supporting text of the step.
 func (c TStep) SupportingText(supportingText string) TStep {
 	c.supportingText = supportingText
 	return c

@@ -9,13 +9,17 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
+// Shadow is a utility component (Shadow).
+// It defines shadow styling properties that can be applied to components.
+// A shadow consists of a color, blur radius, and X/Y offsets.
 type Shadow struct {
-	Color  Color
-	Radius Length
-	X      Length
-	Y      Length
+	Color  Color  // shadow color
+	Radius Length // blur radius of the shadow
+	X      Length // horizontal offset
+	Y      Length // vertical offset
 }
 
+// ora converts the Shadow into its protocol representation.
 func (s Shadow) ora() proto.Shadow {
 	return proto.Shadow{
 		Color:  proto.Color(s.Color),

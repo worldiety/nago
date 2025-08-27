@@ -10,6 +10,7 @@ package ui
 import (
 	"bytes"
 	"encoding/base64"
+
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/presentation/core"
@@ -36,20 +37,25 @@ const (
 	FitNone ObjectFit = 4
 )
 
+// TImage is a basic component (Image).
+// It displays raster or vector images with support for light/dark mode variants,
+// SVG embedding, object fit, custom colors, borders, padding, and accessibility.
+// The component can also be toggled invisible when needed.
 type TImage struct {
-	lightUri, darkUri  proto.URI
-	accessibilityLabel string
-	invisible          bool
-	border             proto.Border
-	frame              Frame
-	padding            proto.Padding
-	svg                proto.SVG
-	fillColor          proto.Color
-	strokeColor        proto.Color
-	objectFit          ObjectFit
-	light, dark        []byte
+	lightUri, darkUri  proto.URI     // URIs for light and dark mode images
+	accessibilityLabel string        // label for accessibility (e.g., screen readers)
+	invisible          bool          // when true, the image is not rendered
+	border             proto.Border  // border styling around the image
+	frame              Frame         // layout frame for size and positioning
+	padding            proto.Padding // inner spacing around the image
+	svg                proto.SVG     // embedded SVG content
+	fillColor          proto.Color   // fill color for SVGs
+	strokeColor        proto.Color   // stroke color for SVGs
+	objectFit          ObjectFit     // how the image should scale within its frame
+	light, dark        []byte        // optional inline binary image data for light/dark mode
 }
 
+// Image creates a new image with a default frame size of Auto x L160.
 func Image() TImage {
 	return TImage{
 		frame: Frame{}.Size(Auto, L160),
@@ -83,6 +89,9 @@ func (c TImage) URIAdaptive(light, dark core.URI) TImage {
 	return c
 }
 
+// Adaptive sets the image to use different sources for light and dark themes.
+// It generates URIs for both light and dark variants with fixed dimensions (512x512)
+// and no fitting, then applies them to the image.
 func (c TImage) Adaptive(light, dark image.ID) TImage {
 	return c.URIAdaptive(
 		httpimage.URI(light, image.FitNone, 512, 512),
@@ -131,36 +140,45 @@ func (c TImage) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
+// Visible controls the visibility of the image; setting false hides it.
 func (c TImage) Visible(b bool) DecoredView {
 	c.invisible = b
 	return c
 }
 
+// Padding sets the inner spacing around the image.
 func (c TImage) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
 	return c
 }
 
+// Border sets the border styling of the image.
 func (c TImage) Border(border Border) DecoredView {
 	c.border = border.ora()
 	return c
 }
 
+// Frame sets the layout frame of the image, including size and positioning.
 func (c TImage) Frame(frame Frame) DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame applies a transformation function to the image's frame
+// and returns the updated component.
 func (c TImage) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// ObjectFit sets how the image should be resized or scaled inside its frame
+// (e.g., contain, cover, or none).
 func (c TImage) ObjectFit(fit ObjectFit) TImage {
 	c.objectFit = fit
 	return c
 }
 
+// Render builds and returns the protocol representation of the image.
 func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 	// start of delayed encoding
 	if c.light != nil || c.dark != nil {

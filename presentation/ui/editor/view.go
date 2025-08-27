@@ -18,6 +18,9 @@ const (
 	toolbarWidth = ui.L320
 )
 
+// TScreen is a composite component (Screen).
+// This component models a full application screen with title, header,
+// navbar, tool windows, main content, and optional modals.
 type TScreen struct {
 	title              string
 	header             THeader
@@ -28,42 +31,52 @@ type TScreen struct {
 	modals             []core.View
 }
 
+// Screen creates a new TScreen with the given title.
 func Screen(title string) TScreen {
 	return TScreen{
 		title: title,
 	}
 }
 
+// Header sets the header section of the screen.
 func (c TScreen) Header(header THeader) TScreen {
 	c.header = header
 	return c
 }
 
+// Navbar sets the navigation bar of the screen.
 func (c TScreen) Navbar(navbar TNavbar) TScreen {
 	c.navbar = navbar
 	return c
 }
 
+// LeadingToolWindows sets the leading-side tool windows of the screen.
 func (c TScreen) LeadingToolWindows(leading ...TVToolWindow) TScreen {
 	c.leadingToolWindows = leading
 	return c
 }
 
+// TrailingToolWindow sets the trailing-side tool window of the screen.
 func (c TScreen) TrailingToolWindow(tailing TVToolWindow) TScreen {
 	c.toolwindowTrailing = tailing
 	return c
 }
 
+// Content sets the main content area of the screen.
 func (c TScreen) Content(content TContent) TScreen {
 	c.content = content
 	return c
 }
 
+// Modals sets the modal dialogs of the screen.
 func (c TScreen) Modals(modals ...core.View) TScreen {
 	c.modals = modals
 	return c
 }
 
+// Render builds and returns the RenderNode for the TScreen.
+// The entire screen is rendered as a fixed, full-size container with
+// a background color.
 func (c TScreen) Render(ctx core.RenderContext) core.RenderNode {
 	var tmp []core.View
 	tmp = append(tmp,
