@@ -28,7 +28,7 @@ type Message struct {
 	Time    time.Time
 }
 
-// TComment is a util component(Comment).
+// TComment is a overlay component(Comment).
 // It manages the comment text, selection state, and optional resolution.
 // A custom view function can be provided to render the comment.
 type TComment struct {

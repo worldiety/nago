@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TDivider is a util component (Divider).
+// TDivider is a utility component (Divider).
 // It is typically used to visually separate sections of content.
 // The divider can be styled with frame, border, and padding.
 type TDivider struct {

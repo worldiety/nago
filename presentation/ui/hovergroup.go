@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// THoverGroup is a composite component (Hover Group).
+// THoverGroup is a overlay component (Hover Group).
 // It displays one view by default and replaces it with an alternate view
 // when hovered. Useful for interactive UI elements such as cards or buttons
 // that reveal additional content on hover. The group supports styling with

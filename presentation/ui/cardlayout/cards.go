@@ -21,7 +21,7 @@ type sizeClassColumns struct {
 	Columns   int
 }
 
-// TCardLayout is a container component (Card Layout).
+// TCardLayout is a layout component (Card Layout).
 // It organizes child views into a grid-like layout, typically using multiple
 // columns. The number of columns can be defined globally or customized per
 // window size class to enable responsive design.

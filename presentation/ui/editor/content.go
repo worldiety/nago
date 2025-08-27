@@ -19,7 +19,7 @@ const (
 	ContentPage
 )
 
-// TContent is a composite component (Content).
+// TContent is a utility component (Content).
 // This component holds a single view with an associated style
 // and can be toggled visible or hidden.
 type TContent struct {

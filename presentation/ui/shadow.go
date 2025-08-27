@@ -9,7 +9,7 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
-// Shadow is a util component (Shadow).
+// Shadow is a utility component (Shadow).
 // It defines shadow styling properties that can be applied to components.
 // A shadow consists of a color, blur radius, and X/Y offsets.
 type Shadow struct {

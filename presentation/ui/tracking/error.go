@@ -83,7 +83,7 @@ func requestSupportView(wnd core.Window, code AnonymousErrorCode) core.View {
 
 }
 
-// TErrorView is a UI component for displaying errors (Error View).
+// TErrorView is a feedback component (Error View).
 // It shows an error message inside a styled container with optional
 // padding, spacing, borders, and layout configuration. Typically used
 // to surface application or runtime errors to the user.
