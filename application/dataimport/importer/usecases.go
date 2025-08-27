@@ -9,10 +9,11 @@ package importer
 
 import (
 	"context"
-	"github.com/worldiety/jsonptr"
-	"go.wdy.de/nago/presentation/core"
 	"iter"
 	"reflect"
+
+	"github.com/worldiety/jsonptr"
+	"go.wdy.de/nago/presentation/core"
 )
 
 type ID string
@@ -28,6 +29,8 @@ type Configuration struct {
 
 	// ExpectedType represents the actual type which is used to coerce the schema of the [jsonptr.Obj].
 	ExpectedType reflect.Type
+
+	ImportOptionsType reflect.Type
 
 	// PreviewMappings are evaluated to generate a preview from input or transformed data.
 	// If there are dozens of fields, we cannot display all of them. And usually a lot of them are
@@ -49,6 +52,9 @@ type Options struct {
 	// MergeDuplicates tells the importer, that candidates which are almost certain a duplicate, shall be merged
 	// if a unique constraint of an identity would otherwise fail.
 	MergeDuplicates bool
+
+	// Options is either nil or contains an instance of [Configuration.ImportOptionsType].
+	Options any
 }
 
 type MatchOptions struct {

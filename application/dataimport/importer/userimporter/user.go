@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"log/slog"
 	"reflect"
 	"time"
 
@@ -57,6 +58,28 @@ type User struct {
 	Consents        []consent.ID `json:"consents,omitempty" source:"nago.consent.options"`
 }
 
+type Options struct {
+	_                      any  `section:"Zusammenführen" label:"Diese Optionen werden erst wirksam, wenn die Zusammenführung beim Import aktiviert wird. Die Werte eines markierten Feldes werden dann jeweils vollständig ersetzt."`
+	MergeFirstname         bool `label:"Vorname übernehmen" section:"Zusammenführen"`
+	MergeLastname          bool `label:"Nachname übernehmen" section:"Zusammenführen"`
+	MergeTitle             bool `label:"Nachname übernehmen" section:"Zusammenführen"`
+	MergeSalutation        bool `label:"Grußformel übernehmen" section:"Zusammenführen"`
+	MergePhone             bool `label:"Telefon übernehmen" section:"Zusammenführen"`
+	MergeMobilePhone       bool `label:"Mobile übernehmen" section:"Zusammenführen"`
+	MergeCountry           bool `label:"Land übernehmen" section:"Zusammenführen"`
+	MergeCity              bool `label:"Stadt übernehmen" section:"Zusammenführen"`
+	MergePostalCode        bool `label:"Postleitzahl übernehmen" section:"Zusammenführen"`
+	MergeState             bool `label:"Bundesland übernehmen" section:"Zusammenführen"`
+	MergeLinkedIn          bool `label:"LinkedIn übernehmen" section:"Zusammenführen"`
+	MergeWebsite           bool `label:"Webseite übernehmen" section:"Zusammenführen"`
+	MergePosition          bool `label:"Position übernehmen" section:"Zusammenführen"`
+	MergeProfessionalGroup bool `label:"Fachrichtung übernehmen" section:"Zusammenführen"`
+	MergeCompanyName       bool `label:"Firmenname übernehmen" section:"Zusammenführen"`
+	MergeDisplayLanguage   bool `label:"Sprache übernehmen" section:"Zusammenführen"`
+	MergeAboutMe           bool `label:"Über mich übernehmen" section:"Zusammenführen"`
+	MergeConsents          bool `label:"Zustimmungen übernehmen" section:"Zusammenführen"`
+}
+
 type usrImporter struct {
 	users user.UseCases
 }
@@ -70,6 +93,13 @@ func (u usrImporter) Identity() importer.ID {
 }
 
 func (u usrImporter) Import(ctx context.Context, opts importer.Options, data iter.Seq2[*jsonptr.Obj, error]) error {
+
+	myOpts, ok := opts.Options.(Options)
+	if !ok {
+		slog.Warn("user importer custom options are missing")
+		myOpts = Options{}
+	}
+
 	for obj, err := range data {
 		if err != nil {
 			return err
@@ -87,26 +117,50 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			}
 
 			if optUsr.IsSome() {
-				// TODO implement me
+				if opts.MergeDuplicates {
+					if err := mergeUser(myOpts, u.users, optUsr.Unwrap(), usr); err != nil {
+						if opts.MergeDuplicates {
+							continue
+						}
+
+						return fmt.Errorf("merging an existing user failed: %w", err)
+					}
+
+					continue //success
+				}
+
 				if opts.ContinueOnError {
 					continue
 				}
-				return fmt.Errorf("merging an existing user by id is currently not supported")
+
+				return fmt.Errorf("merging an existing user by id is disabled")
 			}
 		}
 
 		if usr.Email != "" {
-			optUsr, err := u.users.FindByID(user.SU(), usr.ID)
+			optUsr, err := u.users.FindByMail(user.SU(), usr.Email)
 			if err != nil {
 				return fmt.Errorf("cannot find user: %v", err)
 			}
 
 			if optUsr.IsSome() {
-				// TODO implement me
+				if opts.MergeDuplicates {
+					if err := mergeUser(myOpts, u.users, optUsr.Unwrap(), usr); err != nil {
+						if opts.MergeDuplicates {
+							continue
+						}
+
+						return fmt.Errorf("merging an existing user failed: %w", err)
+					}
+
+					continue //success
+				}
+
 				if opts.ContinueOnError {
 					continue
 				}
-				return fmt.Errorf("merging an existing user by email is currently not supported")
+
+				return fmt.Errorf("merging an existing user by email is disabled")
 			}
 		}
 
@@ -114,6 +168,7 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			if opts.ContinueOnError {
 				continue
 			}
+
 			return fmt.Errorf("user email is required")
 		}
 
@@ -158,6 +213,77 @@ func (u usrImporter) Import(ctx context.Context, opts importer.Options, data ite
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func mergeUser(opts Options, users user.UseCases, usr user.User, newUsr User) error {
+	if opts.MergeCompanyName {
+		usr.Contact.CompanyName = newUsr.CompanyName
+	}
+
+	if opts.MergeAboutMe {
+		usr.Contact.AboutMe = newUsr.AboutMe
+	}
+
+	if opts.MergeCity {
+		usr.Contact.City = newUsr.City
+	}
+
+	if opts.MergeDisplayLanguage {
+		usr.Contact.DisplayLanguage = newUsr.DisplayLanguage
+	}
+
+	if opts.MergeCountry {
+		usr.Contact.Country = newUsr.Country
+	}
+
+	if opts.MergeProfessionalGroup {
+		usr.Contact.ProfessionalGroup = newUsr.ProfessionalGroup
+	}
+
+	if opts.MergeMobilePhone {
+		usr.Contact.MobilePhone = newUsr.MobilePhone
+	}
+
+	if opts.MergeState {
+		usr.Contact.State = newUsr.State
+	}
+
+	if opts.MergeTitle {
+		usr.Contact.Title = newUsr.Title
+	}
+
+	if opts.MergePosition {
+		usr.Contact.Position = newUsr.Position
+	}
+
+	if opts.MergeFirstname {
+		usr.Contact.Firstname = newUsr.Firstname
+	}
+
+	if opts.MergeLastname {
+		usr.Contact.Lastname = newUsr.Lastname
+	}
+
+	if err := users.UpdateOtherContact(user.SU(), usr.ID, usr.Contact); err != nil {
+		return err
+	}
+
+	if opts.MergeConsents {
+		for _, cid := range newUsr.Consents {
+			err := users.Consent(user.SU(), usr.ID, cid, consent.Action{
+				At:       time.Now(),
+				Status:   consent.Approved,
+				Location: "userimporter-merge",
+			})
+
+			if err != nil {
+				return fmt.Errorf("cannot import-merge user consent: %v", err)
+
+			}
+		}
 	}
 
 	return nil
@@ -224,10 +350,11 @@ func (u usrImporter) FindMatches(ctx context.Context, opts importer.MatchOptions
 
 func (u usrImporter) Configuration() importer.Configuration {
 	return importer.Configuration{
-		Image:        icons.UserAdd,
-		Name:         "Nutzer",
-		Description:  "Nutzer aus externen Quellen importieren.",
-		ExpectedType: reflect.TypeFor[User](),
+		Image:             icons.UserAdd,
+		Name:              "Nutzer",
+		Description:       "Nutzer aus externen Quellen importieren.",
+		ExpectedType:      reflect.TypeFor[User](),
+		ImportOptionsType: reflect.TypeFor[Options](),
 		PreviewMappings: []importer.PreviewMapping{
 			{Name: "Vorname", Keywords: []string{"/contact/firstname", "firstname"}},
 			{Name: "Nachname", Keywords: []string{"/contact/lastname", "lastname", "name"}},

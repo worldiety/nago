@@ -11,6 +11,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
+
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xslices"
@@ -23,11 +29,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/colorpicker"
 	"go.wdy.de/nago/presentation/ui/picker"
 	"go.wdy.de/nago/presentation/ui/timepicker"
-	"log/slog"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type AutoOptions struct {
@@ -61,6 +62,7 @@ type TAuto[T any] struct {
 	border             ui.Border
 	accessibilityLabel string
 	invisible          bool
+	cardPadding        ui.Padding
 }
 
 // Auto is similar to [crud.AutoBinding], however it does much less and just creates a form using
@@ -76,13 +78,19 @@ type TAuto[T any] struct {
 // Other features, which are supported by [crud.Auto] are not (yet) supported.
 func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	return TAuto[T]{
-		opts:  opts,
-		state: state,
+		opts:        opts,
+		state:       state,
+		cardPadding: ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: ""},
 	}
 }
 
 func (t TAuto[T]) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
+	return t
+}
+
+func (t TAuto[T]) CardPadding(padding ui.Padding) TAuto[T] {
+	t.cardPadding = padding
 	return t
 }
 
@@ -93,6 +101,11 @@ func (t TAuto[T]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 
 func (t TAuto[T]) Frame(frame ui.Frame) ui.DecoredView {
 	t.frame = frame
+	return t
+}
+
+func (t TAuto[T]) FullWidth() TAuto[T] {
+	t.frame.Width = ui.Full
 	return t
 }
 
@@ -655,7 +668,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 		if group.Name == "" {
 			rootViews.Append(fields...)
 		} else {
-			card := cardlayout.Card(group.Name).Body(ui.VStack(fields...).Gap(ui.L16).FullWidth()).Frame(ui.Frame{}.FullWidth())
+			card := cardlayout.Card(group.Name).Padding(t.cardPadding).Body(ui.VStack(fields...).Gap(ui.L16).FullWidth()).Frame(ui.Frame{}.FullWidth())
 			if t.opts.SectionPadding.IsSome() {
 				card = card.Padding(t.opts.SectionPadding.Unwrap())
 			}

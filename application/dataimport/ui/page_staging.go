@@ -9,13 +9,16 @@ package uidataimport
 
 import (
 	"fmt"
+	"os"
+	"reflect"
+
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"os"
+	"go.wdy.de/nago/presentation/ui/form"
 )
 
 func PageStaging(wnd core.Window, ucImp dataimport.UseCases) core.View {
@@ -87,7 +90,7 @@ func PageStaging(wnd core.Window, ucImp dataimport.UseCases) core.View {
 	return ui.VStack(
 		ui.H1("Entwürfe prüfen - "+stage.Name),
 		dialogDeleteStaging(wnd, deleteStagingPresented, stage, ucImp),
-		dialogDoImport(wnd, dlgPresentedImport, stage, page.Get(), pageIdx, ucImp),
+		dialogDoImport(wnd, dlgPresentedImport, stage, page.Get(), pageIdx, ucImp, imp),
 		ui.HStack(
 
 			ui.SecondaryButton(func() {
@@ -127,35 +130,65 @@ func dialogDeleteStaging(wnd core.Window, presented *core.State[bool], stage dat
 	}))
 }
 
-func dialogDoImport(wnd core.Window, presented *core.State[bool], stage dataimport.Staging, page data.Page[dataimport.Entry], pageIdx *core.State[int], ucImp dataimport.UseCases) core.View {
+func dialogDoImport(wnd core.Window, presented *core.State[bool], stage dataimport.Staging, page data.Page[dataimport.Entry], pageIdx *core.State[int], ucImp dataimport.UseCases, imp importer.Importer) core.View {
 	if !presented.Get() {
 		return nil
 	}
 
-	return alert.Dialog("Diesen Entwurf importieren", ui.Text(fmt.Sprintf("Soll dieser Entwurf mit %d Einträgen jetzt importiert werden? Abgelehnte und bereits importierte Einträge werden dabei übersprungen.", page.Total)), presented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
-		return ui.PrimaryButton(func() {
-			close(true)
-			defer func() {
-				pageIdx.Notify()
-				pageIdx.Invalidate()
-			}()
+	cfgState := core.AutoState[any](wnd).Init(func() any {
+		ptrValue := reflect.New(imp.Configuration().ImportOptionsType)
+		return ptrValue.Elem().Interface()
+	})
 
-			if err := ucImp.Import(wnd.Subject(), stage.ID, stage.Importer, dataimport.ImportOptions{
-				Context: wnd.Context(),
-				ImporterOptions: importer.Options{
-					ContinueOnError: true,
-					MergeDuplicates: true,
-				},
-			}); err != nil {
-				alert.ShowBannerError(wnd, err)
-				return
-			}
+	continueOnError := core.AutoState[bool](wnd).Init(func() bool {
+		return true
+	})
+	
+	mergeDuplicates := core.AutoState[bool](wnd)
 
-			alert.ShowBannerMessage(wnd, alert.Message{
-				Title:   "Import erfolgreich",
-				Message: "Alle Einträge wurden erfolgreich importiert.",
-				Intent:  alert.IntentOk,
-			})
-		}).Title("Importieren")
-	}))
+	body := ui.VStack(
+		ui.Text(fmt.Sprintf("Soll dieser Entwurf mit %d Einträgen jetzt importiert werden?", page.Total)),
+		ui.CheckboxField("Bei Fehler fortfahren", continueOnError.Get()).InputValue(continueOnError),
+		ui.CheckboxField("Bei Duplikaten Felder zusammenführen", mergeDuplicates.Get()).InputValue(mergeDuplicates),
+		form.Auto[any](form.AutoOptions{Window: wnd}, cfgState).
+			CardPadding(ui.Padding{}).
+			FullWidth(),
+	).FullWidth().
+		Alignment(ui.Leading).
+		Gap(ui.L8)
+
+	return alert.Dialog(
+		"Diesen Entwurf importieren",
+		body,
+		presented,
+		alert.Larger(),
+		alert.Cancel(nil),
+		alert.Custom(func(close func(closeDlg bool)) core.View {
+			return ui.PrimaryButton(func() {
+				close(true)
+				defer func() {
+					pageIdx.Notify()
+					pageIdx.Invalidate()
+				}()
+
+				if err := ucImp.Import(wnd.Subject(), stage.ID, stage.Importer, dataimport.ImportOptions{
+					Context: wnd.Context(),
+					ImporterOptions: importer.Options{
+						ContinueOnError: continueOnError.Get(),
+						MergeDuplicates: mergeDuplicates.Get(),
+						Options:         cfgState.Get(),
+					},
+				}); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+
+				alert.ShowBannerMessage(wnd, alert.Message{
+					Title:   "Import erfolgreich",
+					Message: "Alle Einträge wurden erfolgreich importiert.",
+					Intent:  alert.IntentOk,
+				})
+			}).Title("Importieren")
+		}),
+	)
 }

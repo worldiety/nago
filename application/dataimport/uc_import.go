@@ -11,15 +11,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"log/slog"
-	"os"
-	"sync"
-	"time"
 )
 
 func NewImport(mutex *sync.Mutex, entryRepo EntryRepository, stageRepo StagingRepository, imports *concurrent.RWMap[importer.ID, importer.Importer]) Import {
@@ -60,7 +61,7 @@ func NewImport(mutex *sync.Mutex, entryRepo EntryRepository, stageRepo StagingRe
 				continue
 			}
 
-			if entry.Imported {
+			if !opts.ImporterOptions.MergeDuplicates && entry.Imported {
 				slog.Info("import entry ignored, already imported", "key", entry.ID)
 				continue
 			}
@@ -74,6 +75,7 @@ func NewImport(mutex *sync.Mutex, entryRepo EntryRepository, stageRepo StagingRe
 			if err := imp.Import(opts.Context, importer.Options{
 				ContinueOnError: false, // intentionally always set to false, we will handle that accordingly, because we call it 1:1 for each entry
 				MergeDuplicates: opts.ImporterOptions.MergeDuplicates,
+				Options:         opts.ImporterOptions.Options,
 			}, func(yield func(*jsonptr.Obj, error) bool) {
 				yield(obj, nil)
 			}); err != nil {

@@ -31,7 +31,7 @@ type Repository data.Repository[User, ID]
 
 type Create func(subject permission.Auditable, model ShortRegistrationUser) (User, error)
 type FindByID func(subject permission.Auditable, id ID) (option.Opt[User], error)
-type FindByMail func(subject permission.Auditable, email Email) (std.Option[User], error)
+type FindByMail func(subject permission.Auditable, email Email) (option.Opt[User], error)
 
 type EMailUsed func(email Email) (bool, error)
 type FindAll func(subject permission.Auditable) iter.Seq2[User, error]
