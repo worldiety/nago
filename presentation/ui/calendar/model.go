@@ -46,14 +46,11 @@ type Lane struct {
 
 // Event represents a calendar entry or scheduled activity with metadata.
 type Event struct {
-	From       Instant // From is inclusive and Offset is e.g. the travel time by bus
-	To         Instant // To is inclusive and Offset is e.g. the travel time by train
-	Label      string  // Title of the event
-	Action     func()  // Action if clicked on the event
-	Category   Category
-	Lane       Lane
-	Occupation Occupation
-	Organiser  string
-	Location   string
-	Render     func(Style) core.View // custom render func, may be nil to render the default way
+	From       Instant    // Start time of the event (inclusive), may include travel/prep offset.
+	To         Instant    // End time of the event (inclusive), may include travel/post offset.
+	Label      string     // Title or description of the event.
+	Action     func()     // Callback executed when the event is clicked.
+	Category   Category   // Category classification (e.g., work, private, travel).
+	Lane       Lane       // Lane (row/track) the event belongs to.
+	Occupation Occupation // Information about resource usage (current/max capacity).
 }

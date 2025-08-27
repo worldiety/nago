@@ -18,31 +18,31 @@ import (
 // The VStack can be interactive if an action is defined and responds to hover, press,
 // and focus states with visual feedback.
 type TVStack struct {
-	children               []core.View
-	alignment              proto.Alignment
-	backgroundColor        proto.Color
-	textColor              proto.Color
-	hoveredBackgroundColor proto.Color
-	pressedBackgroundColor proto.Color
-	focusedBackgroundColor proto.Color
-	frame                  Frame
-	gap                    proto.Length
-	padding                proto.Padding
-	border                 proto.Border
-	hoveredBorder          proto.Border
-	focusedBorder          proto.Border
-	pressedBorder          proto.Border
-	stylePreset            proto.StylePreset
+	children               []core.View       // child views arranged in a vertical column
+	alignment              proto.Alignment   // alignment of children within the column
+	backgroundColor        proto.Color       // default background color
+	textColor              proto.Color       // default text color
+	hoveredBackgroundColor proto.Color       // background color when hovered
+	pressedBackgroundColor proto.Color       // background color when pressed
+	focusedBackgroundColor proto.Color       // background color when focused
+	frame                  Frame             // layout frame for sizing/positioning
+	gap                    proto.Length      // spacing between child views
+	padding                proto.Padding     // inner padding around child views
+	border                 proto.Border      // default border
+	hoveredBorder          proto.Border      // border when hovered
+	focusedBorder          proto.Border      // border when focused
+	pressedBorder          proto.Border      // border when pressed
+	stylePreset            proto.StylePreset // reusable style preset
 	transformation         Transformation
 
-	invisible bool
-	font      proto.Font
+	invisible bool       // controls visibility
+	font      proto.Font // font applied to text children
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	accessibilityLabel string
-	action             func()
-	position           Position
-	id                 string
-	noClip             bool
+	accessibilityLabel string   // accessibility label for screen readers
+	action             func()   // optional action handler, makes the stack interactive
+	position           Position // explicit position settings
+	id                 string   // unique identifier
+	noClip             bool     // disables clipping of child content when true
 	animation          Animation
 }
 

@@ -19,9 +19,9 @@ import (
 // It manages pagination state and renders controls to switch between pages.
 // Typical usage is in lists or tables with many items.
 type TPager struct {
-	count   int
-	page    *core.State[int]
-	frame   ui.Frame
+	count int              // total number of pages
+	page  *core.State[int] // current active page (0-based)
+	frame ui.Frame         // layout frame for sizing and positioning
 	visible bool
 }
 
