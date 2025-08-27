@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TPager is a composite component (Pager).
+// TPager is a utility component (Pager).
 // It manages pagination state and renders controls to switch between pages.
 // Typical usage is in lists or tables with many items.
 type TPager struct {

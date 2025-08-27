@@ -37,7 +37,7 @@ type Message struct {
 	Duration time.Duration
 }
 
-// TBannerMessages is an overlay component (Banner Messages).
+// TBannerMessages is a feedback component (Banner Messages).
 // It manages and displays transient banner-style notifications within a window.
 // This component is typically used for showing short-lived feedback messages
 // (e.g., success, error, info) that appear temporarily and may stack if multiple
@@ -204,7 +204,7 @@ func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 	return Message{}, false
 }
 
-// TBannerError is an overlay component(Banner Error).
+// TBannerError is a feedback component(Banner Error).
 type TBannerError struct {
 	err error
 }

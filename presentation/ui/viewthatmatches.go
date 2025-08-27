@@ -30,7 +30,7 @@ func SizeClass(class core.WindowSizeClass, view func() core.View) ViewWithSizeCl
 	}
 }
 
-// TViewThatMatches is a util component (View That Matches).
+// TViewThatMatches is a utility component (View That Matches).
 // It selects the most appropriate view based on the current window's size class.
 type TViewThatMatches struct {
 	wnd     core.Window         // current window context

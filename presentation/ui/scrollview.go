@@ -24,7 +24,7 @@ const (
 	ScrollViewAxisBoth                      = ScrollViewAxis(proto.ScrollViewAxisBoth)
 )
 
-// TScrollView is a composite component (Scroll View).
+// TScrollView is a layout component (Scroll View).
 // It provides a scrollable container for a single child view.
 // The scroll direction can be vertical (default) or horizontal.
 // Supports customization of frame, position, border, background color, and padding.

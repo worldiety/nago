@@ -32,7 +32,7 @@ type BoxLayout struct {
 	BottomTrailing core.View
 }
 
-// TBox is a basic component (Box).
+// TBox is a layout component (Box).
 // It lays out its children according to BoxLayout rules. By definition,
 // the container clips its children. This makes it suitable for overlapping
 // layouts, but usually requires absolute height and width. Shadows may require

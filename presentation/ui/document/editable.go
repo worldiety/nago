@@ -21,7 +21,7 @@ const (
 	Clickable
 )
 
-// TEditable is a util component (Editable).
+// TEditable is a overlay component (Editable).
 // This component allows toggling between a view mode and an edit mode.
 // It is typically used when users should be able to quickly switch
 // between read-only display and editing input fields or values.

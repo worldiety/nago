@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-// TDialogCreate is an overlay component (Dialog Create).
+// TDialogCreate is an feedback component (Dialog Create).
 // This component presents a creation dialog bound to a visibility state,
 // invoking a callback to create a new value of type T.
 type TDialogCreate[T any] struct {
@@ -34,7 +34,7 @@ func DialogCreate[T any](wnd core.Window, name string, presented *core.State[boo
 	}
 }
 
-// TDialogEdit is an overlay component (Dialog Edit).
+// TDialogEdit is a overlay component (Dialog Edit).
 // This component presents an editing dialog bound to a model state,
 // invoking a callback to save changes.
 type TDialogEdit[T any] struct {

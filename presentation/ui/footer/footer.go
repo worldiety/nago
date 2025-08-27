@@ -14,7 +14,7 @@ import (
 
 type LinkOrNavigationPath = string
 
-// TFooter is a overlay component (Footer).
+// TFooter is a layout component (Footer).
 // This component models the footer of an application or website,
 // typically containing branding, legal links, and styling options.
 type TFooter struct {

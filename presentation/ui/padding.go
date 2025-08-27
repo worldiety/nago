@@ -9,7 +9,7 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
-// Padding is a util component (Padding).
+// Padding is a utility component (Padding).
 // It defines the spacing inside a component on each side (top, left, right, bottom).
 type Padding struct {
 	Top    Length // padding at the top

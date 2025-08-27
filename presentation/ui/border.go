@@ -14,7 +14,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// Border defines the border and shadow styling for a component (Border).
+// Border is a utility component (Border).
 // It controls the radius of each corner, the width and color of each edge,
 // and optional shadow settings. A border affects the component's layout
 // dimensions because the width is applied outside the content box.

@@ -25,7 +25,7 @@ const (
 	ClassicFormat PickerFormat = iota
 )
 
-// TPicker is a util component (Time Frame Picker).
+// TPicker is a composite component (Time Frame Picker).
 // It allows users to pick a date and a start/end time, optionally binding
 // the result to an external state. The picker supports different formats,
 // validation messages, and can be configured with a specific time zone.

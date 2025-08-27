@@ -25,7 +25,7 @@ const (
 	Rounded
 )
 
-// TAvatar is a basic component (Avatar).
+// TAvatar is a composite component (Avatar).
 // This component displays a user or entity representation,
 // either as an image (via URL, raw data, or image ID) or as
 // a fallback with initials (paraphe). It can be styled with

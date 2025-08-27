@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TDialog is a composite component (Dialog).
+// TDialog is a overlay component (Dialog).
 // It represents a modal or popup window with optional title, body, and footer sections.
 // The dialog can be aligned, styled with padding and frames, and may support or disable
 // box-based layouts for its content.

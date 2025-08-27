@@ -9,6 +9,7 @@ package ui
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/presentation/proto"
 )
 
@@ -32,8 +33,10 @@ import (
 //	│                                              │
 //	└BottomLeading───────Bottom──────BottomTrailing┘
 //
-// An empty Alignment must be interpreted as Center (="c"), if not otherwise specified.
-//
+// Alignment is a layout component (Alignment).
+// It defines the positioning of child views within a container,
+// such as top, bottom, leading, trailing, or centered.
+// An empty Alignment defaults to Center ("c") if not specified.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Alignment uint
 

@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TBanner is an overlay component(Banner).
+// TBanner is a feedback component(Banner).
 // This component displays a prominent message to the user,
 // typically used for notifications, warnings, or confirmations. It consists
 // of a title and message, and can optionally be dismissible and styled

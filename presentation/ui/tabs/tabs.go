@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-// TPage represents a single tab page (Page).
+// TPage is a utility component (Page).
 // Each page can define a title, an optional icon, and a body
 // function that renders the content. Pages can also be disabled
 // to prevent user interaction.
@@ -46,7 +46,7 @@ func (c TPage) Disabled(disabled bool) TPage {
 	return c
 }
 
-// TTabs is a util component (Tabs).
+// TTabs is a utility component (Tabs).
 // It manages the layout and navigation between different TPage elements,
 // including alignment, positioning, and spacing between the tab bar and content.
 // An optional state can track the currently active tab index.
