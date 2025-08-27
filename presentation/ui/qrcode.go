@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TQrCode is a composite component (QR Code).
+// TQrCode is a basic component (QR Code).
 // It generates and displays a QR code based on a given value (string).
 // The component supports accessibility labeling and can be styled using a frame.
 type TQrCode struct {

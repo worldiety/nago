@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// TModal is a composite component (Modal).
+// TModal is a overlay component (Modal).
 // It represents a modal or overlay container that displays content above all other views.
 // A modal blocks interaction with the background unless configured as an overlay.
 // It supports dismiss callbacks, positioning, and background scrolling behavior.

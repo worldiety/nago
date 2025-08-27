@@ -24,7 +24,7 @@ var (
 	}
 )
 
-// TPage is a util component(Page).
+// TPage is a Layout component(Page).
 // It provides a structured layout with optional padding, borders, background
 // color, alignment, and holds both regular content (items) and threaded comments.
 type TPage struct {

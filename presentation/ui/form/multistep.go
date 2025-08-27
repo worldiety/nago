@@ -117,7 +117,7 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 	).Frame(c.frame).Render(ctx)
 }
 
-// TStep represents a single step (Step).
+// TStep is a basic component (Step).
 // Each step contains a body view with optional headline and supporting text.
 type TStep struct {
 	headline       string    // title of the step
