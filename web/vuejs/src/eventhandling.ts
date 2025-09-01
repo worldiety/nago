@@ -130,7 +130,7 @@ export function getLocale(): Locale {
 	if (navigator.languages && navigator.languages.length > 0) {
 		return navigator.languages[0] as Locale;
 	}
-	
+
 	return navigator.language as Locale;
 }
 

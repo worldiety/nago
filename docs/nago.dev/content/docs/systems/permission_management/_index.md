@@ -38,8 +38,8 @@ Permission Management offers the following key functions:
 - Example (from Mail Management):
 ```go
 var (
-	PermSendMail             = permission.Declare[SendMail]("nago.mail.send", "Mail Senden", "Träger dieser Berechtigung können Mails versenden.")
-	PermInitDefaultTemplates = permission.Declare[SendMail]("nago.mail.init_default_templates", "Standard Templates setzen", "Träger dieser Berechtigung können die Standard Mail templates aktivieren.")
+    PermSendMail             = permission.Declare[SendMail]("nago.mail.send", "Send Mail", "Holders of this authorization can send emails.")
+    PermInitDefaultTemplates = permission.Declare[SendMail]("nago.mail.init_default_templates", "Standard Templates", "Holders of this authorization can activate the standard mail templates.")
 )
 ```
 
@@ -94,9 +94,9 @@ func main() {
 ## Activation
 This system is activated via:
 ```go
-option.Must(cfg.PermissionManagement())
+std.Must(cfg.PermissionManagement())
 ```
 
 ```go
-permissionManagement := option.Must(cfg.PermissionManagement())
+permissionManagement := std.Must(cfg.PermissionManagement())
 ```

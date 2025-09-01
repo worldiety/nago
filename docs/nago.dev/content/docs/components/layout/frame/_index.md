@@ -13,7 +13,7 @@ dimensions. Frames are used to control layout behavior and responsiveness. All f
 | `FullWidth()` | FullWidth sets the frame's width to 100% of the available space. |
 | `IsZero()` | IsZero returns true if all fields of the Frame are unset (zero value). |
 | `MatchScreen()` | MatchScreen sets the frame to match the full viewport height and width. This is useful for fullscreen layouts or sections that should fill the screen. |
-| `Size(h Length, w Length)` | Size sets both Width and Height to the given values and returns the updated Frame. |
+| `Size(w Length, h Length)` | Size sets both Width and Height to the given values and returns the updated Frame. |
 ---
 
 ## Tutorials

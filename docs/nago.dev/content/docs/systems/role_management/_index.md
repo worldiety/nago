@@ -90,9 +90,9 @@ func main() {
 ## Activation
 This system is activated via:
 ```go
-option.Must(cfg.RoleManagement())
+std.Must(cfg.RoleManagement())
 ```
 
 ```go
-roleManagement := option.Must(cfg.RoleManagement())
+roleManagement := std.Must(cfg.RoleManagement())
 ```
