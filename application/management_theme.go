@@ -13,6 +13,16 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// ThemeManagement is a nago system(Theme Management).
+// Theme Management handles the configuration of theme and corporate identity settings.
+//
+// It allows to define logos and app icons (for dark and light mode), configure
+// legal information (e.g. Impressum, Privacy Policy, Terms, User Agreement),
+// and set provider contact details such as responsible entity, contact email,
+// and API documentation URL.
+//
+// Additionally, developers can define fonts and base colors (main, interactive, accent)
+// directly via code. Colors can differ between dark and light mode.
 type ThemeManagement struct {
 	UseCases theme.UseCases
 }
