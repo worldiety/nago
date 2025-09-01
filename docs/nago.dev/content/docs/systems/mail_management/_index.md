@@ -89,9 +89,9 @@ If these are not already active, they will be enabled automatically when Mail Ma
 ## Activation
 This system is activated via:
 ```go
-option.Must(cfg.MailManagement())
+std.Must(cfg.MailManagement())
 ```
 
 ```go
-mailManagement := option.Must(cfg.MailManagement())
+mailManagement := std.Must(cfg.MailManagement())
 ```

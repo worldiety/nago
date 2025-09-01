@@ -129,8 +129,8 @@ If these are not already active, they will be enabled automatically when Secret 
 ## Activation
 This system is activated via the configurator:
 ```go
-option.Must(cfg.SecretManagement())
+std.Must(cfg.SecretManagement())
 ```
 ```go
-secretManagement := option.Must(cfg.SecretManagement())
+secretManagement := std.Must(cfg.SecretManagement())
 ```

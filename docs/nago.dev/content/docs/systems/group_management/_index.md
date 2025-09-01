@@ -103,9 +103,9 @@ func main() {
 ## Activation
 This system is activated via:
 ```go
-option.Must(cfg.GroupManagement())
+std.Must(cfg.GroupManagement())
 ```
 
 ```go
-groupManagement := option.Must(cfg.GroupManagement())
+groupManagement := std.Must(cfg.GroupManagement())
 ```
