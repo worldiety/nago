@@ -57,9 +57,9 @@ These allow integration into workflows beyond email, such as automated reporting
 ## Activation
 This system is activated via:
 ```go
-option.Must(cfg.TemplateManagement())
+std.Must(cfg.TemplateManagement())
 ```
 
 ```go
-templateManagement := option.Must(cfg.TemplateManagement())
+templateManagement := std.Must(cfg.TemplateManagement())
 ```

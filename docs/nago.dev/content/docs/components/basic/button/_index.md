@@ -64,6 +64,7 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 | Method | Description |
 |--------| ------------|
 | `AccessibilityLabel(label string)` |  |
+| `Disabled(b bool)` |  |
 | `Enabled(b bool)` | Enabled has only an effect for StylePreset otherwise it is ignored. |
 | `Font(font Font)` |  |
 | `Frame(frame Frame)` |  |

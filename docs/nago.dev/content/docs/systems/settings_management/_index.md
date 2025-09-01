@@ -56,6 +56,15 @@ xreflect.SetFieldTagFor[user.Settings]("Salutation", "supportingText", "'Mrs' or
 
 ### Example: User Management – GDPR consents
 ```go
+import (
+    "go.wdy.de/nago/application"
+    "go.wdy.de/nago/application/settings"
+    "go.wdy.de/nago/application/user"
+	
+    "github.com/worldiety/option"
+)
+
+
 func configureGDPRConsents(cfg *application.Configurator) {
     usrSettings := settings.ReadGlobal[user.Settings](std.Must(cfg.SettingsManagement()).UseCases.LoadGlobal)
     
@@ -63,7 +72,7 @@ func configureGDPRConsents(cfg *application.Configurator) {
     usrSettings.Consents = []user.ConsentOption{
         {
             ID: consent.DataProtectionProvision,
-            Register: user.ConsentText{Label: "Yes, I have read and accepted the [Privacy Policy](https://www.nago-dv.com/private-policy"},
+            Register: user.ConsentText{Label: "Yes, I have read and accepted the [Privacy Policy](https://www.nago-dv.com/private_policy"},
             Required: true,
         },
         {
@@ -118,6 +127,22 @@ var _ = enum.Variant[settings.GlobalSettings, Settings]()
 
 Usage example in a scheduler configuration:
 ```go
+import (
+	"context"
+	"time"
+	
+    "go.wdy.de/nago/application/scheduler"
+    cfgscheduler "go.wdy.de/nago/application/scheduler/cfg"
+    "go.wdy.de/nago/application/settings"
+    "go.wdy.de/nago/application/user"
+	
+    "github.com/worldiety/option"
+)
+
+type DeleteOldest func(subject auth.Subject, settings Settings) error
+
+schedulers := std.Must(cfgscheduler.Enable(cfg))
+
 option.MustZero(schedulers.UseCases.Configure(user.SU(), scheduler.Options{
     ID:          "nago.dev.events.remove",
     Name:        "Remove events",
@@ -129,7 +154,7 @@ option.MustZero(schedulers.UseCases.Configure(user.SU(), scheduler.Options{
     },
     Runner: func(ctx context.Context) error {
         myEventSettings := settings.ReadGlobal[Settings](settingsManagement.UseCases.LoadGlobal)
-        return events.UseCases.DeleteOldest(user.SU(), myEventSettings) // security note: cron job
+        return DeleteOldest(user.SU(), myEventSettings) // security note: cron job
     },
 }))
 ```
@@ -140,6 +165,20 @@ For more information have a look at [Scheduler Management](../scheduler_manageme
 
 ### Example: custom theme settings via code configuration
 ```go
+import (
+    "context"
+    _ "embed"
+    "time"
+    
+    "go.wdy.de/nago/application"
+    "go.wdy.de/nago/application/image"
+    "go.wdy.de/nago/application/settings"
+    "go.wdy.de/nago/application/user"
+    "go.wdy.de/nago/presentation/core"
+    
+    "github.com/worldiety/option"
+)
+
 //go:embed nago_icon.png
 var nagoIcon application.StaticBytes
 
@@ -192,8 +231,8 @@ Configuration via the admin center:
 ## Activation
 This system is activated via the configurator:
 ```go
-option.Must(cfg.SettingsManagement())
+std.Must(cfg.SettingsManagement())
 ```
 ```go
-settingsManagement := option.Must(cfg.SettingsManagement())
+settingsManagement := std.Must(cfg.SettingsManagement())
 ```
