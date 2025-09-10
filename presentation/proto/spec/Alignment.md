@@ -18,4 +18,5 @@ Alignment is specified as follows:
 	│                                              │
 	└BottomLeading───────Bottom──────BottomTrailing┘
 
-An empty Alignment must be interpreted as Leading (="l").
+An empty Alignment must be interpreted as Default (="d"),
+which is interpreted according to components default behaviors.

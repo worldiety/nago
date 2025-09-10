@@ -3,33 +3,36 @@
   "id": 5,
   "const": {
     "0": {
-      "name": "Leading"
+      "name": "Default"
     },
     "1": {
-      "name": "Top"
-    },
-    "2": {
-      "name": "Bottom"
-    },
-    "3": {
       "name": "Center"
     },
+    "2": {
+      "name": "Top"
+    },
+    "3": {
+      "name": "Bottom"
+    },
     "4": {
-      "name": "Trailing"
+      "name": "Leading"
     },
     "5": {
-      "name": "TopLeading"
+      "name": "Trailing"
     },
     "6": {
-      "name": "TopTrailing"
+      "name": "TopLeading"
     },
     "7": {
-      "name": "BottomLeading"
+      "name": "TopTrailing"
     },
     "8": {
-      "name": "BottomTrailing"
+      "name": "BottomLeading"
     },
     "9": {
+      "name": "BottomTrailing"
+    },
+    "10": {
       "name": "Stretch"
     }
   }

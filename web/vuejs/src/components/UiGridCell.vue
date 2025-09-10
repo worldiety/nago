@@ -57,9 +57,6 @@ const style = computed<string>(() => {
 		case AlignmentValues.Stretch:
 			// do nothing, which stretches
 			break;
-		case AlignmentValues.Center:
-			styles.push('place-self: center');
-			break;
 		case AlignmentValues.Leading:
 			styles.push('place-self: center start');
 			break;
@@ -84,6 +81,8 @@ const style = computed<string>(() => {
 		case AlignmentValues.BottomTrailing:
 			styles.push('place-self: end end');
 			break;
+		default:
+			styles.push('place-self: center');
 	}
 
 	styles.push(...marginCSS(props.ui.padding));

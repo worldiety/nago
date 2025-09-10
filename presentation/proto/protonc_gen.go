@@ -677,20 +677,22 @@ func (v *FunctionCallRequested) read(r *BinaryReader) error {
 //	│                                              │
 //	└BottomLeading───────Bottom──────BottomTrailing┘
 //
-// An empty Alignment must be interpreted as Leading (="l").
+// An empty Alignment must be interpreted as Default (="d"),
+// which is interpreted according to components default behaviors.
 type Alignment uint64
 
 const (
-	Leading        Alignment = 0
-	Top            Alignment = 1
-	Bottom         Alignment = 2
-	Center         Alignment = 3
-	Trailing       Alignment = 4
-	TopLeading     Alignment = 5
-	TopTrailing    Alignment = 6
-	BottomLeading  Alignment = 7
-	BottomTrailing Alignment = 8
-	Stretch        Alignment = 9
+	Default        Alignment = 0
+	Center         Alignment = 1
+	Stretch        Alignment = 10
+	Top            Alignment = 2
+	Bottom         Alignment = 3
+	Leading        Alignment = 4
+	Trailing       Alignment = 5
+	TopLeading     Alignment = 6
+	TopTrailing    Alignment = 7
+	BottomLeading  Alignment = 8
+	BottomTrailing Alignment = 9
 )
 
 func (v *Alignment) write(r *BinaryWriter) error {

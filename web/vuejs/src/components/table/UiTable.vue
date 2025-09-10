@@ -110,9 +110,6 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 	}
 
 	switch (cell.alignment) {
-		case AlignmentValues.Leading:
-			styles.push('vertical-align: middle', 'text-align: start');
-			break;
 		case AlignmentValues.Trailing:
 			styles.push('vertical-align: middle', 'text-align: end');
 			break;
@@ -138,7 +135,7 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 			styles.push('vertical-align: bottom', 'text-align: center');
 			break;
 		default:
-			// nothing, just default
+			styles.push('vertical-align: middle', 'text-align: start');
 			break;
 	}
 
