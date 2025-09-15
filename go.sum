@@ -34,6 +34,8 @@ github.com/worldiety/enum v0.0.0-20250415071812-195794096336 h1:5GA/jISeRFoiVDYu
 github.com/worldiety/enum v0.0.0-20250415071812-195794096336/go.mod h1:0uP0UsAlDy6HB1ZaikFmvMHbrp+ZajhhsOBgzUg0KPY=
 github.com/worldiety/i18n v0.0.0-20250915161102-a988c0489140 h1:qfTeNu//orE9ZamcjC6M9UcYuOmVYmNXIOQkT23RuTo=
 github.com/worldiety/i18n v0.0.0-20250915161102-a988c0489140/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
+github.com/worldiety/i18n v0.0.0-20250915164107-2850e22b7b71 h1:2LmH6VlweL2FQc2OfhCN9D9K8ttHefvGIiZ0cIz9lyE=
+github.com/worldiety/i18n v0.0.0-20250915164107-2850e22b7b71/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
 github.com/worldiety/jsonptr v0.0.3 h1:ffGNVohTh1IugpB16/u07C3Euok3YBil+xfdnYNyeLU=
 github.com/worldiety/jsonptr v0.0.3/go.mod h1:kZmTZng3ftd1GW8sa+O3Xaoi7n+OmsdAm4SsCb1AYEk=
 github.com/worldiety/jsonptr v0.0.4 h1:g3JX0rka2wpB+1rFguyS3mns+bVWoLJChOHpM0aTQJU=

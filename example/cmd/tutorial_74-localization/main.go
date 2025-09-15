@@ -24,6 +24,7 @@ import (
 
 var (
 	StrHelloStringKey = i18n.StringKey("string keys should normally not used")
+	StrBetterPrototyp = i18n.MustEnglish("mydomain.example.better_prototyping", "It can't be easier yet performant")
 	StrHelloWorld     = i18n.MustString("mydomain.example.hello_world", i18n.Values{language.English: "hello world", language.German: "Hallo Welt"})
 	StrHelloX         = i18n.MustVarString(
 		"mydomain.example.hello_x",
@@ -47,6 +48,7 @@ func main() {
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
 				ui.Text(StrHelloStringKey.Get(wnd)),
+				ui.Text(StrBetterPrototyp.Get(wnd)),
 				ui.Text(StrHelloWorld.Get(wnd)),
 				ui.Text(StrHelloX.Get(wnd, i18n.String("name", "Torben"))),
 				ui.Text(rstring.ActionSave.Get(wnd)), // there also some predefined standard texts, which may want to use
