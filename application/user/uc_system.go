@@ -8,13 +8,15 @@
 package user
 
 import (
+	"iter"
+	"slices"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"golang.org/x/text/language"
-	"iter"
-	"slices"
 )
 
 func NewSystem() SysUser {
@@ -24,12 +26,17 @@ func NewSystem() SysUser {
 }
 
 // SU returns a static super user or system user. Note, that this is not necessarily the
-// same as the use case instantiated SysUser.
+// same as the use case instantiated SysUser. The System user has always english as its language and bundle.
 func SU() Subject {
 	return sysUser{}
 }
 
 type sysUser struct {
+}
+
+func (s sysUser) Bundle() *i18n.Bundle {
+	bnd, _ := i18n.Default.MatchBundle(s.Language())
+	return bnd
 }
 
 func (s sysUser) HasResourcePermission(name string, id string, p permission.ID) bool {

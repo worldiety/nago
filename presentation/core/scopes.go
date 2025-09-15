@@ -8,10 +8,12 @@
 package core
 
 import (
+	"log/slog"
+	"sync/atomic"
+	"time"
+
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
-	"log/slog"
-	"time"
 )
 
 // Scopes manages all available scopes and their lifetimes.
@@ -21,7 +23,7 @@ type Scopes struct {
 	updateTicker *time.Ticker
 	updateDone   chan bool
 	scopes       concurrent.CoWMap[proto.ScopeID, *Scope]
-	destroyed    concurrent.Value[bool]
+	destroyed    atomic.Bool
 }
 
 func NewScopes(fps int) *Scopes {
@@ -89,7 +91,7 @@ func (s *Scopes) updateTick(now time.Time) {
 
 // Destroy stops the internal timer and frees all contained scopes.
 func (s *Scopes) Destroy() {
-	if !concurrent.CompareAndSwap(&s.destroyed, false, true) {
+	if !s.destroyed.CompareAndSwap(false, true) {
 		return
 	}
 

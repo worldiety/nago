@@ -9,12 +9,14 @@ package core
 
 import (
 	"context"
+	"log/slog"
+	"time"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/auth"
 	"golang.org/x/text/language"
-	"log/slog"
-	"time"
 )
 
 type ImportFilesOptions struct {
@@ -130,6 +132,9 @@ type Window interface {
 
 	// MediaDevices returns an api access to the frontends attached media devices.
 	MediaDevices() MediaDevices
+
+	// Bundle returns the currently localized and resolved resource bundle.
+	Bundle() *i18n.Bundle
 }
 
 // Colors returns a type safe value based ColorSet instance.

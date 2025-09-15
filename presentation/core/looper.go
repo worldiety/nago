@@ -9,9 +9,11 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/pkg/std/concurrent"
 	"log/slog"
 	"runtime/debug"
+	"sync/atomic"
+
+	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
 type msgType int
@@ -40,7 +42,7 @@ type EventLoop struct {
 
 	batchChan chan []msg
 	done      chan bool
-	destroyed concurrent.Value[bool]
+	destroyed atomic.Bool
 	onPanic   concurrent.Value[func(p any)]
 	reloop    concurrent.Value[bool]
 }
@@ -97,7 +99,7 @@ func (l *EventLoop) SetOnPanicHandler(f func(p any)) {
 // A Post never blocks and keeps allocating space for messages infinitely.
 func (l *EventLoop) Post(f func()) {
 	// this is inprecise, because we may end up with neither this message nor an ever executed func
-	if l.destroyed.Value() {
+	if l.destroyed.Load() {
 		debug.PrintStack()
 		slog.Error("someone posted to a destroyed EventLoop")
 		return
@@ -114,7 +116,7 @@ func (l *EventLoop) Post(f func()) {
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.
 func (l *EventLoop) pull() []msg {
-	if l.destroyed.Value() {
+	if l.destroyed.Load() {
 		return nil
 	}
 
@@ -154,7 +156,7 @@ func (l *EventLoop) tickWithoutLock() {
 // Unprocessed messages are discarded.
 // Future Post calls are ignored.
 func (l *EventLoop) Destroy() {
-	if l.destroyed.Value() {
+	if l.destroyed.Load() {
 		return
 	}
 	/*
@@ -166,7 +168,7 @@ func (l *EventLoop) Destroy() {
 		l.queue.Clear() //this is imprecise, but we want to reduce locks and therefore potential deadlocks
 	*/
 	l.Post(func() {
-		if !concurrent.CompareAndSwap(&l.destroyed, false, true) {
+		if !l.destroyed.CompareAndSwap(false, true) {
 			return
 		}
 

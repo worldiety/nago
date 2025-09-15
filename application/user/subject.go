@@ -8,6 +8,14 @@
 package user
 
 import (
+	"iter"
+	"log/slog"
+	"slices"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
@@ -16,11 +24,6 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/tick"
 	"golang.org/x/text/language"
-	"iter"
-	"log/slog"
-	"slices"
-	"sync"
-	"time"
 )
 
 type AuditableUser interface {
@@ -113,6 +116,9 @@ type Subject interface {
 
 	// Language returns the BCP47 language tag, which encodes a language and locale.
 	Language() language.Tag
+
+	// Bundle returns the associated and localized resource bundle.
+	Bundle() *i18n.Bundle
 }
 
 type viewImpl struct {
@@ -123,6 +129,7 @@ type viewImpl struct {
 	lastRefreshedAt   time.Time
 	refreshInterval   time.Duration
 	locale            language.Tag
+	bundle            atomic.Pointer[i18n.Bundle]
 	roles             []role.ID
 	rolesLookup       map[role.ID]struct{}
 	groups            []group.ID
@@ -513,4 +520,19 @@ func (v *viewImpl) Language() language.Tag {
 	v.refresh()
 
 	return v.locale
+}
+
+func (v *viewImpl) SetLanguage(tag language.Tag) {
+	v.mutex.Lock()
+	defer v.mutex.Unlock()
+
+	v.locale = tag
+}
+
+func (v *viewImpl) Bundle() *i18n.Bundle {
+	return v.bundle.Load()
+}
+
+func (v *viewImpl) SetBundle(b *i18n.Bundle) {
+	v.bundle.Store(b)
 }

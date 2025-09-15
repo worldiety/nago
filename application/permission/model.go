@@ -36,9 +36,9 @@ func (id ID) Valid() bool {
 
 type Permission struct {
 	ID ID `json:"id"`
-	// Name is the unlocalized fallback or default human-readable name of the permission.
+	// Name is the unlocalized fallback or default human-readable name of the permission. Use LocalizedName.
 	Name string `json:"name"`
-	// Description is the unlocalized fallback or default human-readable description of the permission.
+	// Description is the unlocalized fallback or default human-readable description of the permission. Use LocalizedDescription.
 	Description string `json:"desc"`
 }
 

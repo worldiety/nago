@@ -218,6 +218,7 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequested) {
 	s.destroyView()
 	s.updateWindowInfo(s.windowInfo)
+	s.updateLanguage(string(evt.Locale))
 
 	window := newScopeWindow(s, evt.Factory, newValuesFromProto(evt.Values))
 	fac := s.factories[evt.Factory]
@@ -294,6 +295,7 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 		ColorScheme: ColorScheme(winfo.ColorScheme),
 	}
 	s.updateWindowInfo(s.windowInfo)
+	s.updateLanguage(string(evt.AcceptLanguage))
 
 	themes := proto.Themes{
 		Dark: proto.Theme{

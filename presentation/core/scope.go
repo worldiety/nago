@@ -11,12 +11,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/application/session"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/std/concurrent"
-	"go.wdy.de/nago/presentation/proto"
-	"golang.org/x/text/language"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -24,6 +18,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/worldiety/i18n"
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/std/concurrent"
+	"go.wdy.de/nago/presentation/proto"
+	"golang.org/x/text/language"
 )
 
 type Destroyable interface {
@@ -52,7 +54,7 @@ type Scope struct {
 	endOfLifeAt       atomic.Pointer[time.Time]
 	channel           concurrent.Value[Channel]
 	chanDestructor    concurrent.Value[func()]
-	destroyed         concurrent.Value[bool]
+	destroyed         atomic.Bool
 	eventLoop         *EventLoop
 	ctx               context.Context
 	cancelCtx         func()
@@ -66,6 +68,7 @@ type Scope struct {
 	location           *time.Location
 	subject            concurrent.Value[auth.Subject]
 	locale             language.Tag
+	bundle             *i18n.Bundle
 	statesById         map[string]TransientProperty
 
 	sessionID              session.ID
@@ -77,6 +80,18 @@ type Scope struct {
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id proto.ScopeID, lifetime time.Duration, factories map[proto.RootViewID]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
 
+	defaultLang := language.English
+	defaultBundle, ok := i18n.Default.MatchBundle(defaultLang)
+	if !ok {
+		slog.Error("no bundle for default language")
+		i18n.StringKey("no bundle for default language")
+		i18n.Default.Flush()
+		defaultBundle, ok = i18n.Default.MatchBundle(defaultLang)
+		if !ok {
+			panic(fmt.Errorf("implementation error of i18n package: configured at least a single string but broke"))
+		}
+	}
+
 	scopeCtx, cancel := context.WithCancel(ctx)
 	s := &Scope{
 		app:         app,
@@ -87,7 +102,8 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id prot
 		ctx:         scopeCtx,
 		cancelCtx:   cancel,
 		tempRootDir: tempRootDir,
-		locale:      language.German, // TODO implement me
+		locale:      defaultLang,
+		bundle:      defaultBundle,
 		statesById:  make(map[string]TransientProperty),
 		sessionByID: sessionByID,
 	}
@@ -193,6 +209,34 @@ func (s *Scope) updateWindowInfo(winfo WindowInfo) {
 	}
 }
 
+func (s *Scope) updateLanguage(locale string) {
+	tags, _, err := language.ParseAcceptLanguage(locale)
+	if err != nil {
+		slog.Error("cannot parse language", slog.Any("err", err))
+		return
+	}
+
+	if len(tags) == 0 {
+		slog.Error("cannot parse language, no tags", "text", locale)
+		return
+	}
+
+	// todo the race condition situation is not clear here, normally this is protected by the event looper, but subject, scope and window may leak into other go routines
+	s.locale = tags[0]
+	if b, ok := i18n.Default.MatchBundle(s.locale); ok {
+		s.bundle = b
+
+		subject := s.subject.Value()
+		if setter, ok := subject.(subjectLanguageSetter); ok {
+			setter.SetLanguage(s.locale)
+			setter.SetBundle(s.bundle)
+		}
+	} else {
+		slog.Error("cannot match bundle language", "tag", s.locale)
+	}
+
+}
+
 // Connect attaches the given channel to this Scope immediately. There must be exact 1 Scope per Channel.
 // The use case is, that Scopes can be transferred from one channel to another easily.
 // Note, that this is free of technical data races, however it may suffer from logical races, so do not connect
@@ -228,7 +272,7 @@ func (s *Scope) handleMessage(buf []byte) error {
 		return fmt.Errorf("protocol error while handle message: %T is not a proto.NagoEvent", t)
 	}
 
-	if s.destroyed.Value() {
+	if s.destroyed.Load() {
 		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
 		return fmt.Errorf("scope already destroyed")
 	}
@@ -280,7 +324,7 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 	}
 
 	if err := s.channel.Value().Publish(buf.Bytes()); err != nil {
-		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Value())
+		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Load())
 	}
 }
 
@@ -382,7 +426,7 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 // Note, that this may race logically when called concurrently.
 func (s *Scope) Destroy() {
 	fmt.Println("scope.Destroy")
-	if !concurrent.CompareAndSwap(&s.destroyed, false, true) {
+	if !s.destroyed.CompareAndSwap(false, true) {
 		return
 	}
 
@@ -436,4 +480,9 @@ func (s *Scope) handleSessionAssigned(evt *proto.SessionAssigned) {
 	s.sessionID = session.ID(evt.SessionID)
 	tmp := s.sessionByID(s.sessionID)
 	s.virtualSession.Store(&tmp)
+}
+
+type subjectLanguageSetter interface {
+	SetLanguage(tag language.Tag)
+	SetBundle(bundle *i18n.Bundle)
 }

@@ -10,6 +10,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
@@ -226,6 +227,11 @@ func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 		subject = s.parent.app.getAnonUser()
 	}
 
+	if setter, ok := subject.(subjectLanguageSetter); ok {
+		setter.SetBundle(s.Bundle())
+		setter.SetLanguage(s.Locale())
+	}
+
 	s.parent.subject.SetValue(subject)
 }
 
@@ -358,4 +364,8 @@ func (s *scopeWindow) Locale() language.Tag {
 
 func (s *scopeWindow) Location() *time.Location {
 	return s.parent.location
+}
+
+func (s *scopeWindow) Bundle() *i18n.Bundle {
+	return s.parent.bundle
 }

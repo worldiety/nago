@@ -11,6 +11,7 @@ package xslices
 
 import (
 	"iter"
+	"sort"
 )
 
 // Values2 returns an iterator over the values in the slice,
@@ -55,4 +56,30 @@ func ValuesWithError[Slice ~[]Elem, Elem any](s Slice, err error) iter.Seq2[Elem
 			}
 		}
 	}
+}
+
+// PrefixSearch takes a sorted slice of strings and a prefix, and returns the subslice
+// containing all strings that start with the given prefix.
+//
+// The function uses binary search to find the range of matching elements efficiently:
+//  1. Find the lowest index where the prefix could appear.
+//  2. Find the upper bound (the point where strings no longer start with the prefix).
+//
+// Complexity: O(log n + k), where n is the length of the slice and k is the number of matches.
+func PrefixSearch[Slice ~[]Elem, Elem ~string](data Slice, prefix Elem) Slice {
+	// Find the lower bound: the first index where prefix could appear
+	start := sort.Search(len(data), func(i int) bool {
+		return data[i] >= prefix
+	})
+
+	// Construct an artificial upper bound (prefix + high Unicode character)
+	upperBound := prefix + "\uffff"
+
+	// Find the upper bound: the first index where elements are greater than prefix range
+	end := sort.Search(len(data), func(i int) bool {
+		return data[i] >= upperBound
+	})
+
+	// Return the subslice
+	return data[start:end]
 }

@@ -9,11 +9,12 @@ package uiuser
 
 import (
 	"errors"
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"time"
 )
 
 func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User]) core.View {

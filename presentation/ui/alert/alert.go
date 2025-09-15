@@ -8,13 +8,15 @@
 package alert
 
 import (
+	"github.com/worldiety/i18n"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	ui "go.wdy.de/nago/presentation/ui"
 )
 
 type Option interface {
-	apply(opts *alertOpts)
+	apply(wnd core.Window, opts *alertOpts)
 }
 
 type alertOpts struct {
@@ -33,51 +35,51 @@ type alertOpts struct {
 	height       ui.Length
 }
 
-type optFunc func(opts *alertOpts)
+type optFunc func(wnd core.Window, opts *alertOpts)
 
-func (f optFunc) apply(opts *alertOpts) {
-	f(opts)
+func (f optFunc) apply(wnd core.Window, opts *alertOpts) {
+	f(wnd, opts)
 }
 
 func Ok() Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.okBtn = ui.PrimaryButton(func() {
 			opts.state.Set(false)
 			opts.state.Notify()
-		}).Title("Schließen")
+		}).Title(rstring.ActionClose.Get(wnd))
 	})
 }
 
 func Delete(onDelete func()) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.delBtn = ui.PrimaryButton(func() {
 			opts.state.Set(false)
 			opts.state.Notify()
 			if onDelete != nil {
 				onDelete()
 			}
-		}).Title("Löschen")
+		}).Title(rstring.ActionDelete.Get(wnd))
 	})
 }
 
 func Save(onSave func() (close bool)) Option {
-	return save("Speichern", onSave)
+	return save(rstring.ActionSave, onSave)
 }
 
 func Apply(onSave func() (close bool)) Option {
-	return save("Übernehmen", onSave)
+	return save(rstring.ActionApply, onSave)
 }
 
 func Close(onSave func() (close bool)) Option {
-	return save("Schließen", onSave)
+	return save(rstring.ActionClose, onSave)
 }
 
 func Confirm(onSave func() (close bool)) Option {
-	return save("Bestätigen", onSave)
+	return save(rstring.ActionConfirm, onSave)
 }
 
-func save(caption string, onSave func() (close bool)) Option {
-	return optFunc(func(opts *alertOpts) {
+func save(caption i18n.StrHnd, onSave func() (close bool)) Option {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.saveBtn = ui.PrimaryButton(func() {
 			open := false
 			if onSave != nil {
@@ -87,12 +89,12 @@ func save(caption string, onSave func() (close bool)) Option {
 			opts.state.Set(open)
 			opts.state.Notify()
 
-		}).Title(caption)
+		}).Title(caption.Get(wnd))
 	})
 }
 
 func Closeable() Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.closeable = ui.TertiaryButton(func() {
 			opts.state.Set(false)
 			opts.state.Notify()
@@ -102,13 +104,13 @@ func Closeable() Option {
 
 // MinWidth is probably not what you want. Consider [Width] instead.
 func MinWidth(w ui.Length) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.minWidth = w
 	})
 }
 
 func Width(w ui.Length) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.width = w
 	})
 }
@@ -134,14 +136,14 @@ func FullHeight() Option {
 }
 
 func Height(h ui.Length) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.height = h
 	})
 }
 
 // Custom adds a custom footer (button) element.
 func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.custom = append(opts.custom, makeCustomView(func(closeDlg bool) {
 			opts.state.Set(!closeDlg)
 			opts.state.Notify()
@@ -150,44 +152,44 @@ func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 }
 
 func Cancel(onCancel func()) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
 			opts.state.Set(false)
 			opts.state.Notify()
 			if onCancel != nil {
 				onCancel()
 			}
-		}).Title("Abbrechen")
+		}).Title(rstring.ActionCancel.Get(wnd))
 	})
 }
 
 func Back(onCancel func()) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
 			opts.state.Set(false)
 			opts.state.Notify()
 			if onCancel != nil {
 				onCancel()
 			}
-		}).Title("Zurück")
+		}).Title(rstring.ActionBack.Get(wnd))
 	})
 }
 
 func Alignment(alignment ui.Alignment) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.dlgAlign = alignment
 	})
 }
 
 func ModalPadding(padding ui.Padding) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.modalPadding = padding
 	})
 }
 
 // PreBody sets a view between title and body. The body will scroll automatically, however the title and pre body not.
 func PreBody(v core.View) Option {
-	return optFunc(func(opts *alertOpts) {
+	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.preBody = v
 	})
 }
@@ -217,7 +219,7 @@ func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 	var options alertOpts
 	options.state = t.isPresented
 	for _, opt := range t.opts {
-		opt.apply(&options)
+		opt.apply(ctx.Window(), &options)
 	}
 
 	var fixHeight ui.Length

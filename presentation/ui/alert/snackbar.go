@@ -106,7 +106,7 @@ func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages.Set(append(messages.Get(), msg))
 }
 
-func makeMessageFromError(err error) (Message, bool) {
+func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 	if err == nil {
 		return Message{}, false
 	}
@@ -128,9 +128,9 @@ func makeMessageFromError(err error) (Message, bool) {
 	}
 
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
-		name := "diese"
+		name := "?"
 		if str, ok := permissionDenied.(user.PermissionDeniedError); ok {
-			name = "'" + string(str) + "'"
+			name = "'" + wnd.Bundle().Resolve(string(str)) + "'"
 		}
 
 		return Message{
@@ -206,7 +206,7 @@ func (t TBannerError) Render(ctx core.RenderContext) core.RenderNode {
 	tmp := sha3.Sum224([]byte(t.err.Error()))
 	token := hex.EncodeToString(tmp[:16])
 
-	if msg, ok := makeMessageFromError(t.err); ok {
+	if msg, ok := makeMessageFromError(ctx.Window(), t.err); ok {
 		slog.Error("handled customized banner error", "err", t.err.Error(), "token", token)
 		return Banner(msg.Title, msg.Message+" Code: "+token).Render(ctx)
 	}
@@ -233,7 +233,7 @@ func ShowBannerError(wnd core.Window, err error) {
 	tmp := sha3.Sum224([]byte(err.Error()))
 	token := hex.EncodeToString(tmp[:16])
 
-	if msg, ok := makeMessageFromError(err); ok {
+	if msg, ok := makeMessageFromError(wnd, err); ok {
 		slog.Error("handled customized show banner error", "err", err.Error(), "token", token)
 		msg.Message += " Code: " + token
 		ShowBannerMessage(wnd, msg)

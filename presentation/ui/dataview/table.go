@@ -8,6 +8,7 @@
 package dataview
 
 import (
+	"fmt"
 	"iter"
 
 	"go.wdy.de/nago/pkg/data"
@@ -27,8 +28,26 @@ type Field[E any] struct {
 	Name string
 	Map  func(obj E) core.View
 }
+type TDataView[E data.Aggregate[ID], ID ~string] struct {
+	data   Data[E, ID]
+	action func(e E)
+}
 
-func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) core.View {
+func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) TDataView[E, ID] {
+	return TDataView[E, ID]{
+		data: data,
+	}
+}
+
+func (t TDataView[E, ID]) Action(fn func(e E)) TDataView[E, ID] {
+	t.action = fn
+	return t
+}
+
+func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
+	wnd := ctx.Window()
+	data := t.data
+
 	model, err := pager.NewModel(
 		wnd,
 		data.FindByID,
@@ -37,7 +56,7 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 	)
 
 	if err != nil {
-		return alert.BannerError(err)
+		return alert.BannerError(err).Render(ctx)
 	}
 
 	var cols []ui.TTableColumn
@@ -48,7 +67,14 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 
 	return ui.Table(cols...).Rows(
 		ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
+			if v := u.Identity(); v == "" {
+				panic(fmt.Errorf("an item must not have a zero identity"))
+			}
+
 			myState := model.Selections[u.Identity()]
+			if myState == nil {
+				panic(fmt.Errorf("no selection state for %q", u.Identity()))
+			}
 
 			var cells []ui.TTableCell
 			cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
@@ -57,6 +83,9 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 			}
 
 			return ui.TableRow(cells...).Action(func() {
+				if t.action != nil {
+					t.action(u)
+				}
 			}).HoveredBackgroundColor(ui.ColorCardFooter)
 		})...,
 	).Rows(
@@ -70,5 +99,5 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 			).ColSpan(6),
 		).BackgroundColor(ui.ColorCardFooter),
 	).
-		Frame(ui.Frame{}.FullWidth())
+		Frame(ui.Frame{}.FullWidth()).Render(ctx)
 }

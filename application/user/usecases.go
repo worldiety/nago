@@ -81,7 +81,8 @@ type UnassignUserLicense func(auditable permission.Auditable, id ID, license lic
 type SysUser func() Subject
 
 // GetAnonUser returns an anonymous user which has all the declared permissions, roles and groups defined by the
-// settings.
+// settings. Note, that the anon user has english as its default language. We currently don't plan to
+// change that, for logical and performance implications.
 type GetAnonUser func() Subject
 
 // AuthenticateByPassword checks mail and password and returns the view of the user to the caller.

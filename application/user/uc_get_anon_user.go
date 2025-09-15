@@ -8,6 +8,13 @@
 package user
 
 import (
+	"fmt"
+	"iter"
+	"log/slog"
+	"slices"
+	"sync/atomic"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
@@ -16,16 +23,12 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xiter"
 	"golang.org/x/text/language"
-	"iter"
-	"log/slog"
-	"slices"
-	"sync/atomic"
 )
 
 func NewGetAnonUser(loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, bus events.Bus) GetAnonUser {
 	var subj atomic.Pointer[anonSubject]
 	loadSubject := func() {
-		subject := createAnonSubject(loadGlobal, findRoleByID)
+		subject := createAnonSubject(language.English, loadGlobal, findRoleByID)
 		subj.Store(&subject)
 	}
 
@@ -50,13 +53,20 @@ func NewGetAnonUser(loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, 
 	}
 }
 
-func createAnonSubject(loadGlobal settings.LoadGlobal, findRoleByID role.FindByID) anonSubject {
+func createAnonSubject(tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID) anonSubject {
+	bnd, ok := i18n.Default.MatchBundle(tag)
+	if !ok {
+		panic(fmt.Errorf("unreachable"))
+	}
+
 	cfg := settings.ReadGlobal[Settings](loadGlobal)
 	anon := anonSubject{
 		groupsMap:           map[group.ID]struct{}{},
 		rolesMap:            map[role.ID]struct{}{},
 		permissionsMap:      map[permission.ID]struct{}{},
 		resourcePermissions: map[Resource]map[permission.ID]struct{}{},
+		tag:                 tag,
+		bundle:              bnd,
 	}
 
 	for _, anonGroup := range cfg.AnonGroups {
@@ -96,9 +106,15 @@ type anonSubject struct {
 	permissionsMap      map[permission.ID]struct{}
 	permissions         []permission.ID
 	resourcePermissions map[Resource]map[permission.ID]struct{}
+	bundle              *i18n.Bundle
+	tag                 language.Tag
 
 	// intentionally anon users never support Licenses because any amount of users share the same anon subject
 	// and a per-user license would be pointless.
+}
+
+func (a anonSubject) Bundle() *i18n.Bundle {
+	return a.bundle
 }
 
 func (a anonSubject) Audit(permission permission.ID) error {
@@ -199,5 +215,5 @@ func (a anonSubject) Valid() bool {
 }
 
 func (a anonSubject) Language() language.Tag {
-	return language.German
+	return a.tag
 }

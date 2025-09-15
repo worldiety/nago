@@ -9,6 +9,14 @@ package token
 
 import (
 	"fmt"
+	"iter"
+	"log/slog"
+	"maps"
+	"slices"
+	"sync"
+	"time"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
@@ -16,12 +24,6 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std/tick"
 	"golang.org/x/text/language"
-	"iter"
-	"log/slog"
-	"maps"
-	"slices"
-	"sync"
-	"time"
 )
 
 type subject struct {
@@ -204,6 +206,11 @@ func (s *subject) Valid() bool {
 
 func (s *subject) Language() language.Tag {
 	return language.English
+}
+
+func (s *subject) Bundle() *i18n.Bundle {
+	bnd, _ := i18n.Default.MatchBundle(s.Language())
+	return bnd
 }
 
 func (s *subject) load() {

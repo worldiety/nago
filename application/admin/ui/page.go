@@ -9,6 +9,7 @@ package uiadmin
 
 import (
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
@@ -70,7 +71,7 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 					Footer(
 						ui.SecondaryButton(func() {
 							wnd.Navigation().ForwardTo(entry.Target, entry.TargetParams)
-						}).Title("Auswählen"),
+						}).Title(rstring.ActionSelect.Get(wnd)),
 					),
 			)
 		}
