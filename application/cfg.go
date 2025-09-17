@@ -10,12 +10,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"go.wdy.de/nago/application/admin"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/events"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/proto"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -28,6 +22,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+
+	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type EntityStorageFactory interface {
@@ -161,7 +162,7 @@ type envVarConfig struct {
 	cb       func(envVarConfig, string, *Configurator, *slog.Logger) error
 }
 
-var envConfig []envVarConfig = []envVarConfig{
+var envConfig = []envVarConfig{
 	{
 		key:      "HOST",
 		required: false,
@@ -210,6 +211,8 @@ var envConfig []envVarConfig = []envVarConfig{
 		cb: func(config envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
 			if s != "" {
 				cfg.SetContextPath("https://" + s)
+			} else {
+				cfg.SetContextPath("http://localhost" + s)
 			}
 
 			return nil
@@ -323,12 +326,14 @@ func (c *Configurator) ContextPath() string {
 func (c *Configurator) ContextPathURI(path string, query core.Values) string {
 	p := c.ContextPath()
 	if p == "" {
-		p = fmt.Sprintf("http://localhost:%d", c.port)
+		p = fmt.Sprintf("http://localhost:%d", c.getPort())
 	}
 
 	if !strings.HasSuffix(p, "/") {
 		p = p + "/"
 	}
+
+	path = strings.TrimPrefix(path, "/")
 
 	p += path
 

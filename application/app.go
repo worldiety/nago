@@ -9,12 +9,13 @@ package application
 
 import (
 	"fmt"
+	"log/slog"
+	"path/filepath"
+
 	"github.com/joho/godotenv"
 	"go.wdy.de/nago/application/adm"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/internal/server"
-	"log/slog"
-	"path/filepath"
 )
 
 type Application struct {
@@ -34,10 +35,8 @@ func (a *Application) init(configure func(cfg *Configurator)) {
 	_ = godotenv.Load()
 
 	a.cfg = NewConfigurator()
-	configure(a.cfg)
-
 	a.cfg.LoadConfigFromEnv()
-
+	configure(a.cfg)
 }
 
 func (a *Application) Stop() {
