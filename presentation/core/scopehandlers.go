@@ -219,6 +219,9 @@ func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequest
 	s.destroyView()
 	s.updateWindowInfo(s.windowInfo)
 	s.updateLanguage(string(evt.Locale))
+	if session := s.virtualSession.Load(); session != nil {
+		_ = (*session).User() // trigger a potential session refresh every render
+	}
 
 	window := newScopeWindow(s, evt.Factory, newValuesFromProto(evt.Values))
 	fac := s.factories[evt.Factory]

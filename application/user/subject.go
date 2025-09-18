@@ -254,7 +254,7 @@ func (v *viewImpl) load() {
 	}
 
 	slices.Sort(v.permissions)
-
+	
 }
 
 func (v *viewImpl) HasResourcePermission(name string, id string, p permission.ID) bool {

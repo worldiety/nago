@@ -8,10 +8,13 @@
 package session
 
 import (
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
 	"sync"
 	"time"
+
+	"go.wdy.de/nago/application/settings"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
 )
 
 type FindByID func(id ID) (std.Option[Session], error)
@@ -68,6 +71,35 @@ type UserSession interface {
 	// GetString returns the value.
 	GetString(key string) (string, bool)
 }
+
+type NLSNonce string
+type NLSNonceEntry struct {
+	ID       NLSNonce `json:"id"`
+	Session  ID       `json:"sid"`
+	Redirect string   `json:"redirect"`
+}
+
+func (e NLSNonceEntry) Identity() NLSNonce {
+	return e.ID
+}
+
+type NLSNonceRepository data.Repository[NLSNonceEntry, NLSNonce]
+
+type NLSRefreshToken string
+
+// StartNLSFlow allocates a nonce for the given session and returns the according URL to invoke the configured
+// nago-login-service. That service will eventually authenticate our nonce over a REST api. The server can
+// then create and authenticate the user and attach it to the session identified by the nonce. The redirect
+// is the root of the app by default.
+type StartNLSFlow func(id ID) (uri string, err error)
+
+// RefreshNLS tries to refresh the given session. It uses the refresh token to issue a request to the NLS server
+// which in turn updates the user.
+type RefreshNLS func(id ID) error
+
+// ExchangeNLS tries to exchange the nonce for a refresh token and stores that for the given session.
+type ExchangeNLS func(id ID, nonce NLSNonce) (redirect string, err error)
+
 type UseCases struct {
 	FindSessionByID     FindByID
 	FindUserSessionByID FindUserSessionByID
@@ -75,15 +107,19 @@ type UseCases struct {
 	LoginUser           LoginUser
 	Logout              Logout
 	Clear               Clear
+	StartNLSFlow        StartNLSFlow
+	ExchangeNLS         ExchangeNLS
 }
 
-func NewUseCases(repo Repository, authByPwd user.AuthenticateByPassword) UseCases {
+func NewUseCases(defaultNLSRedirectURL string, loadGlobal settings.LoadGlobal, mergeSSO user.MergeSingleSignOnUser, repo Repository, nonceRepo NLSNonceRepository, authByPwd user.AuthenticateByPassword) UseCases {
+	var mutex sync.Mutex
+
 	sessionByIdFn := NewFindByID(repo)
 	loginFn := NewLogin(repo, authByPwd)
 	logoutFn := NewLogout(repo)
-	findUserSessionByIDFn := NewFindUserSessionByID(repo)
+	refreshNLSFn := NewRefreshNLS(&mutex, repo, loadGlobal, mergeSSO, logoutFn)
+	findUserSessionByIDFn := NewFindUserSessionByID(repo, refreshNLSFn)
 
-	var mutex sync.Mutex
 	return UseCases{
 		FindSessionByID:     sessionByIdFn,
 		Login:               loginFn,
@@ -91,5 +127,7 @@ func NewUseCases(repo Repository, authByPwd user.AuthenticateByPassword) UseCase
 		Logout:              logoutFn,
 		FindUserSessionByID: findUserSessionByIDFn,
 		Clear:               NewClear(&mutex, repo),
+		StartNLSFlow:        NewStartNLSFlow(&mutex, defaultNLSRedirectURL, nonceRepo, loadGlobal),
+		ExchangeNLS:         NewExchangeNLS(&mutex, nonceRepo, repo, loadGlobal, refreshNLSFn),
 	}
 }

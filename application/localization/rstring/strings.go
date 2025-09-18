@@ -94,6 +94,24 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionEdit = i18n.MustString(
+		"nago.common.action.edit",
+		i18n.Values{
+			language.English: "Edit",
+			language.German:  "Bearbeiten",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	ActionLogin = i18n.MustString(
+		"nago.common.action.login",
+		i18n.Values{
+			language.English: "Login",
+			language.German:  "Anmelden",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionApply = i18n.MustString(
 		"nago.common.action.apply",
 		i18n.Values{
@@ -148,5 +166,23 @@ var (
 			language.German:  "Nichts gewählt",
 		},
 		i18n.LocalizationHint("This text is usually used on pickers where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelPleaseWait = i18n.MustString(
+		"nago.common.label.please_wait",
+		i18n.Values{
+			language.English: "Please wait...",
+			language.German:  "Einen Moment bitte...",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelError = i18n.MustString(
+		"nago.common.label.error",
+		i18n.Values{
+			language.English: "Error",
+			language.German:  "Fehler",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 )

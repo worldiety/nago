@@ -63,16 +63,28 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			return SessionManagement{}, fmt.Errorf("cannot get user management: %w", err)
 		}
 
+		setMgmt, err := c.SettingsManagement()
+		if err != nil {
+			return SessionManagement{}, fmt.Errorf("cannot get settings management: %w", err)
+		}
+
+		repoNonces, err := JSONRepository[session.NLSNonceEntry, session.NLSNonce](c, "nago.iam.nls.nonce")
+
 		useCases := session.NewUseCases(
+			c.ContextPathURI("", nil),
+			setMgmt.UseCases.LoadGlobal,
+			userMgmt.UseCases.MergeSingleSignOnUser,
 			repo,
+			repoNonces,
 			userMgmt.UseCases.AuthenticateByPassword,
 		)
 
 		c.sessionManagement = &SessionManagement{
 			UseCases: useCases,
 			Pages: uisession.Pages{
-				Login:  "account/login",
-				Logout: "account/logout",
+				Login:          "account/login",
+				Logout:         "account/logout",
+				Authentication: "account/nls/authentication",
 			},
 		}
 
@@ -85,6 +97,7 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 			return uisession.Login(
 				wnd,
 				c.sessionManagement.UseCases.Login,
+				c.sessionManagement.UseCases.StartNLSFlow,
 				c.userManagement.UseCases.SysUser,
 				c.userManagement.UseCases.FindByMail,
 				c.SendPasswordResetMail,
@@ -92,6 +105,10 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 				settingsManagement.UseCases.LoadGlobal,
 				userMgmt.Pages.Register,
 			)
+		})
+
+		c.RootView(c.sessionManagement.Pages.Authentication, func(wnd core.Window) core.View {
+			return uisession.PageNLSAuthentication(wnd, c.sessionManagement.UseCases.ExchangeNLS)
 		})
 
 		c.RootView(c.sessionManagement.Pages.Logout, c.DecorateRootView(func(wnd core.Window) core.View {

@@ -145,6 +145,51 @@ type ListGrantedPermissions func(subject AuditableUser, id GrantingKey) ([]permi
 // [GrantingIndexRepository] is used.
 type ListGrantedUsers func(subject AuditableUser, res Resource) iter.Seq2[ID, error]
 
+type SingleSignOnUser struct {
+	Firstname         string
+	Lastname          string
+	Name              string
+	Email             Email
+	PreferredLanguage string
+
+	Salutation        string
+	Title             string
+	Position          string
+	CompanyName       string
+	City              string
+	PostalCode        string
+	State             string
+	Country           string
+	ProfessionalGroup string
+	MobilePhone       string
+	AboutMe           string
+}
+
+func (u SingleSignOnUser) FirstName() string {
+	if u.Firstname != "" {
+		return u.Firstname
+	}
+
+	return strings.Split(u.Name, " ")[0]
+}
+
+func (u SingleSignOnUser) LastName() string {
+	if u.Lastname != "" {
+		return u.Lastname
+	}
+
+	if tokens := strings.Split(u.Name, " ")[0]; len(tokens) > 1 {
+		return strings.Split(u.Name, " ")[1]
+	}
+
+	return u.Name
+}
+
+// MergeSingleSignOnUser accepts the given user credentials as verified and trusted. If any existing user
+// is found with the same mail address, it will be marked as SSO-managed and the password-login and profile editing
+// is disabled.
+type MergeSingleSignOnUser func(user SingleSignOnUser) (ID, error)
+
 // GrantingKey is a triple composite key of <repo-name>/<resource-id>/<user-id>.
 type GrantingKey string
 
@@ -246,6 +291,7 @@ type UseCases struct {
 	ListGrantedPermissions    ListGrantedPermissions
 	ListGrantedUsers          ListGrantedUsers
 	ExportUsers               ExportUsers
+	MergeSingleSignOnUser     MergeSingleSignOnUser
 }
 
 func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
@@ -329,5 +375,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
 		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
 		ExportUsers:               NewExportUsers(users),
+		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn),
 	}
 }

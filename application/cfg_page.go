@@ -12,6 +12,18 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"io/fs"
+	"log"
+	"log/slog"
+	"mime"
+	"net/http"
+	"path/filepath"
+	"runtime/debug"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
@@ -26,17 +38,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/proto"
-	"io"
-	"io/fs"
-	"log"
-	"log/slog"
-	"mime"
-	"net/http"
-	"path/filepath"
-	"runtime/debug"
-	"strings"
-	"sync"
-	"time"
 )
 
 // RootView registers a factory to create a [core.View] within a [core.Scope].
@@ -260,8 +261,6 @@ func (c *Configurator) newHandler() http.Handler {
 				return
 			}
 
-			log.Println(request.URL.Path)
-
 			assets.ServeHTTP(writer, request)
 		}))
 
@@ -461,7 +460,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 		logger := logging.FromContext(r.Context())
-		logger.Info("wire is called, before upgrade")
+		//logger.Info("wire is called, before upgrade")
 		queryParams := r.URL.Query()
 		scopeID := queryParams.Get("_sid")
 		_ = logger
@@ -481,7 +480,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 		conn.EnableWriteCompression(true)
 
-		logger.Info("wire upgrade to websocket success", "id", scopeID)
+		//logger.Info("wire upgrade to websocket success", "id", scopeID)
 
 		// todo new
 		defer func() {

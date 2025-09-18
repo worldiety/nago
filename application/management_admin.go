@@ -8,12 +8,13 @@
 package application
 
 import (
+	"slices"
+	"strings"
+
 	"go.wdy.de/nago/application/admin"
 	uiadmin "go.wdy.de/nago/application/admin/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
-	"slices"
-	"strings"
 )
 
 type AdminManagement struct {
@@ -121,6 +122,7 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				return groups
 			},
 			QueryGroups: admin.NewGroups(func(subject auth.Subject) []admin.Group {
+				// TODO not sure about always inflating this also for the profile menu ?!?
 				// be invariant on replacements for FindAll, so that developer can inject custom admin groups
 				return c.adminManagement.FindAll(subject)
 			}),

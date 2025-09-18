@@ -11,11 +11,21 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/worldiety/i18n"
 )
 
 type Group struct {
 	Name   string
 	Fields []reflect.StructField
+}
+
+func LocalizeGroups(bnd *i18n.Bundle, groups []Group) []Group {
+	for idx := range groups {
+		groups[idx].Name = bnd.Resolve(groups[idx].Name)
+	}
+	
+	return groups
 }
 
 func GroupsFor[T any]() []Group {

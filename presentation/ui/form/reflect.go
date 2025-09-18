@@ -138,7 +138,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
-	for _, group := range GroupsOf(structType, t.opts.IgnoreFields...) {
+	for _, group := range LocalizeGroups(ctx.Window().Bundle(), GroupsOf(structType, t.opts.IgnoreFields...)) {
 		var fieldsBuilder xslices.Builder[core.View]
 		for _, field := range group.Fields {
 			/*fieldTableVisible := true
@@ -164,6 +164,9 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 				fieldsBuilder.Append(ui.HLine())
 				continue
 			}
+
+			label = ctx.Window().Bundle().Resolve(label) // try to translate
+			supportingText := ctx.Window().Bundle().Resolve(field.Tag.Get("supportingText"))
 
 			if strings.HasPrefix(field.Name, "_") && label != "_" {
 				fieldsBuilder.Append(ui.Text(label).FullWidth().TextAlignment(ui.TextAlignStart))
@@ -239,7 +242,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							Title(label).
 							MultiSelect(true).
 							Disabled(disabled).
-							SupportingText(field.Tag.Get("supportingText")).
+							SupportingText(supportingText).
 							Frame(ui.Frame{}.FullWidth()))
 
 					} else {
@@ -294,7 +297,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
 							InputValue(strState).
 							ID(id).
-							SupportingText(field.Tag.Get("supportingText")).
+							SupportingText(supportingText).
 							Lines(lines).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
@@ -333,7 +336,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 					Disabled(disabled).
 					ID(id).
 					InputValue(boolState).
-					SupportingText(field.Tag.Get("supportingText")).
+					SupportingText(supportingText).
 					Frame(ui.Frame{}.FullWidth()),
 				)
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -400,7 +403,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						Minutes(showMinutes).
 						Seconds(showSeconds).
 						Disabled(disabled).
-						SupportingText(field.Tag.Get("supportingText")).
+						SupportingText(supportingText).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				default:
@@ -432,7 +435,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 					fieldsBuilder.Append(ui.IntField(label, intState.Get(), intState).
 						Disabled(disabled).
-						SupportingText(field.Tag.Get("supportingText")).
+						SupportingText(supportingText).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
@@ -456,7 +459,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 					fieldsBuilder.Append(ui.SingleDatePicker(label, dateState.Get(), dateState).
 						Disabled(disabled).
-						SupportingText(field.Tag.Get("supportingText")).
+						SupportingText(supportingText).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 
@@ -569,7 +572,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						fieldsBuilder.Append(ui.PasswordField(label, secretState.Get()).
 							InputValue(secretState).
 							ID(id).
-							SupportingText(field.Tag.Get("supportingText")).
+							SupportingText(supportingText).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
 						)
@@ -622,7 +625,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 								Title(label).
 								MultiSelect(false).
 								Disabled(disabled).
-								SupportingText(field.Tag.Get("supportingText")).
+								SupportingText(supportingText).
 								Frame(ui.Frame{}.FullWidth()))
 
 						} else {
@@ -653,7 +656,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							fieldsBuilder.Append(ui.TextField(label, strState.Get()).
 								InputValue(strState).
 								ID(id).
-								SupportingText(field.Tag.Get("supportingText")).
+								SupportingText(supportingText).
 								Lines(lines).
 								Disabled(disabled).
 								Frame(ui.Frame{}.FullWidth()),

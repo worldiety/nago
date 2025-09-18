@@ -479,6 +479,7 @@ func (s *Scope) destroy() {
 func (s *Scope) handleSessionAssigned(evt *proto.SessionAssigned) {
 	s.sessionID = session.ID(evt.SessionID)
 	tmp := s.sessionByID(s.sessionID)
+	_ = tmp.User() //issue a refresh, if required
 	s.virtualSession.Store(&tmp)
 }
 

@@ -8,17 +8,28 @@
 package user
 
 import (
+	"log/slog"
+	"regexp"
+
 	"github.com/worldiety/enum"
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
-	"log/slog"
-	"regexp"
+	"golang.org/x/text/language"
 )
 
 var _ = enum.Variant[settings.GlobalSettings, Settings](
 	enum.Rename[Settings]("nago.user.settings"),
+)
+
+var (
+	StrSettingsSSOTitle                   = i18n.MustString("nago.iam.settings.sso.title", i18n.Values{language.English: "Single-Sign On", language.German: "Verzeichnisdienst (SSO)"})
+	StrSettingsSSODescription             = i18n.MustString("nago.iam.settings.sso.description", i18n.Values{language.English: "This instance can authenticate against an external Nago-Login-Service (NLS). This allows automatic account creation for externally authenticated users. Existing local users are merged automatically with external identities and cannot login using their password anymore or can change their profile.", language.German: "Diese Instanz kann sich gegenüber einem externen Nago-Login-Service (NLS) authentifizieren. Dadurch ist die automatische Kontoerstellung für extern authentifizierte Benutzer möglich. Existierende Nutzer werden automatisch mit externen Identitäten verbunden. Ein Login per Passwort oder das Ändern der Profildaten ist dann nicht mehr möglich."})
+	StrSettingsSSONLSURLSupportingText    = i18n.MustString("nago.iam.settings.sso.nls_url_supporting_text", i18n.Values{language.English: "The NLS server instance to use. For example https://login.worldiety.nago.app", language.German: "Die NLS server Instanz, die verwendet werden soll, beispielsweise https://login.worldiety.nago.app"})
+	StrSettingsSSOAllowListTitle          = i18n.MustString("nago.iam.settings.sso.allow_list_title", i18n.Values{language.English: "Allow list email patterns", language.German: "Erlaubte E-Mail Muster"})
+	StrSettingsSSOAllowListSupportingText = i18n.MustString("nago.iam.settings.sso.allow_list_supporting_text", i18n.Values{language.English: "If empty, all users are accepted from the SSO. Otherwise only the contained patterns are allowed. For example to allow only members of worldiety insert: ^[a-z|-|.]+@worldiety.de$", language.German: "Wenn leer, werden alle Benutzer aus dem SSO akzeptiert. Andernfalls sind nur die enthaltenen Muster zulässig. Um beispielsweise nur Mitglieder von worldiety zuzulassen, kann folgender Ausdruck verwendet werden: ^[a-z|-|.]+@worldiety.de$"})
 )
 
 type FieldConstraint string
@@ -133,6 +144,14 @@ type Settings struct {
 	______     any        `section:"Anonyme Nutzer" label:"Standardrollen und Gruppen von anonymen Nutzern. Diese Rollen werden nicht auf gültige, ungültige oder angemeldete Nutzer vererbt, sodass eine entsprechende Unterscheidung möglich ist."`
 	AnonRoles  []role.ID  `section:"Anonyme Nutzer" json:"anonRoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen hat jeder anonyme Nutzer."`
 	AnonGroups []group.ID `section:"Anonyme Nutzer" json:"anonGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen hat jeder anonyme Nutzer."`
+
+	_______      any      `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.description"`
+	SSONLSServer string   `section:"nago.iam.settings.sso.title" label:"NLS URL" supportingText:"nago.iam.settings.sso.nls_url_supporting_text" json:"sso_nls_server"`
+	SSOAllowList []string `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.allow_list_title" supportingText:"nago.iam.settings.sso.allow_list_supporting_text" json:"sso_allow_list"`
 }
 
 func (s Settings) GlobalSettings() bool { return true }
+
+func (s Settings) HasSSO() bool {
+	return s.SSONLSServer != ""
+}

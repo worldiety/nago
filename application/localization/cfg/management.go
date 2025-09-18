@@ -49,11 +49,15 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
+		if !subject.HasPermission(localization.PermReadDir) {
+			return admin.Group{}
+		}
+		
 		var grp admin.Group
 		grp.Title = uilocalization.StrTranslations.Get(subject)
 		dir, err := uc.ReadDir(subject, ".")
 		if err != nil {
-			slog.Error("failed to localization directory", "subject", subject, "err", err.Error())
+			slog.Error("failed to read localization directory", "subject", subject.ID(), "err", err.Error())
 			return grp
 		}
 

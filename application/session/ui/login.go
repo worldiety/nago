@@ -10,8 +10,11 @@ package uisession
 import (
 	"errors"
 	"fmt"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/theme"
@@ -20,6 +23,11 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrSignInWithSSO = i18n.MustString("nago.iam.login.sign_in_with_sso", i18n.Values{language.English: "or sign in with", language.German: "oder anmelden mit"})
 )
 
 type SendPasswordResetMail func(email user.Email) error
@@ -28,6 +36,7 @@ type SendVerificationMail func(uid user.ID) error
 func Login(
 	wnd core.Window,
 	loginFn session.Login,
+	startNLSFlow session.StartNLSFlow,
 	su user.SysUser,
 	findByMail user.FindByMail,
 	sendResetPwdMail SendPasswordResetMail,
@@ -105,7 +114,7 @@ func Login(
 
 	return ui.VStack( // we don't have a scaffold
 		ui.VStack(
-			ui.WindowTitle("Anmelden"),
+			ui.WindowTitle(rstring.ActionLogin.Get(wnd)),
 			cardlayout.Card("").
 				Padding(ui.Padding{}.All(ui.L12)).
 				Body(
@@ -119,7 +128,7 @@ func Login(
 								func(close func(closeDlg bool)) core.View {
 									return ui.SecondaryButton(func() {
 										close(true)
-									}).Title("Abbrechen")
+									}).Title(rstring.ActionCancel.Get(wnd))
 								},
 							),
 
@@ -176,6 +185,26 @@ func Login(
 							presentPasswordForgotten.Set(false)
 
 						}).Font(ui.Small).Visible(presentPasswordForgotten.Get()),
+
+						ui.IfFunc(usrSettings.HasSSO(), func() core.View {
+							return ui.VStack(
+								ui.HStack(
+									ui.HLine().Frame(ui.Frame{Width: ui.L40}),
+									ui.Text(StrSignInWithSSO.Get(wnd)),
+									ui.HLine().Frame(ui.Frame{Width: ui.L40}),
+								).FullWidth().Gap(ui.L8),
+
+								ui.SecondaryButton(func() {
+									uri, err := startNLSFlow(wnd.Session().ID())
+									if err != nil {
+										alert.ShowBannerError(wnd, err)
+										return
+									}
+
+									core.HTTPOpen(wnd.Navigation(), core.URI(uri), "_self")
+								}).Title("SSO").Frame(ui.Frame{}.FullWidth()),
+							).FullWidth().Gap(ui.L8)
+						}),
 					).Gap(ui.L8),
 				).Footer(
 				ui.HStack(
@@ -195,7 +224,7 @@ func Login(
 
 						infoText.Set(fmt.Sprintf("Eine E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get()))
 					}).Visible(presentPasswordForgotten.Get()).Title("Link per E-Mail senden"),
-					ui.PrimaryButton(triggerLoginAction).Visible(!presentPasswordForgotten.Get()).Title("Anmelden").ID("nago-action-login"),
+					ui.PrimaryButton(triggerLoginAction).Visible(!presentPasswordForgotten.Get()).Title(rstring.ActionLogin.Get(wnd)).ID("nago-action-login"),
 				),
 			),
 			ui.TextLayout(

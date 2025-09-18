@@ -255,6 +255,7 @@ type User struct {
 	EMailVerified         bool          `json:"emailVerified,omitempty"`
 	Status                AccountStatus `json:"status,omitempty"`
 	RequirePasswordChange bool          `json:"requirePasswordChange,omitempty"`
+	NLSManagedUser        bool          `json:"nls,omitempty"`
 	VerificationCode      Code          `json:"verificationCode,omitzero"`
 	PasswordRequestCode   Code          `json:"passwordRequestCode,omitzero"`
 
@@ -273,6 +274,10 @@ type User struct {
 
 func (u User) String() string {
 	return xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname) + " (" + string(u.Email) + ")"
+}
+
+func (u User) SSO() bool {
+	return u.NLSManagedUser
 }
 
 func (u User) Identity() ID {
@@ -305,5 +310,9 @@ func (u User) Enabled() bool {
 }
 
 func (u User) RequiresVerification() bool {
+	if u.NLSManagedUser {
+		return false
+	}
+
 	return u.RequirePasswordChange || !u.PasswordRequestCode.IsZero() || !u.VerificationCode.IsZero() || len(u.PasswordHash) == 0
 }

@@ -8,10 +8,11 @@
 package session
 
 import (
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"time"
 )
 
 type ID string
@@ -22,6 +23,7 @@ type Session struct {
 	CreatedAt       time.Time           `json:"createdAt,omitempty,omitzero"`
 	AuthenticatedAt time.Time           `json:"authenticatedAt,omitempty,omitzero"`
 	Values          map[string]string   `json:"values,omitempty,omitzero"`
+	RefreshToken    NLSRefreshToken     `json:"refreshToken,omitzero"`
 }
 
 func (s Session) Identity() ID {

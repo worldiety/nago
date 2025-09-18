@@ -10,6 +10,7 @@ package uisession
 import "go.wdy.de/nago/presentation/core"
 
 type Pages struct {
-	Login  core.NavigationPath
-	Logout core.NavigationPath
+	Login          core.NavigationPath
+	Logout         core.NavigationPath
+	Authentication core.NavigationPath
 }

@@ -9,12 +9,13 @@ package session
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/std/tick"
 	"log/slog"
 	"sync"
 	"time"
+
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/std/tick"
 )
 
 type sessionImpl struct {
@@ -24,22 +25,44 @@ type sessionImpl struct {
 	mutex           sync.RWMutex
 	refreshInterval time.Duration
 	lastRefreshedAt time.Time
+	refreshNLS      RefreshNLS
+}
+
+func newSessionImpl(id ID, repo Repository, refresh RefreshNLS) *sessionImpl {
+	return &sessionImpl{id: id, repo: repo, refreshNLS: refresh}
 }
 
 func (s *sessionImpl) refresh() Session {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
+
+	session := s.session
+	id := s.id
 
 	if s.refreshInterval == 0 {
 		s.refreshInterval = 5 * time.Minute
 	}
 
 	now := tick.Now(tick.Minute)
+	var requiresRefresh bool
 	if now.Sub(s.lastRefreshedAt) >= s.refreshInterval {
 		s.session = s.load()
+		session = s.session
+		requiresRefresh = true
+		s.lastRefreshedAt = now
 	}
 
-	return s.session
+	hasNLS := s.session.RefreshToken != ""
+	
+	s.mutex.Unlock()
+
+	// execute refresh without locks
+	if requiresRefresh && hasNLS {
+		if err := s.refreshNLS(id); err != nil {
+			slog.Error("failed to refresh NLS session", "err", err.Error())
+		}
+	}
+
+	return session
 }
 
 func (s *sessionImpl) load() Session {

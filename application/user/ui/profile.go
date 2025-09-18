@@ -9,9 +9,14 @@ package uiuser
 
 import (
 	"errors"
+	"os"
+	"strings"
+
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/image"
 	httpimage "go.wdy.de/nago/application/image/http"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/xstrings"
@@ -22,8 +27,11 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/list"
-	"os"
-	"strings"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrSSOUserCannotEditProfile = i18n.MustString("nago.iam.user.profile.cannot_edit_sso", i18n.Values{language.English: "User is managed by external Single Sign On System and profile data cannot be edited.", language.German: "Der Benutzer wird durch ein externes Single-Sign-On-System verwaltet, und die Profildaten können nicht bearbeitet werden."})
 )
 
 func ProfilePage(
@@ -39,17 +47,23 @@ func ProfilePage(
 		return alert.BannerError(user.PermissionDeniedErr)
 	}
 
-	contact, err := readMyContact(wnd.Subject())
+	optUsr, err := findUserByID(wnd.Subject(), wnd.Subject().ID())
 	if err != nil {
-		return alert.BannerError(err)
+		alert.ShowBannerError(wnd, err)
+	}
+
+	if optUsr.IsNone() {
+		return alert.BannerError(os.ErrNotExist)
 	}
 
 	presentPasswordChange := core.AutoState[bool](wnd)
 	return ui.VStack(
 		passwordChangeDialog(wnd, changeMyPassword, presentPasswordChange),
 		ui.H1("Mein Profil"),
-		profileCard(wnd, pages, contact, findMyRoles),
-		actionCard(wnd, presentPasswordChange, wnd.Subject().ID(), findUserByID, consent),
+		profileCard(wnd, pages, optUsr.Unwrap(), findMyRoles),
+		ui.IfFunc(!optUsr.Unwrap().SSO(), func() core.View {
+			return actionCard(wnd, presentPasswordChange, wnd.Subject().ID(), findUserByID, consent)
+		}),
 	).Gap(ui.L20).
 		Alignment(ui.Leading).
 		Frame(ui.Frame{Width: ui.L560, MaxWidth: "100%"})
@@ -200,7 +214,8 @@ func actionCard(wnd core.Window, presentPasswordChange *core.State[bool], uid us
 	return list.List(actionItems...).Frame(ui.Frame{}.FullWidth())
 }
 
-func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles role.FindMyRoles) core.View {
+func profileCard(wnd core.Window, pages Pages, usr user.User, findMyRoles role.FindMyRoles) core.View {
+	contact := usr.Contact
 	var myRoleNames []string
 	for myRole, err := range findMyRoles(wnd.Subject()) {
 		if err != nil {
@@ -253,6 +268,11 @@ func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles
 		tmpDetailsViews...,
 	).Alignment(ui.Leading)
 
+	var editHint string
+	if usr.SSO() {
+		editHint = StrSSOUserCannotEditProfile.Get(wnd)
+	}
+
 	return ui.VStack(
 		ui.HStack(
 			ui.Text(strings.Join(myRoleNames, ", "))).
@@ -269,7 +289,7 @@ func profileCard(wnd core.Window, pages Pages, contact user.Contact, findMyRoles
 			ui.HStack(
 				ui.SecondaryButton(func() {
 					wnd.Navigation().ForwardTo(pages.MyContact, nil)
-				}).Title("Bearbeiten"),
+				}).Title(rstring.ActionEdit.Get(wnd)).Enabled(!usr.SSO()).AccessibilityLabel(editHint),
 			).Alignment(ui.Trailing).
 				FullWidth(),
 		).Alignment(ui.Leading).
