@@ -30,13 +30,14 @@ func (c *RWMap[K, V]) Put(key K, value V) {
 }
 
 func (c *RWMap[K, V]) Get(key K) (value V, ok bool) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	
 	if c.m == nil {
 		var zero V
 		return zero, false
 	}
 
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
 	v, ok := c.m[key]
 	return v, ok
 }
