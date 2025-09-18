@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"reflect"
 	"unsafe"
 )
 
@@ -13640,14 +13639,8 @@ func (v *FunctionCallRequested) IsZero() bool {
 type Color string
 
 func (v *Color) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -13693,14 +13686,8 @@ func (v *Shadow) IsZero() bool {
 type Length string
 
 func (v *Length) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -13933,14 +13920,8 @@ func (v *ErrorOccurred) IsZero() bool {
 type Locale string
 
 func (v *Locale) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -13975,14 +13956,8 @@ func (v *Locale) reset() {
 type RootViewID string
 
 func (v *RootViewID) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -14074,14 +14049,8 @@ func (v *RootViewParameters) reset() {
 type Str string
 
 func (v *Str) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -14304,14 +14273,8 @@ func (v *Locales) reset() {
 type URI string
 
 func (v *URI) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -14346,14 +14309,8 @@ func (v *URI) reset() {
 type NamespaceName string
 
 func (v *NamespaceName) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -14817,14 +14774,8 @@ func (v *Img) IsZero() bool {
 type SVG []byte
 
 func (v *SVG) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -14982,14 +14933,8 @@ func (v *NavigationReloadRequested) IsZero() bool {
 type ThemeID string
 
 func (v *ThemeID) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -15145,14 +15090,8 @@ func (v *ScaffoldMenuEntry) IsZero() bool {
 type ScopeID string
 
 func (v *ScopeID) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
@@ -16370,14 +16309,8 @@ func (v *Chart) IsZero() bool {
 type LineHeight string
 
 func (v *LineHeight) write(r *BinaryWriter) error {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(v))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-
-	data := *(*[]byte)(unsafe.Pointer(&bh))
+	s := string(*v)
+	data := unsafe.Slice(unsafe.StringData(s), len(s))
 	if err := r.writeUvarint(uint64(len(data))); err != nil {
 		return err
 	}
