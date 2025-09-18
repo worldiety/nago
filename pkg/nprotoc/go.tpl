@@ -8,6 +8,7 @@ import(
 	"fmt"
 	"math"
 	"unsafe"
+	"reflect"
 )
 
 {{.BinaryWriter}}

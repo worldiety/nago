@@ -17,7 +17,11 @@ func (c *Compiler) goEmitString(t Typename, decl String) error {
 	c.pf("type %s %s\n", t, strShape)
 	c.pn("")
 	c.pf("func(v *%s) write(r *BinaryWriter)error{\n", t)
-	c.pn("	data := *(*[]byte)(unsafe.Pointer(v))")
+	//c.pn("	data := *(*[]byte)(unsafe.Pointer(v))")
+	c.pn("	sh := (*reflect.StringHeader)(unsafe.Pointer(v))")
+	c.pn("	bh := reflect.SliceHeader{\n        Data: sh.Data,\n        Len:  sh.Len,\n        Cap:  sh.Len,\n    }\n")
+	c.pn("data:= *(*[]byte)(unsafe.Pointer(&bh))")
+
 	c.pn("	if err:=r.writeUvarint(uint64(len(data)));err!=nil {")
 	c.pn("		return err")
 	c.pn("	}")
