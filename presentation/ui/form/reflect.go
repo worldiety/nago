@@ -531,9 +531,9 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 					switch field.Tag.Get("style") {
 					case "avatar":
-						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Circle))
+						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Circle).Enabled(!t.opts.ViewOnly))
 					case "icon":
-						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Rounded))
+						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Rounded).Enabled(!t.opts.ViewOnly))
 					default:
 						fieldsBuilder.Append(SingleImagePicker(t.opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
 					}

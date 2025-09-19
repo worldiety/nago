@@ -106,15 +106,18 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 		),
 
 		passwordChangeOtherDialog(wnd, usr.Get().ID, ucUsers.ChangeOtherPassword, presentedPwdChange),
-		etcAction(
-			wnd,
-			"Kennwort setzen",
-			"Das Kennwort sollte aus Sicherheitsgründen immer vom Konto-Inhaber selbst gesetzt werden. Fall dies nicht möglich sein sollte, kann das Kennwort hier manuell vergeben werden. Es muss über einen sicheren Kanal bestätigt werden, dass die Person, welche die Anmeldedaten besitzt auch wirklich der Kontoinhaber ist. Achtung: Telefonnummern, Stimmen und Videoanrufe können gefälscht sein.",
-			"",
-			"Kennwort setzen",
-			func() {
-				presentedPwdChange.Set(true)
-			},
+
+		ui.If(!usr.Get().SSO(),
+			etcAction(
+				wnd,
+				"Kennwort setzen",
+				"Das Kennwort sollte aus Sicherheitsgründen immer vom Konto-Inhaber selbst gesetzt werden. Fall dies nicht möglich sein sollte, kann das Kennwort hier manuell vergeben werden. Es muss über einen sicheren Kanal bestätigt werden, dass die Person, welche die Anmeldedaten besitzt auch wirklich der Kontoinhaber ist. Achtung: Telefonnummern, Stimmen und Videoanrufe können gefälscht sein.",
+				"",
+				"Kennwort setzen",
+				func() {
+					presentedPwdChange.Set(true)
+				},
+			),
 		),
 	).FullWidth().Gap(ui.L32)
 }

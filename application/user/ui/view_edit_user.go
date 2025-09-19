@@ -35,7 +35,10 @@ func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCase
 	return ui.VStack(
 		tabs.Tabs(
 			tabs.Page("Kontakt", func() core.View {
-				return viewContact(wnd, editContact)
+				return ui.VStack(
+					ui.If(usr.Get().SSO(), ui.Text(StrSSOUserCannotEditProfile.Get(wnd))),
+					ui.If(!usr.Get().SSO(), viewContact(wnd, usr, editContact)),
+				).FullWidth()
 			}).Icon(icons.AddressBook),
 			tabs.Page("Rollen", func() core.View {
 				return viewRoles(wnd, ucUsers, ucRoles, usr)
@@ -150,8 +153,8 @@ func viewGroups(wnd core.Window, ucGroups group.UseCases, usr *core.State[user.U
 
 }
 
-func viewContact(wnd core.Window, usr *core.State[contactViewModel]) core.View {
-	return form.Auto(form.AutoOptions{Window: wnd}, usr).Frame(ui.Frame{Width: ui.Full})
+func viewContact(wnd core.Window, usrState *core.State[user.User], usr *core.State[contactViewModel]) core.View {
+	return form.Auto(form.AutoOptions{Window: wnd, ViewOnly: usrState.Get().SSO()}, usr).Frame(ui.Frame{Width: ui.Full})
 }
 
 func viewPermissions(wnd core.Window, usr *core.State[user.User]) core.View {

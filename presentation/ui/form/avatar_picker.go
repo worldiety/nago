@@ -31,6 +31,7 @@ type TAvatarPicker struct {
 	border             ui.Border
 	accessibilityLabel string
 	invisible          bool
+	disabled           bool
 }
 
 func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string, id image.ID, state *core.State[image.ID], paraphe string, style avatar.Style) TAvatarPicker {
@@ -46,6 +47,10 @@ func AvatarPicker(wnd core.Window, setCreator image.CreateSrcSet, selfId string,
 	}
 }
 
+func (t TAvatarPicker) Enabled(b bool) TAvatarPicker {
+	t.disabled = !b
+	return t
+}
 func (t TAvatarPicker) Padding(padding ui.Padding) ui.DecoredView {
 	t.padding = padding
 	return t
@@ -96,25 +101,27 @@ func (t TAvatarPicker) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	var actionBtn core.View
-	if t.id == "" {
-		actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Plus).StrokeColor(ui.ColorBlack).Frame(ui.Frame{}.FullWidth())).
-			Action(func() {
-				wndImportFiles(t.wnd, t.setCreator, t.selfID, t.state)
-			}).
-			BackgroundColor(ui.ColorWhite).
-			Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
-			Padding(ui.Padding{}.All(ui.L2)).
-			Border(ui.Border{}.Width(ui.L4).Circle().Color(ui.ColorBlack))
-	} else {
-		actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Trash).StrokeColor(ui.ColorError).Frame(ui.Frame{}.FullWidth())).
-			Action(func() {
-				t.state.Set("")
-				t.state.Notify()
-			}).
-			BackgroundColor(ui.ColorWhite).
-			Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
-			Padding(ui.Padding{}.All(ui.L2)).
-			Border(ui.Border{}.Width(ui.L4).Circle().Color(ui.ColorError))
+	if !t.disabled {
+		if t.id == "" {
+			actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Plus).StrokeColor(ui.ColorBlack).Frame(ui.Frame{}.FullWidth())).
+				Action(func() {
+					wndImportFiles(t.wnd, t.setCreator, t.selfID, t.state)
+				}).
+				BackgroundColor(ui.ColorWhite).
+				Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
+				Padding(ui.Padding{}.All(ui.L2)).
+				Border(ui.Border{}.Width(ui.L4).Circle().Color(ui.ColorBlack))
+		} else {
+			actionBtn = ui.HStack(ui.ImageIcon(heroOutline.Trash).StrokeColor(ui.ColorError).Frame(ui.Frame{}.FullWidth())).
+				Action(func() {
+					t.state.Set("")
+					t.state.Notify()
+				}).
+				BackgroundColor(ui.ColorWhite).
+				Frame(ui.Frame{}.Size(ui.L32, ui.L32)).
+				Padding(ui.Padding{}.All(ui.L2)).
+				Border(ui.Border{}.Width(ui.L4).Circle().Color(ui.ColorError))
+		}
 	}
 
 	return ui.Box(ui.BoxLayout{
