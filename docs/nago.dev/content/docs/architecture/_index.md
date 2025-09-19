@@ -1,7 +1,7 @@
 ---
 # Static content
 title: Architecture
-weight: 5
+weight: 6
 prev: /docs/apis
 next: /docs/ora
 sidebar:
