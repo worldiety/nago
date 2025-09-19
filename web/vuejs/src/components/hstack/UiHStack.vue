@@ -176,9 +176,6 @@ const clazz = computed<string>(() => {
 		case AlignmentValues.Trailing:
 			classes.push('justify-end', 'items-center');
 			break;
-		case AlignmentValues.Center:
-			classes.push('justify-center', 'items-center');
-			break;
 		case AlignmentValues.TopLeading:
 			classes.push('justify-start', 'items-start');
 			break;

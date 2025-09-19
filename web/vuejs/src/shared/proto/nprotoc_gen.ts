@@ -582,7 +582,8 @@ export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 // 	│                                              │
 // 	└BottomLeading───────Bottom──────BottomTrailing┘
 //
-// An empty Alignment must be interpreted as Center (="c").
+// An empty Alignment must be interpreted as Default (="d"),
+// which is interpreted according to components default behaviors.
 export type Alignment = number;
 function writeTypeHeaderAlignment(dst: BinaryWriter): void {
 	dst.writeTypeHeader(Shapes.UVARINT, 5);
@@ -590,16 +591,17 @@ function writeTypeHeaderAlignment(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for Alignment
 export enum AlignmentValues {
-	Center = 0,
-	Top = 1,
-	Bottom = 2,
-	Leading = 3,
-	Trailing = 4,
-	TopLeading = 5,
-	TopTrailing = 6,
-	BottomLeading = 7,
-	BottomTrailing = 8,
-	Stretch = 9,
+	Default = 0,
+	Center = 1,
+	Stretch = 10,
+	Top = 2,
+	Bottom = 3,
+	Leading = 4,
+	Trailing = 5,
+	TopLeading = 6,
+	TopTrailing = 7,
+	BottomLeading = 8,
+	BottomTrailing = 9,
 }
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
