@@ -470,13 +470,18 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 }
 
 export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
-	navigator.clipboard
+	return navigator.clipboard
 		.writeText(evt.text!)
-		.then((value) => {
+		.then(() => {
 			console.log('text written to clipboard');
+			return '';
 		})
 		.catch((reason) => {
 			console.log('failed to copy text into clipboard', reason);
+			if (reason.toString().lastIndexOf('NotAllowed') >= 0) {
+				return evt.text!;
+			}
+			return '';
 		});
 }
 

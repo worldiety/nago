@@ -51,6 +51,11 @@
 			"additionalInformation": "Undefinierter HTTP-Fehler "
 		}
 	},
+	"clipboardModal": {
+		"confirm": "Kopieren",
+		"cancel": "Abbrechen",
+		"info": "Ihr Browser hat das Kopieren blockiert. Bitte bestätigen Sie die Aktion."
+	},
 	"datepicker": {
 		"confirm": "Bestätigen",
 		"select": "Auswählen..."
