@@ -42,5 +42,10 @@
 			"errorMessage": "Connection not possible. Please check your network devices and connections.",
 			"additionalInformation": "Undefined HTTP Error "
 		}
+	},
+	"clipboardModal": {
+		"confirm": "Copy",
+		"cancel": "Cancel",
+		"info": "Your browser blocked your clipboard. Please confirm the copy action."
 	}
 }

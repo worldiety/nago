@@ -19,7 +19,7 @@ By default, it initializes with a 120x120 frame size.
 | `Border(border ui.Border)` | Border sets the border styling of the avatar picker. |
 | `Enabled(b bool)` |  |
 | `Frame(frame ui.Frame)` | Frame sets the frame of the avatar picker directly. |
-| `Padding(padding ui.Padding)` |  |
+| `Padding(padding ui.Padding)` | Padding sets the padding around the avatar picker. |
 | `Visible(visible bool)` | Visible toggles the visibility of the avatar picker. |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` | WithFrame updates the frame of the avatar picker using a frame transformation function. |
 ---
