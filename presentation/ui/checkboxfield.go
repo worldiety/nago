@@ -12,18 +12,19 @@ import (
 )
 
 type TCheckboxField struct {
-	label           string
-	value           bool
-	inputValue      *core.State[bool]
-	supportingText  string
-	errorText       string
-	disabled        bool
-	invisible       bool
-	padding         Padding
-	frame           Frame
-	border          Border
-	keyboardOptions TKeyboardOptions
-	id              string
+	label              string
+	value              bool
+	inputValue         *core.State[bool]
+	supportingText     string
+	errorText          string
+	disabled           bool
+	invisible          bool
+	padding            Padding
+	frame              Frame
+	border             Border
+	keyboardOptions    TKeyboardOptions
+	accessibilityLabel string
+	id                 string
 }
 
 // A CheckboxField aggregates a checkbox together with form field typical labels, hints and error texts.
@@ -70,7 +71,7 @@ func (c TCheckboxField) Visible(visible bool) DecoredView {
 }
 
 func (c TCheckboxField) AccessibilityLabel(label string) DecoredView {
-	c.label = label
+	c.accessibilityLabel = label
 	return c
 }
 
@@ -108,6 +109,7 @@ func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 			Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0),
 		),
 	).Alignment(Leading).
+		AccessibilityLabel(c.accessibilityLabel).
 		Border(c.border).
 		Visible(!c.invisible).
 		Padding(c.padding).
