@@ -11,6 +11,7 @@
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
 import UiUpload from '@/api/upload/UiUpload.vue';
 import { useUploadRepository } from '@/api/upload/uploadRepository';
+import UIClipboardModal from '@/components/UIClipboardModal.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
@@ -71,6 +72,7 @@ const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
 const componentKey = ref(0);
+const copy_component_text = ref('');
 
 const connected = ref(true);
 
@@ -180,7 +182,9 @@ async function applyConfiguration(): Promise<void> {
 		}
 
 		if (evt instanceof ClipboardWriteTextRequested) {
-			clipboardWriteText(evt);
+			clipboardWriteText(evt).then((not_copied_text) => {
+				copy_component_text.value = not_copied_text!;
+			});
 			return;
 		}
 
@@ -335,5 +339,7 @@ watch(
 		<div v-else-if="state === State.Error">Failed to fetch UI definition.</div>
 		<generic-ui v-else-if="state === State.ShowUI && ui" :ui="ui" />
 		<div v-else>Empty UI</div>
+
+		<UIClipboardModal v-model="copy_component_text" />
 	</div>
 </template>
