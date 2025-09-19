@@ -294,7 +294,7 @@ type UseCases struct {
 	MergeSingleSignOnUser     MergeSingleSignOnUser
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users Repository, grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)

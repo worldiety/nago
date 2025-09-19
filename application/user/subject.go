@@ -158,6 +158,13 @@ func newViewImpl(repo Repository, roles data.ReadRepository[role.Role, role.ID],
 	return v
 }
 
+func (v *viewImpl) invalidate() {
+	v.mutex.Lock()
+	defer v.mutex.Unlock()
+
+	v.lastRefreshedAt = time.Time{}
+}
+
 func (v *viewImpl) refresh() User {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
@@ -194,6 +201,8 @@ func (v *viewImpl) load() {
 		v.user = User{ID: v.user.ID, Status: Disabled{}}
 		return
 	}
+
+	v.user = optUsr.Unwrap()
 
 	if v.user.Contact.DisplayLanguage == "und" {
 		v.locale = language.English
@@ -254,7 +263,7 @@ func (v *viewImpl) load() {
 	}
 
 	slices.Sort(v.permissions)
-	
+
 }
 
 func (v *viewImpl) HasResourcePermission(name string, id string, p permission.ID) bool {

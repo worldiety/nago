@@ -17,8 +17,21 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewViewOf(users Repository, roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
+func NewViewOf(users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
 	var cachedViews concurrent.RWMap[ID, *viewImpl]
+
+	users.AddDeletedObserver(func(repository data.Repository[User, ID], deleted data.Deleted[ID]) error {
+		cachedViews.Delete(deleted.ID)
+		return nil
+	})
+
+	users.AddSavedObserver(func(repository data.Repository[User, ID], saved data.Saved[User, ID]) error {
+		if v, ok := cachedViews.Get(saved.ID); ok {
+			v.invalidate()
+		}
+
+		return nil
+	})
 
 	return func(subject permission.Auditable, id ID) (option.Opt[Subject], error) {
 		// TODO not sure what permissions we need, this is only system anyway

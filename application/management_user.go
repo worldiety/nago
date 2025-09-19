@@ -9,18 +9,20 @@ package application
 
 import (
 	"fmt"
+	"iter"
+	"log/slog"
+
 	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
-	"iter"
-	"log/slog"
 )
 
 type UserManagement struct {
@@ -35,7 +37,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			return UserManagement{}, fmt.Errorf("cannot get entity store: %w", err)
 		}
 
-		userRepo := json.NewSloppyJSONRepository[user.User, user.ID](userStore)
+		userRepo := data.NewNotifyRepository(nil, json.NewSloppyJSONRepository[user.User, user.ID](userStore))
 
 		licenseUseCases, err := c.LicenseManagement()
 		if err != nil {
