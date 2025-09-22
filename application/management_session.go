@@ -17,6 +17,23 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
+// SessionManagement is a nago system(Session Management).
+// It provides functionality for handling user sessions,
+// including login, logout, authentication state, and Single Sign-On (SSO)
+// via the Nago Login Service (NLS).
+//
+// A session is identified by a unique cookie-based ID and represents the
+// persistent state of a client. This ID is stable across tabs and device restarts.
+//
+// Key features include:
+//   - Session lifecycle management (create, find, clear, timeout handling)
+//   - Authentication via email/password or direct user ID
+//   - Single Sign-On support (start, exchange, refresh NLS flows)
+//   - Logout and session invalidation
+//   - Tracking of creation and authentication timestamps
+//   - Storing small key-value pairs in session context
+//
+// SessionManagement is automatically initialized when the application starts.
 type SessionManagement struct {
 	UseCases session.UseCases
 	Pages    uisession.Pages
