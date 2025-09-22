@@ -52,7 +52,7 @@ func (s *sessionImpl) refresh() Session {
 	}
 
 	hasNLS := s.session.RefreshToken != ""
-	
+
 	s.mutex.Unlock()
 
 	// execute refresh without locks
@@ -125,7 +125,13 @@ func (s *sessionImpl) PutString(key string, value string) error {
 
 	session.Values[key] = value
 
-	return s.repo.Save(session)
+	if err = s.repo.Save(session); err != nil {
+		return err
+	}
+
+	s.session = session
+
+	return nil
 }
 
 func (s *sessionImpl) GetString(key string) (string, bool) {
