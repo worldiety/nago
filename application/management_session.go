@@ -33,7 +33,7 @@ import (
 //   - Tracking of creation and authentication timestamps
 //   - Storing small key-value pairs in session context
 //
-// SessionManagement is automatically initialized when the application starts.
+// Session Management is automatically initialized when the application starts.
 type SessionManagement struct {
 	UseCases session.UseCases
 	Pages    uisession.Pages

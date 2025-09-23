@@ -17,6 +17,18 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// AdminManagement is a nago system(Admin Management).
+// It provides the Admin Center, a central hub that aggregates
+// and displays the administration pages of all connected subsystems.
+//
+// Key features include:
+//   - Centralized access to management systems
+//   - Automatic integration of built-in systems (User, Role, Session, Permission, etc.)
+//   - Role- and permission-based access control
+//   - Extensibility by allowing developers to register custom groups and cards
+//
+// Admin Management is automatically initialized when the application starts
+// and makes the admin center available at the navigation path "admin".
 type AdminManagement struct {
 	FindAll     admin.FindAllGroups
 	QueryGroups admin.QueryGroups

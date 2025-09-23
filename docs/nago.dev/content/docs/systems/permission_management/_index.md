@@ -41,9 +41,11 @@ var (
     PermSendMail             = permission.Declare[SendMail]("nago.mail.send", "Send Mail", "Holders of this authorization can send emails.")
     PermInitDefaultTemplates = permission.Declare[SendMail]("nago.mail.init_default_templates", "Standard Templates", "Holders of this authorization can activate the standard mail templates.")
 )
+
+type SendMail func(subject auth.Subject, mail Mail) (ID, error)
 ```
 
-## Code usage
+### Example: Declare and use custom permissions
 
 ```go
 package main
