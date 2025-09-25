@@ -107,5 +107,5 @@ std.Must(cfg.ImageManagement())
 ```
 
 ```go
-ImageManagement := std.Must(cfg.ImageManagement())
+imageManagement := std.Must(cfg.ImageManagement())
 ```
