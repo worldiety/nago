@@ -150,7 +150,7 @@ func checkSession(sessionManagement session.UseCases, id session.ID) {
 - [Settings Management](../settings_management/)
 - [User Management](../user_management/)
 
-If these are not already active, they will be enabled automatically when User Management is activated.
+If these are not already active, they will be enabled automatically when Session Management is activated.
 
 **Is required by:**
 - none
