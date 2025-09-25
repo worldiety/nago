@@ -16,6 +16,17 @@ import (
 	"log/slog"
 )
 
+// BackupManagement is a nago system(Backup Management).
+// It provides access to backup and restore functionality in Nago.
+//
+// It includes use cases for creating backups, restoring from backups, exporting the master key,
+// and replacing the master key.
+//
+// UseCases:
+//   - Backup: Creates a full backup of the application. Encrypted stores remain encrypted; the master key is not included.
+//   - Restore: Restores the application state from a backup file. This overwrites existing data. Encrypted stores require the master key.
+//   - ExportMasterKey: Returns the current Nago master key, required to decrypt encrypted stores in backups.
+//   - ReplaceMasterKey: Replaces the current master key. Encrypted stores can only be decrypted after restart with the new key.
 type BackupManagement struct {
 	UseCases backup.UseCases
 	Pages    uibackup.Pages
