@@ -14,6 +14,25 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 )
 
+// ImageManagement is a nago system(Image Management).
+//
+// It provides backend functionality for storing, processing, and serving images.
+// Images are represented as SrcSets, which contain multiple scaled variants
+// (e.g., thumbnails, previews, high-resolution versions) of the same source.
+//
+// Features:
+//   - Validation of uploaded images (file size, supported format, dimensions)
+//   - Creation of SrcSets with automatically generated downscaled variants
+//   - Deduplication of image data in the underlying blob store
+//   - Best-fit selection of images for given dimensions and object-fit strategies
+//   - Secure opening of image readers with permission-aware access control
+//   - Default HTTP endpoint (/api/nago/v1/image) for image delivery, including caching
+//
+// A SrcSet is stored in a JSON-based repository, while the raw image data is stored in a blob store.
+// The system ensures that each uploaded image is preserved in its original resolution,
+// while smaller variants are generated automatically using bilinear downscaling.
+//
+// Image Management is automatically initialized when the application starts.
 type ImageManagement struct {
 	repo     image.Repository
 	blobs    blob.Store

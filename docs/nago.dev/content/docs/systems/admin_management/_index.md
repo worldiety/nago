@@ -88,7 +88,11 @@ By adding groups via AddAdminCenterGroup, custom systems can seamlessly integrat
 - [User Management](../user_management/)
 
 **Is required by:**
-- None directly, but it serves as the **UI entry point** for most other systems.
+- [Session Management](../session_management/)
+
+{{< callout type="info" >}}
+Furthermore, it serves as the **UI entry point** for most other systems.
+{{< /callout >}}
 
 ## Activation
 This system is activated via:
