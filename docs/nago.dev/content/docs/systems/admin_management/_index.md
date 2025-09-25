@@ -75,6 +75,8 @@ By adding groups via AddAdminCenterGroup, custom systems can seamlessly integrat
 **Requires:**
 - [Billing Management](../billing_management/)
 
+If this is not already active, it will be enabled automatically when Admin Management is activated.
+
 **Optionally integrates with (if present):**
 - [Backup Management](../backup_management/)
 - [Group Management](../group_management/)

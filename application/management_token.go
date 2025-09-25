@@ -17,6 +17,14 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// TokenManagement is a nago system(Token Management).
+// It configures and provides the backend for managing API access tokens.
+//
+// Tokens are used to authenticate requests against REST APIs. They can carry
+// groups, roles, permissions, and licenses, similar to regular users.
+// This enables external applications or services to act as authenticated subjects.
+//
+// It is typically used together with cfghapi.Management to secure API endpoints with bearer tokens.
 type TokenManagement struct {
 	UseCases token.UseCases
 	Pages    uitoken.Pages
