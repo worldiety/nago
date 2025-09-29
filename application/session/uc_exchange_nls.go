@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -85,7 +86,13 @@ func NewExchangeNLS(mutex *sync.Mutex, repo NLSNonceRepository, repoSession Repo
 			}
 
 			if optSession.IsNone() {
-				return fmt.Errorf("session unknown: %w", os.ErrNotExist)
+				optSession = option.Some(Session{
+					ID:              entry.Session,
+					User:            option.None[user.ID](), // we don't know yet the actual user, because it must be merged which happens later
+					CreatedAt:       time.Now(),
+					AuthenticatedAt: time.Now(),
+				})
+				slog.Info("created on-the-fly nls session for SSO authentication", "id", entry.Session)
 			}
 
 			session := optSession.Unwrap()
