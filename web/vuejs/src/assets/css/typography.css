@@ -8,7 +8,7 @@
 	font-feature-settings:
 		'calt' 1,
 		'tnum' 1,
-		'frac' 1;
+		'frac' 0; /* keep it disabled, because it renders mostly wrong in general */
 }
 
 /* Font definitions in accordance with WDYNAGO-218 */

@@ -127,7 +127,11 @@ export function requestScopeConfigurationChange(chan: Channel, themeManager: The
  * getLocale returns whatever the browser thinks, the locale/language the user wants.
  */
 export function getLocale(): Locale {
-	return navigator.language || navigator.languages[0];
+	if (navigator.languages && navigator.languages.length > 0) {
+		return navigator.languages[0] as Locale;
+	}
+	
+	return navigator.language as Locale;
 }
 
 /**
