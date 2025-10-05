@@ -9,14 +9,15 @@ package cfghapi
 
 import (
 	"encoding/json"
+	"log/slog"
+	"net/http"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/hapi"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/pkg/oas/v31"
 	"go.wdy.de/nago/presentation/core"
-	"log/slog"
-	"net/http"
 )
 
 type Management struct {

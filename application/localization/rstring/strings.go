@@ -94,6 +94,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionCreate = i18n.MustString(
+		"nago.common.action.create",
+		i18n.Values{
+			language.English: "Create",
+			language.German:  "Erstellen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionEdit = i18n.MustString(
 		"nago.common.action.edit",
 		i18n.Values{

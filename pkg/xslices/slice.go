@@ -72,3 +72,13 @@ func (s Slice[T]) Append(v ...T) Slice[T] {
 func (s Slice[T]) IsZero() bool {
 	return len(s.s) == 0
 }
+
+func Contains[T comparable](s Slice[T], v T) bool {
+	for _, i := range s.s {
+		if i == v {
+			return true
+		}
+	}
+
+	return false
+}

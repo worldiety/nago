@@ -66,6 +66,10 @@ func Save(onSave func() (close bool)) Option {
 	return save(rstring.ActionSave, onSave)
 }
 
+func Create(onSave func() (close bool)) Option {
+	return save(rstring.ActionCreate, onSave)
+}
+
 func Apply(onSave func() (close bool)) Option {
 	return save(rstring.ActionApply, onSave)
 }
