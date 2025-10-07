@@ -55,7 +55,7 @@ const styles = computed<string>(() => {
 			</MenuButton>
 		</div>
 
-		<transition ref="container" style="z-index: 40">
+		<transition ref="container" style="z-index: 40" class="border border-M3">
 			<MenuItems
 				class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-M3 rounded-md bg-M1 shadow-lg ring-1 ring-black/5 focus:outline-none"
 			>
@@ -63,7 +63,7 @@ const styles = computed<string>(() => {
 					<MenuItem v-for="ui in section.items?.value" v-slot="{ active }">
 						<button
 							:class="[
-								active ? 'bg-I0 bg-opacity-25 text-M8' : 'text-gray-900',
+								active ? 'bg-I0 bg-opacity-25' : '',
 								'group flex w-full items-center rounded-md px-2 py-2 text-sm',
 							]"
 							@click="itemClick(ui)"
