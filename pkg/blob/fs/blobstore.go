@@ -13,15 +13,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/blob/tdb"
-	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
 	"os"
 	"path"
 	"path/filepath"
 	"sync"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/blob/tdb"
+	"go.wdy.de/nago/pkg/std"
 )
 
 var _ blob.Store = (*BlobStore)(nil)
@@ -96,6 +98,35 @@ func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {
 
 func (b *BlobStore) Close() error {
 	return b.db.Close()
+}
+
+// LocalFile returns the local file for the given key. This allows peeking through any abstractions and accessing
+// directly the physical file. It must not be modified, however it can be used to pass this to other processes
+// for reading without an additional copy.
+func (b *BlobStore) LocalFile(key string) (option.Opt[string], error) {
+	var fname string
+
+	b.dirLock.RLock()
+	defer b.dirLock.RUnlock()
+
+	inodeBufOpt := b.db.Get(b.bucketNamePaths, key)
+	if inodeBufOpt.IsNone() {
+		return std.None[string](), nil
+	}
+
+	reader := inodeBufOpt.Unwrap()
+	dec := json.NewDecoder(reader)
+	defer reader.Close()
+
+	var ind inode
+	if err := dec.Decode(&ind); err != nil {
+		// oops, some meta data error
+		return std.None[string](), fmt.Errorf("cannot parse inode meta data: %w", err)
+	}
+
+	fname = b.filepath(ind.Sha512)
+
+	return option.Some(fname), nil
 }
 
 func (b *BlobStore) Delete(ctx context.Context, key string) error {

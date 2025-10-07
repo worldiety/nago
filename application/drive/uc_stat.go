@@ -33,6 +33,10 @@ func NewStat(repo Repository) Stat {
 }
 
 func readFileStat(repo Repository, fid FID) (option.Opt[File], error) {
+	if fid == "" {
+		return option.None[File](), nil
+	}
+
 	optFile, err := repo.FindByID(fid)
 	if err != nil {
 		return option.None[File](), fmt.Errorf("failed to load from repo: %w", err)

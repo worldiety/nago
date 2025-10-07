@@ -26,7 +26,7 @@ func PageDrive(wnd core.Window, uc drive.UseCases) core.View {
 		return alert.BannerError(err)
 	}
 
-	root := drive.FID(wnd.Values()["id"])
+	root := drive.FID(wnd.Values()["fid"])
 	if root == "" {
 		if id, ok := drives.Global[drive.FSDrive]; ok {
 			root = id
@@ -39,9 +39,10 @@ func PageDrive(wnd core.Window, uc drive.UseCases) core.View {
 		return ui.Text(StrNoRoot.Get(wnd))
 	}
 
-	return Drive().Frame(ui.Frame{}.FullWidth()).
-		Current(root).
-		OnNavigate(func(file drive.File) {
+	rootState := core.AutoState[drive.FID](wnd).Init(func() drive.FID {
+		return root
+	})
 
-		})
+	return Drive(rootState).
+		Frame(ui.Frame{}.FullWidth())
 }

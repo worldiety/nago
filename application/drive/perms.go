@@ -50,4 +50,40 @@ var (
 			},
 		).String(),
 	)
+
+	PermDelete = permission.Declare[OpenRoot](
+		"nago.drive.delete",
+		i18n.MustString(
+			"nago.permissions.drive.delete",
+			i18n.Values{
+				language.English: "Delete a file or folder",
+				language.German:  "Eine Datei oder Ordner löschen",
+			},
+		).String(),
+		i18n.MustString(
+			"nago.permissions.drive.delete_desc",
+			i18n.Values{
+				language.English: "Holders of this authorisation can delete an assigned folder or file.",
+				language.German:  "Träger dieser Berechtigung können einen zugewiesenen Ordner oder eine Datei löschen.",
+			},
+		).String(),
+	)
+
+	PermPut = permission.Declare[OpenRoot](
+		"nago.drive.put",
+		i18n.MustString(
+			"nago.permissions.drive.put",
+			i18n.Values{
+				language.English: "Create or update a file",
+				language.German:  "Eine Datei erstellen oder aktualisieren",
+			},
+		).String(),
+		i18n.MustString(
+			"nago.permissions.drive.put_desc",
+			i18n.Values{
+				language.English: "Holders of this authorisation can create or update a file.",
+				language.German:  "Träger dieser Berechtigung können Datei erstellen oder aktualisieren.",
+			},
+		).String(),
+	)
 )

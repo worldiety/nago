@@ -36,6 +36,10 @@ type ImportFilesOptions struct {
 	OnCompletion func(files []File)
 }
 
+func (o ImportFilesOptions) IsZero() bool {
+	return o.ID == "" && o.Multiple && o.MaxBytes == 0 && len(o.AllowedMimeTypes) == 0 && o.OnCompletion == nil
+}
+
 type ExportFilesOptions struct {
 	// ID of your export request. If empty, an automatic ID based on your structure
 	// is created, which may work. If your structure changes between renderings,

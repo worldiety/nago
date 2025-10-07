@@ -13,12 +13,16 @@ import (
 	"os"
 	"sync"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewMkDir(mutex *sync.Mutex, repo Repository) MkDir {
+func NewMkDir(mutex *sync.Mutex, bus events.Bus, repo Repository) MkDir {
 	return func(subject auth.Subject, parent FID, name string, opts MkDirOptions) (File, error) {
 		var zero File
 
@@ -58,6 +62,10 @@ func NewMkDir(mutex *sync.Mutex, repo Repository) MkDir {
 
 			entry := optEntryFile.Unwrap()
 
+			if entry.Filename != name {
+				continue
+			}
+
 			if !entry.CanRead(subject) {
 				return zero, fmt.Errorf("cannot read child entry file %s: %w", fid, user.PermissionDeniedErr)
 			}
@@ -66,11 +74,11 @@ func NewMkDir(mutex *sync.Mutex, repo Repository) MkDir {
 				return zero, fmt.Errorf("child entry exists and is not a directory %s: %w", fid, os.ErrExist)
 			}
 
-			if entry.Filename == name {
-				return entry, nil
-			}
+			return entry, nil
+
 		}
 
+		now := xtime.Now()
 		file := File{
 			ID:       data.RandIdent[FID](),
 			Filename: name,
@@ -78,6 +86,7 @@ func NewMkDir(mutex *sync.Mutex, repo Repository) MkDir {
 			Group:    opts.Group,
 			FileMode: os.ModeDir | opts.Mode.Perm(),
 			repo:     repo,
+			Parent:   parent,
 		}
 
 		if file.Owner == "" {
@@ -103,14 +112,43 @@ func NewMkDir(mutex *sync.Mutex, repo Repository) MkDir {
 			return zero, fmt.Errorf("file already exists: %s", file.ID)
 		}
 
+		file.AuditLog = xslices.Wrap[LogEntry](LogEntry{Created: option.Pointer(&Created{
+			Filename: file.Filename,
+			Owner:    file.Owner,
+			Group:    file.Group,
+			FileMode: file.FileMode,
+			Parent:   file.Parent,
+			ByUser:   subject.ID(),
+			Time:     now,
+		})})
+
 		if err := repo.Save(file); err != nil {
 			return zero, fmt.Errorf("cannot save file: %w", err)
 		}
 
 		parentFile.Entries = parentFile.Entries.Append(file.ID)
+		parentFile.AuditLog = parentFile.AuditLog.Append(LogEntry{Added: option.Pointer(&Added{
+			FID:    file.ID,
+			ByUser: subject.ID(),
+			Time:   now,
+		})})
+
+		sortedEntries, err := applyStandardEntryOrder(repo, parentFile.Entries.All())
+		if err != nil {
+			return zero, err
+		}
+		parentFile.Entries = xslices.Wrap(sortedEntries...)
 
 		if err := repo.Save(parentFile); err != nil {
 			return zero, fmt.Errorf("cannot save parent file: %w", err)
+		}
+
+		if log, ok := file.AuditLog.Last(); ok {
+			bus.Publish(log)
+		}
+
+		if log, ok := parentFile.AuditLog.Last(); ok {
+			bus.Publish(log)
 		}
 
 		return file, nil

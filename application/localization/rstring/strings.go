@@ -151,8 +151,17 @@ var (
 	ActionDelete = i18n.MustString(
 		"nago.common.action.delete",
 		i18n.Values{
-			language.English: "delete",
+			language.English: "Delete",
 			language.German:  "Löschen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	ActionDownload = i18n.MustString(
+		"nago.common.action.download",
+		i18n.Values{
+			language.English: "Download",
+			language.German:  "Herunterladen",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
@@ -191,6 +200,49 @@ var (
 		i18n.Values{
 			language.English: "Error",
 			language.German:  "Fehler",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelOptions = i18n.MustString(
+		"nago.common.label.options",
+		i18n.Values{
+			language.English: "Options",
+			language.German:  "Optionen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelChanged = i18n.MustString(
+		"nago.common.label.changed",
+		i18n.Values{
+			language.English: "Modified",
+			language.German:  "Geändert",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelChangedBy = i18n.MustString(
+		"nago.common.label.changed_by",
+		i18n.Values{
+			language.English: "Modified by",
+			language.German:  "Geändert von",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelXItems = i18n.MustQuantityString(
+		"nago.common.label.x_items",
+
+		i18n.QValues{
+			language.English: i18n.Quantities{
+				One:   "{x} item",
+				Other: "{x} items",
+			},
+			language.German: i18n.Quantities{
+				One:   "{x} Element",
+				Other: "{x} Elemente",
+			},
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

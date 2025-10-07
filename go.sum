@@ -36,6 +36,8 @@ github.com/worldiety/i18n v0.0.0-20250915161102-a988c0489140 h1:qfTeNu//orE9Zamc
 github.com/worldiety/i18n v0.0.0-20250915161102-a988c0489140/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
 github.com/worldiety/i18n v0.0.0-20250915164107-2850e22b7b71 h1:2LmH6VlweL2FQc2OfhCN9D9K8ttHefvGIiZ0cIz9lyE=
 github.com/worldiety/i18n v0.0.0-20250915164107-2850e22b7b71/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
+github.com/worldiety/i18n v0.0.0-20251006153431-ee426d0a369d h1:raUF+oYQHwdj1q7mUMiwLveu+sJfmYc2CcDr+Y3drME=
+github.com/worldiety/i18n v0.0.0-20251006153431-ee426d0a369d/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
 github.com/worldiety/jsonptr v0.0.3 h1:ffGNVohTh1IugpB16/u07C3Euok3YBil+xfdnYNyeLU=
 github.com/worldiety/jsonptr v0.0.3/go.mod h1:kZmTZng3ftd1GW8sa+O3Xaoi7n+OmsdAm4SsCb1AYEk=
 github.com/worldiety/jsonptr v0.0.4 h1:g3JX0rka2wpB+1rFguyS3mns+bVWoLJChOHpM0aTQJU=
@@ -48,6 +50,8 @@ github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16/go.mod h1:UX8Sb7OvGA+gh+NSJKqUsslZ7Ao7ftYVzutt70hcL9g=
 github.com/worldiety/option v0.0.0-20250215102253-75959db51930 h1:OqC/yFkrn15NOXOM2UysM7GnpuORChQ10ek06o0qKgA=
 github.com/worldiety/option v0.0.0-20250215102253-75959db51930/go.mod h1:teHsHBcwKGhykKggie4/SdJ+jLM6WlVt37dSP0lT7bU=
+github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83 h1:rJCMfQMxHh0R68EfoRG2SXyBXEKkDLRpnvGdwstsStA=
+github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83/go.mod h1:teHsHBcwKGhykKggie4/SdJ+jLM6WlVt37dSP0lT7bU=
 github.com/worldiety/xtractdoc v0.0.0-20220627084453-8a284facdb0d h1:hZ+iF6nislDTWx2UlxtT54TxWZUxaZtsUU7w/e3JleQ=
 github.com/worldiety/xtractdoc v0.0.0-20220627084453-8a284facdb0d/go.mod h1:pprkXrL/8PKcyFLAI/P9ogK5T6rM8gtjxUnBDCQjnXQ=
 github.com/worldiety/xtractdoc v0.0.0-20250708133307-e081ccca7cf6 h1:UFgcobtfAJZdDmg+PHdI7WWOltrlh9RNB7hQkwBld3Q=

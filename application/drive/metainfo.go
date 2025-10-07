@@ -8,6 +8,9 @@
 package drive
 
 import (
+	"crypto/sha3"
+	"encoding/hex"
+	"io"
 	"time"
 
 	"go.wdy.de/nago/application/image"
@@ -15,6 +18,16 @@ import (
 )
 
 type Sha3H256 string
+
+func NewSha3H256(r io.Reader) (Sha3H256, error) {
+	h := sha3.New256()
+	if _, err := io.Copy(h, r); err != nil {
+		return "", err
+	}
+
+	return Sha3H256(hex.EncodeToString(h.Sum(nil))), nil
+}
+
 type MetaInfo struct {
 	Key          Sha3H256
 	Audio        *AudioInfo     `json:"a,omitempty"`

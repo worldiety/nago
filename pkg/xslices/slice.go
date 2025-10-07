@@ -73,6 +73,21 @@ func (s Slice[T]) IsZero() bool {
 	return len(s.s) == 0
 }
 
+func (s Slice[T]) Last() (T, bool) {
+	var zero T
+	if len(s.s) == 0 {
+		return zero, false
+	}
+
+	return s.s[len(s.s)-1], true
+}
+
+func (s Slice[T]) DeleteFunc(fn func(T) bool) Slice[T] {
+	tmp := slices.Clone(s.s)
+	tmp = slices.DeleteFunc(tmp, fn)
+	return Slice[T]{tmp}
+}
+
 func Contains[T comparable](s Slice[T], v T) bool {
 	for _, i := range s.s {
 		if i == v {

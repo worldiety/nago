@@ -16,6 +16,8 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
 func NewOpenRoot(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository) OpenRoot {
@@ -86,7 +88,7 @@ func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject
 
 	globalRoot := optGlobalRoot.Unwrap()
 	if globalRoot.Root == "" {
-		tmp := newRandFileFromOpts(repo, opts)
+		tmp := newRandFileFromOpts(repo, subject, opts)
 		if optFile, err := repo.FindByID(tmp.ID); err != nil || optFile.IsSome() {
 			if err != nil {
 				return "", fmt.Errorf("failed to create new global drive root: %s: %w", opts.Name, os.ErrExist)
@@ -141,7 +143,7 @@ func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth
 	}
 
 	if rootID == "" {
-		tmp := newRandFileFromOpts(repo, opts)
+		tmp := newRandFileFromOpts(repo, subject, opts)
 
 		if optFile, err := repo.FindByID(tmp.ID); err != nil || optFile.IsSome() {
 			if err != nil {
@@ -171,11 +173,20 @@ func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth
 	return rootID, nil
 }
 
-func newRandFileFromOpts(repo Repository, opts OpenRootOptions) File {
+func newRandFileFromOpts(repo Repository, subject auth.Subject, opts OpenRootOptions) File {
+	mode := os.ModeDir | opts.Mode.Perm()
 	return File{
 		ID:       data.RandIdent[FID](),
-		FileMode: os.ModeDir | opts.Mode.Perm(),
+		FileMode: mode,
 		Group:    opts.Group,
 		repo:     repo,
+		Owner:    opts.User,
+		AuditLog: xslices.Wrap[LogEntry](LogEntry{Created: option.Pointer(&Created{
+			Owner:    opts.User,
+			Group:    opts.Group,
+			FileMode: mode,
+			ByUser:   subject.ID(),
+			Time:     xtime.Now(),
+		})}),
 	}
 }

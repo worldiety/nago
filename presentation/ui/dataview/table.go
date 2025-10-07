@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -29,8 +30,10 @@ type Field[E any] struct {
 	Map  func(obj E) core.View
 }
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
-	data   Data[E, ID]
-	action func(e E)
+	data         Data[E, ID]
+	action       func(e E)
+	modelOptions pager.ModelOptions
+	model        option.Opt[pager.Model[E, ID]]
 }
 
 func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) TDataView[E, ID] {
@@ -39,8 +42,22 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 	}
 }
 
+func FromModel[E data.Aggregate[ID], ID ~string](wnd core.Window, model pager.Model[E, ID], fields []Field[E]) TDataView[E, ID] {
+	return TDataView[E, ID]{
+		model: option.Some(model),
+		data: Data[E, ID]{
+			Fields: fields,
+		},
+	}
+}
+
 func (t TDataView[E, ID]) Action(fn func(e E)) TDataView[E, ID] {
 	t.action = fn
+	return t
+}
+
+func (t TDataView[E, ID]) ModelOptions(opts pager.ModelOptions) TDataView[E, ID] {
+	t.modelOptions = opts
 	return t
 }
 
@@ -48,15 +65,22 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	data := t.data
 
-	model, err := pager.NewModel(
-		wnd,
-		data.FindByID,
-		data.FindAll,
-		pager.ModelOptions{},
-	)
+	var model pager.Model[E, ID]
+	if t.model.IsSome() {
+		model = t.model.Unwrap()
+	} else {
+		m, err := pager.NewModel(
+			wnd,
+			data.FindByID,
+			data.FindAll,
+			t.modelOptions,
+		)
 
-	if err != nil {
-		return alert.BannerError(err).Render(ctx)
+		if err != nil {
+			return alert.BannerError(err).Render(ctx)
+		}
+
+		model = m
 	}
 
 	var cols []ui.TTableColumn

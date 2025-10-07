@@ -48,7 +48,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	uc := drive.NewUseCases(fileRepo, globalRootsRepo, userRootsRepo, fileBlobs)
+	uc := drive.NewUseCases(cfg.EventBus(), fileRepo, globalRootsRepo, userRootsRepo, fileBlobs)
 
 	management = Management{
 		UseCases: uc,

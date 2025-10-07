@@ -15,7 +15,6 @@ import (
 	"os"
 	"regexp"
 	"sync"
-	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
@@ -23,6 +22,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -30,151 +30,11 @@ import (
 type FID string
 
 type FileInfo struct {
-	OriginalFilename string                 `json:"n,omitempty"` // OriginalFilename contains optionally the filename from the source, e.g. the name from the uploaded file
-	Blob             string                 `json:"b"`
-	Sha3H256         Sha3H256               `json:"h"`
-	CreatedAt        xtime.UnixMilliseconds `json:"t"`
-	Size             int64                  `json:"s"`           // in bytes
-	MimeType         string                 `json:"m,omitempty"` //e.g. video/mp4
-	Comment          string                 `json:"c,omitempty"`
-	CreatedBy        user.ID                `json:"u,omitempty"`
-}
-
-// A File is similar to a unix file (or somewhat to an inode). It supports the same semantics for the
-// unix owner, group and permission bits but in addition to a conventional file system a huge amount of metadata
-// can be attached and also each binary can keep its version history.
-// Also note, that most of the use cases also implement resource based permissions to allow fine-grained access control
-// similar to the ACL pattern (access control lists).
-type File struct {
-	ID        FID                     `json:"id"`
-	Filename  string                  `json:"n"`
-	Entries   xslices.Slice[FID]      `json:"e,omitempty,omitzero"` // Entries are only valid if [os.FileMode.IsDir]
-	Owner     user.ID                 `json:"o,omitempty"`
-	Group     group.ID                `json:"g,omitempty"`
-	DeletedAt xtime.UnixMilliseconds  `json:"d,omitempty"`
-	FileMode  os.FileMode             `json:"m,omitempty"`
-	History   xslices.Slice[FileInfo] `json:"h,omitempty,omitzero"` // History is only valid if [os.FileMode.IsFile]. The most current data is the last element in the slice. The history is append-only
-	Shares    xslices.Slice[Share]    `json:"s,omitempty,omitzero"` // TODO create an inverse share index for lookup
-	repo      Repository
-}
-
-func (f File) Name() string {
-	return f.Filename
-}
-
-func (f File) Size() int64 {
-	if f.History.Len() > 0 {
-		return f.History.At(f.History.Len() - 1).Size
-	}
-
-	return 0
-}
-
-func (f File) Mode() fs.FileMode {
-	return f.FileMode
-}
-
-func (f File) CanRead(subject auth.Subject) bool {
-	if f.ID == "" {
-		return false
-	}
-
-	if f.FileMode&OtherRead != 0 {
-		// file is world readable
-		return true
-	}
-
-	if f.Owner != "" && f.Owner == subject.ID() {
-		// owners can always read
-		return true
-	}
-
-	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&0040 != 0 {
-		// subject is group member and group is allowed to read
-		return true
-	}
-
-	if f.repo != nil {
-		if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermOpenFile) {
-			// file object has nago permission
-			return true
-		}
-	}
-
-	// check if it has been shared with the subject
-	for share := range f.Shares.All() {
-		if xslices.Contains(share.Users, subject.ID()) {
-			return true
-		}
-
-		// TODO what about a share with token?
-	}
-
-	return false
-}
-
-const (
-	OtherWrite os.FileMode = 0002
-	OtherRead  os.FileMode = 0004
-)
-
-func (f File) CanWrite(subject auth.Subject) bool {
-	if f.ID == "" {
-		return false
-	}
-
-	if f.FileMode&OtherWrite != 0 {
-		// file is world writeable
-		return true
-	}
-
-	if f.Owner != "" && f.Owner == subject.ID() {
-		// owners can always write
-		return true
-	}
-
-	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&0020 != 0 {
-		// subject is group member and group is allowed to write
-		return true
-	}
-
-	if f.repo != nil {
-		if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermOpenFile) {
-			// file object has nago permission
-			return true
-		}
-	}
-
-	// check if it has been shared with the subject
-	for share := range f.Shares.All() {
-		if share.CanWrite && xslices.Contains(share.Users, subject.ID()) {
-			return true
-		}
-
-		// TODO what about a share with token?
-	}
-
-	return false
-}
-
-func (f File) ModTime() time.Time {
-	if f.History.Len() > 0 {
-		return time.Unix(int64(f.History.At(f.History.Len()-1).CreatedAt), 0)
-	}
-
-	return time.Time{}
-}
-
-func (f File) IsDir() bool {
-	return f.FileMode.IsDir()
-}
-
-func (f File) Sys() any {
-	return f
-}
-
-func (f File) Identity() FID {
-	return f.ID
+	OriginalFilename string   `json:"n,omitempty"` // OriginalFilename contains optionally the filename from the source, e.g. the name from the uploaded file
+	Blob             string   `json:"b"`
+	Sha3H256         Sha3H256 `json:"h"`
+	Size             int64    `json:"s"`  // in bytes
+	MimeType         string   `json:"m,"` //e.g. video/mp4
 }
 
 type ShareID string
@@ -238,11 +98,6 @@ type OpenRoot func(subject auth.Subject, opts OpenRootOptions) (File, error)
 type Stat func(subject auth.Subject, fid FID) (option.Opt[File], error)
 
 type DeleteOptions struct {
-	// If Retention is not 0 the file will be kept at least for the given duration before deletion.
-	// Note, that this is the minimum time to keep and not the maximum time, due to scheduler timings or
-	// if the service is just not active.
-	Retention time.Duration
-
 	// Recursive is only applied if the file denotes a directory.
 	Recursive bool
 }
@@ -250,15 +105,14 @@ type DeleteOptions struct {
 // Delete removes the denoted file. It is not an error to remove a non-existing file.
 type Delete func(subject auth.Subject, fid FID, opts DeleteOptions) error
 
-// Store adds a blob stream as a new version for the given file.
-type Store func(subject auth.Subject, fid FID, src io.Reader) error
-
 type PutOptions struct {
+	OriginalFilename string
+	SourceHint       SourceHint
 	// If KeepVersion the old file content will be kept in the files` history.
 	KeepVersion bool
-
-	// Comment is stored with the version, if [PutOptions.KeepVersion] is true.
-	Comment string
+	Mode        os.FileMode // only the perm bits are used. If zero, the perm bits from the parent is used.
+	Owner       user.ID     // only used when created, otherwise use [Chown]. If empty, the parent Owner is used.
+	Group       group.ID    // only used when created, otherwise use [Chgrp]. If empty, the parent Group is used.
 }
 
 // Put either creates a new file entry or re-uses an existing one and stores a new version inside the given
@@ -275,10 +129,10 @@ type MkDirOptions struct {
 // the existing directory. If a file already exists, an [os.ErrExist] is returned.
 type MkDir func(subject auth.Subject, parent FID, name string, opts MkDirOptions) (File, error)
 
-// Load opens the desired version to read.
+// Get opens the desired version to read which is identified by the given hash.
 // An index of -1 will always open the latest blob from history. The returned ReadCloser may also be a
 // [io.ReadSeekCloser] but that depends on the given blob store implementation.
-type Load func(subject auth.Subject, fid FID, versionIndex int) (io.ReadCloser, error)
+type Get func(subject auth.Subject, fid FID, hash Sha3H256) (io.ReadCloser, error)
 
 // LoadMetaInfo returns the currently available meta information. The access rights are checked against the
 // given file identifier.
@@ -310,27 +164,40 @@ type Drives struct {
 // ReadDrives returns those file roots which are either defined as a drive root or declared by a share.
 type ReadDrives func(subject auth.Subject, uid user.ID) (Drives, error)
 
+type WalkDir func(subject auth.Subject, root FID, walker func(fid FID, file File, err error) error) error
+
 type UseCases struct {
 	OpenRoot   OpenRoot
 	Stat       Stat
 	ReadDrives ReadDrives
 	MkDir      MkDir
+	Delete     Delete
+	WalkDir    WalkDir
+	Put        Put
 }
 
-func NewUseCases(repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store) UseCases {
+func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store) UseCases {
 	// IMPORTANT: we must ensure that no evil locks occur. No (huge) payload use case call must be stalled or at least must stall other concurrent calls
 	var mutex sync.Mutex
+
+	walkDirFn := NewWalkDir(repo)
 
 	return UseCases{
 		OpenRoot:   NewOpenRoot(&mutex, repo, globalRootRepo, userRootRepo),
 		Stat:       NewStat(repo),
 		ReadDrives: NewReadDrives(globalRootRepo, userRootRepo),
-		MkDir:      NewMkDir(&mutex, repo),
+		MkDir:      NewMkDir(&mutex, bus, repo),
+		Delete:     NewDelete(&mutex, bus, repo, walkDirFn, fileBlobs),
+		WalkDir:    NewWalkDir(repo),
+		Put:        NewPut(&mutex, bus, repo, fileBlobs),
 	}
 }
 
 var validFilename = regexp.MustCompile(`^[^<>:"/\\|?*\x00-\x1F]+$`)
 
+// ValidateName checks if the given string can be safely used as a file name on common operating systems like
+// windows, macos or linux. Even though we may support arbitrary strings, the user can't when downloading
+// a file or within a zip file. This also lowers the attack surface at the users side.
 func ValidateName(name string) error {
 	if len(name) > 255 || !validFilename.MatchString(name) {
 		return fmt.Errorf("invalid file name: %q: %w", name, os.ErrInvalid)
