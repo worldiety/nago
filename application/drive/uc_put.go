@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,11 +29,38 @@ import (
 
 func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store) Put {
 	return func(subject auth.Subject, parent FID, name string, src io.Reader, opts PutOptions) error {
+		requiresKeyDeletion := false
+		key, size, err := storeBlob(blobs, src)
+		if err != nil {
+			return fmt.Errorf("cannot store blob: %w", err)
+		}
+
+		defer func() {
+			if requiresKeyDeletion {
+				if err := blobs.Delete(context.Background(), key); err != nil {
+					slog.Error("failed to cleanup transient blob %q: %w", key, err)
+				}
+			}
+		}()
+
+		shaHash, err := hash(blobs, key)
+
+		mime, err := mimeType(blobs, key)
+		if err != nil {
+			requiresKeyDeletion = true
+			return fmt.Errorf("cannot detect mime type: %w", err)
+		}
+
+		// very important: keep this store-lock order. We must keep performance up. The code below
+		// is quite constant performance-wise, however the code above depends on the actual client transfer speed.
+		// A slow upload from a single client must never block anything else and must be therefore always
+		// without any locks.
 		mutex.Lock()
 		defer mutex.Unlock()
 
 		optParentFile, err := readFileStat(repo, parent)
 		if err != nil {
+			requiresKeyDeletion = true
 			return fmt.Errorf("cannot open parent file: %w", err)
 		}
 
@@ -42,15 +70,18 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 
 		parentFile := optParentFile.Unwrap()
 		if !parentFile.IsDir() {
+			requiresKeyDeletion = true
 			return fmt.Errorf("parent file is not a directory: %s: %w", parent, os.ErrInvalid)
 		}
 
 		if !parentFile.CanWrite(subject) {
+			requiresKeyDeletion = true
 			return fmt.Errorf("cannot write to parent file: %s: %w", parent, user.PermissionDeniedErr)
 		}
 
 		optFile, err := parentFile.EntryByName(name)
 		if err != nil {
+			requiresKeyDeletion = true
 			return fmt.Errorf("cannot get entry by name: %s: %w", name, err)
 		}
 
@@ -87,27 +118,17 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 
 			if optFile, err := repo.FindByID(file.ID); optFile.IsSome() || err != nil {
 				if err != nil {
+					requiresKeyDeletion = true
 					return fmt.Errorf("cannot check file: %s: %w", file.ID, err)
 				}
 
+				requiresKeyDeletion = true
 				return fmt.Errorf("file already exists: %s: %w", file.ID, os.ErrExist)
 			}
 
 			requiresParentFlush = true
 
 			optFile = option.Some(file)
-		}
-
-		key, size, err := storeBlob(blobs, src)
-		if err != nil {
-			return fmt.Errorf("cannot store blob: %w", err)
-		}
-
-		shaHash, err := hash(blobs, key)
-
-		mime, err := mimeType(blobs, key)
-		if err != nil {
-			return fmt.Errorf("cannot detect mime type: %w", err)
 		}
 
 		now := xtime.Now()
@@ -137,6 +158,7 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 		file.AuditLog = file.AuditLog.Append(LogEntry{VersionAdded: option.Pointer(&versionAdded)})
 
 		if err := repo.Save(file); err != nil {
+			requiresKeyDeletion = true
 			return fmt.Errorf("cannot save file: %w", err)
 		}
 
@@ -156,11 +178,13 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 
 			sortedEntries, err := applyStandardEntryOrder(repo, parentFile.Entries.All())
 			if err != nil {
+				requiresKeyDeletion = true
 				return err
 			}
 			parentFile.Entries = xslices.Wrap(sortedEntries...)
 
 			if err := repo.Save(parentFile); err != nil {
+				requiresKeyDeletion = true
 				return fmt.Errorf("cannot save parent file: %s: %w", parentFile.ID, err)
 			}
 

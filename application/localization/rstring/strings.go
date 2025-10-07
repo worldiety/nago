@@ -165,6 +165,15 @@ var (
 		},
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
+
+	ActionRename = i18n.MustString(
+		"nago.common.action.rename",
+		i18n.Values{
+			language.English: "Rename",
+			language.German:  "Umbenennen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
 )
 
 var (
@@ -209,6 +218,15 @@ var (
 		i18n.Values{
 			language.English: "Options",
 			language.German:  "Optionen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelName = i18n.MustString(
+		"nago.common.label.name",
+		i18n.Values{
+			language.English: "Name",
+			language.German:  "Name",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

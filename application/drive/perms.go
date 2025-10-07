@@ -86,4 +86,22 @@ var (
 			},
 		).String(),
 	)
+
+	PermRename = permission.Declare[OpenRoot](
+		"nago.drive.rename",
+		i18n.MustString(
+			"nago.permissions.drive.rename",
+			i18n.Values{
+				language.English: "Rename a file",
+				language.German:  "Eine Datei umbenennen",
+			},
+		).String(),
+		i18n.MustString(
+			"nago.permissions.drive.rename_desc",
+			i18n.Values{
+				language.English: "Holders of this authorisation can rename a file.",
+				language.German:  "Träger dieser Berechtigung können Dateien umbenennen.",
+			},
+		).String(),
+	)
 )

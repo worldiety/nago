@@ -40,6 +40,9 @@ func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 
 		items := make([]proto.MenuItem, 0, len(grp.items))
 		for _, item := range grp.items {
+			if item.content == nil {
+				continue
+			}
 			items = append(items, proto.MenuItem{
 				Action:  ctx.MountCallback(item.action),
 				Content: render(ctx, item.content),

@@ -173,6 +173,18 @@ func (f File) CanDelete(subject auth.Subject) bool {
 	return canDelete
 }
 
+func (f File) CanRename(subject auth.Subject) bool {
+	if f.CanWrite(subject) {
+		return true
+	}
+
+	if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermRename) {
+		return true
+	}
+
+	return false
+}
+
 func (f File) CanWrite(subject auth.Subject) bool {
 	if f.ID == "" {
 		return false

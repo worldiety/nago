@@ -164,6 +164,10 @@ type Chgrp func(subject auth.Subject, gid group.ID, fid FID) error
 // Chmod sets the virtual and portable permission bits.
 type Chmod func(subject auth.Subject, mode os.FileMode, fid FID) error
 
+// Rename tries to rename the given file. It ensures that the filename is unique and valid in the parent directory,
+// even though we actually would not need that limitation.
+type Rename func(subject auth.Subject, fid FID, newName string) error
+
 type Drives struct {
 	Private map[string]FID
 	Global  map[string]FID
@@ -185,6 +189,7 @@ type UseCases struct {
 	Put        Put
 	Get        Get
 	Zip        Zip
+	Rename     Rename
 }
 
 func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store) UseCases {
@@ -203,6 +208,7 @@ func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootReposi
 		Put:        NewPut(&mutex, bus, repo, fileBlobs),
 		Get:        NewGet(repo, fileBlobs),
 		Zip:        NewZip(repo, fileBlobs, walkDirFn),
+		Rename:     NewRename(&mutex, bus, repo),
 	}
 }
 

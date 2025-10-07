@@ -37,7 +37,7 @@ type ImportFilesOptions struct {
 }
 
 func (o ImportFilesOptions) IsZero() bool {
-	return o.ID == "" && o.Multiple && o.MaxBytes == 0 && len(o.AllowedMimeTypes) == 0 && o.OnCompletion == nil
+	return o.ID == "" && !o.Multiple && o.MaxBytes == 0 && len(o.AllowedMimeTypes) == 0 && o.OnCompletion == nil
 }
 
 type ExportFilesOptions struct {

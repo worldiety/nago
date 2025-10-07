@@ -40,6 +40,8 @@ func (e LogEntry) Unwrap() (Activity, bool) {
 		return e.Deleted.Unwrap(), true
 	case e.VersionAdded.IsSome():
 		return e.VersionAdded.Unwrap(), true
+	case e.Renamed.IsSome():
+		return e.Renamed.Unwrap(), true
 	}
 
 	return nil, false
@@ -54,6 +56,14 @@ type Renamed struct {
 	Name    string                 `json:"n"`
 	ByUser  user.ID                `json:"b"`
 	ModTime xtime.UnixMilliseconds `json:"t"`
+}
+
+func (r Renamed) Mod() xtime.UnixMilliseconds {
+	return r.ModTime
+}
+
+func (r Renamed) ModBy() user.ID {
+	return r.ByUser
 }
 
 type FileModeChanged struct {

@@ -8,6 +8,7 @@
 package uidrive
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -50,6 +51,10 @@ var (
 			language.German:  i18n.Quantities{One: "Soll die ausgewählte Datei unwiderruflich gelöscht werden?", Other: "Sollen {amount} Dateien unwiderruflich gelöscht werden?"},
 		},
 	)
+
+	StrDialogRenameTitle       = i18n.MustString("nago.drive.dialog.rename_title", i18n.Values{language.English: "Rename file", language.German: "Datei umbenennen"})
+	StrDialogRenameDesc        = i18n.MustString("nago.drive.dialog.rename_desc", i18n.Values{language.English: "Enter your new name", language.German: "Den neuen Dateinamen eingeben"})
+	StrDialogRenameInvalidName = i18n.MustString("nago.drive.dialog.rename_invalid", i18n.Values{language.English: "The file name is invalid. Keep below 255 chars and use less special characters.", language.German: "Der Dateiname ist ungültig. Namen länger als 255 Zeichen sind nicht erlaubt genauso wie verschiedene Sonderzeichen."})
 )
 
 type TDrive struct {
@@ -225,12 +230,20 @@ func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	deletePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-delete-presented")
+	renamePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-rename-presented")
+
+	selected := pModel.Selected()
+	var selectedFid option.Opt[drive.FID]
+	if len(selected) == 1 {
+		selectedFid = option.Some(selected[0])
+	}
 
 	return ui.VStack(
-		dialogDelete(wnd, deletePresented, uc.Delete, pModel.Selected()),
+		dialogDelete(wnd, deletePresented, uc.Delete, selected),
 		dialogCreateDirectory(ctx.Window(), createDirPresented, func(name string) error {
 			return c.mkdir(curDir, name)
 		}),
+		dialogRename(wnd, renamePresented, uc.Stat, uc.Rename, selectedFid),
 		ui.HStack(c.viewBreadcrumbs(wnd, c.loadFiles(c.breadcrumbs...), c.onNavigate)).Alignment(ui.Leading).FullWidth(),
 		ui.HStack(
 			ui.Menu(
@@ -274,6 +287,10 @@ func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 						})
 
 					}, ui.HStack(ui.ImageIcon(icons.Download), ui.Text(rstring.ActionDownload.Get(wnd))).Gap(ui.L8)),
+
+					ui.MenuItem(func() {
+						renamePresented.Set(true)
+					}, ui.If(pModel.SelectionCount == 1, ui.HStack(ui.ImageIcon(icons.Pen), ui.Text(rstring.ActionRename.Get(wnd))).Gap(ui.L8))),
 				),
 			),
 			ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40}),
@@ -531,5 +548,54 @@ func dialogDelete(wnd core.Window, presented *core.State[bool], delete drive.Del
 			}
 		}),
 		alert.Large(),
+	)
+}
+
+func dialogRename(wnd core.Window, presented *core.State[bool], stat drive.Stat, rename drive.Rename, optFid option.Opt[drive.FID]) core.View {
+	if !presented.Get() || optFid.IsNone() {
+		return nil
+	}
+
+	fid := optFid.Unwrap()
+
+	optFile, err := stat(wnd.Subject(), fid)
+	if err != nil {
+		alert.ShowBannerError(wnd, err)
+		return nil
+	}
+
+	if optFile.IsNone() {
+		alert.ShowBannerError(wnd, fmt.Errorf("file not found: %s: %w", fid, os.ErrNotExist))
+		return nil
+	}
+
+	file := optFile.Unwrap()
+	newName := core.AutoState[string](wnd).Init(func() string {
+		return file.Name()
+	})
+
+	errState := core.AutoState[string](wnd)
+
+	return alert.Dialog(
+		StrDialogRenameTitle.Get(wnd),
+		ui.TextField(rstring.LabelName.Get(wnd), newName.Get()).InputValue(newName).SupportingText(StrDialogRenameDesc.Get(wnd)).ErrorText(errState.Get()),
+		presented,
+		alert.Closeable(),
+		alert.Cancel(nil),
+		alert.Larger(),
+		alert.Save(func() (close bool) {
+			errState.Set("")
+			if err := rename(wnd.Subject(), fid, newName.Get()); err != nil {
+				if errors.Is(err, os.ErrInvalid) {
+					errState.Set(StrDialogRenameInvalidName.Get(wnd))
+					return
+				}
+
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+
+			return true
+		}),
 	)
 }
