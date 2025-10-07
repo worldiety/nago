@@ -92,7 +92,7 @@ func NewDelete(mutex *sync.Mutex, bus events.Bus, repo Repository, walkDir WalkD
 		for _, file := range deleteList {
 			// purge all blob versions from store
 			for _, added := range file.Versions() {
-				if err := blobs.Delete(ctx, added.FileInfo.Blob); err != nil {
+				if err := blobs.Delete(ctx, string(added.FileInfo.Blob)); err != nil {
 					return fmt.Errorf("cannot delete blob %s: %w", added.FileInfo.Blob, err)
 				}
 			}

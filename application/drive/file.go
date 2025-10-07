@@ -12,6 +12,8 @@ import (
 	"io/fs"
 	"log/slog"
 	"os"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/worldiety/option"
@@ -48,6 +50,29 @@ type File struct {
 
 func (f File) Name() string {
 	return f.Filename
+}
+
+// AbsolutePath tries to assemble a human readable (but not unique) name of the nested file structure in which
+// this file can be found.
+func (f File) AbsolutePath() (string, error) {
+	var names []string
+	leaf := f
+	for leaf.Parent != "" {
+		names = append(names, leaf.Filename)
+		optParent, err := readFileStat(f.repo, leaf.Parent)
+		if err != nil {
+			return "", err
+		}
+
+		if optParent.IsNone() {
+			return "", fmt.Errorf("parent is gone: %s: %w", leaf.Parent, os.ErrNotExist)
+		}
+
+		leaf = optParent.Unwrap()
+	}
+
+	slices.Reverse(names)
+	return strings.Join(names, "/"), nil
 }
 
 // EntryByName walks over each entry and stats each linked file to inspect its name.

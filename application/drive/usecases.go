@@ -25,13 +25,17 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/core"
 )
 
+// FID is a file identifier and unique through the entire drive.
 type FID string
 
+// BID is version identifier and identifies a specific blob.
+type BID string
 type FileInfo struct {
 	OriginalFilename string   `json:"n,omitempty"` // OriginalFilename contains optionally the filename from the source, e.g. the name from the uploaded file
-	Blob             string   `json:"b"`
+	Blob             BID      `json:"b"`
 	Sha3H256         Sha3H256 `json:"h"`
 	Size             int64    `json:"s"`  // in bytes
 	MimeType         string   `json:"m,"` //e.g. video/mp4
@@ -129,10 +133,15 @@ type MkDirOptions struct {
 // the existing directory. If a file already exists, an [os.ErrExist] is returned.
 type MkDir func(subject auth.Subject, parent FID, name string, opts MkDirOptions) (File, error)
 
-// Get opens the desired version to read which is identified by the given hash.
-// An index of -1 will always open the latest blob from history. The returned ReadCloser may also be a
+// Get opens the desired version to read which is identified by the given blob identifier.
+// An empty version identifier returns the latest blob from history. The returned File may also return a
 // [io.ReadSeekCloser] but that depends on the given blob store implementation.
-type Get func(subject auth.Subject, fid FID, hash Sha3H256) (io.ReadCloser, error)
+type Get func(subject auth.Subject, fid FID, version BID) (option.Opt[core.File], error)
+
+// Zip takes the given options and returns a zip file containing all given files in their latest version.
+// The implementation may optimize and create the file on the fly, thus browsers may not be able to show
+// a download progress.
+type Zip func(subject auth.Subject, fids []FID) (core.File, error)
 
 // LoadMetaInfo returns the currently available meta information. The access rights are checked against the
 // given file identifier.
@@ -174,6 +183,8 @@ type UseCases struct {
 	Delete     Delete
 	WalkDir    WalkDir
 	Put        Put
+	Get        Get
+	Zip        Zip
 }
 
 func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store) UseCases {
@@ -188,8 +199,10 @@ func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootReposi
 		ReadDrives: NewReadDrives(globalRootRepo, userRootRepo),
 		MkDir:      NewMkDir(&mutex, bus, repo),
 		Delete:     NewDelete(&mutex, bus, repo, walkDirFn, fileBlobs),
-		WalkDir:    NewWalkDir(repo),
+		WalkDir:    walkDirFn,
 		Put:        NewPut(&mutex, bus, repo, fileBlobs),
+		Get:        NewGet(repo, fileBlobs),
+		Zip:        NewZip(repo, fileBlobs, walkDirFn),
 	}
 }
 

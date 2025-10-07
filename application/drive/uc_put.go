@@ -116,7 +116,7 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 			SourceHint: opts.SourceHint,
 			FileInfo: FileInfo{
 				OriginalFilename: opts.OriginalFilename,
-				Blob:             key,
+				Blob:             BID(key),
 				Sha3H256:         shaHash,
 				Size:             size,
 				MimeType:         mime,
@@ -130,7 +130,7 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 		}
 
 		if file.Filename == "" {
-			file.Filename = versionAdded.FileInfo.Blob
+			file.Filename = string(versionAdded.FileInfo.Blob)
 		}
 
 		file.FileInfo = option.Some(versionAdded.FileInfo)

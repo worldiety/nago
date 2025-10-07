@@ -10,6 +10,7 @@ package uidrive
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"slices"
 
 	"github.com/worldiety/i18n"
@@ -239,6 +240,38 @@ func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 						deletePresented.Set(true)
 					}, ui.HStack(ui.ImageIcon(icons.TrashBin), ui.Text(rstring.ActionDelete.Get(wnd))).Gap(ui.L8)),
 					ui.MenuItem(func() {
+						selected := pModel.Selected()
+						if len(selected) == 1 {
+							optFile, err := uc.Get(wnd.Subject(), selected[0], "")
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
+
+							if optFile.IsNone() {
+								alert.ShowBannerError(wnd, os.ErrNotExist)
+							}
+
+							file := optFile.Unwrap()
+							wnd.ExportFiles(core.ExportFilesOptions{
+								ID:    string(selected[0]),
+								Files: []core.File{file},
+							})
+
+							return
+						}
+
+						// zip export
+						zip, err := uc.Zip(wnd.Subject(), selected)
+						if err != nil {
+							alert.ShowBannerError(wnd, err)
+							return
+						}
+
+						wnd.ExportFiles(core.ExportFilesOptions{
+							ID:    string(selected[0]),
+							Files: []core.File{zip},
+						})
 
 					}, ui.HStack(ui.ImageIcon(icons.Download), ui.Text(rstring.ActionDownload.Get(wnd))).Gap(ui.L8)),
 				),
