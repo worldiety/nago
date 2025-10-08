@@ -29,20 +29,20 @@ import (
 // Also note, that most of the use cases also implement resource based permissions to allow fine-grained access control
 // similar to the ACL pattern (access control lists).
 type File struct {
-	ID FID `json:"d"`
+	ID FID `json:"id"`
 	// the following fields are a snapshot based on the activity audit log
-	Filename string               `json:"n"`
-	Entries  xslices.Slice[FID]   `json:"e,omitzero"` // Entries are only valid if [os.FileMode.IsDir]
-	Owner    user.ID              `json:"o,omitempty"`
-	Group    group.ID             `json:"g,omitempty"`
-	FileMode os.FileMode          `json:"m,omitempty"`
-	FileInfo option.Opt[FileInfo] `json:"i,omitempty"` // FileInfo is only valid if ![os.FileMode.IsDir]
-	Parent   FID                  `json:"p,omitempty"` // every file (besides root) has a backward reference to its parent. We will never support hardlinks, because that would break this assumption, but it saves us from other headaches too.
-	Shares   xslices.Slice[Share] `json:"r,omitempty"`
+	Filename string               `json:"name"`
+	Entries  xslices.Slice[FID]   `json:"entries,omitzero"` // Entries are only valid if [os.FileMode.IsDir]
+	Owner    user.ID              `json:"oid,omitempty"`
+	Group    group.ID             `json:"gid,omitempty"`
+	FileMode os.FileMode          `json:"mode,omitempty"`
+	FileInfo option.Opt[FileInfo] `json:"info,omitempty"`   // FileInfo is only valid if ![os.FileMode.IsDir]
+	Parent   FID                  `json:"parent,omitempty"` // every file (besides root) has a backward reference to its parent. We will never support hardlinks, because that would break this assumption, but it saves us from other headaches too.
+	Shares   xslices.Slice[Share] `json:"shares,omitempty"`
 
 	// AuditLog contains all changes to this file as kind of audit trail. The latest changes are always appended and the
 	// fields above are updated to reflect the current state.
-	AuditLog xslices.Slice[LogEntry] `json:"a,omitempty"`
+	AuditLog xslices.Slice[LogEntry] `json:"log,omitempty"`
 
 	// the repo is used to provide some internal helpers and is only used internally. It is not intended to create a File from the outside.
 	repo Repository

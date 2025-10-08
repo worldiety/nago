@@ -18,15 +18,15 @@ import (
 
 // LogEntry either contains one value or none. It is invalid to represent more than one activity at a time.
 type LogEntry struct {
-	Deleted      option.Ptr[Deleted]      `json:"d,omitzero"`
-	Created      option.Ptr[Created]      `json:"c,omitzero"`
-	GroupChanged option.Ptr[GroupChanged] `json:"g,omitzero"`
-	OwnerChanged option.Ptr[OwnerChanged] `json:"o,omitzero"`
-	ModeChanged  option.Ptr[ModeChanged]  `json:"m,omitzero"`
-	Renamed      option.Ptr[Renamed]      `json:"r,omitzero"`
-	Moved        option.Ptr[Moved]        `json:"v,omitzero"`
-	Added        option.Ptr[Added]        `json:"a,omitzero"`
-	VersionAdded option.Ptr[VersionAdded] `json:"e,omitzero"`
+	Deleted      option.Ptr[Deleted]      `json:"deleted,omitzero"`
+	Created      option.Ptr[Created]      `json:"created,omitzero"`
+	GroupChanged option.Ptr[GroupChanged] `json:"gidChanged,omitzero"`
+	OwnerChanged option.Ptr[OwnerChanged] `json:"oidChanged,omitzero"`
+	ModeChanged  option.Ptr[ModeChanged]  `json:"modeChanged,omitzero"`
+	Renamed      option.Ptr[Renamed]      `json:"renamed,omitzero"`
+	Moved        option.Ptr[Moved]        `json:"moved,omitzero"`
+	Added        option.Ptr[Added]        `json:"entryAdded,omitzero"`
+	VersionAdded option.Ptr[VersionAdded] `json:"versionAdded,omitzero"`
 }
 
 // Unwrap assumes an enum-state and returns the first found non-nil pointer value.
@@ -53,9 +53,9 @@ type Activity interface {
 }
 
 type Renamed struct {
-	Name    string                 `json:"n"`
-	ByUser  user.ID                `json:"b"`
-	ModTime xtime.UnixMilliseconds `json:"t"`
+	Name    string                 `json:"name"`
+	ByUser  user.ID                `json:"uid"`
+	ModTime xtime.UnixMilliseconds `json:"ts"`
 }
 
 func (r Renamed) Mod() xtime.UnixMilliseconds {
@@ -67,9 +67,9 @@ func (r Renamed) ModBy() user.ID {
 }
 
 type FileModeChanged struct {
-	FileMode os.FileMode            `json:"m,omitempty"`
-	By       user.ID                `json:"b"`
-	Time     xtime.UnixMilliseconds `json:"t"`
+	FileMode os.FileMode            `json:"mode,omitempty"`
+	By       user.ID                `json:"uid"`
+	Time     xtime.UnixMilliseconds `json:"ts"`
 }
 
 type GroupChanged struct {
@@ -78,13 +78,13 @@ type OwnerChanged struct {
 }
 
 type Created struct {
-	Filename string                 `json:"n"`
-	Owner    user.ID                `json:"o,omitempty"`
-	Group    group.ID               `json:"g,omitempty"`
-	FileMode os.FileMode            `json:"m,omitempty"`
-	Parent   FID                    `json:"p,omitempty"`
-	ByUser   user.ID                `json:"b,omitempty"`
-	Time     xtime.UnixMilliseconds `json:"t,omitempty"`
+	Filename string                 `json:"name"`
+	Owner    user.ID                `json:"oid,omitempty"`
+	Group    group.ID               `json:"gid,omitempty"`
+	FileMode os.FileMode            `json:"mode,omitempty"`
+	Parent   FID                    `json:"parent,omitempty"`
+	ByUser   user.ID                `json:"uid,omitempty"`
+	Time     xtime.UnixMilliseconds `json:"ts,omitempty"`
 }
 
 func (d Created) Mod() xtime.UnixMilliseconds {
@@ -96,9 +96,9 @@ func (d Created) ModBy() user.ID {
 }
 
 type Deleted struct {
-	FID    FID                    `json:"f"`
-	ByUser user.ID                `json:"b,omitempty"`
-	Time   xtime.UnixMilliseconds `json:"t,omitempty"`
+	FID    FID                    `json:"fid"`
+	ByUser user.ID                `json:"uid,omitempty"`
+	Time   xtime.UnixMilliseconds `json:"ts,omitempty"`
 }
 
 func (d Deleted) Mod() xtime.UnixMilliseconds {
@@ -116,9 +116,9 @@ type Moved struct {
 }
 
 type Added struct {
-	FID    FID                    `json:"f"`
-	ByUser user.ID                `json:"b,omitempty"`
-	Time   xtime.UnixMilliseconds `json:"t,omitempty"`
+	FID    FID                    `json:"fid"`
+	ByUser user.ID                `json:"uid,omitempty"`
+	Time   xtime.UnixMilliseconds `json:"ts,omitempty"`
 }
 
 func (d Added) Mod() xtime.UnixMilliseconds {
@@ -138,10 +138,10 @@ const (
 )
 
 type VersionAdded struct {
-	SourceHint SourceHint             `json:"s"`
-	FileInfo   FileInfo               `json:"f"`
-	ByUser     user.ID                `json:"b"`
-	Time       xtime.UnixMilliseconds `json:"t"`
+	SourceHint SourceHint             `json:"src"`
+	FileInfo   FileInfo               `json:"info"`
+	ByUser     user.ID                `json:"uid"`
+	Time       xtime.UnixMilliseconds `json:"ts"`
 }
 
 func (v VersionAdded) Mod() xtime.UnixMilliseconds {

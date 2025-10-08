@@ -34,11 +34,11 @@ type FID string
 // BID is version identifier and identifies a specific blob.
 type BID string
 type FileInfo struct {
-	OriginalFilename string   `json:"n,omitempty"` // OriginalFilename contains optionally the filename from the source, e.g. the name from the uploaded file
-	Blob             BID      `json:"b"`
-	Sha3H256         Sha3H256 `json:"h"`
-	Size             int64    `json:"s"`  // in bytes
-	MimeType         string   `json:"m,"` //e.g. video/mp4
+	OriginalFilename string   `json:"originalName,omitempty"` // OriginalFilename contains optionally the filename from the source, e.g. the name from the uploaded file
+	Blob             BID      `json:"bid"`
+	Sha3H256         Sha3H256 `json:"sha3"`
+	Size             int64    `json:"size"` // in bytes
+	MimeType         string   `json:"mime"` //e.g. video/mp4
 }
 
 type ShareID string
