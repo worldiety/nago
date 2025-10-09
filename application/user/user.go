@@ -166,7 +166,7 @@ func (c Contact) IsZero() bool {
 		c.State == "" &&
 		c.PostalCode == "" &&
 		c.City == "" &&
-		c.IsZero() &&
+		c.Addresses.IsZero() &&
 		c.LinkedIn == "" &&
 		c.Website == "" &&
 		c.Position == "" &&
