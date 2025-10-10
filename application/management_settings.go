@@ -18,6 +18,28 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// SettingsManagement is a nago system(Settings Management).
+// It provides centralized configuration for global and per-user settings and has two main responsibilities:
+//
+//  1. Manage general application-level user settings such as:
+//     - free registration (enable/disable)
+//     - forgot password functionality
+//     - domain whitelist for registration
+//     - default roles and groups for new and anonymous users
+//
+//  2. Provide an extension mechanism for other systems to define and persist
+//     their own settings. Any type implementing settings.GlobalSettings or settings.UserSettings
+//     is automatically integrated into the Admin Center UI with generated forms.
+//
+// Examples:
+//   - User Management: GDPR consent texts
+//   - Theme Management: global theme configuration
+//   - Schedule Management: job lifetime and cleanup rules
+//
+// Settings are stored persistently and can be loaded and written via UseCases:
+//
+//	settings := settings.ReadGlobal[user.Settings](cfg.SettingsManagement().UseCases.LoadGlobal)
+//	option.MustZero(cfg.SettingsManagement().UseCases.StoreGlobal(user.SU(), settings))
 type SettingsManagement struct {
 	UseCases settings.UseCases
 	Pages    uisettings.Pages

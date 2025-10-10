@@ -1,11 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/worldiety/xtractdoc/domain/api"
-	"github.com/worldiety/xtractdoc/domain/app"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -35,39 +32,21 @@ type DocComponent struct {
 	Type          *api.Type
 }
 
-// generateDocsForComponents generates Markdown for all components in the packages.
-// Make sure to include all needed packages in cfg.Packages and separate them with ;
-// e.g. "go.wdy.de/nago/presentation/ui;go.wdy.de/nago/presentation/ui/picker"
+// generateDocsForComponents generates Markdown for all components and copies them into the hugo project.
+// All necessary folders and files are created within this process.
 // It returns a map containing all components and their component type (basic, composite etc.).
 func generateDocsForComponents(
+	docComponentsMap map[string]DocComponent,
 	projectRoot string,
 	componentTotTutorialMap map[string][]string,
 ) (map[string]ComponentType, error) {
-	var cfg app.Config
-	cfg.Reset()
-	cfg.Flags(flag.CommandLine)
-	flag.Parse()
-	cfg.OutputFormat = "json"
-	cfg.Packages = "go.wdy.de/nago/presentation/ui;go.wdy.de/nago/presentation/ui/colorpicker;go.wdy.de/nago/presentation/ui/alert"
-
-	buf, err := app.Apply(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	var module api.Module
-	err = json.Unmarshal(buf, &module)
-	if err != nil {
-		return nil, err
-	}
-
 	basicComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/basic")
 	layoutComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/layout")
 	utilComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/utility")
 	feedbackAndOverlayComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/feedback-and-overlay")
 	advancedComponentOutputPath := filepath.Join(projectRoot, "/docs/nago.dev/content/docs/components/composite")
 
-	err = os.MkdirAll(basicComponentOutputPath, os.ModePerm)
+	err := os.MkdirAll(basicComponentOutputPath, os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
@@ -88,17 +67,12 @@ func generateDocsForComponents(
 		return nil, err
 	}
 
-	docComponents := make(map[string]DocComponent)
-
-	pattern := regexp.MustCompile(`is (a|an) (basic|layout|utility|feedback|overlay|composite) component\([^)]+\)`)
-
-	createDocComponentMapEntries(module, pattern, docComponents)
-	err = createMarkdownAndCopyToHugo(docComponents, basicComponentOutputPath, layoutComponentOutputPath, utilComponentOutputPath, feedbackAndOverlayComponentOutputPath, advancedComponentOutputPath, pattern, componentTotTutorialMap)
+	err = createMarkdownAndCopyToHugo(docComponentsMap, basicComponentOutputPath, layoutComponentOutputPath, utilComponentOutputPath, feedbackAndOverlayComponentOutputPath, advancedComponentOutputPath, componentTotTutorialMap)
 	if err != nil {
 		return nil, err
 	}
 
-	componentDisplayNameToTypeMap := createComponentDisplayNameToComponentTypeMap(docComponents)
+	componentDisplayNameToTypeMap := createComponentDisplayNameToComponentTypeMap(docComponentsMap)
 
 	return componentDisplayNameToTypeMap, nil
 }
@@ -122,7 +96,6 @@ func createMarkdownAndCopyToHugo(
 	utilComponentOutputPath string,
 	feedbackAndOverlayComponentOutputPath string,
 	advancedComponentOutputPath string,
-	pattern *regexp.Regexp,
 	componentToTutorialMap map[string][]string,
 ) error {
 	for _, component := range docComponents {
@@ -150,7 +123,7 @@ func createMarkdownAndCopyToHugo(
 		}
 
 		filePath := filepath.Join(dirPath, "_index.md")
-		md := createMarkdownForComponent(component, docComponents, pattern, componentToTutorialMap)
+		md := createMarkdownForComponent(component, docComponents, componentToTutorialMap)
 
 		err = os.WriteFile(filePath, []byte(md), 0644)
 		if err != nil {
@@ -159,38 +132,6 @@ func createMarkdownAndCopyToHugo(
 	}
 
 	return nil
-}
-
-// createDocComponentMapEntries creates a map entry for every component.
-// Afterward, the display name, file name & related components are known for all components.
-func createDocComponentMapEntries(
-	module api.Module,
-	pattern *regexp.Regexp,
-	docComponents map[string]DocComponent,
-) {
-	for _, pkg := range module.Packages {
-		for name, typ := range pkg.Types {
-			if !pattern.MatchString(typ.Doc) {
-				continue
-			}
-
-			related := getRelatedTypesInOrder(typ)
-			componentType := filterComponentType(typ)
-
-			displayName := extractDisplayName(typ.Doc)
-			if displayName == "" {
-				displayName = name
-			}
-
-			docComponents[name] = DocComponent{
-				DisplayName:   displayName,
-				Related:       related,
-				DirName:       strings.ToLower(strings.ReplaceAll(displayName, " ", "_")),
-				ComponentType: componentType,
-				Type:          typ,
-			}
-		}
-	}
 }
 
 func filterComponentType(t *api.Type) ComponentType {
@@ -211,7 +152,7 @@ func filterComponentType(t *api.Type) ComponentType {
 }
 
 // extractDisplayName extracts the name of a component from the comment.
-// e.g. TText -> Text.
+// e.g. TText -> Text. // TODO Note: not very stable, but works so far.
 func extractDisplayName(doc string) string {
 	start := strings.Index(doc, "(")
 	end := strings.Index(doc, ")")
@@ -277,7 +218,6 @@ func createMarkdownForImage(path string, sb *strings.Builder) {
 func createMarkdownForComponent(
 	component DocComponent,
 	docComponents map[string]DocComponent,
-	pattern *regexp.Regexp,
 	componentToTutorialMap map[string][]string,
 ) string {
 	var sb strings.Builder
@@ -290,7 +230,7 @@ func createMarkdownForComponent(
 	sb.WriteString("---\n")
 
 	// Description
-	sb.WriteString(cleanDoc(component.Type.Doc, pattern) + "\n")
+	sb.WriteString(component.Type.Doc + "\n")
 	sb.WriteString("\n")
 
 	// Constructors
@@ -448,35 +388,6 @@ func sortMapKeys[T any](m map[string]T) []string {
 
 	sort.Strings(keys)
 	return keys
-}
-
-// cleanDoc removes the assignment record of a component from the comments, as this should not be displayed in the docs.
-func cleanDoc(doc string, pattern *regexp.Regexp) string {
-	parts := strings.Split(doc, ".")
-	var cleaned []string
-
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
-		if pattern.MatchString(strings.ToLower(part)) {
-			continue
-		}
-
-		cleaned = append(cleaned, part)
-	}
-
-	if len(cleaned) == 0 && !pattern.MatchString(strings.ToLower(doc)) {
-		return strings.TrimSpace(doc)
-	}
-
-	if len(cleaned) > 0 {
-		return strings.Join(cleaned, ". ") + "."
-	}
-
-	return ""
 }
 
 // getRelatedTypesInOrder collects all parameter and result types for every method of the *api.Type.

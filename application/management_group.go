@@ -19,6 +19,13 @@ import (
 	"iter"
 )
 
+// GroupManagement is a nago system(Group Management).
+// It provides UseCases for creating and managing user groups.
+// Groups are used to bundle users together and control access to certain pages or resources.
+// They can be created, edited, and deleted via UI or code.
+// Group membership is managed through UserManagement.
+// A special "System" group is created automatically for internal services
+// and is not intended for real users.
 type GroupManagement struct {
 	UseCases group.UseCases
 	Pages    uigroup.Pages
