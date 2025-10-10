@@ -19,6 +19,10 @@ import (
 	"log/slog"
 )
 
+// Management is a nago system(User Circle Management.
+// User Circle Management enables the creation and administration of user circles — subsets of users
+// that can be managed independently by delegated circle administrators. Each circle defines which roles,
+// groups, and licenses its administrators are allowed to manage.
 type Management struct {
 	circleRepo usercircle.Repository
 	UseCases   usercircle.UseCases
