@@ -19,6 +19,10 @@ import (
 	"log/slog"
 )
 
+// SchedulerManagement is a nago system(Scheduler Management).
+// It provides centralized management of background processes (schedulers).
+// Developers can register recurring or one-shot jobs at application startup, monitor their execution,
+// and interact with them through the Admin Center UI.
 type SchedulerManagement struct {
 	settingsRepo scheduler.SettingsRepository
 	UseCases     scheduler.UseCases
