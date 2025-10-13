@@ -12,12 +12,14 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// Markers defines point markers for a line chart.
 type Markers struct {
-	Size               int
-	BorderColor        ui.Color
-	ShowNullDataPoints bool
+	Size               int      // marker size in px
+	BorderColor        ui.Color // marker border color
+	ShowNullDataPoints bool     // show markers for null values
 }
 
+// Ora converts Markers to proto.LineChartMarkers.
 func (s Markers) Ora() proto.LineChartMarkers {
 	return proto.LineChartMarkers{
 		Size:               proto.Int(s.Size),

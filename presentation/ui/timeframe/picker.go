@@ -8,13 +8,14 @@
 package timeframe
 
 import (
+	"math"
+	"time"
+
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/timepicker"
-	"math"
-	"time"
 )
 
 type PickerFormat int
@@ -24,19 +25,23 @@ const (
 	ClassicFormat PickerFormat = iota
 )
 
+// TPicker is a composite component (Time Frame Picker).
+// It allows users to pick a date and a start/end time, optionally binding
+// the result to an external state. The picker supports different formats,
+// validation messages, and can be configured with a specific time zone.
 type TPicker struct {
-	label          string
-	supportingText string
-	errorText      string
-	frame          ui.Frame
-	day            *core.State[xtime.Date]
-	startTime      *core.State[time.Duration]
-	endTime        *core.State[time.Duration]
-	targetState    *core.State[xtime.TimeFrame]
-	title          string
-	format         PickerFormat
-	disabled       bool
-	tz             *time.Location
+	label          string                       // primary label shown with the control
+	supportingText string                       // helper or secondary text shown below the label
+	errorText      string                       // validation or error message
+	frame          ui.Frame                     // layout frame for size and positioning
+	day            *core.State[xtime.Date]      // selected date
+	startTime      *core.State[time.Duration]   // start time of the frame
+	endTime        *core.State[time.Duration]   // end time of the frame
+	targetState    *core.State[xtime.TimeFrame] // external binding for the full time frame
+	title          string                       // title used when presented in a dialog
+	format         PickerFormat                 // defines display/interaction format for the picker
+	disabled       bool                         // when true, interaction is disabled
+	tz             *time.Location               // time zone used for interpreting times
 }
 
 // Picker renders a xtime.TimeFrame picker to select at least a day and a start and end time (inclusive).
@@ -110,65 +115,87 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 	return p
 }
 
+// roundToMinute rounds the given Unix timestamp in milliseconds
+// to the nearest whole minute.
 func roundToMinute(t xtime.UnixMilliseconds) xtime.UnixMilliseconds {
 	return xtime.UnixMilliseconds(math.Round(float64(t)/1000/60)) * 1000 * 60
 }
 
+// Padding sets the inner spacing around the picker content.
+// (currently not implemented)
 func (c TPicker) Padding(padding ui.Padding) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Frame sets the layout frame of the picker, including size and positioning.
 func (c TPicker) Frame(frame ui.Frame) ui.DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame applies a transformation function to the picker's frame
+// and returns the updated component.
 func (c TPicker) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// Border sets the border style of the picker.
+// (currently not implemented)
 func (c TPicker) Border(border ui.Border) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Visible controls the visibility of the picker; setting false hides it.
+// (currently not implemented)
 func (c TPicker) Visible(visible bool) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// AccessibilityLabel sets a label used by screen readers for accessibility.
+// (currently not implemented)
 func (c TPicker) AccessibilityLabel(label string) ui.DecoredView {
 	//TODO implement me
 	return c
 }
 
+// Disabled enables or disables user interaction with the picker.
 func (c TPicker) Disabled(disabled bool) TPicker {
 	c.disabled = disabled
 	return c
 }
 
+// Title sets the title of the picker, typically shown in dialogs.
 func (c TPicker) Title(title string) TPicker {
 	c.title = title
 	return c
 }
 
+// Format sets the picker format, which controls its display and interaction style.
 func (c TPicker) Format(format PickerFormat) TPicker {
 	c.format = format
 	return c
 }
 
+// SupportingText sets helper or secondary text displayed below the picker label.
 func (c TPicker) SupportingText(text string) TPicker {
 	c.supportingText = text
 	return c
 }
 
+// ErrorText sets the validation or error message displayed below the picker.
 func (c TPicker) ErrorText(text string) TPicker {
 	c.errorText = text
 	return c
 }
 
+// Render builds and returns the UI representation of the time frame picker.
+// It displays a date picker, start and end time pickers, and a read-only field
+// showing the calculated duration. The component also renders labels,
+// supporting text, or error messages depending on its state.
 func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	var duration string
 	if c.targetState.Get().Empty() {

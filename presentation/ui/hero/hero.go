@@ -5,14 +5,18 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+// THero is a composite component (Hero).
+// This component represents a prominent section with an image,
+// title, subtitle, and optional action buttons.
 type THero struct {
-	teaserImg ui.DecoredView
-	title     string
-	subtitle  string
-	actions   []core.View
-	frame     ui.Frame
+	teaserImg ui.DecoredView // hero image or visual teaser
+	title     string         // main headline text
+	subtitle  string         // supporting subtitle text
+	actions   []core.View    // list of action buttons or links
+	frame     ui.Frame       // layout frame for the hero section
 }
 
+// Hero creates a new THero with the given title and a default full-width height of 320.
 func Hero(title string) THero {
 	return THero{
 		title: title,
@@ -20,26 +24,32 @@ func Hero(title string) THero {
 	}
 }
 
+// Frame sets the frame of the hero section.
 func (c THero) Frame(frame ui.Frame) THero {
 	c.frame = frame
 	return c
 }
 
+// Actions sets the action buttons or links of the hero section.
 func (c THero) Actions(actions ...core.View) THero {
 	c.actions = actions
 	return c
 }
 
+// Subtitle sets the subtitle text of the hero section.
 func (c THero) Subtitle(subtitle string) THero {
 	c.subtitle = subtitle
 	return c
 }
 
+// Teaser sets the teaser image of the hero section.
 func (c THero) Teaser(img ui.DecoredView) THero {
 	c.teaserImg = img
 	return c
 }
 
+// Render shows the hero section with title, subtitle, actions, and optional teaser image.
+// On small screens, the text takes full width and the image is hidden.
 func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 	winfo := ctx.Window().Info()
 	small := winfo.SizeClass.Ordinal() <= core.SizeClassSmall.Ordinal()

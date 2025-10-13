@@ -37,7 +37,11 @@ type Message struct {
 	Duration time.Duration
 }
 
-// TBannerMessages is an overlay component(Banner Messages).
+// TBannerMessages is a feedback component (Banner Messages).
+// It manages and displays transient banner-style notifications within a window.
+// This component is typically used for showing short-lived feedback messages
+// (e.g., success, error, info) that appear temporarily and may stack if multiple
+// messages are triggered.
 type TBannerMessages struct {
 	wnd core.Window
 }
@@ -50,6 +54,12 @@ func BannerMessages(wnd core.Window) TBannerMessages {
 	}
 }
 
+// Render displays all currently active banner messages in an overlay.
+// The messages are shown in a scrollable vertical stack, with automatic padding
+// adjustments for small screen sizes. Each message is wrapped in a Banner
+// component that can auto-close after a duration or be dismissed manually.
+// When a banner is closed, it is removed from the transient state so the list
+// stays up-to-date.
 func (t TBannerMessages) Render(ctx core.RenderContext) core.RenderNode {
 	messages := core.TransientStateOf[[]Message](t.wnd, ".nago-messages")
 	if len(messages.Get()) == 0 {
@@ -106,6 +116,11 @@ func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages.Set(append(messages.Get(), msg))
 }
 
+// makeMessageFromError converts different error types into user-facing Message structs.
+// It checks for known error interfaces (e.g., NotLoggedIn, PermissionDenied, LocalizedError)
+// and standard errors like os.ErrNotExist or password strength errors, returning a
+// localized title and description suitable for display in a banner or snackbar.
+// If the error is not recognized, it returns false so no message is shown.
 func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 	if err == nil {
 		return Message{}, false
@@ -189,15 +204,21 @@ func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 	return Message{}, false
 }
 
-// TBannerError is an overlay component(Banner Error).
+// TBannerError is a feedback component(Banner Error).
 type TBannerError struct {
 	err error
 }
 
+// BannerError wraps a given error into a TBannerError,
+// which can later be rendered as a user-visible banner.
 func BannerError(err error) TBannerError {
 	return TBannerError{err: err}
 }
 
+// Render transforms the stored error into a banner message.
+// Known errors are mapped via makeMessageFromError into
+// user-friendly messages. For unknown errors, it shows a
+// generic fallback message with a support token for reference.
 func (t TBannerError) Render(ctx core.RenderContext) core.RenderNode {
 	if t.err == nil {
 		return nil

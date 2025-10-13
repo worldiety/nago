@@ -59,17 +59,20 @@ func initButton(action func(), preset StylePreset) TButton {
 	return btn
 }
 
-// Enabled has only an effect for StylePreset otherwise it is ignored.
+// Enabled toggles whether the button is interactive.
+// This has an effect only if a StylePreset is applied; otherwise it is ignored.
 func (c TButton) Enabled(b bool) TButton {
 	c.disabled = !b
 	return c
 }
 
+// Title sets the text label displayed on the button.
 func (c TButton) Title(text string) TButton {
 	c.title = text
 	return c
 }
 
+// Visible controls the visibility of the button; setting false hides it.
 func (c TButton) Visible(b bool) TButton {
 	c.invisible = !b
 	return c
@@ -80,41 +83,49 @@ func (c TButton) Disabled(b bool) TButton {
 	return c
 }
 
+// Font sets the font style for the button's text label.
 func (c TButton) Font(font Font) TButton {
 	c.font = font
 	return c
 }
 
+// AccessibilityLabel sets a label used by screen readers for accessibility.
 func (c TButton) AccessibilityLabel(label string) TButton {
 	c.accessibilityLabel = label
 	return c
 }
 
+// PreIcon sets the icon displayed before the text label.
 func (c TButton) PreIcon(svg core.SVG) TButton {
 	c.preIcon = proto.SVG(svg)
 	return c
 }
 
+// PostIcon sets the icon displayed after the text label.
 func (c TButton) PostIcon(svg core.SVG) TButton {
 	c.postIcon = proto.SVG(svg)
 	return c
 }
 
+// Preset applies a style preset to the button, controlling its appearance and behavior.
 func (c TButton) Preset(preset StylePreset) TButton {
 	c.preset = preset
 	return c
 }
 
+// Frame sets the layout frame of the button, including size and positioning.
 func (c TButton) Frame(frame Frame) TButton {
 	c.frame = frame
 	return c
 }
 
+// ID assigns a unique identifier to the button, useful for testing or referencing.
 func (c TButton) ID(id string) TButton {
 	c.id = id
 	return c
 }
 
+// Render builds and returns the visual representation of the button.
 func (c TButton) Render(context core.RenderContext) proto.Component {
 	alabel := c.accessibilityLabel
 	if alabel == "" {

@@ -39,6 +39,9 @@ type ScaffoldMenuEntry struct {
 	// intentionally left out expanded and badge, because badge can be emulated with Box layout and expanded is automatic
 }
 
+// ForwardScaffoldMenuEntry creates a leaf menu entry that navigates
+// forward to the given destination when clicked. It also sets up
+// automatic active-state highlighting based on the destination path.
 func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst core.NavigationPath) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
 		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L20, L20)),
@@ -50,6 +53,9 @@ func ForwardScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, dst 
 	}
 }
 
+// ParentScaffoldMenuEntry creates a parent menu entry that groups together
+// multiple child entries. Unlike ForwardScaffoldMenuEntry, this entry does not
+// navigate directly, but instead serves as a container for its children.
 func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, children ...ScaffoldMenuEntry) ScaffoldMenuEntry {
 	return ScaffoldMenuEntry{
 		Icon:  Image().Embed(icon).Frame(Frame{}.Size(L20, L20)),
@@ -58,50 +64,65 @@ func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, child
 	}
 }
 
+// TScaffold is a composite component (Scaffold).
+// It provides a structural layout for applications with a consistent navigation
+// and content framework. A scaffold usually consists of a logo, navigation menu,
+// main body, footer, and optional bottom view. It also supports responsive design
+// through alignment and breakpoints.
 type TScaffold struct {
-	logo       core.View
-	body       core.View
-	alignment  proto.ScaffoldAlignment
-	menu       []ScaffoldMenuEntry
-	bottomView core.View
-	breakpoint int
-	footer     core.View
+	logo       core.View               // logo or brand element
+	body       core.View               // main content body
+	alignment  proto.ScaffoldAlignment // scaffold alignment (e.g., left, right, top)
+	menu       []ScaffoldMenuEntry     // navigation menu entries
+	bottomView core.View               // optional bottom view (e.g., settings, profile)
+	breakpoint int                     // breakpoint for responsive layout
+	footer     core.View               // footer content
 }
 
+// Scaffold creates a new scaffold with the given alignment.
 func Scaffold(alignment ScaffoldAlignment) TScaffold {
 	return TScaffold{alignment: alignment.ora()}
 }
 
+// Logo sets the logo or brand element of the scaffold.
 func (c TScaffold) Logo(view core.View) TScaffold {
 	c.logo = view
 	return c
 }
 
+// Body sets the main content body of the scaffold.
 func (c TScaffold) Body(view core.View) TScaffold {
 	c.body = view
 	return c
 }
 
+// Menu sets the navigation menu entries for the scaffold.
 func (c TScaffold) Menu(items ...ScaffoldMenuEntry) TScaffold {
 	c.menu = items
 	return c
 }
 
+// BottomView sets the optional bottom view of the scaffold,
+// often used for secondary actions like user profile or settings.
 func (c TScaffold) BottomView(view core.View) TScaffold {
 	c.bottomView = view
 	return c
 }
 
+// Footer sets the footer content of the scaffold.
 func (c TScaffold) Footer(view core.View) TScaffold {
 	c.footer = view
 	return c
 }
 
+// Breakpoint sets the responsive breakpoint at which the scaffold layout
+// may adapt (e.g., switch between drawer and permanent menu).
 func (c TScaffold) Breakpoint(breakpoint int) TScaffold {
 	c.breakpoint = breakpoint
 	return c
 }
 
+// Render builds and returns the protocol representation of the scaffold.
 func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.Scaffold{
@@ -115,6 +136,9 @@ func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 	}
 }
 
+// makeMenu recursively converts a list of ScaffoldMenuEntry objects
+// into their protocol representation. It renders icons, titles, actions,
+// active state markers, and nested sub-menus. Returns nil if no entries exist.
 func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []proto.ScaffoldMenuEntry {
 	if len(menu) == 0 {
 		return nil

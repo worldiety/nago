@@ -9,11 +9,12 @@ package ui
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"strconv"
 	"time"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 type TextFieldStyle uint
@@ -35,41 +36,52 @@ const (
 	TextFieldBasic TextFieldStyle = TextFieldStyle(proto.TextFieldBasic)
 )
 
+// TTextField is a basic component (Text Field).
+// This component provides a text input field with optional supporting and error text,
+// leading/trailing views (e.g., icons), debounce settings, styling, and keyboard options.
+// It supports both controlled (via State) and uncontrolled (via value) modes.
+//
+// It is typically used in forms, search bars, and other user input scenarios.
 type TTextField struct {
-	label           string
-	value           string
-	inputValue      *core.State[string]
-	supportingText  string
-	errorText       string
-	disabled        bool
-	leading         core.View
-	trailing        core.View
-	style           proto.TextFieldStyle
-	disableDebounce bool
-	debounceTime    time.Duration
-	invisible       bool
-	frame           Frame
-	lines           int
-	keyboardOptions TKeyboardOptions
-	id              string
-	keydownEnter    func()
+	label           string               // label displayed above or inside the field
+	value           string               // static text value (used if InputValue is not set)
+	inputValue      *core.State[string]  // bound state for controlled input
+	supportingText  string               // helper text shown below the field
+	errorText       string               // error message shown below the field
+	disabled        bool                 // disables user interaction
+	leading         core.View            // optional leading element (e.g., icon)
+	trailing        core.View            // optional trailing element (e.g., button, icon)
+	style           proto.TextFieldStyle // visual style of the field (outlined, filled, etc.)
+	disableDebounce bool                 // disables debounce if true
+	debounceTime    time.Duration        // custom debounce duration for input
+	invisible       bool                 // hides the field when true
+	frame           Frame                // layout constraints
+	lines           int                  // number of lines (0 = single line, >0 = text area)
+	keyboardOptions TKeyboardOptions     // platform-specific keyboard options
+	id              string               // unique identifier for the field
+	keydownEnter    func()               // callback for Enter key press
 }
 
+// Padding is a placeholder implementation.
 func (c TTextField) Padding(padding Padding) DecoredView {
 	// TODO implement me or reduce interface
 	return c
 }
 
+// Border is a placeholder implementation.
 func (c TTextField) Border(border Border) DecoredView {
 	// TODO implement me or reduce interface
 	return c
 }
 
+// AccessibilityLabel is a placeholder implementation.
 func (c TTextField) AccessibilityLabel(label string) DecoredView {
 	// TODO implement me or reduce interface
 	return c
 }
 
+// TextField creates a new text field with the given label and initial value.
+// By default, it is single-line and uncontrolled until InputValue is set.
 func TextField(label string, value string) TTextField {
 	c := TTextField{
 		label: label,
@@ -154,21 +166,30 @@ func FloatField(label string, value float64, state *core.State[float64]) TTextFi
 	return TextField(label, val).InputValue(strState).KeyboardType(KeyboardFloat)
 }
 
+// SupportingText sets helper text for the field.
+// This text is displayed below the input and is typically used to provide hints or guidance.
 func (c TTextField) SupportingText(text string) TTextField {
 	c.supportingText = text
 	return c
 }
 
+// ErrorText sets an error message for the field.
+// When provided, this text is shown below the input in place of supporting text,
+// usually styled to indicate an error state.
 func (c TTextField) ErrorText(text string) TTextField {
 	c.errorText = text
 	return c
 }
 
+// Leading sets a leading view for the field.
+// This view is displayed at the start of the input field, e.g., an icon.
 func (c TTextField) Leading(v core.View) TTextField {
 	c.leading = v
 	return c
 }
 
+// Trailing sets a trailing view for the field.
+// This view is displayed at the end of the input field, e.g., a clear button or icon.
 func (c TTextField) Trailing(v core.View) TTextField {
 	c.trailing = v
 	return c
@@ -193,30 +214,39 @@ func (c TTextField) Debounce(enabled bool) TTextField {
 	return c
 }
 
+// Label sets the label text of the field.
+// Unlike other setters, this does not return a modified copy of TTextField.
 func (c TTextField) Label(label string) {
 	c.label = label
 }
 
+// InputValue binds the text field to a reactive state.
+// This enables controlled input behavior where the state is updated as the user types.
 func (c TTextField) InputValue(input *core.State[string]) TTextField {
 	c.inputValue = input
 	return c
 }
 
+// Disabled disables or enables the field.
+// When disabled, the user cannot interact with the field.
 func (c TTextField) Disabled(disabled bool) TTextField {
 	c.disabled = disabled
 	return c
 }
 
+// Frame sets the layout frame of the field (size, width, height, etc.).
 func (c TTextField) Frame(frame Frame) DecoredView {
 	c.frame = frame
 	return c
 }
 
+// WithFrame updates the current frame of the field via a transformation function.
 func (c TTextField) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
 }
 
+// FullWidth expands the text field to take the full available width.
 func (c TTextField) FullWidth() TTextField {
 	c.frame = c.frame.FullWidth()
 	return c
@@ -243,26 +273,33 @@ func (c TTextField) Lines(lines int) TTextField {
 	return c
 }
 
+// Visible toggles the visibility of the text field.
+// When set to false, the field is hidden from view but still part of the layout.
 func (c TTextField) Visible(v bool) DecoredView {
 	c.invisible = !v
 	return c
 }
 
+// KeyboardOptions sets advanced keyboard behavior (type, capitalization, return key, etc.).
 func (c TTextField) KeyboardOptions(options TKeyboardOptions) TTextField {
 	c.keyboardOptions = options
 	return c
 }
 
+// KeyboardType sets the type of keyboard to display (e.g., text, number, email).
 func (c TTextField) KeyboardType(keyboardType KeyboardType) TTextField {
 	c.keyboardOptions.keyboardType = keyboardType
 	return c
 }
 
+// ID assigns a unique identifier to the text field.
+// Useful for testing, accessibility, or programmatic interaction.
 func (c TTextField) ID(id string) TTextField {
 	c.id = id
 	return c
 }
 
+// Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.TextField{

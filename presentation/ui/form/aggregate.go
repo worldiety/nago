@@ -9,6 +9,9 @@ package form
 
 import "go.wdy.de/nago/pkg/data"
 
+// Aggregate defines a generic aggregate interface.
+// It extends data.Aggregate by requiring a method to return
+// a new instance with the specified identity.
 type Aggregate[A any, ID comparable] interface {
 	data.Aggregate[ID]
 	WithIdentity(ID) A

@@ -9,7 +9,7 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
-// TKeyboardOptions is a utility component(Keyboard Options).
+// TKeyboardOptions is a utility component (Keyboard Options).
 // Keyboard Options defines configuration options for virtual keyboard behavior.
 // It allows customization of capitalization, auto-correction, and keyboard type hints.
 // These options are primarily used in text input components to enhance user experience.

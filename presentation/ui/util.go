@@ -8,12 +8,15 @@
 package ui
 
 import (
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/proto"
 	"iter"
 	"slices"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
+// render renders a single view into a proto.Component.
+// Returns nil if the view itself is nil.
 func render(ctx core.RenderContext, c core.View) proto.Component {
 	if c == nil {
 		return nil
@@ -22,6 +25,8 @@ func render(ctx core.RenderContext, c core.View) proto.Component {
 	return c.Render(ctx)
 }
 
+// renderComponents renders a list of views into proto.Components.
+// Nil views are skipped, and only non-nil rendered components are added to the result.
 func renderComponents(ctx core.RenderContext, c []core.View) []proto.Component {
 	res := make([]proto.Component, 0, len(c))
 	for _, component := range c {
@@ -79,10 +84,14 @@ func Yield[T any](seq iter.Seq[T]) []T {
 	return res
 }*/
 
+// ForEach maps each element of a slice to a new value using the given function.
+// Additional values can be appended via the variadic parameter `more`.
 func ForEach[T any, V any](seq []T, m func(T) V, more ...V) []V {
 	return Each(slices.Values(seq), m, more...)
 }
 
+// Each maps each element of a sequence (iter.Seq) to a new value using the given function.
+// Additional values can be appended via the variadic parameter `more`.
 func Each[T any, V any](seq iter.Seq[T], m func(T) V, more ...V) []V {
 	var res []V
 	seq(func(t T) bool {
@@ -95,6 +104,8 @@ func Each[T any, V any](seq iter.Seq[T], m func(T) V, more ...V) []V {
 	return res
 }
 
+// Each2 maps each key-value pair of a sequence (iter.Seq2) to a new value using the given function.
+// Returns a slice of the mapped results.
 func Each2[K, V any, X any](seq iter.Seq2[K, V], m func(K, V) X) []X {
 	var res []X
 	seq(func(k K, v V) bool {

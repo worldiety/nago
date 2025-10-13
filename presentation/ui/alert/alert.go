@@ -41,6 +41,7 @@ func (f optFunc) apply(wnd core.Window, opts *alertOpts) {
 	f(wnd, opts)
 }
 
+// Ok adds a default button that closes the dialog.
 func Ok() Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.okBtn = ui.PrimaryButton(func() {
@@ -50,6 +51,7 @@ func Ok() Option {
 	})
 }
 
+// Delete adds a button that closes the dialog and triggers the given callback.
 func Delete(onDelete func()) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.delBtn = ui.PrimaryButton(func() {
@@ -62,6 +64,7 @@ func Delete(onDelete func()) Option {
 	})
 }
 
+// Save adds a button that triggers the callback and optionally closes the dialog.
 func Save(onSave func() (close bool)) Option {
 	return save(rstring.ActionSave, onSave)
 }
@@ -70,18 +73,22 @@ func Create(onSave func() (close bool)) Option {
 	return save(rstring.ActionCreate, onSave)
 }
 
+// Apply adds an button that triggers the callback and optionally closes the dialog.
 func Apply(onSave func() (close bool)) Option {
 	return save(rstring.ActionApply, onSave)
 }
 
+// Close adds a button that triggers the callback and optionally closes the dialog.
 func Close(onSave func() (close bool)) Option {
 	return save(rstring.ActionClose, onSave)
 }
 
+// Confirm adds a button that triggers the callback and optionally closes the dialog.
 func Confirm(onSave func() (close bool)) Option {
 	return save(rstring.ActionConfirm, onSave)
 }
 
+// save is a helper that creates a button with the given caption and onSave logic.
 func save(caption i18n.StrHnd, onSave func() (close bool)) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.saveBtn = ui.PrimaryButton(func() {
@@ -97,6 +104,7 @@ func save(caption i18n.StrHnd, onSave func() (close bool)) Option {
 	})
 }
 
+// Closeable adds a close icon button ("X") to dismiss the dialog.
 func Closeable() Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.closeable = ui.TertiaryButton(func() {
@@ -113,32 +121,39 @@ func MinWidth(w ui.Length) Option {
 	})
 }
 
+// Width sets the dialog width to the given Length.
 func Width(w ui.Length) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.width = w
 	})
 }
 
+// Large sets the dialog width to 560dp (35rem).
 func Large() Option {
 	return Width(ui.L560)
 }
 
+// Larger sets the dialog width to 880dp (55rem).
 func Larger() Option {
 	return Width(ui.L880)
 }
 
+// XLarge sets the dialog width to 1200dp (75rem).
 func XLarge() Option {
 	return Width(ui.L1200)
 }
 
+// XXLarge sets the dialog width to 1600dp (100rem).
 func XXLarge() Option {
 	return Width(ui.L1600)
 }
 
+// FullHeight makes the dialog take the full available height.
 func FullHeight() Option {
 	return Height(ui.Full)
 }
 
+// Height sets the dialog height to the given Length.
 func Height(h ui.Length) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.height = h
@@ -155,6 +170,7 @@ func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 	})
 }
 
+// Cancel adds an button that closes the dialog and triggers the given callback.
 func Cancel(onCancel func()) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
@@ -167,6 +183,7 @@ func Cancel(onCancel func()) Option {
 	})
 }
 
+// Back adds a button that closes the dialog and triggers the given callback.
 func Back(onCancel func()) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
@@ -179,12 +196,14 @@ func Back(onCancel func()) Option {
 	})
 }
 
+// Alignment sets the alignment of the dialog content.
 func Alignment(alignment ui.Alignment) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.dlgAlign = alignment
 	})
 }
 
+// ModalPadding defines the padding inside the modal dialog.
 func ModalPadding(padding ui.Padding) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.modalPadding = padding
@@ -198,7 +217,15 @@ func PreBody(v core.View) Option {
 	})
 }
 
-// TDialog is an overlay component(Dialog).
+// TDialog is an overlay component (Dialog).
+// This component presents content in a centered modal window
+// above the main interface. It is typically used for confirmations,
+// forms, or focused interactions that require the user's attention.
+//
+// A dialog consists of a title and body content, and can be controlled
+// through an isPresented state. Additional options can be provided
+// to customize its appearance and behavior (e.g., alignment, padding,
+// footer actions).
 type TDialog struct {
 	title       string
 	body        core.View
@@ -206,6 +233,7 @@ type TDialog struct {
 	opts        []Option
 }
 
+// Dialog creates a new dialog with the given title, body content, visibility state, and optional configuration.
 func Dialog(title string, body core.View, isPresented *core.State[bool], opts ...Option) TDialog {
 	return TDialog{
 		title:       title,
@@ -215,6 +243,10 @@ func Dialog(title string, body core.View, isPresented *core.State[bool], opts ..
 	}
 }
 
+// Render builds and displays the dialog as a modal overlay if it is currently presented.
+// It applies all configured options (e.g., size, alignment, padding, buttons) to customize
+// the dialog's layout and behavior. The dialog content is wrapped in a scroll view, and
+// footer buttons (OK, Cancel, Delete, Save, or custom) are rendered in a consistent order.
 func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 	if !t.isPresented.Get() {
 		return nil

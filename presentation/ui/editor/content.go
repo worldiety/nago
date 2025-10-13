@@ -19,12 +19,16 @@ const (
 	ContentPage
 )
 
+// TContent is a utility component (Content).
+// This component holds a single view with an associated style
+// and can be toggled visible or hidden.
 type TContent struct {
-	view    core.View
-	visible bool
-	style   ContentStyle
+	view    core.View    // the inner view displayed within the content
+	visible bool         // controls whether the content is visible
+	style   ContentStyle // defines the appearance of the content
 }
 
+// Content creates a new TContent with the given view and sets it visible by default.
 func Content(view core.View) TContent {
 	return TContent{
 		view:    view,
@@ -32,11 +36,17 @@ func Content(view core.View) TContent {
 	}
 }
 
+// Style applies the given ContentStyle to the TContent.
 func (c TContent) Style(style ContentStyle) TContent {
 	c.style = style
 	return c
 }
 
+// Render builds and returns the RenderNode for the TContent.
+// It applies layout and styling depending on the ContentStyle:
+// - ContentFull: renders the view in a scrollable full-area container.
+// - ContentPage: renders the view in a scrollable, styled page container.
+// Returns a text node if the style is invalid.
 func (c TContent) Render(ctx core.RenderContext) core.RenderNode {
 	if c.style == ContentFull {
 		return ui.ScrollView(c.view).

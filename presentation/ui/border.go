@@ -9,11 +9,15 @@ package ui
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// Border adds the defined border and dimension to the component. Note, that a border will change the dimension.
+// Border is a utility component (Border).
+// It controls the radius of each corner, the width and color of each edge,
+// and optional shadow settings. A border affects the component's layout
+// dimensions because the width is applied outside the content box.
 // #[go.TypeScript "path":"web/vuejs/src/shared/protocol/ora"]
 type Border struct {
 	TopLeftRadius     Length
@@ -34,6 +38,7 @@ type Border struct {
 	BoxShadow Shadow `json:"s,omitempty"`
 }
 
+// ora converts a Border into its protocol representation for serialization.
 func (b Border) ora() proto.Border {
 	return proto.Border{
 		TopLeftRadius:     proto.Length(b.TopLeftRadius),
@@ -52,6 +57,7 @@ func (b Border) ora() proto.Border {
 	}
 }
 
+// Radius sets the same corner radius for all four corners.
 func (b Border) Radius(radius Length) Border {
 	b.TopLeftRadius = radius
 	b.TopRightRadius = radius
@@ -60,22 +66,26 @@ func (b Border) Radius(radius Length) Border {
 	return b
 }
 
+// TopRadius sets the same corner radius for both top corners.
 func (b Border) TopRadius(radius Length) Border {
 	b.TopLeftRadius = radius
 	b.TopRightRadius = radius
 	return b
 }
 
+// BottomRadius sets the same corner radius for both bottom corners.
 func (b Border) BottomRadius(radius Length) Border {
 	b.BottomLeftRadius = radius
 	b.BottomRightRadius = radius
 	return b
 }
 
+// Circle sets all corner radii to a large value, resulting in a circle/ellipse shape.
 func (b Border) Circle() Border {
 	return b.Radius("999999dp")
 }
 
+// Width sets the same border thickness on all four sides.
 func (b Border) Width(width Length) Border {
 	b.LeftWidth = width
 	b.TopWidth = width
@@ -84,6 +94,7 @@ func (b Border) Width(width Length) Border {
 	return b
 }
 
+// Color sets the same border color on all four sides.
 func (b Border) Color(c Color) Border {
 	b.LeftColor = c
 	b.TopColor = c
@@ -92,6 +103,7 @@ func (b Border) Color(c Color) Border {
 	return b
 }
 
+// Shadow adds a shadow with the given blur radius and a default semi-transparent black color.
 func (b Border) Shadow(radius Length) Border {
 	b.BoxShadow.Radius = radius
 	b.BoxShadow.Color = "#00000054"
@@ -100,7 +112,8 @@ func (b Border) Shadow(radius Length) Border {
 	return b
 }
 
-// Elevate by DP
+// Elevate applies a shadow effect based on a given elevation in device-independent pixels (DP).
+// The shadow blur radius and offset are scaled accordingly, using rem units.
 func (b Border) Elevate(elevation core.DP) Border {
 	rem := float64(elevation) / 16
 	b.BoxShadow.Radius = Length(fmt.Sprintf("%.2frem", rem*3))

@@ -21,7 +21,4 @@ More static content.
 ## See also
 - [Frame](../../components/layout/frame)
 - [HStack](../../components/layout/hstack)
-- [Spacer](../../components/layout/spacer)
-- [Text](../../components/basic/text)
-- [VStack](../../components/layout/vstack)
 

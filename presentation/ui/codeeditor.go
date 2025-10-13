@@ -26,6 +26,8 @@ type TCodeEditor struct {
 	tabSize    int
 }
 
+// CodeEditor creates a new code editor with the given initial value
+// and a default tab size of 4 spaces.
 func CodeEditor(value string) TCodeEditor {
 	return TCodeEditor{
 		value:   value,
@@ -33,21 +35,25 @@ func CodeEditor(value string) TCodeEditor {
 	}
 }
 
+// InputValue binds the editor to an external state for controlled text value updates.
 func (c TCodeEditor) InputValue(state *core.State[string]) TCodeEditor {
 	c.inputValue = state
 	return c
 }
 
+// Disabled enables or disables user interaction with the editor.
 func (c TCodeEditor) Disabled(b bool) TCodeEditor {
 	c.disabled = b
 	return c
 }
 
+// Frame sets the layout frame of the editor, including size and positioning.
 func (c TCodeEditor) Frame(frame Frame) TCodeEditor {
 	c.frame = frame
 	return c
 }
 
+// FullWidth sets the editor to span the full available width.
 func (c TCodeEditor) FullWidth() TCodeEditor {
 	c.frame = c.frame.FullWidth()
 	return c
@@ -60,6 +66,7 @@ func (c TCodeEditor) Language(language string) TCodeEditor {
 	return c
 }
 
+// Render builds and returns the protocol representation of the code editor.
 func (c TCodeEditor) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.CodeEditor{
 		Value:      proto.Str(c.value),

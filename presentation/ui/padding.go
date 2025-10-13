@@ -9,13 +9,16 @@ package ui
 
 import "go.wdy.de/nago/presentation/proto"
 
+// Padding is a utility component (Padding).
+// It defines the spacing inside a component on each side (top, left, right, bottom).
 type Padding struct {
-	Top    Length
-	Left   Length
-	Right  Length
-	Bottom Length
+	Top    Length // padding at the top
+	Left   Length // padding at the left
+	Right  Length // padding at the right
+	Bottom Length // padding at the bottom
 }
 
+// ora converts the padding to its protocol representation.
 func (p Padding) ora() proto.Padding {
 	return proto.Padding{
 		Top:    proto.Length(p.Top),
@@ -25,6 +28,7 @@ func (p Padding) ora() proto.Padding {
 	}
 }
 
+// All applies the same padding value to all four sides.
 func (p Padding) All(pad Length) Padding {
 	p.Left = pad
 	p.Right = pad
@@ -33,14 +37,14 @@ func (p Padding) All(pad Length) Padding {
 	return p
 }
 
-// Vertical means Y axis, so top and bottom are set to the padding value.
+// Vertical sets the padding for the vertical axis (top and bottom).
 func (p Padding) Vertical(pad Length) Padding {
 	p.Bottom = pad
 	p.Top = pad
 	return p
 }
 
-// Horizontal means X axis, so left and right are set to the padding value.
+// Horizontal sets the padding for the horizontal axis (left and right).
 func (p Padding) Horizontal(pad Length) Padding {
 	p.Left = pad
 	p.Right = pad
