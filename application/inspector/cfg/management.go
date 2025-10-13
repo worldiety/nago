@@ -17,6 +17,10 @@ import (
 	"log/slog"
 )
 
+// Management is a Nago system(Inspector Management).
+// It provides functionality to inspect and manage entity and blob stores.
+// The system allows users to view and edit repository entries, download and delete blob files,
+// and interact with stores through the Admin Center UI.
 type Management struct {
 	UseCases inspector.UseCases
 	Pages    uiinspector.Pages
