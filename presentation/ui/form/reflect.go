@@ -269,7 +269,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 							if val := field.Tag.Get("value"); val != "" && str == "" {
 								requiresInit = true
-								return val
+								return ctx.Window().Bundle().Resolve(val)
 							}
 
 							return str
@@ -636,7 +636,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 								str := reflect.ValueOf(src).FieldByName(field.Name).String()
 								if val := field.Tag.Get("value"); val != "" && str == "" {
 									requiresInit = true
-									return val
+									return ctx.Window().Bundle().Resolve(val)
 								}
 
 								return str
