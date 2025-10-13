@@ -9,7 +9,12 @@ package uisecret
 
 import (
 	"encoding/hex"
+	"reflect"
+	"slices"
+	"strings"
+
 	"github.com/worldiety/enum"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
@@ -17,9 +22,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/list"
-	"reflect"
-	"slices"
-	"strings"
 )
 
 func CreateSecretPage(wnd core.Window, pages Pages, createSecret secret.CreateSecret) core.View {
@@ -33,7 +35,7 @@ func CreateSecretPage(wnd core.Window, pages Pages, createSecret secret.CreateSe
 		list.List(items...).Caption(ui.Text("Verfügbare Geheimnis-Varianten")).Frame(ui.Frame{}.FullWidth()),
 		ui.HStack(ui.SecondaryButton(func() {
 			wnd.Navigation().Back()
-		}).Title("Zurück")).
+		}).Title(rstring.ActionBack.Get(wnd))).
 			FullWidth().
 			Alignment(ui.Trailing).
 			Padding(ui.Padding{Top: ui.L16}),
@@ -115,8 +117,8 @@ func getGlobalCredentialTypeSpecs() []credentialTypeSpec {
 func credentialType(wnd core.Window, pages Pages, createSecret secret.CreateSecret, spec credentialTypeSpec) core.View {
 	return list.Entry().
 		Leading(spec.LogoView()).
-		Headline(spec.name).
-		SupportingText(spec.description).
+		Headline(wnd.Bundle().Resolve(spec.name)).
+		SupportingText(wnd.Bundle().Resolve(spec.description)).
 		Trailing(ui.PrimaryButton(func() {
 			value := reflect.New(spec.refType).Elem().Interface().(secret.Credentials)
 			id, err := createSecret(wnd.Subject(), value)
@@ -126,5 +128,5 @@ func credentialType(wnd core.Window, pages Pages, createSecret secret.CreateSecr
 			}
 
 			wnd.Navigation().ForwardTo(pages.EditSecret, core.Values{"id": string(id)})
-		}).PreIcon(heroOutline.Plus).Title("hinzufügen"))
+		}).PreIcon(heroOutline.Plus).Title(rstring.ActionAdd.Get(wnd)))
 }

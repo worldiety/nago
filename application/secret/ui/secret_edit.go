@@ -8,6 +8,9 @@
 package uisecret
 
 import (
+	"reflect"
+	"slices"
+
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -19,8 +22,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"reflect"
-	"slices"
 )
 
 func EditSecretPage(
@@ -89,12 +90,12 @@ func EditSecretPage(
 	spec := newCredentialTypeSpec(reflect.TypeOf(scr.Credentials))
 	logo := spec.LogoView()
 	if avtLogo, ok := logo.(avatar.TAvatar); ok {
-		logo = cardlayout.Card(spec.name).
+		logo = cardlayout.Card(wnd.Bundle().Resolve(spec.name)).
 			Style(cardlayout.TitleCompact).
 			Body(
 				ui.VStack(
 					avtLogo.Size(ui.L80),
-					ui.Text(spec.description).TextAlignment(ui.TextAlignCenter),
+					ui.Text(wnd.Bundle().Resolve(spec.description)).TextAlignment(ui.TextAlignCenter),
 				).Gap(ui.L16).
 					FullWidth(),
 			).

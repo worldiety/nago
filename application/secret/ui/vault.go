@@ -8,6 +8,11 @@
 package uisecret
 
 import (
+	"maps"
+	"reflect"
+	"slices"
+	"strings"
+
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -17,10 +22,6 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/list"
-	"maps"
-	"reflect"
-	"slices"
-	"strings"
 )
 
 func VaultPage(wnd core.Window, pages Pages, findMySecrets secret.FindMySecrets, findGrpById group.FindByID) core.View {
@@ -154,7 +155,7 @@ func itemEntry(wnd core.Window, pages Pages, scr secret.Secret) list.TEntry {
 		Leading(spec.LogoView()).
 		Headline(name).
 		Trailing(ui.ImageIcon(heroOutline.ChevronRight)).
-		SupportingText(spec.description).
+		SupportingText(wnd.Bundle().Resolve(spec.description)).
 		Action(func() {
 			wnd.Navigation().ForwardTo(pages.EditSecret, core.Values{"id": string(scr.ID)})
 		})
