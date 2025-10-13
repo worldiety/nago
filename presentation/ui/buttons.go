@@ -9,9 +9,10 @@ package ui
 
 import (
 	"fmt"
+	"runtime/debug"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
-	"runtime/debug"
 )
 
 // TButton is a basic component(Button).
@@ -71,6 +72,11 @@ func (c TButton) Title(text string) TButton {
 
 func (c TButton) Visible(b bool) TButton {
 	c.invisible = !b
+	return c
+}
+
+func (c TButton) Disabled(b bool) TButton {
+	c.disabled = b
 	return c
 }
 
