@@ -25,7 +25,10 @@ type TTableColumn struct {
 }
 
 func TableColumn(content core.View) TTableColumn {
-	return TTableColumn{content: content}
+	return TTableColumn{
+		alignment: proto.Leading, // a leading start is more common in standard tables
+		content:   content,
+	}
 }
 
 // Action refers only to the cell, not to the entire column.

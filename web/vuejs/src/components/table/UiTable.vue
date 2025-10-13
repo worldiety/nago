@@ -175,7 +175,7 @@ function headCellStyles(colIdx: number): string {
 	}
 
 	if (cell.alignment === undefined) {
-		cell.alignment = AlignmentValues.Leading; // this is a different rule: if not defined, use leading, which is more common than centered in tables
+		cell.alignment = AlignmentValues.Center; // use the correct alignment default to align with our spec
 	}
 
 	switch (cell.alignment) {
