@@ -26,7 +26,7 @@ Each scheduler specifies:
 - Optional **default settings** (e.g., `PauseTime`, `StartDelay`)
 - Optional **custom actions**, callable from the Admin Center
 
-### Examples
+### Example 1: One-Shot Scheduler
 ```go
 scheduleManagement := option.Must(cfgscheduler.Enable(cfg))
 
@@ -42,6 +42,8 @@ option.MustZero(scheduleManagement.UseCases.Configure(user.SU(), scheduler.Optio
     },
 }))
 ```
+
+### Example 2: Scheduled recurring task
 
 ```go
 scheduleManagement := option.Must(cfgscheduler.Enable(cfg))
