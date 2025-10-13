@@ -120,7 +120,7 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 					ui.Spacer(),
 					pager.Pager(model.PageIdx).Count(model.Page.PageCount).Visible(model.HasPages()),
 				).FullWidth(),
-			).ColSpan(6),
+			).ColSpan(len(cols)),
 		).BackgroundColor(ui.ColorCardFooter),
 	).
 		Frame(ui.Frame{}.FullWidth()).Render(ctx)
