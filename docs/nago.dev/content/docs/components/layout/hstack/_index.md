@@ -33,6 +33,7 @@ you need to apply additional padding.
 | `HoveredBorder(border Border)` | HoveredBorder sets the border styling when the stack is hovered. |
 | `ID(id string)` | ID assigns a unique identifier to the stack, useful for testing or referencing. |
 | `NoClip(b bool)` | NoClip toggles whether the stack clips its children. By default, stacks clip their children; setting true disables clipping. |
+| `Opacity(opacity float64)` | Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means fully visible. This also affects all contained children. |
 | `Padding(padding Padding)` | Padding sets the inner spacing around the stack's children. |
 | `Position(position Position)` | Position sets the position of the horizontal stack within its parent layout. |
 | `PressedBackgroundColor(backgroundColor Color)` | PressedBackgroundColor sets the background color of the stack when it is pressed or clicked. |

@@ -44,6 +44,7 @@ type TVStack struct {
 	id                 string
 	noClip             bool
 	animation          Animation
+	opacity            float64
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -83,6 +84,13 @@ func (c TVStack) StylePreset(preset StylePreset) TVStack {
 // TextColor sets the default text color for the VStack.
 func (c TVStack) TextColor(textColor Color) TVStack {
 	c.textColor = textColor.ora()
+	return c
+}
+
+// Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means
+// fully visible. This also affects all contained children.
+func (c TVStack) Opacity(opacity float64) TVStack {
+	c.opacity = 1 - opacity
 	return c
 }
 
@@ -140,11 +148,11 @@ func (c TVStack) Frame(f Frame) DecoredView {
 	return c
 }
 
-// WithFrame modifies the current frame using the provided function.
 func (c TVStack) With(fn func(stack TVStack) TVStack) TVStack {
 	return fn(c)
 }
 
+// WithFrame modifies the current frame using the provided function.
 func (c TVStack) WithFrame(fn func(Frame) Frame) DecoredView {
 	c.frame = fn(c.frame)
 	return c
@@ -243,5 +251,18 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Position:               c.position.ora(),
 		Id:                     proto.Str(c.id),
 		NoClip:                 proto.Bool(c.noClip),
+		Opacity:                clampOpacity(c.opacity),
 	}
+}
+
+func clampOpacity(o float64) proto.Uint {
+	var opacity proto.Uint
+	if o != 0 {
+		// we transmit it inverse, 0=fully visible and 1=fully transparent
+		opacity = proto.Uint(o * 100)
+		opacity = max(0, opacity)
+		opacity = min(100, opacity)
+	}
+
+	return opacity
 }

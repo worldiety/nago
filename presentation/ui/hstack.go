@@ -47,6 +47,7 @@ type THStack struct {
 	id                     string
 	noClip                 bool
 	textColor              Color
+	opacity                float64
 }
 
 // HStack is a container, in which the given children will be layout in a row according to the applied
@@ -235,6 +236,13 @@ func (c THStack) NoClip(b bool) THStack {
 	return c
 }
 
+// Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means
+// fully visible. This also affects all contained children.
+func (c THStack) Opacity(opacity float64) THStack {
+	c.opacity = 1 - opacity
+	return c
+}
+
 // Render builds and returns the protocol representation of the horizontal stack.
 func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 	ptr := ctx.MountCallback(c.action)
@@ -268,5 +276,6 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 		StylePreset: c.stylePreset,
 		Id:          proto.Str(c.id),
 		NoClip:      proto.Bool(c.noClip),
+		Opacity:     clampOpacity(c.opacity),
 	}
 }

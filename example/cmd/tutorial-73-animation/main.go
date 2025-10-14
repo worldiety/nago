@@ -25,6 +25,9 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			colorIdx := core.AutoState[int](wnd)
 			colorValue := core.AutoState[ui.Color](wnd)
+			opacityValue := core.AutoState[float64](wnd).Init(func() float64 {
+				return 1
+			})
 			animation := core.AutoState[ui.Animation](wnd).Init(func() ui.Animation {
 				return ui.AnimateBounce
 			})
@@ -47,6 +50,7 @@ func main() {
 						return stack
 					}).
 					Animation(animation.Get()).
+					Opacity(opacityValue.Get()).
 					Padding(ui.Padding{}.All(paddings[paddingIdx.Get()%len(paddings)])).
 					Border(ui.Border{}.Radius(ui.L16)),
 
@@ -54,6 +58,7 @@ func main() {
 					colorIdx.Set(colorIdx.Get() + 1)
 					paddingIdx.Set(paddingIdx.Get() + 1)
 					colorValue.Set("")
+					opacityValue.Set(1)
 				}).Title("next style"),
 
 				ui.SecondaryButton(func() {
@@ -61,6 +66,7 @@ func main() {
 					colorValue.Set("")
 					colorIdx.Set(0)
 					transformation.Set(ui.Transformation{})
+					opacityValue.Set(1)
 				}).Title("none"),
 
 				ui.SecondaryButton(func() {
@@ -124,6 +130,16 @@ func main() {
 						transformation.Set(ui.Transformation{TranslateX: ""})
 					}()
 				}).Title("custom fade out"),
+
+				ui.SecondaryButton(func() {
+					animation.Set(ui.AnimateTransition)
+					opacityValue.Set(0)
+
+					go func() {
+						time.Sleep(500 * time.Millisecond)
+						opacityValue.Set(1)
+					}()
+				}).Title("Opacity"),
 			).Gap(ui.L8).
 				Frame(ui.Frame{}.MatchScreen())
 		})

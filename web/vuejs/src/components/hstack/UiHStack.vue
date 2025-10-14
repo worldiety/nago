@@ -82,6 +82,10 @@ function commonStyles(): string[] {
 		}
 	}
 
+	if (props.ui.opacity) {
+		styles.push(`opacity: ${100 - props.ui.opacity}%`);
+	}
+
 	if (props.ui.action) {
 		focusable.value = true;
 	}
