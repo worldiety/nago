@@ -19,6 +19,12 @@ import (
 	"log/slog"
 )
 
+// Management is a Nago system(Data Import Management).
+// It provides functionality to import external data into the application by mapping raw input to existing data structures.
+// The system supports various formats such as CSV, JSON, and PDF AcroForms and allows users to review, transform, and import data interactively.
+// It integrates into the Admin Center, providing UI flows for staging, field mapping, validation, and import execution.
+//
+// The system is extensible through custom importers and parsers that implement the importer.Importer and parser.Parser interfaces.
 type Management struct {
 	Pages    uidataimport.Pages
 	UseCases dataimport.UseCases
