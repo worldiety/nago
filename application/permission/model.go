@@ -91,6 +91,40 @@ func DeclareCreate[UseCase any](id ID, entityName string) ID {
 	).String()}, 3)
 }
 
+// DeclareFindByID creates a prototype permission stub. See also [DeclareCreate].
+func DeclareFindByID[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("View %s element", entityName),
+			language.German:  fmt.Sprintf("%s Element anzeigen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can view " + entityName + " elements if they know their identifier.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente ansehen, wenn sie das Kennzeichen kennen.",
+		},
+	).String()}, 3)
+}
+
+// DeclareFindAllIdentifiers creates a prototype permission stub. See also [DeclareCreate].
+func DeclareFindAllIdentifiers[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Get %s element identifiers", entityName),
+			language.German:  fmt.Sprintf("%s Element-Kennzeichen abrufen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can get " + entityName + " all identifiers.",
+			language.German:  "Träger dieser Berechtigung können alle " + entityName + "-Kennzeichen abrufen.",
+		},
+	).String()}, 3)
+}
+
 // SetName sets the default permission name or if undefined, ignores it. Ignoring is fine, e.g. because
 // an AST preprocessor may include documentation for otherwise unreachable code.
 func SetName(id ID, name string) {
