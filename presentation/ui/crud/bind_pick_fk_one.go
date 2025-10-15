@@ -9,15 +9,16 @@ package crud
 
 import (
 	"fmt"
+	"iter"
+	"log/slog"
+	"reflect"
+	"strings"
+
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"iter"
-	"log/slog"
-	"reflect"
-	"strings"
 )
 
 type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
@@ -36,7 +37,7 @@ type OneToOneOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOptions[T, IDOfT], property Property[E, std.Option[IDOfT]]) Field[E] {
 	if opts.ForeignPickerRenderer == nil {
 		opts.ForeignPickerRenderer = func(t T) core.View {
-			return ui.Text(fmt.Sprintf("%v", t))
+			return ui.Text(fmt.Sprintf("%v", t)).Resolve(true)
 		}
 	}
 
@@ -115,7 +116,7 @@ func OneToOne[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToOneOp
 				ItemPickedRenderer(func(t []T) core.View {
 					switch len(t) {
 					case 0:
-						return ui.Text("nichts gewählt")
+						return ui.Text("nichts gewählt").Resolve(true)
 					case 1:
 						return opts.ForeignPickerRenderer(t[0])
 					default:

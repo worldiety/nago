@@ -55,6 +55,7 @@ type TText struct {
 	action             func()        // click/tap action
 	lineBreak          bool          // whether text should wrap
 	underline          bool          // underline the text
+	resolve            bool
 }
 
 // MailTo creates a mailto: link text component.
@@ -139,6 +140,13 @@ func (c TText) FullWidth() TText {
 	return c
 }
 
+// Resolve tries to resolve the current text content against the window bundle at render time to translate
+// its contents. This may cause a lot of redundant or wrong lookups and therefore it is disabled by default.
+func (c TText) Resolve(b bool) TText {
+	c.resolve = b
+	return c
+}
+
 // Border draws a Border around the component. It's used to set the Border width, color and radius.
 // Fore more information also have a look at the Border component.
 func (c TText) Border(border Border) DecoredView {
@@ -215,8 +223,13 @@ func (c TText) Action(f func()) TText {
 
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
+	value := c.content
+	if c.resolve {
+		value = ctx.Window().Bundle().Resolve(value)
+	}
+
 	return &proto.TextView{
-		Value:              proto.Str(c.content),
+		Value:              proto.Str(value),
 		Color:              c.color,
 		BackgroundColor:    c.backgroundColor,
 		Font:               c.font,

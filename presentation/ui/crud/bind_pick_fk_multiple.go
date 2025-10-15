@@ -9,14 +9,15 @@ package crud
 
 import (
 	"fmt"
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/picker"
 	"iter"
 	"log/slog"
 	"reflect"
 	"strings"
+
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/picker"
 )
 
 type OneToManyOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
@@ -36,7 +37,7 @@ type OneToManyOptions[T data.Aggregate[IDOfT], IDOfT data.IDType] struct {
 func OneToMany[E any, T data.Aggregate[IDOfT], IDOfT data.IDType](opts OneToManyOptions[T, IDOfT], property Property[E, []IDOfT]) Field[E] {
 	if opts.ForeignPickerRenderer == nil {
 		opts.ForeignPickerRenderer = func(t T) core.View {
-			return ui.Text(fmt.Sprintf("%v", t))
+			return ui.Text(fmt.Sprintf("%v", t)).Resolve(true)
 		}
 	}
 

@@ -9,11 +9,12 @@ package crud
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"reflect"
-	"strings"
 )
 
 type PickMultipleOptions[T any] struct {
@@ -66,7 +67,7 @@ func PickMultiple[E any, T any](opts PickMultipleOptions[T], property Property[E
 		RenderTableCell: func(self Field[E], entity *core.State[E]) ui.TTableCell {
 			tmp := entity.Get()
 			v := property.Get(&tmp)
-			return ui.TableCell(ui.Text(fmtSlice(v)))
+			return ui.TableCell(ui.Text(fmtSlice(v)).Resolve(true))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
@@ -76,7 +77,7 @@ func PickMultiple[E any, T any](opts PickMultipleOptions[T], property Property[E
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				ui.Text(fmtSlice(v)),
+				ui.Text(fmtSlice(v)).Resolve(true),
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {

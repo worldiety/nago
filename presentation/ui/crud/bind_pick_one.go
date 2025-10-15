@@ -9,12 +9,13 @@ package crud
 
 import (
 	"fmt"
+	"slices"
+	"strings"
+
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"slices"
-	"strings"
 )
 
 type PickOneStyle int
@@ -138,7 +139,7 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 			if v.IsSome() {
 				return ui.TableCell(opts.ItemRenderer(v.Unwrap()))
 			}
-			return ui.TableCell(ui.Text(fmtOptOne(v)))
+			return ui.TableCell(ui.Text(fmtOptOne(v)).Resolve(true))
 		},
 		RenderCardElement: func(self Field[E], entity *core.State[E]) ui.DecoredView {
 			var tmp E
@@ -148,7 +149,7 @@ func PickOne[E any, T comparable](opts PickOneOptions[T], property Property[E, s
 				ui.VStack(ui.Text(self.Label).Font(ui.SubTitle)).
 					Alignment(ui.Leading).
 					Frame(ui.Frame{}.FullWidth()),
-				ui.Text(fmtOptOne(v)),
+				ui.Text(fmtOptOne(v)).Resolve(true),
 			).Alignment(ui.Trailing)
 		},
 		Comparator: func(a, b E) int {
