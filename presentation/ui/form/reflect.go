@@ -38,6 +38,10 @@ type AutoOptions struct {
 	Window         core.Window
 	// Context is used to resolve the data sources. If Context is nil, the Window context is used to resolve the sources.
 	Context context.Context
+	// Errors can be either a map[string]string or a struct {Field string} to resolve error messages for
+	// specific fields. In both cases, the key respective the Field names must match the original introspected
+	// field names of the model.
+	Errors any
 }
 
 func (o AutoOptions) context() context.Context {
@@ -85,8 +89,6 @@ func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 		cardPadding: ui.Padding{Right: ui.L40, Left: ui.L40, Bottom: ui.L40, Top: ""},
 	}
 }
-
-
 
 // Padding sets the padding of the auto form.
 func (t TAuto[T]) Padding(padding ui.Padding) ui.DecoredView {
@@ -145,6 +147,8 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 	if value == nil {
 		return ui.VStack(alert.Banner("implementation error", "no type information available for [form.Auto]")).Render(ctx)
 	}
+
+	fieldErrValues := strFieldValues(t.opts.Errors)
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
@@ -251,6 +255,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
 							Title(label).
 							MultiSelect(true).
+							ErrorText(fieldErrValues[field.Name]).
 							Disabled(disabled).
 							SupportingText(supportingText).
 							Frame(ui.Frame{}.FullWidth()))
@@ -309,6 +314,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							ID(id).
 							SupportingText(supportingText).
 							Lines(lines).
+							ErrorText(fieldErrValues[field.Name]).
 							Disabled(disabled).
 							Frame(ui.Frame{}.FullWidth()),
 						)
@@ -345,6 +351,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
 					Disabled(disabled).
 					ID(id).
+					ErrorText(fieldErrValues[field.Name]).
 					InputValue(boolState).
 					SupportingText(supportingText).
 					Frame(ui.Frame{}.FullWidth()),
@@ -413,6 +420,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						Minutes(showMinutes).
 						Seconds(showSeconds).
 						Disabled(disabled).
+						ErrorText(fieldErrValues[field.Name]).
 						SupportingText(supportingText).
 						Frame(ui.Frame{}.FullWidth()),
 					)
@@ -446,6 +454,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 					fieldsBuilder.Append(ui.IntField(label, intState.Get(), intState).
 						Disabled(disabled).
 						SupportingText(supportingText).
+						ErrorText(fieldErrValues[field.Name]).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
@@ -470,6 +479,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 					fieldsBuilder.Append(ui.SingleDatePicker(label, dateState.Get(), dateState).
 						Disabled(disabled).
 						SupportingText(supportingText).
+						ErrorText(fieldErrValues[field.Name]).
 						Frame(ui.Frame{}.FullWidth()),
 					)
 
@@ -504,7 +514,11 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						colorState.Notify()
 					}
 
-					fieldsBuilder.Append(colorpicker.PalettePicker(label, colorpicker.DefaultPalette).State(colorState).Value(colorState.Get()))
+					fieldsBuilder.Append(colorpicker.PalettePicker(label, colorpicker.DefaultPalette).
+						State(colorState).
+						Value(colorState.Get()).
+						ErrorText(fieldErrValues[field.Name]))
+
 				case reflect.TypeFor[image.ID]():
 
 					if t.opts.Window == nil {
@@ -584,6 +598,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							ID(id).
 							SupportingText(supportingText).
 							Disabled(disabled).
+							ErrorText(fieldErrValues[field.Name]).
 							Frame(ui.Frame{}.FullWidth()),
 						)
 
@@ -634,6 +649,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
 								Title(label).
 								MultiSelect(false).
+								ErrorText(fieldErrValues[field.Name]).
 								Disabled(disabled).
 								SupportingText(supportingText).
 								Frame(ui.Frame{}.FullWidth()))
@@ -667,6 +683,7 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 								InputValue(strState).
 								ID(id).
 								SupportingText(supportingText).
+								ErrorText(fieldErrValues[field.Name]).
 								Lines(lines).
 								Disabled(disabled).
 								Frame(ui.Frame{}.FullWidth()),
@@ -719,4 +736,33 @@ func setFieldValue(dst any, fieldName string, val any) any {
 	}
 
 	return cpy.Interface()
+}
+
+// strFieldValues returns v if it is a map itself or the fields from the struct. In all other cases returns nil.
+func strFieldValues(v any) map[string]string {
+	if v == nil {
+		return nil
+	}
+
+	if m, ok := v.(map[string]string); ok {
+		return m
+	}
+
+	rType := reflect.TypeOf(v)
+	if rType.Kind() != reflect.Struct {
+		return nil
+	}
+
+	res := map[string]string{}
+	rVal := reflect.ValueOf(v)
+	for i := 0; i < rType.NumField(); i++ {
+		fVal := rVal.Field(i)
+		if fVal.Kind() != reflect.String {
+			continue
+		}
+
+		res[rType.Field(i).Name] = fVal.String()
+	}
+
+	return res
 }
