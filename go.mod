@@ -24,7 +24,7 @@ require (
 
 require (
 	github.com/stretchr/testify v1.10.0 // indirect
-	github.com/worldiety/i18n v0.0.0-20251006153431-ee426d0a369d // indirect
+	github.com/worldiety/i18n v0.0.0-20251015140345-964ae52376d2 // indirect
 	github.com/worldiety/jsonptr v0.0.6 // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
 	golang.org/x/mod v0.27.0 // indirect
