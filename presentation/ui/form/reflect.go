@@ -40,7 +40,8 @@ type AutoOptions struct {
 	Context context.Context
 	// Errors can be either a map[string]string or a struct {Field string} to resolve error messages for
 	// specific fields. In both cases, the key respective the Field names must match the original introspected
-	// field names of the model.
+	// field names of the model. See also [ErrorWithFields]. Any other error will be appended as alert.BannerError.
+	// See also [xerrors.WithFields] to create compatible wrapper error.
 	Errors any
 }
 
@@ -149,6 +150,10 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	fieldErrValues := strFieldValues(t.opts.Errors)
+	var err error
+	if e, ok := t.opts.Errors.(error); ok && len(fieldErrValues) == 0 {
+		err = e
+	}
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
@@ -706,6 +711,10 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 		}
 	}
 
+	if err != nil {
+		rootViews.Append(alert.BannerError(err))
+	}
+
 	return ui.VStack(rootViews.Collect()...).Gap(ui.L16).FullWidth().Render(ctx)
 }
 
@@ -738,6 +747,14 @@ func setFieldValue(dst any, fieldName string, val any) any {
 	return cpy.Interface()
 }
 
+type ErrorWithFields interface {
+	error
+	// UnwrapFields may return a struct{FieldA string, FieldB string} or a map[string]string to address
+	// individual error messages for a specific field. It may also return nil, if the problem is not
+	// related to a specific field.
+	UnwrapFields() any
+}
+
 // strFieldValues returns v if it is a map itself or the fields from the struct. In all other cases returns nil.
 func strFieldValues(v any) map[string]string {
 	if v == nil {
@@ -746,6 +763,10 @@ func strFieldValues(v any) map[string]string {
 
 	if m, ok := v.(map[string]string); ok {
 		return m
+	}
+
+	if err, ok := v.(ErrorWithFields); ok {
+		return strFieldValues(err.UnwrapFields())
 	}
 
 	rType := reflect.TypeOf(v)
