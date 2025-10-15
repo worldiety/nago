@@ -67,6 +67,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionNew = i18n.MustString(
+		"nago.common.action.new",
+		i18n.Values{
+			language.English: "New",
+			language.German:  "Neu",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionBack = i18n.MustString(
 		"nago.common.action.back",
 		i18n.Values{
@@ -227,6 +236,33 @@ var (
 		i18n.Values{
 			language.English: "Name",
 			language.German:  "Name",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelDescription = i18n.MustString(
+		"nago.common.label.description",
+		i18n.Values{
+			language.English: "Description",
+			language.German:  "Beschreibung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelPlatform = i18n.MustString(
+		"nago.common.label.platform",
+		i18n.Values{
+			language.English: "Platform",
+			language.German:  "Plattform",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelValueMustNotBeEmpty = i18n.MustString(
+		"nago.common.label.value_must_not_be_empty",
+		i18n.Values{
+			language.English: "Value must not be empty.",
+			language.German:  "Der Wert darf nicht leer sein.",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

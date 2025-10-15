@@ -5,15 +5,10 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package library
+package uiai
 
-import "go.wdy.de/nago/application/drive"
+import "go.wdy.de/nago/presentation/core"
 
-type ID string
-
-type Library struct {
-	ID          ID
-	Name        string
-	Description string
-	Root        drive.File
+type Pages struct {
+	Workspaces core.NavigationPath
 }
