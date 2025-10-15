@@ -11,6 +11,8 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
+
 	"iter"
 	"sync"
 )
@@ -68,15 +70,15 @@ type UseCases struct {
 	FindMyGroups FindMyGroups
 }
 
-func NewUseCases(repo Repository) UseCases {
+func NewUseCases(bus events.Bus, repo Repository) UseCases {
 	var mutex sync.Mutex
 
 	findByIdFn := NewFindByID(repo)
 	findAllFn := NewFindAll(repo)
 	createFn := NewCreate(&mutex, repo)
-	upsertFn := NewUpsert(&mutex, repo)
-	updateFn := NewUpdate(&mutex, repo)
-	deleteFn := NewDelete(&mutex, repo)
+	upsertFn := NewUpsert(&mutex, bus, repo)
+	updateFn := NewUpdate(&mutex, bus, repo)
+	deleteFn := NewDelete(&mutex, bus, repo)
 	findMyGroupsFn := NewFindMyGroups(repo)
 
 	return UseCases{

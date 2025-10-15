@@ -9,13 +9,16 @@ package group
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
+
 	"strings"
 	"sync"
 )
 
-func NewUpsert(mutex *sync.Mutex, repo Repository) Upsert {
+func NewUpsert(mutex *sync.Mutex, bus events.Bus, repo Repository) Upsert {
 	return func(subject permission.Auditable, group Group) (ID, error) {
 		if err := subject.Audit(PermCreate); err != nil {
 			return "", err
@@ -43,6 +46,14 @@ func NewUpsert(mutex *sync.Mutex, repo Repository) Upsert {
 			return "", fmt.Errorf("random id collision on upsert creation")
 		}
 
-		return group.ID, repo.Save(group)
+		if err := repo.Save(group); err != nil {
+			return "", fmt.Errorf("cannot save group: %w", err)
+		}
+
+		if optGroup.IsSome() {
+			bus.Publish(Updated{Group: group.ID})
+		}
+
+		return group.ID, nil
 	}
 }

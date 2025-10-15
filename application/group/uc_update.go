@@ -8,13 +8,15 @@
 package group
 
 import (
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/pkg/std"
 	"strings"
 	"sync"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/std"
 )
 
-func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
+func NewUpdate(mutex *sync.Mutex, bus events.Bus, repo Repository) Update {
 	return func(subject permission.Auditable, group Group) error {
 		if err := subject.Audit(PermUpdate); err != nil {
 			return err
@@ -27,6 +29,11 @@ func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
 			return std.NewLocalizedError("Ungültige EID", "Eine leere Gruppen EID ist nicht zulässig.")
 		}
 
-		return repo.Save(group)
+		if err := repo.Save(group); err != nil {
+			return err
+		}
+
+		bus.Publish(Updated{Group: group.ID})
+		return nil
 	}
 }

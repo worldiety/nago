@@ -9,10 +9,12 @@ package group
 
 import (
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/events"
+
 	"sync"
 )
 
-func NewDelete(mutex *sync.Mutex, repo Repository) Delete {
+func NewDelete(mutex *sync.Mutex, bus events.Bus, repo Repository) Delete {
 	return func(subject permission.Auditable, id ID) error {
 		if err := subject.Audit(PermDelete); err != nil {
 			return err
@@ -21,6 +23,12 @@ func NewDelete(mutex *sync.Mutex, repo Repository) Delete {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		return repo.DeleteByID(id)
+		if err := repo.DeleteByID(id); err != nil {
+			return err
+		}
+
+		bus.Publish(Deleted{Group: id})
+		
+		return nil
 	}
 }

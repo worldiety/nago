@@ -9,6 +9,8 @@ package application
 
 import (
 	"fmt"
+	"iter"
+
 	"go.wdy.de/nago/application/group"
 	uigroup "go.wdy.de/nago/application/group/ui"
 	"go.wdy.de/nago/application/user"
@@ -16,7 +18,6 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
-	"iter"
 )
 
 // GroupManagement is a nago system(Group Management).
@@ -41,7 +42,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 		groupRepo := json.NewSloppyJSONRepository[group.Group, group.ID](groupStore)
 
 		c.groupManagement = &GroupManagement{
-			UseCases: group.NewUseCases(groupRepo),
+			UseCases: group.NewUseCases(c.EventBus(), groupRepo),
 			Pages: uigroup.Pages{
 				Groups: "admin/groups",
 			},

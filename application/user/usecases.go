@@ -311,7 +311,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 	deleteFn := NewDelete(users)
 
 	authenticateByPasswordFn := NewAuthenticatesByPassword(findByMailFn, systemFn)
-	subjectFromUserFn := NewViewOf(users, roles)
+	subjectFromUserFn := NewViewOf(eventBus, users, roles)
 
 	readMyContactFn := NewReadMyContact(users)
 

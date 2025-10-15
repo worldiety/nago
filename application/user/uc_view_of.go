@@ -11,13 +11,15 @@ import (
 	"fmt"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewViewOf(users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
+func NewViewOf(bus events.Bus, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
 	var cachedViews concurrent.RWMap[ID, *viewImpl]
 
 	users.AddDeletedObserver(func(repository data.Repository[User, ID], deleted data.Deleted[ID]) error {
@@ -31,6 +33,26 @@ func NewViewOf(users data.NotifyRepository[User, ID], roles data.ReadRepository[
 		}
 
 		return nil
+	})
+
+	events.SubscribeFor[role.Updated](bus, func(evt role.Updated) {
+		// cannot decide efficiently which users are affected, thus clear it
+		cachedViews.Clear()
+	})
+
+	events.SubscribeFor[role.Deleted](bus, func(evt role.Deleted) {
+		// cannot decide efficiently which users are affected, thus clear it
+		cachedViews.Clear()
+	})
+
+	events.SubscribeFor[group.Updated](bus, func(evt group.Updated) {
+		// cannot decide efficiently which users are affected, thus clear it
+		cachedViews.Clear()
+	})
+
+	events.SubscribeFor[group.Deleted](bus, func(evt group.Deleted) {
+		// cannot decide efficiently which users are affected, thus clear it
+		cachedViews.Clear()
 	})
 
 	return func(subject permission.Auditable, id ID) (option.Opt[Subject], error) {
