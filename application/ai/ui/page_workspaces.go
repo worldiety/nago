@@ -56,7 +56,18 @@ func PageWorkspaces(wnd core.Window, ucWS workspace.UseCases) core.View {
 					},
 				},
 			},
-		}).Selection(false).
+		}).Selection(true).
+			SelectOptions(
+				dataview.NewSelectOptionDelete(wnd, func(selected []workspace.ID) error {
+					for _, id := range selected {
+						if err := ucWS.DeleteByID(wnd.Subject(), id); err != nil {
+							return err
+						}
+					}
+					
+					return nil
+				}),
+			).
 			ActionNew(func() {
 				createDialogPresented.Set(true)
 			}),

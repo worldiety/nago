@@ -10,7 +10,8 @@ package workspace
 import "go.wdy.de/nago/application/permission"
 
 var (
-	PermCreate   = permission.DeclareCreate[Create]("nago.ai.workspace.create", "AI Workspace")
-	PermFindByID = permission.DeclareFindByID[FindByID]("nago.ai.workspace.find_by_id", "AI Workspace")
-	PermFindAll  = permission.DeclareFindAllIdentifiers[FindAll]("nago.ai.workspace.find_all", "AI Workspace")
+	PermCreate     = permission.DeclareCreate[Create]("nago.ai.workspace.create", "AI Workspace")
+	PermFindByID   = permission.DeclareFindByID[FindByID]("nago.ai.workspace.find_by_id", "AI Workspace")
+	PermFindAll    = permission.DeclareFindAllIdentifiers[FindAll]("nago.ai.workspace.find_all", "AI Workspace")
+	PermDeleteByID = permission.DeclareDeleteByID[DeleteByID]("nago.ai.workspace.delete", "AI Workspace")
 )

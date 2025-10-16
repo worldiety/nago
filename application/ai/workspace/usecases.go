@@ -91,17 +91,20 @@ type FindAll func(subject auth.Subject) iter.Seq2[ID, error]
 
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Workspace], error)
 
+type DeleteByID func(subject auth.Subject, id ID) error
 type UseCases struct {
-	Create   Create
-	FindAll  FindAll
-	FindByID FindByID
+	Create     Create
+	FindAll    FindAll
+	FindByID   FindByID
+	DeleteByID DeleteByID
 }
 
-func NewUseCases(repo Repository) UseCases {
+func NewUseCases(repo Repository, repoAgents agent.Repository) UseCases {
 	var mutex sync.Mutex
 	return UseCases{
-		Create:   NewCreate(&mutex, repo),
-		FindAll:  NewFindAll(repo),
-		FindByID: NewFindByID(repo),
+		Create:     NewCreate(&mutex, repo),
+		FindAll:    NewFindAll(repo),
+		FindByID:   NewFindByID(repo),
+		DeleteByID: NewDeleteByID(repo, repoAgents),
 	}
 }

@@ -45,8 +45,13 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	repoAgents, err := application.JSONRepository[agent.Agent](cfg, "nago.ai.agent")
+	if err != nil {
+		return Management{}, err
+	}
+
 	management = Management{
-		WorkspaceUseCases: workspace.NewUseCases(repoWorkspace),
+		WorkspaceUseCases: workspace.NewUseCases(repoWorkspace, repoAgents),
 		Pages: uiai.Pages{
 			Workspaces: "admin/ai/workspaces",
 		},
