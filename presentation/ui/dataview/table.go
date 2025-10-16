@@ -10,11 +10,13 @@ package dataview
 import (
 	"fmt"
 	"iter"
+	"strconv"
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -74,13 +76,52 @@ type Field[E any] struct {
 	Map  func(obj E) core.View
 }
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
-	data          Data[E, ID]
-	action        func(e E)
-	actionNew     func()
-	selectOptions []SelectOption[ID]
-	modelOptions  pager.ModelOptions
-	model         option.Opt[pager.Model[E, ID]]
-	hideSelection bool
+	data            Data[E, ID]
+	action          func(e E)
+	actionNew       func()
+	selectOptions   []SelectOption[ID]
+	modelOptions    pager.ModelOptions
+	model           option.Opt[pager.Model[E, ID]]
+	hideSelection   bool
+	addChevronRight bool
+}
+
+type Idx string
+
+type Element[T any] struct {
+	ID    Idx
+	Index int
+	Value T
+}
+
+func (e Element[T]) Identity() Idx {
+	return e.ID
+}
+
+// FromSlice takes the given slice of T and wraps it into an index Element box, so that the identity
+// is based on the index within the slice. This works for any kind of T.
+func FromSlice[T any](wnd core.Window, slice []T, fields []Field[Element[T]]) TDataView[Element[T], Idx] {
+	idents := make([]Idx, 0, len(slice))
+	for i := range slice {
+		idents = append(idents, Idx(strconv.Itoa(i)))
+	}
+
+	return FromData[Element[T], Idx](wnd, Data[Element[T], Idx]{
+		FindAll: xslices.ValuesWithError(idents, nil),
+		FindByID: func(id Idx) (option.Opt[Element[T]], error) {
+			i, err := strconv.Atoi(string(id))
+			if err != nil {
+				return option.Opt[Element[T]]{}, err
+			}
+
+			return option.Some(Element[T]{
+				ID:    id,
+				Index: i,
+				Value: slice[i],
+			}), nil
+		},
+		Fields: fields,
+	})
 }
 
 func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) TDataView[E, ID] {
@@ -99,8 +140,17 @@ func FromModel[E data.Aggregate[ID], ID ~string](wnd core.Window, model pager.Mo
 }
 
 // Action sets a global listener which is triggered, if an entry has been clicked.
+// This automatically sets [TDataView.NextActionIndicator] to true.
 func (t TDataView[E, ID]) Action(fn func(e E)) TDataView[E, ID] {
 	t.action = fn
+	t.addChevronRight = true
+	return t
+}
+
+// NextActionIndicator sets a flag if another column should be appended to indicate
+// that an entry has an attached next-action.
+func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
+	t.addChevronRight = b
 	return t
 }
 
@@ -162,6 +212,10 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 		cols = append(cols, ui.TableColumn(ui.Text(field.Name)))
 	}
 
+	if t.addChevronRight {
+		cols = append(cols, ui.TableColumn(ui.Text("")))
+	}
+
 	return ui.VStack(
 		t.actionBar(ctx.Window(), model),
 		ui.Table(cols...).Rows(
@@ -181,6 +235,10 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 				}
 				for _, field := range data.Fields {
 					cells = append(cells, ui.TableCell(field.Map(u)))
+				}
+
+				if t.addChevronRight {
+					cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
 				}
 
 				return ui.TableRow(cells...).Action(func() {
