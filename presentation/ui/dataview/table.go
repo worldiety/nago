@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/pkg/data"
@@ -19,7 +20,48 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/pager"
+	"golang.org/x/text/language"
 )
+
+var (
+	StrDialogDeleteTitle = i18n.MustString("nago.dataview.dialog.delete_title", i18n.Values{language.English: "Deletes Elements", language.German: "Elemente löschen"})
+	StrDialogDeleteDescX = i18n.MustQuantityString(
+		"nago.dataview.dialog.delete_desc",
+		i18n.QValues{
+			language.English: i18n.Quantities{One: "Delete the selected element?", Other: "Delete {amount} elements?"},
+			language.German:  i18n.Quantities{One: "Soll das ausgewählte Element unwiderruflich gelöscht werden?", Other: "Sollen {amount} Elemente unwiderruflich gelöscht werden?"},
+		},
+	)
+)
+
+type ConfirmDialog[ID any] struct {
+	Title   string
+	Message string
+	action  func(selected []ID) error // func of SelectOption.Action
+}
+
+type SelectOption[ID any] struct {
+	Icon          core.SVG
+	Name          string
+	Action        func(selected []ID) error
+	Visible       func(selected []ID) bool
+	ConfirmDialog func(selected []ID) ConfirmDialog[ID]
+}
+
+// NewSelectOptionDelete is a factory to create a generic delete option with a standard confirm dialog.
+func NewSelectOptionDelete[ID any](wnd core.Window, action func(selected []ID) error) SelectOption[ID] {
+	return SelectOption[ID]{
+		Icon:   icons.TrashBin,
+		Name:   StrDialogDeleteTitle.Get(wnd),
+		Action: action,
+		ConfirmDialog: func(selected []ID) ConfirmDialog[ID] {
+			return ConfirmDialog[ID]{
+				Title:   rstring.ActionDelete.Get(wnd),
+				Message: StrDialogDeleteDescX.Get(wnd, float64(len(selected)), i18n.Int("amount", len(selected))),
+			}
+		},
+	}
+}
 
 type Data[E data.Aggregate[ID], ID ~string] struct {
 	FindAll  iter.Seq2[ID, error]
@@ -35,6 +77,7 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	data          Data[E, ID]
 	action        func(e E)
 	actionNew     func()
+	selectOptions []SelectOption[ID]
 	modelOptions  pager.ModelOptions
 	model         option.Opt[pager.Model[E, ID]]
 	hideSelection bool
@@ -69,8 +112,16 @@ func (t TDataView[E, ID]) ActionNew(fn func()) TDataView[E, ID] {
 }
 
 // Selection enabled the flag to show or hide data selection. Default is show selection.
+// See also [TDataView.SelectOptions].
 func (t TDataView[E, ID]) Selection(showSelection bool) TDataView[E, ID] {
 	t.hideSelection = !showSelection
+	return t
+}
+
+// SelectOptions adds a default options button, which is enabled if at least a single item is selected.
+// See also [NewSelectOptionDelete].
+func (t TDataView[E, ID]) SelectOptions(options ...SelectOption[ID]) TDataView[E, ID] {
+	t.selectOptions = options
 	return t
 }
 
@@ -112,7 +163,7 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.VStack(
-		t.actionBar(ctx.Window()),
+		t.actionBar(ctx.Window(), model),
 		ui.Table(cols...).Rows(
 			ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
 				if v := u.Identity(); v == "" {
@@ -152,15 +203,67 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	).FullWidth().Render(ctx)
 }
 
-func (t TDataView[E, ID]) actionBar(wnd core.Window) core.View {
+func (t TDataView[E, ID]) actionBar(wnd core.Window, model pager.Model[E, ID]) core.View {
 	if t.actionNew == nil {
 		return nil
 	}
 
+	selected := model.Selected()
+	dlgSpec := core.StateOf[ConfirmDialog[ID]](wnd, model.SelectSubset.ID()+"-dlgConfirm")
+	confirmPresented := core.DerivedState[bool](dlgSpec, "confirm-presented")
+
+	var items []ui.TMenuItem
+	for _, selectOption := range t.selectOptions {
+		if selectOption.Visible != nil && !selectOption.Visible(selected) {
+			continue
+		}
+
+		items = append(items, ui.MenuItem(func() {
+			if selectOption.ConfirmDialog == nil {
+				if err := selectOption.Action(selected); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+
+				return
+			}
+
+			spec := selectOption.ConfirmDialog(selected)
+			spec.action = selectOption.Action
+			dlgSpec.Set(spec)
+			confirmPresented.Set(true)
+
+		}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name)).Gap(ui.L8)))
+	}
+
 	return ui.HStack(
+		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
+		ui.IfFunc(len(t.selectOptions) > 0, func() core.View {
+			return ui.Menu(
+				ui.SecondaryButton(nil).Enabled(len(selected) > 0).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid),
+				ui.MenuGroup(items...),
+			)
+		}),
+		ui.If(len(t.selectOptions) > 0, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 		ui.If(t.actionNew != nil, ui.PrimaryButton(t.actionNew).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(wnd))),
 	).
 		FullWidth().
+		Gap(ui.L8).
 		Alignment(ui.Trailing).
 		Padding(ui.Padding{Bottom: ui.L16})
+}
+
+func (t TDataView[E, ID]) confirmDialog(wnd core.Window, presented *core.State[bool], spec *core.State[ConfirmDialog[ID]], selected []ID) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	return alert.Dialog(spec.Get().Title, ui.Text(spec.Get().Message), presented, alert.Closeable(), alert.Cancel(nil), alert.Confirm(func() (close bool) {
+		if err := spec.Get().action(selected); err != nil {
+			alert.ShowBannerError(wnd, err)
+			return false
+		}
+
+		return true
+	}))
 }
