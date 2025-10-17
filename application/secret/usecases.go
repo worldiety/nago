@@ -8,12 +8,15 @@
 package secret
 
 import (
+	"iter"
+	"reflect"
+	"sync"
+
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
-	"iter"
-	"sync"
 )
 
 // FindMySecrets returns all entries which are owned by the given subject. Other sharing aspects are not relevant.
@@ -40,6 +43,16 @@ type DeleteMySecretByID func(subject auth.Subject, id ID) error
 // the given subject also belongs to that group. It returns also those secrets, which are not owned by the subject,
 // thus this may cause a secret exposure issue.
 type FindGroupSecrets func(subject auth.Subject, gid group.ID) iter.Seq2[Secret, error]
+
+type MatchOptions struct {
+	Hint   string   // may be a name or identifier. Ignored if not found, but prioritized if available.
+	Group  group.ID // may be empty, but if not set, this must be matched due to security constraints.
+	Expect bool     // if expected, ([option.None],nil) is never returned but (None,[os.ErrNotExists]) instead.
+}
+
+// Match searches for the given credential type and applies the given MatchOptions to eventually return the best
+// match to use.
+type Match func(subject auth.Subject, typ reflect.Type, opts MatchOptions) (option.Opt[Credentials], error)
 
 // FindGroupCredentialsForType asserts a distinct
 // credentials type for type safe queries. See [FindGroupSecrets] for security notes.
@@ -73,6 +86,7 @@ type UseCases struct {
 	UpdateMySecretGroups UpdateMySecretGroups
 	FindGroupSecrets     FindGroupSecrets
 	UpdateMySecretOwners UpdateMySecretOwners
+	Match                Match
 }
 
 func NewUseCases(repository Repository) UseCases {
@@ -95,5 +109,6 @@ func NewUseCases(repository Repository) UseCases {
 		UpdateMySecretGroups: updateMySecretGroupsFn,
 		FindGroupSecrets:     findGroupSecretsFn,
 		UpdateMySecretOwners: updateMySecretOwnersFn,
+		Match:                NewMatch(repository),
 	}
 }
