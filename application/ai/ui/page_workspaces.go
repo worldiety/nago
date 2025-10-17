@@ -55,6 +55,13 @@ func PageWorkspaces(wnd core.Window, ucWS workspace.UseCases) core.View {
 						return ui.Text(obj.Description)
 					},
 				},
+
+				{
+					Name: rstring.LabelPlatform.Get(wnd),
+					Map: func(obj workspace.Workspace) core.View {
+						return ui.Text(obj.Platform.String())
+					},
+				},
 			},
 		}).Selection(true).
 			SelectOptions(
@@ -64,10 +71,13 @@ func PageWorkspaces(wnd core.Window, ucWS workspace.UseCases) core.View {
 							return err
 						}
 					}
-					
+
 					return nil
 				}),
 			).
+			Action(func(e workspace.Workspace) {
+				wnd.Navigation().ForwardTo("admin/ai/workspace", core.Values{"workspace": string(e.ID)})
+			}).
 			ActionNew(func() {
 				createDialogPresented.Set(true)
 			}),

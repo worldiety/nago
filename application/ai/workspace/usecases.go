@@ -92,19 +92,43 @@ type FindAll func(subject auth.Subject) iter.Seq2[ID, error]
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Workspace], error)
 
 type DeleteByID func(subject auth.Subject, id ID) error
+
+type CreateAgentOptions struct {
+	Name         string
+	Description  string
+	Prompt       string
+	Model        agent.Model
+	Libraries    []library.ID
+	Capabilities []agent.Capability
+	Temperature  agent.Temperature
+	// The system flag defines this workspace as a system workspace which is not editable through the UI.
+	System struct {
+		Valid bool
+		ID    agent.ID
+	}
+}
+
+type CreateAgent func(subject auth.Subject, parent ID, createOptions CreateAgentOptions) (agent.ID, error)
+
+type DeleteAgent func(subject auth.Subject, parent ID, aid agent.ID) error
+
 type UseCases struct {
-	Create     Create
-	FindAll    FindAll
-	FindByID   FindByID
-	DeleteByID DeleteByID
+	Create      Create
+	FindAll     FindAll
+	FindByID    FindByID
+	DeleteByID  DeleteByID
+	CreateAgent CreateAgent
+	DeleteAgent DeleteAgent
 }
 
 func NewUseCases(repo Repository, repoAgents agent.Repository) UseCases {
 	var mutex sync.Mutex
 	return UseCases{
-		Create:     NewCreate(&mutex, repo),
-		FindAll:    NewFindAll(repo),
-		FindByID:   NewFindByID(repo),
-		DeleteByID: NewDeleteByID(repo, repoAgents),
+		Create:      NewCreate(&mutex, repo),
+		FindAll:     NewFindAll(repo),
+		FindByID:    NewFindByID(repo),
+		DeleteByID:  NewDeleteByID(repo, repoAgents),
+		CreateAgent: NewCreateAgent(&mutex, repo, repoAgents),
+		DeleteAgent: NewDeleteAgent(&mutex, repo, repoAgents),
 	}
 }

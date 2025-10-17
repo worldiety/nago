@@ -52,13 +52,24 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	management = Management{
 		WorkspaceUseCases: workspace.NewUseCases(repoWorkspace, repoAgents),
+		AgentUseCases:     agent.NewUseCases(repoAgents),
 		Pages: uiai.Pages{
 			Workspaces: "admin/ai/workspaces",
+			Agents:     "admin/ai/workspace",
+			Agent:      "admin/ai/workspace/agent",
 		},
 	}
 
 	cfg.RootViewWithDecoration(management.Pages.Workspaces, func(wnd core.Window) core.View {
 		return uiai.PageWorkspaces(wnd, management.WorkspaceUseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Agents, func(wnd core.Window) core.View {
+		return uiai.PageWorkspace(wnd, management.WorkspaceUseCases, management.AgentUseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Agent, func(wnd core.Window) core.View {
+		return uiai.PageAgent(wnd, management.WorkspaceUseCases, management.AgentUseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -81,6 +92,12 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("nago.ai", management))
 	cfg.AddContextValue(core.ContextValue("nago.ai.platforms", form.AnyUseCaseList[workspace.Platform, workspace.Platform](func(subject auth.Subject) iter.Seq2[workspace.Platform, error] {
 		return xslices.ValuesWithError([]workspace.Platform{workspace.OpenAI, workspace.MistralAI}, nil)
+	})))
+	cfg.AddContextValue(core.ContextValue("nago.ai.agent.capabilities", form.AnyUseCaseList[agent.Capability, agent.Capability](func(subject auth.Subject) iter.Seq2[agent.Capability, error] {
+		return xslices.ValuesWithError(agent.Capabilities.Clone(), nil)
+	})))
+	cfg.AddContextValue(core.ContextValue("nago.ai.agent.models", form.AnyUseCaseList[agent.Model, agent.Model](func(subject auth.Subject) iter.Seq2[agent.Model, error] {
+		return xslices.ValuesWithError(agent.Models.Clone(), nil)
 	})))
 	return management, nil
 }

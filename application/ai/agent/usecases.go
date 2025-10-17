@@ -8,16 +8,29 @@
 package agent
 
 import (
+	"sync"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xslices"
 )
 
 // Model represents quality categories of agent models to use. Currently, three classifications are defined
 // and an actual implementation must be able to match these. However, to peek through the abstraction and pick
 // a specific model, implementations may also support specific model unportable identifiers.
 type Model string
+
+func (c Model) WithIdentity(id Model) Model {
+	return id
+}
+
+func (c Model) Identity() Model {
+	return c
+}
+
+var Models = xslices.Wrap(Quality, Balanced, Efficiency)
 
 const (
 	// Quality refers to the most expensive and most complex reasoning models and may map in 2025 to
@@ -35,6 +48,20 @@ const (
 // Capability hints additional intentions which the agent should solve. This allows further classification of
 // the general purpose Model specifier. This helps a specific implementation to pick a better concrete model.
 type Capability string
+
+func (c Capability) WithIdentity(id Capability) Capability {
+	return id
+}
+
+func (c Capability) Identity() Capability {
+	return c
+}
+
+func (c Capability) String() string {
+	return string(c)
+}
+
+var Capabilities = xslices.Wrap(Reasoning, Coding, Multimodal, OCR, Voice, Classifier, Embedding)
 
 const (
 	Reasoning  Capability = "reasoning"
@@ -71,31 +98,23 @@ func (e Agent) Identity() ID {
 
 type Repository data.Repository[Agent, ID]
 
-type CreateOptions struct {
-	Name         string
-	Description  string
-	Prompt       string
-	Model        Model
-	Libraries    []library.ID
-	Capabilities []Capability
-	Temperature  Temperature
-	System       bool
-}
-
-type Create func(subject auth.Subject, options CreateOptions) (ID, error)
-type DeleteByID func(subject auth.Subject, aid ID) error
-
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Agent], error)
 
-type UpdatePrompt func(subject auth.Subject, options CreateOptions) (ID, error)
+type Update func(subject auth.Subject, ag Agent) error
 
 // ProvideAgent declares a system agent using a pre-defined non-empty identifier.
 type ProvideAgent func(agent Agent) error
 
 type UseCases struct {
-	Create       Create
-	DeleteByID   DeleteByID
 	FindByID     FindByID
-	UpdatePrompt UpdatePrompt
+	Update       Update
 	ProvideAgent ProvideAgent
+}
+
+func NewUseCases(repo Repository) UseCases {
+	var mutex sync.Mutex
+	return UseCases{
+		FindByID: NewFindByID(repo),
+		Update:   NewUpdate(&mutex, repo),
+	}
 }
