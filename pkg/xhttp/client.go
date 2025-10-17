@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,6 +31,9 @@ type Request struct {
 	body      func() (io.Reader, error)
 	respBody  func(io.Reader) error
 	assert2xx bool
+	respLimit int64
+	retry     int
+	retryWait time.Duration
 }
 
 func NewRequest() *Request {
@@ -61,6 +65,19 @@ func (r *Request) Client(c *http.Client) *Request {
 // Timeout sets the timeout to use. By default, the timeout is
 func (r *Request) Timeout(timeout time.Duration) *Request {
 	r.timeout = timeout
+	return r
+}
+
+// Retry enables an internal retry-mechanics which is used to retry on connection errors, not higher level
+// protocol errors. The retry sleep time uses exponential backoff. See also [Request.RetryWait].
+func (r *Request) Retry(retry int) *Request {
+	r.retry = retry
+	return r
+}
+
+// RetryWait sets the base duration for retries. Defaults to 50ms.
+func (r *Request) RetryWait(retryWait time.Duration) *Request {
+	r.retryWait = retryWait
 	return r
 }
 
@@ -112,15 +129,48 @@ func (r *Request) Body(fn func() (io.Reader, error)) *Request {
 }
 
 func (r *Request) To(fn func(r io.Reader) error) *Request {
-	r.respBody = fn
+	if r.respLimit == 0 {
+		r.respBody = fn
+	} else {
+		r.respBody = func(body io.Reader) error {
+			lr := io.LimitReader(body, r.respLimit)
+			return fn(lr)
+		}
+	}
+
 	return r
 }
 
-// ToJSON accepts a json response and unmarshal into the given pointer.
+// ToLimit installs a limited reader when processing with any To* response.
+func (r *Request) ToLimit(limit int64) *Request {
+	r.respLimit = limit
+	return r
+}
+
+// ToJSON accepts a json response and unmarshal into the given pointer. If a limit is configured, the
+// response will be buffered and returned in the error for debugging purpose. Otherwise, the stream decoder
+// is used.
 func (r *Request) ToJSON(v any) *Request {
-	r.respBody = func(r io.Reader) error {
-		return json.NewDecoder(r).Decode(v)
-	}
+	r.To(func(reader io.Reader) error {
+		if r.respLimit > 0 {
+			buf, err := io.ReadAll(reader)
+			if err != nil {
+				return err
+			}
+
+			err = json.Unmarshal(buf, v)
+			if err != nil {
+				return ErrorWithBody{
+					Cause: err,
+					Body:  buf,
+				}
+			}
+
+			return err
+		}
+
+		return json.NewDecoder(reader).Decode(v)
+	})
 
 	r.Header("Accept", "application/json")
 	return r
@@ -144,6 +194,14 @@ func (r *Request) Delete() error {
 
 func (r *Request) Put() error {
 	return r.Do(http.MethodPut)
+}
+
+func (r *Request) retryWaitDuration() time.Duration {
+	if r.retryWait == 0 {
+		return time.Millisecond * 50
+	}
+
+	return r.retryWait
 }
 
 func (r *Request) Do(method string) error {
@@ -172,7 +230,7 @@ func (r *Request) Do(method string) error {
 	}
 
 	if len(r.query) > 0 {
-		u, err := url.Parse(r.url)
+		u, err := url.Parse(reqUrl)
 		if err != nil {
 			return fmt.Errorf("invalid url %q: %w", r.url, err)
 		}
@@ -207,7 +265,39 @@ func (r *Request) Do(method string) error {
 		req.Header.Set(k, v)
 	}
 
-	resp, err := client.Do(req)
+	waitTime := r.retryWaitDuration()
+	try := time.Duration(0)
+	doFn := func() (*http.Response, error) {
+		var resp *http.Response
+		var err error
+		for range r.retry + 1 {
+			try++
+			resp, err = client.Do(req)
+			if r.assert2xx && err == nil && resp.StatusCode == http.StatusServiceUnavailable {
+				// try work against unreliable services
+				_ = resp.Body.Close()
+				err = fmt.Errorf("request failed with status code %v", resp.StatusCode)
+			}
+
+			if err != nil {
+				if r.retry > 0 {
+					slog.Warn("request failed, wait and retry", "try", try, "wait", waitTime, "err", err.Error())
+					time.Sleep(waitTime)
+					waitTime = waitTime + waitTime*try
+				} else {
+					break
+				}
+
+				continue
+			}
+
+			break
+		}
+
+		return resp, err
+	}
+
+	resp, err := doFn()
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
@@ -229,4 +319,17 @@ func (r *Request) Do(method string) error {
 	}
 
 	return nil
+}
+
+type ErrorWithBody struct {
+	Cause error
+	Body  []byte
+}
+
+func (e ErrorWithBody) Error() string {
+	return fmt.Sprintf("%s: %s", e.Cause.Error(), string(e.Body))
+}
+
+func (e ErrorWithBody) Unwrap() error {
+	return e.Cause
 }
