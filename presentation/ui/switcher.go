@@ -244,7 +244,7 @@ func (t TSwitcher) makeIconViews() []core.View {
 		return nil
 	}
 	var iconViews []core.View
-	for i, _ := range t.group {
+	for i := range t.group {
 
 		var bgColor Color
 		var border Border
