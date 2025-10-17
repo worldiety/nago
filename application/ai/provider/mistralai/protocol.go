@@ -57,15 +57,28 @@ type Client struct {
 	c     *http.Client
 	token string
 	base  string
+	retry int
 }
 
 func NewClient(token string) *Client {
+	// note, we get a lot of connection problems with the mistral api, like
+	//   got 503 Service Unavailable: upstream connect error or disconnect/reset before headers.
+	//   retried and the latest reset reason: remote connection failure, transport failure reason:
+	//   TLS_error:|268436501:SSL routines:OPENSSL_internal:SSLV3_ALERT_CERTIFICATE_EXPIRED:TLS_error_end"
+	// and it looks like they don't get their cluster stuff configured the right way
+
+	// also note, that in general their service looks very unreliable. During development, we got a lot of random
+	// http 503 service not available responses.
 	return &Client{
 		c: &http.Client{
 			Timeout: 60 * time.Second,
+			Transport: &http.Transport{
+				DisableKeepAlives: true,
+			},
 		},
 		base:  "https://api.mistral.ai/v1/",
 		token: token,
+		retry: 3,
 	}
 }
 
@@ -74,6 +87,7 @@ func (c *Client) CreateConversion(req CreateConversionRequest) (CreateConversion
 	err := xhttp.NewRequest().
 		Client(c.c).
 		BaseURL(c.base).
+		Retry(c.retry).
 		URL("conversations").
 		BearerAuthentication(c.token).
 		BodyJSON(req).
@@ -130,12 +144,30 @@ type Agent struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+func (c *Client) GetAgent(id string) (Agent, error) {
+	var resp Agent
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("agents/"+id).
+		BearerAuthentication(c.token).
+		Query("page", "0").
+		Query("page_size", "1000").
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return resp, err
+}
+
 func (c *Client) ListAgents() iter.Seq2[Agent, error] {
 	return func(yield func(Agent, error) bool) {
 		var resp []Agent
 		err := xhttp.NewRequest().
 			Client(c.c).
 			BaseURL(c.base).
+			Retry(c.retry).
 			URL("agents").
 			BearerAuthentication(c.token).
 			Query("page", "0").
@@ -155,4 +187,35 @@ func (c *Client) ListAgents() iter.Seq2[Agent, error] {
 			}
 		}
 	}
+}
+
+func (c *Client) DeleteAgent(id string) error {
+	// note: they forgot to implement the endpoint, heck, even their UI cannot delete agents right now and gets 404
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		Assert2xx(true).
+		URL("agents/" + id).
+		BearerAuthentication(c.token).
+		Delete()
+}
+
+type UpdateAgentRequest struct {
+	Instructions *string `json:"instructions"`
+	Model        *string `json:"model"`
+	Name         *string `json:"name"`
+	Description  *string `json:"description"`
+}
+
+func (c *Client) UpdateAgent(id string, req UpdateAgentRequest) error {
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("agents/" + id).
+		BodyJSON(req).
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		Patch()
 }

@@ -14,9 +14,11 @@ import (
 )
 
 type CreateAgentRequest struct {
-	Model       string `json:"model"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Model        string   `json:"model"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description,omitempty"`
+	Handoffs     []string `json:"handoffs,omitempty"`
+	Instructions string   `json:"instructions,omitempty"`
 }
 
 type CreateAgentResponse struct {

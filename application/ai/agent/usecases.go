@@ -14,7 +14,9 @@ import (
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
 // Model represents quality categories of agent models to use. Currently, three classifications are defined
@@ -89,7 +91,8 @@ type Agent struct {
 	Temperature  Temperature  `json:"tmp,omitempty"`
 	// System indicates that any modifications through the UI are not allowed. The advantage is, that the truth
 	// of this agent definition is always the source code and does not contain any user modifications.
-	System bool `json:"system,omitempty"`
+	System  bool                   `json:"system,omitempty"`
+	LastMod xtime.UnixMilliseconds `json:"lastMod,omitempty"`
 }
 
 func (e Agent) Identity() ID {
@@ -111,10 +114,10 @@ type UseCases struct {
 	ProvideAgent ProvideAgent
 }
 
-func NewUseCases(repo Repository) UseCases {
+func NewUseCases(bus events.Bus, repo Repository) UseCases {
 	var mutex sync.Mutex
 	return UseCases{
 		FindByID: NewFindByID(repo),
-		Update:   NewUpdate(&mutex, repo),
+		Update:   NewUpdate(&mutex, bus, repo),
 	}
 }

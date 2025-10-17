@@ -9,15 +9,19 @@ package cfgai
 
 import (
 	"iter"
+	"log/slog"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/provider/mistralai"
 	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/ai/workspace"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
 	"golang.org/x/text/language"
@@ -40,6 +44,11 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return management, nil
 	}
 
+	secrets, err := cfg.SecretManagement()
+	if err != nil {
+		return Management{}, err
+	}
+
 	repoWorkspace, err := application.JSONRepository[workspace.Workspace](cfg, "nago.ai.workspace")
 	if err != nil {
 		return Management{}, err
@@ -50,15 +59,40 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	syncAgentRepo, err := application.JSONRepository[mistralai.SynchronizedAgent](cfg, "nago.ai.provider.mistralai.agents")
+	if err != nil {
+		return Management{}, err
+	}
+
 	management = Management{
 		WorkspaceUseCases: workspace.NewUseCases(repoWorkspace, repoAgents),
-		AgentUseCases:     agent.NewUseCases(repoAgents),
+		AgentUseCases:     agent.NewUseCases(cfg.EventBus(), repoAgents),
 		Pages: uiai.Pages{
 			Workspaces: "admin/ai/workspaces",
 			Agents:     "admin/ai/workspace",
 			Agent:      "admin/ai/workspace/agent",
 		},
 	}
+
+	ucMistral := mistralai.NewUseCases(
+		cfg.EventBus(),
+		repoWorkspace.Name(),
+		syncAgentRepo,
+		secrets.UseCases.Match,
+		management.WorkspaceUseCases.FindWorkspacesByPlatform,
+		management.AgentUseCases.FindByID,
+	)
+
+	xsync.Go(func() error {
+		slog.Info("sync Mistral AI workspaces")
+		if err := ucMistral.Sync(user.SU()); err != nil {
+			slog.Error("failed to sync Mistral AI workspaces", "err", err.Error())
+		} else {
+			slog.Info("sync Mistral AI workspaces successful")
+		}
+
+		return nil
+	}, nil)
 
 	cfg.RootViewWithDecoration(management.Pages.Workspaces, func(wnd core.Window) core.View {
 		return uiai.PageWorkspaces(wnd, management.WorkspaceUseCases)
@@ -93,11 +127,15 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("nago.ai.platforms", form.AnyUseCaseList[workspace.Platform, workspace.Platform](func(subject auth.Subject) iter.Seq2[workspace.Platform, error] {
 		return xslices.ValuesWithError([]workspace.Platform{workspace.OpenAI, workspace.MistralAI}, nil)
 	})))
+
 	cfg.AddContextValue(core.ContextValue("nago.ai.agent.capabilities", form.AnyUseCaseList[agent.Capability, agent.Capability](func(subject auth.Subject) iter.Seq2[agent.Capability, error] {
 		return xslices.ValuesWithError(agent.Capabilities.Clone(), nil)
 	})))
+
 	cfg.AddContextValue(core.ContextValue("nago.ai.agent.models", form.AnyUseCaseList[agent.Model, agent.Model](func(subject auth.Subject) iter.Seq2[agent.Model, error] {
 		return xslices.ValuesWithError(agent.Models.Clone(), nil)
 	})))
+
+	slog.Info("installed AI module")
 	return management, nil
 }

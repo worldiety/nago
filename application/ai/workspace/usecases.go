@@ -65,6 +65,8 @@ type Workspace struct {
 	LastMod     time.Time    `json:"lastMod,omitempty"`
 	LastModBy   user.ID      `json:"lastModBy,omitempty"`
 	CreatedAt   time.Time    `json:"createdAt,omitempty"`
+	// SecretHint is a hint to select a different secret if multiple are defined. This may be a name or id.
+	SecretHint string `json:"secretHint,omitempty"`
 }
 
 func (e Workspace) Identity() ID {
@@ -88,6 +90,8 @@ type CreateOptions struct {
 type Create func(subject auth.Subject, createOptions CreateOptions) (ID, error)
 
 type FindAll func(subject auth.Subject) iter.Seq2[ID, error]
+
+type FindWorkspacesByPlatform func(subject auth.Subject, platform Platform) iter.Seq2[Workspace, error]
 
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Workspace], error)
 
@@ -113,22 +117,24 @@ type CreateAgent func(subject auth.Subject, parent ID, createOptions CreateAgent
 type DeleteAgent func(subject auth.Subject, parent ID, aid agent.ID) error
 
 type UseCases struct {
-	Create      Create
-	FindAll     FindAll
-	FindByID    FindByID
-	DeleteByID  DeleteByID
-	CreateAgent CreateAgent
-	DeleteAgent DeleteAgent
+	Create                   Create
+	FindAll                  FindAll
+	FindByID                 FindByID
+	DeleteByID               DeleteByID
+	CreateAgent              CreateAgent
+	DeleteAgent              DeleteAgent
+	FindWorkspacesByPlatform FindWorkspacesByPlatform
 }
 
 func NewUseCases(repo Repository, repoAgents agent.Repository) UseCases {
 	var mutex sync.Mutex
 	return UseCases{
-		Create:      NewCreate(&mutex, repo),
-		FindAll:     NewFindAll(repo),
-		FindByID:    NewFindByID(repo),
-		DeleteByID:  NewDeleteByID(repo, repoAgents),
-		CreateAgent: NewCreateAgent(&mutex, repo, repoAgents),
-		DeleteAgent: NewDeleteAgent(&mutex, repo, repoAgents),
+		Create:                   NewCreate(&mutex, repo),
+		FindAll:                  NewFindAll(repo),
+		FindByID:                 NewFindByID(repo),
+		DeleteByID:               NewDeleteByID(repo, repoAgents),
+		CreateAgent:              NewCreateAgent(&mutex, repo, repoAgents),
+		DeleteAgent:              NewDeleteAgent(&mutex, repo, repoAgents),
+		FindWorkspacesByPlatform: NewFindWorkspacesByPlatform(repo),
 	}
 }

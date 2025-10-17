@@ -71,9 +71,33 @@ type AgentForm struct {
 	System       bool               `visible:"false"`
 }
 
+func (f AgentForm) IntoAgent() agent.Agent {
+	return agent.Agent{
+		ID:           f.ID,
+		Name:         f.Name,
+		Description:  f.Description,
+		Prompt:       f.Prompt,
+		Model:        f.Model,
+		Libraries:    f.Libraries,
+		Capabilities: f.Capabilities,
+		Temperature:  f.Temperature,
+		System:       f.System,
+	}
+}
+
 func viewEditAgent(wnd core.Window, ucWS workspace.UseCases, ucAgents agent.UseCases, ws workspace.Workspace, ag agent.Agent) core.View {
 	agentForm := core.AutoState[AgentForm](wnd).Init(func() AgentForm {
-		return AgentForm(ag)
+		return AgentForm{
+			ID:           ag.ID,
+			Name:         ag.Name,
+			Description:  ag.Description,
+			Prompt:       ag.Prompt,
+			Model:        ag.Model,
+			Libraries:    ag.Libraries,
+			Capabilities: ag.Capabilities,
+			Temperature:  ag.Temperature,
+			System:       ag.System,
+		}
 	})
 
 	return ui.VStack(
@@ -97,7 +121,7 @@ func viewEditAgent(wnd core.Window, ucWS workspace.UseCases, ucAgents agent.UseC
 				wnd.Navigation().BackwardTo("admin/ai/workspace", wnd.Values())
 			}).Title(rstring.ActionCancel.Get(wnd)),
 			ui.PrimaryButton(func() {
-				if err := ucAgents.Update(wnd.Subject(), agent.Agent(agentForm.Get())); err != nil {
+				if err := ucAgents.Update(wnd.Subject(), agentForm.Get().IntoAgent()); err != nil {
 					alert.ShowBannerError(wnd, err)
 					return
 				}

@@ -13,9 +13,11 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
+func NewUpdate(mutex *sync.Mutex, bus events.Bus, repo Repository) Update {
 	return func(subject auth.Subject, ag Agent) error {
 		if err := subject.AuditResource(repo.Name(), string(ag.ID), PermUpdate); err != nil {
 			return err
@@ -33,6 +35,13 @@ func NewUpdate(mutex *sync.Mutex, repo Repository) Update {
 			return fmt.Errorf("agent id %q not found: %w", ag.ID, os.ErrNotExist)
 		}
 
-		return repo.Save(ag)
+		ag.LastMod = xtime.Now()
+
+		if err := repo.Save(ag); err != nil {
+			return err
+		}
+
+		bus.Publish(Updated{Agent: ag.ID})
+		return nil
 	}
 }
