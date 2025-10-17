@@ -35,7 +35,8 @@ type AutoOptions struct {
 	SectionPadding std.Option[ui.Padding]
 	ViewOnly       bool
 	IgnoreFields   []string
-	Window         core.Window
+	// Specific Window to use, if nil uses the default window at render time.
+	Window core.Window
 	// Context is used to resolve the data sources. If Context is nil, the Window context is used to resolve the sources.
 	Context context.Context
 	// Errors can be either a map[string]string or a struct {Field string} to resolve error messages for
@@ -81,8 +82,23 @@ type TAuto[T any] struct {
 // The current implementation only supports:
 //   - string fields
 //   - integer fields (literally)
+//   - string slices
+//   - bool fields
+//   - float fields
 //
 // Other features, which are supported by [crud.Auto] are not (yet) supported.
+//
+// Supported field tags:
+//   - visible:"true"|"false" defaults to true
+//   - section:"some text" defaults to zero
+//   - label:"string literal"|"i18n key" defaults to Field name
+//   - source:"source id" defaults to zero, only applicable to fields with underlying type string or []string. The
+//     source must be provided using [Configuration.AddContextValue] as type [AnyUseCaseList].
+//   - lines:"integer" only applicable to fields with underlying type string or []string and defaults to zero which
+//     renders as a single line. 1 also renders as single line, but uses a multiline input element. Defaults to zero
+//     for string types and to 5 for []string types.
+//   - value:"string literal"|"bool literal"|"number literal" only applicable for fields with the according underlying
+//     type. Defaults to the zero value of the underlying type.
 func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	return TAuto[T]{
 		opts:        opts,
@@ -138,6 +154,10 @@ func (t TAuto[T]) AccessibilityLabel(label string) ui.DecoredView {
 }
 
 func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
+	if t.opts.Window == nil {
+		t.opts.Window = ctx.Window()
+	}
+
 	// TODO can we unify this with the crud package, but it is so different under the hood and equal at the same time?
 	value := any(t.state.Get())
 	if value == nil {
@@ -463,6 +483,39 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 						Frame(ui.Frame{}.FullWidth()),
 					)
 				}
+			case reflect.Float32, reflect.Float64:
+				requiresInit := false
+				floatState := core.DerivedState[float64](t.state, field.Name).Init(func() float64 {
+					src := t.state.Get()
+					v := reflect.ValueOf(src).FieldByName(field.Name).Float()
+					if val := field.Tag.Get("value"); val != "" && v == 0 {
+						p, err := strconv.ParseFloat(val, 64)
+						if err == nil {
+							requiresInit = true
+							return p
+						}
+					}
+
+					return v
+				})
+
+				floatState.Observe(func(newValue float64) {
+					dst := t.state.Get()
+					dst = setFieldValue(dst, field.Name, newValue).(T)
+					t.state.Set(dst)
+					t.state.Notify()
+				})
+
+				if requiresInit {
+					floatState.Notify()
+				}
+
+				fieldsBuilder.Append(ui.FloatField(label, floatState.Get(), floatState).
+					Disabled(disabled).
+					SupportingText(supportingText).
+					ErrorText(fieldErrValues[field.Name]).
+					Frame(ui.Frame{}.FullWidth()),
+				)
 			case reflect.Struct:
 				switch field.Type {
 				case reflect.TypeFor[xtime.Date]():
@@ -735,6 +788,8 @@ func setFieldValue(dst any, fieldName string, val any) any {
 		cpy.FieldByName(fieldName).SetInt(int64(t))
 	case int64:
 		cpy.FieldByName(fieldName).SetInt(t)
+	case float64:
+		cpy.FieldByName(fieldName).SetFloat(t)
 	case time.Duration:
 		cpy.FieldByName(fieldName).SetInt(int64(t))
 	case bool:
