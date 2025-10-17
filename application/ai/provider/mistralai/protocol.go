@@ -8,6 +8,7 @@
 package mistralai
 
 import (
+	"iter"
 	"net/http"
 	"time"
 
@@ -80,4 +81,78 @@ func (c *Client) CreateConversion(req CreateConversionRequest) (CreateConversion
 		Post()
 
 	return resp, err
+}
+
+type Agent struct {
+	Instructions string `json:"instructions"`
+	Tools        []struct {
+		Type     string `json:"type"`
+		Function struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			Strict      bool   `json:"strict"`
+			Parameters  struct {
+			} `json:"parameters"`
+		} `json:"function"`
+	} `json:"tools"`
+	CompletionArgs struct {
+		Stop             string  `json:"stop"`
+		PresencePenalty  int     `json:"presence_penalty"`
+		FrequencyPenalty int     `json:"frequency_penalty"`
+		Temperature      float64 `json:"temperature"`
+		TopP             int     `json:"top_p"`
+		MaxTokens        int     `json:"max_tokens"`
+		RandomSeed       int     `json:"random_seed"`
+		Prediction       struct {
+			Type    string `json:"type"`
+			Content string `json:"content"`
+		} `json:"prediction"`
+		ResponseFormat struct {
+			Type       string `json:"type"`
+			JsonSchema struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+				Schema      struct {
+				} `json:"schema"`
+				Strict bool `json:"strict"`
+			} `json:"json_schema"`
+		} `json:"response_format"`
+		ToolChoice string `json:"tool_choice"`
+	} `json:"completion_args"`
+	Model       string    `json:"model"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Handoffs    []string  `json:"handoffs"`
+	Object      string    `json:"object"`
+	Id          string    `json:"id"`
+	Version     int       `json:"version"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (c *Client) ListAgents() iter.Seq2[Agent, error] {
+	return func(yield func(Agent, error) bool) {
+		var resp []Agent
+		err := xhttp.NewRequest().
+			Client(c.c).
+			BaseURL(c.base).
+			URL("agents").
+			BearerAuthentication(c.token).
+			Query("page", "0").
+			Query("page_size", "1000").
+			ToJSON(&resp).
+			ToLimit(1024 * 1024).
+			Get()
+
+		if err != nil {
+			yield(Agent{}, err)
+			return
+		}
+
+		for _, agent := range resp {
+			if !yield(agent, nil) {
+				return
+			}
+		}
+	}
 }
