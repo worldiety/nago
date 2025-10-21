@@ -13,11 +13,12 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	cfgai "go.wdy.de/nago/application/ai/cfg"
+	"go.wdy.de/nago/application/ai/conversation"
 	_ "go.wdy.de/nago/application/ai/provider/mistralai"
 	_ "go.wdy.de/nago/application/ai/provider/openai"
+	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/drive"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
-	uidrive "go.wdy.de/nago/application/drive/ui"
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/application/user"
@@ -46,9 +47,16 @@ func main() {
 		}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+			prompt := core.AutoState[string](wnd)
+			conv := core.AutoState[conversation.ID](wnd)
+
 			return ui.VStack(
-				ui.Text("hello world!"),
-				uidrive.PageDrive(wnd, drives.UseCases),
+				uiai.Chat(conv, prompt).
+					StartOptions(conversation.StartOptions{
+						WorkspaceName: "Test",
+						AgentName:     "Walter",
+						CloudStore:    true,
+					}),
 			).FullWidth()
 
 		})

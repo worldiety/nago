@@ -15,11 +15,14 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/provider/mistralai"
 	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
@@ -33,9 +36,10 @@ var (
 )
 
 type Management struct {
-	AgentUseCases     agent.UseCases
-	WorkspaceUseCases workspace.UseCases
-	Pages             uiai.Pages
+	AgentUseCases        agent.UseCases
+	WorkspaceUseCases    workspace.UseCases
+	ConversationUseCases conversation.UseCases
+	Pages                uiai.Pages
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
@@ -64,9 +68,31 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	syncConvRepo, err := application.JSONRepository[mistralai.SynchronizedConversation](cfg, "nago.ai.provider.mistralai.conversations")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoConversation, err := application.JSONRepository[conversation.Conversation](cfg, "nago.ai.conversation")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoMessages, err := application.JSONRepository[message.Message](cfg, "nago.ai.message")
+	if err != nil {
+		return Management{}, err
+	}
+
+	storeIdxConvMsg, err := cfg.EntityStore("nago.ai.conversation_message_idx")
+	if err != nil {
+		return Management{}, err
+	}
+	idxConvMsg := data.NewCompositeIndex[conversation.ID, message.ID](storeIdxConvMsg)
+
 	management = Management{
-		WorkspaceUseCases: workspace.NewUseCases(repoWorkspace, repoAgents),
-		AgentUseCases:     agent.NewUseCases(cfg.EventBus(), repoAgents),
+		WorkspaceUseCases:    workspace.NewUseCases(cfg.EventBus(), repoWorkspace, repoAgents),
+		AgentUseCases:        agent.NewUseCases(cfg.EventBus(), repoAgents),
+		ConversationUseCases: conversation.NewUseCases(cfg.EventBus(), repoConversation, repoWorkspace, repoAgents, repoMessages, idxConvMsg),
 		Pages: uiai.Pages{
 			Workspaces: "admin/ai/workspaces",
 			Agents:     "admin/ai/workspace",
@@ -78,7 +104,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		cfg.EventBus(),
 		repoWorkspace.Name(),
 		syncAgentRepo,
+		syncConvRepo,
 		secrets.UseCases.Match,
+		management.ConversationUseCases.FindAll,
 		management.WorkspaceUseCases.FindWorkspacesByPlatform,
 		management.AgentUseCases.FindByID,
 	)
@@ -135,6 +163,8 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("nago.ai.agent.models", form.AnyUseCaseList[agent.Model, agent.Model](func(subject auth.Subject) iter.Seq2[agent.Model, error] {
 		return xslices.ValuesWithError(agent.Models.Clone(), nil)
 	})))
+
+	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Start))
 
 	slog.Info("installed AI module")
 	return management, nil

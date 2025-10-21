@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 )
 
 // Platform identifies which implementation should be used.
@@ -126,14 +127,14 @@ type UseCases struct {
 	FindWorkspacesByPlatform FindWorkspacesByPlatform
 }
 
-func NewUseCases(repo Repository, repoAgents agent.Repository) UseCases {
+func NewUseCases(bus events.Bus, repo Repository, repoAgents agent.Repository) UseCases {
 	var mutex sync.Mutex
 	return UseCases{
-		Create:                   NewCreate(&mutex, repo),
+		Create:                   NewCreate(&mutex, bus, repo),
 		FindAll:                  NewFindAll(repo),
 		FindByID:                 NewFindByID(repo),
 		DeleteByID:               NewDeleteByID(repo, repoAgents),
-		CreateAgent:              NewCreateAgent(&mutex, repo, repoAgents),
+		CreateAgent:              NewCreateAgent(&mutex, bus, repo, repoAgents),
 		DeleteAgent:              NewDeleteAgent(&mutex, repo, repoAgents),
 		FindWorkspacesByPlatform: NewFindWorkspacesByPlatform(repo),
 	}

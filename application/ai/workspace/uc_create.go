@@ -15,10 +15,11 @@ import (
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-func NewCreate(mutex *sync.Mutex, repo Repository) Create {
+func NewCreate(mutex *sync.Mutex, bus events.Bus, repo Repository) Create {
 	return func(subject auth.Subject, createOptions CreateOptions) (ID, error) {
 		mutex.Lock()
 		defer mutex.Unlock()

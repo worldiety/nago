@@ -11,12 +11,14 @@ import (
 	"os"
 
 	"github.com/worldiety/i18n"
+	"github.com/worldiety/i18n/date"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
+	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/breadcrumb"
@@ -79,6 +81,23 @@ func PageWorkspace(wnd core.Window, ucWS workspace.UseCases, ucAgents agent.UseC
 					Name: rstring.LabelDescription.Get(wnd),
 					Map: func(obj agent.Agent) core.View {
 						return ui.Text(obj.Description)
+					},
+				},
+				{
+					Name: rstring.LabelState.Get(wnd),
+					Map: func(obj agent.Agent) core.View {
+						if obj.Error != "" {
+							// security note: providing the sync error text may cause an unwanted information disclosure
+							return ui.ImageIcon(icons.ExclamationCircle).AccessibilityLabel(obj.Error)
+						}
+
+						switch obj.State {
+						case agent.StateSynced:
+							return ui.ImageIcon(icons.Check).AccessibilityLabel(date.Format(wnd.Locale(), date.Time, obj.LastMod.Time(wnd.Location())))
+						default:
+							return ui.ImageIcon(icons.CloudArrowUp).AccessibilityLabel(date.Format(wnd.Locale(), date.Time, obj.LastMod.Time(wnd.Location())))
+						}
+
 					},
 				},
 			},

@@ -36,6 +36,8 @@ func NewUpdate(mutex *sync.Mutex, bus events.Bus, repo Repository) Update {
 		}
 
 		ag.LastMod = xtime.Now()
+		ag.State = StatePending
+		ag.Error = ""
 
 		if err := repo.Save(ag); err != nil {
 			return err

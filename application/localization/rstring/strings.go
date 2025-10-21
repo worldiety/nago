@@ -175,6 +175,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionFileUpload = i18n.MustString(
+		"nago.common.action.file_upload",
+		i18n.Values{
+			language.English: "File upload",
+			language.German:  "Datei hochladen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionRename = i18n.MustString(
 		"nago.common.action.rename",
 		i18n.Values{
@@ -240,6 +249,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelState = i18n.MustString(
+		"nago.common.label.status",
+		i18n.Values{
+			language.English: "State",
+			language.German:  "Status",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelDescription = i18n.MustString(
 		"nago.common.label.description",
 		i18n.Values{
@@ -263,6 +281,15 @@ var (
 		i18n.Values{
 			language.English: "Value must not be empty.",
 			language.German:  "Der Wert darf nicht leer sein.",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelHowItWorks = i18n.MustString(
+		"nago.common.label.how_it_works",
+		i18n.Values{
+			language.English: "How it works",
+			language.German:  "So funktionierts",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

@@ -5,13 +5,4 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package agent
-
-type Updated struct {
-	Agent ID
-}
-
-type SyncStatusUpdated struct {
-	Agent ID
-	Error string
-}
+package message

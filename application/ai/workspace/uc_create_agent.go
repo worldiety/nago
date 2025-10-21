@@ -16,10 +16,11 @@ import (
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-func NewCreateAgent(mutex *sync.Mutex, repoWS Repository, repoAgents agent.Repository) CreateAgent {
+func NewCreateAgent(mutex *sync.Mutex, bus events.Bus, repoWS Repository, repoAgents agent.Repository) CreateAgent {
 	return func(subject auth.Subject, parent ID, createOptions CreateAgentOptions) (agent.ID, error) {
 		if err := subject.AuditResource(repoWS.Name(), string(parent), PermCreateAgent); err != nil {
 			return "", err
@@ -82,6 +83,8 @@ func NewCreateAgent(mutex *sync.Mutex, repoWS Repository, repoAgents agent.Repos
 		if err := repoWS.Save(ws); err != nil {
 			return "", fmt.Errorf("failed to save workspace: %w", err)
 		}
+
+		bus.Publish(agent.Updated{Agent: ag.ID})
 
 		return ag.ID, nil
 	}

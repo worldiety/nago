@@ -8,6 +8,7 @@
 package agent
 
 import (
+	"log/slog"
 	"sync"
 
 	"github.com/worldiety/option"
@@ -77,6 +78,13 @@ const (
 
 type ID string
 
+type State int
+
+const (
+	StatePending State = iota
+	StateSynced
+)
+
 // Temperature defines how reproducible the answers of the Agent are. Lower values make the results more predictable.
 // Higher values make the results more novel. The allowed range is [0..1].
 type Temperature float64
@@ -93,6 +101,9 @@ type Agent struct {
 	// of this agent definition is always the source code and does not contain any user modifications.
 	System  bool                   `json:"system,omitempty"`
 	LastMod xtime.UnixMilliseconds `json:"lastMod,omitempty"`
+
+	State State  `json:"state,omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
 func (e Agent) Identity() ID {
@@ -116,6 +127,35 @@ type UseCases struct {
 
 func NewUseCases(bus events.Bus, repo Repository) UseCases {
 	var mutex sync.Mutex
+
+	events.SubscribeFor[SyncStatusUpdated](bus, func(evt SyncStatusUpdated) {
+		mutex.Lock()
+		defer mutex.Unlock()
+		optAgent, err := repo.FindByID(evt.Agent)
+		if err != nil {
+			slog.Error("cannot update agent sync status: failed to find agent", "agent", evt.Agent, "err", err.Error())
+			return
+		}
+
+		if optAgent.IsNone() {
+			slog.Error("cannot update agent sync status: agent is gone", "agent", evt.Agent)
+			return
+		}
+
+		agent := optAgent.Unwrap()
+		agent.Error = evt.Error
+		if agent.Error == "" {
+			agent.State = StateSynced
+		} else {
+			agent.State = StatePending
+		}
+
+		if err := repo.Save(agent); err != nil {
+			slog.Error("cannot update agent sync status", "agent", evt.Agent, "err", err.Error())
+			return
+		}
+	})
+
 	return UseCases{
 		FindByID: NewFindByID(repo),
 		Update:   NewUpdate(&mutex, bus, repo),

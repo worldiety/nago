@@ -19,9 +19,9 @@ var _ = enum.Variant[secret.Credentials, Settings](
 )
 
 var (
-	StrMymistralaiSettingsTitle       = i18n.MustString("nago.ai.mistralai.settings_title", i18n.Values{language.English: "My Mistral AI Token", language.German: "Mein Mistral AI Token"})
-	StrMymistralaiSettingsName        = i18n.MustString("nago.ai.mistralai.settings_name", i18n.Values{language.English: "Mistral AI", language.German: "mistral AI"})
-	StrMymistralaiSettingsDescription = i18n.MustString("nago.ai.mistralai.settings_desc", i18n.Values{language.English: "API Token to connect to Mistral AI", language.German: "Token zur API Anbindung von Mistral AI"})
+	StrMistralAISettingsTitle       = i18n.MustString("nago.ai.mistralai.settings_title", i18n.Values{language.English: "My Mistral AI Token", language.German: "Mein Mistral AI Token"})
+	StrMistralAISettingsName        = i18n.MustString("nago.ai.mistralai.settings_name", i18n.Values{language.English: "Mistral AI", language.German: "mistral AI"})
+	StrMistralAISettingsDescription = i18n.MustString("nago.ai.mistralai.settings_desc", i18n.Values{language.English: "API Token to connect to Mistral AI", language.German: "Token zur API Anbindung von Mistral AI"})
 )
 
 type Settings struct {

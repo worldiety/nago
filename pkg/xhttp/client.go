@@ -305,9 +305,10 @@ func (r *Request) Do(method string) error {
 	defer resp.Body.Close()
 
 	if r.assert2xx {
-		lr := io.LimitReader(resp.Body, 4*1024)
-		buf, _ := io.ReadAll(lr)
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			lr := io.LimitReader(resp.Body, 4*1024)
+			buf, _ := io.ReadAll(lr)
+
 			return fmt.Errorf("unexpected status: got %v: %s", resp.Status, string(buf))
 		}
 	}

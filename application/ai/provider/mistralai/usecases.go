@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -42,15 +43,42 @@ func (a SynchronizedAgent) Identity() agent.ID {
 
 type SyncAgentRepository data.Repository[SynchronizedAgent, agent.ID]
 
-func NewUseCases(bus events.Bus, repoWorkspaceName string, syncAgentRepo SyncAgentRepository, findSecret secret.Match, findWorkspaces workspace.FindWorkspacesByPlatform, findAgent agent.FindByID) UseCases {
+type SynchronizedConversation struct {
+	ID                conversation.ID        `json:"id"`
+	CloudConversation string                 `json:"cloudConversation"`
+	LastMod           xtime.UnixMilliseconds `json:"lastMod"`
+}
+
+func (c SynchronizedConversation) Identity() conversation.ID {
+	return c.ID
+}
+
+type SyncConversationRepository data.Repository[SynchronizedConversation, conversation.ID]
+
+func NewUseCases(
+	bus events.Bus,
+	repoWorkspaceName string,
+	syncAgentRepo SyncAgentRepository,
+	syncConvRepo SyncConversationRepository,
+	findSecret secret.Match,
+	findAllConversations conversation.FindAll,
+	findWorkspaces workspace.FindWorkspacesByPlatform,
+	findAgent agent.FindByID,
+) UseCases {
 	var mutex sync.Mutex
 	uc := UseCases{
-		Sync: NewSync(&mutex, repoWorkspaceName, syncAgentRepo, findSecret, findWorkspaces, findAgent),
+		Sync: NewSync(&mutex, bus, repoWorkspaceName, syncAgentRepo, syncConvRepo, findSecret, findAllConversations, findWorkspaces, findAgent),
 	}
 
 	events.SubscribeFor[agent.Updated](bus, func(evt agent.Updated) {
 		if err := uc.Sync(user.SU()); err != nil {
 			slog.Error("failed to sync mistral workspaces, caused by agent.Updated", "err", err.Error())
+		}
+	})
+
+	events.SubscribeFor[conversation.Started](bus, func(evt conversation.Started) {
+		if err := uc.Sync(user.SU()); err != nil {
+			slog.Error("failed to sync mistral workspaces, caused by conversation.Started", "err", err.Error())
 		}
 	})
 
