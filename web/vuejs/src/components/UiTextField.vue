@@ -16,12 +16,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import {
-	FunctionCallRequested,
-	KeyboardTypeValues,
-	TextField,
-	UpdateStateValueRequested,
-} from '@/shared/proto/nprotoc_gen';
+import { KeyboardTypeValues, TextField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: TextField;
@@ -31,7 +26,8 @@ const serviceAdapter = useServiceAdapter();
 const leadingElement = useTemplateRef('leadingElement');
 const trailingElement = useTemplateRef('trailingElement');
 const clearButton = useTemplateRef('clearButton');
-const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
+const useStrictFormatting = ref<boolean>(false);
+const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
 let timer: number = 0;
 
 const frameStyles = computed<string>(() => {
@@ -67,6 +63,114 @@ const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'se
 	}
 );
 
+function parseFloat(input: string) {
+	if (input === '') {
+		return '0';
+	}
+
+	const negative = input.lastIndexOf('-') >= 0;
+
+	// Remove any non digits, superfluous separators and leading zeros
+	const parts = input.split(/[,.]/);
+	for (let i = 0; i < parts.length; i++) {
+		parts[i] = parts[i].replaceAll(/\D/g, '');
+		parts[i] = parts[i].replaceAll(/^0+/g, '');
+	}
+	const lastPart = parts.length > 1 ? parts.pop() : undefined;
+	const firstPart = parts.join('');
+
+	// Combine to final value
+	let finalValue = firstPart === '' ? '0' : firstPart;
+	finalValue += lastPart === undefined || lastPart === '' ? '' : '.' + lastPart;
+
+	finalValue = negative ? '-' + finalValue : finalValue;
+	return finalValue;
+}
+
+function formatFloat(input: string, allowEmpty: boolean = false) {
+	const negative = input.indexOf('-') >= 0 && input.indexOf('-') === input.lastIndexOf('-');
+	const fractionSeparator = isLanguageGerman() ? ',' : '.';
+
+	const parts = input.split(/[,.]/);
+	const decimals = parts.length > 1 ? parts.pop()?.replaceAll(/\D/g, '') : undefined;
+	let finalValue = parts.join('').replaceAll(/\D/g, '');
+	finalValue = /^0+$/g.test(finalValue) ? '0' : finalValue.replaceAll(/^0+/g, '');
+
+	if (decimals === '' && allowEmpty) {
+		finalValue += fractionSeparator; // There is a tailing separator symbol
+	} else if (decimals && decimals.length > 0) {
+		finalValue += fractionSeparator + decimals;
+	}
+
+	if (finalValue === '') {
+		finalValue = allowEmpty ? '' : '0';
+	} else {
+		finalValue = negative ? '-' + finalValue : finalValue;
+	}
+	return finalValue;
+}
+
+function parseInt(input: string) {
+	const negative = input.lastIndexOf('-') >= 0;
+	let value = input.replace(/\D/g, '');
+	if (value === '') {
+		value = '0';
+	} else {
+		value = negative ? '-' + value : value;
+	}
+	return value;
+}
+
+function formatInt(input: string, allowEmpty: boolean = false) {
+	const negative = input.lastIndexOf('-') >= 0;
+	const digits = input.split('');
+
+	let finalValue = '';
+	for (let i = 0; i < digits.length; i++) {
+		const digit = digits[i];
+		if (/\D/g.test(digit)) {
+			continue;
+		}
+		if (finalValue !== '' || digit !== '0') {
+			finalValue += digit;
+		}
+	}
+	if (finalValue === '') {
+		finalValue = allowEmpty ? '' : '0';
+	} else {
+		finalValue = negative ? '-' + finalValue : finalValue;
+	}
+
+	return finalValue;
+}
+
+function parseValue(value: string) {
+	switch (props.ui.keyboardOptions?.keyboardType) {
+		case KeyboardTypeValues.KeyboardInteger:
+			return parseInt(value);
+		case KeyboardTypeValues.KeyboardFloat:
+			return parseFloat(value);
+		default:
+			return value;
+	}
+}
+
+function formatValue(value: string) {
+	let formattedValue;
+	switch (props.ui.keyboardOptions?.keyboardType) {
+		case KeyboardTypeValues.KeyboardInteger:
+			formattedValue = formatInt(value, !useStrictFormatting.value);
+			break;
+		case KeyboardTypeValues.KeyboardFloat:
+			formattedValue = formatFloat(value, !useStrictFormatting.value);
+			break;
+		default:
+			formattedValue = value;
+	}
+	useStrictFormatting.value = false;
+	return formattedValue;
+}
+
 const inputStyle = computed<Record<string, string>>(() => {
 	const leadingElementWidth = leadingElement.value?.offsetWidth;
 	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
@@ -95,35 +199,18 @@ watch(inputValue, (newValue, oldValue) => {
 	if (newValue == oldValue) {
 		return;
 	}
-
-	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger) {
-		if (newValue === '' || newValue === '-') {
-			inputValue.value = '0';
-		} else if (!newValue.match(/^-?[0-9]+$/)) {
-			inputValue.value = oldValue;
-		}
-
-		return;
-	}
-
-	if (props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardFloat) {
-		if (newValue === '' || newValue === '-') {
-			inputValue.value = '0';
-		} else if (!newValue.match(/^[+-]?(\d+(\.\d*)?|\.\d+)$/)) {
-			inputValue.value = oldValue;
-		}
-
-		return;
+	const formattedValue = formatValue(newValue);
+	if (inputValue.value != formattedValue) {
+		inputValue.value = formattedValue;
 	}
 });
 
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		if (newValue) {
-			inputValue.value = newValue;
-		} else {
-			inputValue.value = '';
+		if (document.getElementById(id.value) !== document.activeElement) {
+			useStrictFormatting.value = true;
+			inputValue.value = newValue ? newValue : '';
 		}
 	}
 );
@@ -131,10 +218,9 @@ watch(
 watch(
 	() => props.ui,
 	(newValue) => {
-		if (newValue.value) {
-			inputValue.value = newValue.value;
-		} else {
-			inputValue.value = '';
+		if (document.getElementById(id.value) !== document.activeElement) {
+			useStrictFormatting.value = true;
+			inputValue.value = newValue.value ? newValue.value : '';
 		}
 	}
 );
@@ -142,15 +228,20 @@ watch(
 function handleKeydownEnter(event: Event) {
 	if (props.ui.keydownEnter) {
 		event.stopPropagation();
+		const parsedValue = parseValue(inputValue.value);
+		if (parsedValue == props.ui.value) {
+			return;
+		}
 		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), inputValue.value)
+			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
 		);
 		clearTimeout(timer); // cancel any debounced follow up event
 	}
 }
 
-function submitInputValue(force: boolean): void {
-	if (inputValue.value == props.ui.value) {
+function submitInputValue(force: boolean, functionPointer: number = 0): void {
+	const parsedValue = parseValue(inputValue.value);
+	if (parsedValue == props.ui.value) {
 		return;
 	}
 
@@ -159,16 +250,39 @@ function submitInputValue(force: boolean): void {
 	nextRID();
 
 	if (force || props.ui.disableDebounce) {
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
-
+		serviceAdapter.sendEvent(
+			new UpdateStateValueRequested(props.ui.inputValue, functionPointer, nextRID(), parsedValue)
+		);
 		return;
 	}
 
 	debouncedInput();
 }
 
+function isNumerical() {
+	return (
+		props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger ||
+		props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardFloat
+	);
+}
+
+function isLanguageGerman() {
+	return navigator.language.split('-')[0].toLowerCase() === 'de';
+}
+
+function leaveFocus(): void {
+	if (inputValue.value === '' && isNumerical()) {
+		inputValue.value = '0';
+	} else {
+		useStrictFormatting.value = true;
+		inputValue.value = formatValue(inputValue.value);
+	}
+
+	submitInputValue(true);
+}
+
 function clearInputValue(): void {
-	inputValue.value = '';
+	inputValue.value = isNumerical() ? '0' : '';
 	submitInputValue(true);
 }
 
@@ -184,11 +298,11 @@ function debouncedInput() {
 
 	clearTimeout(timer);
 	timer = window.setTimeout(() => {
-		if (inputValue.value == props.ui.value) {
+		const parsedValue = parseValue(inputValue.value);
+		if (parsedValue == props.ui.value) {
 			return;
 		}
-
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), inputValue.value));
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), parsedValue));
 	}, debounceTime);
 }
 
@@ -216,7 +330,6 @@ function debouncedInput() {
 
 				<input
 					v-if="!props.ui.lines"
-					@keydown.enter="handleKeydownEnter"
 					:id="id"
 					v-model="inputValue"
 					class="input-field"
@@ -224,7 +337,8 @@ function debouncedInput() {
 					:disabled="props.ui.disabled"
 					type="text"
 					:inputmode="inputMode"
-					@focusout="submitInputValue(true)"
+					@keydown.enter="handleKeydownEnter"
+					@focusout="leaveFocus"
 					@input="submitInputValue(false)"
 				/>
 				<textarea
