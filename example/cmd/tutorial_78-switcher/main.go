@@ -21,14 +21,14 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
-//go:embed landscape1.png
-var landscape1 application.StaticBytes
+//go:embed hummel.jpg
+var hummel application.StaticBytes
 
-//go:embed landscape2.png
-var landscape2 application.StaticBytes
+//go:embed gras.jpg
+var gras application.StaticBytes
 
-//go:embed landscape3.png
-var landscape3 application.StaticBytes
+//go:embed screenshot-01.png
+var screenShot application.StaticBytes
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
@@ -41,37 +41,37 @@ func main() {
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
 
-		headlineLandscape1 := "Headline 1"
-		textLandscape1 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
-		landscape1Content := ui.Content{
-			ID:       "landscape1",
-			Image:    landscape1,
-			Icon:     icons.Bookmark,
-			Headline: headlineLandscape1,
-			Text:     textLandscape1,
+		headline1 := "Headline 1"
+		text1 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
+		content1 := ui.Content{
+			ID:       "gras",
+			Image:    gras,
+			Icon:     icons.Globe,
+			Headline: headline1,
+			Text:     text1,
 		}
 
-		headlineLandscape2 := "Headline 2"
-		textLandscape2 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,"
-		landscape2Content := ui.Content{
-			ID:       "landscape2",
-			Image:    landscape2,
-			Icon:     icons.CheckCircle,
-			Headline: headlineLandscape2,
-			Text:     textLandscape2,
+		headline2 := "Headline 2"
+		text2 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,"
+		content2 := ui.Content{
+			ID:       "hummel",
+			Image:    hummel,
+			Icon:     icons.CameraPhoto,
+			Headline: headline2,
+			Text:     text2,
 		}
 
-		headlineLandscape3 := "Headline 3"
-		textLandscape3 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.\n\nLorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At"
-		landscape3Content := ui.Content{
-			ID:       "landscape3",
-			Image:    landscape3,
-			Icon:     icons.Rocket,
-			Headline: headlineLandscape3,
-			Text:     textLandscape3,
+		headline3 := "Headline 3"
+		text3 := "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.\n\nLorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At"
+		content3 := ui.Content{
+			ID:       "combined",
+			Image:    screenShot,
+			Icon:     icons.FileImage,
+			Headline: headline3,
+			Text:     text3,
 		}
 
-		contents := []ui.Content{landscape1Content, landscape2Content, landscape3Content}
+		contents := []ui.Content{content1, content2, content3}
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 
@@ -80,7 +80,9 @@ func main() {
 			return ui.VStack(
 				ui.Switcher(selectedIdx, contents...).
 					ID("switcher").
-					AccessibilityLabel("test-label"),
+					AccessibilityLabel("test-label").
+					Padding(ui.Padding{}.All(ui.L16)).
+					Frame(ui.Frame{}.FullWidth()),
 			).Padding(ui.Padding{Top: ui.L80}).Frame(ui.Frame{}.FullWidth())
 
 		})

@@ -51,14 +51,14 @@ func Switcher(
 	contents ...Content,
 ) TSwitcher {
 
-	height := calculateHeight(contents)
+	minHeight := calculateHeight(contents)
 
 	return TSwitcher{
 		selectedIdx: selectedIdx,
 		group:       contents,
 		// initial default values for border, frame, visible, height and backgroundColor
 		border:              Border{}.Radius(L32),
-		frame:               Frame{Height: height}.FullWidth(),
+		frame:               Frame{MinHeight: minHeight, Height: Auto, MaxWidth: "100%", Width: Auto},
 		visible:             true,
 		backgroundColor:     M2,
 		iconBackgroundColor: M4,
@@ -129,28 +129,9 @@ func (t TSwitcher) ID(id string) TSwitcher {
 	return t
 }
 
-// Render builds and returns the UI representation of the TSwitcher.
-func (t TSwitcher) Render(context core.RenderContext) core.RenderNode {
-	return VStack(
-		t.makeResultViews()...,
-	).
-		Alignment(Leading).
-		Position(Position{
-			Type: PositionOffset,
-		}).
-		ID(t.id).
-		BackgroundColor(t.backgroundColor).
-		AccessibilityLabel(t.accessibilityLabel).
-		Border(t.border).
-		Visible(t.visible).
-		Padding(Padding{Top: t.padding.Top, Bottom: t.padding.Bottom}).
-		Frame(t.frame).
-		Render(context)
-}
-
 // makeResultViews creates a []core.View of the Content elements
 // of TSwitcher and returns it.
-func (t TSwitcher) makeResultViews() []core.View {
+func (t TSwitcher) makeResultViews(sizeclass core.WindowSizeClass) []core.View {
 	if len(t.group) == 0 {
 		return nil
 	}
@@ -165,77 +146,153 @@ func (t TSwitcher) makeResultViews() []core.View {
 		}
 
 		resultViews = append(resultViews,
-			t.resultView(opacity, cont),
+			t.resultView(opacity, cont, sizeclass),
 		)
 	}
 	return resultViews
 }
 
 // resultView creates a view for the current Content.
-func (t TSwitcher) resultView(opacity float64, cont Content) core.View {
+func (t TSwitcher) resultView(opacity float64, cont Content, sizeclass core.WindowSizeClass) core.View {
+	if sizeclass >= core.SizeClassLarge {
+		return t.resultViewLarge(opacity, cont, sizeclass)
+	}
+	return t.resultViewSmall(opacity, cont, sizeclass)
+}
+
+func (t TSwitcher) resultViewSmall(opacity float64, cont Content, sizeClass core.WindowSizeClass) core.View {
+	return VStack(
+
+		VStack(
+			t.horizontalIconView(),
+			contentTexts(cont, opacity),
+		).
+			Alignment(TopLeading).
+			Gap(L20).
+			Padding(t.padding).
+			Frame(Frame{}.FullWidth()),
+
+		VStack(
+			t.img(cont,
+				Border{BottomRightRadius: t.border.BottomRightRadius, BottomLeftRadius: t.border.BottomLeftRadius},
+				sizeClass,
+			),
+		).
+			Alignment(Bottom).
+			Frame(Frame{}.Size(Full, Full)),
+	).
+		ID(t.id).
+		Alignment(TopLeading).
+		BackgroundColor(t.backgroundColor).
+		Opacity(opacity).
+		Animation(AnimateTransition).
+		Visible(t.visible).
+		AccessibilityLabel(t.accessibilityLabel).
+		Border(t.border).
+		Frame(t.frame)
+}
+
+func (t TSwitcher) resultViewLarge(opacity float64, cont Content, sizeClass core.WindowSizeClass) core.View {
 	return VStack(
 		HStack(
 			HStack(
 				VStack(
-					t.makeIconViews()...,
+					t.verticalIconView(),
 				).
-					Alignment(BottomLeading).
-					Gap(L12).
-					BackgroundColor(t.iconBackgroundColor).
-					Border(Border{}.Radius(L20)).
-					Padding(Padding{}.All(L12)),
-
-				VStack(
-					Text(cont.Headline).
-						Font(Font{Size: L32, Weight: HeadlineAndTitleFontWeight}),
-					Text(cont.Text),
-				).
-					Alignment(BottomLeading).
-					Gap(L16).
-					Opacity(opacity).
-					Frame(Frame{}.FullWidth()),
+					Alignment(TopLeading).
+					Padding(Padding{Right: L40}),
+				contentTexts(cont, opacity),
 			).
 				Alignment(BottomLeading).
-				Gap(L20).
-				Position(Position{
-					Type: PositionAbsolute,
-				}).
-				Padding(Padding{}.All(L40)).
-				Frame(Frame{MaxWidth: "50%"}.FullWidth()),
+				Padding(t.padding).
+				Frame(Frame{}.FullWidth()),
 
 			// image
 			HStack(
 
 				VStack(
-
-					Image().
-						Embed(cont.Image).
-						ObjectFit(FitContain).
-						Frame(Frame{}.FullWidth()),
+					t.img(cont,
+						Border{TopRightRadius: t.border.TopRightRadius, BottomRightRadius: t.border.BottomRightRadius},
+						sizeClass,
+					),
 				).
 					Opacity(opacity).
-					Frame(Frame{MaxWidth: "50%"}.FullWidth()),
+					Alignment(Trailing).
+					Frame(Frame{}.FullWidth()),
 			).
-				Alignment(Stretch).
-				Position(Position{
-					Type: PositionAbsolute,
-					Left: "50%",
-				}).
+				Alignment(Center).
 				Frame(Frame{}.FullWidth()),
 		).
 			Alignment(BottomLeading).
-			Position(Position{Type: PositionOffset}).
 			Frame(t.frame),
 	).
+		ID(t.id).
 		Alignment(BottomLeading).
 		BackgroundColor(t.backgroundColor).
 		Opacity(opacity).
 		Animation(AnimateTransition).
-		Position(Position{
-			Type: PositionAbsolute,
-		}).
-		Padding(t.padding).
-		Frame(t.frame)
+		Visible(t.visible).
+		AccessibilityLabel(t.accessibilityLabel).
+		Border(t.border).
+		WithFrame(func(frame Frame) Frame {
+			f := frame
+			f.MinHeight = calculateHeight(t.group) // set the min height at least to the calculated height
+			// in order to make sure that all icons fit in the container
+			return f
+		})
+}
+
+// img returns the image of the given Content.
+func (t TSwitcher) img(cont Content, border Border, sizeClass core.WindowSizeClass) core.View {
+	var fr Frame
+	if sizeClass >= core.SizeClassLarge {
+		fr = Frame{MinHeight: calculateHeight(t.group)}.Size(Full, L560)
+	} else {
+		fr = Frame{}.Size(Full, L256)
+	}
+
+	return Image().
+		Embed(cont.Image).
+		ObjectFit(FitCover).
+		Border(border).
+		Frame(fr)
+}
+
+// contentTexts returns the headline and the text of the content.
+func contentTexts(cont Content, opacity float64) core.View {
+	return VStack(
+		Text(cont.Headline).
+			Font(Font{Size: L32, Weight: HeadlineAndTitleFontWeight}),
+		Text(cont.Text),
+	).
+		Alignment(BottomLeading).
+		Gap(L16).
+		Opacity(opacity).
+		Frame(Frame{}.FullWidth())
+}
+
+// verticalIconView returns a vertical icon view.
+func (t TSwitcher) verticalIconView() core.View {
+	return VStack(
+		t.makeIconViews()...,
+	).
+		Alignment(BottomLeading).
+		Gap(L12).
+		BackgroundColor(t.iconBackgroundColor).
+		Border(Border{}.Radius(L20)).
+		Padding(Padding{}.All(L12))
+}
+
+// horizontalIconView returns a horizontal icon view.
+func (t TSwitcher) horizontalIconView() core.View {
+	return HStack(
+		t.makeIconViews()...,
+	).
+		Alignment(BottomLeading).
+		Gap(L12).
+		BackgroundColor(t.iconBackgroundColor).
+		Border(Border{}.Radius(L20)).
+		Padding(Padding{}.All(L12))
 }
 
 // makeIconViews returns a slice of the resulting icon views.
@@ -254,7 +311,7 @@ func (t TSwitcher) makeIconViews() []core.View {
 
 		if selected {
 			bgColor = M3
-			border = Border{}.Radius(L20).Color(M8).Width(L1)
+			border = Border{}.Radius(L20).Color(M8)
 			opacity = 1.0
 		}
 
@@ -299,4 +356,29 @@ func (t TSwitcher) iconView(
 		Border(border).
 		Padding(Padding{}.All(L12)).
 		Frame(Frame{}.Size(L80, L80))
+}
+
+// Render builds and returns the UI representation of the TSwitcher.
+func (t TSwitcher) Render(context core.RenderContext) core.RenderNode {
+	views := t.makeResultViews(context.Window().Info().SizeClass)
+	var cells []TGridCell
+	for _, view := range views {
+		cells = append(cells,
+			GridCell(
+				view,
+			).
+				RowStart(1).
+				RowEnd(1).
+				ColStart(1).
+				ColEnd(1),
+		)
+	}
+
+	return Grid(
+		cells...,
+	).
+		Columns(1).
+		Rows(1).
+		Frame(t.frame).
+		Render(context)
 }
