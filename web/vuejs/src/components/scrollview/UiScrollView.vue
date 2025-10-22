@@ -8,14 +8,14 @@
 -->
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, nextTick, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { borderCSS } from '@/components/shared/border';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
-import { ScrollView, ScrollViewAxisValues } from '@/shared/proto/nprotoc_gen';
+import { ScrollAnimationValues, ScrollView, ScrollViewAxisValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ScrollView;
@@ -67,6 +67,22 @@ const innerStyles = computed<string>(() => {
 	}
 
 	return css.join(';');
+});
+
+watch(props, (newValue, oldValue) => {
+	if (props.ui.scrollIntoView) {
+		let id = props.ui.scrollIntoView;
+		nextTick(() => {
+			const child = document.getElementById(id);
+			switch (props.ui.scrollAnimation) {
+				case ScrollAnimationValues.Instant:
+					child?.scrollIntoView({});
+					break;
+				default:
+					child?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+			}
+		});
+	}
 });
 
 // note that we need the max-content hack, otherwise we get layout bugs at least for horizontal areas

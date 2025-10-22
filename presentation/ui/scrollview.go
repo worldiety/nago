@@ -24,6 +24,13 @@ const (
 	ScrollViewAxisBoth                      = ScrollViewAxis(proto.ScrollViewAxisBoth)
 )
 
+type ScrollAnimation int
+
+const (
+	ScrollAnimationSmooth ScrollAnimation = iota
+	ScrollAnimationInstant
+)
+
 // TScrollView is a layout component (Scroll View).
 // It provides a scrollable container for a single child view.
 // The scroll direction can be vertical (default) or horizontal.
@@ -36,6 +43,8 @@ type TScrollView struct {
 	border          Border         // optional border around the scroll view
 	backgroundColor Color          // background color
 	padding         Padding        // inner padding
+	scrollToView    string
+	scrollAnimation ScrollAnimation
 }
 
 // A ScrollView can either be horizontal or vertical. By default, it is vertical.
@@ -61,6 +70,12 @@ func (c TScrollView) Frame(frame Frame) TScrollView {
 // Position sets the alignment of the content inside the scroll view.
 func (c TScrollView) Position(position Position) TScrollView {
 	c.position = position
+	return c
+}
+
+func (c TScrollView) ScrollToView(scrollToView string, animation ScrollAnimation) TScrollView {
+	c.scrollToView = scrollToView
+	c.scrollAnimation = animation
 	return c
 }
 
@@ -94,5 +109,7 @@ func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 		Border:          c.border.ora(),
 		BackgroundColor: c.backgroundColor.ora(),
 		Padding:         c.padding.ora(),
+		ScrollIntoView:  proto.Str(c.scrollToView),
+		ScrollAnimation: proto.ScrollAnimation(c.scrollAnimation),
 	}
 }

@@ -6146,10 +6146,13 @@ type ScrollView struct {
 	Axis            ScrollViewAxis
 	Invisible       Bool
 	Position        Position
+	// ScrollIntoView takes an ID and tries to scroll the denoted view into the visible viewport.
+	ScrollIntoView  Str
+	ScrollAnimation ScrollAnimation
 }
 
 func (v *ScrollView) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [11]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Border.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -6158,6 +6161,8 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 	fields[6] = !v.Axis.IsZero()
 	fields[7] = !v.Invisible.IsZero()
 	fields[8] = !v.Position.IsZero()
+	fields[9] = !v.ScrollIntoView.IsZero()
+	fields[10] = !v.ScrollAnimation.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -6239,6 +6244,22 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.ScrollIntoView.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.ScrollAnimation.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -6300,6 +6321,16 @@ func (v *ScrollView) read(r *BinaryReader) error {
 			}
 		case 8:
 			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.ScrollIntoView.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.ScrollAnimation.read(r)
 			if err != nil {
 				return err
 			}
@@ -12629,6 +12660,33 @@ func (v *Transformation) read(r *BinaryReader) error {
 	return nil
 }
 
+type ScrollAnimation uint64
+
+const (
+	Smooth  ScrollAnimation = 0
+	Instant ScrollAnimation = 1
+)
+
+func (v *ScrollAnimation) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ScrollAnimation) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ScrollAnimation(tmp)
+	return nil
+}
+
+func (v *ScrollAnimation) reset() {
+	*v = ScrollAnimation(0)
+}
+func (v *ScrollAnimation) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13622,6 +13680,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 170:
 		var v Transformation
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 171:
+		var v ScrollAnimation
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -15175,10 +15239,12 @@ func (v *ScrollView) reset() {
 	v.Axis.reset()
 	v.Invisible.reset()
 	v.Position.reset()
+	v.ScrollIntoView.reset()
+	v.ScrollAnimation.reset()
 }
 
 func (v *ScrollView) IsZero() bool {
-	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero()
+	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero()
 }
 
 func (v *Resource) reset() {
@@ -17533,6 +17599,13 @@ func (v *Animation) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Transformation) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 170); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScrollAnimation) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 171); err != nil {
 		return err
 	}
 	return nil

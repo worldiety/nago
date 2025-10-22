@@ -6336,6 +6336,11 @@ export class ScrollView implements Writeable, Readable, Component {
 
 	public position?: Position;
 
+	// ScrollIntoView takes an ID and tries to scroll the denoted view into the visible viewport.
+	public scrollIntoView?: Str;
+
+	public scrollAnimation?: ScrollAnimation;
+
 	constructor(
 		content: Component | undefined = undefined,
 		border: Border | undefined = undefined,
@@ -6344,7 +6349,9 @@ export class ScrollView implements Writeable, Readable, Component {
 		backgroundColor: Color | undefined = undefined,
 		axis: ScrollViewAxis | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		position: Position | undefined = undefined
+		position: Position | undefined = undefined,
+		scrollIntoView: Str | undefined = undefined,
+		scrollAnimation: ScrollAnimation | undefined = undefined
 	) {
 		this.content = content;
 		this.border = border;
@@ -6354,6 +6361,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.axis = axis;
 		this.invisible = invisible;
 		this.position = position;
+		this.scrollIntoView = scrollIntoView;
+		this.scrollAnimation = scrollAnimation;
 	}
 
 	read(reader: BinaryReader): void {
@@ -6403,6 +6412,14 @@ export class ScrollView implements Writeable, Readable, Component {
 					this.position.read(reader);
 					break;
 				}
+				case 9: {
+					this.scrollIntoView = readString(reader);
+					break;
+				}
+				case 10: {
+					this.scrollAnimation = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -6420,6 +6437,8 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.axis !== undefined,
 			this.invisible !== undefined,
 			this.position !== undefined && !this.position.isZero(),
+			this.scrollIntoView !== undefined,
+			this.scrollAnimation !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6458,6 +6477,14 @@ export class ScrollView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 8);
 			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
+			writeString(writer, this.scrollIntoView!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			writeInt(writer, this.scrollAnimation!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -6469,7 +6496,9 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.backgroundColor === undefined &&
 			this.axis === undefined &&
 			this.invisible === undefined &&
-			(this.position === undefined || this.position.isZero())
+			(this.position === undefined || this.position.isZero()) &&
+			this.scrollIntoView === undefined &&
+			this.scrollAnimation === undefined
 		);
 	}
 
@@ -6482,6 +6511,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.axis = undefined;
 		this.invisible = undefined;
 		this.position = undefined;
+		this.scrollIntoView = undefined;
+		this.scrollAnimation = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -13230,6 +13261,17 @@ export class Transformation implements Writeable, Readable {
 	}
 }
 
+export type ScrollAnimation = number;
+function writeTypeHeaderScrollAnimation(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 171);
+	return;
+}
+// companion enum containing all defined constants for ScrollAnimation
+export enum ScrollAnimationValues {
+	Smooth = 0,
+	Instant = 1,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14004,6 +14046,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 170: {
 			const v = new Transformation();
 			v.read(src);
+			return v;
+		}
+		case 171: {
+			const v = readInt(src) as ScrollAnimation;
 			return v;
 		}
 	}

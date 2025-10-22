@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 171,
+  "const": {
+    "0": {
+      "name": "Smooth"
+    },
+    "1": {
+      "name": "Instant"
+    }
+  }
+}

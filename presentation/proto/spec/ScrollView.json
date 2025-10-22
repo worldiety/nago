@@ -34,6 +34,15 @@
     "8": {
       "name": "Position",
       "type": "Position"
+    },
+    "9": {
+      "doc": "ScrollIntoView takes an ID and tries to scroll the denoted view into the visible viewport.",
+      "name": "ScrollIntoView",
+      "type": "Str"
+    },
+    "10": {
+      "name": "ScrollAnimation",
+      "type": "ScrollAnimation"
     }
   }
 }
