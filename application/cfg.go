@@ -124,9 +124,12 @@ func NewConfigurator() *Configurator {
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
 		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
+		eventBus:           events.NewEventBus(),
 	}
 
 	cfg.hasSSL = cfg.determineSecureCookie()
+
+	cfg.AddContextValue(core.ContextValue("", cfg.eventBus))
 
 	return cfg
 }
@@ -471,9 +474,6 @@ func (c *Configurator) Debug(isDebug bool) *Configurator {
 }
 
 func (c *Configurator) EventBus() events.EventBus {
-	if c.eventBus == nil {
-		c.eventBus = events.NewEventBus()
-	}
 
 	return c.eventBus
 }
