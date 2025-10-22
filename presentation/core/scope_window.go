@@ -106,8 +106,13 @@ func (s *scopeWindow) reset() {
 	//s.lastAutoStatePtr = 0 // make them stable
 	//clear(s.states)
 	clear(s.filesReceiver)
-	//clear(s.destroyObservers) ???
 	clear(s.callbacks)
+
+	// todo: not sure if this is the "correct" behavior but otherwise we only get leaks until the browser tab is closed
+	for _, f := range s.destroyObservers {
+		f()
+	}
+	clear(s.destroyObservers)
 
 	for _, property := range s.states {
 		property.clearObservers()
