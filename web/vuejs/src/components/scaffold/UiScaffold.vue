@@ -66,7 +66,8 @@ const burgerMenuVisible = computed((): boolean => {
 
 const bodyWrapperClass = computed((): string | undefined => {
 	if (burgerMenuVisible.value || navigationBarVisible.value) {
-		return 'pt-28';
+		//return 'pt-28'; // this introduces a padding and looks wrong if we try to fill the page exactly in height with calc
+		return 'pt-[6rem]';
 	}
 	if (sidebarVisible.value) {
 		return 'pl-32'; // py-8 would cause to introduce scrollbar with 100dvh
