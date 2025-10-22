@@ -8,6 +8,7 @@
 package markdown
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -18,10 +19,13 @@ import (
 	"github.com/yuin/goldmark/text"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 )
 
 type Options struct {
-	Window core.Window // the Window is required for links to work properly
+	Window        core.Window // the Window is required for links to work properly
+	RichText      bool
+	TrimParagraph bool
 }
 
 // Render parses the given source as a markdown dialect and interprets it as views.
@@ -37,8 +41,31 @@ func Render(opts Options, source []byte) core.View {
 		),
 	)
 
+	if opts.RichText {
+		var buf bytes.Buffer
+
+		if err := md.Convert(source, &buf); err != nil {
+			return alert.BannerError(err)
+		}
+
+		b := buf.Bytes()
+		if opts.TrimParagraph {
+			b = bytes.TrimSpace(b)
+			if bytes.HasPrefix(b, []byte("<p>")) {
+				b = b[3:]
+			}
+
+			if bytes.HasSuffix(b, []byte("</p>")) {
+				b = b[:len(b)-4]
+			}
+		}
+
+		return ui.RichText(string(b))
+	}
+
 	r := renderer{}
 	node := md.Parser().Parse(text.NewReader(source))
+
 	err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		switch n := n.(type) {
 		case *ast.Document:
