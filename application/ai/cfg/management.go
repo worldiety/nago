@@ -170,6 +170,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.FindAll))
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.FindMessages))
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Append))
+	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Delete))
 
 	slog.Info("installed AI module")
 	return management, nil

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"reflect"
+	"slices"
 	"sync"
 
 	"github.com/worldiety/option"
@@ -167,6 +168,8 @@ func syncWorkspace(bus events.Bus, syncAgentRepo SyncAgentRepository, syncConvRe
 }
 
 func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentRepository, findAllConversations conversation.FindAll, syncConvRepo SyncConversationRepository, cl *Client) error {
+	var allConversations []conversation.ID
+
 	for conv, err := range findAllConversations(user.SU()) {
 		if err != nil {
 			return fmt.Errorf("cannot find conversation: %w", err)
@@ -175,6 +178,8 @@ func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentR
 		if conv.Workspace != ws {
 			continue
 		}
+
+		allConversations = append(allConversations, conv.ID)
 
 		optCloudAgent, err := syncAgentRepo.FindByID(conv.Agent)
 		if err != nil {
@@ -215,6 +220,7 @@ func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentR
 					ID:                conv.ID,
 					CloudConversation: resp.ConversationId,
 					LastMod:           conv.CreatedAt,
+					Workspace:         ws,
 				}); err != nil {
 					return fmt.Errorf("cannot save conversation: %w", err)
 				}
@@ -254,6 +260,31 @@ func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentR
 			slog.Info("conversation already exists in cloud", "conversation", conv.ID)
 		}
 
+	}
+
+	// check if we have synchronized entries which are not available anymore, either local or remote
+	for synchronizedConversation, err := range syncConvRepo.All() {
+		if err != nil {
+			return fmt.Errorf("cannot loop sync conversation repo: %w", err)
+		}
+
+		if synchronizedConversation.Workspace != ws {
+			continue
+		}
+
+		if slices.Contains(allConversations, synchronizedConversation.ID) {
+			continue
+		}
+
+		slog.Warn("found cloud conversation which is not locally available", "conversation", synchronizedConversation.ID, "cloud", synchronizedConversation.ID)
+
+		if err := cl.DeleteConversation(synchronizedConversation.CloudConversation); err != nil {
+			return fmt.Errorf("cannot delete cloud conversation: %w", err)
+		}
+
+		if err := syncConvRepo.DeleteByID(synchronizedConversation.ID); err != nil {
+			return fmt.Errorf("cannot delete sync cloud conversation: %w", err)
+		}
 	}
 
 	return nil

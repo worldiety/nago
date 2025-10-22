@@ -45,6 +45,7 @@ type SyncAgentRepository data.Repository[SynchronizedAgent, agent.ID]
 
 type SynchronizedConversation struct {
 	ID                conversation.ID        `json:"id"`
+	Workspace         workspace.ID           `json:"workspace"`
 	CloudConversation string                 `json:"cloudConversation"`
 	LastMod           xtime.UnixMilliseconds `json:"lastMod"`
 }
@@ -86,7 +87,13 @@ func NewUseCases(
 
 	events.SubscribeFor(bus, func(evt conversation.HumanAppended) {
 		if err := appendMessage(bus, findSecret, findConvByID, findWorkspaceByID, syncConvRepo, evt); err != nil {
-			slog.Error("failed to append mistral chat message, caused by conversation.HumanAppended", "err", err.Error())
+			slog.Error("failed to sync mistral workspaces, caused by conversation.Updated", "err", err.Error())
+		}
+	})
+
+	events.SubscribeFor(bus, func(evt conversation.Deleted) {
+		if err := delete(findSecret, findConvByID, findWorkspaceByID, syncConvRepo, evt.Conversation); err != nil {
+			slog.Error("failed to delete conversation, caused by conversation.Deleted", "err", err.Error())
 		}
 	})
 

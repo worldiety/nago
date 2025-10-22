@@ -42,3 +42,7 @@ type HumanAppended struct {
 type Updated struct {
 	Conversation ID
 }
+
+type Deleted struct {
+	Conversation ID
+}

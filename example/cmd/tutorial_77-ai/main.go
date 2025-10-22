@@ -8,6 +8,7 @@
 package main
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/worldiety/option"
@@ -35,7 +36,9 @@ func main() {
 
 		option.MustZero(cfg.StandardSystems())
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
-		cfg.SetDecorator(cfg.NewScaffold().Decorator())
+		cfg.SetDecorator(cfg.NewScaffold().
+			NoFooterContentPadding(".").
+			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
 		drives := option.Must(cfgdrive.Enable(cfg))
@@ -53,19 +56,29 @@ func main() {
 
 			wnd.AddDestroyObserver(events.SubscribeFor[conversation.Updated](cfg.EventBus(), func(evt conversation.Updated) {
 				if conv.Get() == evt.Conversation {
+					slog.Info("conversation updated", "id", evt.Conversation)
 					conv.Invalidate()
+					conv.Notify()
 				}
 			}))
 
+			const innerFullHeight = "calc(100vh - 16rem - 1px)"
+
 			return ui.HStack(
-				uiai.Chats(conv).Frame(ui.Frame{Width: ui.L560}),
-				uiai.Chat(conv, prompt).
-					StartOptions(conversation.StartOptions{
-						WorkspaceName: "Test",
-						AgentName:     "Walter",
-						CloudStore:    true,
-					}),
-			).FullWidth()
+				ui.ScrollView(
+					uiai.Chats(conv).Frame(ui.Frame{Width: ui.Full, MinHeight: innerFullHeight}),
+				).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
+
+				ui.ScrollView(
+					uiai.Chat(conv, prompt).
+						StartOptions(conversation.StartOptions{
+							WorkspaceName: "Test",
+							AgentName:     "Walter",
+							CloudStore:    true,
+						}).Padding(ui.Padding{}.All(ui.L16)),
+				).ScrollToView("end-of-chat", ui.ScrollAnimationSmooth).
+					Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}),
+			).Alignment(ui.Top).Frame(ui.Frame{Width: ui.Full, Height: innerFullHeight})
 
 		})
 	}).Run()

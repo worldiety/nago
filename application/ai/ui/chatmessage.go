@@ -10,6 +10,7 @@ package uiai
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
 type MessageStyle int
@@ -20,9 +21,10 @@ const (
 )
 
 type TChatMessage struct {
-	style MessageStyle
-	text  string
-	ico   core.SVG
+	style    MessageStyle
+	text     string
+	markdown bool
+	ico      core.SVG
 }
 
 func ChatMessage() TChatMessage {
@@ -31,6 +33,12 @@ func ChatMessage() TChatMessage {
 
 func (c TChatMessage) Text(text string) TChatMessage {
 	c.text = text
+	return c
+}
+
+func (c TChatMessage) Markdown(text string) TChatMessage {
+	c.text = text
+	c.markdown = true
 	return c
 }
 
@@ -51,7 +59,14 @@ func (c TChatMessage) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.VStack(
-		ui.Text(c.text),
+		func() core.View {
+			if !c.markdown {
+				ui.Text(c.text)
+			}
+
+			return markdown.Render(markdown.Options{Window: ctx.Window(), RichText: true, TrimParagraph: true}, []byte(c.text))
+		}(),
+
 		ui.If(len(c.ico) != 0, ui.ImageIcon(c.ico)),
 	).
 		BackgroundColor(color).

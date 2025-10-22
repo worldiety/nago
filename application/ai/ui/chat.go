@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -24,10 +25,16 @@ type TChat struct {
 	conv         *core.State[conversation.ID]
 	text         *core.State[string]
 	startOptions conversation.StartOptions
+	padding      ui.Padding
 }
 
 func Chat(conv *core.State[conversation.ID], text *core.State[string]) TChat {
 	return TChat{conv: conv, text: text}
+}
+
+func (c TChat) Padding(padding ui.Padding) TChat {
+	c.padding = padding
+	return c
 }
 
 func (c TChat) StartOptions(opts conversation.StartOptions) TChat {
@@ -53,10 +60,18 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 		return alert.Banner("no ai", "the ai module has not been enabled").Render(ctx)
 	}
 
+	bus, ok := core.FromContext[events.EventBus](wnd.Context(), "")
+	if !ok {
+		panic("no event-bus")
+	}
+
 	pleaseWaitPresented := core.DerivedState[bool](c.conv, "-pw-presented")
-	c.conv.Observe(func(newValue conversation.ID) {
+
+	ctx.Window().AddDestroyObserver(events.SubscribeFor(bus, func(evt conversation.AgentAppended) {
 		pleaseWaitPresented.Set(false)
-	})
+		// clear the prompt
+		c.text.Set("")
+	}))
 
 	return ui.VStack(
 		ui.Each2(aiFindMessages(wnd.Subject(), c.conv.Get()), func(msg message.Message, err error) core.View {
@@ -75,7 +90,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 			for content := range msg.Inputs.All() {
 				switch {
 				case content.Text.IsSome():
-					stack = stack.Append(ChatMessage().Text(content.Text.Unwrap()).Style(style))
+					stack = stack.Append(ChatMessage().Markdown(content.Text.Unwrap()).Style(style))
 				}
 			}
 
@@ -108,7 +123,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 								return
 							}
 
-							c.conv.Set(cid)
+							c.conv.Update(cid)
 						} else {
 							// append to existing conversation
 							tmp := c.text.Get()
@@ -119,20 +134,22 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 								},
 								CloudStore: c.startOptions.CloudStore,
 							})
+
 							if err != nil {
 								alert.ShowBannerError(wnd, err)
 								return
 							}
 						}
 
-						// clear the prompt
-						c.text.Set("")
 					}),
 				ui.PrimaryButton(nil).Title(rstring.ActionFileUpload.Get(wnd)).PreIcon(icons.Upload).Frame(ui.Frame{MinWidth: "12rem"}),
 				ui.SecondaryButton(nil).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
 			).Gap(ui.L8).
 				FullWidth(),
-		).FullWidth().
+		).
+		Append(ui.VStack().ID("end-of-chat")).
+		FullWidth().
 		Gap(ui.L16).
+		Padding(c.padding).
 		Render(ctx)
 }

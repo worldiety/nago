@@ -176,13 +176,23 @@ func (c *Client) ListAgents() iter.Seq2[Agent, error] {
 }
 
 func (c *Client) DeleteAgent(id string) error {
-	// note: they forgot to implement the endpoint, heck, even their UI cannot delete agents right now and gets 404
 	return xhttp.NewRequest().
 		Client(c.c).
 		BaseURL(c.base).
 		Retry(c.retry).
 		Assert2xx(true).
 		URL("agents/" + id).
+		BearerAuthentication(c.token).
+		Delete()
+}
+
+func (c *Client) DeleteConversation(id string) error {
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		Assert2xx(true).
+		URL("conversations/" + id).
 		BearerAuthentication(c.token).
 		Delete()
 }

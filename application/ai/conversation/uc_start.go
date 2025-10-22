@@ -101,7 +101,7 @@ func NewStart(mutex *sync.Mutex, bus events.Bus, repo Repository, repoWS workspa
 		}
 
 		conv := Conversation{
-			ID:           data.RandIdent[ID](),
+			ID:           "conv_" + ID(eventstore.NewID()), // ensures natural order of identifiers
 			Workspace:    optWS.Unwrap().ID,
 			Agent:        optAgent.Unwrap().ID,
 			Name:         opts.Name,

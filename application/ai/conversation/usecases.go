@@ -113,6 +113,8 @@ type AppendOptions struct {
 // Append adds a message to the conversation.
 type Append func(subject auth.Subject, opts AppendOptions) (message.ID, error)
 
+type Delete func(subject auth.Subject, id ID) error
+
 type Repository data.Repository[Conversation, ID]
 
 type UseCases struct {
@@ -121,6 +123,7 @@ type UseCases struct {
 	FindAll      FindAll
 	FindMessages FindMessages
 	FindByID     FindByID
+	Delete       Delete
 }
 
 func NewUseCases(bus events.Bus, repo Repository, repoWS workspace.Repository, repoAgents agent.Repository, repoMsg message.Repository, idxConvMsg *data.CompositeIndex[ID, message.ID]) UseCases {
@@ -146,32 +149,12 @@ func NewUseCases(bus events.Bus, repo Repository, repoWS workspace.Repository, r
 		bus.Publish(Updated{Conversation: evt.Conversation})
 	})
 
-	/*events.SubscribeFor(bus, func(evt HumanAppended) {
-		msg := message.Message{
-			ID:        data.RandIdent[message.ID](),
-			CreatedAt: xtime.Now(),
-			CreatedBy: evt.ByUser,
-			Inputs:    xslices.Wrap(evt.Content...),
-		}
-
-		if err := repoMsg.Save(msg); err != nil {
-			slog.Error("failed to save message triggered by HumanAppended", "err", err.Error())
-			return
-		}
-
-		if err := idxConvMsg.Put(evt.Conversation, msg.ID); err != nil {
-			slog.Error("failed to put idxConvMsg", "err", err.Error())
-			return
-		}
-
-		bus.Publish(Updated{Conversation: evt.Conversation})
-	})*/
-
 	return UseCases{
 		Start:        NewStart(&mutex, bus, repo, repoWS, repoAgents, repoMsg, idxConvMsg),
 		Append:       NewAppend(&mutex, bus, repo, repoMsg, idxConvMsg),
 		FindAll:      NewFindAll(repo),
 		FindMessages: NewFindMessages(repo, repoMsg, idxConvMsg),
 		FindByID:     NewFindByID(repo),
+		Delete:       NewDelete(bus, repo, repoMsg, idxConvMsg),
 	}
 }

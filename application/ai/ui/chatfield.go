@@ -35,8 +35,18 @@ func (c TChatField) Enabled(enabled bool) TChatField {
 
 func (c TChatField) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.HStack(
-		ui.TextField("", c.text.String()).InputValue(c.text).Style(ui.TextFieldBasic).FullWidth().Disabled(c.disabled),
-		ui.PrimaryButton(c.action).PreIcon(icons.ArrowRight).Frame(ui.Frame{MinWidth: ui.L40}).Disabled(c.disabled),
+		ui.TextField("", c.text.String()).
+			InputValue(c.text).
+			Style(ui.TextFieldBasic).
+			KeydownEnter(c.action).
+			FullWidth().
+			Disabled(c.disabled),
+
+		ui.PrimaryButton(c.action).
+			PreIcon(icons.ArrowRight).
+			Frame(ui.Frame{MinWidth: ui.L40}).
+			Disabled(c.disabled).
+			ID("start-chat-button"),
 	).
 		BackgroundColor(ui.M2).
 		Border(ui.Border{}.Width(ui.L1).Color(ui.M5).Radius(ui.L24)).
