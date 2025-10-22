@@ -9,6 +9,8 @@ package application
 
 import (
 	_ "embed"
+	"slices"
+
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/permission"
@@ -189,17 +191,18 @@ func (b *SubMenuEntryBuilder) PublicOnly() *SubMenuBuilder {
 }
 
 type ScaffoldBuilder struct {
-	cfg                   *Configurator
-	alignment             ui.ScaffoldAlignment
-	menu                  []*MenuEntryBuilder
-	logoClick             func(wnd core.Window)
-	logoImage             ui.DecoredView
-	showLogin             bool
-	breakpoint            *int
-	footer                core.View
-	enableAutoFooter      bool
-	footerBackgroundColor ui.Color
-	footerTextColor       ui.Color
+	cfg                     *Configurator
+	alignment               ui.ScaffoldAlignment
+	menu                    []*MenuEntryBuilder
+	logoClick               func(wnd core.Window)
+	logoImage               ui.DecoredView
+	showLogin               bool
+	breakpoint              *int
+	footer                  core.View
+	enableAutoFooter        bool
+	footerBackgroundColor   ui.Color
+	footerTextColor         ui.Color
+	disableContentPaddingOn []core.NavigationPath
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -287,6 +290,12 @@ func (b *ScaffoldBuilder) MenuEntry() *MenuEntryBuilder {
 	e := &MenuEntryBuilder{parent: b}
 	b.menu = append(b.menu, e)
 	return e
+}
+
+// NoFooterContentPadding disables the footers content padding on the given paths.
+func (b *ScaffoldBuilder) NoFooterContentPadding(paths ...core.NavigationPath) *ScaffoldBuilder {
+	b.disableContentPaddingOn = paths
+	return b
 }
 
 func (b *ScaffoldBuilder) name() string {
@@ -499,6 +508,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				BackgroundColor(b.footerBackgroundColor).
 				Slogan(themeCfg.Slogan).
 				GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
+
+			if slices.Contains(b.disableContentPaddingOn, wnd.Path()) {
+				autoFooter = autoFooter.ContentPadding("")
+			}
 
 			scaffold = scaffold.Footer(autoFooter)
 		}
