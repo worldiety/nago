@@ -43,75 +43,96 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 		return alert.Banner("no ai", "the ai module has not been enabled").Render(ctx)
 	}
 
+	aiFindMessages, ok := core.FromContext[conversation.FindMessages](wnd.Context(), "")
+	if !ok {
+		return alert.Banner("no ai", "the ai module has not been enabled").Render(ctx)
+	}
+
+	aiAppendMessage, ok := core.FromContext[conversation.Append](wnd.Context(), "")
+	if !ok {
+		return alert.Banner("no ai", "the ai module has not been enabled").Render(ctx)
+	}
+
+	pleaseWaitPresented := core.DerivedState[bool](c.conv, "-pw-presented")
+	c.conv.Observe(func(newValue conversation.ID) {
+		pleaseWaitPresented.Set(false)
+	})
+
 	return ui.VStack(
-		ui.HStack(
-			ChatField(c.text).
-				Action(func() {
-					if c.conv.Get() == "" {
-						// create a new conversation
-						tmp := c.text.Get()
-						c.startOptions.Input = append(c.startOptions.Input, message.Content{Text: option.Pointer(&tmp)})
-						if _, err := aiStartConv(wnd.Subject(), c.startOptions); err != nil {
-							alert.ShowBannerError(wnd, err)
-							return
+		ui.Each2(aiFindMessages(wnd.Subject(), c.conv.Get()), func(msg message.Message, err error) core.View {
+			if err != nil {
+				return alert.BannerError(err)
+			}
+
+			stack := ui.VStack()
+			style := MessageAgent
+			align := ui.Leading
+			if msg.CreatedBy != "" {
+				style = MessageHuman
+				align = ui.Trailing
+			}
+
+			for content := range msg.Inputs.All() {
+				switch {
+				case content.Text.IsSome():
+					stack = stack.Append(ChatMessage().Text(content.Text.Unwrap()).Style(style))
+				}
+			}
+
+			return stack.Alignment(align).FullWidth()
+		})...,
+	).Append(
+		ui.If(pleaseWaitPresented.Get(),
+			ui.HStack(
+				ChatMessage().Icon(icons.DotsHorizontal).Style(MessageAgent),
+			).FullWidth().Alignment(ui.Leading),
+		),
+	).
+		Append(
+			ui.HStack(
+				ChatField(c.text).
+					Enabled(!pleaseWaitPresented.Get()).
+					Action(func() {
+						pleaseWaitPresented.Set(true)
+						if c.conv.Get() == "" {
+							// create a new conversation
+							tmp := c.text.Get()
+							if c.startOptions.Name == "" {
+								c.startOptions.Name = tmp
+							}
+
+							c.startOptions.Input = append(c.startOptions.Input, message.Content{Text: option.Pointer(&tmp)})
+							cid, err := aiStartConv(wnd.Subject(), c.startOptions)
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
+
+							c.conv.Set(cid)
+						} else {
+							// append to existing conversation
+							tmp := c.text.Get()
+							_, err := aiAppendMessage(wnd.Subject(), conversation.AppendOptions{
+								Conversation: c.conv.Get(),
+								Input: []message.Content{
+									{Text: option.Pointer(&tmp)},
+								},
+								CloudStore: c.startOptions.CloudStore,
+							})
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
 						}
 
-						return
-					}
-				}),
-			ui.PrimaryButton(nil).Title(rstring.ActionFileUpload.Get(wnd)).PreIcon(icons.Upload).Frame(ui.Frame{MinWidth: "12rem"}),
-			ui.SecondaryButton(nil).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
-		).Gap(ui.L8).
-			FullWidth(),
-	).FullWidth().
-		Render(ctx)
-}
-
-type MessageStyle int
-
-const (
-	MessageAgent MessageStyle = iota
-	MessageHuman
-)
-
-type TChatMessage struct {
-	style MessageStyle
-	text  string
-}
-
-func (c TChatMessage) Render(ctx core.RenderContext) core.RenderNode {
-	return ui.VStack(
-		ui.Text(c.text),
-	).
-		BackgroundColor(ui.M2).
-		Border(ui.Border{}.Width(ui.L1).Color(ui.M5).Radius(ui.L24)).
-		Padding(ui.Padding{}.All(ui.L8)).
-		Frame(ui.Frame{}.FullWidth()).
-		Render(ctx)
-}
-
-type TChatField struct {
-	text   *core.State[string]
-	action func()
-}
-
-func ChatField(text *core.State[string]) TChatField {
-	return TChatField{text: text}
-}
-
-func (c TChatField) Action(fn func()) TChatField {
-	c.action = fn
-	return c
-}
-
-func (c TChatField) Render(ctx core.RenderContext) core.RenderNode {
-	return ui.HStack(
-		ui.TextField("", c.text.String()).InputValue(c.text).Style(ui.TextFieldBasic).FullWidth(),
-		ui.PrimaryButton(c.action).PreIcon(icons.ArrowRight).Frame(ui.Frame{MinWidth: ui.L40}),
-	).
-		BackgroundColor(ui.M2).
-		Border(ui.Border{}.Width(ui.L1).Color(ui.M5).Radius(ui.L24)).
-		Padding(ui.Padding{}.All(ui.L8)).
-		Frame(ui.Frame{}.FullWidth()).
+						// clear the prompt
+						c.text.Set("")
+					}),
+				ui.PrimaryButton(nil).Title(rstring.ActionFileUpload.Get(wnd)).PreIcon(icons.Upload).Frame(ui.Frame{MinWidth: "12rem"}),
+				ui.SecondaryButton(nil).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
+			).Gap(ui.L8).
+				FullWidth(),
+		).FullWidth().
+		Gap(ui.L16).
 		Render(ctx)
 }

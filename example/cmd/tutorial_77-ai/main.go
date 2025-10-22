@@ -22,6 +22,7 @@ import (
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
@@ -50,7 +51,14 @@ func main() {
 			prompt := core.AutoState[string](wnd)
 			conv := core.AutoState[conversation.ID](wnd)
 
-			return ui.VStack(
+			wnd.AddDestroyObserver(events.SubscribeFor[conversation.Updated](cfg.EventBus(), func(evt conversation.Updated) {
+				if conv.Get() == evt.Conversation {
+					conv.Invalidate()
+				}
+			}))
+
+			return ui.HStack(
+				uiai.Chats(conv).Frame(ui.Frame{Width: ui.L560}),
 				uiai.Chat(conv, prompt).
 					StartOptions(conversation.StartOptions{
 						WorkspaceName: "Test",

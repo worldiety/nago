@@ -9,8 +9,10 @@ package conversation
 
 import (
 	"iter"
+	"log/slog"
 	"sync"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/workspace"
@@ -18,6 +20,8 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/eventstore"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -88,6 +92,14 @@ type Start func(subject auth.Subject, opts StartOptions) (ID, error)
 // resource permissions or if the conversation was created by the subject.
 type FindAll func(subject auth.Subject) iter.Seq2[Conversation, error]
 
+// FindByID applies the same rules as [FindAll].
+type FindByID func(subject auth.Subject, id ID) (option.Opt[Conversation], error)
+
+// FindMessages returns a sequence of all associated messages in the order from oldest to newest.
+// The same permission rules are applied, as for [FindAll]. If someone can find a conversation or is the owner
+// he/she can also read all messages.
+type FindMessages func(subject auth.Subject, cid ID) iter.Seq2[message.Message, error]
+
 type AppendOptions struct {
 	Conversation ID
 	// Input is a slice of union types of various content types. This must not be empty.
@@ -104,16 +116,62 @@ type Append func(subject auth.Subject, opts AppendOptions) (message.ID, error)
 type Repository data.Repository[Conversation, ID]
 
 type UseCases struct {
-	Start   Start
-	Append  Append
-	FindAll FindAll
+	Start        Start
+	Append       Append
+	FindAll      FindAll
+	FindMessages FindMessages
+	FindByID     FindByID
 }
 
 func NewUseCases(bus events.Bus, repo Repository, repoWS workspace.Repository, repoAgents agent.Repository, repoMsg message.Repository, idxConvMsg *data.CompositeIndex[ID, message.ID]) UseCases {
 	var mutex sync.Mutex
+
+	events.SubscribeFor(bus, func(evt AgentAppended) {
+		msg := message.Message{
+			ID:        message.ID(eventstore.NewID()),
+			CreatedAt: xtime.Now(),
+			Inputs:    xslices.Wrap(evt.Content...),
+		}
+
+		if err := repoMsg.Save(msg); err != nil {
+			slog.Error("failed to save message triggered by AgentAppended", "err", err.Error())
+			return
+		}
+
+		if err := idxConvMsg.Put(evt.Conversation, msg.ID); err != nil {
+			slog.Error("failed to put idxConvMsg", "err", err.Error())
+			return
+		}
+
+		bus.Publish(Updated{Conversation: evt.Conversation})
+	})
+
+	/*events.SubscribeFor(bus, func(evt HumanAppended) {
+		msg := message.Message{
+			ID:        data.RandIdent[message.ID](),
+			CreatedAt: xtime.Now(),
+			CreatedBy: evt.ByUser,
+			Inputs:    xslices.Wrap(evt.Content...),
+		}
+
+		if err := repoMsg.Save(msg); err != nil {
+			slog.Error("failed to save message triggered by HumanAppended", "err", err.Error())
+			return
+		}
+
+		if err := idxConvMsg.Put(evt.Conversation, msg.ID); err != nil {
+			slog.Error("failed to put idxConvMsg", "err", err.Error())
+			return
+		}
+
+		bus.Publish(Updated{Conversation: evt.Conversation})
+	})*/
+
 	return UseCases{
-		Start:   NewStart(&mutex, bus, repo, repoWS, repoAgents),
-		Append:  NewAppend(&mutex, bus, repo, repoMsg, idxConvMsg),
-		FindAll: NewFindAll(repo),
+		Start:        NewStart(&mutex, bus, repo, repoWS, repoAgents, repoMsg, idxConvMsg),
+		Append:       NewAppend(&mutex, bus, repo, repoMsg, idxConvMsg),
+		FindAll:      NewFindAll(repo),
+		FindMessages: NewFindMessages(repo, repoMsg, idxConvMsg),
+		FindByID:     NewFindByID(repo),
 	}
 }

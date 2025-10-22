@@ -15,14 +15,17 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/eventstore"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewStart(mutex *sync.Mutex, bus events.Bus, repo Repository, repoWS workspace.Repository, repoAgents agent.Repository) Start {
+func NewStart(mutex *sync.Mutex, bus events.Bus, repo Repository, repoWS workspace.Repository, repoAgents agent.Repository, repoMsg message.Repository, idxConvMsg *data.CompositeIndex[ID, message.ID]) Start {
 	return func(subject auth.Subject, opts StartOptions) (ID, error) {
 		if !subject.HasPermission(PermStart) && !subject.HasResourcePermission(repoWS.Name(), string(opts.Workspace), PermStart) {
 			return "", subject.Audit(PermStart)
@@ -114,7 +117,35 @@ func NewStart(mutex *sync.Mutex, bus events.Bus, repo Repository, repoWS workspa
 			return "", fmt.Errorf("failed to save conversation: %w", err)
 		}
 
+		msg := message.Message{
+			ID:        message.ID(eventstore.NewID()),
+			CreatedAt: xtime.Now(),
+			CreatedBy: subject.ID(),
+			Inputs:    xslices.New(opts.Input...),
+		}
+
+		if optMsg, err := repoMsg.FindByID(msg.ID); err != nil || optMsg.IsSome() {
+			if err != nil {
+				return "", err
+			}
+
+			return "", fmt.Errorf("message already exists: %q", msg.ID)
+		}
+
+		if err := repoMsg.Save(msg); err != nil {
+			return "", err
+		}
+
+		if err := idxConvMsg.Put(conv.ID, msg.ID); err != nil {
+			return "", fmt.Errorf("failed to index message %q: %w", msg.ID, err)
+		}
+
 		bus.Publish(Started{Conversation: conv.ID})
+		bus.Publish(HumanAppended{
+			Conversation: conv.ID,
+			ByUser:       subject.ID(),
+			Content:      opts.Input,
+		})
 
 		return conv.ID, nil
 	}

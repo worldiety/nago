@@ -107,7 +107,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		syncConvRepo,
 		secrets.UseCases.Match,
 		management.ConversationUseCases.FindAll,
+		management.ConversationUseCases.FindByID,
 		management.WorkspaceUseCases.FindWorkspacesByPlatform,
+		management.WorkspaceUseCases.FindByID,
 		management.AgentUseCases.FindByID,
 	)
 
@@ -165,6 +167,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})))
 
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Start))
+	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.FindAll))
+	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.FindMessages))
+	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Append))
 
 	slog.Info("installed AI module")
 	return management, nil

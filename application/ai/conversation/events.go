@@ -27,3 +27,18 @@ type MessageAppended struct {
 	Conversation ID
 	Message      message.ID
 }
+
+type AgentAppended struct {
+	Conversation ID
+	Content      []message.Content
+}
+
+type HumanAppended struct {
+	Conversation ID
+	ByUser       user.ID
+	Content      []message.Content
+}
+
+type Updated struct {
+	Conversation ID
+}

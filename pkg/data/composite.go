@@ -146,7 +146,7 @@ func (idx *CompositeIndex[A, B]) AllByPrefix(ctx context.Context, prefix string)
 				continue
 			}
 
-			tokens := strings.Split(prefix, ".")
+			tokens := strings.Split(s, ".")
 			if len(tokens) != 2 {
 				if !yield(CompositeKey[A, B]{}, fmt.Errorf("invalid tokens: %s", s)) {
 					return

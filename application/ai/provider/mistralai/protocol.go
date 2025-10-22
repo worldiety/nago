@@ -83,21 +83,6 @@ func NewClient(token string) *Client {
 	}
 }
 
-func (c *Client) CreateConversion(req CreateConversionRequest) (CreateConversionResponse, error) {
-	var resp CreateConversionResponse
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
-		URL("conversations").
-		BearerAuthentication(c.token).
-		BodyJSON(req).
-		ToJSON(&resp).
-		Post()
-
-	return resp, err
-}
-
 type Agent struct {
 	Instructions string `json:"instructions"`
 	Tools        []struct {
@@ -219,6 +204,38 @@ func (c *Client) UpdateAgent(id string, req UpdateAgentRequest) error {
 		Assert2xx(true).
 		BearerAuthentication(c.token).
 		Patch()
+}
+
+type AppendConversationRequest struct {
+	Inputs []Input `json:"inputs,omitempty"`
+	Store  bool    `json:"store"`
+	Stream bool    `json:"stream"`
+}
+
+type AppendConversationResponse struct {
+	ConversationId string `json:"conversation_id"`
+	Outputs        []struct {
+		Content string `json:"content"`
+	} `json:"outputs"`
+	Usage struct {
+	} `json:"usage"`
+}
+
+func (c *Client) AppendConversation(conversationId string, req AppendConversationRequest) (AppendConversationResponse, error) {
+	var resp AppendConversationResponse
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("conversations/" + conversationId).
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		BodyJSON(req).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Post()
+
+	return resp, err
 }
 
 type CreateConversationRequest struct {

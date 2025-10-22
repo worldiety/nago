@@ -71,6 +71,16 @@ func NewAppend(mutex *sync.Mutex, bus events.Bus, repo Repository, repoMsg messa
 			Message:      msg.ID,
 		})
 
+		bus.Publish(HumanAppended{
+			Conversation: opts.Conversation,
+			ByUser:       subject.ID(),
+			Content:      opts.Input,
+		})
+
+		bus.Publish(Updated{
+			Conversation: opts.Conversation,
+		})
+
 		return msg.ID, nil
 	}
 }

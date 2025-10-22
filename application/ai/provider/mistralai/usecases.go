@@ -62,7 +62,9 @@ func NewUseCases(
 	syncConvRepo SyncConversationRepository,
 	findSecret secret.Match,
 	findAllConversations conversation.FindAll,
+	findConvByID conversation.FindByID,
 	findWorkspaces workspace.FindWorkspacesByPlatform,
+	findWorkspaceByID workspace.FindByID,
 	findAgent agent.FindByID,
 ) UseCases {
 	var mutex sync.Mutex
@@ -70,15 +72,21 @@ func NewUseCases(
 		Sync: NewSync(&mutex, bus, repoWorkspaceName, syncAgentRepo, syncConvRepo, findSecret, findAllConversations, findWorkspaces, findAgent),
 	}
 
-	events.SubscribeFor[agent.Updated](bus, func(evt agent.Updated) {
+	events.SubscribeFor(bus, func(evt agent.Updated) {
 		if err := uc.Sync(user.SU()); err != nil {
 			slog.Error("failed to sync mistral workspaces, caused by agent.Updated", "err", err.Error())
 		}
 	})
 
-	events.SubscribeFor[conversation.Started](bus, func(evt conversation.Started) {
+	events.SubscribeFor(bus, func(evt conversation.Started) {
 		if err := uc.Sync(user.SU()); err != nil {
 			slog.Error("failed to sync mistral workspaces, caused by conversation.Started", "err", err.Error())
+		}
+	})
+
+	events.SubscribeFor(bus, func(evt conversation.HumanAppended) {
+		if err := appendMessage(bus, findSecret, findConvByID, findWorkspaceByID, syncConvRepo, evt); err != nil {
+			slog.Error("failed to append mistral chat message, caused by conversation.HumanAppended", "err", err.Error())
 		}
 	})
 
