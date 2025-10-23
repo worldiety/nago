@@ -25,9 +25,10 @@ var (
 )
 
 type Settings struct {
-	Name  string `value:"nago.ai.mistralai.settings_title"`
-	Token string `style:"secret"`
-	_     string `credentialName:"nago.ai.mistralai.settings_name" credentialDescription:"nago.ai.mistralai.settings_desc" credentialLogo:"https://mistral.ai/favicon.ico?favicon.95e802d0.ico"`
+	Name        string `value:"nago.ai.mistralai.settings_title"`
+	Description string `label:"nago.common.label.description" lines:"3"`
+	Token       string `style:"secret"`
+	_           string `credentialName:"nago.ai.mistralai.settings_name" credentialDescription:"nago.ai.mistralai.settings_desc" credentialLogo:"https://mistral.ai/favicon.ico?favicon.95e802d0.ico"`
 }
 
 func (Settings) Credentials() bool {

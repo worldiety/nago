@@ -13,4 +13,5 @@ type Pages struct {
 	Workspaces core.NavigationPath
 	Agents     core.NavigationPath
 	Agent      core.NavigationPath
+	Provider   core.NavigationPath
 }

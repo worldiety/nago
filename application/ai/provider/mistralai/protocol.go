@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/pkg/xhttp"
 )
 
@@ -128,6 +129,14 @@ type Agent struct {
 	Version     int       `json:"version"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (a Agent) IntoAgent() agent.Agent {
+	return agent.Agent{
+		ID:          agent.ID(a.Id),
+		Name:        a.Name,
+		Description: a.Description,
+	}
 }
 
 func (c *Client) GetAgent(id string) (Agent, error) {

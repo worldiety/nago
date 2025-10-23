@@ -7,13 +7,15 @@
 
 package library
 
-import "go.wdy.de/nago/application/drive"
-
 type ID string
 
 type Library struct {
 	ID          ID
 	Name        string
 	Description string
-	Root        drive.File
+}
+
+type CreateOptions struct {
+	Name        string
+	Description string
 }

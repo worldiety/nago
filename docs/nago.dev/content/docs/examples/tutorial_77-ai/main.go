@@ -8,6 +8,7 @@
 package main
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/worldiety/option"
@@ -55,7 +56,9 @@ func main() {
 
 			wnd.AddDestroyObserver(events.SubscribeFor[conversation.Updated](cfg.EventBus(), func(evt conversation.Updated) {
 				if conv.Get() == evt.Conversation {
+					slog.Info("conversation updated", "id", evt.Conversation)
 					conv.Invalidate()
+					conv.Notify()
 				}
 			}))
 
@@ -63,8 +66,8 @@ func main() {
 
 			return ui.HStack(
 				ui.ScrollView(
-					uiai.Chats(conv).Frame(ui.Frame{Width: ui.L560, MinWidth: ui.L560}),
-				).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}),
+					uiai.Chats(conv).Frame(ui.Frame{Width: ui.Full, MinHeight: innerFullHeight}),
+				).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
 
 				ui.ScrollView(
 					uiai.Chat(conv, prompt).
@@ -72,8 +75,8 @@ func main() {
 							WorkspaceName: "Test",
 							AgentName:     "Walter",
 							CloudStore:    true,
-						}),
-				).ScrollToView("start-chat-button", ui.ScrollAnimationSmooth).
+						}).Padding(ui.Padding{}.All(ui.L16)),
+				).ScrollToView("end-of-chat", ui.ScrollAnimationSmooth).
 					Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}),
 			).Alignment(ui.Top).Frame(ui.Frame{Width: ui.Full, Height: innerFullHeight})
 

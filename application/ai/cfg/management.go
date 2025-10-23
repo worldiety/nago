@@ -14,6 +14,7 @@ import (
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/ai"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
@@ -39,6 +40,7 @@ type Management struct {
 	AgentUseCases        agent.UseCases
 	WorkspaceUseCases    workspace.UseCases
 	ConversationUseCases conversation.UseCases
+	UseCases             ai.UseCases
 	Pages                uiai.Pages
 }
 
@@ -89,14 +91,18 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 	idxConvMsg := data.NewCompositeIndex[conversation.ID, message.ID](storeIdxConvMsg)
 
+	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets)
+
 	management = Management{
 		WorkspaceUseCases:    workspace.NewUseCases(cfg.EventBus(), repoWorkspace, repoAgents),
 		AgentUseCases:        agent.NewUseCases(cfg.EventBus(), repoAgents),
 		ConversationUseCases: conversation.NewUseCases(cfg.EventBus(), repoConversation, repoWorkspace, repoAgents, repoMessages, idxConvMsg),
+		UseCases:             ucAI,
 		Pages: uiai.Pages{
 			Workspaces: "admin/ai/workspaces",
 			Agents:     "admin/ai/workspace",
 			Agent:      "admin/ai/workspace/agent",
+			Provider:   "admin/ai/provider",
 		},
 	}
 
@@ -136,12 +142,16 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return uiai.PageAgent(wnd, management.WorkspaceUseCases, management.AgentUseCases)
 	})
 
+	cfg.RootViewWithDecoration(management.Pages.Provider, func(wnd core.Window) core.View {
+		return uiai.PageProvider(wnd, management.UseCases)
+	})
+
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 		if !subject.HasPermission(workspace.PermCreate) {
 			return admin.Group{}
 		}
 
-		return admin.Group{
+		grp := admin.Group{
 			Title: "AI",
 			Entries: []admin.Card{
 				{
@@ -151,6 +161,22 @@ func Enable(cfg *application.Configurator) (Management, error) {
 				},
 			},
 		}
+
+		for provider, err := range ucAI.FindAllProvider(user.SU()) {
+			if err != nil {
+				slog.Error("failed to find provider", "err", err.Error())
+				continue
+			}
+
+			grp.Entries = append(grp.Entries, admin.Card{
+				Title:        provider.Name(),
+				Text:         provider.Description(),
+				Target:       management.Pages.Provider,
+				TargetParams: core.Values{"provider": string(provider.Identity())},
+			})
+		}
+
+		return grp
 	})
 
 	cfg.AddContextValue(core.ContextValue("nago.ai", management))

@@ -29,8 +29,8 @@ var (
 	StrModel        = i18n.MustString("nago.ai.admin.model", i18n.Values{language.English: "Model", language.German: "Modell"})
 	StrTemperature  = i18n.MustString("nago.ai.admin.temperature", i18n.Values{language.English: "Temperature", language.German: "Zufälligkeit"})
 	StrCapabilities = i18n.MustString("nago.ai.admin.capabilities", i18n.Values{language.English: "Capabilities", language.German: "Fähigkeiten"})
-	StrLibraries    = i18n.MustString("nago.ai.admin.libraries", i18n.Values{language.English: "Libraries", language.German: "Bibliotheken"})
-	StrFunctions    = i18n.MustString("nago.ai.admin.functions", i18n.Values{language.English: "Functions", language.German: "Funktionen"})
+
+	StrFunctions = i18n.MustString("nago.ai.admin.functions", i18n.Values{language.English: "Functions", language.German: "Funktionen"})
 )
 
 func PageAgent(wnd core.Window, ucWS workspace.UseCases, ucAgents agent.UseCases) core.View {

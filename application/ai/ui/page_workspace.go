@@ -30,7 +30,6 @@ import (
 var (
 	StrWorkspace = i18n.MustString("nago.ai.admin.workspace", i18n.Values{language.English: "Workspace", language.German: "Workspace"})
 	StrAgent     = i18n.MustString("nago.ai.admin.agent", i18n.Values{language.English: "Agent", language.German: "Agent"})
-	StrAgents    = i18n.MustString("nago.ai.admin.agents", i18n.Values{language.English: "Agents", language.German: "Agents"})
 )
 
 type CreateAgentForm struct {

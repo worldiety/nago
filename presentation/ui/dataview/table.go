@@ -88,6 +88,11 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 
 type Idx string
 
+func (i Idx) Int() (int, bool) {
+	v, err := strconv.Atoi(string(i))
+	return v, err == nil
+}
+
 type Element[T any] struct {
 	ID    Idx
 	Index int
