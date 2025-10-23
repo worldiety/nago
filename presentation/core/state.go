@@ -13,8 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go.wdy.de/nago/pkg/xtime"
-	"go.wdy.de/nago/presentation/proto"
 	"log/slog"
 	"reflect"
 	"runtime"
@@ -23,6 +21,10 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"go.wdy.de/nago/pkg/xsync"
+	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // A State is held within the root composition (which is a scope)
@@ -157,6 +159,23 @@ func (s *State[T]) Get() T {
 	return s.value
 }
 
+// Valid returns true, if a value has ever been set explicitly. A newly created empty State will return false.
+func (s *State[T]) Valid() bool {
+	if s == nil {
+		return false
+	}
+
+	return s.valid
+}
+
+// SetValid switches the valid flag which may cause Init and AsyncInit to run again.
+func (s *State[T]) SetValid(v bool) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.valid = v
+	s.Invalidate()
+}
+
 // Notify triggers all listeners. Usually, you may just want to
 // use [State.Set] without any observers, because that is entirely user/frontend-driven
 // and to avoid causing infinite cycles in your UI.
@@ -185,6 +204,8 @@ func (s *State[T]) Set(v T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	s.valid = true // always make valid, otherwise setting e.g. a nil value to a pointer type will never become valid
+
 	// TODO not sure, if this is a good idea but it breaks reactive code loops setting values all over again however this causes a massive escaping ballast and is often unneeded (int, bool, string etc). fix me if generics get a type switch
 	if reflect.DeepEqual(s.value, v) {
 		return
@@ -192,7 +213,6 @@ func (s *State[T]) Set(v T) {
 
 	s.Invalidate() // TODO set this once in the scope_window for better performance
 	s.value = v
-	s.valid = true
 }
 
 // Update sets and notifies the state. See also [State.Set] and [State.Notify].
@@ -261,6 +281,23 @@ func (s *State[T]) Init(fn func() T) *State[T] {
 		s.valid = true
 		s.value = fn()
 	}
+	return s
+}
+
+func (s *State[T]) AsyncInit(fn func() T) *State[T] {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.valid {
+		return s
+	}
+
+	xsync.Go(func() error {
+		v := fn()
+		s.Set(v)
+		s.Invalidate() // ensure that even equal states like zero or nil values will trigger a redraw
+		return nil
+	}, nil)
+
 	return s
 }
 
