@@ -51,6 +51,23 @@ func DeclareFindByID[UseCase any](id ID, entityName string) ID {
 	).String()}, 3)
 }
 
+// DeclareFindByName creates a prototype permission stub. See also [DeclareCreate].
+func DeclareFindByName[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("View %s element by name", entityName),
+			language.German:  fmt.Sprintf("%s Element nach Namen anzeigen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can view " + entityName + " elements if they know their name.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente ansehen, wenn sie den Namen kennen.",
+		},
+	).String()}, 3)
+}
+
 // DeclareDeleteByID creates a prototype permission stub. See also [DeclareCreate].
 func DeclareDeleteByID[UseCase any](id ID, entityName string) ID {
 	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
