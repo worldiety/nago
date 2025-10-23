@@ -9,6 +9,7 @@ package application
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/secret"
 	uisecret "go.wdy.de/nago/application/secret/ui"
 	"go.wdy.de/nago/pkg/blob/crypto"
@@ -53,7 +54,7 @@ func (c *Configurator) SecretManagement() (SecretManagement, error) {
 
 		encryptedSecretStore := crypto.NewBlobStore(secretStore, key)
 		secretRepo := json.NewSloppyJSONRepository[secret.Secret, secret.ID](encryptedSecretStore)
-		uc := secret.NewUseCases(secretRepo)
+		uc := secret.NewUseCases(c.EventBus(), secretRepo)
 
 		c.secretManagement = &SecretManagement{
 			UseCases: uc,

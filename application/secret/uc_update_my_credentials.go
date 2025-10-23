@@ -9,14 +9,16 @@ package secret
 
 import (
 	"fmt"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/std"
 	"slices"
 	"sync"
 	"time"
+
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/std"
 )
 
-func NewUpdateMyCredentials(mutex *sync.Mutex, repository Repository) UpdateMyCredentials {
+func NewUpdateMyCredentials(mutex *sync.Mutex, bus events.Bus, repository Repository) UpdateMyCredentials {
 	return func(subject auth.Subject, id ID, credentials Credentials) error {
 		if err := subject.Audit(PermUpdateMyCredentials); err != nil {
 			return err
@@ -43,6 +45,11 @@ func NewUpdateMyCredentials(mutex *sync.Mutex, repository Repository) UpdateMyCr
 		secret.Credentials = credentials
 		secret.LastMod = time.Now()
 
-		return repository.Save(secret)
+		if err := repository.Save(secret); err != nil {
+			return fmt.Errorf("cannot save secret: %w", err)
+		}
+
+		bus.Publish(Updated{Secret: id})
+		return nil
 	}
 }

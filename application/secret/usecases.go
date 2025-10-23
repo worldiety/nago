@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 )
 
@@ -89,16 +90,16 @@ type UseCases struct {
 	Match                Match
 }
 
-func NewUseCases(repository Repository) UseCases {
+func NewUseCases(bus events.Bus, repository Repository) UseCases {
 	var globalLock sync.Mutex
 	findMySecretsFn := NewFindMySecrets(repository)
-	createSecretFn := NewCreateSecret(&globalLock, repository)
-	updateMyCredentialsFn := NewUpdateMyCredentials(&globalLock, repository)
+	createSecretFn := NewCreateSecret(&globalLock, bus, repository)
+	updateMyCredentialsFn := NewUpdateMyCredentials(&globalLock, bus, repository)
 	findMySecretByIDFn := NewFindMySecretByID(repository)
-	deleteMySecretByIDFn := NewDeleteMySecretByID(repository)
-	updateMySecretGroupsFn := NewUpdateMySecretGroups(&globalLock, repository)
+	deleteMySecretByIDFn := NewDeleteMySecretByID(bus, repository)
+	updateMySecretGroupsFn := NewUpdateMySecretGroups(&globalLock, bus, repository)
 	findGroupSecretsFn := NewFindGroupSecrets(repository)
-	updateMySecretOwnersFn := NewUpdateMySecretOwners(&globalLock, repository)
+	updateMySecretOwnersFn := NewUpdateMySecretOwners(&globalLock, bus, repository)
 
 	return UseCases{
 		FindMySecrets:        findMySecretsFn,

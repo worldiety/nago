@@ -9,13 +9,15 @@ package secret
 
 import (
 	"fmt"
+	"sync"
+
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
-	"sync"
 )
 
-func NewUpdateMySecretGroups(mutex *sync.Mutex, repository Repository) UpdateMySecretGroups {
+func NewUpdateMySecretGroups(mutex *sync.Mutex, bus events.Bus, repository Repository) UpdateMySecretGroups {
 	return func(subject auth.Subject, id ID, groups []group.ID) error {
 		if err := subject.Audit(PermUpdateMySecretGroups); err != nil {
 			return err
@@ -42,6 +44,11 @@ func NewUpdateMySecretGroups(mutex *sync.Mutex, repository Repository) UpdateMyS
 		secret := optSecret.Unwrap()
 		secret.Groups = groups
 
-		return repository.Save(secret)
+		if err := repository.Save(secret); err != nil {
+			return fmt.Errorf("cannot save secret: %w", err)
+		}
+
+		bus.Publish(Updated{Secret: id})
+		return nil
 	}
 }

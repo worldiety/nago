@@ -9,14 +9,17 @@ package secret
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
+
 	"sync"
 	"time"
 )
 
-func NewCreateSecret(mutex *sync.Mutex, secrets Repository) CreateSecret {
+func NewCreateSecret(mutex *sync.Mutex, bus events.Bus, secrets Repository) CreateSecret {
 	return func(subject auth.Subject, credentials Credentials) (ID, error) {
 		if err := subject.Audit(PermCreateSecret); err != nil {
 			return "", err
@@ -41,6 +44,12 @@ func NewCreateSecret(mutex *sync.Mutex, secrets Repository) CreateSecret {
 			return "", fmt.Errorf("secret already exists")
 		}
 
-		return secret.ID, secrets.Save(secret)
+		if err := secrets.Save(secret); err != nil {
+			return "", fmt.Errorf("cannot save secret: %v", err)
+		}
+
+		bus.Publish(Created{Secret: secret.ID})
+
+		return secret.ID, nil
 	}
 }
