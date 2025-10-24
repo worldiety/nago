@@ -39,7 +39,7 @@ func PageMyCircleGroupsUsers(
 		return alert.BannerError(err)
 	}
 
-	return viewUsers(wnd, "Grupppe / "+myGroup.Name, useCases, func(usr user.User) bool {
+	return viewUsers(wnd, "Gruppe / "+myGroup.Name, useCases, func(usr user.User) bool {
 		return slices.Contains(usr.Groups, myGroup.ID)
 	}, func(users []user.User) {
 		for _, usr := range users {
