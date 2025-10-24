@@ -49,23 +49,21 @@ func Heading(level int, title string) core.View {
 	case 1:
 		return VStack(
 			WindowTitle(title),
-			Text(title).Font(Font{
-				Size:   "2rem",
-				Weight: HeadlineAndTitleFontWeight,
-			}),
+			Text(title).Font(HeadlineLarge),
 			HLineWithColor(ColorAccent),
-		).Alignment(Leading).Padding(Padding{Bottom: Length("2rem")})
+		).Alignment(Leading).Padding(Padding{Top: "1rem", Bottom: "1rem"})
 	case 2:
 		return VStack(
-			Text(title).Font(Font{
-				Size:   "1.2rem",
-				Weight: HeadlineAndTitleFontWeight,
-			}),
+			Text(title).Font(HeadlineMedium),
 			HLine(),
-		).Alignment(Leading).Padding(Padding{Bottom: Length("2rem")})
+		).Alignment(Leading).Padding(Padding{Bottom: "1rem"})
 	case 3:
-		return VStack(Text(title).Font(Title))
+		return VStack(Text(title).Font(HeadlineSmall))
+	case 4:
+		return VStack(Text(title).Font(TitleLarge))
+	case 5:
+		return VStack(Text(title).Font(TitleMedium))
 	default:
-		return VStack(Text(title).Font(SubTitle))
+		return VStack(Text(title).Font(TitleSmall))
 	}
 }
