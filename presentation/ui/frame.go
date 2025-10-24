@@ -60,6 +60,20 @@ func (f Frame) FullWidth() Frame {
 	return f
 }
 
+// Large sets the max width to 560dp (35rem) and Width to Full.
+func (f Frame) Large() Frame {
+	f.MaxWidth = L560
+	f.Width = Full
+	return f
+}
+
+// Larger sets the width to 880dp (55rem) and Width to Full.
+func (f Frame) Larger() Frame {
+	f.MaxWidth = L880
+	f.Width = Full
+	return f
+}
+
 // FullHeight sets the frame's height to 100% of the available space.
 func (f Frame) FullHeight() Frame {
 	f.Height = "100%"

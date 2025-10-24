@@ -78,12 +78,13 @@ type Field[E any] struct {
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	data            Data[E, ID]
 	action          func(e E)
-	actionNew       func()
+	newAction       core.View
 	selectOptions   []SelectOption[ID]
 	modelOptions    pager.ModelOptions
 	model           option.Opt[pager.Model[E, ID]]
 	hideSelection   bool
 	addChevronRight bool
+	wnd             core.Window
 }
 
 type Idx string
@@ -132,12 +133,14 @@ func FromSlice[T any](wnd core.Window, slice []T, fields []Field[Element[T]]) TD
 func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) TDataView[E, ID] {
 	return TDataView[E, ID]{
 		data: data,
+		wnd:  wnd,
 	}
 }
 
 func FromModel[E data.Aggregate[ID], ID ~string](wnd core.Window, model pager.Model[E, ID], fields []Field[E]) TDataView[E, ID] {
 	return TDataView[E, ID]{
 		model: option.Some(model),
+		wnd:   wnd,
 		data: Data[E, ID]{
 			Fields: fields,
 		},
@@ -159,10 +162,15 @@ func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
 	return t
 }
 
-// ActionNew inserts a conventional default button to create a new element for this data view. It has a default
-// position, icon, text and button style.
-func (t TDataView[E, ID]) ActionNew(fn func()) TDataView[E, ID] {
-	t.actionNew = fn
+// NewAction inserts a conventional default button to create a new element for this data view. It has a default
+// position, icon, text and button style. See also [TDataView.NewActionView].
+func (t TDataView[E, ID]) NewAction(fn func()) TDataView[E, ID] {
+	return t.NewActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)))
+}
+
+// NewActionView inserts the given view to idiomatic position for creating new elements. See also [TDataView.NewAction].
+func (t TDataView[E, ID]) NewActionView(view core.View) TDataView[E, ID] {
+	t.newAction = view
 	return t
 }
 
@@ -267,7 +275,7 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 }
 
 func (t TDataView[E, ID]) actionBar(wnd core.Window, model pager.Model[E, ID]) core.View {
-	if t.actionNew == nil {
+	if t.newAction == nil {
 		return nil
 	}
 
@@ -308,7 +316,7 @@ func (t TDataView[E, ID]) actionBar(wnd core.Window, model pager.Model[E, ID]) c
 			)
 		}),
 		ui.If(len(t.selectOptions) > 0, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
-		ui.If(t.actionNew != nil, ui.PrimaryButton(t.actionNew).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(wnd))),
+		t.newAction,
 	).
 		FullWidth().
 		Gap(ui.L8).

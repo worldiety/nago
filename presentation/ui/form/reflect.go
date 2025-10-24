@@ -99,6 +99,7 @@ type TAuto[T any] struct {
 //     for string types and to 5 for []string types.
 //   - value:"string literal"|"bool literal"|"number literal" only applicable for fields with the according underlying
 //     type. Defaults to the zero value of the underlying type.
+//   - dialogOptions:"large|larger|xlarge|xxlarge" is only supported for source picker.
 func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	return TAuto[T]{
 		opts:        opts,
@@ -277,11 +278,14 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 							t.state.Notify()
 						})
 
+						dlgOpts := getDialogOptions(field)
+
 						fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
 							Title(label).
 							MultiSelect(true).
 							ErrorText(fieldErrValues[field.Name]).
 							Disabled(disabled).
+							DialogOptions(dlgOpts...).
 							SupportingText(supportingText).
 							Frame(ui.Frame{}.FullWidth()))
 
@@ -704,11 +708,14 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 								t.state.Notify()
 							})
 
+							dlgOpts := getDialogOptions(field)
+
 							fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
 								Title(label).
 								MultiSelect(false).
 								ErrorText(fieldErrValues[field.Name]).
 								Disabled(disabled).
+								DialogOptions(dlgOpts...).
 								SupportingText(supportingText).
 								Frame(ui.Frame{}.FullWidth()))
 
@@ -800,6 +807,24 @@ func setFieldValue(dst any, fieldName string, val any) any {
 	}
 
 	return cpy.Interface()
+}
+
+func getDialogOptions(field reflect.StructField) []alert.Option {
+	var dlgOpts []alert.Option
+	if dlgWidth := field.Tag.Get("dialogOptions"); dlgWidth != "" {
+		switch dlgWidth {
+		case "large":
+			dlgOpts = append(dlgOpts, alert.Large())
+		case "larger":
+			dlgOpts = append(dlgOpts, alert.Larger())
+		case "xlarge":
+			dlgOpts = append(dlgOpts, alert.XLarge())
+		case "xxlarge":
+			dlgOpts = append(dlgOpts, alert.XXLarge())
+		}
+	}
+
+	return dlgOpts
 }
 
 type ErrorWithFields interface {
