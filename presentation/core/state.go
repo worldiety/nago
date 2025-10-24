@@ -168,8 +168,11 @@ func (s *State[T]) Valid() bool {
 	return s.valid
 }
 
-// SetValid switches the valid flag which may cause Init and AsyncInit to run again.
-func (s *State[T]) SetValid(v bool) {
+// MarkValid switches the valid flag which may cause Init and AsyncInit to run again in the next render cycle, if
+// the state is then still in the composition. We intentionally do not named it SetValid because it appears
+// using the completion and a developer may confuse that with the regular Set, especially when working with
+// bool-states and (not so clever AI auto-completion).
+func (s *State[T]) MarkValid(v bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.valid = v
@@ -197,6 +200,13 @@ func (s *State[T]) Notify() {
 // Set updates the state with the given value and marks this state as valid (so no From initialization will ever happen)
 // and it marks this state as dirty (it updates the render generation marker). However, it uses a deep equals
 // logic to decide whether the state becomes dirty.
+//
+// Mutation of a state is free of technical data races, however it is not free of logical races while rendering.
+// For example, you may update the state exactly during rendering from another goroutine,
+// but after it has been evaluated to emit a dependent
+// view tree and when done, the state is marked as non-dirty and will not render again. To fix this, you must
+// post the change over the windows event loop. This is intentionally not the default, because it would trigger
+// additional render-cycles for most common in-loop modifications.
 //
 // Important: this does not trigger any registered observer. Observers are triggers by the frontend.
 // See also [State.SetObservable].
@@ -293,8 +303,14 @@ func (s *State[T]) AsyncInit(fn func() T) *State[T] {
 
 	xsync.Go(func() error {
 		v := fn()
-		s.Set(v)
-		s.Invalidate() // ensure that even equal states like zero or nil values will trigger a redraw
+		if wnd := s.wnd; wnd != nil {
+			// post this, to ensure that we are logically race free, even though updating a state is always free
+			// of technical data races.
+			wnd.(*scopeWindow).parent.eventLoop.Post(func() {
+				s.Set(v)
+				s.Invalidate() // ensure that even equal states like zero or nil values will trigger a redraw
+			})
+		}
 		return nil
 	}, nil)
 
