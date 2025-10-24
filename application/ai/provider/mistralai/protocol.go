@@ -9,7 +9,6 @@ package mistralai
 
 import (
 	"encoding/json"
-	"iter"
 	"net/http"
 	"time"
 
@@ -137,62 +136,6 @@ func (a Agent) IntoAgent() agent.Agent {
 		Name:        a.Name,
 		Description: a.Description,
 	}
-}
-
-func (c *Client) GetAgent(id string) (Agent, error) {
-	var resp Agent
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
-		URL("agents/"+id).
-		BearerAuthentication(c.token).
-		Query("page", "0").
-		Query("page_size", "1000").
-		ToJSON(&resp).
-		ToLimit(1024 * 1024).
-		Get()
-
-	return resp, err
-}
-
-func (c *Client) ListAgents() iter.Seq2[Agent, error] {
-	return func(yield func(Agent, error) bool) {
-		var resp []Agent
-		err := xhttp.NewRequest().
-			Client(c.c).
-			BaseURL(c.base).
-			Retry(c.retry).
-			URL("agents").
-			BearerAuthentication(c.token).
-			Query("page", "0").
-			Query("page_size", "1000").
-			ToJSON(&resp).
-			ToLimit(1024 * 1024).
-			Get()
-
-		if err != nil {
-			yield(Agent{}, err)
-			return
-		}
-
-		for _, agent := range resp {
-			if !yield(agent, nil) {
-				return
-			}
-		}
-	}
-}
-
-func (c *Client) DeleteAgent(id string) error {
-	return xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
-		Assert2xx(true).
-		URL("agents/" + id).
-		BearerAuthentication(c.token).
-		Delete()
 }
 
 func (c *Client) DeleteConversation(id string) error {

@@ -14,4 +14,5 @@ type Pages struct {
 	Agents     core.NavigationPath
 	Agent      core.NavigationPath
 	Provider   core.NavigationPath
+	Library    core.NavigationPath
 }

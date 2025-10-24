@@ -103,6 +103,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Agents:     "admin/ai/workspace",
 			Agent:      "admin/ai/workspace/agent",
 			Provider:   "admin/ai/provider",
+			Library:    "admin/ai/library",
 		},
 	}
 
@@ -144,6 +145,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.RootViewWithDecoration(management.Pages.Provider, func(wnd core.Window) core.View {
 		return uiai.PageProvider(wnd, management.UseCases)
+	})
+	cfg.RootViewWithDecoration(management.Pages.Library, func(wnd core.Window) core.View {
+		return uiai.PageLibrary(wnd, management.UseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

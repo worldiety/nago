@@ -58,6 +58,28 @@ func (c *Client) CreateLibrary(req CreateLibraryRequest) (LibraryInfo, error) {
 	return resp, err
 }
 
+type UpdateLibraryRequest struct {
+	Description string `json:"description,omitempty"`
+	Name        string `json:"name,omitempty"`
+}
+
+func (c *Client) UpdateLibrary(id string, req UpdateLibraryRequest) (LibraryInfo, error) {
+	var resp LibraryInfo
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("libraries/" + id).
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		BodyJSON(req).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Put()
+
+	return resp, err
+}
+
 func (c *Client) GetLibrary(id string) (LibraryInfo, error) {
 	var resp LibraryInfo
 	err := xhttp.NewRequest().

@@ -13,15 +13,42 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
 )
+
+var _ provider.Libraries = (*mistralLibraries)(nil)
 
 type mistralLibraries struct {
 	parent *mistralProvider
 }
 
+func (p *mistralLibraries) Documents(id library.ID) provider.Documents {
+	return &mistralDocuments{
+		id:     id,
+		parent: p.parent,
+	}
+}
+
 func (p *mistralLibraries) Create(subject auth.Subject, opts library.CreateOptions) (library.Library, error) {
 	info, err := p.client().CreateLibrary(CreateLibraryRequest{
+		Description: opts.Description,
+		Name:        opts.Name,
+	})
+
+	if err != nil {
+		return library.Library{}, err
+	}
+
+	if info.Id == "" {
+		return library.Library{}, fmt.Errorf("failed to create library: received empty id, probably a mistral protocol error")
+	}
+
+	return info.IntoLibrary(), nil
+}
+
+func (p *mistralLibraries) Update(subject auth.Subject, id library.ID, opts library.UpdateOptions) (library.Library, error) {
+	info, err := p.client().UpdateLibrary(string(id), UpdateLibraryRequest{
 		Description: opts.Description,
 		Name:        opts.Name,
 	})

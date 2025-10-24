@@ -13,6 +13,7 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
@@ -94,6 +95,7 @@ type Agent struct {
 	Description  string       `json:"desc,omitempty"`
 	Prompt       string       `json:"prompt,omitempty"`
 	Model        Model        `json:"model,omitempty"`
+	Model2       model.ID     `json:"model2,omitempty"`
 	Libraries    []library.ID `json:"libraries,omitempty"`
 	Capabilities []Capability `json:"capabilities,omitempty"`
 	Temperature  Temperature  `json:"tmp,omitempty"`
@@ -108,6 +110,13 @@ type Agent struct {
 
 func (e Agent) Identity() ID {
 	return e.ID
+}
+
+type CreateOptions struct {
+	Name         string
+	Description  string
+	Model        model.ID
+	Instructions string
 }
 
 type Repository data.Repository[Agent, ID]

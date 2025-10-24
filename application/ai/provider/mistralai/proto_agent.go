@@ -8,9 +8,13 @@
 package mistralai
 
 import (
+	"iter"
 	"time"
 
+	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/pkg/xhttp"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
 type CreateAgentRequest struct {
@@ -21,7 +25,7 @@ type CreateAgentRequest struct {
 	Instructions string   `json:"instructions,omitempty"`
 }
 
-type CreateAgentResponse struct {
+type AgentInfo struct {
 	Instructions string `json:"instructions"`
 	Tools        []struct {
 		Type     string `json:"type"`
@@ -68,16 +72,84 @@ type CreateAgentResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (c *Client) CreateAgent(req CreateAgentRequest) (CreateAgentResponse, error) {
-	var resp CreateAgentResponse
+func (a AgentInfo) IntoAgent() agent.Agent {
+	return agent.Agent{
+		ID:          agent.ID(a.Id),
+		Name:        a.Name,
+		Description: a.Description,
+		Prompt:      a.Instructions,
+		Model2:      model.ID(a.Model),
+		LastMod:     xtime.UnixMilliseconds(a.UpdatedAt.UnixMilli()),
+	}
+}
+
+func (c *Client) CreateAgent(req CreateAgentRequest) (AgentInfo, error) {
+	var resp AgentInfo
 	err := xhttp.NewRequest().
 		Client(c.c).
 		BaseURL(c.base).
 		URL("agents").
 		BearerAuthentication(c.token).
+		Assert2xx(true).
 		BodyJSON(req).
 		ToJSON(&resp).
 		Post()
 
 	return resp, err
+}
+
+func (c *Client) GetAgent(id string) (Agent, error) {
+	var resp Agent
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("agents/"+id).
+		BearerAuthentication(c.token).
+		Query("page", "0").
+		Query("page_size", "1000").
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return resp, err
+}
+
+func (c *Client) ListAgents() iter.Seq2[Agent, error] {
+	return func(yield func(Agent, error) bool) {
+		var resp []Agent
+		err := xhttp.NewRequest().
+			Client(c.c).
+			BaseURL(c.base).
+			Retry(c.retry).
+			URL("agents").
+			BearerAuthentication(c.token).
+			Query("page", "0").
+			Query("page_size", "1000").
+			ToJSON(&resp).
+			ToLimit(1024 * 1024).
+			Get()
+
+		if err != nil {
+			yield(Agent{}, err)
+			return
+		}
+
+		for _, agent := range resp {
+			if !yield(agent, nil) {
+				return
+			}
+		}
+	}
+}
+
+func (c *Client) DeleteAgent(id string) error {
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		Assert2xx(true).
+		URL("agents/" + id).
+		BearerAuthentication(c.token).
+		Delete()
 }

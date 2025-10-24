@@ -78,7 +78,7 @@ func PageWorkspaces(wnd core.Window, ucWS workspace.UseCases) core.View {
 			Action(func(e workspace.Workspace) {
 				wnd.Navigation().ForwardTo("admin/ai/workspace", core.Values{"workspace": string(e.ID)})
 			}).
-			ActionNew(func() {
+			NewAction(func() {
 				createDialogPresented.Set(true)
 			}),
 	).FullWidth().Alignment(ui.Leading)

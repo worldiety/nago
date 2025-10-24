@@ -115,7 +115,7 @@ func PageWorkspace(wnd core.Window, ucWS workspace.UseCases, ucAgents agent.UseC
 			Action(func(e agent.Agent) {
 				wnd.Navigation().ForwardTo("admin/ai/workspace/agent", wnd.Values().Put("agent", string(e.ID)))
 			}).
-			ActionNew(func() {
+			NewAction(func() {
 				createDialogPresented.Set(true)
 			}),
 	).FullWidth().Alignment(ui.Leading)

@@ -15,10 +15,25 @@ import (
 	"go.wdy.de/nago/auth"
 )
 
-var _ = provider.Agents((*mistralAgents)(nil))
+var _ provider.Agents = (*mistralAgents)(nil)
 
 type mistralAgents struct {
 	parent *mistralProvider
+}
+
+func (p *mistralAgents) Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error) {
+	ag, err := p.client().CreateAgent(CreateAgentRequest{
+		Model:        string(options.Model),
+		Name:         options.Name,
+		Description:  options.Description,
+		Instructions: options.Instructions,
+	})
+
+	if err != nil {
+		return agent.Agent{}, err
+	}
+
+	return ag.IntoAgent(), nil
 }
 
 func (p *mistralAgents) client() *Client {

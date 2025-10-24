@@ -19,3 +19,8 @@ type CreateOptions struct {
 	Name        string
 	Description string
 }
+
+type UpdateOptions struct {
+	Name        string
+	Description string
+}

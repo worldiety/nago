@@ -160,6 +160,7 @@ func (s *State[T]) Get() T {
 }
 
 // Valid returns true, if a value has ever been set explicitly. A newly created empty State will return false.
+// See also [State.Reset].
 func (s *State[T]) Valid() bool {
 	if s == nil {
 		return false
@@ -168,14 +169,12 @@ func (s *State[T]) Valid() bool {
 	return s.valid
 }
 
-// MarkValid switches the valid flag which may cause Init and AsyncInit to run again in the next render cycle, if
-// the state is then still in the composition. We intentionally do not named it SetValid because it appears
-// using the completion and a developer may confuse that with the regular Set, especially when working with
-// bool-states and (not so clever AI auto-completion).
-func (s *State[T]) MarkValid(v bool) {
+// Reset may cause [State.Init] and [State.AsyncInit] to run again in the next render cycle, if
+// the state is then still in the composition. See also [State.Valid].
+func (s *State[T]) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.valid = v
+	s.valid = false
 	s.Invalidate()
 }
 

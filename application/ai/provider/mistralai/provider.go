@@ -12,12 +12,15 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 )
 
+var _ provider.Provider = (*mistralProvider)(nil)
+
 type mistralProvider struct {
 	id     provider.ID
 	cfg    Settings
 	cl     *Client
 	libs   *mistralLibraries
 	agents *mistralAgents
+	models *mistralModels
 }
 
 func NewProvider(id provider.ID, cfg Settings) provider.Provider {
@@ -35,7 +38,15 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 		parent: p,
 	}
 
+	p.models = &mistralModels{
+		parent: p,
+	}
+
 	return p
+}
+
+func (p *mistralProvider) Models() provider.Models {
+	return p.models
 }
 
 func (p *mistralProvider) Identity() provider.ID {

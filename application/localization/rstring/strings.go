@@ -267,6 +267,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelSummary = i18n.MustString(
+		"nago.common.label.summary",
+		i18n.Values{
+			language.English: "Summary",
+			language.German:  "Zusammenfassung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelPlatform = i18n.MustString(
 		"nago.common.label.platform",
 		i18n.Values{
