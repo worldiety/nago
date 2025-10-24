@@ -375,6 +375,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
 		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
 		ExportUsers:               NewExportUsers(users),
-		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn),
+		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal, updateOtherGroupsFn, updateOtherRolesFn),
 	}
 }

@@ -145,9 +145,11 @@ type Settings struct {
 	AnonRoles  []role.ID  `section:"Anonyme Nutzer" json:"anonRoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen hat jeder anonyme Nutzer."`
 	AnonGroups []group.ID `section:"Anonyme Nutzer" json:"anonGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen hat jeder anonyme Nutzer."`
 
-	_______      any      `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.description"`
-	SSONLSServer string   `section:"nago.iam.settings.sso.title" label:"NLS URL" supportingText:"nago.iam.settings.sso.nls_url_supporting_text" json:"sso_nls_server"`
-	SSOAllowList []string `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.allow_list_title" supportingText:"nago.iam.settings.sso.allow_list_supporting_text" json:"sso_allow_list"`
+	_______          any        `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.description"`
+	SSONLSServer     string     `section:"nago.iam.settings.sso.title" label:"NLS URL" supportingText:"nago.iam.settings.sso.nls_url_supporting_text" json:"sso_nls_server"`
+	SSOAllowList     []string   `section:"nago.iam.settings.sso.title" label:"nago.iam.settings.sso.allow_list_title" supportingText:"nago.iam.settings.sso.allow_list_supporting_text" json:"sso_allow_list"`
+	DefaultSSORoles  []role.ID  `section:"nago.iam.settings.sso.title" json:"defaultSSORoles" source:"nago.roles" label:"Standardrolle" supportingText:"Diese Rollen werden pauschal einem neuen SSO Nutzer hinzugefügt."`
+	DefaultSSOGroups []group.ID `section:"nago.iam.settings.sso.title" json:"defaultSSOGroups" source:"nago.groups" label:"Standardgruppen" supportingText:"Diese Gruppen werden pauschal einem neuen SSO Nutzer hinzugefügt."`
 }
 
 func (s Settings) GlobalSettings() bool { return true }
