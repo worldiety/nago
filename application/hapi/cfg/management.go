@@ -20,6 +20,14 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// Management is a Nago system (HAPI Management).
+// It provides functionality to define and serve RESTful APIs within the application.
+// It is possible to programmatically register endpoints, describe request and response types,
+// and automatically generate OpenAPI specifications used by various API documentation frontends
+// such as Stoplight, Swagger, or Redocly. If multiple frontends are enabled, only one will be selected.
+// It is strongly recommended to enable only one, as the selection behaviour is undefined.
+//
+// When application.TokenManagement is enabled, bearer authentication can be used to protect API endpoints.
 type Management struct {
 	API *hapi.API
 }

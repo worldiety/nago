@@ -15,7 +15,7 @@ Tokens act like users: they can have groups, roles, permissions, and licenses as
 This allows external applications or users to authenticate against the system and gain access to defined resources.
 
 {{< callout type="info" >}}
-Tokens are primarily intended to be used with [API Management](../api_management/).  
+Tokens are primarily intended to be used with [HAPI Management](../hapi_management/).  
 While APIs can also be exposed without authentication, Token Management enables secure and fine-grained access control.
 {{< /callout >}}
 
