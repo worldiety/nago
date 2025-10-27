@@ -18,7 +18,7 @@ import (
 	"go.wdy.de/nago/pkg/data"
 )
 
-func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal, updateGroups UpdateOtherGroups, updateRoles UpdateOtherRoles) MergeSingleSignOnUser {
+func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal) MergeSingleSignOnUser {
 	return func(createData SingleSignOnUser) (ID, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -67,23 +67,13 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 				},
 				CreatedAt:     time.Now(),
 				EMailVerified: true,
+				Roles:         cfg.DefaultSSORoles,
+				Groups:        cfg.DefaultGroups,
 				Status:        Enabled{},
 			}
 
 			if err := repo.Save(usr); err != nil {
 				return "", fmt.Errorf("cannot save user: %w", err)
-			}
-
-			if len(cfg.DefaultSSOGroups) > 0 {
-				if err := updateGroups(SU(), usr.ID, cfg.DefaultSSOGroups); err != nil {
-					return "", fmt.Errorf("cannot update sso default groups: %w", err)
-				}
-			}
-
-			if len(cfg.DefaultSSORoles) > 0 {
-				if err := updateRoles(SU(), usr.ID, cfg.DefaultSSORoles); err != nil {
-					return "", fmt.Errorf("cannot update sso default groups: %w", err)
-				}
 			}
 
 			// done
