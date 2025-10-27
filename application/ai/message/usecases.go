@@ -26,11 +26,24 @@ type Content struct {
 	Text option.Ptr[string] `json:"text,omitzero"`
 }
 
+type Role string
+
+const (
+	User          Role = "user"
+	AssistantRole      = "assistant"
+)
+
 type Message struct {
 	ID        ID                     `json:"id"`
 	CreatedAt xtime.UnixMilliseconds `json:"createdAt"`
 	CreatedBy user.ID                `json:"createdBy"`
-	Inputs    xslices.Slice[Content] `json:"inputs"`
+
+	// deprecated
+	Inputs xslices.Slice[Content] `json:"inputs"`
+
+	Role          Role               `json:"role"`
+	MessageInput  option.Ptr[string] `json:"messageInput"`
+	MessageOutput option.Ptr[string] `json:"messageOutput"`
 }
 
 func (m Message) Identity() ID {

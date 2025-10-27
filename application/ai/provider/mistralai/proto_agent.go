@@ -17,6 +17,61 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
+type Agent struct {
+	Instructions string `json:"instructions"`
+	Tools        []struct {
+		Type     string `json:"type"`
+		Function struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			Strict      bool   `json:"strict"`
+			Parameters  struct {
+			} `json:"parameters"`
+		} `json:"function"`
+	} `json:"tools"`
+	CompletionArgs struct {
+		Stop             string  `json:"stop"`
+		PresencePenalty  int     `json:"presence_penalty"`
+		FrequencyPenalty int     `json:"frequency_penalty"`
+		Temperature      float64 `json:"temperature"`
+		TopP             int     `json:"top_p"`
+		MaxTokens        int     `json:"max_tokens"`
+		RandomSeed       int     `json:"random_seed"`
+		Prediction       struct {
+			Type    string `json:"type"`
+			Content string `json:"content"`
+		} `json:"prediction"`
+		ResponseFormat struct {
+			Type       string `json:"type"`
+			JsonSchema struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+				Schema      struct {
+				} `json:"schema"`
+				Strict bool `json:"strict"`
+			} `json:"json_schema"`
+		} `json:"response_format"`
+		ToolChoice string `json:"tool_choice"`
+	} `json:"completion_args"`
+	Model       string    `json:"model"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Handoffs    []string  `json:"handoffs"`
+	Object      string    `json:"object"`
+	Id          string    `json:"id"`
+	Version     int       `json:"version"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (a Agent) IntoAgent() agent.Agent {
+	return agent.Agent{
+		ID:          agent.ID(a.Id),
+		Name:        a.Name,
+		Description: a.Description,
+	}
+}
+
 type CreateAgentRequest struct {
 	Model        string   `json:"model"`
 	Name         string   `json:"name"`
@@ -152,4 +207,23 @@ func (c *Client) DeleteAgent(id string) error {
 		URL("agents/" + id).
 		BearerAuthentication(c.token).
 		Delete()
+}
+
+type UpdateAgentRequest struct {
+	Instructions *string `json:"instructions"`
+	Model        *string `json:"model"`
+	Name         *string `json:"name"`
+	Description  *string `json:"description"`
+}
+
+func (c *Client) UpdateAgent(id string, req UpdateAgentRequest) error {
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("agents/" + id).
+		BodyJSON(req).
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		Patch()
 }

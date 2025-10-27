@@ -12,8 +12,10 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
 )
@@ -36,6 +38,8 @@ type Provider interface {
 	Libraries() option.Opt[Libraries]
 
 	Agents() option.Opt[Agents]
+
+	Conversations() option.Opt[Conversations]
 }
 
 type Models interface {
@@ -62,4 +66,17 @@ type Agents interface {
 	All(subject auth.Subject) iter.Seq2[agent.Agent, error]
 	Delete(subject auth.Subject, id agent.ID) error
 	Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error)
+}
+
+type Conversations interface {
+	All(subject auth.Subject) iter.Seq2[conversation.Conversation, error]
+	FindByID(subject auth.Subject, id conversation.ID) (option.Opt[conversation.Conversation], error)
+	Delete(subject auth.Subject, id conversation.ID) error
+	Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, error)
+	Messages(subject auth.Subject, id conversation.ID) Messages
+}
+
+type Messages interface {
+	Conversation() conversation.ID
+	All(subject auth.Subject) iter.Seq2[message.Message, error]
 }

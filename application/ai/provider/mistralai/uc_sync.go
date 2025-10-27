@@ -290,20 +290,6 @@ func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentR
 	return nil
 }
 
-func convInputToMistralInput(contents []message.Content) []Input {
-	var inputs []Input
-	for _, content := range contents {
-		if content.Text.IsSome() {
-			inputs = append(inputs, MessageInputEntry{
-				Content: TextChunk{Text: content.Text.Unwrap()},
-				Role:    RoleUser,
-			})
-		}
-	}
-
-	return inputs
-}
-
 func createCloudAgent(syncAgentRepo SyncAgentRepository, cl *Client, localAgent agent.Agent) error {
 	cla, err := cl.CreateAgent(CreateAgentRequest{
 		Model:        calculateBestMistralModel(localAgent),

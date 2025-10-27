@@ -15,6 +15,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/message"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
@@ -35,9 +36,10 @@ const (
 )
 
 type Conversation struct {
-	ID        ID           `json:"id,omitempty"`
-	Workspace workspace.ID `json:"workspace,omitempty"`
-	Agent     agent.ID     `json:"agent,omitempty"`
+	ID ID `json:"id,omitempty"`
+
+	Agent agent.ID `json:"agent,omitempty"`
+	Model model.ID `json:"model,omitempty"` // alternatively a model was used instead of an agent
 
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -50,12 +52,31 @@ type Conversation struct {
 
 	// CloudStore indicates if the conversation should be stored and retrievable if the provider uses a cloud
 	// backend.
+	// deprecated
 	CloudStore bool                   `json:"cloudStore,omitempty"`
 	CreatedAt  xtime.UnixMilliseconds `json:"createdAt,omitempty"`
 	CreatedBy  user.ID                `json:"createdBy,omitempty"`
 
-	State State  `json:"state,omitempty"`
+	// deprecated
+	Workspace workspace.ID `json:"workspace,omitempty"`
+
+	// deprecated
+	State State `json:"state,omitempty"`
+	// deprecated
 	Error string `json:"error,omitempty"`
+}
+
+type CreateOptions struct {
+	Model        model.ID // either Model or Agent must be used - if agents are supported at all
+	Agent        agent.ID
+	Name         string
+	Description  string
+	Instructions string
+	// Input is a slice of union types of various content types. This must not be empty.
+	Input []message.Content `json:"input,omitempty"`
+	// CloudStore indicates if the conversation should be stored and retrievable if the provider uses a cloud
+	// backend.
+	CloudStore bool
 }
 
 func (c Conversation) Identity() ID {

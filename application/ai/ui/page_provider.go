@@ -15,6 +15,7 @@ import (
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/ai"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
@@ -30,9 +31,10 @@ import (
 )
 
 var (
-	StrLibraries = i18n.MustString("nago.ai.admin.libraries", i18n.Values{language.English: "Libraries", language.German: "Bibliotheken"})
-	StrLibrary   = i18n.MustString("nago.ai.admin.library", i18n.Values{language.English: "Library", language.German: "Bibliothek"})
-	StrAgents    = i18n.MustString("nago.ai.admin.agents", i18n.Values{language.English: "Agents", language.German: "Agenten"})
+	StrConversations = i18n.MustString("nago.ai.admin.conversations", i18n.Values{language.English: "Conversations", language.German: "Unterhaltungen"})
+	StrLibraries     = i18n.MustString("nago.ai.admin.libraries", i18n.Values{language.English: "Libraries", language.German: "Bibliotheken"})
+	StrLibrary       = i18n.MustString("nago.ai.admin.library", i18n.Values{language.English: "Library", language.German: "Bibliothek"})
+	StrAgents        = i18n.MustString("nago.ai.admin.agents", i18n.Values{language.English: "Agents", language.German: "Agenten"})
 )
 
 func PageProvider(wnd core.Window, uc ai.UseCases) core.View {
@@ -54,6 +56,8 @@ func PageProvider(wnd core.Window, uc ai.UseCases) core.View {
 		agentTable(wnd, prov),
 		ui.Space(ui.L48),
 		libTable(wnd, prov),
+		ui.Space(ui.L48),
+		libConversations(wnd, prov),
 	).FullWidth().Alignment(ui.Leading)
 }
 
@@ -268,4 +272,69 @@ func dialogNewLibrary(wnd core.Window, libs provider.Libraries, presented *core.
 			return err == nil
 		}),
 	)
+}
+
+func libConversations(wnd core.Window, prov provider.Provider) core.View {
+	optConvs := prov.Conversations()
+	if optConvs.IsNone() {
+		return nil
+	}
+
+	convs := optConvs.Unwrap()
+
+	loadedConvs := core.AutoState[[]conversation.Conversation](wnd).AsyncInit(func() []conversation.Conversation {
+		v, err := xslices.Collect2(convs.All(wnd.Subject()))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return nil
+		}
+
+		return v
+	})
+
+	createPresented := core.AutoState[bool](wnd)
+
+	return ui.VStack(
+		ui.H2(StrConversations.Get(wnd)),
+		ui.If(!loadedConvs.Valid(), ui.Text(rstring.LabelPleaseWait.Get(wnd))),
+
+		ui.IfFunc(loadedConvs.Valid(), func() core.View {
+			return dataview.FromSlice(wnd, loadedConvs.Get(), []dataview.Field[dataview.Element[conversation.Conversation]]{
+				{
+					Name: rstring.LabelName.Get(wnd),
+					Map: func(obj dataview.Element[conversation.Conversation]) core.View {
+						return ui.Text(obj.Value.Name)
+					},
+				},
+				{
+					Name: rstring.LabelDescription.Get(wnd),
+					Map: func(obj dataview.Element[conversation.Conversation]) core.View {
+						return ui.Text(obj.Value.Description)
+					},
+				},
+			}).
+				Action(func(e dataview.Element[conversation.Conversation]) {
+					wnd.Navigation().ForwardTo("admin/ai/provider/conversation", wnd.Values().Put("conversation", string(e.Value.ID)))
+				}).
+				NextActionIndicator(true).
+				NewAction(func() {
+					createPresented.Set(true)
+				}).SelectOptions(
+				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+					for _, i := range selected {
+						if idx, ok := i.Int(); ok {
+							if err := convs.Delete(wnd.Subject(), loadedConvs.Get()[idx].ID); err != nil {
+								return err
+							}
+						}
+					}
+
+					loadedConvs.Reset()
+
+					return nil
+				}),
+			)
+		}),
+	).FullWidth().Alignment(ui.Leading)
+
 }

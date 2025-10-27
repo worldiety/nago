@@ -10,9 +10,10 @@ package uiai
 import "go.wdy.de/nago/presentation/core"
 
 type Pages struct {
-	Workspaces core.NavigationPath
-	Agents     core.NavigationPath
-	Agent      core.NavigationPath
-	Provider   core.NavigationPath
-	Library    core.NavigationPath
+	Workspaces   core.NavigationPath
+	Agents       core.NavigationPath
+	Agent        core.NavigationPath
+	Provider     core.NavigationPath
+	Library      core.NavigationPath
+	Conversation core.NavigationPath
 }

@@ -99,11 +99,12 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		ConversationUseCases: conversation.NewUseCases(cfg.EventBus(), repoConversation, repoWorkspace, repoAgents, repoMessages, idxConvMsg),
 		UseCases:             ucAI,
 		Pages: uiai.Pages{
-			Workspaces: "admin/ai/workspaces",
-			Agents:     "admin/ai/workspace",
-			Agent:      "admin/ai/workspace/agent",
-			Provider:   "admin/ai/provider",
-			Library:    "admin/ai/library",
+			Workspaces:   "admin/ai/workspaces",
+			Agents:       "admin/ai/workspace",
+			Agent:        "admin/ai/workspace/agent",
+			Provider:     "admin/ai/provider",
+			Library:      "admin/ai/library",
+			Conversation: "admin/ai/provider/conversation",
 		},
 	}
 
@@ -148,6 +149,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})
 	cfg.RootViewWithDecoration(management.Pages.Library, func(wnd core.Window) core.View {
 		return uiai.PageLibrary(wnd, management.UseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Conversation, func(wnd core.Window) core.View {
+		return uiai.PageConversation(wnd, management.UseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

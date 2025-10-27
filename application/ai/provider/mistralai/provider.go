@@ -15,12 +15,13 @@ import (
 var _ provider.Provider = (*mistralProvider)(nil)
 
 type mistralProvider struct {
-	id     provider.ID
-	cfg    Settings
-	cl     *Client
-	libs   *mistralLibraries
-	agents *mistralAgents
-	models *mistralModels
+	id            provider.ID
+	cfg           Settings
+	cl            *Client
+	libs          *mistralLibraries
+	agents        *mistralAgents
+	models        *mistralModels
+	conversations *mistralConversations
 }
 
 func NewProvider(id provider.ID, cfg Settings) provider.Provider {
@@ -42,7 +43,15 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 		parent: p,
 	}
 
+	p.conversations = &mistralConversations{
+		parent: p,
+	}
+
 	return p
+}
+
+func (p *mistralProvider) Conversations() option.Opt[provider.Conversations] {
+	return option.Some[provider.Conversations](p.conversations)
 }
 
 func (p *mistralProvider) Models() provider.Models {
