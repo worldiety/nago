@@ -222,7 +222,7 @@ Configuration via the admin center:
 - No other systems
 
 **Is required by:**
-- [API Management](../api_management/)
+- [HAPI Management](../hapi_management/)
 - [Session Management](../session_management/)
 - [Signature Management](../signature_management/)
 - [Theme Management](../theme_management/)
