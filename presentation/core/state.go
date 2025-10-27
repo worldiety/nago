@@ -42,15 +42,16 @@ type State[T any] struct {
 	id                    string
 	ptr                   proto.Ptr
 	value                 T
-	valid                 bool
 	observer              []func(newValue T)
 	destroyedObserver     []func()
 	generation            int64
 	lastChangedGeneration int64
 	mutex                 sync.Mutex
 	observerLock          sync.RWMutex
-	destroyed             bool
 	wnd                   Window
+	valid                 bool
+	destroyed             bool
+	asyncPending          bool
 }
 
 // ID returns the window unique state identifier which is internally mapped into an proto.Ptr.
@@ -175,6 +176,7 @@ func (s *State[T]) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.valid = false
+	s.asyncPending = false
 	s.Invalidate()
 }
 
@@ -300,7 +302,19 @@ func (s *State[T]) AsyncInit(fn func() T) *State[T] {
 		return s
 	}
 
+	if s.asyncPending {
+		return s
+	}
+
+	s.asyncPending = true
+
 	xsync.Go(func() error {
+		defer func() {
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+			s.asyncPending = false
+		}()
+
 		v := fn()
 		if wnd := s.wnd; wnd != nil {
 			// post this, to ensure that we are logically race free, even though updating a state is always free
