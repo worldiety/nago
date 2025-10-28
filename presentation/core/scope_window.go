@@ -10,6 +10,12 @@ package core
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/auth"
@@ -17,11 +23,6 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
-	"io"
-	"log/slog"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 var _ Window = (*scopeWindow)(nil)
@@ -373,4 +374,16 @@ func (s *scopeWindow) Location() *time.Location {
 
 func (s *scopeWindow) Bundle() *i18n.Bundle {
 	return s.parent.bundle
+}
+
+func (s *scopeWindow) Post(fn func()) bool {
+	s.mutex.Lock()
+	p := s.parent
+	s.mutex.Unlock()
+
+	if p != nil {
+		return p.eventLoop.Post(fn)
+	}
+
+	return false
 }

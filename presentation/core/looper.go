@@ -97,12 +97,12 @@ func (l *EventLoop) SetOnPanicHandler(f func(p any)) {
 // Post appends f to the internal queue. It will be executed in the next tick cycle.
 // This is a LiFo, so the oldest message is evaluated first.
 // A Post never blocks and keeps allocating space for messages infinitely.
-func (l *EventLoop) Post(f func()) {
+func (l *EventLoop) Post(f func()) bool {
 	// this is inprecise, because we may end up with neither this message nor an ever executed func
 	if l.destroyed.Load() {
 		debug.PrintStack()
-		slog.Error("someone posted to a destroyed EventLoop")
-		return
+		//slog.Error("someone posted to a destroyed EventLoop")
+		return false
 	}
 
 	/*
@@ -111,7 +111,7 @@ func (l *EventLoop) Post(f func()) {
 			fn:  f,
 		})*/
 	l.batchChan <- []msg{msg{msgFunc, f}}
-
+	return true
 }
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.

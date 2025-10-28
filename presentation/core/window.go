@@ -139,6 +139,12 @@ type Window interface {
 
 	// Bundle returns the currently localized and resolved resource bundle.
 	Bundle() *i18n.Bundle
+
+	// Post schedules the given func to the event looper of the window. Returns true if the func was placed into
+	// the event queue. Returns false on failure, e.g. if the window or looper has been destroyed. A Post is useful
+	// to prevent kinds of logical data races during rendering and concurrent state modifications. Even though
+	// states are technically free of races, their mutation during rendering may cause unwanted side effects.
+	Post(fn func()) bool
 }
 
 // Colors returns a type safe value based ColorSet instance.
