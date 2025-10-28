@@ -28,7 +28,7 @@ func (p *mistralDocuments) client() *Client {
 	return p.parent.client()
 }
 
-func (p *mistralDocuments) Library() library.ID {
+func (p *mistralDocuments) Identity() library.ID {
 	return p.id
 }
 

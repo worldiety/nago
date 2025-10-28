@@ -56,7 +56,7 @@ type Libraries interface {
 }
 
 type Documents interface {
-	Library() library.ID
+	Identity() library.ID
 	All(subject auth.Subject) iter.Seq2[document.Document, error]
 	Delete(subject auth.Subject, doc document.ID) error
 	Create(subject auth.Subject, doc document.CreateOptions) (document.Document, error)
@@ -65,6 +65,8 @@ type Documents interface {
 type Agents interface {
 	All(subject auth.Subject) iter.Seq2[agent.Agent, error]
 	Delete(subject auth.Subject, id agent.ID) error
+	FindByID(subject auth.Subject, id agent.ID) (option.Opt[agent.Agent], error)
+	FindByName(subject auth.Subject, name string) (option.Opt[agent.Agent], error)
 	Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error)
 }
 
@@ -72,11 +74,13 @@ type Conversations interface {
 	All(subject auth.Subject) iter.Seq2[conversation.Conversation, error]
 	FindByID(subject auth.Subject, id conversation.ID) (option.Opt[conversation.Conversation], error)
 	Delete(subject auth.Subject, id conversation.ID) error
-	Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, error)
-	Messages(subject auth.Subject, id conversation.ID) Messages
+	// Create returns the conversation and the according request and response messages.
+	Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, []message.Message, error)
+	Messages(subject auth.Subject, id conversation.ID) Conversation
 }
 
-type Messages interface {
-	Conversation() conversation.ID
+type Conversation interface {
+	Identity() conversation.ID
 	All(subject auth.Subject) iter.Seq2[message.Message, error]
+	Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error)
 }

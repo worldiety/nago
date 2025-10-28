@@ -10,6 +10,7 @@ package mistralai
 import (
 	"iter"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
@@ -19,6 +20,29 @@ var _ provider.Agents = (*mistralAgents)(nil)
 
 type mistralAgents struct {
 	parent *mistralProvider
+}
+
+func (p *mistralAgents) FindByName(subject auth.Subject, name string) (option.Opt[agent.Agent], error) {
+	for a, err := range p.All(subject) {
+		if err != nil {
+			return option.Opt[agent.Agent]{}, err
+		}
+
+		if a.Name == name {
+			return option.Some(a), nil
+		}
+	}
+
+	return option.Opt[agent.Agent]{}, nil
+}
+
+func (p *mistralAgents) FindByID(subject auth.Subject, id agent.ID) (option.Opt[agent.Agent], error) {
+	a, err := p.client().GetAgent(string(id))
+	if err != nil {
+		return option.None[agent.Agent](), err
+	}
+
+	return option.Some(a.IntoAgent()), nil
 }
 
 func (p *mistralAgents) Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error) {

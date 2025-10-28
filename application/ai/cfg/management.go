@@ -105,6 +105,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Provider:     "admin/ai/provider",
 			Library:      "admin/ai/library",
 			Conversation: "admin/ai/provider/conversation",
+			Chat:         "admin/ai/chat",
 		},
 	}
 
@@ -153,6 +154,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.RootViewWithDecoration(management.Pages.Conversation, func(wnd core.Window) core.View {
 		return uiai.PageConversation(wnd, management.UseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Chat, func(wnd core.Window) core.View {
+		return uiai.PageChat(wnd, management.UseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -206,6 +211,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.FindMessages))
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Append))
 	cfg.AddContextValue(core.ContextValue("", management.ConversationUseCases.Delete))
+
+	cfg.AddContextValue(core.ContextValue("", management.UseCases.FindProviderByID))
+	cfg.AddContextValue(core.ContextValue("", management.UseCases.FindProviderByName))
 
 	slog.Info("installed AI module")
 	return management, nil

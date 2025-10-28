@@ -22,6 +22,7 @@ type InputText struct {
 	Text string
 }
 
+// deprecated
 type Content struct {
 	Text option.Ptr[string] `json:"text,omitzero"`
 }
@@ -32,6 +33,12 @@ const (
 	User          Role = "user"
 	AssistantRole      = "assistant"
 )
+
+type AppendOptions struct {
+	Role         Role
+	MessageInput option.Ptr[string]
+	CloudStore   bool
+}
 
 type Message struct {
 	ID        ID                     `json:"id"`
@@ -44,6 +51,13 @@ type Message struct {
 	Role          Role               `json:"role"`
 	MessageInput  option.Ptr[string] `json:"messageInput"`
 	MessageOutput option.Ptr[string] `json:"messageOutput"`
+}
+
+// Transient is a state which is used for inflight messages. We introduced it, because the Mistral Conversation
+// API does not return input messages in their response, thus we know that it has been appended, but we cannot
+// know their ID. Thus, the according provider implementation needs to insert transient messages without identities.
+func (m Message) Transient() bool {
+	return m.ID == ""
 }
 
 func (m Message) Identity() ID {

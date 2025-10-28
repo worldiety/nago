@@ -32,6 +32,7 @@ var (
 	StrRole      = i18n.MustString("nago.ai.admin.role", i18n.Values{language.English: "Role", language.German: "Rolle"})
 	StrContent   = i18n.MustString("nago.ai.admin.content", i18n.Values{language.English: "Content", language.German: "Inhalt"})
 	StrCreatedAt = i18n.MustString("nago.ai.admin.created_at", i18n.Values{language.English: "Created at", language.German: "Erstellt am"})
+	StrOpenChat  = i18n.MustString("nago.ai.admin.open_chat", i18n.Values{language.English: "Open Chat", language.German: "Chat öffnen"})
 )
 
 func PageConversation(wnd core.Window, uc ai.UseCases) core.View {
@@ -79,7 +80,7 @@ func PageConversation(wnd core.Window, uc ai.UseCases) core.View {
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func msgTable(wnd core.Window, prov provider.Provider, messages provider.Messages) core.View {
+func msgTable(wnd core.Window, prov provider.Provider, messages provider.Conversation) core.View {
 	msgs := messages
 
 	loadedMsgs := core.AutoState[[]message.Message](wnd).AsyncInit(func() []message.Message {
@@ -116,7 +117,9 @@ func msgTable(wnd core.Window, prov provider.Provider, messages provider.Message
 						return renderContent(wnd, obj.Value)
 					},
 				},
-			})
+			}).NewActionView(ui.PrimaryButton(func() {
+				wnd.Navigation().ForwardTo("admin/ai/chat", wnd.Values().Put("provider", string(prov.Identity())).Put("conversation", string(messages.Identity())))
+			}).Title(StrOpenChat.Get(wnd)))
 		}),
 	).FullWidth().Alignment(ui.Leading)
 

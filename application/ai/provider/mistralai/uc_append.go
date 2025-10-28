@@ -12,9 +12,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/conversation"
-	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/pkg/events"
@@ -58,12 +56,13 @@ func appendMessage(bus events.Bus, match secret.Match, findConvByID conversation
 	}
 
 	for _, output := range resp.Outputs {
-		bus.Publish(conversation.AgentAppended{
+		/*bus.Publish(conversation.AgentAppended{
 			Conversation: conv.ID,
 			Content: []message.Content{{
 				Text: option.Pointer(&output.Content),
 			}},
-		})
+		})*/
+		_ = output
 	}
 
 	return nil

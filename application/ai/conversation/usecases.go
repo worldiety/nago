@@ -88,10 +88,8 @@ type InputEntry interface {
 }
 
 type StartOptions struct {
-	Workspace     workspace.ID
-	WorkspaceName string // alternative to Workspace ID find the first workspace with the given name
-	Agent         agent.ID
-	AgentName     string // alternative to Agent ID find the first agent with the given name
+	Agent     agent.ID
+	AgentName string // alternative to Agent ID find the first agent with the given name
 
 	Name        string
 	Description string
@@ -105,6 +103,11 @@ type StartOptions struct {
 	// CloudStore indicates if the conversation should be stored and retrievable if the provider uses a cloud
 	// backend.
 	CloudStore bool
+
+	// deprecated
+	Workspace workspace.ID
+	// deprecated
+	WorkspaceName string // alternative to Workspace ID find the first workspace with the given name
 }
 
 type Start func(subject auth.Subject, opts StartOptions) (ID, error)

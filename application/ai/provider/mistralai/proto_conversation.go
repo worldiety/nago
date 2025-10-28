@@ -35,11 +35,12 @@ type AppendConversationRequest struct {
 }
 
 type AppendConversationResponse struct {
-	ConversationId string `json:"conversation_id"`
-	Outputs        []struct {
-		Content string `json:"content"`
-	} `json:"outputs"`
-	Usage struct {
+	ConversationId string     `json:"conversation_id"`
+	Outputs        []EntryBox `json:"outputs"`
+	Usage          struct {
+		CompletionTokens int `json:"completion_tokens"`
+		PromptTokens     int `json:"prompt_tokens"`
+		TotalTokens      int `json:"total_tokens"`
 	} `json:"usage"`
 }
 
@@ -72,20 +73,10 @@ type CreateConversationRequest struct {
 }
 
 type CreateConversationResponse struct {
-	ConversationId string `json:"conversation_id"`
-	Object         string `json:"object"`
-	Outputs        []struct {
-		AgentId     string    `json:"agent_id"`
-		CompletedAt time.Time `json:"completed_at"`
-		Content     string    `json:"content"`
-		CreatedAt   time.Time `json:"created_at"`
-		Id          string    `json:"id"`
-		Model       string    `json:"model"`
-		Object      string    `json:"object"`
-		Role        string    `json:"role"`
-		Type        string    `json:"type"`
-	} `json:"outputs"`
-	Usage struct {
+	ConversationId string     `json:"conversation_id"`
+	Object         string     `json:"object"`
+	Outputs        []EntryBox `json:"outputs"`
+	Usage          struct {
 		CompletionTokens int `json:"completion_tokens"`
 		PromptTokens     int `json:"prompt_tokens"`
 		TotalTokens      int `json:"total_tokens"`
@@ -100,7 +91,6 @@ func (c CreateConversationResponse) IntoConversation() conversation.Conversation
 
 func (c *Client) CreateConversation(req CreateConversationRequest) (CreateConversationResponse, error) {
 	var resp CreateConversationResponse
-	var bla any
 	err := xhttp.NewRequest().
 		Client(c.c).
 		BaseURL(c.base).
@@ -109,8 +99,7 @@ func (c *Client) CreateConversation(req CreateConversationRequest) (CreateConver
 		Assert2xx(true).
 		BearerAuthentication(c.token).
 		BodyJSON(req).
-		//ToJSON(&resp).
-		ToJSON(&bla).
+		ToJSON(&resp).
 		ToLimit(1024 * 1024).
 		Post()
 

@@ -292,8 +292,6 @@ func libConversations(wnd core.Window, prov provider.Provider) core.View {
 		return v
 	})
 
-	createPresented := core.AutoState[bool](wnd)
-
 	return ui.VStack(
 		ui.H2(StrConversations.Get(wnd)),
 		ui.If(!loadedConvs.Valid(), ui.Text(rstring.LabelPleaseWait.Get(wnd))),
@@ -318,7 +316,7 @@ func libConversations(wnd core.Window, prov provider.Provider) core.View {
 				}).
 				NextActionIndicator(true).
 				NewAction(func() {
-					createPresented.Set(true)
+					wnd.Navigation().ForwardTo("admin/ai/chat", wnd.Values().Put("provider", string(prov.Identity())))
 				}).SelectOptions(
 				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
 					for _, i := range selected {

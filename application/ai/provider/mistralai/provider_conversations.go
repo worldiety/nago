@@ -8,6 +8,7 @@
 package mistralai
 
 import (
+	"fmt"
 	"iter"
 	"time"
 
@@ -58,24 +59,30 @@ func (p *mistralConversations) Delete(subject auth.Subject, id conversation.ID) 
 	return p.client().DeleteConversation(string(id))
 }
 
-func (p *mistralConversations) Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, error) {
+func (p *mistralConversations) Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, []message.Message, error) {
+	instructs := opts.Instructions
+	if opts.Agent != "" && opts.Instructions != "" {
+		return conversation.Conversation{}, nil, fmt.Errorf("mistral does not support creating a conversation based on a combination of instructions and agent")
+	}
+
 	res, err := p.client().CreateConversation(CreateConversationRequest{
 		AgentID:      string(opts.Agent),
 		Model:        string(opts.Model),
 		Description:  opts.Description,
 		Name:         opts.Name,
-		Instructions: opts.Instructions,
+		Instructions: instructs,
 		Store:        opts.CloudStore,
 		Stream:       false,
 		Inputs:       convInputToMistralInput(opts.Input),
 	})
 
 	if err != nil {
-		return conversation.Conversation{}, err
+		return conversation.Conversation{}, nil, err
 	}
 
 	conv := res.IntoConversation()
 	conv.CreatedBy = subject.ID()
+	conv.ID = conversation.ID(res.ConversationId)
 	conv.CreatedAt = xtime.UnixMilliseconds(time.Now().UnixMilli())
 	conv.Agent = opts.Agent
 	conv.Name = opts.Name
@@ -85,11 +92,15 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 	conv.CloudStore = opts.CloudStore
 
 	// TODO response already contains already an arbitrary set of response messages
+	tmp := make([]message.Message, 0, len(res.Outputs))
+	for _, output := range res.Outputs {
+		tmp = append(tmp, output.Value.IntoMessage())
+	}
 
-	return conv, nil
+	return conv, tmp, nil
 }
 
-func (p *mistralConversations) Messages(subject auth.Subject, id conversation.ID) provider.Messages {
+func (p *mistralConversations) Messages(subject auth.Subject, id conversation.ID) provider.Conversation {
 	return &mistralMessages{
 		id:     id,
 		parent: p.parent,

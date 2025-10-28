@@ -16,4 +16,5 @@ type Pages struct {
 	Provider     core.NavigationPath
 	Library      core.NavigationPath
 	Conversation core.NavigationPath
+	Chat         core.NavigationPath
 }

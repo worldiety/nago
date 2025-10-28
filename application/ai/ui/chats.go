@@ -8,9 +8,13 @@
 package uiai
 
 import (
+	"fmt"
+
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -29,22 +33,29 @@ var (
 type TChats struct {
 	selected *core.State[conversation.ID]
 	frame    ui.Frame
+	provider provider.Provider
 }
 
-func Chats(selected *core.State[conversation.ID]) TChats {
-	return TChats{selected: selected}
+func Chats(provider provider.Provider, selected *core.State[conversation.ID]) TChats {
+	return TChats{selected: selected, provider: provider}
 }
 
 func (c TChats) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 
-	aiFindAll, ok := core.FromContext[conversation.FindAll](wnd.Context(), "")
-	if !ok {
-		return alert.Banner("no ai", "the ai module has not been enabled").Render(ctx)
-	}
-
 	deleteState := core.DerivedState[conversation.Conversation](c.selected, "-selected-delete")
 	deletePresented := core.DerivedState[bool](c.selected, "-delete-presented")
+
+	optConvs := c.provider.Conversations()
+	if optConvs.IsNone() {
+		return alert.BannerError(fmt.Errorf("provider does not support conversations: %s", c.provider.Identity())).Render(ctx)
+	}
+
+	convs := optConvs.Unwrap()
+	conversations, err := xslices.Collect2(convs.All(wnd.Subject()))
+	if err != nil {
+		return alert.BannerError(err).Render(ctx)
+	}
 
 	return ui.VStack(
 		c.deleteDialog(deleteState, deletePresented),
@@ -54,10 +65,7 @@ func (c TChats) Render(ctx core.RenderContext) core.RenderNode {
 		ui.HStack(ui.Text(StrChats.Get(wnd)).Color(ui.ColorIconsMuted).Font(ui.BodySmall)).Padding(ui.Padding{Left: ui.L16}),
 	).
 		Append(
-			ui.Each2(aiFindAll(wnd.Subject()), func(conv conversation.Conversation, err error) core.View {
-				if err != nil {
-					return alert.BannerError(err)
-				}
+			ui.ForEach(conversations, func(conv conversation.Conversation) core.View {
 
 				title := xstrings.EllipsisEnd(c.title(conv), 20)
 				var btnView core.View
@@ -111,11 +119,6 @@ func (c TChats) deleteDialog(selected *core.State[conversation.Conversation], pr
 		return nil
 	}
 
-	aiDelete, ok := core.FromContext[conversation.Delete](presented.Window().Context(), "")
-	if !ok {
-		return alert.Banner("no ai", "the ai module has not been enabled")
-	}
-
 	return alert.Dialog(
 		StrDeleteChatTitle.Get(selected.Window()),
 		ui.Text(StrDeleteChatMessageX.Get(selected.Window(), i18n.String("x", c.title(selected.Get())))),
@@ -123,7 +126,8 @@ func (c TChats) deleteDialog(selected *core.State[conversation.Conversation], pr
 		alert.Closeable(),
 		alert.Cancel(nil),
 		alert.Delete(func() {
-			if err := aiDelete(selected.Window().Subject(), selected.Get().ID); err != nil {
+
+			if err := c.provider.Conversations().Unwrap().Delete(selected.Window().Subject(), selected.Get().ID); err != nil {
 				alert.ShowBannerError(selected.Window(), err)
 				return
 			}

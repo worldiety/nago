@@ -14,7 +14,6 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
@@ -228,10 +227,11 @@ func syncConversations(bus events.Bus, ws workspace.ID, syncAgentRepo SyncAgentR
 				slog.Info("created new cloud conversation", "conversation", conv.ID, "cloud", resp.ConversationId)
 
 				for _, output := range resp.Outputs {
+					_ = output
 					bus.Publish(conversation.AgentAppended{
 						Conversation: conv.ID,
-						Content: []message.Content{{
-							Text: option.Pointer(&output.Content),
+						Content:      []message.Content{{
+							//Text: option.Pointer(&output.Content),
 						}},
 					})
 				}
