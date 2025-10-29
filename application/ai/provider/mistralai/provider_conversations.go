@@ -89,7 +89,6 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 	conv.Model = opts.Model
 	conv.Description = opts.Description
 	conv.Instructions = opts.Instructions
-	conv.CloudStore = opts.CloudStore
 
 	// TODO response already contains already an arbitrary set of response messages
 	tmp := make([]message.Message, 0, len(res.Outputs))

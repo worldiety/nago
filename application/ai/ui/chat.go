@@ -19,7 +19,6 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
-	"go.wdy.de/nago/application/ai/workspace"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xslices"
@@ -102,7 +101,6 @@ func (opts StartOptions) resolve(subject auth.Subject, prov provider.Provider) (
 }
 
 type TChat struct {
-	ws           workspace.ID
 	conv         *core.State[conversation.ID]
 	text         *core.State[string]
 	padding      ui.Padding

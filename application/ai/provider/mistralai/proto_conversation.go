@@ -125,8 +125,6 @@ func (c ConversationInfo) IntoConversation() conversation.Conversation {
 		Name:         c.Name,
 		Description:  c.Description,
 		Instructions: c.Instructions,
-		Input:        nil, // TODO
-		CloudStore:   true,
 		CreatedAt:    xtime.UnixMilliseconds(c.CreatedAt.UnixMilli()),
 		CreatedBy:    "", //?
 	}
