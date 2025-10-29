@@ -52,10 +52,10 @@ type Libraries interface {
 	All(subject auth.Subject) iter.Seq2[library.Library, error]
 	Delete(subject auth.Subject, id library.ID) error
 	Update(subject auth.Subject, id library.ID, update library.UpdateOptions) (library.Library, error)
-	Documents(id library.ID) Documents
+	Library(id library.ID) Library
 }
 
-type Documents interface {
+type Library interface {
 	Identity() library.ID
 	All(subject auth.Subject) iter.Seq2[document.Document, error]
 	Delete(subject auth.Subject, doc document.ID) error
@@ -66,7 +66,7 @@ type Agents interface {
 	All(subject auth.Subject) iter.Seq2[agent.Agent, error]
 	Delete(subject auth.Subject, id agent.ID) error
 	FindByID(subject auth.Subject, id agent.ID) (option.Opt[agent.Agent], error)
-	FindByName(subject auth.Subject, name string) (option.Opt[agent.Agent], error)
+	FindByName(subject auth.Subject, name string) iter.Seq2[agent.Agent, error]
 	Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error)
 }
 
@@ -76,7 +76,7 @@ type Conversations interface {
 	Delete(subject auth.Subject, id conversation.ID) error
 	// Create returns the conversation and the according request and response messages.
 	Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, []message.Message, error)
-	Messages(subject auth.Subject, id conversation.ID) Conversation
+	Conversation(subject auth.Subject, id conversation.ID) Conversation
 }
 
 type Conversation interface {

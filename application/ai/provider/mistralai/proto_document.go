@@ -110,12 +110,14 @@ func (c *Client) ListDocuments(id string) ([]DocumentInfo, error) {
 		Retry(c.retry).
 		URL("libraries/"+id+"/documents").
 		Query("page", "0").
-		Query("page_size", "100000").
+		Query("page_size", "100").
 		Assert2xx(true).
 		BearerAuthentication(c.token).
 		ToJSON(&resp).
 		ToLimit(1024 * 1024 * 1024).
 		Get()
+
+	// TODO their paging logic is broken anyway and the API changes on a daily basis, that is not beta, just WIP
 
 	return resp.Data, err
 }

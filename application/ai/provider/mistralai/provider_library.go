@@ -8,6 +8,7 @@
 package mistralai
 
 import (
+	"fmt"
 	"iter"
 	"log/slog"
 
@@ -17,22 +18,22 @@ import (
 	"go.wdy.de/nago/auth"
 )
 
-var _ provider.Documents = (*mistralDocuments)(nil)
+var _ provider.Library = (*mistralLibrary)(nil)
 
-type mistralDocuments struct {
+type mistralLibrary struct {
 	id     library.ID
 	parent *mistralProvider
 }
 
-func (p *mistralDocuments) client() *Client {
+func (p *mistralLibrary) client() *Client {
 	return p.parent.client()
 }
 
-func (p *mistralDocuments) Identity() library.ID {
+func (p *mistralLibrary) Identity() library.ID {
 	return p.id
 }
 
-func (p *mistralDocuments) Create(subject auth.Subject, opts document.CreateOptions) (document.Document, error) {
+func (p *mistralLibrary) Create(subject auth.Subject, opts document.CreateOptions) (document.Document, error) {
 	doc, err := p.client().CreateDocument(string(p.id), opts.Filename, opts.Reader)
 
 	if err != nil {
@@ -44,15 +45,15 @@ func (p *mistralDocuments) Create(subject auth.Subject, opts document.CreateOpti
 	return doc.IntoDocument(), nil
 }
 
-func (p *mistralDocuments) Delete(subject auth.Subject, doc document.ID) error {
+func (p *mistralLibrary) Delete(subject auth.Subject, doc document.ID) error {
 	return p.client().DeleteDocument(string(p.id), string(doc))
 }
 
-func (p *mistralDocuments) All(subject auth.Subject) iter.Seq2[document.Document, error] {
+func (p *mistralLibrary) All(subject auth.Subject) iter.Seq2[document.Document, error] {
 	return func(yield func(document.Document, error) bool) {
 		docs, err := p.client().ListDocuments(string(p.id))
 		if err != nil {
-			yield(document.Document{}, err)
+			yield(document.Document{}, fmt.Errorf("failed to list documents from library %s: %w", p.id, err))
 			return
 		}
 

@@ -15,7 +15,6 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/xslices"
 )
 
 var _ provider.Conversation = (*mistralMessages)(nil)
@@ -54,7 +53,6 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 		ID:            "", // TODO make this transient?
 		CreatedAt:     0,
 		CreatedBy:     "",
-		Inputs:        xslices.Slice[message.Content]{},
 		Role:          opts.Role,
 		MessageInput:  opts.MessageInput,
 		MessageOutput: option.Ptr[string]{},

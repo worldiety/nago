@@ -22,18 +22,22 @@ type mistralAgents struct {
 	parent *mistralProvider
 }
 
-func (p *mistralAgents) FindByName(subject auth.Subject, name string) (option.Opt[agent.Agent], error) {
-	for a, err := range p.All(subject) {
-		if err != nil {
-			return option.Opt[agent.Agent]{}, err
-		}
+func (p *mistralAgents) FindByName(subject auth.Subject, name string) iter.Seq2[agent.Agent, error] {
+	return func(yield func(agent.Agent, error) bool) {
+		for a, err := range p.All(subject) {
+			if err != nil {
+				yield(a, err)
+				return
+			}
 
-		if a.Name == name {
-			return option.Some(a), nil
+			if a.Name == name {
+				if !yield(a, nil) {
+					return
+				}
+			}
 		}
+		
 	}
-
-	return option.Opt[agent.Agent]{}, nil
 }
 
 func (p *mistralAgents) FindByID(subject auth.Subject, id agent.ID) (option.Opt[agent.Agent], error) {

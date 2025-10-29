@@ -11,7 +11,6 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -44,9 +43,6 @@ type Message struct {
 	ID        ID                     `json:"id"`
 	CreatedAt xtime.UnixMilliseconds `json:"createdAt"`
 	CreatedBy user.ID                `json:"createdBy"`
-
-	// deprecated
-	Inputs xslices.Slice[Content] `json:"inputs"`
 
 	Role          Role               `json:"role"`
 	MessageInput  option.Ptr[string] `json:"messageInput"`

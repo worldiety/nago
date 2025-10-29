@@ -13,9 +13,18 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ai"
+	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/document"
+	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/message"
+	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/provider/cache"
 	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -35,7 +44,69 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets)
+	cacheEnabled := true
+	repoAgents, err := application.JSONRepository[agent.Agent](cfg, "nago.ai.cache.agent")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoConversations, err := application.JSONRepository[conversation.Conversation](cfg, "nago.ai.cache.conversation")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoMessages, err := application.JSONRepository[message.Message](cfg, "nago.ai.cache.message")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoLibraries, err := application.JSONRepository[library.Library](cfg, "nago.ai.cache.library")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoDocuments, err := application.JSONRepository[document.Document](cfg, "nago.ai.cache.document")
+	if err != nil {
+		return Management{}, err
+	}
+
+	repoModels, err := application.JSONRepository[model.Model](cfg, "nago.ai.cache.model")
+	if err != nil {
+		return Management{}, err
+	}
+
+	idxConvStore, err := cfg.EntityStore("nago.ai.cache.idx_conversation_message")
+	if err != nil {
+		return Management{}, err
+	}
+	idxConvMsg := data.NewCompositeIndex[conversation.ID, message.ID](idxConvStore)
+
+	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, func(provider provider.Provider) (provider.Provider, error) {
+		if !cacheEnabled {
+			return provider, nil
+		}
+
+		prov := cache.NewProvider(
+			provider,
+			repoModels,
+			repoLibraries,
+			repoAgents,
+			repoDocuments,
+			repoConversations,
+			repoMessages,
+			idxConvMsg,
+		)
+
+		/*if err := prov.Clear(); err != nil {
+			panic(err)
+		}*/
+
+		if err := prov.LoadIfEmpty(); err != nil {
+			return nil, err
+		}
+
+		return prov, nil
+	})
 
 	management = Management{
 

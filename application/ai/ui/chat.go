@@ -53,13 +53,13 @@ func (opts StartOptions) resolve(subject auth.Subject, prov provider.Provider) (
 	}
 
 	if opts.AgentName != "" {
-		opt, err := prov.Agents().Unwrap().FindByName(subject, opts.AgentName)
+		opt, err := xslices.Collect2(prov.Agents().Unwrap().FindByName(subject, opts.AgentName))
 		if err != nil {
 			return "", "", err
 		}
 
-		if opt.IsSome() {
-			return opt.Unwrap().ID, "", nil
+		if len(opt) > 0 {
+			return opt[0].ID, "", nil
 		}
 
 		return "", "", fmt.Errorf("agent by name not found %s: %w", opts.AgentName, os.ErrNotExist)
@@ -144,7 +144,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 				return nil
 			}
 			conv := optConv.Unwrap()
-			msg, err := xslices.Collect2(conversations.Messages(wnd.Subject(), conv.ID).All(wnd.Subject()))
+			msg, err := xslices.Collect2(conversations.Conversation(wnd.Subject(), conv.ID).All(wnd.Subject()))
 			if err != nil {
 				alert.ShowBannerError(wnd, fmt.Errorf("cannot collect messages from conv %s: %w", conv.ID, err))
 				return nil
@@ -229,7 +229,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 							} else {
 								// append to existing conversation
 								tmp := c.text.Get()
-								msgs, err := conversations.Messages(wnd.Subject(), c.conv.Get()).Append(wnd.Subject(), message.AppendOptions{
+								msgs, err := conversations.Conversation(wnd.Subject(), c.conv.Get()).Append(wnd.Subject(), message.AppendOptions{
 									MessageInput: option.Pointer(&tmp),
 									CloudStore:   c.startOptions.CloudStore,
 								})

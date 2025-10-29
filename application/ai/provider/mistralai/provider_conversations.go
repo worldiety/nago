@@ -99,7 +99,7 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 	return conv, tmp, nil
 }
 
-func (p *mistralConversations) Messages(subject auth.Subject, id conversation.ID) provider.Conversation {
+func (p *mistralConversations) Conversation(subject auth.Subject, id conversation.ID) provider.Conversation {
 	return &mistralMessages{
 		id:     id,
 		parent: p.parent,

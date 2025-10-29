@@ -133,7 +133,7 @@ func (a AgentInfo) IntoAgent() agent.Agent {
 		Name:        a.Name,
 		Description: a.Description,
 		Prompt:      a.Instructions,
-		Model2:      model.ID(a.Model),
+		Model:       model.ID(a.Model),
 		LastMod:     xtime.UnixMilliseconds(a.UpdatedAt.UnixMilli()),
 	}
 }

@@ -35,9 +35,9 @@ type UseCases struct {
 	ReloadProvider     ReloadProvider
 }
 
-func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets) UseCases {
+func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) UseCases {
 	var providers concurrent.RWMap[provider.ID, provider.Provider]
-	fnReload := NewReloadProvider(&providers, findSecrets)
+	fnReload := NewReloadProvider(&providers, findSecrets, decorator)
 
 	fnInvokeReload := func() {
 		if err := fnReload(); err != nil {

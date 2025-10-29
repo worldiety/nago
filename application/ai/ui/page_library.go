@@ -114,7 +114,7 @@ func formLibSettings(wnd core.Window, libs provider.Libraries, lib *core.State[l
 func docTable(wnd core.Window, prov provider.Provider, libs provider.Libraries, libId library.ID) core.View {
 
 	loadedDocs := core.AutoState[[]document.Document](wnd).AsyncInit(func() []document.Document {
-		v, err := xslices.Collect2(libs.Documents(libId).All(wnd.Subject()))
+		v, err := xslices.Collect2(libs.Library(libId).All(wnd.Subject()))
 		if err != nil {
 			alert.ShowBannerError(wnd, err)
 			return nil
@@ -172,7 +172,7 @@ func docTable(wnd core.Window, prov provider.Provider, libs provider.Libraries, 
 												return
 											}
 
-											_, err = libs.Documents(libId).Create(wnd.Subject(), document.CreateOptions{
+											_, err = libs.Library(libId).Create(wnd.Subject(), document.CreateOptions{
 												Filename: file.Name(),
 												Reader:   reader,
 											})
@@ -194,7 +194,7 @@ func docTable(wnd core.Window, prov provider.Provider, libs provider.Libraries, 
 				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
 					for _, i := range selected {
 						if idx, ok := i.Int(); ok {
-							if err := libs.Documents(libId).Delete(wnd.Subject(), loadedDocs.Get()[idx].ID); err != nil {
+							if err := libs.Library(libId).Delete(wnd.Subject(), loadedDocs.Get()[idx].ID); err != nil {
 								return err
 							}
 						}

@@ -18,7 +18,7 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], findSecrets secret.FindGroupSecrets) ReloadProvider {
+func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) ReloadProvider {
 	return func() error {
 		m.Clear()
 
@@ -36,6 +36,14 @@ func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], find
 
 			if prov == nil {
 				continue
+			}
+
+			if decorator != nil {
+				prov, err = decorator(prov)
+				if err != nil {
+					slog.Error("failed to decorate provider", "provider", prov.Identity(), "err", err.Error())
+					continue
+				}
 			}
 
 			m.Put(prov.Identity(), prov)

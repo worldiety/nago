@@ -23,8 +23,8 @@ type mistralLibraries struct {
 	parent *mistralProvider
 }
 
-func (p *mistralLibraries) Documents(id library.ID) provider.Documents {
-	return &mistralDocuments{
+func (p *mistralLibraries) Library(id library.ID) provider.Library {
+	return &mistralLibrary{
 		id:     id,
 		parent: p.parent,
 	}

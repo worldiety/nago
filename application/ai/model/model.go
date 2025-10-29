@@ -7,6 +7,8 @@
 
 package model
 
+import "go.wdy.de/nago/pkg/data"
+
 type ID string
 type Model struct {
 	ID                 ID      `json:"id,omitempty"`
@@ -27,3 +29,5 @@ func (m Model) WithIdentity(id ID) Model {
 func (m Model) String() string {
 	return m.Name + "\n" + m.Description
 }
+
+type Repository data.Repository[Model, ID]

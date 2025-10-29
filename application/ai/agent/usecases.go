@@ -10,6 +10,7 @@ package agent
 import (
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -24,10 +25,11 @@ type Agent struct {
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"desc,omitempty"`
 	Prompt      string                 `json:"prompt,omitempty"`
-	Model2      model.ID               `json:"model2,omitempty"`
+	Model       model.ID               `json:"model,omitempty"`
 	Libraries   []library.ID           `json:"libraries,omitempty"`
 	Temperature Temperature            `json:"tmp,omitempty"`
 	LastMod     xtime.UnixMilliseconds `json:"lastMod,omitempty"`
+	CreatedBy   user.ID                `json:"createdBy,omitempty"`
 }
 
 func (e Agent) Identity() ID {

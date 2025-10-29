@@ -11,6 +11,8 @@ import (
 	"io"
 
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -20,6 +22,7 @@ type ProcessingStatus string
 type Document struct {
 	ID               ID
 	CreatedAt        xtime.UnixMilliseconds
+	CreatedBy        user.ID
 	Hash             string
 	Library          library.ID
 	MimeType         string
@@ -29,7 +32,13 @@ type Document struct {
 	Summary          string
 }
 
+func (d Document) Identity() ID {
+	return d.ID
+}
+
 type CreateOptions struct {
 	Filename string
 	Reader   io.Reader
 }
+
+type Repository data.Repository[Document, ID]

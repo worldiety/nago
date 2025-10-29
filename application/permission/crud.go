@@ -102,6 +102,23 @@ func DeclareFindAll[UseCase any](id ID, entityName string) ID {
 	).String()}, 3)
 }
 
+// DeclareAppend creates a prototype permission stub. See also [DeclareCreate].
+func DeclareAppend[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Append %s elements", entityName),
+			language.German:  fmt.Sprintf("%s Elemente anhängen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can get " + entityName + " append elements.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente anhängen.",
+		},
+	).String()}, 3)
+}
+
 // DeclareFindAllIdentifiers creates a prototype permission stub. See also [DeclareCreate].
 func DeclareFindAllIdentifiers[UseCase any](id ID, entityName string) ID {
 	return register[UseCase](Permission{ID: id, Name: i18n.MustString(

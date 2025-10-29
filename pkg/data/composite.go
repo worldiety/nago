@@ -130,6 +130,11 @@ func (idx *CompositeIndex[A, B]) All(ctx context.Context) iter.Seq2[CompositeKey
 	return idx.AllByPrefix(ctx, "")
 }
 
+// Clear just removes all entries.
+func (idx *CompositeIndex[A, B]) Clear(ctx context.Context) error {
+	return blob.DeleteAll(idx.store)
+}
+
 // AllByPrefix can be a partial a.b* and is the fastest reduction of effort you can get from the underlying store.
 // See also AllByPrimary for a bit more safety.
 func (idx *CompositeIndex[A, B]) AllByPrefix(ctx context.Context, prefix string) iter.Seq2[CompositeKey[A, B], error] {

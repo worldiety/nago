@@ -66,7 +66,7 @@ func PageConversation(wnd core.Window, uc ai.UseCases) core.View {
 
 	refConv := optRefConv.Unwrap()
 
-	messages := conv.Messages(wnd.Subject(), cid)
+	messages := conv.Conversation(wnd.Subject(), cid)
 
 	return ui.VStack(
 		breadcrumb.Breadcrumbs(ui.TertiaryButton(func() {
