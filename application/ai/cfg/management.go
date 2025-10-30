@@ -82,11 +82,22 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	blobTextStore, err := cfg.EntityStore("nago.ai.cache.document_text")
+	if err != nil {
+		return Management{}, err
+	}
+
 	idxConvStore, err := cfg.EntityStore("nago.ai.cache.idx_conversation_message")
 	if err != nil {
 		return Management{}, err
 	}
 	idxConvMsg := data.NewCompositeIndex[conversation.ID, message.ID](idxConvStore)
+
+	idxProvModStore, err := cfg.EntityStore("nago.ai.cache.idx_provider_model")
+	if err != nil {
+		return Management{}, err
+	}
+	idxProvMod := data.NewCompositeIndex[provider.ID, model.ID](idxProvModStore)
 
 	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, func(provider provider.Provider) (provider.Provider, error) {
 		if !cacheEnabled {
@@ -101,7 +112,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			repoDocuments,
 			repoConversations,
 			repoMessages,
+			blobTextStore,
 			idxConvMsg,
+			idxProvMod,
 		)
 
 		return prov, nil
@@ -115,6 +128,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Provider:     "admin/ai/provider",
 			Library:      "admin/ai/library",
 			Conversation: "admin/ai/provider/conversation",
+			Document:     "admin/ai/library/document",
 			Chat:         "admin/ai/chat",
 			Agent:        "admin/ai/agent",
 		},
@@ -141,6 +155,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.RootViewWithDecoration(management.Pages.Agent, func(wnd core.Window) core.View {
 		return uiai.PageAgent(wnd, management.UseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Document, func(wnd core.Window) core.View {
+		return uiai.PageDocument(wnd, management.UseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

@@ -60,6 +60,9 @@ type Library interface {
 	All(subject auth.Subject) iter.Seq2[document.Document, error]
 	Delete(subject auth.Subject, doc document.ID) error
 	Create(subject auth.Subject, doc document.CreateOptions) (document.Document, error)
+	TextContentByID(subject auth.Subject, id document.ID) (option.Opt[string], error)
+	StatusByID(subject auth.Subject, id document.ID) (option.Opt[document.ProcessingStatus], error)
+	FindByID(subject auth.Subject, id document.ID) (option.Opt[document.Document], error)
 }
 
 type Agents interface {

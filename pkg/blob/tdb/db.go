@@ -12,9 +12,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/google/btree"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/xmaps"
 	"io"
 	"iter"
 	"log/slog"
@@ -25,6 +22,10 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"github.com/google/btree"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xmaps"
 )
 
 var globalDirLocks = xmaps.NewConcurrentMap[string, *sync.Mutex]()
@@ -284,6 +285,18 @@ func (db *DB) Range(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
 	return func(yield func(IndexEntry) bool) {
 		snapshot.AscendRange(IndexEntry{key: minKey}, IndexEntry{key: maxKey}, yield)
 	}
+}
+
+func (db *DB) Len(bucket string) int {
+	db.btreeSnapshotLock.RLock()
+	defer db.btreeSnapshotLock.RUnlock()
+
+	tree, ok := db.buckets.Load(bucket)
+	if !ok {
+		return 0
+	}
+
+	return tree.Len()
 }
 
 // Delete removes the entry from the in-memory index and adds that to the WAL. Deleting non-existing entries is a no-op.

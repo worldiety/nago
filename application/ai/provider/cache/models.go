@@ -8,7 +8,11 @@
 package cache
 
 import (
+	"context"
 	"iter"
+	"log/slog"
+	"slices"
+	"strings"
 
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
@@ -23,19 +27,68 @@ type cacheModels struct {
 
 func (c cacheModels) All(subject auth.Subject) iter.Seq2[model.Model, error] {
 	return func(yield func(model.Model, error) bool) {
-		for m, err := range c.parent.repoModels.All() {
-			if err != nil {
-				if !yield(m, err) {
+		ctx := context.Background()
+		num, err := c.parent.idxProvModels.Count(ctx)
+		if err != nil {
+			yield(model.Model{}, err)
+			return
+		}
+
+		if num == 0 {
+			for mod, err := range c.parent.prov.Models().All(subject) {
+				if err != nil {
+					yield(model.Model{}, err)
 					return
 				}
 
+				if mod.ID == "" {
+					slog.Warn("provider returned ai model without an ID")
+					continue
+				}
+
+				if err := c.parent.repoModels.Save(mod); err != nil {
+					yield(model.Model{}, err)
+					return
+				}
+
+				if err := c.parent.idxProvModels.Put(c.parent.Identity(), mod.Identity()); err != nil {
+					yield(model.Model{}, err)
+					return
+				}
+			}
+		}
+
+		var tmp []model.Model
+		for key, err := range c.parent.idxProvModels.AllByPrimary(ctx, c.parent.Identity()) {
+			if err != nil {
+				yield(model.Model{}, err)
+				return
+			}
+
+			optMod, err := c.parent.repoModels.FindByID(key.Secondary)
+			if err != nil {
+				yield(model.Model{}, err)
+				return
+			}
+
+			if optMod.IsNone() {
 				continue
 			}
+
+			m := optMod.Unwrap()
 
 			if !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermFindAllModel) {
 				continue
 			}
 
+			tmp = append(tmp, m)
+		}
+
+		slices.SortFunc(tmp, func(a, b model.Model) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+
+		for _, m := range tmp {
 			if !yield(m, nil) {
 				return
 			}

@@ -132,3 +132,54 @@ func (c *Client) DeleteDocument(lib, doc string) error {
 		BearerAuthentication(c.token).
 		Delete()
 }
+
+func (c *Client) GetDocument(libId, docId string) (DocumentInfo, error) {
+	var resp DocumentInfo
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("libraries/" + libId + "/documents/" + docId).
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return resp, err
+}
+
+func (c *Client) GetDocumentText(libId, docId string) (string, error) {
+	var resp struct {
+		Text string `json:"text"`
+	}
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("libraries/" + libId + "/documents/" + docId + "/text_content").
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		ToJSON(&resp).
+		Get()
+
+	return resp.Text, err
+}
+
+func (c *Client) GetDocumentStatus(libId, docId string) (document.ProcessingStatus, error) {
+	var resp struct {
+		DocumentId       string                    `json:"document_id"`
+		ProcessingStatus document.ProcessingStatus `json:"processing_status"`
+	}
+	err := xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		URL("libraries/" + libId + "/documents/" + docId + "/status").
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		ToJSON(&resp).
+		Get()
+
+	return resp.ProcessingStatus, err
+}

@@ -13,6 +13,7 @@ type Pages struct {
 	Provider     core.NavigationPath
 	Library      core.NavigationPath
 	Conversation core.NavigationPath
+	Document     core.NavigationPath
 	Chat         core.NavigationPath
 	Agent        core.NavigationPath
 	Maintenance  core.NavigationPath

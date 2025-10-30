@@ -27,7 +27,7 @@ func (m Model) WithIdentity(id ID) Model {
 }
 
 func (m Model) String() string {
-	return m.Name + "\n" + m.Description
+	return m.Name + " (" + string(m.ID) + ")" + "\n" + m.Description
 }
 
 type Repository data.Repository[Model, ID]

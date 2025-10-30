@@ -60,7 +60,7 @@ func Render(opts Options, source []byte) core.View {
 			}
 		}
 
-		return ui.RichText(string(b))
+		return ui.RichText(string(b)).FullWidth()
 	}
 
 	r := renderer{}

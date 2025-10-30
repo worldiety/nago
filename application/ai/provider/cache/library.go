@@ -11,11 +11,15 @@ import (
 	"fmt"
 	"iter"
 	"os"
+	"slices"
+	"strings"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -32,13 +36,12 @@ func (c cacheLibrary) Identity() library.ID {
 
 func (c cacheLibrary) All(subject auth.Subject) iter.Seq2[document.Document, error] {
 	return func(yield func(document.Document, error) bool) {
+		var docs []document.Document
+		// collect our visible docs
 		for doc, err := range c.parent.repoDocuments.All() {
 			if err != nil {
-				if !yield(doc, err) {
-					return
-				}
-
-				continue
+				yield(doc, err)
+				return
 			}
 
 			if doc.Library != c.id {
@@ -49,6 +52,70 @@ func (c cacheLibrary) All(subject auth.Subject) iter.Seq2[document.Document, err
 				continue
 			}
 
+			docs = append(docs, doc)
+		}
+
+		// check if we need a reload
+		needsReload := map[document.ID]document.Document{}
+		for _, doc := range docs {
+			if doc.ProcessingStatus == document.ProcessingRunning {
+				needsReload[doc.ID] = doc
+			}
+		}
+
+		// update required ones
+		if len(needsReload) > 0 {
+			for id, doc := range needsReload {
+				optStat, err := c.parent.prov.Libraries().Unwrap().Library(c.id).StatusByID(subject, id)
+				if err != nil {
+					yield(document.Document{}, err)
+					return
+				}
+
+				if optStat.IsNone() {
+					if err := c.parent.repoDocuments.DeleteByID(id); err != nil {
+						yield(document.Document{}, err)
+						return
+					}
+
+					continue
+				}
+
+				stat := optStat.Unwrap()
+				if stat != doc.ProcessingStatus {
+					doc.ProcessingStatus = stat
+					if err := c.parent.repoDocuments.Save(doc); err != nil {
+						yield(document.Document{}, err)
+						return
+					}
+				}
+			}
+
+			// collect again
+			docs = docs[:0]
+			for doc, err := range c.parent.repoDocuments.All() {
+				if err != nil {
+					yield(doc, err)
+					return
+				}
+
+				if doc.Library != c.id {
+					continue
+				}
+
+				if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(doc.ID), PermDocumentFindAll) {
+					continue
+				}
+
+				docs = append(docs, doc)
+			}
+		}
+
+		slices.SortFunc(docs, func(a, b document.Document) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+
+		for _, doc := range docs {
 			if !yield(doc, nil) {
 				return
 			}
@@ -121,4 +188,99 @@ func (c cacheLibrary) Create(subject auth.Subject, opts document.CreateOptions) 
 	}
 
 	return doc, nil
+}
+
+func (c cacheLibrary) TextContentByID(subject auth.Subject, id document.ID) (option.Opt[string], error) {
+	optDoc, err := c.parent.repoDocuments.FindByID(id)
+	if err != nil {
+		return option.Opt[string]{}, err
+	}
+
+	if optDoc.IsNone() {
+		return option.Opt[string]{}, nil
+	}
+
+	doc := optDoc.Unwrap()
+	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(doc.ID), PermReadTextContent) {
+		return option.Opt[string]{}, subject.Audit(PermReadTextContent)
+	}
+
+	optText, err := blob.Get(c.parent.docTextStore, string(id))
+	if err != nil {
+		return option.Opt[string]{}, err
+	}
+
+	if optText.IsSome() {
+		return option.Some(string(optText.Unwrap())), nil
+	}
+
+	optStrText, err := c.parent.prov.Libraries().Unwrap().Library(c.id).TextContentByID(subject, id)
+	if err != nil {
+		return option.Opt[string]{}, err
+	}
+
+	if optStrText.IsNone() {
+		return option.Opt[string]{}, nil
+	}
+
+	if err := blob.Put(c.parent.docTextStore, string(id), []byte(optStrText.Unwrap())); err != nil {
+		return option.Opt[string]{}, err
+	}
+
+	return optStrText, nil
+}
+
+func (c cacheLibrary) StatusByID(subject auth.Subject, id document.ID) (option.Opt[document.ProcessingStatus], error) {
+	optDoc, err := c.parent.repoDocuments.FindByID(id)
+	if err != nil {
+		return option.Opt[document.ProcessingStatus]{}, nil
+	}
+
+	if optDoc.IsNone() {
+		return option.Opt[document.ProcessingStatus]{}, nil
+	}
+
+	doc := optDoc.Unwrap()
+	if doc.ProcessingStatus != document.ProcessingCompleted {
+		optStat, err := c.parent.prov.Libraries().Unwrap().Library(c.id).StatusByID(subject, id)
+		if err != nil {
+			return option.Opt[document.ProcessingStatus]{}, err
+		}
+
+		if optStat.IsNone() {
+			if err := c.parent.repoDocuments.DeleteByID(id); err != nil {
+				return option.Opt[document.ProcessingStatus]{}, err
+			}
+
+			return option.Opt[document.ProcessingStatus]{}, nil
+		}
+
+		stat := optStat.Unwrap()
+		if stat != doc.ProcessingStatus {
+			doc.ProcessingStatus = stat
+			if err := c.parent.repoDocuments.Save(doc); err != nil {
+				return option.Opt[document.ProcessingStatus]{}, err
+			}
+		}
+	}
+
+	return option.Some(doc.ProcessingStatus), nil
+}
+
+func (c cacheLibrary) FindByID(subject auth.Subject, id document.ID) (option.Opt[document.Document], error) {
+	optDoc, err := c.parent.repoDocuments.FindByID(id)
+	if err != nil {
+		return option.Opt[document.Document]{}, err
+	}
+
+	if optDoc.IsNone() {
+		return option.Opt[document.Document]{}, nil
+	}
+
+	doc := optDoc.Unwrap()
+	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(doc.ID), PermDocumentFindAll) {
+		return option.Opt[document.Document]{}, subject.Audit(PermDocumentFindAll)
+	}
+
+	return option.Some(doc), nil
 }

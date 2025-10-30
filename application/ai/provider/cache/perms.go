@@ -27,6 +27,7 @@ var (
 	PermDocumentFindAll = permission.DeclareFindAll[Stub]("nago.ai.document.find_all", "AI Document")
 	PermDocumentDelete  = permission.DeclareDeleteByID[Stub]("nago.ai.document.delete", "AI Document")
 	PermDocumentCreate  = permission.DeclareCreate[Stub]("nago.ai.document.create", "AI Document")
+	PermReadTextContent = permission.DeclareFindByID[Stub]("nago.ai.document.read_text", "AI Document Text")
 )
 
 // Agent Permissions

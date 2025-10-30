@@ -10,10 +10,11 @@ package tdb
 import (
 	"bytes"
 	"context"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/std"
 	"io"
 	"iter"
+
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/std"
 )
 
 type BlobStore struct {
@@ -39,7 +40,7 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		if opts.Prefix != "" && len(opts.MaxInc) == 0 {
 			maxK = nextPrefix(maxK)
 		}
-		
+
 		for entry := range b.db.Range(b.bucket, minK, maxK) {
 			if !yield(entry.key, nil) {
 				return
@@ -57,6 +58,10 @@ func nextPrefix(s string) string {
 	}
 
 	return ""
+}
+
+func (b *BlobStore) Count(ctx context.Context) (int64, error) {
+	return int64(b.db.Len(b.bucket)), nil
 }
 
 func (b *BlobStore) Exists(ctx context.Context, key string) (bool, error) {

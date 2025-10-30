@@ -10,12 +10,13 @@ package blob
 import (
 	"bytes"
 	"context"
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/xslices"
 	"io"
 	"iter"
 	"time"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xslices"
 )
 
 type ListOptions struct {
@@ -70,6 +71,10 @@ type Info struct {
 type StatReader interface {
 	// Stat reads some metadata for the given key.
 	Stat(ctx context.Context, key string) (option.Opt[Info], error)
+}
+
+type Counter interface {
+	Count(ctx context.Context) (int64, error)
 }
 
 // Store represents a single bucket store for blobs. Note, that individual methods are thread safe, however
@@ -185,4 +190,24 @@ func Get(store Reader, key string) (std.Option[[]byte], error) {
 
 func Keys(store Store) ([]string, error) {
 	return xslices.Collect2(store.List(context.Background(), ListOptions{}))
+}
+
+// Count may enumerate through all entries which may become expensive, and it is just an indicator under concurrency.
+// If the given store implements a [Counter] interface, it is used to determine the amount of entries without
+// iterating all elements.
+func Count(ctx context.Context, store Store) (int64, error) {
+	if counter, ok := store.(Counter); ok {
+		return counter.Count(ctx)
+	}
+
+	var count int64
+	for _, err := range store.List(ctx, ListOptions{}) {
+		if err != nil {
+			return 0, err
+		}
+
+		count++
+	}
+
+	return count, nil
 }

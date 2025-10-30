@@ -22,6 +22,7 @@ import (
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 )
 
@@ -38,7 +39,9 @@ type Provider struct {
 	repoDocuments     document.Repository
 	repoConversations conversation.Repository
 	repoMessages      message.Repository
+	docTextStore      blob.Store
 	idxMsg            *data.CompositeIndex[conversation.ID, message.ID]
+	idxProvModels     *data.CompositeIndex[provider.ID, model.ID]
 }
 
 func NewProvider(
@@ -49,7 +52,9 @@ func NewProvider(
 	repoDocuments document.Repository,
 	repoConversations conversation.Repository,
 	repoMessages message.Repository,
+	docTextStore blob.Store,
 	idxMsg *data.CompositeIndex[conversation.ID, message.ID],
+	idxProvModels *data.CompositeIndex[provider.ID, model.ID],
 ) *Provider {
 	p := &Provider{
 		prov:              other,
@@ -59,7 +64,9 @@ func NewProvider(
 		repoDocuments:     repoDocuments,
 		repoConversations: repoConversations,
 		repoMessages:      repoMessages,
+		docTextStore:      docTextStore,
 		idxMsg:            idxMsg,
+		idxProvModels:     idxProvModels,
 	}
 
 	return p
@@ -112,7 +119,7 @@ func (p *Provider) LoadAll() error {
 			}
 
 		}
-		
+
 	}
 
 	if p.prov.Agents().IsSome() {
@@ -208,6 +215,14 @@ func (p *Provider) Clear() error {
 
 	if err := p.idxMsg.Clear(context.Background()); err != nil {
 		return fmt.Errorf("failed to clear index message cache repository: %w", err)
+	}
+
+	if err := p.idxProvModels.Clear(context.Background()); err != nil {
+		return fmt.Errorf("failed to clear index prov/model cache repository: %w", err)
+	}
+
+	if err := blob.DeleteAll(p.docTextStore); err != nil {
+		return fmt.Errorf("failed to clear documents text cache repository: %w", err)
 	}
 
 	return nil

@@ -11,14 +11,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"iter"
+	"log/slog"
+
 	"github.com/worldiety/enum/json"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"io"
-	"iter"
-	"log/slog"
 )
 
 type Repository[DomainModel data.Aggregate[DomainID], DomainID data.IDType, PersistenceModel data.Aggregate[PersistenceID], PersistenceID data.IDType] struct {
@@ -250,15 +251,8 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) All
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Count() (int, error) {
-	count := 0
-	for _, err := range r.store.List(context.Background(), blob.ListOptions{}) {
-		if err != nil {
-			return count, err
-		}
-		count++
-	}
-
-	return count, nil
+	c, err := blob.Count(context.Background(), r.store)
+	return int(c), err
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) DeleteByID(id DomainID) error {

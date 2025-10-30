@@ -125,6 +125,11 @@ func (idx *CompositeIndex[A, B]) DeleteAllSecondary(ctx context.Context, b B) er
 	return nil
 }
 
+// Count just returns the total amount of entries in the index.
+func (idx *CompositeIndex[A, B]) Count(ctx context.Context) (int64, error) {
+	return blob.Count(ctx, idx.store)
+}
+
 // All just loops of the entire key set.
 func (idx *CompositeIndex[A, B]) All(ctx context.Context) iter.Seq2[CompositeKey[A, B], error] {
 	return idx.AllByPrefix(ctx, "")

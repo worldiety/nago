@@ -12,6 +12,7 @@ import (
 	"iter"
 	"log/slog"
 
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/provider"
@@ -63,4 +64,31 @@ func (p *mistralLibrary) All(subject auth.Subject) iter.Seq2[document.Document, 
 			}
 		}
 	}
+}
+
+func (p *mistralLibrary) TextContentByID(subject auth.Subject, id document.ID) (option.Opt[string], error) {
+	text, err := p.client().GetDocumentText(string(p.id), string(id))
+	if err != nil {
+		return option.Opt[string]{}, err
+	}
+
+	return option.Some(text), nil
+}
+
+func (p *mistralLibrary) StatusByID(subject auth.Subject, id document.ID) (option.Opt[document.ProcessingStatus], error) {
+	status, err := p.client().GetDocumentStatus(string(p.id), string(id))
+	if err != nil {
+		return option.Opt[document.ProcessingStatus]{}, err
+	}
+
+	return option.Some(status), nil
+}
+
+func (p *mistralLibrary) FindByID(subject auth.Subject, id document.ID) (option.Opt[document.Document], error) {
+	doc, err := p.client().GetDocument(string(p.id), string(id))
+	if err != nil {
+		return option.Opt[document.Document]{}, err
+	}
+
+	return option.Some(doc.IntoDocument()), nil
 }

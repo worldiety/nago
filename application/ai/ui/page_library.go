@@ -30,6 +30,7 @@ import (
 
 var (
 	StrDocuments          = i18n.MustString("nago.ai.admin.library.documents", i18n.Values{language.English: "Documents", language.German: "Dokumente"})
+	StrDocument           = i18n.MustString("nago.ai.admin.library.document", i18n.Values{language.English: "Document", language.German: "Dokument"})
 	StrLibraryUpdated     = i18n.MustString("nago.ai.admin.library.updated", i18n.Values{language.English: "Library updated", language.German: "Bibliothek aktualisiert"})
 	StrLibraryUpdatedDesc = i18n.MustString("nago.ai.admin.library.updated_desc", i18n.Values{language.English: "The Library has been updated.", language.German: "Die Bibliothek wurde erfolgreich aktualisiert."})
 )

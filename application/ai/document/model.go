@@ -19,6 +19,12 @@ import (
 type ID string
 
 type ProcessingStatus string
+
+const (
+	ProcessingCompleted ProcessingStatus = "Completed"
+	ProcessingRunning   ProcessingStatus = "Running"
+)
+
 type Document struct {
 	ID               ID
 	CreatedAt        xtime.UnixMilliseconds
