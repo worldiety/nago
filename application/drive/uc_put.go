@@ -251,7 +251,7 @@ func mimeType(store blob.Store, key string) (string, error) {
 
 		fname := optFname.Unwrap()
 
-		cmd := exec.Command("file", "-I", fname)
+		cmd := exec.Command("file", "--mime", fname)
 		buf, err := cmd.CombinedOutput()
 		if err != nil {
 			return "", fmt.Errorf("cannot exec file cmd %s: %s, %w", fname, string(buf), err)
