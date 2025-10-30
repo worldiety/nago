@@ -24,6 +24,10 @@ type cacheAgents struct {
 	parent *Provider
 }
 
+func (c cacheAgents) Agent(id agent.ID) provider.Agent {
+	return cacheAgent{c.parent, id}
+}
+
 func (c cacheAgents) All(subject auth.Subject) iter.Seq2[agent.Agent, error] {
 	return func(yield func(agent.Agent, error) bool) {
 		for m, err := range c.parent.repoAgents.All() {
@@ -116,8 +120,8 @@ func (c cacheAgents) Create(subject auth.Subject, opts agent.CreateOptions) (age
 		return agent.Agent{}, err
 	}
 
-	if ag.LastMod == 0 {
-		ag.LastMod = xtime.Now()
+	if ag.UpdatedAt == 0 {
+		ag.UpdatedAt = xtime.Now()
 	}
 
 	ag.CreatedBy = subject.ID()

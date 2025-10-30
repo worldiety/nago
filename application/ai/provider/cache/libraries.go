@@ -117,7 +117,7 @@ func (c cacheLibraries) Delete(subject auth.Subject, id library.ID) error {
 	if err := c.parent.prov.Libraries().Unwrap().Delete(subject, id); err != nil {
 		return err
 	}
-	
+
 	return c.parent.repoLibraries.DeleteByID(id)
 }
 
@@ -142,7 +142,7 @@ func (c cacheLibraries) Update(subject auth.Subject, id library.ID, opts library
 	}
 
 	nLib.CreatedBy = lib.CreatedBy
-	return nLib, c.parent.repoLibraries.Save(lib)
+	return nLib, c.parent.repoLibraries.Save(nLib)
 }
 
 func (c cacheLibraries) Library(id library.ID) provider.Library {

@@ -29,7 +29,9 @@ import (
 )
 
 var (
-	StrDocuments = i18n.MustString("nago.ai.admin.library.documents", i18n.Values{language.English: "Documents", language.German: "Dokumente"})
+	StrDocuments          = i18n.MustString("nago.ai.admin.library.documents", i18n.Values{language.English: "Documents", language.German: "Dokumente"})
+	StrLibraryUpdated     = i18n.MustString("nago.ai.admin.library.updated", i18n.Values{language.English: "Library updated", language.German: "Bibliothek aktualisiert"})
+	StrLibraryUpdatedDesc = i18n.MustString("nago.ai.admin.library.updated_desc", i18n.Values{language.English: "The Library has been updated.", language.German: "Die Bibliothek wurde erfolgreich aktualisiert."})
 )
 
 func PageLibrary(wnd core.Window, uc ai.UseCases) core.View {
@@ -107,6 +109,13 @@ func formLibSettings(wnd core.Window, libs provider.Libraries, lib *core.State[l
 				return
 			}
 			lib.Set(info)
+
+			alert.ShowBannerMessage(wnd, alert.Message{
+				Title:   StrLibraryUpdated.Get(wnd),
+				Message: StrLibraryUpdatedDesc.Get(wnd),
+				Intent:  alert.IntentOk,
+			})
+
 		}).Title(rstring.ActionSave.Get(wnd))).FullWidth().Alignment(ui.Trailing),
 	).FullWidth()
 }

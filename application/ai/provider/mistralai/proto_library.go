@@ -59,8 +59,8 @@ func (c *Client) CreateLibrary(req CreateLibraryRequest) (LibraryInfo, error) {
 }
 
 type UpdateLibraryRequest struct {
-	Description string `json:"description,omitempty"`
-	Name        string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty"`
 }
 
 func (c *Client) UpdateLibrary(id string, req UpdateLibraryRequest) (LibraryInfo, error) {

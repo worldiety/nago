@@ -65,7 +65,7 @@ func (c cacheLibrary) Delete(subject auth.Subject, id document.ID) error {
 	if optDoc.IsNone() {
 		return nil
 	}
-	
+
 	lib := optDoc.Unwrap()
 	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(lib.ID), PermDocumentDelete) {
 		return subject.Audit(PermDocumentDelete)

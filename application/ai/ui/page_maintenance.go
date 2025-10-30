@@ -19,12 +19,12 @@ import (
 )
 
 var (
-	StrClearCacheBtn     = i18n.MustString("nago.ai.maintenance.action_clear", i18n.Values{language.English: "Clear cache", language.German: "Cache löschen"})
-	StrClearCacheText    = i18n.MustString("nago.ai.maintenance.desc_clear", i18n.Values{language.English: "Deletes all cache data for all configured providers and rebuild it from providers. All data which is not available remote, like user ownerships are also removed and cannot be restored.", language.German: "Löscht alle Cache-Daten für alle konfigurierten Anbieter und baut sie aus den Anbietern neu auf. Alle Daten, die nicht remote verfügbar sind, wie z. B. Benutzerrechte, werden ebenfalls entfernt und können nicht wiederhergestellt werden."})
-	StrClearCacheConfirm = i18n.MustString("nago.ai.maintenance.action_clear_confirm", i18n.Values{language.English: "Do you really want to delete the cache and all related data? This will cause a data loss.", language.German: "Möchten Sie den Cache und alle zugehörigen Daten wirklich löschen? Dies führt zu einem Datenverlust."})
+	StrClearCacheBtn     = i18n.MustString("nago.ai.admin.maintenance.action_clear", i18n.Values{language.English: "Clear cache", language.German: "Cache löschen"})
+	StrClearCacheText    = i18n.MustString("nago.ai.admin.maintenance.desc_clear", i18n.Values{language.English: "Deletes all cache data for all configured providers and rebuild it from providers. All data which is not available remote, like user ownerships are also removed and cannot be restored.", language.German: "Löscht alle Cache-Daten für alle konfigurierten Anbieter und baut sie aus den Anbietern neu auf. Alle Daten, die nicht remote verfügbar sind, wie z. B. Benutzerrechte, werden ebenfalls entfernt und können nicht wiederhergestellt werden."})
+	StrClearCacheConfirm = i18n.MustString("nago.ai.admin.maintenance.action_clear_confirm", i18n.Values{language.English: "Do you really want to delete the cache and all related data? This will cause a data loss.", language.German: "Möchten Sie den Cache und alle zugehörigen Daten wirklich löschen? Dies führt zu einem Datenverlust."})
 
-	StrReloadProviderBtn  = i18n.MustString("nago.ai.maintenance.action_reload", i18n.Values{language.English: "Reload provider", language.German: "Provider initialisieren"})
-	StrReloadProviderText = i18n.MustString("nago.ai.maintenance.desc_reload", i18n.Values{language.English: "Reloads all providers configurations and eventually re-creates caches based on the actual local and remote state.", language.German: "Lädt alle Anbieterkonfigurationen neu und erstellt schließlich Caches basierend auf dem aktuellen lokalen und Remote-Status neu."})
+	StrReloadProviderBtn  = i18n.MustString("nago.ai.admin.maintenance.action_reload", i18n.Values{language.English: "Reload provider", language.German: "Provider initialisieren"})
+	StrReloadProviderText = i18n.MustString("nago.ai.admin.maintenance.desc_reload", i18n.Values{language.English: "Reloads all providers configurations and eventually re-creates caches based on the actual local and remote state.", language.German: "Lädt alle Anbieterkonfigurationen neu und erstellt schließlich Caches basierend auf dem aktuellen lokalen und Remote-Status neu."})
 )
 
 func PageMaintenance(wnd core.Window, uc ai.UseCases) core.View {

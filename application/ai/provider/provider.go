@@ -68,6 +68,12 @@ type Agents interface {
 	FindByID(subject auth.Subject, id agent.ID) (option.Opt[agent.Agent], error)
 	FindByName(subject auth.Subject, name string) iter.Seq2[agent.Agent, error]
 	Create(subject auth.Subject, options agent.CreateOptions) (agent.Agent, error)
+	Agent(id agent.ID) Agent
+}
+
+type Agent interface {
+	Identity() agent.ID
+	Update(subject auth.Subject, opts agent.UpdateOptions) (agent.Agent, error)
 }
 
 type Conversations interface {
@@ -82,7 +88,7 @@ type Conversations interface {
 type Conversation interface {
 	Identity() conversation.ID
 	All(subject auth.Subject) iter.Seq2[message.Message, error]
-	
+
 	// Append takes the given options and applies it for input processing. This method blocks until processing
 	// has finished and returns all input messages and the generated output messages which may require further
 	// processing work.

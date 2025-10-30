@@ -49,8 +49,8 @@ func (p *mistralLibraries) Create(subject auth.Subject, opts library.CreateOptio
 
 func (p *mistralLibraries) Update(subject auth.Subject, id library.ID, opts library.UpdateOptions) (library.Library, error) {
 	info, err := p.client().UpdateLibrary(string(id), UpdateLibraryRequest{
-		Description: opts.Description,
-		Name:        opts.Name,
+		Description: &opts.Description,
+		Name:        &opts.Name,
 	})
 
 	if err != nil {

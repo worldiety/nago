@@ -44,9 +44,10 @@ type Message struct {
 	CreatedAt xtime.UnixMilliseconds `json:"createdAt"`
 	CreatedBy user.ID                `json:"createdBy"`
 
-	Role          Role               `json:"role"`
-	MessageInput  option.Ptr[string] `json:"messageInput"`
-	MessageOutput option.Ptr[string] `json:"messageOutput"`
+	Role          Role                      `json:"role"`
+	MessageInput  option.Ptr[string]        `json:"messageInput"`
+	MessageOutput option.Ptr[string]        `json:"messageOutput"`
+	ToolExecution option.Ptr[ToolExecution] `json:"toolExecution"`
 }
 
 func (m Message) Identity() ID {
@@ -54,3 +55,8 @@ func (m Message) Identity() ID {
 }
 
 type Repository data.Repository[Message, ID]
+
+type ToolExecution struct {
+	Type      string
+	Arguments string
+}

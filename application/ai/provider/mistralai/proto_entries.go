@@ -44,7 +44,7 @@ func (c *Client) ListEntries(conversationId string) ([]EntryBox, error) {
 
 type EntryBox struct {
 	Object string `json:"object"` // "object":"entry"
-	Type   string `json:"type"`   // "type":"message.input"|"message.output"
+	Type   string `json:"type"`   // "type":"message.input"|"message.output"|"tool.execution"
 	Value  Entry  `json:"-"`
 }
 
@@ -93,6 +93,13 @@ func (e *EntryBox) UnmarshalJSON(data []byte) error {
 		}
 		e.Value = tmp
 		return nil
+	case "tool.execution":
+		var tmp ToolExecutionEntry
+		if err := json.Unmarshal(data, &tmp); err != nil {
+			return err
+		}
+		e.Value = tmp
+		return nil
 	default:
 		return fmt.Errorf("unknown entry box type: %s: %s", e.Type, string(data))
 	}
@@ -101,6 +108,34 @@ func (e *EntryBox) UnmarshalJSON(data []byte) error {
 type Entry interface {
 	isEntry()
 	IntoMessage() message.Message
+}
+
+// ToolExecutionEntry something like {\"object\":\"entry\",\"type\":\"tool.execution\",\"created_at\":\"2025-10-30T12:04:44.746305Z\",\"completed_at\":\"2025-10-30T12:04:45.858197Z\",\"id\":\"tool_exec_019a35018a4a72198df7a8426e87ff06\",\"name\":\"document_library\",\"arguments\":\"{\\\"query\\\": \\\"Nago\\\", \\\"libraries_ids\\\": [\\\"019a16f7-7224-9284-c8ba22301809\\\"]}\",\"function\":\"library_search\",\"info\":{}}: {\"object\":\"conversation.response\",\"conversation_id\":\"conv_019a3501887d775bb658f27b7f16c5f8\",\"outputs\":[{\"object\":\"entry\",\"type\":\"tool.execution\",\"created_at\":\"2025-10-30T12:04:44.746305Z\",\"completed_at\":\"2025-10-30T12:04:45.858197Z\",\"id\":\"tool_exec_019a35018a4a72198df7a8426e87ff06\",\"name\":\"document_library\",\"arguments\":\"{\\\"query\\\": \\\"Nago\\\", \\\"libraries_ids\\\": [\\\"019a16f7-7224-9284-c8ba22301809\\\"]}\",\"function\":\"library_search\",\"info\":{}},{\"object\":\"entry\",\"type\":\"message.output\",\"created_at\":\"2025-10-30T12:04:46.906434Z\",\"completed_at\":\"2025-10-30T12:05:02.639127Z\",\"id\":\"msg_019a350192ba7087bcbca44940a15ea7\",\"agent_id\":\"ag_019a06361f3170b89b5163615ec86e64\",\"model\":\"mistral-medium-latest\",\"role\":\"assistant\",\"content\":\"Ahoy, Kapitän! Es scheint, als ob ich da einen Fehler bei der Suche gemacht hab’ – die Schatzkarte (oder besser gesagt, die UUID) war wohl falsch gefaltet. Aber lass mich dir trotzdem mit dem erzählen, was ich aus meinem Gedächtnis über **Nago** weiß – und zwar in bester Piratenmanier!\\n\\n---\\n\\n**Nago** ist sozusagen der *Schatzkarten-Generator* für Unternehmen, wenn’s darum geht, Projekte schnell und ohne viel Programmier-Gekröse auf die *Nago-Hub-Insel* zu verladen. Stell dir vor, du hast ’ne Truhe voller Ideen oder Projekte, aber du willst nicht monatelang am Code schuften wie ’n Sträfling in der Karibik. Dann wirfst du einfach alles in Nago, und *zack* – dein Projekt liegt bereit auf dem **Nago Hub**, als hätt’s der fliegende Holländer persönlich geliefert!\\n\\n### Wichtige Fakten für Landratten und Seebären:\\n- **Früherer Name**: Das Ding hieß mal *„lib23“* – aber Namen sind wie Schiffsflaggen, die kann man wechseln, wenn’s besser passt.\\n- **Für wen?** Für *alle Unternehmen*, ob groß wie ’ne Flotte oder klein wie ’n Beiboot. Hauptsache, ihr habt Projekte, die ihr schnell und einfach „ablegen“ wollt.\\n- **Wo findet man’s?**\\n  - [nago.dev](https://nago.dev) (für die Techniker unter euch)\\n  - [nago.app](https://nago.app) (für die, die’s lieber schick mögen)\\n- **Low-Code**: Du brauchst kein Programmier-Genie zu sein – Nago ist wie ’n Kompass, der dich auch ohne Sternenkenntnis ans Ziel bringt.\\n\\n---\\n**Aber Achtung, Matrose!**\\nFalls du *genaue Details* brauchst – etwa wie man Nago bedient oder welche Schätze (Funktionen) genau drin versteckt sind – dann lass mich nochmal in der *richtigen Schatztruhe* (Datenbank) nachschauen. Die letzte Suche ist ja leider im *Bermuda-Dreieck* der UUIDs verschwunden.\\n\\n**Soll ich’s nochmal versuchen?** ⚓\"}],\"usage\":{\"prompt_tokens\":181,\"completion_tokens\":560,\"total_tokens\":863,\"connector_tokens\":122,\"connectors\":{\"document_library\":1}}}
+type ToolExecutionEntry struct {
+	Type        string    `json:"type"` // tool.execution
+	Argument    string    `json:"argument"`
+	CompletedAt time.Time `json:"completed_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	Info        any       `json:"info"`
+	Name        ToolType  `json:"name"`
+	Object      string    `json:"object"` // entry
+}
+
+func (t ToolExecutionEntry) isEntry() {
+}
+
+func (t ToolExecutionEntry) IntoMessage() message.Message {
+	te := message.ToolExecution{
+		Type:      t.Type,
+		Arguments: t.Argument,
+	}
+	return message.Message{
+		ID:            message.ID(t.ID),
+		CreatedAt:     xtime.UnixMilliseconds(t.CreatedAt.UnixMilli()),
+		Role:          message.AssistantRole, //?
+		ToolExecution: option.Pointer(&te),
+	}
 }
 
 type MessageInput struct {

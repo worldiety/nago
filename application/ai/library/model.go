@@ -27,6 +27,15 @@ func (l Library) Identity() ID {
 	return l.ID
 }
 
+func (l Library) WithIdentity(id ID) Library {
+	l.ID = id
+	return l
+}
+
+func (l Library) String() string {
+	return l.Name
+}
+
 type CreateOptions struct {
 	Name        string
 	Description string

@@ -8,6 +8,7 @@
 package agent
 
 import (
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/user"
@@ -21,15 +22,16 @@ type ID string
 // Higher values make the results more novel. The allowed range is [0..1].
 type Temperature float64
 type Agent struct {
-	ID          ID                     `json:"id,omitempty"`
-	Name        string                 `json:"name,omitempty"`
-	Description string                 `json:"desc,omitempty"`
-	Prompt      string                 `json:"prompt,omitempty"`
-	Model       model.ID               `json:"model,omitempty"`
-	Libraries   []library.ID           `json:"libraries,omitempty"`
-	Temperature Temperature            `json:"tmp,omitempty"`
-	LastMod     xtime.UnixMilliseconds `json:"lastMod,omitempty"`
-	CreatedBy   user.ID                `json:"createdBy,omitempty"`
+	ID           ID                     `json:"id,omitempty"`
+	Name         string                 `json:"name,omitempty"`
+	Description  string                 `json:"desc,omitempty"`
+	Instructions string                 `json:"prompt,omitempty"`
+	Model        model.ID               `json:"model,omitempty"`
+	Libraries    []library.ID           `json:"libraries,omitempty"`
+	Temperature  Temperature            `json:"tmp,omitempty"`
+	UpdatedAt    xtime.UnixMilliseconds `json:"lastMod,omitempty"`
+	CreatedBy    user.ID                `json:"createdBy,omitempty"`
+	CreatedAt    xtime.UnixMilliseconds `json:"createdAt,omitempty"`
 }
 
 func (e Agent) Identity() ID {
@@ -41,6 +43,15 @@ type CreateOptions struct {
 	Description  string
 	Model        model.ID
 	Instructions string
+}
+
+type UpdateOptions struct {
+	Name         option.Opt[string]
+	Description  option.Opt[string]
+	Model        option.Opt[model.ID]
+	Instructions option.Opt[string]
+	Temperature  option.Opt[Temperature]
+	Libraries    option.Opt[[]library.ID]
 }
 
 type Repository data.Repository[Agent, ID]

@@ -102,6 +102,9 @@ func agentTable(wnd core.Window, prov provider.Provider) core.View {
 					},
 				},
 			}).NextActionIndicator(true).
+				Action(func(e dataview.Element[agent.Agent]) {
+					wnd.Navigation().ForwardTo("admin/ai/agent", wnd.Values().Put("agent", string(e.Value.ID)))
+				}).
 				NewAction(func() {
 					createPresented.Set(true)
 				}).SelectOptions(

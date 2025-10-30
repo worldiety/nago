@@ -232,7 +232,7 @@ func (r *Request) Do(method string) error {
 	if len(r.query) > 0 {
 		u, err := url.Parse(reqUrl)
 		if err != nil {
-			return fmt.Errorf("invalid url %q: %w", r.url, err)
+			return fmt.Errorf("invalid url %s: %w", r.url, err)
 		}
 
 		queryValues := u.Query()

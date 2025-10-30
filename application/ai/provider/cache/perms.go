@@ -37,6 +37,7 @@ var (
 	PermAgentCreate     = permission.DeclareCreate[Stub]("nago.ai.agent.create", "AI Agent")
 	PermAgentFindByID   = permission.DeclareFindByID[Stub]("nago.ai.agent.find_by_id", "AI Agent")
 	PermAgentFindByName = permission.DeclareFindByName[Stub]("nago.ai.agent.find_by_name", "AI Agent")
+	PermAgentUpdate     = permission.DeclareUpdate[Stub]("nago.ai.agent.update", "AI Agent")
 )
 
 // Conversations Permissions

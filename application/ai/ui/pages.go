@@ -14,5 +14,6 @@ type Pages struct {
 	Library      core.NavigationPath
 	Conversation core.NavigationPath
 	Chat         core.NavigationPath
+	Agent        core.NavigationPath
 	Maintenance  core.NavigationPath
 }

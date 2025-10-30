@@ -116,6 +116,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Library:      "admin/ai/library",
 			Conversation: "admin/ai/provider/conversation",
 			Chat:         "admin/ai/chat",
+			Agent:        "admin/ai/agent",
 		},
 	}
 
@@ -136,6 +137,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.RootViewWithDecoration(management.Pages.Maintenance, func(wnd core.Window) core.View {
 		return uiai.PageMaintenance(wnd, management.UseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.Pages.Agent, func(wnd core.Window) core.View {
+		return uiai.PageAgent(wnd, management.UseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

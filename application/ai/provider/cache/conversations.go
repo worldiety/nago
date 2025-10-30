@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"slices"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/conversation"
@@ -28,6 +29,7 @@ type cacheConversations struct {
 
 func (c *cacheConversations) All(subject auth.Subject) iter.Seq2[conversation.Conversation, error] {
 	return func(yield func(conversation.Conversation, error) bool) {
+		var tmp []conversation.Conversation
 		for m, err := range c.parent.repoConversations.All() {
 			if err != nil {
 				if !yield(m, err) {
@@ -41,7 +43,15 @@ func (c *cacheConversations) All(subject auth.Subject) iter.Seq2[conversation.Co
 				continue
 			}
 
-			if !yield(m, nil) {
+			tmp = append(tmp, m)
+		}
+
+		slices.SortFunc(tmp, func(a, b conversation.Conversation) int {
+			return int(b.CreatedAt - a.CreatedAt)
+		})
+
+		for _, t := range tmp {
+			if !yield(t, nil) {
 				return
 			}
 		}

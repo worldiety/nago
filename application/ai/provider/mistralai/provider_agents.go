@@ -22,6 +22,10 @@ type mistralAgents struct {
 	parent *mistralProvider
 }
 
+func (p *mistralAgents) Agent(id agent.ID) provider.Agent {
+	return &mistralAgent{p.parent, id}
+}
+
 func (p *mistralAgents) FindByName(subject auth.Subject, name string) iter.Seq2[agent.Agent, error] {
 	return func(yield func(agent.Agent, error) bool) {
 		for a, err := range p.All(subject) {
@@ -36,7 +40,7 @@ func (p *mistralAgents) FindByName(subject auth.Subject, name string) iter.Seq2[
 				}
 			}
 		}
-		
+
 	}
 }
 
