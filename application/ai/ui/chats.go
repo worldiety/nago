@@ -61,6 +61,7 @@ func (c TChats) Render(ctx core.RenderContext) core.RenderNode {
 		c.deleteDialog(deleteState, deletePresented),
 		ui.TertiaryButton(func() {
 			c.selected.Set("")
+			c.selected.Notify()
 		}).PreIcon(icons.Pen).Title(StrNewChat.Get(wnd)),
 		ui.HStack(ui.Text(StrChats.Get(wnd)).Color(ui.ColorIconsMuted).Font(ui.BodySmall)).Padding(ui.Padding{Left: ui.L16}),
 	).

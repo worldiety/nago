@@ -89,6 +89,7 @@ type Configurator struct {
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]
 	hasSSL                 bool
+	noFooter               []core.NavigationPath
 }
 
 func NewConfigurator() *Configurator {
@@ -253,6 +254,15 @@ func (c *Configurator) AddOnWindowCreatedObserver(observer core.OnWindowCreatedO
 
 func (c *Configurator) OnDestroy(f func()) {
 	c.destructors = append(c.destructors, f)
+}
+
+func (c *Configurator) NoFooter(p ...core.NavigationPath) *Configurator {
+	c.noFooter = append(c.noFooter, p...)
+	return c
+}
+
+func (c *Configurator) GetNoFooter() []core.NavigationPath {
+	return c.noFooter
 }
 
 // AppIcon sets the icon of the application

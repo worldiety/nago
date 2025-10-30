@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
@@ -28,6 +29,11 @@ import (
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrAIDisclaimer = i18n.MustString("nago.ai.chat.disclaimer", i18n.Values{language.English: "Note: AI-generated content may contain errors. Please check your results.", language.German: "Hinweis: KI generierte Inhalte können fehlerhaft sein. Bitte überprüfen Sie Ihre Ergebnisse."})
 )
 
 type StartOptions struct {
@@ -107,6 +113,8 @@ type TChat struct {
 	padding      ui.Padding
 	provider     provider.Provider
 	startOptions StartOptions
+	frame        ui.Frame
+	teaser       core.View
 }
 
 func Chat(provider provider.Provider, conv *core.State[conversation.ID], text *core.State[string]) TChat {
@@ -118,8 +126,19 @@ func (c TChat) Padding(padding ui.Padding) TChat {
 	return c
 }
 
+func (c TChat) Frame(frame ui.Frame) TChat {
+	c.frame = frame
+	return c
+}
+
 func (c TChat) StartOptions(opts StartOptions) TChat {
 	c.startOptions = opts
+	return c
+}
+
+// Teaser view is shown in empty chats above the input text
+func (c TChat) Teaser(teaser core.View) TChat {
+	c.teaser = teaser
 	return c
 }
 
@@ -159,11 +178,13 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 
 	c.conv.Observe(func(newValue conversation.ID) {
 		messages.Reset()
+		c.text.Set("")
 	})
 
 	pleaseWaitPresented := core.DerivedState[bool](c.conv, "-pw-presented")
 
 	return ui.VStack(
+		// the actual messages
 		ui.ForEach(messages.Get(), func(msg message.Message) core.View {
 
 			stack := ui.VStack()
@@ -184,13 +205,20 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 
 			return stack.Alignment(align).FullWidth()
 		})...,
-	).Append(
-		ui.If(pleaseWaitPresented.Get(),
-			ui.HStack(
-				ChatMessage().Icon(icons.DotsHorizontal).Style(MessageAgent),
-			).FullWidth().Alignment(ui.Leading),
-		),
 	).
+		// greeting view if no messages are available
+		Append(
+			ui.If(len(messages.Get()) == 0, c.teaser),
+		).
+		// wait entertainment
+		Append(
+			ui.If(pleaseWaitPresented.Get(),
+				ui.HStack(
+					ChatMessage().Icon(icons.DotsHorizontal).Style(MessageAgent),
+				).FullWidth().Alignment(ui.Leading),
+			),
+		).
+		// chat field
 		Append(
 			ui.HStack(
 				ChatField(c.text).
@@ -253,7 +281,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 								wnd.PostDelayed(func() {
 									wnd.RequestFocus("ai-user-prompt")
 								}, 100*time.Millisecond)
-								
+
 								if err != nil {
 									alert.ShowBannerError(wnd, err)
 									return
@@ -271,9 +299,17 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 			).Gap(ui.L8).
 				FullWidth(),
 		).
+		// chat footer
+		Append(
+			ui.Space(ui.L16),
+			ui.HStack(
+				ui.Text(StrAIDisclaimer.Get(wnd)),
+			).BackgroundColor(ui.M2).Border(ui.Border{}.Radius(ui.L16)).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L96)),
+		).
 		Append(ui.VStack().ID("end-of-chat")).
-		FullWidth().
 		Gap(ui.L16).
+		Alignment(ui.Bottom).
 		Padding(c.padding).
+		Frame(c.frame).
 		Render(ctx)
 }

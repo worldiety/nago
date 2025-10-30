@@ -145,6 +145,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return uiai.PageConversation(wnd, management.UseCases)
 	})
 
+	cfg.NoFooter(management.Pages.Chat)
 	cfg.RootViewWithDecoration(management.Pages.Chat, func(wnd core.Window) core.View {
 		return uiai.PageChat(wnd, management.UseCases)
 	})

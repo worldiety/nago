@@ -33,11 +33,12 @@ func main() {
 		option.MustZero(cfg.StandardSystems())
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(cfg.NewScaffold().
-			NoFooterContentPadding(".").
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
 		drives := option.Must(cfgdrive.Enable(cfg))
+
+		cfg.NoFooter(".")
 
 		modAi := option.Must(cfgai.Enable(cfg))
 

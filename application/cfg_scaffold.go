@@ -494,26 +494,29 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			scaffold = scaffold.Breakpoint(*b.breakpoint)
 		}
 
-		if b.footer != nil {
-			scaffold = scaffold.Footer(b.footer)
-		} else if b.enableAutoFooter {
+		noFooter := b.cfg.noFooter
+		if len(noFooter) > 0 && !slices.Contains(noFooter, wnd.Path()) {
+			if b.footer != nil {
+				scaffold = scaffold.Footer(b.footer)
+			} else if b.enableAutoFooter {
 
-			autoFooter := footer.Footer().
-				Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark).ObjectFit(ui.FitContain).Frame(ui.Frame{Height: ui.L64})).
-				Impress(themeCfg.Impress).
-				PrivacyPolicy(themeCfg.PrivacyPolicy).
-				TermsOfUse(themeCfg.TermsOfUse).
-				ProviderName(themeCfg.ProviderName).
-				TextColor(b.footerTextColor).
-				BackgroundColor(b.footerBackgroundColor).
-				Slogan(themeCfg.Slogan).
-				GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
+				autoFooter := footer.Footer().
+					Logo(ui.Image().Adaptive(themeCfg.PageLogoLight, themeCfg.PageLogoDark).ObjectFit(ui.FitContain).Frame(ui.Frame{Height: ui.L64})).
+					Impress(themeCfg.Impress).
+					PrivacyPolicy(themeCfg.PrivacyPolicy).
+					TermsOfUse(themeCfg.TermsOfUse).
+					ProviderName(themeCfg.ProviderName).
+					TextColor(b.footerTextColor).
+					BackgroundColor(b.footerBackgroundColor).
+					Slogan(themeCfg.Slogan).
+					GeneralTermsAndConditions(themeCfg.GeneralTermsAndConditions)
 
-			if slices.Contains(b.disableContentPaddingOn, wnd.Path()) {
-				autoFooter = autoFooter.ContentPadding("")
+				if slices.Contains(b.disableContentPaddingOn, wnd.Path()) {
+					autoFooter = autoFooter.ContentPadding("")
+				}
+
+				scaffold = scaffold.Footer(autoFooter)
 			}
-
-			scaffold = scaffold.Footer(autoFooter)
 		}
 
 		return scaffold

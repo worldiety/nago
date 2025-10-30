@@ -90,10 +90,11 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 	conv.Description = opts.Description
 	conv.Instructions = opts.Instructions
 
-	// TODO response already contains already an arbitrary set of response messages
-	tmp := make([]message.Message, 0, len(res.Outputs))
-	for _, output := range res.Outputs {
-		tmp = append(tmp, output.Value.IntoMessage())
+	entries, err := p.client().ListEntries(res.ConversationId)
+
+	var tmp []message.Message
+	for _, msg := range entries {
+		tmp = append(tmp, msg.Value.IntoMessage())
 	}
 
 	return conv, tmp, nil
