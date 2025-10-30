@@ -145,6 +145,7 @@ function handleKeydownEnter(event: Event) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), inputValue.value)
 		);
+		clearTimeout(timer); // cancel any debounced follow up event
 	}
 }
 
