@@ -249,12 +249,18 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 							wnd.PostDelayed(func() {
 								pleaseWaitPresented.Set(false)
 
+								// some post to work-around redraw cycles? that does not look very stable
+								wnd.PostDelayed(func() {
+									wnd.RequestFocus("ai-user-prompt")
+								}, 100*time.Millisecond)
+								
 								if err != nil {
 									alert.ShowBannerError(wnd, err)
 									return
 								} else {
 									c.text.Set("")
 								}
+
 							}, time.Millisecond*500) // we got some state failures in practice, probably caused by the debounce time of the input text field which is 500ms by default
 
 						})

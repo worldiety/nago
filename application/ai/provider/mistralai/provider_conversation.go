@@ -50,7 +50,7 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 	// TODO @Mistral Team please just go fix your API
 	_ = resp // ignore the incomplete and partial result and instead do...
 	if len(resp.Outputs) > 1 {
-		slog.Info("@Torben: check if mistral fixed their API")
+		slog.Warn("@Torben: check if mistral fixed their API")
 	}
 	list, err := p.client().ListEntries(string(p.id))
 	if err != nil {

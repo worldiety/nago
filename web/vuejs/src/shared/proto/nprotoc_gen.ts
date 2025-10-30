@@ -13272,6 +13272,56 @@ export enum ScrollAnimationValues {
 	Instant = 1,
 }
 
+// CallRequestFocus tries to set the focus to the denoted component.
+export class CallRequestFocus implements Writeable, Readable, CallArgs {
+	// The component ID which should take focus
+	public iD?: Str;
+
+	constructor(iD: Str | undefined = undefined) {
+		this.iD = iD;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.iD = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.iD !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.iD!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.iD === undefined;
+	}
+
+	reset(): void {
+		this.iD = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 172);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14050,6 +14100,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 171: {
 			const v = readInt(src) as ScrollAnimation;
+			return v;
+		}
+		case 172: {
+			const v = new CallRequestFocus();
+			v.read(src);
 			return v;
 		}
 	}

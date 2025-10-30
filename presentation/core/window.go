@@ -149,6 +149,10 @@ type Window interface {
 	// PostDelayed waits the given delay until executing the func using the windows event loop. It is not guaranteed
 	// that the func is ever executed, because the window may get destroyed before.
 	PostDelayed(fn func(), delay time.Duration)
+
+	// RequestFocus requires a specific element to acquire the users focus, e.g. by placing a cursor into a component
+	// and show OSD keyboard.
+	RequestFocus(id string)
 }
 
 // Colors returns a type safe value based ColorSet instance.

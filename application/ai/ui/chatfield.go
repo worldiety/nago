@@ -36,6 +36,7 @@ func (c TChatField) Enabled(enabled bool) TChatField {
 func (c TChatField) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.HStack(
 		ui.TextField("", c.text.String()).
+			ID("ai-user-prompt").
 			InputValue(c.text).
 			Style(ui.TextFieldBasic).
 			KeydownEnter(c.action).

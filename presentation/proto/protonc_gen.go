@@ -251,6 +251,7 @@ type CallArgs interface {
 }
 
 func (CallMediaDevicesEnumerate) isCallArgs() {}
+func (CallRequestFocus) isCallArgs()          {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -12687,6 +12688,58 @@ func (v *ScrollAnimation) IsZero() bool {
 	return *v == 0
 }
 
+// CallRequestFocus tries to set the focus to the denoted component.
+type CallRequestFocus struct {
+	// The component ID which should take focus
+	ID Str
+}
+
+func (v *CallRequestFocus) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.ID.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.ID.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallRequestFocus) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.ID.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13686,6 +13739,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 171:
 		var v ScrollAnimation
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 172:
+		var v CallRequestFocus
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -16470,6 +16529,14 @@ func (v *Transformation) IsZero() bool {
 	return v.TranslateX.IsZero() && v.TranslateY.IsZero() && v.TranslateZ.IsZero() && v.ScaleX.IsZero() && v.ScaleY.IsZero() && v.ScaleZ.IsZero() && v.RotateZ.IsZero()
 }
 
+func (v *CallRequestFocus) reset() {
+	v.ID.reset()
+}
+
+func (v *CallRequestFocus) IsZero() bool {
+	return v.ID.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -17606,6 +17673,13 @@ func (v *Transformation) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ScrollAnimation) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 171); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallRequestFocus) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 172); err != nil {
 		return err
 	}
 	return nil

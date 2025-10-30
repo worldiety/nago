@@ -8,8 +8,9 @@
 package core
 
 import (
-	"go.wdy.de/nago/presentation/proto"
 	"strconv"
+
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // AsyncCall requests an asynchronous invocation within the frontend implementation. Usually, this is used
@@ -28,7 +29,9 @@ import (
 func AsyncCall(wnd Window, args proto.CallArgs, fn func(ret proto.CallRet)) (cancel func()) {
 	w := wnd.(*scopeWindow)
 	ptr := proto.Ptr(w.lastAsyncInvokePtr.Add(1))
-	w.asyncCallbacks.Put(ptr, fn)
+	if fn != nil {
+		w.asyncCallbacks.Put(ptr, fn)
+	}
 
 	w.parent.Publish(&proto.CallRequested{
 		CallPtr: ptr,

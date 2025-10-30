@@ -393,3 +393,7 @@ func (s *scopeWindow) PostDelayed(fn func(), delay time.Duration) {
 		s.Post(fn)
 	})
 }
+
+func (s *scopeWindow) RequestFocus(id string) {
+	AsyncCall(s, &proto.CallRequestFocus{ID: proto.Str(id)}, nil)
+}

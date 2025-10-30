@@ -1,0 +1,12 @@
+{
+  "doc": "CallRequestFocus tries to set the focus to the denoted component.",
+  "kind": "Record",
+  "id": 172,
+  "fields": {
+    "1": {
+      "doc": "The component ID which should take focus",
+      "name": "ID",
+      "type": "Str"
+    }
+  }
+}

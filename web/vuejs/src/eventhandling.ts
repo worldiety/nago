@@ -10,6 +10,7 @@ import { UploadRepository } from '@/api/upload/uploadRepository';
 import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
+	CallRequestFocus,
 	CallRequested,
 	CallResolved,
 	ClipboardWriteTextRequested,
@@ -488,6 +489,21 @@ export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
 export async function callRequested(chan: Channel, evt: CallRequested) {
 	if (evt.call instanceof CallMediaDevicesEnumerate) {
 		await callMediaDevicesEnumerate(chan, evt, evt.call);
+		return;
+	}
+
+	if (evt.call instanceof CallRequestFocus) {
+		await callRequestFocus(chan, evt, evt.call);
+		return;
+	}
+}
+
+async function callRequestFocus(chan: Channel, evt: CallRequested, args: CallRequestFocus) {
+	if (args.iD) {
+		let elem = document.getElementById(args.iD);
+		if (elem) {
+			elem.focus();
+		}
 	}
 }
 
