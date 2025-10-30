@@ -9,8 +9,8 @@ package mistralai
 
 import (
 	"iter"
+	"log/slog"
 
-	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/provider"
@@ -24,6 +24,9 @@ type mistralMessages struct {
 	parent *mistralProvider
 }
 
+// Append is broken for this implementation, because the Mistral API does not include any input message, even
+// though they were processed and got already identifiers etc. We currently just assign a fake identifier
+// and return the input messages, however that is actually not what someone would expect.
 func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error) {
 	var tmp []Input
 	if opts.MessageInput.IsSome() {
@@ -43,21 +46,24 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 		return nil, err
 	}
 
+	// TODO will request all messages again from the API but that may increase costs and certainly increase latency.
+	// TODO @Mistral Team please just go fix your API
+	_ = resp // ignore the incomplete and partial result and instead do...
+	if len(resp.Outputs) > 1 {
+		slog.Info("@Torben: check if mistral fixed their API")
+	}
+	list, err := p.client().ListEntries(string(p.id))
+	if err != nil {
+		return nil, err
+	}
+
 	var msgs []message.Message
 
 	if opts.Role == "" {
 		opts.Role = "user" // this API design makes me crazy, nothing is explained
 	}
-	// we don't know, because the Mistral API is broken, again. How do I get this, without requesting the entire thread?
-	msgs = append(msgs, message.Message{
-		ID:            "", // TODO make this transient?
-		CreatedAt:     0,
-		CreatedBy:     "",
-		Role:          opts.Role,
-		MessageInput:  opts.MessageInput,
-		MessageOutput: option.Ptr[string]{},
-	})
-	for _, entry := range resp.Outputs {
+
+	for _, entry := range list {
 		msgs = append(msgs, entry.Value.IntoMessage())
 	}
 

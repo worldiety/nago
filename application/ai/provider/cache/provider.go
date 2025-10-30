@@ -65,11 +65,10 @@ func NewProvider(
 	return p
 }
 
-// LoadIfEmpty checks for each repository, if it is empty and tries to load from the wrapped provider and
-// stores the result in the cache. If at least one entry is found within a cache repository, the remote data
-// will not be loaded again. See also [Provider.Clear].
-func (p *Provider) LoadIfEmpty() error {
-	if err := loadIfEmpty(p.Identity(), p.repoModels, func() iter.Seq2[model.Model, error] {
+// LoadAll downloads blindly all data into the given repositories. This may keep stale data and
+// overwrite existing data. See also [Provider.Clear].
+func (p *Provider) LoadAll() error {
+	if err := load(p.Identity(), p.repoModels, func() iter.Seq2[model.Model, error] {
 		return p.prov.Models().All(user.SU())
 	}); err != nil {
 		return err
@@ -84,7 +83,7 @@ func (p *Provider) LoadIfEmpty() error {
 			return err
 		}
 
-		if err := loadIfEmpty(p.Identity(), p.repoConversations, func() iter.Seq2[conversation.Conversation, error] {
+		if err := load(p.Identity(), p.repoConversations, func() iter.Seq2[conversation.Conversation, error] {
 			return p.prov.Conversations().Unwrap().All(user.SU())
 		}); err != nil {
 			return err
@@ -113,10 +112,11 @@ func (p *Provider) LoadIfEmpty() error {
 			}
 
 		}
+		
 	}
 
 	if p.prov.Agents().IsSome() {
-		if err := loadIfEmpty(p.Identity(), p.repoAgents, func() iter.Seq2[agent.Agent, error] {
+		if err := load(p.Identity(), p.repoAgents, func() iter.Seq2[agent.Agent, error] {
 			return p.prov.Agents().Unwrap().All(user.SU())
 		}); err != nil {
 			return err
@@ -124,9 +124,10 @@ func (p *Provider) LoadIfEmpty() error {
 	}
 
 	if p.prov.Libraries().IsSome() {
-		if err := loadIfEmpty(p.Identity(), p.repoLibraries, func() iter.Seq2[library.Library, error] {
+		err := load(p.Identity(), p.repoLibraries, func() iter.Seq2[library.Library, error] {
 			return p.prov.Libraries().Unwrap().All(user.SU())
-		}); err != nil {
+		})
+		if err != nil {
 			return err
 		}
 
@@ -137,18 +138,19 @@ func (p *Provider) LoadIfEmpty() error {
 
 			slog.Info("ai provider cache iterating library", "library", cLib.Identity(), "provider", p.prov.Identity())
 			lib := p.prov.Libraries().Unwrap().Library(cLib.ID)
-			if err := loadIfEmpty(p.Identity(), p.repoDocuments, func() iter.Seq2[document.Document, error] {
+			if err := load(p.Identity(), p.repoDocuments, func() iter.Seq2[document.Document, error] {
 				return lib.All(user.SU())
 			}); err != nil {
 				return err
 			}
 		}
+
 	}
 
 	return nil
 }
 
-func loadIfEmpty[E data.Aggregate[ID], ID data.IDType](prov provider.ID, repo data.Repository[E, ID], src func() iter.Seq2[E, error]) (err error) {
+func load[E data.Aggregate[ID], ID data.IDType](prov provider.ID, repo data.Repository[E, ID], src func() iter.Seq2[E, error]) (err error) {
 	defer func() {
 		if err != nil {
 			slog.Error("ai provider cache failed to load from source: removing entries from cache", "repository", repo.Name(), "provider", prov)
@@ -158,30 +160,23 @@ func loadIfEmpty[E data.Aggregate[ID], ID data.IDType](prov provider.ID, repo da
 		}
 	}()
 
-	count, err := repo.Count()
-	if err != nil {
-		return fmt.Errorf("failed to count repository %s: %w", repo.Name(), err)
-	}
+	slog.Info("filling ai provider cache from remote...", "repository", repo.Name(), "provider", prov)
 
-	if count == 0 {
-		slog.Info("filling ai provider cache from remote...", "repository", repo.Name(), "provider", prov)
-
-		num := 0
-		for e, err := range src() {
-			if err != nil {
-				return err
-			}
-
-			if err := repo.Save(e); err != nil {
-				return err
-			}
-			num++
+	num := 0
+	for e, err := range src() {
+		if err != nil {
+			return err
 		}
 
-		slog.Info("ai provider cache loaded from source", "repository", repo.Name(), "count", num, "provider", prov)
+		if err := repo.Save(e); err != nil {
+			return err
+		}
+		num++
 	}
 
+	slog.Info("ai provider cache loaded from source", "repository", repo.Name(), "count", num, "provider", prov)
 	return nil
+
 }
 
 // Clear purges all caches from the used cache repositories. If the same repositories are used for different

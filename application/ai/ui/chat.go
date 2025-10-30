@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
@@ -245,7 +246,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 
 							return nil
 						}, func(err error) {
-							wnd.Post(func() {
+							wnd.PostDelayed(func() {
 								pleaseWaitPresented.Set(false)
 
 								if err != nil {
@@ -254,7 +255,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 								} else {
 									c.text.Set("")
 								}
-							})
+							}, time.Millisecond*500) // we got some state failures in practice, probably caused by the debounce time of the input text field which is 500ms by default
 
 						})
 

@@ -85,6 +85,40 @@ func DeclareDeleteByID[UseCase any](id ID, entityName string) ID {
 	).String()}, 3)
 }
 
+// DeclareDeleteAll creates a prototype permission stub. See also [DeclareCreate].
+func DeclareDeleteAll[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Delete all %s elements", entityName),
+			language.German:  fmt.Sprintf("Alle %s Element löschen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can delete all " + entityName + " elements.",
+			language.German:  "Träger dieser Berechtigung können alle " + entityName + "-Elemente löschen.",
+		},
+	).String()}, 3)
+}
+
+// DeclareReloadAll creates a prototype permission stub. See also [DeclareCreate].
+func DeclareReloadAll[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Reload all %s elements", entityName),
+			language.German:  fmt.Sprintf("Alle %s Element neu laden", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can reload all " + entityName + " elements.",
+			language.German:  "Träger dieser Berechtigung können alle " + entityName + "-Elemente neu laden.",
+		},
+	).String()}, 3)
+}
+
 // DeclareFindAll creates a prototype permission stub. See also [DeclareCreate].
 func DeclareFindAll[UseCase any](id ID, entityName string) ID {
 	return register[UseCase](Permission{ID: id, Name: i18n.MustString(

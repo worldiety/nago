@@ -82,5 +82,9 @@ type Conversations interface {
 type Conversation interface {
 	Identity() conversation.ID
 	All(subject auth.Subject) iter.Seq2[message.Message, error]
+	
+	// Append takes the given options and applies it for input processing. This method blocks until processing
+	// has finished and returns all input messages and the generated output messages which may require further
+	// processing work.
 	Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error)
 }

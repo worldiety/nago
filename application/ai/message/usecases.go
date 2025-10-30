@@ -49,13 +49,6 @@ type Message struct {
 	MessageOutput option.Ptr[string] `json:"messageOutput"`
 }
 
-// Transient is a state which is used for inflight messages. We introduced it, because the Mistral Conversation
-// API does not return input messages in their response, thus we know that it has been appended, but we cannot
-// know their ID. Thus, the according provider implementation needs to insert transient messages without identities.
-func (m Message) Transient() bool {
-	return m.ID == ""
-}
-
 func (m Message) Identity() ID {
 	return m.ID
 }

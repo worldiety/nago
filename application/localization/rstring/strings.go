@@ -249,6 +249,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelMaintenance = i18n.MustString(
+		"nago.common.label.maintenance",
+		i18n.Values{
+			language.English: "Maintenance",
+			language.German:  "Wartung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelState = i18n.MustString(
 		"nago.common.label.status",
 		i18n.Values{

@@ -10,6 +10,7 @@ package cfgai
 import (
 	"log/slog"
 
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ai"
@@ -22,10 +23,16 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/provider/cache"
 	uiai "go.wdy.de/nago/application/ai/ui"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrMaintenanceAdminCardDesc = i18n.MustString("nago.ai.admin.maintenance_desc", i18n.Values{language.English: "Apply some maintenance tasks to the AI subsystem.", language.German: "Wartungsarbeiten am KI Subsystem durchführen."})
 )
 
 type Management struct {
@@ -97,14 +104,6 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			idxConvMsg,
 		)
 
-		/*if err := prov.Clear(); err != nil {
-			panic(err)
-		}*/
-
-		if err := prov.LoadIfEmpty(); err != nil {
-			return nil, err
-		}
-
 		return prov, nil
 	})
 
@@ -112,9 +111,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 		UseCases: ucAI,
 		Pages: uiai.Pages{
-			Workspaces:   "admin/ai/workspaces",
-			Agents:       "admin/ai/workspace",
-			Agent:        "admin/ai/workspace/agent",
+			Maintenance:  "admin/ai/maintenance",
 			Provider:     "admin/ai/provider",
 			Library:      "admin/ai/library",
 			Conversation: "admin/ai/provider/conversation",
@@ -137,11 +134,22 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return uiai.PageChat(wnd, management.UseCases)
 	})
 
+	cfg.RootViewWithDecoration(management.Pages.Maintenance, func(wnd core.Window) core.View {
+		return uiai.PageMaintenance(wnd, management.UseCases)
+	})
+
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 
 		grp := admin.Group{
 			Title: "AI",
 		}
+
+		grp.Entries = append(grp.Entries, admin.Card{
+			Title:      rstring.LabelMaintenance.Get(subject),
+			Text:       StrMaintenanceAdminCardDesc.Get(subject),
+			Target:     management.Pages.Maintenance,
+			Permission: ai.PermClearCache,
+		})
 
 		for provider, err := range ucAI.FindAllProvider(user.SU()) {
 			if err != nil {

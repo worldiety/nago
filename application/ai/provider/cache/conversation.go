@@ -90,13 +90,25 @@ func (c cacheConversation) Append(subject auth.Subject, opts message.AppendOptio
 		return nil, err
 	}
 
-	// TODO fix me: what about transient input messages???
 	for _, msg := range msgs {
+		// just start by checking if we already now that message.
+		// This is a repair-code for broken online-providers
+		optMsg, err := c.parent.repoMessages.FindByID(msg.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if optMsg.IsSome() {
+			continue
+		}
+
+		// unknown message, thus just continue
 		if msg.CreatedAt == 0 {
 			msg.CreatedAt = xtime.Now()
 		}
 
 		msg.CreatedBy = subject.ID()
+
 		if err := c.parent.repoMessages.Save(msg); err != nil {
 			return nil, err
 		}

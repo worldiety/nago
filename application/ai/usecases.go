@@ -14,6 +14,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -26,13 +27,20 @@ type FindAllProvider func(subject auth.Subject) iter.Seq2[provider.Provider, err
 
 type FindProviderByID func(subject auth.Subject, id provider.ID) (option.Opt[provider.Provider], error)
 
-type ReloadProvider func() error
+type ReloadProviderOptions struct {
+	// LoadAll indicates if the entire provider should be scraped and stored into the cache (if configured).
+	LoadAll bool
+}
+type ReloadProvider func(subject auth.Subject, opts ReloadProviderOptions) error
+
+type ClearCache func(subject auth.Subject) error
 
 type UseCases struct {
 	FindProviderByName FindProviderByName
 	FindAllProvider    FindAllProvider
 	FindProviderByID   FindProviderByID
 	ReloadProvider     ReloadProvider
+	ClearCache         ClearCache
 }
 
 func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) UseCases {
@@ -40,7 +48,7 @@ func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator 
 	fnReload := NewReloadProvider(&providers, findSecrets, decorator)
 
 	fnInvokeReload := func() {
-		if err := fnReload(); err != nil {
+		if err := fnReload(user.SU(), ReloadProviderOptions{}); err != nil {
 			slog.Error("failed to reload providers", "err", err.Error())
 		}
 	}
@@ -64,5 +72,6 @@ func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator 
 		FindProviderByName: NewFindProviderByName(&providers),
 		FindAllProvider:    NewFindAllProvider(&providers),
 		FindProviderByID:   NewFindProviderByID(&providers),
+		ClearCache:         NewClearCache(decorator),
 	}
 }

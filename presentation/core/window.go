@@ -145,6 +145,10 @@ type Window interface {
 	// to prevent kinds of logical data races during rendering and concurrent state modifications. Even though
 	// states are technically free of races, their mutation during rendering may cause unwanted side effects.
 	Post(fn func()) bool
+
+	// PostDelayed waits the given delay until executing the func using the windows event loop. It is not guaranteed
+	// that the func is ever executed, because the window may get destroyed before.
+	PostDelayed(fn func(), delay time.Duration)
 }
 
 // Colors returns a type safe value based ColorSet instance.

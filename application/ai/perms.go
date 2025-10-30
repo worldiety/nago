@@ -13,4 +13,6 @@ var (
 	PermFindProviderByName = permission.DeclareFindByName[FindProviderByName]("nago.ai.provider.find_by_name", "AI Provider")
 	PermFindProviderByID   = permission.DeclareFindByID[FindProviderByID]("nago.ai.provider.find_by_id", "AI Provider")
 	PermFindAllProvider    = permission.DeclareFindAll[FindAllProvider]("nago.ai.provider.find_all", "AI Provider")
+	PermClearCache         = permission.DeclareDeleteAll[ClearCache]("nago.ai.provider.clear_cache", "AI Cache & Ownership")
+	PermReloadProvider     = permission.DeclareReloadAll[ReloadProvider]("nago.ai.provider.reload", "AI Provider")
 )

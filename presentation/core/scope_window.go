@@ -387,3 +387,9 @@ func (s *scopeWindow) Post(fn func()) bool {
 
 	return false
 }
+
+func (s *scopeWindow) PostDelayed(fn func(), delay time.Duration) {
+	time.AfterFunc(delay, func() {
+		s.Post(fn)
+	})
+}
