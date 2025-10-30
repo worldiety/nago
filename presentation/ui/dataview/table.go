@@ -309,13 +309,13 @@ func (t TDataView[E, ID]) actionBar(wnd core.Window, model pager.Model[E, ID]) c
 
 	return ui.HStack(
 		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
-		ui.IfFunc(len(t.selectOptions) > 0, func() core.View {
+		ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
 			return ui.Menu(
 				ui.SecondaryButton(nil).Enabled(len(selected) > 0).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid),
 				ui.MenuGroup(items...),
 			)
 		}),
-		ui.If(len(t.selectOptions) > 0, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
+		ui.If(len(t.selectOptions) > 0 && !t.hideSelection, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 		t.newAction,
 	).
 		FullWidth().

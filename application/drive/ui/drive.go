@@ -247,7 +247,7 @@ func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 		ui.HStack(c.viewBreadcrumbs(wnd, c.loadFiles(c.breadcrumbs...), c.onNavigate)).Alignment(ui.Leading).FullWidth(),
 		ui.HStack(
 			ui.Menu(
-				ui.SecondaryButton(nil).PreIcon(icons.Grid).Enabled(pModel.SelectionCount > 0).Title(rstring.LabelOptions.Get(wnd)),
+				ui.SecondaryButton(nil).PreIcon(icons.Grid).Enabled(pModel.SelectionCount > 0).Title(rstring.LabelOptions.Get(wnd)).Visible(wnd.Info().SizeClass > core.SizeClassSmall),
 				ui.MenuGroup(
 					ui.MenuItem(func() {
 						deletePresented.Set(true)
@@ -293,7 +293,7 @@ func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 					}, ui.If(pModel.SelectionCount == 1, ui.HStack(ui.ImageIcon(icons.Pen), ui.Text(rstring.ActionRename.Get(wnd))).Gap(ui.L8))),
 				),
 			),
-			ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40}),
+			ui.If(wnd.Info().SizeClass > core.SizeClassSmall, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 			ui.If(canCreateDir, ui.SecondaryButton(func() {
 				createDirPresented.Set(true)
 			}).Title(StrCreateDirectory.Get(ctx.Window()))),
@@ -386,11 +386,11 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 		return alert.BannerError(fmt.Errorf("user.DisplayName not found"))
 	}
 
-	return dataview.FromModel(
-		wnd,
-		model,
-		[]dataview.Field[drive.File]{
-			{
+	var columns []dataview.Field[drive.File]
+
+	if wnd.Info().SizeClass > core.SizeClassSmall {
+		columns = append(columns,
+			dataview.Field[drive.File]{
 				Name: "",
 				Map: func(obj drive.File) core.View {
 					if obj.IsDir() {
@@ -406,12 +406,19 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 					}
 				},
 			},
-			{
-				Name: StrName.Get(wnd),
-				Map: func(obj drive.File) core.View {
-					return ui.Text(obj.Filename)
-				},
-			},
+		)
+	}
+
+	columns = append(columns, dataview.Field[drive.File]{
+		Name: StrName.Get(wnd),
+		Map: func(obj drive.File) core.View {
+			return ui.Text(obj.Filename)
+		},
+	})
+
+	if wnd.Info().SizeClass > core.SizeClassSmall {
+		columns = append(columns, []dataview.Field[drive.File]{
+
 			{
 				Name: rstring.LabelChanged.Get(wnd),
 				Map: func(obj drive.File) core.View {
@@ -440,13 +447,19 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 					return ui.Text(xstrings.FormatByteSize(wnd.Locale(), obj.Size(), 1))
 				},
 			},
-		},
+		}...)
+	}
+
+	return dataview.FromModel(
+		wnd,
+		model,
+		columns,
 	).Action(func(e drive.File) {
 		if e.IsDir() && c.actionDirectory != nil {
 			c.actionDirectory(e)
 			return
 		}
-	})
+	}).Selection(wnd.Info().SizeClass > core.SizeClassSmall)
 }
 
 func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNavigate func(drive.File)) core.View {

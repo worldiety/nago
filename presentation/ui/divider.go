@@ -16,9 +16,10 @@ import (
 // It is typically used to visually separate sections of content.
 // The divider can be styled with frame, border, and padding.
 type TDivider struct {
-	frame   proto.Frame   // layout frame defining size and positioning
-	border  proto.Border  // border styling, typically a thin line
-	padding proto.Padding // spacing around the divider
+	frame     proto.Frame   // layout frame defining size and positioning
+	border    proto.Border  // border styling, typically a thin line
+	padding   proto.Padding // spacing around the divider
+	invisible bool
 }
 
 // HLineWithColor configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
@@ -73,6 +74,11 @@ func (c TDivider) Frame(frame Frame) TDivider {
 // Border sets the border styling of the divider, typically its line thickness and color.
 func (c TDivider) Border(border Border) TDivider {
 	c.border = border.ora()
+	return c
+}
+
+func (c TDivider) Visible(visible bool) TDivider {
+	c.invisible = !visible
 	return c
 }
 
