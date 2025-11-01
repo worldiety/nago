@@ -8,9 +8,10 @@
 package crud
 
 import (
+	"slices"
+
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"slices"
 )
 
 // TForm is a crud component(CRUD Form).
@@ -28,6 +29,7 @@ type TForm[T any] struct {
 	invisible          bool
 }
 
+// deprecated: use [entities.NewUseCases]
 func Form[T any](bnd *Binding[T], state *core.State[T]) TForm[T] {
 	return TForm[T]{
 		bnd:   bnd,

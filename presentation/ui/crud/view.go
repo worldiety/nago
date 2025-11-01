@@ -8,11 +8,12 @@
 package crud
 
 import (
+	"slices"
+
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
-	"slices"
 )
 
 // TView is a crud component(CRUD View).
@@ -26,6 +27,7 @@ type TView[Entity data.Aggregate[ID], ID data.IDType] struct {
 	invisible          bool
 }
 
+// deprecated: use [entities.NewUseCases]
 func View[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) TView[Entity, ID] {
 	return TView[Entity, ID]{
 		opts:  opts,

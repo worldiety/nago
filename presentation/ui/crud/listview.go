@@ -9,11 +9,12 @@ package crud
 
 import (
 	"fmt"
+	"slices"
+
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/list"
-	"slices"
 )
 
 // TList is a crud component(CRUD List).
@@ -27,6 +28,7 @@ type TList[Entity data.Aggregate[ID], ID data.IDType] struct {
 	invisible          bool
 }
 
+// deprecated: use [entities.NewUseCases]
 func List[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) TList[Entity, ID] {
 	return TList[Entity, ID]{
 		opts:  opts,

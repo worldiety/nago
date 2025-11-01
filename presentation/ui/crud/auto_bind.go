@@ -9,6 +9,12 @@ package crud
 
 import (
 	"encoding/json"
+	"log/slog"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
+
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/pkg/data"
@@ -19,11 +25,6 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/timepicker"
-	"log/slog"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type AutoBindingOptions struct {
@@ -36,6 +37,7 @@ type AutoBindingOptions struct {
 //   - hidden to omit it completely
 //
 // To automatically also create a CRUD component e.g. for an entire page, see also [AutoView].
+// deprecated: use [entities.NewUseCases]
 func AutoBinding[E form.Aggregate[E, ID], ID ~string](opts AutoBindingOptions, wnd core.Window, useCases rcrud.UseCases[E, ID]) *Binding[E] {
 	var zero E
 	bnd := NewBinding[E](wnd)

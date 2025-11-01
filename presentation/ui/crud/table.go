@@ -9,13 +9,14 @@ package crud
 
 import (
 	"fmt"
+	"reflect"
+	"slices"
+
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"reflect"
-	"slices"
 )
 
 // TTable is a crud component(CRUD Table).
@@ -29,6 +30,7 @@ type TTable[Entity data.Aggregate[ID], ID data.IDType] struct {
 	invisible          bool
 }
 
+// deprecated: use [entities.NewUseCases]
 func Table[Entity data.Aggregate[ID], ID data.IDType](opts TOptions[Entity, ID]) TTable[Entity, ID] {
 	return TTable[Entity, ID]{
 		opts: opts,

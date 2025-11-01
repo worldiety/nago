@@ -5,6 +5,7 @@
 //
 // SPDX-License-Identifier: Custom-License
 
+// deprecated: use [entities.NewUseCases]
 package crud
 
 import (
@@ -33,6 +34,7 @@ type TAutoRootView[E form.Aggregate[E, ID], ID ~string] struct {
 	frame ui.Frame
 }
 
+// deprecated: use [entities.NewUseCases]
 func AutoRootView[E form.Aggregate[E, ID], ID ~string](opts AutoRootViewOptions, useCases rcrud.UseCases[E, ID]) func(wnd core.Window) core.View {
 	return func(wnd core.Window) core.View {
 		return TAutoRootView[E, ID]{

@@ -7,19 +7,22 @@
 
 // Package rcrud provides simple but automatic use case implementation for create, read, update and delete
 // based on a given repository. The required permissions are also automatically registered.
+//
+// deprecated: use package [application.entities]
 package rcrud
 
 import (
 	"fmt"
+	"iter"
+	"reflect"
+	"strings"
+	"sync"
+
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xiter"
-	"iter"
-	"reflect"
-	"strings"
-	"sync"
 )
 
 type Aggregate[A any, ID comparable] interface {
@@ -30,6 +33,7 @@ type Aggregate[A any, ID comparable] interface {
 // UseCases represent the most basic and simplest CRUD-based use cases. See also [NewUseCases] to automatically
 // derive an instance from a [data.Repository]. This is probably only useful for rapid prototyping for
 // the most simple CRUD use cases.
+// deprecated: use [entities.NewUseCases]
 type UseCases[E Aggregate[E, ID], ID ~string] interface {
 	PermFindByID() permission.ID
 	PermFindAll() permission.ID
@@ -146,6 +150,7 @@ func (u useCasesImpl[E, EID]) Update(subject auth.Subject, entity E) error {
 	return err
 }
 
+// deprecated: use [entities.NewUseCases]
 type Funcs[E Aggregate[E, EID], EID data.IDType] struct {
 	repo           data.Repository[E, EID]
 	PermFindByID   permission.ID
@@ -190,10 +195,12 @@ type DecoratorOptions struct {
 	EntityName       string // translated entity name for auto generated permission details.
 }
 
+// deprecated: use [entities.NewUseCases]
 func UseCasesFrom[E Aggregate[E, EID], EID ~string](funcs *Funcs[E, EID]) UseCases[E, EID] {
 	return useCasesImpl[E, EID]{decorated: funcs, mutex: new(sync.Mutex)}
 }
 
+// deprecated: use [entities.NewUseCases]
 func DecorateRepository[E Aggregate[E, EID], EID ~string](opts DecoratorOptions, repo data.Repository[E, EID]) *Funcs[E, EID] {
 	var repoMutex sync.Mutex
 
