@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/breadcrumb"
 	"go.wdy.de/nago/presentation/ui/form"
 )
 
@@ -24,10 +25,7 @@ func PageCreate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, uc ent.UseC
 		opts.Create = newDefaultCreate(wnd, opts)
 	}
 
-	return ui.VStack(
-		ui.H1(opts.EntityName),
-		opts.Create(wnd, uc),
-	).Alignment(ui.Leading).Frame(ui.Frame{}.Larger())
+	return opts.Create(wnd, uc)
 }
 
 func newDefaultCreate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, opts PageCreateOptions[T, ID]) func(wnd core.Window, uc ent.UseCases[T, ID]) core.View {
@@ -40,6 +38,18 @@ func newDefaultCreate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, opts 
 		}, state).FullWidth()
 
 		return ui.VStack(
+			ui.Space(ui.L16),
+			breadcrumb.Breadcrumbs(
+				ui.TertiaryButton(func() {
+					wnd.Navigation().BackwardTo("admin", wnd.Values().Put("#", string(opts.Prefix)))
+				}).Title(StrDataManagement.Get(wnd)),
+				ui.TertiaryButton(func() {
+					wnd.Navigation().BackwardTo(opts.Pages.List, wnd.Values())
+				}).Title(opts.EntityName+" "+StrElements.Get(wnd)),
+			).ClampLeading(),
+
+			ui.H1(opts.EntityName),
+			
 			view,
 			ui.HLine(),
 			ui.HStack(
@@ -56,6 +66,6 @@ func newDefaultCreate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, opts 
 					wnd.Navigation().ForwardTo(opts.Pages.List, wnd.Values().Put(string(opts.Prefix), string(id)))
 				}).Title(rstring.ActionCreate.Get(wnd)),
 			).Gap(ui.L8).FullWidth().Alignment(ui.Trailing),
-		).FullWidth()
+		).Alignment(ui.Leading).Frame(ui.Frame{}.Larger())
 	}
 }

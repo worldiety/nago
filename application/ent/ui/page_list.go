@@ -9,6 +9,7 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/breadcrumb"
 	"go.wdy.de/nago/presentation/ui/dataview"
 )
 
@@ -25,10 +26,7 @@ func PageList[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, uc ent.UseCas
 		opts.List = newDefaultList[T, ID](opts)
 	}
 
-	return ui.VStack(
-		ui.H1(opts.EntityName),
-		opts.List(wnd, uc),
-	).FullWidth().Alignment(ui.Leading)
+	return opts.List(wnd, uc)
 }
 
 func newDefaultList[T ent.Aggregate[T, ID], ID ~string](opts PageListOptions[T, ID]) func(wnd core.Window, uc ent.UseCases[T, ID]) core.View {
@@ -61,7 +59,16 @@ func newDefaultList[T ent.Aggregate[T, ID], ID ~string](opts PageListOptions[T, 
 			}))
 		}
 
-		return dv
+		return ui.VStack(
+			ui.Space(ui.L16),
+			breadcrumb.Breadcrumbs(
+				ui.TertiaryButton(func() {
+					wnd.Navigation().BackwardTo("admin", wnd.Values().Put("#", string(opts.Prefix)))
+				}).Title(StrDataManagement.Get(wnd)),
+			).ClampLeading(),
+			ui.H1(opts.EntityName),
+			dv,
+		).FullWidth().Alignment(ui.Leading)
 	}
 }
 

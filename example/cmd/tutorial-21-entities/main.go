@@ -81,8 +81,8 @@ func main() {
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
-		option.Must(cfgent.Enable(cfg, "testdomain.person", "Person", cfgent.Options[Person, PersonID]{AdminCenter: true}))
-		option.Must(cfgent.Enable(cfg, "testdomain.hobby", "Hobby", cfgent.Options[Hobby, HobbyID]{AdminCenter: true}))
+		option.Must(cfgent.Enable(cfg, "testdomain.person", "Person", cfgent.Options[Person, PersonID]{}))
+		option.Must(cfgent.Enable(cfg, "testdomain.hobby", "Hobby", cfgent.Options[Hobby, HobbyID]{}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return VStack(Text("1. create a role\n2.assign all permissions\n3. give this role to yourself\n4.admin center shows Person and Hobby cards")).

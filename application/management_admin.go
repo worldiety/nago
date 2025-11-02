@@ -116,7 +116,21 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 
 				var groups []admin.Group
 				for _, groupFn := range c.adminManagementGroups {
-					groups = append(groups, groupFn(subject))
+					grp := groupFn(subject)
+					merged := false
+					// hm, this is quadratic effort. we should keep an eye on large admin centers
+					for i, group := range groups {
+						if group.Title == grp.Title {
+							group.Entries = append(group.Entries, grp.Entries...)
+							groups[i] = group
+							merged = true
+							break
+						}
+					}
+
+					if !merged {
+						groups = append(groups, grp)
+					}
 				}
 
 				groups = append(groups, admin.DefaultGroups(pages)...)

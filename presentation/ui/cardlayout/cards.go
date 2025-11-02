@@ -126,6 +126,7 @@ const (
 // and layout adjustments via frame and title style.
 type TCard struct {
 	title         string
+	id            string
 	body          core.View
 	footer        core.View
 	frame         ui.Frame
@@ -142,6 +143,12 @@ func Card(title string) TCard {
 // Style sets the title style of the card (e.g., heading level or visual variant).
 func (c TCard) Style(style TitleStyle) TCard {
 	c.style = style
+	return c
+}
+
+// ID sets the components unique identifier.
+func (c TCard) ID(id string) TCard {
+	c.id = id
 	return c
 }
 
@@ -219,6 +226,7 @@ func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 			BackgroundColor(ui.ColorCardFooter).
 			Padding(ui.Padding{}.All(ui.L12))),
 	).Alignment(ui.Leading).
+		ID(c.id).
 		BackgroundColor(ui.ColorCardBody).
 		Border(border).
 		Frame(c.frame).

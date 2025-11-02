@@ -5,10 +5,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ent"
-	uientities "go.wdy.de/nago/application/ent/ui"
+	uient "go.wdy.de/nago/application/ent/ui"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
@@ -21,7 +22,24 @@ type Module[T ent.Aggregate[T, ID], ID data.IDType] struct {
 	Mutex      *sync.Mutex // Mutex used by the UseCases to protect critical write sections
 	Repository data.Repository[T, ID]
 	UseCases   ent.UseCases[T, ID]
-	Pages      uientities.Pages
+	Pages      uient.Pages
+}
+
+type AdminCenterStyle int
+
+const (
+	AdminCenterDataSection AdminCenterStyle = iota
+	AdminCenterNone
+	AdminCenterIndividual
+)
+
+type AdminCenter struct {
+	// Style indicates how the entities should be shown in the admin center.
+	// The visibility and capabilities are automatically determined by the assigned permissions.
+	Style AdminCenterStyle
+
+	// Description is shown on the card. If empty, a default CRUD text is shown.
+	Description string
 }
 
 type Options[T ent.Aggregate[T, ID], ID ~string] struct {
@@ -29,9 +47,8 @@ type Options[T ent.Aggregate[T, ID], ID ~string] struct {
 	// If you don't know or care, just leave it nil.
 	Mutex *sync.Mutex
 
-	// AdminCenter indicates if the admin center shall show a card to view and manage entities.
-	// The visibility and capabilities are automatically determined by the assigned permissions.
-	AdminCenter bool
+	// AdminCenter configuration for this entity type.
+	AdminCenter AdminCenter
 
 	// List may be nil to generate a default list view implementation, e.g. using the [dataview.FromData].
 	// The page route can be read from [Module.Pages.Create]
@@ -88,7 +105,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 	mod = Module[T, ID]{
 		Repository: repo,
 		UseCases:   uc,
-		Pages: uientities.Pages{
+		Pages: uient.Pages{
 			List:   "admin/entities/" + makeFactoryID(prefix) + "/list",
 			Create: "admin/entities/" + makeFactoryID(prefix) + "/create",
 			Update: "admin/entities/" + makeFactoryID(prefix) + "/update",
@@ -96,7 +113,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 	}
 
 	cfg.RootViewWithDecoration(mod.Pages.List, func(wnd core.Window) core.View {
-		return uientities.PageList(wnd, mod.UseCases, uientities.PageListOptions[T, ID]{
+		return uient.PageList(wnd, mod.UseCases, uient.PageListOptions[T, ID]{
 			EntityName: entityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
@@ -106,7 +123,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 	})
 
 	cfg.RootViewWithDecoration(mod.Pages.Create, func(wnd core.Window) core.View {
-		return uientities.PageCreate(wnd, mod.UseCases, uientities.PageCreateOptions[T, ID]{
+		return uient.PageCreate(wnd, mod.UseCases, uient.PageCreateOptions[T, ID]{
 			EntityName: entityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
@@ -116,7 +133,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 	})
 
 	cfg.RootViewWithDecoration(mod.Pages.Update, func(wnd core.Window) core.View {
-		return uientities.PageUpdate(wnd, mod.UseCases, uientities.PageUpdateOptions[T, ID]{
+		return uient.PageUpdate(wnd, mod.UseCases, uient.PageUpdateOptions[T, ID]{
 			EntityName: entityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
@@ -127,7 +144,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 		var res admin.Group
-		if !opts.AdminCenter {
+		if opts.AdminCenter.Style == AdminCenterNone {
 			return res
 		}
 
@@ -135,11 +152,25 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 			return res
 		}
 
-		res.Title = entityName
+		cardText := subject.Bundle().Resolve(opts.AdminCenter.Description)
+		if cardText == "" {
+			cardText = uient.StrManageEntitiesX.Get(subject, i18n.String("name", entityName))
+		}
+
+		var groupTitle string
+		switch opts.AdminCenter.Style {
+		case AdminCenterDataSection:
+			groupTitle = uient.StrDataManagement.Get(subject)
+		default:
+			groupTitle = entityName
+		}
+
+		res.Title = groupTitle
 		res.Entries = append(res.Entries, admin.Card{
 			Title:  entityName,
-			Text:   "",
+			Text:   cardText,
 			Target: mod.Pages.List,
+			ID:     string(prefix),
 		})
 
 		return res

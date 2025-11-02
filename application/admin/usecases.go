@@ -45,6 +45,7 @@ type Pages struct {
 type Card struct {
 	Title        string
 	Text         string
+	ID           string
 	Target       core.NavigationPath
 	TargetParams core.Values
 	Role         role.ID

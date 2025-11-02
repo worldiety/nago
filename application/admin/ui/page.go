@@ -67,6 +67,7 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 		for _, entry := range grp.Entries {
 			cardLayoutViews.Append(
 				cardlayout.Card(entry.Title).
+					ID(entry.ID).
 					Body(ui.Text(entry.Text)).
 					Footer(
 						ui.SecondaryButton(func() {
