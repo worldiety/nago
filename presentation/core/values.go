@@ -84,12 +84,23 @@ func (v Values) proto() proto.RootViewParameters {
 }
 
 func (v Values) URLEncode() string {
+	var hashTag string
 	tmp := url.Values{}
 	for key, value := range v {
+		if key == "#" {
+			hashTag = value
+			continue
+		}
+
 		tmp.Add(key, value)
 	}
 
-	return tmp.Encode()
+	str := tmp.Encode()
+	if hashTag != "" {
+		str = str + "#" + hashTag
+	}
+
+	return str
 }
 
 func (v Values) Clone() Values {

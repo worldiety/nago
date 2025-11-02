@@ -6,12 +6,12 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import { UploadRepository } from '@/api/upload/uploadRepository';
-import { Channel } from '@/shared/network/serviceAdapter';
+import {UploadRepository} from '@/api/upload/uploadRepository';
+import {Channel} from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
-	CallRequestFocus,
 	CallRequested,
+	CallRequestFocus,
 	CallResolved,
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
@@ -24,15 +24,15 @@ import {
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
-	RID,
 	RetMediaDevicesEnumerate,
 	RetMediaDevicesPermissionsError,
+	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
 	SendMultipleRequested,
 	ThemeRequested,
 	URI,
@@ -41,7 +41,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import ThemeManager, {ThemeKey} from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -346,6 +346,7 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
 	//console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
+	let hashTagValue = ``;
 	if (evt.values) {
 		url += '?';
 		let idx = 0;
@@ -353,12 +354,21 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 			if (!evt.values?.value.size) {
 				return;
 			}
+			if (key === `#`) {
+				hashTagValue = value;
+				return;
+			}
+
 			url += `${key}=${value}`;
 			if (idx < evt.values.value.size - 1) {
 				url += '&';
 			}
 			idx++;
 		});
+	}
+
+	if (hashTagValue !== ``) {
+		url += "#" + hashTagValue;
 	}
 
 	if (evt.target === '_blank') {
@@ -391,6 +401,29 @@ export function nextInvalidationScrollsTop(): boolean {
 
 // scrollToTop issues a scrolling to the top of the window. Note that posting may cause a flickering.
 export function scrollToTop(post: boolean) {
+	let hashTag = window.location.hash;
+	if (hashTag && hashTag !== '') {
+		setTimeout(() => {
+			hashTag = hashTag.substring(1);
+			console.log('hashTag scroll', hashTag, "post", post);
+			const element = document.getElementById(hashTag);
+			if (element) {
+				const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+				const offsetPosition = elementPosition - 96; // TODO this break with REM scaling
+				//element.scrollIntoView({behavior: "instant"}); // wrong offset due to fixed header
+				window.scrollTo({
+					top: offsetPosition,
+					behavior: "instant",
+				});
+
+			} else {
+				console.log("hash scroll element not found", hashTag);
+			}
+		});
+
+
+		return;
+	}
 	console.log('scroll to top');
 	if (post) {
 		setTimeout(() => window.scrollTo(0, 0), 0);
