@@ -8,6 +8,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"iter"
 
@@ -30,14 +31,29 @@ func (c cacheAgents) Agent(id agent.ID) provider.Agent {
 
 func (c cacheAgents) All(subject auth.Subject) iter.Seq2[agent.Agent, error] {
 	return func(yield func(agent.Agent, error) bool) {
-		for m, err := range c.parent.repoAgents.All() {
+		for key, err := range c.parent.idxProvAgents.AllByPrimary(context.Background(), c.parent.Identity()) {
 			if err != nil {
-				if !yield(m, err) {
+				if !yield(agent.Agent{}, err) {
 					return
 				}
 
 				continue
 			}
+
+			optConv, err := c.parent.repoAgents.FindByID(key.Secondary)
+			if err != nil {
+				if !yield(agent.Agent{}, err) {
+					return
+				}
+
+				continue
+			}
+
+			if optConv.IsNone() {
+				continue // stale ref
+			}
+
+			m := optConv.Unwrap()
 
 			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermAgentFindAll) {
 				continue
@@ -66,6 +82,10 @@ func (c cacheAgents) Delete(subject auth.Subject, id agent.ID) error {
 	}
 
 	if err := c.parent.prov.Agents().Unwrap().Delete(subject, id); err != nil {
+		return err
+	}
+
+	if err := c.parent.idxProvAgents.Delete(context.Background(), c.parent.Identity(), ag.ID); err != nil {
 		return err
 	}
 
@@ -138,6 +158,10 @@ func (c cacheAgents) Create(subject auth.Subject, opts agent.CreateOptions) (age
 	}
 
 	if err := c.parent.repoAgents.Save(ag); err != nil {
+		return agent.Agent{}, err
+	}
+
+	if err := c.parent.idxProvAgents.Put(c.parent.Identity(), ag.ID); err != nil {
 		return agent.Agent{}, err
 	}
 

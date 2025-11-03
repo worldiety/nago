@@ -87,6 +87,10 @@ func (idx *CompositeIndex[A, B]) Put(a A, b B) error {
 	return nil
 }
 
+func (idx *CompositeIndex[A, B]) Delete(ctx context.Context, a A, b B) error {
+	return idx.store.Delete(ctx, string(a)+"."+string(b))
+}
+
 func (idx *CompositeIndex[A, B]) Exists(ctx context.Context, a A, b B) (bool, error) {
 	return idx.store.Exists(ctx, string(a)+"."+string(b))
 }
@@ -128,6 +132,19 @@ func (idx *CompositeIndex[A, B]) DeleteAllSecondary(ctx context.Context, b B) er
 // Count just returns the total amount of entries in the index.
 func (idx *CompositeIndex[A, B]) Count(ctx context.Context) (int64, error) {
 	return blob.Count(ctx, idx.store)
+}
+
+// CountByPrimary just returns the total amount of primary entries in the index.
+func (idx *CompositeIndex[A, B]) CountByPrimary(ctx context.Context, primary A) (int64, error) {
+	var count int64
+	for _, err := range idx.AllByPrimary(ctx, primary) {
+		if err != nil {
+			return 0, err
+		}
+		count++
+	}
+
+	return count, nil
 }
 
 // All just loops of the entire key set.

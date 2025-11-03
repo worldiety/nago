@@ -8,10 +8,13 @@
 package blob
 
 import (
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/pkg/xslices"
+	"fmt"
 	"iter"
 	"reflect"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/pkg/xstrings"
 )
 
 type StoreType int
@@ -22,19 +25,46 @@ const (
 	FileStore
 )
 
+func (t StoreType) String() string {
+	switch t {
+	case EntityStore:
+		return "Entity"
+	case FileStore:
+		return "File"
+	default:
+		return fmt.Sprintf("%d", t)
+
+	}
+}
+
 type ContentType struct {
 	Mime string // e.g. application/json
 	Type reflect.Type
 }
 
 type StoreInfo struct {
-	Name         string
+	Name         string // Name is the unique identifier for the store
 	Type         StoreType
 	ContentTypes xslices.Slice[ContentType]
+	Title        string // just to make it more human-readable, maybe an [i18n.Key]
+	Description  string // just to make it more human-readable, maybe an [i18n.Key]
+}
+
+func (s StoreInfo) String() string {
+	title := s.Title
+	if title == "" {
+		title = s.Name
+	}
+
+	description := s.Description
+	typeName := "(" + s.Type.String() + ")"
+	return xstrings.Space(title, description, typeName)
 }
 
 type OpenStoreOptions struct {
-	Type StoreType
+	Type        StoreType
+	Title       string // just to make it more human-readable, maybe an [i18n.Key]
+	Description string // just to make it more human-readable, maybe an [i18n.Key]
 }
 
 // Stores defines a common meta-interface for databases or other sources to interact with store instances on a meta-

@@ -8,6 +8,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"iter"
 	"os"
@@ -56,6 +57,10 @@ func (c cacheLibraries) Create(subject auth.Subject, opts library.CreateOptions)
 		return library.Library{}, err
 	}
 
+	if err := c.parent.idxProvLibraries.Put(c.parent.Identity(), lib.ID); err != nil {
+		return library.Library{}, err
+	}
+
 	return lib, nil
 }
 
@@ -79,14 +84,29 @@ func (c cacheLibraries) FindByID(subject auth.Subject, id library.ID) (option.Op
 
 func (c cacheLibraries) All(subject auth.Subject) iter.Seq2[library.Library, error] {
 	return func(yield func(library.Library, error) bool) {
-		for m, err := range c.parent.repoLibraries.All() {
+		for key, err := range c.parent.idxProvLibraries.AllByPrimary(context.Background(), c.parent.Identity()) {
 			if err != nil {
-				if !yield(m, err) {
+				if !yield(library.Library{}, err) {
 					return
 				}
 
 				continue
 			}
+
+			optConv, err := c.parent.repoLibraries.FindByID(key.Secondary)
+			if err != nil {
+				if !yield(library.Library{}, err) {
+					return
+				}
+
+				continue
+			}
+
+			if optConv.IsNone() {
+				continue // stale ref
+			}
+
+			m := optConv.Unwrap()
 
 			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermLibraryFindAll) {
 				continue
@@ -115,6 +135,10 @@ func (c cacheLibraries) Delete(subject auth.Subject, id library.ID) error {
 	}
 
 	if err := c.parent.prov.Libraries().Unwrap().Delete(subject, id); err != nil {
+		return err
+	}
+
+	if err := c.parent.idxProvLibraries.Delete(context.Background(), c.parent.Identity(), lib.ID); err != nil {
 		return err
 	}
 

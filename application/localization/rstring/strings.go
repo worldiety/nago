@@ -67,6 +67,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionSynchronizeNow = i18n.MustString(
+		"nago.common.action.synchronize_now",
+		i18n.Values{
+			language.English: "Synchronize now",
+			language.German:  "Jetzt synchronisieren",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionNew = i18n.MustString(
 		"nago.common.action.new",
 		i18n.Values{
@@ -254,6 +263,33 @@ var (
 		i18n.Values{
 			language.English: "Maintenance",
 			language.German:  "Wartung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelSource = i18n.MustString(
+		"nago.common.label.source",
+		i18n.Values{
+			language.English: "Source",
+			language.German:  "Quelle",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelType = i18n.MustString(
+		"nago.common.label.type",
+		i18n.Values{
+			language.English: "Type",
+			language.German:  "Typ",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelSynchronization = i18n.MustString(
+		"nago.common.label.synchronization",
+		i18n.Values{
+			language.English: "Synchronization",
+			language.German:  "Synchronisation",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

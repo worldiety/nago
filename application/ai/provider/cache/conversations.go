@@ -30,14 +30,29 @@ type cacheConversations struct {
 func (c *cacheConversations) All(subject auth.Subject) iter.Seq2[conversation.Conversation, error] {
 	return func(yield func(conversation.Conversation, error) bool) {
 		var tmp []conversation.Conversation
-		for m, err := range c.parent.repoConversations.All() {
+		for key, err := range c.parent.idxProvConversations.AllByPrimary(context.Background(), c.parent.Identity()) {
 			if err != nil {
-				if !yield(m, err) {
+				if !yield(conversation.Conversation{}, err) {
 					return
 				}
 
 				continue
 			}
+
+			optConv, err := c.parent.repoConversations.FindByID(key.Secondary)
+			if err != nil {
+				if !yield(conversation.Conversation{}, err) {
+					return
+				}
+
+				continue
+			}
+
+			if optConv.IsNone() {
+				continue // stale ref
+			}
+
+			m := optConv.Unwrap()
 
 			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoConversations.Name(), string(m.ID), PermConversationFindAll) {
 				continue
@@ -103,6 +118,10 @@ func (c *cacheConversations) Delete(subject auth.Subject, id conversation.ID) er
 		return err
 	}
 
+	if err := c.parent.idxProvConversations.Delete(context.Background(), c.parent.Identity(), id); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -134,6 +153,10 @@ func (c *cacheConversations) Create(subject auth.Subject, opts conversation.Crea
 	}
 
 	if err := c.parent.repoConversations.Save(conv); err != nil {
+		return conversation.Conversation{}, nil, err
+	}
+
+	if err := c.parent.idxProvConversations.Put(c.parent.Identity(), conv.ID); err != nil {
 		return conversation.Conversation{}, nil, err
 	}
 

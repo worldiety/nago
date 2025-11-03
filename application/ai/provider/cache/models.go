@@ -28,7 +28,7 @@ type cacheModels struct {
 func (c cacheModels) All(subject auth.Subject) iter.Seq2[model.Model, error] {
 	return func(yield func(model.Model, error) bool) {
 		ctx := context.Background()
-		num, err := c.parent.idxProvModels.Count(ctx)
+		num, err := c.parent.idxProvModels.CountByPrimary(ctx, c.parent.Identity()) // this must never be empty
 		if err != nil {
 			yield(model.Model{}, err)
 			return

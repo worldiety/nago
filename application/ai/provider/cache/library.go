@@ -10,6 +10,7 @@ package cache
 import (
 	"fmt"
 	"iter"
+	"log/slog"
 	"os"
 	"slices"
 	"strings"
@@ -180,7 +181,8 @@ func (c cacheLibrary) Create(subject auth.Subject, opts document.CreateOptions) 
 			return document.Document{}, err
 		}
 
-		return document.Document{}, fmt.Errorf("provider returned an existing document: %s", doc.ID)
+		slog.Warn("provider returned an existing document, this may be intentional (e.g. if identical document was uploaded) or an unwanted collision", "doc", doc.ID)
+		//return document.Document{}, fmt.Errorf("provider returned an existing document: %s", doc.ID)
 	}
 
 	if err := c.parent.repoDocuments.Save(doc); err != nil {

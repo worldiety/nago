@@ -9,6 +9,13 @@ package application
 
 import (
 	"fmt"
+	"iter"
+	"os"
+	"path/filepath"
+	"reflect"
+	"regexp"
+	"sync"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/fs"
@@ -17,12 +24,6 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xslices"
-	"iter"
-	"os"
-	"path/filepath"
-	"reflect"
-	"regexp"
-	"sync"
 )
 
 // EntityStore returns the default applications blob store. There is only one instance.
@@ -235,7 +236,10 @@ func (s *LocalStores) open(name string, opts blob.OpenStoreOptions) (blob.Store,
 		entry = &storeEntry{
 			store: store,
 			info: blob.StoreInfo{
-				Type: opts.Type,
+				Name:        name,
+				Type:        opts.Type,
+				Title:       opts.Title,
+				Description: opts.Description,
 			},
 		}
 	case blob.EntityStore:
@@ -243,7 +247,10 @@ func (s *LocalStores) open(name string, opts blob.OpenStoreOptions) (blob.Store,
 		entry = &storeEntry{
 			store: db,
 			info: blob.StoreInfo{
-				Type: opts.Type,
+				Name:        name,
+				Type:        opts.Type,
+				Title:       opts.Title,
+				Description: opts.Description,
 			},
 		}
 

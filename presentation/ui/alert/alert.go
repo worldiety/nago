@@ -73,6 +73,10 @@ func Create(onSave func() (close bool)) Option {
 	return save(rstring.ActionCreate, onSave)
 }
 
+func Add(onSave func() (close bool)) Option {
+	return save(rstring.ActionAdd, onSave)
+}
+
 // Apply adds an button that triggers the callback and optionally closes the dialog.
 func Apply(onSave func() (close bool)) Option {
 	return save(rstring.ActionApply, onSave)

@@ -18,11 +18,13 @@ import (
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/libsync"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/provider/cache"
 	uiai "go.wdy.de/nago/application/ai/ui"
+	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
@@ -36,8 +38,9 @@ var (
 )
 
 type Management struct {
-	UseCases ai.UseCases
-	Pages    uiai.Pages
+	UseCases        ai.UseCases
+	LibSyncUseCases libsync.UseCases
+	Pages           uiai.Pages
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
@@ -99,6 +102,24 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 	idxProvMod := data.NewCompositeIndex[provider.ID, model.ID](idxProvModStore)
 
+	idxProvAgentsStore, err := cfg.EntityStore("nago.ai.cache.idx_provider_agent")
+	if err != nil {
+		return Management{}, err
+	}
+	idxProvAgents := data.NewCompositeIndex[provider.ID, agent.ID](idxProvAgentsStore)
+
+	idxProvLibrariesStore, err := cfg.EntityStore("nago.ai.cache.idx_provider_library")
+	if err != nil {
+		return Management{}, err
+	}
+	idxProvLibraries := data.NewCompositeIndex[provider.ID, library.ID](idxProvLibrariesStore)
+
+	idxProvConvStore, err := cfg.EntityStore("nago.ai.cache.idx_provider_conversation")
+	if err != nil {
+		return Management{}, err
+	}
+	idxProvConv := data.NewCompositeIndex[provider.ID, conversation.ID](idxProvConvStore)
+
 	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, func(provider provider.Provider) (provider.Provider, error) {
 		if !cacheEnabled {
 			return provider, nil
@@ -115,14 +136,41 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			blobTextStore,
 			idxConvMsg,
 			idxProvMod,
+			idxProvAgents,
+			idxProvLibraries,
+			idxProvConv,
 		)
 
 		return prov, nil
 	})
 
-	management = Management{
+	modDrive, err := cfgdrive.Enable(cfg)
+	if err != nil {
+		return Management{}, err
+	}
 
-		UseCases: ucAI,
+	stores, err := cfg.Stores()
+	if err != nil {
+		return Management{}, err
+	}
+
+	jobRepo, err := application.JSONRepository[libsync.Job](cfg, "nago.ai.libsync.job")
+	syncRepo, err := application.JSONRepository[libsync.SyncInfo](cfg, "nago.ai.libsync.sync_info")
+
+	ucLibSync := libsync.NewUseCases(
+		cfg.EventBus(),
+		ucAI.FindProviderByID,
+		jobRepo,
+		syncRepo,
+		stores,
+		modDrive.UseCases.WalkDir,
+		modDrive.UseCases.Get,
+		modDrive.UseCases.Stat,
+	)
+
+	management = Management{
+		LibSyncUseCases: ucLibSync,
+		UseCases:        ucAI,
 		Pages: uiai.Pages{
 			Maintenance:  "admin/ai/maintenance",
 			Provider:     "admin/ai/provider",
@@ -138,7 +186,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return uiai.PageProvider(wnd, management.UseCases)
 	})
 	cfg.RootViewWithDecoration(management.Pages.Library, func(wnd core.Window) core.View {
-		return uiai.PageLibrary(wnd, management.UseCases)
+		return uiai.PageLibrary(wnd, stores, modDrive.UseCases.ReadDrives, modDrive.UseCases.Stat, management.UseCases, management.LibSyncUseCases)
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.Conversation, func(wnd core.Window) core.View {

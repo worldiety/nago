@@ -32,16 +32,19 @@ var _ provider.Provider = (*Provider)(nil)
 // from a lot of queries and may decrease latencies and failure conditions, especially if the wrapped provider
 // is actually a pure cloud provider, like [mistralai.NewProvider].
 type Provider struct {
-	prov              provider.Provider
-	repoModels        model.Repository
-	repoLibraries     library.Repository
-	repoAgents        agent.Repository
-	repoDocuments     document.Repository
-	repoConversations conversation.Repository
-	repoMessages      message.Repository
-	docTextStore      blob.Store
-	idxMsg            *data.CompositeIndex[conversation.ID, message.ID]
-	idxProvModels     *data.CompositeIndex[provider.ID, model.ID]
+	prov                 provider.Provider
+	repoModels           model.Repository
+	repoLibraries        library.Repository
+	repoAgents           agent.Repository
+	repoDocuments        document.Repository
+	repoConversations    conversation.Repository
+	repoMessages         message.Repository
+	docTextStore         blob.Store
+	idxMsg               *data.CompositeIndex[conversation.ID, message.ID]
+	idxProvModels        *data.CompositeIndex[provider.ID, model.ID]
+	idxProvAgents        *data.CompositeIndex[provider.ID, agent.ID]
+	idxProvLibraries     *data.CompositeIndex[provider.ID, library.ID]
+	idxProvConversations *data.CompositeIndex[provider.ID, conversation.ID]
 }
 
 func NewProvider(
@@ -55,18 +58,24 @@ func NewProvider(
 	docTextStore blob.Store,
 	idxMsg *data.CompositeIndex[conversation.ID, message.ID],
 	idxProvModels *data.CompositeIndex[provider.ID, model.ID],
+	idxProvAgents *data.CompositeIndex[provider.ID, agent.ID],
+	idxProvLibraries *data.CompositeIndex[provider.ID, library.ID],
+	idxProvConversations *data.CompositeIndex[provider.ID, conversation.ID],
 ) *Provider {
 	p := &Provider{
-		prov:              other,
-		repoModels:        repoModels,
-		repoLibraries:     repoLibraries,
-		repoAgents:        repoAgents,
-		repoDocuments:     repoDocuments,
-		repoConversations: repoConversations,
-		repoMessages:      repoMessages,
-		docTextStore:      docTextStore,
-		idxMsg:            idxMsg,
-		idxProvModels:     idxProvModels,
+		prov:                 other,
+		repoModels:           repoModels,
+		repoLibraries:        repoLibraries,
+		repoAgents:           repoAgents,
+		repoDocuments:        repoDocuments,
+		repoConversations:    repoConversations,
+		repoMessages:         repoMessages,
+		docTextStore:         docTextStore,
+		idxMsg:               idxMsg,
+		idxProvModels:        idxProvModels,
+		idxProvAgents:        idxProvAgents,
+		idxProvLibraries:     idxProvLibraries,
+		idxProvConversations: idxProvConversations,
 	}
 
 	return p
