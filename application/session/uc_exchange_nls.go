@@ -102,10 +102,12 @@ func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, 
 				return fmt.Errorf("failed saving session: %w", err)
 			}
 
-			bus.Publish(Authenticated{
-				Session: id,
-				User:    session.User.Unwrap(),
-			})
+			if session.User.IsSome() {
+				bus.Publish(Authenticated{
+					Session: id,
+					User:    session.User.Unwrap(),
+				})
+			}
 
 			return nil
 		}()
