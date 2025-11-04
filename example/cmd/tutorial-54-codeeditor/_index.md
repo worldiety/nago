@@ -20,4 +20,6 @@ More static content.
 ## See also
 - [Code Editor](../../components/composite/code_editor)
 - [Frame](../../components/layout/frame)
+- [Text](../../components/basic/text)
+- [VStack](../../components/layout/vstack)
 
