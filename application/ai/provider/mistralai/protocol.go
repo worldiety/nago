@@ -68,7 +68,7 @@ func NewClient(token string) *Client {
 	// http 503 service not available responses.
 	return &Client{
 		c: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 120 * time.Second, // mistral can become enormously slow, thus let us try a 2-minute timeout
 			Transport: &http.Transport{
 				DisableKeepAlives: true,
 			},

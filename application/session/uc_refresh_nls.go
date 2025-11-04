@@ -133,7 +133,7 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 		}
 
 		if !user.Email(result.User.Mail).Valid() {
-			return fmt.Errorf("invalid NLS email: %s", result.User.Mail)
+			return fmt.Errorf("invalid NLS email: '%s'", result.User.Mail)
 		}
 
 		mutex.Lock()

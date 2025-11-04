@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"iter"
 	"os"
 	"regexp"
 	"sync"
@@ -87,18 +88,23 @@ func (n NamedRoot) Identity() string {
 	return n.ID
 }
 
-type OpenRootOptions struct {
-	User   user.ID     // if empty, uses the global named lookup. If the user is set, it is assigned as the owner and this denotes a private drive.
-	Group  group.ID    // if Create is true and Group is set, this group is set as the associated group.
-	Name   string      // if empty, uses [FSDrive]
-	Create bool        // if true, the root is created automatically. Otherwise [os.ErrNotExists] is returned if no such root exists.
-	Mode   os.FileMode // if Create use this Mode for the root element (if not 0). Only the Perm bits are used.
+type OpenDriveOptions struct {
+	Namespace Namespace   // Namespace defines the name space where to open or create the drive. Default is [OriginPrivate].
+	Name      string      // if empty, uses [FSDrive] literal.
+	User      user.ID     // If the user is set and the drive is created, it is assigned as the owner.
+	Group     group.ID    // if Create is true and Group is set, this group is set as the associated group.
+	Create    bool        // if true, the root is created automatically. Otherwise [os.ErrNotExists] is returned if no such root exists.
+	Mode      os.FileMode // if Create use this Mode for the root element (if not 0). Only the Perm bits are used.
 }
 
-// OpenRoot either opens an existing root or creates a new one. The newly created root directory
-// has an empty name and the owner is the given uid, if the permission allows it.
-type OpenRoot func(subject auth.Subject, opts OpenRootOptions) (File, error)
+// OpenDrive either opens an existing root or creates a new one. The newly created root directory
+// has an empty name and the owner is the given uid, if the permission allows it. The returned file is either
+// a user-private root stored in the named per-user list or a global root stored in the global name list.
+// See also [ReadDrives] to inspect the users accessible drives and [Stat] to read a file entry.
+type OpenDrive func(subject auth.Subject, opts OpenDriveOptions) (Drive, error)
 
+// Stat loads the index entry for the given file identifier to read its metadata. See also [OpenDrive]
+// and [ReadDrives].
 type Stat func(subject auth.Subject, fid FID) (option.Opt[File], error)
 
 type DeleteOptions struct {
@@ -168,21 +174,57 @@ type Chmod func(subject auth.Subject, mode os.FileMode, fid FID) error
 // even though we actually would not need that limitation.
 type Rename func(subject auth.Subject, fid FID, newName string) error
 
-type Drives struct {
-	Private map[string]FID
-	Global  map[string]FID
-	Shared  []FID
+// FindDrive is the inverse of [OpenDrive] and inspects the given fid to eventually return the declaring root drive.
+// The current implementation requires O(n) on all (global and private) drive namespaces, thus be careful if you
+// have a lot of drives.
+type FindDrive func(subject auth.Subject, fid FID) (option.Opt[Drive], error)
+
+// Namespace describes the name space to use to lookup the root FID by name.
+type Namespace int
+
+func (n Namespace) String() string {
+	switch n {
+	case NamespacePrivate:
+		return "private"
+	case NamespaceGlobal:
+		return "global"
+	default:
+		return fmt.Sprintf("unknown (%d)", n)
+	}
 }
 
-// ReadDrives returns those file roots which are either defined as a drive root or declared by a share.
-type ReadDrives func(subject auth.Subject, uid user.ID) (Drives, error)
+const (
+	// NamespacePrivate denotes a drive root which is originated in the private name space of a user.
+	NamespacePrivate Namespace = iota
+
+	// NamespaceGlobal denotes a drive root which is originated in the global drive name space.
+	NamespaceGlobal
+
+	// NamespaceShared denotes a drive root which is originated in the shared drive name space.
+	// This is currently only reserved and not yet implemented.
+	NamespaceShared
+)
+
+type Drive struct {
+	Namespace Namespace // Origin of the namespace
+	Name      string    // Name is unique within a distinct [Namespace] namespace
+	Root      FID       // Root refers to the first root directory of the drive
+}
+
+// ReadDrives returns those file roots which are either defined as a drive root or declared by a share and are
+// visible for the given user. See also [Stat] and [OpenDrive].
+type ReadDrives func(subject auth.Subject, uid user.ID) iter.Seq2[Drive, error]
 
 type WalkDir func(subject auth.Subject, root FID, walker func(fid FID, file File, err error) error) error
 
+// UseCases represents the surface for manipulating drive objects. Each mutating use case will publish one or
+// more events into the event bus. These are all concrete types of [Activity].
+// To find out which drive was actually affected, inspect the Activity element and use [FindDrive].
 type UseCases struct {
-	OpenRoot   OpenRoot
-	Stat       Stat
+	OpenDrive  OpenDrive
 	ReadDrives ReadDrives
+	FindDrive  FindDrive
+	Stat       Stat
 	MkDir      MkDir
 	Delete     Delete
 	WalkDir    WalkDir
@@ -199,9 +241,10 @@ func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootReposi
 	walkDirFn := NewWalkDir(repo)
 
 	return UseCases{
-		OpenRoot:   NewOpenRoot(&mutex, repo, globalRootRepo, userRootRepo),
+		OpenDrive:  NewOpenDrive(&mutex, repo, globalRootRepo, userRootRepo),
 		Stat:       NewStat(repo),
 		ReadDrives: NewReadDrives(globalRootRepo, userRootRepo),
+		FindDrive:  NewFindDrive(repo, globalRootRepo, userRootRepo),
 		MkDir:      NewMkDir(&mutex, bus, repo),
 		Delete:     NewDelete(&mutex, bus, repo, walkDirFn, fileBlobs),
 		WalkDir:    walkDirFn,

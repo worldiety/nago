@@ -8,42 +8,56 @@
 package drive
 
 import (
+	"iter"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 )
 
 func NewReadDrives(globalRootRepo NamedRootRepository, userRootRepo UserRootRepository) ReadDrives {
-	return func(subject auth.Subject, uid user.ID) (Drives, error) {
-		drives := Drives{
-			Private: map[string]FID{},
-			Global:  map[string]FID{},
-		}
+	return func(subject auth.Subject, uid user.ID) iter.Seq2[Drive, error] {
+		return func(yield func(Drive, error) bool) {
 
-		for root, err := range globalRootRepo.All() {
-			if err != nil {
-				return Drives{}, err
-			}
+			for root, err := range globalRootRepo.All() {
+				if err != nil {
+					yield(Drive{}, err)
+					return
+				}
 
-			if root.Root != "" {
-				drives.Global[root.ID] = root.Root
-			}
-		}
-
-		if subject.ID() == uid || subject.HasPermission(PermOpenFile) {
-			optRoot, err := userRootRepo.FindByID(uid)
-			if err != nil {
-				return Drives{}, err
-			}
-
-			if optRoot.IsSome() {
-				for name, id := range optRoot.Unwrap().Roots {
-					drives.Private[name] = id
+				if root.Root != "" {
+					if !yield(Drive{
+						Namespace: NamespaceGlobal,
+						Name:      root.ID,
+						Root:      root.Root,
+					}, nil) {
+						return
+					}
 				}
 			}
+
+			// security note: this looks quite dangerous. However, users should probably work with groups in the drive
+			if subject.ID() == uid || subject.HasPermission(PermOpenFile) {
+				optRoot, err := userRootRepo.FindByID(uid)
+				if err != nil {
+					yield(Drive{}, err)
+					return
+				}
+
+				if optRoot.IsSome() {
+					for name, id := range optRoot.Unwrap().Roots {
+						if !yield(Drive{
+							Namespace: NamespacePrivate,
+							Name:      name,
+							Root:      id,
+						}, nil) {
+							return
+						}
+					}
+				}
+			}
+
+			// TODO find shared with user through some inverse lookup
 		}
 
-		// TODO find shared with user through some inverse lookup
-
-		return drives, nil
 	}
 }

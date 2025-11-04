@@ -10,6 +10,7 @@ package uidrive
 import (
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/drive"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -21,17 +22,18 @@ var (
 )
 
 func PageDrive(wnd core.Window, uc drive.UseCases) core.View {
-	drives, err := uc.ReadDrives(wnd.Subject(), wnd.Subject().ID())
+	drives, err := xslices.Collect2(uc.ReadDrives(wnd.Subject(), wnd.Subject().ID()))
 	if err != nil {
 		return alert.BannerError(err)
 	}
 
 	root := drive.FID(wnd.Values()["fid"])
 	if root == "" {
-		if id, ok := drives.Global[drive.FSDrive]; ok {
-			root = id
-		} else if id, ok := drives.Private[drive.FSDrive]; ok {
-			root = id
+		for _, drv := range drives {
+			if drv.Name == drive.FSDrive {
+				root = drv.Root
+				break
+			}
 		}
 	}
 

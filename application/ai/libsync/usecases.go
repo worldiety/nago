@@ -10,7 +10,9 @@ package libsync
 import (
 	"fmt"
 	"iter"
+	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/worldiety/option"
@@ -20,10 +22,12 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/drive"
 	"go.wdy.de/nago/application/ent"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/xsync"
 )
 
 type Source struct {
@@ -119,12 +123,58 @@ type UseCases struct {
 	RemoveSource       RemoveSource
 }
 
+// NewUseCases also listens for the following events on the event bus, to trigger synchronizations automatically:
+//   - [drive.Activity]
+//   - [blob.Written]
+//   - [blob.Deleted]
 func NewUseCases(bus events.Bus, findProvider ai.FindProviderByID, jobRepo Repository, syncRepo SyncRepository, stores blob.Stores, walkDir drive.WalkDir, openFile drive.Get, statFile drive.Stat) UseCases {
 	var mutex sync.Mutex
 	uc := ent.NewUseCases(Permissions, jobRepo, ent.Options{Mutex: &mutex})
 
+	syncFn := NewSynchronize(bus, findProvider, jobRepo, syncRepo, stores, walkDir, openFile, statFile)
+
+	var lastMod atomic.Int64
+	xsync.GoFn(
+		func() {
+			// TODO do we need something to stop? a context?
+			// TODO we need an infrastructure in NAGO to notify about errors which otherwise would go unnoticed
+			var lastModProcess int64
+			for range time.Tick(time.Minute * 1) {
+				if lastModProcess == lastMod.Load() {
+					continue
+				}
+
+				// TODO what about unsupported file types? the api will reject that???
+				for info, err := range jobRepo.All() {
+					if err != nil {
+						slog.Error("failed to execute job repo listing", "err", err.Error())
+						continue
+					}
+
+					if err := syncFn(user.SU(), info.ID); err != nil {
+						slog.Error("failed to execute libsync", "err", err.Error())
+						continue
+					}
+				}
+
+				lastModProcess = lastMod.Load() // TODO not clear if we stop syncing on error or should retry in next cycle: e.g. if unsupported mimetype, we would run in a cycle?
+			}
+		},
+	)
+
+	bus.Subscribe(func(evt any) {
+		switch evt.(type) {
+		case drive.Activity:
+			lastMod.Add(1)
+		case blob.Written:
+			lastMod.Add(1)
+		case blob.Deleted:
+			lastMod.Add(1)
+		}
+	})
+
 	return UseCases{
-		Synchronize: NewSynchronize(bus, findProvider, jobRepo, syncRepo, stores, walkDir, openFile, statFile),
+		Synchronize: syncFn,
 		Delete:      DeleteByID(uc.DeleteByID),
 		Create: func(subject auth.Subject, job Job) (library.ID, error) {
 			if job.ID == "" {

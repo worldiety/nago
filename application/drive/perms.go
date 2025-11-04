@@ -15,7 +15,7 @@ import (
 
 var (
 	// TODO this permission is not understandable
-	PermOpenFile = permission.Declare[OpenRoot](
+	PermOpenFile = permission.Declare[OpenDrive](
 		"nago.drive.open_file",
 		i18n.MustString(
 			"nago.permissions.drive.open_file",
@@ -33,7 +33,7 @@ var (
 		).String(),
 	)
 
-	PermMkDir = permission.Declare[OpenRoot](
+	PermMkDir = permission.Declare[OpenDrive](
 		"nago.drive.mkdir",
 		i18n.MustString(
 			"nago.permissions.drive.mkdir",
@@ -51,7 +51,7 @@ var (
 		).String(),
 	)
 
-	PermDelete = permission.Declare[OpenRoot](
+	PermDelete = permission.Declare[OpenDrive](
 		"nago.drive.delete",
 		i18n.MustString(
 			"nago.permissions.drive.delete",
@@ -69,7 +69,7 @@ var (
 		).String(),
 	)
 
-	PermPut = permission.Declare[OpenRoot](
+	PermPut = permission.Declare[OpenDrive](
 		"nago.drive.put",
 		i18n.MustString(
 			"nago.permissions.drive.put",
@@ -87,7 +87,7 @@ var (
 		).String(),
 	)
 
-	PermRename = permission.Declare[OpenRoot](
+	PermRename = permission.Declare[OpenDrive](
 		"nago.drive.rename",
 		i18n.MustString(
 			"nago.permissions.drive.rename",

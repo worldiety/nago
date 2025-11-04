@@ -279,28 +279,21 @@ func dialogAddDrive(wnd core.Window, readDrives drive.ReadDrives, ucLibSync libs
 		return nil
 	}
 
-	drives, err := readDrives(wnd.Subject(), wnd.Subject().ID())
+	drives, err := xslices.Collect2(readDrives(wnd.Subject(), wnd.Subject().ID()))
 	if err != nil {
 		return alert.BannerError(err)
 	}
 
 	var items []driveEntry
-	for n, fid := range drives.Global {
+	for _, drv := range drives {
 		items = append(items, driveEntry{
-			Name:   n,
-			Global: true,
-			Root:   fid,
+			Name:   drv.Name,
+			Global: drv.Namespace == drive.NamespaceGlobal,
+			Root:   drv.Root,
+			User:   wnd.Subject().ID(),
 		})
 	}
-
-	for n, fid := range drives.Private {
-		items = append(items, driveEntry{
-			Name: n,
-			User: wnd.Subject().ID(),
-			Root: fid,
-		})
-	}
-
+	
 	slices.SortFunc(items, func(a, b driveEntry) int {
 		return strings.Compare(a.Name, b.Name)
 	})

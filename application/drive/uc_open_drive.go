@@ -20,10 +20,10 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewOpenRoot(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository) OpenRoot {
-	return func(subject auth.Subject, opts OpenRootOptions) (File, error) {
+func NewOpenDrive(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository) OpenDrive {
+	return func(subject auth.Subject, opts OpenDriveOptions) (Drive, error) {
 		var root FID
-		var zero File
+		var zero Drive
 
 		if opts.Name == "" {
 			opts.Name = FSDrive
@@ -32,41 +32,48 @@ func NewOpenRoot(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRep
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		if opts.User != "" {
+		switch opts.Namespace {
+		case NamespacePrivate:
 			id, err := openUserRoot(repo, userRootRepo, subject, opts)
 			if err != nil {
 				return zero, fmt.Errorf("failed top open user root: %w", err)
 			}
 
 			root = id
-		} else {
+		case NamespaceGlobal:
 			id, err := openGlobalRoot(repo, globalRootRepo, subject, opts)
 			if err != nil {
 				return zero, fmt.Errorf("failed top open global root: %w", err)
 			}
 
 			root = id
+		default:
+			return zero, fmt.Errorf("unknown origin: %v", opts.Namespace)
 		}
 
 		optFile, err := repo.FindByID(root)
 		if err != nil {
-			return File{}, fmt.Errorf("cannot open root: %s: %w", root, err)
+			return zero, fmt.Errorf("cannot open root: %s: %w", root, err)
 		}
 
 		if optFile.IsNone() {
-			return File{}, fmt.Errorf("referenced root file does not exist: %s: %w", root, err)
+			return zero, fmt.Errorf("referenced root file does not exist: %s: %w", root, err)
 		}
 
 		file := optFile.Unwrap()
 		if !file.CanRead(subject) {
-			return File{}, fmt.Errorf("user is not allowed to read file: %s: %w", subject.ID(), user.PermissionDeniedErr)
+			return zero, fmt.Errorf("user is not allowed to read file: %s: %w", subject.ID(), user.PermissionDeniedErr)
 		}
 
-		return file, nil
+		return Drive{
+			Name:      opts.Name,
+			Root:      file.ID,
+			Namespace: opts.Namespace,
+		}, nil
 	}
 }
 
-func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject auth.Subject, opts OpenRootOptions) (FID, error) {
+func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject auth.Subject, opts OpenDriveOptions) (FID, error) {
 	if err := subject.AuditResource(globalRootRepo.Name(), opts.Name, PermOpenFile); err != nil {
 		return "", err
 	}
@@ -113,7 +120,7 @@ func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject
 	return globalRoot.Root, nil
 }
 
-func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth.Subject, opts OpenRootOptions) (FID, error) {
+func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth.Subject, opts OpenDriveOptions) (FID, error) {
 	if err := subject.AuditResource(userRootRepo.Name(), string(opts.User), PermOpenFile); err != nil {
 		return "", err
 	}
@@ -173,7 +180,7 @@ func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth
 	return rootID, nil
 }
 
-func newRandFileFromOpts(repo Repository, subject auth.Subject, opts OpenRootOptions) File {
+func newRandFileFromOpts(repo Repository, subject auth.Subject, opts OpenDriveOptions) File {
 	mode := os.ModeDir | opts.Mode.Perm()
 	return File{
 		ID:       data.RandIdent[FID](),

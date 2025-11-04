@@ -14,6 +14,17 @@ import (
 	"sync"
 )
 
+func GoFn(fn func()) *sync.WaitGroup {
+	return Go(func() error {
+		fn()
+		return nil
+	}, func(err error) {
+		if err != nil {
+			slog.Error("failed to execute Go function", "err", err.Error())
+		}
+	})
+}
+
 // Go runs the given closure concurrently and execute it with a panic recover guard. The onDone callback may be
 // nil and is either called with an error or with nil.
 func Go(fn func() error, onDone func(error)) *sync.WaitGroup {

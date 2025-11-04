@@ -35,7 +35,7 @@ func main() {
 		option.Must(cfglocalization.Enable(cfg))
 		drives := option.Must(cfgdrive.Enable(cfg))
 
-		option.Must(drives.UseCases.OpenRoot(user.SU(), drive.OpenRootOptions{
+		option.Must(drives.UseCases.OpenDrive(user.SU(), drive.OpenDriveOptions{
 			Create: true,
 			Mode:   drive.OtherWrite | drive.OtherRead,
 		}))
