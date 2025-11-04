@@ -10,7 +10,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"iter"
 	"log/slog"
 
 	"github.com/worldiety/option"
@@ -84,115 +83,84 @@ func NewProvider(
 // LoadAll downloads blindly all data into the given repositories. This may keep stale data and
 // overwrite existing data. See also [Provider.Clear].
 func (p *Provider) LoadAll() error {
-	if err := load(p.Identity(), p.repoModels, func() iter.Seq2[model.Model, error] {
-		return p.prov.Models().All(user.SU())
-	}); err != nil {
-		return err
-	}
-
 	if p.prov.Conversations().IsSome() {
-		if err := p.idxMsg.Clear(context.Background()); err != nil {
-			return err
-		}
-
-		if err := p.repoMessages.DeleteAll(); err != nil {
-			return err
-		}
-
-		if err := load(p.Identity(), p.repoConversations, func() iter.Seq2[conversation.Conversation, error] {
-			return p.prov.Conversations().Unwrap().All(user.SU())
-		}); err != nil {
-			return err
-		}
-
-		for conv, err := range p.repoConversations.All() {
+		for conv, err := range p.prov.Conversations().Unwrap().All(user.SU()) {
 			if err != nil {
 				return err
 			}
 
-			slog.Info("ai provider cache iterating conversation", "conversation", conv.Identity(), "provider", p.prov.Identity())
-			lib := p.prov.Conversations().Unwrap().Conversation(user.SU(), conv.ID)
-			for m, err := range lib.All(user.SU()) {
+			if err := p.repoConversations.Save(conv); err != nil {
+				return err
+			}
+
+			if err := p.idxProvConversations.Put(p.Identity(), conv.ID); err != nil {
+				return err
+			}
+
+			for msg, err := range p.prov.Conversations().Unwrap().Conversation(user.SU(), conv.ID).All(user.SU()) {
 				if err != nil {
 					return err
 				}
 
-				if err := p.repoMessages.Save(m); err != nil {
+				if err := p.repoMessages.Save(msg); err != nil {
 					return err
 				}
 
-				if err := p.idxMsg.Put(conv.ID, m.ID); err != nil {
+				if err := p.idxMsg.Put(conv.ID, msg.ID); err != nil {
 					return err
 				}
 
 			}
-
 		}
 
 	}
 
 	if p.prov.Agents().IsSome() {
-		if err := load(p.Identity(), p.repoAgents, func() iter.Seq2[agent.Agent, error] {
-			return p.prov.Agents().Unwrap().All(user.SU())
-		}); err != nil {
-			return err
-		}
-	}
-
-	if p.prov.Libraries().IsSome() {
-		err := load(p.Identity(), p.repoLibraries, func() iter.Seq2[library.Library, error] {
-			return p.prov.Libraries().Unwrap().All(user.SU())
-		})
-		if err != nil {
-			return err
-		}
-
-		for cLib, err := range p.repoLibraries.All() {
+		for ag, err := range p.prov.Agents().Unwrap().All(user.SU()) {
 			if err != nil {
 				return err
 			}
 
-			slog.Info("ai provider cache iterating library", "library", cLib.Identity(), "provider", p.prov.Identity())
-			lib := p.prov.Libraries().Unwrap().Library(cLib.ID)
-			if err := load(p.Identity(), p.repoDocuments, func() iter.Seq2[document.Document, error] {
-				return lib.All(user.SU())
-			}); err != nil {
+			if err := p.repoAgents.Save(ag); err != nil {
+				return err
+			}
+
+			if err := p.idxProvAgents.Put(p.Identity(), ag.ID); err != nil {
 				return err
 			}
 		}
 
 	}
 
-	return nil
-}
+	if p.prov.Libraries().IsSome() {
+		for lib, err := range p.prov.Libraries().Unwrap().All(user.SU()) {
+			if err != nil {
+				return err
+			}
 
-func load[E data.Aggregate[ID], ID data.IDType](prov provider.ID, repo data.Repository[E, ID], src func() iter.Seq2[E, error]) (err error) {
-	defer func() {
-		if err != nil {
-			slog.Error("ai provider cache failed to load from source: removing entries from cache", "repository", repo.Name(), "provider", prov)
-			if err := repo.DeleteAll(); err != nil {
-				slog.Error("failed to delete all entries from cache", "repository", repo.Name(), "provider", prov, "err", err.Error())
+			if err := p.repoLibraries.Save(lib); err != nil {
+				return err
+			}
+
+			if err := p.idxProvLibraries.Put(p.Identity(), lib.ID); err != nil {
+				return err
+			}
+
+			slog.Info("ai provider cache iterating library", "library", lib.Identity(), "provider", p.prov.Identity())
+			for doc, err := range p.prov.Libraries().Unwrap().Library(lib.ID).All(user.SU()) {
+				if err != nil {
+					return err
+				}
+
+				if err := p.repoDocuments.Save(doc); err != nil {
+					return err
+				}
 			}
 		}
-	}()
 
-	slog.Info("filling ai provider cache from remote...", "repository", repo.Name(), "provider", prov)
-
-	num := 0
-	for e, err := range src() {
-		if err != nil {
-			return err
-		}
-
-		if err := repo.Save(e); err != nil {
-			return err
-		}
-		num++
 	}
 
-	slog.Info("ai provider cache loaded from source", "repository", repo.Name(), "count", num, "provider", prov)
 	return nil
-
 }
 
 // Clear purges all caches from the used cache repositories. If the same repositories are used for different
@@ -228,6 +196,18 @@ func (p *Provider) Clear() error {
 
 	if err := p.idxProvModels.Clear(context.Background()); err != nil {
 		return fmt.Errorf("failed to clear index prov/model cache repository: %w", err)
+	}
+
+	if err := p.idxProvAgents.Clear(context.Background()); err != nil {
+		return fmt.Errorf("failed to clear index prov/agent cache repository: %w", err)
+	}
+
+	if err := p.idxProvLibraries.Clear(context.Background()); err != nil {
+		return fmt.Errorf("failed to clear index prov/libs cache repository: %w", err)
+	}
+
+	if err := p.idxProvConversations.Clear(context.Background()); err != nil {
+		return fmt.Errorf("failed to clear index prov/conv cache repository: %w", err)
 	}
 
 	if err := blob.DeleteAll(p.docTextStore); err != nil {
