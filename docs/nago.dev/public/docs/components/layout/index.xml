@@ -1,0 +1,1221 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Layout</title>
+    <link>//localhost:1313/docs/components/layout/</link>
+    <description>Recent content in Layout on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/components/layout/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Alignment</title>
+      <link>//localhost:1313/docs/components/layout/alignment/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/alignment/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It defines the positioning of child views within a container,
+such as top, bottom, leading, trailing, or centered. An empty Alignment defaults to Center (&amp;ldquo;c&amp;rdquo;) if not specified. #[go. TypeScript &amp;ldquo;path&amp;rdquo;:&amp;ldquo;web/vuejs/src/shared/protocol/ora&amp;rdquo;].&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Alignments&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;alignments&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#alignments&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;String()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Tutorials&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tutorials&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tutorials&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-02-combining-views&#34; &gt;tutorial-02-combining-views&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Box</title>
+      <link>//localhost:1313/docs/components/layout/box/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/box/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It lays out its children according to BoxLayout rules. By definition,
+the container clips its children. This makes it suitable for overlapping
+layouts, but usually requires absolute height and width. Shadows may require
+extra padding since clipped children cannot extend beyond the container.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Box&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;box&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#box&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Box is a container, in which the given children will be layout to the according BoxLayout
+rules. Note, that per definition the container clips its children. Thus, if working with shadows,
+you need to apply additional padding. Important: this container requires usually absolute height and width
+attributes and cannot work properly using wrap content semantics, because it intentionally allows overlapping.&lt;/p&gt;
+&lt;h3&gt;BoxAlign&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;boxalign&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#boxalign&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;BoxAlign creates a new Box with a single child aligned according to
+the given alignment position (e.g., Top, Center, Bottom, etc.).&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets a label used by screen readers for accessibility.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the box.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border styling of the box.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Font(font Font)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Font sets the font style for text content inside the box.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(fr Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the box, including size and positioning.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the box to span the full available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(p Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing around the box&amp;rsquo;s children.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible controls the visibility of the box; setting false hides it.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame applies a transformation function to the box&amp;rsquo;s frame and returns the updated component.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Card Layout</title>
+      <link>//localhost:1313/docs/components/layout/card_layout/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/card_layout/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It organizes child views into a grid-like layout, typically using multiple
+columns. The number of columns can be defined globally or customized per
+window size class to enable responsive design.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Layout&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;layout&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#layout&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Layout creates a new TCardLayout with the given child views.
+Nil children are automatically skipped. By default, the layout uses 3 columns.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Columns(class core.WindowSizeClass, columns int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the frame (size and positioning) for the card layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding ui.Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Footer</title>
+      <link>//localhost:1313/docs/components/layout/footer/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/footer/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This component models the footer of an application or website,
+typically containing branding, legal links, and styling options.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Footer&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;footer&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#footer&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Footer creates a new TFooter with default content padding.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor ui.Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ContentPadding(content ui.Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ContentPadding is a padding between the footer line separator and the view before the footer (typically the actual page content). Set to &amp;quot;&amp;quot; to disable any padding.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;GeneralTermsAndConditions(gtc LinkOrNavigationPath)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;GeneralTermsAndConditions sets the GTC link of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Impress(impress LinkOrNavigationPath)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Impress sets the imprint link of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Logo(logo ui.DecoredView)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Logo sets the logo view of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PrivacyPolicy(gdpr LinkOrNavigationPath)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PrivacyPolicy sets the privacy policy (GDPR) link of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ProviderName(copyright string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ProviderName sets the copyright/provider name of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Slogan(slogan string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Slogan sets the slogan text of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TermsOfUse(termsOfUse LinkOrNavigationPath)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;TermsOfUse sets the terms of use link of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TextColor(textColor ui.Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;TextColor sets the text color of the footer.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Frame</title>
+      <link>//localhost:1313/docs/components/layout/frame/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/frame/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Frame defines the sizing constraints and fixed dimensions for a UI element. It allows you to specify minimum and maximum width/height, as well as fixed
+dimensions. Frames are used to control layout behavior and responsiveness. All fields are optional. If a field is zero, it will not constrain the layout.&lt;/p&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullHeight()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullHeight sets the frame&amp;rsquo;s height to 100% of the available space.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the frame&amp;rsquo;s width to 100% of the available space.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;IsZero()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;IsZero returns true if all fields of the Frame are unset (zero value).&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Large()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Large sets the max width to 560dp (35rem) and Width to Full.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Larger()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Larger sets the width to 880dp (55rem) and Width to Full.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;MatchScreen()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;MatchScreen sets the frame to match the full viewport height and width. This is useful for fullscreen layouts or sections that should fill the screen.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Size(w Length, h Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Size sets both Width and Height to the given values and returns the updated Frame.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Tutorials&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tutorials&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tutorials&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-01-helloworld&#34; &gt;tutorial-01-helloworld&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-02-combining-views&#34; &gt;tutorial-02-combining-views&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-54-codeeditor&#34; &gt;tutorial-54-codeeditor&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Grid</title>
+      <link>//localhost:1313/docs/components/layout/grid/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/grid/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It arranges its children into a grid of rows and columns. The grid supports flexible sizing, spacing, alignment, borders,
+accessibility labels, and visibility control. For complex cases
+(e. g. , overlapping cells), row/column boundaries must be explicitly defined.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Grid&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;grid&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#grid&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Grid creates a new grid containing the given cells.
+For simple cases, only rows or columns need to be set.
+For complex layouts (like overlapping), rows, columns,
+and explicit start/end positions must be defined.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets the accessibility label of the grid, used by screen readers.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Append(cells ...)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Append adds one or more cells to the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border styling of the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ColGap(g Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ColGap sets the horizontal spacing between columns in the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Columns(cols int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Columns sets the amount of columns explicitly. If not set, the result is undefined. This component tries its best to calculate the right amount cells, however, when used with areas, this cannot work properly.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Font(font Font)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Font sets the font style applied to text inside the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(fr Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the grid, including size and positioning.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the grid to span the full available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Gap(g Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Gap sets RowGap and ColGap equally.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing around the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RowGap(g Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;RowGap sets the vertical spacing between rows in the grid.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Rows(rows int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Rows sets the amount of rows explicitly. If not set, the result is undefined. This component tries its best to calculate the right amount cells, however, when used with areas, this cannot work properly.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible controls the visibility of the grid; setting false hides it.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Widths(colWidths ...)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Widths are optional column width from left to right. If not all width are defined, the rest of widths are equally distributed based on the remaining amount of space.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame applies a transformation function to the grid&amp;rsquo;s frame and returns the updated component.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;cellCount()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;cellCount calculates the number of grid cells based on spans and column positions. It accounts for cells with explicit colSpan or colStart/colEnd values, falling back to counting as one cell if no span information is provided.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Grid Cell</title>
+      <link>//localhost:1313/docs/components/layout/grid_cell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/grid_cell/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It represents a single cell inside a grid layout, defining its
+position, span, alignment, padding, and background color.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;GridCell&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;gridcell&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#gridcell&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;GridCell creates a new grid cell containing the given body view.
+Rows and columns are 1-based (starting at 1). By default, the cell
+uses Stretch alignment, meaning its content will expand to fill the
+available space. If another alignment is set, the content uses
+wrap-content semantics and the grid background becomes visible.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(a Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets the alignment of the content within the grid cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(color Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the grid cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ColEnd(colEnd int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ColEnd must be always at least +1 of ColStart, even if that column is beyond the defined amount of total columns.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ColSpan(colSpan int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ColSpan behavior is unspecified and can sometime make your life easier, because you must not exactly know the layout. However, it may also behave unexpectedly, especially when overlapped.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ColStart(colStart int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ColStart must start at 1.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(p Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing around the cell content.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RowEnd(rowEnd int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;RowEnd must be always at least +1 of RowStart, even if that row is beyond the defined amount of total rows.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RowSpan(rowSpan int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;RowSpan behavior is unspecified and can sometime make your life easier, because you must not exactly know the layout. However, it may also behave unexpectedly, especially when overlapped.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RowStart(rowStart int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;RowStart must start at 1.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;render(ctx core.RenderContext)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>HStack</title>
+      <link>//localhost:1313/docs/components/layout/hstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/hstack/</guid>
+      <description>
+        
+        
+        &lt;p&gt;HStack is a horizontal layout container that arranges its child views in a row. It supports alignment, spacing, background styling, borders, and interaction states. The HStack is interactive if an action is defined and can respond to hover, press,
+and focus states with visual feedback.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;HStack&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;hstack&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#hstack&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;HStack is a container, in which the given children will be layout in a row according to the applied
+alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
+you need to apply additional padding.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets the label used by screen readers for accessibility.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(f func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action sets the callback function to be invoked when the stack is clicked or tapped.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets how the stack&amp;rsquo;s children are aligned vertically within the horizontal row.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Append(children ...)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Append adds one or more child views to the horizontal stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the horizontal stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border styling of the stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Enabled(enabled bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Enabled has only an effect if StylePreset is applied, otherwise it is ignored.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FocusedBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FocusedBackgroundColor sets the background color of the stack when it is focused (e.g., via keyboard navigation).&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FocusedBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FocusedBorder sets the border styling when the stack is focused.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Font(font Font)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Font sets the font style applied to text content inside the stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(fr Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the horizontal stack, including size and positioning.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the stack to span the full available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Gap(gap Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Gap sets the spacing between child views in the horizontal stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBackgroundColor sets the background color of the stack when the user hovers over it.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBorder sets the border styling when the stack is hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ID(id string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ID assigns a unique identifier to the stack, useful for testing or referencing.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;NoClip(b bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;NoClip toggles whether the stack clips its children. By default, stacks clip their children; setting true disables clipping.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Opacity(opacity float64)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means fully visible. This also affects all contained children.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing around the stack&amp;rsquo;s children.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Position(position Position)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Position sets the position of the horizontal stack within its parent layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PressedBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PressedBackgroundColor sets the background color of the stack when it is pressed or clicked.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PressedBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PressedBorder sets the border styling when the stack is pressed or clicked.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;StylePreset(preset StylePreset)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;StylePreset applies a predefined style preset to the stack, controlling its appearance.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TextColor(textColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;TextColor sets the color of text content inside the stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible controls the visibility of the stack; setting false hides it.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;With(fn func(stack THStack) THStack)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;With applies a transformation function to the stack itself and returns the result. Useful for chaining configuration in a functional style.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame applies a transformation function to the stack&amp;rsquo;s frame and returns the updated component.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Wrap(wrap bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Wrap tries to reproduce the flex-box wrap behavior. This means, that if the HStack has a limited width, it must create multiple rows to place its children. Note, that the text layout behavior is unspecified (it may layout without word-wrap or use some sensible defaults). Each row and each element may have its own custom size, so this must not use a grid-like layouting.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Tutorials&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tutorials&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tutorials&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-02-combining-views&#34; &gt;tutorial-02-combining-views&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Scroll View</title>
+      <link>//localhost:1313/docs/components/layout/scroll_view/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/scroll_view/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It provides a scrollable container for a single child view. The scroll direction can be vertical (default) or horizontal. Supports customization of frame, position, border, background color, and padding.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;ScrollView&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;scrollview&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#scrollview&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;A ScrollView can either be horizontal or vertical. By default, it is vertical.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Axis(axis ScrollViewAxis)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Axis sets the scroll direction (vertical or horizontal).&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(color Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the scroll view.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border applies a border around the scroll view.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame for the scroll view.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner padding of the scroll view.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Position(position Position)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Position sets the alignment of the content inside the scroll view.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ScrollToView(animation ScrollAnimation, scrollToView string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Space</title>
+      <link>//localhost:1313/docs/components/layout/space/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/space/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It represents a fixed-size spacer used to add consistent spacing
+between UI elements in both vertical and horizontal layouts.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Space&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;space&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#space&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Space creates a fixed-size spacer with the given length.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Spacer</title>
+      <link>//localhost:1313/docs/components/layout/spacer/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/spacer/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Unlike TSpace, Spacer grows and shrinks dynamically to fill
+available space inside VStack or HStack containers.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Spacer&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;spacer&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#spacer&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Spacer creates a dynamic spacer that expands to fill available space.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the spacer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border of the spacer.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the frame of the spacer, allowing control over its layout constraints.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Tutorials&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tutorials&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tutorials&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-02-combining-views&#34; &gt;tutorial-02-combining-views&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Table Cell</title>
+      <link>//localhost:1313/docs/components/layout/table_cell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/table_cell/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Represents an individual cell inside a table row with optional spanning,
+alignment, background, padding, border, and actions.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;TableCell&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tablecell&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tablecell&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;TableCell creates a new table cell with the given content.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(action func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action sets an optional click/tap action for the cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets the alignment for the cell content.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border of the cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ColSpan(colSpan int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ColSpan sets how many columns this cell spans.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBackgroundColor sets the background color when the cell is hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the padding of the cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RowSpan(rowSpan int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;RowSpan sets how many rows this cell spans.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Table Column</title>
+      <link>//localhost:1313/docs/components/layout/table_column/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/table_column/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It defines the configuration for a table column header and its cell defaults. Columns can define width, alignment, background color, padding, borders,
+and cell-specific actions (e. g. , sorting).&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;TableColumn&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tablecolumn&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tablecolumn&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;TableColumn creates a new table column with the given header content.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(action func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action sets an optional click/tap action for the column&amp;rsquo;s cells.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets the content alignment within the column cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color for the column cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border for the column cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBackgroundColor sets the background color when the column cell is hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the padding for the column cell.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Span(span int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Span sets how many columns this header should span.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Width(width Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Width sets the column width.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Table Row</title>
+      <link>//localhost:1313/docs/components/layout/table_row/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/table_row/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It groups a collection of cells and defines row-level styling and actions.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;TableRow&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tablerow&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tablerow&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;TableRow creates a new table row with the given cells.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(action func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action sets a click/tap action for the entire row.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the row.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Height(height Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Height sets the row height.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBackgroundColor sets the background color when the row is hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Text Layout</title>
+      <link>//localhost:1313/docs/components/layout/text_layout/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/text_layout/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It arranges multiple text (and text-like) child views with shared typography,
+spacing, and alignment. Useful for paragraphs, captions, or any block of text
+that needs consistent styling and optional interaction (action callback).&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;TextLayout&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;textlayout&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#textlayout&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;TextLayout performs an inline layouting of multiple text elements. The alignment properties of each
+Text are ignored. Any implementation must support an arbitrary amount of text elements with different
+font settings. However, implementations are also open to support images and any other views, as long
+as they can be rendered inline.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets the screen-reader label describing the layout&amp;rsquo;s content or purpose.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(f func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action sets a callback function that is executed when the layout is clicked.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment TextAlignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment defines the text alignment within the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color of the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border applies the given border (widths, radii, colors, shadow) to the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Font(font Font)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Font sets the font styling for the text in the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(f Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the dimensions and position of the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth expands the layout to occupy the full available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing of the layout.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible toggles visibility of the layout. Setting false hides it.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame modifies the current frame using the provided function.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>VStack</title>
+      <link>//localhost:1313/docs/components/layout/vstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/vstack/</guid>
+      <description>
+        
+        
+        &lt;p&gt;VStack is a vertical layout container that arranges its child views in a column. It supports alignment, spacing, background styling, borders, and interaction states. The VStack can be interactive if an action is defined and responds to hover, press,
+and focus states with visual feedback.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;VStack&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;vstack&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#vstack&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;VStack is a container, in which the given children will be layout in a column according to the applied
+alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
+you need to apply additional padding.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets the accessibility label for screen readers.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Action(f func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Action assigns an action handler, making the VStack interactive.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets the alignment of child views within the column.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Animation(animation Animation)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Append(children ...)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Append adds additional child views to the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BackgroundColor sets the background color.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the default border styling.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FocusedBackgroundColor(backgroundColor proto.Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FocusedBackgroundColor sets the background color when focused.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FocusedBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FocusedBorder sets the border styling when focused.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Font(font Font)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Font sets the default font for text children.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(f Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the VStack to span 100% of the available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Gap(gap Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Gap sets the spacing between child views.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBackgroundColor sets the background color when hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HoveredBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HoveredBorder sets the border styling when hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ID(id string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ID assigns a unique identifier to the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;NoClip(b bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;NoClip disables clipping of child content when true.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Opacity(opacity float64)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means fully visible. This also affects all contained children.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner padding of the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Position(position Position)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Position sets the positioning of the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PressedBackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PressedBackgroundColor sets the background color when pressed.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PressedBorder(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PressedBorder sets the border styling when pressed.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;StylePreset(preset StylePreset)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;StylePreset applies a predefined style preset.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TextColor(textColor Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;TextColor sets the default text color for the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Transformation(transformation Transformation)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible controls the visibility of the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;With(fn func(stack TVStack) TVStack)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame modifies the current frame using the provided function.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Tutorials&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tutorials&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tutorials&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-01-helloworld&#34; &gt;tutorial-01-helloworld&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-02-combining-views&#34; &gt;tutorial-02-combining-views&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../../examples/tutorial-54-codeeditor&#34; &gt;tutorial-54-codeeditor&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,33 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Improvement</title>
+    <link>//localhost:1313/tags/improvement/</link>
+    <description>Recent content in Improvement on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 03 Jun 2025 00:00:00 +0000</lastBuildDate>
+    
+	  <atom:link href="//localhost:1313/tags/improvement/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Our first changelog</title>
+      <link>//localhost:1313/changelog/2025_01/11-10-things-changed/</link>
+      <pubDate>Tue, 03 Jun 2025 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/changelog/2025_01/11-10-things-changed/</guid>
+      <description>
+        
+        
+        &lt;p&gt;The doc gets more functionality every day.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>
