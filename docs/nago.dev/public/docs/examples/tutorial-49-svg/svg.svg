@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <path d="M64.586,176.688L274.454,375.294L373.722,375.294L373.722,73.097L59.857,73.097" style="fill:none;stroke:rgb(81,180,230);stroke-width:2.71px;"/>
+    <g transform="matrix(1.61193,0,0,1.61193,-85.4629,-62.4384)">
+        <circle aria-valuenow="VAR0" cx="155.304" cy="117.678" r="15.642" style="fill:rgb(95,135,197);stroke:rgb(81,180,230);stroke-width:1.68px;"/>
+    </g>
+    <g transform="matrix(1.61193,0,0,1.61193,-8.33587,-5.34424)">
+        <circle aria-valuenow="VAR1" cx="155.304" cy="117.678" r="15.642" style="fill:rgb(95,135,197);stroke:rgb(81,180,230);stroke-width:1.68px;"/>
+    </g>
+    <g transform="matrix(1.61193,0,0,1.61193,58.9975,-73.2725)">
+        <circle aria-valuenow="VAR2"  cx="155.304" cy="117.678" r="15.642" style="fill:rgb(95,135,197);stroke:rgb(81,180,230);stroke-width:1.68px;"/>
+    </g>
+    <g transform="matrix(1.61193,0,0,1.61193,33.7837,107.46)">
+        <circle aria-valuenow="VAR3" cx="155.304" cy="117.678" r="15.642" style="fill:rgb(95,135,197);stroke:rgb(81,180,230);stroke-width:1.68px;"/>
+    </g>
+</svg>

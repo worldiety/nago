@@ -1,0 +1,522 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Utility</title>
+    <link>//localhost:1313/docs/components/utility/</link>
+    <description>Recent content in Utility on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/components/utility/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Border</title>
+      <link>//localhost:1313/docs/components/utility/border/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/border/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It controls the radius of each corner, the width and color of each edge,
+and optional shadow settings. A border affects the component&amp;rsquo;s layout
+dimensions because the width is applied outside the content box. #[go. TypeScript &amp;ldquo;path&amp;rdquo;:&amp;ldquo;web/vuejs/src/shared/protocol/ora&amp;rdquo;].&lt;/p&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BottomRadius(radius Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;BottomRadius sets the same corner radius for both bottom corners.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Circle()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Circle sets all corner radii to a large value, resulting in a circle/ellipse shape.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Color(c Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Color sets the same border color on all four sides.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Elevate(elevation core.DP)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Elevate applies a shadow effect based on a given elevation in device-independent pixels (DP). The shadow blur radius and offset are scaled accordingly, using rem units.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Radius(radius Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Radius sets the same corner radius for all four corners.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Shadow(radius Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Shadow adds a shadow with the given blur radius and a default semi-transparent black color.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TopRadius(radius Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;TopRadius sets the same corner radius for both top corners.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Width(width Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Width sets the same border thickness on all four sides.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Color</title>
+      <link>//localhost:1313/docs/components/utility/color/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/color/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It wraps a ui. Color and can be rendered to show its visual representation.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Color&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;color&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#color&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Color creates a new TColor component with the given color.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Colorset</title>
+      <link>//localhost:1313/docs/components/utility/colorset/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/colorset/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Colors defines a themes color set. See also https://wiki. worldiety. net/books/design-system-ora/page/farbsystem.&lt;/p&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Default(scheme core.ColorScheme)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Namespace()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Valid()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Content</title>
+      <link>//localhost:1313/docs/components/utility/content/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/content/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This component holds a single view with an associated style
+and can be toggled visible or hidden.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Content&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;content&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#content&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Content creates a new TContent with the given view and sets it visible by default.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Style(style ContentStyle)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Style applies the given ContentStyle to the TContent.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Divider</title>
+      <link>//localhost:1313/docs/components/utility/divider/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/divider/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It is typically used to visually separate sections of content. The divider can be styled with frame, border, and padding.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;HLine&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;hline&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#hline&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;HLine configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.
+The color is derived from the main color.&lt;/p&gt;
+&lt;h3&gt;HLineWithColor&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;hlinewithcolor&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#hlinewithcolor&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;HLineWithColor configures the TDivider to be used as a horizontal hairline divider, e.g. within a TVStack.&lt;/p&gt;
+&lt;h3&gt;VLine&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;vline&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#vline&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;VLine configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.
+The color is derived from main.&lt;/p&gt;
+&lt;h3&gt;VLineWithColor&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;vlinewithcolor&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#vlinewithcolor&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;VLineWithColor configures a TDivider to be used as a vertical hairline divider, e.g. within a THStack.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border styling of the divider, typically its line thickness and color.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the divider, including size and positioning.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the spacing around the divider.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Keyboard Options</title>
+      <link>//localhost:1313/docs/components/utility/keyboard_options/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/keyboard_options/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Keyboard Options defines configuration options for virtual keyboard behavior. It allows customization of capitalization, auto-correction, and keyboard type hints. These options are primarily used in text input components to enhance user experience.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;KeyboardOptions&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;keyboardoptions&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#keyboardoptions&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class=&#34;hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code&#34;&gt;
+
+&lt;div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;KeyboardOptions&lt;/span&gt;()&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&#34;hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0&#34;&gt;
+  &lt;button
+    class=&#34;hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50&#34;
+    title=&#34;Copy code&#34;
+  &gt;
+    &lt;div class=&#34;copy-icon group-[.copied]/copybtn:hx-hidden hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+    &lt;div class=&#34;success-icon hx-hidden group-[.copied]/copybtn:hx-block hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AutoCorrectEnabled(autoCorrectEnabled bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AutoCorrectEnabled enables or disables auto-correction.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Capitalization(capitalization bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Capitalization enables or disables automatic capitalization.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;KeyboardType(keyboardType KeyboardType)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;KeyboardType is a hint to the frontend. Technically, it is impossible to actually guarantee anything, and you have always to considers bugs and hacks:   - a malicious user may send you anything, which would otherwise not be possible (e.g. text instead of numbers)   - Android IME hints or keyboard types are never guaranteed. A user may install third-party keyboards which just ignore anything   - a user may inject anything using wrong autocompletion or the clipboard&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Padding</title>
+      <link>//localhost:1313/docs/components/utility/padding/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/padding/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It defines the spacing inside a component on each side (top, left, right, bottom).&lt;/p&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;All(pad Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;All applies the same padding value to all four sides.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Horizontal(pad Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Horizontal sets the padding for the horizontal axis (left and right).&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Vertical(pad Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Vertical sets the padding for the vertical axis (top and bottom).&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Page</title>
+      <link>//localhost:1313/docs/components/utility/page/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/page/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Each page can define a title, an optional icon, and a body
+function that renders the content. Pages can also be disabled
+to prevent user interaction.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Page&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;page&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#page&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Page creates a new tab page with the given title and content body.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Disabled(disabled bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Disabled marks the page as disabled, making it visible but not selectable.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Icon(ico core.SVG)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Icon sets the icon displayed next to the page title.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Pager</title>
+      <link>//localhost:1313/docs/components/utility/pager/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/pager/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It manages pagination state and renders controls to switch between pages. Typical usage is in lists or tables with many items.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Pager&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;pager&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#pager&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Pager creates a new Page with the given state.
+The active page is the zero-based offset of the current page.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Count(count int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Count sets the number of available pages. If count is 0 or less, at least a single page is still shown.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(v bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Shadow</title>
+      <link>//localhost:1313/docs/components/utility/shadow/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/shadow/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It defines shadow styling properties that can be applied to components. A shadow consists of a color, blur radius, and X/Y offsets.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Tabs</title>
+      <link>//localhost:1313/docs/components/utility/tabs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/tabs/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It manages the layout and navigation between different TPage elements,
+including alignment, positioning, and spacing between the tab bar and content. An optional state can track the currently active tab index.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Tabs&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;tabs&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#tabs&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Tabs creates a new tab container with the given pages,
+defaulting to leading alignment and a standard page-to-tab spacer.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ButtonAlignment(tabAlignment ui.Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ButtonAlignment sets the alignment of the tab buttons within the button bar. Defaults to Leading.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the tabs container, including size and spacing.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;FullWidth sets the tabs container to span the full available width.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;InputValue(activeIdx *core.State[int])&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;InputValue binds the tab container to an external state that tracks the index of the currently active page.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;PageTabSpace(space ui.Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;PageTabSpace is the amount of space between the tab button bar and the actual page content. Default to L32. Set to the empty string to disable any space.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Position(pos ui.Position)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Position sets the position of the tab bar (e.g., top, bottom, start, end).&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>View That Matches</title>
+      <link>//localhost:1313/docs/components/utility/view_that_matches/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/view_that_matches/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It selects the most appropriate view based on the current window&amp;rsquo;s size class.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;ViewThatMatches&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;viewthatmatches&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#viewthatmatches&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;ViewThatMatches creates a TViewThatMatches for a window and a set of size-specific views.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Window Title</title>
+      <link>//localhost:1313/docs/components/utility/window_title/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/window_title/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This component sets the browser or application window title,
+which is also displayed in the browser tab.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;WindowTitle&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;windowtitle&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#windowtitle&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;WindowTitle creates a new TWindowTitle with the given title text.&lt;/p&gt;
+&lt;div class=&#34;hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code&#34;&gt;
+
+&lt;div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;WindowTitle&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Nago&amp;#34;&lt;/span&gt;)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&#34;hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0&#34;&gt;
+  &lt;button
+    class=&#34;hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50&#34;
+    title=&#34;Copy code&#34;
+  &gt;
+    &lt;div class=&#34;copy-icon group-[.copied]/copybtn:hx-hidden hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+    &lt;div class=&#34;success-icon hx-hidden group-[.copied]/copybtn:hx-block hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

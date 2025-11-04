@@ -1,0 +1,41 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Tutorial 19</title>
+    <link>//localhost:1313/docs/examples/tutorial-19-download-file/</link>
+    <description>Recent content in Tutorial 19 on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/examples/tutorial-19-download-file/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title></title>
+      <link>//localhost:1313/docs/examples/tutorial-19-download-file/readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/examples/tutorial-19-download-file/readme/</guid>
+      <description>
+        
+        
+        &lt;h1&gt;Download bzw. das Senden von Dateien&lt;/h1&gt;&lt;p&gt;Das Backend kann eine oder mehrere Dateien gleichzeitig an eine Frontend-Implementierung senden.
+Abhängig von der konkreten Plattform werden die Dateien an das System zur weiteren Verwendung durch den Nutzer weitergereicht.
+In einer Webbrowser-Umgebung wird immer genau ein Datei-Download ausgelöst.
+Wurden mehrere Dateien gesendet, werden diese vorher in einer Zip-Datei zusammengefasst und als &lt;code&gt;files.zip&lt;/code&gt; zum Download angeboten.
+Auf anderen Plattformen werden in Abhängigkeit der automatisch ermittelten Mimetypes Anwendungen zur Weiterverarbeitung angeboten, z.B. mittels dem &lt;code&gt;ACTION_SEND_MULTIPLE&lt;/code&gt; Intent unter Android.&lt;/p&gt;
+&lt;p&gt;
+    &lt;img src=&#34;../screenshot-01.png&#34; alt=&#34;Screenshot&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Die zum Download angebotenen Dateien sind nur temporär mit einem geheimen Token verfügbar.
+Dazu werden die Dateien aus dem &lt;code&gt;fs.FS&lt;/code&gt; kopiert und an den Lebenszyklus eines &lt;em&gt;Scopes&lt;/em&gt; gebunden, d.h. wird der Scope zerstört, wird auch die Datei gelöscht.
+Wurde ein Download gestartet und der Scope währenddessen zerstört, kann der laufende Download noch erfolgreich beendet werden.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,143 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Components</title>
+    <link>//localhost:1313/docs/components/</link>
+    <description>Recent content in Components on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/components/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Basic</title>
+      <link>//localhost:1313/docs/components/basic/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/basic/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Basic components are the fundamental building blocks of the user interface. They are simple, reusable, and commonly used across many parts of the application.&lt;/p&gt;
+&lt;h2&gt;Examples&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;examples&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#examples&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Buttons&lt;/li&gt;
+&lt;li&gt;Checkboxes&lt;/li&gt;
+&lt;li&gt;Radio buttons&lt;/li&gt;
+&lt;li&gt;Text fields&lt;/li&gt;
+&lt;li&gt;Labels&lt;/li&gt;
+&lt;li&gt;Avatars&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These components typically have minimal internal logic and are designed for composition into more complex structures.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;➡️ See also: &lt;a href=&#34;../composite&#34; &gt;Composite&lt;/a&gt;, &lt;a href=&#34;../layout&#34; &gt;Layout&lt;/a&gt;, &lt;a href=&#34;../feedback-and-overlay&#34; &gt;Feedback &amp;amp; Overlays&lt;/a&gt;, &lt;a href=&#34;../utility&#34; &gt;Utility&lt;/a&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Composite</title>
+      <link>//localhost:1313/docs/components/composite/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/composite/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Composite components are made up of multiple basic elements and encapsulate more complex behavior or structure. They often represent self-contained UI units with specific functionality.&lt;/p&gt;
+&lt;h2&gt;Examples&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;examples&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#examples&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Date pickers and color pickers&lt;/li&gt;
+&lt;li&gt;Multi-step forms&lt;/li&gt;
+&lt;li&gt;Rich text editors&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Use these when simple elements aren&amp;rsquo;t enough, and more behavior or structure is required.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;➡️ See also: &lt;a href=&#34;../basic&#34; &gt;Basic&lt;/a&gt;, &lt;a href=&#34;../layout&#34; &gt;Layout&lt;/a&gt;, &lt;a href=&#34;../feedback-and-overlay&#34; &gt;Feedback &amp;amp; Overlays&lt;/a&gt;, &lt;a href=&#34;../utility&#34; &gt;Utility&lt;/a&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Layout</title>
+      <link>//localhost:1313/docs/components/layout/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/layout/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Layout components define the structure and positioning of UI elements. They help organize content spatially and ensure responsive and consistent design across different screen sizes.&lt;/p&gt;
+&lt;h2&gt;Examples&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;examples&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#examples&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;VStack / HStack&lt;/li&gt;
+&lt;li&gt;Box&lt;/li&gt;
+&lt;li&gt;Grid&lt;/li&gt;
+&lt;li&gt;ScrollView&lt;/li&gt;
+&lt;li&gt;Frame&lt;/li&gt;
+&lt;li&gt;Position&lt;/li&gt;
+&lt;li&gt;Scaffold&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Layout defines the &lt;em&gt;how&lt;/em&gt; of structure, not the &lt;em&gt;what&lt;/em&gt; of content.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;➡️ See also: &lt;a href=&#34;../basic&#34; &gt;Basic&lt;/a&gt;, &lt;a href=&#34;../composite&#34; &gt;Composite&lt;/a&gt;, &lt;a href=&#34;../feedback-and-overlay&#34; &gt;Feedback &amp;amp; Overlays&lt;/a&gt;, &lt;a href=&#34;../utility&#34; &gt;Utility&lt;/a&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Feedback &amp; Overlays</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Feedback &amp;amp; Overlay components provide visual responses to user actions or display content in layers above the main interface. They help guide users, confirm actions, or present additional information.&lt;/p&gt;
+&lt;h2&gt;Examples&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;examples&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#examples&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Alerts&lt;/li&gt;
+&lt;li&gt;Banners&lt;/li&gt;
+&lt;li&gt;Toasts&lt;/li&gt;
+&lt;li&gt;Modals&lt;/li&gt;
+&lt;li&gt;Dialogs&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;➡️ See also: &lt;a href=&#34;../basic&#34; &gt;Basic&lt;/a&gt;, &lt;a href=&#34;../composite&#34; &gt;Composite&lt;/a&gt;, &lt;a href=&#34;../layout&#34; &gt;Layout&lt;/a&gt;, &lt;a href=&#34;../utility&#34; &gt;Utility&lt;/a&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Utility</title>
+      <link>//localhost:1313/docs/components/utility/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/utility/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Utility components provide supporting functionality, styling, or configuration for other components. They are often used to apply design tokens, manage behavior, or enhance developer experience.&lt;/p&gt;
+&lt;p&gt;This category also includes &lt;strong&gt;conditional rendering utilities&lt;/strong&gt; that control the visibility and repetition of UI elements based on logic or data.&lt;/p&gt;
+&lt;h2&gt;Examples&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;examples&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#examples&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Style presets and color sets&lt;/li&gt;
+&lt;li&gt;Keyboard helpers and redraw triggers&lt;/li&gt;
+&lt;li&gt;Window title and document metadata&lt;/li&gt;
+&lt;li&gt;Conditional rendering: &lt;code&gt;ui.if&lt;/code&gt;, &lt;code&gt;ui.ifelse&lt;/code&gt;, &lt;code&gt;ui.foreach&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These are essential for maintaining consistency and control across your UI system.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;➡️ See also: &lt;a href=&#34;../basic&#34; &gt;Basic&lt;/a&gt;, &lt;a href=&#34;../composite&#34; &gt;Composite&lt;/a&gt;, &lt;a href=&#34;../layout&#34; &gt;Layout&lt;/a&gt;, &lt;a href=&#34;../feedback-and-overlay&#34; &gt;Feedback &amp;amp; Overlays&lt;/a&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,33 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Get Started</title>
+    <link>//localhost:1313/docs/getting-started/</link>
+    <description>Recent content in Get Started on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/getting-started/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Quickstart</title>
+      <link>//localhost:1313/docs/getting-started/quickstart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/getting-started/quickstart/</guid>
+      <description>
+        
+        
+        &lt;p&gt;Here are some quickstart instructions.&lt;/p&gt;
+&lt;p&gt;TBD&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

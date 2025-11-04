@@ -1,0 +1,267 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nago Docs – Feedback &amp; Overlays</title>
+    <link>//localhost:1313/docs/components/feedback-and-overlay/</link>
+    <description>Recent content in Feedback &amp; Overlays on Nago Docs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="//localhost:1313/docs/components/feedback-and-overlay/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Banner</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/banner/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This component displays a prominent message to the user,
+typically used for notifications, warnings, or confirmations. It consists
+of a title and message, and can optionally be dismissible and styled
+according to intent (e. g. , success, warning, error). It also supports a callback when the banner is closed.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Banner&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;banner&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#banner&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class=&#34;hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code&#34;&gt;
+
+&lt;div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;Banner&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Nago ist great&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Give it a try.&amp;#34;&lt;/span&gt;)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&#34;hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0&#34;&gt;
+  &lt;button
+    class=&#34;hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50&#34;
+    title=&#34;Copy code&#34;
+  &gt;
+    &lt;div class=&#34;copy-icon group-[.copied]/copybtn:hx-hidden hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+    &lt;div class=&#34;success-icon hx-hidden group-[.copied]/copybtn:hx-block hx-pointer-events-none hx-h-4 hx-w-4&#34;&gt;&lt;/div&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/feedback-and-overlay/alert/banner.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AutoCloseTimeoutOrDefault(d time.Duration)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Closeable(presented *core.State[bool])&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Closeable makes the banner dismissible by binding its visibility to the given state.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets a custom frame (layout constraints) for the banner.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Intent(intent Intent)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Intent sets the visual intent of the banner (e.g., success, warning, error).&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;OnClosed(fn func())&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;OnClosed sets a callback function that is triggered when the banner is closed.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Banner Error</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/banner_error/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner_error/</guid>
+      <description>
+        
+        
+        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;BannerError&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;bannererror&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#bannererror&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;BannerError wraps a given error into a TBannerError,
+which can later be rendered as a user-visible banner.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Banner Messages</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/banner_messages/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner_messages/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It manages and displays transient banner-style notifications within a window. This component is typically used for showing short-lived feedback messages
+(e. g. , success, error, info) that appear temporarily and may stack if multiple
+messages are triggered.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;BannerMessages&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;bannermessages&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#bannermessages&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;BannerMessages may return nil, if no information needs to be displayed. Otherwise, it appends to
+the modal overlay.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Breadcrumbs</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/breadcrumbs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/breadcrumbs/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It displays a horizontal trail of items representing the user&amp;rsquo;s navigation path
+within the application. Each item is typically a link or label, separated by a
+configurable gap, and the layout can be styled with frame and padding options.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Breadcrumbs&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;breadcrumbs&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#breadcrumbs&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Breadcrumbs creates a new breadcrumb trail with the given items.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ClampLeading()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ClampLeading ensures that if the first entry is a default Item its title will be aligned to the leading of this component so that you can align the optical flight of text.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame defines the frame layout (size and positioning) of the breadcrumbs.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Gap(l ui.Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Gap sets the spacing between breadcrumb items.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Item(action func(), title string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Item appends a default button with the given title and text. Currently, this just defaults to a tertiary styled button.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding ui.Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner padding around the breadcrumb trail.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Dialog</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog/</guid>
+      <description>
+        
+        
+        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Dialog&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;dialog&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#dialog&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Dialog Create</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog_create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog_create/</guid>
+      <description>
+        
+        
+        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;DialogCreate&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;dialogcreate&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#dialogcreate&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Dialog Edit</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog_edit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog_edit/</guid>
+      <description>
+        
+        
+        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;DialogEdit&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;dialogedit&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#dialogedit&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Error View</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/error_view/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/error_view/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It shows an error message inside a styled container with optional
+padding, spacing, borders, and layout configuration. Typically used
+to surface application or runtime errors to the user.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;ErrorView&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;errorview&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#errorview&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;ErrorView returns a view which is suited to be displayed instead of your actual view in case of an unexpected
+error. It is similar to the combined tuple of collecting errors using RequestSupport and showing them
+through SupportRequestDialog. However, it returns an empty view, if err is nil. It returns a special view
+when the permission
+is denied and a support view in case of anything else to avoid leaking confidential error details.
+Note, that unlike RequestSupport, each call to SupportView will immediately allocate a new SupportView, thus
+better don&amp;rsquo;t use it in loops to create error views over and over again.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Support Request Dialog</title>
+      <link>//localhost:1313/docs/components/feedback-and-overlay/support_request_dialog/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>//localhost:1313/docs/components/feedback-and-overlay/support_request_dialog/</guid>
+      <description>
+        
+        
+        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;SupportRequestDialog&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;supportrequestdialog&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#supportrequestdialog&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;SupportRequestDialog return either nil or the dialog to which allows contacting the developers. It shows the latest
+anonymous error code, to avoid security sensitive details. Use
+[RequestSupport] to insert an error into the global error list.&lt;/p&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>
