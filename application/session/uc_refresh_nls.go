@@ -20,6 +20,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/events"
 )
 
 type nlsJSONAuthenticationDetails struct {
@@ -83,7 +84,7 @@ func (u nlsUser) intoSSOUser() user.SingleSignOnUser {
 	}
 }
 
-func NewRefreshNLS(mutex *sync.Mutex, repo Repository, loadGlobal settings.LoadGlobal, mergeUser user.MergeSingleSignOnUser, logout Logout) RefreshNLS {
+func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, loadGlobal settings.LoadGlobal, mergeUser user.MergeSingleSignOnUser, logout Logout) RefreshNLS {
 
 	refresh := func(id ID) error {
 		usrSettings := settings.ReadGlobal[user.Settings](loadGlobal)
@@ -161,6 +162,11 @@ func NewRefreshNLS(mutex *sync.Mutex, repo Repository, loadGlobal settings.LoadG
 		}
 
 		slog.Info("nls refresh successful", "session", id, "user", uid)
+
+		bus.Publish(Authenticated{
+			Session: id,
+			User:    session.User.Unwrap(),
+		})
 
 		return nil
 	}

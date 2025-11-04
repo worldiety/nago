@@ -9,6 +9,7 @@ package application
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/session"
 	uisession "go.wdy.de/nago/application/session/ui"
 	"go.wdy.de/nago/pkg/blob/crypto"
@@ -88,6 +89,7 @@ func (c *Configurator) SessionManagement() (SessionManagement, error) {
 		repoNonces, err := JSONRepository[session.NLSNonceEntry, session.NLSNonce](c, "nago.iam.nls.nonce")
 
 		useCases := session.NewUseCases(
+			c.EventBus(),
 			c.ContextPathURI("", nil),
 			setMgmt.UseCases.LoadGlobal,
 			userMgmt.UseCases.MergeSingleSignOnUser,

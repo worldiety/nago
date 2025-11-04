@@ -9,12 +9,14 @@ package session
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
 	"time"
+
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/std"
 )
 
-func NewLoginUser(sessions Repository) LoginUser {
+func NewLoginUser(bus events.Bus, sessions Repository) LoginUser {
 	return func(id ID, usr user.ID) error {
 		// first install the session
 		optSession, err := sessions.FindByID(id)
@@ -36,6 +38,11 @@ func NewLoginUser(sessions Repository) LoginUser {
 		if err := sessions.Save(session); err != nil {
 			return fmt.Errorf("sessions.Save failed: %w", err)
 		}
+
+		bus.Publish(Authenticated{
+			Session: id,
+			User:    session.User.Unwrap(),
+		})
 
 		return nil
 	}

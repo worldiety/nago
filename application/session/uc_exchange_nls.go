@@ -21,9 +21,10 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/events"
 )
 
-func NewExchangeNLS(mutex *sync.Mutex, repo NLSNonceRepository, repoSession Repository, loadGlobal settings.LoadGlobal, refresh RefreshNLS) ExchangeNLS {
+func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, repoSession Repository, loadGlobal settings.LoadGlobal, refresh RefreshNLS) ExchangeNLS {
 	return func(id ID, nonce NLSNonce) (string, error) {
 		usrSettings := settings.ReadGlobal[user.Settings](loadGlobal)
 
@@ -100,6 +101,11 @@ func NewExchangeNLS(mutex *sync.Mutex, repo NLSNonceRepository, repoSession Repo
 			if err := repoSession.Save(session); err != nil {
 				return fmt.Errorf("failed saving session: %w", err)
 			}
+
+			bus.Publish(Authenticated{
+				Session: id,
+				User:    session.User.Unwrap(),
+			})
 
 			return nil
 		}()

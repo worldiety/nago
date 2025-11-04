@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 )
 
@@ -111,23 +112,23 @@ type UseCases struct {
 	ExchangeNLS         ExchangeNLS
 }
 
-func NewUseCases(defaultNLSRedirectURL string, loadGlobal settings.LoadGlobal, mergeSSO user.MergeSingleSignOnUser, repo Repository, nonceRepo NLSNonceRepository, authByPwd user.AuthenticateByPassword) UseCases {
+func NewUseCases(bus events.Bus, defaultNLSRedirectURL string, loadGlobal settings.LoadGlobal, mergeSSO user.MergeSingleSignOnUser, repo Repository, nonceRepo NLSNonceRepository, authByPwd user.AuthenticateByPassword) UseCases {
 	var mutex sync.Mutex
 
 	sessionByIdFn := NewFindByID(repo)
-	loginFn := NewLogin(repo, authByPwd)
+	loginFn := NewLogin(bus, repo, authByPwd)
 	logoutFn := NewLogout(repo)
-	refreshNLSFn := NewRefreshNLS(&mutex, repo, loadGlobal, mergeSSO, logoutFn)
+	refreshNLSFn := NewRefreshNLS(&mutex, bus, repo, loadGlobal, mergeSSO, logoutFn)
 	findUserSessionByIDFn := NewFindUserSessionByID(repo, refreshNLSFn)
 
 	return UseCases{
 		FindSessionByID:     sessionByIdFn,
 		Login:               loginFn,
-		LoginUser:           NewLoginUser(repo),
+		LoginUser:           NewLoginUser(bus, repo),
 		Logout:              logoutFn,
 		FindUserSessionByID: findUserSessionByIDFn,
 		Clear:               NewClear(&mutex, repo),
 		StartNLSFlow:        NewStartNLSFlow(&mutex, defaultNLSRedirectURL, nonceRepo, loadGlobal),
-		ExchangeNLS:         NewExchangeNLS(&mutex, nonceRepo, repo, loadGlobal, refreshNLSFn),
+		ExchangeNLS:         NewExchangeNLS(&mutex, bus, nonceRepo, repo, loadGlobal, refreshNLSFn),
 	}
 }
