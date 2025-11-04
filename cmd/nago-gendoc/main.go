@@ -117,8 +117,8 @@ func categorizeModule(module api.Module) *NagoProject {
 		Systems:    []DocSystem{},
 	}
 
-	componentPattern := regexp.MustCompile(`is (a|an) (basic|layout|utility|feedback|overlay|composite) component\([^)]+\)`)
-	systemPattern := regexp.MustCompile(`is a nago system\([^)]+\)`)
+	componentPattern := regexp.MustCompile(`is (a|an) (basic|layout|utility|feedback|overlay|composite) component\s*\([^)]+\)`)
+	systemPattern := regexp.MustCompile(`is a nago system\s*\([^)]+\)`)
 
 	for _, pkg := range module.Packages {
 		for name, typ := range pkg.Types {

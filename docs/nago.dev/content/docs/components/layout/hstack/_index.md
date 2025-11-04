@@ -47,7 +47,10 @@ you need to apply additional padding.
 ---
 
 ## Related
+- [Alignment](../../layout/alignment/)
+- [Border](../../utility/border/)
 - [Frame](../../layout/frame/)
+- [Padding](../../utility/padding/)
 
 ## Tutorials
 - [tutorial-02-combining-views](../../../examples/tutorial-02-combining-views)

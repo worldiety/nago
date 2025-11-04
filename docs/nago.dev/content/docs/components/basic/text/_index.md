@@ -3,7 +3,8 @@
 # Manual changes will be overwritten!
 title: Text
 ---
-This component displays a piece of text with rich styling and interaction options. It can be used for static labels, links, or interactive elements with click actions.
+This component displays text with customizable styling and interaction options. It supports colors, background states, padding, borders, accessibility labels,
+text alignment, and interaction callbacks. It can be used for labels, inline text, or as an interactive element (e. g. links).
 
 ## Constructors
 ### Link
@@ -16,6 +17,8 @@ the window will perform an Open call. Otherwise, a local forward navigation is a
 ![](/images/components/basic/text/link-example.png)
 
 ### LinkWithAction
+LinkWithAction creates an interactive link-like text component.
+It applies underline styling, interactive color, and attaches an action callback.
 ```go
 	LinkWithAction("Nago Docs", func() {
 		fmt.Printf("Nago is easy to use")
@@ -25,6 +28,8 @@ the window will perform an Open call. Otherwise, a local forward navigation is a
 ![](/images/components/basic/text/link-example.png)
 
 ### MailTo
+MailTo creates a mailto: link text component.
+When clicked, it opens the user's email client with the given email address.
 ```go
 	MailTo(nil, "Worldiety", "info@worldiety.de")
 ```
@@ -71,6 +76,7 @@ func main() {
 | `LineBreak(lb bool)` | LineBreak de-/activates line breaking in between the Text. |
 | `Padding(padding Padding)` | Padding sets a top, right, bottom and left spacing. |
 | `PressedBorder(border Border)` | PressedBorder sets the Border width, color and radius when the component is clicked. |
+| `Resolve(b bool)` | Resolve tries to resolve the current text content against the window bundle at render time to translate its contents. This may cause a lot of redundant or wrong lookups and therefore it is disabled by default. |
 | `TextAlignment(align TextAlignment)` | TextAlignment sets the position of the Text. For more information also have a look at TextAlignment. |
 | `Underline(b bool)` | Underline underlines the Text. |
 | `Visible(visible bool)` | Visible decides whether a text is shown. |
@@ -78,7 +84,9 @@ func main() {
 ---
 
 ## Related
+- [Border](../../utility/border/)
 - [Frame](../../layout/frame/)
+- [Padding](../../utility/padding/)
 
 ## Tutorials
 - [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)
