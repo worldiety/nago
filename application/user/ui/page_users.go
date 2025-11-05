@@ -8,10 +8,12 @@
 package uiuser
 
 import (
-	"fmt"
+	"strings"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
@@ -21,9 +23,18 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
+	"go.wdy.de/nago/presentation/ui/dataview"
 	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/pager"
 	"golang.org/x/text/language"
+)
+
+var (
+	StrAccountTitle      = i18n.MustString("nago.admin.user.title_accounts", i18n.Values{language.English: "User Accounts", language.German: "Nutzerkonten"})
+	StrNotifyUser        = i18n.MustString("nago.admin.user.notify", i18n.Values{language.English: "Notify user about account", language.German: "Nutzer über Konto benachrichtigen"})
+	StrNotifyUserDesc    = i18n.MustString("nago.admin.user.notify_desc", i18n.Values{language.English: "Notify the user by email that this account has been created and ask them to log in. To do this, the same internal domain event is generated as if this user had been newly created. Processes or procedures that assume this event is unique may behave incorrectly.", language.German: "Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten."})
+	StrExportUserCSV     = i18n.MustString("nago.admin.user.export_csv", i18n.Values{language.English: "Export users as CSV", language.German: "Nutzer als CSV exportieren"})
+	StrExportUserCSVDesc = i18n.MustString("nago.admin.user.export_csv_desc", i18n.Values{language.English: "Export the selected users with their personal data to a CSV file. Please note that using this data without the users' consent could be a violation of the GDPR.", language.German: "Die ausgewählten Nutzer mit ihren persönlichen Daten in einer CSV Datei exportieren. Beachten Sie, dass die Verwendung dieser Daten ohne Zustimmung der Nutzer ein Verstoß gegen die DSGVO sein könnte."})
 )
 
 func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases) core.View {
@@ -44,7 +55,6 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 		return alert.BannerError(err)
 	}
 
-	batchEtcPresented := core.AutoState[bool](wnd)
 	editUserPresented := core.AutoState[bool](wnd)
 	createUserPresented := core.AutoState[bool](wnd)
 	selectedUser := core.AutoState[user.User](wnd)
@@ -55,68 +65,144 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 	}
 
 	return ui.VStack(
-		ui.H1("Nutzerkonten"),
-		func() core.View {
-			if !batchEtcPresented.Get() {
-				return nil
-			}
+		ui.H1(StrAccountTitle.Get(wnd)),
 
-			idents := model.Selected()
-			return dialogEtcBatch(wnd, ucUsers, batchEtcPresented, idents)
-		}(),
+		dataview.FromData(wnd, dataview.Data[user.User, user.ID]{
+			FindAll: ucUsers.FindAllIdentifiers(wnd.Subject()),
+			FindByID: func(id user.ID) (option.Opt[user.User], error) {
+				return ucUsers.FindByID(wnd.Subject(), id)
+			},
+			Fields: []dataview.Field[user.User]{
+				{
+					ID:   "avatar",
+					Name: "",
+					Map: func(obj user.User) core.View {
+						display := xstrings.Join2(" ", obj.Contact.Firstname, obj.Contact.Lastname)
+						return avatar.TextOrImage(display, obj.Contact.Avatar)
+					},
+				},
+
+				{
+					ID:   "name",
+					Name: rstring.LabelName.Get(wnd),
+					Map: func(obj user.User) core.View {
+						display := xstrings.Join2(" ", obj.Contact.Firstname, obj.Contact.Lastname)
+						return ui.Text(display)
+					},
+					Comparator: func(a, b user.User) int {
+						return xstrings.CompareIgnoreCase(a.Contact.Firstname, b.Contact.Firstname)
+					},
+				},
+
+				{
+					ID:   "email",
+					Name: rstring.LabelEMail.Get(wnd),
+					Map: func(obj user.User) core.View {
+						return ui.Text(string(obj.Email))
+					},
+					Comparator: func(a, b user.User) int {
+						return xstrings.CompareIgnoreCase(string(a.Email), string(b.Email))
+					},
+				},
+
+				{
+					ID:   "status",
+					Name: rstring.LabelState.Get(wnd),
+					Map: func(obj user.User) core.View {
+						return ui.Text(stateStr(obj))
+					},
+					Comparator: func(a, b user.User) int {
+						return strings.Compare(stateStr(a), stateStr(b))
+					},
+				},
+			},
+		}).
+			Search(true).
+			NewAction(func() {
+				createUserPresented.Set(true)
+			}).
+			CardOptions(dataview.CardOptions{
+				Title: "name",
+				Hints: map[dataview.FieldID]dataview.FormatHint{
+					"avatar": dataview.HintInvisible,
+					"status": dataview.HintInline,
+				},
+			}).
+			SelectOptions(
+				dataview.NewSelectOptionDelete(wnd, func(selected []user.ID) error {
+					for _, id := range selected {
+						if err := ucUsers.Delete(wnd.Subject(), id); err != nil {
+							return err
+						}
+					}
+
+					return nil
+				}),
+
+				dataview.SelectOption[user.ID]{
+					Icon: icons.MailBox,
+					Name: StrNotifyUser.Get(wnd),
+					Action: func(selected []user.ID) error {
+						for _, id := range selected {
+							optUsr, err := ucUsers.FindByID(wnd.Subject(), id)
+							if err != nil {
+								return err
+							}
+							if optUsr.IsNone() {
+								// stale ref
+								continue
+							}
+
+							usr := optUsr.Unwrap()
+							user.PublishUserCreated(wnd.Application().EventBus(), usr, true)
+						}
+
+						return nil
+					},
+					ConfirmDialog: func(selected []user.ID) dataview.ConfirmDialog[user.ID] {
+						return dataview.ConfirmDialog[user.ID]{
+							Title:   StrNotifyUser.Get(wnd),
+							Message: StrNotifyUserDesc.Get(wnd),
+						}
+					},
+				},
+
+				dataview.SelectOption[user.ID]{
+					Icon: icons.MailBox,
+					Name: StrExportUserCSV.Get(wnd),
+					Action: func(selected []user.ID) error {
+						buf, err := ucUsers.ExportUsers(wnd.Subject(), selected, user.ExportUsersOptions{
+							Format:   user.ExportCSV,
+							Language: wnd.Locale(),
+						})
+						if err != nil {
+							return err
+						}
+
+						wnd.ExportFiles(core.ExportFileBytes("users.csv", buf))
+
+						return nil
+					},
+					ConfirmDialog: func(selected []user.ID) dataview.ConfirmDialog[user.ID] {
+						return dataview.ConfirmDialog[user.ID]{
+							Title:   StrExportUserCSV.Get(wnd),
+							Message: StrExportUserCSVDesc.Get(wnd),
+						}
+					},
+				},
+			).
+			Action(func(u user.User) {
+				selectedUser.Set(u)
+				editUserPresented.Set(true)
+			}).
+			NextActionIndicator(true).
+			TableOptions(dataview.TableOptions{
+				ColumnWidths: map[dataview.FieldID]ui.Length{"avatar": ui.L64},
+			}),
+
+		ui.Space(ui.L64),
 		dlgEditUser(wnd, ucUsers, ucGroups, ucRoles, ucPermissions, editUserPresented, selectedUser),
 		dlgCreateUserModel(wnd, ucUsers, createUserPresented),
-		ui.HStack(
-			ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)),
-			ui.TertiaryButton(func() {
-				model.UnselectAll()
-			}).Title(fmt.Sprintf("%d ausgewählt", model.SelectionCount)).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
-			ui.SecondaryButton(func() {
-				batchEtcPresented.Set(true)
-			}).Title("Optionen").PreIcon(icons.Grid).Enabled(model.SelectionCount > 0),
-			ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40}),
-			ui.PrimaryButton(func() {
-				createUserPresented.Set(true)
-			}).Title("Nutzer hinzufügen"),
-		).Alignment(ui.Trailing).FullWidth().Gap(ui.L8),
-		ui.Space(ui.L32),
-
-		ui.Table(
-			ui.TableColumn(ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset)).Width(ui.L64),
-			ui.TableColumn(ui.Text("")).Width(ui.L64),
-			ui.TableColumn(ui.Text("Anzeigename")),
-			ui.TableColumn(ui.Text("E-Mail")),
-			ui.TableColumn(ui.Text("Status")),
-			ui.TableColumn(ui.Text("")).Width(ui.L64),
-		).Rows(
-			ui.ForEach(model.Page.Items, func(u user.User) ui.TTableRow {
-				myState := model.Selections[u.ID]
-
-				display := xstrings.Join2(" ", u.Contact.Firstname, u.Contact.Lastname)
-				return ui.TableRow(
-					ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)),
-					ui.TableCell(avatar.TextOrImage(display, u.Contact.Avatar)),
-					ui.TableCell(ui.Text(display)),
-					ui.TableCell(ui.Text(string(u.Email))),
-					ui.TableCell(ui.Text(stateStr(u))),
-					ui.TableCell(ui.ImageIcon(icons.ChevronRight)),
-				).Action(func() {
-					selectedUser.Set(u)
-					editUserPresented.Set(true)
-				}).HoveredBackgroundColor(ui.ColorCardFooter)
-			})...,
-		).Rows(
-			ui.TableRow(
-				ui.TableCell(
-					ui.HStack(
-						ui.Text(model.PageString()),
-						ui.Spacer(),
-						pager.Pager(model.PageIdx).Count(model.Page.PageCount),
-					).FullWidth(),
-				).ColSpan(6),
-			).BackgroundColor(ui.ColorCardFooter),
-		).
-			Frame(ui.Frame{}.FullWidth()),
 	).FullWidth().Alignment(ui.Leading)
 
 }

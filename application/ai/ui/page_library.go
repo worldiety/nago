@@ -293,7 +293,7 @@ func dialogAddDrive(wnd core.Window, readDrives drive.ReadDrives, ucLibSync libs
 			User:   wnd.Subject().ID(),
 		})
 	}
-	
+
 	slices.SortFunc(items, func(a, b driveEntry) int {
 		return strings.Compare(a.Name, b.Name)
 	})
@@ -467,6 +467,7 @@ func docTable(wnd core.Window, prov provider.Provider, libs provider.Libraries, 
 					wnd.Navigation().ForwardTo("admin/ai/library/document", wnd.Values().Put("document", string(e.Value.ID)))
 				}).
 				NextActionIndicator(true).
+				Search(true).
 				NewActionView(
 					ui.Menu(
 						ui.PrimaryButton(nil).Title(rstring.ActionNew.Get(wnd)).PreIcon(icons.Plus),

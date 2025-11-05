@@ -39,7 +39,7 @@ func applyStandardEntryOrder(repo Repository, seq iter.Seq[FID]) ([]FID, error) 
 			return 1
 		}
 
-		return xstrings.CompareFold(a.Name(), b.Name())
+		return xstrings.CompareIgnoreCase(a.Name(), b.Name())
 	})
 
 	tmp2 := make([]FID, 0, len(tmp))

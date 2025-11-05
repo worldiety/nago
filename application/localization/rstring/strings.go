@@ -258,6 +258,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelEMail = i18n.MustString(
+		"nago.common.label.email",
+		i18n.Values{
+			language.English: "eMail",
+			language.German:  "E-Mail",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelMaintenance = i18n.MustString(
 		"nago.common.label.maintenance",
 		i18n.Values{
@@ -299,6 +308,15 @@ var (
 		i18n.Values{
 			language.English: "State",
 			language.German:  "Status",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelFilter = i18n.MustString(
+		"nago.common.label.filter",
+		i18n.Values{
+			language.English: "Filter",
+			language.German:  "Filter",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

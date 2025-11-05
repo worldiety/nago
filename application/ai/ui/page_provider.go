@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"os"
+	"strings"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/ai"
@@ -27,6 +28,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/dataview"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/pager"
 	"golang.org/x/text/language"
 )
 
@@ -93,12 +95,18 @@ func agentTable(wnd core.Window, prov provider.Provider) core.View {
 					Map: func(obj dataview.Element[agent.Agent]) core.View {
 						return ui.Text(obj.Value.Name)
 					},
+					Comparator: func(a, b dataview.Element[agent.Agent]) int {
+						return strings.Compare(a.Value.Name, b.Value.Name)
+					},
 				},
 
 				{
 					Name: rstring.LabelDescription.Get(wnd),
 					Map: func(obj dataview.Element[agent.Agent]) core.View {
 						return ui.Text(obj.Value.Description)
+					},
+					Comparator: func(a, b dataview.Element[agent.Agent]) int {
+						return strings.Compare(a.Value.Description, b.Value.Description)
 					},
 				},
 			}).NextActionIndicator(true).
@@ -107,21 +115,24 @@ func agentTable(wnd core.Window, prov provider.Provider) core.View {
 				}).
 				NewAction(func() {
 					createPresented.Set(true)
-				}).SelectOptions(
-				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
-					for _, i := range selected {
-						if idx, ok := i.Int(); ok {
-							if err := agents.Delete(wnd.Subject(), loadedAgents.Get()[idx].ID); err != nil {
-								return err
+				}).
+				Search(true).
+				ModelOptions(pager.ModelOptions{StatePrefix: "ai-agents"}).
+				SelectOptions(
+					dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+						for _, i := range selected {
+							if idx, ok := i.Int(); ok {
+								if err := agents.Delete(wnd.Subject(), loadedAgents.Get()[idx].ID); err != nil {
+									return err
+								}
 							}
 						}
-					}
 
-					loadedAgents.Reset()
+						loadedAgents.Reset()
 
-					return nil
-				}),
-			)
+						return nil
+					}),
+				)
 		}),
 	).FullWidth().Alignment(ui.Leading)
 
@@ -224,21 +235,24 @@ func libTable(wnd core.Window, prov provider.Provider) core.View {
 				NextActionIndicator(true).
 				NewAction(func() {
 					createPresented.Set(true)
-				}).SelectOptions(
-				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
-					for _, i := range selected {
-						if idx, ok := i.Int(); ok {
-							if err := libs.Delete(wnd.Subject(), loadedLibs.Get()[idx].ID); err != nil {
-								return err
+				}).
+				Search(true).
+				ModelOptions(pager.ModelOptions{StatePrefix: "ai-libs"}).
+				SelectOptions(
+					dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+						for _, i := range selected {
+							if idx, ok := i.Int(); ok {
+								if err := libs.Delete(wnd.Subject(), loadedLibs.Get()[idx].ID); err != nil {
+									return err
+								}
 							}
 						}
-					}
 
-					loadedLibs.Reset()
+						loadedLibs.Reset()
 
-					return nil
-				}),
-			)
+						return nil
+					}),
+				)
 		}),
 	).FullWidth().Alignment(ui.Leading)
 
@@ -318,6 +332,8 @@ func libConversations(wnd core.Window, prov provider.Provider) core.View {
 					wnd.Navigation().ForwardTo("admin/ai/provider/conversation", wnd.Values().Put("conversation", string(e.Value.ID)))
 				}).
 				NextActionIndicator(true).
+				Search(true).
+				ModelOptions(pager.ModelOptions{StatePrefix: "ai-convs"}).
 				NewAction(func() {
 					wnd.Navigation().ForwardTo("admin/ai/chat", wnd.Values().Put("provider", string(prov.Identity())))
 				}).SelectOptions(

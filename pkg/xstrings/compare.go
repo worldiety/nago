@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 )
 
-func CompareFold(a, b string) int {
+func CompareIgnoreCase(a, b string) int {
 	for len(a) > 0 && len(b) > 0 {
 		ra, sizeA := utf8.DecodeRuneInString(a)
 		rb, sizeB := utf8.DecodeRuneInString(b)

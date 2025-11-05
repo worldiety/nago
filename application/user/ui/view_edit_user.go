@@ -97,7 +97,9 @@ func viewRoles(wnd core.Window, ucUsers user.UseCases, ucRoles role.UseCases, us
 		r := optRole.Unwrap()
 		for _, pid := range r.Permissions {
 			if perm, ok := permission.Find(pid); ok {
-				permsViewInRole = append(permsViewInRole, list.Entry().Leading(ui.ImageIcon(icons.Shield)).Headline(perm.Name).SupportingText(perm.Description))
+				title := wnd.Subject().Bundle().Resolve(perm.Name)
+				desc := wnd.Subject().Bundle().Resolve(perm.Description)
+				permsViewInRole = append(permsViewInRole, list.Entry().Leading(ui.ImageIcon(icons.Shield)).Headline(title).SupportingText(desc))
 			}
 		}
 
