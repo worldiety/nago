@@ -31,7 +31,7 @@ func TestCompareFold(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := CompareFold(tt.a, tt.b)
+		got := CompareIgnoreCase(tt.a, tt.b)
 		if got != tt.expect {
 			t.Errorf("CompareFold(%q, %q) = %d; want %d", tt.a, tt.b, got, tt.expect)
 		}

@@ -6,12 +6,12 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import {UploadRepository} from '@/api/upload/uploadRepository';
-import {Channel} from '@/shared/network/serviceAdapter';
+import { UploadRepository } from '@/api/upload/uploadRepository';
+import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
-	CallRequested,
 	CallRequestFocus,
+	CallRequested,
 	CallResolved,
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
@@ -24,15 +24,15 @@ import {
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
+	RID,
 	RetMediaDevicesEnumerate,
 	RetMediaDevicesPermissionsError,
-	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChanged,
 	ScopeConfigurationChangeRequested,
+	ScopeConfigurationChanged,
 	SendMultipleRequested,
 	ThemeRequested,
 	URI,
@@ -41,7 +41,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
-import ThemeManager, {ThemeKey} from '@/shared/themeManager';
+import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
 
@@ -368,7 +368,7 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 	}
 
 	if (hashTagValue !== ``) {
-		url += "#" + hashTagValue;
+		url += '#' + hashTagValue;
 	}
 
 	if (evt.target === '_blank') {
@@ -405,7 +405,7 @@ export function scrollToTop(post: boolean) {
 	if (hashTag && hashTag !== '') {
 		setTimeout(() => {
 			hashTag = hashTag.substring(1);
-			console.log('hashTag scroll', hashTag, "post", post);
+			console.log('hashTag scroll', hashTag, 'post', post);
 			const element = document.getElementById(hashTag);
 			if (element) {
 				const elementPosition = element.getBoundingClientRect().top + window.scrollY;
@@ -413,14 +413,12 @@ export function scrollToTop(post: boolean) {
 				//element.scrollIntoView({behavior: "instant"}); // wrong offset due to fixed header
 				window.scrollTo({
 					top: offsetPosition,
-					behavior: "instant",
+					behavior: 'instant',
 				});
-
 			} else {
-				console.log("hash scroll element not found", hashTag);
+				console.log('hash scroll element not found', hashTag);
 			}
 		});
-
 
 		return;
 	}

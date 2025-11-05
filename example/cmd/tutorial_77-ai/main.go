@@ -23,6 +23,7 @@ import (
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -55,6 +56,14 @@ func main() {
 		})
 		cfg.RootViewWithDecoration("drive", func(wnd core.Window) core.View {
 			return uidrive.PageDrive(wnd, drives.UseCases)
+		})
+		cfg.RootViewWithDecoration("blocksatz", func(wnd core.Window) core.View {
+			return ui.VStack(
+				ui.Text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, " +
+					"no sea takimata sanctus est Lorem ipsum dolor sit amet.").
+					TextAlignment(ui.TextAlignJustify).
+					Hyphens(ui.HyphensAuto),
+			).Frame(ui.Frame{}.Large())
 		})
 	}).Run()
 }

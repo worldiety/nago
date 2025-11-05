@@ -64,6 +64,10 @@ const styles = computed<string>(() => {
 			break;
 	}
 
+	if (props.ui.hyphens) {
+		styles.push(`hyphens: ${props.ui.hyphens}`);
+	}
+
 	if (props.ui.action) {
 		styles.push('cursor: pointer');
 	}

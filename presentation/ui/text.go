@@ -20,6 +20,15 @@ const LinkTargetNewWindowOrTab = "_blank"
 
 type TextAlignment uint
 
+type Hyphens byte
+
+const (
+	HyphensInherit Hyphens = iota
+	HyphensNone
+	HyphensManual
+	HyphensAuto
+)
+
 const (
 	TextAlignInherit TextAlignment = TextAlignment(proto.TextAlignInherit)
 	TextAlignStart   TextAlignment = TextAlignment(proto.TextAlignStart)
@@ -56,6 +65,7 @@ type TText struct {
 	lineBreak          bool          // whether text should wrap
 	underline          bool          // underline the text
 	resolve            bool
+	hyphens            Hyphens
 }
 
 // MailTo creates a mailto: link text component.
@@ -147,6 +157,11 @@ func (c TText) Resolve(b bool) TText {
 	return c
 }
 
+func (c TText) Hyphens(h Hyphens) TText {
+	c.hyphens = h
+	return c
+}
+
 // Border draws a Border around the component. It's used to set the Border width, color and radius.
 // Fore more information also have a look at the Border component.
 func (c TText) Border(border Border) DecoredView {
@@ -228,6 +243,16 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		value = ctx.Window().Bundle().Resolve(value)
 	}
 
+	var hyphens string
+	switch c.hyphens {
+	case HyphensAuto:
+		hyphens = "auto"
+	case HyphensManual:
+		hyphens = "manual"
+	case HyphensNone:
+		hyphens = "none"
+	}
+
 	return &proto.TextView{
 		Value:              proto.Str(value),
 		Color:              c.color,
@@ -250,5 +275,6 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		Action:                 ctx.MountCallback(c.action),
 		LineBreak:              proto.Bool(c.lineBreak),
 		Underline:              proto.Bool(c.underline),
+		Hyphens:                proto.Str(hyphens),
 	}
 }

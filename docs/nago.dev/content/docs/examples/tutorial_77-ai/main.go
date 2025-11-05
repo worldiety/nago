@@ -18,10 +18,12 @@ import (
 	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/drive"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
+	uidrive "go.wdy.de/nago/application/drive/ui"
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -33,21 +35,34 @@ func main() {
 		option.MustZero(cfg.StandardSystems())
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(cfg.NewScaffold().
-			NoFooterContentPadding(".").
+			MenuEntry().Title("home").Forward(".").Private().
+			MenuEntry().Title("drive").Forward("drive").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
 		drives := option.Must(cfgdrive.Enable(cfg))
 
+		cfg.NoFooter(".")
+
 		modAi := option.Must(cfgai.Enable(cfg))
 
-		option.Must(drives.UseCases.OpenRoot(user.SU(), drive.OpenRootOptions{
+		option.Must(drives.UseCases.OpenDrive(user.SU(), drive.OpenDriveOptions{
 			Create: true,
 			Mode:   drive.OtherWrite | drive.OtherRead,
 		}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return uiai.PageChat(wnd, modAi.UseCases)
+		})
+		cfg.RootViewWithDecoration("drive", func(wnd core.Window) core.View {
+			return uidrive.PageDrive(wnd, drives.UseCases)
+		})
+		cfg.RootViewWithDecoration("blocksatz", func(wnd core.Window) core.View {
+			return ui.VStack(
+				ui.Text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, " +
+					"no sea takimata sanctus est Lorem ipsum dolor sit amet.").
+					TextAlignment(ui.TextAlignJustify),
+			).Frame(ui.Frame{}.Large())
 		})
 	}).Run()
 }

@@ -91,6 +91,10 @@
     "22": {
       "name": "Underline",
       "type": "Bool"
+    },
+    "23": {
+      "name": "Hyphens",
+      "type": "Str"
     }
   }
 }
