@@ -47,6 +47,11 @@ func SimplePredicate[T any](query string) func(T) bool {
 }
 
 func contains(t any, what string) bool {
+	if t == nil {
+		// traversing (untyped) nil pointers do not make sense
+		return false
+	}
+
 	// fast type switch
 	switch t := t.(type) {
 	case string:
