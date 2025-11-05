@@ -388,26 +388,25 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 
 	var columns []dataview.Field[drive.File]
 
-	if wnd.Info().SizeClass > core.SizeClassSmall {
-		columns = append(columns,
-			dataview.Field[drive.File]{
-				Name: "",
-				Map: func(obj drive.File) core.View {
-					if obj.IsDir() {
-						return ui.ImageIcon(icons.Folder)
-					}
+	columns = append(columns,
+		dataview.Field[drive.File]{
+			Name: "",
+			Map: func(obj drive.File) core.View {
+				if obj.IsDir() {
+					return ui.ImageIcon(icons.Folder)
+				}
 
-					mt := obj.FileInfo.UnwrapOr(drive.FileInfo{})
-					switch mt.MimeType {
-					case "application/pdf":
-						return ui.ImageIcon(icons.FilePdf)
-					default:
-						return ui.ImageIcon(icons.File)
-					}
-				},
+				mt := obj.FileInfo.UnwrapOr(drive.FileInfo{})
+				switch mt.MimeType {
+				case "application/pdf":
+					return ui.ImageIcon(icons.FilePdf)
+				default:
+					return ui.ImageIcon(icons.File)
+				}
 			},
-		)
-	}
+			Visible: dataview.MinSizeMedium(),
+		},
+	)
 
 	columns = append(columns, dataview.Field[drive.File]{
 		Name: StrName.Get(wnd),
@@ -416,39 +415,40 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 		},
 	})
 
-	if wnd.Info().SizeClass > core.SizeClassSmall {
-		columns = append(columns, []dataview.Field[drive.File]{
+	columns = append(columns, []dataview.Field[drive.File]{
 
-			{
-				Name: rstring.LabelChanged.Get(wnd),
-				Map: func(obj drive.File) core.View {
-					return ui.Text(date.Format(wnd.Locale(), date.Date, obj.ModTime())).AccessibilityLabel(date.Format(wnd.Locale(), date.Time, obj.ModTime()))
-				},
+		{
+			Name: rstring.LabelChanged.Get(wnd),
+			Map: func(obj drive.File) core.View {
+				return ui.Text(date.Format(wnd.Locale(), date.Date, obj.ModTime())).AccessibilityLabel(date.Format(wnd.Locale(), date.Time, obj.ModTime()))
 			},
-			{
-				Name: rstring.LabelChangedBy.Get(wnd),
-				Map: func(obj drive.File) core.View {
-					if log, ok := obj.AuditLog.Last(); ok {
-						if v, ok := log.Unwrap(); ok && v.ModBy() != "" {
-							return ui.Text(displyName(v.ModBy()).Displayname)
-						}
+			Visible: dataview.MinSizeMedium(),
+		},
+		{
+			Name: rstring.LabelChangedBy.Get(wnd),
+			Map: func(obj drive.File) core.View {
+				if log, ok := obj.AuditLog.Last(); ok {
+					if v, ok := log.Unwrap(); ok && v.ModBy() != "" {
+						return ui.Text(displyName(v.ModBy()).Displayname)
 					}
+				}
 
-					return ui.Text(StrAnonymous.Get(wnd))
-				},
+				return ui.Text(StrAnonymous.Get(wnd))
 			},
-			{
-				Name: StrFileSize.Get(wnd),
-				Map: func(obj drive.File) core.View {
-					if obj.IsDir() {
-						return ui.Text(rstring.LabelXItems.Get(wnd, float64(obj.Entries.Len()), i18n.Int("x", obj.Entries.Len())))
-					}
+			Visible: dataview.MinSizeLarge(),
+		},
+		{
+			Name: StrFileSize.Get(wnd),
+			Map: func(obj drive.File) core.View {
+				if obj.IsDir() {
+					return ui.Text(rstring.LabelXItems.Get(wnd, float64(obj.Entries.Len()), i18n.Int("x", obj.Entries.Len())))
+				}
 
-					return ui.Text(xstrings.FormatByteSize(wnd.Locale(), obj.Size(), 1))
-				},
+				return ui.Text(xstrings.FormatByteSize(wnd.Locale(), obj.Size(), 1))
 			},
-		}...)
-	}
+			Visible: dataview.MinSizeMedium(),
+		},
+	}...)
 
 	return dataview.FromModel(
 		wnd,
@@ -459,7 +459,8 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 			c.actionDirectory(e)
 			return
 		}
-	}).Selection(wnd.Info().SizeClass > core.SizeClassSmall)
+	}).Style(dataview.Table).
+		Selection(wnd.Info().SizeClass > core.SizeClassSmall)
 }
 
 func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNavigate func(drive.File)) core.View {

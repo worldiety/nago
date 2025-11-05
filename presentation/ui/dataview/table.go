@@ -82,6 +82,12 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	}
 
 	for _, field := range data.Fields {
+		if field.Visible != nil {
+			if !field.Visible(FieldContext{Style: Table, Window: wnd}) {
+				continue
+			}
+		}
+
 		if field.Comparator == nil {
 			cols = append(cols, ui.TableColumn(ui.Text(field.Name)).Width(t.tableOptions.ColumnWidths[field.ID]))
 			continue
@@ -131,6 +137,11 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 					cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
 				}
 				for _, field := range data.Fields {
+					if field.Visible != nil {
+						if !field.Visible(FieldContext{Style: Table, Window: wnd}) {
+							continue
+						}
+					}
 					cells = append(cells, ui.TableCell(field.Map(u)))
 				}
 

@@ -78,6 +78,11 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 	Fields   []Field[E]
 }
 
+type FieldContext struct {
+	Window core.Window
+	Style  Style
+}
+
 type Field[E any] struct {
 	ID FieldID // ID may is optional and may be empty. You can set this to apply other effects like default enabled sorting.
 
@@ -88,7 +93,35 @@ type Field[E any] struct {
 	// amount of memory to O(n) to apply the comparator on the entire data set. If you can provide a natural
 	// identifier order which would be fine for most use cases, you should definitely rely on it for performance.
 	Comparator func(a, b E) int
+
+	// Visible is an optional predicate which determines if this field shall be generally shown or not.
+	Visible func(ctx FieldContext) bool
 }
+
+func MinSizeMedium() func(ctx FieldContext) bool {
+	return func(ctx FieldContext) bool {
+		return ctx.Window.Info().SizeClass >= core.SizeClassMedium
+	}
+}
+
+func MinSizeLarge() func(ctx FieldContext) bool {
+	return func(ctx FieldContext) bool {
+		return ctx.Window.Info().SizeClass >= core.SizeClassLarge
+	}
+}
+
+func MinSizeXL() func(ctx FieldContext) bool {
+	return func(ctx FieldContext) bool {
+		return ctx.Window.Info().SizeClass >= core.SizeClassXL
+	}
+}
+
+func MinSize2XL() func(ctx FieldContext) bool {
+	return func(ctx FieldContext) bool {
+		return ctx.Window.Info().SizeClass >= core.SizeClass2XL
+	}
+}
+
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	data            Data[E, ID]
 	action          func(e E)

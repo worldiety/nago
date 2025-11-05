@@ -110,7 +110,6 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 				opts := t.cardOptions
 				var titleField Field[E]
 				for idx, field := range t.data.Fields {
-
 					if opts.Title == "" {
 						if idx == 0 {
 							titleField = field
@@ -158,6 +157,12 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 
 									if opts.Hints[f.ID] == HintInvisible {
 										return nil
+									}
+
+									if f.Visible != nil {
+										if !f.Visible(FieldContext{Style: Card, Window: wnd}) {
+											return nil
+										}
 									}
 
 									if opts.Hints[f.ID] == HintInline {
