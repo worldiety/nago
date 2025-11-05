@@ -141,6 +141,10 @@ const frameStyles = computed<string>(() => {
 		styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
 	}
 
+	if (props.ui.wrap && props.ui.gap) {
+		styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
+	}
+
 	return styles.join(';');
 });
 
