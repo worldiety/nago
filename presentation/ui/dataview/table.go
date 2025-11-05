@@ -72,8 +72,15 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 }
 
 type Field[E any] struct {
+	ID string // ID may is optional and may be empty. You can set this to apply other effects like default enabled sorting.
+
 	Name string
 	Map  func(obj E) core.View
+
+	// Comparator may be nil to disable field sorting. If not-nil this will increase at least the temporary
+	// amount of memory to O(n) to apply the comparator on the entire data set. If you can provide a natural
+	// identifier order which would be fine for most use cases, you should definitely rely on it for performance.
+	Comparator func(a, b E) int
 }
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	data            Data[E, ID]
@@ -83,6 +90,7 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	modelOptions    pager.ModelOptions
 	model           option.Opt[pager.Model[E, ID]]
 	hideSelection   bool
+	showSearchbar   bool
 	addChevronRight bool
 	wnd             core.Window
 }
@@ -194,9 +202,43 @@ func (t TDataView[E, ID]) ModelOptions(opts pager.ModelOptions) TDataView[E, ID]
 	return t
 }
 
+func (t TDataView[E, ID]) Search(visible bool) TDataView[E, ID] {
+	t.showSearchbar = visible
+	return t
+}
+
 func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	data := t.data
+
+	sortByField := core.StateOf[string](wnd, t.modelOptions.StatePrefix+"-sortByField")
+	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
+
+	findAllIDs := data.FindAll
+	if sortByField.Get() != "" {
+		var sortField Field[E]
+		for idx, field := range t.data.Fields {
+			if field.ID == "" {
+				field.ID = strconv.Itoa(idx)
+			}
+
+			if field.ID == sortByField.Get() {
+				sortField = field
+				break
+			}
+		}
+
+		if sortField.Comparator != nil {
+			findAllIDs = pager.Sort(data.FindByID, data.FindAll, func(a, b E) int {
+				if sortReverse.Get() {
+					return -sortField.Comparator(a, b)
+				}
+
+				return sortField.Comparator(a, b)
+			}, pager.SortOptions[E]{})
+		}
+
+	}
 
 	var model pager.Model[E, ID]
 	if t.model.IsSome() {
@@ -205,7 +247,7 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 		m, err := pager.NewModel(
 			wnd,
 			data.FindByID,
-			data.FindAll,
+			findAllIDs,
 			t.modelOptions,
 		)
 
@@ -221,8 +263,36 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 		cols = append(cols, ui.TableColumn(ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset)).Width(ui.L64))
 	}
 
-	for _, field := range data.Fields {
-		cols = append(cols, ui.TableColumn(ui.Text(field.Name)))
+	for idx, field := range data.Fields {
+		if field.Comparator == nil {
+			cols = append(cols, ui.TableColumn(ui.Text(field.Name)))
+			continue
+		}
+
+		if field.ID == "" {
+			field.ID = strconv.Itoa(idx)
+		}
+
+		ico := icons.ArrowUpDown
+		if field.ID == sortByField.Get() {
+			if sortReverse.Get() {
+				ico = icons.ArrowDown
+			} else {
+				ico = icons.ArrowUp
+			}
+		}
+
+		cols = append(cols, ui.TableColumn(ui.HStack(
+			ui.TertiaryButton(func() {
+				if sortByField.Get() != field.ID {
+					sortByField.Set(field.ID)
+					sortReverse.Set(false)
+				} else {
+					sortReverse.Set(!sortReverse.Get())
+				}
+			}).PreIcon(ico),
+			ui.Text(field.Name),
+		)))
 	}
 
 	if t.addChevronRight {
@@ -309,13 +379,14 @@ func (t TDataView[E, ID]) actionBar(wnd core.Window, model pager.Model[E, ID]) c
 
 	return ui.HStack(
 		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
+		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search))),
 		ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
 			return ui.Menu(
 				ui.SecondaryButton(nil).Enabled(len(selected) > 0).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid),
 				ui.MenuGroup(items...),
 			)
 		}),
-		ui.If(len(t.selectOptions) > 0 && !t.hideSelection, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
+		ui.If(len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 		t.newAction,
 	).
 		FullWidth().
