@@ -495,7 +495,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		}
 
 		noFooter := b.cfg.noFooter
-		if len(noFooter) > 0 && !slices.Contains(noFooter, wnd.Path()) {
+		if len(noFooter) == 0 || (len(noFooter) > 0 && !slices.Contains(noFooter, wnd.Path())) {
 			if b.footer != nil {
 				scaffold = scaffold.Footer(b.footer)
 			} else if b.enableAutoFooter {
