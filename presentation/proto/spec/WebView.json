@@ -9,6 +9,22 @@
     "2": {
       "name": "Frame",
       "type": "Frame"
+    },
+    "3": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Allow",
+      "type": "Str"
+    },
+    "5": {
+      "name": "ReferrerPolicy",
+      "type": "Str"
+    },
+    "6": {
+      "name": "Raw",
+      "type": "Str"
     }
   }
 }

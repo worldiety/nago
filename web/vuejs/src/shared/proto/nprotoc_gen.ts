@@ -9227,9 +9227,28 @@ export class WebView implements Writeable, Readable, Component {
 
 	public frame?: Frame;
 
-	constructor(uRI: URI | undefined = undefined, frame: Frame | undefined = undefined) {
+	public title?: Str;
+
+	public allow?: Str;
+
+	public referrerPolicy?: Str;
+
+	public raw?: Str;
+
+	constructor(
+		uRI: URI | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		title: Str | undefined = undefined,
+		allow: Str | undefined = undefined,
+		referrerPolicy: Str | undefined = undefined,
+		raw: Str | undefined = undefined
+	) {
 		this.uRI = uRI;
 		this.frame = frame;
+		this.title = title;
+		this.allow = allow;
+		this.referrerPolicy = referrerPolicy;
+		this.raw = raw;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9247,6 +9266,22 @@ export class WebView implements Writeable, Readable, Component {
 					this.frame.read(reader);
 					break;
 				}
+				case 3: {
+					this.title = readString(reader);
+					break;
+				}
+				case 4: {
+					this.allow = readString(reader);
+					break;
+				}
+				case 5: {
+					this.referrerPolicy = readString(reader);
+					break;
+				}
+				case 6: {
+					this.raw = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9254,7 +9289,15 @@ export class WebView implements Writeable, Readable, Component {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.uRI !== undefined, this.frame !== undefined && !this.frame.isZero()];
+		const fields = [
+			false,
+			this.uRI !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.title !== undefined,
+			this.allow !== undefined,
+			this.referrerPolicy !== undefined,
+			this.raw !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -9265,15 +9308,42 @@ export class WebView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 2);
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.allow!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.referrerPolicy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.raw!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.uRI === undefined && (this.frame === undefined || this.frame.isZero());
+		return (
+			this.uRI === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.title === undefined &&
+			this.allow === undefined &&
+			this.referrerPolicy === undefined &&
+			this.raw === undefined
+		);
 	}
 
 	reset(): void {
 		this.uRI = undefined;
 		this.frame = undefined;
+		this.title = undefined;
+		this.allow = undefined;
+		this.referrerPolicy = undefined;
+		this.raw = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

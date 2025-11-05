@@ -8844,14 +8844,22 @@ func (v *VStack) read(r *BinaryReader) error {
 }
 
 type WebView struct {
-	URI   URI
-	Frame Frame
+	URI            URI
+	Frame          Frame
+	Title          Str
+	Allow          Str
+	ReferrerPolicy Str
+	Raw            Str
 }
 
 func (v *WebView) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [7]bool
 	fields[1] = !v.URI.IsZero()
 	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.Title.IsZero()
+	fields[4] = !v.Allow.IsZero()
+	fields[5] = !v.ReferrerPolicy.IsZero()
+	fields[6] = !v.Raw.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8878,6 +8886,38 @@ func (v *WebView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Allow.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.ReferrerPolicy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Raw.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8900,6 +8940,26 @@ func (v *WebView) read(r *BinaryReader) error {
 			}
 		case 2:
 			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Allow.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.ReferrerPolicy.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Raw.read(r)
 			if err != nil {
 				return err
 			}
@@ -15723,10 +15783,14 @@ func (v *VStack) IsZero() bool {
 func (v *WebView) reset() {
 	v.URI.reset()
 	v.Frame.reset()
+	v.Title.reset()
+	v.Allow.reset()
+	v.ReferrerPolicy.reset()
+	v.Raw.reset()
 }
 
 func (v *WebView) IsZero() bool {
-	return v.URI.IsZero() && v.Frame.IsZero()
+	return v.URI.IsZero() && v.Frame.IsZero() && v.Title.IsZero() && v.Allow.IsZero() && v.ReferrerPolicy.IsZero() && v.Raw.IsZero()
 }
 
 func (v *WindowInfoChanged) reset() {
