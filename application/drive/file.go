@@ -112,6 +112,10 @@ func (f File) CanRead(subject auth.Subject) bool {
 		return false
 	}
 
+	if user.IsSU(subject) {
+		return true
+	}
+
 	if f.FileMode&OtherRead != 0 {
 		// file is world readable
 		return true
@@ -160,6 +164,10 @@ func (f File) CanDelete(subject auth.Subject) bool {
 		return false
 	}
 
+	if user.IsSU(subject) {
+		return true
+	}
+
 	canDelete := subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermDelete)
 	optParent, err := f.repo.FindByID(f.ID)
 	if err != nil {
@@ -182,6 +190,10 @@ func (f File) CanRename(subject auth.Subject) bool {
 		return true
 	}
 
+	if user.IsSU(subject) {
+		return true
+	}
+
 	if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermRename) {
 		return true
 	}
@@ -192,6 +204,10 @@ func (f File) CanRename(subject auth.Subject) bool {
 func (f File) CanWrite(subject auth.Subject) bool {
 	if f.ID == "" {
 		return false
+	}
+
+	if user.IsSU(subject) {
+		return true
 	}
 
 	if f.FileMode&OtherWrite != 0 {
