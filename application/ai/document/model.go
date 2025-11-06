@@ -8,6 +8,7 @@
 package document
 
 import (
+	"errors"
 	"io"
 
 	"go.wdy.de/nago/application/ai/library"
@@ -23,6 +24,10 @@ type ProcessingStatus string
 const (
 	ProcessingCompleted ProcessingStatus = "Completed"
 	ProcessingRunning   ProcessingStatus = "Running"
+)
+
+var (
+	UnsupportedFormatError = errors.New("unsupported document format")
 )
 
 type Document struct {

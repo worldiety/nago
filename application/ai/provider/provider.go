@@ -59,6 +59,10 @@ type Library interface {
 	Identity() library.ID
 	All(subject auth.Subject) iter.Seq2[document.Document, error]
 	Delete(subject auth.Subject, doc document.ID) error
+
+	// Create submits a file which should be inserted into the library. However, that may fail for various reasons.
+	// The defined errors are specified as follows:
+	//   - [document.UnsupportedFormatError] if the file type is not supported, e.g. because it cannot be parsed
 	Create(subject auth.Subject, doc document.CreateOptions) (document.Document, error)
 	TextContentByID(subject auth.Subject, id document.ID) (option.Opt[string], error)
 	StatusByID(subject auth.Subject, id document.ID) (option.Opt[document.ProcessingStatus], error)

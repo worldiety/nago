@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/sha3"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -152,6 +153,11 @@ func applyTasks(stores blob.Stores, openFile drive.Get, statFile drive.Stat, pro
 			}
 
 			if err != nil {
+				if errors.Is(err, document.UnsupportedFormatError) {
+					slog.Warn("sync job cannot create document in unsupported format: file ignored", "provider", prov.Identity(), "job", job.ID, "err", err.Error())
+					continue
+				}
+
 				return fmt.Errorf("cannot create provider document: %w", err)
 			}
 

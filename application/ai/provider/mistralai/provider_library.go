@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"log/slog"
+	"strings"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/document"
@@ -38,6 +39,10 @@ func (p *mistralLibrary) Create(subject auth.Subject, opts document.CreateOption
 	doc, err := p.client().CreateDocument(string(p.id), opts.Filename, opts.Reader)
 
 	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "mimetype not supported") {
+			return document.Document{}, fmt.Errorf("%w: %w", err, document.UnsupportedFormatError)
+		}
+
 		return document.Document{}, err
 	}
 
