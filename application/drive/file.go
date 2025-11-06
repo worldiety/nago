@@ -122,7 +122,7 @@ func (f File) CanRead(subject auth.Subject) bool {
 		return true
 	}
 
-	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&0040 != 0 {
+	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&GroupRead != 0 {
 		// subject is group member and group is allowed to read
 		return true
 	}
@@ -149,6 +149,10 @@ func (f File) CanRead(subject auth.Subject) bool {
 const (
 	OtherWrite os.FileMode = 0002
 	OtherRead  os.FileMode = 0004
+	GroupWrite os.FileMode = 0020
+	GroupRead  os.FileMode = 0040
+	OwnerWrite os.FileMode = 0200
+	OwnerRead  os.FileMode = 0400
 )
 
 func (f File) CanDelete(subject auth.Subject) bool {
@@ -200,7 +204,7 @@ func (f File) CanWrite(subject auth.Subject) bool {
 		return true
 	}
 
-	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&0020 != 0 {
+	if f.Group != "" && subject.HasGroup(f.Group) && f.FileMode&GroupWrite != 0 {
 		// subject is group member and group is allowed to write
 		return true
 	}

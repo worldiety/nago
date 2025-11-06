@@ -116,3 +116,8 @@ func (s sysUser) Valid() bool {
 func (s sysUser) Language() language.Tag {
 	return language.English
 }
+
+func IsSU(subject Subject) bool {
+	_, ok := subject.(sysUser)
+	return ok
+}

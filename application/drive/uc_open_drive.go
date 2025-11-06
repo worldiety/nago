@@ -9,6 +9,7 @@ package drive
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"sync"
 
@@ -61,6 +62,19 @@ func NewOpenDrive(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRe
 		}
 
 		file := optFile.Unwrap()
+
+		if opts.Create && user.IsSU(subject) {
+			chmodRequired := file.Group != opts.Group || file.FileMode.Perm() != opts.Mode.Perm()
+			if chmodRequired {
+				slog.Warn("su changed root permissions", "fid", file.ID)
+				file.Group = opts.Group
+				file.FileMode = opts.Mode
+				if err := repo.Save(file); err != nil {
+					return zero, fmt.Errorf("failed su chmod file: %w", err)
+				}
+			}
+		}
+
 		if !file.CanRead(subject) {
 			return zero, fmt.Errorf("user is not allowed to read file: %s: %w", subject.ID(), user.PermissionDeniedErr)
 		}
@@ -167,9 +181,10 @@ func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth
 		}
 
 		if usrRoot.Roots == nil {
-			usrRoot.Roots[opts.Name] = tmp.ID
+			usrRoot.Roots = map[string]FID{}
 		}
 
+		usrRoot.Roots[opts.Name] = tmp.ID
 		rootID = tmp.ID
 	}
 
