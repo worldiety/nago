@@ -27,7 +27,6 @@ import (
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
-	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/breadcrumb"
@@ -204,29 +203,36 @@ func formLibSync(wnd core.Window, stores blob.Stores, readDrives drive.ReadDrive
 				},
 			},
 		}).ModelOptions(pager.ModelOptions{StatePrefix: "libsync-src"}).
-			NewActionView(ui.Menu(
-				ui.PrimaryButton(nil).Title(rstring.ActionNew.Get(wnd)).PreIcon(icons.Plus),
-				ui.MenuGroup(
-					ui.MenuItem(func() {
+			CreateOptions(
+				dataview.CreateOption{
+					Name: "Store",
+					Action: func() error {
 						addStorePresented.Set(true)
-					}, ui.Text("Store")),
-					ui.MenuItem(func() {
+						return nil
+					},
+				},
+
+				dataview.CreateOption{
+					Name: "Drive",
+					Action: func() error {
 						addDrivePresented.Set(true)
-					}, ui.Text("Drive")),
-				),
-			)).SelectOptions(
-			dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
-				for _, idx := range selected {
-					if i, ok := idx.Int(); ok {
-						if err := ucLibSync.RemoveSource(wnd.Subject(), lib, job.Sources[i]); err != nil {
-							return err
+						return nil
+					},
+				},
+			).
+			SelectOptions(
+				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+					for _, idx := range selected {
+						if i, ok := idx.Int(); ok {
+							if err := ucLibSync.RemoveSource(wnd.Subject(), lib, job.Sources[i]); err != nil {
+								return err
+							}
 						}
 					}
-				}
 
-				return nil
-			}),
-		),
+					return nil
+				}),
+			),
 
 		ui.Space(ui.L16),
 		ui.HStack(
@@ -468,58 +474,59 @@ func docTable(wnd core.Window, prov provider.Provider, libs provider.Libraries, 
 				}).
 				NextActionIndicator(true).
 				Search(true).
-				NewActionView(
-					ui.Menu(
-						ui.PrimaryButton(nil).Title(rstring.ActionNew.Get(wnd)).PreIcon(icons.Plus),
-						ui.MenuGroup(
-							ui.MenuItem(func() {
-								wnd.ImportFiles(core.ImportFilesOptions{
-									Multiple: true,
-									OnCompletion: func(files []core.File) {
-										defer func() {
-											loadedDocs.Reset()
-										}()
+				CreateOptions(
+					dataview.CreateOption{
+						Name: rstring.ActionFileUpload.Get(wnd),
+						Action: func() error {
+							wnd.ImportFiles(core.ImportFilesOptions{
+								Multiple: true,
+								OnCompletion: func(files []core.File) {
+									defer func() {
+										loadedDocs.Reset()
+									}()
 
-										for _, file := range files {
-											reader, err := file.Open()
-											if err != nil {
-												alert.ShowBannerError(wnd, fmt.Errorf("failed to open uploaded file %s: %w", file.Name(), err))
-												return
-											}
-
-											_, err = libs.Library(libId).Create(wnd.Subject(), document.CreateOptions{
-												Filename: file.Name(),
-												Reader:   reader,
-											})
-
-											_ = reader.Close()
-
-											if err != nil {
-												alert.ShowBannerError(wnd, fmt.Errorf("failed to upload %s: %w", file.Name(), err))
-												return
-											}
+									for _, file := range files {
+										reader, err := file.Open()
+										if err != nil {
+											alert.ShowBannerError(wnd, fmt.Errorf("failed to open uploaded file %s: %w", file.Name(), err))
+											return
 										}
 
-									},
-								})
-							}, ui.Text(rstring.ActionFileUpload.Get(wnd))),
-						),
-					),
-				).SelectOptions(
-				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
-					for _, i := range selected {
-						if idx, ok := i.Int(); ok {
-							if err := libs.Library(libId).Delete(wnd.Subject(), loadedDocs.Get()[idx].ID); err != nil {
-								return err
+										_, err = libs.Library(libId).Create(wnd.Subject(), document.CreateOptions{
+											Filename: file.Name(),
+											Reader:   reader,
+										})
+
+										_ = reader.Close()
+
+										if err != nil {
+											alert.ShowBannerError(wnd, fmt.Errorf("failed to upload %s: %w", file.Name(), err))
+											return
+										}
+									}
+
+								},
+							})
+							return nil
+						},
+						Visible: nil,
+					},
+				).
+				SelectOptions(
+					dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+						for _, i := range selected {
+							if idx, ok := i.Int(); ok {
+								if err := libs.Library(libId).Delete(wnd.Subject(), loadedDocs.Get()[idx].ID); err != nil {
+									return err
+								}
 							}
 						}
-					}
 
-					loadedDocs.Reset()
+						loadedDocs.Reset()
 
-					return nil
-				}),
-			)
+						return nil
+					}),
+				)
 		}),
 	).FullWidth().Alignment(ui.Leading)
 

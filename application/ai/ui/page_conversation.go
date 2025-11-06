@@ -117,7 +117,7 @@ func msgTable(wnd core.Window, prov provider.Provider, messages provider.Convers
 						return renderContent(wnd, obj.Value)
 					},
 				},
-			}).NewActionView(ui.PrimaryButton(func() {
+			}).CreateActionView(ui.PrimaryButton(func() {
 				wnd.Navigation().ForwardTo("admin/ai/chat", wnd.Values().Put("provider", string(prov.Identity())).Put("conversation", string(messages.Identity())))
 			}).Title(StrOpenChat.Get(wnd)))
 		}),

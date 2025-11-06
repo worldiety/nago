@@ -113,7 +113,7 @@ func agentTable(wnd core.Window, prov provider.Provider) core.View {
 				Action(func(e dataview.Element[agent.Agent]) {
 					wnd.Navigation().ForwardTo("admin/ai/agent", wnd.Values().Put("agent", string(e.Value.ID)))
 				}).
-				NewAction(func() {
+				CreateAction(func() {
 					createPresented.Set(true)
 				}).
 				Search(true).
@@ -233,7 +233,7 @@ func libTable(wnd core.Window, prov provider.Provider) core.View {
 					wnd.Navigation().ForwardTo("admin/ai/library", wnd.Values().Put("library", string(e.Value.ID)))
 				}).
 				NextActionIndicator(true).
-				NewAction(func() {
+				CreateAction(func() {
 					createPresented.Set(true)
 				}).
 				Search(true).
@@ -334,23 +334,24 @@ func libConversations(wnd core.Window, prov provider.Provider) core.View {
 				NextActionIndicator(true).
 				Search(true).
 				ModelOptions(pager.ModelOptions{StatePrefix: "ai-convs"}).
-				NewAction(func() {
+				CreateAction(func() {
 					wnd.Navigation().ForwardTo("admin/ai/chat", wnd.Values().Put("provider", string(prov.Identity())))
-				}).SelectOptions(
-				dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
-					for _, i := range selected {
-						if idx, ok := i.Int(); ok {
-							if err := convs.Delete(wnd.Subject(), loadedConvs.Get()[idx].ID); err != nil {
-								return err
+				}).
+				SelectOptions(
+					dataview.NewSelectOptionDelete(wnd, func(selected []dataview.Idx) error {
+						for _, i := range selected {
+							if idx, ok := i.Int(); ok {
+								if err := convs.Delete(wnd.Subject(), loadedConvs.Get()[idx].ID); err != nil {
+									return err
+								}
 							}
 						}
-					}
 
-					loadedConvs.Reset()
+						loadedConvs.Reset()
 
-					return nil
-				}),
-			)
+						return nil
+					}),
+				)
 		}),
 	).FullWidth().Alignment(ui.Leading)
 

@@ -118,7 +118,7 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 			},
 		}).
 			Search(true).
-			NewAction(func() {
+			CreateAction(func() {
 				createUserPresented.Set(true)
 			}).
 			CardOptions(dataview.CardOptions{

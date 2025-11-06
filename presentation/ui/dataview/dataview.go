@@ -57,6 +57,13 @@ type SelectOption[ID any] struct {
 	ConfirmDialog func(selected []ID) ConfirmDialog[ID]
 }
 
+type CreateOption struct {
+	Icon    core.SVG
+	Name    string
+	Action  func() error
+	Visible func() bool
+}
+
 // NewSelectOptionDelete is a factory to create a generic delete option with a standard confirm dialog.
 func NewSelectOptionDelete[ID any](wnd core.Window, action func(selected []ID) error) SelectOption[ID] {
 	return SelectOption[ID]{
@@ -227,14 +234,41 @@ func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
 	return t
 }
 
-// NewAction inserts a conventional default button to create a new element for this data view. It has a default
-// position, icon, text and button style. See also [TDataView.NewActionView].
-func (t TDataView[E, ID]) NewAction(fn func()) TDataView[E, ID] {
-	return t.NewActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)))
+// CreateAction is a conventional default factory to create a new element for this data view. It has a default
+// position, icon, text and button style. See also [TDataView.CreateActionView] and [TDataView.CreateOptions].
+func (t TDataView[E, ID]) CreateAction(fn func()) TDataView[E, ID] {
+	return t.CreateActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)))
 }
 
-// NewActionView inserts the given view to idiomatic position for creating new elements. See also [TDataView.NewAction].
-func (t TDataView[E, ID]) NewActionView(view core.View) TDataView[E, ID] {
+// CreateOptions is default factory for [TDataView.NewActionView]. See also [TDataView.NewAction].
+// It inserts a popup menu on the conventional new-button and offers all the defined options.
+func (t TDataView[E, ID]) CreateOptions(actions ...CreateOption) TDataView[E, ID] {
+	var items []ui.TMenuItem
+	for _, action := range actions {
+		if action.Visible == nil || action.Visible() {
+			items = append(items, ui.MenuItem(
+				func() {
+					if err := action.Action; err != nil {
+						alert.ShowBannerError(t.wnd, err())
+						return
+					}
+				},
+				ui.HStack(ui.ImageIcon(action.Icon), ui.Text(action.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()),
+			)
+		}
+	}
+
+	return t.CreateActionView(
+		ui.Menu(
+			ui.PrimaryButton(nil).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)),
+			ui.MenuGroup(items...),
+		),
+	)
+}
+
+// CreateActionView inserts the given view to idiomatic position for creating new elements.
+// See also [TDataView.CreateAction] or [TDataView.CreateOptions] for factories to bootstrap common situations.
+func (t TDataView[E, ID]) CreateActionView(view core.View) TDataView[E, ID] {
 	t.newAction = view
 	return t
 }
@@ -282,7 +316,7 @@ func (t TDataView[E, ID]) Search(visible bool) TDataView[E, ID] {
 func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	var style Style
 	if t.style == Auto {
-		if len(t.data.Fields) < 3 {
+		if len(t.data.Fields) < 2 {
 			style = Table
 		} else {
 			if ctx.Window().Info().SizeClass <= core.SizeClassSmall {

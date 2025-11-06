@@ -196,149 +196,23 @@ func (c TDrive) autoInit(ctx core.RenderContext) TDrive {
 func (c TDrive) Render(ctx core.RenderContext) core.RenderNode {
 	c = c.autoInit(ctx)
 	curDir := c.loadFile(c.current.Get()).UnwrapOr(drive.File{})
-	canCreateDir := c.canCreateDirectory(curDir)
-	canCreateFile := c.canCreateFile(curDir)
 
 	wnd := ctx.Window()
-	createDirPresented := core.StateOf[bool](wnd, string(curDir.ID)+"-mkdir-presented")
+
 	uc, hasUC := core.FromContext[drive.UseCases](ctx.Window().Context(), "")
 	if !hasUC {
 		return alert.BannerError(fmt.Errorf("drive management not found")).Render(ctx)
 	}
 
-	pModel, err := pager.NewModel[drive.File, drive.FID](
-		wnd,
-
-		func(id drive.FID) (option.Opt[drive.File], error) {
-			return c.stat(id)
-		},
-		func(yield func(drive.FID, error) bool) {
-			file := c.loadFile(c.current.Get()).UnwrapOr(drive.File{})
-			for id := range file.Entries.All() {
-				if !yield(id, nil) {
-					return
-				}
-			}
-		},
-		pager.ModelOptions{
-			StatePrefix: string(curDir.ID),
-		},
-	)
-
-	if err != nil {
-		return alert.BannerError(err).Render(ctx)
-	}
-
-	deletePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-delete-presented")
-	renamePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-rename-presented")
-
-	selected := pModel.Selected()
-	var selectedFid option.Opt[drive.FID]
-	if len(selected) == 1 {
-		selectedFid = option.Some(selected[0])
-	}
-
 	return ui.VStack(
-		dialogDelete(wnd, deletePresented, uc.Delete, selected),
-		dialogCreateDirectory(ctx.Window(), createDirPresented, func(name string) error {
-			return c.mkdir(curDir, name)
-		}),
-		dialogRename(wnd, renamePresented, uc.Stat, uc.Rename, selectedFid),
+
 		ui.HStack(c.viewBreadcrumbs(wnd, c.loadFiles(c.breadcrumbs...), c.onNavigate)).Alignment(ui.Leading).FullWidth(),
-		ui.HStack(
-			ui.Menu(
-				ui.SecondaryButton(nil).PreIcon(icons.Grid).Enabled(pModel.SelectionCount > 0).Title(rstring.LabelOptions.Get(wnd)).Visible(wnd.Info().SizeClass > core.SizeClassSmall),
-				ui.MenuGroup(
-					ui.MenuItem(func() {
-						deletePresented.Set(true)
-					}, ui.HStack(ui.ImageIcon(icons.TrashBin), ui.Text(rstring.ActionDelete.Get(wnd))).Gap(ui.L8)),
-					ui.MenuItem(func() {
-						selected := pModel.Selected()
-						if len(selected) == 1 {
-							optFile, err := uc.Get(wnd.Subject(), selected[0], "")
-							if err != nil {
-								alert.ShowBannerError(wnd, err)
-								return
-							}
 
-							if optFile.IsNone() {
-								alert.ShowBannerError(wnd, os.ErrNotExist)
-							}
-
-							file := optFile.Unwrap()
-							wnd.ExportFiles(core.ExportFilesOptions{
-								ID:    string(selected[0]),
-								Files: []core.File{file},
-							})
-
-							return
-						}
-
-						// zip export
-						zip, err := uc.Zip(wnd.Subject(), selected)
-						if err != nil {
-							alert.ShowBannerError(wnd, err)
-							return
-						}
-
-						wnd.ExportFiles(core.ExportFilesOptions{
-							ID:    string(selected[0]),
-							Files: []core.File{zip},
-						})
-
-					}, ui.HStack(ui.ImageIcon(icons.Download), ui.Text(rstring.ActionDownload.Get(wnd))).Gap(ui.L8)),
-
-					ui.MenuItem(func() {
-						renamePresented.Set(true)
-					}, ui.If(pModel.SelectionCount == 1, ui.HStack(ui.ImageIcon(icons.Pen), ui.Text(rstring.ActionRename.Get(wnd))).Gap(ui.L8))),
-				),
-			),
-			ui.If(wnd.Info().SizeClass > core.SizeClassSmall, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
-			ui.If(canCreateDir, ui.SecondaryButton(func() {
-				createDirPresented.Set(true)
-			}).Title(StrCreateDirectory.Get(ctx.Window()))),
-			ui.If(canCreateFile, ui.SecondaryButton(func() {
-				targetDir := c.current.Get() // important: freeze our target, because it may change during upload
-				tmp := c.importOptions
-				tmp.OnCompletion = func(files []core.File) {
-					if c.importOptions.OnCompletion != nil {
-						c.importOptions.OnCompletion(files)
-					}
-
-					for _, file := range files {
-						reader, err := file.Open()
-						if err != nil {
-							alert.ShowBannerError(wnd, err)
-							continue
-						}
-
-						err = uc.Put(wnd.Subject(), targetDir, file.Name(), reader, drive.PutOptions{
-							OriginalFilename: file.Name(),
-							SourceHint:       drive.Upload,
-							KeepVersion:      true,
-						})
-
-						_ = reader.Close()
-
-						if err != nil {
-							alert.ShowBannerError(wnd, err)
-							continue
-						}
-
-						alert.ShowBannerMessage(wnd, alert.Message{
-							Title:   StrUploadSuccessTitle.Get(wnd),
-							Message: StrUploadSuccessX.Get(wnd, i18n.String("name", file.Name())),
-							Intent:  alert.IntentOk,
-						})
-					}
-				}
-
-				wnd.ImportFiles(tmp)
-			}).Title(StrUploadFile.Get(ctx.Window()))),
-		).FullWidth().
-			Alignment(ui.Trailing).
-			Gap(ui.L8),
-		c.viewListing(ctx.Window(), pModel),
+		c.viewListing(
+			ctx.Window(),
+			uc,
+			curDir,
+		),
 	).
 		Gap(ui.L16).
 		Frame(c.frame).Render(ctx)
@@ -379,17 +253,34 @@ func (c TDrive) loadFile(id drive.FID) option.Opt[drive.File] {
 	return optFile
 }
 
-func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive.FID]) core.View {
+func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.File) core.View {
 
 	displyName, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
 		return alert.BannerError(fmt.Errorf("user.DisplayName not found"))
 	}
 
+	allIdents := func(yield func(drive.FID, error) bool) {
+		file := c.loadFile(c.current.Get()).UnwrapOr(drive.File{})
+		for id := range file.Entries.All() {
+			if !yield(id, nil) {
+				return
+			}
+		}
+	}
+
+	createDirPresented := core.StateOf[bool](wnd, string(curDir.ID)+"-mkdir-presented")
+	renamePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-rn-presented")
+	selectedFid := core.StateOf[drive.FID](wnd, string(curDir.ID)+"-selectedfid")
+
+	canCreateDir := c.canCreateDirectory(curDir)
+	canCreateFile := c.canCreateFile(curDir)
+
 	var columns []dataview.Field[drive.File]
 
-	columns = append(columns,
-		dataview.Field[drive.File]{
+	columns = append(columns, []dataview.Field[drive.File]{
+
+		{
 			Name: "",
 			Map: func(obj drive.File) core.View {
 				if obj.IsDir() {
@@ -406,23 +297,27 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 			},
 			Visible: dataview.MinSizeMedium(),
 		},
-	)
-
-	columns = append(columns, dataview.Field[drive.File]{
-		Name: StrName.Get(wnd),
-		Map: func(obj drive.File) core.View {
-			return ui.Text(obj.Filename)
+		{
+			ID:   "fname",
+			Name: StrName.Get(wnd),
+			Map: func(obj drive.File) core.View {
+				return ui.Text(obj.Filename)
+			},
+			Comparator: func(a, b drive.File) int {
+				return xstrings.CompareIgnoreCase(a.Filename, b.Filename)
+			},
 		},
-	})
-
-	columns = append(columns, []dataview.Field[drive.File]{
 
 		{
+			ID:   "lastmod",
 			Name: rstring.LabelChanged.Get(wnd),
 			Map: func(obj drive.File) core.View {
 				return ui.Text(date.Format(wnd.Locale(), date.Date, obj.ModTime())).AccessibilityLabel(date.Format(wnd.Locale(), date.Time, obj.ModTime()))
 			},
 			Visible: dataview.MinSizeMedium(),
+			Comparator: func(a, b drive.File) int {
+				return a.ModTime().Compare(b.ModTime())
+			},
 		},
 		{
 			Name: rstring.LabelChangedBy.Get(wnd),
@@ -438,6 +333,7 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 			Visible: dataview.MinSizeLarge(),
 		},
 		{
+			ID:   "size",
 			Name: StrFileSize.Get(wnd),
 			Map: func(obj drive.File) core.View {
 				if obj.IsDir() {
@@ -447,20 +343,163 @@ func (c TDrive) viewListing(wnd core.Window, model pager.Model[drive.File, drive
 				return ui.Text(xstrings.FormatByteSize(wnd.Locale(), obj.Size(), 1))
 			},
 			Visible: dataview.MinSizeMedium(),
+			Comparator: func(a, b drive.File) int {
+				return int(a.Size() - b.Size())
+			},
 		},
 	}...)
 
-	return dataview.FromModel(
+	dv := dataview.FromData(
 		wnd,
-		model,
-		columns,
-	).Action(func(e drive.File) {
-		if e.IsDir() && c.actionDirectory != nil {
-			c.actionDirectory(e)
-			return
-		}
-	}).Style(dataview.Table).
-		Selection(wnd.Info().SizeClass > core.SizeClassSmall)
+		dataview.Data[drive.File, drive.FID]{
+			FindAll: allIdents,
+			FindByID: func(id drive.FID) (option.Opt[drive.File], error) {
+				return uc.Stat(wnd.Subject(), id)
+			},
+			Fields: columns,
+		},
+	).ModelOptions(pager.ModelOptions{StatePrefix: string(curDir.ID)}).
+		Action(func(e drive.File) {
+			if e.IsDir() && c.actionDirectory != nil {
+				c.actionDirectory(e)
+				return
+			}
+		}).
+		CreateOptions(
+			dataview.CreateOption{
+				Icon: icons.FolderPlus,
+				Name: StrCreateDirectory.Get(wnd),
+				Action: func() error {
+					createDirPresented.Set(true)
+					return nil
+				},
+				Visible: func() bool {
+					return canCreateDir
+				},
+			},
+
+			dataview.CreateOption{
+				Icon: icons.Upload,
+				Name: StrUploadFile.Get(wnd),
+				Action: func() error {
+					targetDir := c.current.Get() // important: freeze our target, because it may change during upload
+					tmp := c.importOptions
+					tmp.OnCompletion = func(files []core.File) {
+						if c.importOptions.OnCompletion != nil {
+							c.importOptions.OnCompletion(files)
+						}
+
+						for _, file := range files {
+							reader, err := file.Open()
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								continue
+							}
+
+							err = uc.Put(wnd.Subject(), targetDir, file.Name(), reader, drive.PutOptions{
+								OriginalFilename: file.Name(),
+								SourceHint:       drive.Upload,
+								KeepVersion:      true,
+							})
+
+							_ = reader.Close()
+
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								continue
+							}
+
+							alert.ShowBannerMessage(wnd, alert.Message{
+								Title:   StrUploadSuccessTitle.Get(wnd),
+								Message: StrUploadSuccessX.Get(wnd, i18n.String("name", file.Name())),
+								Intent:  alert.IntentOk,
+							})
+						}
+					}
+
+					wnd.ImportFiles(tmp)
+					return nil
+				},
+				Visible: func() bool {
+					return canCreateFile
+				},
+			},
+		).
+		SelectOptions(
+			dataview.NewSelectOptionDelete(wnd, func(selected []drive.FID) error {
+				for _, file := range selected {
+					if err := uc.Delete(wnd.Subject(), file, drive.DeleteOptions{
+						Recursive: true,
+					}); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			}),
+
+			dataview.SelectOption[drive.FID]{
+				Icon: icons.Download,
+				Name: rstring.ActionDownload.Get(wnd),
+				Action: func(selected []drive.FID) error {
+					if len(selected) == 1 {
+						optFile, err := uc.Get(wnd.Subject(), selected[0], "")
+						if err != nil {
+							return err
+						}
+
+						if optFile.IsNone() {
+							return os.ErrNotExist
+						}
+
+						file := optFile.Unwrap()
+						wnd.ExportFiles(core.ExportFilesOptions{
+							ID:    string(selected[0]),
+							Files: []core.File{file},
+						})
+
+						return nil
+					}
+
+					// zip export
+					zip, err := uc.Zip(wnd.Subject(), selected)
+					if err != nil {
+						return err
+					}
+
+					wnd.ExportFiles(core.ExportFilesOptions{
+						ID:    string(selected[0]),
+						Files: []core.File{zip},
+					})
+
+					return nil
+				},
+			},
+
+			dataview.SelectOption[drive.FID]{
+				Icon: icons.Pen,
+				Name: rstring.ActionRename.Get(wnd),
+				Action: func(selected []drive.FID) error {
+					selectedFid.Set(selected[0])
+					renamePresented.Set(true)
+					return nil
+				},
+				Visible: func(selected []drive.FID) bool {
+					return len(selected) == 1
+				},
+			},
+		).
+		Search(true).
+		Style(dataview.Table).
+		Selection(true)
+
+	return ui.VStack(
+		dialogCreateDirectory(wnd, createDirPresented, func(name string) error {
+			return c.mkdir(curDir, name)
+		}),
+		dialogRename(wnd, renamePresented, uc.Stat, uc.Rename, selectedFid),
+		dv,
+	).FullWidth()
 }
 
 func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNavigate func(drive.File)) core.View {
@@ -541,36 +580,12 @@ func calculateBreadcrumbs(stat drive.Stat, subject auth.Subject, virtualRoot dri
 	return res, nil
 }
 
-func dialogDelete(wnd core.Window, presented *core.State[bool], delete drive.Delete, files []drive.FID) core.View {
-	if !presented.Get() {
+func dialogRename(wnd core.Window, presented *core.State[bool], stat drive.Stat, rename drive.Rename, optFid *core.State[drive.FID]) core.View {
+	if !presented.Get() || optFid.Get() == "" {
 		return nil
 	}
 
-	return alert.Dialog(
-		StrDialogDeleteTitle.Get(wnd),
-		ui.Text(StrDialogDeleteDescX.Get(wnd, float64(len(files)), i18n.Int("amount", len(files)))),
-		presented,
-		alert.Closeable(),
-		alert.Cancel(nil),
-		alert.Delete(func() {
-			for _, file := range files {
-				if err := delete(wnd.Subject(), file, drive.DeleteOptions{
-					Recursive: true,
-				}); err != nil {
-					alert.ShowBannerError(wnd, err)
-				}
-			}
-		}),
-		alert.Large(),
-	)
-}
-
-func dialogRename(wnd core.Window, presented *core.State[bool], stat drive.Stat, rename drive.Rename, optFid option.Opt[drive.FID]) core.View {
-	if !presented.Get() || optFid.IsNone() {
-		return nil
-	}
-
-	fid := optFid.Unwrap()
+	fid := optFid.Get()
 
 	optFile, err := stat(wnd.Subject(), fid)
 	if err != nil {

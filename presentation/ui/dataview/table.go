@@ -166,8 +166,8 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 }
 
 func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, ID]) core.View {
-	if t.newAction == nil {
-		return nil
+	if wnd.Info().SizeClass <= core.SizeClassSmall {
+		return t.cardActionBar(wnd, model)
 	}
 
 	selected := model.Selected()
@@ -212,7 +212,7 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 				ui.MenuGroup(items...),
 			)
 		}),
-		ui.If(len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
+		ui.If((len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar) && t.newAction != nil, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 		t.newAction,
 	).
 		FullWidth().

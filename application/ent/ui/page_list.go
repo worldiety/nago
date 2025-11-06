@@ -42,7 +42,7 @@ func newDefaultList[T ent.Aggregate[T, ID], ID ~string](opts PageListOptions[T, 
 		}).NextActionIndicator(true)
 
 		if wnd.Subject().HasPermission(opts.Perms.Create) {
-			dv = dv.NewAction(func() {
+			dv = dv.CreateAction(func() {
 				wnd.Navigation().ForwardTo(opts.Pages.Create, nil)
 			})
 		}

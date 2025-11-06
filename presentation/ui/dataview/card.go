@@ -214,10 +214,6 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 }
 
 func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID]) core.View {
-	if t.newAction == nil {
-		return nil
-	}
-
 	selected := model.Selected()
 	dlgSpec := core.StateOf[ConfirmDialog[ID]](wnd, model.SelectSubset.ID()+"-dlgConfirm")
 	confirmPresented := core.DerivedState[bool](dlgSpec, "confirm-presented")
@@ -262,7 +258,7 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 					ui.MenuGroup(items...),
 				)
 			}),
-			ui.If(len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
+			ui.If((len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar) && t.newAction != nil, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
 			t.newAction,
 		).
 			FullWidth().

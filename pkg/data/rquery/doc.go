@@ -106,22 +106,29 @@ func contains(t any, what string) bool {
 			}
 
 			ftype := method.Func.Type()
-			//fmt.Println(method.Name, ftype.NumIn(), ftype.NumOut())
 			if ftype.NumIn() != 1 || ftype.NumOut() != 1 {
 				continue
 			}
 
-			res := method.Func.Call([]reflect.Value{reflect.ValueOf(t)})[0]
-			val := res.Interface()
-			returnedType := reflect.TypeOf(val)
-			// stop searching when reaching foreign types
-			if returnedType.PkgPath() != "" && !strings.Contains(returnedType.PkgPath(), "wdy") {
-				continue
+			switch method.Name {
+			case "String":
+				// I can't remember why this is a good idea, we will get a lot of
+				// unwanted methods like Unwrap* or Destroy or MarshalJSON. Thus let us limit that to an allow list
+				res := method.Func.Call([]reflect.Value{reflect.ValueOf(t)})[0]
+				val := res.Interface()
+				returnedType := reflect.TypeOf(val)
+				// stop searching when reaching foreign types
+				if returnedType.PkgPath() != "" && !strings.Contains(returnedType.PkgPath(), "wdy") {
+					continue
+				}
+
+				if contains(val, what) {
+					return true
+				}
 			}
 
-			if contains(val, what) {
-				return true
-			}
+			//fmt.Println(method.Name, ftype.NumIn(), ftype.NumOut())
+
 		}
 	default:
 		//fmt.Printf("ignoring %T", t)
