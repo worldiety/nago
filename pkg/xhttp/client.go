@@ -17,8 +17,32 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
+
+type RequestGroup struct {
+	rpsMutex  sync.Mutex
+	rps       int
+	lastReqAt atomic.Int64
+	debugLog  bool
+	debugCtr  atomic.Int64
+}
+
+func NewRequestGroup() *RequestGroup {
+	return &RequestGroup{}
+}
+
+func (r *RequestGroup) DebugLog(debugLog bool) *RequestGroup {
+	r.debugLog = debugLog
+	return r
+}
+
+func (r *RequestGroup) RateLimit(rps int) *RequestGroup {
+	r.rps = rps
+	return r
+}
 
 type Request struct {
 	client    *http.Client
@@ -34,6 +58,7 @@ type Request struct {
 	respLimit int64
 	retry     int
 	retryWait time.Duration
+	group     *RequestGroup
 }
 
 func NewRequest() *Request {
@@ -72,6 +97,12 @@ func (r *Request) Timeout(timeout time.Duration) *Request {
 // protocol errors. The retry sleep time uses exponential backoff. See also [Request.RetryWait].
 func (r *Request) Retry(retry int) *Request {
 	r.retry = retry
+	return r
+}
+
+// Group sets the group to which this request shall belong.
+func (r *Request) Group(group *RequestGroup) *Request {
+	r.group = group
 	return r
 }
 
@@ -205,6 +236,7 @@ func (r *Request) retryWaitDuration() time.Duration {
 }
 
 func (r *Request) Do(method string) error {
+
 	ctx := r.ctx
 	if ctx == nil {
 		ctx = context.Background()
@@ -242,6 +274,40 @@ func (r *Request) Do(method string) error {
 
 		u.RawQuery = queryValues.Encode()
 		reqUrl = u.String()
+	}
+
+	if grp := r.group; grp != nil {
+
+		if grp.debugLog {
+			id := grp.debugCtr.Add(1)
+			slog.Info("xhttp.Do", "id", id, "method", method, "url", reqUrl, "timeout", timeout)
+			start := time.Now()
+
+			defer func() {
+				slog.Info("xhttp.Do done", "id", id, "method", method, "url", reqUrl, "duration", time.Since(start))
+			}()
+		}
+
+		if grp.rps > 0 {
+			// we must serialize all goroutines into a sequence so that waiting duration calculation is correct
+			grp.rpsMutex.Lock()
+
+			delta := time.Duration(time.Now().UnixMilli()-grp.lastReqAt.Load()) * 1000 * 1000
+			betweenRequest := time.Second / time.Duration(grp.rps)
+			if delta < betweenRequest {
+				waitTime := betweenRequest - delta
+				if grp.debugLog {
+					slog.Info("xhttp.Do throttle", "wait", waitTime, "rps", grp.rps)
+				}
+
+				time.Sleep(waitTime)
+			}
+
+			grp.lastReqAt.Store(time.Now().UnixMilli())
+
+			grp.rpsMutex.Unlock()
+		}
+
 	}
 
 	var body io.Reader
