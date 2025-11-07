@@ -301,7 +301,7 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 			ID:   "fname",
 			Name: StrName.Get(wnd),
 			Map: func(obj drive.File) core.View {
-				return ui.Text(obj.Filename)
+				return ui.Text(obj.Filename).Hyphens(ui.HyphensAuto)
 			},
 			Comparator: func(a, b drive.File) int {
 				return xstrings.CompareIgnoreCase(a.Filename, b.Filename)
