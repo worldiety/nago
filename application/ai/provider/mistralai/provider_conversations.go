@@ -10,6 +10,7 @@ package mistralai
 import (
 	"fmt"
 	"iter"
+	"log/slog"
 	"time"
 
 	"github.com/worldiety/option"
@@ -60,6 +61,12 @@ func (p *mistralConversations) Delete(subject auth.Subject, id conversation.ID) 
 }
 
 func (p *mistralConversations) Create(subject auth.Subject, opts conversation.CreateOptions) (conversation.Conversation, []message.Message, error) {
+	slog.Info("mistral conversation started")
+	start := time.Now()
+	defer func() {
+		slog.Info("mistral conversation ended", "duration", time.Since(start))
+	}()
+
 	instructs := opts.Instructions
 	if opts.Agent != "" && opts.Instructions != "" {
 		return conversation.Conversation{}, nil, fmt.Errorf("mistral does not support creating a conversation based on a combination of instructions and agent")

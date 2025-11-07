@@ -68,9 +68,9 @@ func NewClient(token string) *Client {
 	// http 503 service not available responses.
 	return &Client{
 		c: &http.Client{
-			Timeout: 120 * time.Second, // mistral can become enormously slow, thus let us try a 2-minute timeout
+			Timeout: 5 * time.Minute, // mistral can become enormously slow
 			Transport: &http.Transport{
-				DisableKeepAlives: true,
+				DisableKeepAlives: false,
 			},
 		},
 		base:  "https://api.mistral.ai/v1/",
