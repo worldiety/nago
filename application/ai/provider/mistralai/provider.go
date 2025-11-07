@@ -28,7 +28,7 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 	p := &mistralProvider{
 		id:  id,
 		cfg: cfg,
-		cl:  NewClient(cfg.Token),
+		cl:  NewClient(cfg.Token, cfg.RPS, cfg.Debug),
 	}
 
 	p.libs = &mistralLibraries{

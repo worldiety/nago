@@ -148,10 +148,7 @@ func (c *Client) GetAgent(id string) (AgentInfo, error) {
 func (c *Client) ListAgents() iter.Seq2[AgentInfo, error] {
 	return func(yield func(AgentInfo, error) bool) {
 		var resp []AgentInfo
-		err := xhttp.NewRequest().
-			Client(c.c).
-			BaseURL(c.base).
-			Retry(c.retry).
+		err := c.newReq().
 			URL("agents").
 			BearerAuthentication(c.token).
 			Query("page", "0").
@@ -174,10 +171,7 @@ func (c *Client) ListAgents() iter.Seq2[AgentInfo, error] {
 }
 
 func (c *Client) DeleteAgent(id string) error {
-	return xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	return c.newReq().
 		Assert2xx(true).
 		URL("agents/" + id).
 		BearerAuthentication(c.token).
@@ -194,10 +188,7 @@ type UpdateAgentRequest struct {
 }
 
 func (c *Client) UpdateAgent(id string, req UpdateAgentRequest) error {
-	return xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	return c.newReq().
 		URL("agents/" + id).
 		BodyJSON(req).
 		Assert2xx(true).

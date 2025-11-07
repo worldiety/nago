@@ -11,11 +11,11 @@ import (
 	"bytes"
 	"io"
 	"mime/multipart"
+	"strconv"
 	"time"
 
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
-	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -77,10 +77,7 @@ func (c *Client) CreateDocument(libId string, filename string, reader io.Reader)
 	}
 
 	var resp DocumentInfo
-	err = xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err = c.newReq().
 		Header("Content-Type", writer.FormDataContentType()).
 		URL("libraries/" + libId + "/documents").
 		Assert2xx(true).
@@ -95,19 +92,20 @@ func (c *Client) CreateDocument(libId string, filename string, reader io.Reader)
 	return resp, err
 }
 
+type Pagination struct {
+	TotalItems  int  `json:"total_items"`
+	TotalPages  int  `json:"total_pages"`
+	CurrentPage int  `json:"current_page"`
+	PageSize    int  `json:"page_size"`
+	HasMore     bool `json:"has_more"`
+}
+
 func (c *Client) ListDocuments(id string) ([]DocumentInfo, error) {
 	var resp struct {
-		Data        []DocumentInfo `json:"data"`
-		CurrentPage int            `json:"current_page"`
-		HasMore     bool           `json:"has_more"`
-		PageSize    int            `json:"page_size"`
-		TotalItems  int            `json:"total_items"`
-		TotalPages  int            `json:"total_pages"`
+		Data       []DocumentInfo `json:"data"`
+		Pagination Pagination     `json:"pagination"`
 	}
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/"+id+"/documents").
 		Query("page", "0").
 		Query("page_size", "100").
@@ -119,14 +117,35 @@ func (c *Client) ListDocuments(id string) ([]DocumentInfo, error) {
 
 	// TODO their paging logic is broken anyway and the API changes on a daily basis, that is not beta, just WIP
 
-	return resp.Data, err
+	if !resp.Pagination.HasMore {
+		return resp.Data, nil
+	}
+
+	var tmp []DocumentInfo
+	tmp = append(tmp, resp.Data...)
+	for resp.Pagination.HasMore {
+		err = c.newReq().
+			URL("libraries/"+id+"/documents").
+			Query("page", strconv.Itoa(resp.Pagination.CurrentPage+1)).
+			Query("page_size", "100").
+			Assert2xx(true).
+			BearerAuthentication(c.token).
+			ToJSON(&resp).
+			ToLimit(1024 * 1024 * 1024).
+			Get()
+
+		if err != nil {
+			return nil, err
+		}
+
+		tmp = append(tmp, resp.Data...)
+	}
+
+	return tmp, err
 }
 
 func (c *Client) DeleteDocument(lib, doc string) error {
-	return xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	return c.newReq().
 		Assert2xx(true).
 		URL("libraries/" + lib + "/documents/" + doc).
 		BearerAuthentication(c.token).
@@ -135,10 +154,7 @@ func (c *Client) DeleteDocument(lib, doc string) error {
 
 func (c *Client) GetDocument(libId, docId string) (DocumentInfo, error) {
 	var resp DocumentInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + libId + "/documents/" + docId).
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -153,10 +169,7 @@ func (c *Client) GetDocumentText(libId, docId string) (string, error) {
 	var resp struct {
 		Text string `json:"text"`
 	}
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + libId + "/documents/" + docId + "/text_content").
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -171,10 +184,7 @@ func (c *Client) GetDocumentStatus(libId, docId string) (document.ProcessingStat
 		DocumentId       string                    `json:"document_id"`
 		ProcessingStatus document.ProcessingStatus `json:"processing_status"`
 	}
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + libId + "/documents/" + docId + "/status").
 		Assert2xx(true).
 		BearerAuthentication(c.token).

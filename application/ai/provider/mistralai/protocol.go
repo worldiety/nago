@@ -10,6 +10,8 @@ package mistralai
 import (
 	"net/http"
 	"time"
+
+	"go.wdy.de/nago/pkg/xhttp"
 )
 
 type CreateConversionRequest struct {
@@ -51,30 +53,49 @@ type CreateConversionResponse struct {
 }
 
 type Client struct {
-	c     *http.Client
-	token string
-	base  string
-	retry int
+	c       *http.Client
+	token   string
+	base    string
+	retry   int
+	rps     int
+	debug   bool
+	timeout time.Duration
+	group   *xhttp.RequestGroup
 }
 
-func NewClient(token string) *Client {
+func NewClient(token string, rps int, debug bool) *Client {
 	// note, we get a lot of connection problems with the mistral api, like
 	//   got 503 Service Unavailable: upstream connect error or disconnect/reset before headers.
 	//   retried and the latest reset reason: remote connection failure, transport failure reason:
 	//   TLS_error:|268436501:SSL routines:OPENSSL_internal:SSLV3_ALERT_CERTIFICATE_EXPIRED:TLS_error_end"
 	// and it looks like they don't get their cluster stuff configured the right way
 
+	if rps == 0 {
+		rps = 1
+	}
+
+	timeout := 5 * time.Minute
+
 	// also note, that in general their service looks very unreliable. During development, we got a lot of random
 	// http 503 service not available responses.
 	return &Client{
 		c: &http.Client{
-			Timeout: 5 * time.Minute, // mistral can become enormously slow
-			Transport: &http.Transport{
-				DisableKeepAlives: false,
-			},
+			Timeout: timeout, // mistral can become enormously slow
 		},
-		base:  "https://api.mistral.ai/v1/",
-		token: token,
-		retry: 3,
+		base:    "https://api.mistral.ai/v1/",
+		token:   token,
+		retry:   3,
+		rps:     rps,
+		timeout: timeout,
+		group:   xhttp.NewRequestGroup().DebugLog(debug).RateLimit(rps),
 	}
+}
+
+func (c *Client) newReq() *xhttp.Request {
+	return xhttp.NewRequest().
+		Client(c.c).
+		BaseURL(c.base).
+		Retry(c.retry).
+		Timeout(c.timeout).
+		Group(c.group)
 }

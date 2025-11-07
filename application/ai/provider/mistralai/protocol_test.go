@@ -20,7 +20,7 @@ func TestNewClient(t *testing.T) {
 		return
 	}
 
-	c := NewClient(token)
+	c := NewClient(token, 0, true)
 	/*t.Log(c.CreateConversion(CreateConversionRequest{
 		Inputs: "test unterhaltung",
 		Model:  "mistral-large-latest",

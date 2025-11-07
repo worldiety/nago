@@ -9,7 +9,6 @@ package mistralai
 
 import (
 	"go.wdy.de/nago/application/ai/model"
-	"go.wdy.de/nago/pkg/xhttp"
 	"golang.org/x/text/language"
 )
 
@@ -53,10 +52,7 @@ func (c *Client) ListAllModels(tag language.Tag) ([]ModelInfoResponse, error) {
 		Data []ModelInfoResponse `json:"data"`
 	}
 
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		Header("Accept-Language", tag.String()).
 		URL("models").
 		Assert2xx(true).

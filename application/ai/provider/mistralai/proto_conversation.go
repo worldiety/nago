@@ -13,15 +13,11 @@ import (
 
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
-	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
 func (c *Client) DeleteConversation(id string) error {
-	return xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	return c.newReq().
 		Assert2xx(true).
 		URL("conversations/" + id).
 		BearerAuthentication(c.token).
@@ -46,10 +42,7 @@ type AppendConversationResponse struct {
 
 func (c *Client) AppendConversation(conversationId string, req AppendConversationRequest) (AppendConversationResponse, error) {
 	var resp AppendConversationResponse
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("conversations/" + conversationId).
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -91,10 +84,7 @@ func (c CreateConversationResponse) IntoConversation() conversation.Conversation
 
 func (c *Client) CreateConversation(req CreateConversationRequest) (CreateConversationResponse, error) {
 	var resp CreateConversationResponse
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("conversations").
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -132,10 +122,7 @@ func (c ConversationInfo) IntoConversation() conversation.Conversation {
 
 func (c *Client) ListConversations() ([]ConversationInfo, error) {
 	var resp []ConversationInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		Query("page", "0").
 		Query("page_size", "100000").
 		URL("conversations").
@@ -150,10 +137,7 @@ func (c *Client) ListConversations() ([]ConversationInfo, error) {
 
 func (c *Client) GetConversation(convId string) (ConversationInfo, error) {
 	var resp ConversationInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("conversations/" + convId).
 		Assert2xx(true).
 		BearerAuthentication(c.token).

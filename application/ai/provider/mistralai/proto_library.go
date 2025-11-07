@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"go.wdy.de/nago/application/ai/library"
-	"go.wdy.de/nago/pkg/xhttp"
 )
 
 type CreateLibraryRequest struct {
@@ -43,10 +42,7 @@ func (i LibraryInfo) IntoLibrary() library.Library {
 
 func (c *Client) CreateLibrary(req CreateLibraryRequest) (LibraryInfo, error) {
 	var resp LibraryInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries").
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -65,10 +61,7 @@ type UpdateLibraryRequest struct {
 
 func (c *Client) UpdateLibrary(id string, req UpdateLibraryRequest) (LibraryInfo, error) {
 	var resp LibraryInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + id).
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -82,10 +75,7 @@ func (c *Client) UpdateLibrary(id string, req UpdateLibraryRequest) (LibraryInfo
 
 func (c *Client) GetLibrary(id string) (LibraryInfo, error) {
 	var resp LibraryInfo
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + id).
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -97,10 +87,7 @@ func (c *Client) GetLibrary(id string) (LibraryInfo, error) {
 }
 
 func (c *Client) DeleteLibrary(id string) error {
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries/" + id).
 		Assert2xx(true).
 		BearerAuthentication(c.token).
@@ -114,10 +101,7 @@ func (c *Client) ListAllLibraries() ([]LibraryInfo, error) {
 	var resp struct {
 		Data []LibraryInfo `json:"data"`
 	}
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		URL("libraries").
 		Assert2xx(true).
 		BearerAuthentication(c.token).

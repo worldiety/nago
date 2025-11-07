@@ -14,7 +14,6 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/message"
-	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -26,10 +25,7 @@ type ListEntryResponse struct {
 
 func (c *Client) ListEntries(conversationId string) ([]EntryBox, error) {
 	var resp ListEntryResponse
-	err := xhttp.NewRequest().
-		Client(c.c).
-		BaseURL(c.base).
-		Retry(c.retry).
+	err := c.newReq().
 		Query("page", "0").
 		Query("page_size", "100000").
 		URL("conversations/" + conversationId + "/history").
