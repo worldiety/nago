@@ -243,6 +243,10 @@ func (t TDataView[E, ID]) CreateAction(fn func()) TDataView[E, ID] {
 // CreateOptions is default factory for [TDataView.NewActionView]. See also [TDataView.NewAction].
 // It inserts a popup menu on the conventional new-button and offers all the defined options.
 func (t TDataView[E, ID]) CreateOptions(actions ...CreateOption) TDataView[E, ID] {
+	if len(actions) == 0 {
+		return t
+	}
+	
 	var items []ui.TMenuItem
 	for _, action := range actions {
 		if action.Visible == nil || action.Visible() {
