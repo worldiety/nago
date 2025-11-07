@@ -9,6 +9,8 @@ package mistralai
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"strconv"
@@ -16,6 +18,8 @@ import (
 
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -88,6 +92,13 @@ func (c *Client) CreateDocument(libId string, filename string, reader io.Reader)
 		ToJSON(&resp).
 		ToLimit(1024 * 1024).
 		Post()
+
+	var statErr xhttp.UnexpectedStatusCodeError
+	if errors.As(err, &statErr) {
+		if statErr.StatusCode == 429 {
+			return resp, fmt.Errorf("%w: %w", err, provider.TooManyRequests)
+		}
+	}
 
 	return resp, err
 }

@@ -375,7 +375,7 @@ func (r *Request) Do(method string) error {
 			lr := io.LimitReader(resp.Body, 4*1024)
 			buf, _ := io.ReadAll(lr)
 
-			return fmt.Errorf("unexpected status: got %v: %s", resp.Status, string(buf))
+			return UnexpectedStatusCodeError{resp.StatusCode, buf}
 		}
 	}
 
@@ -386,6 +386,15 @@ func (r *Request) Do(method string) error {
 	}
 
 	return nil
+}
+
+type UnexpectedStatusCodeError struct {
+	StatusCode int
+	Body       []byte
+}
+
+func (e UnexpectedStatusCodeError) Error() string {
+	return fmt.Sprintf("unexpected status code: %d: %s", e.StatusCode, string(e.Body))
 }
 
 type ErrorWithBody struct {

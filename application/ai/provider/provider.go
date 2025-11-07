@@ -8,6 +8,7 @@
 package provider
 
 import (
+	"errors"
 	"iter"
 
 	"github.com/worldiety/option"
@@ -18,6 +19,10 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
+)
+
+var (
+	TooManyRequests = errors.New("too many requests") // TooManyRequests tells you that the rate limiter has kicked in
 )
 
 type ID string

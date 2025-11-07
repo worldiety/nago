@@ -16,6 +16,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai"
@@ -95,6 +96,8 @@ func NewSynchronize(bus events.Bus, findProvider ai.FindProviderByID, repo Repos
 	}
 }
 
+var continueError = errors.New("libsync-continue")
+
 func applyTasks(stores blob.Stores, openFile drive.Get, statFile drive.Stat, prov provider.Provider, syncRepo SyncRepository, job Job, tasks []tTask) error {
 	lib := prov.Libraries().Unwrap().Library(job.ID)
 
@@ -121,43 +124,64 @@ func applyTasks(stores blob.Stores, openFile drive.Get, statFile drive.Stat, pro
 	for _, task := range tasks {
 		if task.InsertRemote.Valid {
 			remote := task.InsertRemote
-			optReader, err := open(remote.Src, stores, openFile)
-			if err != nil {
-				return fmt.Errorf("cannot open load reader: %w", err)
+
+			var doc document.Document
+			var err error
+			createDoc := func() error {
+				optReader, err := open(remote.Src, stores, openFile)
+				if err != nil {
+					return fmt.Errorf("cannot open load reader: %w", err)
+				}
+
+				if optReader.IsNone() {
+					slog.Info("sync job stale local source ignoring")
+					return continueError // may got stale during execution, which may be normal
+				}
+
+				reader := optReader.Unwrap()
+
+				var fname string
+				if remote.Src.Drive.Valid {
+					optStat, _ := statFile(user.SU(), remote.Src.Drive.File)
+					fname = optStat.UnwrapOr(drive.File{Filename: string(remote.Src.Drive.File)}).Name()
+				}
+
+				if remote.Src.Store.Valid {
+					fname = remote.Src.Store.Name + "/" + remote.Src.Store.Key
+				}
+
+				doc, err = lib.Create(user.SU(), document.CreateOptions{
+					Filename: fname,
+					Reader:   reader,
+				})
+
+				if err := reader.Close(); err != nil {
+					return fmt.Errorf("cannot close reader: %w", err)
+				}
+
+				return nil
 			}
 
-			if optReader.IsNone() {
-				slog.Info("sync job stale local source ignoring")
-				continue // may got stale during execution, which may be normal
-			}
-
-			reader := optReader.Unwrap()
-
-			var fname string
-			if remote.Src.Drive.Valid {
-				optStat, _ := statFile(user.SU(), remote.Src.Drive.File)
-				fname = optStat.UnwrapOr(drive.File{Filename: string(remote.Src.Drive.File)}).Name()
-			}
-
-			if remote.Src.Store.Valid {
-				fname = remote.Src.Store.Name + "/" + remote.Src.Store.Key
-			}
-
-			doc, err := lib.Create(user.SU(), document.CreateOptions{
-				Filename: fname,
-				Reader:   reader,
-			})
-
-			if err := reader.Close(); err != nil {
-				return fmt.Errorf("cannot close reader: %w", err)
-			}
-
-			if err != nil {
+			if err = createDoc(); err != nil {
+				if errors.Is(err, continueError) {
+					continue
+				}
 				if errors.Is(err, document.UnsupportedFormatError) {
 					slog.Warn("sync job cannot create document in unsupported format: file ignored", "provider", prov.Identity(), "job", job.ID, "err", err.Error())
 					continue
 				}
 
+				if errors.Is(err, provider.TooManyRequests) {
+					dur := time.Minute
+					slog.Warn("sync job created too many create document requests", "sleeping", dur, "err", err)
+					time.Sleep(dur)
+
+					slog.Warn("retry once again after auto throttle")
+					if err = createDoc(); err != nil {
+						return err
+					}
+
+				}
 				return fmt.Errorf("cannot create provider document: %w", err)
 			}
 
