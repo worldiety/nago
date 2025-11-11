@@ -67,6 +67,18 @@ func (p *mistralAgent) Update(subject auth.Subject, opts agent.UpdateOptions) (a
 		}
 	}
 
+	if opts.Tools.IsSome() {
+		ag.Tools = slices.DeleteFunc(ag.Tools, func(tool Tool) bool {
+			return tool.Type != ToolDocumentLibrary // the rest is just build-in
+		})
+
+		for _, id := range opts.Tools.Unwrap() {
+			ag.Tools = append(ag.Tools, Tool{
+				Type: ToolType(id),
+			})
+		}
+	}
+
 	if err := p.client().UpdateAgent(string(p.id), UpdateAgentRequest{
 		Instructions:   &ag.Instructions,
 		Model:          &ag.Model,

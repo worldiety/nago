@@ -11,6 +11,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
@@ -27,6 +28,7 @@ type Agent struct {
 	Description  string                 `json:"desc,omitempty"`
 	Instructions string                 `json:"prompt,omitempty"`
 	Model        model.ID               `json:"model,omitempty"`
+	Tools        []tool.ID              `json:"tools,omitempty"`
 	Libraries    []library.ID           `json:"libraries,omitempty"`
 	Temperature  Temperature            `json:"tmp,omitempty"`
 	UpdatedAt    xtime.UnixMilliseconds `json:"lastMod,omitempty"`
@@ -52,6 +54,7 @@ type UpdateOptions struct {
 	Instructions option.Opt[string]
 	Temperature  option.Opt[Temperature]
 	Libraries    option.Opt[[]library.ID]
+	Tools        option.Opt[[]tool.ID]
 }
 
 type Repository data.Repository[Agent, ID]

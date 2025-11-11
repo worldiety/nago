@@ -16,6 +16,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -28,6 +29,7 @@ type RequestGroup struct {
 	lastReqAt atomic.Int64
 	debugLog  bool
 	debugCtr  atomic.Int64
+	leakBody  bool
 }
 
 func NewRequestGroup() *RequestGroup {
@@ -45,20 +47,21 @@ func (r *RequestGroup) RateLimit(rps int) *RequestGroup {
 }
 
 type Request struct {
-	client    *http.Client
-	ctx       context.Context
-	timeout   time.Duration
-	url       string
-	baseUrl   string
-	headers   map[string]string
-	query     map[string]string
-	body      func() (io.Reader, error)
-	respBody  func(io.Reader) error
-	assert2xx bool
-	respLimit int64
-	retry     int
-	retryWait time.Duration
-	group     *RequestGroup
+	client       *http.Client
+	ctx          context.Context
+	timeout      time.Duration
+	url          string
+	baseUrl      string
+	headers      map[string]string
+	query        map[string]string
+	body         func() (io.Reader, error)
+	respBody     func(closer io.ReadCloser) error
+	assert2xx    bool
+	respLimit    int64
+	retry        int
+	retryWait    time.Duration
+	group        *RequestGroup
+	leakResponse bool
 }
 
 func NewRequest() *Request {
@@ -146,6 +149,18 @@ func (r *Request) BodyJSON(v any) *Request {
 			return nil, err
 		}
 
+		var debug bool
+		if r.group != nil {
+			debug = r.group.debugLog
+		}
+		if debug {
+			if _, ok := os.LookupEnv("XPC_SERVICE_NAME"); ok {
+				fmt.Println(string(b))
+			}
+
+			slog.Info("prepared JSON request body", "body", string(b))
+		}
+
 		return bytes.NewReader(b), nil
 	}
 
@@ -161,12 +176,26 @@ func (r *Request) Body(fn func() (io.Reader, error)) *Request {
 
 func (r *Request) To(fn func(r io.Reader) error) *Request {
 	if r.respLimit == 0 {
-		r.respBody = fn
+		r.respBody = func(closer io.ReadCloser) error {
+			return fn(closer)
+		}
 	} else {
-		r.respBody = func(body io.Reader) error {
+		r.respBody = func(body io.ReadCloser) error {
 			lr := io.LimitReader(body, r.respLimit)
 			return fn(lr)
 		}
+	}
+
+	return r
+}
+
+// ToCloser keeps the body open and leaks the entire returned response reader. The caller is responsible for closing
+// and releasing the associated resources.
+func (r *Request) ToCloser(body func(readCloser io.ReadCloser)) *Request {
+	r.leakResponse = true
+	r.respBody = func(closer io.ReadCloser) error {
+		body(closer)
+		return nil
 	}
 
 	return r
@@ -187,6 +216,18 @@ func (r *Request) ToJSON(v any) *Request {
 			buf, err := io.ReadAll(reader)
 			if err != nil {
 				return err
+			}
+
+			var debug bool
+			if r.group != nil {
+				debug = r.group.debugLog
+			}
+			if debug {
+				if _, ok := os.LookupEnv("XPC_SERVICE_NAME"); ok {
+					fmt.Println(string(buf))
+				}
+
+				slog.Info("received JSON response body", "body", string(buf))
 			}
 
 			err = json.Unmarshal(buf, v)
@@ -319,8 +360,13 @@ func (r *Request) Do(method string) error {
 
 		body = b
 	}
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	if !r.leakResponse {
+		// TODO it is unclear, how this should behave. We must actually couple the close of the leaked reader with this cancel to release earlier
+		// this way we don't have forced timeouts at all
+		c, cancel := context.WithTimeout(ctx, timeout)
+		ctx = c
+		defer cancel()
+	}
 
 	req, err := http.NewRequestWithContext(ctx, method, reqUrl, body)
 	if err != nil {
@@ -368,7 +414,9 @@ func (r *Request) Do(method string) error {
 		return fmt.Errorf("request failed: %w", err)
 	}
 
-	defer resp.Body.Close()
+	if !r.leakResponse {
+		defer resp.Body.Close()
+	}
 
 	if r.assert2xx {
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {

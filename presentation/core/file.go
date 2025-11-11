@@ -48,8 +48,9 @@ func (r *ReaderFile) SetMimeType(mime string) {
 	r.mime = mime
 }
 
-func (r *ReaderFile) SetName(name string) {
+func (r *ReaderFile) SetName(name string) *ReaderFile {
 	r.name = name
+	return r
 }
 
 func (r *ReaderFile) Name() string {

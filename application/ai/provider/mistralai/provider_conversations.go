@@ -91,10 +91,16 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 	conv.Instructions = opts.Instructions
 
 	entries, err := p.client().ListEntries(res.ConversationId)
+	if err != nil {
+		return conversation.Conversation{}, nil, err
+	}
 
 	var tmp []message.Message
 	for _, msg := range entries {
-		tmp = append(tmp, msg.Value.IntoMessage())
+		for _, value := range msg.Values {
+			tmp = append(tmp, value.IntoMessages()...)
+		}
+
 	}
 
 	return conv, tmp, nil
@@ -107,16 +113,17 @@ func (p *mistralConversations) Conversation(subject auth.Subject, id conversatio
 	}
 }
 
-func convInputToMistralInput(contents []message.Content) []Input {
-	var inputs []Input
+func convInputToMistralInput(contents []message.Content) InputBox {
+	var inputs []Entry
 	for _, content := range contents {
 		if content.Text.IsSome() {
 			inputs = append(inputs, MessageInputEntry{
-				Content: TextChunk{Text: content.Text.Unwrap()},
+				Object:  "entry",
+				Content: ChunkBox{Values: []Chunk{TextChunk{Text: content.Text.Unwrap()}}},
 				Role:    RoleUser,
 			})
 		}
 	}
 
-	return inputs
+	return InputBox{Values: inputs}
 }

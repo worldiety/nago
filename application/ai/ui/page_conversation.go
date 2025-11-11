@@ -131,7 +131,13 @@ func renderContent(wnd core.Window, msg message.Message) core.View {
 		return ui.Text(msg.MessageInput.Unwrap())
 	case msg.MessageOutput.IsSome():
 		return ui.Text(msg.MessageOutput.Unwrap())
+	case msg.ToolExecution.IsSome():
+		msg := msg.ToolExecution.Unwrap()
+		return ui.Text(msg.Type + ": " + msg.Arguments)
+	case msg.File.IsSome():
+		msg := msg.File.Unwrap()
+		return ui.Text("File: " + msg.Name + " (" + string(msg.ID) + ")\n" + string(msg.MimeType))
 	default:
-		return ui.Text(fmt.Sprintf("rendering not implemented: %+v", msg))
+		return ui.Text(fmt.Sprintf("rendering not implemented: %#v", msg))
 	}
 }

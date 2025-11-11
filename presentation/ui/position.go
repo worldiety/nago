@@ -32,6 +32,10 @@ const (
 	PositionSticky
 )
 
+const (
+	PositionRelative = PositionOffset
+)
+
 type Position struct {
 	Type PositionType
 

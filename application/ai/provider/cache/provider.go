@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
@@ -38,12 +39,17 @@ type Provider struct {
 	repoDocuments        document.Repository
 	repoConversations    conversation.Repository
 	repoMessages         message.Repository
+	repoFiles            file.Repository
 	docTextStore         blob.Store
+	fileStore            blob.Store
 	idxMsg               *data.CompositeIndex[conversation.ID, message.ID]
 	idxProvModels        *data.CompositeIndex[provider.ID, model.ID]
 	idxProvAgents        *data.CompositeIndex[provider.ID, agent.ID]
 	idxProvLibraries     *data.CompositeIndex[provider.ID, library.ID]
 	idxProvConversations *data.CompositeIndex[provider.ID, conversation.ID]
+	idxProvFiles         *data.CompositeIndex[provider.ID, file.ID]
+
+	buildInTools *cacheTools
 }
 
 func NewProvider(
@@ -54,12 +60,15 @@ func NewProvider(
 	repoDocuments document.Repository,
 	repoConversations conversation.Repository,
 	repoMessages message.Repository,
+	repoFiles file.Repository,
 	docTextStore blob.Store,
+	fileStore blob.Store,
 	idxMsg *data.CompositeIndex[conversation.ID, message.ID],
 	idxProvModels *data.CompositeIndex[provider.ID, model.ID],
 	idxProvAgents *data.CompositeIndex[provider.ID, agent.ID],
 	idxProvLibraries *data.CompositeIndex[provider.ID, library.ID],
 	idxProvConversations *data.CompositeIndex[provider.ID, conversation.ID],
+	idxProvFiles *data.CompositeIndex[provider.ID, file.ID],
 ) *Provider {
 	p := &Provider{
 		prov:                 other,
@@ -69,15 +78,26 @@ func NewProvider(
 		repoDocuments:        repoDocuments,
 		repoConversations:    repoConversations,
 		repoMessages:         repoMessages,
+		repoFiles:            repoFiles,
 		docTextStore:         docTextStore,
+		fileStore:            fileStore,
 		idxMsg:               idxMsg,
 		idxProvModels:        idxProvModels,
 		idxProvAgents:        idxProvAgents,
 		idxProvLibraries:     idxProvLibraries,
 		idxProvConversations: idxProvConversations,
+		idxProvFiles:         idxProvFiles,
+	}
+
+	p.buildInTools = &cacheTools{
+		parent: p,
 	}
 
 	return p
+}
+
+func (p *Provider) Tools() provider.Tools {
+	return p.buildInTools
 }
 
 // LoadAll downloads blindly all data into the given repositories. This may keep stale data and
@@ -215,6 +235,14 @@ func (p *Provider) Clear() error {
 	}
 
 	return nil
+}
+
+func (p *Provider) Files() option.Opt[provider.Files] {
+	if p.prov.Files().IsNone() {
+		return option.Opt[provider.Files]{}
+	}
+
+	return option.Some[provider.Files](&cacheFiles{parent: p})
 }
 
 func (p *Provider) Identity() provider.ID {

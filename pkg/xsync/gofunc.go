@@ -10,6 +10,7 @@ package xsync
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"runtime/debug"
 	"sync"
 )
@@ -32,6 +33,9 @@ func Go(fn func() error, onDone func(error)) *sync.WaitGroup {
 	wg.Go(func() {
 		defer func() {
 			if r := recover(); r != nil {
+				if _, ok := os.LookupEnv("XPC_SERVICE_NAME"); ok {
+					debug.PrintStack()
+				}
 				slog.Error(fmt.Sprintf("%v", r), slog.String("stack", string(debug.Stack())))
 				if onDone != nil {
 					onDone(fmt.Errorf("panic: %v", r))

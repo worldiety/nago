@@ -62,3 +62,12 @@ var (
 var (
 	PermFindAllModel = permission.DeclareFindAll[Stub]("nago.ai.model.find_all", "AI Model")
 )
+
+// File Permissions
+var (
+	PermFileFindAll  = permission.DeclareFindAll[Stub]("nago.ai.file.find_all", "AI File")
+	PermFileFindByID = permission.DeclareFindByID[Stub]("nago.ai.file.find_by_id", "AI File")
+	PermFileDelete   = permission.DeclareDeleteByID[Stub]("nago.ai.file.delete", "AI File")
+	PermFileGet      = permission.DeclareFindByID[Stub]("nago.ai.file.get_data", "AI File Data")
+	PermFilePut      = permission.DeclareCreate[Stub]("nago.ai.file.put_data", "AI File Data")
+)

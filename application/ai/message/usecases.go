@@ -9,6 +9,7 @@ package message
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
@@ -48,6 +49,7 @@ type Message struct {
 	MessageInput  option.Ptr[string]        `json:"messageInput"`
 	MessageOutput option.Ptr[string]        `json:"messageOutput"`
 	ToolExecution option.Ptr[ToolExecution] `json:"toolExecution"`
+	File          option.Ptr[file.File]     `json:"file"`
 }
 
 func (m Message) Identity() ID {

@@ -18,6 +18,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
@@ -200,6 +201,18 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 				stack = stack.Append(ChatMessage().Markdown(msg.MessageInput.Unwrap()).Style(style))
 			case msg.MessageOutput.IsSome():
 				stack = stack.Append(ChatMessage().Markdown(msg.MessageOutput.Unwrap()).Style(style))
+			case msg.File.IsSome():
+				f := msg.File.Unwrap()
+				switch f.MimeType {
+				case file.PNG:
+					fallthrough
+				case file.JPEG:
+					fallthrough
+				case file.GIF:
+					stack = stack.Append(ChatMessage().Image(f).Provider(c.provider))
+				default:
+					stack = stack.Append(ChatMessage().File(f).Provider(c.provider))
+				}
 
 			}
 
@@ -220,7 +233,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 		).
 		// chat field
 		Append(
-			ui.HStack(
+			ui.Stack(
 				ChatField(c.text).
 					Enabled(!pleaseWaitPresented.Get()).
 					Action(func() {

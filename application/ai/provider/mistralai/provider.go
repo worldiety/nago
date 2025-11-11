@@ -22,6 +22,7 @@ type mistralProvider struct {
 	agents        *mistralAgents
 	models        *mistralModels
 	conversations *mistralConversations
+	files         *mistralFiles
 }
 
 func NewProvider(id provider.ID, cfg Settings) provider.Provider {
@@ -47,7 +48,19 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 		parent: p,
 	}
 
+	p.files = &mistralFiles{
+		parent: p,
+	}
+
 	return p
+}
+
+func (p *mistralProvider) Files() option.Opt[provider.Files] {
+	return option.Some[provider.Files](p.files)
+}
+
+func (p *mistralProvider) Tools() provider.Tools {
+	return &mistralTools{}
 }
 
 func (p *mistralProvider) Conversations() option.Opt[provider.Conversations] {

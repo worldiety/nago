@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
@@ -35,6 +36,7 @@ var (
 	StrAgentTemperature  = i18n.MustString("nago.ai.admin.agent.temperature", i18n.Values{language.English: "Temperature", language.German: "Reproduzierbarkeit"})
 	StrAgentInstructions = i18n.MustString("nago.ai.admin.agent.instructions", i18n.Values{language.English: "Instructions", language.German: "Instruktionen"})
 	StrAgentModel        = i18n.MustString("nago.ai.admin.agent.model", i18n.Values{language.English: "Model", language.German: "Modell"})
+	StrAgentTools        = i18n.MustString("nago.ai.admin.agent.tools", i18n.Values{language.English: "Tools", language.German: "Tools"})
 )
 
 func PageAgent(wnd core.Window, uc ai.UseCases) core.View {
@@ -91,6 +93,7 @@ func formAgentSettings(wnd core.Window, prov provider.Provider, agents provider.
 		Model        model.ID          `label:"nago.ai.admin.agent.model" source:"prov-models"`
 		Instructions string            `label:"nago.ai.admin.agent.instructions" lines:"5"`
 		Temperature  agent.Temperature `label:"nago.ai.admin.agent.temperature"`
+		Tools        []tool.ID         `label:"nago.ai.admin.agent.tools" source:"prov-tools" dialogOptions:"larger"`
 		Libraries    []library.ID      `label:"nago.ai.admin.libraries" source:"prov-libs"`
 	}
 
@@ -110,6 +113,14 @@ func formAgentSettings(wnd core.Window, prov provider.Provider, agents provider.
 		return func(yield func(model.Model, error) bool) {}
 	})))
 
+	ctx = core.WithContext(ctx, core.ContextValue("prov-tools", form.AnyUseCaseList(func(subject auth.Subject) iter.Seq2[tool.Tool, error] {
+		if prov.Libraries().IsSome() {
+			return prov.Tools().All(subject)
+		}
+
+		return func(yield func(tool.Tool, error) bool) {}
+	})))
+
 	cfg := core.AutoState[EditForm](wnd).Init(func() EditForm {
 		return EditForm{
 			Name:         ag.Get().Name,
@@ -118,6 +129,7 @@ func formAgentSettings(wnd core.Window, prov provider.Provider, agents provider.
 			Instructions: ag.Get().Instructions,
 			Libraries:    ag.Get().Libraries,
 			Model:        ag.Get().Model,
+			Tools:        ag.Get().Tools,
 		}
 	})
 
@@ -135,6 +147,7 @@ func formAgentSettings(wnd core.Window, prov provider.Provider, agents provider.
 				Instructions: option.Some(frm.Instructions),
 				Libraries:    option.Some(frm.Libraries),
 				Model:        option.Some(frm.Model),
+				Tools:        option.Some(frm.Tools),
 			})
 			if err != nil {
 				alert.ShowBannerError(wnd, err)

@@ -9,15 +9,18 @@ package provider
 
 import (
 	"errors"
+	"io"
 	"iter"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/auth"
 )
 
@@ -39,12 +42,26 @@ type Provider interface {
 
 	Models() Models
 
+	// Tools list all possibly available parameterless build-in tools.
+	// Not all combinations with all models are allowed. We could
+	// include an allow list into the tool, however, that is usually not programmatically readable from provider APIs
+	// and the world is still moving too fast. We just omit that and leave it as a trial and error task for
+	// the user.
+	Tools() Tools
+
 	// Libraries returns the implementation, if this Provider supports native libraries.
 	Libraries() option.Opt[Libraries]
 
 	Agents() option.Opt[Agents]
 
 	Conversations() option.Opt[Conversations]
+
+	// Files interface to work with submitting files into the provider and reading generated files back.
+	Files() option.Opt[Files]
+}
+
+type Tools interface {
+	All(subject auth.Subject) iter.Seq2[tool.Tool, error]
 }
 
 type Models interface {
@@ -105,4 +122,12 @@ type Conversation interface {
 	// has finished and returns all input messages and the generated output messages which may require further
 	// processing work.
 	Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error)
+}
+
+type Files interface {
+	All(subject auth.Subject) iter.Seq2[file.File, error]
+	FindByID(subject auth.Subject, id file.ID) (option.Opt[file.File], error)
+	Delete(subject auth.Subject, id file.ID) error
+	Put(subject auth.Subject, opts file.CreateOptions) (file.File, error)
+	Get(subject auth.Subject, id file.ID) (option.Opt[io.ReadCloser], error)
 }

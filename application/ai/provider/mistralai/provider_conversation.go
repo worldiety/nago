@@ -31,7 +31,8 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 	var tmp []Input
 	if opts.MessageInput.IsSome() {
 		tmp = append(tmp, MessageInputEntry{
-			Content: TextChunk{Text: opts.MessageInput.Unwrap()},
+			Object:  "entry",
+			Content: ChunkBox{Values: []Chunk{TextChunk{Text: opts.MessageInput.Unwrap()}}},
 			Role:    "user", // TODO is that always correct?
 		})
 	}
@@ -64,7 +65,10 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 	}
 
 	for _, entry := range list {
-		msgs = append(msgs, entry.Value.IntoMessage())
+		for _, value := range entry.Values {
+			msgs = append(msgs, value.IntoMessages()...)
+		}
+
 	}
 
 	return msgs, nil
@@ -83,9 +87,15 @@ func (p *mistralMessages) All(subject auth.Subject) iter.Seq2[message.Message, e
 		}
 
 		for _, info := range resp {
-			if !yield(info.Value.IntoMessage(), nil) {
-				return
+			for _, value := range info.Values {
+				for _, m := range value.IntoMessages() {
+					if !yield(m, nil) {
+						return
+					}
+				}
+
 			}
+
 		}
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
@@ -23,6 +24,14 @@ import (
 type Provider struct {
 	id   provider.ID
 	name string
+}
+
+func (p *Provider) Files() option.Opt[provider.Files] {
+	return option.Opt[provider.Files]{}
+}
+
+func (p *Provider) Tools() provider.Tools {
+	return tools{}
 }
 
 func New(id provider.ID, name string) *Provider {
@@ -169,5 +178,14 @@ func (m models) All(subject auth.Subject) iter.Seq2[model.Model, error] {
 			Description:        "Parrots what you say",
 			DefaultTemperature: 0,
 		}, nil)
+	}
+}
+
+type tools struct {
+}
+
+func (t tools) All(subject auth.Subject) iter.Seq2[tool.Tool, error] {
+	return func(yield func(tool.Tool, error) bool) {
+
 	}
 }

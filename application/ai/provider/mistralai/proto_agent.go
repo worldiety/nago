@@ -52,7 +52,7 @@ type CompletionArgs struct {
 	PresencePenalty  *int     `json:"presence_penalty"`
 	FrequencyPenalty *int     `json:"frequency_penalty"`
 	Temperature      *float64 `json:"temperature"`
-	TopP             *int     `json:"top_p"`
+	TopP             *float64 `json:"top_p"`
 	MaxTokens        *int     `json:"max_tokens"`
 	RandomSeed       *int     `json:"random_seed"`
 	Prediction       *struct {

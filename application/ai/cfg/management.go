@@ -17,12 +17,14 @@ import (
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/libsync"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/provider/cache"
+	"go.wdy.de/nago/application/ai/rest"
 	uiai "go.wdy.de/nago/application/ai/ui"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	"go.wdy.de/nago/application/localization/rstring"
@@ -85,7 +87,17 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	blobTextStore, err := cfg.EntityStore("nago.ai.cache.document_text")
+	repoFiles, err := application.JSONRepository[file.File](cfg, "nago.ai.cache.file")
+	if err != nil {
+		return Management{}, err
+	}
+
+	blobTextStore, err := cfg.FileStore("nago.ai.cache.document_text")
+	if err != nil {
+		return Management{}, err
+	}
+
+	fileStore, err := cfg.FileStore("nago.ai.cache.file_data")
 	if err != nil {
 		return Management{}, err
 	}
@@ -120,6 +132,12 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 	idxProvConv := data.NewCompositeIndex[provider.ID, conversation.ID](idxProvConvStore)
 
+	idxProvFileStore, err := cfg.EntityStore("nago.ai.cache.idx_provider_file")
+	if err != nil {
+		return Management{}, err
+	}
+	idxProvFile := data.NewCompositeIndex[provider.ID, file.ID](idxProvFileStore)
+
 	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, func(provider provider.Provider) (provider.Provider, error) {
 		if !cacheEnabled {
 			return provider, nil
@@ -133,12 +151,15 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			repoDocuments,
 			repoConversations,
 			repoMessages,
+			repoFiles,
 			blobTextStore,
+			fileStore,
 			idxConvMsg,
 			idxProvMod,
 			idxProvAgents,
 			idxProvLibraries,
 			idxProvConv,
+			idxProvFile,
 		)
 
 		return prov, nil
@@ -244,6 +265,8 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.AddContextValue(core.ContextValue("", management.UseCases.FindProviderByID))
 	cfg.AddContextValue(core.ContextValue("", management.UseCases.FindProviderByName))
+
+	cfg.HandleFunc(rest.Endpoint, rest.NewFileEndpoint(ucAI.FindProviderByID))
 
 	slog.Info("installed AI module")
 	return management, nil

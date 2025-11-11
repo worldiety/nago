@@ -78,11 +78,14 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 	})
 
 	const innerFullHeight = "calc(100vh - 6rem - 1px)" // remember: this only works with NoFooter option for the according page path
-
+	large := wnd.Info().SizeClass >= core.SizeClassMedium
 	return ui.HStack(
-		ui.ScrollView(
-			Chats(prov, conv).Frame(ui.Frame{Width: ui.Full, MinHeight: innerFullHeight}),
-		).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
+		ui.If(
+			large,
+			ui.ScrollView(
+				Chats(prov, conv).Frame(ui.Frame{Width: ui.Full, MinHeight: innerFullHeight}),
+			).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
+		),
 
 		ui.ScrollView(
 			Chat(prov, conv, prompt).

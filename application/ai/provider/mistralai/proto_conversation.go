@@ -8,11 +8,11 @@
 package mistralai
 
 import (
-	"encoding/json"
 	"time"
 
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -55,14 +55,14 @@ func (c *Client) AppendConversation(conversationId string, req AppendConversatio
 }
 
 type CreateConversationRequest struct {
-	AgentID      string  `json:"agent_id,omitempty"`
-	Description  string  `json:"description,omitempty"`
-	Name         string  `json:"name,omitempty"`
-	Instructions string  `json:"instructions,omitempty"`
-	Model        string  `json:"model,omitempty"`
-	Store        bool    `json:"store"`
-	Stream       bool    `json:"stream"`
-	Inputs       []Input `json:"inputs,omitempty"`
+	AgentID      string   `json:"agent_id,omitempty"`
+	Description  string   `json:"description,omitempty"`
+	Name         string   `json:"name,omitempty"`
+	Instructions string   `json:"instructions,omitempty"`
+	Model        string   `json:"model,omitempty"`
+	Store        bool     `json:"store"`
+	Stream       bool     `json:"stream"`
+	Inputs       InputBox `json:"inputs,omitempty"`
 }
 
 type CreateConversationResponse struct {
@@ -150,7 +150,6 @@ func (c *Client) GetConversation(convId string) (ConversationInfo, error) {
 
 type Input interface {
 	Type() string
-	MarshalJSON() ([]byte, error)
 	isInput()
 }
 
@@ -162,32 +161,10 @@ const (
 )
 
 type MessageInputEntry struct {
-	Content Chunk  `json:"content,omitempty"`
-	Role    Role   `json:"role,omitempty"`
-	ID      string `json:"id,omitempty"`
-}
-
-func (e MessageInputEntry) MarshalJSON() ([]byte, error) {
-	type jsonInputEntry struct {
-		Content json.RawMessage `json:"content,omitempty"`
-		Role    Role            `json:"role,omitempty"`
-		ID      string          `json:"id,omitempty"`
-		Type    string          `json:"type,omitempty"`
-		Object  string          `json:"object,omitempty"`
-	}
-
-	raw, err := json.Marshal(e.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(jsonInputEntry{
-		Content: raw,
-		Role:    e.Role,
-		ID:      e.ID,
-		Type:    e.Type(),
-		Object:  "entry",
-	})
+	Content ChunkBox `json:"content,omitempty"`
+	Role    Role     `json:"role,omitempty"`
+	ID      string   `json:"id,omitempty"`
+	Object  string   `json:"object,omitempty"`
 }
 
 func (e MessageInputEntry) isInput() {}
@@ -196,37 +173,10 @@ func (e MessageInputEntry) Type() string {
 	return "message.input"
 }
 
-type Chunk interface {
-	Type() string
-	MarshalJSON() ([]byte, error)
-	isChunk()
+func (e MessageInputEntry) isEntry() {
+
 }
 
-type TextChunk struct {
-	Text string `json:"text"`
-}
-
-func (t TextChunk) Type() string {
-	return "text"
-}
-
-func (t TextChunk) isChunk() {}
-
-func (t TextChunk) MarshalJSON() ([]byte, error) {
-	const mistralApiDocIsJustWrongAgain = true
-	if mistralApiDocIsJustWrongAgain {
-		// TODO this sucks as hell, the api doc clearly tells us how a TextChunk must be encoded but the server rejects with 422, no extra inputs permitted
-		// TODO if you look at https://docs.mistral.ai/agents/agents you can see that the used encoding was never defined in the api docs and does not conform to the Chunk spec.
-		return json.Marshal(t.Text)
-	}
-
-	type jsonTextChunk struct {
-		Text string `json:"text"`
-		Type string `json:"type"`
-	}
-
-	return json.Marshal(jsonTextChunk{
-		Text: t.Text,
-		Type: t.Type(),
-	})
+func (e MessageInputEntry) IntoMessages() []message.Message {
+	return e.Content.IntoMessages(e.ID, message.Role(e.Role))
 }

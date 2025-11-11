@@ -129,14 +129,22 @@ func Write(store Writer, key string, src io.Reader) (written int64, err error) {
 		return objWriter.Put(context.Background(), key, src)
 	}
 
-	w, err := store.NewWriter(context.Background(), key)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	w, err := store.NewWriter(ctx, key)
 	if err != nil {
 		return 0, err
 	}
 
 	defer std.Try(w.Close, &err)
 
-	return io.Copy(w, src)
+	n, err := io.Copy(w, src)
+	if err != nil {
+		cancel() //cancel earlier to mark written data so far as stale
+	}
+
+	return n, err
 }
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
