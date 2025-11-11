@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -104,9 +105,12 @@ func (a AgentInfo) IntoAgent() agent.Agent {
 		Instructions: a.Instructions,
 	}
 
-	for _, tool := range a.Tools {
-		if tool.Type == ToolDocumentLibrary {
-			ag.Libraries = tool.Libraries
+	for _, t := range a.Tools {
+		switch t.Type {
+		case ToolDocumentLibrary:
+			ag.Libraries = t.Libraries
+		case ToolWebSearch, ToolWebSearchPremium, ToolCodeInterpreter, ToolImageGeneration:
+			ag.Tools = append(ag.Tools, tool.ID(t.Type))
 		}
 	}
 
