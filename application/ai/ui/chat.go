@@ -311,10 +311,16 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 									return err
 								}
 
-								slice := messages.Get()
-								slice = append(slice, msgs...)
-								messages.Set(slice)
-								messages.Invalidate()
+								// note that this is a workaround for broken append implementations
+								if len(msgs) == 0 {
+									messages.Reset()
+								} else {
+									slice := messages.Get()
+									slice = append(slice, msgs...)
+									messages.Set(slice)
+									messages.Invalidate()
+								}
+
 							}
 
 							return nil

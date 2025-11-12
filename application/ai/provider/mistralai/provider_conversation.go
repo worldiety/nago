@@ -9,7 +9,6 @@ package mistralai
 
 import (
 	"iter"
-	"log/slog"
 
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
@@ -30,7 +29,7 @@ type mistralMessages struct {
 func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error) {
 	tmp := convInputToMistralInput(p.client(), opts.Input).Values
 
-	resp, err := p.client().AppendConversation(string(p.id), AppendConversationRequest{
+	_, err := p.client().AppendConversation(string(p.id), AppendConversationRequest{
 		Inputs: tmp,
 		Store:  opts.CloudStore,
 		Stream: false,
@@ -40,31 +39,11 @@ func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOption
 		return nil, err
 	}
 
-	// TODO will request all messages again from the API but that may increase costs and certainly increase latency.
-	// TODO @Mistral Team please just go fix your API
-	_ = resp // ignore the incomplete and partial result and instead do...
-	if len(resp.Outputs) > 1 {
-		slog.Warn("@Torben: check if mistral fixed their API")
-	}
-	list, err := p.client().ListEntries(string(p.id))
-	if err != nil {
-		return nil, err
-	}
+	// the mistral API is not symmetric and input/output messages are not in-sync regarding the actual
+	// conversation history, therefore let us not pretend otherwise and instead tell the callee
+	// that we are broken by returning nil
 
-	var msgs []message.Message
-
-	if opts.Role == "" {
-		opts.Role = "user" // this API design makes me crazy, nothing is explained
-	}
-
-	for _, entry := range list {
-		for _, value := range entry.Values {
-			msgs = append(msgs, value.IntoMessages()...)
-		}
-
-	}
-
-	return msgs, nil
+	return nil, nil
 }
 
 func (p *mistralMessages) Identity() conversation.ID {

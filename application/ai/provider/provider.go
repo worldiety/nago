@@ -121,6 +121,8 @@ type Conversation interface {
 	// Append takes the given options and applies it for input processing. This method blocks until processing
 	// has finished and returns all input messages and the generated output messages which may require further
 	// processing work.
+	// If the implementation cannot provide the appended and responded messages properly,
+	// it should return a nil slice to indicate that the conversation must be loaded again.
 	Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error)
 }
 

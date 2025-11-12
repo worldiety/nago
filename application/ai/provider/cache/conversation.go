@@ -90,8 +90,21 @@ func (c cacheConversation) Append(subject auth.Subject, opts message.AppendOptio
 		return nil, err
 	}
 
+	brokenProvider := false
+	if msgs == nil {
+		// full repair logic
+		brokenProvider = true
+		for msg, err := range c.parent.prov.Conversations().Unwrap().Conversation(subject, c.id).All(subject) {
+			if err != nil {
+				return nil, err
+			}
+
+			msgs = append(msgs, msg)
+		}
+	}
+
 	for _, msg := range msgs {
-		// just start by checking if we already now that message.
+		// just start by checking if we already know that message.
 		// This is a repair-code for broken online-providers
 		optMsg, err := c.parent.repoMessages.FindByID(msg.ID)
 		if err != nil {
@@ -118,5 +131,9 @@ func (c cacheConversation) Append(subject auth.Subject, opts message.AppendOptio
 		}
 	}
 
+	if brokenProvider {
+		return nil, nil
+	}
+	
 	return msgs, nil
 }
