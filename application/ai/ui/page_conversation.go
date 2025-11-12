@@ -139,7 +139,10 @@ func renderContent(wnd core.Window, msg message.Message) core.View {
 		return ui.Text("File: " + msg.Name + " (" + string(msg.ID) + ")\n" + string(msg.MimeType))
 	case msg.DocumentURL.IsSome():
 		msg := msg.DocumentURL.Unwrap()
-		return ui.Text("Document-URL: " + msg.Name + " (" + string(msg.URL) + ")\n")
+		return ui.Text("Document-URL: " + msg.Name + " (" + string(msg.URL) + ")")
+	case msg.Reference.IsSome():
+		msg := msg.Reference.Unwrap()
+		return ui.Text("Referenz: " + msg.Title + " (" + string(msg.URL) + ")\n" + msg.Description + "\n" + string(msg.Tool))
 	default:
 		return ui.Text(fmt.Sprintf("rendering not implemented: %#v", msg))
 	}

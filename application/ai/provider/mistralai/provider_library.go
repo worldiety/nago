@@ -9,6 +9,7 @@ package mistralai
 
 import (
 	"fmt"
+	"io"
 	"iter"
 	"log/slog"
 	"strings"
@@ -96,4 +97,13 @@ func (p *mistralLibrary) FindByID(subject auth.Subject, id document.ID) (option.
 	}
 
 	return option.Some(doc.IntoDocument()), nil
+}
+
+func (p *mistralLibrary) Get(subject auth.Subject, id document.ID) (option.Opt[io.ReadCloser], error) {
+	reader, err := p.client().GetDocumentDownload(string(p.id), string(id))
+	if err != nil {
+		return option.Opt[io.ReadCloser]{}, err
+	}
+
+	return option.Some(reader), nil
 }

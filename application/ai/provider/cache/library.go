@@ -9,6 +9,7 @@ package cache
 
 import (
 	"fmt"
+	"io"
 	"iter"
 	"log/slog"
 	"os"
@@ -285,4 +286,9 @@ func (c cacheLibrary) FindByID(subject auth.Subject, id document.ID) (option.Opt
 	}
 
 	return option.Some(doc), nil
+}
+
+func (c cacheLibrary) Get(subject auth.Subject, id document.ID) (option.Opt[io.ReadCloser], error) {
+	// TODO should we store the file again? If source is our drive we would need to double the files and occupied space
+	return c.parent.prov.Libraries().Unwrap().Library(c.id).Get(subject, id)
 }

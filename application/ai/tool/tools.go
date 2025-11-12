@@ -11,6 +11,11 @@ import "go.wdy.de/nago/pkg/data"
 
 type ID string
 
+const (
+	// DocumentLibrary is the standard name for the default rag library system.
+	DocumentLibrary ID = "document_library"
+)
+
 type Tool struct {
 	ID          ID     `json:"id"`
 	Name        string `json:"name,omitempty"`

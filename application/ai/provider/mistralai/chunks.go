@@ -11,10 +11,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/message"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/pkg/xjson"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
@@ -25,6 +27,7 @@ var chunkVariants = []xjson.VariantOption{
 	xjson.Variant[ToolFileChunk]("tool_file"),
 	xjson.Variant[DocumentURLChunk]("document_url"),
 	xjson.Variant[FileChunk]("file"),
+	xjson.Variant[ToolReferenceChunk]("tool_reference"),
 }
 
 type ChunkBox struct {
@@ -34,7 +37,15 @@ type ChunkBox struct {
 func (c ChunkBox) IntoMessages(id string, role message.Role) []message.Message {
 	var tmp []message.Message
 	now := xtime.Now()
-	for _, value := range c.Values {
+	for idx, value := range c.Values {
+		var id = id
+		if len(c.Values) > 1 {
+			// we are flattening the nested responses. This may be a bad idea, however it simplifies everything
+			if idx > 0 {
+				id = id + "_" + strconv.Itoa(idx)
+			}
+		}
+
 		switch v := value.(type) {
 		case TextChunk:
 			tmp = append(tmp, message.Message{
@@ -75,6 +86,20 @@ func (c ChunkBox) IntoMessages(id string, role message.Role) []message.Message {
 				CreatedAt:   now,
 				Role:        role,
 				DocumentURL: option.Pointer(&doc),
+			})
+		case ToolReferenceChunk:
+			ref := message.Reference{
+				Tool:        tool.ID(v.Tool),
+				Title:       v.Title,
+				URL:         core.URI(v.Url),
+				Description: v.Description,
+			}
+
+			tmp = append(tmp, message.Message{
+				ID:        message.ID(id),
+				CreatedAt: now,
+				Role:      role,
+				Reference: option.Pointer(&ref),
 			})
 		default:
 			panic(fmt.Errorf("implement me %T", v))
@@ -157,3 +182,13 @@ type DocumentURLChunk struct {
 }
 
 func (DocumentURLChunk) isChunk() {}
+
+type ToolReferenceChunk struct {
+	Tool        string `json:"tool"`
+	Title       string `json:"title"`
+	Url         string `json:"url"`
+	Favicon     any    `json:"favicon"`
+	Description string `json:"description"`
+}
+
+func (ToolReferenceChunk) isChunk() {}

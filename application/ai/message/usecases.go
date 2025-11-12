@@ -10,6 +10,7 @@ package message
 import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/file"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
@@ -48,6 +49,7 @@ type Message struct {
 	MessageOutput option.Ptr[string]        `json:"messageOutput,omitzero"`
 	ToolExecution option.Ptr[ToolExecution] `json:"toolExecution,omitzero"`
 	DocumentURL   option.Ptr[DocumentURL]   `json:"documentUrl,omitzero"`
+	Reference     option.Ptr[Reference]     `json:"ref,omitzero"`
 	File          option.Ptr[file.File]     `json:"file"`
 }
 
@@ -65,4 +67,11 @@ type ToolExecution struct {
 type DocumentURL struct {
 	Name string   `json:"name,omitempty"`
 	URL  core.URI `json:"url,omitempty"`
+}
+
+type Reference struct {
+	Tool        tool.ID  `json:"tool,omitempty"`
+	Title       string   `json:"title,omitempty"`
+	URL         core.URI `json:"url,omitempty"`
+	Description string   `json:"description,omitempty"`
 }

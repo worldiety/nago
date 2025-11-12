@@ -9,6 +9,7 @@ package uiai
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -18,11 +19,14 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
+	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/tool"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xsync"
@@ -223,6 +227,42 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 					stack = stack.Append(ChatMessage().File(f).Provider(c.provider))
 				}
 
+			case msg.Reference.IsSome():
+				ref := msg.Reference.Unwrap()
+				view := ChatMessage().Markdown(fmt.Sprintf("**%s**\n> %s\n", ref.Title, ref.Description))
+				if ref.Tool == tool.DocumentLibrary {
+					view = view.Download(func() {
+						wnd.ExportFiles(core.ExportFilesOptions{
+							Files: []core.File{
+								core.NewReaderFile(func() (io.ReadCloser, error) {
+									// TODO this does not make sense, however we currently don't know better with Mistral
+									for lib, err := range c.provider.Libraries().Unwrap().All(user.SU()) {
+										if err != nil {
+											return nil, err
+										}
+
+										optReader, err := c.provider.Libraries().Unwrap().Library(lib.ID).Get(wnd.Subject(), document.ID(ref.URL))
+										if err != nil {
+											slog.Warn("trial-and-error ai source reference download: not found in library", "lib", lib.ID, "doc", ref.URL, "err", err.Error())
+											continue
+										}
+
+										if optReader.IsNone() {
+											slog.Warn("trial-and-error ai source reference download: not found in library", "lib", lib.ID, "doc", ref.URL)
+											continue
+										}
+
+										return optReader.Unwrap(), nil
+									}
+
+									return nil, fmt.Errorf("no ai library source has that document: %s", ref.URL)
+
+								}).SetName(ref.Title),
+							},
+						})
+					})
+				}
+				stack = stack.Append(view)
 			}
 
 			return stack.Alignment(align).FullWidth()

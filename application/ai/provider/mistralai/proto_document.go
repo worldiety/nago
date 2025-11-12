@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/core"
 )
 
 type DocumentInfo struct {
@@ -203,4 +204,38 @@ func (c *Client) GetDocumentStatus(libId, docId string) (document.ProcessingStat
 		Get()
 
 	return resp.ProcessingStatus, err
+}
+
+func (c *Client) GetDocumentSignedURL(libID, fileID string) (core.URI, error) {
+	var resp string
+	err := c.newReq().
+		URL("libraries/" + libID + "/documents/" + fileID + "/signed-url").
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return core.URI(resp), err
+}
+
+func (c *Client) GetDocumentDownload(libID, fileID string) (io.ReadCloser, error) {
+	// TODO this endpoint does not exist, thus emulate it via download link
+	uri, err := c.GetDocumentSignedURL(libID, fileID)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp io.ReadCloser
+	err = c.newReq().
+		BaseURL("").
+		URL(string(uri)). // note that we got an absolute URL
+		Assert2xx(true).
+		//BearerAuthentication(c.token). // note that we got a signed request
+		ToCloser(func(readCloser io.ReadCloser) {
+			resp = readCloser
+		}).
+		Get()
+
+	return resp, err
 }

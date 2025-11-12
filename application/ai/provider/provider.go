@@ -89,6 +89,8 @@ type Library interface {
 	TextContentByID(subject auth.Subject, id document.ID) (option.Opt[string], error)
 	StatusByID(subject auth.Subject, id document.ID) (option.Opt[document.ProcessingStatus], error)
 	FindByID(subject auth.Subject, id document.ID) (option.Opt[document.Document], error)
+
+	Get(subject auth.Subject, id document.ID) (option.Opt[io.ReadCloser], error)
 }
 
 type Agents interface {

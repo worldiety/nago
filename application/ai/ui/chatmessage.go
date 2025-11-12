@@ -38,6 +38,7 @@ type TChatMessage struct {
 	file        file.File
 	fileAsImage bool
 	prov        provider.Provider
+	download    func()
 }
 
 func ChatMessage() TChatMessage {
@@ -52,6 +53,11 @@ func (c TChatMessage) Text(text string) TChatMessage {
 func (c TChatMessage) Markdown(text string) TChatMessage {
 	c.text = text
 	c.markdown = true
+	return c
+}
+
+func (c TChatMessage) Download(fn func()) TChatMessage {
+	c.download = fn
 	return c
 }
 
@@ -152,6 +158,9 @@ func (c TChatMessage) Render(ctx core.RenderContext) core.RenderNode {
 		}(),
 
 		ui.If(len(c.ico) != 0, ui.ImageIcon(c.ico)),
+		ui.If(c.download != nil, ui.HStack(
+			ui.TertiaryButton(c.download).PreIcon(icons.Download).AccessibilityLabel(rstring.ActionDownload.Get(wnd)),
+		).FullWidth()),
 	).
 		BackgroundColor(color).
 		Border(ui.Border{}.Width(ui.L1).Color(ui.M5).Radius(ui.L24)).
