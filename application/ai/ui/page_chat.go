@@ -16,14 +16,41 @@ import (
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/markdown"
 	"golang.org/x/text/language"
 )
 
 var (
-	StrHowCanXHelp = i18n.MustVarString("nago.ai.chat.help_x", i18n.Values{language.English: "How can {name} help you today?", language.German: "Wie kann {name} Dir heute weiterhelfen?"})
+	StrHowCanXHelp       = i18n.MustVarString("nago.ai.chat.help_x", i18n.Values{language.English: "How can {name} help you today?", language.German: "Wie kann {name} Dir heute weiterhelfen?"})
+	StrHowItWorksDetails = i18n.MustString("nago.ai.chat.how_it_works_details", i18n.Values{
+		language.English: `## 1. Describe the issue and ask your question.
+Write down what the issue is in your own words – the more specific you are, the more accurate the answer will be.
+
+## 2. Upload any relevant documents.
+Images, presentations, tables, photos, etc. It is best to use digitally generated PDFs, not scans. Vary your strategies when uploading to get the best results.
+
+## 3. Wait for the result.
+The AI analyses your request in seconds and provides you with the best context-specific advice on how to proceed.
+
+**Tip**: You can ask questions, add details or continue the chat at any time – the AI stays on topic.
+
+Translated with DeepL.com (free version)`,
+
+		language.German: `## 1. Sachverhalt beschreiben und Frage stellen.
+Schreib in deinen Worten, worum es geht – je konkreter du Inhalte beschreibst, desto präziser die Antwort.
+
+## 2. Dokument(e) hochladen, wenn vorhanden.
+Bilder, Präsentationen, Tabellen, Fotos, etc. Verwende am besten digital erzeugte PDFs, keine Scans. Variiere deine Strategien beim Hochladen, um das beste Ergebnis zu erhalten.
+
+## 3. Ergebnis abwarten.
+Die KI analysiert dein Anliegen in Sekunden und liefert dir die im Kontext besten Hinweise wie du weiter machen kannst.
+
+**Tipp**: Du kannst jederzeit nachfragen, Details ergänzen oder den Chatverlauf fortsetzen – die KI bleibt im Thema.`,
+	})
 )
 
 func PageChat(wnd core.Window, uc ai.UseCases) core.View {
@@ -77,9 +104,11 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 		return conversation.ID(wnd.Values()["conversation"])
 	})
 
+	helpPresented := core.AutoState[bool](wnd)
 	const innerFullHeight = "calc(100vh - 6rem - 1px)" // remember: this only works with NoFooter option for the according page path
 	large := wnd.Info().SizeClass >= core.SizeClassMedium
 	return ui.HStack(
+		dialogHelp(wnd, helpPresented),
 		ui.If(
 			large,
 			ui.ScrollView(
@@ -95,6 +124,11 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 					CloudStore: true,
 				}).
 				Teaser(teaser(wnd, prov)).
+				More(
+					ui.SecondaryButton(func() {
+						helpPresented.Set(true)
+					}).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
+				).
 				Padding(ui.Padding{}.All(ui.L16)).
 				Frame(ui.Frame{Width: ui.Full, Height: ui.Full, MinHeight: innerFullHeight}),
 		).ScrollToView("end-of-chat", ui.ScrollAnimationSmooth).
@@ -108,4 +142,13 @@ func teaser(wnd core.Window, prov provider.Provider) core.View {
 			Font(ui.DisplayLarge).
 			Frame(ui.Frame{MaxWidth: "33%"}),
 	).FullWidth().Alignment(ui.Leading)
+}
+
+func dialogHelp(wnd core.Window, presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	body := markdown.Render(markdown.Options{RichText: true, TrimParagraph: true}, []byte(StrHowItWorksDetails.Get(wnd)))
+	return alert.Dialog(rstring.LabelHowItWorks.Get(wnd), body, presented, alert.Ok(), alert.Larger())
 }

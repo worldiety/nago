@@ -116,6 +116,7 @@ type TChat struct {
 	startOptions StartOptions
 	frame        ui.Frame
 	teaser       core.View
+	more         core.View
 }
 
 func Chat(provider provider.Provider, conv *core.State[conversation.ID], text *core.State[string]) TChat {
@@ -134,6 +135,12 @@ func (c TChat) Frame(frame ui.Frame) TChat {
 
 func (c TChat) StartOptions(opts StartOptions) TChat {
 	c.startOptions = opts
+	return c
+}
+
+// More is placed in-line or beneath the chat field, where the user enters his prompt.
+func (c TChat) More(view core.View) TChat {
+	c.more = view
 	return c
 }
 
@@ -362,8 +369,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 					Enabled(c.provider.Files().IsSome()).
 					PreIcon(icons.Upload).
 					Frame(ui.Frame{MinWidth: "12rem"}),
-
-				ui.SecondaryButton(nil).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
+				c.more,
 			).Gap(ui.L8).
 				FullWidth(),
 		).
