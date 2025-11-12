@@ -17,11 +17,14 @@ import (
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/pkg/xjson"
 	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/core"
 )
 
 var chunkVariants = []xjson.VariantOption{
 	xjson.Variant[TextChunk]("text"),
 	xjson.Variant[ToolFileChunk]("tool_file"),
+	xjson.Variant[DocumentURLChunk]("document_url"),
+	xjson.Variant[FileChunk]("file"),
 }
 
 type ChunkBox struct {
@@ -61,6 +64,17 @@ func (c ChunkBox) IntoMessages(id string, role message.Role) []message.Message {
 				CreatedAt: now,
 				Role:      role,
 				File:      option.Pointer(&f),
+			})
+		case DocumentURLChunk:
+			doc := message.DocumentURL{
+				Name: v.Name,
+				URL:  core.URI(v.Url),
+			}
+			tmp = append(tmp, message.Message{
+				ID:          message.ID(id),
+				CreatedAt:   now,
+				Role:        role,
+				DocumentURL: option.Pointer(&doc),
 			})
 		default:
 			panic(fmt.Errorf("implement me %T", v))
@@ -120,11 +134,26 @@ type TextChunk struct {
 func (TextChunk) isChunk() {}
 
 type ToolFileChunk struct {
-	Type     string `json:"type"`
-	Tool     string `json:"tool"`
-	FileId   string `json:"file_id"`
-	FileName string `json:"file_name"`
-	FileType string `json:"file_type"`
+	Type     string `json:"type,omitempty"`
+	Tool     string `json:"tool,omitempty"`
+	FileId   string `json:"file_id,omitempty"`
+	FileName string `json:"file_name,omitempty"`
+	FileType string `json:"file_type,omitempty"`
 }
 
 func (ToolFileChunk) isChunk() {}
+
+// FileChunk does not exist for beta conversation API, however the ToolFileChunk as input does not work either
+// and also does not make sense at all.
+type FileChunk struct {
+	FileId string `json:"file_id,omitempty"`
+}
+
+func (FileChunk) isChunk() {}
+
+type DocumentURLChunk struct {
+	Name string `json:"document_name"`
+	Url  string `json:"document_url"`
+}
+
+func (DocumentURLChunk) isChunk() {}

@@ -25,7 +25,7 @@ func (c *Client) DeleteConversation(id string) error {
 }
 
 type AppendConversationRequest struct {
-	Inputs []Input `json:"inputs,omitempty"`
+	Inputs []Entry `json:"inputs,omitempty"`
 	Store  bool    `json:"store"`
 	Stream bool    `json:"stream"`
 }
@@ -146,11 +146,6 @@ func (c *Client) GetConversation(convId string) (ConversationInfo, error) {
 		Get()
 
 	return resp, err
-}
-
-type Input interface {
-	Type() string
-	isInput()
 }
 
 type Role string

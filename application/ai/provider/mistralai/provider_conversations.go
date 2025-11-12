@@ -10,6 +10,8 @@ package mistralai
 import (
 	"fmt"
 	"iter"
+	"log/slog"
+	"path/filepath"
 	"time"
 
 	"github.com/worldiety/option"
@@ -73,7 +75,7 @@ func (p *mistralConversations) Create(subject auth.Subject, opts conversation.Cr
 		Instructions: instructs,
 		Store:        opts.CloudStore,
 		Stream:       false,
-		Inputs:       convInputToMistralInput(opts.Input),
+		Inputs:       convInputToMistralInput(p.client(), opts.Input),
 	})
 
 	if err != nil {
@@ -113,7 +115,7 @@ func (p *mistralConversations) Conversation(subject auth.Subject, id conversatio
 	}
 }
 
-func convInputToMistralInput(contents []message.Content) InputBox {
+func convInputToMistralInput(cl *Client, contents []message.Input) InputBox {
 	var inputs []Entry
 	for _, content := range contents {
 		if content.Text.IsSome() {
@@ -121,6 +123,55 @@ func convInputToMistralInput(contents []message.Content) InputBox {
 				Object:  "entry",
 				Content: ChunkBox{Values: []Chunk{TextChunk{Text: content.Text.Unwrap()}}},
 				Role:    RoleUser,
+			})
+		}
+
+		if content.File.IsSome() {
+			f := content.File.Unwrap()
+
+			url, err := cl.GetSignedURL(string(f.ID))
+			if err != nil {
+				slog.Error("failed to fetch url for file", "id", f.ID, "err", err)
+				continue
+			}
+
+			inputs = append(inputs, MessageInputEntry{
+				Object: "entry",
+				Content: ChunkBox{Values: []Chunk{
+					DocumentURLChunk{
+						Name: f.Name,
+						Url:  string(url),
+					},
+				}},
+				Role: RoleUser,
+			})
+
+			// TODO this won't work. Don't know how to connect existing file api and beta conversation input, seems not to be possible
+			/*inputs = append(inputs, MessageInputEntry{
+				Object: "entry",
+				Content: ChunkBox{Values: []Chunk{
+					ToolFileChunk{
+						Tool:     "document_library",
+						FileId:   string(fid),
+						FileName: "abc.pdf",
+						FileType: "application/pdf",
+					},
+				}},
+				Role: RoleUser,
+			})*/
+		}
+
+		if content.URL.IsSome() {
+			url := content.URL.Unwrap()
+			inputs = append(inputs, MessageInputEntry{
+				Object: "entry",
+				Content: ChunkBox{Values: []Chunk{
+					DocumentURLChunk{
+						Name: filepath.Base(string(url)),
+						Url:  string(url),
+					},
+				}},
+				Role: RoleUser,
 			})
 		}
 	}

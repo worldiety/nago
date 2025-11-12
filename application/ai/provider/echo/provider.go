@@ -87,13 +87,28 @@ func (c conversations) Create(subject auth.Subject, opts conversation.CreateOpti
 	var res []message.Message
 	for _, m := range opts.Input {
 
-		res = append(res, message.Message{
-			ID:           data.RandIdent[message.ID](),
-			CreatedAt:    xtime.Now(),
-			CreatedBy:    subject.ID(),
-			Role:         message.User,
-			MessageInput: m.Text,
-		})
+		if m.Text.IsSome() {
+			text := m.Text.Unwrap()
+			res = append(res, message.Message{
+				ID:           data.RandIdent[message.ID](),
+				CreatedAt:    xtime.Now(),
+				CreatedBy:    subject.ID(),
+				Role:         message.User,
+				MessageInput: option.Pointer(&text),
+			})
+		}
+
+		if m.File.IsSome() {
+			f := m.File.Unwrap()
+			res = append(res, message.Message{
+				ID:        data.RandIdent[message.ID](),
+				CreatedAt: xtime.Now(),
+				CreatedBy: subject.ID(),
+				Role:      message.User,
+				File:      option.Pointer(&f),
+			})
+		}
+
 	}
 
 	for _, m := range opts.Input {
@@ -143,26 +158,29 @@ func (e echoConv) All(subject auth.Subject) iter.Seq2[message.Message, error] {
 func (e echoConv) Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error) {
 	var res []message.Message
 
-	res = append(res, message.Message{
-		ID:           data.RandIdent[message.ID](),
-		CreatedAt:    xtime.Now(),
-		CreatedBy:    subject.ID(),
-		Role:         message.User,
-		MessageInput: opts.MessageInput,
-	})
+	for _, m := range opts.Input {
+		if m.Text.IsSome() {
+			text := "echo: " + m.Text.Unwrap()
+			res = append(res, message.Message{
+				ID:           data.RandIdent[message.ID](),
+				CreatedAt:    xtime.Now(),
+				CreatedBy:    subject.ID(),
+				Role:         message.User,
+				MessageInput: option.Pointer(&text),
+			})
+		}
 
-	tmp := "hello echo: "
-	if opts.MessageInput.IsSome() {
-		tmp += opts.MessageInput.Unwrap()
+		if m.File.IsSome() {
+			f := m.File.Unwrap()
+			res = append(res, message.Message{
+				ID:        data.RandIdent[message.ID](),
+				CreatedAt: xtime.Now(),
+				CreatedBy: subject.ID(),
+				Role:      message.User,
+				File:      option.Pointer(&f),
+			})
+		}
 	}
-
-	res = append(res, message.Message{
-		ID:            data.RandIdent[message.ID](),
-		CreatedAt:     xtime.Now(),
-		CreatedBy:     subject.ID(),
-		Role:          message.AssistantRole,
-		MessageOutput: option.Pointer(&tmp),
-	})
 
 	return res, nil
 }

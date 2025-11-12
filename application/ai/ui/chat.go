@@ -152,6 +152,8 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 
 	conversations := c.provider.Conversations().Unwrap()
 
+	pendingUploadFiles := core.DerivedState[[]file.File](c.conv, "-upload-files")
+
 	messages := core.DerivedState[[]message.Message](c.conv, "-messages").Init(func() []message.Message {
 		if c.conv.Get() != "" {
 			optConv, err := conversations.FindByID(wnd.Subject(), c.conv.Get())
@@ -231,6 +233,10 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 				).FullWidth().Alignment(ui.Leading),
 			),
 		).
+		// area where uploaded but not yet sent files can be seen
+		Append(
+			ChatUploads(pendingUploadFiles),
+		).
 		// chat field
 		Append(
 			ui.Stack(
@@ -247,16 +253,23 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 
 								// create a new conversation
 								tmp := c.text.Get()
+								inputs := []message.Input{
+									{
+										Text: option.Some(tmp),
+									},
+								}
+
+								for _, f := range pendingUploadFiles.Get() {
+									inputs = append(inputs, message.Input{
+										File: option.Some(f),
+									})
+								}
 
 								cv, msgs, err := conversations.Create(wnd.Subject(), conversation.CreateOptions{
-									Model: modelID,
-									Agent: agentID,
-									Name:  tmp,
-									Input: []message.Content{
-										{
-											Text: option.Pointer(&tmp),
-										},
-									},
+									Model:      modelID,
+									Agent:      agentID,
+									Name:       tmp,
+									Input:      inputs,
 									CloudStore: c.startOptions.CloudStore,
 								})
 								if err != nil {
@@ -271,9 +284,21 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 							} else {
 								// append to existing conversation
 								tmp := c.text.Get()
+								inputs := []message.Input{
+									{
+										Text: option.Some(tmp),
+									},
+								}
+
+								for _, f := range pendingUploadFiles.Get() {
+									inputs = append(inputs, message.Input{
+										File: option.Some(f),
+									})
+								}
+
 								msgs, err := conversations.Conversation(wnd.Subject(), c.conv.Get()).Append(wnd.Subject(), message.AppendOptions{
-									MessageInput: option.Pointer(&tmp),
-									CloudStore:   c.startOptions.CloudStore,
+									Input:      inputs,
+									CloudStore: c.startOptions.CloudStore,
 								})
 								if err != nil {
 									return err
@@ -300,6 +325,7 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 									return
 								} else {
 									c.text.Set("")
+									pendingUploadFiles.Set(nil)
 								}
 
 							}, time.Millisecond*500) // we got some state failures in practice, probably caused by the debounce time of the input text field which is 500ms by default
@@ -307,7 +333,36 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 						})
 
 					}),
-				ui.PrimaryButton(nil).Title(rstring.ActionFileUpload.Get(wnd)).PreIcon(icons.Upload).Frame(ui.Frame{MinWidth: "12rem"}),
+				ui.PrimaryButton(func() {
+					wnd.ImportFiles(core.ImportFilesOptions{
+						Multiple: true,
+						OnCompletion: func(files []core.File) {
+							for _, f := range files {
+								aiFile, err := c.provider.Files().Unwrap().Put(wnd.Subject(), file.CreateOptions{
+									Name: f.Name(),
+									Open: f.Open,
+								})
+
+								if err != nil {
+									alert.ShowBannerError(wnd, err)
+									return
+								}
+
+								wnd.Post(func() {
+									slice := pendingUploadFiles.Get()
+									slice = append(slice, aiFile)
+									pendingUploadFiles.Set(slice) // equals will miss the update
+									pendingUploadFiles.Invalidate()
+								})
+
+							}
+						},
+					})
+				}).Title(rstring.ActionFileUpload.Get(wnd)).
+					Enabled(c.provider.Files().IsSome()).
+					PreIcon(icons.Upload).
+					Frame(ui.Frame{MinWidth: "12rem"}),
+
 				ui.SecondaryButton(nil).Title(rstring.LabelHowItWorks.Get(wnd)).Frame(ui.Frame{MinWidth: "12rem"}),
 			).Gap(ui.L8).
 				FullWidth(),

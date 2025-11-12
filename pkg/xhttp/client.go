@@ -154,7 +154,7 @@ func (r *Request) BodyJSON(v any) *Request {
 			debug = r.group.debugLog
 		}
 		if debug {
-			if _, ok := os.LookupEnv("XPC_SERVICE_NAME"); ok {
+			if DevelopmentBuild() {
 				fmt.Println(string(b))
 			}
 
@@ -223,7 +223,7 @@ func (r *Request) ToJSON(v any) *Request {
 				debug = r.group.debugLog
 			}
 			if debug {
-				if _, ok := os.LookupEnv("XPC_SERVICE_NAME"); ok {
+				if DevelopmentBuild() {
 					fmt.Println(string(buf))
 				}
 
@@ -420,8 +420,14 @@ func (r *Request) Do(method string) error {
 
 	if r.assert2xx {
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
-			lr := io.LimitReader(resp.Body, 4*1024)
+			lr := io.LimitReader(resp.Body, 1024*1024)
 			buf, _ := io.ReadAll(lr)
+
+			if grp := r.group; grp != nil {
+				if grp.debugLog && DevelopmentBuild() {
+					fmt.Println(string(buf))
+				}
+			}
 
 			return UnexpectedStatusCodeError{resp.StatusCode, buf}
 		}
@@ -456,4 +462,10 @@ func (e ErrorWithBody) Error() string {
 
 func (e ErrorWithBody) Unwrap() error {
 	return e.Cause
+}
+
+// DevelopmentBuild returns true if this process is likely run on a developers machine
+func DevelopmentBuild() bool {
+	_, ok := os.LookupEnv("XPC_SERVICE_NAME")
+	return ok
 }

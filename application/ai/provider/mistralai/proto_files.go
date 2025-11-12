@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/pkg/xhttp"
 	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/core"
 )
 
 type FileSchema struct {
@@ -90,6 +91,11 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (FileSchema, erro
 		return FileSchema{}, err
 	}
 
+	// TODO important to tell the API what this is. OCR is the only thing which accepts arbitrary files
+	if err := writer.WriteField("purpose", "ocr"); err != nil {
+		return FileSchema{}, err
+	}
+
 	if err := writer.Close(); err != nil {
 		return FileSchema{}, err
 	}
@@ -137,4 +143,19 @@ func (c *Client) DownloadFile(fileId string) (io.ReadCloser, error) {
 		Get()
 
 	return resp, err
+}
+
+func (c *Client) GetSignedURL(fileId string) (core.URI, error) {
+	var resp struct {
+		URL core.URI `json:"url"`
+	}
+	err := c.newReq().
+		URL("files/" + fileId + "/url").
+		Assert2xx(true).
+		BearerAuthentication(c.token).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return resp.URL, err
 }

@@ -28,14 +28,7 @@ type mistralMessages struct {
 // though they were processed and got already identifiers etc. We currently just assign a fake identifier
 // and return the input messages, however that is actually not what someone would expect.
 func (p *mistralMessages) Append(subject auth.Subject, opts message.AppendOptions) ([]message.Message, error) {
-	var tmp []Input
-	if opts.MessageInput.IsSome() {
-		tmp = append(tmp, MessageInputEntry{
-			Object:  "entry",
-			Content: ChunkBox{Values: []Chunk{TextChunk{Text: opts.MessageInput.Unwrap()}}},
-			Role:    "user", // TODO is that always correct?
-		})
-	}
+	tmp := convInputToMistralInput(p.client(), opts.Input).Values
 
 	resp, err := p.client().AppendConversation(string(p.id), AppendConversationRequest{
 		Inputs: tmp,

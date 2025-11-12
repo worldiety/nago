@@ -41,7 +41,7 @@ type CreateOptions struct {
 	Description  string
 	Instructions string
 	// Input is a slice of union types of various content types. This must not be empty.
-	Input []message.Content `json:"input,omitempty"`
+	Input []message.Input `json:"input,omitempty"`
 	// CloudStore indicates if the conversation should be stored and retrievable if the provider uses a cloud
 	// backend.
 	CloudStore bool

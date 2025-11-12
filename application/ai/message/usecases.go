@@ -13,18 +13,16 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
+	"go.wdy.de/nago/presentation/core"
 )
 
 type ID string
 
-// InputText is a text message usually created by a human.
-type InputText struct {
-	Text string
-}
-
-// deprecated
-type Content struct {
-	Text option.Ptr[string] `json:"text,omitzero"`
+// Input is a content usually created by a human.
+type Input struct {
+	Text option.Opt[string]    `json:"text,omitzero"`
+	File option.Opt[file.File] `json:"file,omitzero"`
+	URL  option.Opt[core.URI]  `json:"url,omitzero"`
 }
 
 type Role string
@@ -35,9 +33,9 @@ const (
 )
 
 type AppendOptions struct {
-	Role         Role
-	MessageInput option.Ptr[string]
-	CloudStore   bool
+	Role       Role
+	Input      []Input
+	CloudStore bool
 }
 
 type Message struct {
@@ -46,9 +44,10 @@ type Message struct {
 	CreatedBy user.ID                `json:"createdBy"`
 
 	Role          Role                      `json:"role"`
-	MessageInput  option.Ptr[string]        `json:"messageInput"`
-	MessageOutput option.Ptr[string]        `json:"messageOutput"`
-	ToolExecution option.Ptr[ToolExecution] `json:"toolExecution"`
+	MessageInput  option.Ptr[string]        `json:"messageInput,omitzero"`
+	MessageOutput option.Ptr[string]        `json:"messageOutput,omitzero"`
+	ToolExecution option.Ptr[ToolExecution] `json:"toolExecution,omitzero"`
+	DocumentURL   option.Ptr[DocumentURL]   `json:"documentUrl,omitzero"`
 	File          option.Ptr[file.File]     `json:"file"`
 }
 
@@ -59,6 +58,11 @@ func (m Message) Identity() ID {
 type Repository data.Repository[Message, ID]
 
 type ToolExecution struct {
-	Type      string
-	Arguments string
+	Type      string `json:"type,omitempty"`
+	Arguments string `json:"arguments,omitempty"`
+}
+
+type DocumentURL struct {
+	Name string   `json:"name,omitempty"`
+	URL  core.URI `json:"url,omitempty"`
 }
