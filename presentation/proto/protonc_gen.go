@@ -311,6 +311,7 @@ func (QrCodeReader) isComponent()   {}
 func (BarChart) isComponent()       {}
 func (LineChart) isComponent()      {}
 func (Video) isComponent()          {}
+func (PieChart) isComponent()       {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -12815,6 +12816,101 @@ func (v *CallRequestFocus) read(r *BinaryReader) error {
 	return nil
 }
 
+type PieChart struct {
+	Chart          Chart
+	Series         ChartSeriesArray
+	ShowAsDonut    Bool
+	ShowDataLabels Bool
+}
+
+func (v *PieChart) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Chart.IsZero()
+	fields[2] = !v.Series.IsZero()
+	fields[3] = !v.ShowAsDonut.IsZero()
+	fields[4] = !v.ShowDataLabels.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Chart.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Series.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.ShowAsDonut.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.ShowDataLabels.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *PieChart) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Chart.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Series.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ShowAsDonut.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.ShowDataLabels.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13820,6 +13916,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 172:
 		var v CallRequestFocus
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 173:
+		var v PieChart
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -16617,6 +16719,17 @@ func (v *CallRequestFocus) IsZero() bool {
 	return v.ID.IsZero()
 }
 
+func (v *PieChart) reset() {
+	v.Chart.reset()
+	v.Series.reset()
+	v.ShowAsDonut.reset()
+	v.ShowDataLabels.reset()
+}
+
+func (v *PieChart) IsZero() bool {
+	return v.Chart.IsZero() && v.Series.IsZero() && v.ShowAsDonut.IsZero() && v.ShowDataLabels.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -17760,6 +17873,13 @@ func (v *ScrollAnimation) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CallRequestFocus) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 172); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *PieChart) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 173); err != nil {
 		return err
 	}
 	return nil

@@ -40,6 +40,16 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 		noData: {
 			text: props.ui.chart?.noDataMessage,
 		},
+		xaxis: {
+			title: {
+				text: props.ui.chart?.xAxisTitle,
+			},
+		},
+		yaxis: {
+			title: {
+				text: props.ui.chart?.yAxisTitle,
+			},
+		},
 		labels: props.ui.chart?.labels?.value ?? [],
 	};
 });

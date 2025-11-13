@@ -13407,6 +13407,108 @@ export class CallRequestFocus implements Writeable, Readable, CallArgs {
 	isCallArgs(): void {}
 }
 
+export class PieChart implements Writeable, Readable, Component {
+	public chart?: Chart;
+
+	public series?: ChartSeriesArray;
+
+	public showAsDonut?: Bool;
+
+	public showDataLabels?: Bool;
+
+	constructor(
+		chart: Chart | undefined = undefined,
+		series: ChartSeriesArray | undefined = undefined,
+		showAsDonut: Bool | undefined = undefined,
+		showDataLabels: Bool | undefined = undefined
+	) {
+		this.chart = chart;
+		this.series = series;
+		this.showAsDonut = showAsDonut;
+		this.showDataLabels = showDataLabels;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.chart = new Chart();
+					this.chart.read(reader);
+					break;
+				}
+				case 2: {
+					this.series = new ChartSeriesArray();
+					this.series.read(reader);
+					break;
+				}
+				case 3: {
+					this.showAsDonut = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.showDataLabels = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.chart !== undefined && !this.chart.isZero(),
+			this.series !== undefined && !this.series.isZero(),
+			this.showAsDonut !== undefined,
+			this.showDataLabels !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.chart!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.series!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.showAsDonut!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.showDataLabels!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.chart === undefined || this.chart.isZero()) &&
+			(this.series === undefined || this.series.isZero()) &&
+			this.showAsDonut === undefined &&
+			this.showDataLabels === undefined
+		);
+	}
+
+	reset(): void {
+		this.chart = undefined;
+		this.series = undefined;
+		this.showAsDonut = undefined;
+		this.showDataLabels = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 173);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14189,6 +14291,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 172: {
 			const v = new CallRequestFocus();
+			v.read(src);
+			return v;
+		}
+		case 173: {
+			const v = new PieChart();
 			v.read(src);
 			return v;
 		}

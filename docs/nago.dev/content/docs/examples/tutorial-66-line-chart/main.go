@@ -156,6 +156,8 @@ func main() {
 				Colors:       colorPalette,
 				Frame:        ui.Frame{}.Size(ui.L320, ui.L200),
 				Downloadable: false,
+				XAxisTitle:   "x-axis title",
+				YAxisTitle:   "y-axis title",
 			}
 			chart2 := chart.Chart{
 				Colors: colorPalette2,

@@ -34,7 +34,8 @@ func main() {
 					TextAlignment(ui.TextAlignJustify).
 					Hyphens(ui.HyphensAuto),
 
-				webview.WebView("https://www.youtube.com/embed/x6zAJ_CQnMo?si=vBOiOd-f2m9zkAT9").
+				webview.WebView().
+					Src("https://www.youtube.com/embed/x6zAJ_CQnMo?si=vBOiOd-f2m9zkAT9").
 					Allow("accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share").
 					ReferrerPolicy("strict-origin-when-cross-origin").
 					Title("YouTube video player").

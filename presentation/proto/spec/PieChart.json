@@ -1,0 +1,22 @@
+{
+  "kind": "Record",
+  "id": 173,
+  "fields": {
+    "1": {
+      "name": "Chart",
+      "type": "Chart"
+    },
+    "2": {
+      "name": "Series",
+      "type": "ChartSeriesArray"
+    },
+    "3": {
+      "name": "ShowAsDonut",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "ShowDataLabels",
+      "type": "Bool"
+    }
+  }
+}
