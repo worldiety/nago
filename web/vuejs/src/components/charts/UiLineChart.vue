@@ -38,6 +38,16 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 		stroke: {
 			curve: mapCurve(props.ui.curve),
 		},
+		xaxis: {
+			title: {
+				text: props.ui.chart?.xAxisTitle,
+			},
+		},
+		yaxis: {
+			title: {
+				text: props.ui.chart?.yAxisTitle,
+			},
+		},
 		markers: {
 			size: props.ui.markers?.size,
 			strokeColors: props.ui.markers?.borderColor ? colorToHexValue(props.ui.markers?.borderColor) : '#fff',

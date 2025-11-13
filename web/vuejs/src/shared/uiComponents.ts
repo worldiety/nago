@@ -26,6 +26,7 @@ import {
 	Modal,
 	Component as NagoComponent,
 	PasswordField,
+	PieChart,
 	QrCode,
 	QrCodeReader,
 	Radiobutton,
@@ -79,6 +80,7 @@ const LazyUiQrCodeReader = defineAsyncComponent(() => import('@/components/UiQrC
 const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
 const LazyUiLineChart = defineAsyncComponent(() => import('@/components/charts/UiLineChart.vue'));
 const LazyUiVideo = defineAsyncComponent(() => import('@/components/video/UiVideo.vue'));
+const LazyUiPieChart = defineAsyncComponent(() => import('@/components/charts/UiPieChart.vue'));
 
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -216,6 +218,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Video) {
 		return LazyUiVideo;
+	}
+
+	if (ngc instanceof PieChart) {
+		return LazyUiPieChart;
 	}
 
 	// keep this as the default fallback
