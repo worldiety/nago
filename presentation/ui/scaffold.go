@@ -77,6 +77,7 @@ type TScaffold struct {
 	bottomView core.View               // optional bottom view (e.g., settings, profile)
 	breakpoint int                     // breakpoint for responsive layout
 	footer     core.View               // footer content
+	height     Length                  // optional fixed height of the scaffold
 }
 
 // Scaffold creates a new scaffold with the given alignment.
@@ -122,6 +123,11 @@ func (c TScaffold) Breakpoint(breakpoint int) TScaffold {
 	return c
 }
 
+func (c TScaffold) Height(height Length) TScaffold {
+	c.height = height
+	return c
+}
+
 // Render builds and returns the protocol representation of the scaffold.
 func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -133,6 +139,7 @@ func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 		Alignment:  c.alignment,
 		Breakpoint: proto.Uint(c.breakpoint),
 		Footer:     render(ctx, c.footer),
+		Height:     proto.Length(c.height),
 	}
 }
 

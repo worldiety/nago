@@ -31,6 +31,10 @@
     "7": {
       "name": "Footer",
       "type": "Component"
+    },
+    "8": {
+      "name": "Height",
+      "type": "Length"
     }
   }
 }

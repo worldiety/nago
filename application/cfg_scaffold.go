@@ -203,6 +203,7 @@ type ScaffoldBuilder struct {
 	footerBackgroundColor   ui.Color
 	footerTextColor         ui.Color
 	disableContentPaddingOn []core.NavigationPath
+	height                  ui.Length
 }
 
 func (c *Configurator) NewScaffold() *ScaffoldBuilder {
@@ -230,6 +231,11 @@ func (b *ScaffoldBuilder) Login(show bool) *ScaffoldBuilder {
 
 func (b *ScaffoldBuilder) Alignment(alignment ui.ScaffoldAlignment) *ScaffoldBuilder {
 	b.alignment = alignment
+	return b
+}
+
+func (b *ScaffoldBuilder) Height(height ui.Length) *ScaffoldBuilder {
+	b.height = height
 	return b
 }
 
@@ -488,7 +494,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 		})).
 			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd)).Frame(ui.Frame{Height: ui.L96})).
-			Menu(menu...)
+			Menu(menu...).Height(b.height)
 
 		if b.breakpoint != nil {
 			scaffold = scaffold.Breakpoint(*b.breakpoint)

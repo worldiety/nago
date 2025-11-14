@@ -5677,10 +5677,11 @@ type Scaffold struct {
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
 	Breakpoint Uint
 	Footer     Component
+	Height     Length
 }
 
 func (v *Scaffold) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = v.Body != nil && !v.Body.IsZero()
 	fields[2] = v.Logo != nil && !v.Logo.IsZero()
 	fields[3] = !v.Menu.IsZero()
@@ -5688,6 +5689,7 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 	fields[5] = !v.Alignment.IsZero()
 	fields[6] = !v.Breakpoint.IsZero()
 	fields[7] = v.Footer != nil && !v.Footer.IsZero()
+	fields[8] = !v.Height.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5782,6 +5784,14 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.Height.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5868,6 +5878,11 @@ func (v *Scaffold) read(r *BinaryReader) error {
 				return err
 			}
 			v.Footer = obj.(Component)
+		case 8:
+			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -15604,10 +15619,11 @@ func (v *Scaffold) reset() {
 	v.Alignment.reset()
 	v.Breakpoint.reset()
 	v.Footer = nil
+	v.Height.reset()
 }
 
 func (v *Scaffold) IsZero() bool {
-	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero()
+	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero() && v.Height.IsZero()
 }
 
 func (v *ScaffoldMenuEntry) reset() {
