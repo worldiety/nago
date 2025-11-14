@@ -55,7 +55,7 @@ const series = computed<ApexNonAxisChartSeries>(() => {
 	const apexAxisChartSeriesRaw = props.ui.series.value.map((s) => {
 		if (!s.dataPoints || s.dataPoints.value.length === 0) return [];
 
-		return s.dataPoints.value.map((dp) => dp.y ?? null);
+		return s.dataPoints.value.map((dp) => dp.y ?? 0);
 	});
 
 	if (apexAxisChartSeriesRaw.length > 1) {
