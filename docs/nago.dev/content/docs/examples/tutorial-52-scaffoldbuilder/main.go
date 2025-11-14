@@ -9,6 +9,8 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/std"
@@ -17,7 +19,6 @@ import (
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 func main() {
