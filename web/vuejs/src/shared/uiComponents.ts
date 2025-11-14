@@ -16,6 +16,7 @@ import {
 	CountDown,
 	DatePicker,
 	Divider,
+	DnDArea,
 	Form,
 	Grid,
 	HStack,
@@ -81,6 +82,7 @@ const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/Ui
 const LazyUiLineChart = defineAsyncComponent(() => import('@/components/charts/UiLineChart.vue'));
 const LazyUiVideo = defineAsyncComponent(() => import('@/components/video/UiVideo.vue'));
 const LazyUiPieChart = defineAsyncComponent(() => import('@/components/charts/UiPieChart.vue'));
+const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
 
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -222,6 +224,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof PieChart) {
 		return LazyUiPieChart;
+	}
+
+	if (ngc instanceof DnDArea) {
+		return LazyUiDnDArea;
 	}
 
 	// keep this as the default fallback

@@ -13509,6 +13509,211 @@ export class PieChart implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// DnD models a drag and drop configuration.
+export class DnD implements Writeable, Readable {
+	public canDrop?: Bool;
+
+	public canDrag?: Bool;
+
+	public droppableIDs?: Strings;
+
+	constructor(
+		canDrop: Bool | undefined = undefined,
+		canDrag: Bool | undefined = undefined,
+		droppableIDs: Strings | undefined = undefined
+	) {
+		this.canDrop = canDrop;
+		this.canDrag = canDrag;
+		this.droppableIDs = droppableIDs;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.canDrop = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.canDrag = readBool(reader);
+					break;
+				}
+				case 3: {
+					this.droppableIDs = new Strings();
+					this.droppableIDs.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.canDrop !== undefined,
+			this.canDrag !== undefined,
+			this.droppableIDs !== undefined && !this.droppableIDs.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.canDrop!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.canDrag!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.droppableIDs!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.canDrop === undefined &&
+			this.canDrag === undefined &&
+			(this.droppableIDs === undefined || this.droppableIDs.isZero())
+		);
+	}
+
+	reset(): void {
+		this.canDrop = undefined;
+		this.canDrag = undefined;
+		this.droppableIDs = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 175);
+		return;
+	}
+}
+
+export class DnDArea implements Writeable, Readable, Component {
+	public children?: Components;
+
+	public frame?: Frame;
+
+	public dnD?: DnD;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	public droppedId?: Ptr;
+
+	constructor(
+		children: Components | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		dnD: DnD | undefined = undefined,
+		id: Str | undefined = undefined,
+		droppedId: Ptr | undefined = undefined
+	) {
+		this.children = children;
+		this.frame = frame;
+		this.dnD = dnD;
+		this.id = id;
+		this.droppedId = droppedId;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.children = new Components();
+					this.children.read(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 3: {
+					this.dnD = new DnD();
+					this.dnD.read(reader);
+					break;
+				}
+				case 4: {
+					this.id = readString(reader);
+					break;
+				}
+				case 5: {
+					this.droppedId = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.children !== undefined && !this.children.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.dnD !== undefined && !this.dnD.isZero(),
+			this.id !== undefined,
+			this.droppedId !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.children!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.dnD!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.droppedId!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.children === undefined || this.children.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			(this.dnD === undefined || this.dnD.isZero()) &&
+			this.id === undefined &&
+			this.droppedId === undefined
+		);
+	}
+
+	reset(): void {
+		this.children = undefined;
+		this.frame = undefined;
+		this.dnD = undefined;
+		this.id = undefined;
+		this.droppedId = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 176);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14296,6 +14501,16 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 173: {
 			const v = new PieChart();
+			v.read(src);
+			return v;
+		}
+		case 175: {
+			const v = new DnD();
+			v.read(src);
+			return v;
+		}
+		case 176: {
+			const v = new DnDArea();
 			v.read(src);
 			return v;
 		}

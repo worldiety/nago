@@ -312,6 +312,7 @@ func (BarChart) isComponent()       {}
 func (LineChart) isComponent()      {}
 func (Video) isComponent()          {}
 func (PieChart) isComponent()       {}
+func (DnDArea) isComponent()        {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -12911,6 +12912,198 @@ func (v *PieChart) read(r *BinaryReader) error {
 	return nil
 }
 
+// DnD models a drag and drop configuration.
+type DnD struct {
+	CanDrop      Bool
+	CanDrag      Bool
+	DroppableIDs Strings
+}
+
+func (v *DnD) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.CanDrop.IsZero()
+	fields[2] = !v.CanDrag.IsZero()
+	fields[3] = !v.DroppableIDs.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.CanDrop.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.CanDrag.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.DroppableIDs.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *DnD) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.CanDrop.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.CanDrag.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.DroppableIDs.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type DnDArea struct {
+	Children Components
+	Frame    Frame
+	DnD      DnD
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id        Str
+	DroppedId Ptr
+}
+
+func (v *DnDArea) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.DnD.IsZero()
+	fields[4] = !v.Id.IsZero()
+	fields[5] = !v.DroppedId.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.DnD.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.DroppedId.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *DnDArea) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.DnD.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.DroppedId.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -13922,6 +14115,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 173:
 		var v PieChart
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 175:
+		var v DnD
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 176:
+		var v DnDArea
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -16730,6 +16935,28 @@ func (v *PieChart) IsZero() bool {
 	return v.Chart.IsZero() && v.Series.IsZero() && v.ShowAsDonut.IsZero() && v.ShowDataLabels.IsZero()
 }
 
+func (v *DnD) reset() {
+	v.CanDrop.reset()
+	v.CanDrag.reset()
+	v.DroppableIDs.reset()
+}
+
+func (v *DnD) IsZero() bool {
+	return v.CanDrop.IsZero() && v.CanDrag.IsZero() && v.DroppableIDs.IsZero()
+}
+
+func (v *DnDArea) reset() {
+	v.Children.reset()
+	v.Frame.reset()
+	v.DnD.reset()
+	v.Id.reset()
+	v.DroppedId.reset()
+}
+
+func (v *DnDArea) IsZero() bool {
+	return v.Children.IsZero() && v.Frame.IsZero() && v.DnD.IsZero() && v.Id.IsZero() && v.DroppedId.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -17880,6 +18107,20 @@ func (v *CallRequestFocus) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *PieChart) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 173); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *DnD) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 175); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *DnDArea) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 176); err != nil {
 		return err
 	}
 	return nil

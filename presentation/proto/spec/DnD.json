@@ -1,0 +1,21 @@
+{
+  "doc": "DnD models a drag and drop configuration.",
+  "kind": "Record",
+  "id": 175,
+  "fields": {
+    "1": {
+      "name": "CanDrop",
+      "type": "Bool"
+    },
+    "2": {
+      "name": "CanDrag",
+      "type": "Bool"
+    },
+    "3": {
+      "name": "DroppableIDs",
+      "type": "Strings"
+    }
+  }
+}
+
+

@@ -35,6 +35,7 @@
     "BarChart",
     "LineChart",
     "Video",
-    "PieChart"
+    "PieChart",
+    "DnDArea"
   ]
 }

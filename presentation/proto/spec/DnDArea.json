@@ -1,0 +1,27 @@
+{
+  "kind": "Record",
+  "id": 176,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "DnD",
+      "type": "DnD"
+    },
+    "4": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "5": {
+      "name": "DroppedId",
+      "type": "Ptr"
+    }
+  }
+}

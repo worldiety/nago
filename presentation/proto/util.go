@@ -58,3 +58,16 @@ func (c RootViewID) Matches(other RootViewID) bool {
 
 	return false
 }
+
+func NewStrings(str []string) Strings {
+	if str == nil {
+		return nil
+	}
+
+	tmp := make([]Str, len(str))
+	for i, str := range str {
+		tmp[i] = Str(str)
+	}
+
+	return tmp
+}
