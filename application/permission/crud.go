@@ -203,3 +203,20 @@ func DeclareSync[UseCase any](id ID, entityName string) ID {
 		},
 	).String()}, 3)
 }
+
+// DeclareSend creates a prototype permission stub. See also [DeclareCreate].
+func DeclareSend[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Send %s element", entityName),
+			language.German:  fmt.Sprintf("%s Element senden", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can send " + entityName + " elements.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente senden.",
+		},
+	).String()}, 3)
+}

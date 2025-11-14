@@ -103,6 +103,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 		}
 
 		cols = append(cols, ui.TableColumn(ui.HStack(
+			ui.Text(field.Name),
 			ui.TertiaryButton(func() {
 				if sortByField.Get() != field.ID {
 					sortByField.Set(field.ID)
@@ -111,7 +112,6 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 					sortReverse.Set(!sortReverse.Get())
 				}
 			}).PreIcon(ico),
-			ui.Text(field.Name),
 		)).Width(t.tableOptions.ColumnWidths[field.ID]))
 	}
 

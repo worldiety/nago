@@ -17,6 +17,7 @@ type TCard struct {
 	children   []core.View
 	frame      ui.Frame
 	background ui.Color
+	gap        ui.Length
 }
 
 func Card(views ...core.View) TCard {
@@ -47,12 +48,18 @@ func (c TCard) BackgroundColor(background ui.Color) TCard {
 	return c
 }
 
+func (c TCard) Gap(gap ui.Length) TCard {
+	c.gap = gap
+	return c
+}
+
 func (c TCard) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
 		ui.If(c.title != "", cardTitle(c.title)),
 	).Append(c.children...).
 		BackgroundColor(c.background).
 		Alignment(ui.Leading).
+		Gap(c.gap).
 		Frame(c.frame).
 		Padding(ui.Padding{}.All(ui.L16)).
 		Border(ui.Border{}.Radius(ui.L8)).

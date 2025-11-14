@@ -58,6 +58,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionSend = i18n.MustString(
+		"nago.common.action.send",
+		i18n.Values{
+			language.English: "Send",
+			language.German:  "Senden",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionAdd = i18n.MustString(
 		"nago.common.action.add",
 		i18n.Values{
@@ -303,6 +312,33 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelReceiver = i18n.MustString(
+		"nago.common.label.receiver",
+		i18n.Values{
+			language.English: "Receiver",
+			language.German:  "Empfänger",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelSender = i18n.MustString(
+		"nago.common.label.sender",
+		i18n.Values{
+			language.English: "Sender",
+			language.German:  "Absender",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelText = i18n.MustString(
+		"nago.common.label.text",
+		i18n.Values{
+			language.English: "Text",
+			language.German:  "Text",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelState = i18n.MustString(
 		"nago.common.label.status",
 		i18n.Values{
@@ -380,6 +416,24 @@ var (
 		i18n.Values{
 			language.English: "Modified by",
 			language.German:  "Geändert von",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelCreatedAt = i18n.MustString(
+		"nago.common.label.created_at",
+		i18n.Values{
+			language.English: "Created at",
+			language.German:  "Erstellt am",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelSentAt = i18n.MustString(
+		"nago.common.label.sent_at",
+		i18n.Values{
+			language.English: "Sent at",
+			language.German:  "Gesendet am",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

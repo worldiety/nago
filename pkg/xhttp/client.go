@@ -10,6 +10,7 @@ package xhttp
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -133,6 +134,14 @@ func (r *Request) Query(key, value string) *Request {
 
 func (r *Request) BearerAuthentication(token string) *Request {
 	r.Header("Authorization", "Bearer "+token)
+	return r
+}
+
+func (r *Request) BasicAuthentication(username, password string) *Request {
+	auth := username + ":" + password
+	encoded := base64.StdEncoding.EncodeToString([]byte(auth))
+
+	r.Header("Authorization", "Basic "+encoded)
 	return r
 }
 
