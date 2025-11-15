@@ -51,8 +51,20 @@ func M4[Y Number](it iter.Seq[Point[UnixMilli, Y]], interval Range, width int) i
 						}
 					}
 				}
-			} else {
+
 				t += timeInterval
+			}
+		}
+
+		if t != tMax {
+			set := m4UniquePoints(left, right, min, max)
+
+			for _, p := range set {
+				if p.X != NA {
+					if !yield(p) {
+						return
+					}
+				}
 			}
 		}
 	}
