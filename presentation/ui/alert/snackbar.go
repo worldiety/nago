@@ -145,12 +145,22 @@ func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
 		name := "?"
 		if str, ok := permissionDenied.(user.PermissionDeniedError); ok {
-			name = "'" + wnd.Bundle().Resolve(string(str)) + "'"
+			localized := wnd.Bundle().Resolve(string(str))
+			if localized == string(user.PermissionDeniedErr) {
+				name = ""
+			} else {
+				name = "'" + localized + "'"
+			}
 		}
 
+		msg := "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden."
+		if name != "" {
+			msg += " Ein übergeordneter Rechteinhaber muss " + name + " zunächst explizit erteilen."
+		}
+		
 		return Message{
 			Title:   "Zugriff verweigert",
-			Message: "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden. Ein übergeordneter Rechteinhaber muss " + name + " zunächst explizit erteilen.",
+			Message: msg,
 		}, true
 	}
 
