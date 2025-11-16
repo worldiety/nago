@@ -8,18 +8,22 @@
 package user
 
 import (
+	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
+	"golang.org/x/crypto/sha3"
 )
 
-func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal) MergeSingleSignOnUser {
-	return func(createData SingleSignOnUser) (ID, error) {
+func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal, createSrcSet image.CreateSrcSet) MergeSingleSignOnUser {
+	return func(createData SingleSignOnUser, avatarBuf []byte) (ID, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
 
@@ -82,6 +86,23 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 
 		// merge existing
 		user := optUser.Unwrap()
+
+		if len(avatarBuf) > 0 {
+			h := sha3.Sum256(avatarBuf)
+			id := image.ID(hex.EncodeToString(h[:]))
+			srcSet, err := createSrcSet(SU(), image.Options{
+				ID: id,
+			}, image.MemFile{
+				Filename: "avatar.png",
+				Bytes:    avatarBuf,
+			})
+
+			if err != nil {
+				slog.Error("failed to generate nls user avatar image", "user", user.ID, "err", err.Error())
+			} else {
+				user.Contact.Avatar = srcSet.ID
+			}
+		}
 
 		// TODO this is incomplete and may be we need some advanced merge logic?
 		user.Contact.Firstname = createData.FirstName()

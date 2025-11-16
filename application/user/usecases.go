@@ -188,7 +188,7 @@ func (u SingleSignOnUser) LastName() string {
 // MergeSingleSignOnUser accepts the given user credentials as verified and trusted. If any existing user
 // is found with the same mail address, it will be marked as SSO-managed and the password-login and profile editing
 // is disabled.
-type MergeSingleSignOnUser func(user SingleSignOnUser) (ID, error)
+type MergeSingleSignOnUser func(user SingleSignOnUser, avatar []byte) (ID, error)
 
 // GrantingKey is a triple composite key of <repo-name>/<resource-id>/<user-id>.
 type GrantingKey string
@@ -294,7 +294,7 @@ type UseCases struct {
 	MergeSingleSignOnUser     MergeSingleSignOnUser
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID) UseCases {
+func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID, createSrcSet image.CreateSrcSet) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
@@ -375,6 +375,6 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
 		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
 		ExportUsers:               NewExportUsers(users),
-		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal),
+		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal, createSrcSet),
 	}
 }

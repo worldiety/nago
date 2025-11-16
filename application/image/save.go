@@ -11,16 +11,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/std"
-	"golang.org/x/image/draw"
 	"image"
 	"image/jpeg"
 	"image/png"
 	"io"
 	"log/slog"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
+	"golang.org/x/image/draw"
 )
 
 type File interface {
@@ -34,6 +35,41 @@ type File interface {
 	Transfer(dst io.Writer) (int64, error)
 }
 
+type MemFile struct {
+	Filename     string
+	MimeTypeHint string
+	Bytes        []byte
+}
+
+func (b MemFile) Transfer(dst io.Writer) (int64, error) {
+	n, err := dst.Write(b.Bytes)
+	return int64(n), err
+}
+
+func (b MemFile) Open() (io.ReadCloser, error) {
+	return readerReadCloser{bytes.NewReader(b.Bytes)}, nil
+}
+
+func (b MemFile) Name() string {
+	return b.Filename
+}
+
+func (b MemFile) MimeType() (string, bool) {
+	return b.MimeTypeHint, b.MimeTypeHint != ""
+}
+
+func (b MemFile) Size() (int64, bool) {
+	return int64(len(b.Bytes)), true
+}
+
+type readerReadCloser struct {
+	*bytes.Reader
+}
+
+func (r readerReadCloser) Close() error {
+	return nil
+}
+
 // Options are used in two cases: first as default parameters for all source sets which will be created
 // and second deviating options for a specific case, where the default options shall not apply.
 type Options struct {
@@ -41,6 +77,10 @@ type Options struct {
 	MaxFileSize int64
 	// Default is 3840 (4k)
 	MaxWidthOrHeight int
+
+	// optional ID to e.g. cause a specific collision. If the image/SrcSet already exists, it is just returned
+	// without ever looking into the given file.
+	ID ID
 }
 
 // CreateSrcSet accepts the given files and returns at least a src set.
@@ -56,6 +96,22 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 	}
 
 	return func(user permission.Auditable, customOpts Options, img File) (SrcSet, error) {
+		if customOpts.ID != "" {
+			if len(customOpts.ID) > 512 {
+				return SrcSet{}, fmt.Errorf("your image id looks weirdly large: %d", len(customOpts.ID))
+			}
+
+			optSrcSet, err := srcSets.FindByID(customOpts.ID)
+			if err != nil {
+				return SrcSet{}, err
+			}
+
+			if optSrcSet.IsSome() {
+				return optSrcSet.Unwrap(), nil
+			}
+			
+		}
+
 		// inherit and overload default Options
 		if customOpts.MaxWidthOrHeight == 0 {
 			customOpts.MaxWidthOrHeight = opts.MaxWidthOrHeight
@@ -74,7 +130,10 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 		// note, that our default blob store implementation applies automatic deduplication internally,
 		// thus if even though we burn I/O bandwidth and CPU cycles, we don't have a problem with redundant
 		// bytes on storage.
-		srcImgId := data.RandIdent[ID]()
+		srcImgId := customOpts.ID
+		if srcImgId == "" {
+			srcImgId = data.RandIdent[ID]()
+		}
 
 		// we use cancel to clean up broken writes into the blob store, if it comes too late, it is just ignored.
 		ctx, cancel := context.WithCancel(context.Background())

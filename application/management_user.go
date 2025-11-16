@@ -81,6 +81,11 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		repoGrants := json.NewSloppyJSONRepository[user.Granting, user.GrantingKey](storeGrants)
 
+		images, err := c.ImageManagement()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get images: %w", err)
+		}
+
 		c.AddContextValue(core.ContextValue("nago.consent.options", form.AnyUseCaseList[user.ConsentOption, consent.ID](func(subject auth.Subject) iter.Seq2[user.ConsentOption, error] {
 			return func(yield func(user.ConsentOption, error) bool) {
 				usrSettings := settings.ReadGlobal[user.Settings](std.Must(c.SettingsManagement()).UseCases.LoadGlobal)
@@ -101,6 +106,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				roleUseCases.roleRepository,
 				licenseUseCases.UseCases.PerUser.FindByID,
 				roleUseCases.UseCases.FindByID,
+				images.UseCases.CreateSrcSet,
 			),
 			Pages: uiuser.Pages{
 				Users:         "admin/accounts",

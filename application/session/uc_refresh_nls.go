@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/xhttp"
 )
 
 type nlsJSONAuthenticationDetails struct {
@@ -148,8 +150,10 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 			return fmt.Errorf("session refresh is gone: %s", id)
 		}
 
+		avatarBuf := loadAvatar(usrSettings.SSONLSServer, session.RefreshToken)
+
 		session = optSession.Unwrap()
-		uid, err := mergeUser(result.User.intoSSOUser())
+		uid, err := mergeUser(result.User.intoSSOUser(), avatarBuf)
 		if err != nil {
 			return fmt.Errorf("failed merging user: %w", err)
 		}
@@ -182,4 +186,31 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 
 		return nil
 	}
+}
+
+func loadAvatar(baseUrl string, token NLSRefreshToken) []byte {
+	// grab optional image
+	var buf []byte
+	err := xhttp.NewRequest().
+		BaseURL(baseUrl).
+		URL("/api/nago/v1/photo/me").
+		BearerAuthentication(string(token)).
+		Assert2xx(true).
+		To(func(r io.Reader) error {
+			tmp, err := io.ReadAll(r)
+			if err != nil {
+				return err
+			}
+
+			buf = tmp
+			return nil
+		}).
+		Get()
+
+	if err != nil {
+		slog.Warn("failed loading nls avatar", "err", err.Error())
+		return nil
+	}
+
+	return buf
 }
