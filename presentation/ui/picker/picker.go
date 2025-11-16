@@ -369,7 +369,7 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 					)
 				} else {
 					yield(ui.TableRow(
-						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state)),
+						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID())),
 						ui.TableCell(c.renderToSelect2(wnd, c.values[i], state)).Alignment(ui.Leading),
 					),
 					)
