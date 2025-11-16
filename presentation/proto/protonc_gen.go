@@ -5550,14 +5550,17 @@ type Radiobutton struct {
 	Value     Bool
 	Disabled  Bool
 	Invisible Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
 }
 
 func (v *Radiobutton) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
+	fields[5] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5600,6 +5603,14 @@ func (v *Radiobutton) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5632,6 +5643,11 @@ func (v *Radiobutton) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -7392,10 +7408,11 @@ type TextView struct {
 	Invisible              Bool
 	Underline              Bool
 	Hyphens                Str
+	LabelFor               Str
 }
 
 func (v *TextView) write(w *BinaryWriter) error {
-	var fields [24]bool
+	var fields [25]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Color.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
@@ -7419,6 +7436,7 @@ func (v *TextView) write(w *BinaryWriter) error {
 	fields[21] = !v.Invisible.IsZero()
 	fields[22] = !v.Underline.IsZero()
 	fields[23] = !v.Hyphens.IsZero()
+	fields[24] = !v.LabelFor.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7613,6 +7631,14 @@ func (v *TextView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[24] {
+		if err := w.writeFieldHeader(byteSlice, 24); err != nil {
+			return err
+		}
+		if err := v.LabelFor.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7740,6 +7766,11 @@ func (v *TextView) read(r *BinaryReader) error {
 			}
 		case 23:
 			err := v.Hyphens.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
+			err := v.LabelFor.read(r)
 			if err != nil {
 				return err
 			}
@@ -15561,10 +15592,11 @@ func (v *Radiobutton) reset() {
 	v.Value.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.Id.reset()
 }
 
 func (v *Radiobutton) IsZero() bool {
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
 type ScaffoldMenuEntries []ScaffoldMenuEntry
@@ -16010,10 +16042,11 @@ func (v *TextView) reset() {
 	v.Invisible.reset()
 	v.Underline.reset()
 	v.Hyphens.reset()
+	v.LabelFor.reset()
 }
 
 func (v *TextView) IsZero() bool {
-	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero()
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero()
 }
 
 func (v *TextField) reset() {

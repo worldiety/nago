@@ -92,6 +92,7 @@ type TRadioButton struct {
 	inputValue *core.State[bool] // optional bound state for two-way data binding
 	disabled   bool              // disables interaction when true
 	invisible  bool              // hides the radio button when true
+	id         string
 }
 
 // RadioButton represents a user interface element which spans a visible area to click or tap from the user.
@@ -109,6 +110,11 @@ func RadioButton(checked bool) TRadioButton {
 // so that the selected state is synchronized with external logic.
 func (c TRadioButton) InputChecked(input *core.State[bool]) TRadioButton {
 	c.inputValue = input
+	return c
+}
+
+func (c TRadioButton) ID(id string) TRadioButton {
+	c.id = id
 	return c
 }
 
@@ -133,5 +139,6 @@ func (c TRadioButton) Render(ctx core.RenderContext) core.RenderNode {
 		InputValue: c.inputValue.Ptr(),
 		Disabled:   proto.Bool(c.disabled),
 		Invisible:  proto.Bool(c.invisible),
+		Id:         proto.Str(c.id),
 	}
 }

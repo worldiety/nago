@@ -53,7 +53,6 @@ function checkboxSelected(): void {
 
 <template>
 	<div
-		:id="ui.id"
 		v-if="!ui.invisible"
 		class="input-checkbox rounded-full w-fit"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"
@@ -63,6 +62,7 @@ function checkboxSelected(): void {
 	>
 		<div class="p-2.5">
 			<input
+				:id="ui.id"
 				:checked="checked"
 				type="checkbox"
 				class="pointer-events-none"

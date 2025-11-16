@@ -411,7 +411,8 @@ func AutoState[T any](wnd Window) *State[T] {
 	}
 
 	// be as efficient as possible, I know, this is not unicode
-	return StateOf[T](wnd, unsafe.String(&id[0], len(id)))
+	//return StateOf[T](wnd, unsafe.String(&id[0], len(id))) // TODO unsure if this is worth the performance
+	return StateOf[T](wnd, hex.EncodeToString(id[:4])) // TODO less noise, still safe enough?
 }
 
 // OnAppear executes the given function only once for the given identity state. It triggers an invalidation

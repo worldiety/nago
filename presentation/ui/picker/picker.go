@@ -30,27 +30,27 @@ import (
 // can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
 	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
-	renderToSelect       func(T) core.View               // renders a single row/item inside the selection list
-	stringer             func(T) string                  // returns a textual representation (used e.g. for quick search/filter)
-	label                string                          // primary label shown with the control
-	supportingText       string                          // secondary/helper text shown under the label
-	errorText            string                          // validation or error message
-	values               []T                             // full set of candidate values to pick from
-	frame                ui.Frame                        // layout container / sizing and spacing context
-	title                string                          // title used when the picker is presented (e.g., in a dialog)
-	selectAllCheckbox    *core.State[bool]               // nil if "Select all" is not applicable/enabled
-	targetSelectedState  *core.State[[]T]                // external binding; nil if uncontrolled
-	currentSelectedState *core.State[[]T]                // internal working selection (mirrors/buffers target state during edits)
-	pickerPresented      *core.State[bool]               // controls whether the picker UI is currently shown
-	multiselect          *core.State[bool]               // true for multi-select mode; single-select otherwise
-	checkboxStates       []*core.State[bool]             // per-item selection states (used in multi-select list)
-	quickSearch          *core.State[string]             // current quick-filter query; nil if filtering is disabled
-	selectAllSupported   bool                            // enables/disables "Select all" behavior
-	quickFilterSupported bool                            // enables/disables quick search/filter UI
-	disabled             bool                            // when true, interaction is disabled
-	detailView           core.View                       // optional detail pane shown alongside the list
-	invisible            bool                            // when true, the control is not rendered
-	dlgOptions           []alert.Option                  // dialog options used when presenting the picker
+	renderToSelect2      func(wnd core.Window, item T, state *core.State[bool]) core.View
+	stringer             func(T) string      // returns a textual representation (used e.g. for quick search/filter)
+	label                string              // primary label shown with the control
+	supportingText       string              // secondary/helper text shown under the label
+	errorText            string              // validation or error message
+	values               []T                 // full set of candidate values to pick from
+	frame                ui.Frame            // layout container / sizing and spacing context
+	title                string              // title used when the picker is presented (e.g., in a dialog)
+	selectAllCheckbox    *core.State[bool]   // nil if "Select all" is not applicable/enabled
+	targetSelectedState  *core.State[[]T]    // external binding; nil if uncontrolled
+	currentSelectedState *core.State[[]T]    // internal working selection (mirrors/buffers target state during edits)
+	pickerPresented      *core.State[bool]   // controls whether the picker UI is currently shown
+	multiselect          *core.State[bool]   // true for multi-select mode; single-select otherwise
+	checkboxStates       []*core.State[bool] // per-item selection states (used in multi-select list)
+	quickSearch          *core.State[string] // current quick-filter query; nil if filtering is disabled
+	selectAllSupported   bool                // enables/disables "Select all" behavior
+	quickFilterSupported bool                // enables/disables quick search/filter UI
+	disabled             bool                // when true, interaction is disabled
+	detailView           core.View           // optional detail pane shown alongside the list
+	invisible            bool                // when true, the control is not rendered
+	dlgOptions           []alert.Option      // dialog options used when presenting the picker
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -268,13 +268,28 @@ func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
 	return c
 }
 
-// ItemRenderer can be customized to return a non-text view for the given T. This is
+// Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is
 // shown within the picker popup. If fn is nil, the default fallback rendering will be applied.
 func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
-	c.renderToSelect = fn
 	if fn == nil {
-		c.renderToSelect = func(t T) core.View {
-			return ui.HStack(ui.Text(cleanMarkdown(fmt.Sprintf("%v", t)))).Padding(ui.Padding{}.Vertical(ui.L16))
+		return c.ItemRenderer2(nil)
+	}
+
+	return c.ItemRenderer2(func(wnd core.Window, item T, state *core.State[bool]) core.View {
+		return fn(item)
+	})
+}
+
+// ItemRenderer2 can be customized to return a non-text view for the given T. This is
+// shown within the picker popup. If fn is nil, the default fallback rendering will be applied.
+func (c TPicker[T]) ItemRenderer2(fn func(wnd core.Window, item T, state *core.State[bool]) core.View) TPicker[T] {
+	c.renderToSelect2 = fn
+	if fn == nil {
+		c.renderToSelect2 = func(wnd core.Window, item T, state *core.State[bool]) core.View {
+			text := cleanMarkdown(fmt.Sprintf("%v", item))
+			resolve := strings.HasPrefix(text, "@")
+
+			return ui.HStack(ui.Text(text).Resolve(resolve).LabelFor(state.ID())).Padding(ui.Padding{}.Vertical(ui.L16))
 		}
 	}
 
@@ -286,7 +301,7 @@ func (c TPicker[D]) Disabled(disabled bool) TPicker[D] {
 	return c
 }
 
-func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
+func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter core.View) {
 	filtered := make([]bool, len(c.values))
 	hiddenEntries := 0
 	if c.quickSearch.Get() != "" {
@@ -348,14 +363,14 @@ func (c TPicker[T]) pickerTable() (table core.View, quickFilter core.View) {
 
 				if c.multiselect.Get() {
 					yield(ui.TableRow(
-						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state)),
-						ui.TableCell(c.renderToSelect(c.values[i])).Alignment(ui.Leading),
+						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID())),
+						ui.TableCell(c.renderToSelect2(wnd, c.values[i], state)).Alignment(ui.Leading),
 					),
 					)
 				} else {
 					yield(ui.TableRow(
 						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state)),
-						ui.TableCell(c.renderToSelect(c.values[i])).Alignment(ui.Leading),
+						ui.TableCell(c.renderToSelect2(wnd, c.values[i], state)).Alignment(ui.Leading),
 					),
 					)
 				}
@@ -383,14 +398,16 @@ func (c TPicker[T]) DialogOptions(opts ...alert.Option) TPicker[T] {
 // Dialog returns the dialog view as if pressed on the actual button.
 func (c TPicker[T]) Dialog() core.View {
 
+	var wnd core.Window
 	selectedCount := 0
 	for _, state := range c.checkboxStates {
+		wnd = state.Window()
 		if state.Get() {
 			selectedCount++
 		}
 	}
 
-	table, quickFilter := c.pickerTable()
+	table, quickFilter := c.pickerTable(wnd)
 
 	dlgOpts := make([]alert.Option, 0, 4+len(c.dlgOptions))
 	dlgOpts = append(dlgOpts, alert.PreBody(quickFilter),

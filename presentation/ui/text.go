@@ -66,6 +66,7 @@ type TText struct {
 	underline          bool          // underline the text
 	resolve            bool
 	hyphens            Hyphens
+	labelFor           string
 }
 
 // MailTo creates a mailto: link text component.
@@ -236,6 +237,11 @@ func (c TText) Action(f func()) TText {
 	return c
 }
 
+func (c TText) LabelFor(id string) DecoredView {
+	c.labelFor = id
+	return c
+}
+
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	value := c.content
@@ -276,5 +282,6 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		LineBreak:              proto.Bool(c.lineBreak),
 		Underline:              proto.Bool(c.underline),
 		Hyphens:                proto.Str(hyphens),
+		LabelFor:               proto.Str(c.labelFor),
 	}
 }

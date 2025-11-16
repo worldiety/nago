@@ -81,7 +81,17 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible" :style="styles" @click="onClick" :title="props.ui.accessibilityLabel">
+	<span v-if="!ui.invisible && !ui.labelFor" :style="styles" @click="onClick" :title="props.ui.accessibilityLabel">
 		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
+
+	<label
+		v-else-if="!ui.invisible"
+		:style="styles"
+		@click="onClick"
+		:title="props.ui.accessibilityLabel"
+		:for="ui.labelFor"
+	>
+		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
+	</label>
 </template>

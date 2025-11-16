@@ -116,13 +116,18 @@ func (c TCheckboxField) ID(id string) TCheckboxField {
 
 // Render builds and returns the UI representation of the checkbox field.
 func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
+	id := c.id
+	if id == "" && c.inputValue != nil {
+		c.id = c.inputValue.ID()
+	}
+
 	return VStack(
 		HStack(
 			Checkbox(c.value).
 				ID(c.id).
 				Disabled(c.disabled).
 				InputChecked(c.inputValue),
-			Text(c.label),
+			Text(c.label).LabelFor(c.id),
 		),
 		IfElse(c.errorText == "",
 			Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0),

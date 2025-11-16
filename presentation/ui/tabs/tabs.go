@@ -9,7 +9,6 @@ package tabs
 
 import (
 	"strconv"
-	"unicode/utf8"
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -125,9 +124,10 @@ func (c TTabs) Render(ctx core.RenderContext) core.RenderNode {
 						if c.idx != nil {
 							c.idx.Set(myIdx)
 							c.idx.Notify()
-							if utf8.ValidString(c.idx.ID()) {
-								ctx.Window().Navigation().ForwardTo(ctx.Window().Path(), ctx.Window().Values().Put(c.idx.ID()+"-idx", strconv.Itoa(myIdx)))
-							}
+							// TODO this breaks TTabs in open dialogs
+							//if utf8.ValidString(c.idx.ID()) {
+							//	ctx.Window().Navigation().ForwardTo(ctx.Window().Path(), ctx.Window().Values().Put(c.idx.ID()+"-idx", strconv.Itoa(myIdx)))
+							//}
 						}
 					}).Title(p.title).PreIcon(p.icon).Preset(style).Enabled(c.idx != nil && !p.disabled)
 				})...,
