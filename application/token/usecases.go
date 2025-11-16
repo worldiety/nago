@@ -9,6 +9,10 @@ package token
 
 import (
 	"fmt"
+	"iter"
+	"sync"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/license"
@@ -19,14 +23,12 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xtime"
-	"iter"
-	"sync"
-	"time"
 )
 
 type CreationData struct {
 	Name        string
 	Description string          `label:"Beschreibung"`
+	Plaintext   Plaintext       `label:"Token" supportingText:"Optional vorgegebener Token, leer lassen, um einen neuen sicheren Zufallstoken zu generieren."`
 	ValidUntil  xtime.Date      `label:"Gültig bis"`
 	Groups      []group.ID      `label:"Gruppen" source:"nago.groups"`
 	Roles       []role.ID       `label:"Rollen" source:"nago.roles"`

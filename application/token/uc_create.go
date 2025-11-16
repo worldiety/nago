@@ -10,12 +10,13 @@ package token
 import (
 	"crypto/rand"
 	"fmt"
+	"sync"
+	"time"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"sync"
-	"time"
 )
 
 func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID]) Create {
@@ -35,7 +36,15 @@ func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 		//   with salts (which is exactly the point of a salt).
 
 		// security note: our token has at least 16 bytes of entropy, which is ever returned once and never stored
-		plaintext := Plaintext(rand.Text())
+		plaintext := cdata.Plaintext
+		if plaintext == "" {
+			plaintext = Plaintext(rand.Text())
+		}
+
+		if len(plaintext) < 16 {
+			return "", "", fmt.Errorf("plaintext is too short: %s", plaintext)
+		}
+
 		hBytes, err := plaintext.TokenHash(algo)
 		if err != nil {
 			return "", "", err
