@@ -9,6 +9,8 @@ package colorpicker
 
 import (
 	"fmt"
+	"slices"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
@@ -16,7 +18,6 @@ import (
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"slices"
 )
 
 // TPalettePicker is a composite component(Palette Picker).
@@ -130,7 +131,7 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		c.Dialog(c.pickerPresented),
 		renderColor(c.palette, c.value),
 		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {
 		if c.disabled {
 			return

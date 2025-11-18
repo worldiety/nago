@@ -445,7 +445,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		c.Dialog(),
 		c.renderPicked(c, c.targetSelectedState.Get()),
 		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
