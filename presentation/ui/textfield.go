@@ -60,6 +60,7 @@ type TTextField struct {
 	keyboardOptions TKeyboardOptions     // platform-specific keyboard options
 	id              string               // unique identifier for the field
 	keydownEnter    func()               // callback for Enter key press
+	textAlignment   TextAlignment
 }
 
 // Padding is a placeholder implementation.
@@ -195,6 +196,11 @@ func (c TTextField) Trailing(v core.View) TTextField {
 	return c
 }
 
+func (c TTextField) TextAlignment(v TextAlignment) TTextField {
+	c.textAlignment = v
+	return c
+}
+
 // Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied.
 func (c TTextField) Style(s TextFieldStyle) TTextField {
 	c.style = s.ora()
@@ -320,5 +326,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		KeyboardOptions: c.keyboardOptions.ora(),
 		Id:              proto.Str(c.id),
 		KeydownEnter:    ctx.MountCallback(c.keydownEnter),
+		TextAlignment:   proto.TextAlignment(c.textAlignment),
 	}
 }

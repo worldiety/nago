@@ -8215,6 +8215,8 @@ export class TextField implements Writeable, Readable, Component {
 
 	public keydownEnter?: Ptr;
 
+	public textAlignment?: TextAlignment;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8234,7 +8236,8 @@ export class TextField implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
-		keydownEnter: Ptr | undefined = undefined
+		keydownEnter: Ptr | undefined = undefined,
+		textAlignment: TextAlignment | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8255,6 +8258,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.revealed = revealed;
 		this.id = id;
 		this.keydownEnter = keydownEnter;
+		this.textAlignment = textAlignment;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8351,6 +8355,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.keydownEnter = readInt(reader);
 					break;
 				}
+				case 20: {
+					this.textAlignment = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8379,6 +8387,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.revealed !== undefined,
 			this.id !== undefined,
 			this.keydownEnter !== undefined,
+			this.textAlignment !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8464,6 +8473,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 19);
 			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[20]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 20);
+			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8486,7 +8499,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			this.revealed === undefined &&
 			this.id === undefined &&
-			this.keydownEnter === undefined
+			this.keydownEnter === undefined &&
+			this.textAlignment === undefined
 		);
 	}
 
@@ -8510,6 +8524,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.revealed = undefined;
 		this.id = undefined;
 		this.keydownEnter = undefined;
+		this.textAlignment = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

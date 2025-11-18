@@ -88,6 +88,10 @@
     "19": {
       "name": "KeydownEnter",
       "type": "Ptr"
+    },
+    "20": {
+      "name": "TextAlignment",
+      "type": "TextAlignment"
     }
   }
 }

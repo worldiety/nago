@@ -8,15 +8,21 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import {computed, ref, useTemplateRef, watch} from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import { frameCSS } from '@/components/shared/frame';
-import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
-import { KeyboardTypeValues, TextField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import {frameCSS} from '@/components/shared/frame';
+import {inputWrapperStyleFrom} from '@/components/shared/inputWrapperStyle';
+import {useServiceAdapter} from '@/composables/serviceAdapter';
+import {nextRID} from '@/eventhandling';
+import {
+	KeyboardTypeValues,
+	TextAlignmentValues,
+	TextField,
+	TextFieldStyleValues,
+	UpdateStateValueRequested,
+} from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: TextField;
@@ -31,7 +37,10 @@ const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : ''
 let timer: number = 0;
 
 const frameStyles = computed<string>(() => {
-	return frameCSS(props.ui.frame).join(';');
+	let styles = frameCSS(props.ui.frame);
+
+
+	return styles.join(';');
 });
 
 const id = computed<string>(() => {
@@ -171,7 +180,30 @@ function formatValue(value: string) {
 	return formattedValue;
 }
 
-const inputStyle = computed<Record<string, string>>(() => {
+const inputStyle = computed<string>(() => {
+	const styles: string[] = [];
+
+	switch (props.ui.textAlignment) {
+		case TextAlignmentValues.TextAlignStart:
+			styles.push('text-align: start');
+			break;
+		case TextAlignmentValues.TextAlignEnd:
+			styles.push('text-align: end');
+			break;
+		case TextAlignmentValues.TextAlignCenter:
+			styles.push('text-align: center');
+			break;
+		case TextAlignmentValues.TextAlignJustify:
+			styles.push('text-align: justify', 'text-justify: inter-character'); // inter-character just looks so much better
+			break;
+	}
+
+	if (props.ui.style == TextFieldStyleValues.TextFieldBasic) {
+		styles.push('display:inline', 'background:unset');
+
+		return styles.join(';');
+	}
+
 	const leadingElementWidth = leadingElement.value?.offsetWidth;
 	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
 
@@ -184,10 +216,8 @@ const inputStyle = computed<Record<string, string>>(() => {
 		paddingRight = clearButtonElementWidth ? `${clearButtonElementWidth}px` : 'auto';
 	}
 
-	return {
-		'padding-left': paddingLeft,
-		'padding-right': paddingRight,
-	};
+	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
+	return styles.join(';');
 });
 
 /**
@@ -229,9 +259,7 @@ function handleKeydownEnter(event: Event) {
 	if (props.ui.keydownEnter) {
 		event.stopPropagation();
 		const parsedValue = parseValue(inputValue.value);
-		if (parsedValue == props.ui.value) {
-			return;
-		}
+		// note that we must always issue the key-down event, even we did not change the text
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
 		);
@@ -325,7 +353,7 @@ function debouncedInput() {
 					ref="leadingElement"
 					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
 				>
-					<UiGeneric :ui="props.ui.leading" />
+					<UiGeneric :ui="props.ui.leading"/>
 				</div>
 
 				<input
@@ -360,16 +388,21 @@ function debouncedInput() {
 					ref="trailingElement"
 					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center pointer-events-none"
 				>
-					<UiGeneric :ui="props.ui.trailing" />
+					<UiGeneric :ui="props.ui.trailing"/>
 				</div>
 
 				<!-- Clear button -->
 				<div
-					v-else-if="inputValue && !props.ui.disabled && !props.ui.lines"
+					v-else-if="
+						inputValue &&
+						!props.ui.disabled &&
+						!props.ui.lines &&
+						props.ui.style != TextFieldStyleValues.TextFieldBasic
+					"
 					ref="clearButton"
 					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center"
 				>
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
 				</div>
 			</div>
 		</InputWrapper>
