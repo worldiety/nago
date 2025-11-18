@@ -7838,12 +7838,13 @@ type TextField struct {
 	// If Revealed the password is shown
 	Revealed Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id           Str
-	KeydownEnter Ptr
+	Id            Str
+	KeydownEnter  Ptr
+	TextAlignment TextAlignment
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [20]bool
+	var fields [21]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7863,6 +7864,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[17] = !v.Revealed.IsZero()
 	fields[18] = !v.Id.IsZero()
 	fields[19] = !v.KeydownEnter.IsZero()
+	fields[20] = !v.TextAlignment.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8039,6 +8041,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[20] {
+		if err := w.writeFieldHeader(uvarint, 20); err != nil {
+			return err
+		}
+		if err := v.TextAlignment.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8164,6 +8174,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 19:
 			err := v.KeydownEnter.read(r)
+			if err != nil {
+				return err
+			}
+		case 20:
+			err := v.TextAlignment.read(r)
 			if err != nil {
 				return err
 			}
@@ -16069,10 +16084,11 @@ func (v *TextField) reset() {
 	v.Revealed.reset()
 	v.Id.reset()
 	v.KeydownEnter.reset()
+	v.TextAlignment.reset()
 }
 
 func (v *TextField) IsZero() bool {
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero()
 }
 
 func (v *Toggle) reset() {

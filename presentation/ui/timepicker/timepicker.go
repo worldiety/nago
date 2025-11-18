@@ -9,10 +9,12 @@ package timepicker
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -278,6 +280,14 @@ func (c TPicker) dayUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+func (c TPicker) setDay(days int) {
+	_, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
+	if days > 99 {
+		days = 0
+	}
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
+}
+
 // hourDown decreases the hours in the current selection,
 // wrapping around to 23 if it goes below 0.
 func (c TPicker) hourDown() {
@@ -294,6 +304,14 @@ func (c TPicker) hourDown() {
 func (c TPicker) hourUp() {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	hours++
+	if hours >= 24 {
+		hours = 0
+	}
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
+}
+
+func (c TPicker) setHour(hours int) {
+	days, _, minutes, seconds := FromDuration(c.currentSelectedState.Get())
 	if hours >= 24 {
 		hours = 0
 	}
@@ -322,6 +340,14 @@ func (c TPicker) minUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+func (c TPicker) setMin(minutes int) {
+	days, hours, _, seconds := FromDuration(c.currentSelectedState.Get())
+	if minutes > 59 {
+		minutes = 0
+	}
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
+}
+
 // secDown decreases the seconds in the current selection,
 // wrapping around to 59 if it goes below 0.
 func (c TPicker) secDown() {
@@ -342,6 +368,14 @@ func (c TPicker) secUp() {
 		seconds = 0
 	}
 	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
+}
+
+func (c TPicker) setSec(seconds int) {
+	days, hours, minutes, _ := FromDuration(c.currentSelectedState.Get())
+	if seconds > 59 {
+		seconds = 0
+	}
+	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
 // round normalizes the given duration based on the picker's configuration.
@@ -380,7 +414,9 @@ func (c TPicker) renderPicker() core.View {
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp),
-				ui.Text(fmt.Sprintf("%02d", days)),
+				editInt(c.currentSelectedState, "day", days, func(v int) {
+					c.setDay(v)
+				}),
 				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown),
 			),
 			ui.Text("Tage"),
@@ -391,7 +427,9 @@ func (c TPicker) renderPicker() core.View {
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp),
-				ui.Text(fmt.Sprintf("%02d", hours)),
+				editInt(c.currentSelectedState, "hour", hours, func(v int) {
+					c.setHour(v)
+				}),
 				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown),
 			),
 			ui.Text("Std."),
@@ -402,7 +440,9 @@ func (c TPicker) renderPicker() core.View {
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp),
-				ui.Text(fmt.Sprintf("%02d", minutes)),
+				editInt(c.currentSelectedState, "min", minutes, func(v int) {
+					c.setMin(v)
+				}),
 				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown),
 			),
 			ui.Text("Min."),
@@ -413,7 +453,9 @@ func (c TPicker) renderPicker() core.View {
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp),
-				ui.Text(fmt.Sprintf("%02d", seconds)),
+				editInt(c.currentSelectedState, "sec", seconds, func(v int) {
+					c.setSec(v)
+				}),
 				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown),
 			),
 			ui.Text("Sek."),
@@ -423,12 +465,41 @@ func (c TPicker) renderPicker() core.View {
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
+func editInt(state *core.State[time.Duration], name string, val int, set func(v int)) core.View {
+	editValPresented := core.DerivedState[bool](state, name+"-presented")
+	if !editValPresented.Get() {
+		return ui.Text(fmt.Sprintf("%02d", val)).Action(func() {
+			editValPresented.Set(true)
+		})
+	}
+
+	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
+		return fmt.Sprintf("%02d", val)
+	}).Observe(func(newValue string) {
+		if v, err := strconv.Atoi(newValue); err == nil {
+			set(v)
+			editValPresented.Set(false)
+		}
+	})
+
+	return ui.TextField("", editVal.Get()).
+		Style(ui.TextFieldBasic).
+		InputValue(editVal).
+		KeyboardOptions(ui.KeyboardOptions().KeyboardType(ui.KeyboardInteger)).
+		TextAlignment(ui.TextAlignEnd).
+		KeydownEnter(func() {
+			editValPresented.Set(false)
+		}).
+		Frame(ui.Frame{Width: ui.L32})
+}
+
 // Render builds and returns the UI representation of the time picker.
 // It displays the current duration value, opens a dialog for selecting
 // a new duration, and shows labels, supporting text, or error messages
 // depending on its state. The picker can be disabled, in which case
 // interaction is blocked.
 func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
+	wnd := ctx.Window()
 	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
 
 	colors := core.Colors[ui.Colors](ctx.Window())
@@ -441,11 +512,11 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 				c.targetSelectedState.Set(c.currentSelectedState.Get())
 				c.targetSelectedState.Notify() // invoke observers
 				close(true)
-			}).Title(fmt.Sprintf("übernehmen"))
+			}).Title(rstring.ActionApply.Get(wnd))
 		})),
 		ui.Text(durationText),
 		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronDown).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).Action(func() {
 		if c.disabled {
 			return
