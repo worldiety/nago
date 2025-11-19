@@ -70,6 +70,18 @@ type Options[T ent.Aggregate[T, ID], ID ~string] struct {
 	DecorateUseCases func(uc ent.UseCases[T, ID]) ent.UseCases[T, ID]
 }
 
+// EnableUseCases is like Enable but takes the given use cases and does not declare a repository or mutex for it.
+func EnableUseCases[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, perms ent.Permissions, uc ent.UseCases[T, ID], opts Options[T, ID]) (Module[T, ID], error) {
+	mod, ok := core.FromContext[Module[T, ID]](cfg.Context(), "")
+	if ok {
+		return mod, nil
+	}
+
+	mod = configureMod(cfg, perms, uc, opts)
+	mod.Repository = nil // we don't have one
+	return mod, nil
+}
+
 // Enable configures a crud module instance. See also [crud.UseCases] and [crud.DeclarePermissions] for details.
 func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, prefix permission.ID, entityName string, opts Options[T, ID]) (Module[T, ID], error) {
 	mod, ok := core.FromContext[Module[T, ID]](cfg.Context(), "")
@@ -98,46 +110,52 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 		Mutex: opts.Mutex,
 	})
 
+	mod = configureMod(cfg, perms, uc, opts)
+	mod.Repository = repo
+	return mod, nil
+}
+
+func configureMod[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, perms ent.Permissions, uc ent.UseCases[T, ID], opts Options[T, ID]) Module[T, ID] {
 	if opts.DecorateUseCases != nil {
 		uc = opts.DecorateUseCases(uc)
 	}
 
-	mod = Module[T, ID]{
-		Repository: repo,
-		UseCases:   uc,
+	mod := Module[T, ID]{
+
+		UseCases: uc,
 		Pages: uient.Pages{
-			List:   "admin/entities/" + makeFactoryID(prefix) + "/list",
-			Create: "admin/entities/" + makeFactoryID(prefix) + "/create",
-			Update: "admin/entities/" + makeFactoryID(prefix) + "/update",
+			List:   "admin/entities/" + makeFactoryID(perms.Prefix) + "/list",
+			Create: "admin/entities/" + makeFactoryID(perms.Prefix) + "/create",
+			Update: "admin/entities/" + makeFactoryID(perms.Prefix) + "/update",
 		},
 	}
 
 	cfg.RootViewWithDecoration(mod.Pages.List, func(wnd core.Window) core.View {
 		return uient.PageList(wnd, mod.UseCases, uient.PageListOptions[T, ID]{
-			EntityName: entityName,
+			EntityName: perms.EntityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
 			List:       opts.List,
-			Prefix:     prefix,
+			Prefix:     perms.Prefix,
 		})
 	})
 
 	cfg.RootViewWithDecoration(mod.Pages.Create, func(wnd core.Window) core.View {
 		return uient.PageCreate(wnd, mod.UseCases, uient.PageCreateOptions[T, ID]{
-			EntityName: entityName,
+			EntityName: perms.EntityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
-			Prefix:     prefix,
+			Prefix:     perms.Prefix,
 			Create:     opts.Create,
 		})
 	})
 
 	cfg.RootViewWithDecoration(mod.Pages.Update, func(wnd core.Window) core.View {
 		return uient.PageUpdate(wnd, mod.UseCases, uient.PageUpdateOptions[T, ID]{
-			EntityName: entityName,
+			EntityName: perms.EntityName,
 			Perms:      perms,
 			Pages:      mod.Pages,
-			Prefix:     prefix,
+			Prefix:     perms.Prefix,
 			Update:     opts.Update,
 		})
 	})
@@ -154,7 +172,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 
 		cardText := subject.Bundle().Resolve(opts.AdminCenter.Description)
 		if cardText == "" {
-			cardText = uient.StrManageEntitiesX.Get(subject, i18n.String("name", entityName))
+			cardText = uient.StrManageEntitiesX.Get(subject, i18n.String("name", perms.EntityName))
 		}
 
 		var groupTitle string
@@ -162,24 +180,24 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 		case AdminCenterDataSection:
 			groupTitle = uient.StrDataManagement.Get(subject)
 		default:
-			groupTitle = entityName
+			groupTitle = perms.EntityName
 		}
 
 		res.Title = groupTitle
 		res.Entries = append(res.Entries, admin.Card{
-			Title:  entityName,
+			Title:  perms.EntityName,
 			Text:   cardText,
 			Target: mod.Pages.List,
-			ID:     string(prefix),
+			ID:     string(perms.Prefix),
 		})
 
 		return res
 	})
 
-	cfg.AddContextValue(core.ContextValue(string("module-"+prefix), mod))
-	cfg.AddContextValue(core.ContextValue(string(prefix), form.AnyUseCaseList[T, ID](uc.FindAll)))
+	cfg.AddContextValue(core.ContextValue(string("module-"+perms.Prefix), mod))
+	cfg.AddContextValue(core.ContextValue(string(perms.Prefix), form.AnyUseCaseList[T, ID](uc.FindAll)))
 
-	return mod, nil
+	return mod
 }
 
 func makeFactoryID(prefix permission.ID) core.NavigationPath {

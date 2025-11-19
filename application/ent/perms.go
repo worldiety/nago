@@ -14,6 +14,8 @@ type Permissions struct {
 	FindAllIdentifiers permission.ID
 	DeleteByID         permission.ID
 	Update             permission.ID
+	Prefix             permission.ID
+	EntityName         string
 }
 
 // DeclarePermissions is a factory to create a bunch of permissions. Use it at package level, so that permission
@@ -33,10 +35,12 @@ func DeclarePermissions[T Aggregate[T, ID], ID data.IDType](prefix permission.ID
 
 	return Permissions{
 		Create:             permission.DeclareCreate[Create[T, ID]](prefix+".create", entityName),
+		FindByID:           permission.DeclareFindByID[FindByID[T, ID]](prefix+".find_by_id", entityName),
+		FindAll:            permission.DeclareFindAll[FindAll[T, ID]](prefix+".find_all", entityName),
+		FindAllIdentifiers: permission.DeclareFindAllIdentifiers[FindAllIdentifiers[T, ID]](prefix+".find_all_identifiers", entityName),
 		DeleteByID:         permission.DeclareDeleteByID[DeleteByID[T, ID]](prefix+".delete_by_id", entityName),
 		Update:             permission.DeclareUpdate[Update[T, ID]](prefix+".update", entityName),
-		FindByID:           permission.DeclareFindByID[FindByID[T, ID]](prefix+".find_by_id", entityName),
-		FindAllIdentifiers: permission.DeclareFindAllIdentifiers[FindAllIdentifiers[T, ID]](prefix+".find_all_identifiers", entityName),
-		FindAll:            permission.DeclareFindAll[FindAll[T, ID]](prefix+".find_all", entityName),
+		Prefix:             prefix,
+		EntityName:         entityName,
 	}
 }
