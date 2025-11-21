@@ -109,6 +109,11 @@
       "doc": "Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.",
       "name": "Opacity",
       "type": "Uint"
+    },
+    "27": {
+      "name": "Background",
+      "type": "Background",
+      "pointer": true
     }
   }
 }

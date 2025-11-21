@@ -3616,11 +3616,12 @@ type HStack struct {
 	Animation      Animation
 	Transformation Transformation
 	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	Opacity Uint
+	Opacity    Uint
+	Background *Background
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
-	var fields [28]bool
+	var fields [29]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -3648,6 +3649,7 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[25] = !v.Animation.IsZero()
 	fields[26] = !v.Transformation.IsZero()
 	fields[27] = !v.Opacity.IsZero()
+	fields[28] = !v.Background.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3874,6 +3876,14 @@ func (v *HStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[28] {
+		if err := w.writeFieldHeader(record, 28); err != nil {
+			return err
+		}
+		if err := v.Background.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4021,6 +4031,11 @@ func (v *HStack) read(r *BinaryReader) error {
 			}
 		case 27:
 			err := v.Opacity.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.Background.read(r)
 			if err != nil {
 				return err
 			}
@@ -8507,11 +8522,12 @@ type VStack struct {
 	Animation      Animation
 	Transformation Transformation
 	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	Opacity Uint
+	Opacity    Uint
+	Background *Background
 }
 
 func (v *VStack) write(w *BinaryWriter) error {
-	var fields [27]bool
+	var fields [28]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -8538,6 +8554,7 @@ func (v *VStack) write(w *BinaryWriter) error {
 	fields[24] = !v.Animation.IsZero()
 	fields[25] = !v.Transformation.IsZero()
 	fields[26] = !v.Opacity.IsZero()
+	fields[27] = !v.Background.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8756,6 +8773,14 @@ func (v *VStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[27] {
+		if err := w.writeFieldHeader(record, 27); err != nil {
+			return err
+		}
+		if err := v.Background.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8898,6 +8923,11 @@ func (v *VStack) read(r *BinaryReader) error {
 			}
 		case 26:
 			err := v.Opacity.read(r)
+			if err != nil {
+				return err
+			}
+		case 27:
+			err := v.Background.read(r)
 			if err != nil {
 				return err
 			}
@@ -13165,6 +13195,121 @@ func (v *DnDArea) read(r *BinaryReader) error {
 	return nil
 }
 
+type Background struct {
+	// Image may support various styles. At least url("...") and linear-gradient(<colorA>,<colorB>...) must be supported. Other variants are implementation dependent. This translates to background-image property in CSS
+	Image Strings
+	// In percent 0-100.
+	PositionX Uint
+	// In percent 0-100.
+	PositionY Uint
+	// Repeat is a tiling mechanics and at least "repeat" and "" for no-repeat must be supported.
+	Repeat Str
+	// Size must support at least "contain" and "cover".
+	Size Str
+}
+
+func (v *Background) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Image.IsZero()
+	fields[2] = !v.PositionX.IsZero()
+	fields[3] = !v.PositionY.IsZero()
+	fields[4] = !v.Repeat.IsZero()
+	fields[5] = !v.Size.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Image.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.PositionX.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.PositionY.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Repeat.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Size.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Background) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Image.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.PositionX.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.PositionY.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Repeat.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Size.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -14192,6 +14337,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 177:
+		var v Background
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -14207,6 +14358,9 @@ func (v *Box) reset() {
 }
 
 func (v *Box) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Children.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero()
 }
 
@@ -14218,6 +14372,9 @@ func (v *UpdateStateValueRequested) reset() {
 }
 
 func (v *UpdateStateValueRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.StatePointer.IsZero() && v.FunctionPointer.IsZero() && v.RID.IsZero() && v.Value.IsZero()
 }
 
@@ -14230,6 +14387,9 @@ func (v *FunctionCallRequested) reset() {
 }
 
 func (v *FunctionCallRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Ptr.IsZero() && v.RID.IsZero()
 }
 
@@ -14277,6 +14437,9 @@ func (v *Shadow) reset() {
 }
 
 func (v *Shadow) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Color.IsZero() && v.Radius.IsZero() && v.X.IsZero() && v.Y.IsZero()
 }
 
@@ -14333,6 +14496,9 @@ func (v *Border) reset() {
 }
 
 func (v *Border) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.TopLeftRadius.IsZero() && v.TopRightRadius.IsZero() && v.BottomLeftRadius.IsZero() && v.BottomRightRadius.IsZero() && v.LeftWidth.IsZero() && v.TopWidth.IsZero() && v.RightWidth.IsZero() && v.BottomWidth.IsZero() && v.LeftColor.IsZero() && v.TopColor.IsZero() && v.RightColor.IsZero() && v.BottomColor.IsZero() && v.BoxShadow.IsZero()
 }
 
@@ -14346,6 +14512,9 @@ func (v *Frame) reset() {
 }
 
 func (v *Frame) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.MinWidth.IsZero() && v.MaxWidth.IsZero() && v.MinHeight.IsZero() && v.MaxHeight.IsZero() && v.Width.IsZero() && v.Height.IsZero()
 }
 
@@ -14357,6 +14526,9 @@ func (v *Padding) reset() {
 }
 
 func (v *Padding) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero()
 }
 
@@ -14366,6 +14538,9 @@ func (v *AlignedComponent) reset() {
 }
 
 func (v *AlignedComponent) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Component.IsZero() && v.Alignment.IsZero()
 }
 
@@ -14468,6 +14643,9 @@ func (v *Checkbox) reset() {
 }
 
 func (v *Checkbox) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
@@ -14511,6 +14689,9 @@ func (v *ErrorOccurred) reset() {
 }
 
 func (v *ErrorOccurred) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Message.IsZero() && v.RID.IsZero()
 }
 
@@ -14684,6 +14865,9 @@ func (v *RootViewRenderingRequested) reset() {
 }
 
 func (v *RootViewRenderingRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero()
 }
 
@@ -14695,6 +14879,9 @@ func (v *RootViewDestructionRequested) reset() {
 }
 
 func (v *RootViewDestructionRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero()
 }
 
@@ -14707,6 +14894,9 @@ func (v *RootViewInvalidated) reset() {
 }
 
 func (v *RootViewInvalidated) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero() && v.Root.IsZero()
 }
 
@@ -14715,6 +14905,9 @@ func (v *ErrorRootViewAllocationRequired) reset() {
 }
 
 func (v *ErrorRootViewAllocationRequired) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero()
 }
 
@@ -14726,6 +14919,9 @@ func (v *RootViewAllocationRequested) reset() {
 }
 
 func (v *RootViewAllocationRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Locale.IsZero() && v.Factory.IsZero() && v.RID.IsZero() && v.Values.IsZero()
 }
 
@@ -14739,6 +14935,9 @@ func (v *ScopeConfigurationChangeRequested) reset() {
 }
 
 func (v *ScopeConfigurationChangeRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero() && v.AcceptLanguage.IsZero() && v.WindowInfo.IsZero()
 }
 
@@ -14755,6 +14954,9 @@ func (v *WindowInfo) reset() {
 }
 
 func (v *WindowInfo) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Width.IsZero() && v.Height.IsZero() && v.Density.IsZero() && v.SizeClass.IsZero() && v.ColorScheme.IsZero() && v.UserAgent.IsZero()
 }
 
@@ -14819,6 +15021,9 @@ func (v *ScopeConfigurationChanged) reset() {
 }
 
 func (v *ScopeConfigurationChanged) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero() && v.Fonts.IsZero()
 }
 
@@ -15002,6 +15207,9 @@ func (v *Theme) reset() {
 }
 
 func (v *Theme) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Colors.IsZero() && v.Lengths.IsZero()
 }
 
@@ -15125,6 +15333,9 @@ func (v *Themes) reset() {
 }
 
 func (v *Themes) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Light.IsZero() && v.Dark.IsZero()
 }
 
@@ -15135,6 +15346,9 @@ func (v *DateData) reset() {
 }
 
 func (v *DateData) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Day.IsZero() && v.Month.IsZero() && v.Year.IsZero()
 }
 
@@ -15153,6 +15367,9 @@ func (v *DatePicker) reset() {
 }
 
 func (v *DatePicker) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Style.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.EndValue.IsZero() && v.EndInputValue.IsZero() && v.Frame.IsZero() && v.Invisible.IsZero() && v.Disabled.IsZero()
 }
 
@@ -15163,6 +15380,9 @@ func (v *Divider) reset() {
 }
 
 func (v *Divider) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Frame.IsZero() && v.Border.IsZero() && v.Padding.IsZero()
 }
 
@@ -15175,6 +15395,9 @@ func (v *Font) reset() {
 }
 
 func (v *Font) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Name.IsZero() && v.Size.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.LineHeight.IsZero()
 }
 
@@ -15195,6 +15418,9 @@ func (v *Grid) reset() {
 }
 
 func (v *Grid) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Cells.IsZero() && v.Rows.IsZero() && v.Columns.IsZero() && v.RowGap.IsZero() && v.ColGap.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.ColWidths.IsZero() && v.Invisible.IsZero()
 }
 
@@ -15302,6 +15528,9 @@ func (v *GridCell) reset() {
 }
 
 func (v *GridCell) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Body.IsZero() && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero()
 }
 
@@ -15333,10 +15562,14 @@ func (v *HStack) reset() {
 	v.Animation.reset()
 	v.Transformation.reset()
 	v.Opacity.reset()
+	v.Background.reset()
 }
 
 func (v *HStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero()
+	if v == nil {
+		return true
+	}
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero()
 }
 
 func (v *Position) reset() {
@@ -15349,6 +15582,9 @@ func (v *Position) reset() {
 }
 
 func (v *Position) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Kind.IsZero() && v.Left.IsZero() && v.Top.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.ZIndex.IsZero()
 }
 
@@ -15366,6 +15602,9 @@ func (v *Img) reset() {
 }
 
 func (v *Img) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Uri.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.SVG.IsZero() && v.FillColor.IsZero() && v.StrokeColor.IsZero() && v.Invisible.IsZero() && v.ObjectFit.IsZero()
 }
 
@@ -15459,6 +15698,9 @@ func (v *FileImportRequested) reset() {
 }
 
 func (v *FileImportRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.ID.IsZero() && v.ScopeID.IsZero() && v.Multiple.IsZero() && v.MaxBytes.IsZero() && v.AllowedMimeTypes.IsZero()
 }
 
@@ -15469,6 +15711,9 @@ func (v *KeyboardOptions) reset() {
 }
 
 func (v *KeyboardOptions) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Capitalization.IsZero() && v.AutoCorrectEnabled.IsZero() && v.KeyboardType.IsZero()
 }
 
@@ -15484,6 +15729,9 @@ func (v *Modal) reset() {
 }
 
 func (v *Modal) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Content.IsZero() && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.AllowBackgroundScrolling.IsZero()
 }
 
@@ -15492,6 +15740,9 @@ func (v *ThemeRequested) reset() {
 }
 
 func (v *ThemeRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Theme.IsZero()
 }
 
@@ -15502,6 +15753,9 @@ func (v *NavigationForwardToRequested) reset() {
 }
 
 func (v *NavigationForwardToRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RootView.IsZero() && v.Values.IsZero() && v.Target.IsZero()
 }
 
@@ -15511,6 +15765,9 @@ func (v *NavigationResetRequested) reset() {
 }
 
 func (v *NavigationResetRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RootView.IsZero() && v.Values.IsZero()
 }
 
@@ -15518,6 +15775,9 @@ func (v *NavigationBackRequested) reset() {
 }
 
 func (v *NavigationBackRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return true
 }
 
@@ -15525,6 +15785,9 @@ func (v *NavigationReloadRequested) reset() {
 }
 
 func (v *NavigationReloadRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return true
 }
 
@@ -15569,6 +15832,9 @@ func (v *WindowTitle) reset() {
 }
 
 func (v *WindowTitle) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero()
 }
 
@@ -15592,6 +15858,9 @@ func (v *PasswordField) reset() {
 }
 
 func (v *PasswordField) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero()
 }
 
@@ -15599,6 +15868,9 @@ func (v *Ping) reset() {
 }
 
 func (v *Ping) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return true
 }
 
@@ -15611,6 +15883,9 @@ func (v *Radiobutton) reset() {
 }
 
 func (v *Radiobutton) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
@@ -15670,6 +15945,9 @@ func (v *Scaffold) reset() {
 }
 
 func (v *Scaffold) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero() && v.Height.IsZero()
 }
 
@@ -15685,6 +15963,9 @@ func (v *ScaffoldMenuEntry) reset() {
 }
 
 func (v *ScaffoldMenuEntry) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Icon.IsZero() && v.IconActive.IsZero() && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero()
 }
 
@@ -15728,6 +16009,9 @@ func (v *ScopeDestructionRequested) reset() {
 }
 
 func (v *ScopeDestructionRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.RID.IsZero()
 }
 
@@ -15748,6 +16032,9 @@ func (v *ScrollView) reset() {
 }
 
 func (v *ScrollView) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero()
 }
 
@@ -15758,6 +16045,9 @@ func (v *Resource) reset() {
 }
 
 func (v *Resource) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Name.IsZero() && v.URI.IsZero() && v.MimeType.IsZero()
 }
 
@@ -15810,6 +16100,9 @@ func (v *SendMultipleRequested) reset() {
 }
 
 func (v *SendMultipleRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Resources.IsZero()
 }
 
@@ -15818,6 +16111,9 @@ func (v *SessionAssigned) reset() {
 }
 
 func (v *SessionAssigned) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.SessionID.IsZero()
 }
 
@@ -15828,6 +16124,9 @@ func (v *Spacer) reset() {
 }
 
 func (v *Spacer) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Frame.IsZero() && v.Border.IsZero() && v.BackgroundColor.IsZero()
 }
 
@@ -15843,6 +16142,9 @@ func (v *Table) reset() {
 }
 
 func (v *Table) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Header.IsZero() && v.Rows.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Border.IsZero() && v.DefaultCellPadding.IsZero() && v.RowDividerColor.IsZero() && v.HeaderDividerColor.IsZero()
 }
 
@@ -15860,6 +16162,9 @@ func (v *TableCell) reset() {
 }
 
 func (v *TableCell) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Content.IsZero() && v.RowSpan.IsZero() && v.ColSpan.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
 }
 
@@ -15877,6 +16182,9 @@ func (v *TableColumn) reset() {
 }
 
 func (v *TableColumn) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Content.IsZero() && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero()
 }
 
@@ -15890,6 +16198,9 @@ func (v *TableRow) reset() {
 }
 
 func (v *TableRow) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Cells.IsZero() && v.Height.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
 }
 
@@ -15898,6 +16209,9 @@ func (v *TableHeader) reset() {
 }
 
 func (v *TableHeader) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Columns.IsZero()
 }
 
@@ -16061,6 +16375,9 @@ func (v *TextView) reset() {
 }
 
 func (v *TextView) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero()
 }
 
@@ -16088,6 +16405,9 @@ func (v *TextField) reset() {
 }
 
 func (v *TextField) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero()
 }
 
@@ -16099,6 +16419,9 @@ func (v *Toggle) reset() {
 }
 
 func (v *Toggle) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
 }
 
@@ -16116,6 +16439,9 @@ func (v *TextLayout) reset() {
 }
 
 func (v *TextLayout) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Children.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.Invisible.IsZero()
 }
 
@@ -16146,10 +16472,14 @@ func (v *VStack) reset() {
 	v.Animation.reset()
 	v.Transformation.reset()
 	v.Opacity.reset()
+	v.Background.reset()
 }
 
 func (v *VStack) IsZero() bool {
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero()
+	if v == nil {
+		return true
+	}
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero()
 }
 
 func (v *WebView) reset() {
@@ -16162,6 +16492,9 @@ func (v *WebView) reset() {
 }
 
 func (v *WebView) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.URI.IsZero() && v.Frame.IsZero() && v.Title.IsZero() && v.Allow.IsZero() && v.ReferrerPolicy.IsZero() && v.Raw.IsZero()
 }
 
@@ -16171,6 +16504,9 @@ func (v *WindowInfoChanged) reset() {
 }
 
 func (v *WindowInfoChanged) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.WindowInfo.IsZero() && v.RID.IsZero()
 }
 
@@ -16187,6 +16523,9 @@ func (v *UpdateStateValues2Requested) reset() {
 }
 
 func (v *UpdateStateValues2Requested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.StatePtr0.IsZero() && v.Value0.IsZero() && v.StatePtr1.IsZero() && v.Value1.IsZero() && v.FunctionPointer.IsZero() && v.RID.IsZero()
 }
 
@@ -16199,6 +16538,9 @@ func (v *OpenHttpLink) reset() {
 }
 
 func (v *OpenHttpLink) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Url.IsZero() && v.Target.IsZero()
 }
 
@@ -16210,6 +16552,9 @@ func (v *OpenHttpFlow) reset() {
 }
 
 func (v *OpenHttpFlow) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Url.IsZero() && v.RedirectTarget.IsZero() && v.RedirectNavigation.IsZero() && v.Session.IsZero()
 }
 
@@ -16218,6 +16563,9 @@ func (v *ClipboardWriteTextRequested) reset() {
 }
 
 func (v *ClipboardWriteTextRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Text.IsZero()
 }
 
@@ -16228,6 +16576,9 @@ func (v *Menu) reset() {
 }
 
 func (v *Menu) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Anchor.IsZero() && v.Groups.IsZero() && v.Frame.IsZero()
 }
 
@@ -16236,6 +16587,9 @@ func (v *MenuGroup) reset() {
 }
 
 func (v *MenuGroup) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Items.IsZero()
 }
 
@@ -16245,6 +16599,9 @@ func (v *MenuItem) reset() {
 }
 
 func (v *MenuItem) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Action.IsZero() && v.Content.IsZero()
 }
 
@@ -16347,6 +16704,9 @@ func (v *Form) reset() {
 }
 
 func (v *Form) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Children.IsZero() && v.Action.IsZero() && v.Id.IsZero() && v.Autocomplete.IsZero() && v.Frame.IsZero()
 }
 
@@ -16367,6 +16727,9 @@ func (v *CountDown) reset() {
 }
 
 func (v *CountDown) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Action.IsZero() && v.Duration.IsZero() && v.ShowDays.IsZero() && v.ShowHours.IsZero() && v.ShowMinutes.IsZero() && v.ShowSeconds.IsZero() && v.Frame.IsZero() && v.TextColor.IsZero() && v.SeparatorColor.IsZero() && v.Style.IsZero() && v.Done.IsZero() && v.ProgressBackground.IsZero() && v.ProgressColor.IsZero()
 }
 
@@ -16381,6 +16744,9 @@ func (v *CodeEditor) reset() {
 }
 
 func (v *CodeEditor) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero() && v.Frame.IsZero() && v.ReadOnly.IsZero() && v.Disabled.IsZero() && v.TabSize.IsZero() && v.InputValue.IsZero() && v.Language.IsZero()
 }
 
@@ -16393,6 +16759,9 @@ func (v *RichTextEditor) reset() {
 }
 
 func (v *RichTextEditor) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero() && v.Frame.IsZero() && v.ReadOnly.IsZero() && v.Disabled.IsZero() && v.InputValue.IsZero()
 }
 
@@ -16402,6 +16771,9 @@ func (v *RichText) reset() {
 }
 
 func (v *RichText) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero() && v.Frame.IsZero()
 }
 
@@ -16417,6 +16789,9 @@ func (v *HoverGroup) reset() {
 }
 
 func (v *HoverGroup) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ContentHover.IsZero()
 }
 
@@ -16472,6 +16847,9 @@ func (v *FontFace) reset() {
 }
 
 func (v *FontFace) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Family.IsZero() && v.Style.IsZero() && v.Weight.IsZero() && v.Source.IsZero()
 }
 
@@ -16481,6 +16859,9 @@ func (v *Fonts) reset() {
 }
 
 func (v *Fonts) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.DefaultFontFace.IsZero() && v.Faces.IsZero()
 }
 
@@ -16491,6 +16872,9 @@ func (v *QrCode) reset() {
 }
 
 func (v *QrCode) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Value.IsZero() && v.AccessibilityLabel.IsZero() && v.Frame.IsZero()
 }
 
@@ -16507,6 +16891,9 @@ func (v *QrCodeReader) reset() {
 }
 
 func (v *QrCodeReader) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && v.NoMediaDeviceContent.IsZero() && v.OnCameraReady.IsZero() && v.Frame.IsZero()
 }
 
@@ -16518,6 +16905,9 @@ func (v *MediaDevice) reset() {
 }
 
 func (v *MediaDevice) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.DeviceID.IsZero() && v.GroupID.IsZero() && v.Label.IsZero() && v.Kind.IsZero()
 }
 
@@ -16528,6 +16918,9 @@ func (v *CallMediaDevicesEnumerate) reset() {
 }
 
 func (v *CallMediaDevicesEnumerate) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Keep.IsZero() && v.WithAudio.IsZero() && v.WithVideo.IsZero()
 }
 
@@ -16583,6 +16976,9 @@ func (v *CallResolved) reset() {
 }
 
 func (v *CallResolved) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.CallPtr.IsZero() && v.Ret.IsZero() && v.RID.IsZero()
 }
 
@@ -16595,6 +16991,9 @@ func (v *CallRequested) reset() {
 }
 
 func (v *CallRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.CallPtr.IsZero() && v.Call.IsZero()
 }
 
@@ -16604,6 +17003,9 @@ func (v *RetError) reset() {
 }
 
 func (v *RetError) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Message.IsZero() && v.Code.IsZero()
 }
 
@@ -16612,6 +17014,9 @@ func (v *RetMediaDevicesEnumerate) reset() {
 }
 
 func (v *RetMediaDevicesEnumerate) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Devices.IsZero()
 }
 
@@ -16619,6 +17024,9 @@ func (v *RetVoid) reset() {
 }
 
 func (v *RetVoid) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return true
 }
 
@@ -16628,6 +17036,9 @@ func (v *RetMediaDevicesPermissionsError) reset() {
 }
 
 func (v *RetMediaDevicesPermissionsError) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Message.IsZero() && v.Code.IsZero()
 }
 
@@ -16640,6 +17051,9 @@ func (v *BarChart) reset() {
 }
 
 func (v *BarChart) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Chart.IsZero() && v.Series.IsZero() && v.Markers.IsZero() && v.Horizontal.IsZero() && v.Stacked.IsZero()
 }
 
@@ -16656,6 +17070,9 @@ func (v *BarChartMarker) reset() {
 }
 
 func (v *BarChartMarker) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Label.IsZero() && v.SeriesIndex.IsZero() && v.DataPointIndex.IsZero() && v.Value.IsZero() && v.Width.IsZero() && v.Height.IsZero() && v.Round.IsZero() && v.Dashed.IsZero() && v.Color.IsZero()
 }
 
@@ -16780,6 +17197,9 @@ func (v *LineChart) reset() {
 }
 
 func (v *LineChart) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Chart.IsZero() && v.Series.IsZero() && v.Curve.IsZero() && v.Markers.IsZero()
 }
 
@@ -16879,6 +17299,9 @@ func (v *ChartDataPoint) reset() {
 }
 
 func (v *ChartDataPoint) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.X.IsZero() && v.Y.IsZero()
 }
 
@@ -16889,6 +17312,9 @@ func (v *ChartSeries) reset() {
 }
 
 func (v *ChartSeries) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Label.IsZero() && v.Type.IsZero() && v.DataPoints.IsZero()
 }
 
@@ -16899,6 +17325,9 @@ func (v *LineChartMarkers) reset() {
 }
 
 func (v *LineChartMarkers) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Size.IsZero() && v.BorderColor.IsZero() && v.ShowNullDataPoints.IsZero()
 }
 
@@ -16913,6 +17342,9 @@ func (v *Chart) reset() {
 }
 
 func (v *Chart) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Labels.IsZero() && v.Colors.IsZero() && v.Frame.IsZero() && v.Downloadable.IsZero() && v.NoDataMessage.IsZero() && v.XAxisTitle.IsZero() && v.YAxisTitle.IsZero()
 }
 
@@ -16964,6 +17396,9 @@ func (v *Video) reset() {
 }
 
 func (v *Video) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Src.IsZero() && v.Frame.IsZero() && v.Controls.IsZero() && v.Loop.IsZero() && v.Muted.IsZero() && v.PlaysInline.IsZero() && v.Poster.IsZero() && v.Autoplay.IsZero()
 }
 
@@ -16978,6 +17413,9 @@ func (v *Transformation) reset() {
 }
 
 func (v *Transformation) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.TranslateX.IsZero() && v.TranslateY.IsZero() && v.TranslateZ.IsZero() && v.ScaleX.IsZero() && v.ScaleY.IsZero() && v.ScaleZ.IsZero() && v.RotateZ.IsZero()
 }
 
@@ -16986,6 +17424,9 @@ func (v *CallRequestFocus) reset() {
 }
 
 func (v *CallRequestFocus) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.ID.IsZero()
 }
 
@@ -16997,6 +17438,9 @@ func (v *PieChart) reset() {
 }
 
 func (v *PieChart) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Chart.IsZero() && v.Series.IsZero() && v.ShowAsDonut.IsZero() && v.ShowDataLabels.IsZero()
 }
 
@@ -17007,6 +17451,9 @@ func (v *DnD) reset() {
 }
 
 func (v *DnD) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.CanDrop.IsZero() && v.CanDrag.IsZero() && v.DroppableIDs.IsZero()
 }
 
@@ -17019,7 +17466,25 @@ func (v *DnDArea) reset() {
 }
 
 func (v *DnDArea) IsZero() bool {
+	if v == nil {
+		return true
+	}
 	return v.Children.IsZero() && v.Frame.IsZero() && v.DnD.IsZero() && v.Id.IsZero() && v.DroppedId.IsZero()
+}
+
+func (v *Background) reset() {
+	v.Image.reset()
+	v.PositionX.reset()
+	v.PositionY.reset()
+	v.Repeat.reset()
+	v.Size.reset()
+}
+
+func (v *Background) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Image.IsZero() && v.PositionX.IsZero() && v.PositionY.IsZero() && v.Repeat.IsZero() && v.Size.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -18186,6 +18651,13 @@ func (v *DnD) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *DnDArea) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 176); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Background) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 177); err != nil {
 		return err
 	}
 	return nil

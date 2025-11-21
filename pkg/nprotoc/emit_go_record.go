@@ -23,7 +23,11 @@ func (c *Compiler) emitGoRecord(t Typename, decl Record) error {
 	for _, fid := range keys {
 		field := decl.Fields[fid]
 		buf.WriteString(c.makeGoDoc(field.Doc))
-		buf.WriteString(fmt.Sprintf("\t%s %s\n", field.Name, field.Type))
+		if field.Pointer {
+			buf.WriteString(fmt.Sprintf("\t%s *%s\n", field.Name, field.Type))
+		} else {
+			buf.WriteString(fmt.Sprintf("\t%s %s\n", field.Name, field.Type))
+		}
 	}
 	buf.WriteString("}\n")
 
@@ -166,6 +170,9 @@ func (c *Compiler) goEmitRecordReset(t Typename, decl Record) error {
 func (c *Compiler) goEmitRecordIsZero(t Typename, decl Record) error {
 	c.pf("func(v *%s) IsZero() bool {\n", t)
 	c.inc()
+
+	c.i()
+	c.p("if v==nil{\nreturn true\n}\n")
 
 	c.i()
 	c.p("return ")

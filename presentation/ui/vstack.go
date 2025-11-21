@@ -45,6 +45,7 @@ type TVStack struct {
 	noClip             bool
 	animation          Animation
 	opacity            float64
+	background         *Background
 }
 
 // VStack is a container, in which the given children will be layout in a column according to the applied
@@ -222,6 +223,11 @@ func (c TVStack) Transformation(transformation Transformation) TVStack {
 	return c
 }
 
+func (c TVStack) Background(bg Background) TVStack {
+	c.background = &bg
+	return c
+}
+
 // Render builds and returns the protocol representation of the VStack.
 func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -252,6 +258,7 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Id:                     proto.Str(c.id),
 		NoClip:                 proto.Bool(c.noClip),
 		Opacity:                clampOpacity(c.opacity),
+		Background:             c.background.proto(),
 	}
 }
 

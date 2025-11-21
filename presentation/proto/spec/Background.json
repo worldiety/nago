@@ -1,0 +1,31 @@
+{
+  "kind": "Record",
+  "id": 177,
+  "fields": {
+    "1": {
+      "doc": "Image may support various styles. At least url(\"...\") and linear-gradient(<colorA>,<colorB>...) must be supported. Other variants are implementation dependent. This translates to background-image property in CSS",
+      "name": "Image",
+      "type": "Strings"
+    },
+    "2": {
+      "doc": "In percent 0-100.",
+      "name": "PositionX",
+      "type": "Uint"
+    },
+    "3": {
+      "doc": "In percent 0-100.",
+      "name": "PositionY",
+      "type": "Uint"
+    },
+    "4": {
+      "doc": "Repeat is a tiling mechanics and at least \"repeat\" and \"\" for no-repeat must be supported.",
+      "name": "Repeat",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "Size must support at least \"contain\" and \"cover\".",
+      "name": "Size",
+      "type": "Str"
+    }
+  }
+}

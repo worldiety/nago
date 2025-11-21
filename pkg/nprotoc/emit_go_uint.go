@@ -44,7 +44,7 @@ func (c *Compiler) emitGoUint(t Typename, decl Uint) {
 
 	buf.WriteString(fmt.Sprintf("func(v *%s) reset(){\n*v=%s(0)\n}\n", t, t))
 
-	buf.WriteString(fmt.Sprintf("func(v *%s) IsZero()bool{\nreturn*v==0\n}\n", t))
+	buf.WriteString(fmt.Sprintf("func(v *%s) IsZero()bool{\nreturn *v==0\n}\n", t))
 
 	c.marshals = append(c.marshals, buf.String())
 }

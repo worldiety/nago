@@ -8,10 +8,11 @@
 package nprotoc
 
 import (
-	"github.com/worldiety/enum"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/worldiety/enum"
 )
 
 type Declaration interface {
@@ -247,10 +248,11 @@ func (d Record) ID() int {
 func (Record) decl() {}
 
 type Field struct {
-	Doc    string   `json:"doc"`
-	Name   string   `json:"name"`
-	Type   Typename `json:"type"`
-	Getter bool     `json:"getter"`
+	Doc     string   `json:"doc"`
+	Name    string   `json:"name"`
+	Type    Typename `json:"type"`
+	Getter  bool     `json:"getter"`
+	Pointer bool     `json:"pointer"`
 }
 
 type Project struct {

@@ -10,6 +10,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
+import { backgroundCSS } from '@/components/shared/background';
 import { borderCSS } from '@/components/shared/border';
 import { colorValue } from '@/components/shared/colors';
 import { fontCSS } from '@/components/shared/font';
@@ -66,6 +67,7 @@ function commonStyles(): string[] {
 	let styles = frameCSS(props.ui.frame);
 	styles.push(...positionCSS(props.ui.position));
 	styles.push(...transformationCSS(props.ui.transformation));
+	styles.push(...backgroundCSS(props.ui.background));
 
 	// background handling
 	if (props.ui.pressedBackgroundColor && pressed.value) {

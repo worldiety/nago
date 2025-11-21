@@ -8,14 +8,14 @@
 -->
 
 <script lang="ts" setup>
-import {computed, ref, useTemplateRef, watch} from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
-import {frameCSS} from '@/components/shared/frame';
-import {inputWrapperStyleFrom} from '@/components/shared/inputWrapperStyle';
-import {useServiceAdapter} from '@/composables/serviceAdapter';
-import {nextRID} from '@/eventhandling';
+import { frameCSS } from '@/components/shared/frame';
+import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
 import {
 	KeyboardTypeValues,
 	TextAlignmentValues,
@@ -38,7 +38,6 @@ let timer: number = 0;
 
 const frameStyles = computed<string>(() => {
 	let styles = frameCSS(props.ui.frame);
-
 
 	return styles.join(';');
 });
@@ -353,7 +352,7 @@ function debouncedInput() {
 					ref="leadingElement"
 					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
 				>
-					<UiGeneric :ui="props.ui.leading"/>
+					<UiGeneric :ui="props.ui.leading" />
 				</div>
 
 				<input
@@ -388,7 +387,7 @@ function debouncedInput() {
 					ref="trailingElement"
 					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center pointer-events-none"
 				>
-					<UiGeneric :ui="props.ui.trailing"/>
+					<UiGeneric :ui="props.ui.trailing" />
 				</div>
 
 				<!-- Clear button -->
@@ -402,7 +401,7 @@ function debouncedInput() {
 					ref="clearButton"
 					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center"
 				>
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue"/>
+					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
 				</div>
 			</div>
 		</InputWrapper>

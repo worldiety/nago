@@ -9,6 +9,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/worldiety/material-color-utilities/hct"
 	"go.wdy.de/nago/pkg/xcolor"
@@ -20,6 +21,10 @@ type Color string
 
 func (c Color) ora() proto.Color {
 	return proto.Color(c)
+}
+
+func (c Color) isAbsolute() bool {
+	return strings.HasPrefix(string(c), `#`)
 }
 
 // WithTransparency updates the alpha value part of the color (0-100), where 25% transparent means 75% opaque.

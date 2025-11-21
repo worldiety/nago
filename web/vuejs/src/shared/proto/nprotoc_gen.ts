@@ -3884,6 +3884,8 @@ export class HStack implements Writeable, Readable, Component {
 	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
 	public opacity?: Uint;
 
+	public background?: Background;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -3911,7 +3913,8 @@ export class HStack implements Writeable, Readable, Component {
 		noClip: Bool | undefined = undefined,
 		animation: Animation | undefined = undefined,
 		transformation: Transformation | undefined = undefined,
-		opacity: Uint | undefined = undefined
+		opacity: Uint | undefined = undefined,
+		background: Background | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -3940,6 +3943,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.animation = animation;
 		this.transformation = transformation;
 		this.opacity = opacity;
+		this.background = background;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4066,6 +4070,11 @@ export class HStack implements Writeable, Readable, Component {
 					this.opacity = readInt(reader);
 					break;
 				}
+				case 28: {
+					this.background = new Background();
+					this.background.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4102,6 +4111,7 @@ export class HStack implements Writeable, Readable, Component {
 			this.animation !== undefined,
 			this.transformation !== undefined && !this.transformation.isZero(),
 			this.opacity !== undefined,
+			this.background !== undefined && !this.background.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4213,6 +4223,10 @@ export class HStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.RECORD, 28);
+			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4243,7 +4257,8 @@ export class HStack implements Writeable, Readable, Component {
 			this.noClip === undefined &&
 			this.animation === undefined &&
 			(this.transformation === undefined || this.transformation.isZero()) &&
-			this.opacity === undefined
+			this.opacity === undefined &&
+			(this.background === undefined || this.background.isZero())
 		);
 	}
 
@@ -4275,6 +4290,7 @@ export class HStack implements Writeable, Readable, Component {
 		this.animation = undefined;
 		this.transformation = undefined;
 		this.opacity = undefined;
+		this.background = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -8896,6 +8912,8 @@ export class VStack implements Writeable, Readable, Component {
 	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
 	public opacity?: Uint;
 
+	public background?: Background;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -8922,7 +8940,8 @@ export class VStack implements Writeable, Readable, Component {
 		noClip: Bool | undefined = undefined,
 		animation: Animation | undefined = undefined,
 		transformation: Transformation | undefined = undefined,
-		opacity: Uint | undefined = undefined
+		opacity: Uint | undefined = undefined,
+		background: Background | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -8950,6 +8969,7 @@ export class VStack implements Writeable, Readable, Component {
 		this.animation = animation;
 		this.transformation = transformation;
 		this.opacity = opacity;
+		this.background = background;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9072,6 +9092,11 @@ export class VStack implements Writeable, Readable, Component {
 					this.opacity = readInt(reader);
 					break;
 				}
+				case 27: {
+					this.background = new Background();
+					this.background.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9107,6 +9132,7 @@ export class VStack implements Writeable, Readable, Component {
 			this.animation !== undefined,
 			this.transformation !== undefined && !this.transformation.isZero(),
 			this.opacity !== undefined,
+			this.background !== undefined && !this.background.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9214,6 +9240,10 @@ export class VStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 26);
 			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.RECORD, 27);
+			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -9243,7 +9273,8 @@ export class VStack implements Writeable, Readable, Component {
 			this.noClip === undefined &&
 			this.animation === undefined &&
 			(this.transformation === undefined || this.transformation.isZero()) &&
-			this.opacity === undefined
+			this.opacity === undefined &&
+			(this.background === undefined || this.background.isZero())
 		);
 	}
 
@@ -9274,6 +9305,7 @@ export class VStack implements Writeable, Readable, Component {
 		this.animation = undefined;
 		this.transformation = undefined;
 		this.opacity = undefined;
+		this.background = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -13775,6 +13807,126 @@ export class DnDArea implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class Background implements Writeable, Readable {
+	// Image may support various styles. At least url("...") and linear-gradient(<colorA>,<colorB>...) must be supported. Other variants are implementation dependent. This translates to background-image property in CSS
+	public image?: Strings;
+
+	// In percent 0-100.
+	public positionX?: Uint;
+
+	// In percent 0-100.
+	public positionY?: Uint;
+
+	// Repeat is a tiling mechanics and at least "repeat" and "" for no-repeat must be supported.
+	public repeat?: Str;
+
+	// Size must support at least "contain" and "cover".
+	public size?: Str;
+
+	constructor(
+		image: Strings | undefined = undefined,
+		positionX: Uint | undefined = undefined,
+		positionY: Uint | undefined = undefined,
+		repeat: Str | undefined = undefined,
+		size: Str | undefined = undefined
+	) {
+		this.image = image;
+		this.positionX = positionX;
+		this.positionY = positionY;
+		this.repeat = repeat;
+		this.size = size;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.image = new Strings();
+					this.image.read(reader);
+					break;
+				}
+				case 2: {
+					this.positionX = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.positionY = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.repeat = readString(reader);
+					break;
+				}
+				case 5: {
+					this.size = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.image !== undefined && !this.image.isZero(),
+			this.positionX !== undefined,
+			this.positionY !== undefined,
+			this.repeat !== undefined,
+			this.size !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.image!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.positionX!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.positionY!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.repeat!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.size!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.image === undefined || this.image.isZero()) &&
+			this.positionX === undefined &&
+			this.positionY === undefined &&
+			this.repeat === undefined &&
+			this.size === undefined
+		);
+	}
+
+	reset(): void {
+		this.image = undefined;
+		this.positionX = undefined;
+		this.positionY = undefined;
+		this.repeat = undefined;
+		this.size = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 177);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14572,6 +14724,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 176: {
 			const v = new DnDArea();
+			v.read(src);
+			return v;
+		}
+		case 177: {
+			const v = new Background();
 			v.read(src);
 			return v;
 		}
