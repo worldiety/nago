@@ -16,6 +16,7 @@ See also [Toggle], [Checkbox] and [Select].
 | Method | Description |
 |--------| ------------|
 | `Disabled(disabled bool)` | Disabled disables the radio button when set to true, preventing user interaction. |
+| `ID(id string)` |  |
 | `InputChecked(input *core.State[bool])` | InputChecked binds the radio button to the given state, enabling two-way data binding so that the selected state is synchronized with external logic. |
 | `Visible(v bool)` | Visible controls the visibility of the radio button. Passing false will hide the component from the UI. |
 ---

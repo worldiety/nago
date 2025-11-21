@@ -73,6 +73,8 @@ func main() {
 | `Frame(frame Frame)` | Frame sets the width, minWidth, maxWidth, height, minHeight and maxHeight. |
 | `FullWidth()` | FullWidth sets the width to 100%. |
 | `HoveredBorder(border Border)` | HoveredBorder sets the Border width, color and radius when component is hovered. |
+| `Hyphens(h Hyphens)` |  |
+| `LabelFor(id string)` |  |
 | `LineBreak(lb bool)` | LineBreak de-/activates line breaking in between the Text. |
 | `Padding(padding Padding)` | Padding sets a top, right, bottom and left spacing. |
 | `PressedBorder(border Border)` | PressedBorder sets the Border width, color and radius when the component is clicked. |

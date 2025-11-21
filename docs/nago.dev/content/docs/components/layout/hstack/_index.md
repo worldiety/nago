@@ -20,6 +20,7 @@ you need to apply additional padding.
 | `Action(f func())` | Action sets the callback function to be invoked when the stack is clicked or tapped. |
 | `Alignment(alignment Alignment)` | Alignment sets how the stack's children are aligned vertically within the horizontal row. |
 | `Append(children ...)` | Append adds one or more child views to the horizontal stack. |
+| `Background(bg Background)` |  |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the horizontal stack. |
 | `Border(border Border)` | Border sets the border styling of the stack. |
 | `Enabled(enabled bool)` | Enabled has only an effect if StylePreset is applied, otherwise it is ignored. |

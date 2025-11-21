@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Composite</title>
-    <link>//localhost:1313/docs/components/composite/</link>
+    <link>/docs/components/composite/</link>
     <description>Recent content in Composite on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/composite/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/composite/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Auto Form</title>
-      <link>//localhost:1313/docs/components/composite/auto_form/</link>
+      <link>/docs/components/composite/auto_form/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/auto_form/</guid>
+      <guid>/docs/components/composite/auto_form/</guid>
       <description>
         
         
@@ -106,10 +106,10 @@ type. Defaults to the zero value of the underlying type.&lt;/li&gt;
     
     <item>
       <title>Avatar</title>
-      <link>//localhost:1313/docs/components/composite/avatar/</link>
+      <link>/docs/components/composite/avatar/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/avatar/</guid>
+      <guid>/docs/components/composite/avatar/</guid>
       <description>
         
         
@@ -162,10 +162,10 @@ optional click action.&lt;/p&gt;
     
     <item>
       <title>Avatar Picker</title>
-      <link>//localhost:1313/docs/components/composite/avatar_picker/</link>
+      <link>/docs/components/composite/avatar_picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/avatar_picker/</guid>
+      <guid>/docs/components/composite/avatar_picker/</guid>
       <description>
         
         
@@ -222,10 +222,10 @@ By default, it initializes with a 120x120 frame size.&lt;/p&gt;
     
     <item>
       <title>Bar Chart</title>
-      <link>//localhost:1313/docs/components/composite/bar_chart/</link>
+      <link>/docs/components/composite/bar_chart/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/bar_chart/</guid>
+      <guid>/docs/components/composite/bar_chart/</guid>
       <description>
         
         
@@ -274,10 +274,10 @@ and additional visual indicators (markers).&lt;/p&gt;
     
     <item>
       <title>Calendar</title>
-      <link>//localhost:1313/docs/components/composite/calendar/</link>
+      <link>/docs/components/composite/calendar/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/calendar/</guid>
+      <guid>/docs/components/composite/calendar/</guid>
       <description>
         
         
@@ -325,10 +325,10 @@ and supports rendering events within a defined viewport. It allows customization
     
     <item>
       <title>Code Editor</title>
-      <link>//localhost:1313/docs/components/composite/code_editor/</link>
+      <link>/docs/components/composite/code_editor/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/code_editor/</guid>
+      <guid>/docs/components/composite/code_editor/</guid>
       <description>
         
         
@@ -386,10 +386,10 @@ and a default tab size of 4 spaces.&lt;/p&gt;
     
     <item>
       <title>Countdown</title>
-      <link>//localhost:1313/docs/components/composite/countdown/</link>
+      <link>/docs/components/composite/countdown/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/countdown/</guid>
+      <guid>/docs/components/composite/countdown/</guid>
       <description>
         
         
@@ -472,10 +472,10 @@ By default, days, hours, minutes, and seconds are all displayed.&lt;/p&gt;
     
     <item>
       <title>Date Picker</title>
-      <link>//localhost:1313/docs/components/composite/date_picker/</link>
+      <link>/docs/components/composite/date_picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/date_picker/</guid>
+      <guid>/docs/components/composite/date_picker/</guid>
       <description>
         
         
@@ -550,10 +550,10 @@ binding the given value and optional state.&lt;/p&gt;
     
     <item>
       <title>Entry</title>
-      <link>//localhost:1313/docs/components/composite/entry/</link>
+      <link>/docs/components/composite/entry/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/entry/</guid>
+      <guid>/docs/components/composite/entry/</guid>
       <description>
         
         
@@ -609,10 +609,10 @@ supporting text/view, leading &amp;amp; trailing views, and an action handler.&l
     
     <item>
       <title>Form</title>
-      <link>//localhost:1313/docs/components/composite/form/</link>
+      <link>/docs/components/composite/form/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/form/</guid>
+      <guid>/docs/components/composite/form/</guid>
       <description>
         
         
@@ -660,10 +660,10 @@ and optionally support autocomplete behavior.&lt;/p&gt;
     
     <item>
       <title>Hero</title>
-      <link>//localhost:1313/docs/components/composite/hero/</link>
+      <link>/docs/components/composite/hero/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/hero/</guid>
+      <guid>/docs/components/composite/hero/</guid>
       <description>
         
         
@@ -687,8 +687,16 @@ title, subtitle, and optional action buttons.&lt;/p&gt;
           &lt;td&gt;Actions sets the action buttons or links of the hero section.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment ui.Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Alignment sets the Alignment of the THero element.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Frame sets the frame of the hero section.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;HeroType(t HeroType)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;HeroType sets the herotype of the THero element.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Subtitle(subtitle string)&lt;/code&gt;&lt;/td&gt;
@@ -707,10 +715,10 @@ title, subtitle, and optional action buttons.&lt;/p&gt;
     
     <item>
       <title>Line Chart</title>
-      <link>//localhost:1313/docs/components/composite/line_chart/</link>
+      <link>/docs/components/composite/line_chart/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/line_chart/</guid>
+      <guid>/docs/components/composite/line_chart/</guid>
       <description>
         
         
@@ -754,10 +762,10 @@ can display markers for data points or thresholds. Typical usage is in dashboard
     
     <item>
       <title>List</title>
-      <link>//localhost:1313/docs/components/composite/list/</link>
+      <link>/docs/components/composite/list/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/list/</guid>
+      <guid>/docs/components/composite/list/</guid>
       <description>
         
         
@@ -804,10 +812,10 @@ can display markers for data points or thresholds. Typical usage is in dashboard
     
     <item>
       <title>Menu</title>
-      <link>//localhost:1313/docs/components/composite/menu/</link>
+      <link>/docs/components/composite/menu/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/menu/</guid>
+      <guid>/docs/components/composite/menu/</guid>
       <description>
         
         
@@ -844,10 +852,10 @@ Empty groups are discarded when rendering.&lt;/p&gt;
     
     <item>
       <title>Multi Steps</title>
-      <link>//localhost:1313/docs/components/composite/multi_steps/</link>
+      <link>/docs/components/composite/multi_steps/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/multi_steps/</guid>
+      <guid>/docs/components/composite/multi_steps/</guid>
       <description>
         
         
@@ -891,10 +899,10 @@ tracking the active step index, available steps, and a completion button. It can
     
     <item>
       <title>Navbar</title>
-      <link>//localhost:1313/docs/components/composite/navbar/</link>
+      <link>/docs/components/composite/navbar/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/navbar/</guid>
+      <guid>/docs/components/composite/navbar/</guid>
       <description>
         
         
@@ -930,10 +938,10 @@ within a vertical navigation bar, which can be shown or hidden.&lt;/p&gt;
     
     <item>
       <title>Palette Picker</title>
-      <link>//localhost:1313/docs/components/composite/palette_picker/</link>
+      <link>/docs/components/composite/palette_picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/palette_picker/</guid>
+      <guid>/docs/components/composite/palette_picker/</guid>
       <description>
         
         
@@ -1057,10 +1065,10 @@ configuration interfaces where color choices are limited to a fixed set.&lt;/p&g
     
     <item>
       <title>Password Field</title>
-      <link>//localhost:1313/docs/components/composite/password_field/</link>
+      <link>/docs/components/composite/password_field/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/password_field/</guid>
+      <guid>/docs/components/composite/password_field/</guid>
       <description>
         
         
@@ -1184,10 +1192,10 @@ the user, after the insertion phase of you form flow is over.&lt;/li&gt;
     
     <item>
       <title>Picker</title>
-      <link>//localhost:1313/docs/components/composite/picker/</link>
+      <link>/docs/components/composite/picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/picker/</guid>
+      <guid>/docs/components/composite/picker/</guid>
       <description>
         
         
@@ -1289,7 +1297,11 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;ItemRenderer(fn func(T) core.View)&lt;/code&gt;&lt;/td&gt;
-          &lt;td&gt;ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.&lt;/td&gt;
+          &lt;td&gt;Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ItemRenderer2 can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;MultiSelect(mv bool)&lt;/code&gt;&lt;/td&gt;
@@ -1328,7 +1340,7 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
           &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;pickerTable()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;pickerTable(wnd core.Window)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
@@ -1348,10 +1360,10 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
     
     <item>
       <title>Progress</title>
-      <link>//localhost:1313/docs/components/composite/progress/</link>
+      <link>/docs/components/composite/progress/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/progress/</guid>
+      <guid>/docs/components/composite/progress/</guid>
       <description>
         
         
@@ -1404,10 +1416,10 @@ card footer background, full width, and standard height.&lt;/p&gt;
     
     <item>
       <title>QR Code Reader</title>
-      <link>//localhost:1313/docs/components/composite/qr_code_reader/</link>
+      <link>/docs/components/composite/qr_code_reader/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/qr_code_reader/</guid>
+      <guid>/docs/components/composite/qr_code_reader/</guid>
       <description>
         
         
@@ -1473,10 +1485,10 @@ torch off, and initializes an empty onCameraReady callback.&lt;/p&gt;
     
     <item>
       <title>Rich Text Editor</title>
-      <link>//localhost:1313/docs/components/composite/rich_text_editor/</link>
+      <link>/docs/components/composite/rich_text_editor/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/rich_text_editor/</guid>
+      <guid>/docs/components/composite/rich_text_editor/</guid>
       <description>
         
         
@@ -1520,10 +1532,10 @@ and layout configuration via frame settings.&lt;/p&gt;
     
     <item>
       <title>Scaffold</title>
-      <link>//localhost:1313/docs/components/composite/scaffold/</link>
+      <link>/docs/components/composite/scaffold/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/scaffold/</guid>
+      <guid>/docs/components/composite/scaffold/</guid>
       <description>
         
         
@@ -1561,6 +1573,10 @@ through alignment and breakpoints.&lt;/p&gt;
           &lt;td&gt;Footer sets the footer content of the scaffold.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Height(height Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Logo(view core.View)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Logo sets the logo or brand element of the scaffold.&lt;/td&gt;
       &lt;/tr&gt;
@@ -1577,10 +1593,10 @@ through alignment and breakpoints.&lt;/p&gt;
     
     <item>
       <title>Screen</title>
-      <link>//localhost:1313/docs/components/composite/screen/</link>
+      <link>/docs/components/composite/screen/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/screen/</guid>
+      <guid>/docs/components/composite/screen/</guid>
       <description>
         
         
@@ -1638,10 +1654,10 @@ navbar, tool windows, main content, and optional modals.&lt;/p&gt;
     
     <item>
       <title>Signature</title>
-      <link>//localhost:1313/docs/components/composite/signature/</link>
+      <link>/docs/components/composite/signature/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/signature/</guid>
+      <guid>/docs/components/composite/signature/</guid>
       <description>
         
         
@@ -1685,10 +1701,10 @@ and a bottom label inside a frame.&lt;/p&gt;
     
     <item>
       <title>Single Image Picker</title>
-      <link>//localhost:1313/docs/components/composite/single_image_picker/</link>
+      <link>/docs/components/composite/single_image_picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/single_image_picker/</guid>
+      <guid>/docs/components/composite/single_image_picker/</guid>
       <description>
         
         
@@ -1740,10 +1756,10 @@ with support for responsive sources, state binding, and accessibility options.&l
     
     <item>
       <title>Stepper</title>
-      <link>//localhost:1313/docs/components/composite/stepper/</link>
+      <link>/docs/components/composite/stepper/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/stepper/</guid>
+      <guid>/docs/components/composite/stepper/</guid>
       <description>
         
         
@@ -1799,10 +1815,10 @@ or full-sized step representations.&lt;/p&gt;
     
     <item>
       <title>Table</title>
-      <link>//localhost:1313/docs/components/composite/table/</link>
+      <link>/docs/components/composite/table/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/table/</guid>
+      <guid>/docs/components/composite/table/</guid>
       <description>
         
         
@@ -1863,11 +1879,87 @@ background styling, and default cell paddings.&lt;/p&gt;
     </item>
     
     <item>
-      <title>Time Picker</title>
-      <link>//localhost:1313/docs/components/composite/time_picker/</link>
+      <title>Time Frame Picker</title>
+      <link>/docs/components/composite/time_frame_picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/time_picker/</guid>
+      <guid>/docs/components/composite/time_frame_picker/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It allows users to pick a date and a start/end time, optionally binding
+the result to an external state. The picker supports different formats,
+validation messages, and can be configured with a specific time zone.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Picker&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;picker&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#picker&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Picker renders a xtime.TimeFrame picker to select at least a day and a start and end time (inclusive).&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;AccessibilityLabel(label string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;AccessibilityLabel sets a label used by screen readers for accessibility. (currently not implemented)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border ui.Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Border sets the border style of the picker. (currently not implemented)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Disabled(disabled bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Disabled enables or disables user interaction with the picker.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ErrorText(text string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;ErrorText sets the validation or error message displayed below the picker.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Format(format PickerFormat)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Format sets the picker format, which controls its display and interaction style.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Frame sets the layout frame of the picker, including size and positioning.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding ui.Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Padding sets the inner spacing around the picker content. (currently not implemented)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;SupportingText(text string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;SupportingText sets helper or secondary text displayed below the picker label.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Title(title string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Title sets the title of the picker, typically shown in dialogs.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Visible controls the visibility of the picker; setting false hides it. (currently not implemented)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithFrame(fn func(ui.Frame) ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;WithFrame applies a transformation function to the picker&amp;rsquo;s frame and returns the updated component.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Time Picker</title>
+      <link>/docs/components/composite/time_picker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/composite/time_picker/</guid>
       <description>
         
         
@@ -1992,6 +2084,22 @@ Keep in mind, that the picker also clamps to the natural limits, e.g. you cannot
           &lt;td&gt;&lt;code&gt;secUp()&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;secUp increases the seconds in the current selection, wrapping back to 0 if it exceeds 59.&lt;/td&gt;
       &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;setDay(days int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;setHour(hours int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;setMin(minutes int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;setSec(seconds int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;hr&gt;
@@ -2001,10 +2109,10 @@ Keep in mind, that the picker also clamps to the natural limits, e.g. you cannot
     
     <item>
       <title>Toggle Field</title>
-      <link>//localhost:1313/docs/components/composite/toggle_field/</link>
+      <link>/docs/components/composite/toggle_field/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/toggle_field/</guid>
+      <guid>/docs/components/composite/toggle_field/</guid>
       <description>
         
         
@@ -2074,10 +2182,10 @@ a label, supporting text, and error messages.&lt;/p&gt;
     
     <item>
       <title>Tool Window</title>
-      <link>//localhost:1313/docs/components/composite/tool_window/</link>
+      <link>/docs/components/composite/tool_window/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/composite/tool_window/</guid>
+      <guid>/docs/components/composite/tool_window/</guid>
       <description>
         
         

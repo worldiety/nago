@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Utility</title>
-    <link>//localhost:1313/docs/components/utility/</link>
+    <link>/docs/components/utility/</link>
     <description>Recent content in Utility on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/utility/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/utility/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Border</title>
-      <link>//localhost:1313/docs/components/utility/border/</link>
+      <link>/docs/components/utility/border/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/border/</guid>
+      <guid>/docs/components/utility/border/</guid>
       <description>
         
         
@@ -76,10 +76,10 @@ dimensions because the width is applied outside the content box. #[go. TypeScrip
     
     <item>
       <title>Color</title>
-      <link>//localhost:1313/docs/components/utility/color/</link>
+      <link>/docs/components/utility/color/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/color/</guid>
+      <guid>/docs/components/utility/color/</guid>
       <description>
         
         
@@ -94,10 +94,10 @@ dimensions because the width is applied outside the content box. #[go. TypeScrip
     
     <item>
       <title>Colorset</title>
-      <link>//localhost:1313/docs/components/utility/colorset/</link>
+      <link>/docs/components/utility/colorset/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/colorset/</guid>
+      <guid>/docs/components/utility/colorset/</guid>
       <description>
         
         
@@ -132,10 +132,10 @@ dimensions because the width is applied outside the content box. #[go. TypeScrip
     
     <item>
       <title>Content</title>
-      <link>//localhost:1313/docs/components/utility/content/</link>
+      <link>/docs/components/utility/content/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/content/</guid>
+      <guid>/docs/components/utility/content/</guid>
       <description>
         
         
@@ -167,10 +167,10 @@ and can be toggled visible or hidden.&lt;/p&gt;
     
     <item>
       <title>Divider</title>
-      <link>//localhost:1313/docs/components/utility/divider/</link>
+      <link>/docs/components/utility/divider/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/divider/</guid>
+      <guid>/docs/components/utility/divider/</guid>
       <description>
         
         
@@ -227,10 +227,10 @@ The color is derived from main.&lt;/p&gt;
     
     <item>
       <title>Keyboard Options</title>
-      <link>//localhost:1313/docs/components/utility/keyboard_options/</link>
+      <link>/docs/components/utility/keyboard_options/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/keyboard_options/</guid>
+      <guid>/docs/components/utility/keyboard_options/</guid>
       <description>
         
         
@@ -280,10 +280,10 @@ The color is derived from main.&lt;/p&gt;
     
     <item>
       <title>Padding</title>
-      <link>//localhost:1313/docs/components/utility/padding/</link>
+      <link>/docs/components/utility/padding/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/padding/</guid>
+      <guid>/docs/components/utility/padding/</guid>
       <description>
         
         
@@ -318,10 +318,10 @@ The color is derived from main.&lt;/p&gt;
     
     <item>
       <title>Page</title>
-      <link>//localhost:1313/docs/components/utility/page/</link>
+      <link>/docs/components/utility/page/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/page/</guid>
+      <guid>/docs/components/utility/page/</guid>
       <description>
         
         
@@ -358,10 +358,10 @@ to prevent user interaction.&lt;/p&gt;
     
     <item>
       <title>Pager</title>
-      <link>//localhost:1313/docs/components/utility/pager/</link>
+      <link>/docs/components/utility/pager/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/pager/</guid>
+      <guid>/docs/components/utility/pager/</guid>
       <description>
         
         
@@ -401,10 +401,10 @@ The active page is the zero-based offset of the current page.&lt;/p&gt;
     
     <item>
       <title>Shadow</title>
-      <link>//localhost:1313/docs/components/utility/shadow/</link>
+      <link>/docs/components/utility/shadow/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/shadow/</guid>
+      <guid>/docs/components/utility/shadow/</guid>
       <description>
         
         
@@ -415,10 +415,10 @@ The active page is the zero-based offset of the current page.&lt;/p&gt;
     
     <item>
       <title>Tabs</title>
-      <link>//localhost:1313/docs/components/utility/tabs/</link>
+      <link>/docs/components/utility/tabs/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/tabs/</guid>
+      <guid>/docs/components/utility/tabs/</guid>
       <description>
         
         
@@ -471,10 +471,10 @@ defaulting to leading alignment and a standard page-to-tab spacer.&lt;/p&gt;
     
     <item>
       <title>View That Matches</title>
-      <link>//localhost:1313/docs/components/utility/view_that_matches/</link>
+      <link>/docs/components/utility/view_that_matches/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/view_that_matches/</guid>
+      <guid>/docs/components/utility/view_that_matches/</guid>
       <description>
         
         
@@ -489,10 +489,10 @@ defaulting to leading alignment and a standard page-to-tab spacer.&lt;/p&gt;
     
     <item>
       <title>Window Title</title>
-      <link>//localhost:1313/docs/components/utility/window_title/</link>
+      <link>/docs/components/utility/window_title/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/utility/window_title/</guid>
+      <guid>/docs/components/utility/window_title/</guid>
       <description>
         
         

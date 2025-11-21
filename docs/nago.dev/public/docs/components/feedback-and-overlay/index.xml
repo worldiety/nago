@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Feedback &amp; Overlays</title>
-    <link>//localhost:1313/docs/components/feedback-and-overlay/</link>
+    <link>/docs/components/feedback-and-overlay/</link>
     <description>Recent content in Feedback &amp; Overlays on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/feedback-and-overlay/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/feedback-and-overlay/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Banner</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/banner/</link>
+      <link>/docs/components/feedback-and-overlay/banner/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner/</guid>
+      <guid>/docs/components/feedback-and-overlay/banner/</guid>
       <description>
         
         
@@ -41,7 +41,7 @@ according to intent (e. g. , success, warning, error). It also supports a callba
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/feedback-and-overlay/alert/banner.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/images/components/feedback-and-overlay/alert/banner.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
@@ -81,10 +81,10 @@ according to intent (e. g. , success, warning, error). It also supports a callba
     
     <item>
       <title>Banner Error</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/banner_error/</link>
+      <link>/docs/components/feedback-and-overlay/banner_error/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner_error/</guid>
+      <guid>/docs/components/feedback-and-overlay/banner_error/</guid>
       <description>
         
         
@@ -99,10 +99,10 @@ which can later be rendered as a user-visible banner.&lt;/p&gt;
     
     <item>
       <title>Banner Messages</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/banner_messages/</link>
+      <link>/docs/components/feedback-and-overlay/banner_messages/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/banner_messages/</guid>
+      <guid>/docs/components/feedback-and-overlay/banner_messages/</guid>
       <description>
         
         
@@ -120,10 +120,10 @@ the modal overlay.&lt;/p&gt;
     
     <item>
       <title>Breadcrumbs</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/breadcrumbs/</link>
+      <link>/docs/components/feedback-and-overlay/breadcrumbs/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/breadcrumbs/</guid>
+      <guid>/docs/components/feedback-and-overlay/breadcrumbs/</guid>
       <description>
         
         
@@ -172,26 +172,33 @@ configurable gap, and the layout can be styled with frame and padding options.&l
     
     <item>
       <title>Dialog</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog/</link>
+      <link>/docs/components/feedback-and-overlay/dialog/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog/</guid>
+      <guid>/docs/components/feedback-and-overlay/dialog/</guid>
       <description>
         
         
-        &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+        &lt;p&gt;This component presents content in a centered modal window
+above the main interface. It is typically used for confirmations,
+forms, or focused interactions that require the user&amp;rsquo;s attention. A dialog consists of a title and body content, and can be controlled
+through an isPresented state. Additional options can be provided
+to customize its appearance and behavior (e. g. , alignment, padding,
+footer actions).&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Dialog&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;dialog&#34;&gt;&lt;/span&gt;
-    &lt;a href=&#34;#dialog&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+    &lt;a href=&#34;#dialog&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Dialog creates a new dialog with the given title, body content, visibility state, and optional configuration.&lt;/p&gt;
+&lt;hr&gt;
 
       </description>
     </item>
     
     <item>
       <title>Dialog Create</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog_create/</link>
+      <link>/docs/components/feedback-and-overlay/dialog_create/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog_create/</guid>
+      <guid>/docs/components/feedback-and-overlay/dialog_create/</guid>
       <description>
         
         
@@ -204,10 +211,10 @@ configurable gap, and the layout can be styled with frame and padding options.&l
     
     <item>
       <title>Dialog Edit</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/dialog_edit/</link>
+      <link>/docs/components/feedback-and-overlay/dialog_edit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/dialog_edit/</guid>
+      <guid>/docs/components/feedback-and-overlay/dialog_edit/</guid>
       <description>
         
         
@@ -220,10 +227,10 @@ configurable gap, and the layout can be styled with frame and padding options.&l
     
     <item>
       <title>Error View</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/error_view/</link>
+      <link>/docs/components/feedback-and-overlay/error_view/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/error_view/</guid>
+      <guid>/docs/components/feedback-and-overlay/error_view/</guid>
       <description>
         
         
@@ -246,10 +253,10 @@ better don&amp;rsquo;t use it in loops to create error views over and over again
     
     <item>
       <title>Support Request Dialog</title>
-      <link>//localhost:1313/docs/components/feedback-and-overlay/support_request_dialog/</link>
+      <link>/docs/components/feedback-and-overlay/support_request_dialog/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/feedback-and-overlay/support_request_dialog/</guid>
+      <guid>/docs/components/feedback-and-overlay/support_request_dialog/</guid>
       <description>
         
         

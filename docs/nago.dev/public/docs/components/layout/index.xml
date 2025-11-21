@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Layout</title>
-    <link>//localhost:1313/docs/components/layout/</link>
+    <link>/docs/components/layout/</link>
     <description>Recent content in Layout on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/layout/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/layout/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Alignment</title>
-      <link>//localhost:1313/docs/components/layout/alignment/</link>
+      <link>/docs/components/layout/alignment/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/alignment/</guid>
+      <guid>/docs/components/layout/alignment/</guid>
       <description>
         
         
@@ -54,10 +54,10 @@ such as top, bottom, leading, trailing, or centered. An empty Alignment defaults
     
     <item>
       <title>Box</title>
-      <link>//localhost:1313/docs/components/layout/box/</link>
+      <link>/docs/components/layout/box/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/box/</guid>
+      <guid>/docs/components/layout/box/</guid>
       <description>
         
         
@@ -135,10 +135,10 @@ the given alignment position (e.g., Top, Center, Bottom, etc.).&lt;/p&gt;
     
     <item>
       <title>Card Layout</title>
-      <link>//localhost:1313/docs/components/layout/card_layout/</link>
+      <link>/docs/components/layout/card_layout/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/card_layout/</guid>
+      <guid>/docs/components/layout/card_layout/</guid>
       <description>
         
         
@@ -180,10 +180,10 @@ Nil children are automatically skipped. By default, the layout uses 3 columns.&l
     
     <item>
       <title>Footer</title>
-      <link>//localhost:1313/docs/components/layout/footer/</link>
+      <link>/docs/components/layout/footer/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/footer/</guid>
+      <guid>/docs/components/layout/footer/</guid>
       <description>
         
         
@@ -251,10 +251,10 @@ typically containing branding, legal links, and styling options.&lt;/p&gt;
     
     <item>
       <title>Frame</title>
-      <link>//localhost:1313/docs/components/layout/frame/</link>
+      <link>/docs/components/layout/frame/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/frame/</guid>
+      <guid>/docs/components/layout/frame/</guid>
       <description>
         
         
@@ -294,7 +294,7 @@ dimensions. Frames are used to control layout behavior and responsiveness. All f
           &lt;td&gt;MatchScreen sets the frame to match the full viewport height and width. This is useful for fullscreen layouts or sections that should fill the screen.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;Size(w Length, h Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;Size(h Length, w Length)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Size sets both Width and Height to the given values and returns the updated Frame.&lt;/td&gt;
       &lt;/tr&gt;
   &lt;/tbody&gt;
@@ -312,10 +312,10 @@ dimensions. Frames are used to control layout behavior and responsiveness. All f
     
     <item>
       <title>Grid</title>
-      <link>//localhost:1313/docs/components/layout/grid/</link>
+      <link>/docs/components/layout/grid/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/grid/</guid>
+      <guid>/docs/components/layout/grid/</guid>
       <description>
         
         
@@ -421,10 +421,10 @@ and explicit start/end positions must be defined.&lt;/p&gt;
     
     <item>
       <title>Grid Cell</title>
-      <link>//localhost:1313/docs/components/layout/grid_cell/</link>
+      <link>/docs/components/layout/grid_cell/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/grid_cell/</guid>
+      <guid>/docs/components/layout/grid_cell/</guid>
       <description>
         
         
@@ -501,10 +501,10 @@ wrap-content semantics and the grid background becomes visible.&lt;/p&gt;
     
     <item>
       <title>HStack</title>
-      <link>//localhost:1313/docs/components/layout/hstack/</link>
+      <link>/docs/components/layout/hstack/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/hstack/</guid>
+      <guid>/docs/components/layout/hstack/</guid>
       <description>
         
         
@@ -540,6 +540,10 @@ you need to apply additional padding.&lt;/p&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Append(children ...)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Append adds one or more child views to the horizontal stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Background(bg Background)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;
@@ -657,10 +661,10 @@ you need to apply additional padding.&lt;/p&gt;
     
     <item>
       <title>Scroll View</title>
-      <link>//localhost:1313/docs/components/layout/scroll_view/</link>
+      <link>/docs/components/layout/scroll_view/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/scroll_view/</guid>
+      <guid>/docs/components/layout/scroll_view/</guid>
       <description>
         
         
@@ -721,10 +725,10 @@ you need to apply additional padding.&lt;/p&gt;
     
     <item>
       <title>Space</title>
-      <link>//localhost:1313/docs/components/layout/space/</link>
+      <link>/docs/components/layout/space/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/space/</guid>
+      <guid>/docs/components/layout/space/</guid>
       <description>
         
         
@@ -740,10 +744,10 @@ between UI elements in both vertical and horizontal layouts.&lt;/p&gt;
     
     <item>
       <title>Spacer</title>
-      <link>//localhost:1313/docs/components/layout/spacer/</link>
+      <link>/docs/components/layout/spacer/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/spacer/</guid>
+      <guid>/docs/components/layout/spacer/</guid>
       <description>
         
         
@@ -791,11 +795,88 @@ available space inside VStack or HStack containers.&lt;/p&gt;
     </item>
     
     <item>
-      <title>Table Cell</title>
-      <link>//localhost:1313/docs/components/layout/table_cell/</link>
+      <title>Stack</title>
+      <link>/docs/components/layout/stack/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/table_cell/</guid>
+      <guid>/docs/components/layout/stack/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It is responsive and can switch between [HStack] and [VStack] during rendering.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Stack&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;stack&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#stack&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Stack is a responsive variant which decides between [VStack] and [HStack].&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Alignment(alignment Alignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Append(children ...)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;BackgroundColor(color Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Border(border Border)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Gap(gap Length)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Layout(layout StackLayout)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Padding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Responsive(fn func(wnd core.Windowstack TStack) TStack)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2&gt;Related&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;related&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#related&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/alignment/&#34; &gt;Alignment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/border/&#34; &gt;Border&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../layout/frame/&#34; &gt;Frame&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;../../utility/padding/&#34; &gt;Padding&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Table Cell</title>
+      <link>/docs/components/layout/table_cell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/layout/table_cell/</guid>
       <description>
         
         
@@ -861,10 +942,10 @@ alignment, background, padding, border, and actions.&lt;/p&gt;
     
     <item>
       <title>Table Column</title>
-      <link>//localhost:1313/docs/components/layout/table_column/</link>
+      <link>/docs/components/layout/table_column/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/table_column/</guid>
+      <guid>/docs/components/layout/table_column/</guid>
       <description>
         
         
@@ -930,10 +1011,10 @@ and cell-specific actions (e. g. , sorting).&lt;/p&gt;
     
     <item>
       <title>Table Row</title>
-      <link>//localhost:1313/docs/components/layout/table_row/</link>
+      <link>/docs/components/layout/table_row/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/table_row/</guid>
+      <guid>/docs/components/layout/table_row/</guid>
       <description>
         
         
@@ -976,10 +1057,10 @@ and cell-specific actions (e. g. , sorting).&lt;/p&gt;
     
     <item>
       <title>Text Layout</title>
-      <link>//localhost:1313/docs/components/layout/text_layout/</link>
+      <link>/docs/components/layout/text_layout/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/text_layout/</guid>
+      <guid>/docs/components/layout/text_layout/</guid>
       <description>
         
         
@@ -1061,10 +1142,10 @@ as they can be rendered inline.&lt;/p&gt;
     
     <item>
       <title>VStack</title>
-      <link>//localhost:1313/docs/components/layout/vstack/</link>
+      <link>/docs/components/layout/vstack/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/layout/vstack/</guid>
+      <guid>/docs/components/layout/vstack/</guid>
       <description>
         
         
@@ -1104,6 +1185,10 @@ you need to apply additional padding.&lt;/p&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Append(children ...)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Append adds additional child views to the VStack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Background(bg Background)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;BackgroundColor(backgroundColor Color)&lt;/code&gt;&lt;/td&gt;

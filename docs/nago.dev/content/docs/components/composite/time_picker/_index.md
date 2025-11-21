@@ -45,5 +45,9 @@ Keep in mind, that the picker also clamps to the natural limits, e.g. you cannot
 | `round(d time.Duration)` | round normalizes the given duration based on the picker's configuration. If seconds are not displayed, the duration is truncated to the nearest minute; otherwise, it is returned unchanged. |
 | `secDown()` | secDown decreases the seconds in the current selection, wrapping around to 59 if it goes below 0. |
 | `secUp()` | secUp increases the seconds in the current selection, wrapping back to 0 if it exceeds 59. |
+| `setDay(days int)` |  |
+| `setHour(hours int)` |  |
+| `setMin(minutes int)` |  |
+| `setSec(seconds int)` |  |
 ---
 

@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Nago Documentation</title>
-    <link>//localhost:1313/docs/</link>
+    <link>/docs/</link>
     <description>Recent content in Nago Documentation on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title></title>
-      <link>//localhost:1313/docs/examples/tutorial-01-helloworld/readme/</link>
+      <link>/docs/examples/tutorial-01-helloworld/readme/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/examples/tutorial-01-helloworld/readme/</guid>
+      <guid>/docs/examples/tutorial-01-helloworld/readme/</guid>
       <description>
         
         
@@ -140,10 +140,10 @@ Alternativ kannst du sämtliche Abhängigkeiten auch mittels &lt;code&gt;go mod 
     
     <item>
       <title></title>
-      <link>//localhost:1313/docs/examples/tutorial-19-download-file/readme/</link>
+      <link>/docs/examples/tutorial-19-download-file/readme/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/examples/tutorial-19-download-file/readme/</guid>
+      <guid>/docs/examples/tutorial-19-download-file/readme/</guid>
       <description>
         
         
@@ -163,10 +163,10 @@ Wurde ein Download gestartet und der Scope währenddessen zerstört, kann der la
     
     <item>
       <title></title>
-      <link>//localhost:1313/docs/examples/tutorial-25-blobstore/readme/</link>
+      <link>/docs/examples/tutorial-25-blobstore/readme/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/examples/tutorial-25-blobstore/readme/</guid>
+      <guid>/docs/examples/tutorial-25-blobstore/readme/</guid>
       <description>
         
         
@@ -200,8 +200,8 @@ Geplant sind zudem noch Implementierung für das worldiety S3- sowie das worldie
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// BlobStore is only for small files upto a few kilobytes.&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// This store saves everything within a single file using etcd bbolt fork.&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// Transactions are supported.&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;//&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// In this example, the database file is ~/.de.worldiety.tutorial/bbolt/bolt.db&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;//
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;		// In this example, the database file is ~/.de.worldiety.tutorial/bbolt/bolt.db&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#a6e22e&#34;&gt;dbstore&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;cfg&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;BlobStore&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;small-blobs&amp;#34;&lt;/span&gt;)
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// quickly write some bytes using a transaction with a single write.&lt;/span&gt;
@@ -219,8 +219,8 @@ Geplant sind zudem noch Implementierung für das worldiety S3- sowie das worldie
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// It stores each blobs as a single file directly in the local filesystem.&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// There is no transaction support at all, however some tricks like atomic rename are used to&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// lower the risk of damaged files.&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;//&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// In this example, the files land in ~/.de.worldiety.tutorial/files/my-large-blobs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;//
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;		// In this example, the files land in ~/.de.worldiety.tutorial/files/my-large-blobs&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#a6e22e&#34;&gt;fstore&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;cfg&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;FileStore&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;my-large-blobs&amp;#34;&lt;/span&gt;)
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#75715e&#34;&gt;// quickly write some bytes&lt;/span&gt;
@@ -254,10 +254,10 @@ Geplant sind zudem noch Implementierung für das worldiety S3- sowie das worldie
     
     <item>
       <title></title>
-      <link>//localhost:1313/docs/examples/tutorial-26-buildin-iam/readme/</link>
+      <link>/docs/examples/tutorial-26-buildin-iam/readme/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/examples/tutorial-26-buildin-iam/readme/</guid>
+      <guid>/docs/examples/tutorial-26-buildin-iam/readme/</guid>
       <description>
         
         
@@ -368,10 +368,10 @@ Insbesondere sind sicherlich die &lt;code&gt;ComponentFactoryID&lt;/code&gt;s un
     
     <item>
       <title>Quickstart</title>
-      <link>//localhost:1313/docs/getting-started/quickstart/</link>
+      <link>/docs/getting-started/quickstart/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/getting-started/quickstart/</guid>
+      <guid>/docs/getting-started/quickstart/</guid>
       <description>
         
         

@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Systems</title>
-    <link>//localhost:1313/docs/systems/</link>
+    <link>/docs/systems/</link>
     <description>Recent content in Systems on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/systems/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/systems/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Admin Management</title>
-      <link>//localhost:1313/docs/systems/admin_management/</link>
+      <link>/docs/systems/admin_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/admin_management/</guid>
+      <guid>/docs/systems/admin_management/</guid>
       <description>
         
         
@@ -91,7 +91,7 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -102,13 +102,13 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/admin_management/galleries/admin_center_group/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/admin_management/galleries/admin_center_group/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -119,7 +119,7 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -206,10 +206,10 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
     
     <item>
       <title>Backup Management</title>
-      <link>//localhost:1313/docs/systems/backup_management/</link>
+      <link>/docs/systems/backup_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/backup_management/</guid>
+      <guid>/docs/systems/backup_management/</guid>
       <description>
         
         
@@ -256,7 +256,7 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
   &lt;/div&gt;
 &lt;/div&gt;
 
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -267,37 +267,37 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/backup_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/backup_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/backup_management/galleries/overview/backup.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/backup_management/galleries/overview/backup.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/backup_management/galleries/overview/recovery.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/backup_management/galleries/overview/recovery.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/backup_management/galleries/overview/export_master_key.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/backup_management/galleries/overview/export_master_key.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/backup_management/galleries/overview/new_master_key.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/backup_management/galleries/overview/new_master_key.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -308,7 +308,7 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -365,10 +365,10 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
     
     <item>
       <title>Data Import Management</title>
-      <link>//localhost:1313/docs/systems/data_import_management/</link>
+      <link>/docs/systems/data_import_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/data_import_management/</guid>
+      <guid>/docs/systems/data_import_management/</guid>
       <description>
         
         
@@ -376,7 +376,7 @@ It aggregates the administration pages of all connected systems (e.g., User, Rol
 It allows mapping uploaded data to existing internal entities, such as users, enabling data reuse and synchronization across systems.&lt;br&gt;
 Therefore, it supports multiple data formats such as &lt;strong&gt;CSV&lt;/strong&gt;, &lt;strong&gt;JSON&lt;/strong&gt; and &lt;strong&gt;PDF AcroForms&lt;/strong&gt;, and provides interactive tools for reviewing, transforming and importing data.&lt;/p&gt;
 &lt;p&gt;Data Import Management is designed for administrators and power users who need to import, validate, and align data with the internal structures of the Nago application.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -387,19 +387,19 @@ Therefore, it supports multiple data formats such as &lt;strong&gt;CSV&lt;/stron
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/overview/user_importer.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/overview/user_importer.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -410,7 +410,7 @@ Therefore, it supports multiple data formats such as &lt;strong&gt;CSV&lt;/stron
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -506,7 +506,7 @@ Options include continuing on errors and merging duplicates.&lt;br&gt;
 Merge behavior can be customized (e.g., whether new values override existing ones).&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -517,49 +517,49 @@ Merge behavior can be customized (e.g., whether new values override existing one
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/new_user_import.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/new_user_import.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/data_uploaded.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/data_uploaded.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/mapping_schema_1.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/mapping_schema_1.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/mapping_schema_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/mapping_schema_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/mapped_data.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/mapped_data.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/validation_and_transformation.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/validation_and_transformation.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/import_options.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/import_options.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/data_import_management/galleries/workflow/import_status.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/data_import_management/galleries/workflow/import_status.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -570,7 +570,7 @@ Merge behavior can be customized (e.g., whether new values override existing one
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -640,17 +640,17 @@ by implementing the &lt;code&gt;parser.Parser&lt;/code&gt; and &lt;code&gt;impor
     
     <item>
       <title>Drive Management</title>
-      <link>//localhost:1313/docs/systems/drive_management/</link>
+      <link>/docs/systems/drive_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/drive_management/</guid>
+      <guid>/docs/systems/drive_management/</guid>
       <description>
         
         
         &lt;p&gt;Drive Management provides a file storage and file management system for Nago applications.&lt;br&gt;
 It offers a user-facing file browser (UI) and a backend API to upload, download, rename and delete files and folders.&lt;br&gt;
 Think of it as an integrated file-share similar in concept to SharePoint/OneDrive — but tailored to the Nago ecosystem and its permission model.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -661,19 +661,19 @@ Think of it as an integrated file-share similar in concept to SharePoint/OneDriv
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/drive_management/galleries/overview/files.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/drive_management/galleries/overview/files.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/drive_management/galleries/overview/create_folder.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/drive_management/galleries/overview/create_folder.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/drive_management/galleries/overview/options.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/drive_management/galleries/overview/options.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -684,7 +684,7 @@ Think of it as an integrated file-share similar in concept to SharePoint/OneDriv
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -836,10 +836,10 @@ Implicit dependencies exist on User Management and Role Management to enforce pe
     
     <item>
       <title>Group Management</title>
-      <link>//localhost:1313/docs/systems/group_management/</link>
+      <link>/docs/systems/group_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/group_management/</guid>
+      <guid>/docs/systems/group_management/</guid>
       <description>
         
         
@@ -848,7 +848,7 @@ Groups are used to organize users and control access to certain pages or resourc
 Groups can be created, edited, and deleted either through the UI or programmatically in the code.&lt;/p&gt;
 &lt;p&gt;A special &lt;strong&gt;System group&lt;/strong&gt; is created automatically.&lt;br&gt;
 It is reserved for internal services such as initializing the SMTP server.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -859,19 +859,19 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/group_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/group_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -882,7 +882,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -906,7 +906,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
 &lt;li&gt;Edit existing groups to update metadata&lt;/li&gt;
 &lt;li&gt;Delete groups that are no longer needed&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -917,7 +917,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/group_management/galleries/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/group_management/galleries/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -928,7 +928,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -950,7 +950,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
 &lt;li&gt;Membership is managed via &lt;a href=&#34;../user_management/&#34; &gt;User Management&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Groups appear in the User Management interface once created&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -961,7 +961,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/group_management/galleries/assign_group.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/group_management/galleries/assign_group.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -972,7 +972,7 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1101,10 +1101,10 @@ It is reserved for internal services such as initializing the SMTP server.&lt;/p
     
     <item>
       <title>HAPI Management</title>
-      <link>//localhost:1313/docs/systems/hapi_management/</link>
+      <link>/docs/systems/hapi_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/hapi_management/</guid>
+      <guid>/docs/systems/hapi_management/</guid>
       <description>
         
         
@@ -1141,7 +1141,7 @@ It integrates seamlessly with &lt;strong&gt;Token Management&lt;/strong&gt; when
 &lt;li&gt;Tokens allow external clients or users to authenticate and access protected endpoints&lt;/li&gt;
 &lt;li&gt;Without Token Management, open APIs can still be defined, but access is unauthenticated&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1152,37 +1152,37 @@ It integrates seamlessly with &lt;strong&gt;Token Management&lt;/strong&gt; when
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/token/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/token/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/token/value.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/token/value.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/token/infos.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/token/infos.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/token/rotate.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/token/rotate.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1193,7 +1193,7 @@ It integrates seamlessly with &lt;strong&gt;Token Management&lt;/strong&gt; when
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1224,7 +1224,7 @@ In most cases, integrating &lt;strong&gt;Token Management&lt;/strong&gt; for sec
 &lt;li&gt;Choose between built-in frontends: &lt;strong&gt;Stoplight&lt;/strong&gt;, &lt;strong&gt;Swagger&lt;/strong&gt;, or &lt;strong&gt;Redocly&lt;/strong&gt;&lt;/li&gt;
 &lt;li&gt;The preferred frontend can be configured in the application code&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1235,7 +1235,7 @@ In most cases, integrating &lt;strong&gt;Token Management&lt;/strong&gt; for sec
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/hapi_management/galleries/documentation/api_spec.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/hapi_management/galleries/documentation/api_spec.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1246,7 +1246,7 @@ In most cases, integrating &lt;strong&gt;Token Management&lt;/strong&gt; for sec
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1388,10 +1388,10 @@ It is therefore strongly recommended to activate &lt;strong&gt;only one&lt;/stro
     
     <item>
       <title>Image Management</title>
-      <link>//localhost:1313/docs/systems/image_management/</link>
+      <link>/docs/systems/image_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/image_management/</guid>
+      <guid>/docs/systems/image_management/</guid>
       <description>
         
         
@@ -1482,7 +1482,7 @@ It is therefore strongly recommended to activate &lt;strong&gt;only one&lt;/stro
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1493,7 +1493,7 @@ It is therefore strongly recommended to activate &lt;strong&gt;only one&lt;/stro
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/image_management/galleries/code_usage/example.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/image_management/galleries/code_usage/example.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1504,7 +1504,7 @@ It is therefore strongly recommended to activate &lt;strong&gt;only one&lt;/stro
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1577,10 +1577,10 @@ It is therefore strongly recommended to activate &lt;strong&gt;only one&lt;/stro
     
     <item>
       <title>Inspector Management</title>
-      <link>//localhost:1313/docs/systems/inspector_management/</link>
+      <link>/docs/systems/inspector_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/inspector_management/</guid>
+      <guid>/docs/systems/inspector_management/</guid>
       <description>
         
         
@@ -1604,7 +1604,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
 &lt;li&gt;Displays store information and type (document/blob)&lt;/li&gt;
 &lt;li&gt;Select a store to view its entries&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1615,19 +1615,19 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/inspector_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/inspector_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/inspector_management/galleries/overview/list.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/inspector_management/galleries/overview/list.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1638,7 +1638,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1663,7 +1663,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
 &lt;li&gt;Delete entries as needed&lt;/li&gt;
 &lt;li&gt;Paginated view for large stores&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1674,13 +1674,13 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/inspector_management/galleries/entities/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/inspector_management/galleries/entities/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/inspector_management/galleries/entities/delete.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/inspector_management/galleries/entities/delete.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1691,7 +1691,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1712,7 +1712,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
 &lt;li&gt;Download blob files from blob stores&lt;/li&gt;
 &lt;li&gt;Delete blob files from blob stores&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1723,7 +1723,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/inspector_management/galleries/blobs/actions.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/inspector_management/galleries/blobs/actions.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1734,7 +1734,7 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1784,10 +1784,10 @@ Be careful when using this system — deleted data &lt;strong&gt;cannot be recov
     
     <item>
       <title>Localization Management</title>
-      <link>//localhost:1313/docs/systems/localization_management/</link>
+      <link>/docs/systems/localization_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/localization_management/</guid>
+      <guid>/docs/systems/localization_management/</guid>
       <description>
         
         
@@ -1802,7 +1802,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
 &lt;li&gt;Overview of total and missing translations per section&lt;/li&gt;
 &lt;li&gt;Direct access to localized message editing&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1813,13 +1813,13 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1830,7 +1830,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1852,7 +1852,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
 &lt;li&gt;Update existing messages or add missing translations without redeploying the application&lt;/li&gt;
 &lt;li&gt;Changes are stored persistently and immediately reflected in the running app&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1863,31 +1863,31 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/edit/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/edit/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/edit/nago_domain.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/edit/nago_domain.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/edit/common_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/edit/common_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/edit/action_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/edit/action_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/edit/add_translation.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/edit/add_translation.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1898,7 +1898,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -1920,7 +1920,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
 &lt;li&gt;Default languages: &lt;strong&gt;English&lt;/strong&gt; and &lt;strong&gt;German&lt;/strong&gt; (preloaded for all standard systems and components)&lt;/li&gt;
 &lt;li&gt;Additional languages are added at runtime and initialized automatically in the i18n resource bundles&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -1931,13 +1931,13 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/languages/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/languages/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/localization_management/galleries/languages/add.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/localization_management/galleries/languages/add.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -1948,7 +1948,7 @@ The system is built on top of &lt;a href=&#34;https://github.com/worldiety/i18n&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2097,17 +2097,17 @@ reducing dependency on professional translation workflows and speeding up intern
     
     <item>
       <title>Mail Management</title>
-      <link>//localhost:1313/docs/systems/mail_management/</link>
+      <link>/docs/systems/mail_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/mail_management/</guid>
+      <guid>/docs/systems/mail_management/</guid>
       <description>
         
         
         &lt;p&gt;The Mail Management system handles the sending of emails within the platform.
 It requires an SMTP secret created in &lt;a href=&#34;../secret_management/&#34; &gt;Secret Management&lt;/a&gt;.
 It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Template Management&lt;/a&gt; to use customizable email templates for common workflows.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2118,13 +2118,13 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/mail_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/mail_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2135,7 +2135,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2159,7 +2159,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
 &lt;li&gt;Send default test emails&lt;/li&gt;
 &lt;li&gt;Send emails that use a template&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2170,13 +2170,13 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/mail_management/galleries/mail_config/test_mail.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/mail_management/galleries/mail_config/test_mail.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/mail_management/galleries/mail_config/test_mail_with_template.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/mail_management/galleries/mail_config/test_mail_with_template.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2187,7 +2187,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2209,7 +2209,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
 &lt;li&gt;View message status, timestamp, and recipient&lt;/li&gt;
 &lt;li&gt;Search and filter logs for troubleshooting&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2220,7 +2220,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/mail_management/galleries/logs/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/mail_management/galleries/logs/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2231,7 +2231,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2253,7 +2253,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
 &lt;li&gt;Templates include registration confirmation, password reset, and various notifications&lt;/li&gt;
 &lt;li&gt;Templates can be edited in Template Management without code changes&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2264,25 +2264,25 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/email_templates/projects.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/email_templates/projects.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/email_templates/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/email_templates/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2293,7 +2293,7 @@ It also integrates with &lt;a href=&#34;../template_management/&#34; &gt;Templat
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2394,10 +2394,10 @@ See &lt;a href=&#34;../secret_management/&#34; &gt;Secret Management&lt;/a&gt; f
     
     <item>
       <title>Permission Management</title>
-      <link>//localhost:1313/docs/systems/permission_management/</link>
+      <link>/docs/systems/permission_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/permission_management/</guid>
+      <guid>/docs/systems/permission_management/</guid>
       <description>
         
         
@@ -2405,7 +2405,7 @@ See &lt;a href=&#34;../secret_management/&#34; &gt;Secret Management&lt;/a&gt; f
 Permissions are the most fine-grained unit of access control and can be used for specific use cases in the domain.&lt;/p&gt;
 &lt;p&gt;Each application use case defines its own permissions &lt;strong&gt;at development time&lt;/strong&gt;.&lt;br&gt;
 Permissions cannot be created or modified at runtime, but they can be &lt;strong&gt;viewed&lt;/strong&gt; and &lt;strong&gt;assigned&lt;/strong&gt; to users.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2416,19 +2416,19 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/permission_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/permission_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2439,7 +2439,7 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2470,7 +2470,7 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
 &lt;li&gt;Instead, permissions can be grouped into &lt;a href=&#34;../role_management/&#34; &gt;Roles&lt;/a&gt; which then can be assigned to users&lt;/li&gt;
 &lt;li&gt;Permissions can also be assigned directly to users via &lt;a href=&#34;../user_management/&#34; &gt;User Management&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2481,13 +2481,13 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/permission_management/galleries/assign_permissions.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/permission_management/galleries/assign_permissions.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/permission_management/galleries/assign_permissions_to_role.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/permission_management/galleries/assign_permissions_to_role.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2498,7 +2498,7 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2625,10 +2625,10 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
     
     <item>
       <title>Role Management</title>
-      <link>//localhost:1313/docs/systems/role_management/</link>
+      <link>/docs/systems/role_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/role_management/</guid>
+      <guid>/docs/systems/role_management/</guid>
       <description>
         
         
@@ -2636,7 +2636,7 @@ Permissions cannot be created or modified at runtime, but they can be &lt;strong
 Roles are collections of permissions and are the recommended way to assign multiple permissions to individual users.&lt;br&gt;
 Roles can be created, edited, and deleted either through the UI or programmatically in the code.&lt;/p&gt;
 &lt;p&gt;Roles can only be assigned to individual users. Assigning roles to groups is not supported. Users can hold multiple roles simultaneously.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2647,19 +2647,19 @@ Roles can be created, edited, and deleted either through the UI or programmatica
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/role_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/role_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2670,7 +2670,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2694,7 +2694,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
 &lt;li&gt;Edit existing roles to update metadata or permissions&lt;/li&gt;
 &lt;li&gt;Delete roles that are no longer needed&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2705,7 +2705,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/role_management/galleries/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/role_management/galleries/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2716,7 +2716,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2738,7 +2738,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
 &lt;li&gt;Remove roles from users as needed&lt;/li&gt;
 &lt;li&gt;Membership is managed via &lt;a href=&#34;../user_management/&#34; &gt;User Management&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2749,7 +2749,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/role_management/galleries/assign_role.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/role_management/galleries/assign_role.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -2760,7 +2760,7 @@ Roles can be created, edited, and deleted either through the UI or programmatica
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -2871,10 +2871,10 @@ Roles can be created, edited, and deleted either through the UI or programmatica
     
     <item>
       <title>Scheduler Management</title>
-      <link>//localhost:1313/docs/systems/scheduler_management/</link>
+      <link>/docs/systems/scheduler_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/scheduler_management/</guid>
+      <guid>/docs/systems/scheduler_management/</guid>
       <description>
         
         
@@ -2982,7 +2982,7 @@ Each scheduler specifies:&lt;/p&gt;
 &lt;li&gt;Manually triggered only (Manual)&lt;/li&gt;
 &lt;li&gt;On a cron-like daily schedule (Cron)&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -2993,31 +2993,31 @@ Each scheduler specifies:&lt;/p&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/scheduler_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/scheduler_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/scheduler_management/galleries/overview/details.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/scheduler_management/galleries/overview/details.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/scheduler_management/galleries/overview/logs.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/scheduler_management/galleries/overview/logs.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/scheduler_management/galleries/overview/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/scheduler_management/galleries/overview/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3028,7 +3028,7 @@ Each scheduler specifies:&lt;/p&gt;
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3066,10 +3066,10 @@ Each scheduler specifies:&lt;/p&gt;
     
     <item>
       <title>Secret Management</title>
-      <link>//localhost:1313/docs/systems/secret_management/</link>
+      <link>/docs/systems/secret_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/secret_management/</guid>
+      <guid>/docs/systems/secret_management/</guid>
       <description>
         
         
@@ -3083,7 +3083,7 @@ It ensures that all stored information is encrypted and can be shared securely w
 &lt;li&gt;Sharing secrets with specific users or groups&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2&gt;SMTP server&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;smtp-server&#34;&gt;&lt;/span&gt;
-    &lt;a href=&#34;#smtp-server&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+    &lt;a href=&#34;#smtp-server&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3094,31 +3094,31 @@ It ensures that all stored information is encrypted and can be shared securely w
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/overview/secret_vault_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/overview/secret_vault_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/overview/create_secret.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/overview/create_secret.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/overview/edit_secret.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/overview/edit_secret.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3129,7 +3129,7 @@ It ensures that all stored information is encrypted and can be shared securely w
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3262,7 +3262,7 @@ To add a new secret type, a developer must implement the &lt;code&gt;secret.Cred
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3273,13 +3273,13 @@ To add a new secret type, a developer must implement the &lt;code&gt;secret.Cred
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/new_secret/create_secret.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/new_secret/create_secret.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/secret_management/galleries/new_secret/edit_secret.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/secret_management/galleries/new_secret/edit_secret.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3290,7 +3290,7 @@ To add a new secret type, a developer must implement the &lt;code&gt;secret.Cred
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3366,10 +3366,10 @@ as these are used for rendering the UI of the secret.&lt;/div&gt;
     
     <item>
       <title>Session Management</title>
-      <link>//localhost:1313/docs/systems/session_management/</link>
+      <link>/docs/systems/session_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/session_management/</guid>
+      <guid>/docs/systems/session_management/</guid>
       <description>
         
         
@@ -3392,7 +3392,7 @@ The available use cases can also be consumed programmatically if needed.&lt;/p&g
 &lt;li&gt;Login via &lt;a href=&#34;#single-sign-on-sso&#34; &gt;Single Sign-On&lt;/a&gt; (SSO)&lt;/li&gt;
 &lt;li&gt;Logout and invalidate a session&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3403,19 +3403,19 @@ The available use cases can also be consumed programmatically if needed.&lt;/p&g
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/authentication/login.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/authentication/login.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries//sso_login.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries//sso_login.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/authentication/logout.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/authentication/logout.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3426,7 +3426,7 @@ The available use cases can also be consumed programmatically if needed.&lt;/p&g
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3547,7 +3547,7 @@ Example: to allow only members of worldiety:
 &lt;/div&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3558,31 +3558,31 @@ Example: to allow only members of worldiety:
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/sso/settings_management.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/sso/settings_management.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/sso/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/sso/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/sso_login.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/sso_login.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/session_management/galleries/sso/microsoft_entra.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/session_management/galleries/sso/microsoft_entra.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3593,7 +3593,7 @@ Example: to allow only members of worldiety:
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3703,17 +3703,17 @@ Example: to allow only members of worldiety:
     
     <item>
       <title>Settings Management</title>
-      <link>//localhost:1313/docs/systems/settings_management/</link>
+      <link>/docs/systems/settings_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/settings_management/</guid>
+      <guid>/docs/systems/settings_management/</guid>
       <description>
         
         
         &lt;p&gt;The Settings Management system provides a central way to configure application-wide settings.
 It controls &lt;strong&gt;global or user-specific settings&lt;/strong&gt; for other systems such as &lt;strong&gt;general user registration rules&lt;/strong&gt; for &lt;a href=&#34;../user_management/&#34; &gt;User Management&lt;/a&gt;
 or &lt;strong&gt;app icons &amp;amp; private policy pages&lt;/strong&gt; for &lt;a href=&#34;../theme_management/&#34; &gt;Theme Management&lt;/a&gt;.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3724,19 +3724,19 @@ or &lt;strong&gt;app icons &amp;amp; private policy pages&lt;/strong&gt; for &lt
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/overview/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/overview/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3747,7 +3747,7 @@ or &lt;strong&gt;app icons &amp;amp; private policy pages&lt;/strong&gt; for &lt
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3785,7 +3785,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
 &lt;/li&gt;
 &lt;li&gt;Define specific user consent options for the registration process&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3796,7 +3796,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/free_registration/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/free_registration/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3807,7 +3807,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -3904,7 +3904,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -3915,7 +3915,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/new_user_consent/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/new_user_consent/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -3926,7 +3926,7 @@ If the list is empty, any domain is allowed.&lt;/li&gt;
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4020,7 +4020,7 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;For more information have a look at &lt;a href=&#34;../scheduler_management/&#34; &gt;Scheduler Management&lt;/a&gt;.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4031,13 +4031,13 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/new_settings/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/new_settings/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/new_settings/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/new_settings/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4048,7 +4048,7 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4123,7 +4123,7 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;Configuration via the admin center:&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4134,13 +4134,13 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/theme_settings/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/theme_settings/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/theme_settings/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/theme_settings/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4151,7 +4151,7 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4212,17 +4212,17 @@ They are then automatically available in the &lt;strong&gt;Admin Center&lt;/stro
     
     <item>
       <title>Template Management</title>
-      <link>//localhost:1313/docs/systems/template_management/</link>
+      <link>/docs/systems/template_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/template_management/</guid>
+      <guid>/docs/systems/template_management/</guid>
       <description>
         
         
         &lt;p&gt;The Template Management system provides a centralized way to create, edit, and manage reusable templates.&lt;br&gt;
 It separates content from code and ensures consistent formatting and styling across the platform.&lt;br&gt;
 Templates are used by other systems such as &lt;a href=&#34;../mail_management/&#34; &gt;Mail Management&lt;/a&gt; for emails or document workflows for generating reports, invoices, or certificates.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4233,13 +4233,13 @@ Templates are used by other systems such as &lt;a href=&#34;../mail_management/&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4250,7 +4250,7 @@ Templates are used by other systems such as &lt;a href=&#34;../mail_management/&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4275,7 +4275,7 @@ Templates are used by other systems such as &lt;a href=&#34;../mail_management/&
 &lt;li&gt;Support for full HTML and CSS styling&lt;/li&gt;
 &lt;li&gt;Templates are globally available to all authorized users&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4286,13 +4286,13 @@ Templates are used by other systems such as &lt;a href=&#34;../mail_management/&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/email_templates/projects.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/email_templates/projects.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/email_templates/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/email_templates/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4303,7 +4303,7 @@ Templates are used by other systems such as &lt;a href=&#34;../mail_management/&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4330,7 +4330,7 @@ These allow integration into workflows beyond email, such as automated reporting
 &lt;li&gt;&lt;strong&gt;LaTeX to PDF&lt;/strong&gt; – LaTeX projects rendered into PDF&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;AsciiDoc to PDF&lt;/strong&gt; – AsciiDoc projects rendered into PDF&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4341,19 +4341,19 @@ These allow integration into workflows beyond email, such as automated reporting
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/pdf_templates/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/pdf_templates/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/pdf_templates/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/pdf_templates/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/template_management/galleries/pdf_templates/create_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/template_management/galleries/pdf_templates/create_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4364,7 +4364,7 @@ These allow integration into workflows beyond email, such as automated reporting
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4428,16 +4428,16 @@ These allow integration into workflows beyond email, such as automated reporting
     
     <item>
       <title>Theme Management</title>
-      <link>//localhost:1313/docs/systems/theme_management/</link>
+      <link>/docs/systems/theme_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/theme_management/</guid>
+      <guid>/docs/systems/theme_management/</guid>
       <description>
         
         
         &lt;p&gt;The Theme Management system is responsible for &lt;strong&gt;theme and Corporate Identity settings&lt;/strong&gt;.&lt;br&gt;
 It allows configuration of logos, app icons, fonts, and color schemes, as well as legal and provider information.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4448,13 +4448,13 @@ It allows configuration of logos, app icons, fonts, and color schemes, as well a
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/theme_settings/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/theme_settings/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4465,7 +4465,7 @@ It allows configuration of logos, app icons, fonts, and color schemes, as well a
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4502,7 +4502,7 @@ Example: &lt;code&gt;http://localhost:3000/page/impressum&lt;/code&gt;&lt;/li&gt
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4513,13 +4513,13 @@ Example: &lt;code&gt;http://localhost:3000/page/impressum&lt;/code&gt;&lt;/li&gt
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/settings_management/galleries/theme_settings/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/settings_management/galleries/theme_settings/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/theme_management/galleries/edit.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/theme_management/galleries/edit.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4530,7 +4530,7 @@ Example: &lt;code&gt;http://localhost:3000/page/impressum&lt;/code&gt;&lt;/li&gt
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4690,10 +4690,10 @@ Example: &lt;code&gt;http://localhost:3000/page/impressum&lt;/code&gt;&lt;/li&gt
     
     <item>
       <title>Token Management</title>
-      <link>//localhost:1313/docs/systems/token_management/</link>
+      <link>/docs/systems/token_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/token_management/</guid>
+      <guid>/docs/systems/token_management/</guid>
       <description>
         
         
@@ -4727,7 +4727,7 @@ After closing the dialog, the token &lt;strong&gt;cannot&lt;/strong&gt; be viewe
   &lt;/div&gt;
 &lt;/div&gt;
 
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4738,43 +4738,43 @@ After closing the dialog, the token &lt;strong&gt;cannot&lt;/strong&gt; be viewe
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/create.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/create.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/create_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/create_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/access_rights.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/access_rights.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/token_management/galleries/overview/rotate.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/token_management/galleries/overview/rotate.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4785,7 +4785,7 @@ After closing the dialog, the token &lt;strong&gt;cannot&lt;/strong&gt; be viewe
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4877,10 +4877,10 @@ After closing the dialog, the token &lt;strong&gt;cannot&lt;/strong&gt; be viewe
     
     <item>
       <title>User Circle Management</title>
-      <link>//localhost:1313/docs/systems/user_circle_management/</link>
+      <link>/docs/systems/user_circle_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/user_circle_management/</guid>
+      <guid>/docs/systems/user_circle_management/</guid>
       <description>
         
         
@@ -4903,7 +4903,7 @@ This enables decentralized administration, e.g., department heads or customer ad
 &lt;li&gt;Specify which roles, groups, and licenses can be managed within each circle&lt;/li&gt;
 &lt;li&gt;Set membership rules (e.g., by user, email domain, group, or role)&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4914,37 +4914,37 @@ This enables decentralized administration, e.g., department heads or customer ad
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/overview/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/overview/create_1.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/overview/create_1.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/overview/create_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/overview/create_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/overview/create_3.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/overview/create_3.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/overview/create_4.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/overview/create_4.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -4955,7 +4955,7 @@ This enables decentralized administration, e.g., department heads or customer ad
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -4980,7 +4980,7 @@ Administrators of a circle can:&lt;/p&gt;
 &lt;li&gt;Activate, deactivate, or verify users&lt;/li&gt;
 &lt;li&gt;Remove users from the circle&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -4991,61 +4991,61 @@ Administrators of a circle can:&lt;/p&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/user.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/user.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/user_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/user_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/user_actions.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/user_actions.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/roles.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/roles.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/roles_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/roles_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/groups.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/groups.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/groups_overview.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/groups_overview.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_circle_management/galleries/manage_circle/groups_actions.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_circle_management/galleries/manage_circle/groups_actions.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5056,7 +5056,7 @@ Administrators of a circle can:&lt;/p&gt;
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -5135,10 +5135,10 @@ That person can then:&lt;/p&gt;
     
     <item>
       <title>User Management</title>
-      <link>//localhost:1313/docs/systems/user_management/</link>
+      <link>/docs/systems/user_management/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/systems/user_management/</guid>
+      <guid>/docs/systems/user_management/</guid>
       <description>
         
         
@@ -5169,7 +5169,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
 &lt;li&gt;Register a new account (self-service)&lt;/li&gt;
 &lt;li&gt;Send notification when a new account is created&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -5180,55 +5180,55 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/registration_01.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/registration_01.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/registration_02.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/registration_02.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/registration_03.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/registration_03.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_table.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_table.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/create_user.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/create_user.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/edit_user.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/edit_user.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/lifecycle/edit_user_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/lifecycle/edit_user_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5239,7 +5239,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -5261,7 +5261,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
 &lt;li&gt;Update contact details&lt;/li&gt;
 &lt;li&gt;Manage consent options&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -5272,19 +5272,19 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_account.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_account.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_account_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_account_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/profile_infos/edit_account_details.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/profile_infos/edit_account_details.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5295,7 +5295,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -5317,7 +5317,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
 &lt;li&gt;Reset password via confirmation code&lt;/li&gt;
 &lt;li&gt;Force password change (admin)&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -5328,55 +5328,55 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/password_management/reset_pw_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/password_management/reset_pw_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/password_management/reset_pw_1.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/password_management/reset_pw_1.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_account.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_account.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_account_2.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_account_2.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/password_management/change_pw_user.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/password_management/change_pw_user.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/user_table.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/user_table.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/password_management/change_pw_admin.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/password_management/change_pw_admin.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5387,7 +5387,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -5409,7 +5409,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
 &lt;li&gt;Assign or revoke group memberships&lt;/li&gt;
 &lt;li&gt;Grant or revoke permissions&lt;/li&gt;
 &lt;/ul&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -5420,31 +5420,31 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/roles_perms_groups/edit_roles.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/roles_perms_groups/edit_roles.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/roles_perms_groups/edit_groups.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/roles_perms_groups/edit_groups.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries/roles_perms_groups/edit_perms.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries/roles_perms_groups/edit_perms.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5455,7 +5455,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {
@@ -5478,7 +5478,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
 &lt;li&gt;Automatic role and group assignments for anonymous users&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;These dependencies are handled by the Settings Management system but are relevant for User Management workflows.&lt;/p&gt;
-&lt;link rel=&#34;stylesheet&#34; href=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.css&#34;&gt;
+&lt;link rel=&#34;stylesheet&#34; href=&#34;/vendor/swiper/swiper-bundle.min.css&#34;&gt;
 
 
 
@@ -5489,19 +5489,19 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/shared/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries//related_settings/admin_center.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries//related_settings/admin_center.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
         &lt;div class=&#34;swiper-slide&#34;&gt;
             &lt;div class=&#34;swiper-zoom-container&#34;&gt;
-                &lt;img src=&#34;//localhost:1313/images/systems/user_management/galleries//related_settings/edit_registration_settings.png&#34; alt=&#34;&#34;&gt;
+                &lt;img src=&#34;/images/systems/user_management/galleries//related_settings/edit_registration_settings.png&#34; alt=&#34;&#34;&gt;
             &lt;/div&gt;
         &lt;/div&gt;
         
@@ -5512,7 +5512,7 @@ For more information how to configure an SMTP server have a look at &lt;a href=&
     &lt;div class=&#34;swiper-pagination&#34;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&#34;//localhost:1313/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
+&lt;script src=&#34;/vendor/swiper/swiper-bundle.min.js&#34;&gt;&lt;/script&gt;
 &lt;script&gt;
     document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
         document.querySelectorAll(&#39;.swiper&#39;).forEach(function(el) {

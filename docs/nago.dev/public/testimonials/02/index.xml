@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Low-Code in Action</title>
-    <link>//localhost:1313/testimonials/02/</link>
+    <link>/testimonials/02/</link>
     <description>Recent content in Low-Code in Action on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/testimonials/02/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/testimonials/02/index.xml" rel="self" type="application/rss+xml" />
     
     
       

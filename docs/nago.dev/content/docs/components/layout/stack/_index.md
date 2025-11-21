@@ -26,5 +26,8 @@ Stack is a responsive variant which decides between [VStack] and [HStack].
 ---
 
 ## Related
+- [Alignment](../../layout/alignment/)
+- [Border](../../utility/border/)
 - [Frame](../../layout/frame/)
+- [Padding](../../utility/padding/)
 

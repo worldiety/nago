@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+<html lang="en"><head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="index, follow" />
   <link rel="icon shortcut" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
@@ -12,12 +12,12 @@
 <link fetchpriority="low" href="/site.webmanifest" rel="manifest" />
 <title>Tutorial 21 – Nago Docs</title>
   <meta name="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/pkg/data&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/pkg/xtime&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/crud&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;log&#34; &#34;log/slog&#34; &#34;net/http&#34; &#34;time&#34; ) import _ &#34;net/http/pprof&#34; type PID string type Score int type Grade float64 type Color string type Birthday xtime.Date type Vacation struct { Start xtime.Date End xtime.Date } type Person struct { ID PID Title string Firstname string Lastname string Friends []PID // this is like foreign keys, however they become stale and are not automatically updated BestFriend std.Option[PID] // this the same as above, but the one-to-one case Score Score Grade Grade Proofed bool FavoriteColor std.Option[Color] FavoriteColor2 std.Option[ui.Color] Colors []Color Birthday Birthday Vacation Vacation WorkDuration time.Duration } func (p Person) Identity() PID { return p.ID } type Persons data.Repository[Person, PID] func main() { go func() { log.Println(http.ListenAndServe(&#34;localhost:6060&#34;, nil)) }() application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) persons := application.SloppyRepository[Person, PID](cfg) persons.SaveAll(func(yield func(Person) bool) { yield(Person{ ID: &#34;1&#34;, Firstname: &#34;bilbo&#34;, Lastname: &#34;beutlin&#34;, Score: 1, }) yield(Person{ ID: &#34;2&#34;, Firstname: &#34;Frodo&#34;, Lastname: &#34;Beutlin&#34;, BestFriend: std.Some[PID](&#34;1&#34;), Score: 2, }) }) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { bnd := crud.NewBinding[Person](wnd) bnd.Add( crud.Text(crud.TextOptions{Label: &#34;Vorname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Firstname })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Firstname != &#34;Torben&#34; { return &#34;Du bist nicht Torben&#34;, nil } return &#34;&#34;, nil }).WithSupportingText(&#34;Gib Torben ein&#34;), crud.Text(crud.TextOptions{Label: &#34;Nachname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Lastname })), crud.Int(crud.IntOptions{Label: &#34;Score&#34;}, crud.Ptr(func(model *Person) *Score { return &amp;model.Score })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Score != 42 { return &#34;muss 42 sein&#34;, nil } return &#34;&#34;, nil }), crud.Float(crud.FloatOptions{Label: &#34;Grade&#34;}, crud.Ptr(func(model *Person) *Grade { return &amp;model.Grade })), crud.Bool(crud.BoolOptions{Label: &#34;Proofed&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;Check me if this is ok&#34;), crud.BoolToggle(crud.BoolOptions{Label: &#34;Proofed2&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;don&#39;t bind same fields into the same form&#34;), crud.PickMultiple(crud.PickMultipleOptions[Color]{Label: &#34;Colors&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *[]Color { return &amp;model.Colors })), crud.PickOne(crud.PickOneOptions[Color]{Label: &#34;Color&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *std.Option[Color] { return &amp;model.FavoriteColor })), crud.OneToMany(crud.OneToManyOptions[Person, PID]{ Label: &#34;Friendos&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.Ptr(func(model *Person) *[]PID { return &amp;model.Friends })), crud.OneToOne(crud.OneToOneOptions[Person, PID]{ Label: &#34;Best Friend&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.PropertyFuncs[Person, std.Option[PID]](func(p *Person) std.Option[PID] { return p.BestFriend }, func(dst *Person, v std.Option[PID]) { dst.BestFriend = v })), crud.Date(crud.DateOptions{Label: &#34;Geburtstag&#34;}, crud.Ptr(func(model *Person) *Birthday { return &amp;model.Birthday })), crud.DateRange(crud.DateRangeOptions{Label: &#34;Urlaub&#34;}, crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.Start }), crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.End })), crud.Time(crud.TimeOptions{Label: &#34;Arbeitszeit&#34;, ShowHours: true, ShowSeconds: true}, crud.Ptr(func(model *Person) *time.Duration { return &amp;model.WorkDuration })), crud.PickOneColor(crud.PickOneColorOptions{Label: &#34;Lieblingsfarbe 2&#34;}, crud.Ptr(func(model *Person) *std.Option[ui.Color] { return &amp;model.FavoriteColor2 })), crud.AggregateActions(&#34;Optionen&#34;, crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error { slog.Info(&#34;delete person&#34;, &#34;id&#34;, p.ID) return nil }), func(person Person) bool { return person.ID != &#34;1&#34; }), crud.ButtonEdit[Person](bnd, func(p Person) (string, error) { slog.Info(&#34;update person&#34;, &#34;id&#34;, p.ID, &#34;person&#34;, p) return &#34;&#34;, persons.Save(p) }), ), ) return ui.VStack( crud.View[Person, PID]( crud.Options[Person, PID](bnd). Actions( crud.ButtonCreate[Person](bnd, Person{ID: &#34;do not randomize here&#34;}, func(person Person) (errorText string, infrastructureError error) { if !bnd.Validates(person) { return &#34;irgendein validation fehler, gugg hin&#34;, nil } if person.Firstname == &#34;&#34; { return &#34;Vorname darf nicht leer sein&#34;, nil } person.ID = data.RandIdent[PID]() // create a unique ID here return &#34;&#34;, persons.Save(person) }), ). FindAll(persons.All()). Title(&#34;Personen&#34;), ), ).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth()) }) }).Run() } Info More static content." /><link rel="canonical" href="//localhost:1313/docs/examples/tutorial-21-crud/" itemprop="url" />
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/pkg/data&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/pkg/xtime&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/crud&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;log&#34; &#34;log/slog&#34; &#34;net/http&#34; &#34;time&#34; ) import _ &#34;net/http/pprof&#34; type PID string type Score int type Grade float64 type Color string type Birthday xtime.Date type Vacation struct { Start xtime.Date End xtime.Date } type Person struct { ID PID Title string Firstname string Lastname string Friends []PID // this is like foreign keys, however they become stale and are not automatically updated BestFriend std.Option[PID] // this the same as above, but the one-to-one case Score Score Grade Grade Proofed bool FavoriteColor std.Option[Color] FavoriteColor2 std.Option[ui.Color] Colors []Color Birthday Birthday Vacation Vacation WorkDuration time.Duration } func (p Person) Identity() PID { return p.ID } type Persons data.Repository[Person, PID] func main() { go func() { log.Println(http.ListenAndServe(&#34;localhost:6060&#34;, nil)) }() application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) persons := application.SloppyRepository[Person, PID](cfg) persons.SaveAll(func(yield func(Person) bool) { yield(Person{ ID: &#34;1&#34;, Firstname: &#34;bilbo&#34;, Lastname: &#34;beutlin&#34;, Score: 1, }) yield(Person{ ID: &#34;2&#34;, Firstname: &#34;Frodo&#34;, Lastname: &#34;Beutlin&#34;, BestFriend: std.Some[PID](&#34;1&#34;), Score: 2, }) }) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { bnd := crud.NewBinding[Person](wnd) bnd.Add( crud.Text(crud.TextOptions{Label: &#34;Vorname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Firstname })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Firstname != &#34;Torben&#34; { return &#34;Du bist nicht Torben&#34;, nil } return &#34;&#34;, nil }).WithSupportingText(&#34;Gib Torben ein&#34;), crud.Text(crud.TextOptions{Label: &#34;Nachname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Lastname })), crud.Int(crud.IntOptions{Label: &#34;Score&#34;}, crud.Ptr(func(model *Person) *Score { return &amp;model.Score })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Score != 42 { return &#34;muss 42 sein&#34;, nil } return &#34;&#34;, nil }), crud.Float(crud.FloatOptions{Label: &#34;Grade&#34;}, crud.Ptr(func(model *Person) *Grade { return &amp;model.Grade })), crud.Bool(crud.BoolOptions{Label: &#34;Proofed&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;Check me if this is ok&#34;), crud.BoolToggle(crud.BoolOptions{Label: &#34;Proofed2&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;don&#39;t bind same fields into the same form&#34;), crud.PickMultiple(crud.PickMultipleOptions[Color]{Label: &#34;Colors&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *[]Color { return &amp;model.Colors })), crud.PickOne(crud.PickOneOptions[Color]{Label: &#34;Color&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *std.Option[Color] { return &amp;model.FavoriteColor })), crud.OneToMany(crud.OneToManyOptions[Person, PID]{ Label: &#34;Friendos&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.Ptr(func(model *Person) *[]PID { return &amp;model.Friends })), crud.OneToOne(crud.OneToOneOptions[Person, PID]{ Label: &#34;Best Friend&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.PropertyFuncs[Person, std.Option[PID]](func(p *Person) std.Option[PID] { return p.BestFriend }, func(dst *Person, v std.Option[PID]) { dst.BestFriend = v })), crud.Date(crud.DateOptions{Label: &#34;Geburtstag&#34;}, crud.Ptr(func(model *Person) *Birthday { return &amp;model.Birthday })), crud.DateRange(crud.DateRangeOptions{Label: &#34;Urlaub&#34;}, crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.Start }), crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.End })), crud.Time(crud.TimeOptions{Label: &#34;Arbeitszeit&#34;, ShowHours: true, ShowSeconds: true}, crud.Ptr(func(model *Person) *time.Duration { return &amp;model.WorkDuration })), crud.PickOneColor(crud.PickOneColorOptions{Label: &#34;Lieblingsfarbe 2&#34;}, crud.Ptr(func(model *Person) *std.Option[ui.Color] { return &amp;model.FavoriteColor2 })), crud.AggregateActions(&#34;Optionen&#34;, crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error { slog.Info(&#34;delete person&#34;, &#34;id&#34;, p.ID) return nil }), func(person Person) bool { return person.ID != &#34;1&#34; }), crud.ButtonEdit[Person](bnd, func(p Person) (string, error) { slog.Info(&#34;update person&#34;, &#34;id&#34;, p.ID, &#34;person&#34;, p) return &#34;&#34;, persons.Save(p) }), ), ) return ui.VStack( crud.View[Person, PID]( crud.Options[Person, PID](bnd). Actions( crud.ButtonCreate[Person](bnd, Person{ID: &#34;do not randomize here&#34;}, func(person Person) (errorText string, infrastructureError error) { if !bnd.Validates(person) { return &#34;irgendein validation fehler, gugg hin&#34;, nil } if person.Firstname == &#34;&#34; { return &#34;Vorname darf nicht leer sein&#34;, nil } person.ID = data.RandIdent[PID]() // create a unique ID here return &#34;&#34;, persons.Save(person) }), ). FindAll(persons.All()). Title(&#34;Personen&#34;), ), ).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth()) }) }).Run() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-21-crud/" itemprop="url" />
 
 <meta property="og:title" content="Tutorial 21" />
 <meta property="og:description" content="Documentation for Nago" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="//localhost:1313/docs/examples/tutorial-21-crud/" />
+<meta property="og:url" content="/docs/examples/tutorial-21-crud/" />
 
   <meta itemprop="name" content="Tutorial 21">
   <meta itemprop="description" content="Write some static content.
@@ -28,11 +28,12 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   <meta name="twitter:description" content="Write some static content.
 Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/pkg/data&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/pkg/xtime&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/crud&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;log&#34; &#34;log/slog&#34; &#34;net/http&#34; &#34;time&#34; ) import _ &#34;net/http/pprof&#34; type PID string type Score int type Grade float64 type Color string type Birthday xtime.Date type Vacation struct { Start xtime.Date End xtime.Date } type Person struct { ID PID Title string Firstname string Lastname string Friends []PID // this is like foreign keys, however they become stale and are not automatically updated BestFriend std.Option[PID] // this the same as above, but the one-to-one case Score Score Grade Grade Proofed bool FavoriteColor std.Option[Color] FavoriteColor2 std.Option[ui.Color] Colors []Color Birthday Birthday Vacation Vacation WorkDuration time.Duration } func (p Person) Identity() PID { return p.ID } type Persons data.Repository[Person, PID] func main() { go func() { log.Println(http.ListenAndServe(&#34;localhost:6060&#34;, nil)) }() application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) persons := application.SloppyRepository[Person, PID](cfg) persons.SaveAll(func(yield func(Person) bool) { yield(Person{ ID: &#34;1&#34;, Firstname: &#34;bilbo&#34;, Lastname: &#34;beutlin&#34;, Score: 1, }) yield(Person{ ID: &#34;2&#34;, Firstname: &#34;Frodo&#34;, Lastname: &#34;Beutlin&#34;, BestFriend: std.Some[PID](&#34;1&#34;), Score: 2, }) }) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { bnd := crud.NewBinding[Person](wnd) bnd.Add( crud.Text(crud.TextOptions{Label: &#34;Vorname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Firstname })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Firstname != &#34;Torben&#34; { return &#34;Du bist nicht Torben&#34;, nil } return &#34;&#34;, nil }).WithSupportingText(&#34;Gib Torben ein&#34;), crud.Text(crud.TextOptions{Label: &#34;Nachname&#34;}, crud.Ptr(func(entity *Person) *string { return &amp;entity.Lastname })), crud.Int(crud.IntOptions{Label: &#34;Score&#34;}, crud.Ptr(func(model *Person) *Score { return &amp;model.Score })).WithValidation(func(person Person) (errorText string, infrastructureError error) { if person.Score != 42 { return &#34;muss 42 sein&#34;, nil } return &#34;&#34;, nil }), crud.Float(crud.FloatOptions{Label: &#34;Grade&#34;}, crud.Ptr(func(model *Person) *Grade { return &amp;model.Grade })), crud.Bool(crud.BoolOptions{Label: &#34;Proofed&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;Check me if this is ok&#34;), crud.BoolToggle(crud.BoolOptions{Label: &#34;Proofed2&#34;}, crud.Ptr(func(model *Person) *bool { return &amp;model.Proofed })).WithSupportingText(&#34;don&#39;t bind same fields into the same form&#34;), crud.PickMultiple(crud.PickMultipleOptions[Color]{Label: &#34;Colors&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *[]Color { return &amp;model.Colors })), crud.PickOne(crud.PickOneOptions[Color]{Label: &#34;Color&#34;, Values: []Color{&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;}}, crud.Ptr(func(model *Person) *std.Option[Color] { return &amp;model.FavoriteColor })), crud.OneToMany(crud.OneToManyOptions[Person, PID]{ Label: &#34;Friendos&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.Ptr(func(model *Person) *[]PID { return &amp;model.Friends })), crud.OneToOne(crud.OneToOneOptions[Person, PID]{ Label: &#34;Best Friend&#34;, ForeignEntities: persons.All(), ForeignPickerRenderer: func(t Person) core.View { return ui.Text(fmt.Sprintf(&#34;%s %s&#34;, t.Firstname, t.Lastname)) }, }, crud.PropertyFuncs[Person, std.Option[PID]](func(p *Person) std.Option[PID] { return p.BestFriend }, func(dst *Person, v std.Option[PID]) { dst.BestFriend = v })), crud.Date(crud.DateOptions{Label: &#34;Geburtstag&#34;}, crud.Ptr(func(model *Person) *Birthday { return &amp;model.Birthday })), crud.DateRange(crud.DateRangeOptions{Label: &#34;Urlaub&#34;}, crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.Start }), crud.Ptr(func(model *Person) *xtime.Date { return &amp;model.Vacation.End })), crud.Time(crud.TimeOptions{Label: &#34;Arbeitszeit&#34;, ShowHours: true, ShowSeconds: true}, crud.Ptr(func(model *Person) *time.Duration { return &amp;model.WorkDuration })), crud.PickOneColor(crud.PickOneColorOptions{Label: &#34;Lieblingsfarbe 2&#34;}, crud.Ptr(func(model *Person) *std.Option[ui.Color] { return &amp;model.FavoriteColor2 })), crud.AggregateActions(&#34;Optionen&#34;, crud.Optional[Person](crud.ButtonDelete[Person](wnd, func(p Person) error { slog.Info(&#34;delete person&#34;, &#34;id&#34;, p.ID) return nil }), func(person Person) bool { return person.ID != &#34;1&#34; }), crud.ButtonEdit[Person](bnd, func(p Person) (string, error) { slog.Info(&#34;update person&#34;, &#34;id&#34;, p.ID, &#34;person&#34;, p) return &#34;&#34;, persons.Save(p) }), ), ) return ui.VStack( crud.View[Person, PID]( crud.Options[Person, PID](bnd). Actions( crud.ButtonCreate[Person](bnd, Person{ID: &#34;do not randomize here&#34;}, func(person Person) (errorText string, infrastructureError error) { if !bnd.Validates(person) { return &#34;irgendein validation fehler, gugg hin&#34;, nil } if person.Firstname == &#34;&#34; { return &#34;Vorname darf nicht leer sein&#34;, nil } person.ID = data.RandIdent[PID]() // create a unique ID here return &#34;&#34;, persons.Save(person) }), ). FindAll(persons.All()). Title(&#34;Personen&#34;), ), ).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth()) }) }).Run() } Info More static content.">
 
-    <link href="/css/compiled/main.css" rel="stylesheet" />
+    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
 
 
 
-  <link href="/css/custom.css" rel="stylesheet" />
+  <link href="/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" rel="stylesheet" integrity="sha256-47DEQpj8HBSa&#43;/TImW&#43;5JCeuQeRkm5NMpJWZG3hSuFU=" />
 
 
   <script>
@@ -385,6 +386,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   >Toggle
     </a>
               
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/webview/"
+    
+  >WebView
+    </a>
+              
             </li></ul>
       </div>
             </li><li class="hx-flex hx-flex-col "><a
@@ -623,6 +632,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/time_frame_picker/"
+    
+  >Time Frame Picker
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/composite/time_picker/"
     
   >Time Picker
@@ -741,6 +758,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/spacer/"
     
   >Spacer
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/stack/"
+    
+  >Stack
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1974,6 +1999,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   >Toggle
     </a>
               
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/webview/"
+    
+  >WebView
+    </a>
+              
             </li></ul>
       </div>
             </li><li class="hx-flex hx-flex-col "><a
@@ -2212,6 +2245,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/time_frame_picker/"
+    
+  >Time Frame Picker
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/composite/time_picker/"
     
   >Time Picker
@@ -2330,6 +2371,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/spacer/"
     
   >Spacer
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/stack/"
+    
+  >Stack
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3401,11 +3450,11 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 
     <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
         <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Copyright (c) 2025 worldiety GmbH</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">//</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// This file is part of the NAGO Low-Code Platform.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// This file is part of the NAGO Low-Code Platform.</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// Licensed under the terms specified in the LICENSE file.</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">//</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: Custom-License</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: Custom-License</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 </span></span><span style="display:flex;"><span>
@@ -3647,8 +3696,8 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
         <div class="hx-flex hx-w-full hx-flex-col hx-items-center sm:hx-items-start"><div class="hx-mt-6 hx-text-xs">© 2025 worldiety GmbH</div></div>
       </div></footer>
     
-    <script defer src="/js/main.js" integrity=""></script>
+    <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.js" integrity=""></script>
+    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
   </body>
 </html>

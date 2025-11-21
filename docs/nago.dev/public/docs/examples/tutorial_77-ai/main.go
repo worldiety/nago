@@ -18,6 +18,8 @@ import (
 	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/drive"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
+	uidrive "go.wdy.de/nago/application/drive/ui"
+	"go.wdy.de/nago/application/group"
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/application/user"
@@ -33,6 +35,8 @@ func main() {
 		option.MustZero(cfg.StandardSystems())
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(cfg.NewScaffold().
+			MenuEntry().Title("home").Forward(".").Private().
+			MenuEntry().Title("drive").Forward("drive").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
@@ -42,13 +46,24 @@ func main() {
 
 		modAi := option.Must(cfgai.Enable(cfg))
 
-		option.Must(drives.UseCases.OpenRoot(user.SU(), drive.OpenRootOptions{
-			Create: true,
-			Mode:   drive.OtherWrite | drive.OtherRead,
+		groups := option.Must(cfg.GroupManagement())
+		gid := option.Must(groups.UseCases.Upsert(user.SU(), group.Group{
+			Name: "Meine Gruppe",
+		}))
+
+		option.Must(drives.UseCases.OpenDrive(user.SU(), drive.OpenDriveOptions{
+			Create:    true,
+			Mode:      drive.GroupWrite | drive.GroupRead, //| drive.OtherWrite | drive.OtherRead,
+			Group:     gid,
+			Namespace: drive.NamespaceGlobal,
 		}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return uiai.PageChat(wnd, modAi.UseCases)
 		})
+		cfg.RootViewWithDecoration("drive", func(wnd core.Window) core.View {
+			return uidrive.PageDrive(wnd, drives.UseCases)
+		})
+
 	}).Run()
 }

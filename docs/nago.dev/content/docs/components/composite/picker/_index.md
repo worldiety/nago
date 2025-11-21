@@ -57,7 +57,8 @@ func main() {
 | `ErrorText(text string)` |  |
 | `Frame(frame ui.Frame)` |  |
 | `ItemPickedRenderer(fn func([]T) core.View)` | ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items. |
-| `ItemRenderer(fn func(T) core.View)` | ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
+| `ItemRenderer(fn func(T) core.View)` | Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
+| `ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)` | ItemRenderer2 can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
 | `MultiSelect(mv bool)` | MultiSelect is by default false. |
 | `Padding(padding ui.Padding)` |  |
 | `QuickFilterSupported(flag bool)` | QuickFilterSupported sets the quick-filter-support and if true and values contains more than 10 items, the quick filter is shown. Default is true. |
@@ -67,7 +68,7 @@ func main() {
 | `Visible(visible bool)` |  |
 | `WithDialogPresented(state *core.State[bool])` |  |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
-| `pickerTable()` |  |
+| `pickerTable(wnd core.Window)` |  |
 | `syncCheckboxStates(state *core.State[[]T])` |  |
 | `syncCurrentSelectedState()` |  |
 ---

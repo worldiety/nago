@@ -21,6 +21,7 @@ you need to apply additional padding.
 | `Alignment(alignment Alignment)` | Alignment sets the alignment of child views within the column. |
 | `Animation(animation Animation)` |  |
 | `Append(children ...)` | Append adds additional child views to the VStack. |
+| `Background(bg Background)` |  |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color. |
 | `Border(border Border)` | Border sets the default border styling. |
 | `FocusedBackgroundColor(backgroundColor proto.Color)` | FocusedBackgroundColor sets the background color when focused. |

@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Tutorial 14</title>
-    <link>//localhost:1313/docs/examples/tutorial-14-checkbox/</link>
+    <link>/docs/examples/tutorial-14-checkbox/</link>
     <description>Recent content in Tutorial 14 on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/examples/tutorial-14-checkbox/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/examples/tutorial-14-checkbox/index.xml" rel="self" type="application/rss+xml" />
     
     
       

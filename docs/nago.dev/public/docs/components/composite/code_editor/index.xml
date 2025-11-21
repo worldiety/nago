@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Code Editor</title>
-    <link>//localhost:1313/docs/components/composite/code_editor/</link>
+    <link>/docs/components/composite/code_editor/</link>
     <description>Recent content in Code Editor on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/composite/code_editor/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/composite/code_editor/index.xml" rel="self" type="application/rss+xml" />
     
     
       

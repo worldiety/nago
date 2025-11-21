@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Image</title>
-    <link>//localhost:1313/docs/components/basic/image/</link>
+    <link>/docs/components/basic/image/</link>
     <description>Recent content in Image on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/basic/image/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/basic/image/index.xml" rel="self" type="application/rss+xml" />
     
     
       

@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Table Row</title>
-    <link>//localhost:1313/docs/components/layout/table_row/</link>
+    <link>/docs/components/layout/table_row/</link>
     <description>Recent content in Table Row on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/layout/table_row/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/layout/table_row/index.xml" rel="self" type="application/rss+xml" />
     
     
       

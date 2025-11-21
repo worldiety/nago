@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Backup Management</title>
-    <link>//localhost:1313/docs/systems/backup_management/</link>
+    <link>/docs/systems/backup_management/</link>
     <description>Recent content in Backup Management on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/systems/backup_management/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/systems/backup_management/index.xml" rel="self" type="application/rss+xml" />
     
     
       

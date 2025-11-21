@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Window Title</title>
-    <link>//localhost:1313/docs/components/utility/window_title/</link>
+    <link>/docs/components/utility/window_title/</link>
     <description>Recent content in Window Title on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/utility/window_title/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/utility/window_title/index.xml" rel="self" type="application/rss+xml" />
     
     
       

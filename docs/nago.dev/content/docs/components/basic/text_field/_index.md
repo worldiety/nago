@@ -49,6 +49,7 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `Padding(padding Padding)` | Padding is a placeholder implementation. |
 | `Style(s TextFieldStyle)` | Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied. |
 | `SupportingText(text string)` | SupportingText sets helper text for the field. This text is displayed below the input and is typically used to provide hints or guidance. |
+| `TextAlignment(v TextAlignment)` |  |
 | `Trailing(v core.View)` | Trailing sets a trailing view for the field. This view is displayed at the end of the input field, e.g., a clear button or icon. |
 | `Visible(v bool)` | Visible toggles the visibility of the text field. When set to false, the field is hidden from view but still part of the layout. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame updates the current frame of the field via a transformation function. |

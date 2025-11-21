@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Nago Docs – Basic</title>
-    <link>//localhost:1313/docs/components/basic/</link>
+    <link>/docs/components/basic/</link>
     <description>Recent content in Basic on Nago Docs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     
-	  <atom:link href="//localhost:1313/docs/components/basic/index.xml" rel="self" type="application/rss+xml" />
+	  <atom:link href="/docs/components/basic/index.xml" rel="self" type="application/rss+xml" />
     
     
       
@@ -16,10 +16,10 @@
     
     <item>
       <title>Button</title>
-      <link>//localhost:1313/docs/components/basic/button/</link>
+      <link>/docs/components/basic/button/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/button/</guid>
+      <guid>/docs/components/basic/button/</guid>
       <description>
         
         
@@ -78,10 +78,10 @@ and may include accessibility attributes for better usability.&lt;/p&gt;
     
     <item>
       <title>Card</title>
-      <link>//localhost:1313/docs/components/basic/card/</link>
+      <link>/docs/components/basic/card/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/card/</guid>
+      <guid>/docs/components/basic/card/</guid>
       <description>
         
         
@@ -135,10 +135,10 @@ and layout adjustments via frame and title style.&lt;/p&gt;
     
     <item>
       <title>Checkbox</title>
-      <link>//localhost:1313/docs/components/basic/checkbox/</link>
+      <link>/docs/components/basic/checkbox/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/checkbox/</guid>
+      <guid>/docs/components/basic/checkbox/</guid>
       <description>
         
         
@@ -184,10 +184,10 @@ Use it for controls, which do not cause an immediate effect. See also [Toggle].&
     
     <item>
       <title>Checkbox Field</title>
-      <link>//localhost:1313/docs/components/basic/checkbox_field/</link>
+      <link>/docs/components/basic/checkbox_field/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/checkbox_field/</guid>
+      <guid>/docs/components/basic/checkbox_field/</guid>
       <description>
         
         
@@ -271,10 +271,10 @@ keyboard options, and visibility controls.&lt;/p&gt;
     
     <item>
       <title>Colored Text Pill</title>
-      <link>//localhost:1313/docs/components/basic/colored_text_pill/</link>
+      <link>/docs/components/basic/colored_text_pill/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/colored_text_pill/</guid>
+      <guid>/docs/components/basic/colored_text_pill/</guid>
       <description>
         
         
@@ -327,10 +327,10 @@ applying default padding and rounded borders.&lt;/p&gt;
     
     <item>
       <title>Filled Button</title>
-      <link>//localhost:1313/docs/components/basic/filled_button/</link>
+      <link>/docs/components/basic/filled_button/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/filled_button/</guid>
+      <guid>/docs/components/basic/filled_button/</guid>
       <description>
         
         
@@ -384,10 +384,10 @@ and action callback.&lt;/p&gt;
     
     <item>
       <title>Image</title>
-      <link>//localhost:1313/docs/components/basic/image/</link>
+      <link>/docs/components/basic/image/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/image/</guid>
+      <guid>/docs/components/basic/image/</guid>
       <description>
         
         
@@ -413,7 +413,7 @@ SVG embedding, object fit, custom colors, borders, padding, and accessibility. T
           &lt;td&gt;AccessibilityLabel sets a label for screen readers. See also &lt;a href=&#34;https://www.w3.org/WAI/tutorials/images/decision-tree/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;https://www.w3.org/WAI/tutorials/images/decision-tree/&lt;/a&gt;.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;Adaptive(dark image.ID, light image.ID)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;Adaptive(light image.ID, dark image.ID)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Adaptive sets the image to use different sources for light and dark themes. It generates URIs for both light and dark variants with fixed dimensions (512x512) and no fitting, then applies them to the image.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
@@ -483,10 +483,10 @@ SVG embedding, object fit, custom colors, borders, padding, and accessibility. T
     
     <item>
       <title>Picker</title>
-      <link>//localhost:1313/docs/components/basic/picker/</link>
+      <link>/docs/components/basic/picker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/picker/</guid>
+      <guid>/docs/components/basic/picker/</guid>
       <description>
         
         
@@ -644,10 +644,10 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
     
     <item>
       <title>QR Code</title>
-      <link>//localhost:1313/docs/components/basic/qr_code/</link>
+      <link>/docs/components/basic/qr_code/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/qr_code/</guid>
+      <guid>/docs/components/basic/qr_code/</guid>
       <description>
         
         
@@ -686,10 +686,10 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
     
     <item>
       <title>Radio Button</title>
-      <link>//localhost:1313/docs/components/basic/radio_button/</link>
+      <link>/docs/components/basic/radio_button/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/radio_button/</guid>
+      <guid>/docs/components/basic/radio_button/</guid>
       <description>
         
         
@@ -714,6 +714,10 @@ See also [Toggle], [Checkbox] and [Select].&lt;/p&gt;
           &lt;td&gt;Disabled disables the radio button when set to true, preventing user interaction.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ID(id string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;InputChecked(input *core.State[bool])&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;InputChecked binds the radio button to the given state, enabling two-way data binding so that the selected state is synchronized with external logic.&lt;/td&gt;
       &lt;/tr&gt;
@@ -730,10 +734,10 @@ See also [Toggle], [Checkbox] and [Select].&lt;/p&gt;
     
     <item>
       <title>Radiobutton</title>
-      <link>//localhost:1313/docs/components/basic/radiobutton/</link>
+      <link>/docs/components/basic/radiobutton/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/radiobutton/</guid>
+      <guid>/docs/components/basic/radiobutton/</guid>
       <description>
         
         
@@ -774,10 +778,10 @@ See also [Toggle], [Checkbox] and [Select].&lt;/p&gt;
     
     <item>
       <title>Rich Text</title>
-      <link>//localhost:1313/docs/components/basic/rich_text/</link>
+      <link>/docs/components/basic/rich_text/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/rich_text/</guid>
+      <guid>/docs/components/basic/rich_text/</guid>
       <description>
         
         
@@ -817,10 +821,10 @@ such as bold, italic, links, or other markup depending on the renderer. The comp
     
     <item>
       <title>Step</title>
-      <link>//localhost:1313/docs/components/basic/step/</link>
+      <link>/docs/components/basic/step/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/step/</guid>
+      <guid>/docs/components/basic/step/</guid>
       <description>
         
         
@@ -855,10 +859,10 @@ such as bold, italic, links, or other markup depending on the renderer. The comp
     
     <item>
       <title>Text</title>
-      <link>//localhost:1313/docs/components/basic/text/</link>
+      <link>/docs/components/basic/text/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/text/</guid>
+      <guid>/docs/components/basic/text/</guid>
       <description>
         
         
@@ -880,7 +884,7 @@ the window will perform an Open call. Otherwise, a local forward navigation is a
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/basic/text/link-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/images/components/basic/text/link-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
 &lt;h3&gt;LinkWithAction&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;linkwithaction&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#linkwithaction&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;LinkWithAction creates an interactive link-like text component.
 It applies underline styling, interactive color, and attaches an action callback.&lt;/p&gt;
@@ -898,7 +902,7 @@ It applies underline styling, interactive color, and attaches an action callback
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/basic/text/link-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/images/components/basic/text/link-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
 &lt;h3&gt;MailTo&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;mailto&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#mailto&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;MailTo creates a mailto: link text component.
 When clicked, it opens the user&amp;rsquo;s email client with the given email address.&lt;/p&gt;
@@ -914,7 +918,7 @@ When clicked, it opens the user&amp;rsquo;s email client with the given email ad
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/basic/text/mail-to-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/images/components/basic/text/mail-to-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
 &lt;h3&gt;Text&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;text&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#text&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class=&#34;hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code&#34;&gt;
 
@@ -943,7 +947,7 @@ When clicked, it opens the user&amp;rsquo;s email client with the given email ad
   &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;img src=&#34;//localhost:1313/images/components/basic/text/text-with-methods-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/images/components/basic/text/text-with-methods-example.png&#34; alt=&#34;&#34; loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
@@ -993,6 +997,14 @@ When clicked, it opens the user&amp;rsquo;s email client with the given email ad
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;HoveredBorder(border Border)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;HoveredBorder sets the Border width, color and radius when component is hovered.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Hyphens(h Hyphens)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;LabelFor(id string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;LineBreak(lb bool)&lt;/code&gt;&lt;/td&gt;
@@ -1047,10 +1059,10 @@ When clicked, it opens the user&amp;rsquo;s email client with the given email ad
     
     <item>
       <title>Text Field</title>
-      <link>//localhost:1313/docs/components/basic/text_field/</link>
+      <link>/docs/components/basic/text_field/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/text_field/</guid>
+      <guid>/docs/components/basic/text_field/</guid>
       <description>
         
         
@@ -1159,6 +1171,10 @@ By default, it is single-line and uncontrolled until InputValue is set.&lt;/p&gt
           &lt;td&gt;SupportingText sets helper text for the field. This text is displayed below the input and is typically used to provide hints or guidance.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;TextAlignment(v TextAlignment)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Trailing(v core.View)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Trailing sets a trailing view for the field. This view is displayed at the end of the input field, e.g., a clear button or icon.&lt;/td&gt;
       &lt;/tr&gt;
@@ -1186,10 +1202,10 @@ By default, it is single-line and uncontrolled until InputValue is set.&lt;/p&gt
     
     <item>
       <title>Toggle</title>
-      <link>//localhost:1313/docs/components/basic/toggle/</link>
+      <link>/docs/components/basic/toggle/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>//localhost:1313/docs/components/basic/toggle/</guid>
+      <guid>/docs/components/basic/toggle/</guid>
       <description>
         
         
@@ -1219,6 +1235,59 @@ functions. In contrast to that, use a checkbox for form things without an immedi
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Visible(v bool)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Visible controls the visibility of the toggle; false hides it from the UI.&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>WebView</title>
+      <link>/docs/components/basic/webview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/basic/webview/</guid>
+      <description>
+        
+        
+        &lt;p&gt;It shows a html page in the context of your view. A Web-Renderer must use an IFrame to avoid any problems or sandboxing security flaws.&lt;/p&gt;
+&lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;WebView&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;webview&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#webview&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;hr&gt;
+&lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;Method&lt;/th&gt;
+          &lt;th&gt;Description&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Allow(allow string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Frame(frame ui.Frame)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Raw(raw string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Raw html code which is passed into the frame.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ReferrerPolicy(referrerpolicy string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Src(src core.URI)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Title(title string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;

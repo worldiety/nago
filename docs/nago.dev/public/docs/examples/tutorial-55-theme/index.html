@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+<html lang="en"><head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="index, follow" />
   <link rel="icon shortcut" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
@@ -12,12 +12,12 @@
 <link fetchpriority="low" href="/site.webmanifest" rel="manifest" />
 <title>Tutorial 55 – Nago Docs</title>
   <meta name="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;github.com/worldiety/option&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/application/theme&#34; &#34;go.wdy.de/nago/application/user&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/form&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial_55&#34;) cfg.Serve(vuejs.Dist()) cfg.SetDecorator(cfg.NewScaffold().Decorator()) option.MustZero(cfg.StandardSystems()) myTheme := option.Must(cfg.ThemeManagement()) if !option.Must(myTheme.UseCases.HasColors(user.SU())) { myBaseColors := theme.BaseColors{ Main: &#34;#f12af7&#34;, Interactive: &#34;#2af4f7&#34;, Accent: &#34;#5af72a&#34;, } myDark := myTheme.UseCases.Calculations.DarkMode(myBaseColors) myLight := myTheme.UseCases.Calculations.LightMode(myBaseColors) option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myDark, Light: myLight, })) } std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), &#34;%6UbRsCuM8N$auy&#34;)) cfg.RootViewWithDecoration(&#34;.&#34;, func(wnd core.Window) core.View { colorState := core.AutoState[theme.BaseColors](wnd).Init(func() theme.BaseColors { actual := option.Must(myTheme.UseCases.ReadColors(user.SU())) return theme.BaseColors{ Main: actual.Light.M0, Interactive: actual.Light.I0, Accent: actual.Light.A0, } }) return ui.VStack( ui.Text(&#34;hello theme&#34;), form.Auto[theme.BaseColors](form.AutoOptions{}, colorState).Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.ResetColors(user.SU())) fmt.Println(&#34;restart server to apply the effect&#34;) }).Title(&#34;Reset Colors&#34;), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myTheme.UseCases.Calculations.DarkMode(colorState.Get()), Light: myTheme.UseCases.Calculations.LightMode(colorState.Get()), })) wnd.Navigation().Reload() }).Title(&#34;Apply User Colors&#34;), ).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen()) }) }).Run() } Info More static content." /><link rel="canonical" href="//localhost:1313/docs/examples/tutorial-55-theme/" itemprop="url" />
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;github.com/worldiety/option&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/application/theme&#34; &#34;go.wdy.de/nago/application/user&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/form&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial_55&#34;) cfg.Serve(vuejs.Dist()) cfg.SetDecorator(cfg.NewScaffold().Decorator()) option.MustZero(cfg.StandardSystems()) myTheme := option.Must(cfg.ThemeManagement()) if !option.Must(myTheme.UseCases.HasColors(user.SU())) { myBaseColors := theme.BaseColors{ Main: &#34;#f12af7&#34;, Interactive: &#34;#2af4f7&#34;, Accent: &#34;#5af72a&#34;, } myDark := myTheme.UseCases.Calculations.DarkMode(myBaseColors) myLight := myTheme.UseCases.Calculations.LightMode(myBaseColors) option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myDark, Light: myLight, })) } std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), &#34;%6UbRsCuM8N$auy&#34;)) cfg.RootViewWithDecoration(&#34;.&#34;, func(wnd core.Window) core.View { colorState := core.AutoState[theme.BaseColors](wnd).Init(func() theme.BaseColors { actual := option.Must(myTheme.UseCases.ReadColors(user.SU())) return theme.BaseColors{ Main: actual.Light.M0, Interactive: actual.Light.I0, Accent: actual.Light.A0, } }) return ui.VStack( ui.Text(&#34;hello theme&#34;), form.Auto[theme.BaseColors](form.AutoOptions{}, colorState).Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.ResetColors(user.SU())) fmt.Println(&#34;restart server to apply the effect&#34;) }).Title(&#34;Reset Colors&#34;), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myTheme.UseCases.Calculations.DarkMode(colorState.Get()), Light: myTheme.UseCases.Calculations.LightMode(colorState.Get()), })) wnd.Navigation().Reload() }).Title(&#34;Apply User Colors&#34;), ).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen()) }) }).Run() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-55-theme/" itemprop="url" />
 
 <meta property="og:title" content="Tutorial 55" />
 <meta property="og:description" content="Documentation for Nago" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="//localhost:1313/docs/examples/tutorial-55-theme/" />
+<meta property="og:url" content="/docs/examples/tutorial-55-theme/" />
 
   <meta itemprop="name" content="Tutorial 55">
   <meta itemprop="description" content="Write some static content.
@@ -28,11 +28,12 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   <meta name="twitter:description" content="Write some static content.
 Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;github.com/worldiety/option&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/application/theme&#34; &#34;go.wdy.de/nago/application/user&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/form&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial_55&#34;) cfg.Serve(vuejs.Dist()) cfg.SetDecorator(cfg.NewScaffold().Decorator()) option.MustZero(cfg.StandardSystems()) myTheme := option.Must(cfg.ThemeManagement()) if !option.Must(myTheme.UseCases.HasColors(user.SU())) { myBaseColors := theme.BaseColors{ Main: &#34;#f12af7&#34;, Interactive: &#34;#2af4f7&#34;, Accent: &#34;#5af72a&#34;, } myDark := myTheme.UseCases.Calculations.DarkMode(myBaseColors) myLight := myTheme.UseCases.Calculations.LightMode(myBaseColors) option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myDark, Light: myLight, })) } std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), &#34;%6UbRsCuM8N$auy&#34;)) cfg.RootViewWithDecoration(&#34;.&#34;, func(wnd core.Window) core.View { colorState := core.AutoState[theme.BaseColors](wnd).Init(func() theme.BaseColors { actual := option.Must(myTheme.UseCases.ReadColors(user.SU())) return theme.BaseColors{ Main: actual.Light.M0, Interactive: actual.Light.I0, Accent: actual.Light.A0, } }) return ui.VStack( ui.Text(&#34;hello theme&#34;), form.Auto[theme.BaseColors](form.AutoOptions{}, colorState).Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.ResetColors(user.SU())) fmt.Println(&#34;restart server to apply the effect&#34;) }).Title(&#34;Reset Colors&#34;), ui.PrimaryButton(func() { option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{ Dark: myTheme.UseCases.Calculations.DarkMode(colorState.Get()), Light: myTheme.UseCases.Calculations.LightMode(colorState.Get()), })) wnd.Navigation().Reload() }).Title(&#34;Apply User Colors&#34;), ).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen()) }) }).Run() } Info More static content.">
 
-    <link href="/css/compiled/main.css" rel="stylesheet" />
+    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
 
 
 
-  <link href="/css/custom.css" rel="stylesheet" />
+  <link href="/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" rel="stylesheet" integrity="sha256-47DEQpj8HBSa&#43;/TImW&#43;5JCeuQeRkm5NMpJWZG3hSuFU=" />
 
 
   <script>
@@ -385,6 +386,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   >Toggle
     </a>
               
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/webview/"
+    
+  >WebView
+    </a>
+              
             </li></ul>
       </div>
             </li><li class="hx-flex hx-flex-col "><a
@@ -623,6 +632,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/time_frame_picker/"
+    
+  >Time Frame Picker
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/composite/time_picker/"
     
   >Time Picker
@@ -741,6 +758,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/spacer/"
     
   >Spacer
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/stack/"
+    
+  >Stack
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1974,6 +1999,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   >Toggle
     </a>
               
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/webview/"
+    
+  >WebView
+    </a>
+              
             </li></ul>
       </div>
             </li><li class="hx-flex hx-flex-col "><a
@@ -2212,6 +2245,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/time_frame_picker/"
+    
+  >Time Frame Picker
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/composite/time_picker/"
     
   >Time Picker
@@ -2330,6 +2371,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/spacer/"
     
   >Spacer
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/stack/"
+    
+  >Stack
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3401,11 +3450,11 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 
     <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
         <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Copyright (c) 2025 worldiety GmbH</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">//</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// This file is part of the NAGO Low-Code Platform.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// This file is part of the NAGO Low-Code Platform.</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// Licensed under the terms specified in the LICENSE file.</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">//</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: Custom-License</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: Custom-License</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 </span></span><span style="display:flex;"><span>
@@ -3518,8 +3567,8 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
         <div class="hx-flex hx-w-full hx-flex-col hx-items-center sm:hx-items-start"><div class="hx-mt-6 hx-text-xs">© 2025 worldiety GmbH</div></div>
       </div></footer>
     
-    <script defer src="/js/main.js" integrity=""></script>
+    <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.js" integrity=""></script>
+    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
   </body>
 </html>
