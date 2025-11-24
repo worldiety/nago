@@ -8,6 +8,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 
 	"go.wdy.de/nago/presentation/core"
@@ -15,13 +16,43 @@ import (
 )
 
 type Background struct {
-	URL   core.URI
-	Fit   ObjectFit
-	lGrad []Color
+	fit         ObjectFit
+	effectStack []proto.Str
 }
 
-func (b Background) LinearGradient(colors ...Color) Background {
-	b.lGrad = colors
+func (b Background) Fit(fit ObjectFit) Background {
+	b.fit = fit
+	return b
+}
+
+// AppendURI appends the given uri on the background effect stack. Beware of the effect order,
+// which is defined as each append comes on top of the prior
+// layer. This is the inverse order of CSS but technically more logical.
+func (b Background) AppendURI(uri core.URI) Background {
+	b.effectStack = append(b.effectStack, "url("+proto.Str(uri)+")")
+	return b
+}
+
+// AppendLinearGradient appends the defined gradient equally distributed between all given colors on the background
+// effect stack. Beware of the effect order, which is defined as each append comes on top of the prior
+// layer. This is the inverse order of CSS but technically more logical.
+func (b Background) AppendLinearGradient(colors ...Color) Background {
+	var tmp strings.Builder
+	for i, color := range colors {
+		if color.isAbsolute() {
+			tmp.WriteString(string(color))
+		} else {
+			tmp.WriteString("var(--")
+			tmp.WriteString(string(color))
+			tmp.WriteString(")")
+		}
+
+		if i < len(colors)-1 {
+			tmp.WriteString(", ")
+		}
+	}
+
+	b.effectStack = append(b.effectStack, proto.Str("linear-gradient("+tmp.String()+")"))
 	return b
 }
 
@@ -32,7 +63,7 @@ func (b *Background) proto() *proto.Background {
 
 	bg := &proto.Background{}
 
-	switch b.Fit {
+	switch b.fit {
 	case FitFill:
 		bg.Size = "100% 100%"
 	case FitContain:
@@ -47,28 +78,8 @@ func (b *Background) proto() *proto.Background {
 		bg.Repeat = "repeat"
 	}
 
-	if len(b.lGrad) > 0 {
-		var tmp strings.Builder
-		for i, color := range b.lGrad {
-			if color.isAbsolute() {
-				tmp.WriteString(string(color))
-			} else {
-				tmp.WriteString("var(--")
-				tmp.WriteString(string(color))
-				tmp.WriteString(")")
-			}
-
-			if i < len(b.lGrad)-1 {
-				tmp.WriteString(", ")
-			}
-		}
-		bg.Image = append(bg.Image, proto.Str("linear-gradient("+tmp.String()+")"))
-	}
-
-	// implementation note: order is important and must be stacked accordingly
-	if b.URL != "" {
-		bg.Image = append(bg.Image, "url("+proto.Str(b.URL)+")")
-	}
+	slices.Reverse(b.effectStack)
+	bg.Image = b.effectStack
 
 	return bg
 }

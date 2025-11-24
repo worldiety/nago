@@ -34,7 +34,11 @@ func main() {
 
 				ui.VStack(
 					ui.Text("hello world"),
-				).Background(ui.Background{URL: huri, Fit: ui.FitCover}.LinearGradient("#00000000", ui.M5)).
+				).Background(ui.Background{}.
+					Fit(ui.FitCover).
+					AppendURI(huri).
+					AppendLinearGradient("#00000000", ui.M5),
+				).
 					Frame(ui.Frame{Width: ui.Full}).
 					Border(ui.Border{}.Radius(ui.L32)).
 					Padding(ui.Padding{}.All(ui.L120)),
