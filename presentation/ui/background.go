@@ -73,6 +73,8 @@ func (b *Background) proto() *proto.Background {
 		bg.Repeat = "no-repeat"
 	case FitCover:
 		bg.Size = "cover"
+		bg.PositionX = 50
+		bg.PositionY = 50
 	case FitNone:
 		bg.Size = "contain"
 		bg.Repeat = "repeat"
