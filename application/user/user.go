@@ -289,6 +289,16 @@ func (u User) WithIdentity(id ID) User {
 	return u
 }
 
+func (u User) ConsentStatusByID(id consent.ID) consent.Status {
+	for _, c := range u.Consents {
+		if c.ID == id {
+			return c.Status()
+		}
+	}
+
+	return consent.Revoked
+}
+
 func (u User) Enabled() bool {
 	enabled := false
 	AccountStatusEnum.Switch(u.Status)(

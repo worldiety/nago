@@ -11,13 +11,14 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/consent"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/pkg/xtime"
 	"golang.org/x/text/language"
@@ -49,7 +50,7 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 		writer.Comma = ';' // excel in germany does not use , by default
 	}
 
-	option.MustZero(writer.Write([]string{
+	columns := []string{
 		"id",
 		"first_name",
 		"last_name",
@@ -58,7 +59,6 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 		"created_at",
 		"enabled",
 		"roles",
-		"consents",
 		"salutation",
 		"title",
 		"position",
@@ -67,19 +67,30 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 		"mobile_phone",
 		"phone",
 		"day_of_birth",
-	}))
+	}
 
-	for usr, err := range repo.FindAllByID(slices.Values(users)) {
-		if err != nil {
-			return nil, err
-		}
+	loadedUsers, err := xslices.Collect2(repo.FindAllByID(slices.Values(users)))
+	if err != nil {
+		return nil, err
+	}
 
-		var consents []string
+	// build all available consents
+	allConsents := map[consent.ID]bool{}
+	for _, usr := range loadedUsers {
 		for _, c := range usr.Consents {
-			consents = append(consents, string(c.ID)+":"+strconv.FormatBool(c.Status() == consent.Approved))
+			allConsents[c.ID] = true
 		}
+	}
 
-		option.MustZero(writer.Write([]string{
+	sortedConsentIdents := slices.Sorted(maps.Keys(allConsents))
+	for _, id := range sortedConsentIdents {
+		columns = append(columns, string(id))
+	}
+
+	option.MustZero(writer.Write(columns))
+
+	for _, usr := range loadedUsers {
+		row := []string{
 			string(usr.ID),
 			usr.Contact.Firstname,
 			usr.Contact.Lastname,
@@ -88,7 +99,6 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 			usr.CreatedAt.Format(time.RFC3339),
 			strconv.FormatBool(usr.Enabled()),
 			string(xstrings.Join(usr.Roles, ",")),
-			strings.Join(consents, ","),
 			usr.Contact.Salutation,
 			usr.Contact.Title,
 			usr.Contact.Position,
@@ -97,7 +107,13 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 			usr.Contact.MobilePhone,
 			usr.Contact.Phone,
 			usr.Contact.DayOfBirth.Time(time.Local).Format(xtime.GermanDate),
-		}))
+		}
+
+		for _, ident := range sortedConsentIdents {
+			row = append(row, strconv.FormatBool(usr.ConsentStatusByID(ident) == consent.Approved))
+		}
+
+		option.MustZero(writer.Write(row))
 	}
 
 	writer.Flush()
