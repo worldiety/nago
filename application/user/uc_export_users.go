@@ -44,7 +44,7 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 
 	writer := csv.NewWriter(&f)
 
-	switch opts.Language {
+	switch opts.Language.Parent() {
 	case language.German:
 		writer.Comma = ';' // excel in germany does not use , by default
 	}
