@@ -124,6 +124,7 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 					CloudStore: true,
 				}).
 				Teaser(teaser(wnd, prov)).
+				Disclaimer(ui.Text(StrAIDisclaimer.Get(wnd))).
 				More(
 					ui.SecondaryButton(func() {
 						helpPresented.Set(true)

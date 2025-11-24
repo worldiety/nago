@@ -35,7 +35,5 @@ export function backgroundCSS(bg?: Background): string[] {
 		styles.push('background-size:' + bg.size);
 	}
 
-	console.log(styles);
-
 	return styles;
 }

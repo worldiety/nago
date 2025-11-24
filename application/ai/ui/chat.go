@@ -121,6 +121,7 @@ type TChat struct {
 	frame        ui.Frame
 	teaser       core.View
 	more         core.View
+	disclaimer   core.View
 }
 
 func Chat(provider provider.Provider, conv *core.State[conversation.ID], text *core.State[string]) TChat {
@@ -139,6 +140,12 @@ func (c TChat) Frame(frame ui.Frame) TChat {
 
 func (c TChat) StartOptions(opts StartOptions) TChat {
 	c.startOptions = opts
+	return c
+}
+
+// Disclaimer sets a little view beneath the chat input message which warns about the usage of the ai.
+func (c TChat) Disclaimer(view core.View) TChat {
+	c.disclaimer = view
 	return c
 }
 
@@ -422,9 +429,11 @@ func (c TChat) Render(ctx core.RenderContext) core.RenderNode {
 		// chat footer
 		Append(
 			ui.Space(ui.L16),
-			ui.HStack(
-				ui.Text(StrAIDisclaimer.Get(wnd)),
-			).BackgroundColor(ui.M2).Border(ui.Border{}.Radius(ui.L16)).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L96)),
+			ui.If(c.disclaimer != nil,
+				ui.HStack(
+					c.disclaimer,
+				).BackgroundColor(ui.M2).Border(ui.Border{}.Radius(ui.L16)).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L96)),
+			),
 		).
 		Append(ui.VStack().ID("end-of-chat")).
 		Gap(ui.L16).
