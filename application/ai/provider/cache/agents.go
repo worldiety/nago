@@ -121,7 +121,7 @@ func (c cacheAgents) FindByName(subject auth.Subject, name string) iter.Seq2[age
 				continue
 			}
 
-			if ag.Name == ag.Name && (ag.CreatedBy == subject.ID() || subject.HasPermission(PermAgentFindByName)) {
+			if ag.Name == name && (ag.CreatedBy == subject.ID() || subject.HasPermission(PermAgentFindByName)) {
 				if !yield(ag, nil) {
 					return
 				}
