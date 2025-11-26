@@ -19,10 +19,11 @@ import (
 )
 
 type Module[T ent.Aggregate[T, ID], ID data.IDType] struct {
-	Mutex      *sync.Mutex // Mutex used by the UseCases to protect critical write sections
-	Repository data.Repository[T, ID]
-	UseCases   ent.UseCases[T, ID]
-	Pages      uient.Pages
+	Mutex       *sync.Mutex // Mutex used by the UseCases to protect critical write sections
+	Repository  data.Repository[T, ID]
+	UseCases    ent.UseCases[T, ID]
+	Pages       uient.Pages
+	Permissions ent.Permissions
 }
 
 type AdminCenterStyle int
@@ -128,6 +129,7 @@ func configureMod[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configura
 			Create: "admin/entities/" + makeFactoryID(perms.Prefix) + "/create",
 			Update: "admin/entities/" + makeFactoryID(perms.Prefix) + "/update",
 		},
+		Permissions: perms,
 	}
 
 	cfg.RootViewWithDecoration(mod.Pages.List, func(wnd core.Window) core.View {
