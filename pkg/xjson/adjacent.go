@@ -16,6 +16,7 @@ import (
 )
 
 var envRegistry concurrent.RWMap[Typename, reflect.Type]
+var invTypenameLookup concurrent.RWMap[reflect.Type, Typename]
 
 type Typename string
 
@@ -27,13 +28,30 @@ func NewTypename(r reflect.Type) Typename {
 	return Typename(fmt.Sprintf("%s.%s", r.PkgPath(), r.Name()))
 }
 
-func RegisterFor[T any]() {
-	rtype := reflect.TypeFor[T]()
-	Register(rtype)
+func Registered(rtype reflect.Type) bool {
+	if rtype == nil {
+		panic("rtype is nil")
+	}
+	_, ok := invTypenameLookup.Get(rtype)
+	return ok
 }
 
-func Register(rtype reflect.Type) {
-	envRegistry.Put(NewTypename(rtype), rtype)
+func RegisterFor[T any](name Typename) {
+	rtype := reflect.TypeFor[T]()
+	Register(name, rtype)
+}
+
+func RegisterSelf(rtype reflect.Type) {
+	Register(NewTypename(rtype), rtype)
+}
+
+func Register(name Typename, rtype reflect.Type) {
+	if v, ok := envRegistry.Get(name); ok && v != rtype {
+		panic(fmt.Errorf("type name %s is ambigous: %v vs %v", name, rtype, v))
+	}
+
+	envRegistry.Put(name, rtype)
+	invTypenameLookup.Put(rtype, name)
 }
 
 // AdjacentEnvelope encodes the type in an envelope as t and the content as c like the haskel default. This default
@@ -44,13 +62,15 @@ type AdjacentEnvelope struct {
 }
 
 func NewAdjacentEnvelope(v any) AdjacentEnvelope {
-	t := NewTypename(reflect.TypeOf(v))
-	if _, ok := envRegistry.Get(t); !ok {
-		envRegistry.Put(t, reflect.TypeOf(v))
+	rtype := reflect.TypeOf(v)
+	name, ok := invTypenameLookup.Get(rtype)
+	if !ok {
+		name = NewTypename(rtype)
+		Register(name, rtype)
 	}
 
 	return AdjacentEnvelope{
-		Type:  t,
+		Type:  name,
 		Value: v,
 	}
 }

@@ -10,19 +10,21 @@ package core
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
-	"io"
-	"log/slog"
-	"path/filepath"
-	"regexp"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 var appIdRegex = regexp.MustCompile(`^[a-z]\w*(\.[a-z]\w*)+$`)
@@ -31,6 +33,11 @@ type ApplicationID string
 
 func (a ApplicationID) Valid() bool {
 	return appIdRegex.FindString(string(a)) == string(a)
+}
+
+func (a ApplicationID) Last() string {
+	tokens := strings.Split(string(a), ".")
+	return tokens[len(tokens)-1]
 }
 
 type OnWindowCreatedObserver func(wnd Window)

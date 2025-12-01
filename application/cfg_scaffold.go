@@ -10,6 +10,7 @@ package application
 import (
 	_ "embed"
 	"slices"
+	"strings"
 
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/application/image/http"
@@ -31,6 +32,7 @@ import (
 type MenuEntryBuilder struct {
 	parent               *ScaffoldBuilder
 	icon                 core.SVG
+	customView           core.View
 	title                string
 	dst                  core.NavigationPath
 	justAuthenticated    bool
@@ -39,6 +41,7 @@ type MenuEntryBuilder struct {
 	onlyPublic           bool
 	oneOfRoles           []role.ID
 	submenu              *SubMenuBuilder
+	dyn                  func(wnd core.Window, entry *MenuEntryBuilder)
 }
 
 func (b *MenuEntryBuilder) OneOf(perms ...permission.ID) *ScaffoldBuilder {
@@ -67,8 +70,18 @@ func (b *MenuEntryBuilder) PublicOnly() *ScaffoldBuilder {
 	return b.parent
 }
 
+func (b *MenuEntryBuilder) Dynamic(fn func(wnd core.Window, entry *MenuEntryBuilder)) *ScaffoldBuilder {
+	b.dyn = fn
+	return b.parent
+}
+
 func (b *MenuEntryBuilder) Icon(icon core.SVG) *MenuEntryBuilder {
 	b.icon = icon
+	return b
+}
+
+func (b *MenuEntryBuilder) Custom(view core.View) *MenuEntryBuilder {
+	b.customView = view
 	return b
 }
 
@@ -340,6 +353,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		var menu []ui.ScaffoldMenuEntry
 
 		for _, entry := range b.menu {
+			if entry.dyn != nil {
+				entry.dyn(wnd, entry)
+			}
+
 			if entry.justAuthenticated && !wnd.Subject().Valid() {
 				continue
 			}
@@ -374,9 +391,14 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				icoSize = ui.L40
 			}
 
+			eTitle := entry.title
+			if strings.HasPrefix(eTitle, "@") {
+				eTitle = wnd.Bundle().Resolve(eTitle)
+			}
+
 			sentry := ui.ScaffoldMenuEntry{
 				Icon:  ui.If(entry.icon != nil, ui.Image().Embed(entry.icon).Frame(ui.Frame{}.Size(icoSize, icoSize))),
-				Title: entry.title,
+				Title: eTitle,
 				Action: func() {
 					if entry.action != nil {
 						entry.action(wnd)
@@ -387,6 +409,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 					}
 				},
 				MarkAsActiveAt: entry.dst,
+			}
+
+			if entry.customView != nil {
+				sentry.Icon = entry.customView
 			}
 
 			if entry.submenu != nil {

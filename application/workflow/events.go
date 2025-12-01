@@ -14,11 +14,11 @@ import (
 )
 
 func init() {
-	xjson.Register(reflect.TypeFor[ActionInvoked]())
-	xjson.Register(reflect.TypeFor[ActionCompletedSuccessfully]())
-	xjson.Register(reflect.TypeFor[InstanceCreated]())
-	xjson.Register(reflect.TypeFor[InstanceEventEnvelope]())
-	xjson.Register(reflect.TypeFor[InstanceStopped]())
+	xjson.RegisterSelf(reflect.TypeFor[ActionInvoked]())
+	xjson.RegisterSelf(reflect.TypeFor[ActionCompletedSuccessfully]())
+	xjson.RegisterSelf(reflect.TypeFor[InstanceCreated]())
+	xjson.RegisterSelf(reflect.TypeFor[InstanceEventEnvelope]())
+	xjson.RegisterSelf(reflect.TypeFor[InstanceStopped]())
 }
 
 type ActionInvoked struct {

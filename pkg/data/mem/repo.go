@@ -8,21 +8,65 @@
 package mem
 
 import (
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/xslices"
 	"iter"
 	"maps"
 	"slices"
 	"strings"
 	"sync"
+
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xslices"
 )
+
+type assertT struct{}
+
+func (assertT) Identity() string {
+	return ""
+}
+
+var _ data.Repository[assertT, string] = (*Repository[assertT, string])(nil)
 
 // Repository is a standalone in-memory implementation which works without any serialization, in contrast to
 // [mem.Store] and [json.Repository] combinations.
 type Repository[E data.Aggregate[ID], ID ~string] struct {
 	mutex    sync.RWMutex
 	licenses map[ID]E
+	name     string
+}
+
+func (r *Repository[E, ID]) FindAllByPrefix(prefix ID) iter.Seq2[E, error] {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *Repository[E, ID]) Identifiers() iter.Seq2[ID, error] {
+	return xslices.ValuesWithError(slices.Sorted(maps.Keys(r.licenses)), nil)
+}
+
+func (r *Repository[E, ID]) IdentifiersByPrefix(prefix ID) iter.Seq2[ID, error] {
+	return func(yield func(ID, error) bool) {
+		for id, err := range r.Identifiers() {
+			if err != nil {
+				yield(id, err)
+				return
+			}
+
+			if strings.HasPrefix(string(id), string(prefix)) {
+				if !yield(id, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func (r *Repository[E, ID]) SetName(name string) {
+	r.name = name
+}
+
+func (r *Repository[E, ID]) Name() string {
+	return r.name
 }
 
 func (r *Repository[E, ID]) Load(id ID) (E, bool) {
@@ -165,6 +209,10 @@ func (r *Repository[E, ID]) Save(e E) error {
 	return nil
 }
 
+func (r *Repository[E, ID]) Put(e E) {
+	r.Store(e)
+}
+
 func (r *Repository[E, ID]) Store(e E) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -201,4 +249,24 @@ func (r *Repository[E, ID]) SaveAll(it iter.Seq[E]) error {
 		r.licenses[e.Identity()] = e
 	}
 	return nil
+}
+
+func (r *Repository[E, ID]) Append(values ...E) {
+	r.StoreAll(values...)
+}
+
+func (r *Repository[E, ID]) Get(id ID) (E, bool) {
+	v, ok := r.licenses[id]
+	return v, ok
+}
+
+func (r *Repository[E, ID]) DeleteFunc(fn func(E) bool) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	for _, v := range r.licenses {
+		if ok := fn(v); ok {
+			delete(r.licenses, v.Identity())
+		}
+	}
+
 }

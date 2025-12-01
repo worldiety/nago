@@ -39,16 +39,16 @@ func (w *workflow) init() {
 		w.stopEvents = append(w.stopEvents, n.cfg.stopEvents...)
 
 		if n.evtType != nil {
-			xjson.Register(n.evtType)
+			xjson.RegisterSelf(n.evtType)
 		}
 	}
 
 	for _, event := range w.startEvents {
-		xjson.Register(event)
+		xjson.RegisterSelf(event)
 	}
 
 	for _, event := range w.stopEvents {
-		xjson.Register(event)
+		xjson.RegisterSelf(event)
 	}
 
 }

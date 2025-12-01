@@ -12,6 +12,7 @@ import (
 	"iter"
 	"reflect"
 
+	"go.wdy.de/nago/application/ent"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
 )
@@ -83,7 +84,7 @@ func AnySeq2Of[E Aggregate[E, ID], ID ~string](it iter.Seq2[E, error]) iter.Seq2
 }
 
 // UseCaseListAny is a function type returning a sequence of AnyEntity for a subject.
-type UseCaseListAny func(subject auth.Subject) iter.Seq2[AnyEntity, error]
+type UseCaseListAny = ent.FindAll[AnyEntity, string]
 
 // AnyUseCaseList converts a typed use case list function into a UseCaseListAny
 // that produces type-erased AnyEntity results.
