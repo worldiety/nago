@@ -40,6 +40,7 @@ func (c TChatField) Render(ctx core.RenderContext) core.RenderNode {
 			InputValue(c.text).
 			Style(ui.TextFieldBasic).
 			KeydownEnter(c.action).
+			Lines(1).
 			FullWidth().
 			Disabled(c.disabled),
 
