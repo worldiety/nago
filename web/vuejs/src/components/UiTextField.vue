@@ -266,7 +266,7 @@ function handleKeydownEnter(event: KeyboardEvent) {
 
 	// textarea
 	if (props.ui.lines) {
-		if (event.shiftKey) return;
+		if (!props.ui.keydownEnter || event.shiftKey) return;
 		event.preventDefault();
 	}
 
