@@ -8,6 +8,7 @@
 package main
 
 import (
+	_ "embed"
 	"time"
 
 	"github.com/worldiety/option"
@@ -21,7 +22,16 @@ import (
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
+)
+
+var (
+	//go:embed nago_logo.svg
+	NagoLogoLight core.SVG
+
+	//go:embed nago_logo_white.svg
+	NagoLogoDark core.SVG
 )
 
 // the main function of the program, which is like the java public static void main.
@@ -40,6 +50,8 @@ func main() {
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(
 			cfg.NewScaffold().
+				Height(ui.L48).
+				Logo(ui.ImageIconAdaptive(NagoLogoLight, NagoLogoDark).Frame(ui.Frame{}.Size(ui.L48, ui.L64))).
 				//	MenuEntry().Title(uienv.StrEnvironment.String()).Forward("drive").Private().
 				Decorator(),
 		)
@@ -47,13 +59,14 @@ func main() {
 		option.Must(cfglocalization.Enable(cfg))
 
 		teaserImg := cfg.Resource(uilanding.TeaserImg)
+		teaserEnvImg := cfg.Resource(uienv.TeaserEnv)
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return uilanding.PageLanding(wnd, teaserImg)
 		})
 
-		cfg.RootViewWithDecoration("environments", func(wnd core.Window) core.View {
-			return uienv.PageEnvironments(wnd, envUC)
+		cfg.RootViewWithDecoration(uienv.PathEnvironments, func(wnd core.Window) core.View {
+			return uienv.PageEnvironments(wnd, teaserEnvImg, envUC)
 		})
 
 		ucAam := aam.NewUseCases(envUC.Replay)

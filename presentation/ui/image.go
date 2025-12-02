@@ -71,6 +71,15 @@ func ImageIcon(svg core.SVG) TImage {
 	return Image().Embed(svg).Frame(Frame{}.Size(L24, L24)).(TImage)
 }
 
+// ImageIconAdaptive renders default with L24/L24 size and is invisible if svg is empty.
+func ImageIconAdaptive(onLight, onDark core.SVG) TImage {
+	if onLight.Empty() {
+		return TImage{invisible: true}
+	}
+
+	return Image().EmbedAdaptive(onLight, onDark).Frame(Frame{}.Size(L24, L24)).(TImage)
+}
+
 // URI can be used for static image resources which are not provided by
 // the ui component itself. The source may be a hand written REST endpoint
 // or even any third-party resource from a different domain.

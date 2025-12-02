@@ -8,19 +8,27 @@
 package uienv
 
 import (
+	_ "embed"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/app/builder/app"
 	"go.wdy.de/nago/app/builder/environment"
+	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
+	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/dataview"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/hero"
 )
 
-func PageEnvironments(wnd core.Window, uc environment.UseCases) core.View {
+//go:embed team-01.jpeg
+var TeaserEnv application.StaticBytes
+
+func PageEnvironments(wnd core.Window, teaser core.URI, uc environment.UseCases) core.View {
 	envs, err := xslices.Collect2(uc.FindAll(wnd.Subject()))
 	if err != nil {
 		return alert.BannerError(err)
@@ -31,14 +39,24 @@ func PageEnvironments(wnd core.Window, uc environment.UseCases) core.View {
 	selectedEnv := core.AutoState[environment.ID](wnd)
 
 	return ui.VStack(
+
+		hero.Hero(StrEnvironments.Get(wnd)).
+			Alignment(ui.BottomLeading).
+			Subtitle(StrEnvironmentsDesc.Get(wnd)).
+			SideSVG(icons.Home).
+			BackgroundImage(teaser).
+			ForegroundColorAdaptive("#000000aa", "#ffffffaa").
+			Actions(
+				ui.PrimaryButton(func() {
+					createEnvPresented.Set(true)
+				}).Title(StrCreateEnvironment.Get(wnd)),
+			),
+
+		ui.Space(ui.L48),
+			
 		dialogNewEnvironment(wnd, uc, createEnvPresented),
 		dialogNewApp(wnd, uc, selectedEnv, createAppPresented),
-		ui.H1(StrAppsAndEnvironments.Get(wnd)),
-		ui.HStack(
-			ui.SecondaryButton(func() {
-				createEnvPresented.Set(true)
-			}).Title(StrCreateEnvironment.Get(wnd)),
-		).FullWidth().Alignment(ui.Trailing),
+		ui.WindowTitle(StrAppsAndEnvironments.Get(wnd)),
 	).Append(
 		ui.ForEach(envs, func(env environment.Environment) core.View {
 			return ui.VStack(

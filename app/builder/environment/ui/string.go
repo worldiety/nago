@@ -9,11 +9,14 @@ package uienv
 
 import (
 	"github.com/worldiety/i18n"
+	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
 )
 
 var (
 	StrEnvironment         = i18n.MustString("nbuilder.environment.title", i18n.Values{language.English: "Environment", language.German: "Umgebung"})
+	StrEnvironments        = core.DefaultStr("nbuilder.environments", "Environments", "Umgebungen")
+	StrEnvironmentsDesc    = core.DefaultStr("nbuilder.environments.desc", "Environments are your organisational starting point for managing your teams and apps.", "Umgebungen sind dein organisatorischer Startpunkt, um deine Teams und Apps zu verwalten.")
 	StrCreateEnvironment   = i18n.MustString("nbuilder.environment.create", i18n.Values{language.English: "create Environment", language.German: "Neue Umgebung erstellen"})
 	StrAppsAndEnvironments = i18n.MustString("nbuilder.environment.apps_and_env", i18n.Values{language.English: "Apps & Environments", language.German: "Umgebungen und Apps"})
 

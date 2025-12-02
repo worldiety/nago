@@ -9,18 +9,19 @@ import (
 // This component represents a prominent section with an image,
 // title, subtitle, and optional action buttons.
 type THero struct {
-	title           string      // main headline text
-	subtitle        core.View   // supporting subtitle text
-	actions         []core.View // list of action buttons or links
-	frame           ui.Frame    // layout frame for the hero section
-	backgroundImage core.URI
-	backgroundColor ui.Color
-	textColor       ui.Color
-	sideView        core.View
-	alignment       ui.Alignment
-	foregroundColor ui.Color
-	border          ui.Border
-	padding         ui.Padding
+	title                string      // main headline text
+	subtitle             core.View   // supporting subtitle text
+	actions              []core.View // list of action buttons or links
+	frame                ui.Frame    // layout frame for the hero section
+	backgroundImage      core.URI
+	backgroundColor      ui.Color
+	textColor            ui.Color
+	sideView             core.View
+	alignment            ui.Alignment
+	foregroundColorLight ui.Color
+	foregroundColorDark  ui.Color
+	border               ui.Border
+	padding              ui.Padding
 }
 
 // Hero creates a new THero with the given title and a default full-width height of 320.
@@ -75,7 +76,13 @@ func (c THero) BackgroundImage(img core.URI) THero {
 }
 
 func (c THero) ForegroundColor(col ui.Color) THero {
-	c.foregroundColor = col
+	c.foregroundColorLight = col
+	return c
+}
+
+func (c THero) ForegroundColorAdaptive(onLight, onDark ui.Color) THero {
+	c.foregroundColorLight = onLight
+	c.foregroundColorDark = onDark
 	return c
 }
 
@@ -112,6 +119,11 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 		heroTextWidth = "70%"
 	}
 
+	fgColor := c.foregroundColorLight
+	if winfo.ColorScheme == core.Dark && c.foregroundColorDark != "" {
+		fgColor = c.foregroundColorDark
+	}
+
 	return ui.HStack(
 		ui.VStack(
 			ui.Text(c.title).Font(ui.DisplayLarge),
@@ -134,8 +146,8 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 		With(func(stack ui.THStack) ui.THStack {
 			if c.backgroundImage != "" {
 				bg := ui.Background{}.AppendURI(c.backgroundImage).Fit(ui.FitCover)
-				if c.foregroundColor != "" {
-					bg = bg.AppendLinearGradient(c.foregroundColor, c.foregroundColor)
+				if fgColor != "" {
+					bg = bg.AppendLinearGradient(fgColor, fgColor)
 				}
 
 				stack = stack.Background(bg)

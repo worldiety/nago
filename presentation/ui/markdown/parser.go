@@ -19,7 +19,6 @@ import (
 	"github.com/yuin/goldmark/text"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
 )
 
 type Options struct {
@@ -28,9 +27,35 @@ type Options struct {
 	TrimParagraph bool
 }
 
-// Render parses the given source as a markdown dialect and interprets it as views.
-func Render(opts Options, source []byte) core.View {
-	md := goldmark.New(
+// RichText is a little helper factory to get some markdown text into a RichText.
+func RichText(value string) ui.TRichText {
+	return markdown(Options{RichText: true, TrimParagraph: true}, []byte(value))
+}
+
+func markdown(opts Options, source []byte) ui.TRichText {
+	md := newMd()
+	var buf bytes.Buffer
+	if err := md.Convert(source, &buf); err != nil {
+		return ui.RichText(err.Error())
+	}
+
+	b := buf.Bytes()
+	if opts.TrimParagraph {
+		b = bytes.TrimSpace(b)
+		if bytes.HasPrefix(b, []byte("<p>")) {
+			b = b[3:]
+		}
+
+		if bytes.HasSuffix(b, []byte("</p>")) {
+			b = b[:len(b)-4]
+		}
+	}
+
+	return ui.RichText(string(b)).FullWidth()
+}
+
+func newMd() goldmark.Markdown {
+	return goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
@@ -40,28 +65,15 @@ func Render(opts Options, source []byte) core.View {
 			html.WithXHTML(),
 		),
 	)
+}
 
+// Render parses the given source as a markdown dialect and interprets it as views.
+func Render(opts Options, source []byte) core.View {
 	if opts.RichText {
-		var buf bytes.Buffer
-
-		if err := md.Convert(source, &buf); err != nil {
-			return alert.BannerError(err)
-		}
-
-		b := buf.Bytes()
-		if opts.TrimParagraph {
-			b = bytes.TrimSpace(b)
-			if bytes.HasPrefix(b, []byte("<p>")) {
-				b = b[3:]
-			}
-
-			if bytes.HasSuffix(b, []byte("</p>")) {
-				b = b[:len(b)-4]
-			}
-		}
-
-		return ui.RichText(string(b)).FullWidth()
+		return markdown(opts, source)
 	}
+
+	md := newMd()
 
 	r := renderer{}
 	node := md.Parser().Parse(text.NewReader(source))

@@ -442,6 +442,12 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 				Icon: icons.Download,
 				Name: rstring.ActionDownload.Get(wnd),
 				Action: func(selected []drive.FID) error {
+					if len(selected) == 0 {
+						// we get spurious index out of bounds panic here, don't know how to reach
+						slog.Error("action exported called without any selected files")
+						return nil
+					}
+
 					if len(selected) == 1 {
 						optFile, err := uc.Get(wnd.Subject(), selected[0], "")
 						if err != nil {
