@@ -36,6 +36,9 @@ const useStrictFormatting = ref<boolean>(false);
 const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
 let timer: number = 0;
 
+const textarea = ref<HTMLTextAreaElement>();
+const textareaHeight = ref('auto');
+
 const frameStyles = computed<string>(() => {
 	let styles = frameCSS(props.ui.frame);
 
@@ -215,6 +218,10 @@ const inputStyle = computed<string>(() => {
 		paddingRight = clearButtonElementWidth ? `${clearButtonElementWidth}px` : 'auto';
 	}
 
+	if (props.ui.lines) {
+		styles.push(`height: ${textareaHeight.value}`);
+	}
+
 	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
 	return styles.join(';');
 });
@@ -254,16 +261,44 @@ watch(
 	}
 );
 
-function handleKeydownEnter(event: Event) {
-	if (props.ui.keydownEnter) {
-		event.stopPropagation();
-		const parsedValue = parseValue(inputValue.value);
-		// note that we must always issue the key-down event, even we did not change the text
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
-		);
-		clearTimeout(timer); // cancel any debounced follow up event
+function handleKeydownEnter(event: KeyboardEvent) {
+	event.stopPropagation();
+
+	// textarea
+	if (props.ui.lines) {
+		if (event.shiftKey) return;
+		event.preventDefault();
 	}
+
+	sendKeydownEnterEvent();
+}
+
+function resizeTextarea() {
+	if (!textarea.value) return;
+
+	const computedStyle = getComputedStyle(textarea.value);
+	const borderTop = window.parseFloat(parseFloat(computedStyle.getPropertyValue('border-top-width')));
+	const borderBottom = window.parseFloat(parseFloat(computedStyle.getPropertyValue('border-bottom-width')));
+	textarea.value.style.height = "auto";
+	const height = textarea.value.scrollHeight + borderTop + borderBottom;
+	textarea.value.style.height = `${height}px`;
+	textareaHeight.value = `${height}px`;
+}
+
+function sendKeydownEnterEvent() {
+	if (!props.ui.keydownEnter) return;
+
+	const parsedValue = parseValue(inputValue.value);
+	// note that we must always issue the key-down event, even we did not change the text
+	serviceAdapter.sendEvent(
+		new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
+	);
+	clearTimeout(timer); // cancel any debounced follow up event
+}
+
+function onTextareaInput(force: boolean) {
+	resizeTextarea();
+	submitInputValue(force);
 }
 
 function submitInputValue(force: boolean, functionPointer: number = 0): void {
@@ -370,6 +405,7 @@ function debouncedInput() {
 				/>
 				<textarea
 					v-if="props.ui.lines"
+					ref="textarea"
 					:id="id"
 					v-model="inputValue"
 					class="input-field"
@@ -377,8 +413,9 @@ function debouncedInput() {
 					:disabled="props.ui.disabled"
 					type="text"
 					:rows="props.ui.lines"
+					@keydown.enter="handleKeydownEnter"
 					@focusout="submitInputValue(true)"
-					@input="submitInputValue(false)"
+					@input="onTextareaInput(false)"
 				/>
 
 				<!-- Trailing view -->
