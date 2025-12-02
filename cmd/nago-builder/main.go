@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/app/builder/app"
 	"go.wdy.de/nago/app/builder/environment"
 	uienv "go.wdy.de/nago/app/builder/environment/ui"
+	uilanding "go.wdy.de/nago/app/builder/landing/ui"
 	"go.wdy.de/nago/application"
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	cfglocalization "go.wdy.de/nago/application/localization/cfg"
@@ -45,7 +46,13 @@ func main() {
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
 
+		teaserImg := cfg.Resource(uilanding.TeaserImg)
+
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+			return uilanding.PageLanding(wnd, teaserImg)
+		})
+
+		cfg.RootViewWithDecoration("environments", func(wnd core.Window) core.View {
 			return uienv.PageEnvironments(wnd, envUC)
 		})
 

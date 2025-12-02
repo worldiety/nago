@@ -5,44 +5,35 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-type HeroType int
-
-const (
-	ImageRight HeroType = iota
-	ImageFull
-)
-
 // THero is a composite component (Hero).
 // This component represents a prominent section with an image,
 // title, subtitle, and optional action buttons.
 type THero struct {
-	teaserImg ui.DecoredView // hero image or visual teaser
-	title     string         // main headline text
-	subtitle  string         // supporting subtitle text
-	actions   []core.View    // list of action buttons or links
-	frame     ui.Frame       // layout frame for the hero section
-	herotype  HeroType
-	alignment ui.Alignment
+	title           string      // main headline text
+	subtitle        core.View   // supporting subtitle text
+	actions         []core.View // list of action buttons or links
+	frame           ui.Frame    // layout frame for the hero section
+	backgroundImage core.URI
+	backgroundColor ui.Color
+	textColor       ui.Color
+	sideView        core.View
+	alignment       ui.Alignment
+	foregroundColor ui.Color
+	border          ui.Border
+	padding         ui.Padding
 }
 
 // Hero creates a new THero with the given title and a default full-width height of 320.
 func Hero(title string) THero {
 	return THero{
-		title: title,
-		frame: ui.Frame{Height: ui.L320}.FullWidth(),
+		title:           title,
+		frame:           ui.Frame{MinHeight: ui.L320}.FullWidth(),
+		backgroundColor: ui.M0,
+		textColor:       ui.M1,
+		alignment:       ui.Center,
+		border:          ui.Border{}.Radius(ui.L32),
+		padding:         ui.Padding{}.All(ui.L48),
 	}
-}
-
-// HeroType sets the herotype of the THero element.
-func (c THero) HeroType(t HeroType) THero {
-	c.herotype = t
-	return c
-}
-
-// Alignment sets the Alignment of the THero element.
-func (c THero) Alignment(alignment ui.Alignment) THero {
-	c.alignment = alignment
-	return c
 }
 
 // Frame sets the frame of the hero section.
@@ -57,16 +48,54 @@ func (c THero) Actions(actions ...core.View) THero {
 	return c
 }
 
+func (c THero) Padding(padding ui.Padding) THero {
+	c.padding = padding
+	return c
+}
+
 // Subtitle sets the subtitle text of the hero section.
-func (c THero) Subtitle(subtitle string) THero {
+func (c THero) Subtitle(text string) THero {
+	return c.SubtitleView(ui.Text(text))
+}
+
+func (c THero) SubtitleView(subtitle core.View) THero {
 	c.subtitle = subtitle
 	return c
 }
 
-// Teaser sets the teaser image of the hero section.
-func (c THero) Teaser(img ui.DecoredView) THero {
-	c.teaserImg = img
+func (c THero) Alignment(alignment ui.Alignment) THero {
+	c.alignment = alignment
 	return c
+}
+
+// BackgroundImage places a fit-cover image into the background.
+func (c THero) BackgroundImage(img core.URI) THero {
+	c.backgroundImage = img
+	return c
+}
+
+func (c THero) ForegroundColor(col ui.Color) THero {
+	c.foregroundColor = col
+	return c
+}
+
+func (c THero) BackgroundColor(color ui.Color) THero {
+	c.backgroundColor = color
+	return c
+}
+
+func (c THero) TextColor(color ui.Color) THero {
+	c.textColor = color
+	return c
+}
+
+func (c THero) SideView(img core.View) THero {
+	c.sideView = img
+	return c
+}
+
+func (c THero) SideSVG(svg core.SVG) THero {
+	return c.SideView(ui.Image().Embed(svg).Frame(ui.Frame{Width: ui.Full, Height: ui.Full}))
 }
 
 // Render shows the hero section with title, subtitle, actions, and optional teaser image.
@@ -78,110 +107,45 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 
 	if small {
 		heroTextWidth = ui.Full
+		c.alignment = ui.Center
 	} else {
 		heroTextWidth = "70%"
 	}
 
-	if c.herotype == ImageFull {
-		return imageFullView(c, small).Render(ctx)
-	}
-
 	return ui.HStack(
 		ui.VStack(
-			ui.Text(c.title).Font(ui.Title),
-			ui.Text(c.subtitle),
-			ui.HStack(c.actions...).FullWidth().Alignment(ui.Leading),
-		).Alignment(ui.Leading).
+			ui.Text(c.title).Font(ui.DisplayLarge),
+			c.subtitle,
+			ui.HStack(c.actions...).FullWidth().Alignment(c.alignment),
+		).Alignment(c.alignment).
 			Gap(ui.L16).
-			Padding(ui.Padding{}.All(ui.L32)).
+			Padding(c.padding).
 			Frame(ui.Frame{Width: heroTextWidth}),
-		ui.IfFunc(c.teaserImg != nil, func() core.View {
+		ui.IfFunc(c.sideView != nil, func() core.View {
 			if small {
 				return nil
 			}
 			return ui.VStack(
-				c.teaserImg.Frame(ui.Frame{Width: ui.Full, Height: ui.Full}),
+				c.sideView,
 			).Alignment(ui.Stretch).Frame(ui.Frame{Width: "30%", Height: "100%"})
 		}),
 	).
-		BackgroundColor(ui.ColorCardFooter).
-		Frame(c.frame).
-		Border(ui.Border{}.Radius(ui.L16)).
-		Render(ctx)
-}
+		TextColor(c.textColor).
+		With(func(stack ui.THStack) ui.THStack {
+			if c.backgroundImage != "" {
+				bg := ui.Background{}.AppendURI(c.backgroundImage).Fit(ui.FitCover)
+				if c.foregroundColor != "" {
+					bg = bg.AppendLinearGradient(c.foregroundColor, c.foregroundColor)
+				}
 
-func imageFullView(
-	c THero,
-	small bool,
-) core.View {
-
-	opacity := 0.5
-	width := ui.Length("80%")
-	if small {
-		width = ui.Full
-	}
-
-	textAlignment := ui.TextAlignStart
-	if c.alignment == ui.TopTrailing || c.alignment == ui.Trailing || c.alignment == ui.BottomTrailing {
-		textAlignment = ui.TextAlignEnd
-	} else if c.alignment == ui.Top || c.alignment == ui.Center || c.alignment == ui.Bottom {
-		textAlignment = ui.TextAlignCenter
-	}
-
-	return ui.VStack(
-
-		ui.IfFunc(c.teaserImg != nil, func() core.View {
-
-			if small {
-				return ui.VStack(
-					c.teaserImg.Frame(ui.Frame{}.Size(ui.Full, ui.Full)),
-				).
-					Alignment(ui.Stretch).
-					Opacity(opacity).
-					Frame(ui.Frame{}.Size(ui.Full, ui.Full))
+				stack = stack.Background(bg)
 			}
 
-			return ui.VStack(
-				c.teaserImg.Frame(ui.Frame{}.FullWidth()),
-			).
-				Alignment(ui.Stretch).
-				Opacity(opacity).
-				Frame(ui.Frame{}.Size(ui.Full, ui.Full))
-		}),
-
-		ui.VStack(
-
-			ui.VStack(
-				ui.Text(c.title).
-					Font(ui.Font{Weight: ui.DisplayAndLabelFontWeight, Size: ui.L60}).
-					TextAlignment(textAlignment).
-					Frame(ui.Frame{MaxWidth: "90%"}.FullWidth()),
-				ui.Text(c.subtitle).
-					TextAlignment(textAlignment).
-					Frame(ui.Frame{MaxWidth: "90%"}.FullWidth()),
-				ui.HStack(c.actions...).FullWidth().Alignment(c.alignment),
-			).Alignment(ui.Leading).
-				Gap(ui.L16).
-				Frame(ui.Frame{}.FullWidth()),
-		).
-			Alignment(c.alignment).
-			Position(ui.Position{
-				Type:   ui.PositionAbsolute,
-				ZIndex: 1,
-			}).
-			Padding(ui.Padding{}.All(ui.L32)).
-			Frame(ui.Frame{MaxWidth: width}.FullWidth()),
-	).
-		Alignment(c.alignment).
-		BackgroundColor(ui.ColorCardFooter).
-		WithFrame(func(frame ui.Frame) ui.Frame {
-			frame.Height = ui.L560 // limit the height of the hero element, since otherwise it would be depending on the image height
-			frame.Width = c.frame.Width
-			frame.MinHeight = c.frame.MinHeight
-			frame.MaxHeight = c.frame.MaxHeight
-			frame.MinWidth = c.frame.MinWidth
-			frame.MaxWidth = c.frame.MaxWidth
-			return frame
+			return stack
 		}).
-		Border(ui.Border{}.Radius(ui.L16))
+		Alignment(c.alignment).
+		BackgroundColor(c.backgroundColor).
+		Frame(c.frame).
+		Border(c.border).
+		Render(ctx)
 }

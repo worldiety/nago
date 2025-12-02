@@ -35,7 +35,7 @@ func PageWorkflow(wnd core.Window, uc workflow.UseCases) core.View {
 	wf := optWf.Unwrap()
 
 	return ui.VStack(
-		hero.Hero(wf.Name).Subtitle(wf.Description).Teaser(ui.ImageIcon(icons.CodeMerge)),
+		hero.Hero(wf.Name).Subtitle(wf.Description).SideSVG(icons.CodeMerge),
 		ui.Space(ui.L32),
 		tabs.Tabs(
 			tabs.Page("Spezifikation", func() core.View {

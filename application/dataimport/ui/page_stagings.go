@@ -9,6 +9,9 @@ package uidataimport
 
 import (
 	"fmt"
+	"os"
+	"slices"
+
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/application/user"
@@ -19,8 +22,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/hero"
-	"os"
-	"slices"
 )
 
 func PageStagings(wnd core.Window, ucImp dataimport.UseCases) core.View {
@@ -55,7 +56,7 @@ func PageStagings(wnd core.Window, ucImp dataimport.UseCases) core.View {
 	return ui.VStack(
 		hero.Hero("Import Entwürfe - "+imp.Configuration().Name).
 			Subtitle(imp.Configuration().Description).
-			Teaser(ui.ImageIcon(imp.Configuration().Image)).
+			SideSVG(imp.Configuration().Image).
 			Actions(ui.PrimaryButton(func() {
 				if err := wnd.Subject().Audit(dataimport.PermImport); err != nil {
 					alert.ShowBannerError(wnd, err)

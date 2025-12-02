@@ -9,6 +9,8 @@ package uidataimport
 
 import (
 	"fmt"
+	"os"
+
 	"go.wdy.de/nago/application/dataimport"
 	"go.wdy.de/nago/application/dataimport/importer"
 	"go.wdy.de/nago/application/dataimport/parser"
@@ -18,7 +20,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/hero"
-	"os"
 )
 
 func PageSelectParser(wnd core.Window, ucImp dataimport.UseCases) core.View {
@@ -46,7 +47,7 @@ func PageSelectParser(wnd core.Window, ucImp dataimport.UseCases) core.View {
 		hero.Hero(imp.Configuration().Name+" - Datenquellen auswählen").
 			Subtitle(fmt.Sprintf("Es stehen insgesamt %d Datenquellen zur Verfügung mit denen Daten aus externen Quellen in einen Import-Entwurf übernommen werden können. "+
 				"Nach dem Parsen der Daten stehen die ausgelesenen Daten als Entwurf zur weiteren Kontrolle und Bearbeitung bereit bevor sie zum Import übergeben werden.", len(parsers))).
-			Teaser(ui.ImageIcon(imp.Configuration().Image)),
+			SideSVG(imp.Configuration().Image),
 		dialogDataImported(wnd, presentImportDone, pendingStaging.Get(), imp.Identity()),
 		ui.Space(ui.L32),
 		cardlayout.Layout(
