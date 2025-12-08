@@ -14,6 +14,13 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
+// ich muss bleiben
+func FirstClass() {
+	x := "hello removed"
+	_ = x
+	// ich muss weg
+}
+
 type Struct struct {
 	Namespace environment.Ident
 	Name      environment.Ident
