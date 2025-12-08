@@ -88,6 +88,13 @@ export default class ThemeManager {
 				elem.style.setProperty(`--${lengthName}`, lengthVal);
 			});
 		}
+
+		// update the global html document style
+		const color = getComputedStyle(document.documentElement)
+			.getPropertyValue('--M1')
+			.trim();
+
+		document.getElementById('themeColorMeta')!.setAttribute('content', color);
 	}
 }
 
