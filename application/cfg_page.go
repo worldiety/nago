@@ -11,6 +11,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -306,6 +307,31 @@ func (c *Configurator) newHandler() http.Handler {
 		cookie.SameSite = http.SameSiteLaxMode
 		cookie.Path = "/"
 		http.SetCookie(writer, cookie)
+	}))
+
+	r.Mount("/api/nago/v1/manifest.json", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		type manifest struct {
+			Name            string `json:"name"`
+			ShortName       string `json:"short_name"`
+			StartUrl        string `json:"start_url"`
+			Display         string `json:"display"`
+			BackgroundColor string `json:"background_color"`
+			ThemeColor      string `json:"theme_color"`
+		}
+
+		buf, err := json.Marshal(manifest{
+			Name:      c.applicationName,
+			ShortName: c.applicationName,
+			StartUrl:  "/",
+			Display:   "standalone",
+		})
+
+		if err != nil {
+			slog.Error("failed to marshal manifest", "err", err.Error())
+		}
+
+		writer.Header().Add("Content-Type", "application/manifest+json")
+		writer.Write(buf)
 	}))
 
 	r.Mount("/api/ora/v1/share", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

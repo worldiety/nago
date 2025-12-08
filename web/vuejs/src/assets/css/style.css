@@ -24,3 +24,7 @@ body ::after,
 body ::before {
 	@apply text-M8 border-M8 outline-M8;
 }
+
+body{
+	background: var(--M1);
+}
