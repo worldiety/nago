@@ -12,8 +12,13 @@ import (
 )
 
 func (c *Configurator) ColorSet(scheme core.ColorScheme, cs core.ColorSet) {
-
 	c.colorSets[scheme][cs.Namespace()] = cs
+}
+
+// SetManifestIcon sets the 512x512 PNG icon url.
+func (c *Configurator) SetManifestIcon(uri core.URI) *Configurator {
+	c.pwaIcon = uri
+	return c
 }
 
 /*// CreateThemes takes the given 3 colors and generates all required themes from it.

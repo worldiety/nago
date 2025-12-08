@@ -310,6 +310,12 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	r.Mount("/api/nago/v1/manifest.json", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		type icon struct {
+			Src   string `json:"src"`
+			Sizes string `json:"sizes"`
+			Type  string `json:"type"`
+		}
+
 		type manifest struct {
 			Name            string `json:"name"`
 			ShortName       string `json:"short_name"`
@@ -317,6 +323,8 @@ func (c *Configurator) newHandler() http.Handler {
 			Display         string `json:"display"`
 			BackgroundColor string `json:"background_color"`
 			ThemeColor      string `json:"theme_color"`
+
+			Icons []icon `json:"icons"`
 		}
 
 		buf, err := json.Marshal(manifest{
@@ -324,6 +332,13 @@ func (c *Configurator) newHandler() http.Handler {
 			ShortName: c.applicationName,
 			StartUrl:  "/",
 			Display:   "standalone",
+			Icons: []icon{
+				{
+					Src:   string(c.pwaIcon),
+					Sizes: "512x512",
+					Type:  "image/png",
+				},
+			},
 		})
 
 		if err != nil {

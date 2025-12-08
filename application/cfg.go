@@ -54,6 +54,7 @@ type Configurator struct {
 	applicationName            string
 	applicationVersion         string
 	applicationSemanticVersion string
+	pwaIcon                    core.URI
 	dataDir                    string
 	factories                  map[proto.RootViewID]func(wnd core.Window) core.View
 	onWindowCreatedObservers   []core.OnWindowCreatedObserver
