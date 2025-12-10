@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
 )
@@ -47,6 +48,9 @@ type Options[T ent.Aggregate[T, ID], ID ~string] struct {
 	// Mutex to protect the default critical sections. If nil, a new mutex is allocated as required.
 	// If you don't know or care, just leave it nil.
 	Mutex *sync.Mutex
+
+	// Bus to be passed into all use cases. May be nil.
+	Bus events.Bus
 
 	// AdminCenter configuration for this entity type.
 	AdminCenter AdminCenter
@@ -112,6 +116,7 @@ func Enable[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configurator, p
 	perms := ent.DeclarePermissions[T, ID](prefix, entityName)
 	uc := ent.NewUseCases[T, ID](perms, repo, ent.Options{
 		Mutex: opts.Mutex,
+		Bus:   opts.Bus,
 	})
 
 	mod = configureMod(cfg, perms, uc, opts)

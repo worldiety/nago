@@ -7,6 +7,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 )
 
 type Aggregate[A any, ID comparable] interface {
@@ -57,6 +58,9 @@ type Options struct {
 	// Mutex is optional and may be nil. If nil, a new mutex is created automatically to protect critical section
 	// under currency pressure. Otherwise, updates and creates may accidentally recreate or overwrite entities.
 	Mutex *sync.Mutex
+
+	// Bus may be nil. If not, according mutation events are eventually published.
+	Bus events.Bus
 }
 
 func NewUseCases[T Aggregate[T, ID], ID ~string](perms Permissions, repo data.Repository[T, ID], opts Options) UseCases[T, ID] {

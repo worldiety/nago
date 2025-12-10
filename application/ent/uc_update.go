@@ -31,6 +31,17 @@ func NewUpdate[T Aggregate[T, ID], ID ~string](opts Options, perms Permissions, 
 			return fmt.Errorf("entity to update does exist: %s: %w", entity.Identity(), os.ErrNotExist)
 		}
 
-		return repo.Save(entity)
+		err := repo.Save(entity)
+		if err != nil {
+			return err
+		}
+
+		if opts.Bus != nil {
+			opts.Bus.Publish(Updated[T, ID]{
+				ID: entity.Identity(),
+			})
+		}
+
+		return nil
 	}
 }
