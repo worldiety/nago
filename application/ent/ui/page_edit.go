@@ -16,11 +16,12 @@ import (
 )
 
 type PageUpdateOptions[T ent.Aggregate[T, ID], ID ~string] struct {
-	Perms      ent.Permissions
-	EntityName string
-	Pages      Pages
-	Prefix     permission.ID
-	Update     func(wnd core.Window, uc ent.UseCases[T, ID], id ID) core.View
+	Perms        ent.Permissions
+	EntityName   string
+	Pages        Pages
+	Prefix       permission.ID
+	Update       func(wnd core.Window, uc ent.UseCases[T, ID], id ID) core.View
+	DecorateView func(wnd core.Window, state *core.State[T], view core.View) core.View
 }
 
 func PageUpdate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, uc ent.UseCases[T, ID], opts PageUpdateOptions[T, ID]) core.View {
@@ -58,11 +59,16 @@ func newDefaultUpdate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, opts 
 		})
 
 		errState := core.StateOf[error](wnd, reflect.TypeFor[T]().Name()+"-update-form-err")
-		view := form.Auto[T](form.AutoOptions{
+		var view core.View
+		view = form.Auto[T](form.AutoOptions{
 			Window:   wnd,
 			Errors:   errState.Get(),
 			ViewOnly: canReadOnly,
 		}, state).FullWidth()
+
+		if opts.DecorateView != nil {
+			view = opts.DecorateView(wnd, state, view)
+		}
 
 		return ui.VStack(
 			ui.Space(ui.L16),

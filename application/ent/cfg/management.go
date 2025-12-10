@@ -65,6 +65,9 @@ type Options[T ent.Aggregate[T, ID], ID ~string] struct {
 	//	// a custom error [xerrors.WithFields].
 	Update func(wnd core.Window, uc ent.UseCases[T, ID], id ID) core.View
 
+	// DecorateUpdateView is called to wrap and decorate the default form view.
+	DecorateUpdateView func(wnd core.Window, state *core.State[T], view core.View) core.View
+
 	// DecorateUseCases is invoked before the use cases are passed into all generated and dependent code fragments
 	// thus you can customize, intercept or replace any standard use case here. For example, you can
 	// apply custom validation and return [xerrors.WithFields].
@@ -154,11 +157,12 @@ func configureMod[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configura
 
 	cfg.RootViewWithDecoration(mod.Pages.Update, func(wnd core.Window) core.View {
 		return uient.PageUpdate(wnd, mod.UseCases, uient.PageUpdateOptions[T, ID]{
-			EntityName: perms.EntityName,
-			Perms:      perms,
-			Pages:      mod.Pages,
-			Prefix:     perms.Prefix,
-			Update:     opts.Update,
+			EntityName:   perms.EntityName,
+			Perms:        perms,
+			Pages:        mod.Pages,
+			Prefix:       perms.Prefix,
+			Update:       opts.Update,
+			DecorateView: opts.DecorateUpdateView,
 		})
 	})
 
