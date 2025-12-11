@@ -23,6 +23,7 @@ type Created struct {
 	PreferredLanguage language.Tag
 	NotifyUser        bool
 	VerificationCode  Code
+	CreatedAt         time.Time
 }
 
 type LicensesUpdated struct {

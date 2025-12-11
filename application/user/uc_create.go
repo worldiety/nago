@@ -9,16 +9,17 @@ package user
 
 import (
 	"fmt"
+	"log/slog"
+	"strings"
+	"sync"
+	"time"
+
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/text/language"
-	"log/slog"
-	"strings"
-	"sync"
-	"time"
 )
 
 func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus events.EventBus, findByMail FindByMail, repo Repository) Create {
@@ -171,5 +172,6 @@ func PublishUserCreated(eventBus events.Bus, user User, notify bool) {
 		PreferredLanguage: tag,
 		NotifyUser:        notify,
 		VerificationCode:  user.VerificationCode,
+		CreatedAt:         user.CreatedAt,
 	})
 }
