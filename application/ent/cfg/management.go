@@ -76,6 +76,9 @@ type Options[T ent.Aggregate[T, ID], ID ~string] struct {
 	// thus you can customize, intercept or replace any standard use case here. For example, you can
 	// apply custom validation and return [xerrors.WithFields].
 	DecorateUseCases func(uc ent.UseCases[T, ID]) ent.UseCases[T, ID]
+
+	// Searchable flags list views to provide a filter or search input field
+	Searchable bool
 }
 
 // EnableUseCases is like Enable but takes the given use cases and does not declare a repository or mutex for it.
@@ -147,6 +150,7 @@ func configureMod[T ent.Aggregate[T, ID], ID ~string](cfg *application.Configura
 			Pages:      mod.Pages,
 			List:       opts.List,
 			Prefix:     perms.Prefix,
+			Searchable: opts.Searchable,
 		})
 	})
 

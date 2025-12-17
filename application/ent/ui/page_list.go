@@ -3,6 +3,7 @@ package uient
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ent"
@@ -19,6 +20,7 @@ type PageListOptions[T ent.Aggregate[T, ID], ID ~string] struct {
 	List       func(wnd core.Window, uc ent.UseCases[T, ID]) core.View
 	Pages      Pages
 	Prefix     permission.ID
+	Searchable bool // if true, the build-in dataview shall allow searching
 }
 
 func PageList[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, uc ent.UseCases[T, ID], opts PageListOptions[T, ID]) core.View {
@@ -39,7 +41,7 @@ func newDefaultList[T ent.Aggregate[T, ID], ID ~string](opts PageListOptions[T, 
 			Fields: autoFields[T](wnd),
 		}).Action(func(e T) {
 			wnd.Navigation().ForwardTo(opts.Pages.Update, wnd.Values().Put(string(opts.Prefix), string(e.Identity())))
-		}).NextActionIndicator(true)
+		}).NextActionIndicator(true).Search(opts.Searchable)
 
 		if wnd.Subject().HasPermission(opts.Perms.Create) {
 			dv = dv.CreateAction(func() {
@@ -105,12 +107,22 @@ func autoFields[T any](wnd core.Window) []dataview.Field[T] {
 
 		name = wnd.Bundle().Resolve(name)
 
+		var comparator func(a, b T) int
+		if v, ok := field.Tag.Lookup("sortable"); ok && v == "true" {
+			comparator = func(a, b T) int {
+				aStr := fmt.Sprintf("%v", reflect.ValueOf(a).FieldByName(field.Name).Interface())
+				bStr := fmt.Sprintf("%v", reflect.ValueOf(b).FieldByName(field.Name).Interface())
+				return strings.Compare(aStr, bStr)
+			}
+		}
+
 		res = append(res, dataview.Field[T]{
 			Name: name,
 			Map: func(obj T) core.View {
 				iface := reflect.ValueOf(obj).FieldByName(field.Name).Interface()
 				return ui.Text(fmt.Sprintf("%v", iface))
 			},
+			Comparator: comparator,
 		})
 	}
 
