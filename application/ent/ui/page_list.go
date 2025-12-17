@@ -80,6 +80,10 @@ func autoFields[T any](wnd core.Window) []dataview.Field[T] {
 			continue
 		}
 
+		if v, ok := field.Tag.Lookup("visibleTable"); ok && v == "false" {
+			continue
+		}
+
 		if _, ok := field.Tag.Lookup("source"); ok {
 			// currently, we can only look up the entire data set and not individual items which
 			// becomes most expensive in our display loop here. Thus discard these entirely.
