@@ -9,7 +9,8 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import { UploadProgressItem, uploadProgressManager } from '@/api/upload/uploadProgressManager';
+import type { UploadProgressItem } from '@/api/upload/uploadProgressManager';
+import { uploadProgressManager } from '@/api/upload/uploadProgressManager';
 
 const uploads = ref<UploadProgressItem[]>([]);
 onMounted(() => {
@@ -36,12 +37,8 @@ function formatBytes(bytes: number, decimals = 1): string {
 </script>
 
 <template>
-	<div id="uploads" class="inset-0" style="--modal-z-index: 50" v-if="uploads.length > 0">
-		<div
-			v-for="(item, index) in uploads"
-			:key="item.id"
-			class="flex flex-col gap-1 absolute bottom-2 w-full items-center"
-		>
+	<div v-if="uploads.length > 0" id="uploads" class="inset-0" style="--modal-z-index: 50">
+		<div v-for="item in uploads" :key="item.id" class="flex flex-col gap-1 fixed bottom-2 w-full items-center">
 			<div class="flex items-center gap-4 p-3 bg-M2 rounded-xl shadow-sm" style="min-width: 30rem">
 				<!-- Icon -->
 				<div class="">
