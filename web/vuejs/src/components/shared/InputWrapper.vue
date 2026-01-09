@@ -12,15 +12,15 @@
 		<!-- Input -->
 		<div class="peer relative">
 			<div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
-				<slot/>
+				<slot />
 			</div>
 		</div>
 
 		<!-- Label with optional hint -->
 		<div class="flex justify-between items-end text-sm" :class="{ 'peer-focus-within:font-semibold': !disabled }">
 			<div v-if="label" class="flex justify-start items-center gap-x-1 pb-1" :class="labelClass">
-				<LockIcon v-if="disabled" class="h-4"/>
-				<ErrorIcon v-else-if="error" class="h-2.5"/>
+				<LockIcon v-if="disabled" class="h-4" />
+				<ErrorIcon v-else-if="error" class="h-2.5" />
 				<span>{{ label }}</span>
 			</div>
 			<div v-if="!disabled && (error || hint)" class="font-normal">
@@ -38,11 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import {computed} from 'vue';
-import {useI18n} from 'vue-i18n';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ErrorIcon from '@/assets/svg/closeBold.svg';
 import LockIcon from '@/assets/svg/lock.svg';
-import {InputWrapperStyle} from '@/components/shared/inputWrapperStyle';
+import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
 	wrapperStyle?: InputWrapperStyle;
@@ -54,7 +54,7 @@ const props = defineProps<{
 	noHoverEffect?: boolean;
 }>();
 
-const {t} = useI18n();
+const { t } = useI18n();
 
 const labelClass = computed((): string | null => {
 	if (props.disabled) {
