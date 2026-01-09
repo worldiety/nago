@@ -29,10 +29,28 @@ func (c *RWMap[K, V]) Put(key K, value V) {
 	c.m[key] = value
 }
 
+// LoadOrStore either creates a new entry or returns an existing one.
+func (c *RWMap[K, V]) LoadOrStore(key K, defaultV V) (actual V, loaded bool) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	v, ok := c.m[key]
+	if ok {
+		return v, true
+	}
+
+	if c.m == nil {
+		c.m = make(map[K]V)
+	}
+
+	c.m[key] = defaultV
+	return defaultV, false
+}
+
 func (c *RWMap[K, V]) Get(key K) (value V, ok bool) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
-	
+
 	if c.m == nil {
 		var zero V
 		return zero, false

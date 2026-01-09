@@ -33,6 +33,7 @@ type TStack struct {
 	padding         Padding
 	border          Border
 	layout          StackLayout
+	noClip          bool
 
 	adapt func(wnd core.Window, stack TStack) TStack
 }
@@ -42,6 +43,11 @@ func Stack(children ...core.View) TStack {
 	return TStack{
 		children: children,
 	}
+}
+
+func (c TStack) NoClip(b bool) TStack {
+	c.noClip = b
+	return c
 }
 
 func (c TStack) Append(children ...core.View) TStack {
@@ -109,6 +115,7 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 		return VStack(c.children...).
 			BackgroundColor(c.backgroundColor).
 			Gap(c.gap).
+			NoClip(c.noClip).
 			Alignment(c.alignment).
 			Frame(c.frame).
 			Padding(c.padding).
@@ -119,6 +126,7 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 		return HStack(c.children...).
 			BackgroundColor(c.backgroundColor).
 			Gap(c.gap).
+			NoClip(c.noClip).
 			Alignment(c.alignment).
 			Wrap(wrap).
 			Frame(c.frame).

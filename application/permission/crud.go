@@ -220,3 +220,37 @@ func DeclareSend[UseCase any](id ID, entityName string) ID {
 		},
 	).String()}, 3)
 }
+
+// DeclareReplay creates a prototype permission stub. See also [DeclareCreate].
+func DeclareReplay[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Replay %s event elements", entityName),
+			language.German:  fmt.Sprintf("Ereignis %s Elemente durchlaufen", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can replay " + entityName + " event elements.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "Ereignis-Elemente durchlaufen.",
+		},
+	).String()}, 3)
+}
+
+// DeclareAudit creates a prototype permission stub. See also [DeclareCreate].
+func DeclareAudit[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Audit %s elements", entityName),
+			language.German:  fmt.Sprintf("%s Elemente auditieren", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can audit " + entityName + " elements.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + " Elemente auditieren.",
+		},
+	).String()}, 3)
+}

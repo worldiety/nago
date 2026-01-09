@@ -34,6 +34,18 @@ func (id ID) Valid() bool {
 	return regexPermissionID.MatchString(string(id))
 }
 
+func (id ID) WithName(n string) ID {
+	if n == "" {
+		return id
+	}
+
+	if !strings.HasSuffix(string(id), ".") {
+		id += "."
+	}
+
+	return id + ID(n)
+}
+
 type Permission struct {
 	ID ID `json:"id"`
 	// Name is the unlocalized fallback or default human-readable name of the permission. Use LocalizedName.

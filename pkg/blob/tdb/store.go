@@ -41,7 +41,17 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 			maxK = nextPrefix(maxK)
 		}
 
-		for entry := range b.db.Range(b.bucket, minK, maxK) {
+		if opts.Reverse {
+			for entry := range b.db.DescendRange(b.bucket, minK, maxK) {
+				if !yield(entry.key, nil) {
+					return
+				}
+			}
+
+			return
+		}
+
+		for entry := range b.db.AscendRange(b.bucket, minK, maxK) {
 			if !yield(entry.key, nil) {
 				return
 			}

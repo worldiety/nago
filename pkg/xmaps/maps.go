@@ -9,6 +9,7 @@ package xmaps
 
 import (
 	"cmp"
+	"iter"
 	"maps"
 	"slices"
 )
@@ -18,4 +19,15 @@ func SortedKeys[K cmp.Ordered, V any](m map[K]V) []K {
 	tmp := slices.Collect(maps.Keys(m))
 	slices.Sort(tmp)
 	return tmp
+}
+
+// All loops in a deterministic way over the given map.
+func All[K cmp.Ordered, V any](m map[K]V) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range SortedKeys(m) {
+			if !yield(k, m[k]) {
+				return
+			}
+		}
+	}
 }

@@ -252,6 +252,9 @@ func (db *DB) Buckets() iter.Seq[string] {
 }
 
 func (db *DB) All(bucket string) iter.Seq[IndexEntry] {
+	return db.Ascend(bucket)
+}
+func (db *DB) Ascend(bucket string) iter.Seq[IndexEntry] {
 	db.btreeSnapshotLock.RLock()
 	tree, ok := db.buckets.Load(bucket)
 	db.btreeSnapshotLock.RUnlock()
@@ -267,9 +270,25 @@ func (db *DB) All(bucket string) iter.Seq[IndexEntry] {
 	}
 }
 
-func (db *DB) Range(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
+func (db *DB) Descend(bucket string) iter.Seq[IndexEntry] {
+	db.btreeSnapshotLock.RLock()
+	tree, ok := db.buckets.Load(bucket)
+	db.btreeSnapshotLock.RUnlock()
+
+	if !ok {
+		return func(yield func(IndexEntry) bool) {}
+	}
+
+	snapshot := tree.Clone()
+
+	return func(yield func(IndexEntry) bool) {
+		snapshot.Descend(yield)
+	}
+}
+
+func (db *DB) AscendRange(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
 	if minKey == "" && maxKey == "" {
-		return db.All(bucket)
+		return db.Ascend(bucket)
 	}
 
 	db.btreeSnapshotLock.RLock()
@@ -284,6 +303,26 @@ func (db *DB) Range(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.AscendRange(IndexEntry{key: minKey}, IndexEntry{key: maxKey}, yield)
+	}
+}
+
+func (db *DB) DescendRange(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
+	if minKey == "" && maxKey == "" {
+		return db.Descend(bucket)
+	}
+
+	db.btreeSnapshotLock.RLock()
+	tree, ok := db.buckets.Load(bucket)
+	db.btreeSnapshotLock.RUnlock()
+
+	if !ok {
+		return func(yield func(IndexEntry) bool) {}
+	}
+
+	snapshot := tree.Clone()
+
+	return func(yield func(IndexEntry) bool) {
+		snapshot.DescendRange(IndexEntry{key: maxKey}, IndexEntry{key: minKey}, yield)
 	}
 }
 

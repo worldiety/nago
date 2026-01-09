@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"path"
 	"reflect"
 	"strconv"
 
@@ -40,6 +41,18 @@ import (
 //	- \a b \c
 //	- a/*/b
 type NavigationPath string
+
+func (p NavigationPath) Base() string {
+	return path.Base(string(p))
+}
+
+func (p NavigationPath) Dir() NavigationPath {
+	return NavigationPath(path.Dir(string(p)))
+}
+
+func (p NavigationPath) Join(elem ...string) NavigationPath {
+	return NavigationPath(string(p) + "/" + path.Join(elem...))
+}
 
 func intoStrSlice[A, B ~string](in []A) []B {
 	tmp := make([]B, len(in))

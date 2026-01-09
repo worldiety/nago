@@ -27,6 +27,9 @@ type ListOptions struct {
 	// If non-zero, MaxInc marks the inclusive minimal ending key in the result set.
 	MaxInc string
 
+	// Reverse inverts the iteration order.
+	Reverse bool
+
 	// If not zero, returns at most the amount of given entries.
 	Limit int
 }
@@ -149,8 +152,22 @@ func Write(store Writer, key string, src io.Reader) (written int64, err error) {
 
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
 func Put(store Writer, key string, value []byte) (err error) {
+	if len(value) == 0 {
+		return putKey(store, key)
+	}
+
 	_, err = Write(store, key, bytes.NewReader(value))
 	return err
+}
+
+// putKey is a peephole optimization for empty blobs to avoid any intermediate context and reader allocations.
+func putKey(store Writer, key string) error {
+	w, err := store.NewWriter(context.Background(), key)
+	if err != nil {
+		return err
+	}
+
+	return w.Close()
 }
 
 func Delete(store Store, key string) error {

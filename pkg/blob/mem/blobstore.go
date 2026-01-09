@@ -10,14 +10,15 @@ package mem
 import (
 	"bytes"
 	"context"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/xmaps"
 	"io"
 	"iter"
 	"slices"
 	"sort"
 	"strings"
+
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xmaps"
 )
 
 var _ blob.Store = (*BlobStore)(nil)
@@ -69,6 +70,11 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		}
 
 		sort.Strings(keys)
+
+		if opts.Reverse {
+			slices.Reverse(keys)
+		}
+		
 		for _, key := range keys {
 			if !yield(key, nil) {
 				return
