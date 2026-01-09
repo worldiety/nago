@@ -3312,6 +3312,8 @@ export class Grid implements Writeable, Readable, Component {
 
 	public invisible?: Bool;
 
+	public rowHeights?: Lengths;
+
 	constructor(
 		cells: GridCells | undefined = undefined,
 		rows: Uint | undefined = undefined,
@@ -3325,7 +3327,8 @@ export class Grid implements Writeable, Readable, Component {
 		accessibilityLabel: Str | undefined = undefined,
 		font: Font | undefined = undefined,
 		colWidths: Lengths | undefined = undefined,
-		invisible: Bool | undefined = undefined
+		invisible: Bool | undefined = undefined,
+		rowHeights: Lengths | undefined = undefined
 	) {
 		this.cells = cells;
 		this.rows = rows;
@@ -3340,6 +3343,7 @@ export class Grid implements Writeable, Readable, Component {
 		this.font = font;
 		this.colWidths = colWidths;
 		this.invisible = invisible;
+		this.rowHeights = rowHeights;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3406,6 +3410,11 @@ export class Grid implements Writeable, Readable, Component {
 					this.invisible = readBool(reader);
 					break;
 				}
+				case 14: {
+					this.rowHeights = new Lengths();
+					this.rowHeights.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3428,6 +3437,7 @@ export class Grid implements Writeable, Readable, Component {
 			this.font !== undefined && !this.font.isZero(),
 			this.colWidths !== undefined && !this.colWidths.isZero(),
 			this.invisible !== undefined,
+			this.rowHeights !== undefined && !this.rowHeights.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3483,6 +3493,10 @@ export class Grid implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
 			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 14);
+			this.rowHeights!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -3499,7 +3513,8 @@ export class Grid implements Writeable, Readable, Component {
 			this.accessibilityLabel === undefined &&
 			(this.font === undefined || this.font.isZero()) &&
 			(this.colWidths === undefined || this.colWidths.isZero()) &&
-			this.invisible === undefined
+			this.invisible === undefined &&
+			(this.rowHeights === undefined || this.rowHeights.isZero())
 		);
 	}
 
@@ -3517,6 +3532,7 @@ export class Grid implements Writeable, Readable, Component {
 		this.font = undefined;
 		this.colWidths = undefined;
 		this.invisible = undefined;
+		this.rowHeights = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

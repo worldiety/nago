@@ -3139,10 +3139,11 @@ type Grid struct {
 	Font               Font
 	ColWidths          Lengths
 	Invisible          Bool
+	RowHeights         Lengths
 }
 
 func (v *Grid) write(w *BinaryWriter) error {
-	var fields [14]bool
+	var fields [15]bool
 	fields[1] = !v.Cells.IsZero()
 	fields[2] = !v.Rows.IsZero()
 	fields[3] = !v.Columns.IsZero()
@@ -3156,6 +3157,7 @@ func (v *Grid) write(w *BinaryWriter) error {
 	fields[11] = !v.Font.IsZero()
 	fields[12] = !v.ColWidths.IsZero()
 	fields[13] = !v.Invisible.IsZero()
+	fields[14] = !v.RowHeights.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3270,6 +3272,14 @@ func (v *Grid) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[14] {
+		if err := w.writeFieldHeader(array, 14); err != nil {
+			return err
+		}
+		if err := v.RowHeights.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3347,6 +3357,11 @@ func (v *Grid) read(r *BinaryReader) error {
 			}
 		case 13:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.RowHeights.read(r)
 			if err != nil {
 				return err
 			}
@@ -15415,13 +15430,14 @@ func (v *Grid) reset() {
 	v.Font.reset()
 	v.ColWidths.reset()
 	v.Invisible.reset()
+	v.RowHeights.reset()
 }
 
 func (v *Grid) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Cells.IsZero() && v.Rows.IsZero() && v.Columns.IsZero() && v.RowGap.IsZero() && v.ColGap.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.ColWidths.IsZero() && v.Invisible.IsZero()
+	return v.Cells.IsZero() && v.Rows.IsZero() && v.Columns.IsZero() && v.RowGap.IsZero() && v.ColGap.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.ColWidths.IsZero() && v.Invisible.IsZero() && v.RowHeights.IsZero()
 }
 
 // GridCells is just a bunch of GridCells.

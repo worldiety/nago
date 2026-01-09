@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -16,10 +16,10 @@ import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
+import type { TextField } from '@/shared/proto/nprotoc_gen';
 import {
 	KeyboardTypeValues,
 	TextAlignmentValues,
-	TextField,
 	TextFieldStyleValues,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
@@ -40,7 +40,7 @@ const textarea = ref<HTMLTextAreaElement>();
 const textareaHeight = ref('auto');
 
 const frameStyles = computed<string>(() => {
-	let styles = frameCSS(props.ui.frame);
+	const styles = frameCSS(props.ui.frame);
 
 	return styles.join(';');
 });
@@ -279,7 +279,7 @@ function resizeTextarea() {
 	const computedStyle = getComputedStyle(textarea.value);
 	const borderTop = window.parseFloat(parseFloat(computedStyle.getPropertyValue('border-top-width')));
 	const borderBottom = window.parseFloat(parseFloat(computedStyle.getPropertyValue('border-bottom-width')));
-	textarea.value.style.height = "auto";
+	textarea.value.style.height = 'auto';
 	const height = textarea.value.scrollHeight + borderTop + borderBottom;
 	textarea.value.style.height = `${height}px`;
 	textareaHeight.value = `${height}px`;
@@ -368,6 +368,8 @@ function debouncedInput() {
 	}, debounceTime);
 }
 
+onMounted(resizeTextarea);
+
 // TODO check :id="idPrefix + props.ui.id.toString()"
 </script>
 
@@ -405,8 +407,8 @@ function debouncedInput() {
 				/>
 				<textarea
 					v-if="props.ui.lines"
-					ref="textarea"
 					:id="id"
+					ref="textarea"
 					v-model="inputValue"
 					class="input-field"
 					:style="inputStyle"

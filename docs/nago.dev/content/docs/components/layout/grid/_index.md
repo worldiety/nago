@@ -28,6 +28,7 @@ and explicit start/end positions must be defined.
 | `Frame(fr Frame)` | Frame sets the layout frame of the grid, including size and positioning. |
 | `FullWidth()` | FullWidth sets the grid to span the full available width. |
 | `Gap(g Length)` | Gap sets RowGap and ColGap equally. |
+| `Heights(rowHeights ...)` | Heights are optional row heights from top to bottom. |
 | `Padding(padding Padding)` | Padding sets the inner spacing around the grid. |
 | `RowGap(g Length)` | RowGap sets the vertical spacing between rows in the grid. |
 | `Rows(rows int)` | Rows sets the amount of rows explicitly. If not set, the result is undefined. This component tries its best to calculate the right amount cells, however, when used with areas, this cannot work properly. |

@@ -81,16 +81,16 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible && !ui.labelFor" :style="styles" @click="onClick" :title="props.ui.accessibilityLabel">
+	<span v-if="!ui.invisible && !ui.labelFor && ui.value" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
 		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
 
 	<label
-		v-else-if="!ui.invisible"
+		v-else-if="!ui.invisible && ui.value"
 		:style="styles"
-		@click="onClick"
 		:title="props.ui.accessibilityLabel"
 		:for="ui.labelFor"
+		@click="onClick"
 	>
 		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</label>

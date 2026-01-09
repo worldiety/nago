@@ -125,6 +125,7 @@ type TGrid struct {
 	backgroundColor    proto.Color    // background color of the grid
 	frame              Frame          // layout frame for size and positioning
 	rows               int            // number of rows in the grid
+	rowHeights         []proto.Length // optional row heights
 	cols               int            // number of columns in the grid
 	colWidths          []proto.Length // optional column widths
 	rowGap             proto.Length   // spacing between rows
@@ -154,6 +155,15 @@ func (c TGrid) Append(cells ...TGridCell) TGrid {
 // best to calculate the right amount cells, however, when used with areas, this cannot work properly.
 func (c TGrid) Rows(rows int) TGrid {
 	c.rows = rows
+	return c
+}
+
+// Heights are optional row heights from top to bottom.
+func (c TGrid) Heights(rowHeights ...Length) TGrid {
+	c.rowHeights = make([]proto.Length, 0, len(rowHeights))
+	for _, height := range rowHeights {
+		c.rowHeights = append(c.rowHeights, height.ora())
+	}
 	return c
 }
 
@@ -309,5 +319,6 @@ func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
 		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		ColWidths:          c.colWidths,
+		RowHeights:         c.rowHeights,
 	}
 }

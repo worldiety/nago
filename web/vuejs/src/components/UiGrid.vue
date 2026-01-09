@@ -16,7 +16,7 @@ import { fontCSS } from '@/components/shared/font';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
-import { Grid } from '@/shared/proto/nprotoc_gen';
+import type { Grid } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Grid;
@@ -32,12 +32,12 @@ const style = computed<string>(() => {
 			styles.push(`grid-template-columns: repeat(${props.ui.columns}, minmax(0, 1fr))`);
 		} else {
 			let tmp = 'grid-template-columns: ';
-			for (let len of props.ui.colWidths.value) {
+			for (const len of props.ui.colWidths.value) {
 				tmp += cssLengthValue(len);
 				tmp += ' ';
 			}
 
-			let restColCount = props.ui.columns - props.ui.colWidths.value.length;
+			const restColCount = props.ui.columns - props.ui.colWidths.value.length;
 			if (restColCount > 0) {
 				tmp += `repeat(${restColCount}, 1fr)`;
 			}
@@ -49,7 +49,22 @@ const style = computed<string>(() => {
 	if (!props.ui.rows) {
 		styles.push('grid-auto-rows: auto');
 	} else {
-		styles.push(`grid-template-rows: repeat(${props.ui.rows}, minmax(0, 1fr))`);
+		if (!props.ui.rowHeights) {
+			styles.push(`grid-template-rows: repeat(${props.ui.rows}, minmax(0, 1fr))`);
+		} else {
+			let tmp = 'grid-template-rows: ';
+			for (const len of props.ui.rowHeights.value) {
+				tmp += cssLengthValue(len);
+				tmp += ' ';
+			}
+
+			const restRowCount = props.ui.rows - props.ui.rowHeights.value.length;
+			if (restRowCount > 0) {
+				tmp += `repeat(${restRowCount}, 1fr)`;
+			}
+
+			styles.push(tmp);
+		}
 	}
 
 	if (props.ui.rowGap) {

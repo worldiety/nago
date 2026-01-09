@@ -90,9 +90,7 @@ export default class ThemeManager {
 		}
 
 		// update the global html document style
-		const color = getComputedStyle(document.documentElement)
-			.getPropertyValue('--M1')
-			.trim();
+		const color = getComputedStyle(document.documentElement).getPropertyValue('--M1').trim();
 
 		document.getElementById('themeColorMeta')!.setAttribute('content', color);
 	}
