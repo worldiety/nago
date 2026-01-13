@@ -46,7 +46,11 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `Label(label string)` | Label sets the label text of the field. Unlike other setters, this does not return a modified copy of TTextField. |
 | `Leading(v core.View)` | Leading sets a leading view for the field. This view is displayed at the start of the input field, e.g., an icon. |
 | `Lines(lines int)` | Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created. This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand. |
+| `Max(max float64)` | Max defines the max value of number fields |
+| `Min(min float64)` | Min defines the min value of number fields |
 | `Padding(padding Padding)` | Padding is a placeholder implementation. |
+| `ShowZero(showZero bool)` | ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields. |
+| `Step(step int)` | Step defines the step size to increase/decrease number values stepwise |
 | `Style(s TextFieldStyle)` | Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied. |
 | `SupportingText(text string)` | SupportingText sets helper text for the field. This text is displayed below the input and is typically used to provide hints or guidance. |
 | `TextAlignment(v TextAlignment)` |  |

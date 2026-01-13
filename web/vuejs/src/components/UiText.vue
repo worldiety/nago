@@ -81,7 +81,12 @@ const styles = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible && !ui.labelFor && ui.value" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
+	<span
+		v-if="!ui.invisible && !ui.labelFor && ui.value"
+		:style="styles"
+		:title="props.ui.accessibilityLabel"
+		@click="onClick"
+	>
 		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
 
