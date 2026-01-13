@@ -8249,6 +8249,18 @@ export class TextField implements Writeable, Readable, Component {
 
 	public textAlignment?: TextAlignment;
 
+	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
+	public showZero?: Bool;
+
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	public step?: Uint;
+
+	// Max defines the max value of a number field.
+	public max?: Float;
+
+	// Min defines the min value of a number field.
+	public min?: Float;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8269,7 +8281,11 @@ export class TextField implements Writeable, Readable, Component {
 		revealed: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
 		keydownEnter: Ptr | undefined = undefined,
-		textAlignment: TextAlignment | undefined = undefined
+		textAlignment: TextAlignment | undefined = undefined,
+		showZero: Bool | undefined = undefined,
+		step: Uint | undefined = undefined,
+		max: Float | undefined = undefined,
+		min: Float | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8291,6 +8307,10 @@ export class TextField implements Writeable, Readable, Component {
 		this.id = id;
 		this.keydownEnter = keydownEnter;
 		this.textAlignment = textAlignment;
+		this.showZero = showZero;
+		this.step = step;
+		this.max = max;
+		this.min = min;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8391,6 +8411,22 @@ export class TextField implements Writeable, Readable, Component {
 					this.textAlignment = readInt(reader);
 					break;
 				}
+				case 21: {
+					this.showZero = readBool(reader);
+					break;
+				}
+				case 22: {
+					this.step = readInt(reader);
+					break;
+				}
+				case 23: {
+					this.max = readFloat(reader);
+					break;
+				}
+				case 24: {
+					this.min = readFloat(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8420,6 +8456,10 @@ export class TextField implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.keydownEnter !== undefined,
 			this.textAlignment !== undefined,
+			this.showZero !== undefined,
+			this.step !== undefined,
+			this.max !== undefined,
+			this.min !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8509,6 +8549,22 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 20);
 			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[21]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 21);
+			writeBool(writer, this.showZero!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 22);
+			writeInt(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[23]) {
+			writer.writeFieldHeader(Shapes.F64, 23);
+			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.F64, 24);
+			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8532,7 +8588,11 @@ export class TextField implements Writeable, Readable, Component {
 			this.revealed === undefined &&
 			this.id === undefined &&
 			this.keydownEnter === undefined &&
-			this.textAlignment === undefined
+			this.textAlignment === undefined &&
+			this.showZero === undefined &&
+			this.step === undefined &&
+			this.max === undefined &&
+			this.min === undefined
 		);
 	}
 
@@ -8557,6 +8617,10 @@ export class TextField implements Writeable, Readable, Component {
 		this.id = undefined;
 		this.keydownEnter = undefined;
 		this.textAlignment = undefined;
+		this.showZero = undefined;
+		this.step = undefined;
+		this.max = undefined;
+		this.min = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

@@ -21,6 +21,7 @@ Stack is a responsive variant which decides between [VStack] and [HStack].
 | `FullWidth()` |  |
 | `Gap(gap Length)` |  |
 | `Layout(layout StackLayout)` |  |
+| `NoClip(b bool)` |  |
 | `Padding(padding Padding)` |  |
 | `Responsive(fn func(wnd core.Windowstack TStack) TStack)` |  |
 ---

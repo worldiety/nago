@@ -7871,10 +7871,18 @@ type TextField struct {
 	Id            Str
 	KeydownEnter  Ptr
 	TextAlignment TextAlignment
+	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
+	ShowZero Bool
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	Step Uint
+	// Max defines the max value of a number field.
+	Max Float
+	// Min defines the min value of a number field.
+	Min Float
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [21]bool
+	var fields [25]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7895,6 +7903,10 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[18] = !v.Id.IsZero()
 	fields[19] = !v.KeydownEnter.IsZero()
 	fields[20] = !v.TextAlignment.IsZero()
+	fields[21] = !v.ShowZero.IsZero()
+	fields[22] = !v.Step.IsZero()
+	fields[23] = !v.Max.IsZero()
+	fields[24] = !v.Min.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8079,6 +8091,38 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[21] {
+		if err := w.writeFieldHeader(uvarint, 21); err != nil {
+			return err
+		}
+		if err := v.ShowZero.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[22] {
+		if err := w.writeFieldHeader(uvarint, 22); err != nil {
+			return err
+		}
+		if err := v.Step.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[23] {
+		if err := w.writeFieldHeader(f64, 23); err != nil {
+			return err
+		}
+		if err := v.Max.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[24] {
+		if err := w.writeFieldHeader(f64, 24); err != nil {
+			return err
+		}
+		if err := v.Min.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8209,6 +8253,26 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 20:
 			err := v.TextAlignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 21:
+			err := v.ShowZero.read(r)
+			if err != nil {
+				return err
+			}
+		case 22:
+			err := v.Step.read(r)
+			if err != nil {
+				return err
+			}
+		case 23:
+			err := v.Max.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
+			err := v.Min.read(r)
 			if err != nil {
 				return err
 			}
@@ -16418,13 +16482,17 @@ func (v *TextField) reset() {
 	v.Id.reset()
 	v.KeydownEnter.reset()
 	v.TextAlignment.reset()
+	v.ShowZero.reset()
+	v.Step.reset()
+	v.Max.reset()
+	v.Min.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero()
 }
 
 func (v *Toggle) reset() {

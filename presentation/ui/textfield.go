@@ -61,6 +61,10 @@ type TTextField struct {
 	id              string               // unique identifier for the field
 	keydownEnter    func()               // callback for Enter key press
 	textAlignment   TextAlignment
+	showZero        bool    // show '0' character for empty/zero values in number fields
+	step            int     // step size to increase/decrease number values
+	maxValue        float64 // max value for number fields
+	minValue        float64 // min value for number fields
 }
 
 // Padding is a placeholder implementation.
@@ -305,6 +309,30 @@ func (c TTextField) ID(id string) TTextField {
 	return c
 }
 
+// ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields.
+func (c TTextField) ShowZero(showZero bool) TTextField {
+	c.showZero = showZero
+	return c
+}
+
+// Step defines the step size to increase/decrease number values stepwise
+func (c TTextField) Step(step int) TTextField {
+	c.step = step
+	return c
+}
+
+// Max defines the max value of number fields
+func (c TTextField) Max(max float64) TTextField {
+	c.maxValue = max
+	return c
+}
+
+// Min defines the min value of number fields
+func (c TTextField) Min(min float64) TTextField {
+	c.minValue = min
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -327,5 +355,9 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Id:              proto.Str(c.id),
 		KeydownEnter:    ctx.MountCallback(c.keydownEnter),
 		TextAlignment:   proto.TextAlignment(c.textAlignment),
+		ShowZero:        proto.Bool(c.showZero),
+		Step:            proto.Uint(c.step),
+		Max:             proto.Float(c.maxValue),
+		Min:             proto.Float(c.minValue),
 	}
 }

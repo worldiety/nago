@@ -32,7 +32,8 @@ const serviceAdapter = useServiceAdapter();
 const leadingElement = useTemplateRef('leadingElement');
 const trailingElement = useTemplateRef('trailingElement');
 const clearButton = useTemplateRef('clearButton');
-const useStrictFormatting = ref<boolean>(false);
+const showZero = !!props.ui.showZero;
+const step = props.ui.step || 0;
 const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
 let timer: number = 0;
 
@@ -98,7 +99,7 @@ function parseFloat(input: string) {
 	return finalValue;
 }
 
-function formatFloat(input: string, allowEmpty: boolean = false) {
+function formatFloat(input: string) {
 	const negative = input.indexOf('-') >= 0 && input.indexOf('-') === input.lastIndexOf('-');
 	const fractionSeparator = isLanguageGerman() ? ',' : '.';
 
@@ -107,14 +108,14 @@ function formatFloat(input: string, allowEmpty: boolean = false) {
 	let finalValue = parts.join('').replaceAll(/\D/g, '');
 	finalValue = /^0+$/g.test(finalValue) ? '0' : finalValue.replaceAll(/^0+/g, '');
 
-	if (decimals === '' && allowEmpty) {
+	if (decimals === '' && !showZero) {
 		finalValue += fractionSeparator; // There is a tailing separator symbol
 	} else if (decimals && decimals.length > 0) {
 		finalValue += fractionSeparator + decimals;
 	}
 
 	if (finalValue === '') {
-		finalValue = allowEmpty ? '' : '0';
+		finalValue = showZero ? '0' : '';
 	} else {
 		finalValue = negative ? '-' + finalValue : finalValue;
 	}
@@ -132,7 +133,7 @@ function parseInt(input: string) {
 	return value;
 }
 
-function formatInt(input: string, allowEmpty: boolean = false) {
+function formatInt(input: string) {
 	const negative = input.lastIndexOf('-') >= 0;
 	const digits = input.split('');
 
@@ -147,7 +148,7 @@ function formatInt(input: string, allowEmpty: boolean = false) {
 		}
 	}
 	if (finalValue === '') {
-		finalValue = allowEmpty ? '' : '0';
+		finalValue = showZero ? '0' : '';
 	} else {
 		finalValue = negative ? '-' + finalValue : finalValue;
 	}
@@ -170,15 +171,14 @@ function formatValue(value: string) {
 	let formattedValue;
 	switch (props.ui.keyboardOptions?.keyboardType) {
 		case KeyboardTypeValues.KeyboardInteger:
-			formattedValue = formatInt(value, !useStrictFormatting.value);
+			formattedValue = formatInt(value);
 			break;
 		case KeyboardTypeValues.KeyboardFloat:
-			formattedValue = formatFloat(value, !useStrictFormatting.value);
+			formattedValue = formatFloat(value);
 			break;
 		default:
 			formattedValue = value;
 	}
-	useStrictFormatting.value = false;
 	return formattedValue;
 }
 
@@ -245,8 +245,7 @@ watch(
 	() => props.ui.value,
 	(newValue) => {
 		if (document.getElementById(id.value) !== document.activeElement) {
-			useStrictFormatting.value = true;
-			inputValue.value = newValue ? newValue : '';
+			inputValue.value = formatValue(newValue || '');
 		}
 	}
 );
@@ -255,8 +254,7 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		if (document.getElementById(id.value) !== document.activeElement) {
-			useStrictFormatting.value = true;
-			inputValue.value = newValue.value ? newValue.value : '';
+			inputValue.value = formatValue(newValue.value || '');
 		}
 	}
 );
@@ -271,6 +269,14 @@ function handleKeydownEnter(event: KeyboardEvent) {
 	}
 
 	sendKeydownEnterEvent();
+}
+
+function onInputUp() {
+	if (isNumerical()) changeValue(step);
+}
+
+function onInputDown() {
+	if (isNumerical()) changeValue(-step);
 }
 
 function resizeTextarea() {
@@ -302,6 +308,8 @@ function onTextareaInput(force: boolean) {
 }
 
 function submitInputValue(force: boolean, functionPointer: number = 0): void {
+	putValueInRange();
+
 	const parsedValue = parseValue(inputValue.value);
 	if (parsedValue == props.ui.value) {
 		return;
@@ -321,6 +329,48 @@ function submitInputValue(force: boolean, functionPointer: number = 0): void {
 	debouncedInput();
 }
 
+function putValueInRange() {
+	if (!isNumerical() || (!props.ui.min && !props.ui.max)) return;
+
+	let numberVal = getNumberValue();
+	numberVal = Math.max(props.ui.min || 0, numberVal);
+	if (props.ui.max) numberVal = Math.min(props.ui.max, numberVal);
+
+	inputValue.value = formatValue(`${numberVal}`);
+}
+
+function onInputWheel(e: WheelEvent) {
+	if (!isNumerical()) return;
+
+	const up = e.deltaY < 0;
+	const down = e.deltaY > 0;
+	if (!up && !down) return;
+
+	changeValue(up ? step : -step);
+}
+
+function changeValue(amount: number) {
+	if (!isNumerical()) return;
+
+	let numberVal = getNumberValue();
+	numberVal += amount;
+	numberVal = Math.max(props.ui.min || 0, numberVal);
+	if (props.ui.max) numberVal = Math.min(props.ui.max, numberVal);
+
+	inputValue.value = formatValue(`${numberVal}`);
+	submitInputValue(false);
+}
+
+function getNumberValue(): number {
+	if (props.ui.keyboardOptions?.keyboardType === KeyboardTypeValues.KeyboardInteger) {
+		return window.parseInt(parseInt(inputValue.value));
+	} else if (props.ui.keyboardOptions?.keyboardType === KeyboardTypeValues.KeyboardFloat) {
+		return window.parseFloat(parseFloat(inputValue.value));
+	}
+
+	return 0;
+}
+
 function isNumerical() {
 	return (
 		props.ui.keyboardOptions?.keyboardType == KeyboardTypeValues.KeyboardInteger ||
@@ -332,14 +382,15 @@ function isLanguageGerman() {
 	return navigator.language.split('-')[0].toLowerCase() === 'de';
 }
 
-function leaveFocus(): void {
-	if (inputValue.value === '' && isNumerical()) {
-		inputValue.value = '0';
-	} else {
-		useStrictFormatting.value = true;
-		inputValue.value = formatValue(inputValue.value);
-	}
+function onInputFocus() {
+	if (!isNumerical()) return;
 
+	const input = document.getElementById(id.value) as HTMLInputElement;
+	if (input) input.select();
+}
+
+function leaveFocus(): void {
+	inputValue.value = formatValue(inputValue.value);
 	submitInputValue(true);
 }
 
@@ -402,8 +453,12 @@ onMounted(resizeTextarea);
 					type="text"
 					:inputmode="inputMode"
 					@keydown.enter="handleKeydownEnter"
+					@keydown.up.prevent="onInputUp"
+					@keydown.down.prevent="onInputDown"
+					@focus="onInputFocus"
 					@focusout="leaveFocus"
 					@input="submitInputValue(false)"
+					@wheel="onInputWheel"
 				/>
 				<textarea
 					v-if="props.ui.lines"

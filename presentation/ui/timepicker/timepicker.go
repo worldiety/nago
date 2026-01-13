@@ -466,31 +466,38 @@ func (c TPicker) renderPicker() core.View {
 }
 
 func editInt(state *core.State[time.Duration], name string, val int, set func(v int)) core.View {
-	editValPresented := core.DerivedState[bool](state, name+"-presented")
-	if !editValPresented.Get() {
-		return ui.Text(fmt.Sprintf("%02d", val)).Action(func() {
-			editValPresented.Set(true)
-		})
-	}
+	formattedVal := fmt.Sprintf("%02d", val)
 
 	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
-		return fmt.Sprintf("%02d", val)
+		return formattedVal
 	}).Observe(func(newValue string) {
 		if v, err := strconv.Atoi(newValue); err == nil {
 			set(v)
-			editValPresented.Set(false)
 		}
 	})
 
-	return ui.TextField("", editVal.Get()).
+	if editVal.String() != formattedVal {
+		editVal.Set(formattedVal)
+	}
+
+	textField := ui.TextField("", editVal.Get()).
+		ShowZero(true).
+		Min(0).
+		Step(1).
 		Style(ui.TextFieldBasic).
 		InputValue(editVal).
 		KeyboardOptions(ui.KeyboardOptions().KeyboardType(ui.KeyboardInteger)).
-		TextAlignment(ui.TextAlignEnd).
-		KeydownEnter(func() {
-			editValPresented.Set(false)
-		}).
-		Frame(ui.Frame{Width: ui.L32})
+		TextAlignment(ui.TextAlignCenter)
+
+	if name == "hour" {
+		textField = textField.Max(23)
+	} else if name == "min" {
+		textField = textField.Max(59)
+	} else if name == "sec" {
+		textField = textField.Max(59)
+	}
+
+	return textField.Frame(ui.Frame{Width: ui.L32})
 }
 
 // Render builds and returns the UI representation of the time picker.
