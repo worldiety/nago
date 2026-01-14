@@ -34,9 +34,17 @@ func Checkbox(checked bool) TCheckbox {
 	return c
 }
 
+// Deprecated: use InputValue
 // InputChecked binds the checkbox to an external boolean state,
 // allowing it to be controlled from outside the component.
 func (c TCheckbox) InputChecked(input *core.State[bool]) TCheckbox {
+	c.inputValue = input
+	return c
+}
+
+// InputValue binds the checkbox to an external boolean state,
+// allowing it to be controlled from outside the component.
+func (c TCheckbox) InputValue(input *core.State[bool]) TCheckbox {
 	c.inputValue = input
 	return c
 }

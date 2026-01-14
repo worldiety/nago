@@ -5,10 +5,11 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package fsection
+package uiflow
 
-type ID string
+import "go.wdy.de/nago/presentation/core"
 
-type Section struct {
-	ID ID
+type Pages struct {
+	Workspaces core.NavigationPath
+	Editor     core.NavigationPath
 }

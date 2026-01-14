@@ -5,10 +5,10 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package fform
+package flow
 
-type ID string
+type WorkspaceID string
 
-type Form struct {
-	ID ID
-}
+type Typename Ident
+
+type TypeID string

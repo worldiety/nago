@@ -5,4 +5,4 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package uibuilder
+package cfgflow
