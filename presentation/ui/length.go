@@ -9,11 +9,12 @@ package ui
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/proto"
 	"math"
 	"strconv"
 	"strings"
+
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 var Full = Relative(1)
@@ -132,7 +133,7 @@ func (l Length) Mul(s float64) Length {
 }
 
 func L(dip float64) Length {
-	return Length(fmt.Sprintf("%.2f", dip/16))
+	return Length(fmt.Sprintf("%.2frem", dip/16))
 }
 
 // The following Length sizes are common for the ORA design system and will automatically adjust to the root elements font size.
