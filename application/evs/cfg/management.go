@@ -58,12 +58,16 @@ type Options[Evt any] struct {
 	// indexerFactories is an addition to the Indexer field which delays construction of the indexer
 	// to avoid that the developer needs to declare the actual indexer implementation upfront.
 	// This is just for convenience and the factories will append to the indexer slice.
-	indexerFactories []func(cfg *application.Configurator, prefix permission.ID, entityName string) (evs.Indexer[Evt], error)
+	indexerFactories []func(cfg *application.Configurator, opts *Options[Evt], prefix permission.ID, entityName string, perms evs.Permissions) (evs.Indexer[Evt], error)
 
 	// DecorateUseCases is invoked before the use cases are passed into all generated and dependent code fragments
 	// thus you can customize, intercept or replace any standard use case here. For example, you can
 	// apply custom validation and return [xerrors.WithFields].
 	DecorateUseCases func(uc evs.UseCases[Evt]) evs.UseCases[Evt]
+
+	HideInAdminCenter bool
+
+	onCreated []func(uc evs.UseCases[Evt]) error
 }
 
 func (o Options[Evt]) WithOptions(opts ...Opt[Evt]) Options[Evt] {
@@ -90,9 +94,14 @@ func Schema[T any, Evt any](d evs.Discriminator) Opt[Evt] {
 	}
 }
 
-func Index[Primary ~string, Evt any](reader evs.PrimaryReader[Primary, Evt]) Opt[Evt] {
+type IndexContext[Primary ~string, Evt any] struct {
+	Replay evs.ReplayWithIndex[Primary, Evt]
+	Index  *evs.StoreIndex[Primary, Evt]
+}
+
+func Index[Primary ~string, Evt any](reader evs.PrimaryReader[Primary, Evt], onCreated func(ctx IndexContext[Primary, Evt]) error) Opt[Evt] {
 	return func(o *Options[Evt]) {
-		o.indexerFactories = append(o.indexerFactories, func(cfg *application.Configurator, prefix permission.ID, entityName string) (evs.Indexer[Evt], error) {
+		o.indexerFactories = append(o.indexerFactories, func(cfg *application.Configurator, opts *Options[Evt], prefix permission.ID, entityName string, perms evs.Permissions) (evs.Indexer[Evt], error) {
 			name := strings.ToLower(reflect.TypeFor[Primary]().Name())
 			store, err := cfg.EntityStore(string(prefix.WithName(name)) + ".idx")
 			if err != nil {
@@ -106,6 +115,16 @@ func Index[Primary ~string, Evt any](reader evs.PrimaryReader[Primary, Evt]) Opt
 				Name:        rType.Name(),
 				Description: uievs.StrIndexManagement.String(),
 			})
+
+			if onCreated != nil {
+				// note: opts is a different instance than the one passed into the factory function
+				opts.onCreated = append(opts.onCreated, func(uc evs.UseCases[Evt]) error {
+					return onCreated(IndexContext[Primary, Evt]{
+						Replay: evs.NewReplayWithIndex(perms, uc.Load, idx),
+						Index:  idx,
+					})
+				})
+			}
 
 			return idx, nil
 		})
@@ -139,8 +158,10 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 		opts.Mutex = &sync.Mutex{}
 	}
 
+	perms := evs.DeclarePermissions[Evt](prefix, entityName)
+
 	for _, factory := range opts.indexerFactories {
-		fac, err := factory(cfg, prefix, entityName)
+		fac, err := factory(cfg, &opts, prefix, entityName, perms)
 		if err != nil {
 			return mod, err
 		}
@@ -148,7 +169,6 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 		opts.Indexer = append(opts.Indexer, fac)
 	}
 
-	perms := evs.DeclarePermissions[Evt](prefix, entityName)
 	uc := evs.NewUseCases[Evt](perms, eventStore, timesStore, evs.Options[Evt]{
 		Mutex:   opts.Mutex,
 		Bus:     opts.Bus,
@@ -157,6 +177,12 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 
 	for discriminator, r := range opts.Schema {
 		if err := uc.Register(r, discriminator); err != nil {
+			return mod, err
+		}
+	}
+
+	for _, fn := range opts.onCreated {
+		if err := fn(uc); err != nil {
 			return mod, err
 		}
 	}
@@ -217,6 +243,10 @@ func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions,
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
 		var res admin.Group
+
+		if opts.HideInAdminCenter {
+			return res
+		}
 
 		if !(subject.HasPermission(perms.ReadAll)) {
 			return res
