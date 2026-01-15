@@ -68,6 +68,7 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 	modEvs, err := cfgevs.Enable[flow.WorkspaceEvent](cfg, "nago.flow.workspace", "Flow Workspace", cfgevs.Options[flow.WorkspaceEvent]{}.WithOptions(
 		cfgevs.Schema[flow.WorkspaceCreated, flow.WorkspaceEvent]("WorkspaceCreated"),
 		cfgevs.Schema[flow.PackageCreated, flow.WorkspaceEvent]("PackageCreated"),
+		cfgevs.Schema[flow.StringTypeCreated, flow.WorkspaceEvent]("StringTypeCreated"),
 		cfgevs.Index[flow.WorkspaceID, flow.WorkspaceEvent](func(e evs.Envelope[flow.WorkspaceEvent]) (flow.WorkspaceID, error) {
 			return e.Data.WorkspaceID(), nil
 		}, func(ctx cfgevs.IndexContext[flow.WorkspaceID, flow.WorkspaceEvent]) error {

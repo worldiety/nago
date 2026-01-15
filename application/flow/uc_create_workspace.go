@@ -15,25 +15,27 @@ import (
 )
 
 func NewCreateWorkspace(storeEvent evs.Store[WorkspaceEvent]) CreateWorkspace {
-	return func(subject auth.Subject, cmd CreateWorkspaceCmd) (WorkspaceID, error) {
+	return func(subject auth.Subject, cmd CreateWorkspaceCmd) (WorkspaceCreated, error) {
+		var zero WorkspaceCreated
 		if err := subject.Audit(PermCreateWorkspace); err != nil {
-			return "", err
+			return zero, err
 		}
 
 		id := data.RandIdent[WorkspaceID]()
-		var ws Workspace
-		evt, err := storeEvent(user.SU(), WorkspaceCreated{
+		evt := WorkspaceCreated{
 			Workspace:   id,
 			Name:        cmd.Name,
 			Description: cmd.Description,
-		}, evs.StoreOptions{
-			CreatedBy: subject.ID(),
-		})
-		
-		if err != nil {
-			return id, err
 		}
 
-		return id, ws.ApplyEnvelope(evt)
+		_, err := storeEvent(user.SU(), evt, evs.StoreOptions{
+			CreatedBy: subject.ID(),
+		})
+
+		if err != nil {
+			return zero, err
+		}
+
+		return evt, nil
 	}
 }

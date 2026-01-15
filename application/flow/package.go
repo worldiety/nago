@@ -73,16 +73,62 @@ func (e PackageCreated) WorkspaceID() WorkspaceID {
 	return e.Workspace
 }
 
+func (e PackageCreated) event() {}
+
 type CreatePackageCmd struct {
-	Package     PackageID
+	Workspace   WorkspaceID `visible:"false"`
 	Path        ImportPath
 	Name        Ident
-	Description string
+	Description string `lines:"3"`
+}
+
+func (c CreatePackageCmd) WorkspaceID() WorkspaceID {
+	return c.Workspace
+}
+
+func (c CreatePackageCmd) WithWorkspaceID(id WorkspaceID) CreatePackageCmd {
+	c.Workspace = id
+	return c
 }
 
 type Package struct {
-	Package     PackageID
-	Path        ImportPath
-	Name        Ident
-	Description string
+	types       map[TypeID]Type
+	pckage      PackageID
+	path        ImportPath
+	name        Ident
+	description string
+}
+
+func (p *Package) String() string {
+	return string(p.name) + " [" + string(p.path) + "]"
+}
+
+func (p *Package) Identity() PackageID {
+	return p.pckage
+}
+
+func (p *Package) WithIdentity(id PackageID) *Package {
+	panic("with identity not supported for package")
+}
+
+func (p *Package) Path() ImportPath {
+	return p.path
+}
+
+func (p *Package) Name() Ident {
+	return p.name
+}
+
+func (p *Package) Description() string {
+	return p.description
+}
+
+func (p *Package) TypeByName(name Ident) (Type, bool) {
+	for _, t := range p.types {
+		if t.Name() == name {
+			return t, true
+		}
+	}
+
+	return nil, false
 }

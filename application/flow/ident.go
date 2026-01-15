@@ -8,7 +8,7 @@
 package flow
 
 import (
-	"fmt"
+	"errors"
 	"unicode"
 )
 
@@ -16,24 +16,44 @@ type Ident string
 
 func (i Ident) Validate() error {
 	if len(i) == 0 {
-		return fmt.Errorf("identifier must not be empty")
+		return errors.New("identifier must not be empty")
 	}
 
-	first := true
-	pos := 0
-	for _, r := range i {
-		if first {
-			if !unicode.IsUpper(r) || !unicode.IsLetter(r) {
-				return fmt.Errorf("identifier must start with an uppercase letter")
+	for idx, r := range i {
+		if idx == 0 {
+			if !isIdentStart(r) {
+				return errors.New("identifier must start with letter or '_'")
 			}
-			first = false
 		} else {
-			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
-				return fmt.Errorf("invalid character %q at position %d", r, pos)
+			if !isIdentPart(r) {
+				return errors.New("identifier contains invalid character")
 			}
 		}
-		pos++
 	}
 
 	return nil
+}
+
+func (i Ident) IsPublic() bool {
+	if len(i) == 0 {
+		return false
+	}
+	r := []rune(i)[0]
+	return unicode.IsUpper(r)
+}
+
+func (i Ident) IsPrivate() bool {
+	if len(i) == 0 {
+		return false
+	}
+	r := []rune(i)[0]
+	return unicode.IsLower(r) || r == '_'
+}
+
+func isIdentStart(r rune) bool {
+	return r == '_' || unicode.IsLetter(r)
+}
+
+func isIdentPart(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }

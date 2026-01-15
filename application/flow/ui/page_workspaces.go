@@ -34,7 +34,7 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 					ID:   "name",
 					Name: rstring.LabelName.Get(wnd),
 					Map: func(obj *flow.Workspace) core.View {
-						return ui.Text(obj.Name)
+						return ui.Text(obj.Name())
 					},
 				},
 
@@ -42,14 +42,14 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 					ID:   "desc",
 					Name: rstring.LabelDescription.Get(wnd),
 					Map: func(obj *flow.Workspace) core.View {
-						return ui.Text(obj.Description)
+						return ui.Text(obj.Description())
 					},
 				},
 			},
 		}).CreateAction(func() {
 			createPresented.Set(true)
 		}).NextActionIndicator(true).Action(func(e *flow.Workspace) {
-			wnd.Navigation().ForwardTo(pages.Editor, core.Values{"workspace": string(e.ID)})
+			wnd.Navigation().ForwardTo(pages.Editor, core.Values{"workspace": string(e.Identity())})
 		}),
 	).FullWidth().Alignment(ui.Leading)
 }

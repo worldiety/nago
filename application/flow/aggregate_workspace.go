@@ -9,80 +9,132 @@ package flow
 
 import (
 	"fmt"
+	"iter"
+	"slices"
+	"strings"
+	"sync"
 
 	"go.wdy.de/nago/application/evs"
+	"go.wdy.de/nago/pkg/xmaps"
 )
 
 // Workspace is the aggregate root for all types and packages within a workspace.
 type Workspace struct {
-	ID          WorkspaceID
-	Types       map[TypeID]*Type
-	Packages    map[PackageID]*Package
-	Name        string
-	Description string
+	id          WorkspaceID
+	packages    map[PackageID]*Package
+	name        string
+	description string
+	mutex       sync.Mutex
+	valid       bool
 }
 
 func (ws *Workspace) Identity() WorkspaceID {
-	return ws.ID
+	return ws.id
 }
 
-func (ws *Workspace) CreatePackage(cmd CreatePackageCmd) (PackageCreated, error) {
-	var zero PackageCreated
-	if cmd.Package == "" {
-		return zero, fmt.Errorf("package id cannot be empty")
-	}
-
-	if _, ok := ws.Packages[cmd.Package]; ok {
-		return zero, fmt.Errorf("package %s already exists", cmd.Package)
-	}
-
-	if err := cmd.Path.Validate(); err != nil {
-		return zero, err
-	}
-
-	if err := cmd.Name.Validate(); err != nil {
-		return zero, err
-	}
-
-	return PackageCreated{
-		Workspace:   ws.ID,
-		Package:     cmd.Package,
-		Path:        cmd.Path,
-		Name:        cmd.Name,
-		Description: cmd.Description,
-	}, nil
+func (ws *Workspace) applyEnvelope(evt evs.Envelope[WorkspaceEvent]) error {
+	return ws.apply(evt.Data)
 }
 
-func (ws *Workspace) ApplyEnvelope(evt evs.Envelope[WorkspaceEvent]) error {
-	return ws.Apply(evt.Data)
-}
+func (ws *Workspace) apply(evt WorkspaceEvent) error {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
 
-func (ws *Workspace) Apply(evt WorkspaceEvent) error {
+	if !ws.valid {
+		return fmt.Errorf("workspace is not valid: %s", ws.id)
+	}
+
 	switch evt := evt.(type) {
 	case WorkspaceCreated:
-		ws.ID = evt.Workspace
-		ws.Types = map[TypeID]*Type{}
-		ws.Packages = map[PackageID]*Package{}
-		ws.Name = evt.Name
-		ws.Description = evt.Description
+		ws.id = evt.Workspace
+		ws.packages = map[PackageID]*Package{}
+		ws.name = evt.Name
+		ws.description = evt.Description
 	case PackageCreated:
-		ws.Packages[evt.Package] = &Package{
-			Package:     evt.Package,
-			Path:        evt.Path,
-			Name:        evt.Name,
-			Description: evt.Description,
+		ws.packages[evt.Package] = &Package{
+			pckage:      evt.Package,
+			types:       map[TypeID]Type{},
+			path:        evt.Path,
+			name:        evt.Name,
+			description: evt.Description,
 		}
 
-	case TypeCreated:
-		ws.Types[evt.Type] = &Type{
-			ID:      evt.Type,
-			Name:    evt.Name,
-			BuildIn: evt.BuildIn,
+	case StringTypeCreated:
+		pkg := ws.packages[evt.Package]
+		if pkg == nil {
+			return fmt.Errorf("package %s not found", evt.Package)
 		}
 
+		pkg.types[evt.ID] = &StringType{
+			name:        evt.Name,
+			id:          evt.ID,
+			description: evt.Description,
+		}
 	default:
 		return fmt.Errorf("unknown event type: %T", evt)
 	}
 
 	return nil
+}
+
+func (ws *Workspace) Packages() iter.Seq[*Package] {
+	return func(yield func(*Package) bool) {
+		ws.mutex.Lock()
+		defer ws.mutex.Unlock()
+
+		for _, id := range xmaps.SortedKeys(ws.packages) {
+			if !yield(ws.packages[id]) {
+				return
+			}
+		}
+	}
+}
+
+func (ws *Workspace) Types() iter.Seq[Type] {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	var tmp []Type
+	for _, p := range ws.packages {
+		for _, t := range p.types {
+			tmp = append(tmp, t)
+		}
+	}
+
+	slices.SortFunc(tmp, func(a, b Type) int {
+		return strings.Compare(string(a.Name()), string(b.Name()))
+	})
+
+	return slices.Values(tmp)
+}
+
+func (ws *Workspace) PackageByPath(path ImportPath) (*Package, bool) {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	return ws.packageByPath(path)
+}
+
+func (ws *Workspace) packageByPath(path ImportPath) (*Package, bool) {
+	for _, p := range ws.packages {
+		if p.path == path {
+			return p, true
+		}
+	}
+
+	return nil, false
+}
+
+func (ws *Workspace) Name() string {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	return ws.name
+}
+
+func (ws *Workspace) Description() string {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	return ws.description
 }

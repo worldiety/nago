@@ -13,7 +13,11 @@ import (
 )
 
 var (
-	StrGroupTitle       = i18n.MustString("nago.flow.admin.title", i18n.Values{language.German: "Flow Daten & Formulare", language.English: "Flow Data & Forms"})
-	StrGroupDescription = i18n.MustString("nago.flow.admin.description", i18n.Values{language.German: "Arbeitsbereiche für dynamische Datenmodellierung und Formulare verwalten.", language.English: "Manage workspaces for dynamic data modeling and forms."})
-	StrWorkspaces       = i18n.MustString("nago.flow.admin.workspaces", i18n.Values{language.German: "Arbeitsbereiche", language.English: "Workspaces"})
+	StrGroupTitle             = i18n.MustString("nago.flow.admin.title", i18n.Values{language.German: "Flow Daten & Formulare", language.English: "Flow Data & Forms"})
+	StrGroupDescription       = i18n.MustString("nago.flow.admin.description", i18n.Values{language.German: "Arbeitsbereiche für dynamische Datenmodellierung und Formulare verwalten.", language.English: "Manage workspaces for dynamic data modeling and forms."})
+	StrWorkspaces             = i18n.MustString("nago.flow.admin.workspaces", i18n.Values{language.German: "Arbeitsbereiche", language.English: "Workspaces"})
+	StrActionCreatePackage    = i18n.MustString("nago.flow.admin.action.create.package", i18n.Values{language.German: "Neues Paket erstellen", language.English: "Create New Package"})
+	StrActionCreateType       = i18n.MustString("nago.flow.admin.action.create.type", i18n.Values{language.German: "Neuen Typ erstellen", language.English: "Create New Type"})
+	StrActionCreateRepository = i18n.MustString("nago.flow.admin.action.create.repository", i18n.Values{language.German: "Neues Repository erstellen", language.English: "Create New Repository"})
+	StrActionCreateForm       = i18n.MustString("nago.flow.admin.action.create.form", i18n.Values{language.German: "Neues Formular erstellen", language.English: "Create New Form"})
 )

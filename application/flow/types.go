@@ -23,7 +23,7 @@ const (
 	ForeignKey // TODO not required because model by relation?
 )
 
-type Type struct {
+/*type Type struct {
 	ID            TypeID         `json:"id"`
 	Package       Package        `json:"package"`
 	Name          Typename       `json:"name"`
@@ -32,6 +32,36 @@ type Type struct {
 	Repository    *Repository    `json:"repository,omitempty"` // optional, only valid for Kind Struct
 	BuildIn       bool           `json:"buildIn"`              // if true, the type is available universally
 	RenderOptions *RenderOptions `json:"renderOptions,omitempty"`
+}*/
+
+type Type interface {
+	Package() *Package
+	Name() Ident
+	ID() TypeID
+	Description() string
+}
+
+type StringType struct {
+	parent      *Package
+	name        Ident
+	id          TypeID
+	description string
+}
+
+func (t *StringType) Description() string {
+	return t.description
+}
+
+func (t *StringType) Package() *Package {
+	return t.parent
+}
+
+func (t *StringType) Name() Ident {
+	return t.name
+}
+
+func (t *StringType) ID() TypeID {
+	return t.id
 }
 
 type RenderOptions struct {

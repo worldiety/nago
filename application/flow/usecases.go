@@ -9,6 +9,7 @@ package flow
 
 import (
 	"iter"
+	"sync"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/evs"
@@ -18,18 +19,30 @@ import (
 type FindWorkspaces func(subject auth.Subject) iter.Seq2[WorkspaceID, error]
 type LoadWorkspace func(subject auth.Subject, id WorkspaceID) (option.Opt[*Workspace], error)
 
-type CreateWorkspace func(subject auth.Subject, cmd CreateWorkspaceCmd) (WorkspaceID, error)
+type CreateWorkspace func(subject auth.Subject, cmd CreateWorkspaceCmd) (WorkspaceCreated, error)
+
+type CreatePackage func(subject auth.Subject, cmd CreatePackageCmd) (PackageCreated, error)
+
+type CreateStringType func(subject auth.Subject, cmd CreateStringTypeCmd) (StringTypeCreated, error)
 
 type UseCases struct {
-	FindWorkspaces  FindWorkspaces
-	LoadWorkspace   LoadWorkspace
-	CreateWorkspace CreateWorkspace
+	FindWorkspaces   FindWorkspaces
+	LoadWorkspace    LoadWorkspace
+	CreateWorkspace  CreateWorkspace
+	CreatePackage    CreatePackage
+	CreateStringType CreateStringType
 }
 
 func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWorkspace evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
+	cache := map[WorkspaceID]*Workspace{}
+	var mutex sync.Mutex
+
+	loadFn := NewLoadWorkspace(&mutex, repoName, replayWorkspace, cache)
 	return UseCases{
-		FindWorkspaces:  NewFindWorkspace(repoName, wsIndex),
-		LoadWorkspace:   NewLoadWorkspace(repoName, replayWorkspace),
-		CreateWorkspace: NewCreateWorkspace(storeEvent),
+		FindWorkspaces:   NewFindWorkspace(repoName, wsIndex),
+		LoadWorkspace:    loadFn,
+		CreateWorkspace:  NewCreateWorkspace(storeEvent),
+		CreatePackage:    NewCreatePackage(newHandleCmd[PackageCreated](repoName, loadFn, storeEvent)),
+		CreateStringType: NewCreateStringType(newHandleCmd[StringTypeCreated](repoName, loadFn, storeEvent)),
 	}
 }

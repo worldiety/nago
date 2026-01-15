@@ -21,3 +21,5 @@ type WorkspaceCreated struct {
 func (e WorkspaceCreated) WorkspaceID() WorkspaceID {
 	return e.Workspace
 }
+
+func (e WorkspaceCreated) event() {}
