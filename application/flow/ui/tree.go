@@ -25,6 +25,14 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 						yield(&treeview.Node[any]{
 							Label: string(p.Name()),
 							Data:  p,
+							Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
+								for p := range p.Types() {
+									yield(&treeview.Node[any]{
+										Label: string(p.Name()),
+										Data:  p,
+									})
+								}
+							}),
 						})
 					}
 				}),

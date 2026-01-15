@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-type StringTypeCreated struct {
+type StructTypeCreated struct {
 	Workspace   WorkspaceID `json:"workspace,omitempty"`
 	ID          TypeID      `json:"id,omitempty"`
 	Name        Ident       `json:"name,omitempty"`
@@ -21,32 +21,32 @@ type StringTypeCreated struct {
 	Description string      `json:"description,omitempty"`
 }
 
-func (e StringTypeCreated) WorkspaceID() WorkspaceID {
+func (e StructTypeCreated) WorkspaceID() WorkspaceID {
 	return e.Workspace
 }
 
-func (e StringTypeCreated) event() {}
+func (e StructTypeCreated) event() {}
 
-type CreateStringTypeCmd struct {
+type CreateStructTypeCmd struct {
 	Workspace   WorkspaceID `visible:"false"`
 	Package     PackageID   `source:"nago.flow.packages"`
 	Name        Ident
 	Description string
 }
 
-func (c CreateStringTypeCmd) WorkspaceID() WorkspaceID {
+func (c CreateStructTypeCmd) WorkspaceID() WorkspaceID {
 	return c.Workspace
 }
 
-func (c CreateStringTypeCmd) WithWorkspaceID(id WorkspaceID) CreateStringTypeCmd {
+func (c CreateStructTypeCmd) WithWorkspaceID(id WorkspaceID) CreateStructTypeCmd {
 	c.Workspace = id
 	return c
 }
 
-func NewCreateStringType(hnd handleCmd[StringTypeCreated]) CreateStringType {
-	return func(subject auth.Subject, cmd CreateStringTypeCmd) (StringTypeCreated, error) {
-		return hnd(subject, cmd.Workspace, func(ws *Workspace) (StringTypeCreated, error) {
-			var zero StringTypeCreated
+func NewCreateStructType(hnd handleCmd[StructTypeCreated]) CreateStructType {
+	return func(subject auth.Subject, cmd CreateStructTypeCmd) (StructTypeCreated, error) {
+		return hnd(subject, cmd.Workspace, func(ws *Workspace) (StructTypeCreated, error) {
+			var zero StructTypeCreated
 			_, ok := ws.packages[cmd.Package]
 			if !ok {
 				return zero, xerrors.WithFields("Validation", "Package not found")
@@ -62,7 +62,7 @@ func NewCreateStringType(hnd handleCmd[StringTypeCreated]) CreateStringType {
 
 			id := data.RandIdent[TypeID]()
 
-			return StringTypeCreated{
+			return StructTypeCreated{
 				Workspace:   cmd.Workspace,
 				ID:          id,
 				Name:        cmd.Name,

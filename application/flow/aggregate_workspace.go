@@ -15,7 +15,6 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/application/evs"
-	"go.wdy.de/nago/pkg/xmaps"
 )
 
 // Workspace is the aggregate root for all types and packages within a workspace.
@@ -57,6 +56,7 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			path:        evt.Path,
 			name:        evt.Name,
 			description: evt.Description,
+			mutex:       &ws.mutex,
 		}
 
 	case StringTypeCreated:
@@ -70,6 +70,29 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			id:          evt.ID,
 			description: evt.Description,
 		}
+	case StructTypeCreated:
+		pkg := ws.packages[evt.Package]
+		if pkg == nil {
+			return fmt.Errorf("package %s not found", evt.Package)
+		}
+
+		pkg.types[evt.ID] = &StructType{
+			name:        evt.Name,
+			id:          evt.ID,
+			description: evt.Description,
+			parent:      pkg,
+		}
+	case StringFieldAppended:
+		st, ok := ws.structTypeByID(evt.Struct)
+		if !ok {
+			return fmt.Errorf("struct %s not found", evt.Struct)
+		}
+
+		st.fields = append(st.fields, &StringField{
+			name:        evt.Name,
+			description: evt.Description,
+			id:          evt.ID,
+		})
 	default:
 		return fmt.Errorf("unknown event type: %T", evt)
 	}
@@ -77,17 +100,60 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 	return nil
 }
 
-func (ws *Workspace) Packages() iter.Seq[*Package] {
-	return func(yield func(*Package) bool) {
-		ws.mutex.Lock()
-		defer ws.mutex.Unlock()
+func (ws *Workspace) StructTypes() iter.Seq[*StructType] {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
 
-		for _, id := range xmaps.SortedKeys(ws.packages) {
-			if !yield(ws.packages[id]) {
-				return
+	var tmp []*StructType
+	for _, p := range ws.packages {
+		for _, t := range p.types {
+			if st, ok := t.(*StructType); ok {
+				tmp = append(tmp, st)
 			}
 		}
 	}
+
+	slices.SortFunc(tmp, func(a, b *StructType) int {
+		return strings.Compare(string(a.name), string(b.Name()))
+	})
+
+	return slices.Values(tmp)
+}
+
+func (ws *Workspace) StructTypeByID(id TypeID) (*StructType, bool) {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	return ws.structTypeByID(id)
+}
+
+func (ws *Workspace) structTypeByID(id TypeID) (*StructType, bool) {
+
+	for _, p := range ws.packages {
+		if s, ok := p.types[id]; ok {
+			if s, ok := s.(*StructType); ok {
+				return s, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+func (ws *Workspace) Packages() iter.Seq[*Package] {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	var tmp []*Package
+	for _, p := range ws.packages {
+		tmp = append(tmp, p)
+	}
+
+	slices.SortFunc(tmp, func(a, b *Package) int {
+		return strings.Compare(string(a.Path()), string(b.path))
+	})
+
+	return slices.Values(tmp)
 }
 
 func (ws *Workspace) Types() iter.Seq[Type] {

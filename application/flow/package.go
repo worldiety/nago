@@ -10,7 +10,11 @@ package flow
 import (
 	"fmt"
 	"go/token"
+	"iter"
+	"maps"
+	"slices"
 	"strings"
+	"sync"
 	"unicode"
 )
 
@@ -62,11 +66,11 @@ func validateIdentifier(s string) error {
 }
 
 type PackageCreated struct {
-	Workspace   WorkspaceID
-	Package     PackageID
-	Path        ImportPath
-	Name        Ident
-	Description string
+	Workspace   WorkspaceID `json:"workspace,omitempty"`
+	Package     PackageID   `json:"package,omitempty"`
+	Path        ImportPath  `json:"path,omitempty"`
+	Name        Ident       `json:"name,omitempty"`
+	Description string      `json:"description,omitempty"`
 }
 
 func (e PackageCreated) WorkspaceID() WorkspaceID {
@@ -97,6 +101,7 @@ type Package struct {
 	path        ImportPath
 	name        Ident
 	description string
+	mutex       *sync.Mutex
 }
 
 func (p *Package) String() string {
@@ -105,10 +110,6 @@ func (p *Package) String() string {
 
 func (p *Package) Identity() PackageID {
 	return p.pckage
-}
-
-func (p *Package) WithIdentity(id PackageID) *Package {
-	panic("with identity not supported for package")
 }
 
 func (p *Package) Path() ImportPath {
@@ -131,4 +132,13 @@ func (p *Package) TypeByName(name Ident) (Type, bool) {
 	}
 
 	return nil, false
+}
+
+func (p *Package) Types() iter.Seq[Type] {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	return slices.Values(slices.SortedFunc(maps.Values(p.types), func(t Type, t2 Type) int {
+		return strings.Compare(string(t.Name()), string(t2.Name()))
+	}))
 }

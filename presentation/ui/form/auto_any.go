@@ -10,10 +10,12 @@ package form
 import (
 	"fmt"
 	"iter"
+	"log/slog"
 	"reflect"
 
 	"go.wdy.de/nago/application/ent"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xiter"
 )
 
@@ -92,4 +94,36 @@ func AnyUseCaseList[E Aggregate[E, ID], ID ~string](list func(subject auth.Subje
 	return func(subject auth.Subject) iter.Seq2[AnyEntity, error] {
 		return AnySeq2Of(list(subject))
 	}
+}
+
+// AnyUseCaseListReadOnly converts a typed use case list function into a UseCaseListAny
+// that produces type-erased AnyEntity results.
+func AnyUseCaseListReadOnly[E data.Aggregate[ID], ID ~string](list func(subject auth.Subject) iter.Seq2[E, error]) UseCaseListAny {
+	return func(subject auth.Subject) iter.Seq2[AnyEntity, error] {
+		return anySeq2OfReadOnly(list(subject))
+	}
+}
+
+// AnySeq2Of maps a sequence of typed aggregates into a sequence of AnyEntity.
+func anySeq2OfReadOnly[E data.Aggregate[ID], ID ~string](it iter.Seq2[E, error]) iter.Seq2[AnyEntity, error] {
+	return xiter.Map2(func(in E, err error) (AnyEntity, error) {
+		return AnyEntityOf(aggregateAdapterReadOnly[E, ID]{in}), err
+	}, it)
+}
+
+type aggregateAdapterReadOnly[E data.Aggregate[ID], ID ~string] struct {
+	other E
+}
+
+func (a aggregateAdapterReadOnly[E, ID]) Identity() ID {
+	return a.other.Identity()
+}
+
+func (a aggregateAdapterReadOnly[E, ID]) WithIdentity(id ID) aggregateAdapterReadOnly[E, ID] {
+	slog.Error("using WithIdentity by read only aggregate adapter")
+	return a
+}
+
+func (a aggregateAdapterReadOnly[E, ID]) String() string {
+	return fmt.Sprintf("%v", a.other)
 }

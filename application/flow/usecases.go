@@ -25,12 +25,18 @@ type CreatePackage func(subject auth.Subject, cmd CreatePackageCmd) (PackageCrea
 
 type CreateStringType func(subject auth.Subject, cmd CreateStringTypeCmd) (StringTypeCreated, error)
 
+type CreateStructType func(subject auth.Subject, cmd CreateStructTypeCmd) (StructTypeCreated, error)
+
+type AppendStringField func(subject auth.Subject, cmd AppendStringFieldCmd) (StringFieldAppended, error)
+
 type UseCases struct {
-	FindWorkspaces   FindWorkspaces
-	LoadWorkspace    LoadWorkspace
-	CreateWorkspace  CreateWorkspace
-	CreatePackage    CreatePackage
-	CreateStringType CreateStringType
+	FindWorkspaces    FindWorkspaces
+	LoadWorkspace     LoadWorkspace
+	CreateWorkspace   CreateWorkspace
+	CreatePackage     CreatePackage
+	CreateStringType  CreateStringType
+	CreateStructType  CreateStructType
+	AppendStringField AppendStringField
 }
 
 func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWorkspace evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
@@ -39,10 +45,12 @@ func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWo
 
 	loadFn := NewLoadWorkspace(&mutex, repoName, replayWorkspace, cache)
 	return UseCases{
-		FindWorkspaces:   NewFindWorkspace(repoName, wsIndex),
-		LoadWorkspace:    loadFn,
-		CreateWorkspace:  NewCreateWorkspace(storeEvent),
-		CreatePackage:    NewCreatePackage(newHandleCmd[PackageCreated](repoName, loadFn, storeEvent)),
-		CreateStringType: NewCreateStringType(newHandleCmd[StringTypeCreated](repoName, loadFn, storeEvent)),
+		FindWorkspaces:    NewFindWorkspace(repoName, wsIndex),
+		LoadWorkspace:     loadFn,
+		CreateWorkspace:   NewCreateWorkspace(storeEvent),
+		CreatePackage:     NewCreatePackage(newHandleCmd[PackageCreated](repoName, loadFn, storeEvent)),
+		CreateStringType:  NewCreateStringType(newHandleCmd[StringTypeCreated](repoName, loadFn, storeEvent)),
+		CreateStructType:  NewCreateStructType(newHandleCmd[StructTypeCreated](repoName, loadFn, storeEvent)),
+		AppendStringField: NewAppendStringField(newHandleCmd[StringFieldAppended](repoName, loadFn, storeEvent)),
 	}
 }

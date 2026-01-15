@@ -69,6 +69,8 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		cfgevs.Schema[flow.WorkspaceCreated, flow.WorkspaceEvent]("WorkspaceCreated"),
 		cfgevs.Schema[flow.PackageCreated, flow.WorkspaceEvent]("PackageCreated"),
 		cfgevs.Schema[flow.StringTypeCreated, flow.WorkspaceEvent]("StringTypeCreated"),
+		cfgevs.Schema[flow.StructTypeCreated, flow.WorkspaceEvent]("StructTypeCreated"),
+		cfgevs.Schema[flow.StringFieldAppended, flow.WorkspaceEvent]("StringFieldAppended"),
 		cfgevs.Index[flow.WorkspaceID, flow.WorkspaceEvent](func(e evs.Envelope[flow.WorkspaceEvent]) (flow.WorkspaceID, error) {
 			return e.Data.WorkspaceID(), nil
 		}, func(ctx cfgevs.IndexContext[flow.WorkspaceID, flow.WorkspaceEvent]) error {

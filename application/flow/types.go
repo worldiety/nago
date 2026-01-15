@@ -8,6 +8,8 @@
 package flow
 
 import (
+	"fmt"
+
 	"go.wdy.de/nago/application/role"
 )
 
@@ -37,7 +39,7 @@ const (
 type Type interface {
 	Package() *Package
 	Name() Ident
-	ID() TypeID
+	Identity() TypeID
 	Description() string
 }
 
@@ -60,8 +62,36 @@ func (t *StringType) Name() Ident {
 	return t.name
 }
 
-func (t *StringType) ID() TypeID {
+func (t *StringType) Identity() TypeID {
 	return t.id
+}
+
+type StructType struct {
+	parent      *Package
+	name        Ident
+	id          TypeID
+	description string
+	fields      []Field
+}
+
+func (t *StructType) Description() string {
+	return t.description
+}
+
+func (t *StructType) Package() *Package {
+	return t.parent
+}
+
+func (t *StructType) Name() Ident {
+	return t.name
+}
+
+func (t *StructType) Identity() TypeID {
+	return t.id
+}
+
+func (t *StructType) String() string {
+	return fmt.Sprintf("%s.%s", t.Package().Name(), t.Name())
 }
 
 type RenderOptions struct {
@@ -87,11 +117,58 @@ type RenderOptionsHStack struct {
 	Weights []float64 `json:"weights"`
 }
 
-type Field struct {
-	Name       Ident    `json:"name"`
-	Type       Typename `json:"type"`
-	Required   bool     `json:"required"`
-	PrimaryKey bool     `json:"primaryKey"`
+type FieldID string
+
+type Field interface {
+	Identity() FieldID
+	Name() Ident
+	Description() string
+	field()
+}
+
+type StringField struct {
+	name        Ident
+	description string
+	id          FieldID
+}
+
+func (f *StringField) Identity() FieldID {
+	return f.id
+}
+
+func (f *StringField) Name() Ident {
+	return f.name
+}
+
+func (f *StringField) Description() string {
+	return f.description
+}
+
+func (f *StringField) field() {}
+
+type TypeField struct {
+	id          FieldID
+	name        Ident
+	description string
+	fieldType   Type
+}
+
+func (f *TypeField) Identity() FieldID {
+	return f.id
+}
+
+func (f *TypeField) Name() Ident {
+	return f.name
+}
+
+func (f *TypeField) Description() string {
+	return f.description
+}
+
+func (f *TypeField) field() {}
+
+func (f *TypeField) Type() Type {
+	return f.fieldType
 }
 
 type Driver string

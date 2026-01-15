@@ -30,9 +30,19 @@ func dialogCmd[T flow.WorkspaceCommand[T], Evt flow.WorkspaceEvent](wnd core.Win
 	})
 	errState := core.DerivedState[error](cmdState, "err")
 
-	ctx := core.WithContext(wnd.Context(), core.ContextValue("nago.flow.packages", form.AnyUseCaseList(func(subject auth.Subject) iter.Seq2[*flow.Package, error] {
+	ctx := core.WithContext(wnd.Context(), core.ContextValue("nago.flow.packages", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.Package, error] {
 		return func(yield func(*flow.Package, error) bool) {
 			for pkg := range ws.Packages() {
+				if !yield(pkg, nil) {
+					return
+				}
+			}
+		}
+	})))
+
+	ctx = core.WithContext(ctx, core.ContextValue("nago.flow.structs", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.StructType, error] {
+		return func(yield func(*flow.StructType, error) bool) {
+			for pkg := range ws.StructTypes() {
 				if !yield(pkg, nil) {
 					return
 				}
@@ -47,6 +57,7 @@ func dialogCmd[T flow.WorkspaceCommand[T], Evt flow.WorkspaceEvent](wnd core.Win
 		alert.Closeable(),
 		alert.Cancel(nil),
 		alert.Create(func() (close bool) {
+			errState.Set(nil)
 			if _, err := handler(wnd.Subject(), cmdState.Get()); err != nil {
 				errState.Set(err)
 				return false
