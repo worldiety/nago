@@ -12,6 +12,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/xerrors"
 )
 
 func NewCreateWorkspace(storeEvent evs.Store[WorkspaceEvent]) CreateWorkspace {
@@ -19,6 +20,14 @@ func NewCreateWorkspace(storeEvent evs.Store[WorkspaceEvent]) CreateWorkspace {
 		var zero WorkspaceCreated
 		if err := subject.Audit(PermCreateWorkspace); err != nil {
 			return zero, err
+		}
+
+		if err := cmd.Name.Validate(); err != nil {
+			return zero, xerrors.WithFields("Validation", "Name", err.Error())
+		}
+
+		if cmd.Name.IsPublic() {
+			return zero, xerrors.WithFields("Validation", "Name", "Name must not start with an uppercase letter")
 		}
 
 		id := data.RandIdent[WorkspaceID]()

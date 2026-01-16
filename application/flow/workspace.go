@@ -8,13 +8,13 @@
 package flow
 
 type CreateWorkspaceCmd struct {
-	Name        string `label:"nago.common.label.name"`
+	Name        Ident  `label:"nago.common.label.name"`
 	Description string `label:"nago.common.label.description" lines:"3"`
 }
 
 type WorkspaceCreated struct {
 	Workspace   WorkspaceID `json:"workspace,omitempty"`
-	Name        string      `json:"name,omitempty"`
+	Name        Ident       `json:"name,omitempty"`
 	Description string      `json:"description,omitempty"`
 }
 

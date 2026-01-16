@@ -10,7 +10,7 @@ package uiflow
 import (
 	"iter"
 	"reflect"
-
+	
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
@@ -18,16 +18,12 @@ import (
 	"go.wdy.de/nago/presentation/ui/form"
 )
 
-func dialogCmd[T flow.WorkspaceCommand[T], Evt flow.WorkspaceEvent](wnd core.Window, ws *flow.Workspace, title string, presented *core.State[bool], handler func(subject auth.Subject, cmd T) (Evt, error)) core.View {
+func dialogCmd[T flow.WorkspaceCommand, Evt flow.WorkspaceEvent](wnd core.Window, ws *flow.Workspace, title string, presented *core.State[bool], handler func(subject auth.Subject, cmd T) (Evt, error), init func() T) core.View {
 	if !presented.Get() {
 		return nil
 	}
 
-	cmdState := core.DerivedState[T](presented, reflect.TypeFor[T]().String()).Init(func() T {
-		var zero T
-		zero = zero.WithWorkspaceID(ws.Identity())
-		return zero
-	})
+	cmdState := core.DerivedState[T](presented, reflect.TypeFor[T]().String()).Init(init)
 	errState := core.DerivedState[error](cmdState, "err")
 
 	ctx := core.WithContext(wnd.Context(), core.ContextValue("nago.flow.packages", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.Package, error] {
@@ -44,6 +40,20 @@ func dialogCmd[T flow.WorkspaceCommand[T], Evt flow.WorkspaceEvent](wnd core.Win
 		return func(yield func(*flow.StructType, error) bool) {
 			for pkg := range ws.StructTypes() {
 				if !yield(pkg, nil) {
+					return
+				}
+			}
+		}
+	})))
+
+	ctx = core.WithContext(ctx, core.ContextValue("nago.flow.pkstructs", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.StructType, error] {
+		return func(yield func(*flow.StructType, error) bool) {
+			for t := range ws.StructTypes() {
+				if !t.DocumentStoreReady() {
+					continue
+				}
+
+				if !yield(t, nil) {
 					return
 				}
 			}

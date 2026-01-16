@@ -10,6 +10,7 @@ package flow
 import (
 	"fmt"
 	"iter"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -21,7 +22,8 @@ import (
 type Workspace struct {
 	id          WorkspaceID
 	packages    map[PackageID]*Package
-	name        string
+	repos       map[RepositoryID]*Repository
+	name        Ident
 	description string
 	mutex       sync.Mutex
 	valid       bool
@@ -47,6 +49,7 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 	case WorkspaceCreated:
 		ws.id = evt.Workspace
 		ws.packages = map[PackageID]*Package{}
+		ws.repos = map[RepositoryID]*Repository{}
 		ws.name = evt.Name
 		ws.description = evt.Description
 	case PackageCreated:
@@ -93,11 +96,74 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			description: evt.Description,
 			id:          evt.ID,
 		})
+	case BoolFieldAppended:
+		st, ok := ws.structTypeByID(evt.Struct)
+		if !ok {
+			return fmt.Errorf("struct %s not found", evt.Struct)
+		}
+
+		st.fields = append(st.fields, &BoolField{
+			name:        evt.Name,
+			description: evt.Description,
+			id:          evt.ID,
+		})
+	case RepositoryAssigned:
+		st, ok := ws.structTypeByID(evt.Struct)
+		if !ok {
+			return fmt.Errorf("struct %s not found", evt.Struct)
+		}
+
+		repo := &Repository{
+			parent:     ws,
+			id:         evt.Repository,
+			structType: st,
+		}
+
+		ws.repos[repo.id] = repo
+
+	case PrimaryKeySelected:
+		st, ok := ws.structTypeByID(evt.Struct)
+		if !ok {
+			return fmt.Errorf("struct %s not found", evt.Struct)
+		}
+
+		for _, f := range st.fields {
+			if f.Identity() == evt.Field {
+				f.SetPrimaryKey(true)
+			} else {
+				// keep it, it is defined like this
+				f.SetPrimaryKey(false)
+			}
+		}
+
 	default:
 		return fmt.Errorf("unknown event type: %T", evt)
 	}
 
 	return nil
+}
+
+func (ws *Workspace) Repositories() iter.Seq[*Repository] {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	tmp := slices.SortedFunc(maps.Values(ws.repos), func(a, b *Repository) int {
+		return strings.Compare(string(a.id), string(b.id))
+	})
+
+	return slices.Values(tmp)
+}
+
+func (ws *Workspace) RepositoryByID(id RepositoryID) (*Repository, bool) {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	return ws.repositoryByID(id)
+}
+
+func (ws *Workspace) repositoryByID(id RepositoryID) (*Repository, bool) {
+	v, ok := ws.repos[id]
+	return v, ok
 }
 
 func (ws *Workspace) StructTypes() iter.Seq[*StructType] {
@@ -191,7 +257,7 @@ func (ws *Workspace) packageByPath(path ImportPath) (*Package, bool) {
 	return nil, false
 }
 
-func (ws *Workspace) Name() string {
+func (ws *Workspace) Name() Ident {
 	ws.mutex.Lock()
 	defer ws.mutex.Unlock()
 

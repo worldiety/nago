@@ -34,7 +34,7 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 					ID:   "name",
 					Name: rstring.LabelName.Get(wnd),
 					Map: func(obj *flow.Workspace) core.View {
-						return ui.Text(obj.Name())
+						return ui.Text(string(obj.Name()))
 					},
 				},
 

@@ -47,18 +47,40 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 		tree.Reset()
 	})
 
+	presentAssignRepository := core.AutoState[bool](wnd).Observe(func(newValue bool) {
+		tree.Reset()
+	})
+
 	selected := core.AutoState[any](wnd).Observe(func(newValue any) {
 
 	})
 
 	return ui.VStack(
 
-		dialogCmd(wnd, ws, "Create new package", presentCreatePackage, uc.CreatePackage),
-		dialogCmd(wnd, ws, "Create new string type", presentCreateStringType, uc.CreateStringType),
-		dialogCmd(wnd, ws, "Create new struct type", presentCreateStructType, uc.CreateStructType),
+		dialogCmd(wnd, ws, "Create new package", presentCreatePackage, uc.CreatePackage, func() flow.CreatePackageCmd {
+			return flow.CreatePackageCmd{
+				Workspace: ws.Identity(),
+			}
+		}),
+		dialogCmd(wnd, ws, "Create new string type", presentCreateStringType, uc.CreateStringType, func() flow.CreateStringTypeCmd {
+			return flow.CreateStringTypeCmd{
+				Workspace: ws.Identity(),
+			}
+		}),
+		dialogCmd(wnd, ws, "Create new struct type", presentCreateStructType, uc.CreateStructType, func() flow.CreateStructTypeCmd {
+			return flow.CreateStructTypeCmd{
+				Workspace: ws.Identity(),
+			}
+		}),
+
+		dialogCmd(wnd, ws, "Assign Repository", presentAssignRepository, uc.AssignRepository, func() flow.AssignRepositoryCmd {
+			return flow.AssignRepositoryCmd{
+				Workspace: ws.Identity(),
+			}
+		}),
 
 		ui.HStack(
-			ui.Text(ws.Name()),
+			ui.Text(string(ws.Name())),
 			ui.Spacer(),
 
 			ui.TertiaryButton(func() {
@@ -79,7 +101,7 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 			),
 
 			ui.TertiaryButton(func() {
-
+				presentAssignRepository.Set(true)
 			}).PreIcon(icons.Database).AccessibilityLabel(StrActionCreateRepository.Get(wnd)),
 		).FullWidth().Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1}).Padding(ui.Padding{}.Vertical(ui.L2)),
 

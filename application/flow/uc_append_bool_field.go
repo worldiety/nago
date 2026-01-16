@@ -13,7 +13,7 @@ import (
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-type StringFieldAppended struct {
+type BoolFieldAppended struct {
 	Workspace   WorkspaceID `json:"workspace"`
 	Struct      TypeID      `json:"struct"`
 	Name        Ident       `json:"name"`
@@ -21,25 +21,25 @@ type StringFieldAppended struct {
 	Description string      `json:"description"`
 }
 
-func (e StringFieldAppended) WorkspaceID() WorkspaceID {
+func (e BoolFieldAppended) WorkspaceID() WorkspaceID {
 	return e.Workspace
 }
 
-func (e StringFieldAppended) event() {}
+func (e BoolFieldAppended) event() {}
 
-type AppendStringFieldCmd struct {
+type AppendBoolFieldCmd struct {
 	Workspace   WorkspaceID `visible:"false"`
-	Struct      TypeID      `source:"nago.flow.structs"`
+	Struct      TypeID      `visible:"false" source:"nago.flow.structs"`
 	Name        Ident
 	Description string `lines:"3"`
 }
 
-func (c AppendStringFieldCmd) cmd() {}
+func (c AppendBoolFieldCmd) cmd() {}
 
-func NewAppendStringField(hnd handleCmd[StringFieldAppended]) AppendStringField {
-	return func(subject auth.Subject, cmd AppendStringFieldCmd) (StringFieldAppended, error) {
-		return hnd(subject, cmd.Workspace, func(ws *Workspace) (StringFieldAppended, error) {
-			var zero StringFieldAppended
+func NewAppendBoolField(hnd handleCmd[BoolFieldAppended]) AppendBoolField {
+	return func(subject auth.Subject, cmd AppendBoolFieldCmd) (BoolFieldAppended, error) {
+		return hnd(subject, cmd.Workspace, func(ws *Workspace) (BoolFieldAppended, error) {
+			var zero BoolFieldAppended
 			s, ok := ws.structTypeByID(cmd.Struct)
 			if !ok {
 				return zero, xerrors.WithFields("Validation", "Struct", "Struct not found")
@@ -61,7 +61,7 @@ func NewAppendStringField(hnd handleCmd[StringFieldAppended]) AppendStringField 
 
 			id := data.RandIdent[FieldID]()
 
-			return StringFieldAppended{
+			return BoolFieldAppended{
 				Workspace:   cmd.Workspace,
 				Struct:      cmd.Struct,
 				ID:          id,

@@ -12,7 +12,6 @@ type WorkspaceEvent interface {
 	event()
 }
 
-type WorkspaceCommand[T any] interface {
-	WorkspaceID() WorkspaceID
-	WithWorkspaceID(id WorkspaceID) T
+type WorkspaceCommand interface {
+	cmd()
 }

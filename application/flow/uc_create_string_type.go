@@ -34,14 +34,7 @@ type CreateStringTypeCmd struct {
 	Description string
 }
 
-func (c CreateStringTypeCmd) WorkspaceID() WorkspaceID {
-	return c.Workspace
-}
-
-func (c CreateStringTypeCmd) WithWorkspaceID(id WorkspaceID) CreateStringTypeCmd {
-	c.Workspace = id
-	return c
-}
+func (c CreateStringTypeCmd) cmd() {}
 
 func NewCreateStringType(hnd handleCmd[StringTypeCreated]) CreateStringType {
 	return func(subject auth.Subject, cmd CreateStringTypeCmd) (StringTypeCreated, error) {

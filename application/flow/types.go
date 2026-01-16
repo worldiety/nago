@@ -9,6 +9,9 @@ package flow
 
 import (
 	"fmt"
+	"iter"
+	"slices"
+	"strings"
 
 	"go.wdy.de/nago/application/role"
 )
@@ -94,6 +97,85 @@ func (t *StructType) String() string {
 	return fmt.Sprintf("%s.%s", t.Package().Name(), t.Name())
 }
 
+func (t *StructType) PrimaryKeyFields() iter.Seq[Field] {
+	t.parent.mutex.Lock()
+	defer t.parent.mutex.Unlock()
+
+	return t.primaryKeyFields()
+}
+
+func (t *StructType) DocumentStoreReady() bool {
+	t.parent.mutex.Lock()
+	defer t.parent.mutex.Unlock()
+
+	count := 0
+	for _, f := range t.fields {
+		if f.IsPrimaryKey() {
+			count++
+		}
+	}
+
+	return count == 1
+}
+
+func (t *StructType) primaryKeyFields() iter.Seq[Field] {
+	var tmp []Field
+	for _, field := range t.fields {
+		if field.IsPrimaryKey() {
+			tmp = append(tmp, field)
+		}
+	}
+
+	slices.SortFunc(tmp, func(a, b Field) int {
+		return strings.Compare(string(a.Name()), string(b.Name()))
+	})
+
+	return slices.Values(tmp)
+}
+
+func (t *StructType) Fields() iter.Seq[Field] {
+	t.parent.mutex.Lock()
+	defer t.parent.mutex.Unlock()
+
+	return t.sortedFields()
+}
+
+func (t *StructType) sortedFields() iter.Seq[Field] {
+	var tmp []Field
+	for _, field := range t.fields {
+		tmp = append(tmp, field)
+	}
+
+	slices.SortFunc(tmp, func(a, b Field) int {
+		return strings.Compare(string(a.Name()), string(b.Name()))
+	})
+
+	return slices.Values(tmp)
+}
+
+func (t *StructType) NonPrimaryFields() iter.Seq[Field] {
+	t.parent.mutex.Lock()
+	defer t.parent.mutex.Unlock()
+
+	return t.nonPrimaryFields()
+}
+
+func (t *StructType) nonPrimaryFields() iter.Seq[Field] {
+	var tmp []Field
+	for _, field := range t.fields {
+		if !field.IsPrimaryKey() {
+			tmp = append(tmp, field)
+		}
+	}
+
+	slices.SortFunc(tmp, func(a, b Field) int {
+		return strings.Compare(string(a.Name()), string(b.Name()))
+	})
+
+	return slices.Values(tmp)
+
+}
+
 type RenderOptions struct {
 	Hidden         bool   `json:"hidden,omitempty"`
 	Label          string `json:"label"`
@@ -115,60 +197,6 @@ type RenderOptionsCard struct {
 type RenderOptionsHStack struct {
 	Label   string    `json:"label"`
 	Weights []float64 `json:"weights"`
-}
-
-type FieldID string
-
-type Field interface {
-	Identity() FieldID
-	Name() Ident
-	Description() string
-	field()
-}
-
-type StringField struct {
-	name        Ident
-	description string
-	id          FieldID
-}
-
-func (f *StringField) Identity() FieldID {
-	return f.id
-}
-
-func (f *StringField) Name() Ident {
-	return f.name
-}
-
-func (f *StringField) Description() string {
-	return f.description
-}
-
-func (f *StringField) field() {}
-
-type TypeField struct {
-	id          FieldID
-	name        Ident
-	description string
-	fieldType   Type
-}
-
-func (f *TypeField) Identity() FieldID {
-	return f.id
-}
-
-func (f *TypeField) Name() Ident {
-	return f.name
-}
-
-func (f *TypeField) Description() string {
-	return f.description
-}
-
-func (f *TypeField) field() {}
-
-func (f *TypeField) Type() Type {
-	return f.fieldType
 }
 
 type Driver string
@@ -197,15 +225,4 @@ type Approval struct {
 	Write []role.ID
 
 	// TODO What about groups, do we need to duplicate this?
-}
-
-// TODO how to represent flows and roles and ownerships?
-// TODO how to docusign?
-type Repository struct {
-	Driver Driver
-	Source string // connection string, url or local nago database name
-
-	// TODO
-	Visibility *Visibility
-	Approval   *Approval
 }

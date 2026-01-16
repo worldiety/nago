@@ -86,14 +86,7 @@ type CreatePackageCmd struct {
 	Description string `lines:"3"`
 }
 
-func (c CreatePackageCmd) WorkspaceID() WorkspaceID {
-	return c.Workspace
-}
-
-func (c CreatePackageCmd) WithWorkspaceID(id WorkspaceID) CreatePackageCmd {
-	c.Workspace = id
-	return c
-}
+func (c CreatePackageCmd) cmd() {}
 
 type Package struct {
 	types       map[TypeID]Type

@@ -34,14 +34,7 @@ type CreateStructTypeCmd struct {
 	Description string
 }
 
-func (c CreateStructTypeCmd) WorkspaceID() WorkspaceID {
-	return c.Workspace
-}
-
-func (c CreateStructTypeCmd) WithWorkspaceID(id WorkspaceID) CreateStructTypeCmd {
-	c.Workspace = id
-	return c
-}
+func (c CreateStructTypeCmd) cmd() {}
 
 func NewCreateStructType(hnd handleCmd[StructTypeCreated]) CreateStructType {
 	return func(subject auth.Subject, cmd CreateStructTypeCmd) (StructTypeCreated, error) {

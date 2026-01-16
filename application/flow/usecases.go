@@ -29,6 +29,8 @@ type CreateStructType func(subject auth.Subject, cmd CreateStructTypeCmd) (Struc
 
 type AppendStringField func(subject auth.Subject, cmd AppendStringFieldCmd) (StringFieldAppended, error)
 
+type AppendBoolField func(subject auth.Subject, cmd AppendBoolFieldCmd) (BoolFieldAppended, error)
+
 type UseCases struct {
 	FindWorkspaces    FindWorkspaces
 	LoadWorkspace     LoadWorkspace
@@ -37,6 +39,8 @@ type UseCases struct {
 	CreateStringType  CreateStringType
 	CreateStructType  CreateStructType
 	AppendStringField AppendStringField
+	AppendBoolField   AppendBoolField
+	AssignRepository  AssignRepository
 }
 
 func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWorkspace evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
@@ -52,5 +56,7 @@ func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWo
 		CreateStringType:  NewCreateStringType(newHandleCmd[StringTypeCreated](repoName, loadFn, storeEvent)),
 		CreateStructType:  NewCreateStructType(newHandleCmd[StructTypeCreated](repoName, loadFn, storeEvent)),
 		AppendStringField: NewAppendStringField(newHandleCmd[StringFieldAppended](repoName, loadFn, storeEvent)),
+		AppendBoolField:   NewAppendBoolField(newHandleCmd[BoolFieldAppended](repoName, loadFn, storeEvent)),
+		AssignRepository:  NewAssignRepository(newHandleCmd[RepositoryAssigned](repoName, loadFn, storeEvent)),
 	}
 }
