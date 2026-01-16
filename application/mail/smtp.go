@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"go.wdy.de/nago/application/secret"
 	"mime"
 	"net"
 	"net/mail"
@@ -19,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.wdy.de/nago/application/secret"
 )
 
 func send(credentials secret.SMTP, m Mail) error {
@@ -55,7 +56,11 @@ func send(credentials secret.SMTP, m Mail) error {
 		return err
 	}
 	if len(m.From.Address) == 0 {
-		m.From.Address = credentials.Username
+		if len(credentials.SenderAddress) != 0 {
+			m.From.Address = credentials.SenderAddress
+		} else {
+			m.From.Address = credentials.Username
+		}
 	}
 
 	// the from address is usually important for authentication
