@@ -107,6 +107,10 @@ type BoolField struct {
 }
 
 func (f *BoolField) SetPrimaryKey(b bool) {
+	if !b {
+		return
+	}
+
 	panic("bool fields cannot be primary keys")
 }
 

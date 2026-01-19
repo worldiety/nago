@@ -10,7 +10,7 @@ package uiflow
 import (
 	"iter"
 	"reflect"
-	
+
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
@@ -46,12 +46,33 @@ func dialogCmd[T flow.WorkspaceCommand, Evt flow.WorkspaceEvent](wnd core.Window
 		}
 	})))
 
+	ctx = core.WithContext(ctx, core.ContextValue("nago.flow.types", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[flow.Type, error] {
+		return func(yield func(flow.Type, error) bool) {
+			for pkg := range ws.Types() {
+				if !yield(pkg, nil) {
+					return
+				}
+			}
+		}
+	})))
+
 	ctx = core.WithContext(ctx, core.ContextValue("nago.flow.pkstructs", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.StructType, error] {
 		return func(yield func(*flow.StructType, error) bool) {
 			for t := range ws.StructTypes() {
 				if !t.DocumentStoreReady() {
 					continue
 				}
+
+				if !yield(t, nil) {
+					return
+				}
+			}
+		}
+	})))
+
+	ctx = core.WithContext(ctx, core.ContextValue("nago.flow.repositories", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[*flow.Repository, error] {
+		return func(yield func(*flow.Repository, error) bool) {
+			for t := range ws.Repositories() {
 
 				if !yield(t, nil) {
 					return

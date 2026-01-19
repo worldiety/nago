@@ -72,8 +72,12 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		cfgevs.Schema[flow.StructTypeCreated, flow.WorkspaceEvent]("StructTypeCreated"),
 		cfgevs.Schema[flow.StringFieldAppended, flow.WorkspaceEvent]("StringFieldAppended"),
 		cfgevs.Schema[flow.BoolFieldAppended, flow.WorkspaceEvent]("BoolFieldAppended"),
+		cfgevs.Schema[flow.TypeFieldAppended, flow.WorkspaceEvent]("TypeFieldAppended"),
 		cfgevs.Schema[flow.RepositoryAssigned, flow.WorkspaceEvent]("RepositoryAssigned"),
 		cfgevs.Schema[flow.PrimaryKeySelected, flow.WorkspaceEvent]("PrimaryKeySelected"),
+		cfgevs.Schema[flow.FormCreated, flow.WorkspaceEvent]("FormCreated"),
+		cfgevs.Schema[flow.StringEnumCaseAdded, flow.WorkspaceEvent]("StringEnumCaseAdded"),
+
 		cfgevs.Index[flow.WorkspaceID, flow.WorkspaceEvent](func(e evs.Envelope[flow.WorkspaceEvent]) (flow.WorkspaceID, error) {
 			return e.Data.WorkspaceID(), nil
 		}, func(ctx cfgevs.IndexContext[flow.WorkspaceID, flow.WorkspaceEvent]) error {

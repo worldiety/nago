@@ -51,6 +51,10 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 		tree.Reset()
 	})
 
+	presentCreateForm := core.AutoState[bool](wnd).Observe(func(newValue bool) {
+		tree.Reset()
+	})
+
 	selected := core.AutoState[any](wnd).Observe(func(newValue any) {
 
 	})
@@ -79,6 +83,12 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 			}
 		}),
 
+		dialogCmd(wnd, ws, "Create new Form", presentCreateForm, uc.CreateForm, func() flow.CreateFormCmd {
+			return flow.CreateFormCmd{
+				Workspace: ws.Identity(),
+			}
+		}),
+
 		ui.HStack(
 			ui.Text(string(ws.Name())),
 			ui.Spacer(),
@@ -103,6 +113,10 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 			ui.TertiaryButton(func() {
 				presentAssignRepository.Set(true)
 			}).PreIcon(icons.Database).AccessibilityLabel(StrActionCreateRepository.Get(wnd)),
+
+			ui.TertiaryButton(func() {
+				presentCreateForm.Set(true)
+			}).PreIcon(icons.CreditCardPlus).AccessibilityLabel(StrActionCreateForm.Get(wnd)),
 		).FullWidth().Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1}).Padding(ui.Padding{}.Vertical(ui.L2)),
 
 		ui.HStack(
@@ -139,6 +153,8 @@ func renderSelected(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, selec
 		return viewTypeString(wnd, uc, ws, t)
 	case *flow.StructType:
 		return viewTypeStruct(wnd, uc, ws, t)
+	case *flow.Form:
+		return viewTypeForm(wnd, uc, ws, t)
 	default:
 		return ui.Text(fmt.Sprintf("%T", selected))
 	}

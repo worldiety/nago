@@ -41,6 +41,10 @@ type UseCases struct {
 	AppendStringField AppendStringField
 	AppendBoolField   AppendBoolField
 	AssignRepository  AssignRepository
+	SelectPrimaryKey  SelectPrimaryKey
+	CreateForm        CreateForm
+	AddStringEnumCase AddStringEnumCase
+	AppendTypeField   AppendTypeField
 }
 
 func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWorkspace evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
@@ -58,5 +62,9 @@ func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWo
 		AppendStringField: NewAppendStringField(newHandleCmd[StringFieldAppended](repoName, loadFn, storeEvent)),
 		AppendBoolField:   NewAppendBoolField(newHandleCmd[BoolFieldAppended](repoName, loadFn, storeEvent)),
 		AssignRepository:  NewAssignRepository(newHandleCmd[RepositoryAssigned](repoName, loadFn, storeEvent)),
+		SelectPrimaryKey:  NewSelectPrimaryKey(newHandleCmd[PrimaryKeySelected](repoName, loadFn, storeEvent)),
+		CreateForm:        NewCreateForm(newHandleCmd[FormCreated](repoName, loadFn, storeEvent)),
+		AddStringEnumCase: NewAddStringEnumCase(newHandleCmd[StringEnumCaseAdded](repoName, loadFn, storeEvent)),
+		AppendTypeField:   NewAppendTypeField(newHandleCmd[TypeFieldAppended](repoName, loadFn, storeEvent)),
 	}
 }

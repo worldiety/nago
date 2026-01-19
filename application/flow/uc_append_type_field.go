@@ -13,33 +13,37 @@ import (
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-type StringFieldAppended struct {
+type TypeFieldAppended struct {
 	Workspace   WorkspaceID `json:"workspace"`
 	Struct      TypeID      `json:"struct"`
 	Name        Ident       `json:"name"`
 	ID          FieldID     `json:"id"`
+	Type        TypeID      `json:"type"`
 	Description string      `json:"description"`
 }
 
-func (e StringFieldAppended) WorkspaceID() WorkspaceID {
+func (e TypeFieldAppended) WorkspaceID() WorkspaceID {
 	return e.Workspace
 }
 
-func (e StringFieldAppended) event() {}
+func (e TypeFieldAppended) event() {}
 
-type AppendStringFieldCmd struct {
+type AppendTypeFieldCmd struct {
 	Workspace   WorkspaceID `visible:"false"`
 	Struct      TypeID      `visible:"false" source:"nago.flow.structs"`
+	Type        TypeID      `source:"nago.flow.types"`
 	Name        Ident
 	Description string `lines:"3"`
 }
 
-func (c AppendStringFieldCmd) cmd() {}
+func (c AppendTypeFieldCmd) cmd() {}
 
-func NewAppendStringField(hnd handleCmd[StringFieldAppended]) AppendStringField {
-	return func(subject auth.Subject, cmd AppendStringFieldCmd) (StringFieldAppended, error) {
-		return hnd(subject, cmd.Workspace, func(ws *Workspace) (StringFieldAppended, error) {
-			var zero StringFieldAppended
+type AppendTypeField func(subject auth.Subject, cmd AppendTypeFieldCmd) (TypeFieldAppended, error)
+
+func NewAppendTypeField(hnd handleCmd[TypeFieldAppended]) AppendTypeField {
+	return func(subject auth.Subject, cmd AppendTypeFieldCmd) (TypeFieldAppended, error) {
+		return hnd(subject, cmd.Workspace, func(ws *Workspace) (TypeFieldAppended, error) {
+			var zero TypeFieldAppended
 			s, ok := ws.structTypeByID(cmd.Struct)
 			if !ok {
 				return zero, xerrors.WithFields("Validation", "Struct", "Struct not found")
@@ -59,14 +63,19 @@ func NewAppendStringField(hnd handleCmd[StringFieldAppended]) AppendStringField 
 				}
 			}
 
+			if _, ok := ws.typeByID(cmd.Type); !ok {
+				return zero, xerrors.WithFields("Validation", "Type", "Type not found")
+			}
+
 			id := data.RandIdent[FieldID]()
 
-			return StringFieldAppended{
+			return TypeFieldAppended{
 				Workspace:   cmd.Workspace,
 				Struct:      cmd.Struct,
 				ID:          id,
 				Name:        cmd.Name,
 				Description: cmd.Description,
+				Type:        cmd.Type,
 			}, nil
 		})
 	}

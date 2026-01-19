@@ -8,13 +8,13 @@
 package uiflow
 
 import (
-	"log"
 	"slices"
 
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/colorpicker"
 )
 
@@ -22,6 +22,10 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 
 	addStringFieldPresented := core.AutoState[bool](wnd)
 	addBoolFieldPresented := core.AutoState[bool](wnd)
+	addTypeFieldPresented := core.AutoState[bool](wnd)
+	selectedField := core.AutoState[flow.Field](wnd)
+
+	selectedColor := ui.ColorCardFooter
 
 	return ui.HStack(
 		dialogCmd(wnd, ws, "Add String field", addStringFieldPresented, uc.AppendStringField, func() flow.AppendStringFieldCmd {
@@ -37,6 +41,13 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 			}
 		}),
 
+		dialogCmd(wnd, ws, "Add custom type field", addTypeFieldPresented, uc.AppendTypeField, func() flow.AppendTypeFieldCmd {
+			return flow.AppendTypeFieldCmd{
+				Workspace: ws.Identity(),
+				Struct:    m.Identity(),
+			}
+		}),
+
 		ui.VStack(
 			ui.VStack(
 
@@ -47,20 +58,35 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 						ui.Grid(
 							slices.Collect(func(yield func(cell ui.TGridCell) bool) {
 								for field := range m.PrimaryKeyFields() {
-									yield(ui.GridCell(ui.Text(string(field.Name())).Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})))
-									yield(ui.GridCell(ui.Text(field.Typename()).Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})))
-									yield(ui.GridCell(ui.Text("")))
+									selected := selectedField.Get() != nil && field.Identity() == selectedField.Get().Identity()
+									var color ui.Color
+									if selected {
+										color = selectedColor
+									}
+
+									yield(ui.GridCell(hoverWrap(ui.Text(string(field.Name())), func() {
+										selectedField.Set(field)
+									}).Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})).BackgroundColor(color))
+									yield(ui.GridCell(viewTypename(field).Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})).BackgroundColor(color))
+									yield(ui.GridCell(ui.Text(" ").Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})).BackgroundColor(color))
 								}
 							})...,
 						).Append(
 							slices.Collect(func(yield func(cell ui.TGridCell) bool) {
 								for field := range m.NonPrimaryFields() {
-									yield(ui.GridCell(hoverWrap(ui.Text(string(field.Name())), func() { log.Println("clicked", field.Identity()) })))
-									yield(ui.GridCell(viewTypename(field)))
+									selected := selectedField.Get() != nil && field.Identity() == selectedField.Get().Identity()
+									var color ui.Color
+									if selected {
+										color = selectedColor
+									}
+									yield(ui.GridCell(hoverWrap(ui.Text(string(field.Name())), func() {
+										selectedField.Set(field)
+									})).BackgroundColor(color))
+									yield(ui.GridCell(viewTypename(field)).BackgroundColor(color))
 									if field.Description() != "" {
-										yield(ui.GridCell(ui.HStack(ui.ImageIcon(icons.MessageCaption).AccessibilityLabel(field.Description())).TextColor(ui.ColorIconsMuted).Alignment(ui.Trailing)))
+										yield(ui.GridCell(ui.HStack(ui.ImageIcon(icons.MessageCaption).AccessibilityLabel(field.Description())).TextColor(ui.ColorIconsMuted).Alignment(ui.Trailing)).BackgroundColor(color))
 									} else {
-										yield(ui.GridCell(ui.Text(" ")))
+										yield(ui.GridCell(ui.Text(" ")).BackgroundColor(color))
 									}
 								}
 							})...,
@@ -92,8 +118,31 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 					ui.MenuItem(func() {
 						addBoolFieldPresented.Set(true)
 					}, ui.Text("Add Bool field")),
+					ui.MenuItem(func() {
+						addTypeFieldPresented.Set(true)
+					}, ui.Text("Add Type field")),
 				),
 			),
+
+			ui.IfFunc(selectedField.Get() != nil, func() core.View {
+				return ui.VStack(
+					ui.HLine(),
+					ui.Text("Field "+string(selectedField.Get().Name())),
+					ui.IfFunc(isPrimaryCandidate(selectedField.Get()), func() core.View {
+						return ui.SecondaryButton(func() {
+							_, err := uc.SelectPrimaryKey(wnd.Subject(), flow.SelectPrimaryKeyCmd{
+								Workspace: ws.Identity(),
+								Struct:    m.Identity(),
+								Field:     selectedField.Get().Identity(),
+							})
+							if err != nil {
+								alert.ShowBannerError(wnd, err)
+								return
+							}
+						}).Title("Set as Primary Key")
+					}),
+				).FullWidth()
+			}),
 		).
 			Alignment(ui.Top).
 			Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
@@ -101,7 +150,19 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 
 }
 
-func viewTypename(field flow.Field) core.View {
+func fieldDescView(field flow.Field) core.View {
+	if field.Description() != "" {
+		return ui.HStack(ui.ImageIcon(icons.MessageCaption).AccessibilityLabel(field.Description())).TextColor(ui.ColorIconsMuted).Alignment(ui.Trailing)
+	}
+	return ui.Text(" ")
+}
+
+func isPrimaryCandidate(field flow.Field) bool {
+	_, strType := field.(*flow.StringField)
+	return !field.IsPrimaryKey() && strType
+}
+
+func viewTypename(field flow.Field) ui.DecoredView {
 	var color ui.Color
 	switch field.Typename() {
 	case "string":
@@ -116,6 +177,6 @@ func viewTypename(field flow.Field) core.View {
 		Padding(ui.Padding{Left: ui.L8})
 }
 
-func hoverWrap(view core.View, action func()) core.View {
+func hoverWrap(view core.View, action func()) ui.THStack {
 	return ui.HStack(view).Alignment(ui.Leading).HoveredBackgroundColor(ui.I1).Action(action)
 }

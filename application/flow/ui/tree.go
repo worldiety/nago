@@ -52,10 +52,26 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 			{
 				Label:      "Repositories",
 				Expandable: true,
+				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
+					for p := range ws.Repositories() {
+						yield(&treeview.Node[any]{
+							Label: string(p.Identity()),
+							Data:  p,
+						})
+					}
+				}),
 			},
 			{
 				Label:      "Forms",
 				Expandable: true,
+				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
+					for p := range ws.Forms() {
+						yield(&treeview.Node[any]{
+							Label: p.Name(),
+							Data:  p,
+						})
+					}
+				}),
 			},
 			{
 				Label:      "Validations",

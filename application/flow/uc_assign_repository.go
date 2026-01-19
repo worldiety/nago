@@ -77,12 +77,16 @@ func NewAssignRepository(hnd handleCmd[RepositoryAssigned]) AssignRepository {
 				return zero, xerrors.WithFields("Validation", "Repository", err.Error())
 			}
 
+			if _, ok := ws.repositoryByID(cmd.Repository); ok {
+				return zero, xerrors.WithFields("Validation", "Repository", "Repository already exists")
+			}
+
 			s, ok := ws.structTypeByID(cmd.Struct)
 			if !ok {
 				return zero, xerrors.WithFields("Validation", "Struct", "Struct not found")
 			}
 
-			if v := slices.Collect(s.PrimaryKeyFields()); len(v) != 1 {
+			if v := slices.Collect(s.primaryKeyFields()); len(v) != 1 {
 				return zero, xerrors.WithFields("Validation", "Struct", "Struct must have exactly one primary key field")
 			}
 

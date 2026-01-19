@@ -66,7 +66,9 @@ func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry
 
 		discriminator, ok := typeRegistry.Get(reflect.TypeOf(evt))
 		if !ok {
-			return zero, fmt.Errorf("type %T not found in type registry. Use eventsourcing.Register[T](name) to declare it", evt)
+			baseType := reflect.TypeFor[Evt]().String()
+			// cfgevs.Schema[flow.PrimaryKeySelected, flow.WorkspaceEvent]("PrimaryKeySelected")
+			return zero, fmt.Errorf("type %T not found in type registry. Use cfgevs.Schema[%T, %s](\"My Alias\") to declare it", evt, evt, baseType)
 		}
 
 		payloadBuf, err := json.Marshal(evt)

@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/application/evs"
+	"go.wdy.de/nago/pkg/xslices"
 )
 
 // Workspace is the aggregate root for all types and packages within a workspace.
@@ -23,6 +24,7 @@ type Workspace struct {
 	id          WorkspaceID
 	packages    map[PackageID]*Package
 	repos       map[RepositoryID]*Repository
+	forms       map[FormID]*Form
 	name        Ident
 	description string
 	mutex       sync.Mutex
@@ -50,6 +52,7 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 		ws.id = evt.Workspace
 		ws.packages = map[PackageID]*Package{}
 		ws.repos = map[RepositoryID]*Repository{}
+		ws.forms = map[FormID]*Form{}
 		ws.name = evt.Name
 		ws.description = evt.Description
 	case PackageCreated:
@@ -68,11 +71,15 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			return fmt.Errorf("package %s not found", evt.Package)
 		}
 
-		pkg.types[evt.ID] = &StringType{
+		t := &StringType{
+			parent:      pkg,
 			name:        evt.Name,
 			id:          evt.ID,
 			description: evt.Description,
 		}
+		t.values.Store(&xslices.Slice[*StringEnumCase]{})
+
+		pkg.types[evt.ID] = t
 	case StructTypeCreated:
 		pkg := ws.packages[evt.Package]
 		if pkg == nil {
@@ -107,6 +114,24 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			description: evt.Description,
 			id:          evt.ID,
 		})
+
+	case TypeFieldAppended:
+		st, ok := ws.structTypeByID(evt.Struct)
+		if !ok {
+			return fmt.Errorf("struct %s not found", evt.Struct)
+		}
+
+		t, ok := ws.typeByID(evt.Type)
+		if !ok {
+			return fmt.Errorf("type %s not found", evt.Type)
+		}
+
+		st.fields = append(st.fields, &TypeField{
+			name:        evt.Name,
+			description: evt.Description,
+			id:          evt.ID,
+			fieldType:   t,
+		})
 	case RepositoryAssigned:
 		st, ok := ws.structTypeByID(evt.Struct)
 		if !ok {
@@ -136,11 +161,47 @@ func (ws *Workspace) apply(evt WorkspaceEvent) error {
 			}
 		}
 
+	case FormCreated:
+		form := &Form{
+			parent: ws,
+			id:     evt.ID,
+		}
+
+		form.name.Store(&evt.Name)
+		form.description.Store(&evt.Description)
+		ws.forms[evt.ID] = form
+
+	case StringEnumCaseAdded:
+		st, ok := ws.stringTypeByID(evt.String)
+		if !ok {
+			return fmt.Errorf("string %s not found", evt.String)
+		}
+
+		eCase := &StringEnumCase{
+			name: evt.Name,
+		}
+		eCase.value.Store(&evt.Value)
+		eCase.description.Store(&evt.Description)
+
+		slice := st.values.Load().Append(eCase)
+		st.values.Store(&slice)
+
 	default:
 		return fmt.Errorf("unknown event type: %T", evt)
 	}
 
 	return nil
+}
+
+func (ws *Workspace) Forms() iter.Seq[*Form] {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
+	tmp := slices.SortedFunc(maps.Values(ws.forms), func(a, b *Form) int {
+		return strings.Compare(string(a.id), string(b.id))
+	})
+
+	return slices.Values(tmp)
 }
 
 func (ws *Workspace) Repositories() iter.Seq[*Repository] {
@@ -206,6 +267,19 @@ func (ws *Workspace) structTypeByID(id TypeID) (*StructType, bool) {
 	return nil, false
 }
 
+func (ws *Workspace) stringTypeByID(id TypeID) (*StringType, bool) {
+
+	for _, p := range ws.packages {
+		if s, ok := p.types[id]; ok {
+			if s, ok := s.(*StringType); ok {
+				return s, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
 func (ws *Workspace) Packages() iter.Seq[*Package] {
 	ws.mutex.Lock()
 	defer ws.mutex.Unlock()
@@ -220,6 +294,18 @@ func (ws *Workspace) Packages() iter.Seq[*Package] {
 	})
 
 	return slices.Values(tmp)
+}
+
+func (ws *Workspace) typeByID(id TypeID) (Type, bool) {
+	for _, p := range ws.packages {
+		for _, t := range p.types {
+			if t.Identity() == id {
+				return t, true
+			}
+		}
+	}
+
+	return nil, false
 }
 
 func (ws *Workspace) Types() iter.Seq[Type] {

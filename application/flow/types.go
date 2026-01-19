@@ -12,8 +12,10 @@ import (
 	"iter"
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/pkg/xslices"
 )
 
 type Kind int
@@ -46,11 +48,34 @@ type Type interface {
 	Description() string
 }
 
+type StringEnumCase struct {
+	name        Ident
+	value       atomic.Pointer[string]
+	description atomic.Pointer[string]
+}
+
+func (e *StringEnumCase) Name() Ident {
+	return e.name
+}
+
+func (e *StringEnumCase) Value() string {
+	return *e.value.Load()
+}
+
+func (e *StringEnumCase) Description() string {
+	return *e.description.Load()
+}
+
 type StringType struct {
 	parent      *Package
 	name        Ident
 	id          TypeID
 	description string
+	values      atomic.Pointer[xslices.Slice[*StringEnumCase]]
+}
+
+func (t *StringType) Values() iter.Seq[*StringEnumCase] {
+	return t.values.Load().All()
 }
 
 func (t *StringType) Description() string {
@@ -67,6 +92,10 @@ func (t *StringType) Name() Ident {
 
 func (t *StringType) Identity() TypeID {
 	return t.id
+}
+
+func (t *StringType) String() string {
+	return fmt.Sprintf("%s.%s", t.Package().Name(), t.Name())
 }
 
 type StructType struct {

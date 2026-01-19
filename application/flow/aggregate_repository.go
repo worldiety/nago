@@ -20,3 +20,7 @@ func (r *Repository) Identity() RepositoryID {
 func (r *Repository) Type() *StructType {
 	return r.structType
 }
+
+func (r *Repository) String() string {
+	return string(r.id)
+}
