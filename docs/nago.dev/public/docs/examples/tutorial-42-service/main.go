@@ -10,22 +10,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/worldiety/enum"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/scheduler"
 	cfgscheduler "go.wdy.de/nago/application/scheduler/cfg"
-	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
-
-var _ = enum.Variant[secret.Credentials, secret.BookStack]()
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {

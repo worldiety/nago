@@ -18,7 +18,8 @@ Use it for controls, which do not cause an immediate effect. See also [Toggle].
 |--------| ------------|
 | `Disabled(disabled bool)` | Disabled enables or disables user interaction with the checkbox. |
 | `ID(id string)` | ID assigns a unique identifier to the checkbox, useful for testing or referencing. |
-| `InputChecked(input *core.State[bool])` | InputChecked binds the checkbox to an external boolean state, allowing it to be controlled from outside the component. |
+| `InputChecked(input *core.State[bool])` | Deprecated: use InputValue InputChecked binds the checkbox to an external boolean state, allowing it to be controlled from outside the component. |
+| `InputValue(input *core.State[bool])` | InputValue binds the checkbox to an external boolean state, allowing it to be controlled from outside the component. |
 | `Visible(v bool)` | Visible controls the visibility of the checkbox; setting false hides it. |
 ---
 

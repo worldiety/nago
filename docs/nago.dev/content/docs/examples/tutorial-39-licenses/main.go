@@ -9,21 +9,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/worldiety/enum"
+	"time"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/license"
-	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 var (
-	_ = enum.Variant[secret.Credentials, secret.Jira]()
-	_ = enum.Variant[secret.Credentials, secret.BookStack]()
+// _ = enum.Variant[secret.Credentials, secret.Jira]()
+// _ = enum.Variant[secret.Credentials, secret.BookStack]()
 )
 
 var licensePucBasic = license.UserLicense{ID: "de.worldiety.puc.license.user.chat", Name: "PUC Basic License", MaxUsers: 10, Url: "https://www.worldiety.de/loesungen/puc"}

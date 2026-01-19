@@ -78,25 +78,28 @@ const styles = computed<string>(() => {
 
 	return styles.join(';');
 });
+
+const textValue = computed<string>(() => {
+	if (!props.ui.value) {
+		return '';
+	}
+
+	return props.ui.value;
+});
 </script>
 
 <template>
-	<span
-		v-if="!ui.invisible && !ui.labelFor && ui.value"
-		:style="styles"
-		:title="props.ui.accessibilityLabel"
-		@click="onClick"
-	>
-		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
+	<span v-if="!ui.invisible && !ui.labelFor" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
+		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
 
 	<label
-		v-else-if="!ui.invisible && ui.value"
+		v-else-if="!ui.invisible"
 		:style="styles"
 		:title="props.ui.accessibilityLabel"
 		:for="ui.labelFor"
 		@click="onClick"
 	>
-		{{ props.ui.value }}<br v-if="!ui.invisible && ui.lineBreak" />
+		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</label>
 </template>

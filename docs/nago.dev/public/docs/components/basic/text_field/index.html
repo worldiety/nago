@@ -22,7 +22,7 @@ Constructors FloatField FloatField is just a TextField using the according keybo
   <meta itemprop="name" content="Text Field">
   <meta itemprop="description" content="This component provides a text input field with optional supporting and error text, leading/trailing views (e. g. , icons), debounce settings, styling, and keyboard options. It supports both controlled (via State) and uncontrolled (via value) modes. It is typically used in forms, search bars, and other user input scenarios.
 Constructors FloatField FloatField is just a TextField using the according keyboard hints. Remember, that these IME hints are no guarantees and a user may enter non-integer stuff anyway. However, any incompatible inputs are ignored and the given int-state is just a kind of view on top of the string state. See also [FloatFieldValue] if you just want to display a non-stateful float value.">
-  <meta itemprop="wordCount" content="761">
+  <meta itemprop="wordCount" content="810">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Text Field">
   <meta name="twitter:description" content="This component provides a text input field with optional supporting and error text, leading/trailing views (e. g. , icons), debounce settings, styling, and keyboard options. It supports both controlled (via State) and uncontrolled (via value) modes. It is typically used in forms, search bars, and other user input scenarios.
@@ -3552,8 +3552,24 @@ By default, it is single-line and uncontrolled until InputValue is set.</p>
           <td>Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created. This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand.</td>
       </tr>
       <tr>
+          <td><code>Max(max float64)</code></td>
+          <td>Max defines the max value of number fields</td>
+      </tr>
+      <tr>
+          <td><code>Min(min float64)</code></td>
+          <td>Min defines the min value of number fields</td>
+      </tr>
+      <tr>
           <td><code>Padding(padding Padding)</code></td>
           <td>Padding is a placeholder implementation.</td>
+      </tr>
+      <tr>
+          <td><code>ShowZero(showZero bool)</code></td>
+          <td>ShowZero defines wheter the &lsquo;0&rsquo; character should be displayed for empty/zero values in number fields.</td>
+      </tr>
+      <tr>
+          <td><code>Step(step int)</code></td>
+          <td>Step defines the step size to increase/decrease number values stepwise</td>
       </tr>
       <tr>
           <td><code>Style(s TextFieldStyle)</code></td>

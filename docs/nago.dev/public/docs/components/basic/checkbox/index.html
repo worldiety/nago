@@ -22,7 +22,7 @@ Constructors Checkbox Checkbox represents a user interface element which spans a
   <meta itemprop="name" content="Checkbox">
   <meta itemprop="description" content="It allows users to toggle between checked and unchecked states, optionally binding to external state. The checkbox can be disabled, hidden, or assigned a unique identifier for reference.
 Constructors Checkbox Checkbox represents a user interface element which spans a visible area to click or tap from the user. Use it for controls, which do not cause an immediate effect. See also [Toggle].">
-  <meta itemprop="wordCount" content="124">
+  <meta itemprop="wordCount" content="147">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Checkbox">
   <meta name="twitter:description" content="It allows users to toggle between checked and unchecked states, optionally binding to external state. The checkbox can be disabled, hidden, or assigned a unique identifier for reference.
@@ -3464,7 +3464,11 @@ Use it for controls, which do not cause an immediate effect. See also [Toggle].<
       </tr>
       <tr>
           <td><code>InputChecked(input *core.State[bool])</code></td>
-          <td>InputChecked binds the checkbox to an external boolean state, allowing it to be controlled from outside the component.</td>
+          <td>Deprecated: use InputValue InputChecked binds the checkbox to an external boolean state, allowing it to be controlled from outside the component.</td>
+      </tr>
+      <tr>
+          <td><code>InputValue(input *core.State[bool])</code></td>
+          <td>InputValue binds the checkbox to an external boolean state, allowing it to be controlled from outside the component.</td>
       </tr>
       <tr>
           <td><code>Visible(v bool)</code></td>

@@ -9,13 +9,15 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"slices"
+	"time"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
-	"io"
-	"time"
 )
 
 func main() {
@@ -55,6 +57,12 @@ func main() {
 						},
 					})
 				}).Title("Select Files"),
+			).Append(
+				slices.Collect(func(yield func(core.View) bool) {
+					for i := range 50 {
+						yield(Text(fmt.Sprintf("Line %d", i)))
+					}
+				})...,
 			).Frame(Frame{}.MatchScreen())
 		})
 	}).Run()

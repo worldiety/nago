@@ -22,7 +22,7 @@ Constructors Grid Grid creates a new grid containing the given cells. For simple
   <meta itemprop="name" content="Grid">
   <meta itemprop="description" content="It arranges its children into a grid of rows and columns. The grid supports flexible sizing, spacing, alignment, borders, accessibility labels, and visibility control. For complex cases (e. g. , overlapping cells), row/column boundaries must be explicitly defined.
 Constructors Grid Grid creates a new grid containing the given cells. For simple cases, only rows or columns need to be set. For complex layouts (like overlapping), rows, columns, and explicit start/end positions must be defined.">
-  <meta itemprop="wordCount" content="376">
+  <meta itemprop="wordCount" content="387">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Grid">
   <meta name="twitter:description" content="It arranges its children into a grid of rows and columns. The grid supports flexible sizing, spacing, alignment, borders, accessibility labels, and visibility control. For complex cases (e. g. , overlapping cells), row/column boundaries must be explicitly defined.
@@ -3505,6 +3505,10 @@ and explicit start/end positions must be defined.</p>
       <tr>
           <td><code>Gap(g Length)</code></td>
           <td>Gap sets RowGap and ColGap equally.</td>
+      </tr>
+      <tr>
+          <td><code>Heights(rowHeights ...)</code></td>
+          <td>Heights are optional row heights from top to bottom.</td>
       </tr>
       <tr>
           <td><code>Padding(padding Padding)</code></td>
