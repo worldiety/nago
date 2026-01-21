@@ -98,6 +98,6 @@ const clazz = computed<string>(() => {
 <template>
 	<!-- grid -->
 	<div :class="clazz" :style="style">
-		<ui-grid-cell v-for="cell in props.ui.cells?.value" :ui="cell" />
+		<ui-grid-cell v-for="cell in props.ui.cells?.value" :key="JSON.stringify(cell)" :ui="cell" />
 	</div>
 </template>
