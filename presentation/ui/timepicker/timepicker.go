@@ -535,6 +535,11 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))
 
+	labelGap := ui.L0
+	if len(strings.TrimSpace(c.label)) > 0 {
+		labelGap = ui.L4
+	}
+
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
 			ui.Text(c.label).Font(ui.Font{Size: ui.L14}),
@@ -549,7 +554,7 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
 		),
 	).Alignment(ui.Leading).
-		Gap(ui.L4).
+		Gap(labelGap).
 		Frame(c.frame).
 		Render(ctx)
 }
