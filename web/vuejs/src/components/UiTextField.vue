@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -420,6 +420,7 @@ function debouncedInput() {
 }
 
 onMounted(resizeTextarea);
+watch(inputValue, () => nextTick(resizeTextarea));
 
 // TODO check :id="idPrefix + props.ui.id.toString()"
 </script>
