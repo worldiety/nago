@@ -29,13 +29,18 @@ func (c Color) isAbsolute() bool {
 
 // WithTransparency updates the alpha value part of the color (0-100), where 25% transparent means 75% opaque.
 func (c Color) WithTransparency(a int8) Color {
-	if len(c) == 9 {
-		c = c[:len(c)-2]
+	// recalculate into 0-255 and invert
+	ai := 255 - int(min(max(float64(a)/100*255, 0), 255))
+
+	if c.isAbsolute() {
+		if len(c) == 9 {
+			co := c[:len(c)-2]
+
+			return Color(fmt.Sprintf("%s%02x", string(co), ai))
+		}
 	}
 
-	// recalculate into 0-255 and invert
-	ai := 255 - int(min(max((float64(a)/100*255), 0), 255))
-	return Color(fmt.Sprintf("%s%02x", string(c), ai))
+	return Color(fmt.Sprintf("%s/%d", string(c), ai))
 }
 
 // WithChromaAndTone applies the given chroma and tone values on the actual hue value using the HCT colorspace.
