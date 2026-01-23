@@ -27,10 +27,6 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 		option.Must(cfginspector.Enable(cfg))
 
-		option.Must(cfgflow.Enable(cfg, cfgflow.Options{}.WithOptions(
-			cfgflow.FieldType(cfgflow.Text{}),
-			cfgflow.FieldType(cfgflow.TextArea{}),
-			cfgflow.FieldType(cfgflow.Checkbox{}),
-		)))
+		option.Must(cfgflow.Enable(cfg, cfgflow.Options{}))
 	}).Run()
 }

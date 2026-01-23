@@ -8,33 +8,28 @@
 package flow
 
 import (
-	"sync"
+	"errors"
+	"os"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/evs"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 )
 
-func NewLoadWorkspace(mutex *sync.Mutex, repoName string, replay evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], cache map[WorkspaceID]*Workspace) LoadWorkspace {
+func NewLoadWorkspace(repoName string, handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID]) LoadWorkspace {
 	return func(subject auth.Subject, id WorkspaceID) (option.Opt[*Workspace], error) {
 		if err := subject.AuditResource(repoName, string(id), PermFindWorkspaces); err != nil {
 			return option.None[*Workspace](), err
 		}
 
-		mutex.Lock()
-		defer mutex.Unlock()
+		ws, err := handler.Aggregate(id)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return option.None[*Workspace](), nil
+			}
 
-		if ws, ok := cache[id]; ok {
-			return option.Some(ws), nil
-		}
-
-		ws := &Workspace{valid: true}
-		if err := replay(user.SU(), id, ws.applyEnvelope, evs.ReplayOptions{}); err != nil {
 			return option.None[*Workspace](), err
 		}
-
-		cache[id] = ws
 
 		return option.Some(ws), nil
 	}

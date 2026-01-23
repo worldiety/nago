@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"iter"
 	"slices"
+
+	"go.wdy.de/nago/pkg/cloner"
 )
 
 // Slice is an immutable view into a conventional slice. Note, that only variables used for unmarshalling
@@ -96,4 +98,13 @@ func Contains[T comparable](s Slice[T], v T) bool {
 	}
 
 	return false
+}
+
+func Clone[S ~[]E, E cloner.Cloner[E]](s S) S {
+	c := make(S, 0, len(s))
+	for _, e := range s {
+		c = append(c, e.Clone())
+	}
+
+	return c
 }

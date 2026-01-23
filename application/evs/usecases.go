@@ -92,7 +92,7 @@ type ReplayOptions struct {
 	ToInc   SeqID
 }
 
-type ReplayWithIndex[Primary ~string, Evt any] func(subject auth.Subject, primary Primary, apply func(Envelope[Evt]) error, opts ReplayOptions) error
+type ReplayWithIndex[Primary ~string, Evt any] func(subject auth.Subject, primary Primary, opts ReplayOptions) iter.Seq2[Envelope[Evt], error]
 
 // OffsetsForTimestamps returns all those sequence identifiers whose event timestamps fall into the given interval.
 // The system keeps an inverted index of all timestamps pointing to (multiple) sequence ids.

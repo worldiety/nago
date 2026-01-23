@@ -8,19 +8,28 @@
 package flow
 
 type Repository struct {
-	parent     *Workspace
-	id         RepositoryID
-	structType *StructType
+	// ID is also human-readable and usually looks like my.namespace.myentity and follows the nago conventions.
+	ID          RepositoryID
+	StructType  TypeID
+	Description string
+}
+
+func NewRepository(id RepositoryID, structType TypeID) *Repository {
+	return &Repository{
+		ID:         id,
+		StructType: structType,
+	}
 }
 
 func (r *Repository) Identity() RepositoryID {
-	return r.id
-}
-
-func (r *Repository) Type() *StructType {
-	return r.structType
+	return r.ID
 }
 
 func (r *Repository) String() string {
-	return string(r.id)
+	return string(r.ID)
+}
+
+func (r *Repository) Clone() *Repository {
+	c := *r
+	return &c
 }

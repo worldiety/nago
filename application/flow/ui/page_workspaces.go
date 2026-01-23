@@ -34,7 +34,7 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 					ID:   "name",
 					Name: rstring.LabelName.Get(wnd),
 					Map: func(obj *flow.Workspace) core.View {
-						return ui.Text(string(obj.Name()))
+						return ui.Text(string(obj.Name))
 					},
 				},
 
@@ -42,7 +42,7 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 					ID:   "desc",
 					Name: rstring.LabelDescription.Get(wnd),
 					Map: func(obj *flow.Workspace) core.View {
-						return ui.Text(obj.Description())
+						return ui.Text(obj.Description)
 					},
 				},
 			},
@@ -68,7 +68,7 @@ func createDialog(wnd core.Window, presented *core.State[bool], uc flow.UseCases
 		alert.Closeable(),
 		alert.Cancel(nil),
 		alert.Create(func() (close bool) {
-			if _, err := uc.CreateWorkspace(wnd.Subject(), state.Get()); err != nil {
+			if err := uc.HandleCommand(wnd.Subject(), state.Get()); err != nil {
 				alert.ShowBannerError(wnd, err)
 				return false
 			}

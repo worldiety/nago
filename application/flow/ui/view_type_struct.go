@@ -28,20 +28,20 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 	selectedColor := ui.ColorCardFooter
 
 	return ui.HStack(
-		dialogCmd(wnd, ws, "Add String field", addStringFieldPresented, uc.AppendStringField, func() flow.AppendStringFieldCmd {
+		dialogCmd(wnd, ws, "Add String field", addStringFieldPresented, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.AppendStringFieldCmd{
 				Workspace: ws.Identity(),
 				Struct:    m.Identity(),
 			}
 		}),
-		dialogCmd(wnd, ws, "Add Bool field", addBoolFieldPresented, uc.AppendBoolField, func() flow.AppendBoolFieldCmd {
+		dialogCmd(wnd, ws, "Add Bool field", addBoolFieldPresented, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.AppendBoolFieldCmd{
 				Workspace: ws.Identity(),
 				Struct:    m.Identity(),
 			}
 		}),
 
-		dialogCmd(wnd, ws, "Add custom type field", addTypeFieldPresented, uc.AppendTypeField, func() flow.AppendTypeFieldCmd {
+		dialogCmd(wnd, ws, "Add custom type field", addTypeFieldPresented, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.AppendTypeFieldCmd{
 				Workspace: ws.Identity(),
 				Struct:    m.Identity(),
@@ -57,7 +57,7 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 						ui.VStack().BackgroundColor(ui.ColorAccent).Frame(ui.Frame{Width: ui.L8}),
 						ui.Grid(
 							slices.Collect(func(yield func(cell ui.TGridCell) bool) {
-								for field := range m.PrimaryKeyFields() {
+								for field := range m.Fields.PrimaryKeys() {
 									selected := selectedField.Get() != nil && field.Identity() == selectedField.Get().Identity()
 									var color ui.Color
 									if selected {
@@ -73,7 +73,7 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 							})...,
 						).Append(
 							slices.Collect(func(yield func(cell ui.TGridCell) bool) {
-								for field := range m.NonPrimaryFields() {
+								for field := range m.Fields.NonPrimaryFields() {
 									selected := selectedField.Get() != nil && field.Identity() == selectedField.Get().Identity()
 									var color ui.Color
 									if selected {
@@ -130,7 +130,7 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 					ui.Text("Field "+string(selectedField.Get().Name())),
 					ui.IfFunc(isPrimaryCandidate(selectedField.Get()), func() core.View {
 						return ui.SecondaryButton(func() {
-							_, err := uc.SelectPrimaryKey(wnd.Subject(), flow.SelectPrimaryKeyCmd{
+							err := uc.HandleCommand(wnd.Subject(), flow.SelectPrimaryKeyCmd{
 								Workspace: ws.Identity(),
 								Struct:    m.Identity(),
 								Field:     selectedField.Get().Identity(),
@@ -158,8 +158,11 @@ func fieldDescView(field flow.Field) core.View {
 }
 
 func isPrimaryCandidate(field flow.Field) bool {
-	_, strType := field.(*flow.StringField)
-	return !field.IsPrimaryKey() && strType
+	if field, ok := field.(flow.PKField); ok {
+		return !field.PrimaryKey()
+	}
+
+	return false
 }
 
 func viewTypename(field flow.Field) ui.DecoredView {

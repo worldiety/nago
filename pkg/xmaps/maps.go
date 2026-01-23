@@ -12,6 +12,8 @@ import (
 	"iter"
 	"maps"
 	"slices"
+
+	"go.wdy.de/nago/pkg/cloner"
 )
 
 // SortedKeys returns all keys in its natural sorted order. Probably there will never be something in the std lib.
@@ -30,4 +32,13 @@ func All[K cmp.Ordered, V any](m map[K]V) iter.Seq2[K, V] {
 			}
 		}
 	}
+}
+
+func Clone[K comparable, V cloner.Cloner[V]](m map[K]V) map[K]V {
+	var clone = make(map[K]V, len(m))
+	for k, v := range m {
+		clone[k] = v.Clone()
+	}
+
+	return clone
 }

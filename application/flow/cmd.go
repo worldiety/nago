@@ -7,8 +7,9 @@
 
 package flow
 
-type WorkspaceID string
+import "go.wdy.de/nago/application/evs"
 
-type Typename Ident
-
-type TypeID string
+type WorkspaceCommand interface {
+	evs.Cmd[*Workspace, WorkspaceEvent]
+	WorkspaceID() WorkspaceID
+}

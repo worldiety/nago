@@ -33,7 +33,11 @@ func NewRegister[Evt any](typeRegistry *concurrent.RWMap[reflect.Type, Discrimin
 			return fmt.Errorf("type %v not implements type %v", t, reflect.TypeFor[Evt]())
 		}
 
-		if _, ok := invTypeRegistry.Get(discriminatorName); ok {
+		if otherT, ok := invTypeRegistry.Get(discriminatorName); ok {
+			if otherT == t {
+				return nil // idempotent registrations
+			}
+
 			return fmt.Errorf("%s is already registered", discriminatorName)
 		}
 

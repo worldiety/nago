@@ -9,83 +9,240 @@ package flow
 
 import (
 	"iter"
-	"sync/atomic"
-
-	"go.wdy.de/nago/pkg/xslices"
+	"slices"
 )
 
+type RendererID string
+
 type Form struct {
-	parent      *Workspace
-	id          FormID
-	name        atomic.Pointer[string]
-	description atomic.Pointer[string]
-	elements    atomic.Pointer[xslices.Slice[FormElement]]
+	ID          FormID
+	Root        FormView
+	name        Ident
+	description string
 }
 
-func (f *Form) Elements() iter.Seq[FormElement] {
-	pSlice := f.elements.Load()
-	if pSlice == nil {
-		return xslices.Slice[FormElement]{}.All()
+func NewForm(id FormID, name Ident, root FormView) *Form {
+	return &Form{
+		ID:   id,
+		name: name,
+		Root: root,
 	}
-
-	return pSlice.All()
 }
 
-func (f *Form) Identity() FormID {
-	return f.id
-}
-
-func (f *Form) Name() string {
-	return *f.name.Load()
+func (f *Form) Name() Ident {
+	return f.name
 }
 
 func (f *Form) Description() string {
-	return *f.description.Load()
+	return f.description
 }
 
-func (f *Form) formElement() {}
-
-type FormElement interface {
-	Identity() ElementID
-	formElement()
-	Label() string
-	SupportingText() string
+func (f *Form) SetDescription(s string) {
+	f.description = s
 }
 
-type ElementID string
-
-type FormCard struct {
-	parent         *Form
-	id             ElementID
-	label          atomic.Pointer[string]
-	supportingText atomic.Pointer[string]
-	elements       atomic.Pointer[xslices.Slice[FormElement]]
+func (f *Form) Identity() FormID {
+	return f.ID
 }
 
-func (f *FormCard) formElement() {}
-
-func (f *FormCard) Elements() iter.Seq[FormElement] {
-	return f.elements.Load().All()
+func (f *Form) Clone() *Form {
+	return &Form{
+		ID:          f.ID,
+		Root:        f.Root.Clone(),
+		name:        f.name,
+		description: f.description,
+	}
 }
 
-func (f *FormCard) Label() string {
-	return *f.label.Load()
+type FormView interface {
+	Identity() ViewID
+	Clone() FormView
+	Renderer() RendererID
 }
 
-func (f *FormCard) SupportingText() string {
-	return *f.supportingText.Load()
+// FormViewGroup extens FormView with view group parent functions. A view tree must not contain cycles.
+type FormViewGroup interface {
+	FormView
+	All() iter.Seq[FormView]
+	// Insert merges the given view into the ordered children list.
+	// If after is empty, the view is appended to the beginning of the group.
+	Insert(view FormView, after ViewID)
+	Remove(ViewID)
 }
 
-func (f *FormCard) Identity() ElementID {
+type ViewID string
+
+var (
+	_ FormView      = (*FormText)(nil)
+	_ FormView      = (*FormCheckbox)(nil)
+	_ FormViewGroup = (*FormVStack)(nil)
+	_ FormViewGroup = (*baseViewGroup)(nil)
+	_ FormViewGroup = (*FormCard)(nil)
+)
+
+type FormText struct {
+	id       ViewID
+	value    string
+	style    FormTextStyle
+	renderer RendererID
+}
+
+func NewFormText(id ViewID, value string, style FormTextStyle, renderer RendererID) *FormText {
+	return &FormText{
+		id:       id,
+		value:    value,
+		style:    style,
+		renderer: renderer,
+	}
+}
+
+func (f *FormText) Clone() FormView {
+	c := *f
+	return &c
+}
+
+func (f *FormText) Value() string {
+	return f.value
+}
+
+func (f *FormText) Style() FormTextStyle {
+	return f.style
+}
+
+func (f *FormText) Renderer() RendererID {
+	return f.renderer
+}
+
+func (f *FormText) Identity() ViewID {
 	return f.id
 }
 
+type baseViewGroup struct {
+	id       ViewID
+	views    []FormView
+	renderer RendererID
+}
+
+func (b *baseViewGroup) Identity() ViewID {
+	return b.id
+}
+
+func (b *baseViewGroup) Clone() FormView {
+	return b.clone()
+}
+
+func (b *baseViewGroup) clone() *baseViewGroup {
+	return &baseViewGroup{
+		id:       b.id,
+		views:    slices.Clone(b.views),
+		renderer: b.renderer,
+	}
+}
+
+func (b *baseViewGroup) Renderer() RendererID {
+	return b.renderer
+}
+
+func (b *baseViewGroup) All() iter.Seq[FormView] {
+	return slices.Values(b.views)
+}
+
+func (b *baseViewGroup) Insert(view FormView, after ViewID) {
+	if after == "" {
+		b.views = append([]FormView{view}, b.views...)
+		return
+	}
+
+	tmp := make([]FormView, 0, len(b.views)+1)
+	inserted := false
+	for _, v := range b.views {
+		tmp = append(tmp, v)
+		if v.Identity() == after {
+			tmp = append(tmp, view)
+			inserted = true
+			break
+		}
+	}
+
+	if !inserted {
+		tmp = append(tmp, view)
+	}
+
+	b.views = tmp
+}
+
+func (b *baseViewGroup) Remove(id ViewID) {
+	b.views = slices.DeleteFunc(b.views, func(v FormView) bool { return v.Identity() == id })
+}
+
+type FormVStack struct {
+	*baseViewGroup
+}
+
+func NewFormVStack(id ViewID, renderer RendererID) *FormVStack {
+	return &FormVStack{baseViewGroup: &baseViewGroup{id: id, renderer: renderer}}
+}
+
+func (f *FormVStack) Clone() FormView {
+	return &FormVStack{baseViewGroup: f.baseViewGroup.clone()}
+}
+
+type FormCard struct {
+	*baseViewGroup
+	label          string
+	supportingText string
+}
+
+func NewFormCard(id ViewID, renderer RendererID) *FormCard {
+	return &FormCard{baseViewGroup: &baseViewGroup{id: id, renderer: renderer}}
+}
+
+func (f *FormCard) Label() string {
+	return f.label
+}
+
+func (f *FormCard) SetLabel(s string) {
+	f.label = s
+}
+
+func (f *FormCard) SupportingText() string {
+	return f.supportingText
+}
+
+func (f *FormCard) SetSupportingText(s string) {
+	f.supportingText = s
+}
+
 type FormCheckbox struct {
-	id             ElementID
+	id             ViewID
+	structType     TypeID
 	field          FieldID
-	label          atomic.Pointer[string]
-	supportingText atomic.Pointer[string]
+	rendererID     RendererID
+	label          string
+	supportingText string
 	visible        VisibilityValueRule
+}
+
+func NewFormCheckbox(id ViewID, structType TypeID, field FieldID, rendererID RendererID) *FormCheckbox {
+	return &FormCheckbox{
+		id:         id,
+		structType: structType,
+		field:      field,
+		rendererID: rendererID,
+	}
+}
+
+func (f *FormCheckbox) Identity() ViewID {
+	return f.id
+}
+
+func (f *FormCheckbox) Clone() FormView {
+	c := *f
+	return &c
+}
+
+func (f *FormCheckbox) Renderer() RendererID {
+	return f.rendererID
 }
 
 type VisibilityValueRule struct {
@@ -103,3 +260,42 @@ const (
 	CmpSmallerThan
 	CmpRegExp
 )
+
+func FindElementByID(root FormView, id ViewID) (FormView, bool) {
+	if root.Identity() == id {
+		return root, true
+	}
+
+	if root, ok := root.(FormViewGroup); ok {
+		for element := range root.All() {
+			if element.Identity() == id {
+				return element, true
+			}
+
+			if v, ok := FindElementByID(element, id); ok {
+				return v, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+func GetViewGroup(ws *Workspace, formID FormID, vg ViewID) (FormViewGroup, bool) {
+	form, ok := ws.Forms.ByID(formID)
+	if !ok {
+		return nil, false
+	}
+
+	parent, ok := FindElementByID(form.Root, vg)
+	if !ok {
+		return nil, false
+	}
+
+	parentGroup, ok := parent.(FormViewGroup)
+	if !ok {
+		return nil, false
+	}
+
+	return parentGroup, true
+}

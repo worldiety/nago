@@ -8,14 +8,7 @@
 package flow
 
 import (
-	"fmt"
-	"iter"
-	"slices"
-	"strings"
-	"sync/atomic"
-
 	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/pkg/xslices"
 )
 
 type Kind int
@@ -41,168 +34,16 @@ const (
 	RenderOptions *RenderOptions `json:"renderOptions,omitempty"`
 }*/
 
+type Typename Ident
+type TypeID string
+
 type Type interface {
-	Package() *Package
 	Name() Ident
+	SetName(Ident)
 	Identity() TypeID
 	Description() string
-}
-
-type StringEnumCase struct {
-	name        Ident
-	value       atomic.Pointer[string]
-	description atomic.Pointer[string]
-}
-
-func (e *StringEnumCase) Name() Ident {
-	return e.name
-}
-
-func (e *StringEnumCase) Value() string {
-	return *e.value.Load()
-}
-
-func (e *StringEnumCase) Description() string {
-	return *e.description.Load()
-}
-
-type StringType struct {
-	parent      *Package
-	name        Ident
-	id          TypeID
-	description string
-	values      atomic.Pointer[xslices.Slice[*StringEnumCase]]
-}
-
-func (t *StringType) Values() iter.Seq[*StringEnumCase] {
-	return t.values.Load().All()
-}
-
-func (t *StringType) Description() string {
-	return t.description
-}
-
-func (t *StringType) Package() *Package {
-	return t.parent
-}
-
-func (t *StringType) Name() Ident {
-	return t.name
-}
-
-func (t *StringType) Identity() TypeID {
-	return t.id
-}
-
-func (t *StringType) String() string {
-	return fmt.Sprintf("%s.%s", t.Package().Name(), t.Name())
-}
-
-type StructType struct {
-	parent      *Package
-	name        Ident
-	id          TypeID
-	description string
-	fields      []Field
-}
-
-func (t *StructType) Description() string {
-	return t.description
-}
-
-func (t *StructType) Package() *Package {
-	return t.parent
-}
-
-func (t *StructType) Name() Ident {
-	return t.name
-}
-
-func (t *StructType) Identity() TypeID {
-	return t.id
-}
-
-func (t *StructType) String() string {
-	return fmt.Sprintf("%s.%s", t.Package().Name(), t.Name())
-}
-
-func (t *StructType) PrimaryKeyFields() iter.Seq[Field] {
-	t.parent.mutex.Lock()
-	defer t.parent.mutex.Unlock()
-
-	return t.primaryKeyFields()
-}
-
-func (t *StructType) DocumentStoreReady() bool {
-	t.parent.mutex.Lock()
-	defer t.parent.mutex.Unlock()
-
-	count := 0
-	for _, f := range t.fields {
-		if f.IsPrimaryKey() {
-			count++
-		}
-	}
-
-	return count == 1
-}
-
-func (t *StructType) primaryKeyFields() iter.Seq[Field] {
-	var tmp []Field
-	for _, field := range t.fields {
-		if field.IsPrimaryKey() {
-			tmp = append(tmp, field)
-		}
-	}
-
-	slices.SortFunc(tmp, func(a, b Field) int {
-		return strings.Compare(string(a.Name()), string(b.Name()))
-	})
-
-	return slices.Values(tmp)
-}
-
-func (t *StructType) Fields() iter.Seq[Field] {
-	t.parent.mutex.Lock()
-	defer t.parent.mutex.Unlock()
-
-	return t.sortedFields()
-}
-
-func (t *StructType) sortedFields() iter.Seq[Field] {
-	var tmp []Field
-	for _, field := range t.fields {
-		tmp = append(tmp, field)
-	}
-
-	slices.SortFunc(tmp, func(a, b Field) int {
-		return strings.Compare(string(a.Name()), string(b.Name()))
-	})
-
-	return slices.Values(tmp)
-}
-
-func (t *StructType) NonPrimaryFields() iter.Seq[Field] {
-	t.parent.mutex.Lock()
-	defer t.parent.mutex.Unlock()
-
-	return t.nonPrimaryFields()
-}
-
-func (t *StructType) nonPrimaryFields() iter.Seq[Field] {
-	var tmp []Field
-	for _, field := range t.fields {
-		if !field.IsPrimaryKey() {
-			tmp = append(tmp, field)
-		}
-	}
-
-	slices.SortFunc(tmp, func(a, b Field) int {
-		return strings.Compare(string(a.Name()), string(b.Name()))
-	})
-
-	return slices.Values(tmp)
-
+	SetDescription(string)
+	Clone() Type
 }
 
 type RenderOptions struct {

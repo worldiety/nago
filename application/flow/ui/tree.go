@@ -21,12 +21,12 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 				Label:      "Packages",
 				Expandable: true,
 				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
-					for p := range ws.Packages() {
+					for p := range ws.Packages.All() {
 						yield(&treeview.Node[any]{
-							Label: string(p.Name()),
+							Label: string(p.Name),
 							Data:  p,
 							Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
-								for p := range p.Types() {
+								for p := range p.Types.All() {
 									yield(&treeview.Node[any]{
 										Label: string(p.Name()),
 										Data:  p,
@@ -41,7 +41,7 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 				Label:      "Types",
 				Expandable: true,
 				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
-					for p := range ws.Types() {
+					for p := range ws.Packages.Types() {
 						yield(&treeview.Node[any]{
 							Label: string(p.Name()),
 							Data:  p,
@@ -53,7 +53,7 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 				Label:      "Repositories",
 				Expandable: true,
 				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
-					for p := range ws.Repositories() {
+					for p := range ws.Repositories.All() {
 						yield(&treeview.Node[any]{
 							Label: string(p.Identity()),
 							Data:  p,
@@ -65,9 +65,9 @@ func createTree(ws *flow.Workspace) *treeview.Node[any] {
 				Label:      "Forms",
 				Expandable: true,
 				Children: slices.Collect(func(yield func(*treeview.Node[any]) bool) {
-					for p := range ws.Forms() {
+					for p := range ws.Forms.All() {
 						yield(&treeview.Node[any]{
-							Label: p.Name(),
+							Label: string(p.Name()),
 							Data:  p,
 						})
 					}

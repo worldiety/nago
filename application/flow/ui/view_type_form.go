@@ -13,11 +13,13 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
-func viewTypeForm(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *flow.Form) core.View {
+func viewTypeForm(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, m *flow.Form) core.View {
 	return ui.Grid(
-		ui.GridCell(ui.Text("mid")),
+		ui.GridCell(FormEditor(wnd, opts, ws, m)),
 		ui.GridCell(ui.Text("right")),
 	).Widths("1fr", "10rem").
-		Columns(3).
-		FullWidth()
+		Columns(2).
+		Gap(ui.L8).
+		FullWidth().
+		Padding(ui.Padding{}.Vertical(ui.L16))
 }

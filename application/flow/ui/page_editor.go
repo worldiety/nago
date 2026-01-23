@@ -19,7 +19,13 @@ import (
 	"go.wdy.de/nago/presentation/ui/treeview"
 )
 
-func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
+type PageEditorOptions struct {
+	UseCases  flow.UseCases
+	Renderers map[flow.RendererID]ViewRenderer
+}
+
+func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
+	uc := opts.UseCases
 	optWs, err := uc.LoadWorkspace(wnd.Subject(), flow.WorkspaceID(wnd.Values()["workspace"]))
 	if err != nil {
 		return alert.BannerError(err)
@@ -56,41 +62,40 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 	})
 
 	selected := core.AutoState[any](wnd).Observe(func(newValue any) {
-
 	})
 
 	return ui.VStack(
 
-		dialogCmd(wnd, ws, "Create new package", presentCreatePackage, uc.CreatePackage, func() flow.CreatePackageCmd {
+		dialogCmd(wnd, ws, "Create new package", presentCreatePackage, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.CreatePackageCmd{
 				Workspace: ws.Identity(),
 			}
 		}),
-		dialogCmd(wnd, ws, "Create new string type", presentCreateStringType, uc.CreateStringType, func() flow.CreateStringTypeCmd {
+		dialogCmd(wnd, ws, "Create new string type", presentCreateStringType, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.CreateStringTypeCmd{
 				Workspace: ws.Identity(),
 			}
 		}),
-		dialogCmd(wnd, ws, "Create new struct type", presentCreateStructType, uc.CreateStructType, func() flow.CreateStructTypeCmd {
+		dialogCmd(wnd, ws, "Create new struct type", presentCreateStructType, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.CreateStructTypeCmd{
 				Workspace: ws.Identity(),
 			}
 		}),
 
-		dialogCmd(wnd, ws, "Assign Repository", presentAssignRepository, uc.AssignRepository, func() flow.AssignRepositoryCmd {
+		dialogCmd(wnd, ws, "Assign Repository", presentAssignRepository, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.AssignRepositoryCmd{
 				Workspace: ws.Identity(),
 			}
 		}),
 
-		dialogCmd(wnd, ws, "Create new Form", presentCreateForm, uc.CreateForm, func() flow.CreateFormCmd {
+		dialogCmd(wnd, ws, "Create new Form", presentCreateForm, uc.HandleCommand, func() flow.WorkspaceCommand {
 			return flow.CreateFormCmd{
 				Workspace: ws.Identity(),
 			}
 		}),
 
 		ui.HStack(
-			ui.Text(string(ws.Name())),
+			ui.Text(string(ws.Name)),
 			ui.Spacer(),
 
 			ui.TertiaryButton(func() {
@@ -129,32 +134,31 @@ func PageEditor(wnd core.Window, uc flow.UseCases) core.View {
 						n.Selected = true
 					}
 
+					// TODO we have problem with our tree state here and the data within the node of the state which are copies now and outdated after mutation
 					selected.Set(n.Data)
-					selected.Invalidate()
-
 					tree.Invalidate()
 				})).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
 			ui.VLine().Frame(ui.Frame{}),
 			ui.VStack(
-				renderSelected(wnd, uc, ws, selected.Get()),
+				renderSelected(wnd, opts, ws, selected.Get()),
 			).Alignment(ui.Top).
 				BackgroundColor(ui.ColorBackground).FullWidth(),
 		).FullWidth().Alignment(ui.Stretch),
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func renderSelected(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, selected any) core.View {
+func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, selected any) core.View {
 	if selected == nil {
 		return ui.Text("Nothing selected")
 	}
 
 	switch t := selected.(type) {
 	case *flow.StringType:
-		return viewTypeString(wnd, uc, ws, t)
+		return viewTypeString(wnd, opts.UseCases, ws, t)
 	case *flow.StructType:
-		return viewTypeStruct(wnd, uc, ws, t)
+		return viewTypeStruct(wnd, opts.UseCases, ws, t)
 	case *flow.Form:
-		return viewTypeForm(wnd, uc, ws, t)
+		return viewTypeForm(wnd, opts, ws, t)
 	default:
 		return ui.Text(fmt.Sprintf("%T", selected))
 	}

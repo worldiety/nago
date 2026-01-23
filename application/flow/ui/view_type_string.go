@@ -23,7 +23,7 @@ func viewTypeString(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 	return ui.Grid(
 		ui.GridCell(
 			ui.VStack(
-				dialogCmd(wnd, ws, "Add String Case", addStringCasePresented, uc.AddStringEnumCase, func() flow.AddStringEnumCaseCmd {
+				dialogCmd(wnd, ws, "Add String Case", addStringCasePresented, uc.HandleCommand, func() flow.WorkspaceCommand {
 					return flow.AddStringEnumCaseCmd{
 						Workspace: ws.Identity(),
 						String:    m.Identity(),
@@ -42,10 +42,10 @@ func viewTypeString(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 									yield(ui.GridCell(viewTypename(&flow.StringField{}).Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})))
 									yield(ui.GridCell(ui.Text(" ").Border(ui.Border{BottomColor: ui.ColorIconsMuted, BottomWidth: ui.L1})))
 
-									for enumCase := range m.Values() {
-										yield(ui.GridCell(ui.Text(string(enumCase.Name()))))
-										yield(ui.GridCell(ui.Text(enumCase.Value()).Color(colorpicker.DefaultPalette[6]).Padding(ui.Padding{Left: ui.L8})))
-										yield(ui.GridCell(ui.Text(enumCase.Description()).FullWidth()))
+									for enumCase := range m.Enumeration.All() {
+										yield(ui.GridCell(ui.Text(string(enumCase.Name))))
+										yield(ui.GridCell(ui.Text(enumCase.Value).Color(colorpicker.DefaultPalette[7]).Padding(ui.Padding{Left: ui.L8})))
+										yield(ui.GridCell(ui.Text(enumCase.Description).FullWidth()))
 									}
 								})...,
 							).

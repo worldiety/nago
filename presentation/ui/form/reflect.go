@@ -744,15 +744,44 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 								strState.Notify()
 							}
 
-							fieldsBuilder.Append(ui.TextField(label, strState.Get()).
-								InputValue(strState).
-								ID(id).
-								SupportingText(supportingText).
-								ErrorText(fieldErrValues[field.Name]).
-								Lines(lines).
-								Disabled(disabled).
-								Frame(ui.Frame{}.FullWidth()),
-							)
+							if len(values) > 0 {
+								multiStrState := core.DerivedState[[]string](strState, "multi").Init(func() []string {
+									if strState.Get() == "" {
+										return []string{}
+									}
+									return []string{strState.Get()}
+								})
+
+								multiStrState.Observe(func(newValue []string) {
+									if len(newValue) == 0 {
+										strState.Set("")
+									} else {
+										strState.Set(newValue[0])
+									}
+
+									strState.Notify()
+								})
+
+								fieldsBuilder.Append(
+									picker.Picker[string](label, values, multiStrState).
+										SupportingText(id).
+										ErrorText(fieldErrValues[field.Name]).
+										Disabled(disabled).
+										MultiSelect(false).
+										Frame(ui.Frame{}.FullWidth()),
+								)
+							} else {
+								fieldsBuilder.Append(ui.TextField(label, strState.Get()).
+									InputValue(strState).
+									ID(id).
+									SupportingText(supportingText).
+									ErrorText(fieldErrValues[field.Name]).
+									Lines(lines).
+									Disabled(disabled).
+									Frame(ui.Frame{}.FullWidth()),
+								)
+							}
+
 						}
 					}
 				}

@@ -9,6 +9,8 @@ package cfgflow
 
 import (
 	"fmt"
+	"reflect"
+	"slices"
 	"strings"
 	"sync"
 
@@ -32,7 +34,8 @@ type Module struct {
 }
 
 type Options struct {
-	underlyingTypes map[TID]UnderlyingType[any]
+	Renderers []uiflow.ViewRenderer
+	Events    []flow.WorkspaceEvent
 }
 
 type Opt func(*Options)
@@ -63,21 +66,35 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		Editor:     "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/edit",
 	}
 
+	if len(opts.Renderers) == 0 {
+		opts.Renderers = slices.Collect(uiflow.DefaultRenderers)
+	}
+
+	renderers := map[flow.RendererID]uiflow.ViewRenderer{}
+	for _, r := range opts.Renderers {
+		if _, ok := renderers[r.Identity()]; ok {
+			return Module{}, fmt.Errorf("duplicate renderer: %s", r.Identity())
+		}
+
+		renderers[r.Identity()] = r
+	}
+
+	if len(opts.Events) == 0 {
+		opts.Events = slices.Collect(flow.DefaultEvents)
+	}
+
+	evsSchemas := map[evs.Discriminator]reflect.Type{}
+	for _, ev := range opts.Events {
+		if _, ok := evsSchemas[ev.Discriminator()]; ok {
+			return Module{}, fmt.Errorf("duplicate event discriminator: %s", ev.Discriminator())
+		}
+
+		evsSchemas[ev.Discriminator()] = reflect.TypeOf(ev)
+	}
+
 	var replayByWorkspace evs.ReplayWithIndex[flow.WorkspaceID, flow.WorkspaceEvent]
 	var idxByWorkspace *evs.StoreIndex[flow.WorkspaceID, flow.WorkspaceEvent]
-	modEvs, err := cfgevs.Enable[flow.WorkspaceEvent](cfg, "nago.flow.workspace", "Flow Workspace", cfgevs.Options[flow.WorkspaceEvent]{}.WithOptions(
-		cfgevs.Schema[flow.WorkspaceCreated, flow.WorkspaceEvent]("WorkspaceCreated"),
-		cfgevs.Schema[flow.PackageCreated, flow.WorkspaceEvent]("PackageCreated"),
-		cfgevs.Schema[flow.StringTypeCreated, flow.WorkspaceEvent]("StringTypeCreated"),
-		cfgevs.Schema[flow.StructTypeCreated, flow.WorkspaceEvent]("StructTypeCreated"),
-		cfgevs.Schema[flow.StringFieldAppended, flow.WorkspaceEvent]("StringFieldAppended"),
-		cfgevs.Schema[flow.BoolFieldAppended, flow.WorkspaceEvent]("BoolFieldAppended"),
-		cfgevs.Schema[flow.TypeFieldAppended, flow.WorkspaceEvent]("TypeFieldAppended"),
-		cfgevs.Schema[flow.RepositoryAssigned, flow.WorkspaceEvent]("RepositoryAssigned"),
-		cfgevs.Schema[flow.PrimaryKeySelected, flow.WorkspaceEvent]("PrimaryKeySelected"),
-		cfgevs.Schema[flow.FormCreated, flow.WorkspaceEvent]("FormCreated"),
-		cfgevs.Schema[flow.StringEnumCaseAdded, flow.WorkspaceEvent]("StringEnumCaseAdded"),
-
+	modEvs, err := cfgevs.Enable[flow.WorkspaceEvent](cfg, "nago.flow.workspace", "Flow Workspace", cfgevs.Options[flow.WorkspaceEvent]{Schema: evsSchemas}.WithOptions(
 		cfgevs.Index[flow.WorkspaceID, flow.WorkspaceEvent](func(e evs.Envelope[flow.WorkspaceEvent]) (flow.WorkspaceID, error) {
 			return e.Data.WorkspaceID(), nil
 		}, func(ctx cfgevs.IndexContext[flow.WorkspaceID, flow.WorkspaceEvent]) error {
@@ -91,7 +108,19 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		return mod, err
 	}
 
-	uc := flow.NewUseCases(string(prefix), modEvs.UseCases.Store, replayByWorkspace, idxByWorkspace)
+	workspaceHandler := evs.NewHandler[*flow.Workspace](
+		modEvs.UseCases.Register,
+		replayByWorkspace,
+		modEvs.UseCases.Store,
+	)
+
+	workspaceHandler.RegisterEvents(
+		flow.WorkspaceCreated{},
+		flow.PackageCreated{},
+		flow.StringTypeCreated{},
+	)
+
+	uc := flow.NewUseCases(string(prefix), workspaceHandler, idxByWorkspace)
 	mod.UseCases = uc
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -115,88 +144,15 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 	})
 
 	cfg.RootViewWithDecoration(mod.Pages.Editor, func(wnd core.Window) core.View {
-		return uiflow.PageEditor(wnd, mod.UseCases)
+		return uiflow.PageEditor(wnd, uiflow.PageEditorOptions{
+			UseCases:  mod.UseCases,
+			Renderers: renderers,
+		})
 	})
 
 	cfg.AddContextValue(core.ContextValue(string("module-"+prefix), mod))
 
 	return mod, nil
-}
-
-// A Workspace shares multiple forms and fields.
-type Workspace struct {
-	Fields []FieldID
-}
-
-type FieldID string
-
-// A Field is like a Textinput (1 line or multiple), bool value, multiple choice (single or multi select and the same model but different design like checkboxes or picker),
-// foreign key (multi or single), embedded struct (multi or single). Also multiple choice often requires adding additional freetext
-type Field struct {
-	// Name must be unique and a valid Go identifier for optional code generation.
-	Name string `json:"name"`
-	Type TID    `json:"type"`
-	// Label is only used when rendering the field.
-	Label string `json:"label,omitempty"`
-	// SupportingText is only used when rendering the field.
-	SupportingText string `json:"supportingText,omitempty"`
-
-	// JsonName must be unique within the scope. If empty, Name is used. Used as the json-Tag in code generation
-	JsonName string `json:"jsonName,omitempty"`
-
-	// Required could be part of the validation chain, however, it cannot be evaluated
-	// programmatically, and we need this information to decide quickly to display an indicator.
-	Required bool `json:"required,omitempty"`
-
-	// References to validation functions.
-	Validation []VID `json:"validation,omitempty"`
-}
-
-type Struct struct {
-	Fields []Field `json:"fields,omitempty"`
-}
-
-type Style int
-
-const (
-	StyleRow Style = iota + 1
-	StyleOptional
-	StyleCard
-)
-
-type Form struct {
-	Groups []Group // TODO what about dialogs
-}
-
-// TODO what about repositories?
-// TODO some may be shared after insertion (login is enough, e.g. a wiki)?
-// TODO some may be shared after another user has proofed it (contract? docusign?)
-// TODO some may be always local (questionaire about used frameworks etc.)
-// TODO what about stepper/pages?
-// TODO what about readonly? roles? states? (e.g. invoices or anträge after einreichung)
-// TODO there are optional groups where the flag itself is relevant (e.g. catering and catering comment)
-type Group struct {
-	Style          Style
-	Label          string  // Depending on the Style, this label may get rendered differently
-	SupportingText string  // Depending on the Style, this text may get rendered differently
-	Fields         []Field `json:"fields,omitempty"`
-	//Groups  []Group // ??? TODO do we need nesting?
-	Visible func(any) bool // TODO we must reference the visible predicate and what is the parameter?
-	// TODO how to support self-referencing cardinality?
-	// TODO are there fields based on a group? what about recursion of groups?
-}
-
-// / SCRATCH
-type MyForm struct {
-	ErbringtDerKundeDienstleistungen bool
-	VerkauftDerKundeProdukte         bool
-	ErfolgtEinVertragsabschluss      bool
-	//...
-}
-
-func (f MyForm) Validate() error {
-	return fmt.Errorf("if all false, not answered")
-	//return fmt.Errorf("if A && B || C || D, answerer D")
 }
 
 func makeFactoryID(prefix permission.ID) core.NavigationPath {

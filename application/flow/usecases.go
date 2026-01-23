@@ -9,7 +9,6 @@ package flow
 
 import (
 	"iter"
-	"sync"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/evs"
@@ -19,52 +18,18 @@ import (
 type FindWorkspaces func(subject auth.Subject) iter.Seq2[WorkspaceID, error]
 type LoadWorkspace func(subject auth.Subject, id WorkspaceID) (option.Opt[*Workspace], error)
 
-type CreateWorkspace func(subject auth.Subject, cmd CreateWorkspaceCmd) (WorkspaceCreated, error)
-
-type CreatePackage func(subject auth.Subject, cmd CreatePackageCmd) (PackageCreated, error)
-
-type CreateStringType func(subject auth.Subject, cmd CreateStringTypeCmd) (StringTypeCreated, error)
-
-type CreateStructType func(subject auth.Subject, cmd CreateStructTypeCmd) (StructTypeCreated, error)
-
-type AppendStringField func(subject auth.Subject, cmd AppendStringFieldCmd) (StringFieldAppended, error)
-
-type AppendBoolField func(subject auth.Subject, cmd AppendBoolFieldCmd) (BoolFieldAppended, error)
-
+type HandleCommand func(subject auth.Subject, cmd WorkspaceCommand) error
 type UseCases struct {
-	FindWorkspaces    FindWorkspaces
-	LoadWorkspace     LoadWorkspace
-	CreateWorkspace   CreateWorkspace
-	CreatePackage     CreatePackage
-	CreateStringType  CreateStringType
-	CreateStructType  CreateStructType
-	AppendStringField AppendStringField
-	AppendBoolField   AppendBoolField
-	AssignRepository  AssignRepository
-	SelectPrimaryKey  SelectPrimaryKey
-	CreateForm        CreateForm
-	AddStringEnumCase AddStringEnumCase
-	AppendTypeField   AppendTypeField
+	FindWorkspaces FindWorkspaces
+	LoadWorkspace  LoadWorkspace
+	HandleCommand  HandleCommand
 }
 
-func NewUseCases(repoName string, storeEvent evs.Store[WorkspaceEvent], replayWorkspace evs.ReplayWithIndex[WorkspaceID, WorkspaceEvent], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
-	cache := map[WorkspaceID]*Workspace{}
-	var mutex sync.Mutex
+func NewUseCases(repoName string, handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
 
-	loadFn := NewLoadWorkspace(&mutex, repoName, replayWorkspace, cache)
 	return UseCases{
-		FindWorkspaces:    NewFindWorkspace(repoName, wsIndex),
-		LoadWorkspace:     loadFn,
-		CreateWorkspace:   NewCreateWorkspace(storeEvent),
-		CreatePackage:     NewCreatePackage(newHandleCmd[PackageCreated](repoName, loadFn, storeEvent)),
-		CreateStringType:  NewCreateStringType(newHandleCmd[StringTypeCreated](repoName, loadFn, storeEvent)),
-		CreateStructType:  NewCreateStructType(newHandleCmd[StructTypeCreated](repoName, loadFn, storeEvent)),
-		AppendStringField: NewAppendStringField(newHandleCmd[StringFieldAppended](repoName, loadFn, storeEvent)),
-		AppendBoolField:   NewAppendBoolField(newHandleCmd[BoolFieldAppended](repoName, loadFn, storeEvent)),
-		AssignRepository:  NewAssignRepository(newHandleCmd[RepositoryAssigned](repoName, loadFn, storeEvent)),
-		SelectPrimaryKey:  NewSelectPrimaryKey(newHandleCmd[PrimaryKeySelected](repoName, loadFn, storeEvent)),
-		CreateForm:        NewCreateForm(newHandleCmd[FormCreated](repoName, loadFn, storeEvent)),
-		AddStringEnumCase: NewAddStringEnumCase(newHandleCmd[StringEnumCaseAdded](repoName, loadFn, storeEvent)),
-		AppendTypeField:   NewAppendTypeField(newHandleCmd[TypeFieldAppended](repoName, loadFn, storeEvent)),
+		FindWorkspaces: NewFindWorkspace(repoName, wsIndex),
+		LoadWorkspace:  NewLoadWorkspace(repoName, handler),
+		HandleCommand:  NewHandleCommand(handler),
 	}
 }
