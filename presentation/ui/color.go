@@ -17,6 +17,8 @@ import (
 )
 
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
+// Optional opacity values of custom color names will be attached to the color name, separated by the `/` character,
+// e.g. `M8/128` describes the custom color `M8` with opacity `128` (0-255)
 type Color string
 
 func (c Color) ora() proto.Color {
@@ -41,6 +43,19 @@ func (c Color) WithTransparency(a int8) Color {
 	}
 
 	return Color(fmt.Sprintf("%s/%d", string(c), ai))
+}
+
+// WithoutTransparency updates the removes the alpha value of the color.
+func (c Color) WithoutTransparency() Color {
+	if c.isAbsolute() {
+		if len(c) == 9 {
+			return c[:len(c)-2]
+		}
+
+		return c
+	}
+
+	return Color(strings.Split(string(c), "/")[0])
 }
 
 // WithChromaAndTone applies the given chroma and tone values on the actual hue value using the HCT colorspace.
