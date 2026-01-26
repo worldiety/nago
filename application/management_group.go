@@ -13,7 +13,6 @@ import (
 
 	"go.wdy.de/nago/application/group"
 	uigroup "go.wdy.de/nago/application/group/ui"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
@@ -48,7 +47,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 			},
 		}
 
-		if _, err := c.groupManagement.UseCases.Upsert(user.NewSystem()(), group.Group{
+		if _, err := c.groupManagement.UseCases.Upsert(c.SysUser(), group.Group{
 			ID:          group.System,
 			Name:        "System",
 			Description: "Die Systemgruppe ist eine interne Gruppe, die nicht für reale Nutzer bestimmt ist und von automatisierten systemrelevanten Diensten verwendet wird.",

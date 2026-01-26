@@ -22,7 +22,7 @@ func NewLoadWorkspace(repoName string, handler *evs.Handler[*Workspace, Workspac
 			return option.None[*Workspace](), err
 		}
 
-		ws, err := handler.Aggregate(id)
+		ws, err := handler.Aggregate(subject.Context(), id)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return option.None[*Workspace](), nil

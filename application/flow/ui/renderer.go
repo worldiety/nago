@@ -9,7 +9,7 @@ package uiflow
 
 import (
 	"context"
-	"slices"
+	"reflect"
 
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/flow"
@@ -18,32 +18,39 @@ import (
 )
 
 type RContext struct {
-	Context   context.Context
-	Window    core.Window
-	Handle    flow.HandleCommand
-	Workspace *flow.Workspace
+	Context      context.Context
+	Window       core.Window
+	Handle       flow.HandleCommand
+	Workspace    *flow.Workspace
+	Render       func(ctx RContext, view flow.FormView) core.View
+	RenderInsert func(ctx RContext) core.View
+	RenderAppend func(ctx RContext) core.View
+	RenderEdit   func(ctx RContext, wrapped core.View) core.View
+	RenderDelete func(ctx RContext, wrapped core.View) core.View
 }
 
 type Apply func() error
 
-type ViewRenderer interface {
-	Identity() flow.RendererID
+type TeaserRenderer interface {
 	TeaserPreview(ctx RContext) core.View
-	Preview(ctx RContext, id flow.FormView) core.View
+}
+
+type ViewRenderer interface {
+	TeaserRenderer
+
+	Preview(ctx RContext, view flow.FormView) core.View
 	Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply)
 	Update(ctx RContext, view flow.ViewID) (core.View, Apply)
 	Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View
 }
 
-var DefaultRenderers = slices.Values([]ViewRenderer{
-	&TextRenderer{},
-})
+// TODO replace with immutable map
+var DefaultRenderers = map[reflect.Type]ViewRenderer{
+	reflect.TypeFor[*flow.FormText]():   &TextRenderer{},
+	reflect.TypeFor[*flow.FormVStack](): &VStackRenderer{},
+}
 
 type StringEnumFieldRenderer struct{}
-
-func (r StringEnumFieldRenderer) Identity() flow.RendererID {
-	return "nago.flow.ui.renderer.string-enum"
-}
 
 func (r StringEnumFieldRenderer) CreateCmd(ws *flow.Workspace, form flow.FormID, parent, after flow.FormView) flow.WorkspaceCommand {
 	//TODO implement me
@@ -93,10 +100,24 @@ func (r StringEnumFieldRenderer) CanRender(field flow.Field) bool {
 	return false
 }
 
+var _ ViewRenderer = (*VStackRenderer)(nil)
+
 type VStackRenderer struct {
 }
 
-func (r VStackRenderer) Preview(wnd core.Window) core.View {
+func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
+	vstack := view.(*flow.FormVStack)
+	var tmp []core.View
+	for formView := range vstack.All() {
+		tmp = append(tmp, ctx.Render(ctx, formView))
+	}
+
+	tmp = append(tmp, ctx.RenderAppend(ctx))
+
+	return ui.VStack(tmp...).FullWidth()
+}
+
+func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {
 	return ui.VStack(
 		ui.Text("A"),
 		ui.Text("B"),
@@ -104,19 +125,17 @@ func (r VStackRenderer) Preview(wnd core.Window) core.View {
 	).FullWidth()
 }
 
-func (r VStackRenderer) CreateCmd(ws *flow.Workspace, form flow.FormID, parent, after flow.ViewID) flow.WorkspaceCommand {
-	panic("implement me")
-}
-
-func (r VStackRenderer) RenderEdit(wnd core.Window, elem flow.FormView) core.View {
-	return nil
-}
-
-func (r VStackRenderer) CanRender(field flow.Field) bool {
+func (r VStackRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r VStackRenderer) Identity() flow.RendererID {
-	return "nago.flow.ui.renderer.vstack"
+func (r VStackRenderer) Update(ctx RContext, view flow.ViewID) (core.View, Apply) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r VStackRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {
+	//TODO implement me
+	panic("implement me")
 }

@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
@@ -34,7 +35,6 @@ type FormTextAdded struct {
 	ID        ViewID        `json:"id"`
 	Value     string        `json:"value"`
 	Style     FormTextStyle `json:"style"`
-	Renderer  RendererID    `json:"renderer"`
 }
 
 func (evt FormTextAdded) WorkspaceID() WorkspaceID {
@@ -45,12 +45,12 @@ func (evt FormTextAdded) Discriminator() evs.Discriminator {
 	return "FormTextAdded"
 }
 
-func (evt FormTextAdded) Evolve(ws *Workspace) error {
+func (evt FormTextAdded) Evolve(ctx context.Context, ws *Workspace) error {
 	form, ok := GetViewGroup(ws, evt.Form, evt.Parent)
 	if !ok {
 		return fmt.Errorf("form %s not found", evt.Form)
 	}
 
-	form.Insert(NewFormText(evt.ID, evt.Value, evt.Style, evt.Renderer), evt.After)
+	form.Insert(NewFormText(evt.ID, evt.Value, evt.Style), evt.After)
 	return nil
 }

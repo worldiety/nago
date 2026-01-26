@@ -8,6 +8,8 @@
 package flow
 
 import (
+	"context"
+
 	"go.wdy.de/nago/application/evs"
 	"go.wdy.de/nago/pkg/cloner"
 )
@@ -20,7 +22,7 @@ type WorkspaceCreated struct {
 	Description string      `json:"description,omitempty"`
 }
 
-func (evt WorkspaceCreated) Evolve(ws *Workspace) error {
+func (evt WorkspaceCreated) Evolve(ctx context.Context, ws *Workspace) error {
 	ws.ID = evt.Workspace
 	ws.Packages = NewPackages()
 	ws.Repositories = NewRepositories()

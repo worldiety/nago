@@ -9,6 +9,7 @@ package application
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/token"
 	uitoken "go.wdy.de/nago/application/token/ui"
@@ -60,6 +61,7 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		}
 
 		uc, err := token.NewUseCases(
+			c.Context(),
 			tokenRepo,
 			users.UseCases.SubjectFromUser,
 			groups.UseCases.FindByID,

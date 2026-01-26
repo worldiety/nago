@@ -9,6 +9,9 @@ package mail
 
 import (
 	"fmt"
+	"iter"
+	"log/slog"
+
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/application/secret"
@@ -19,8 +22,6 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
-	"iter"
-	"log/slog"
 )
 
 var _ = enum.Variant[secret.Credentials, secret.SMTP]()
@@ -48,7 +49,7 @@ type UseCases struct {
 	SendMail SendMail
 }
 
-func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn) (UseCases, error) {
+func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
 	outgoingCrud := rcrud.DecorateRepository(rcrud.DecoratorOptions{EntityName: "Ausgehende Mails", PermissionPrefix: "nago.mail.outgoing"}, outgoingRepo)
 	sendMailFn := NewSendMail(outgoingRepo)
 
@@ -56,7 +57,7 @@ func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template
 	PermOutgoingDeleteByID = outgoingCrud.PermDeleteByID
 	PermOutgoingFindByID = outgoingCrud.PermFindByID
 
-	err := ensureBuildIn(user.NewSystem()(), template.NewProjectData{
+	err := ensureBuildIn(sysUser(), template.NewProjectData{
 		ID:          tplmail.ID,
 		Name:        "Mailvorlagen Berechtigungssystem",
 		Description: "Standardmailvorlagen für Nutzerregistrierung, Passwort vergessen, MFA Code und anderes.",

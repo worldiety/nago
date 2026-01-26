@@ -8,6 +8,8 @@
 package flow
 
 import (
+	"context"
+
 	"go.wdy.de/nago/application/evs"
 	"go.wdy.de/nago/pkg/xerrors"
 )
@@ -28,7 +30,7 @@ func (evt BoolFieldAppended) WorkspaceID() WorkspaceID {
 	return evt.Workspace
 }
 
-func (evt BoolFieldAppended) Evolve(ws *Workspace) error {
+func (evt BoolFieldAppended) Evolve(ctx context.Context, ws *Workspace) error {
 	var errGrp xerrors.FieldBuilder
 	st, ok := ws.Packages.StructTypeByID(evt.Struct)
 	if !ok {

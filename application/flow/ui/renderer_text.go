@@ -85,7 +85,3 @@ func (r *TextRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		panic("unknown text style")
 	}
 }
-
-func (r TextRenderer) Identity() flow.RendererID {
-	return "nago.flow.ui.renderer.text"
-}

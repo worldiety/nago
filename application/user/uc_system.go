@@ -8,6 +8,7 @@
 package user
 
 import (
+	"context"
 	"iter"
 	"slices"
 
@@ -19,9 +20,9 @@ import (
 	"golang.org/x/text/language"
 )
 
-func NewSystem() SysUser {
+func NewSystem(ctx context.Context) SysUser {
 	return func() Subject {
-		return sysUser{}
+		return sysUser{ctx}
 	}
 }
 
@@ -32,6 +33,11 @@ func SU() Subject {
 }
 
 type sysUser struct {
+	ctx context.Context
+}
+
+func (s sysUser) Context() context.Context {
+	return s.ctx
 }
 
 func (s sysUser) Bundle() *i18n.Bundle {

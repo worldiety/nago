@@ -9,6 +9,7 @@ package cfgflow
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -34,7 +35,7 @@ type Module struct {
 }
 
 type Options struct {
-	Renderers []uiflow.ViewRenderer
+	Renderers map[reflect.Type]uiflow.ViewRenderer
 	Events    []flow.WorkspaceEvent
 }
 
@@ -67,16 +68,13 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 	}
 
 	if len(opts.Renderers) == 0 {
-		opts.Renderers = slices.Collect(uiflow.DefaultRenderers)
+		opts.Renderers = maps.Clone(uiflow.DefaultRenderers)
 	}
 
-	renderers := map[flow.RendererID]uiflow.ViewRenderer{}
-	for _, r := range opts.Renderers {
-		if _, ok := renderers[r.Identity()]; ok {
-			return Module{}, fmt.Errorf("duplicate renderer: %s", r.Identity())
-		}
+	renderers := map[reflect.Type]uiflow.ViewRenderer{}
+	for k, r := range opts.Renderers {
 
-		renderers[r.Identity()] = r
+		renderers[k] = r
 	}
 
 	if len(opts.Events) == 0 {

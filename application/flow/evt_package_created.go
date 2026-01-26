@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -45,7 +46,7 @@ type PackageCreated struct {
 	Description string      `json:"description,omitempty"`
 }
 
-func (evt PackageCreated) Evolve(ws *Workspace) error {
+func (evt PackageCreated) Evolve(ctx context.Context, ws *Workspace) error {
 	pkg := NewPackage(evt.Package, evt.Path, evt.Name)
 	pkg.Description = evt.Description
 

@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
@@ -31,7 +32,7 @@ func (evt StructTypeCreated) WorkspaceID() WorkspaceID {
 
 func (evt StructTypeCreated) event() {}
 
-func (evt StructTypeCreated) Evolve(ws *Workspace) error {
+func (evt StructTypeCreated) Evolve(ctx context.Context, ws *Workspace) error {
 	pkg, _ := ws.Packages.ByID(evt.Package)
 	if pkg == nil {
 		return fmt.Errorf("package %s not found", evt.Package)

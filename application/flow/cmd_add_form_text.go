@@ -19,7 +19,6 @@ type AddFormTextCmd struct {
 	Form      FormID        `visible:"false"`
 	Parent    ViewID        `visible:"false"`
 	After     ViewID        `visible:"false"`
-	Renderer  RendererID    `visible:"false"`
 	Value     string        `label:"nago.common.label.value" lines:"5"`
 	Style     FormTextStyle `values:"[\"text\", \"h1\", \"h2\", \"h3\", \"markdown\"]"`
 }
@@ -36,11 +35,7 @@ func (cmd AddFormTextCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspa
 		errGrp.Add("Form", "Form not found")
 		return nil, errGrp.Error()
 	}
-
-	if cmd.Renderer == "" {
-		errGrp.Add("Renderer", "Renderer not set")
-	}
-
+	
 	if !xslices.Contains(FormTextValues, cmd.Style) {
 		errGrp.Add("Style", "Style not valid")
 	}

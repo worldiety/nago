@@ -8,6 +8,7 @@
 package evs_test
 
 import (
+	"context"
 	"fmt"
 	"iter"
 	"reflect"
@@ -56,7 +57,7 @@ func (f FirstnameUpdated) Discriminator() evs.Discriminator {
 	return "FirstnameUpdated"
 }
 
-func (f FirstnameUpdated) Evolve(mut *Person) error {
+func (f FirstnameUpdated) Evolve(ctx context.Context, mut *Person) error {
 	mut.firstname = f.Firstname
 	return nil
 }
@@ -69,7 +70,7 @@ func (f LastnameUpdated) Discriminator() evs.Discriminator {
 	return "LastnameUpdated"
 }
 
-func (f LastnameUpdated) Evolve(mut *Person) error {
+func (f LastnameUpdated) Evolve(ctx context.Context, mut *Person) error {
 	mut.lastname = f.Name
 	return nil
 }
@@ -99,9 +100,9 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	if option.Must(handler.Aggregate("1")).firstname != "John" {
+	if option.Must(handler.Aggregate(context.Background(), "1")).firstname != "John" {
 		t.Error("firstname did not change")
 	}
 
-	t.Log(handler.Aggregate("1"))
+	t.Log(handler.Aggregate(context.Background(), "1"))
 }

@@ -8,6 +8,7 @@
 package token
 
 import (
+	"context"
 	"fmt"
 	"iter"
 	"sync"
@@ -89,6 +90,7 @@ type UseCases struct {
 }
 
 func NewUseCases(
+	ctx context.Context,
 	repository Repository,
 	subjectFromUser user.SubjectFromUser,
 	findGroupByID group.FindByID,
@@ -154,7 +156,7 @@ func NewUseCases(
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
-		AuthenticateSubject: NewAuthenticateSubject(repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID),
+		AuthenticateSubject: NewAuthenticateSubject(ctx, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
 		FindByID:            NewFindByID(repo),
 		ResolveTokenRights: NewResolveTokenRights(

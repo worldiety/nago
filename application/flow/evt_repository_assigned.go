@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -58,7 +59,7 @@ func (evt RepositoryAssigned) Discriminator() evs.Discriminator {
 	return "RepositoryAssigned"
 }
 
-func (evt RepositoryAssigned) Evolve(ws *Workspace) error {
+func (evt RepositoryAssigned) Evolve(ctx context.Context, ws *Workspace) error {
 	st, ok := ws.Packages.TypeByID(evt.Struct)
 	if !ok {
 		return fmt.Errorf("struct %s not found", evt.Struct)

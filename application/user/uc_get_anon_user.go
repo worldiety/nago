@@ -8,6 +8,7 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"iter"
 	"log/slog"
@@ -25,10 +26,10 @@ import (
 	"golang.org/x/text/language"
 )
 
-func NewGetAnonUser(loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, bus events.Bus) GetAnonUser {
+func NewGetAnonUser(ctx context.Context, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, bus events.Bus) GetAnonUser {
 	var subj atomic.Pointer[anonSubject]
 	loadSubject := func() {
-		subject := createAnonSubject(language.English, loadGlobal, findRoleByID)
+		subject := createAnonSubject(ctx, language.English, loadGlobal, findRoleByID)
 		subj.Store(&subject)
 	}
 
@@ -49,11 +50,11 @@ func NewGetAnonUser(loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, 
 	})
 
 	return func() Subject {
-		return subj.Load()
+		return *subj.Load()
 	}
 }
 
-func createAnonSubject(tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID) anonSubject {
+func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID) anonSubject {
 	bnd, ok := i18n.Default.MatchBundle(tag)
 	if !ok {
 		panic(fmt.Errorf("unreachable"))
@@ -67,6 +68,7 @@ func createAnonSubject(tag language.Tag, loadGlobal settings.LoadGlobal, findRol
 		resourcePermissions: map[Resource]map[permission.ID]struct{}{},
 		tag:                 tag,
 		bundle:              bnd,
+		ctx:                 ctx,
 	}
 
 	for _, anonGroup := range cfg.AnonGroups {
@@ -98,6 +100,8 @@ func createAnonSubject(tag language.Tag, loadGlobal settings.LoadGlobal, findRol
 	return anon
 }
 
+var _ Subject = anonSubject{}
+
 type anonSubject struct {
 	groupsMap           map[group.ID]struct{}
 	groups              []group.ID
@@ -108,6 +112,7 @@ type anonSubject struct {
 	resourcePermissions map[Resource]map[permission.ID]struct{}
 	bundle              *i18n.Bundle
 	tag                 language.Tag
+	ctx                 context.Context
 
 	// intentionally anon users never support Licenses because any amount of users share the same anon subject
 	// and a per-user license would be pointless.
@@ -124,6 +129,10 @@ func (a anonSubject) Audit(permission permission.ID) error {
 	}
 
 	return nil
+}
+
+func (a anonSubject) Context() context.Context {
+	return a.ctx
 }
 
 func (a anonSubject) HasPermission(permission permission.ID) bool {

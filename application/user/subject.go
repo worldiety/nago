@@ -8,6 +8,7 @@
 package user
 
 import (
+	"context"
 	"iter"
 	"log/slog"
 	"slices"
@@ -119,10 +120,15 @@ type Subject interface {
 
 	// Bundle returns the associated and localized resource bundle.
 	Bundle() *i18n.Bundle
+
+	// Context returns the current context of the subject. This may be bound to the lifecycle of the window
+	// or unbounded e.g. for [SU] or [GetAnonUser].
+	Context() context.Context
 }
 
 type viewImpl struct {
 	user              User
+	ctx               context.Context
 	mutex             sync.Mutex
 	repo              Repository
 	roleRepo          data.ReadRepository[role.Role, role.ID]
@@ -140,8 +146,9 @@ type viewImpl struct {
 	licencesLookup    map[license.ID]struct{}
 }
 
-func newViewImpl(repo Repository, roles data.ReadRepository[role.Role, role.ID], user User) *viewImpl {
+func newViewImpl(ctx context.Context, repo Repository, roles data.ReadRepository[role.Role, role.ID], user User) *viewImpl {
 	v := &viewImpl{
+		ctx:               ctx,
 		user:              user,
 		lastRefreshedAt:   time.Now(),
 		refreshInterval:   5 * time.Minute,
@@ -156,6 +163,10 @@ func newViewImpl(repo Repository, roles data.ReadRepository[role.Role, role.ID],
 	v.load()
 
 	return v
+}
+
+func (v *viewImpl) Context() context.Context {
+	return v.ctx
 }
 
 func (v *viewImpl) invalidate() {
@@ -544,4 +555,18 @@ func (v *viewImpl) Bundle() *i18n.Bundle {
 
 func (v *viewImpl) SetBundle(b *i18n.Bundle) {
 	v.bundle.Store(b)
+}
+
+// WithContext wraps the subject, delegates all calls but returns the given context instead.
+func WithContext(subject Subject, ctx context.Context) Subject {
+	return ctxSubject{ctx: ctx, Subject: subject}
+}
+
+type ctxSubject struct {
+	ctx context.Context
+	Subject
+}
+
+func (s ctxSubject) Context() context.Context {
+	return s.ctx
 }

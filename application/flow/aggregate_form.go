@@ -12,8 +12,6 @@ import (
 	"slices"
 )
 
-type RendererID string
-
 type Form struct {
 	ID          FormID
 	Root        FormView
@@ -57,7 +55,6 @@ func (f *Form) Clone() *Form {
 type FormView interface {
 	Identity() ViewID
 	Clone() FormView
-	Renderer() RendererID
 }
 
 // FormViewGroup extens FormView with view group parent functions. A view tree must not contain cycles.
@@ -81,18 +78,16 @@ var (
 )
 
 type FormText struct {
-	id       ViewID
-	value    string
-	style    FormTextStyle
-	renderer RendererID
+	id    ViewID
+	value string
+	style FormTextStyle
 }
 
-func NewFormText(id ViewID, value string, style FormTextStyle, renderer RendererID) *FormText {
+func NewFormText(id ViewID, value string, style FormTextStyle) *FormText {
 	return &FormText{
-		id:       id,
-		value:    value,
-		style:    style,
-		renderer: renderer,
+		id:    id,
+		value: value,
+		style: style,
 	}
 }
 
@@ -109,18 +104,13 @@ func (f *FormText) Style() FormTextStyle {
 	return f.style
 }
 
-func (f *FormText) Renderer() RendererID {
-	return f.renderer
-}
-
 func (f *FormText) Identity() ViewID {
 	return f.id
 }
 
 type baseViewGroup struct {
-	id       ViewID
-	views    []FormView
-	renderer RendererID
+	id    ViewID
+	views []FormView
 }
 
 func (b *baseViewGroup) Identity() ViewID {
@@ -133,14 +123,9 @@ func (b *baseViewGroup) Clone() FormView {
 
 func (b *baseViewGroup) clone() *baseViewGroup {
 	return &baseViewGroup{
-		id:       b.id,
-		views:    slices.Clone(b.views),
-		renderer: b.renderer,
+		id:    b.id,
+		views: slices.Clone(b.views),
 	}
-}
-
-func (b *baseViewGroup) Renderer() RendererID {
-	return b.renderer
 }
 
 func (b *baseViewGroup) All() iter.Seq[FormView] {
@@ -179,8 +164,8 @@ type FormVStack struct {
 	*baseViewGroup
 }
 
-func NewFormVStack(id ViewID, renderer RendererID) *FormVStack {
-	return &FormVStack{baseViewGroup: &baseViewGroup{id: id, renderer: renderer}}
+func NewFormVStack(id ViewID) *FormVStack {
+	return &FormVStack{baseViewGroup: &baseViewGroup{id: id}}
 }
 
 func (f *FormVStack) Clone() FormView {
@@ -193,8 +178,8 @@ type FormCard struct {
 	supportingText string
 }
 
-func NewFormCard(id ViewID, renderer RendererID) *FormCard {
-	return &FormCard{baseViewGroup: &baseViewGroup{id: id, renderer: renderer}}
+func NewFormCard(id ViewID) *FormCard {
+	return &FormCard{baseViewGroup: &baseViewGroup{id: id}}
 }
 
 func (f *FormCard) Label() string {
@@ -217,18 +202,16 @@ type FormCheckbox struct {
 	id             ViewID
 	structType     TypeID
 	field          FieldID
-	rendererID     RendererID
 	label          string
 	supportingText string
 	visible        VisibilityValueRule
 }
 
-func NewFormCheckbox(id ViewID, structType TypeID, field FieldID, rendererID RendererID) *FormCheckbox {
+func NewFormCheckbox(id ViewID, structType TypeID, field FieldID) *FormCheckbox {
 	return &FormCheckbox{
 		id:         id,
 		structType: structType,
 		field:      field,
-		rendererID: rendererID,
 	}
 }
 
@@ -239,10 +222,6 @@ func (f *FormCheckbox) Identity() ViewID {
 func (f *FormCheckbox) Clone() FormView {
 	c := *f
 	return &c
-}
-
-func (f *FormCheckbox) Renderer() RendererID {
-	return f.rendererID
 }
 
 type VisibilityValueRule struct {

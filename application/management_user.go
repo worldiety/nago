@@ -99,6 +99,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(
+				c.ctx,
 				c.EventBus(),
 				sets.UseCases.LoadGlobal,
 				userRepo,
@@ -215,7 +216,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 func (c *Configurator) SysUser() auth.Subject {
 	if c.userManagement == nil || c.userManagement.UseCases.SysUser == nil {
-		return user.NewSystem()()
+		return user.NewSystem(c.Context())()
 	}
 
 	return c.userManagement.UseCases.SysUser()

@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
@@ -29,7 +30,7 @@ func (evt StringFieldAppended) WorkspaceID() WorkspaceID {
 	return evt.Workspace
 }
 
-func (evt StringFieldAppended) Evolve(ws *Workspace) error {
+func (evt StringFieldAppended) Evolve(ctx context.Context, ws *Workspace) error {
 	st, ok := ws.Packages.StructTypeByID(evt.Struct)
 	if !ok {
 		return fmt.Errorf("struct %s not found", evt.Struct)

@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
@@ -29,7 +30,7 @@ func (evt StringEnumCaseAdded) Discriminator() evs.Discriminator {
 	return "StringEnumCaseAdded"
 }
 
-func (evt StringEnumCaseAdded) Evolve(ws *Workspace) error {
+func (evt StringEnumCaseAdded) Evolve(ctx context.Context, ws *Workspace) error {
 	st, ok := ws.Packages.StringTypeByID(evt.String)
 	if !ok {
 		return fmt.Errorf("string %s not found", evt.String)

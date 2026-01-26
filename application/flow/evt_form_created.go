@@ -7,7 +7,11 @@
 
 package flow
 
-import "go.wdy.de/nago/application/evs"
+import (
+	"context"
+
+	"go.wdy.de/nago/application/evs"
+)
 
 type FormID string
 
@@ -27,8 +31,8 @@ func (evt FormCreated) WorkspaceID() WorkspaceID {
 	return evt.Workspace
 }
 
-func (evt FormCreated) Evolve(ws *Workspace) error {
-	vstack := NewFormVStack(ViewID(evt.ID+"-root"), "nago.flow.renderer.VStack")
+func (evt FormCreated) Evolve(ctx context.Context, ws *Workspace) error {
+	vstack := NewFormVStack(ViewID(evt.ID + "-root"))
 	form := NewForm(evt.ID, evt.Name, vstack)
 
 	ws.Forms.AddForm(form)

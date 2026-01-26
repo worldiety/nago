@@ -10,6 +10,7 @@ package uiflow
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
@@ -21,7 +22,7 @@ import (
 
 type PageEditorOptions struct {
 	UseCases  flow.UseCases
-	Renderers map[flow.RendererID]ViewRenderer
+	Renderers map[reflect.Type]ViewRenderer
 }
 
 func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {

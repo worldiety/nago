@@ -8,6 +8,7 @@
 package evs
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,7 +28,7 @@ type Cmd[Aggregate, SuperEvt any] interface {
 
 // Evt is an interface for an event which also provides the Evolve implementation.
 type Evt[Aggregate any] interface {
-	Evolve(Aggregate) error
+	Evolve(context.Context, Aggregate) error
 	Discriminator() Discriminator
 }
 
@@ -109,7 +110,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) RegisterEvents(m ...Evt[Aggregat
 }
 
 // ensureReplayed expects to be run on active mutex lock.
-func (h *Handler[Aggregate, SuperEvt, Primary]) ensureReplayed(state *aggregateState[Aggregate], key Primary) error {
+func (h *Handler[Aggregate, SuperEvt, Primary]) ensureReplayed(ctx context.Context, state *aggregateState[Aggregate], key Primary) error {
 
 	if !state.replayed {
 		h.resetAggregate(state)
@@ -121,7 +122,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) ensureReplayed(state *aggregateS
 
 			// implementation note: this works, because we ensured in Handler constructor
 			// that mutAggregate is a pointer type
-			if err := env.Data.Evolve(state.aggregate); err != nil {
+			if err := env.Data.Evolve(ctx, state.aggregate); err != nil {
 				return fmt.Errorf("cannot evolve aggregate: %w: type %T", err, env.Data)
 			}
 			count++
@@ -148,7 +149,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 	state.mutex.Lock()
 	defer state.mutex.Unlock()
 
-	if err := h.ensureReplayed(state, key); err != nil {
+	if err := h.ensureReplayed(subject.Context(), state, key); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -159,6 +160,11 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 	events, err := cmd.Decide(subject, state.aggregate)
 	if err != nil {
 		return fmt.Errorf("cannot decide command %T: %w", cmd, err)
+	}
+
+	// fast return: Decide did not produce any events. This optimization must always be "free"
+	if len(events) == 0 {
+		return nil
 	}
 
 	batch := make([]Envelope[SuperEvt], 0, len(events))
@@ -179,7 +185,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 
 	// second: apply them as an atomic batch
 	for _, env := range batch {
-		if e2 := env.Data.Evolve(state.aggregate); e2 != nil {
+		if e2 := env.Data.Evolve(subject.Context(), state.aggregate); e2 != nil {
 			err = fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, env.Data)
 			break
 		}
@@ -197,12 +203,12 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 
 // Aggregate returns the current immutable aggregate snapshot. This is only race-free if ReadOnlyAggregate does
 // not share mutable memory with the mutable aggregate.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(key Primary) (Aggregate, error) {
+func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(ctx context.Context, key Primary) (Aggregate, error) {
 	state, _ := h.aggregateCache.LoadOrStore(key, &aggregateState[Aggregate]{})
 	state.mutex.Lock()
 	defer state.mutex.Unlock()
 
-	if err := h.ensureReplayed(state, key); err != nil {
+	if err := h.ensureReplayed(ctx, state, key); err != nil {
 		var zero Aggregate
 		return zero, err
 	}

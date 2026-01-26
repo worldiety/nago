@@ -9,6 +9,7 @@ package uiflow
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -30,7 +31,7 @@ type TFormEditor struct {
 	addDialogPresented    *core.State[bool]
 	addCmdDialogPresented *core.State[bool]
 	addCmdDialogCmd       *core.State[flow.WorkspaceCommand]
-	renderersById         map[flow.RendererID]ViewRenderer
+	renderersById         map[reflect.Type]ViewRenderer
 	renderers             []ViewRenderer
 }
 
@@ -48,21 +49,35 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 		addCmdDialogCmd:       core.StateOf[flow.WorkspaceCommand](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.cmd"),
 	}
 
-	for _, renderer := range c.renderersById {
-		c.renderers = append(c.renderers, renderer)
+	type tmpHolder struct {
+		name string
+		r    ViewRenderer
 	}
 
-	slices.SortFunc(c.renderers, func(a, b ViewRenderer) int {
-		return strings.Compare(string(a.Identity()), string(b.Identity()))
+	var tmp []tmpHolder
+
+	for t, renderer := range c.renderersById {
+		tmp = append(tmp, tmpHolder{
+			name: t.Name(),
+			r:    renderer,
+		})
+	}
+
+	slices.SortFunc(tmp, func(a, b tmpHolder) int {
+		return strings.Compare(a.name, b.name)
 	})
+
+	for _, holder := range tmp {
+		c.renderers = append(c.renderers, holder.r)
+	}
 
 	return c
 }
 
 func (c TFormEditor) renderElement(ctx RContext, elem flow.FormView) core.View {
-	r, ok := c.renderersById[elem.Renderer()]
+	r, ok := c.renderersById[reflect.TypeOf(elem)]
 	if !ok {
-		return ui.Text(fmt.Sprintf("%T refers to unknown renderer '%s'", elem, elem.Renderer()))
+		return ui.Text(fmt.Sprintf("%T has no renderer", elem))
 	}
 
 	return r.Preview(ctx, elem)
@@ -160,6 +175,11 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 		Window:    wnd,
 		Handle:    c.uc.HandleCommand,
 		Workspace: c.ws,
+		RenderAppend: func(ctx RContext) core.View {
+			return ui.SecondaryButton(func() {
+
+			}).Title("Append")
+		},
 	}
 }
 

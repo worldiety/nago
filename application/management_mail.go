@@ -9,6 +9,9 @@ package application
 
 import (
 	"fmt"
+	"log/slog"
+	mail2 "net/mail"
+
 	"go.wdy.de/nago/application/mail"
 	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/application/template"
@@ -18,8 +21,6 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
-	"log/slog"
-	mail2 "net/mail"
 )
 
 // MailManagement is a nago system (Mail Management).
@@ -81,7 +82,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			SendMailTest:      "admin/mail/test",
 		}
 
-		c.mailManagement.UseCases, err = mail.NewUseCases(c.EventBus(), outgoingMailRepo, templates.UseCases.EnsureBuildIn)
+		c.mailManagement.UseCases, err = mail.NewUseCases(c.EventBus(), outgoingMailRepo, templates.UseCases.EnsureBuildIn, c.SysUser)
 		if err != nil {
 			return MailManagement{}, fmt.Errorf("cannot create mail usecases: %w", err)
 		}
@@ -211,7 +212,7 @@ func (c *Configurator) SendMailTemplate(to user.Email, tpl template.ID, subjName
 		return fmt.Errorf("cannot render body: %w", err)
 	}
 
-	_, err = mails.UseCases.SendMail(user.NewSystem()(), mail.Mail{
+	_, err = mails.UseCases.SendMail(c.SysUser(), mail.Mail{
 		To: []mail2.Address{{
 			Address: string(to),
 		}},

@@ -8,6 +8,7 @@
 package user
 
 import (
+	"context"
 	"iter"
 	"strings"
 	"sync"
@@ -294,7 +295,7 @@ type UseCases struct {
 	MergeSingleSignOnUser     MergeSingleSignOnUser
 }
 
-func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID, createSrcSet image.CreateSrcSet) UseCases {
+func NewUseCases(ctx context.Context, eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID, createSrcSet image.CreateSrcSet) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
@@ -302,7 +303,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 	findByIdFn := NewFindByID(users)
 	findAllFn := NewFindAll(users)
 
-	systemFn := NewSystem()
+	systemFn := NewSystem(ctx)
 	enableBootstrapAdminFn := NewEnableBootstrapAdmin(users, systemFn, findByMailFn)
 
 	changeMyPasswordFn := NewChangeMyPassword(&globalLock, users)
@@ -311,7 +312,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 	deleteFn := NewDelete(users)
 
 	authenticateByPasswordFn := NewAuthenticatesByPassword(findByMailFn, systemFn)
-	subjectFromUserFn := NewViewOf(eventBus, users, roles)
+	subjectFromUserFn := NewViewOf(ctx, eventBus, users, roles)
 
 	readMyContactFn := NewReadMyContact(users)
 
@@ -366,7 +367,7 @@ func NewUseCases(eventBus events.EventBus, loadGlobal settings.LoadGlobal, users
 		AssignUserLicense:         NewAssignUserLicense(&globalLock, users, countAssignedUserLicenseFn, findUserLicenseByID),
 		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
-		GetAnonUser:               NewGetAnonUser(loadGlobal, findRoleByID, eventBus),
+		GetAnonUser:               NewGetAnonUser(ctx, loadGlobal, findRoleByID, eventBus),
 		Consent:                   NewConsent(&globalLock, eventBus, users),
 		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
 		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),

@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
@@ -19,7 +20,7 @@ type PrimaryKeySelected struct {
 	Field     FieldID     `json:"field"`
 }
 
-func (evt PrimaryKeySelected) Evolve(ws *Workspace) error {
+func (evt PrimaryKeySelected) Evolve(ctx context.Context, ws *Workspace) error {
 	st, ok := ws.Packages.StructTypeByID(evt.Struct)
 	if !ok {
 		return fmt.Errorf("struct %s not found", evt.Struct)

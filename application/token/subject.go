@@ -8,6 +8,7 @@
 package token
 
 import (
+	"context"
 	"fmt"
 	"iter"
 	"log/slog"
@@ -37,6 +38,7 @@ type subject struct {
 	allPermissions []permission.ID
 	lastLoaded     time.Time
 	findRoleByID   role.FindByID
+	ctx            context.Context
 }
 
 func (s *subject) HasResourcePermission(name string, id string, p permission.ID) bool {
@@ -44,12 +46,13 @@ func (s *subject) HasResourcePermission(name string, id string, p permission.ID)
 	panic("implement me")
 }
 
-func newSubject(findRoleByID role.FindByID, repo Repository, token Token) *subject {
+func newSubject(ctx context.Context, findRoleByID role.FindByID, repo Repository, token Token) *subject {
 	if token.Impersonation.IsSome() {
 		panic(fmt.Errorf("impersonation is not allowed"))
 	}
 
 	return &subject{
+		ctx:          ctx,
 		repo:         repo,
 		token:        token,
 		findRoleByID: findRoleByID,
@@ -58,6 +61,10 @@ func newSubject(findRoleByID role.FindByID, repo Repository, token Token) *subje
 		licenses:     make(map[license.ID]struct{}),
 		permissions:  make(map[permission.ID]struct{}),
 	}
+}
+
+func (s *subject) Context() context.Context {
+	return s.ctx
 }
 
 func (s *subject) Audit(permission permission.ID) error {
