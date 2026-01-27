@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"os"
 	"reflect"
 	"sync"
@@ -50,23 +51,27 @@ type aggregateState[Aggregate any] struct {
 // against a per-aggregate mutex and keeping the aggregate in memory and creates clones under the same lock
 // for reading.
 type Handler[Aggregate Cloner[Aggregate], SuperEvt Evt[Aggregate], Primary ~string] struct {
+	uc             UseCases[SuperEvt]
 	eventTypes     map[Discriminator]func() SuperEvt
 	replay         ReplayWithIndex[Primary, SuperEvt]
 	storeEvent     Store[SuperEvt]
 	register       Register[SuperEvt]
 	aggregateCache concurrent.RWMap[Primary, *aggregateState[Aggregate]]
+	index          *StoreIndex[Primary, SuperEvt]
 }
 
 func NewHandler[Aggregate Cloner[Aggregate], SuperEvt Evt[Aggregate], Primary ~string](
-	register Register[SuperEvt],
+	uc UseCases[SuperEvt],
 	replay ReplayWithIndex[Primary, SuperEvt],
-	store Store[SuperEvt],
+	index *StoreIndex[Primary, SuperEvt],
 ) *Handler[Aggregate, SuperEvt, Primary] {
 	h := &Handler[Aggregate, SuperEvt, Primary]{
 		replay:     replay,
-		storeEvent: store,
-		register:   register,
+		uc:         uc,
+		storeEvent: uc.Store,
+		register:   uc.Register,
 		eventTypes: make(map[Discriminator]func() SuperEvt),
+		index:      index,
 	}
 
 	if reflect.TypeFor[Aggregate]().Kind() != reflect.Ptr {
@@ -203,6 +208,23 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 	}
 
 	return nil
+}
+
+// All returns all aggregate ids. The implementation avoids to load replay all aggregates and just consults
+// the inverse primary index to return potential aggregates.
+func (h *Handler[Aggregate, SuperEvt, Primary]) All(ctx context.Context) (iter.Seq[Primary], error) {
+	it, err := h.index.GroupPrimary(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(yield func(Primary) bool) {
+		for id := range it {
+			if !yield(id) {
+				return
+			}
+		}
+	}, nil
 }
 
 // Aggregate returns the current immutable aggregate snapshot. This is only race-free if ReadOnlyAggregate does

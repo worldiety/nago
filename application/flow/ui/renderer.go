@@ -28,7 +28,7 @@ type ViewRenderer interface {
 	Preview(ctx RContext, view flow.FormView) core.View
 	Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply)
 	Update(ctx RContext, view flow.FormView) core.View
-	Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View
+	Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View
 }
 
 // TODO replace with immutable map

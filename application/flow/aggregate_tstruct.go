@@ -179,6 +179,7 @@ type FieldID string
 type Field interface {
 	Identity() FieldID
 	Name() Ident
+	JSONName() string
 	SetName(Ident)
 	Description() string
 	SetDescription(string)
@@ -221,6 +222,10 @@ func (f *StringField) PrimaryKey() bool {
 
 func (f *StringField) SetPrimaryKey(b bool) {
 	f.primaryKey = b
+}
+
+func (f *StringField) JSONName() string {
+	return string(f.name)
 }
 
 func (f *StringField) Clone() Field {
@@ -293,6 +298,10 @@ func (f *TypeField) SetDescription(s string) {
 func (f *TypeField) Clone() Field {
 	c := *f
 	return &c
+}
+
+func (f *TypeField) JSONName() string {
+	return string(f.name)
 }
 
 func (f *TypeField) Description() string {
@@ -374,5 +383,9 @@ func (f *BoolField) Typename() string {
 }
 
 func (f *BoolField) String() string {
+	return string(f.name)
+}
+
+func (f *BoolField) JSONName() string {
 	return string(f.name)
 }

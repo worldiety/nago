@@ -75,11 +75,6 @@ func (r *CheckboxRenderer) Update(ctx RContext, view flow.FormView) core.View {
 	return ui.Text("Edit Checkbox")
 }
 
-func (r *CheckboxRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (r *CheckboxRenderer) TeaserPreview(ctx RContext) core.View {
 	return ui.VStack(
 		ui.Text("Checkbox").Font(ui.BodySmall),
@@ -90,4 +85,32 @@ func (r *CheckboxRenderer) TeaserPreview(ctx RContext) core.View {
 func (r *CheckboxRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	box := view.(*flow.FormCheckbox)
 	return ui.CheckboxField(box.Label(), false).SupportingText(box.SupportingText())
+}
+
+func (r *CheckboxRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
+	box := view.(*flow.FormCheckbox)
+	structType := ctx.StructType()
+	field, ok := structType.Fields.ByID(box.Field())
+	if !ok {
+		return alert.BannerError(fmt.Errorf("field not found: %s", box.Field()))
+	}
+
+	jsonName := field.JSONName()
+	myState := core.DerivedState[bool](state, string(box.Field())).Init(func() bool {
+		val, ok := state.Get().Get(jsonName)
+		if !ok {
+			return false
+		}
+
+		return val.Bool()
+	})
+
+	myState.Observe(func(newValue bool) {
+		obj := state.Get()
+		obj.Put(jsonName, jsonptr.Bool(newValue))
+		state.Set(obj)
+		state.Notify()
+	})
+
+	return ui.CheckboxField(box.Label(), myState.Get()).SupportingText(box.SupportingText()).InputValue(myState)
 }

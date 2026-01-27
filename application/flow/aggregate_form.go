@@ -244,6 +244,10 @@ func (f *FormCheckbox) Label() string {
 	return f.label
 }
 
+func (f *FormCheckbox) Field() FieldID {
+	return f.field
+}
+
 func (f *FormCheckbox) SetLabel(s string) {
 	f.label = s
 }

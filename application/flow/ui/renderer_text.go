@@ -56,11 +56,6 @@ func (r *TextRenderer) Update(ctx RContext, view flow.FormView) core.View {
 	return ui.Text("Edit Text")
 }
 
-func (r *TextRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (r *TextRenderer) TeaserPreview(ctx RContext) core.View {
 	return ui.VStack(
 		ui.Text("Const Text").Font(ui.BodySmall),
@@ -83,5 +78,23 @@ func (r *TextRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		return markdown.RichText(text.Value())
 	default:
 		panic("unknown text style")
+	}
+}
+
+func (r *TextRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
+	text := view.(*flow.FormText)
+	switch text.Style() {
+	case flow.FormTextStyleDefault:
+		return ui.Text(text.Value())
+	case flow.FormTextStyleH1:
+		return ui.H1(text.Value())
+	case flow.FormTextStyleH2:
+		return ui.H2(text.Value())
+	case flow.FormTextStyleH3:
+		return ui.Heading(3, text.Value())
+	case flow.FormTextStyleMarkdown:
+		return markdown.RichText(text.Value())
+	default:
+		return ui.Text(fmt.Sprintf("unknown text style: %v", text.Style()))
 	}
 }

@@ -96,7 +96,13 @@ func (r VStackRenderer) Update(ctx RContext, view flow.FormView) core.View {
 	return ui.Text("Edit VStack")
 }
 
-func (r VStackRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {
-	//TODO implement me
-	panic("implement me")
+func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
+	vstack := view.(*flow.FormVStack)
+
+	var tmp []core.View
+	for formView := range vstack.All() {
+		tmp = append(tmp, ctx.Render(formView))
+	}
+
+	return ui.VStack(tmp...)
 }

@@ -9,6 +9,7 @@ package cfgflow
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 	"reflect"
 	"slices"
@@ -61,10 +62,16 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		return Module{}, fmt.Errorf("prefix is not valid")
 	}
 
+	stores, err := cfg.Stores()
+	if err != nil {
+		return Module{}, err
+	}
+
 	mod = Module{Mutex: &sync.Mutex{}}
 	mod.Pages = uiflow.Pages{
-		Workspaces: "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspaces",
-		Editor:     "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/edit",
+		Workspaces:       "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspaces",
+		Editor:           "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/edit",
+		FormViewerCreate: "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/form/create",
 	}
 
 	if len(opts.Renderers) == 0 {
@@ -107,16 +114,14 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 	}
 
 	workspaceHandler := evs.NewHandler[*flow.Workspace](
-		modEvs.UseCases.Register,
+		modEvs.UseCases,
 		replayByWorkspace,
-		modEvs.UseCases.Store,
+		idxByWorkspace,
 	)
 
-	workspaceHandler.RegisterEvents(
-		flow.WorkspaceCreated{},
-		flow.PackageCreated{},
-		flow.StringTypeCreated{},
-	)
+	for _, event := range opts.Events {
+		workspaceHandler.RegisterEvents(event)
+	}
 
 	uc := flow.NewUseCases(string(prefix), workspaceHandler, idxByWorkspace)
 	mod.UseCases = uc
@@ -134,6 +139,30 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 			Target: mod.Pages.Workspaces,
 		})
 
+		it, err := workspaceHandler.All(subject.Context())
+		if err != nil {
+			slog.Error("failed to load workspaces", "err", err.Error())
+		} else {
+			for id := range it {
+				agg, err := workspaceHandler.Aggregate(subject.Context(), id)
+				if err != nil {
+					slog.Error("failed to load workspace", "err", err.Error())
+					continue
+				}
+
+				for form := range agg.Forms.All() {
+					grp.Entries = append(grp.Entries, admin.Card{
+						Title:        string(agg.Name) + "." + string(form.Name()),
+						Text:         "Create a new instance for this flow form. " + form.Description(),
+						Target:       mod.Pages.FormViewerCreate,
+						TargetParams: core.Values{"workspace": string(agg.ID), "form": string(form.ID)},
+					})
+				}
+
+			}
+
+		}
+
 		return grp
 	})
 
@@ -146,6 +175,10 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 			UseCases:  mod.UseCases,
 			Renderers: renderers,
 		})
+	})
+
+	cfg.RootViewWithDecoration(mod.Pages.FormViewerCreate, func(wnd core.Window) core.View {
+		return uiflow.PageFormViewerCreate(wnd, uc.LoadWorkspace, stores)
 	})
 
 	cfg.AddContextValue(core.ContextValue(string("module-"+prefix), mod))
