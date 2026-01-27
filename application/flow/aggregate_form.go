@@ -13,18 +13,30 @@ import (
 )
 
 type Form struct {
-	ID          FormID
-	Root        FormView
-	name        Ident
-	description string
+	ID             FormID
+	Root           FormView
+	name           Ident
+	description    string
+	repository     RepositoryID
+	repositoryType TypeID
 }
 
-func NewForm(id FormID, name Ident, root FormView) *Form {
+func NewForm(id FormID, name Ident, root FormView, repository RepositoryID, repositoryType TypeID) *Form {
 	return &Form{
-		ID:   id,
-		name: name,
-		Root: root,
+		ID:             id,
+		name:           name,
+		Root:           root,
+		repository:     repository,
+		repositoryType: repositoryType,
 	}
+}
+
+func (f *Form) Repository() RepositoryID {
+	return f.repository
+}
+
+func (f *Form) RepositoryType() TypeID {
+	return f.repositoryType
 }
 
 func (f *Form) Name() Ident {
@@ -44,12 +56,18 @@ func (f *Form) Identity() FormID {
 }
 
 func (f *Form) Clone() *Form {
-	return &Form{
-		ID:          f.ID,
-		Root:        f.Root.Clone(),
-		name:        f.name,
-		description: f.description,
+	c := &Form{
+		ID:             f.ID,
+		name:           f.name,
+		description:    f.description,
+		repository:     f.repository,
+		repositoryType: f.repositoryType,
 	}
+
+	if f.Root != nil {
+		c.Root = f.Root.Clone()
+	}
+	return c
 }
 
 type FormView interface {
@@ -145,7 +163,6 @@ func (b *baseViewGroup) Insert(view FormView, after ViewID) {
 		if v.Identity() == after {
 			tmp = append(tmp, view)
 			inserted = true
-			break
 		}
 	}
 
@@ -204,7 +221,6 @@ type FormCheckbox struct {
 	field          FieldID
 	label          string
 	supportingText string
-	visible        VisibilityValueRule
 }
 
 func NewFormCheckbox(id ViewID, structType TypeID, field FieldID) *FormCheckbox {
@@ -222,6 +238,22 @@ func (f *FormCheckbox) Identity() ViewID {
 func (f *FormCheckbox) Clone() FormView {
 	c := *f
 	return &c
+}
+
+func (f *FormCheckbox) Label() string {
+	return f.label
+}
+
+func (f *FormCheckbox) SetLabel(s string) {
+	f.label = s
+}
+
+func (f *FormCheckbox) SupportingText() string {
+	return f.supportingText
+}
+
+func (f *FormCheckbox) SetSupportingText(s string) {
+	f.supportingText = s
 }
 
 type VisibilityValueRule struct {

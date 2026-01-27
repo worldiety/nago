@@ -36,6 +36,7 @@ func (r *TextRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.Vie
 			Form:      f.ID,
 			Parent:    parent,
 			After:     after,
+			Style:     flow.FormTextStyleDefault,
 		}
 	})
 

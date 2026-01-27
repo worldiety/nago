@@ -45,6 +45,19 @@ func (ctx RContext) RenderAppend(parent flow.ViewID) core.View {
 	}).Title("Append").PreIcon(icons.Plus)
 }
 
+func (ctx RContext) RenderInsertAfter(parent flow.ViewID, after flow.ViewID) core.View {
+	return ui.HStack(
+		ui.HLine().Border(ui.Border{TopWidth: "1px", TopColor: ui.ColorInteractive}),
+		ui.SecondaryButton(func() {
+			ctx.parent.selectedAfter.Set(after)
+			ctx.parent.selectedParent.Set(parent)
+			ctx.parent.addBelow.Set(after)
+			ctx.parent.addDialogPresented.Set(true)
+		}).PreIcon(icons.Plus),
+	).FullWidth()
+
+}
+
 func (ctx RContext) Window() core.Window {
 	return ctx.wnd
 }

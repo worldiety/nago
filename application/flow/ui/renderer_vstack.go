@@ -24,12 +24,17 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	vstack := view.(*flow.FormVStack)
 	var tmp []core.View
 
-	tmp = append(tmp, ui.Text("VSTACK DEBUG"))
+	//tmp = append(tmp, ui.Text("VSTACK DEBUG"))
+	var lastViewID flow.ViewID
 	for formView := range vstack.All() {
-		tmp = append(tmp, ctx.RenderPreview(formView))
+		tmp = append(tmp,
+			ctx.RenderInsertAfter(view.Identity(), lastViewID),
+			ctx.RenderPreview(formView),
+		)
+		lastViewID = formView.Identity()
 	}
 
-	tmp = append(tmp, ctx.RenderAppend(view.Identity()))
+	tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
 
 	return ui.VStack(tmp...).FullWidth().Gap(ui.L8)
 }

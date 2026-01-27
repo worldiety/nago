@@ -35,13 +35,13 @@ func (cmd AddFormTextCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspa
 		errGrp.Add("Form", "Form not found")
 		return nil, errGrp.Error()
 	}
-	
+
 	if !xslices.Contains(FormTextValues, cmd.Style) {
 		errGrp.Add("Style", "Style not valid")
 	}
 
 	if cmd.After != "" {
-		if _, ok := FindElementByID(parent, cmd.After); ok {
+		if _, ok := FindElementByID(parent, cmd.After); !ok {
 			errGrp.Add("After", "After element not found")
 		}
 	}

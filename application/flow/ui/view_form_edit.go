@@ -14,7 +14,6 @@ import (
 
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
-	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
@@ -30,6 +29,7 @@ type TFormEditor struct {
 	selectedRenderer    *core.State[ViewRenderer]
 	createViewPresented *core.State[bool]
 	selectedParent      *core.State[flow.ViewID]
+	selectedAfter       *core.State[flow.ViewID]
 	//addCmdDialogPresented *core.State[bool]
 	//addCmdDialogCmd       *core.State[flow.WorkspaceCommand]
 	renderersById map[reflect.Type]ViewRenderer
@@ -51,6 +51,7 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 		selectedRenderer:    core.StateOf[ViewRenderer](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.renderer"),
 		createViewPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.create.view.presented"),
 		selectedParent:      core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.parent"),
+		selectedAfter:       core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.after"),
 	}
 
 	type tmpHolder struct {
@@ -62,7 +63,7 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 
 	for t, renderer := range c.renderersById {
 		tmp = append(tmp, tmpHolder{
-			name: t.Name(),
+			name: t.String(),
 			r:    renderer,
 		})
 	}
@@ -78,47 +79,27 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 	return c
 }
 
-func (c TFormEditor) insertViewLarge(elem flow.FormView) core.View {
-	return ui.HStack(
-		ui.ImageIcon(icons.Plus),
-		ui.Text("Add form element"),
-	).FullWidth().
-		Action(func() {
-			c.addBelow.Set("")
-			c.selected.Set(elem)
-			c.addDialogPresented.Set(true)
-		}).
-		HoveredBorder(ui.Border{}.Color(ui.I0).Width(ui.L1).Radius(ui.L16)).
-		HoveredBackgroundColor(ui.I1).
-		Padding(ui.Padding{}.All(ui.L16)).
-		Border(ui.Border{}.Color(ui.ColorIconsMuted).Width(ui.L1).Radius(ui.L16))
-}
-
-func insertView() core.View {
-	return ui.HStack(
-		ui.HLine().Border(ui.Border{TopWidth: "1px", TopColor: ui.ColorInteractive}),
-		ui.SecondaryButton(func() {
-
-		}).PreIcon(icons.Plus),
-	).FullWidth()
-}
-
 func (c TFormEditor) dialogAddCmd() core.View {
 	if !c.createViewPresented.Get() {
 		return nil
 	}
 
-	view, applyFn := c.selectedRenderer.Get().Create(c.newRenderContext(c.wnd), c.selectedParent.Get(), "")
+	view, applyFn := c.selectedRenderer.Get().Create(c.newRenderContext(c.wnd), c.selectedParent.Get(), c.selectedAfter.Get())
 	return alert.Dialog(
 		"Add form element",
 		view,
 		c.createViewPresented,
 		alert.Closeable(),
+		alert.Cancel(func() {
+			c.addDialogPresented.Set(true)
+		}),
 		alert.Create(func() (close bool) {
 			if err := applyFn(); err != nil {
 				alert.ShowBannerError(c.wnd, err)
 				return false
 			}
+
+			c.addDialogPresented.Set(false)
 
 			return true
 		}),
@@ -137,11 +118,9 @@ func (c TFormEditor) dialogAddFormElement() core.View {
 		availableElements = append(availableElements, ui.VStack(
 			renderer.TeaserPreview(rctx),
 		).Action(func() {
-			//cmd := renderer.CreateCmd(c.ws, c.form.Identity(), c.selected.Get().Identity(), c.addBelow.Get())
-			//c.addCmdDialogCmd.Set(cmd)
-			//c.addCmdDialogPresented.Set(true)
 			c.selectedRenderer.Set(renderer)
 			c.createViewPresented.Set(true)
+			c.addDialogPresented.Set(false)
 
 		}).
 			HoveredBackgroundColor(ui.I1).
@@ -149,7 +128,7 @@ func (c TFormEditor) dialogAddFormElement() core.View {
 	}
 
 	return alert.Dialog(
-		"Add form element",
+		"Add form element 2",
 		ui.HStack(availableElements...).Wrap(true).Gap(ui.L8).Alignment(ui.Stretch).FullWidth(),
 		c.addDialogPresented,
 		alert.Larger(),
@@ -170,10 +149,16 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 }
 
 func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
+	deleteFormPresented := core.StateOf[bool](c.wnd, "form_delete_presented")
 	if c.selected.Get() == nil {
 		return ui.VStack(
+			c.deleteFormDialog(deleteFormPresented),
 			ui.Heading(6, string(c.form.Name())),
 			ui.Text(c.form.Description()),
+			ui.HLine(),
+			ui.SecondaryButton(func() {
+				deleteFormPresented.Set(true)
+			}).Title("Delete form"),
 		).FullWidth().Alignment(ui.TopLeading)
 	}
 
@@ -187,6 +172,28 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 			deletePresented.Set(true)
 		}).Title("Delete"),
 	).FullWidth().Alignment(ui.TopLeading)
+}
+
+func (c TFormEditor) deleteFormDialog(presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	return alert.Dialog(
+		"Delete form",
+		ui.Text("Are you sure you want to delete this form?"),
+		presented,
+		alert.Closeable(),
+		alert.Cancel(nil),
+		alert.Delete(func() {
+			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.DeleteFormCmd{
+				Workspace: c.ws.Identity(),
+				ID:        c.form.Identity(),
+			}); err != nil {
+				alert.ShowBannerError(c.wnd, err)
+			}
+		}),
+	)
 }
 
 func (c TFormEditor) deleteViewDialog(presented *core.State[bool]) core.View {

@@ -29,6 +29,15 @@ func (forms *Forms) ByID(id FormID) (*Form, bool) {
 	return form, ok
 }
 
+func (forms *Forms) Remove(id FormID) (*Form, bool) {
+	form, ok := forms.forms[id]
+	if ok {
+		delete(forms.forms, id)
+	}
+
+	return form, ok
+}
+
 func (forms *Forms) ByView(id ViewID) (*Form, bool) {
 	for _, form := range forms.forms {
 		if _, ok := FindElementByID(form.Root, id); ok {

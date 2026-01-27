@@ -34,7 +34,7 @@ func (cmd AddVStackCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspace
 	}
 
 	if cmd.After != "" {
-		if _, ok := FindElementByID(parent, cmd.After); ok {
+		if _, ok := FindElementByID(parent, cmd.After); !ok {
 			errGrp.Add("After", "After element not found")
 		}
 	}

@@ -10,6 +10,7 @@ package form
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"reflect"
@@ -874,8 +875,11 @@ func strFieldValues(v any) map[string]string {
 		return m
 	}
 
-	if err, ok := v.(ErrorWithFields); ok {
-		return strFieldValues(err.UnwrapFields())
+	if v, ok := v.(error); ok {
+		var err ErrorWithFields
+		if errors.As(v, &err) {
+			return strFieldValues(err.UnwrapFields())
+		}
 	}
 
 	rType := reflect.TypeOf(v)

@@ -33,8 +33,9 @@ type ViewRenderer interface {
 
 // TODO replace with immutable map
 var DefaultRenderers = map[reflect.Type]ViewRenderer{
-	reflect.TypeFor[*flow.FormText]():   &TextRenderer{},
-	reflect.TypeFor[*flow.FormVStack](): &VStackRenderer{},
+	reflect.TypeFor[*flow.FormText]():     &TextRenderer{},
+	reflect.TypeFor[*flow.FormVStack]():   &VStackRenderer{},
+	reflect.TypeFor[*flow.FormCheckbox](): &CheckboxRenderer{},
 }
 
 type StringEnumFieldRenderer struct{}

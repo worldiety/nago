@@ -372,3 +372,7 @@ func (f *BoolField) field() {}
 func (f *BoolField) Typename() string {
 	return "bool"
 }
+
+func (f *BoolField) String() string {
+	return string(f.name)
+}

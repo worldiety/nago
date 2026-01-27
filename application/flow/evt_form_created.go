@@ -11,6 +11,7 @@ import (
 	"context"
 
 	"go.wdy.de/nago/application/evs"
+	"go.wdy.de/nago/pkg/xerrors"
 )
 
 type FormID string
@@ -32,8 +33,15 @@ func (evt FormCreated) WorkspaceID() WorkspaceID {
 }
 
 func (evt FormCreated) Evolve(ctx context.Context, ws *Workspace) error {
+	var errGrp xerrors.FieldBuilder
+	repo, ok := ws.Repositories.ByID(evt.Repository)
+	if !ok {
+		errGrp.Add("Repository", "Repository not found")
+		return errGrp.Error()
+	}
+
 	vstack := NewFormVStack(ViewID(evt.ID + "-root"))
-	form := NewForm(evt.ID, evt.Name, vstack)
+	form := NewForm(evt.ID, evt.Name, vstack, evt.Repository, repo.StructType)
 
 	ws.Forms.AddForm(form)
 	return nil
