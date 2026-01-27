@@ -64,7 +64,7 @@ function opacityValue(color?: Color): number {
 		if (color?.length === 9) split = color.substring(8);
 		if (split) {
 			const num = Number(`0x${split}`);
-			return num / 255 * 100;
+			return (num / 255) * 100;
 		}
 
 		return 100;
@@ -72,7 +72,7 @@ function opacityValue(color?: Color): number {
 
 	if (color?.includes('/')) {
 		const split = color?.split('/').pop();
-		return split ? parseInt(split) / 255 * 100 : 0;
+		return split ? (parseInt(split) / 255) * 100 : 0;
 	}
 
 	return 0;

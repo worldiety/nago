@@ -25,14 +25,14 @@ type TextRenderer struct {
 }
 
 func (r *TextRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply) {
-	f, ok := ctx.Workspace.Forms.ByView(parent)
+	f, ok := ctx.Workspace().Forms.ByView(parent)
 	if !ok {
 		return alert.BannerError(fmt.Errorf("parent has no form: %s", parent)), nil
 	}
 
-	state := core.StateOf[flow.AddFormTextCmd](ctx.Window, fmt.Sprintf("%s-%s", parent, after)).Init(func() flow.AddFormTextCmd {
+	state := core.StateOf[flow.AddFormTextCmd](ctx.Window(), fmt.Sprintf("%s-%s", parent, after)).Init(func() flow.AddFormTextCmd {
 		return flow.AddFormTextCmd{
-			Workspace: ctx.Workspace.Identity(),
+			Workspace: ctx.Workspace().Identity(),
 			Form:      f.ID,
 			Parent:    parent,
 			After:     after,
@@ -47,13 +47,12 @@ func (r *TextRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.Vie
 				Context: ctx.Context,
 			}, state),
 		).FullWidth(), func() error {
-			return ctx.Handle(ctx.Window.Subject(), state.Get())
+			return ctx.Handle(ctx.Window().Subject(), state.Get())
 		}
 }
 
-func (r *TextRenderer) Update(ctx RContext, view flow.ViewID) (core.View, Apply) {
-	//TODO implement me
-	panic("implement me")
+func (r *TextRenderer) Update(ctx RContext, view flow.FormView) core.View {
+	return ui.Text("Edit Text")
 }
 
 func (r *TextRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {

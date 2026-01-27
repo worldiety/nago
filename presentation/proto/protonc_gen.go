@@ -831,10 +831,11 @@ type Border struct {
 	RightColor        Color
 	BottomColor       Color
 	BoxShadow         Shadow
+	BorderStyle       BorderStyle
 }
 
 func (v *Border) write(w *BinaryWriter) error {
-	var fields [14]bool
+	var fields [15]bool
 	fields[1] = !v.TopLeftRadius.IsZero()
 	fields[2] = !v.TopRightRadius.IsZero()
 	fields[3] = !v.BottomLeftRadius.IsZero()
@@ -848,6 +849,7 @@ func (v *Border) write(w *BinaryWriter) error {
 	fields[11] = !v.RightColor.IsZero()
 	fields[12] = !v.BottomColor.IsZero()
 	fields[13] = !v.BoxShadow.IsZero()
+	fields[14] = !v.BorderStyle.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -962,6 +964,14 @@ func (v *Border) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[14] {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
+			return err
+		}
+		if err := v.BorderStyle.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -1039,6 +1049,11 @@ func (v *Border) read(r *BinaryReader) error {
 			}
 		case 13:
 			err := v.BoxShadow.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.BorderStyle.read(r)
 			if err != nil {
 				return err
 			}
@@ -13389,6 +13404,34 @@ func (v *Background) read(r *BinaryReader) error {
 	return nil
 }
 
+type BorderStyle uint64
+
+const (
+	StyleSolid  BorderStyle = 0
+	StyleDotted BorderStyle = 1
+	StyleDashed BorderStyle = 2
+)
+
+func (v *BorderStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *BorderStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = BorderStyle(tmp)
+	return nil
+}
+
+func (v *BorderStyle) reset() {
+	*v = BorderStyle(0)
+}
+func (v *BorderStyle) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -14422,6 +14465,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 178:
+		var v BorderStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -14572,13 +14621,14 @@ func (v *Border) reset() {
 	v.RightColor.reset()
 	v.BottomColor.reset()
 	v.BoxShadow.reset()
+	v.BorderStyle.reset()
 }
 
 func (v *Border) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.TopLeftRadius.IsZero() && v.TopRightRadius.IsZero() && v.BottomLeftRadius.IsZero() && v.BottomRightRadius.IsZero() && v.LeftWidth.IsZero() && v.TopWidth.IsZero() && v.RightWidth.IsZero() && v.BottomWidth.IsZero() && v.LeftColor.IsZero() && v.TopColor.IsZero() && v.RightColor.IsZero() && v.BottomColor.IsZero() && v.BoxShadow.IsZero()
+	return v.TopLeftRadius.IsZero() && v.TopRightRadius.IsZero() && v.BottomLeftRadius.IsZero() && v.BottomRightRadius.IsZero() && v.LeftWidth.IsZero() && v.TopWidth.IsZero() && v.RightWidth.IsZero() && v.BottomWidth.IsZero() && v.LeftColor.IsZero() && v.TopColor.IsZero() && v.RightColor.IsZero() && v.BottomColor.IsZero() && v.BoxShadow.IsZero() && v.BorderStyle.IsZero()
 }
 
 func (v *Frame) reset() {
@@ -18742,6 +18792,13 @@ func (v *DnDArea) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Background) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 177); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BorderStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 178); err != nil {
 		return err
 	}
 	return nil

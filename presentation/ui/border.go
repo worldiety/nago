@@ -14,6 +14,14 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+type BorderStyle int
+
+const (
+	BorderStyleSolid  = BorderStyle(proto.StyleSolid)
+	BorderStyleDashed = BorderStyle(proto.StyleDashed)
+	BorderStyleDotted = BorderStyle(proto.StyleDotted)
+)
+
 // Border is a utility component (Border).
 // It controls the radius of each corner, the width and color of each edge,
 // and optional shadow settings. A border affects the component's layout
@@ -35,7 +43,9 @@ type Border struct {
 	RightColor  Color
 	BottomColor Color
 
-	BoxShadow Shadow `json:"s,omitempty"`
+	BoxShadow Shadow
+
+	BorderStyle BorderStyle
 }
 
 // ora converts a Border into its protocol representation for serialization.
@@ -54,6 +64,7 @@ func (b Border) ora() proto.Border {
 		RightColor:        proto.Color(b.RightColor),
 		BottomColor:       proto.Color(b.BottomColor),
 		BoxShadow:         b.BoxShadow.ora(),
+		BorderStyle:       proto.BorderStyle(b.BorderStyle),
 	}
 }
 
@@ -83,6 +94,12 @@ func (b Border) BottomRadius(radius Length) Border {
 // Circle sets all corner radii to a large value, resulting in a circle/ellipse shape.
 func (b Border) Circle() Border {
 	return b.Radius("999999dp")
+}
+
+// Style sets the border style.
+func (b Border) Style(style BorderStyle) Border {
+	b.BorderStyle = style
+	return b
 }
 
 // Width sets the same border thickness on all four sides.

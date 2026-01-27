@@ -260,6 +260,23 @@ func FindElementByID(root FormView, id ViewID) (FormView, bool) {
 	return nil, false
 }
 
+func DeleteElementByID(root FormView, id ViewID) (FormView, bool) {
+	if root, ok := root.(FormViewGroup); ok {
+		for element := range root.All() {
+			if element.Identity() == id {
+				root.Remove(id)
+				return element, true
+			}
+
+			if v, ok := DeleteElementByID(element, id); ok {
+				return v, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
 func GetViewGroup(ws *Workspace, formID FormID, vg ViewID) (FormViewGroup, bool) {
 	form, ok := ws.Forms.ByID(formID)
 	if !ok {

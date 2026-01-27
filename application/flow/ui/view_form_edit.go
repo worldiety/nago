@@ -8,7 +8,6 @@
 package uiflow
 
 import (
-	"fmt"
 	"reflect"
 	"slices"
 	"strings"
@@ -18,35 +17,40 @@ import (
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/form"
 )
 
 type TFormEditor struct {
-	wnd                   core.Window
-	uc                    flow.UseCases
-	ws                    *flow.Workspace
-	form                  *flow.Form
-	selected              *core.State[flow.FormView]
-	addBelow              *core.State[flow.ViewID]
-	addDialogPresented    *core.State[bool]
-	addCmdDialogPresented *core.State[bool]
-	addCmdDialogCmd       *core.State[flow.WorkspaceCommand]
-	renderersById         map[reflect.Type]ViewRenderer
-	renderers             []ViewRenderer
+	wnd                 core.Window
+	uc                  flow.UseCases
+	ws                  *flow.Workspace
+	form                *flow.Form
+	selected            *core.State[flow.FormView]
+	addBelow            *core.State[flow.ViewID]
+	addDialogPresented  *core.State[bool]
+	selectedRenderer    *core.State[ViewRenderer]
+	createViewPresented *core.State[bool]
+	selectedParent      *core.State[flow.ViewID]
+	//addCmdDialogPresented *core.State[bool]
+	//addCmdDialogCmd       *core.State[flow.WorkspaceCommand]
+	renderersById map[reflect.Type]ViewRenderer
+	renderers     []ViewRenderer
 }
 
 func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, form *flow.Form) TFormEditor {
 	c := TFormEditor{
-		wnd:                   wnd,
-		uc:                    opts.UseCases,
-		renderersById:         opts.Renderers,
-		form:                  form,
-		ws:                    ws,
-		selected:              core.StateOf[flow.FormView](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
-		addBelow:              core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.add.below"),
-		addDialogPresented:    core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.dialog.presented"),
-		addCmdDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.presented"),
-		addCmdDialogCmd:       core.StateOf[flow.WorkspaceCommand](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.cmd"),
+		wnd:                wnd,
+		uc:                 opts.UseCases,
+		renderersById:      opts.Renderers,
+		form:               form,
+		ws:                 ws,
+		selected:           core.StateOf[flow.FormView](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
+		addBelow:           core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.add.below"),
+		addDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.dialog.presented"),
+		//addCmdDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.presented"),
+		//addCmdDialogCmd:       core.StateOf[flow.WorkspaceCommand](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.cmd"),
+		selectedRenderer:    core.StateOf[ViewRenderer](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.renderer"),
+		createViewPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.create.view.presented"),
+		selectedParent:      core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.parent"),
 	}
 
 	type tmpHolder struct {
@@ -72,15 +76,6 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 	}
 
 	return c
-}
-
-func (c TFormEditor) renderElement(ctx RContext, elem flow.FormView) core.View {
-	r, ok := c.renderersById[reflect.TypeOf(elem)]
-	if !ok {
-		return ui.Text(fmt.Sprintf("%T has no renderer", elem))
-	}
-
-	return r.Preview(ctx, elem)
 }
 
 func (c TFormEditor) insertViewLarge(elem flow.FormView) core.View {
@@ -109,32 +104,23 @@ func insertView() core.View {
 }
 
 func (c TFormEditor) dialogAddCmd() core.View {
-	if !c.addCmdDialogPresented.Get() {
+	if !c.createViewPresented.Get() {
 		return nil
 	}
 
-	state := core.DerivedState[flow.WorkspaceCommand](c.addCmdDialogPresented, "state").Init(c.addCmdDialogCmd.Get)
-	errState := core.DerivedState[error](state, "err")
-
+	view, applyFn := c.selectedRenderer.Get().Create(c.newRenderContext(c.wnd), c.selectedParent.Get(), "")
 	return alert.Dialog(
 		"Add form element",
-		form.Auto(form.AutoOptions{Errors: errState.Get()}, state),
-		c.addCmdDialogPresented,
+		view,
+		c.createViewPresented,
 		alert.Closeable(),
 		alert.Create(func() (close bool) {
-			//var err error
-			switch cmd := state.Get().(type) {
-
-			default:
-				panic(fmt.Sprintf("cmd %T not implemented", cmd))
+			if err := applyFn(); err != nil {
+				alert.ShowBannerError(c.wnd, err)
+				return false
 			}
 
-			/*			errState.Set(err)
-						if err != nil {
-							return false
-						}
-
-						return true*/
+			return true
 		}),
 	)
 
@@ -153,7 +139,10 @@ func (c TFormEditor) dialogAddFormElement() core.View {
 		).Action(func() {
 			//cmd := renderer.CreateCmd(c.ws, c.form.Identity(), c.selected.Get().Identity(), c.addBelow.Get())
 			//c.addCmdDialogCmd.Set(cmd)
-			c.addCmdDialogPresented.Set(true)
+			//c.addCmdDialogPresented.Set(true)
+			c.selectedRenderer.Set(renderer)
+			c.createViewPresented.Set(true)
+
 		}).
 			HoveredBackgroundColor(ui.I1).
 			Border(ui.Border{}.Color(ui.ColorIconsMuted).Width(ui.L1).Radius(ui.L16)).Padding(ui.Padding{}.All(ui.L8)))
@@ -171,24 +160,73 @@ func (c TFormEditor) dialogAddFormElement() core.View {
 
 func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 	return RContext{
-		Context:   wnd.Context(), // TODO merge with dialog_cmd
-		Window:    wnd,
-		Handle:    c.uc.HandleCommand,
-		Workspace: c.ws,
-		RenderAppend: func(ctx RContext) core.View {
-			return ui.SecondaryButton(func() {
-
-			}).Title("Append")
-		},
+		parent:         c,
+		Context:        wnd.Context(), // TODO merge with dialog_cmd
+		wnd:            wnd,
+		Handle:         c.uc.HandleCommand,
+		ws:             c.ws,
+		selectedStates: map[flow.ViewID]*core.State[bool]{},
 	}
+}
+
+func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
+	if c.selected.Get() == nil {
+		return ui.VStack(
+			ui.Heading(6, string(c.form.Name())),
+			ui.Text(c.form.Description()),
+		).FullWidth().Alignment(ui.TopLeading)
+	}
+
+	deletePresented := core.StateOf[bool](c.wnd, "view_delete_presented")
+
+	return ui.VStack(
+		c.deleteViewDialog(deletePresented),
+		ctx.RenderEditor(c.selected.Get()),
+		ui.HLine(),
+		ui.SecondaryButton(func() {
+			deletePresented.Set(true)
+		}).Title("Delete"),
+	).FullWidth().Alignment(ui.TopLeading)
+}
+
+func (c TFormEditor) deleteViewDialog(presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	return alert.Dialog(
+		"Delete",
+		ui.Text("Are you sure you want to delete this view?"),
+		presented,
+		alert.Closeable(),
+		alert.Cancel(nil),
+		alert.Delete(func() {
+			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.DeleteViewCmd{
+				Workspace: c.ws.Identity(),
+				Form:      c.form.Identity(),
+				View:      c.selected.Get().Identity(),
+			}); err != nil {
+				alert.ShowBannerError(c.wnd, err)
+			}
+		}),
+	)
 }
 
 func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
 	rctx := c.newRenderContext(ctx.Window())
 
-	return ui.VStack(
-		c.dialogAddFormElement(),
-		c.dialogAddCmd(),
-		c.renderElement(rctx, c.form.Root),
-	).FullWidth().Render(ctx)
+	return ui.Grid(
+		ui.GridCell(
+			ui.VStack(
+				c.dialogAddFormElement(),
+				c.dialogAddCmd(),
+				rctx.RenderPreview(c.form.Root),
+			).FullWidth(),
+		),
+		ui.GridCell(c.renderSelectedViewEditor(rctx)),
+	).Widths("1fr", "10rem").
+		Columns(2).
+		Gap(ui.L8).
+		FullWidth().
+		Padding(ui.Padding{}.Vertical(ui.L16)).Render(ctx)
 }

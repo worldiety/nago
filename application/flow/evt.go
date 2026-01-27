@@ -8,7 +8,6 @@
 package flow
 
 import (
-	"iter"
 	"slices"
 
 	"go.wdy.de/nago/application/evs"
@@ -19,7 +18,7 @@ type WorkspaceEvent interface {
 	WorkspaceID() WorkspaceID
 }
 
-var DefaultEvents iter.Seq[WorkspaceEvent] = slices.Values([]WorkspaceEvent{
+var DefaultEvents = slices.Values([]WorkspaceEvent{
 	TypeFieldAppended{},
 	BoolFieldAppended{},
 	FormCreated{},
@@ -32,4 +31,6 @@ var DefaultEvents iter.Seq[WorkspaceEvent] = slices.Values([]WorkspaceEvent{
 	StringTypeCreated{},
 	StructTypeCreated{},
 	WorkspaceCreated{},
+	FormVStackAdded{},
+	FormViewDeleted{},
 })

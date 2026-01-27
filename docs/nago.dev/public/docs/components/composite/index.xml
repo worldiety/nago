@@ -703,7 +703,7 @@ title, subtitle, and optional action buttons.&lt;/p&gt;
           &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;ForegroundColorAdaptive(onLight ui.Color, onDark ui.Color)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;ForegroundColorAdaptive(onDark ui.Color, onLight ui.Color)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;

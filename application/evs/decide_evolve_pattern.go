@@ -145,6 +145,10 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) resetAggregate(state *aggregateS
 }
 
 func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
+	if key == "" {
+		return fmt.Errorf("aggregate id / key cannot be empty")
+	}
+
 	state, _ := h.aggregateCache.LoadOrStore(key, &aggregateState[Aggregate]{})
 	state.mutex.Lock()
 	defer state.mutex.Unlock()

@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 178,
+  "const": {
+    "0": {
+      "name": "StyleSolid"
+    },
+    "1":{
+      "name": "StyleDotted"
+    },
+    "2":{
+      "name": "StyleDashed"
+    }
+  }
+}

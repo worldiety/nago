@@ -1,1 +1,0 @@
-import{d as s,c as o,o as n,E as c}from"./main-CjpOGkyD.js";const i={key:0},p={key:1},u=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(r,a)=>e.ui?(n(),o("div",i,"[Protocol type has not been implemented: '"+c(e.ui.constructor.name)+"']",1)):(n(),o("div",p,"ui component is null"))}});export{u as default};

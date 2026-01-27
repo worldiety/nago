@@ -7,7 +7,10 @@
 
 package xerrors
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 func WithFields(msg string, args ...string) error {
 	if len(args)%2 != 0 {
@@ -69,7 +72,7 @@ func (b *FieldBuilder) Error() error {
 	}
 
 	return ErrorWithFields{
-		Message: "field validation failed",
+		Message: fmt.Sprintf("field validation failed: %v", b.fields),
 		Fields:  b.fields,
 	}
 }

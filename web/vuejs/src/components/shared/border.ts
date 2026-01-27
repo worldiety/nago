@@ -8,13 +8,25 @@
  */
 import { colorValue } from '@/components/shared/colors';
 import { cssLengthValue } from '@/components/shared/length';
-import { Border } from '@/shared/proto/nprotoc_gen';
+import { Border, BorderStyleValues } from '@/shared/proto/nprotoc_gen';
 
 export function borderCSS(border?: Border): string[] {
 	const css: string[] = [];
 
 	if (!border) {
 		return css;
+	}
+
+	// style
+	switch (border.borderStyle) {
+		case BorderStyleValues.StyleDotted:
+			css.push(`border-style: dotted`);
+			break;
+		case BorderStyleValues.StyleDashed:
+			css.push(`border-style: dashed`);
+			break;
+		default:
+			css.push(`border-style: solid`);
 	}
 
 	// border radius

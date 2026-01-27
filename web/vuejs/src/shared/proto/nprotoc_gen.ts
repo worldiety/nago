@@ -743,6 +743,8 @@ export class Border implements Writeable, Readable {
 
 	public boxShadow?: Shadow;
 
+	public borderStyle?: BorderStyle;
+
 	constructor(
 		topLeftRadius: Length | undefined = undefined,
 		topRightRadius: Length | undefined = undefined,
@@ -756,7 +758,8 @@ export class Border implements Writeable, Readable {
 		topColor: Color | undefined = undefined,
 		rightColor: Color | undefined = undefined,
 		bottomColor: Color | undefined = undefined,
-		boxShadow: Shadow | undefined = undefined
+		boxShadow: Shadow | undefined = undefined,
+		borderStyle: BorderStyle | undefined = undefined
 	) {
 		this.topLeftRadius = topLeftRadius;
 		this.topRightRadius = topRightRadius;
@@ -771,6 +774,7 @@ export class Border implements Writeable, Readable {
 		this.rightColor = rightColor;
 		this.bottomColor = bottomColor;
 		this.boxShadow = boxShadow;
+		this.borderStyle = borderStyle;
 	}
 
 	read(reader: BinaryReader): void {
@@ -832,6 +836,10 @@ export class Border implements Writeable, Readable {
 					this.boxShadow.read(reader);
 					break;
 				}
+				case 14: {
+					this.borderStyle = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -854,6 +862,7 @@ export class Border implements Writeable, Readable {
 			this.rightColor !== undefined,
 			this.bottomColor !== undefined,
 			this.boxShadow !== undefined && !this.boxShadow.isZero(),
+			this.borderStyle !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -909,6 +918,10 @@ export class Border implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.RECORD, 13);
 			this.boxShadow!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 14);
+			writeInt(writer, this.borderStyle!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -925,7 +938,8 @@ export class Border implements Writeable, Readable {
 			this.topColor === undefined &&
 			this.rightColor === undefined &&
 			this.bottomColor === undefined &&
-			(this.boxShadow === undefined || this.boxShadow.isZero())
+			(this.boxShadow === undefined || this.boxShadow.isZero()) &&
+			this.borderStyle === undefined
 		);
 	}
 
@@ -943,6 +957,7 @@ export class Border implements Writeable, Readable {
 		this.rightColor = undefined;
 		this.bottomColor = undefined;
 		this.boxShadow = undefined;
+		this.borderStyle = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -14007,6 +14022,18 @@ export class Background implements Writeable, Readable {
 	}
 }
 
+export type BorderStyle = number;
+function writeTypeHeaderBorderStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 178);
+	return;
+}
+// companion enum containing all defined constants for BorderStyle
+export enum BorderStyleValues {
+	StyleSolid = 0,
+	StyleDotted = 1,
+	StyleDashed = 2,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14810,6 +14837,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 177: {
 			const v = new Background();
 			v.read(src);
+			return v;
+		}
+		case 178: {
+			const v = readInt(src) as BorderStyle;
 			return v;
 		}
 	}

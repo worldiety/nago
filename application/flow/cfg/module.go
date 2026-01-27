@@ -83,8 +83,8 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 
 	evsSchemas := map[evs.Discriminator]reflect.Type{}
 	for _, ev := range opts.Events {
-		if _, ok := evsSchemas[ev.Discriminator()]; ok {
-			return Module{}, fmt.Errorf("duplicate event discriminator: %s", ev.Discriminator())
+		if other, ok := evsSchemas[ev.Discriminator()]; ok {
+			return Module{}, fmt.Errorf("duplicate event discriminator: %s defined by both %v and %T", ev.Discriminator(), other, ev)
 		}
 
 		evsSchemas[ev.Discriminator()] = reflect.TypeOf(ev)

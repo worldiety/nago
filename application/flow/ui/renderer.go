@@ -8,7 +8,6 @@
 package uiflow
 
 import (
-	"context"
 	"reflect"
 
 	"github.com/worldiety/jsonptr"
@@ -16,18 +15,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 )
-
-type RContext struct {
-	Context      context.Context
-	Window       core.Window
-	Handle       flow.HandleCommand
-	Workspace    *flow.Workspace
-	Render       func(ctx RContext, view flow.FormView) core.View
-	RenderInsert func(ctx RContext) core.View
-	RenderAppend func(ctx RContext) core.View
-	RenderEdit   func(ctx RContext, wrapped core.View) core.View
-	RenderDelete func(ctx RContext, wrapped core.View) core.View
-}
 
 type Apply func() error
 
@@ -40,7 +27,7 @@ type ViewRenderer interface {
 
 	Preview(ctx RContext, view flow.FormView) core.View
 	Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply)
-	Update(ctx RContext, view flow.ViewID) (core.View, Apply)
+	Update(ctx RContext, view flow.FormView) core.View
 	Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View
 }
 
@@ -98,44 +85,4 @@ func (r StringEnumFieldRenderer) RenderEdit(wnd core.Window, elem flow.FormView)
 func (r StringEnumFieldRenderer) CanRender(field flow.Field) bool {
 
 	return false
-}
-
-var _ ViewRenderer = (*VStackRenderer)(nil)
-
-type VStackRenderer struct {
-}
-
-func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
-	vstack := view.(*flow.FormVStack)
-	var tmp []core.View
-	for formView := range vstack.All() {
-		tmp = append(tmp, ctx.Render(ctx, formView))
-	}
-
-	tmp = append(tmp, ctx.RenderAppend(ctx))
-
-	return ui.VStack(tmp...).FullWidth()
-}
-
-func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {
-	return ui.VStack(
-		ui.Text("A"),
-		ui.Text("B"),
-		ui.Text("C"),
-	).FullWidth()
-}
-
-func (r VStackRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r VStackRenderer) Update(ctx RContext, view flow.ViewID) (core.View, Apply) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r VStackRenderer) Bind(ctx RContext, view flow.ViewID, state *core.State[*jsonptr.Obj]) core.View {
-	//TODO implement me
-	panic("implement me")
 }
