@@ -163,15 +163,54 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	}
 
 	deletePresented := core.StateOf[bool](c.wnd, "view_delete_presented")
+	conditionalPresented := core.StateOf[bool](c.wnd, "view_conditional_presented")
 
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
+		c.conditionalFormDialog(conditionalPresented),
+
 		ctx.RenderEditor(c.selected.Get()),
 		ui.HLine(),
 		ui.SecondaryButton(func() {
+			conditionalPresented.Set(true)
+		}).Title("Conditional Visibility").Frame(ui.Frame{}.FullWidth()),
+		ui.SecondaryButton(func() {
 			deletePresented.Set(true)
-		}).Title("Delete"),
-	).FullWidth().Alignment(ui.TopLeading)
+		}).Title("Delete").Frame(ui.Frame{}.FullWidth()),
+	).FullWidth().Alignment(ui.TopLeading).Gap(ui.L8)
+}
+
+func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	code := core.StateOf[string](c.wnd, string(c.selected.Get().Identity())+"-visibility-expr-code").Init(func() string {
+		return string(c.selected.Get().VisibleExpr())
+	})
+
+	return alert.Dialog(
+		"conditional visibility",
+		ui.VStack(
+			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
+		).FullWidth(),
+		presented,
+		alert.Closeable(),
+		alert.Larger(),
+		alert.Cancel(nil),
+		alert.Save(func() (close bool) {
+			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.UpdateFormVisibleExpr{
+				Workspace:  c.ws.Identity(),
+				Form:       c.form.Identity(),
+				ID:         c.selected.Get().Identity(),
+				Expression: flow.Expression(code.Get()),
+			}); err != nil {
+				alert.ShowBannerError(c.wnd, err)
+			}
+
+			return true
+		}),
+	)
 }
 
 func (c TFormEditor) deleteFormDialog(presented *core.State[bool]) core.View {

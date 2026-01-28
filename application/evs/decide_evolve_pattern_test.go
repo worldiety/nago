@@ -10,8 +10,6 @@ package evs_test
 import (
 	"context"
 	"fmt"
-	"iter"
-	"reflect"
 	"testing"
 
 	"github.com/worldiety/option"
@@ -76,20 +74,7 @@ func (f LastnameUpdated) Evolve(ctx context.Context, mut *Person) error {
 }
 
 func TestHandler(t *testing.T) {
-	handler := evs.NewHandler[*Person, Evt, PID](
-		func(t reflect.Type, discriminatorName evs.Discriminator) error {
-			return nil
-		},
-		func(subject auth.Subject, primary PID, opts evs.ReplayOptions) iter.Seq2[evs.Envelope[Evt], error] {
-			return func(yield func(evs.Envelope[Evt], error) bool) {
-
-			}
-		},
-
-		func(subject auth.Subject, evt Evt, opts evs.StoreOptions) (evs.Envelope[Evt], error) {
-			return evs.Envelope[Evt]{Data: evt}, nil
-		},
-	)
+	var handler evs.Handler[*Person, Evt, PID]
 
 	handler.RegisterEvents(
 		FirstnameUpdated{},

@@ -38,13 +38,6 @@ func (ctx RContext) Form() *flow.Form {
 	return ctx.parent.form
 }
 
-func (ctx RContext) RenderAppend(parent flow.ViewID) core.View {
-	return ui.SecondaryButton(func() {
-		ctx.parent.selectedParent.Set(parent)
-		ctx.parent.addDialogPresented.Set(true)
-	}).Title("Append").PreIcon(icons.Plus)
-}
-
 func (ctx RContext) RenderInsertAfter(parent flow.ViewID, after flow.ViewID) core.View {
 	return ui.HStack(
 		ui.HLine().Border(ui.Border{TopWidth: "1px", TopColor: ui.ColorInteractive}),

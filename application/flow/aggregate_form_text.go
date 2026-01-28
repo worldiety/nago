@@ -8,9 +8,10 @@
 package flow
 
 type FormText struct {
-	id    ViewID
-	value string
-	style FormTextStyle
+	id          ViewID
+	value       string
+	style       FormTextStyle
+	visibleExpr Expression
 }
 
 func NewFormText(id ViewID, value string, style FormTextStyle) *FormText {
@@ -19,6 +20,14 @@ func NewFormText(id ViewID, value string, style FormTextStyle) *FormText {
 		value: value,
 		style: style,
 	}
+}
+
+func (f *FormText) SetVisibleExpr(expr Expression) {
+	f.visibleExpr = expr
+}
+
+func (f *FormText) VisibleExpr() Expression {
+	return f.visibleExpr
 }
 
 func (f *FormText) Clone() FormView {

@@ -31,6 +31,12 @@ type ViewRenderer interface {
 	Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View
 }
 
+type PredicateRenderer interface {
+	Settings(ctx RContext, what any) core.View
+	
+	Applies(ctx ViewerRenderContext, state *core.State[*jsonptr.Obj]) (bool, error)
+}
+
 // TODO replace with immutable map
 var DefaultRenderers = map[reflect.Type]ViewRenderer{
 	reflect.TypeFor[*flow.FormText]():     &TextRenderer{},

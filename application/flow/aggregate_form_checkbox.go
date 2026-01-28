@@ -13,6 +13,7 @@ type FormCheckbox struct {
 	field          FieldID
 	label          string
 	supportingText string
+	visibleExpr    Expression
 }
 
 func NewFormCheckbox(id ViewID, structType TypeID, field FieldID) *FormCheckbox {
@@ -21,6 +22,14 @@ func NewFormCheckbox(id ViewID, structType TypeID, field FieldID) *FormCheckbox 
 		structType: structType,
 		field:      field,
 	}
+}
+
+func (f *FormCheckbox) SetVisibleExpr(expr Expression) {
+	f.visibleExpr = expr
+}
+
+func (f *FormCheckbox) VisibleExpr() Expression {
+	return f.visibleExpr
 }
 
 func (f *FormCheckbox) Identity() ViewID {

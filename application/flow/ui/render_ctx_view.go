@@ -10,8 +10,11 @@ package uiflow
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"reflect"
 
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
@@ -19,15 +22,16 @@ import (
 )
 
 type ViewerRenderContext struct {
-	ctx           context.Context
-	wnd           core.Window
-	workspace     *flow.Workspace
-	form          *flow.Form
-	structType    *flow.StructType
-	handle        flow.HandleCommand
-	readOnly      bool
-	renderersById map[reflect.Type]ViewRenderer
-	state         *core.State[*jsonptr.Obj]
+	ctx              context.Context
+	wnd              core.Window
+	workspace        *flow.Workspace
+	form             *flow.Form
+	structType       *flow.StructType
+	handle           flow.HandleCommand
+	readOnly         bool
+	renderersById    map[reflect.Type]ViewRenderer
+	state            *core.State[*jsonptr.Obj]
+	compileExprCache map[flow.Expression]*vm.Program
 }
 
 func NewViewerRenderContext(
@@ -40,11 +44,57 @@ func NewViewerRenderContext(
 	readOnly bool,
 	state *core.State[*jsonptr.Obj],
 ) ViewerRenderContext {
-	return ViewerRenderContext{ctx: ctx, wnd: wnd, workspace: ws, form: form, readOnly: readOnly, renderersById: renderersById, state: state, structType: structType}
+	return ViewerRenderContext{
+		ctx:              ctx,
+		wnd:              wnd,
+		workspace:        ws,
+		form:             form,
+		readOnly:         readOnly,
+		renderersById:    renderersById,
+		state:            state,
+		structType:       structType,
+		compileExprCache: make(map[flow.Expression]*vm.Program),
+	}
 }
 
 func (c ViewerRenderContext) ReadOnly() bool {
 	return c.readOnly
+}
+
+func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
+	estr := view.VisibleExpr()
+	if estr == "" {
+		return true
+	}
+
+	env := map[string]any{
+		"self": c.state.Get(),
+		"NULL": jsonptr.Null{},
+	}
+
+	if _, ok := c.compileExprCache[estr]; !ok {
+		p, err := expr.Compile(string(estr), expr.Env(env))
+		if err != nil {
+			slog.Error("cannot compile expression", "view", view.Identity(), "err", err)
+			return false
+		}
+
+		c.compileExprCache[estr] = p
+	}
+
+	prg := c.compileExprCache[estr]
+
+	output, err := expr.Run(prg, env)
+	if err != nil {
+		slog.Error("cannot evaluate expression", "view", view.Identity(), "err", err)
+		return false
+	}
+
+	if b, ok := output.(bool); ok {
+		return b
+	}
+
+	return true
 }
 
 func (c ViewerRenderContext) Context() context.Context {
@@ -71,6 +121,10 @@ func (c ViewerRenderContext) Render(view flow.FormView) core.View {
 	r, ok := c.renderersById[reflect.TypeOf(view)]
 	if !ok {
 		return ui.Text(fmt.Sprintf("%T has no renderer", view))
+	}
+
+	if !c.EvaluateVisibility(view) {
+		return nil
 	}
 
 	return r.Bind(c, view, c.state)

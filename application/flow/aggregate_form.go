@@ -72,9 +72,13 @@ func (f *Form) Clone() *Form {
 	return c
 }
 
+type Expression string
+
 type FormView interface {
 	Identity() ViewID
 	Clone() FormView
+	VisibleExpr() Expression
+	SetVisibleExpr(Expression)
 }
 
 // FormViewGroup extens FormView with view group parent functions. A view tree must not contain cycles.
@@ -103,8 +107,9 @@ var (
 )
 
 type baseViewGroup struct {
-	id    ViewID
-	views []FormView
+	id          ViewID
+	views       []FormView
+	visibleExpr Expression
 }
 
 func (b *baseViewGroup) Identity() ViewID {
@@ -117,9 +122,18 @@ func (b *baseViewGroup) Clone() FormView {
 
 func (b *baseViewGroup) clone() *baseViewGroup {
 	return &baseViewGroup{
-		id:    b.id,
-		views: slices.Clone(b.views),
+		id:          b.id,
+		views:       slices.Clone(b.views),
+		visibleExpr: b.visibleExpr,
 	}
+}
+
+func (b *baseViewGroup) VisibleExpr() Expression {
+	return b.visibleExpr
+}
+
+func (b *baseViewGroup) SetVisibleExpr(expr Expression) {
+	b.visibleExpr = expr
 }
 
 func (b *baseViewGroup) All() iter.Seq[FormView] {
@@ -230,6 +244,15 @@ func DeleteElementByID(root FormView, id ViewID) (FormView, bool) {
 	}
 
 	return nil, false
+}
+
+func GetView(ws *Workspace, formID FormID, v ViewID) (FormView, bool) {
+	form, ok := ws.Forms.ByID(formID)
+	if !ok {
+		return nil, false
+	}
+
+	return FindElementByID(form.Root, v)
 }
 
 func GetViewGroup(ws *Workspace, formID FormID, vg ViewID) (FormViewGroup, bool) {
