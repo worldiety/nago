@@ -23,17 +23,15 @@ type TFormEditor struct {
 	uc                  flow.UseCases
 	ws                  *flow.Workspace
 	form                *flow.Form
-	selected            *core.State[flow.FormView]
+	selected            *core.State[flow.ViewID]
 	addBelow            *core.State[flow.ViewID]
 	addDialogPresented  *core.State[bool]
 	selectedRenderer    *core.State[ViewRenderer]
 	createViewPresented *core.State[bool]
 	selectedParent      *core.State[flow.ViewID]
 	selectedAfter       *core.State[flow.ViewID]
-	//addCmdDialogPresented *core.State[bool]
-	//addCmdDialogCmd       *core.State[flow.WorkspaceCommand]
-	renderersById map[reflect.Type]ViewRenderer
-	renderers     []ViewRenderer
+	renderersById       map[reflect.Type]ViewRenderer
+	renderers           []ViewRenderer
 }
 
 func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, form *flow.Form) TFormEditor {
@@ -43,7 +41,7 @@ func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, for
 		renderersById:      opts.Renderers,
 		form:               form,
 		ws:                 ws,
-		selected:           core.StateOf[flow.FormView](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
+		selected:           core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
 		addBelow:           core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.add.below"),
 		addDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.dialog.presented"),
 		//addCmdDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.presented"),
@@ -150,7 +148,7 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 
 func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	deleteFormPresented := core.StateOf[bool](c.wnd, "form_delete_presented")
-	if c.selected.Get() == nil {
+	if c.selected.Get() == "" {
 		return ui.VStack(
 			c.deleteFormDialog(deleteFormPresented),
 			ui.Heading(6, string(c.form.Name())),
@@ -165,11 +163,13 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	deletePresented := core.StateOf[bool](c.wnd, "view_delete_presented")
 	conditionalPresented := core.StateOf[bool](c.wnd, "view_conditional_presented")
 
+	view, _ := flow.GetView(c.ws, c.form.ID, c.selected.Get())
+
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
 		c.conditionalFormDialog(conditionalPresented),
 
-		ctx.RenderEditor(c.selected.Get()),
+		ctx.RenderEditor(view),
 		ui.HLine(),
 		ui.SecondaryButton(func() {
 			conditionalPresented.Set(true)
@@ -185,15 +185,22 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 		return nil
 	}
 
-	code := core.StateOf[string](c.wnd, string(c.selected.Get().Identity())+"-visibility-expr-code").Init(func() string {
-		return string(c.selected.Get().VisibleExpr())
+	code := core.StateOf[string](c.wnd, string(c.selected.Get())+"-visibility-expr-code").Init(func() string {
+		view, ok := flow.GetView(c.ws, c.form.ID, c.selected.Get())
+		if !ok {
+			return ""
+		}
+		return string(view.VisibleExpr())
 	})
 
 	return alert.Dialog(
 		"conditional visibility",
 		ui.VStack(
 			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
-		).FullWidth(),
+			ui.Text("example: field(\"MyFieldName\").Bool() == true").
+				Color(ui.ColorIconsMuted).
+				Font(ui.BodySmall),
+		).FullWidth().Alignment(ui.Leading),
 		presented,
 		alert.Closeable(),
 		alert.Larger(),
@@ -202,7 +209,7 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.UpdateFormVisibleExpr{
 				Workspace:  c.ws.Identity(),
 				Form:       c.form.Identity(),
-				ID:         c.selected.Get().Identity(),
+				ID:         c.selected.Get(),
 				Expression: flow.Expression(code.Get()),
 			}); err != nil {
 				alert.ShowBannerError(c.wnd, err)
@@ -250,7 +257,7 @@ func (c TFormEditor) deleteViewDialog(presented *core.State[bool]) core.View {
 			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.DeleteViewCmd{
 				Workspace: c.ws.Identity(),
 				Form:      c.form.Identity(),
-				View:      c.selected.Get().Identity(),
+				View:      c.selected.Get(),
 			}); err != nil {
 				alert.ShowBannerError(c.wnd, err)
 			}

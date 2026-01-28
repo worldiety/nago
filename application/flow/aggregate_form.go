@@ -193,22 +193,6 @@ func (f *FormCard) SetSupportingText(s string) {
 	f.supportingText = s
 }
 
-type VisibilityValueRule struct {
-	Field      FieldID
-	Value      string
-	Comparator Comparator
-}
-
-type Comparator int
-
-const (
-	CmpEqual Comparator = iota + 1
-	CmpNotEqual
-	CmpLargerThan
-	CmpSmallerThan
-	CmpRegExp
-)
-
 func FindElementByID(root FormView, id ViewID) (FormView, bool) {
 	if root.Identity() == id {
 		return root, true

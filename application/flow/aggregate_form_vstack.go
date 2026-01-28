@@ -24,7 +24,10 @@ func NewFormVStack(id ViewID) *FormVStack {
 }
 
 func (f *FormVStack) Clone() FormView {
-	return &FormVStack{baseViewGroup: f.baseViewGroup.clone()}
+	return &FormVStack{
+		baseViewGroup: f.baseViewGroup.clone(),
+		alignment:     f.alignment,
+	}
 }
 
 func (f *FormVStack) Alignment() ui.Alignment {

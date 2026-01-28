@@ -20,7 +20,7 @@ type AddCheckboxCmd struct {
 	After          ViewID      `visible:"false"`
 	Label          string
 	SupportingText string  `lines:"3"`
-	Field          FieldID `source:"nago.flow.fields"`
+	Field          FieldID `source:"nago.flow.fields" dialogOptions:"larger"`
 }
 
 func (cmd AddCheckboxCmd) WorkspaceID() WorkspaceID {

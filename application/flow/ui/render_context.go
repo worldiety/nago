@@ -84,9 +84,9 @@ func (ctx RContext) RenderPreview(view flow.FormView, align ui.Alignment) core.V
 			}
 			state.Set(!wasSelected)
 			if state.Get() {
-				ctx.parent.selected.Set(view)
+				ctx.parent.selected.Set(view.Identity())
 			} else {
-				ctx.parent.selected.Set(nil)
+				ctx.parent.selected.Set("")
 			}
 		}).With(func(stack ui.TVStack) ui.TVStack {
 		if state.Get() {

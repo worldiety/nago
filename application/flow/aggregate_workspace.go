@@ -43,3 +43,24 @@ func (a *Workspace) Clone() *Workspace {
 func (a *Workspace) Identity() WorkspaceID {
 	return a.ID
 }
+
+// ByID tries to match any identifiable component by its string-like ID.
+func (a *Workspace) ByID(id string) (any, bool) {
+	if f, ok := a.Forms.ByID(FormID(id)); ok {
+		return f, true
+	}
+
+	if r, ok := a.Repositories.ByID(RepositoryID(id)); ok {
+		return r, true
+	}
+
+	if p, ok := a.Packages.ByID(PackageID(id)); ok {
+		return p, true
+	}
+
+	if t, ok := a.Packages.TypeByID(TypeID(id)); ok {
+		return t, true
+	}
+
+	return nil, false
+}

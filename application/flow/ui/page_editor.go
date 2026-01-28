@@ -38,32 +38,16 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 
 	ws := optWs.Unwrap()
 
-	tree := core.AutoState[*treeview.Node[any]](wnd).Init(func() *treeview.Node[any] {
-		return createTree(ws)
-	})
+	tree := createTree(ws)
 
-	presentCreatePackage := core.AutoState[bool](wnd).Observe(func(newValue bool) {
-		tree.Reset()
-	})
+	presentCreatePackage := core.AutoState[bool](wnd)
+	presentCreateStringType := core.AutoState[bool](wnd)
+	presentCreateStructType := core.AutoState[bool](wnd)
 
-	presentCreateStringType := core.AutoState[bool](wnd).Observe(func(newValue bool) {
-		tree.Reset()
-	})
+	presentAssignRepository := core.AutoState[bool](wnd)
 
-	presentCreateStructType := core.AutoState[bool](wnd).Observe(func(newValue bool) {
-		tree.Reset()
-	})
-
-	presentAssignRepository := core.AutoState[bool](wnd).Observe(func(newValue bool) {
-		tree.Reset()
-	})
-
-	presentCreateForm := core.AutoState[bool](wnd).Observe(func(newValue bool) {
-		tree.Reset()
-	})
-
-	selected := core.AutoState[any](wnd).Observe(func(newValue any) {
-	})
+	presentCreateForm := core.AutoState[bool](wnd)
+	treeState := core.AutoState[treeview.TreeStateModel[string]](wnd)
 
 	return ui.VStack(
 
@@ -127,28 +111,23 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 
 		ui.HStack(
 			ui.ScrollView(
-				treeview.TreeView(tree.Get()).Action(func(n *treeview.Node[any]) {
-					if n.Expandable {
-						n.Expanded = !n.Expanded
-					} else {
-						tree.Get().Select(false)
-						n.Selected = true
-					}
-
-					// TODO we have problem with our tree state here and the data within the node of the state which are copies now and outdated after mutation
-					selected.Set(n.Data)
-					tree.Invalidate()
-				})).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
+				treeview.TreeView(tree, treeState)).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
 			ui.VLine().Frame(ui.Frame{}),
 			ui.VStack(
-				renderSelected(wnd, opts, ws, selected.Get()),
+				renderSelected(wnd, opts, ws, treeState),
 			).Alignment(ui.Top).
 				BackgroundColor(ui.ColorBackground).FullWidth(),
 		).FullWidth().Alignment(ui.Stretch),
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, selected any) core.View {
+func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, treeState *core.State[treeview.TreeStateModel[string]]) core.View {
+	selID, ok := treeState.Get().FirstSelected()
+	if !ok {
+		return ui.Text("Nothing selected")
+	}
+
+	selected, _ := ws.ByID(selID)
 	if selected == nil {
 		return ui.Text("Nothing selected")
 	}
