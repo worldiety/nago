@@ -73,6 +73,10 @@ func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
 		"field": func(name string) jsonptr.Value {
 			return c.state.Get().GetOr(name, jsonptr.Null{})
 		},
+		"has": func(name string) bool {
+			_, ok := c.state.Get().Get(name)
+			return ok
+		},
 	}
 
 	if _, ok := c.compileExprCache[estr]; !ok {

@@ -8,7 +8,10 @@
 package uiflow
 
 import (
+	"go/format"
+	"log/slog"
 	"slices"
+	"strings"
 
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
@@ -127,7 +130,7 @@ func viewTypeStruct(wnd core.Window, uc flow.UseCases, ws *flow.Workspace, m *fl
 			ui.IfFunc(selectedField.Get() != nil, func() core.View {
 				return ui.VStack(
 					ui.HLine(),
-					ui.Text("Field "+string(selectedField.Get().Name())),
+					ui.Text("Field "+string(selectedField.Get().Name())).Hyphens(ui.HyphensAuto).LineBreak(true),
 					ui.IfFunc(isPrimaryCandidate(selectedField.Get()), func() core.View {
 						return ui.SecondaryButton(func() {
 							err := uc.HandleCommand(wnd.Subject(), flow.SelectPrimaryKeyCmd{
@@ -182,4 +185,38 @@ func viewTypename(field flow.Field) ui.DecoredView {
 
 func hoverWrap(view core.View, action func()) ui.THStack {
 	return ui.HStack(view).Alignment(ui.Leading).HoveredBackgroundColor(ui.I1).Action(action)
+}
+
+func structAsGoCode(ws *flow.Workspace, m *flow.StructType) string {
+	var sb strings.Builder
+	sb.WriteString(commentGo(m.Description()))
+	sb.WriteString("type ")
+	sb.WriteString(string(m.Name()))
+	sb.WriteString(" struct {\n")
+	for field := range m.Fields.All() {
+		sb.WriteString(commentGo(field.Description()))
+		sb.WriteString(string(field.Name()))
+		sb.WriteString(" ")
+		sb.WriteString(field.Typename())
+		sb.WriteString("`json:\"")
+		sb.WriteString(field.JSONName())
+		sb.WriteString("\"")
+		sb.WriteString("`")
+		sb.WriteString("\n")
+	}
+	sb.WriteString("}")
+	buf, err := format.Source([]byte(sb.String()))
+	if err != nil {
+		slog.Error("failed to format struct as go code", "err", err.Error(), "code", sb.String(), "formatted", string(buf)+"")
+		return err.Error()
+	}
+
+	return string(buf)
+}
+
+func commentGo(str string) string {
+	if str == "" {
+		return ""
+	}
+	return strings.TrimSpace("// "+strings.ReplaceAll(str, "\n", "\n// ")) + "\n"
 }

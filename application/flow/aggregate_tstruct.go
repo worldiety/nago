@@ -147,7 +147,7 @@ func (f *Fields) NonPrimaryFields() iter.Seq[Field] {
 func (f *Fields) Filter(predicate func(Field) bool) iter.Seq[Field] {
 	var tmp []Field
 	for _, field := range f.fields {
-		if !predicate(field) {
+		if predicate(field) {
 			tmp = append(tmp, field)
 		}
 	}

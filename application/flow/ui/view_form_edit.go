@@ -36,16 +36,14 @@ type TFormEditor struct {
 
 func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, form *flow.Form) TFormEditor {
 	c := TFormEditor{
-		wnd:                wnd,
-		uc:                 opts.UseCases,
-		renderersById:      opts.Renderers,
-		form:               form,
-		ws:                 ws,
-		selected:           core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
-		addBelow:           core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.add.below"),
-		addDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.dialog.presented"),
-		//addCmdDialogPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.presented"),
-		//addCmdDialogCmd:       core.StateOf[flow.WorkspaceCommand](wnd, string(ws.Name)+"_nago.flow.form.editor.add.cmd.dialog.cmd"),
+		wnd:                 wnd,
+		uc:                  opts.UseCases,
+		renderersById:       opts.Renderers,
+		form:                form,
+		ws:                  ws,
+		selected:            core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected"),
+		addBelow:            core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.add.below"),
+		addDialogPresented:  core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.add.dialog.presented"),
 		selectedRenderer:    core.StateOf[ViewRenderer](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.renderer"),
 		createViewPresented: core.StateOf[bool](wnd, string(ws.Name)+"_nago.flow.form.editor.create.view.presented"),
 		selectedParent:      core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected.parent"),
@@ -193,6 +191,12 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 		return string(view.VisibleExpr())
 	})
 
+	structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
+	var fieldDetails core.View
+	if ok {
+		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
+	}
+
 	return alert.Dialog(
 		"conditional visibility",
 		ui.VStack(
@@ -200,6 +204,8 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 			ui.Text("example: field(\"MyFieldName\").Bool() == true").
 				Color(ui.ColorIconsMuted).
 				Font(ui.BodySmall),
+			ui.Space(ui.L16),
+			fieldDetails,
 		).FullWidth().Alignment(ui.Leading),
 		presented,
 		alert.Closeable(),
