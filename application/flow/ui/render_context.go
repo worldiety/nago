@@ -71,7 +71,7 @@ func (ctx RContext) RenderEditor(view flow.FormView) core.View {
 	return r.Update(ctx, view)
 }
 
-func (ctx RContext) RenderPreview(view flow.FormView) core.View {
+func (ctx RContext) RenderPreview(view flow.FormView, align ui.Alignment) core.View {
 	r, ok := ctx.parent.renderersById[reflect.TypeOf(view)]
 	if !ok {
 		return ui.Text(fmt.Sprintf("%T has no renderer", view))
@@ -84,6 +84,7 @@ func (ctx RContext) RenderPreview(view flow.FormView) core.View {
 	return ui.VStack(
 		r.Preview(ctx, view),
 	).FullWidth().
+		Alignment(align).
 		Action(func() {
 			for _, c := range ctx.selectedStates {
 				c.Set(false)
@@ -107,4 +108,8 @@ func (ctx RContext) RenderPreview(view flow.FormView) core.View {
 			Style(ui.BorderStyleDashed)).
 		Padding(ui.Padding{}.All(ui.L16))
 
+}
+
+func (ctx RContext) HandleCommand(cmd flow.WorkspaceCommand) error {
+	return ctx.parent.uc.HandleCommand(ctx.wnd.Subject(), cmd)
 }

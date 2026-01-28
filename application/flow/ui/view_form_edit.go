@@ -227,7 +227,7 @@ func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
 			ui.VStack(
 				c.dialogAddFormElement(),
 				c.dialogAddCmd(),
-				rctx.RenderPreview(c.form.Root),
+				rctx.RenderPreview(c.form.Root, ui.Center),
 			).FullWidth(),
 		),
 		ui.GridCell(c.renderSelectedViewEditor(rctx)),

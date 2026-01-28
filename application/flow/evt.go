@@ -35,4 +35,5 @@ var DefaultEvents = slices.Values([]WorkspaceEvent{
 	FormViewDeleted{},
 	FormDeleted{},
 	FormCheckboxAdded{},
+	FormAlignmentUpdated{},
 })

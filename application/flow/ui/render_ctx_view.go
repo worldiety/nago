@@ -24,6 +24,7 @@ type ViewerRenderContext struct {
 	workspace     *flow.Workspace
 	form          *flow.Form
 	structType    *flow.StructType
+	handle        flow.HandleCommand
 	readOnly      bool
 	renderersById map[reflect.Type]ViewRenderer
 	state         *core.State[*jsonptr.Obj]

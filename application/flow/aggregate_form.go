@@ -10,6 +10,8 @@ package flow
 import (
 	"iter"
 	"slices"
+
+	"go.wdy.de/nago/presentation/ui"
 )
 
 type Form struct {
@@ -85,46 +87,20 @@ type FormViewGroup interface {
 	Remove(ViewID)
 }
 
+type Alignable interface {
+	FormView
+	Alignment() ui.Alignment
+	SetAlignment(ui.Alignment)
+}
+
 type ViewID string
 
 var (
 	_ FormView      = (*FormText)(nil)
 	_ FormView      = (*FormCheckbox)(nil)
-	_ FormViewGroup = (*FormVStack)(nil)
 	_ FormViewGroup = (*baseViewGroup)(nil)
 	_ FormViewGroup = (*FormCard)(nil)
 )
-
-type FormText struct {
-	id    ViewID
-	value string
-	style FormTextStyle
-}
-
-func NewFormText(id ViewID, value string, style FormTextStyle) *FormText {
-	return &FormText{
-		id:    id,
-		value: value,
-		style: style,
-	}
-}
-
-func (f *FormText) Clone() FormView {
-	c := *f
-	return &c
-}
-
-func (f *FormText) Value() string {
-	return f.value
-}
-
-func (f *FormText) Style() FormTextStyle {
-	return f.style
-}
-
-func (f *FormText) Identity() ViewID {
-	return f.id
-}
 
 type baseViewGroup struct {
 	id    ViewID
@@ -177,18 +153,6 @@ func (b *baseViewGroup) Remove(id ViewID) {
 	b.views = slices.DeleteFunc(b.views, func(v FormView) bool { return v.Identity() == id })
 }
 
-type FormVStack struct {
-	*baseViewGroup
-}
-
-func NewFormVStack(id ViewID) *FormVStack {
-	return &FormVStack{baseViewGroup: &baseViewGroup{id: id}}
-}
-
-func (f *FormVStack) Clone() FormView {
-	return &FormVStack{baseViewGroup: f.baseViewGroup.clone()}
-}
-
 type FormCard struct {
 	*baseViewGroup
 	label          string
@@ -212,51 +176,6 @@ func (f *FormCard) SupportingText() string {
 }
 
 func (f *FormCard) SetSupportingText(s string) {
-	f.supportingText = s
-}
-
-type FormCheckbox struct {
-	id             ViewID
-	structType     TypeID
-	field          FieldID
-	label          string
-	supportingText string
-}
-
-func NewFormCheckbox(id ViewID, structType TypeID, field FieldID) *FormCheckbox {
-	return &FormCheckbox{
-		id:         id,
-		structType: structType,
-		field:      field,
-	}
-}
-
-func (f *FormCheckbox) Identity() ViewID {
-	return f.id
-}
-
-func (f *FormCheckbox) Clone() FormView {
-	c := *f
-	return &c
-}
-
-func (f *FormCheckbox) Label() string {
-	return f.label
-}
-
-func (f *FormCheckbox) Field() FieldID {
-	return f.field
-}
-
-func (f *FormCheckbox) SetLabel(s string) {
-	f.label = s
-}
-
-func (f *FormCheckbox) SupportingText() string {
-	return f.supportingText
-}
-
-func (f *FormCheckbox) SetSupportingText(s string) {
 	f.supportingText = s
 }
 

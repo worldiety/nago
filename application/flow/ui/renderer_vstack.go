@@ -12,7 +12,9 @@ import (
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/picker"
 )
 
 var _ ViewRenderer = (*VStackRenderer)(nil)
@@ -29,14 +31,14 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	for formView := range vstack.All() {
 		tmp = append(tmp,
 			ctx.RenderInsertAfter(view.Identity(), lastViewID),
-			ctx.RenderPreview(formView),
+			ctx.RenderPreview(formView, vstack.Alignment()),
 		)
 		lastViewID = formView.Identity()
 	}
 
 	tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
 
-	return ui.VStack(tmp...).FullWidth().Gap(ui.L8)
+	return ui.VStack(tmp...).FullWidth().Gap(ui.L8).Alignment(vstack.Alignment())
 }
 
 func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {
@@ -49,31 +51,6 @@ func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {
 }
 
 func (r VStackRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.View, Apply) {
-	/*	state := core.DerivedState[flow.WorkspaceCommand](c.createViewPresented, "state").Init(c.addCmdDialogCmd.Get)
-		errState := core.DerivedState[error](state, "err")
-
-		return alert.Dialog(
-			"Add form element",
-			form.Auto(form.AutoOptions{Errors: errState.Get()}, state),
-			c.addCmdDialogPresented,
-			alert.Closeable(),
-			alert.Create(func() (close bool) {
-				//var err error
-				switch cmd := state.Get().(type) {
-
-				default:
-					panic(fmt.Sprintf("cmd %T not implemented", cmd))
-				}
-
-				/*			errState.Set(err)
-							if err != nil {
-								return false
-							}
-
-							return true*/
-	//}),
-	//)*/
-
 	state := core.AutoState[flow.AddVStackCmd](ctx.Window()).Init(func() flow.AddVStackCmd {
 		return flow.AddVStackCmd{
 			Workspace: ctx.Workspace().ID,
@@ -93,7 +70,31 @@ func (r VStackRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.Vi
 }
 
 func (r VStackRenderer) Update(ctx RContext, view flow.FormView) core.View {
-	return ui.Text("Edit VStack")
+	vstack := view.(*flow.FormVStack)
+
+	alignState := core.StateOf[[]ui.Alignment](ctx.Window(), string(view.Identity())+"alignment").Init(func() []ui.Alignment {
+		return []ui.Alignment{vstack.Alignment()}
+	}).Observe(func(newValue []ui.Alignment) {
+		var align ui.Alignment
+		if len(newValue) > 0 {
+			align = newValue[0]
+		}
+
+		if err := ctx.HandleCommand(flow.UpdateFormAlignment{
+			Workspace: ctx.Workspace().ID,
+			Form:      ctx.Form().ID,
+			ID:        view.Identity(),
+			Alignment: align,
+		}); err != nil {
+			alert.ShowBannerError(ctx.Window(), err)
+		}
+
+	})
+
+	return ui.VStack(
+		ui.Text("Edit VStack"),
+		picker.Picker[ui.Alignment]("Alignment", ui.Alignments(), alignState),
+	)
 }
 
 func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
@@ -104,5 +105,5 @@ func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state 
 		tmp = append(tmp, ctx.Render(formView))
 	}
 
-	return ui.VStack(tmp...)
+	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth()
 }
