@@ -28,12 +28,17 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 
 	//tmp = append(tmp, ui.Text("VSTACK DEBUG"))
 	var lastViewID flow.ViewID
+	c := 0
 	for formView := range vstack.All() {
 		tmp = append(tmp,
 			ctx.RenderInsertAfter(view.Identity(), lastViewID),
 			ctx.RenderPreview(formView, vstack.Alignment()),
 		)
 		lastViewID = formView.Identity()
+		if vstack.Gap() != "" && c < vstack.Len()-1 {
+			tmp = append(tmp, ui.VStack(ui.Text(string(vstack.Gap())).Font(ui.BodySmall).Color(ui.ColorIconsMuted)).FullWidth())
+		}
+		c++
 	}
 
 	tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
@@ -105,5 +110,5 @@ func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state 
 		tmp = append(tmp, ctx.Render(formView))
 	}
 
-	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth()
+	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth().Gap(vstack.Gap())
 }

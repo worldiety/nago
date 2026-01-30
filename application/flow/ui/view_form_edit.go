@@ -160,6 +160,10 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 
 	view, _ := flow.GetView(c.ws, c.form.ID, c.selected.Get())
 
+	if view == nil {
+		return ui.Text("State has no view")
+	}
+
 	deletePresented := core.StateOf[bool](c.wnd, "view_delete_presented")
 	conditionalPresented := core.StateOf[bool](c.wnd, "view_conditional_presented")
 	actionPresented := core.StateOf[bool](ctx.Window(), string(view.Identity())+"action-presented")
@@ -167,6 +171,32 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 
 	actionable, _ := view.(flow.Actionable)
 	enabler, _ := view.(flow.Enabler)
+	gapable, _ := view.(flow.Gapable)
+	gapState := core.StateOf[string](ctx.Window(), string(view.Identity())+"gap").Init(func() string {
+		if gapable != nil {
+			return string(gapable.Gap())
+		}
+
+		return ""
+	}).Observe(func(newValue string) {
+		if gapable == nil {
+			return
+		}
+
+		if gapable.Gap() == ui.Length(newValue) {
+			return
+		}
+		
+		if err := ctx.HandleCommand(flow.UpdateFormGap{
+			Workspace: ctx.Workspace().ID,
+			Form:      ctx.Form().ID,
+			ID:        view.Identity(),
+			Gap:       ui.Length(newValue),
+		}); err != nil {
+			alert.ShowBannerError(ctx.Window(), err)
+		}
+	})
+	hasLayout := gapable != nil
 
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
@@ -175,6 +205,11 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 		c.enabledFormDialog(enabledPresented),
 
 		ctx.RenderEditor(view),
+
+		ui.If(hasLayout, ui.HLine()),
+		ui.If(hasLayout, ui.Text("Layout")),
+		ui.If(gapable != nil, ui.TextField("Gap", gapState.Get()).InputValue(gapState)),
+
 		ui.HLine(),
 		ui.Text("Scripts"),
 		ui.If(enabler != nil, ui.SecondaryButton(func() {

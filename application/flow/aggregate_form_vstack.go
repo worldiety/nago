@@ -17,6 +17,7 @@ var (
 type FormVStack struct {
 	*baseViewGroup
 	alignment ui.Alignment
+	gap       ui.Length
 }
 
 func NewFormVStack(id ViewID) *FormVStack {
@@ -27,6 +28,7 @@ func (f *FormVStack) Clone() FormView {
 	return &FormVStack{
 		baseViewGroup: f.baseViewGroup.clone(),
 		alignment:     f.alignment,
+		gap:           f.gap,
 	}
 }
 
@@ -36,4 +38,12 @@ func (f *FormVStack) Alignment() ui.Alignment {
 
 func (f *FormVStack) SetAlignment(a ui.Alignment) {
 	f.alignment = a
+}
+
+func (f *FormVStack) Gap() ui.Length {
+	return f.gap
+}
+
+func (f *FormVStack) SetGap(l ui.Length) {
+	f.gap = l
 }

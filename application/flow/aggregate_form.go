@@ -84,6 +84,7 @@ type FormView interface {
 // FormViewGroup extens FormView with view group parent functions. A view tree must not contain cycles.
 type FormViewGroup interface {
 	FormView
+	Len() int
 	All() iter.Seq[FormView]
 	// Insert merges the given view into the ordered children list.
 	// If after is empty, the view is appended to the beginning of the group.
@@ -107,6 +108,12 @@ type Enabler interface {
 	FormView
 	EnabledExpr() Expression
 	SetEnabledExpr(Expression)
+}
+
+type Gapable interface {
+	FormView
+	Gap() ui.Length
+	SetGap(ui.Length)
 }
 
 type ViewID string
@@ -150,6 +157,10 @@ func (b *baseViewGroup) SetVisibleExpr(expr Expression) {
 
 func (b *baseViewGroup) All() iter.Seq[FormView] {
 	return slices.Values(b.views)
+}
+
+func (b *baseViewGroup) Len() int {
+	return len(b.views)
 }
 
 func (b *baseViewGroup) Insert(view FormView, after ViewID) {
