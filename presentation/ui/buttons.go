@@ -24,13 +24,18 @@ type TButton struct {
 	preIcon            proto.SVG
 	postIcon           proto.SVG
 	frame              Frame
-	preset             StylePreset
+	preset             ButtonStyle
 	font               Font
 	action             func()
 	trace              string
 	invisible          bool
 	disabled           bool
 	id                 string
+}
+
+// Button creates a new Button with the given style preset.
+func Button(style ButtonStyle, action func()) TButton {
+	return initButton(action, style)
 }
 
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored

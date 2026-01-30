@@ -97,6 +97,12 @@ type Alignable interface {
 	SetAlignment(ui.Alignment)
 }
 
+type Actionable interface {
+	FormView
+	ActionExpr() []Expression
+	SetActionExpr(...Expression)
+}
+
 type ViewID string
 
 var (

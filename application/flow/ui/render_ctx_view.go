@@ -61,10 +61,9 @@ func (c ViewerRenderContext) ReadOnly() bool {
 	return c.readOnly
 }
 
-func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
-	estr := view.VisibleExpr()
+func (c ViewerRenderContext) runExpr(estr flow.Expression) (any, error) {
 	if estr == "" {
-		return true
+		return nil, nil
 	}
 
 	env := map[string]any{
@@ -77,13 +76,26 @@ func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
 			_, ok := c.state.Get().Get(name)
 			return ok
 		},
+		"put": func(name string, value any) bool {
+			switch value := value.(type) {
+			case bool:
+				c.state.Get().Put(name, jsonptr.Bool(value))
+			case string:
+				c.state.Get().Put(name, jsonptr.String(value))
+			}
+
+			return true
+		},
+		"delete": func(name string) bool {
+			//c.state.Get().Delete(name) TODO missing in API
+			return true
+		},
 	}
 
 	if _, ok := c.compileExprCache[estr]; !ok {
 		p, err := expr.Compile(string(estr), expr.Env(env))
 		if err != nil {
-			slog.Error("cannot compile expression", "view", view.Identity(), "err", err)
-			return false
+			return nil, fmt.Errorf("cannot compile expression: %w", err)
 		}
 
 		c.compileExprCache[estr] = p
@@ -93,8 +105,17 @@ func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
 
 	output, err := expr.Run(prg, env)
 	if err != nil {
-		slog.Error("cannot evaluate expression", "view", view.Identity(), "err", err)
-		return false
+		return nil, fmt.Errorf("cannot evaluate expression: %w", err)
+	}
+
+	return output, nil
+}
+
+func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
+	output, err := c.runExpr(view.VisibleExpr())
+	if err != nil {
+		slog.Error("cannot evaluate expression", "view", view.Identity(), "err", err, "expr", view.VisibleExpr())
+		return true
 	}
 
 	if b, ok := output.(bool); ok {
@@ -102,6 +123,16 @@ func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
 	}
 
 	return true
+}
+
+func (c ViewerRenderContext) EvaluateAction(view flow.Actionable) {
+	for _, ex := range view.ActionExpr() {
+		_, err := c.runExpr(ex)
+		if err != nil {
+			slog.Error("cannot evaluate expression", "view", view.Identity(), "err", err, "expr", view.VisibleExpr())
+		}
+	}
+
 }
 
 func (c ViewerRenderContext) Context() context.Context {

@@ -33,7 +33,7 @@ type ViewRenderer interface {
 
 type PredicateRenderer interface {
 	Settings(ctx RContext, what any) core.View
-	
+
 	Applies(ctx ViewerRenderContext, state *core.State[*jsonptr.Obj]) (bool, error)
 }
 
@@ -42,6 +42,7 @@ var DefaultRenderers = map[reflect.Type]ViewRenderer{
 	reflect.TypeFor[*flow.FormText]():     &TextRenderer{},
 	reflect.TypeFor[*flow.FormVStack]():   &VStackRenderer{},
 	reflect.TypeFor[*flow.FormCheckbox](): &CheckboxRenderer{},
+	reflect.TypeFor[*flow.FormButton]():   &ButtonRenderer{},
 }
 
 type StringEnumFieldRenderer struct{}
