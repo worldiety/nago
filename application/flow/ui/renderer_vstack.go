@@ -12,9 +12,7 @@ import (
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/form"
-	"go.wdy.de/nago/presentation/ui/picker"
 )
 
 var _ ViewRenderer = (*VStackRenderer)(nil)
@@ -75,30 +73,10 @@ func (r VStackRenderer) Create(ctx RContext, parent, after flow.ViewID) (core.Vi
 }
 
 func (r VStackRenderer) Update(ctx RContext, view flow.FormView) core.View {
-	vstack := view.(*flow.FormVStack)
-
-	alignState := core.StateOf[[]ui.Alignment](ctx.Window(), string(view.Identity())+"alignment").Init(func() []ui.Alignment {
-		return []ui.Alignment{vstack.Alignment()}
-	}).Observe(func(newValue []ui.Alignment) {
-		var align ui.Alignment
-		if len(newValue) > 0 {
-			align = newValue[0]
-		}
-
-		if err := ctx.HandleCommand(flow.UpdateFormAlignment{
-			Workspace: ctx.Workspace().ID,
-			Form:      ctx.Form().ID,
-			ID:        view.Identity(),
-			Alignment: align,
-		}); err != nil {
-			alert.ShowBannerError(ctx.Window(), err)
-		}
-
-	})
+	_ = view.(*flow.FormVStack)
 
 	return ui.VStack(
 		ui.Text("Edit VStack"),
-		picker.Picker[ui.Alignment]("Alignment", ui.Alignments(), alignState),
 	)
 }
 

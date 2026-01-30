@@ -41,6 +41,7 @@ type PredicateRenderer interface {
 var DefaultRenderers = map[reflect.Type]ViewRenderer{
 	reflect.TypeFor[*flow.FormText]():     &TextRenderer{},
 	reflect.TypeFor[*flow.FormVStack]():   &VStackRenderer{},
+	reflect.TypeFor[*flow.FormHStack]():   &HStackRenderer{},
 	reflect.TypeFor[*flow.FormCheckbox](): &CheckboxRenderer{},
 	reflect.TypeFor[*flow.FormButton]():   &ButtonRenderer{},
 }

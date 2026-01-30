@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/picker"
 )
 
 type TFormEditor struct {
@@ -169,6 +170,7 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	actionPresented := core.StateOf[bool](ctx.Window(), string(view.Identity())+"action-presented")
 	enabledPresented := core.StateOf[bool](ctx.Window(), string(view.Identity())+"enabled-presented")
 
+	alignable, _ := view.(flow.Alignable)
 	actionable, _ := view.(flow.Actionable)
 	enabler, _ := view.(flow.Enabler)
 	gapable, _ := view.(flow.Gapable)
@@ -186,7 +188,7 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 		if gapable.Gap() == ui.Length(newValue) {
 			return
 		}
-		
+
 		if err := ctx.HandleCommand(flow.UpdateFormGap{
 			Workspace: ctx.Workspace().ID,
 			Form:      ctx.Form().ID,
@@ -196,7 +198,35 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 			alert.ShowBannerError(ctx.Window(), err)
 		}
 	})
-	hasLayout := gapable != nil
+
+	alignState := core.StateOf[[]ui.Alignment](ctx.Window(), string(view.Identity())+"alignment").Init(func() []ui.Alignment {
+		if alignable == nil {
+			return nil
+		}
+
+		return []ui.Alignment{alignable.Alignment()}
+	}).Observe(func(newValue []ui.Alignment) {
+		if alignable == nil {
+			return
+		}
+
+		var align ui.Alignment
+		if len(newValue) > 0 {
+			align = newValue[0]
+		}
+
+		if err := ctx.HandleCommand(flow.UpdateFormAlignment{
+			Workspace: ctx.Workspace().ID,
+			Form:      ctx.Form().ID,
+			ID:        view.Identity(),
+			Alignment: align,
+		}); err != nil {
+			alert.ShowBannerError(ctx.Window(), err)
+		}
+
+	})
+
+	hasLayout := gapable != nil || alignable != nil
 
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
@@ -208,6 +238,9 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 
 		ui.If(hasLayout, ui.HLine()),
 		ui.If(hasLayout, ui.Text("Layout")),
+		ui.If(alignable != nil,
+			picker.Picker[ui.Alignment]("Alignment", ui.Alignments(), alignState).FullWidth(),
+		),
 		ui.If(gapable != nil, ui.TextField("Gap", gapState.Get()).InputValue(gapState)),
 
 		ui.HLine(),

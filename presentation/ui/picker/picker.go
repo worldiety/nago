@@ -204,6 +204,11 @@ func (c TPicker[T]) Frame(frame ui.Frame) ui.DecoredView {
 	return c
 }
 
+func (c TPicker[T]) FullWidth() TPicker[T] {
+	c.frame = c.frame.FullWidth()
+	return c
+}
+
 func (c TPicker[T]) WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView {
 	c.frame = fn(c.frame)
 	return c

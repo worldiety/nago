@@ -48,7 +48,15 @@ func (ctx RContext) RenderInsertAfter(parent flow.ViewID, after flow.ViewID) cor
 			ctx.parent.addDialogPresented.Set(true)
 		}).PreIcon(icons.Plus),
 	).FullWidth()
+}
 
+func (ctx RContext) RenderInsertPlus(parent flow.ViewID, after flow.ViewID) core.View {
+	return ui.SecondaryButton(func() {
+		ctx.parent.selectedAfter.Set(after)
+		ctx.parent.selectedParent.Set(parent)
+		ctx.parent.addBelow.Set(after)
+		ctx.parent.addDialogPresented.Set(true)
+	}).PreIcon(icons.Plus).Frame(ui.Frame{MinWidth: ui.L40})
 }
 
 func (ctx RContext) Window() core.Window {
