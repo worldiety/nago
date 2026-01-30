@@ -15,7 +15,7 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/worldiety/enum v0.0.0-20250415071812-195794096336
 	github.com/worldiety/i18n v0.0.0-20251015140345-964ae52376d2
-	github.com/worldiety/jsonptr v0.0.6
+	github.com/worldiety/jsonptr v0.0.7
 	github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16
 	github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83
 	github.com/worldiety/xtractdoc v0.0.0-20250708133307-e081ccca7cf6

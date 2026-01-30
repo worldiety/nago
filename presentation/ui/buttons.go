@@ -41,22 +41,22 @@ func Button(style ButtonStyle, action func()) TButton {
 // PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
 func PrimaryButton(action func()) TButton {
-	return initButton(action, StyleButtonPrimary)
+	return initButton(action, ButtonStylePrimary)
 }
 
 // SecondaryButton uses an internal preset to represent a secondary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
 func SecondaryButton(action func()) TButton {
-	return initButton(action, StyleButtonSecondary)
+	return initButton(action, ButtonStyleSecondary)
 }
 
 // TertiaryButton uses an internal preset to represent a tertiary button. See also FilledButton for a custom-colored
 // Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
 func TertiaryButton(action func()) TButton {
-	return initButton(action, StyleButtonTertiary)
+	return initButton(action, ButtonStyleTertiary)
 }
 
-func initButton(action func(), preset StylePreset) TButton {
+func initButton(action func(), preset ButtonStyle) TButton {
 	btn := TButton{action: action, preset: preset}
 	if core.Debug {
 		btn.trace = string(debug.Stack())
@@ -113,7 +113,7 @@ func (c TButton) PostIcon(svg core.SVG) TButton {
 }
 
 // Preset applies a style preset to the button, controlling its appearance and behavior.
-func (c TButton) Preset(preset StylePreset) TButton {
+func (c TButton) Preset(preset ButtonStyle) TButton {
 	c.preset = preset
 	return c
 }
@@ -121,6 +121,11 @@ func (c TButton) Preset(preset StylePreset) TButton {
 // Frame sets the layout frame of the button, including size and positioning.
 func (c TButton) Frame(frame Frame) TButton {
 	c.frame = frame
+	return c
+}
+
+func (c TButton) FullWidth() TButton {
+	c.frame = c.frame.FullWidth()
 	return c
 }
 

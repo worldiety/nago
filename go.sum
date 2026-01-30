@@ -40,6 +40,8 @@ github.com/worldiety/i18n v0.0.0-20251015140345-964ae52376d2 h1:DQEpB4hP5QXIbD88
 github.com/worldiety/i18n v0.0.0-20251015140345-964ae52376d2/go.mod h1:5aJpAfnGu9d91kIZyuJenwlHj97wD00IZ8y1CtRLfhQ=
 github.com/worldiety/jsonptr v0.0.6 h1:T7Rj8GvOcFP8Oa/m5w4H1ZpQq2J55LzXSh9nYhHwBdI=
 github.com/worldiety/jsonptr v0.0.6/go.mod h1:9UA8zEZhmBdoRKyyWD/4vXygiiS6XYrA9Yq7rl73ook=
+github.com/worldiety/jsonptr v0.0.7 h1:94Af0YwAgFGwh5/S0atVg0YFgmP1sbUQcsNLoJUWtPo=
+github.com/worldiety/jsonptr v0.0.7/go.mod h1:9UA8zEZhmBdoRKyyWD/4vXygiiS6XYrA9Yq7rl73ook=
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16 h1:9E5bS0EtiWaNaxsjxZtXFQcC95wgjAv6K27qaDhPaJs=
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16/go.mod h1:UX8Sb7OvGA+gh+NSJKqUsslZ7Ao7ftYVzutt70hcL9g=
 github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83 h1:rJCMfQMxHh0R68EfoRG2SXyBXEKkDLRpnvGdwstsStA=

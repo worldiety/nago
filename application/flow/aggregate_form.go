@@ -103,6 +103,12 @@ type Actionable interface {
 	SetActionExpr(...Expression)
 }
 
+type Enabler interface {
+	FormView
+	EnabledExpr() Expression
+	SetEnabledExpr(Expression)
+}
+
 type ViewID string
 
 var (

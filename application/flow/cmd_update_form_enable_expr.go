@@ -12,30 +12,35 @@ import (
 	"go.wdy.de/nago/pkg/xerrors"
 )
 
-type UpdateFormVisibleExpr struct {
+type UpdateFormEnableExpr struct {
 	Workspace  WorkspaceID
 	Form       FormID
 	ID         ViewID
 	Expression Expression
 }
 
-func (cmd UpdateFormVisibleExpr) WorkspaceID() WorkspaceID {
+func (cmd UpdateFormEnableExpr) WorkspaceID() WorkspaceID {
 	return cmd.Workspace
 }
 
-func (cmd UpdateFormVisibleExpr) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
+func (cmd UpdateFormEnableExpr) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
 	var errGrp xerrors.FieldBuilder
 
-	_, ok := GetView(ws, cmd.Form, cmd.ID)
+	v, ok := GetView(ws, cmd.Form, cmd.ID)
 	if !ok {
 		errGrp.Add("ID", "View not found")
 		return nil, errGrp.Error()
 	}
 
-	return []WorkspaceEvent{FormVisibleExprUpdated{
+	if _, ok := v.(Enabler); !ok {
+		errGrp.Add("ID", "View is not Enabler")
+		return nil, errGrp.Error()
+	}
+
+	return []WorkspaceEvent{FormEnableExprUpdated{
 		Workspace:  cmd.Workspace,
 		Form:       cmd.Form,
 		ID:         cmd.ID,
-		Expression: cmd.Expression,
+		EnableExpr: cmd.Expression,
 	}}, nil
 }

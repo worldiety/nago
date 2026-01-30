@@ -158,117 +158,39 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 		).FullWidth().Alignment(ui.TopLeading)
 	}
 
+	view, _ := flow.GetView(c.ws, c.form.ID, c.selected.Get())
+
 	deletePresented := core.StateOf[bool](c.wnd, "view_delete_presented")
 	conditionalPresented := core.StateOf[bool](c.wnd, "view_conditional_presented")
+	actionPresented := core.StateOf[bool](ctx.Window(), string(view.Identity())+"action-presented")
+	enabledPresented := core.StateOf[bool](ctx.Window(), string(view.Identity())+"enabled-presented")
 
-	view, _ := flow.GetView(c.ws, c.form.ID, c.selected.Get())
+	actionable, _ := view.(flow.Actionable)
+	enabler, _ := view.(flow.Enabler)
 
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
 		c.conditionalFormDialog(conditionalPresented),
+		c.formActionDialog(ctx, actionable, actionPresented),
+		c.enabledFormDialog(enabledPresented),
 
 		ctx.RenderEditor(view),
 		ui.HLine(),
+		ui.Text("Scripts"),
+		ui.If(enabler != nil, ui.SecondaryButton(func() {
+			enabledPresented.Set(true)
+		}).Title("Enabled").FullWidth()),
+		ui.If(actionable != nil, ui.SecondaryButton(func() {
+			actionPresented.Set(true)
+		}).Title("Action").FullWidth()),
 		ui.SecondaryButton(func() {
 			conditionalPresented.Set(true)
-		}).Title("Conditional Visibility").Frame(ui.Frame{}.FullWidth()),
+		}).Title("Visibility").FullWidth(),
+		ui.HLine(),
 		ui.SecondaryButton(func() {
 			deletePresented.Set(true)
-		}).Title("Delete").Frame(ui.Frame{}.FullWidth()),
+		}).Title("Delete").FullWidth(),
 	).FullWidth().Alignment(ui.TopLeading).Gap(ui.L8)
-}
-
-func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.View {
-	if !presented.Get() {
-		return nil
-	}
-
-	code := core.StateOf[string](c.wnd, string(c.selected.Get())+"-visibility-expr-code").Init(func() string {
-		view, ok := flow.GetView(c.ws, c.form.ID, c.selected.Get())
-		if !ok {
-			return ""
-		}
-		return string(view.VisibleExpr())
-	})
-
-	structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
-	var fieldDetails core.View
-	if ok {
-		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
-	}
-
-	return alert.Dialog(
-		"conditional visibility",
-		ui.VStack(
-			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
-			ui.Text("example: field(\"MyFieldName\").Bool() == true").
-				Color(ui.ColorIconsMuted).
-				Font(ui.BodySmall),
-			ui.Space(ui.L16),
-			fieldDetails,
-		).FullWidth().Alignment(ui.Leading),
-		presented,
-		alert.Closeable(),
-		alert.Larger(),
-		alert.Cancel(nil),
-		alert.Save(func() (close bool) {
-			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.UpdateFormVisibleExpr{
-				Workspace:  c.ws.Identity(),
-				Form:       c.form.Identity(),
-				ID:         c.selected.Get(),
-				Expression: flow.Expression(code.Get()),
-			}); err != nil {
-				alert.ShowBannerError(c.wnd, err)
-			}
-
-			return true
-		}),
-	)
-}
-
-func (c TFormEditor) deleteFormDialog(presented *core.State[bool]) core.View {
-	if !presented.Get() {
-		return nil
-	}
-
-	return alert.Dialog(
-		"Delete form",
-		ui.Text("Are you sure you want to delete this form?"),
-		presented,
-		alert.Closeable(),
-		alert.Cancel(nil),
-		alert.Delete(func() {
-			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.DeleteFormCmd{
-				Workspace: c.ws.Identity(),
-				ID:        c.form.Identity(),
-			}); err != nil {
-				alert.ShowBannerError(c.wnd, err)
-			}
-		}),
-	)
-}
-
-func (c TFormEditor) deleteViewDialog(presented *core.State[bool]) core.View {
-	if !presented.Get() {
-		return nil
-	}
-
-	return alert.Dialog(
-		"Delete",
-		ui.Text("Are you sure you want to delete this view?"),
-		presented,
-		alert.Closeable(),
-		alert.Cancel(nil),
-		alert.Delete(func() {
-			if err := c.uc.HandleCommand(c.wnd.Subject(), flow.DeleteViewCmd{
-				Workspace: c.ws.Identity(),
-				Form:      c.form.Identity(),
-				View:      c.selected.Get(),
-			}); err != nil {
-				alert.ShowBannerError(c.wnd, err)
-			}
-		}),
-	)
 }
 
 func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {

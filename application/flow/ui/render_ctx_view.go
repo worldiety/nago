@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log/slog"
 	"reflect"
+	"strings"
 
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
@@ -87,7 +88,16 @@ func (c ViewerRenderContext) runExpr(estr flow.Expression) (any, error) {
 			return true
 		},
 		"delete": func(name string) bool {
-			//c.state.Get().Delete(name) TODO missing in API
+			c.state.Get().Delete(name)
+			return true
+		},
+		// this is useful to delete conventionally an entire range with a prefix name out of the model
+		"deleteWithPrefix": func(prefix string) bool {
+			for k := range c.state.Get().All() {
+				if strings.HasPrefix(k, prefix) {
+					c.state.Get().Delete(k)
+				}
+			}
 			return true
 		},
 	}
@@ -125,6 +135,20 @@ func (c ViewerRenderContext) EvaluateVisibility(view flow.FormView) bool {
 	return true
 }
 
+func (c ViewerRenderContext) EvaluateEnabled(view flow.Enabler) bool {
+	output, err := c.runExpr(view.EnabledExpr())
+	if err != nil {
+		slog.Error("cannot evaluate expression", "view", view.Identity(), "err", err, "expr", view.VisibleExpr())
+		return true
+	}
+
+	if b, ok := output.(bool); ok {
+		return b
+	}
+
+	return true
+}
+
 func (c ViewerRenderContext) EvaluateAction(view flow.Actionable) {
 	for _, ex := range view.ActionExpr() {
 		_, err := c.runExpr(ex)
@@ -133,6 +157,7 @@ func (c ViewerRenderContext) EvaluateAction(view flow.Actionable) {
 		}
 	}
 
+	c.state.Invalidate()
 }
 
 func (c ViewerRenderContext) Context() context.Context {
