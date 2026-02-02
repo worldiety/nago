@@ -27,13 +27,13 @@ func (cmd UpdateFormPadding) WorkspaceID() WorkspaceID {
 func (cmd UpdateFormPadding) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
 	var errGrp xerrors.FieldBuilder
 
-	v, ok := GetViewGroup(ws, cmd.Form, cmd.ID)
+	v, ok := GetView(ws, cmd.Form, cmd.ID)
 	if !ok {
 		errGrp.Add("ID", "View not found")
 		return nil, errGrp.Error()
 	}
 
-	if _, ok := v.(Borderable); !ok {
+	if _, ok := v.(Paddable); !ok {
 		errGrp.Add("ID", "View has not padding property")
 		return nil, errGrp.Error()
 	}

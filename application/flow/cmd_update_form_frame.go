@@ -27,7 +27,7 @@ func (cmd UpdateFormFrame) WorkspaceID() WorkspaceID {
 func (cmd UpdateFormFrame) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
 	var errGrp xerrors.FieldBuilder
 
-	v, ok := GetViewGroup(ws, cmd.Form, cmd.ID)
+	v, ok := GetView(ws, cmd.Form, cmd.ID)
 	if !ok {
 		errGrp.Add("ID", "View not found")
 		return nil, errGrp.Error()

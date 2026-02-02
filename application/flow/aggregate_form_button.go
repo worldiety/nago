@@ -13,6 +13,10 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+var (
+	_ Frameable = (*FormButton)(nil)
+)
+
 type FormButton struct {
 	id          ViewID
 	title       string
@@ -20,6 +24,7 @@ type FormButton struct {
 	action      []Expression
 	enabled     Expression // if empty, its enabled
 	style       ui.ButtonStyle
+	frame       ui.Frame
 }
 
 func NewFormButton(id ViewID, title string, style ui.ButtonStyle) *FormButton {
@@ -74,4 +79,12 @@ func (f *FormButton) SetStyle(style ui.ButtonStyle) {
 
 func (f *FormButton) Identity() ViewID {
 	return f.id
+}
+
+func (f *FormButton) Frame() ui.Frame {
+	return f.frame
+}
+
+func (f *FormButton) SetFrame(frame ui.Frame) {
+	f.frame = frame
 }

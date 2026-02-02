@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 type FormHLineAdded struct {
@@ -36,6 +37,15 @@ func (evt FormHLineAdded) Evolve(ctx context.Context, ws *Workspace) error {
 		return fmt.Errorf("form %s not found", evt.Form)
 	}
 
-	form.Insert(NewFormHLine(evt.ID), evt.After)
+	v := NewFormHLine(evt.ID)
+	fr := v.Frame()
+	fr.Width = ui.Full
+	v.SetFrame(fr)
+
+	pd := v.Padding()
+	pd = pd.Vertical(ui.L16)
+	v.SetPadding(pd)
+
+	form.Insert(v, evt.After)
 	return nil
 }

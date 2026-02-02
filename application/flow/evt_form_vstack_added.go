@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/evs"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 type FormVStackAdded struct {
@@ -36,6 +37,11 @@ func (evt FormVStackAdded) Evolve(ctx context.Context, ws *Workspace) error {
 		return fmt.Errorf("form %s not found", evt.Form)
 	}
 
-	form.Insert(NewFormVStack(evt.ID), evt.After)
+	v := NewFormVStack(evt.ID)
+	fr := v.Frame()
+	fr.Width = ui.Full
+	v.SetFrame(fr)
+
+	form.Insert(v, evt.After)
 	return nil
 }

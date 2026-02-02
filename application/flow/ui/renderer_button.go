@@ -96,5 +96,7 @@ func (r *ButtonRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state
 	btn := view.(*flow.FormButton)
 	return ui.Button(btn.Style(), func() {
 		ctx.EvaluateAction(btn)
-	}).Title(btn.Title()).Enabled(ctx.EvaluateEnabled(btn))
+	}).Title(btn.Title()).
+		Enabled(ctx.EvaluateEnabled(btn)).
+		Frame(btn.Frame())
 }

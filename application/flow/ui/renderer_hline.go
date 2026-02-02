@@ -61,5 +61,8 @@ func (r HLineRenderer) Update(ctx RContext, view flow.FormView) core.View {
 func (r HLineRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
 	hline := view.(*flow.FormHLine)
 	_ = hline
-	return ui.HLine()
+	return ui.TDivider{}.
+		Border(ui.Border{TopWidth: "1px", TopColor: ui.M5}).
+		Frame(hline.Frame()).
+		Padding(hline.Padding())
 }
