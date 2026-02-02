@@ -15,7 +15,9 @@ import (
 	"go.wdy.de/nago/presentation/ui/form"
 )
 
-var _ ViewRenderer = (*VStackRenderer)(nil)
+var (
+	_ ViewRenderer = (*VStackRenderer)(nil)
+)
 
 type VStackRenderer struct {
 }
@@ -41,7 +43,7 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 
 	tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
 
-	return ui.VStack(tmp...).FullWidth().Gap(ui.L8).Alignment(vstack.Alignment())
+	return ui.VStack(tmp...).FullWidth().Gap(ui.L8).Alignment(vstack.Alignment()).BackgroundColor(vstack.BackgroundColor())
 }
 
 func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {
@@ -88,5 +90,5 @@ func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state 
 		tmp = append(tmp, ctx.Render(formView))
 	}
 
-	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth().Gap(vstack.Gap())
+	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth().Gap(vstack.Gap()).BackgroundColor(vstack.BackgroundColor())
 }

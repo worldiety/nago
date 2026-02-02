@@ -116,6 +116,24 @@ type Gapable interface {
 	SetGap(ui.Length)
 }
 
+type Frameable interface {
+	FormView
+	Frame() ui.Frame
+	SetFrame(ui.Frame)
+}
+
+type Borderable interface {
+	FormView
+	Border() ui.Border
+	SetBorder(ui.Border)
+}
+
+type Backgroundable interface {
+	FormView
+	BackgroundColor() ui.Color
+	SetBackgroundColor(color ui.Color)
+}
+
 type ViewID string
 
 var (

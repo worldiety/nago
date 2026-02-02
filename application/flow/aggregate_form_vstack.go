@@ -10,14 +10,20 @@ package flow
 import "go.wdy.de/nago/presentation/ui"
 
 var (
-	_ FormViewGroup = (*FormVStack)(nil)
-	_ Alignable     = (*FormVStack)(nil)
+	_ FormViewGroup  = (*FormVStack)(nil)
+	_ Alignable      = (*FormVStack)(nil)
+	_ Borderable     = (*FormVStack)(nil)
+	_ Frameable      = (*FormVStack)(nil)
+	_ Backgroundable = (*FormVStack)(nil)
 )
 
 type FormVStack struct {
 	*baseViewGroup
-	alignment ui.Alignment
-	gap       ui.Length
+	alignment       ui.Alignment
+	gap             ui.Length
+	frame           ui.Frame
+	border          ui.Border
+	backgroundColor ui.Color
 }
 
 func NewFormVStack(id ViewID) *FormVStack {
@@ -46,4 +52,28 @@ func (f *FormVStack) Gap() ui.Length {
 
 func (f *FormVStack) SetGap(l ui.Length) {
 	f.gap = l
+}
+
+func (f *FormVStack) Frame() ui.Frame {
+	return f.frame
+}
+
+func (f *FormVStack) SetFrame(frame ui.Frame) {
+	f.frame = frame
+}
+
+func (f *FormVStack) Border() ui.Border {
+	return f.border
+}
+
+func (f *FormVStack) SetBorder(border ui.Border) {
+	f.border = border
+}
+
+func (f *FormVStack) BackgroundColor() ui.Color {
+	return f.backgroundColor
+}
+
+func (f *FormVStack) SetBackgroundColor(color ui.Color) {
+	f.backgroundColor = color
 }

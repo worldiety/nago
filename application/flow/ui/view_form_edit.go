@@ -174,6 +174,7 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	actionable, _ := view.(flow.Actionable)
 	enabler, _ := view.(flow.Enabler)
 	gapable, _ := view.(flow.Gapable)
+	backgroundable, _ := view.(flow.Backgroundable)
 	gapState := core.StateOf[string](ctx.Window(), string(view.Identity())+"gap").Init(func() string {
 		if gapable != nil {
 			return string(gapable.Gap())
@@ -228,6 +229,27 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 
 	hasLayout := gapable != nil || alignable != nil
 
+	backgroundColorState := core.StateOf[string](ctx.Window(), string(view.Identity())+"background-color").Init(func() string {
+		if backgroundable == nil {
+			return ""
+		}
+
+		return string(backgroundable.BackgroundColor())
+	}).Observe(func(newValue string) {
+		if backgroundable == nil {
+			return
+		}
+
+		if err := ctx.HandleCommand(flow.UpdateFormBackgroundColorCmd{
+			Workspace: ctx.Workspace().ID,
+			Form:      ctx.Form().ID,
+			ID:        view.Identity(),
+			Color:     ui.Color(newValue),
+		}); err != nil {
+			alert.ShowBannerError(ctx.Window(), err)
+		}
+	})
+
 	return ui.VStack(
 		c.deleteViewDialog(deletePresented),
 		c.conditionalFormDialog(conditionalPresented),
@@ -242,6 +264,14 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 			picker.Picker[ui.Alignment]("Alignment", ui.Alignments(), alignState).FullWidth(),
 		),
 		ui.If(gapable != nil, ui.TextField("Gap", gapState.Get()).InputValue(gapState)),
+
+		ui.IfFunc(backgroundable != nil, func() core.View {
+			return ui.VStack(
+				ui.HLine(),
+				ui.Text("Background"),
+				ui.TextField("Background Color", backgroundColorState.Get()).InputValue(backgroundColorState).FullWidth(),
+			).FullWidth().Alignment(ui.Leading)
+		}),
 
 		ui.HLine(),
 		ui.Text("Scripts"),
