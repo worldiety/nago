@@ -175,6 +175,7 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	enabler, _ := view.(flow.Enabler)
 	gapable, _ := view.(flow.Gapable)
 	backgroundable, _ := view.(flow.Backgroundable)
+
 	gapState := core.StateOf[string](ctx.Window(), string(view.Identity())+"gap").Init(func() string {
 		if gapable != nil {
 			return string(gapable.Gap())
@@ -272,6 +273,10 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 				ui.TextField("Background Color", backgroundColorState.Get()).InputValue(backgroundColorState).FullWidth(),
 			).FullWidth().Alignment(ui.Leading)
 		}),
+
+		editBorderable(ctx, view),
+		editFrameable(ctx, view),
+		editPaddable(ctx, view),
 
 		ui.HLine(),
 		ui.Text("Scripts"),

@@ -12,10 +12,10 @@ import "go.wdy.de/nago/presentation/proto"
 // Padding is a utility component (Padding).
 // It defines the spacing inside a component on each side (top, left, right, bottom).
 type Padding struct {
-	Top    Length // padding at the top
-	Left   Length // padding at the left
-	Right  Length // padding at the right
-	Bottom Length // padding at the bottom
+	Top    Length `json:"top,omitempty"`
+	Left   Length `json:"left,omitempty"`
+	Right  Length `json:"right,omitempty"`
+	Bottom Length `json:"bottom,omitempty"`
 }
 
 // ora converts the padding to its protocol representation.

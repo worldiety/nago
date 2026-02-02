@@ -90,5 +90,11 @@ func (r VStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state 
 		tmp = append(tmp, ctx.Render(formView))
 	}
 
-	return ui.VStack(tmp...).Alignment(vstack.Alignment()).FullWidth().Gap(vstack.Gap()).BackgroundColor(vstack.BackgroundColor())
+	return ui.VStack(tmp...).
+		Alignment(vstack.Alignment()).
+		Gap(vstack.Gap()).
+		BackgroundColor(vstack.BackgroundColor()).
+		Frame(vstack.Frame()).
+		Padding(vstack.Padding()).
+		Border(vstack.Border())
 }

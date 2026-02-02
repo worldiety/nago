@@ -15,6 +15,7 @@ var (
 	_ Borderable     = (*FormVStack)(nil)
 	_ Frameable      = (*FormVStack)(nil)
 	_ Backgroundable = (*FormVStack)(nil)
+	_ Paddable       = (*FormVStack)(nil)
 )
 
 type FormVStack struct {
@@ -24,6 +25,7 @@ type FormVStack struct {
 	frame           ui.Frame
 	border          ui.Border
 	backgroundColor ui.Color
+	padding         ui.Padding
 }
 
 func NewFormVStack(id ViewID) *FormVStack {
@@ -32,9 +34,13 @@ func NewFormVStack(id ViewID) *FormVStack {
 
 func (f *FormVStack) Clone() FormView {
 	return &FormVStack{
-		baseViewGroup: f.baseViewGroup.clone(),
-		alignment:     f.alignment,
-		gap:           f.gap,
+		baseViewGroup:   f.baseViewGroup.clone(),
+		alignment:       f.alignment,
+		gap:             f.gap,
+		frame:           f.frame,
+		border:          f.border,
+		backgroundColor: f.backgroundColor,
+		padding:         f.padding,
 	}
 }
 
@@ -76,4 +82,12 @@ func (f *FormVStack) BackgroundColor() ui.Color {
 
 func (f *FormVStack) SetBackgroundColor(color ui.Color) {
 	f.backgroundColor = color
+}
+
+func (f *FormVStack) Padding() ui.Padding {
+	return f.padding
+}
+
+func (f *FormVStack) SetPadding(padding ui.Padding) {
+	f.padding = padding
 }

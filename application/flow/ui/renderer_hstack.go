@@ -89,5 +89,11 @@ func (r HStackRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state 
 		tmp = append(tmp, ctx.Render(formView))
 	}
 
-	return ui.HStack(tmp...).Alignment(hstack.Alignment()).FullWidth().Gap(hstack.Gap())
+	return ui.HStack(tmp...).
+		Alignment(hstack.Alignment()).
+		Gap(hstack.Gap()).
+		BackgroundColor(hstack.BackgroundColor()).
+		Frame(hstack.Frame()).
+		Padding(hstack.Padding()).
+		Border(hstack.Border())
 }

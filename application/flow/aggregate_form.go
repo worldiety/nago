@@ -134,6 +134,12 @@ type Backgroundable interface {
 	SetBackgroundColor(color ui.Color)
 }
 
+type Paddable interface {
+	FormView
+	Padding() ui.Padding
+	SetPadding(ui.Padding)
+}
+
 type ViewID string
 
 var (

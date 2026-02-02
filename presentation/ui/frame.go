@@ -15,12 +15,12 @@ import "go.wdy.de/nago/presentation/proto"
 // dimensions. Frames are used to control layout behavior and responsiveness.
 // All fields are optional. If a field is zero, it will not constrain the layout.
 type Frame struct {
-	MinWidth  Length
-	MaxWidth  Length
-	MinHeight Length
-	MaxHeight Length
-	Width     Length
-	Height    Length
+	MinWidth  Length `json:"minWidth,omitempty"`
+	MaxWidth  Length `json:"maxWidth,omitempty"`
+	MinHeight Length `json:"minHeight,omitempty"`
+	MaxHeight Length `json:"maxHeight,omitempty"`
+	Width     Length `json:"width,omitempty"`
+	Height    Length `json:"height,omitempty"`
 }
 
 // IsZero returns true if all fields of the Frame are unset (zero value).
