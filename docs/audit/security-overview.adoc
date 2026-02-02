@@ -1,0 +1,186 @@
+= Nago Low-Code Framework - Sicherheitsdokumentation
+:author: worldiety GmbH
+:email: security@worldiety.de
+:revnumber: 1.0
+:revdate: 2026-02-02
+:revremark: Initiale Version für ISO 27001 Audit und Penetrationstest
+:toc: left
+:toclevels: 4
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:imagesdir: images
+:chapter-label:
+:lang: de
+
+[.lead]
+Diese Dokumentation beschreibt die Sicherheitsarchitektur, implementierte Kontrollen und Compliance-Nachweise des Nago Low-Code Frameworks für Sicherheitsaudits nach ISO 27001 und Penetrationstests.
+
+== Executive Summary
+
+Das *Nago Low-Code Framework* ist eine Enterprise-Grade-Plattform zur schnellen Entwicklung von Geschäftsanwendungen, entwickelt von der worldiety GmbH. Das Framework basiert auf einer modernen Architektur mit Go-Backend und VueJS-Frontend, verbunden über WebSocket-Kommunikation.
+
+=== Sicherheits-Highlights
+
+[cols="1,3"]
+|===
+|Bereich |Implementierung
+
+|*Authentifizierung*
+|Argon2id-Passwort-Hashing (OWASP-konform), Session-basierte Authentifizierung, SSO via OAuth2/OpenID Connect
+
+|*Autorisierung*
+|Role-Based Access Control (RBAC), Permission-basierte Zugriffskontrolle mit Audit-Trail
+
+|*Kryptographie*
+|AES-GCM-256 für Datenverschlüsselung, 32-Byte Master Key, TLS für Netzwerkkommunikation
+
+|*Datenschutz*
+|DSGVO-konforme Consent-Verwaltung, E-Mail-Verifikationspflicht, Backup-Verschlüsselung
+
+|*Logging*
+|Strukturiertes Logging mit slog, Event-basierter Audit-Trail, Session-Tracking
+|===
+
+=== Dokumentstruktur
+
+Diese Dokumentation ist modular aufgebaut:
+
+* <<security-architecture.adoc#,Sicherheitsarchitektur>> - Systemübersicht, Komponenten, Datenflüsse
+* <<security-controls.adoc#,ISO 27001 Controls>> - Annex A Mapping mit Code-Referenzen
+* <<security-threats.adoc#,Bedrohungsmodell>> - STRIDE-Analyse mit Mitigationen
+* <<security-pentest-checklist.adoc#,Pentest-Checkliste>> - OWASP Top 10 Testszenarien
+* <<security-compliance.adoc#,Compliance-Nachweise>> - ISO 27001, SOC 2, DSGVO Evidences
+* <<security-incident-response.adoc#,Incident Response Plan>> - Reaktionsverfahren für Sicherheitsvorfälle
+
+== Geltungsbereich
+
+=== In Scope
+
+* Nago Framework Application Layer (Go Backend, VueJS Frontend)
+* Session Management und Authentifizierung
+* Permission- und Role-Management
+* Kryptographische Implementierungen
+* Backup- und Restore-Funktionalität
+* Event-basiertes Audit-Logging
+
+=== Out of Scope
+
+* Deployment-Infrastruktur (siehe Nago Hub Hosting Dokumentation)
+* Reverse Proxy / Load Balancer Konfiguration
+* TLS-Zertifikatsverwaltung
+* Firewall-Regeln
+* Container-Orchestrierung
+* Host-Betriebssystem-Sicherheit
+
+[NOTE]
+====
+Für Deployment-Security-Aspekte verweisen wir auf die separate *Nago Hub Hosting Dokumentation*, die alle infrastrukturbezogenen Sicherheitsmaßnahmen beschreibt.
+====
+
+== Technologie-Stack
+
+[cols="1,2,1"]
+|===
+|Komponente |Technologie |Version
+
+|Backend
+|Go
+|1.25.0
+
+|Frontend
+|VueJS
+|3.x
+
+|HTTP Router
+|chi/v5
+|5.2.3
+
+|WebSocket
+|gorilla/websocket
+|1.5.3
+
+|Kryptographie
+|golang.org/x/crypto
+|0.45.0
+
+|Passwort-Validierung
+|wagslane/go-password-validator
+|0.3.0
+
+|Internationalisierung
+|worldiety/i18n
+|aktuell
+|===
+
+== Versionierung
+
+[cols="1,1,2,1"]
+|===
+|Version |Datum |Änderungen |Autor
+
+|1.0
+|2026-02-02
+|Initiale Version für ISO 27001 Audit
+|worldiety GmbH
+|===
+
+== Kontakt
+
+[cols="1,2"]
+|===
+|Anfragen |Kontakt
+
+|Security Issues
+|security@worldiety.de
+
+|Compliance-Fragen
+|compliance@worldiety.de
+
+|Technische Dokumentation
+|https://nago.dev
+|===
+
+== Glossar
+
+[cols="1,3"]
+|===
+|Begriff |Definition
+
+|*Argon2id*
+|Memory-hard Passwort-Hashing-Algorithmus, empfohlen von OWASP für Passwort-Speicherung
+
+|*AES-GCM-256*
+|Advanced Encryption Standard mit Galois/Counter Mode und 256-Bit Schlüssel
+
+|*RBAC*
+|Role-Based Access Control - Rollenbasierte Zugriffskontrolle
+
+|*Master Key*
+|32-Byte kryptographischer Schlüssel zur Verschlüsselung aller sensitiven Daten
+
+|*NLS*
+|Nago Login Service - SSO-Provider für OAuth2/OpenID Connect
+
+|*Event Bus*
+|Internes Publish-Subscribe-System für lose gekoppelte Kommunikation
+
+|*Blob Storage*
+|Key-Value-basiertes Speichersystem für strukturierte und unstrukturierte Daten
+
+|*Subject*
+|Authentifizierter Benutzerkontext mit Berechtigungen und Audit-Fähigkeiten
+|===
+
+// Includes für modulare Dokumentation
+include::security-architecture.adoc[leveloffset=+1]
+
+include::security-controls.adoc[leveloffset=+1]
+
+include::security-threats.adoc[leveloffset=+1]
+
+include::security-pentest-checklist.adoc[leveloffset=+1]
+
+include::security-compliance.adoc[leveloffset=+1]
+
+include::security-incident-response.adoc[leveloffset=+1]
