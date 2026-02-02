@@ -44,6 +44,7 @@ var DefaultRenderers = map[reflect.Type]ViewRenderer{
 	reflect.TypeFor[*flow.FormHStack]():   &HStackRenderer{},
 	reflect.TypeFor[*flow.FormCheckbox](): &CheckboxRenderer{},
 	reflect.TypeFor[*flow.FormButton]():   &ButtonRenderer{},
+	reflect.TypeFor[*flow.FormHLine]():    &HLineRenderer{},
 }
 
 type StringEnumFieldRenderer struct{}

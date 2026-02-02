@@ -43,4 +43,5 @@ var DefaultEvents = slices.Values([]WorkspaceEvent{
 	FormEnableExprUpdated{},
 	FormGapUpdated{},
 	FormHStackAdded{},
+	FormHLineAdded{},
 })
