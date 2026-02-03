@@ -49,4 +49,5 @@ var DefaultEvents = slices.Values([]WorkspaceEvent{
 	FormFrameUpdated{},
 	FormBorderUpdated{},
 	FormTextFieldAdded{},
+	FormRefAdded{},
 })

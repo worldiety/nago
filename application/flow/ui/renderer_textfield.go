@@ -104,7 +104,7 @@ func (r *TextFieldRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, st
 	}
 
 	jsonName := field.JSONName()
-	myState := core.DerivedState[string](state, string(tf.Field())).Init(func() string {
+	myState := core.DerivedState[string](state, string(tf.Field())+string(tf.Identity())).Init(func() string {
 		val, ok := state.Get().Get(jsonName)
 		if !ok {
 			return ""
@@ -118,6 +118,14 @@ func (r *TextFieldRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, st
 		obj.Put(jsonName, jsonptr.String(newValue))
 		state.Set(obj)
 		state.Notify()
+	})
+
+	state.Observe(func(newValue *jsonptr.Obj) {
+		val, ok := state.Get().Get(jsonName)
+		if ok {
+			myState.Set(val.String())
+		}
+
 	})
 
 	return ui.TextField(tf.Label(), myState.Get()).SupportingText(tf.SupportingText()).InputValue(myState).Frame(tf.Frame())

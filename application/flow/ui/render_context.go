@@ -19,17 +19,18 @@ import (
 )
 
 type RContext struct {
-	parent         TFormEditor
-	Context        context.Context
-	wnd            core.Window
-	Handle         flow.HandleCommand
-	ws             *flow.Workspace
-	selectedStates map[flow.ViewID]*core.State[bool]
-	RenderInsert   func(ctx RContext) core.View
-	RenderEdit     func(ctx RContext, wrapped core.View) core.View
-	RenderDelete   func(ctx RContext, wrapped core.View) core.View
-	insertMode     bool
-	inspectorMode  bool
+	parent           TFormEditor
+	Context          context.Context
+	wnd              core.Window
+	Handle           flow.HandleCommand
+	ws               *flow.Workspace
+	selectedStates   map[flow.ViewID]*core.State[bool]
+	RenderInsert     func(ctx RContext) core.View
+	RenderEdit       func(ctx RContext, wrapped core.View) core.View
+	RenderDelete     func(ctx RContext, wrapped core.View) core.View
+	insertMode       bool
+	inspectorMode    bool
+	recursionCounter *int
 }
 
 func (ctx RContext) InsertMode() bool {
@@ -107,6 +108,13 @@ func (ctx RContext) EditorAction(view flow.FormView) func() {
 }
 
 func (ctx RContext) RenderPreview(view flow.FormView) core.View {
+	*ctx.recursionCounter++
+	defer func() { *ctx.recursionCounter-- }()
+
+	if *ctx.recursionCounter > 10 {
+		return ui.VStack(ui.Text("Recursion limit reached").Color(ui.ColorWhite)).BackgroundColor(ui.ColorError)
+	}
+
 	r, ok := ctx.parent.renderersById[reflect.TypeOf(view)]
 	if !ok {
 		return ui.Text(fmt.Sprintf("%T has no renderer", view))

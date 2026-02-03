@@ -53,6 +53,10 @@ func (f *Form) Identity() FormID {
 	return f.ID
 }
 
+func (f *Form) String() string {
+	return string(f.name)
+}
+
 func (f *Form) Clone() *Form {
 	c := &Form{
 		ID:          f.ID,

@@ -140,15 +140,17 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 	formEditorFlagInsertModeState := core.StateOf[bool](wnd, formEditorFlagInsertMode)
 	formEditorFlagShowInspectorState := core.StateOf[bool](wnd, formEditorFlagShowInspector)
 
+	var rinc int
 	return RContext{
-		parent:         c,
-		Context:        wnd.Context(), // TODO merge with dialog_cmd
-		wnd:            wnd,
-		Handle:         c.uc.HandleCommand,
-		ws:             c.ws,
-		selectedStates: map[flow.ViewID]*core.State[bool]{},
-		insertMode:     formEditorFlagInsertModeState.Get(),
-		inspectorMode:  formEditorFlagShowInspectorState.Get(),
+		parent:           c,
+		Context:          wnd.Context(), // TODO merge with dialog_cmd
+		wnd:              wnd,
+		Handle:           c.uc.HandleCommand,
+		ws:               c.ws,
+		selectedStates:   map[flow.ViewID]*core.State[bool]{},
+		insertMode:       formEditorFlagInsertModeState.Get(),
+		inspectorMode:    formEditorFlagShowInspectorState.Get(),
+		recursionCounter: &rinc,
 	}
 }
 
