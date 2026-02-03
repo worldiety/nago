@@ -318,6 +318,20 @@ func (f *TypeField) SuitableAsPrimaryKey(ws *Workspace) bool {
 	return ok
 }
 
+func (f *TypeField) StringType(ws *Workspace) bool {
+	ref, ok := ws.Packages.TypeByID(f.Type)
+	if !ok {
+		return false
+	}
+
+	_, ok = ref.(*StringType)
+	return ok
+}
+
+func (f *TypeField) String() string {
+	return string(f.name)
+}
+
 func (f *TypeField) PrimaryKey() bool {
 	return f.primaryKey
 }

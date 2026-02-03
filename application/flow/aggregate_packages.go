@@ -29,9 +29,34 @@ func (p *Packages) Clone() *Packages {
 }
 
 func (p *Packages) All() iter.Seq[*Package] {
+	if len(p.packages) == 0 {
+		return func(yield func(*Package) bool) {}
+	}
+
+	if len(p.packages) == 1 {
+		return func(yield func(*Package) bool) {
+			for _, p2 := range p.packages {
+				yield(p2)
+				return
+			}
+		}
+	}
+
 	return slices.Values(slices.SortedFunc(maps.Values(p.packages), func(e *Package, e2 *Package) int {
 		return strings.Compare(string(e.ImportPath), string(e2.ImportPath))
 	}))
+}
+
+func (p *Packages) Len() int {
+	return len(p.packages)
+}
+
+func (p *Packages) First() (*Package, bool) {
+	for p := range p.All() {
+		return p, true
+	}
+
+	return nil, false
 }
 
 func (p *Packages) AddPackage(pkg *Package) {

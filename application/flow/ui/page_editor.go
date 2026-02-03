@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
@@ -68,12 +69,28 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 			}
 		}),
 		dialogCmd(wnd, ws, "Create new string type", presentCreateStringType, uc.HandleCommand, func() flow.WorkspaceCommand {
+			var pkgId flow.PackageID
+
+			if ws.Packages.Len() == 1 {
+				pkg, _ := ws.Packages.First()
+				pkgId = pkg.Identity()
+			}
+
 			return flow.CreateStringTypeCmd{
+				Package:   pkgId,
 				Workspace: ws.Identity(),
 			}
 		}),
 		dialogCmd(wnd, ws, "Create new struct type", presentCreateStructType, uc.HandleCommand, func() flow.WorkspaceCommand {
+			var pkgId flow.PackageID
+
+			if ws.Packages.Len() == 1 {
+				pkg, _ := ws.Packages.First()
+				pkgId = pkg.Identity()
+			}
+
 			return flow.CreateStructTypeCmd{
+				Package:   pkgId,
 				Workspace: ws.Identity(),
 			}
 		}),
@@ -85,7 +102,22 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 		}),
 
 		dialogCmd(wnd, ws, "Create new Form", presentCreateForm, uc.HandleCommand, func() flow.WorkspaceCommand {
+			var structId flow.TypeID
+			var pkgId flow.PackageID
+
+			if ws.Packages.Len() == 1 {
+				pkg, _ := ws.Packages.First()
+				pkgId = pkg.Identity()
+
+				structs := slices.Collect(pkg.Types.Structs())
+				if len(structs) == 1 {
+					structId = structs[0].Identity()
+				}
+			}
+
 			return flow.CreateFormCmd{
+				Struct:    structId,
+				Package:   pkgId,
 				Workspace: ws.Identity(),
 			}
 		}),

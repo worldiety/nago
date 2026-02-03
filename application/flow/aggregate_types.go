@@ -29,6 +29,18 @@ func (t *Types) Clone() *Types {
 }
 
 func (t *Types) All() iter.Seq[Type] {
+	if len(t.types) == 0 {
+		return func(yield func(Type) bool) {}
+	}
+
+	if len(t.types) == 1 {
+		return func(yield func(Type) bool) {
+			for _, t2 := range t.types {
+				yield(t2)
+				return
+			}
+		}
+	}
 	return slices.Values(slices.SortedFunc(maps.Values(t.types), func(t Type, t2 Type) int {
 		return strings.Compare(string(t.Name()), string(t2.Name()))
 	}))
@@ -56,4 +68,20 @@ func (t *Types) AddType(typ Type) bool {
 
 	t.types[typ.Identity()] = typ
 	return true
+}
+
+func (t *Types) Len() int {
+	return len(t.types)
+}
+
+func (t *Types) Structs() iter.Seq[*StructType] {
+	return func(yield func(*StructType) bool) {
+		for t := range t.All() {
+			if s, ok := t.(*StructType); ok {
+				if !yield(s) {
+					return
+				}
+			}
+		}
+	}
 }
