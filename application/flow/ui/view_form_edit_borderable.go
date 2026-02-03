@@ -46,7 +46,7 @@ func editBorderable(ctx RContext, view flow.FormView) core.View {
 			Form:      ctx.Form().ID,
 			ID:        view.Identity(),
 			Border: ui.Border{}.
-				Radius(ui.Length(allRad.Get())).
+				Radius(flow.FixLength(ui.Length(allRad.Get()))).
 				Color(ui.Color(allColor.Get())).
 				Shadow(ui.Length(shadow.Get())),
 		}); err != nil {

@@ -26,24 +26,30 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	vstack := view.(*flow.FormVStack)
 	var tmp []core.View
 
-	//tmp = append(tmp, ui.Text("VSTACK DEBUG"))
 	var lastViewID flow.ViewID
 	c := 0
 	for formView := range vstack.All() {
-		tmp = append(tmp,
-			ctx.RenderInsertAfter(view.Identity(), lastViewID),
-			ctx.RenderPreview(formView, vstack.Alignment()),
-		)
-		lastViewID = formView.Identity()
-		if vstack.Gap() != "" && c < vstack.Len()-1 {
-			tmp = append(tmp, ui.VStack(ui.Text(string(vstack.Gap())).Font(ui.BodySmall).Color(ui.ColorIconsMuted)).FullWidth())
+		if ctx.InsertMode() {
+			tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
 		}
+
+		tmp = append(tmp, ctx.RenderPreview(formView))
+		lastViewID = formView.Identity()
 		c++
 	}
 
-	tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
+	if ctx.InsertMode() {
+		tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
+	}
 
-	return ui.VStack(tmp...).FullWidth().Gap(ui.L8).Alignment(vstack.Alignment()).BackgroundColor(vstack.BackgroundColor())
+	return ui.VStack(tmp...).
+		Action(ctx.EditorAction(view)).
+		Alignment(vstack.Alignment()).
+		Gap(vstack.Gap()).
+		BackgroundColor(vstack.BackgroundColor()).
+		Frame(vstack.Frame()).
+		Padding(vstack.Padding()).
+		Border(vstack.Border())
 }
 
 func (r VStackRenderer) TeaserPreview(ctx RContext) core.View {

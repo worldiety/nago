@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"go/token"
 	"unicode"
+
+	"go.wdy.de/nago/presentation/ui"
 )
 
 func validateIdentifier(s string) error {
@@ -35,4 +37,25 @@ func validateIdentifier(s string) error {
 	}
 
 	return nil
+}
+
+func NumberOnly(s string) bool {
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func FixLength(s ui.Length) ui.Length {
+	if s == "" {
+		return ""
+	}
+
+	if NumberOnly(string(s)) {
+		return s + "rem"
+	}
+
+	return s
 }

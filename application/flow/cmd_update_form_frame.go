@@ -38,10 +38,18 @@ func (cmd UpdateFormFrame) Decide(subject auth.Subject, ws *Workspace) ([]Worksp
 		return nil, errGrp.Error()
 	}
 
+	f := cmd.Frame
+	f.Width = FixLength(f.Width)
+	f.Height = FixLength(f.Height)
+	f.MinWidth = FixLength(f.MinWidth)
+	f.MinHeight = FixLength(f.MinHeight)
+	f.MaxWidth = FixLength(f.MaxWidth)
+	f.MaxHeight = FixLength(f.MaxHeight)
+
 	return []WorkspaceEvent{FormFrameUpdated{
 		Workspace: cmd.Workspace,
 		Form:      cmd.Form,
 		ID:        cmd.ID,
-		Frame:     cmd.Frame,
+		Frame:     f,
 	}}, nil
 }

@@ -33,30 +33,30 @@ func (c TWindowTitle) Render(ctx core.RenderContext) core.RenderNode {
 }
 
 // H1 creates a level 1 heading (page title) and sets the window title accordingly.
-func H1(title string) core.View {
+func H1(title string) TVStack {
 	return Heading(1, title)
 }
 
 // H2 creates a level 2 heading with a slightly smaller bold font and a standard horizontal line.
-func H2(title string) core.View {
+func H2(title string) TVStack {
 	return Heading(2, title)
 }
 
 // Heading returns a default formatted heading text. Level 1 is page heading H1 and so forth. H1 levels also
 // set automatically the window title.
-func Heading(level int, title string) core.View {
+func Heading(level int, title string) TVStack {
 	switch level {
 	case 1:
 		return VStack(
 			WindowTitle(title),
 			Text(title).Font(HeadlineLarge),
 			HLineWithColor(ColorAccent),
-		).Alignment(Leading).Padding(Padding{Top: "1rem", Bottom: "1rem"})
+		).Alignment(Leading).WithPadding(Padding{Top: "1rem", Bottom: "1rem"})
 	case 2:
 		return VStack(
 			Text(title).Font(HeadlineMedium),
 			HLine(),
-		).Alignment(Leading).Padding(Padding{Bottom: "1rem"})
+		).Alignment(Leading).WithPadding(Padding{Bottom: "1rem"})
 	case 3:
 		return VStack(Text(title).Font(HeadlineSmall))
 	case 4:

@@ -38,10 +38,16 @@ func (cmd UpdateFormPadding) Decide(subject auth.Subject, ws *Workspace) ([]Work
 		return nil, errGrp.Error()
 	}
 
+	p := cmd.Padding
+	p.Left = FixLength(p.Left)
+	p.Right = FixLength(p.Right)
+	p.Top = FixLength(p.Top)
+	p.Bottom = FixLength(p.Bottom)
+
 	return []WorkspaceEvent{FormPaddingUpdated{
 		Workspace: cmd.Workspace,
 		Form:      cmd.Form,
 		ID:        cmd.ID,
-		Padding:   cmd.Padding,
+		Padding:   p,
 	}}, nil
 }

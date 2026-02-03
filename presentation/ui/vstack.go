@@ -171,6 +171,11 @@ func (c TVStack) Padding(padding Padding) DecoredView {
 	return c
 }
 
+func (c TVStack) WithPadding(padding Padding) TVStack {
+	c.padding = padding.ora()
+	return c
+}
+
 // Border sets the default border styling.
 func (c TVStack) Border(border Border) DecoredView {
 	c.border = border.ora()

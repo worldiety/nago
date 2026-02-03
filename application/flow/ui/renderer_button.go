@@ -88,8 +88,8 @@ func (r *ButtonRenderer) TeaserPreview(ctx RContext) core.View {
 }
 
 func (r *ButtonRenderer) Preview(ctx RContext, view flow.FormView) core.View {
-	text := view.(*flow.FormButton)
-	return ui.Button(text.Style(), nil).Title(text.Title())
+	btn := view.(*flow.FormButton)
+	return ui.Button(btn.Style(), ctx.EditorAction(view)).Title(btn.Title()).Frame(btn.Frame())
 }
 
 func (r *ButtonRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {

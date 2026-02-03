@@ -67,15 +67,15 @@ func (r *TextRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	text := view.(*flow.FormText)
 	switch text.Style() {
 	case flow.FormTextStyleDefault:
-		return ui.Text(text.Value())
+		return ui.VStack(ui.Text(text.Value())).Action(ctx.EditorAction(view))
 	case flow.FormTextStyleH1:
-		return ui.H1(text.Value())
+		return ui.H1(text.Value()).Action(ctx.EditorAction(view))
 	case flow.FormTextStyleH2:
-		return ui.H2(text.Value())
+		return ui.H2(text.Value()).Action(ctx.EditorAction(view))
 	case flow.FormTextStyleH3:
-		return ui.Heading(3, text.Value())
+		return ui.Heading(3, text.Value()).Action(ctx.EditorAction(view))
 	case flow.FormTextStyleMarkdown:
-		return markdown.RichText(text.Value())
+		return ui.VStack(markdown.RichText(text.Value())).Action(ctx.EditorAction(view))
 	default:
 		panic("unknown text style")
 	}

@@ -8,10 +8,12 @@
 package uiflow
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"strings"
 
+	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -135,6 +137,9 @@ func (c TFormEditor) dialogAddFormElement() core.View {
 }
 
 func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
+	formEditorFlagInsertModeState := core.StateOf[bool](wnd, formEditorFlagInsertMode)
+	formEditorFlagShowInspectorState := core.StateOf[bool](wnd, formEditorFlagShowInspector)
+
 	return RContext{
 		parent:         c,
 		Context:        wnd.Context(), // TODO merge with dialog_cmd
@@ -142,6 +147,8 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 		Handle:         c.uc.HandleCommand,
 		ws:             c.ws,
 		selectedStates: map[flow.ViewID]*core.State[bool]{},
+		insertMode:     formEditorFlagInsertModeState.Get(),
+		inspectorMode:  formEditorFlagShowInspectorState.Get(),
 	}
 }
 
@@ -293,10 +300,48 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 		ui.SecondaryButton(func() {
 			deletePresented.Set(true)
 		}).Title("Delete").FullWidth(),
-	).FullWidth().Alignment(ui.TopLeading).Gap(ui.L8)
+	).FullWidth().
+		Alignment(ui.TopLeading).
+		Gap(ui.L8)
 }
 
 func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
+	formEditorFlagTestState := core.StateOf[bool](ctx.Window(), formEditorFlagTest)
+	if formEditorFlagTestState.Get() {
+
+		structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
+		if !ok {
+			return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", c.form.Repository(), c.form.ID)).Render(ctx)
+		}
+
+		tmpState := core.StateOf[*jsonptr.Obj](ctx.Window(), string(structType.ID)+"tmp").Init(func() *jsonptr.Obj {
+			return jsonptr.NewObj(make(map[string]jsonptr.Value))
+		})
+
+		rctx := NewViewerRenderContext(
+			ctx.Window().Context(),
+			ctx.Window(),
+			c.ws,
+			c.form,
+			structType,
+			c.renderersById,
+			false,
+			tmpState,
+		)
+
+		return ui.HStack(
+			rctx.Render(c.form.Root),
+			ui.VStack(
+				ui.CodeEditor(tmpState.Get().String()).Disabled(true).Language("json").FullWidth(),
+			).
+				BackgroundColor(ui.M3).
+				Position(ui.Position{Type: ui.PositionFixed, Right: "1rem", Top: "10rem"}).
+				Frame(ui.Frame{Width: ui.L400, MaxWidth: ui.L400}).
+				Padding(ui.Padding{}.All(ui.L8)).
+				Border(ui.Border{}.Radius(ui.L16).Shadow(ui.L8)),
+		).Render(ctx)
+	}
+
 	rctx := c.newRenderContext(ctx.Window())
 
 	return ui.Grid(
@@ -304,11 +349,22 @@ func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
 			ui.VStack(
 				c.dialogAddFormElement(),
 				c.dialogAddCmd(),
-				rctx.RenderPreview(c.form.Root, ui.Center),
+				rctx.RenderPreview(c.form.Root),
 			).FullWidth(),
 		),
-		ui.GridCell(c.renderSelectedViewEditor(rctx)),
-	).Widths("1fr", "10rem").
+		ui.GridCell(
+			ui.VStack(
+				ui.ScrollView(
+					c.renderSelectedViewEditor(rctx),
+				).Frame(ui.Frame{}.FullWidth()),
+			).Alignment(ui.TopLeading).
+				BackgroundColor(ui.M3).
+				Position(ui.Position{Type: ui.PositionFixed, Right: "1rem", Top: "10rem", Bottom: "1rem"}).
+				Frame(ui.Frame{Width: ui.L256, MaxWidth: ui.L256}).
+				Padding(ui.Padding{}.All(ui.L8)).
+				Border(ui.Border{}.Radius(ui.L16).Shadow(ui.L8)),
+		),
+	).Widths("1fr", "18rem").
 		Columns(2).
 		Gap(ui.L8).
 		FullWidth().

@@ -84,7 +84,9 @@ func (r *CheckboxRenderer) TeaserPreview(ctx RContext) core.View {
 
 func (r *CheckboxRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	box := view.(*flow.FormCheckbox)
-	return ui.CheckboxField(box.Label(), false).SupportingText(box.SupportingText())
+	return ui.VStack(
+		ui.CheckboxField(box.Label(), false).SupportingText(box.SupportingText()),
+	).Action(ctx.EditorAction(view))
 }
 
 func (r *CheckboxRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {

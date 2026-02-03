@@ -27,20 +27,30 @@ func (r HStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	var lastViewID flow.ViewID
 	c := 0
 	for formView := range hstack.All() {
-		tmp = append(tmp,
-			ctx.RenderInsertPlus(view.Identity(), lastViewID),
-			ctx.RenderPreview(formView, hstack.Alignment()),
-		)
-		lastViewID = formView.Identity()
-		if hstack.Gap() != "" && c < hstack.Len()-1 {
-			tmp = append(tmp, ui.VStack(ui.Text(string(hstack.Gap())).Font(ui.BodySmall).Color(ui.ColorIconsMuted)).FullWidth())
+		if ctx.InsertMode() {
+			tmp = append(tmp, ctx.RenderInsertPlus(view.Identity(), lastViewID))
 		}
+
+		tmp = append(tmp,
+			ctx.RenderPreview(formView),
+		)
+
+		lastViewID = formView.Identity()
 		c++
 	}
 
-	tmp = append(tmp, ctx.RenderInsertPlus(view.Identity(), lastViewID))
+	if ctx.InsertMode() {
+		tmp = append(tmp, ctx.RenderInsertPlus(view.Identity(), lastViewID))
+	}
 
-	return ui.HStack(tmp...).FullWidth().Gap(ui.L8).Alignment(hstack.Alignment())
+	return ui.HStack(tmp...).
+		Action(ctx.EditorAction(view)).
+		Alignment(hstack.Alignment()).
+		Gap(hstack.Gap()).
+		BackgroundColor(hstack.BackgroundColor()).
+		Frame(hstack.Frame()).
+		Padding(hstack.Padding()).
+		Border(hstack.Border())
 }
 
 func (r HStackRenderer) TeaserPreview(ctx RContext) core.View {

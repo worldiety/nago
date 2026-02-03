@@ -42,6 +42,6 @@ func (cmd UpdateFormGap) Decide(subject auth.Subject, ws *Workspace) ([]Workspac
 		Workspace: cmd.Workspace,
 		Form:      cmd.Form,
 		ID:        cmd.ID,
-		Gap:       cmd.Gap,
+		Gap:       FixLength(cmd.Gap),
 	}}, nil
 }

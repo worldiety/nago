@@ -20,6 +20,12 @@ import (
 	"go.wdy.de/nago/presentation/ui/treeview"
 )
 
+const (
+	formEditorFlagInsertMode    = "form-editor-insertMode"
+	formEditorFlagShowInspector = "form-editor-showInspector"
+	formEditorFlagTest          = "form-editor-test"
+)
+
 type PageEditorOptions struct {
 	UseCases  flow.UseCases
 	Renderers map[reflect.Type]ViewRenderer
@@ -48,6 +54,11 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 
 	presentCreateForm := core.AutoState[bool](wnd)
 	treeState := core.AutoState[treeview.TreeStateModel[string]](wnd)
+
+	toolbarFormOptions := core.AutoState[bool](wnd)
+	formEditorFlagInsertModeState := core.StateOf[bool](wnd, formEditorFlagInsertMode)
+	formEditorFlagShowInspectorState := core.StateOf[bool](wnd, formEditorFlagShowInspector)
+	formEditorFlagTestState := core.StateOf[bool](wnd, formEditorFlagTest)
 
 	return ui.VStack(
 
@@ -83,6 +94,33 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 			ui.Text(string(ws.Name)),
 			ui.Spacer(),
 
+			ui.IfFunc(toolbarFormOptions.Get(), func() core.View {
+				return ui.HStack(
+					ui.Menu(ui.TertiaryButton(nil).PreIcon(icons.Eye).AccessibilityLabel("View Form Options"),
+						ui.MenuGroup(
+							ui.MenuItem(func() {
+								formEditorFlagShowInspectorState.Set(!formEditorFlagShowInspectorState.Get())
+								formEditorFlagTestState.Set(false)
+							}, ui.HStack(ui.Checkbox(formEditorFlagShowInspectorState.Get()), ui.Text("Show Inspector")),
+							),
+
+							ui.MenuItem(func() {
+								formEditorFlagInsertModeState.Set(!formEditorFlagInsertModeState.Get())
+								formEditorFlagTestState.Set(false)
+							}, ui.HStack(ui.Checkbox(formEditorFlagInsertModeState.Get()), ui.Text("Insert mode")),
+							),
+							ui.MenuItem(func() {
+								formEditorFlagInsertModeState.Set(false)
+								formEditorFlagShowInspectorState.Set(false)
+								formEditorFlagTestState.Set(!formEditorFlagTestState.Get())
+							}, ui.HStack(ui.Checkbox(formEditorFlagTestState.Get()), ui.Text("Test mode")),
+							),
+						),
+					),
+					ui.VLine().Frame(ui.Frame{Height: ui.L16}),
+				)
+			}),
+
 			ui.TertiaryButton(func() {
 				presentCreatePackage.Set(true)
 			}).PreIcon(icons.Folder).AccessibilityLabel(StrActionCreatePackage.Get(wnd)),
@@ -114,14 +152,14 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 				treeview.TreeView(tree, treeState)).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
 			ui.VLine().Frame(ui.Frame{}),
 			ui.VStack(
-				renderSelected(wnd, opts, ws, treeState),
+				renderSelected(wnd, opts, ws, treeState, toolbarFormOptions),
 			).Alignment(ui.Top).
 				BackgroundColor(ui.ColorBackground).FullWidth(),
 		).FullWidth().Alignment(ui.Stretch),
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, treeState *core.State[treeview.TreeStateModel[string]]) core.View {
+func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, treeState *core.State[treeview.TreeStateModel[string]], toolbarFormOptions *core.State[bool]) core.View {
 	selID, ok := treeState.Get().FirstSelected()
 	if !ok {
 		return ui.Text("Nothing selected")
@@ -134,12 +172,16 @@ func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace,
 
 	switch t := selected.(type) {
 	case *flow.StringType:
+		toolbarFormOptions.Set(false)
 		return viewTypeString(wnd, opts.UseCases, ws, t)
 	case *flow.StructType:
+		toolbarFormOptions.Set(false)
 		return viewTypeStruct(wnd, opts.UseCases, ws, t)
 	case *flow.Form:
+		toolbarFormOptions.Set(true)
 		return viewTypeForm(wnd, opts, ws, t)
 	default:
+		toolbarFormOptions.Set(false)
 		return ui.Text(fmt.Sprintf("%T", selected))
 	}
 
