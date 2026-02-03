@@ -286,6 +286,7 @@ func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 		editBorderable(ctx, view),
 		editFrameable(ctx, view),
 		editPaddable(ctx, view),
+		editCard(ctx, view),
 
 		ui.HLine(),
 		ui.Text("Scripts"),
@@ -341,7 +342,7 @@ func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
 				Frame(ui.Frame{Width: ui.L400, MaxWidth: ui.L400}).
 				Padding(ui.Padding{}.All(ui.L8)).
 				Border(ui.Border{}.Radius(ui.L16).Shadow(ui.L8)),
-		).Render(ctx)
+		).FullWidth().Render(ctx)
 	}
 
 	rctx := c.newRenderContext(ctx.Window())

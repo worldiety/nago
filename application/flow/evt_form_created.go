@@ -12,6 +12,7 @@ import (
 
 	"go.wdy.de/nago/application/evs"
 	"go.wdy.de/nago/pkg/xerrors"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 type FormID string
@@ -42,6 +43,8 @@ func (evt FormCreated) Evolve(ctx context.Context, ws *Workspace) error {
 	}
 
 	vstack := NewFormVStack(ViewID(evt.ID + "-root"))
+	vstack.SetFrame(ui.Frame{}.Larger())
+
 	form := NewForm(evt.ID, evt.Name, vstack, evt.Package, evt.Struct)
 
 	ws.Forms.AddForm(form)

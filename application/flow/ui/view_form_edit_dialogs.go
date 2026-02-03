@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
+	icons "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
@@ -38,12 +39,15 @@ func (c TFormEditor) enabledFormDialog(presented *core.State[bool]) core.View {
 	structType, ok := c.ws.Packages.StructTypeByID(c.form.Type())
 	var fieldDetails core.View
 	if ok {
-		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
+		fieldDetails = c.viewHelpFieldsExpr(structType, code)
 	}
 
 	return alert.Dialog(
 		"enabled condition",
 		ui.VStack(
+			ui.HStack(ui.TertiaryButton(func() {
+				code.Set("")
+			}).PreIcon(icons.XMark)).Alignment(ui.Trailing).FullWidth(),
 			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
 			ui.Text("example: field(\"MyFieldName\").Bool() == true").
 				Color(ui.ColorIconsMuted).
@@ -86,12 +90,15 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 	structType, ok := c.ws.Packages.StructTypeByID(c.form.Type())
 	var fieldDetails core.View
 	if ok {
-		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
+		fieldDetails = c.viewHelpFieldsExpr(structType, code)
 	}
 
 	return alert.Dialog(
 		"conditional visibility",
 		ui.VStack(
+			ui.HStack(ui.TertiaryButton(func() {
+				code.Set("")
+			}).PreIcon(icons.XMark)).Alignment(ui.Trailing).FullWidth(),
 			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
 			ui.Text("example: field(\"MyFieldName\").Bool() == true").
 				Color(ui.ColorIconsMuted).
@@ -130,7 +137,7 @@ func (c TFormEditor) formActionDialog(ctx RContext, btn flow.Actionable, present
 	structType, ok := ctx.Workspace().Packages.StructTypeByID(ctx.Form().Type())
 	var fieldDetails core.View
 	if ok {
-		fieldDetails = ui.CodeEditor(structAsGoCode(ctx.Workspace(), structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
+		fieldDetails = c.viewHelpFieldsStmt(structType, code)
 	}
 
 	expressions := func() []flow.Expression {
@@ -145,6 +152,9 @@ func (c TFormEditor) formActionDialog(ctx RContext, btn flow.Actionable, present
 	return alert.Dialog(
 		"action expressions",
 		ui.VStack(
+			ui.HStack(ui.TertiaryButton(func() {
+				code.Set("")
+			}).PreIcon(icons.XMark)).Alignment(ui.Trailing).FullWidth(),
 			ui.CodeEditor(code.Get()).InputValue(code).Frame(ui.Frame{}.FullWidth()),
 			ui.Text("example:\nput(\"MyFieldName\",\"my value\")\ndelete(\"OtherFieldName\")\ndeleteWithPrefix(\"MySubFormPrefix\")").
 				Color(ui.ColorIconsMuted).

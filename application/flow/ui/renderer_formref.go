@@ -95,6 +95,7 @@ func (r *FormRefRenderer) TeaserPreview(ctx RContext) core.View {
 }
 
 func (r *FormRefRenderer) Preview(ctx RContext, view flow.FormView) core.View {
+	ctx = ctx.InheritRef()
 	ref := view.(*flow.FormRef)
 	refForm, ok := ctx.Workspace().Forms.ByID(ref.Ref())
 	if !ok {
@@ -107,8 +108,13 @@ func (r *FormRefRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		ctx.RenderPreview(refForm.Root),
 		ui.VStack(
 			ui.Text(refForm.String()).Color(ui.ColorWhite),
-		).BackgroundColor("#00000055").Position(ui.Position{Type: ui.PositionAbsolute, Bottom: "0rem", Left: "0rem", Right: "0rem", Top: "0rem"}),
-	).Action(ctx.EditorAction(view)).Position(ui.Position{Type: ui.PositionRelative}).FullWidth()
+		).BackgroundColor("#00000055").
+			Position(ui.Position{Type: ui.PositionAbsolute, Bottom: "0rem", Left: "0rem", Right: "0rem", Top: "0rem"}).
+			Border(ui.Border{}.Radius(ui.L8)),
+	).Action(ctx.EditorAction(view)).
+		Position(ui.Position{Type: ui.PositionRelative}).
+		FullWidth().
+		Padding(ui.Padding{}.All(ui.L8))
 }
 
 func (r *FormRefRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {

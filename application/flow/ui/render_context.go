@@ -41,6 +41,12 @@ func (ctx RContext) InspectorMode() bool {
 	return ctx.inspectorMode
 }
 
+func (ctx RContext) InheritRef() RContext {
+	ctx.insertMode = false
+	ctx.inspectorMode = false
+	return ctx
+}
+
 func (ctx RContext) Workspace() *flow.Workspace {
 	return ctx.ws
 }
@@ -98,6 +104,15 @@ func (ctx RContext) EditorAction(view flow.FormView) func() {
 		for _, c := range ctx.selectedStates {
 			c.Set(false)
 		}
+
+		// do not toggle if near-preview mode, that feels strange
+		if !ctx.inspectorMode {
+			state.Set(true)
+			ctx.parent.selected.Set(view.Identity())
+			return
+		}
+
+		// toggle mode for inspector
 		state.Set(!wasSelected)
 		if state.Get() {
 			ctx.parent.selected.Set(view.Identity())

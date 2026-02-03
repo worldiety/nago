@@ -74,7 +74,12 @@ func (c ViewerRenderContext) runExpr(estr flow.Expression) (any, error) {
 			return c.state.Get().GetOr(name, jsonptr.Null{})
 		},
 		"has": func(name string) bool {
-			_, ok := c.state.Get().Get(name)
+			v, ok := c.state.Get().Get(name)
+			var zero jsonptr.Null
+			if ok && v == zero {
+				return false
+			}
+
 			return ok
 		},
 		"put": func(name string, value any) bool {
