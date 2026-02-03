@@ -69,9 +69,9 @@ func (c TFormViewer) Render(ctx core.RenderContext) core.RenderNode {
 		return alert.BannerError(fmt.Errorf("form not found: %s: %w", c.formID, os.ErrNotExist)).Render(ctx)
 	}
 
-	structType, ok := ws.Packages.StructTypeByID(form.RepositoryType())
+	structType, ok := ws.Packages.StructTypeByID(form.Type())
 	if !ok {
-		return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", form.Repository(), form.ID)).Render(ctx)
+		return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", form.ID, form.Type())).Render(ctx)
 	}
 
 	rctx := NewViewerRenderContext(

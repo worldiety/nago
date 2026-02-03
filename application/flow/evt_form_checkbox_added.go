@@ -39,7 +39,7 @@ func (evt FormCheckboxAdded) Evolve(ctx context.Context, ws *Workspace) error {
 		return fmt.Errorf("form %s not found", evt.Form)
 	}
 
-	structType := form.RepositoryType()
+	structType := form.Type()
 
 	parent, ok := GetViewGroup(ws, evt.Form, evt.Parent)
 	if !ok {

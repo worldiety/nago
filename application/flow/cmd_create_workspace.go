@@ -14,12 +14,14 @@ import (
 )
 
 type CreateWorkspaceCmd struct {
-	Name        Ident  `label:"nago.common.label.name"`
-	Description string `label:"nago.common.label.description" lines:"3"`
+	Label       string
+	Name        Ident       `label:"nago.common.label.name"`
+	Description string      `label:"nago.common.label.description" lines:"3"`
+	ID          WorkspaceID `visible:"false"`
 }
 
 func (cmd CreateWorkspaceCmd) WorkspaceID() WorkspaceID {
-	return ""
+	return cmd.ID
 }
 
 func (cmd CreateWorkspaceCmd) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
@@ -32,16 +34,32 @@ func (cmd CreateWorkspaceCmd) Decide(subject auth.Subject, ws *Workspace) ([]Wor
 		errGrp.Add("Name", "Name must not start with an uppercase letter")
 	}
 
+	if cmd.Label == "" {
+		errGrp.Add("Label", "Label must not be empty")
+	}
+
 	if err := errGrp.Error(); err != nil {
 		return nil, err
 	}
 
-	id := data.RandIdent[WorkspaceID]()
+	id := cmd.ID
+	if id == "" {
+		id = data.RandIdent[WorkspaceID]()
+	}
+
 	evt := WorkspaceCreated{
 		Workspace:   id,
 		Name:        cmd.Name,
 		Description: cmd.Description,
 	}
 
-	return []WorkspaceEvent{evt}, nil
+	cpkg := PackageCreated{
+		Workspace:   evt.Workspace,
+		Package:     data.RandIdent[PackageID](),
+		Path:        ImportPath(evt.Name),
+		Name:        evt.Name,
+		Description: "Default workspace package.",
+	}
+
+	return []WorkspaceEvent{evt, cpkg}, nil
 }

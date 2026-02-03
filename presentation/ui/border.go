@@ -122,6 +122,11 @@ func (b Border) Color(c Color) Border {
 
 // Shadow adds a shadow with the given blur radius and a default semi-transparent black color.
 func (b Border) Shadow(radius Length) Border {
+	if radius == "" {
+		b.BoxShadow = Shadow{}
+		return b
+	}
+
 	b.BoxShadow.Radius = radius
 	b.BoxShadow.Color = "#00000054"
 	b.BoxShadow.X = ""

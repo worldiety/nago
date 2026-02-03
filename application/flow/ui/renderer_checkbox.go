@@ -40,9 +40,9 @@ func (r *CheckboxRenderer) Create(ctx RContext, parent, after flow.ViewID) (core
 		}
 	})
 
-	structType, ok := ctx.Workspace().Packages.StructTypeByID(f.RepositoryType())
+	structType, ok := ctx.Workspace().Packages.StructTypeByID(f.Type())
 	if !ok {
-		return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", f.Repository(), f.ID)), nil
+		return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", f.Type(), f.ID)), nil
 	}
 
 	myCtx := core.WithContext(ctx.Context, core.ContextValue("nago.flow.fields", form.AnyUseCaseListReadOnly(func(subject auth.Subject) iter.Seq2[flow.Field, error] {

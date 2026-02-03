@@ -309,9 +309,9 @@ func (c TFormEditor) Render(ctx core.RenderContext) core.RenderNode {
 	formEditorFlagTestState := core.StateOf[bool](ctx.Window(), formEditorFlagTest)
 	if formEditorFlagTestState.Get() {
 
-		structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
+		structType, ok := c.ws.Packages.StructTypeByID(c.form.Type())
 		if !ok {
-			return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", c.form.Repository(), c.form.ID)).Render(ctx)
+			return alert.BannerError(fmt.Errorf("form referenced a struct type over repository which cannot be resolved: %s.%s", c.form.Type(), c.form.ID)).Render(ctx)
 		}
 
 		tmpState := core.StateOf[*jsonptr.Obj](ctx.Window(), string(structType.ID)+"tmp").Init(func() *jsonptr.Obj {

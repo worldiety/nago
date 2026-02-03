@@ -17,11 +17,12 @@ import (
 type FormID string
 
 type FormCreated struct {
-	Workspace   WorkspaceID  `json:"workspace"`
-	Repository  RepositoryID `json:"repository"`
-	ID          FormID       `json:"id"`
-	Name        Ident        `json:"name"`
-	Description string       `json:"description"`
+	Workspace   WorkspaceID `json:"workspace"`
+	Package     PackageID   `json:"package"`
+	Struct      TypeID      `json:"struct"`
+	ID          FormID      `json:"id"`
+	Name        Ident       `json:"name"`
+	Description string      `json:"description"`
 }
 
 func (evt FormCreated) Discriminator() evs.Discriminator {
@@ -34,14 +35,14 @@ func (evt FormCreated) WorkspaceID() WorkspaceID {
 
 func (evt FormCreated) Evolve(ctx context.Context, ws *Workspace) error {
 	var errGrp xerrors.FieldBuilder
-	repo, ok := ws.Repositories.ByID(evt.Repository)
+	_, ok := ws.Packages.StructTypeByID(evt.Struct)
 	if !ok {
-		errGrp.Add("Repository", "Repository not found")
+		errGrp.Add("Struct", "Struct not found")
 		return errGrp.Error()
 	}
 
 	vstack := NewFormVStack(ViewID(evt.ID + "-root"))
-	form := NewForm(evt.ID, evt.Name, vstack, evt.Repository, repo.StructType)
+	form := NewForm(evt.ID, evt.Name, vstack, evt.Package, evt.Struct)
 
 	ws.Forms.AddForm(form)
 	return nil

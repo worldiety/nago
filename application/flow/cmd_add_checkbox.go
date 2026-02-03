@@ -36,7 +36,7 @@ func (cmd AddCheckboxCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspa
 		return nil, errGrp.Error()
 	}
 
-	structType, ok := ws.Packages.StructTypeByID(form.RepositoryType())
+	structType, ok := ws.Packages.StructTypeByID(form.Type())
 	if !ok {
 		errGrp.Add("Form", "Repository type not found")
 		return nil, errGrp.Error()

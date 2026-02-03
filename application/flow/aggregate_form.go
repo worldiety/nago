@@ -15,30 +15,26 @@ import (
 )
 
 type Form struct {
-	ID             FormID
-	Root           FormView
-	name           Ident
-	description    string
-	repository     RepositoryID
-	repositoryType TypeID
+	ID          FormID
+	Root        FormView
+	name        Ident
+	description string
+	structType  TypeID
+	pkg         PackageID
 }
 
-func NewForm(id FormID, name Ident, root FormView, repository RepositoryID, repositoryType TypeID) *Form {
+func NewForm(id FormID, name Ident, root FormView, pkg PackageID, structType TypeID) *Form {
 	return &Form{
-		ID:             id,
-		name:           name,
-		Root:           root,
-		repository:     repository,
-		repositoryType: repositoryType,
+		ID:         id,
+		name:       name,
+		Root:       root,
+		structType: structType,
+		pkg:        pkg,
 	}
 }
 
-func (f *Form) Repository() RepositoryID {
-	return f.repository
-}
-
-func (f *Form) RepositoryType() TypeID {
-	return f.repositoryType
+func (f *Form) Type() TypeID {
+	return f.structType
 }
 
 func (f *Form) Name() Ident {
@@ -59,11 +55,10 @@ func (f *Form) Identity() FormID {
 
 func (f *Form) Clone() *Form {
 	c := &Form{
-		ID:             f.ID,
-		name:           f.name,
-		description:    f.description,
-		repository:     f.repository,
-		repositoryType: f.repositoryType,
+		ID:          f.ID,
+		name:        f.name,
+		description: f.description,
+		structType:  f.structType,
 	}
 
 	if f.Root != nil {

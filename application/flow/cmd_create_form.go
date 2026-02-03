@@ -14,10 +14,11 @@ import (
 )
 
 type CreateFormCmd struct {
-	Workspace   WorkspaceID  `visible:"false"`
-	Repository  RepositoryID `source:"nago.flow.repositories"`
-	Name        Ident        `label:"nago.common.label.name"`
-	Description string       `lines:"3"`
+	Workspace   WorkspaceID `visible:"false"`
+	Package     PackageID   `source:"nago.flow.packages"`
+	Struct      TypeID      `source:"nago.flow.structs"`
+	Name        Ident       `label:"nago.common.label.name"`
+	Description string      `lines:"3"`
 }
 
 func (cmd CreateFormCmd) WorkspaceID() WorkspaceID {
@@ -26,10 +27,6 @@ func (cmd CreateFormCmd) WorkspaceID() WorkspaceID {
 
 func (cmd CreateFormCmd) Decide(subject auth.Subject, ws *Workspace) ([]WorkspaceEvent, error) {
 	var errGrp xerrors.FieldBuilder
-	if err := cmd.Repository.Validate(); err != nil {
-		errGrp.Add("Repository", err.Error())
-		return nil, errGrp.Error()
-	}
 
 	if err := cmd.Name.Validate(); err != nil {
 		errGrp.Add("Name", err.Error())
@@ -39,7 +36,7 @@ func (cmd CreateFormCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspac
 		errGrp.Add("Name", "Name must start with an uppercase letter")
 	}
 
-	_, ok := ws.Repositories.ByID(cmd.Repository)
+	_, ok := ws.Packages.StructTypeByID(cmd.Struct)
 	if !ok {
 		errGrp.Add("Repository", "Repository not found")
 		return nil, errGrp.Error()
@@ -52,8 +49,9 @@ func (cmd CreateFormCmd) Decide(subject auth.Subject, ws *Workspace) ([]Workspac
 	return []WorkspaceEvent{FormCreated{
 		Workspace:   cmd.Workspace,
 		ID:          data.RandIdent[FormID](),
-		Repository:  cmd.Repository,
+		Struct:      cmd.Struct,
 		Description: cmd.Description,
 		Name:        cmd.Name,
+		Package:     cmd.Package,
 	}}, nil
 }

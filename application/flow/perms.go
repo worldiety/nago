@@ -10,5 +10,6 @@ package flow
 import "go.wdy.de/nago/application/permission"
 
 var (
-	PermFindWorkspaces = permission.DeclareFindAll[FindWorkspaces]("nago.flow.workspace.findall", "Flow Workspace")
+	PermFindWorkspaces  = permission.DeclareFindAll[FindWorkspaces]("nago.flowmod.workspace.findall", "Flow Workspace")
+	PermDeleteWorkspace = permission.DeclareDeleteByID[DeleteWorkspace]("nago.flowmod.workspace.delete", "Flow Workspace")
 )

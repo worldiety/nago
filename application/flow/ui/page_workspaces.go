@@ -11,6 +11,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/flow"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -50,7 +51,15 @@ func PageWorkspaces(wnd core.Window, pages Pages, uc flow.UseCases) core.View {
 			createPresented.Set(true)
 		}).NextActionIndicator(true).Action(func(e *flow.Workspace) {
 			wnd.Navigation().ForwardTo(pages.Editor, core.Values{"workspace": string(e.Identity())})
-		}),
+		}).SelectOptions(dataview.NewSelectOptionDelete(wnd, func(selected []flow.WorkspaceID) error {
+			for _, id := range selected {
+				if err := uc.DeleteWorkspace(wnd.Subject(), id); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})),
 	).FullWidth().Alignment(ui.Leading)
 }
 
@@ -59,17 +68,24 @@ func createDialog(wnd core.Window, presented *core.State[bool], uc flow.UseCases
 		return nil
 	}
 
-	state := core.AutoState[flow.CreateWorkspaceCmd](wnd)
+	state := core.AutoState[flow.CreateWorkspaceCmd](wnd).Init(func() flow.CreateWorkspaceCmd {
+		return flow.CreateWorkspaceCmd{
+			ID: data.RandIdent[flow.WorkspaceID](),
+		}
+	})
+	errState := core.DerivedState[error](state, "err")
 
 	return alert.Dialog(
 		rstring.ActionCreate.Get(wnd),
-		form.Auto(form.AutoOptions{}, state),
+		form.Auto(form.AutoOptions{Errors: errState.Get()}, state),
 		presented,
 		alert.Closeable(),
 		alert.Cancel(nil),
 		alert.Create(func() (close bool) {
-			if err := uc.HandleCommand(wnd.Subject(), state.Get()); err != nil {
-				alert.ShowBannerError(wnd, err)
+			err := uc.HandleCommand(wnd.Subject(), state.Get())
+			errState.Set(err)
+			
+			if err != nil {
 				return false
 			}
 

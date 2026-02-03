@@ -35,7 +35,7 @@ func (c TFormEditor) enabledFormDialog(presented *core.State[bool]) core.View {
 		return ""
 	})
 
-	structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
+	structType, ok := c.ws.Packages.StructTypeByID(c.form.Type())
 	var fieldDetails core.View
 	if ok {
 		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
@@ -83,7 +83,7 @@ func (c TFormEditor) conditionalFormDialog(presented *core.State[bool]) core.Vie
 		return string(view.VisibleExpr())
 	})
 
-	structType, ok := c.ws.Packages.StructTypeByID(c.form.RepositoryType())
+	structType, ok := c.ws.Packages.StructTypeByID(c.form.Type())
 	var fieldDetails core.View
 	if ok {
 		fieldDetails = ui.CodeEditor(structAsGoCode(c.ws, structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())
@@ -127,7 +127,7 @@ func (c TFormEditor) formActionDialog(ctx RContext, btn flow.Actionable, present
 		return string(xstrings.Join(btn.ActionExpr(), "\n"))
 	})
 
-	structType, ok := ctx.Workspace().Packages.StructTypeByID(ctx.Form().RepositoryType())
+	structType, ok := ctx.Workspace().Packages.StructTypeByID(ctx.Form().Type())
 	var fieldDetails core.View
 	if ok {
 		fieldDetails = ui.CodeEditor(structAsGoCode(ctx.Workspace(), structType)).Language("go").Disabled(true).Frame(ui.Frame{}.FullWidth())

@@ -149,6 +149,15 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) resetAggregate(state *aggregateS
 	state.aggregate = reflect.New(reflect.TypeFor[Aggregate]().Elem()).Interface().(Aggregate)
 }
 
+func (h *Handler[Aggregate, SuperEvt, Primary]) Delete(subject auth.Subject, key Primary) error {
+	if err := h.uc.DeleteByPrimary(subject, h.index.Info().ID, string(key)); err != nil {
+		return err
+	}
+
+	h.Evict(key)
+	return nil
+}
+
 func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
 	if key == "" {
 		return fmt.Errorf("aggregate id / key cannot be empty")
