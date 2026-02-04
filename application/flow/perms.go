@@ -12,4 +12,6 @@ import "go.wdy.de/nago/application/permission"
 var (
 	PermFindWorkspaces  = permission.DeclareFindAll[FindWorkspaces]("nago.flowmod.workspace.findall", "Flow Workspace")
 	PermDeleteWorkspace = permission.DeclareDeleteByID[DeleteWorkspace]("nago.flowmod.workspace.delete", "Flow Workspace")
+	PermExportWorkspace = permission.DeclareExportByID[ExportWorkspace]("nago.flowmod.workspace.export", "Flow Workspace")
+	PermImportWorkspace = permission.DeclareImportByID[ImportWorkspace]("nago.flowmod.workspace.import", "Flow Workspace")
 )

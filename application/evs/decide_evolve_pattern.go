@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"log/slog"
 	"os"
 	"reflect"
 	"sync"
@@ -254,4 +255,68 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(ctx context.Context, k
 // Evict removes the aggregate from the cache. This must be done manually.
 func (h *Handler[Aggregate, SuperEvt, Primary]) Evict(key Primary) {
 	h.aggregateCache.Delete(key)
+}
+
+func (h *Handler[Aggregate, SuperEvt, Primary]) EvictAll() {
+	h.aggregateCache.Clear()
+}
+
+// Replay replays all events for the given aggregate id in raw form. It does not mutate any internal state.
+// This is useful for debugging or backup purposes.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Replay(key Primary) iter.Seq2[Envelope[SuperEvt], error] {
+	return h.replay(user.SU(), key, ReplayOptions{})
+}
+
+// Restore is in the danger zone of the handler because it blindly tries to decode the given envelope and
+// evolves the affected aggregate. It may screw up the internal state of any aggregate. Its use is mainly for
+// restoring or exchanging aggregate states.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Restore(ctx context.Context, it iter.Seq2[JsonEnvelope, error]) error {
+	registry := make(map[Discriminator]reflect.Type)
+	for registeredType := range h.uc.RegisteredTypes() {
+		registry[registeredType.Discriminator] = registeredType.Type
+	}
+
+	var decodedEvents []Envelope[SuperEvt]
+	for env, err := range it {
+		if err != nil {
+			return err
+		}
+
+		obj, err := env.Decode(registry)
+		if err != nil {
+			return err
+		}
+
+		if e, ok := obj.(SuperEvt); ok {
+			decodedEvents = append(decodedEvents, Envelope[SuperEvt]{
+				Discriminator: env.Discriminator,
+				EventTime:     env.EventTime,
+				CreatedBy:     env.CreatedBy,
+				Metadata:      env.Metadata,
+				Data:          e,
+				Raw:           env.Data,
+			})
+		} else {
+			return fmt.Errorf("decoded event %T is not a SuperEvt", obj)
+		}
+	}
+
+	if len(decodedEvents) == 0 {
+		return nil
+	}
+
+	for _, event := range decodedEvents {
+		_, err := h.uc.Store(user.SU(), event.Data, StoreOptions{
+			Metadata:  event.Metadata,
+			EventTime: event.EventTime,
+			CreatedBy: event.CreatedBy,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	slog.Info("restored events", "count", len(decodedEvents))
+	h.EvictAll()
+	return nil
 }

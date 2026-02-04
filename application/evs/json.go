@@ -17,7 +17,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-type jsonEnvelope struct {
+type JsonEnvelope struct {
 	Discriminator Discriminator          `json:"t,omitempty"`
 	EventTime     xtime.UnixMilliseconds `json:"ts,omitempty"`
 	CreatedBy     user.ID                `json:"createdBy,omitempty"`
@@ -25,7 +25,21 @@ type jsonEnvelope struct {
 	Data          json.RawMessage        `json:"data,omitempty"`
 }
 
-func (e jsonEnvelope) decodeData(registry *concurrent.RWMap[Discriminator, reflect.Type]) (any, error) {
+func (e JsonEnvelope) Decode(registry map[Discriminator]reflect.Type) (any, error) {
+	rtype, ok := registry[e.Discriminator]
+	if !ok {
+		return nil, fmt.Errorf("unknown type: %s", e.Discriminator)
+	}
+
+	rval := reflect.New(rtype)
+	if err := json.Unmarshal(e.Data, rval.Interface()); err != nil {
+		return nil, err
+	}
+
+	return rval.Elem().Interface(), nil
+}
+
+func (e JsonEnvelope) decodeData(registry *concurrent.RWMap[Discriminator, reflect.Type]) (any, error) {
 	rtype, ok := registry.Get(e.Discriminator)
 	if !ok {
 		return nil, fmt.Errorf("unknown type: %s", e.Discriminator)

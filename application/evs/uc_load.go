@@ -39,7 +39,7 @@ func NewLoad[Evt any](perms Permissions, eventStore blob.Store, registry *concur
 			return zero, nil
 		}
 
-		var jsonEnv jsonEnvelope
+		var jsonEnv JsonEnvelope
 		if err := json.Unmarshal(optBuf.Unwrap(), &jsonEnv); err != nil {
 			return zero, err
 		}
@@ -63,7 +63,7 @@ func NewLoad[Evt any](perms Permissions, eventStore blob.Store, registry *concur
 			CreatedBy:     jsonEnv.CreatedBy,
 			Metadata:      jsonEnv.Metadata,
 			Data:          payloadEvt,
-			Raw:           optBuf.Unwrap(),
+			Raw:           jsonEnv.Data,
 		}), nil
 	}
 }

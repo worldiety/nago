@@ -9,7 +9,6 @@ package cfgflow
 
 import (
 	"fmt"
-	"log/slog"
 	"maps"
 	"reflect"
 	"slices"
@@ -138,30 +137,6 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 			Text:   uiflow.StrGroupDescription.Get(subject),
 			Target: mod.Pages.Workspaces,
 		})
-
-		it, err := workspaceHandler.All(subject.Context())
-		if err != nil {
-			slog.Error("failed to load workspaces", "err", err.Error())
-		} else {
-			for id := range it {
-				agg, err := workspaceHandler.Aggregate(subject.Context(), id)
-				if err != nil {
-					slog.Error("failed to load workspace", "err", err.Error())
-					continue
-				}
-
-				for form := range agg.Forms.All() {
-					grp.Entries = append(grp.Entries, admin.Card{
-						Title:        string(agg.Name) + "." + string(form.Name()),
-						Text:         "Create a new instance for this flow form. " + form.Description(),
-						Target:       mod.Pages.FormViewerCreate,
-						TargetParams: core.Values{"workspace": string(agg.ID), "form": string(form.ID)},
-					})
-				}
-
-			}
-
-		}
 
 		return grp
 	})

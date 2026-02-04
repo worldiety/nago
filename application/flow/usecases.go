@@ -20,11 +20,21 @@ type LoadWorkspace func(subject auth.Subject, id WorkspaceID) (option.Opt[*Works
 
 type DeleteWorkspace func(subject auth.Subject, id WorkspaceID) error
 type HandleCommand func(subject auth.Subject, cmd WorkspaceCommand) error
+
+// ExportedWorkspace represents a json decoded Export. See also [ExportWorkspace] and [ImportWorkspace].
+type ExportedWorkspace struct {
+	Events []evs.JsonEnvelope `json:"events"`
+}
+type ExportWorkspace func(subject auth.Subject, id WorkspaceID) ([]byte, error)
+type ImportWorkspace func(subject auth.Subject, data []byte) error
+
 type UseCases struct {
 	FindWorkspaces  FindWorkspaces
 	LoadWorkspace   LoadWorkspace
 	HandleCommand   HandleCommand
 	DeleteWorkspace DeleteWorkspace
+	ExportWorkspace ExportWorkspace
+	ImportWorkspace ImportWorkspace
 }
 
 func NewUseCases(repoName string, handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID], wsIndex *evs.StoreIndex[WorkspaceID, WorkspaceEvent]) UseCases {
@@ -34,5 +44,7 @@ func NewUseCases(repoName string, handler *evs.Handler[*Workspace, WorkspaceEven
 		LoadWorkspace:   NewLoadWorkspace(repoName, handler),
 		HandleCommand:   NewHandleCommand(handler),
 		DeleteWorkspace: NewDeleteWorkspace(handler),
+		ExportWorkspace: NewExportWorkspace(handler),
+		ImportWorkspace: NewImportWorkspace(handler),
 	}
 }

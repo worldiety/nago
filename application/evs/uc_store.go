@@ -94,7 +94,7 @@ func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry
 			opts.EventTime = xtime.Now()
 		}
 
-		env := jsonEnvelope{
+		env := JsonEnvelope{
 			Discriminator: discriminator,
 			EventTime:     opts.EventTime,
 			CreatedBy:     opts.CreatedBy,

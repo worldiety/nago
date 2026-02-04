@@ -85,6 +85,40 @@ func DeclareDeleteByID[UseCase any](id ID, entityName string) ID {
 	).String()}, 3)
 }
 
+// DeclareExportByID creates a prototype permission stub. See also [DeclareCreate].
+func DeclareExportByID[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Export %s element", entityName),
+			language.German:  fmt.Sprintf("%s Element exportieren", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can export " + entityName + " elements if they know their identifier.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente exportieren, wenn sie das Kennzeichen kennen.",
+		},
+	).String()}, 3)
+}
+
+// DeclareImportByID creates a prototype permission stub. See also [DeclareCreate].
+func DeclareImportByID[UseCase any](id ID, entityName string) ID {
+	return register[UseCase](Permission{ID: id, Name: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_name", id)),
+		i18n.Values{
+			language.English: fmt.Sprintf("Import %s element", entityName),
+			language.German:  fmt.Sprintf("%s Element importieren", entityName),
+		},
+	).String(), Description: i18n.MustString(
+		i18n.Key(fmt.Sprintf("%s_perm_desc", id)),
+		i18n.Values{
+			language.English: "Holders of this authorisation can import " + entityName + " elements if they know their identifier.",
+			language.German:  "Träger dieser Berechtigung können " + entityName + "-Elemente importieren, wenn sie das Kennzeichen kennen.",
+		},
+	).String()}, 3)
+}
+
 // DeclareDeleteAll creates a prototype permission stub. See also [DeclareCreate].
 func DeclareDeleteAll[UseCase any](id ID, entityName string) ID {
 	return register[UseCase](Permission{ID: id, Name: i18n.MustString(

@@ -9,6 +9,7 @@ package uiflow
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/flow"
@@ -89,7 +90,25 @@ func (r *ButtonRenderer) TeaserPreview(ctx RContext) core.View {
 
 func (r *ButtonRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 	btn := view.(*flow.FormButton)
-	return ui.Button(btn.Style(), ctx.EditorAction(view)).Title(btn.Title()).Frame(btn.Frame())
+	var tmp strings.Builder
+	if btn.EnabledExpr() != "" {
+		tmp.WriteString("Enabled:\n")
+		tmp.WriteString(string(btn.EnabledExpr()))
+		tmp.WriteString("\n")
+	}
+
+	if len(btn.ActionExpr()) > 0 {
+		if tmp.Len() > 0 {
+			tmp.WriteString("\n")
+		}
+		tmp.WriteString("Action:\n")
+		for _, expression := range btn.ActionExpr() {
+			tmp.WriteString(string(expression))
+			tmp.WriteString("\n")
+		}
+	}
+
+	return ui.Button(btn.Style(), ctx.EditorAction(view)).Title(btn.Title()).Frame(btn.Frame()).AccessibilityLabel(tmp.String())
 }
 
 func (r *ButtonRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {
