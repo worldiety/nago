@@ -16,12 +16,8 @@ import (
 	"go.wdy.de/nago/auth"
 )
 
-func NewLoadWorkspace(repoName string, handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID]) LoadWorkspace {
+func NewLoadWorkspace(handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID]) LoadWorkspace {
 	return func(subject auth.Subject, id WorkspaceID) (option.Opt[*Workspace], error) {
-		if err := subject.AuditResource(repoName, string(id), PermFindWorkspaces); err != nil {
-			return option.None[*Workspace](), err
-		}
-
 		ws, err := handler.Aggregate(subject.Context(), id)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
@@ -29,6 +25,10 @@ func NewLoadWorkspace(repoName string, handler *evs.Handler[*Workspace, Workspac
 			}
 
 			return option.None[*Workspace](), err
+		}
+
+		if !(subject.HasPermission(PermFindWorkspaces) || ws.IsOwner(subject.ID())) {
+			return option.None[*Workspace](), nil
 		}
 
 		return option.Some(ws), nil

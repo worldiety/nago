@@ -61,16 +61,11 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		return Module{}, fmt.Errorf("prefix is not valid")
 	}
 
-	stores, err := cfg.Stores()
-	if err != nil {
-		return Module{}, err
-	}
-
 	mod = Module{Mutex: &sync.Mutex{}}
 	mod.Pages = uiflow.Pages{
-		Workspaces:       "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspaces",
-		Editor:           "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/edit",
-		FormViewerCreate: "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/form/create",
+		Workspaces:  "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspaces",
+		Editor:      "admin/" + core.NavigationPath(makeFactoryID(prefix)) + "/workspace/edit",
+		ShareViewer: "nago/flow/form/share",
 	}
 
 	if len(opts.Renderers) == 0 {
@@ -122,7 +117,12 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		workspaceHandler.RegisterEvents(event)
 	}
 
-	uc := flow.NewUseCases(string(prefix), workspaceHandler, idxByWorkspace)
+	shareRepo, err := application.JSONRepository[flow.FormShare, flow.FormShareID](cfg, string(prefix+".form.share"))
+	if err != nil {
+		return mod, err
+	}
+
+	uc := flow.NewUseCases(workspaceHandler, shareRepo)
 	mod.UseCases = uc
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -147,13 +147,14 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 
 	cfg.RootViewWithDecoration(mod.Pages.Editor, func(wnd core.Window) core.View {
 		return uiflow.PageEditor(wnd, uiflow.PageEditorOptions{
-			UseCases:  mod.UseCases,
-			Renderers: renderers,
+			UseCases:       mod.UseCases,
+			Renderers:      renderers,
+			ContextPathURI: cfg.ContextPathURI,
 		})
 	})
 
-	cfg.RootViewWithDecoration(mod.Pages.FormViewerCreate, func(wnd core.Window) core.View {
-		return uiflow.PageFormViewerCreate(wnd, uc.LoadWorkspace, stores)
+	cfg.RootViewWithDecoration(mod.Pages.ShareViewer, func(wnd core.Window) core.View {
+		return uiflow.PageShareViewer(wnd, uc.LoadWorkspace, uc.FindFormShareByID)
 	})
 
 	cfg.AddContextValue(core.ContextValue(string("module-"+prefix), mod))

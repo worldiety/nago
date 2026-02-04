@@ -8,6 +8,7 @@
 package flow
 
 import (
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/cloner"
 )
 
@@ -18,6 +19,7 @@ type Workspace struct {
 	Forms        *Forms
 	Name         Ident
 	Description  string
+	owners       map[user.ID]struct{}
 	// Extensions can be used by custom events and commands to introduce additional functionality.
 	// We cannot know the according types, thus this has to be type-unsafe.
 	Extensions map[string]cloner.Cloneable
@@ -63,4 +65,16 @@ func (a *Workspace) ByID(id string) (any, bool) {
 	}
 
 	return nil, false
+}
+
+func (a *Workspace) AddOwner(id user.ID) {
+	if a.owners == nil {
+		a.owners = map[user.ID]struct{}{}
+	}
+	a.owners[id] = struct{}{}
+}
+
+func (a *Workspace) IsOwner(id user.ID) bool {
+	_, ok := a.owners[id]
+	return ok
 }

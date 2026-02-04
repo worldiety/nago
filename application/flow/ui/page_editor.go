@@ -28,8 +28,9 @@ const (
 )
 
 type PageEditorOptions struct {
-	UseCases  flow.UseCases
-	Renderers map[reflect.Type]ViewRenderer
+	UseCases       flow.UseCases
+	Renderers      map[reflect.Type]ViewRenderer
+	ContextPathURI func(path string, query core.Values) string
 }
 
 func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
@@ -181,7 +182,15 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 
 		ui.HStack(
 			ui.ScrollView(
-				treeview.TreeView(tree, treeState)).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
+				treeview.TreeView(tree, treeState).Action(func(n *treeview.Node[any, string]) {
+					// reset the selected view id within the editor when switching between forms so that it becomes easy to address the form itself
+					// which otherwise is cumbersome by using the inspector and poking around
+					if _, ok := n.Data.(*flow.Form); ok {
+						state := core.StateOf[flow.ViewID](wnd, string(ws.Name)+"_nago.flow.form.editor.selected")
+						state.Set("")
+					}
+				}),
+			).Axis(ui.ScrollViewAxisBoth).Frame(ui.Frame{Width: ui.L200, MaxWidth: ui.L200}),
 			ui.VLine().Frame(ui.Frame{}),
 			ui.VStack(
 				renderSelected(wnd, opts, ws, treeState, toolbarFormOptions),

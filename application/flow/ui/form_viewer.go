@@ -14,6 +14,7 @@ import (
 
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/flow"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
@@ -21,6 +22,7 @@ import (
 // TFormViewer is a component. It renders a flow form for editing or viewing and tracks its state using the given
 // state.
 type TFormViewer struct {
+	subject       auth.Subject
 	loader        flow.LoadWorkspace
 	wsID          flow.WorkspaceID
 	formID        flow.FormID
@@ -29,8 +31,9 @@ type TFormViewer struct {
 	readOnly      bool
 }
 
-func FormViewer(loader flow.LoadWorkspace, workspace flow.WorkspaceID, form flow.FormID, state *core.State[*jsonptr.Obj]) TFormViewer {
+func FormViewer(subject auth.Subject, loader flow.LoadWorkspace, workspace flow.WorkspaceID, form flow.FormID, state *core.State[*jsonptr.Obj]) TFormViewer {
 	return TFormViewer{
+		subject:       subject,
 		loader:        loader,
 		wsID:          workspace,
 		formID:        form,
@@ -53,7 +56,7 @@ func (c TFormViewer) Disabled(b bool) TFormViewer {
 
 func (c TFormViewer) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
-	optWs, err := c.loader(wnd.Subject(), c.wsID)
+	optWs, err := c.loader(c.subject, c.wsID)
 	if err != nil {
 		return alert.BannerError(err).Render(ctx)
 	}

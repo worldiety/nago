@@ -66,13 +66,13 @@ func initButton(action func(), preset ButtonStyle) TButton {
 	return btn
 }
 
-// URL sets the URL that the button navigates to when clicked if no action is specified.
+// HRef sets the URL that the button navigates to when clicked if no action is specified.
 // If both URL and Action are set, the URL takes precedence.
 // This avoids another render cycle if the only goal is to navigate to a different page.
 // It also avoids issues with browser which block async browser interactions like Safari.
 // In fact, the [core.Navigation.Open] does not work properly on Safari.
 // See also [TButton.Target].
-func (c TButton) URL(url core.URI) TButton {
+func (c TButton) HRef(url core.URI) TButton {
 	c.url = url
 	return c
 }
@@ -173,7 +173,7 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
 		ID(c.id).
-		URL(c.url).
+		HRef(c.url).
 		Target(c.target).
 		Enabled(!c.disabled).
 		Action(c.action).

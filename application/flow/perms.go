@@ -14,4 +14,5 @@ var (
 	PermDeleteWorkspace = permission.DeclareDeleteByID[DeleteWorkspace]("nago.flowmod.workspace.delete", "Flow Workspace")
 	PermExportWorkspace = permission.DeclareExportByID[ExportWorkspace]("nago.flowmod.workspace.export", "Flow Workspace")
 	PermImportWorkspace = permission.DeclareImportByID[ImportWorkspace]("nago.flowmod.workspace.import", "Flow Workspace")
+	PermUpdateFormShare = permission.DeclareUpdate[UpdateFormShare]("nago.flowmod.formshare.update", "Flow Form Share")
 )

@@ -68,13 +68,13 @@ func HStack(children ...core.View) THStack {
 	return c
 }
 
-// URL sets the URL that the button navigates to when clicked if no action is specified.
+// HRef sets the URL that the button navigates to when clicked if no action is specified.
 // If both URL and Action are set, the URL takes precedence.
 // This avoids another render cycle if the only goal is to navigate to a different page.
 // It also avoids issues with browser which block async browser interactions like Safari.
 // In fact, the [core.Navigation.Open] does not work properly on Safari.
 // See also [TButton.Target].
-func (c THStack) URL(url core.URI) THStack {
+func (c THStack) HRef(url core.URI) THStack {
 	c.url = url
 	return c
 }

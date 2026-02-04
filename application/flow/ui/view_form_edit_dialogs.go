@@ -16,6 +16,7 @@ import (
 	icons "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/form"
 )
 
 func (c TFormEditor) enabledFormDialog(presented *core.State[bool]) core.View {
@@ -222,6 +223,60 @@ func (c TFormEditor) deleteViewDialog(presented *core.State[bool]) core.View {
 			}); err != nil {
 				alert.ShowBannerError(c.wnd, err)
 			}
+		}),
+	)
+}
+
+func (c TFormEditor) shareFormDialog(presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		return nil
+	}
+
+	state := core.DerivedState[flow.FormShare](presented, "share").Init(func() flow.FormShare {
+		optShare, err := c.uc.FindFormShare(c.wnd.Subject(), c.ws.Identity(), c.form.Identity())
+		if err != nil {
+			alert.ShowBannerError(c.wnd, err)
+		}
+
+		return optShare.UnwrapOr(flow.FormShare{})
+	})
+
+	errState := core.DerivedState[error](presented, "share-error")
+
+	link := c.opts.ContextPathURI("nago/flow/form/share", core.Values{"share": string(state.Get().ID)})
+	return alert.Dialog(
+		"Share",
+		ui.VStack(
+			form.Auto(form.AutoOptions{Errors: errState.Get()}, state),
+			ui.IfFunc(state.Get().ID != "", func() core.View {
+				return ui.VStack(
+					ui.HLine(),
+					ui.HStack(
+						ui.ImageIcon(icons.Link),
+						ui.Text(link).Hyphens(ui.HyphensAuto).LineBreak(true),
+						ui.SecondaryButton(func() {
+							_ = c.wnd.Clipboard().SetText(link)
+						}).Title("Copy link").Frame(ui.Frame{Width: ui.L160}),
+					).FullWidth().BackgroundColor(ui.M3).Border(ui.Border{}.Radius(ui.L8)).Padding(ui.Padding{}.All(ui.L8)),
+				).FullWidth().Gap(ui.L8)
+			}),
+			ui.If(state.Get().ID == "", ui.Text("no share active")),
+		).FullWidth(),
+		presented,
+		alert.Larger(),
+		alert.Closeable(),
+		alert.Cancel(nil),
+		alert.Apply(func() (close bool) {
+			_, err := c.uc.UpdateFormShare(c.wnd.Subject(), c.ws.Identity(), c.form.Identity(), flow.ShareFormOptions{
+				AllowUnauthenticated: state.Get().AllowUnauthenticated,
+				AllowedUsers:         state.Get().AllowedUsers,
+			})
+			if err != nil {
+				alert.ShowBannerError(c.wnd, err)
+				return false
+			}
+
+			return true
 		}),
 	)
 }

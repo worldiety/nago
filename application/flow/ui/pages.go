@@ -10,7 +10,7 @@ package uiflow
 import "go.wdy.de/nago/presentation/core"
 
 type Pages struct {
-	Workspaces       core.NavigationPath
-	Editor           core.NavigationPath
-	FormViewerCreate core.NavigationPath
+	Workspaces  core.NavigationPath
+	Editor      core.NavigationPath
+	ShareViewer core.NavigationPath
 }

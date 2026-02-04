@@ -35,11 +35,13 @@ type TFormEditor struct {
 	selectedAfter       *core.State[flow.ViewID]
 	renderersById       map[reflect.Type]ViewRenderer
 	renderers           []ViewRenderer
+	opts                PageEditorOptions
 }
 
 func FormEditor(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace, form *flow.Form) TFormEditor {
 	c := TFormEditor{
 		wnd:                 wnd,
+		opts:                opts,
 		uc:                  opts.UseCases,
 		renderersById:       opts.Renderers,
 		form:                form,
@@ -154,18 +156,29 @@ func (c TFormEditor) newRenderContext(wnd core.Window) RContext {
 	}
 }
 
-func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
+func (c TFormEditor) renderFormRoot(ctx RContext) core.View {
 	deleteFormPresented := core.StateOf[bool](c.wnd, "form_delete_presented")
+	shareFormPresented := core.StateOf[bool](c.wnd, "form_share_presented")
+
+	return ui.VStack(
+		c.deleteFormDialog(deleteFormPresented),
+		c.shareFormDialog(shareFormPresented),
+
+		ui.Heading(6, string(c.form.Name())),
+		ui.Text(c.form.Description()),
+		ui.SecondaryButton(func() {
+			shareFormPresented.Set(true)
+		}).Title("Share").FullWidth(),
+		ui.HLine(),
+		ui.SecondaryButton(func() {
+			deleteFormPresented.Set(true)
+		}).Title("Delete form"),
+	).FullWidth().Alignment(ui.TopLeading)
+}
+
+func (c TFormEditor) renderSelectedViewEditor(ctx RContext) core.View {
 	if c.selected.Get() == "" {
-		return ui.VStack(
-			c.deleteFormDialog(deleteFormPresented),
-			ui.Heading(6, string(c.form.Name())),
-			ui.Text(c.form.Description()),
-			ui.HLine(),
-			ui.SecondaryButton(func() {
-				deleteFormPresented.Set(true)
-			}).Title("Delete form"),
-		).FullWidth().Alignment(ui.TopLeading)
+		return c.renderFormRoot(ctx)
 	}
 
 	view, _ := flow.GetView(c.ws, c.form.ID, c.selected.Get())
