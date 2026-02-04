@@ -160,7 +160,7 @@ Nil children are automatically skipped. By default, the layout uses 3 columns.&l
   &lt;/thead&gt;
   &lt;tbody&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;Columns(class core.WindowSizeClass, columns int)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;Columns(columns int, class core.WindowSizeClass)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
@@ -626,8 +626,16 @@ you need to apply additional padding.&lt;/p&gt;
           &lt;td&gt;StylePreset applies a predefined style preset to the stack, controlling its appearance.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;Target(target string)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;Target sets the name of the browsing context, like _self, _blank, _ parent, _top.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;TextColor(textColor Color)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;TextColor sets the color of text content inside the stack.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;URL(url core.URI)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;URL sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target].&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Visible(visible bool)&lt;/code&gt;&lt;/td&gt;
@@ -1160,7 +1168,14 @@ as they can be rendered inline.&lt;/p&gt;
         &lt;p&gt;VStack is a vertical layout container that arranges its child views in a column. It supports alignment, spacing, background styling, borders, and interaction states. The VStack can be interactive if an action is defined and responds to hover, press,
 and focus states with visual feedback.&lt;/p&gt;
 &lt;h2&gt;Constructors&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;constructors&#34;&gt;&lt;/span&gt;
-    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;VStack&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;vstack&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#constructors&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;H1&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;h1&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#h1&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;H1 creates a level 1 heading (page title) and sets the window title accordingly.&lt;/p&gt;
+&lt;h3&gt;H2&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;h2&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#h2&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;H2 creates a level 2 heading with a slightly smaller bold font and a standard horizontal line.&lt;/p&gt;
+&lt;h3&gt;Heading&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;heading&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#heading&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Heading returns a default formatted heading text. Level 1 is page heading H1 and so forth. H1 levels also
+set automatically the window title.&lt;/p&gt;
+&lt;h3&gt;VStack&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;vstack&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#vstack&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;VStack is a container, in which the given children will be layout in a column according to the applied
 alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
 you need to apply additional padding.&lt;/p&gt;
@@ -1289,6 +1304,10 @@ you need to apply additional padding.&lt;/p&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;WithFrame(fn func(Frame) Frame)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;WithFrame modifies the current frame using the provided function.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;WithPadding(padding Padding)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;

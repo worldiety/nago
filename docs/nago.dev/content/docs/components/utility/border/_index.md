@@ -16,6 +16,7 @@ dimensions because the width is applied outside the content box. #[go. TypeScrip
 | `Elevate(elevation core.DP)` | Elevate applies a shadow effect based on a given elevation in device-independent pixels (DP). The shadow blur radius and offset are scaled accordingly, using rem units. |
 | `Radius(radius Length)` | Radius sets the same corner radius for all four corners. |
 | `Shadow(radius Length)` | Shadow adds a shadow with the given blur radius and a default semi-transparent black color. |
+| `Style(style BorderStyle)` | Style sets the border style. |
 | `TopRadius(radius Length)` | TopRadius sets the same corner radius for both top corners. |
 | `Width(width Length)` | Width sets the same border thickness on all four sides. |
 ---

@@ -248,6 +248,7 @@ const clazz = computed<string>(() => {
 	<div
 		:id="ui.id"
 		v-if="
+			!props.ui.url &&
 			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
 			!props.ui.invisible
 		"
@@ -277,6 +278,7 @@ const clazz = computed<string>(() => {
 		:tabindex="focusable ? 0 : -1"
 		:disabled="props.ui.disabled"
 		v-else-if="
+			!props.ui.url &&
 			props.ui.stylePreset !== StylePresetValues.StyleNone &&
 			props.ui.stylePreset !== undefined &&
 			(props.ui.invisible === undefined || !props.ui.invisible)
@@ -288,4 +290,17 @@ const clazz = computed<string>(() => {
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</button>
+
+	<a
+		v-else-if="props.ui.url"
+		:id="ui.id"
+		:class="clazz"
+		:style="frameStyles"
+		:href="props.ui.url"
+		:target="props.ui.target"
+		:title="props.ui.accessibilityLabel"
+	>
+		aaaa
+		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+	</a>
 </template>

@@ -7,6 +7,16 @@ VStack is a vertical layout container that arranges its child views in a column.
 and focus states with visual feedback.
 
 ## Constructors
+### H1
+H1 creates a level 1 heading (page title) and sets the window title accordingly.
+
+### H2
+H2 creates a level 2 heading with a slightly smaller bold font and a standard horizontal line.
+
+### Heading
+Heading returns a default formatted heading text. Level 1 is page heading H1 and so forth. H1 levels also
+set automatically the window title.
+
 ### VStack
 VStack is a container, in which the given children will be layout in a column according to the applied
 alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
@@ -45,6 +55,7 @@ you need to apply additional padding.
 | `Visible(visible bool)` | Visible controls the visibility of the VStack. |
 | `With(fn func(stack TVStack) TVStack)` |  |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame modifies the current frame using the provided function. |
+| `WithPadding(padding Padding)` |  |
 ---
 
 ## Related

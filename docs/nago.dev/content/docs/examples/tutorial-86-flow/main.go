@@ -28,5 +28,6 @@ func main() {
 		option.Must(cfginspector.Enable(cfg))
 
 		option.Must(cfgflow.Enable(cfg, cfgflow.Options{}))
+
 	}).Run()
 }

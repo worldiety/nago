@@ -3585,7 +3585,7 @@ Permissions cannot be created or modified at runtime, but they can be <strong>vi
 </ul>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> (
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> (
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">PermSendMail</span>             = <span style="color:#a6e22e">permission</span>.<span style="color:#a6e22e">Declare</span>[<span style="color:#a6e22e">SendMail</span>](<span style="color:#e6db74">&#34;nago.mail.send&#34;</span>, <span style="color:#e6db74">&#34;Send Mail&#34;</span>, <span style="color:#e6db74">&#34;Holders of this authorization can send emails.&#34;</span>)
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">PermInitDefaultTemplates</span> = <span style="color:#a6e22e">permission</span>.<span style="color:#a6e22e">Declare</span>[<span style="color:#a6e22e">SendMail</span>](<span style="color:#e6db74">&#34;nago.mail.init_default_templates&#34;</span>, <span style="color:#e6db74">&#34;Standard Templates&#34;</span>, <span style="color:#e6db74">&#34;Holders of this authorization can activate the standard mail templates.&#34;</span>)
 </span></span><span style="display:flex;"><span>)
@@ -3603,7 +3603,7 @@ Permissions cannot be created or modified at runtime, but they can be <strong>vi
 <h3>Example: Declare and use custom permissions<span class="hx-absolute -hx-mt-20" id="example-declare-and-use-custom-permissions"></span>
     <a href="#example-declare-and-use-custom-permissions" class="subheading-anchor" aria-label="Permalink for this section"></a></h3><div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/application&#34;</span>
@@ -3661,7 +3661,7 @@ Permissions cannot be created or modified at runtime, but they can be <strong>vi
     <a href="#activation" class="subheading-anchor" aria-label="Permalink for this section"></a></h2><p>This system is activated via:</p>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">PermissionManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">PermissionManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
   <button
     class="hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50"
     title="Copy code"
@@ -3673,7 +3673,7 @@ Permissions cannot be created or modified at runtime, but they can be <strong>vi
 </div>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">permissionManagement</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">PermissionManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">permissionManagement</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">PermissionManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
   <button
     class="hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50"
     title="Copy code"

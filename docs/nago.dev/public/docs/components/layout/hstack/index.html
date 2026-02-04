@@ -22,7 +22,7 @@ Constructors HStack HStack is a container, in which the given children will be l
   <meta itemprop="name" content="HStack">
   <meta itemprop="description" content="HStack is a horizontal layout container that arranges its child views in a row. It supports alignment, spacing, background styling, borders, and interaction states. The HStack is interactive if an action is defined and can respond to hover, press, and focus states with visual feedback.
 Constructors HStack HStack is a container, in which the given children will be layout in a row according to the applied alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows, you need to apply additional padding.">
-  <meta itemprop="wordCount" content="570">
+  <meta itemprop="wordCount" content="657">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="HStack">
   <meta name="twitter:description" content="HStack is a horizontal layout container that arranges its child views in a row. It supports alignment, spacing, background styling, borders, and interaction states. The HStack is interactive if an action is defined and can respond to hover, press, and focus states with visual feedback.
@@ -3571,8 +3571,16 @@ you need to apply additional padding.</p>
           <td>StylePreset applies a predefined style preset to the stack, controlling its appearance.</td>
       </tr>
       <tr>
+          <td><code>Target(target string)</code></td>
+          <td>Target sets the name of the browsing context, like _self, _blank, _ parent, _top.</td>
+      </tr>
+      <tr>
           <td><code>TextColor(textColor Color)</code></td>
           <td>TextColor sets the color of text content inside the stack.</td>
+      </tr>
+      <tr>
+          <td><code>URL(url core.URI)</code></td>
+          <td>URL sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target].</td>
       </tr>
       <tr>
           <td><code>Visible(visible bool)</code></td>

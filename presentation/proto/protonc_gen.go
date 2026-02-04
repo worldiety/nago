@@ -3648,10 +3648,12 @@ type HStack struct {
 	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
 	Opacity    Uint
 	Background *Background
+	Url        URI
+	Target     Str
 }
 
 func (v *HStack) write(w *BinaryWriter) error {
-	var fields [29]bool
+	var fields [31]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -3680,6 +3682,8 @@ func (v *HStack) write(w *BinaryWriter) error {
 	fields[26] = !v.Transformation.IsZero()
 	fields[27] = !v.Opacity.IsZero()
 	fields[28] = !v.Background.IsZero()
+	fields[29] = !v.Url.IsZero()
+	fields[30] = !v.Target.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -3914,6 +3918,22 @@ func (v *HStack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[29] {
+		if err := w.writeFieldHeader(byteSlice, 29); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[30] {
+		if err := w.writeFieldHeader(byteSlice, 30); err != nil {
+			return err
+		}
+		if err := v.Target.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4066,6 +4086,16 @@ func (v *HStack) read(r *BinaryReader) error {
 			}
 		case 28:
 			err := v.Background.read(r)
+			if err != nil {
+				return err
+			}
+		case 29:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		case 30:
+			err := v.Target.read(r)
 			if err != nil {
 				return err
 			}
@@ -15693,13 +15723,15 @@ func (v *HStack) reset() {
 	v.Transformation.reset()
 	v.Opacity.reset()
 	v.Background.reset()
+	v.Url.reset()
+	v.Target.reset()
 }
 
 func (v *HStack) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero()
 }
 
 func (v *Position) reset() {

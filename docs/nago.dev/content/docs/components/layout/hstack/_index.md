@@ -40,7 +40,9 @@ you need to apply additional padding.
 | `PressedBackgroundColor(backgroundColor Color)` | PressedBackgroundColor sets the background color of the stack when it is pressed or clicked. |
 | `PressedBorder(border Border)` | PressedBorder sets the border styling when the stack is pressed or clicked. |
 | `StylePreset(preset StylePreset)` | StylePreset applies a predefined style preset to the stack, controlling its appearance. |
+| `Target(target string)` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |
 | `TextColor(textColor Color)` | TextColor sets the color of text content inside the stack. |
+| `URL(url core.URI)` | URL sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `Visible(visible bool)` | Visible controls the visibility of the stack; setting false hides it. |
 | `With(fn func(stack THStack) THStack)` | With applies a transformation function to the stack itself and returns the result. Useful for chaining configuration in a functional style. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the stack's frame and returns the updated component. |

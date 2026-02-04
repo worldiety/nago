@@ -3598,7 +3598,7 @@ If the list is empty, any domain is allowed.</li>
 
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">xreflect</span>.<span style="color:#a6e22e">SetFieldTagFor</span>[<span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">Settings</span>](<span style="color:#e6db74">&#34;Salutation&#34;</span>, <span style="color:#e6db74">&#34;supportingText&#34;</span>, <span style="color:#e6db74">&#34;&#39;Mrs&#39; or &#39;Mr&#39;&#34;</span>)</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">xreflect</span>.<span style="color:#a6e22e">SetFieldTagFor</span>[<span style="color:#a6e22e">user</span>.<span style="color:#a6e22e">Settings</span>](<span style="color:#e6db74">&#34;Salutation&#34;</span>, <span style="color:#e6db74">&#34;supportingText&#34;</span>, <span style="color:#e6db74">&#34;&#39;Mrs&#39; or &#39;Mr&#39;&#34;</span>)</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
   <button
     class="hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50"
     title="Copy code"
@@ -3611,7 +3611,7 @@ If the list is empty, any domain is allowed.</li>
 <h3>Example: User Management – GDPR consents<span class="hx-absolute -hx-mt-20" id="example-user-management--gdpr-consents"></span>
     <a href="#example-user-management--gdpr-consents" class="subheading-anchor" aria-label="Permalink for this section"></a></h3><div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;go.wdy.de/nago/application&#34;</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;go.wdy.de/nago/application/settings&#34;</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;go.wdy.de/nago/application/user&#34;</span>
@@ -3715,7 +3715,7 @@ They are then automatically available in the <strong>Admin Center</strong> UI.</
 <h3>Example: Scheduler with custom settings<span class="hx-absolute -hx-mt-20" id="example-scheduler-with-custom-settings"></span>
     <a href="#example-scheduler-with-custom-settings" class="subheading-anchor" aria-label="Permalink for this section"></a></h3><div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Settings</span> <span style="color:#66d9ef">struct</span> {
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Settings</span> <span style="color:#66d9ef">struct</span> {
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span>        <span style="color:#66d9ef">any</span>           <span style="color:#e6db74">`title:&#34;Events&#34; description:&#34;Configure events.&#34;`</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Lifetime</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span> <span style="color:#e6db74">`json:&#34;lifetime&#34; label:&#34;Lifetime of events&#34; supportingText:&#34;Events will be deleted after the defined lifetime.&#34;`</span>
 </span></span><span style="display:flex;"><span>}
@@ -3737,7 +3737,7 @@ They are then automatically available in the <strong>Admin Center</strong> UI.</
 <p>Usage example in a scheduler configuration:</p>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;context&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;time&#34;</span>
 </span></span><span style="display:flex;"><span>	
@@ -3824,7 +3824,7 @@ They are then automatically available in the <strong>Admin Center</strong> UI.</
 <h3>Example: custom theme settings via code configuration<span class="hx-absolute -hx-mt-20" id="example-custom-theme-settings-via-code-configuration"></span>
     <a href="#example-custom-theme-settings-via-code-configuration" class="subheading-anchor" aria-label="Permalink for this section"></a></h3><div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;context&#34;</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span> <span style="color:#e6db74">&#34;embed&#34;</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;time&#34;</span>
@@ -3941,7 +3941,7 @@ They are then automatically available in the <strong>Admin Center</strong> UI.</
     <a href="#activation" class="subheading-anchor" aria-label="Permalink for this section"></a></h2><p>This system is activated via the configurator:</p>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">SettingsManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">SettingsManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
   <button
     class="hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50"
     title="Copy code"
@@ -3953,7 +3953,7 @@ They are then automatically available in the <strong>Admin Center</strong> UI.</
 </div>
 <div class="hextra-code-block hx-relative hx-mt-6 first:hx-mt-0 hx-group/code">
 
-<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">settingsManagement</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">SettingsManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
+<div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">settingsManagement</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">std</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">SettingsManagement</span>())</span></span></code></pre></div></div><div class="hextra-code-copy-btn-container hx-opacity-0 hx-transition group-hover/code:hx-opacity-100 hx-flex hx-gap-1 hx-absolute hx-m-[11px] hx-right-0 hx-top-0">
   <button
     class="hextra-code-copy-btn hx-group/copybtn hx-transition-all active:hx-opacity-50 hx-bg-primary-700/5 hx-border hx-border-black/5 hx-text-gray-600 hover:hx-text-gray-900 hx-rounded-md hx-p-1.5 dark:hx-bg-primary-300/10 dark:hx-border-white/10 dark:hx-text-gray-400 dark:hover:hx-text-gray-50"
     title="Copy code"

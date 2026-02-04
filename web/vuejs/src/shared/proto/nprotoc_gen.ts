@@ -3917,6 +3917,10 @@ export class HStack implements Writeable, Readable, Component {
 
 	public background?: Background;
 
+	public url?: URI;
+
+	public target?: Str;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -3945,7 +3949,9 @@ export class HStack implements Writeable, Readable, Component {
 		animation: Animation | undefined = undefined,
 		transformation: Transformation | undefined = undefined,
 		opacity: Uint | undefined = undefined,
-		background: Background | undefined = undefined
+		background: Background | undefined = undefined,
+		url: URI | undefined = undefined,
+		target: Str | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -3975,6 +3981,8 @@ export class HStack implements Writeable, Readable, Component {
 		this.transformation = transformation;
 		this.opacity = opacity;
 		this.background = background;
+		this.url = url;
+		this.target = target;
 	}
 
 	read(reader: BinaryReader): void {
@@ -4106,6 +4114,14 @@ export class HStack implements Writeable, Readable, Component {
 					this.background.read(reader);
 					break;
 				}
+				case 29: {
+					this.url = readString(reader);
+					break;
+				}
+				case 30: {
+					this.target = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -4143,6 +4159,8 @@ export class HStack implements Writeable, Readable, Component {
 			this.transformation !== undefined && !this.transformation.isZero(),
 			this.opacity !== undefined,
 			this.background !== undefined && !this.background.isZero(),
+			this.url !== undefined,
+			this.target !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -4258,6 +4276,14 @@ export class HStack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 28);
 			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[29]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 29);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[30]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 30);
+			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -4289,7 +4315,9 @@ export class HStack implements Writeable, Readable, Component {
 			this.animation === undefined &&
 			(this.transformation === undefined || this.transformation.isZero()) &&
 			this.opacity === undefined &&
-			(this.background === undefined || this.background.isZero())
+			(this.background === undefined || this.background.isZero()) &&
+			this.url === undefined &&
+			this.target === undefined
 		);
 	}
 
@@ -4322,6 +4350,8 @@ export class HStack implements Writeable, Readable, Component {
 		this.transformation = undefined;
 		this.opacity = undefined;
 		this.background = undefined;
+		this.url = undefined;
+		this.target = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

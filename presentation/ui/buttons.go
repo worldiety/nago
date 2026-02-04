@@ -31,6 +31,8 @@ type TButton struct {
 	invisible          bool
 	disabled           bool
 	id                 string
+	url                core.URI
+	target             string
 }
 
 // Button creates a new Button with the given style preset.
@@ -62,6 +64,23 @@ func initButton(action func(), preset ButtonStyle) TButton {
 		btn.trace = string(debug.Stack())
 	}
 	return btn
+}
+
+// URL sets the URL that the button navigates to when clicked if no action is specified.
+// If both URL and Action are set, the URL takes precedence.
+// This avoids another render cycle if the only goal is to navigate to a different page.
+// It also avoids issues with browser which block async browser interactions like Safari.
+// In fact, the [core.Navigation.Open] does not work properly on Safari.
+// See also [TButton.Target].
+func (c TButton) URL(url core.URI) TButton {
+	c.url = url
+	return c
+}
+
+// Target sets the name of the browsing context, like _self, _blank, _ parent, _top.
+func (c TButton) Target(target string) TButton {
+	c.target = target
+	return c
 }
 
 // Enabled toggles whether the button is interactive.
@@ -154,6 +173,8 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
 		ID(c.id).
+		URL(c.url).
+		Target(c.target).
 		Enabled(!c.disabled).
 		Action(c.action).
 		StylePreset(c.preset).

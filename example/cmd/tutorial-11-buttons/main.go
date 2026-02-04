@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -57,6 +58,11 @@ func defaultButtons() core.View {
 		PasswordField("Test", "Test"),
 		PasswordField("Test", "Test"),
 		Toggle(false),
+
+		PrimaryButton(nil).
+			Title("link button").
+			URL("https://www.worldiety.de").
+			Target("_self"),
 	).Gap(L16).
 		Padding(Padding{}.All(L16))
 }

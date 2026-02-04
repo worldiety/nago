@@ -118,6 +118,14 @@
       "name": "Background",
       "type": "Background",
       "pointer": true
+    },
+    "29": {
+      "name": "Url",
+      "type": "URI"
+    },
+    "30": {
+      "name": "Target",
+      "type": "Str"
     }
   }
 }
