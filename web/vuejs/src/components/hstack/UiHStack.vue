@@ -300,7 +300,6 @@ const clazz = computed<string>(() => {
 		:target="props.ui.target"
 		:title="props.ui.accessibilityLabel"
 	>
-		aaaa
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</a>
 </template>
