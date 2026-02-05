@@ -108,7 +108,10 @@ func (r *ButtonRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		}
 	}
 
-	return ui.Button(btn.Style(), ctx.EditorAction(view)).Title(btn.Title()).Frame(btn.Frame()).AccessibilityLabel(tmp.String())
+	return ui.VStack(
+		ui.Button(btn.Style(), ctx.EditorAction(view)).Title(btn.Title()).Frame(ui.Frame{Width: ui.Full, Height: ui.Full}).AccessibilityLabel(tmp.String()),
+		ctx.SelectedLayer(view.Identity()),
+	).Position(ui.Position{Type: ui.PositionRelative}).Frame(btn.Frame())
 }
 
 func (r *ButtonRenderer) Bind(ctx ViewerRenderContext, view flow.FormView, state *core.State[*jsonptr.Obj]) core.View {

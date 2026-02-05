@@ -42,7 +42,10 @@ func (r VStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		tmp = append(tmp, ctx.RenderInsertAfter(view.Identity(), lastViewID))
 	}
 
+	tmp = append(tmp, ctx.SelectedLayer(view.Identity()))
+
 	return ui.VStack(tmp...).
+		Position(ui.Position{Type: ui.PositionRelative}).
 		Action(ctx.EditorAction(view)).
 		Alignment(vstack.Alignment()).
 		Gap(vstack.Gap()).

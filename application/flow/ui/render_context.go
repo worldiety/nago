@@ -153,3 +153,29 @@ func (ctx RContext) RenderPreview(view flow.FormView) core.View {
 func (ctx RContext) HandleCommand(cmd flow.WorkspaceCommand) error {
 	return ctx.parent.uc.HandleCommand(ctx.wnd.Subject(), cmd)
 }
+
+func (ctx RContext) Selected() flow.ViewID {
+	for k, c := range ctx.selectedStates {
+		if c.Get() {
+			return k
+		}
+	}
+
+	return ""
+}
+
+func (ctx RContext) SelectedLayer(id flow.ViewID) core.View {
+	if ctx.parent.selected.Get() != id {
+		return nil
+	}
+
+	return ui.VStack().
+		BackgroundColor(ui.I0.WithTransparency(75)).
+		Position(ui.Position{
+			Type:   ui.PositionAbsolute,
+			Left:   "0px",
+			Top:    "0px",
+			Right:  "0px",
+			Bottom: "0px",
+		})
+}

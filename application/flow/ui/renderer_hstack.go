@@ -43,7 +43,10 @@ func (r HStackRenderer) Preview(ctx RContext, view flow.FormView) core.View {
 		tmp = append(tmp, ctx.RenderInsertPlus(view.Identity(), lastViewID))
 	}
 
+	tmp = append(tmp, ctx.SelectedLayer(view.Identity()))
+
 	return ui.HStack(tmp...).
+		Position(ui.Position{Type: ui.PositionRelative}).
 		Action(ctx.EditorAction(view)).
 		Alignment(hstack.Alignment()).
 		Gap(hstack.Gap()).
