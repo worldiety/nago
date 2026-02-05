@@ -31,36 +31,9 @@ type View interface {
 	Render(RenderContext) RenderNode
 }
 
-type ViewPadding struct {
-	parent  View
-	padding *proto.Padding
-}
+// RenderView is a lazy delayed view factory, which immediately calls Render on the returned view
+type RenderView func(wnd Window) View
 
-func NewViewPadding(parent View, padding *proto.Padding) ViewPadding {
-	return ViewPadding{parent: parent, padding: padding}
-}
-
-func (p ViewPadding) Top(pad proto.Length) View {
-	p.padding.Top = pad
-	return p.parent
-}
-
-func (p ViewPadding) All(pad proto.Length) View {
-	p.padding.Left = pad
-	p.padding.Right = pad
-	p.padding.Bottom = pad
-	p.padding.Top = pad
-	return p.parent
-}
-
-func (p ViewPadding) Vertical(pad proto.Length) View {
-	p.padding.Bottom = pad
-	p.padding.Top = pad
-	return p.parent
-}
-
-func (p ViewPadding) Horizontal(pad proto.Length) View {
-	p.padding.Left = pad
-	p.padding.Right = pad
-	return p.parent
+func (f RenderView) Render(ctx RenderContext) RenderNode {
+	return f(ctx.Window()).Render(ctx)
 }

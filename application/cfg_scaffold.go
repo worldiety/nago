@@ -326,10 +326,7 @@ func (b *ScaffoldBuilder) registerLegalViews() {
 	b.cfg.RootView("_", func(wnd core.Window) core.View {
 		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
 		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return ui.VStack(
-				ui.WindowTitle("Nicht gefunden"),
-				alert.Banner("Resource nicht gefunden", "Die Seite, Funktion oder Resource wurde nicht gefunden."),
-			)
+			return alert.NotFound()
 		})(wnd)
 	})
 

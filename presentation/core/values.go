@@ -132,6 +132,13 @@ func (v Values) Put(key string, value string) Values {
 	return tmp
 }
 
+// Delete clones the current values and removes the given key-value-pair.
+func (v Values) Delete(key string) Values {
+	tmp := v.Clone()
+	delete(tmp, key)
+	return tmp
+}
+
 // UnmarshalValues takes a Values type and tries to deserialize the fields. Supported fields with underlying field types are
 //   - string
 //   - int
