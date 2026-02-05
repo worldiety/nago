@@ -67,6 +67,8 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 		"mobile_phone",
 		"phone",
 		"day_of_birth",
+		"zip",
+		"city",
 	}
 
 	loadedUsers, err := xslices.Collect2(repo.FindAllByID(slices.Values(users)))
@@ -107,6 +109,8 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 			usr.Contact.MobilePhone,
 			usr.Contact.Phone,
 			usr.Contact.DayOfBirth.Time(time.Local).Format(xtime.GermanDate),
+			usr.Contact.PostalCode,
+			usr.Contact.City,
 		}
 
 		for _, ident := range sortedConsentIdents {
