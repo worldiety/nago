@@ -44,6 +44,7 @@ type TListItem struct {
 	frame    ui.Frame
 	target   ViewID
 	idPrefix string
+	deletes  TargetKind
 }
 
 func ListItem(kind TargetKind, target ViewID, content core.View) TListItem {
@@ -65,6 +66,11 @@ func (c TListItem) Prefix(id string) TListItem {
 	return c
 }
 
+func (c TListItem) DeleteTarget(kind TargetKind) TListItem {
+	c.deletes = kind
+	return c
+}
+
 func (c TListItem) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	key := c.kind.queryKey(c.idPrefix)
@@ -75,11 +81,16 @@ func (c TListItem) Render(ctx core.RenderContext) core.RenderNode {
 		bgColor = ui.ColorCardFooter
 	}
 
+	values := wnd.Values().Put(key, string(c.target))
+	if c.deletes != 0 {
+		values = values.Delete(c.deletes.queryKey(c.idPrefix))
+	}
+
 	return ui.HStack(c.content).
 		BackgroundColor(bgColor).
 		HoveredBackgroundColor(ui.ColorCardFooter).
 		Action(func() {
-			wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(key, string(c.target)))
+			wnd.Navigation().ForwardTo(wnd.Path(), values)
 		}).
 		Border(ui.Border{}.Radius(ui.L8)).
 		Padding(ui.Padding{}.All(ui.L8)).

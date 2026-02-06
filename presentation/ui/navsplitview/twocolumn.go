@@ -44,6 +44,10 @@ func NavigateDetail(wnd core.Window, id string, view ViewID) {
 	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindDetail.queryKey(id), string(view)))
 }
 
+func NavigateSidebar(wnd core.Window, id string, view ViewID) {
+	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindSidebar.queryKey(id), string(view)))
+}
+
 // TTwoColumn is a layout component (TwoColumn).
 type TTwoColumn struct {
 	nav            Factory
@@ -54,12 +58,14 @@ type TTwoColumn struct {
 	bgContent      ui.Color
 	bgDetail       ui.Color
 	contentWidth   ui.Length
+	detailWidth    ui.Length
 }
 
 func TwoColumn(nav Factory) TTwoColumn {
 	return TTwoColumn{
 		nav:          nav,
 		contentWidth: "30rem",
+		detailWidth:  "1fr",
 	}
 }
 
@@ -87,6 +93,11 @@ func (c TTwoColumn) FullWidth() TTwoColumn {
 // WidthContent sets the width of the content column.
 func (c TTwoColumn) WidthContent(width ui.Length) TTwoColumn {
 	c.contentWidth = width
+	return c
+}
+
+func (c TTwoColumn) WidthDetail(width ui.Length) TTwoColumn {
+	c.detailWidth = width
 	return c
 }
 
@@ -128,7 +139,7 @@ func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 		detailView = alert.NotFound()
 	}
 
-	if wnd.Info().SizeClass <= core.SizeClassSmall {
+	if wnd.Info().SizeClass <= core.SizeClassMedium {
 		if detailView == nil {
 			return ui.VStack().Render(ctx)
 		}
@@ -151,7 +162,7 @@ func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 		ui.GridCell(detailView).BackgroundColor(c.bgDetail),
 	).Columns(3).
 		Gap(ui.L8).
-		Widths(c.contentWidth, "1px", "1fr").
+		Widths(c.contentWidth, "1px", c.detailWidth).
 		Frame(c.frame).
 		Render(ctx)
 }

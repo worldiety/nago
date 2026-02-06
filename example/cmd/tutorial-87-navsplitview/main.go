@@ -43,7 +43,7 @@ func main() {
 					FullWidth(),
 
 				ui.Space(ui.L48),
-				
+
 				// note the ID which is used to identify the navsplitview and prepended in the links
 				// also note that you can use a factory or lazy evaluated view factories
 				ui.Text("navsplitview demo 2"),
@@ -70,7 +70,44 @@ func main() {
 				}).ID("nsv2").
 					Default("_", "none").
 					FullWidth(),
+
+				ui.Space(ui.L48),
+
+				ui.Text("navsplitview 3 col"),
+				navsplitview.ThreeColumn(navsplitview.NavLinks{
+					"sb": ui.VStack(
+						ui.Text("sidebar"),
+						navsplitview.ListItem(navsplitview.KindContent, "c1", ui.Text("punkt 1")).
+							Prefix("nsv3").
+							DeleteTarget(navsplitview.KindDetail),
+						navsplitview.ListItem(navsplitview.KindContent, "c2", ui.Text("punkt 2")).
+							Prefix("nsv3").
+							DeleteTarget(navsplitview.KindDetail),
+					).FullWidth(),
+					"none": ui.VStack(
+						ui.Text("nichts gewählt"),
+					),
+					"c1": ui.VStack(
+						ui.Text("content 1"),
+						navsplitview.ListItem(navsplitview.KindDetail, "c1d1", ui.Text("punkt 1")).Prefix("nsv3"),
+						navsplitview.ListItem(navsplitview.KindDetail, "c1d2", ui.Text("punkt 2")).Prefix("nsv3"),
+					),
+
+					"c2": ui.VStack(
+						ui.Text("content 2"),
+						navsplitview.ListItem(navsplitview.KindDetail, "c2d1", ui.Text("punkt 1")).Prefix("nsv3"),
+						navsplitview.ListItem(navsplitview.KindDetail, "c2d2", ui.Text("punkt 2")).Prefix("nsv3"),
+					),
+
+					"c1d1": ui.Text("c1d1"),
+					"c1d2": ui.Text("c1d2"),
+					"c2d1": ui.Text("c2d1"),
+					"c2d2": ui.Text("c2d2"),
+				}).ID("nsv3").
+					Default("sb", "none", "none").
+					FullWidth(),
 			).FullWidth()
+
 		})
 
 	}).Run()
