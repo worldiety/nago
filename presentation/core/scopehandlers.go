@@ -10,9 +10,10 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/proto"
-	"log/slog"
 )
 
 // only for event loop
@@ -216,6 +217,20 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 }
 
 func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequested) {
+	if s.allocatedRootView.IsSome() {
+		rv := s.allocatedRootView.Unwrap()
+		// this is a fast path optimization to avoid re-allocation of already present root views, e.g.
+		// just because a query parameter or anchor has changed
+		if rv.factory == evt.Factory {
+			//fmt.Println("reuse existing root view")
+			values := newValuesFromProto(evt.Values)
+			rv.values.Store(&values)
+			s.updateWindowInfo(s.windowInfo)
+			s.updateLanguage(string(evt.Locale))
+			return
+		}
+	}
+
 	s.destroyView()
 	s.updateWindowInfo(s.windowInfo)
 	s.updateLanguage(string(evt.Locale))

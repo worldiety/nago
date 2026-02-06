@@ -52,7 +52,7 @@ type scopeWindow struct {
 	hnd                  int
 	factory              proto.RootViewID
 	navController        *navigationController
-	values               Values
+	values               atomic.Pointer[Values]
 	isRendering          bool
 	generation           int64
 	mutex                sync.Mutex
@@ -75,10 +75,10 @@ func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *sco
 	s.generation = 0
 
 	if values == nil {
-		s.values = Values{}
-	} else {
-		s.values = values
+		values = Values{}
 	}
+
+	s.values.Store(&values)
 
 	s.navController = newNavigationController(parent)
 	for _, observer := range s.parent.app.onWindowCreatedObservers {
@@ -349,7 +349,12 @@ func (s *scopeWindow) Navigation() Navigation {
 }
 
 func (s *scopeWindow) Values() Values {
-	return s.values
+	ptrV := s.values.Load()
+	if ptrV == nil {
+		return Values{}
+	}
+
+	return *ptrV
 }
 
 func (s *scopeWindow) Subject() auth.Subject {
