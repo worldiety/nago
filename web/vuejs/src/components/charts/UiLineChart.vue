@@ -116,6 +116,6 @@ function mapSeriesType(seriesType: number | undefined) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="line" :series="options.series" :options="options"/>
+		<VueApexCharts type="line" :series="options.series" :options="options" :height="props.ui.chart?.frame?.height" :width="props.ui.chart?.frame?.width" />
 	</div>
 </template>
