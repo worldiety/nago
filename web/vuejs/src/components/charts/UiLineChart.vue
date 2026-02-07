@@ -8,12 +8,13 @@
 -->
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { frameCSS } from '@/components/shared/frame';
+import {computed} from 'vue';
+import {frameCSS} from '@/components/shared/frame';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import { ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
-import { colorToHexValue } from '@/shared/tailwindTranslator';
+import {ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues} from '@/shared/proto/nprotoc_gen';
+import {colorToHexValue} from '@/shared/tailwindTranslator';
+import {cssLengthValue} from "@/components/shared/length";
 
 const props = defineProps<{
 	ui: LineChart;
@@ -28,6 +29,8 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 					download: props.ui.chart?.downloadable ?? false,
 				},
 			},
+			height: cssLengthValue(props.ui.chart?.frame?.height ?? "auto"),
+			width: cssLengthValue(props.ui.chart?.frame?.width ?? "auto"),
 		},
 		colors: colors.value,
 		series: series.value,
@@ -83,6 +86,7 @@ function mapDataPointsToData(dataPoint: ChartDataPoint) {
 		y: dataPoint.y,
 	};
 }
+
 function mapCurve(curve: number | undefined) {
 	switch (curve) {
 		case LineChartCurveValues.LineChartCurveStraight:
@@ -95,6 +99,7 @@ function mapCurve(curve: number | undefined) {
 			return 'straight';
 	}
 }
+
 function mapSeriesType(seriesType: number | undefined) {
 	switch (seriesType) {
 		case ChartSeriesTypeValues.ChartSeriesTypeLine:
@@ -111,6 +116,6 @@ function mapSeriesType(seriesType: number | undefined) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="line" :series="options.series" :options="options" />
+		<VueApexCharts type="line" :series="options.series" :options="options"/>
 	</div>
 </template>
