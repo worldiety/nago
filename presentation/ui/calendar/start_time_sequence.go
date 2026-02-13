@@ -73,14 +73,28 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 func startTimeSeqPill(c TCalendar, evt Event, timeOnly bool) core.View {
 	colors := c.colors
 
+	isTimePoint := evt.To.At.Equal(evt.From.At)
+
 	var timeStr string
-	if timeOnly {
-		timeStr = evt.From.At.Format("15:04") + " - " + evt.To.At.Format("15:04")
-	} else {
-		if evt.To.At.Hour() == 0 && evt.To.At.Minute() == 0 && evt.From.At.Hour() == 0 && evt.To.At.Minute() == 0 {
-			timeStr = evt.From.At.Format(xtime.GermanDate) + " - " + evt.To.At.Format(xtime.GermanDate)
+	if isTimePoint {
+		if timeOnly {
+			timeStr = evt.From.At.Format("15:04")
 		} else {
-			timeStr = evt.From.At.Format(xtime.GermanDateTime) + " - " + evt.To.At.Format(xtime.GermanDateTime)
+			if evt.To.At.Hour() == 0 && evt.To.At.Minute() == 0 && evt.From.At.Hour() == 0 && evt.To.At.Minute() == 0 {
+				timeStr = evt.From.At.Format(xtime.GermanDate)
+			} else {
+				timeStr = evt.From.At.Format(xtime.GermanDateTime)
+			}
+		}
+	} else {
+		if timeOnly {
+			timeStr = evt.From.At.Format("15:04") + " - " + evt.To.At.Format("15:04")
+		} else {
+			if evt.To.At.Hour() == 0 && evt.To.At.Minute() == 0 && evt.From.At.Hour() == 0 && evt.To.At.Minute() == 0 {
+				timeStr = evt.From.At.Format(xtime.GermanDate) + " - " + evt.To.At.Format(xtime.GermanDate)
+			} else {
+				timeStr = evt.From.At.Format(xtime.GermanDateTime) + " - " + evt.To.At.Format(xtime.GermanDateTime)
+			}
 		}
 	}
 
